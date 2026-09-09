@@ -265,11 +265,12 @@ Cụm từ chỉ cấp độ an toàn trong tệp TXT không được chuẩn h�
 - **Train Normal:** `metallurgy-Level04-SuspendedRail-000646-001`
   - TXT: *"In the sintering equipment area scene, the pipeline, valve, and stent are all securely in place, no abnormalities observed."*
   - Shapes (10): `Valve` (x2), `Pipeline` (x4), `Stent` (x4).
-- **Train Anomaly (Level 3 - Mẫu dị thường luyện kim thực sự duy nhất):** `metallurgy-Level03-SuspendedRail-002666-001`
+- **Train Anomaly (Level 3):** `metallurgy-Level03-SuspendedRail-002666-001`
   - TXT: *"In the metallurgical scene, there is water accumulation on the ground. The safety level is grade three."*
   - Shapes (10): `Sight Hole Cover`, `Person`, `Bellows`, `Pipeline` (x3), `Liquid`, `Bottle`, `Safety Helmet`, `Mobile Phone`.
-- **Train Anomaly (Level 1 - Ví dụ trong 8 mẫu mismatch sang oil_chemical):** `metallurgy-Level01-SuspendedRail-002658-001`
-  - TXT: *"In the oil and gas chemical environment, there is an open flame. Therefore, the safety level is Grade One."* *(Lưu ý: mismatch tên miền; 8 trong số 9 mẫu anomaly gán nhãn metallurgy thực chất mô tả môi trường dầu khí hóa chất)*
+  - *Ghi chú:* Trong 9 anomaly samples có folder domain metallurgy, 8 mẫu có TXT mô tả oil_chemical; chỉ 1 mẫu này có folder domain và TXT cùng xác nhận metallurgy.
+- **Train Anomaly (Level 1 - Ví dụ mẫu có TXT mô tả oil_chemical):** `metallurgy-Level01-SuspendedRail-002658-001`
+  - TXT: *"In the oil and gas chemical environment, there is an open flame. Therefore, the safety level is Grade One."* *(Lưu ý: mismatch tên miền giữa folder và TXT)*
   - Shapes (6): `Open Flame`, `Stairs`, `Stent` (x4).
 - **Test Normal:** `metallurgy-Level04-SuspendedRail-000030-001`
   - TXT: *"In the sintering equipment area scene, the pipeline, stent, and stairs are all securely in place, no abnormalities observed."*
@@ -360,24 +361,31 @@ Bảng đối chiếu giữa các thông tin quan trọng và nguồn trích xu�
 
 ## 9. Các trường đề xuất để xây dựng Data Manifest
 
-Khi xây dựng manifest chuẩn cho SafeShift (ví dụ dạng JSON Lines hoặc CSV nhỏ gọn, độc lập với máy cá nhân), các trường sau đây có thể tạo ra một cách nhất quán và có thể truy vết:
+Khi xây dựng manifest chuẩn cho SafeShift (ví dụ dạng JSON Lines hoặc CSV nhỏ gọn, độc lập với máy cá nhân), các trường sau đây cần được tạo ra một cách nhất quán, đầy đủ và có thể truy vết:
 
 1. `sample_id` (`string`): Định danh mẫu duy nhất, ví dụ `"coal_conveyor-Level04-SuspendedRail-000560-001"`.
 2. `point_id` (`string`): Định danh điểm kiểm tra (6 chữ số), ví dụ `"000560"`.
 3. `instance_id` (`string`): Định danh số thứ tự mẫu tại điểm (3 chữ số), ví dụ `"001"`.
 4. `split` (`string`): Tập dữ liệu chính thức (`"train"` hoặc `"test"`).
 5. `data_type` (`string`): Phân loại nhãn nhị phân của tập dữ liệu (`"Normal_data"` hoặc `"Anomaly_data"`).
-6. `domain` (`string`): Ngành công nghiệp (`"coal_conveyor"`, `"metallurgy"`, `"oil_chemical"`, `"power"`, `"tunnel"`).
-7. `safety_level` (`string`): Cấp độ an toàn 4 mức (`"Level01"`, `"Level02"`, `"Level03"`, `"Level04"`).
-8. `safety_level_int` (`integer`): Mã số nguyên tương ứng (1: High Risk, 2: Moderate Risk, 3: Minor Hazard, 4: Normal).
-9. `robot_platform` (`string`): Loại robot di chuyển (`"SuspendedRail"` hoặc `"Wheeled"`).
-10. `image_relpath` (`string`): Đường dẫn tương đối tính từ repository root, ví dụ `"data/raw/InspecSafe-V1/train/DATA_PATH/train/Annotations/Normal_data/.../....jpg"`.
-11. `json_relpath` (`string`): Đường dẫn tương đối tới tệp JSON tương ứng.
-12. `txt_relpath` (`string`): Đường dẫn tương đối tới tệp TXT tương ứng.
-13. `image_width` (`integer`) & `image_height` (`integer`): Độ phân giải ảnh.
-14. `image_format` (`string`): Định dạng nhị phân thực tế (`"JPEG"` hoặc `"PNG"`).
-15. `num_shapes` (`integer`): Số lượng đối tượng đa giác trong mẫu.
-16. `has_other_modalities` (`boolean`): Cờ đánh dấu điểm này có dữ liệu trong `Other_modalities` hay không.
+6. `folder_domain` (`string`): Tên miền công nghiệp trích xuất từ tên thư mục điểm/đường dẫn (`"coal_conveyor"`, `"metallurgy"`, `"oil_chemical"`, `"power"`, `"tunnel"`).
+7. `text_domain` (`string` | `null`): Tên miền công nghiệp suy luận từ câu mở đầu trong tệp TXT nếu xác định được.
+8. `domain_mismatch` (`boolean`): Cờ boolean cho biết hai nguồn miền có xung đột hay không (`folder_domain != text_domain`).
+9. `safety_level` (`string`): Cấp độ an toàn 4 mức từ tên thư mục (`"Level01"`, `"Level02"`, `"Level03"`, `"Level04"`).
+10. `safety_level_int` (`integer`): Mã số nguyên tương ứng (1: High Risk, 2: Moderate Risk, 3: Minor Hazard, 4: Normal).
+11. `robot_platform` (`string`): Loại robot di chuyển (`"SuspendedRail"` hoặc `"Wheeled"`).
+12. `image_relpath` (`string`): Đường dẫn tương đối tính từ repository root tới tệp ảnh.
+13. `json_relpath` (`string`): Đường dẫn tương đối tính từ repository root tới tệp JSON.
+14. `txt_relpath` (`string`): Đường dẫn tương đối tính từ repository root tới tệp TXT.
+15. `text_description` (`string`): Toàn bộ nội dung chuỗi văn bản mô tả trong tệp TXT nguyên gốc.
+16. `object_labels` (`list[string]`): Danh sách các nhãn đối tượng thô trích xuất từ `shapes[].label` trong tệp JSON, giữ nguyên bản không normalize.
+17. `num_shapes` (`integer`): Số lượng đối tượng đa giác trong mẫu (`len(shapes)`).
+18. `image_width` (`integer`) & `image_height` (`integer`): Độ phân giải ảnh pixel từ metadata JSON.
+19. `image_format` (`string`): Định dạng nhị phân thực tế của ảnh (`"JPEG"` hoặc `"PNG"`).
+20. `has_other_modalities` (`boolean`): Cờ đánh dấu điểm tuần tra này có dữ liệu trong `Other_modalities` hay không.
+
+> [!IMPORTANT]
+> **Quy định về Ground Truth Domain:** Trong khuôn khổ Week 1 (Dataset Audit), SafeShift **không tự ý quyết định rằng `folder_domain` hay `text_domain` là ground truth cuối cùng** cho 36 mẫu xung đột (nhằm tránh suy đoán khi chưa có visual verification đầy đủ cho toàn bộ ảnh). Cả hai trường đều được lưu trữ song song trong manifest cùng cờ `domain_mismatch`. Quyết định lựa chọn nguồn nhãn chuẩn hoặc chiến lược lọc/xử lý cho các mẫu này sẽ được thảo luận và chốt chính thức trong **Week 2 (Research Protocol)** theo đúng quy tắc tại `AGENTS.md`.
 
 ---
 
@@ -428,7 +436,7 @@ Qua khảo sát toàn diện, các bất thường sau đã được ghi nhận:
         - `metallurgy-Level01-SuspendedRail-002663-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
         - `metallurgy-Level01-SuspendedRail-002664-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
         - `metallurgy-Level01-SuspendedRail-002665-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
-        - *Phát hiện nghiên cứu hệ quả:* Toàn bộ tập Train `Anomaly_data` của domain `metallurgy` chỉ có đúng 9 mẫu; 8 mẫu trên thực chất là cảnh dầu khí hóa chất. Cả dataset InspecSafe-V1 chỉ có duy nhất **1 mẫu dị thường luyện kim thực sự** (`metallurgy-Level03-SuspendedRail-002666-001`).
+        - *Ghi nhận về dữ liệu:* Trong 9 anomaly samples có folder domain metallurgy, 8 mẫu có TXT mô tả oil_chemical; chỉ 1 mẫu (`metallurgy-Level03-SuspendedRail-002666-001`) có folder domain và TXT cùng xác nhận metallurgy.
      3. **Nhóm `tunnel` (thư mục) $\rightarrow$ `oil_chemical` (TXT):** 24 mẫu thuộc 12 điểm tuần tra (mỗi điểm gồm 2 mẫu `-001` và `-002`, TXT đều mở đầu bằng *"In the oil, gas, and chemical plant scene..."*).
         - Tập Train `Normal_data` (20 mẫu / 10 điểm):
           - `tunnel-Level04-Wheeled-002224` (`-001`, `-002`)
@@ -447,7 +455,7 @@ Qua khảo sát toàn diện, các bất thường sau đã được ghi nhận:
      - Tổng cộng chính xác: $4 + 8 + 24 = 36$ mẫu. 4,977 mẫu còn lại khớp hoàn toàn giữa tên thư mục và khẳng định miền trong TXT.
 3. **Sự mất cân bằng nghiêm trọng và thiếu hụt dữ liệu dị thường ở domain `metallurgy`:**
    - Trong tập `test`: Domain `metallurgy` có 90 mẫu `Normal_data`, nhưng có **0 mẫu `Anomaly_data`**!
-   - Trong tập `train`: Domain `metallurgy` có 271 mẫu `Normal_data`, nhưng chỉ có **9 mẫu `Anomaly_data`** (trong đó có tới 4 mẫu nội dung TXT lại nói về dầu khí).
+   - Trong tập `train`: Domain `metallurgy` có 271 mẫu `Normal_data`, nhưng chỉ có **9 mẫu `Anomaly_data`** (trong 9 anomaly samples có folder domain metallurgy, 8 mẫu có TXT mô tả oil_chemical; chỉ 1 mẫu có folder domain và TXT cùng xác nhận metallurgy).
    - Điều này tạo ra rủi ro nghiêm trọng nếu dùng `metallurgy` làm tập test cross-domain cho bài toán phát hiện dị thường / thẩm định an toàn.
 4. **Mất cân bằng cực đoan giữa các cấp độ an toàn (Extreme Class Imbalance):**
    - `Level04` (Bình thường): 4,013 mẫu (**80.05%**).
@@ -495,7 +503,7 @@ Sau khi khảo sát toàn bộ 37,434 đa giác gán nhãn trong 5,013 tệp JSO
    - Ngành `metallurgy` ở tập test có 0 mẫu dị thường và chỉ có 9 mẫu dị thường ở train. Có nên loại `metallurgy` khỏi vai trò target test domain trong bài toán phát hiện bất thường hay không?
    - Cần chốt rõ các cặp source/target domain (ví dụ train trên 3-4 domain, evaluate zero-shot trên domain còn lại) để tránh sai lệch dữ liệu.
 3. **Xử lý 36 mẫu mâu thuẫn domain:**
-   - Nên tin cậy nhãn domain từ tên thư mục (hệ thống tuần tra robot thực tế ghi nhận) hay từ câu mô tả cảnh trong tệp TXT? Cần ghi nhận thành quy tắc trong manifest.
+   - Trong khuôn khổ Week 1 (Dataset Audit), SafeShift không tự ý quyết định rằng `folder_domain` hay `text_domain` là ground truth cuối cùng (tránh overclaim khi chưa thực hiện visual verification toàn bộ 36 ảnh). Quyết định chọn nguồn nhãn chuẩn, quy tắc ưu tiên hoặc chiến lược xử lý dữ liệu cho 36 mẫu này sẽ được thảo luận và chốt chính thức trong **Week 2 (Research Protocol)**.
 4. **Phương pháp đánh giá Grounding cho vi phạm thiếu bảo hộ (Negative PPE):**
    - Khi mô hình VLM giải thích *"không đội mũ bảo hiểm"*, bounding box mô hình đưa ra cần khớp với vùng đầu của công nhân hay chấp nhận khớp với toàn bộ cơ thể `Person`?
 5. **Khai thác dữ liệu đa phương thức (`Other_modalities`):**
