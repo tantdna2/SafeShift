@@ -1,6 +1,6 @@
 # Dataset Manifest Builder — W1, Bước 2
 
-Builder thực thi schema đã khảo sát trong `notes/dataset_schema.md`, mục 1–11.
+Builder thực thi schema đã khảo sát trong `notes/dataset_schema.md`, mục 1–11 và 15.
 Phạm vi là inventory các triplet ảnh/JSON/TXT; không chọn ground truth domain,
 không đổi split/nhãn và không thực hiện thí nghiệm.
 
@@ -43,7 +43,10 @@ cũ sau một lần chạy thất bại.
   và newline cuối. CSV cần đọc bằng `csv.DictReader` với `encoding="utf-8"`,
   `newline=""` để roundtrip đúng. Một record CSV có thể chứa nhiều dòng vật lý.
 - `text_domain` chỉ khớp chính xác, phân biệt hoa/thường, với các mệnh đề mở đầu
-  `In the ... ,` được dẫn chứng tại mục 6, 7, 11 của schema. Danh sách explicit
+  `In the ... ,` thuộc đúng 24 opening thực tế được dẫn chứng tại mục 15.3 của schema.
+  Audit bổ sung đã hoàn thiện vocabulary, thay cụm không tồn tại
+  `In the sintering equipment area scene,` bằng `In the metallurgical plant scene,`
+  và bổ sung các biến thể coal_conveyor/oil_chemical đã xác minh. Danh sách explicit
   nằm trong `TEXT_OPENINGS` của `safeshift/data/manifest.py`. Không strip/lowercase
   văn bản, không tìm keyword trong phần mô tả thiết bị, không suy domain từ folder.
   Biến thể chưa được dẫn chứng hoặc không khớp chính xác nhận `null`.
@@ -80,9 +83,10 @@ Không dùng ngẫu nhiên, seed không áp dụng.
 
 Môi trường: Windows, Python 3.11.9, standard library. Dataset: InspecSafe-V1 local
 ở đường dẫn mặc định, theo nguồn cấu trúc `notes/dataset_schema.md`.
-Lần kiểm chứng dùng parent Git commit `5b444b5d0ca1b2a6a0583796e66e9d9bc87333ca`
-cùng code builder mới chưa commit; checksum code cụ thể và trạng thái được lưu
-trong provenance local. Lệnh tái lập và artifacts như trên.
+Lần kiểm chứng dùng parent Git commit `fb108118644773b9ebe1d0441788d316774164fb`
+cùng patch vocabulary chưa commit; checksum code cụ thể và trạng thái được lưu
+trong provenance local. Run ID: `manifest-20260909T072331099303Z`.
+Lệnh tái lập và artifacts như trên. **Exit code của full local run: `0`.**
 
 | Thống kê | Kết quả |
 | --- | ---: |
@@ -101,7 +105,8 @@ trong provenance local. Lệnh tái lập và artifacts như trên.
 | Level03 | 15 |
 | Level04 | 4.013 |
 | Domain mismatch đã xác định | 36 |
-| Text domain chưa xác định | 789 |
+| Text domain chưa xác định | 0 |
+| Coverage text domain | 5.013 / 5.013 |
 | JPEG | 4.969 |
 | PNG mang đuôi .jpg | 44 |
 | Incomplete/malformed | 0 |
@@ -109,25 +114,35 @@ trong provenance local. Lệnh tái lập và artifacts như trên.
 | Có other modalities | 4.011 |
 | Tổng shapes | 37.434 |
 
-**Đối chiếu audit:** cả 6 regression counts được yêu cầu (total/train/test/mismatch/
-JPEG/PNG) đều khớp. Tuy nhiên, ma trận ở mục 11 của schema gán text domain cho cả
-5.013 mẫu, trong khi tập mệnh đề explicit được schema dẫn chứng chỉ khớp 4.224 mẫu
-trong bản local. 789 mẫu còn lại được giữ `text_domain=null`,
-`domain_mismatch=null`: 711 metallurgy, 69 coal_conveyor, 9 oil_chemical (theo folder).
-Đây là discrepancy về độ phủ, không phải mẫu bị bỏ. CLI báo
-`W1 DISCREPANCY: unknown_text_domain: expected 0, observed 789` và exit `2`.
-Không mở rộng rules để ép khớp audit; cần audit bổ sung và ghi bằng chứng cho các
-mệnh đề chưa có trong schema trước khi đề xuất mở rộng parser.
+**Đối chiếu audit:** toàn bộ regression counts đều khớp; không có discrepancy.
+Audit bổ sung của Research Lead + Antigravity (schema mục 15) đã hoàn thiện
+vocabulary thành đúng 24 opening thực tế. Builder nhận diện đủ 5.013/5.013 mẫu;
+12 opening mới nhận diện 789 mẫu mà không tạo thêm mismatch. Số mẫu của từng
+opening cũng khớp toàn bộ bảng 15.3, không sửa số liệu hoặc nguyên tắc exact match.
 
-Validation: **25 tests synthetic pass** bằng `python -m unittest discover -v`.
+Ma trận `folder_domain` (hàng) × `text_domain` (cột), đếm trực tiếp từ CSV bằng
+`collections.Counter((row["folder_domain"], row["text_domain"]) for row in rows)`:
+
+| Folder / Text | coal_conveyor | metallurgy | oil_chemical | power | tunnel |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| coal_conveyor | 1.121 | 0 | 0 | 0 | 0 |
+| metallurgy | 0 | 712 | 8 | 0 | 0 |
+| oil_chemical | 0 | 0 | 1.023 | 0 | 0 |
+| power | 4 | 0 | 0 | 865 | 0 |
+| tunnel | 0 | 0 | 24 | 0 | 1.256 |
+
+Cả 25 ô đều khớp audit; tổng ngoài đường chéo là 36. Hai nguồn domain vẫn được
+giữ song song, không chọn ground truth. Phrase chưa xác minh vẫn trả `null`.
+
+Validation: **29 tests synthetic pass** bằng `python -m unittest discover -v`.
 Kiểm tra CSV local: 5.013 IDs duy nhất; toàn bộ đường dẫn tương đối trỏ tới file
 tồn tại; toàn bộ TXT roundtrip khớp nguyên văn; mỗi list labels có độ dài bằng
 num_shapes. Nhãn `出口` được giữ nguyên (1 occurrence); 3.693 samples có nhãn lặp.
 CSV không có field `imageData`. Không chạy VLM hoặc kiểm tra pixel/near-duplicates
 vì nằm ngoài phạm vi manifest builder.
 
-- CSV: 4.285.037 bytes.
-- CSV SHA-256: `4f1b3950c963dfb3b89255546f1c41813f06c00c011a1177ad34e0aea84dd729`.
+- CSV: 4.290.785 bytes.
+- CSV SHA-256: `3025edb985d947cbcfe3e397b37aed505e2305b32ece46663d46115c28568577`.
 - Input fingerprint: `7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5`.
 
 CSV chứa toàn bộ TXT gốc và quyền chia sẻ chúng chưa được xác minh. Vì vậy CSV

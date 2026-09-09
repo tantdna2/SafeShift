@@ -18,6 +18,36 @@ from safeshift.data.manifest import (
 from scripts.build_manifest import main
 
 
+# Independent expected mappings from notes/dataset_schema.md section 15.3.
+# Descriptions appended in tests are synthetic; no dataset samples are loaded.
+AUDITED_OPENINGS = {
+    "In the coal conveyor bridge scene,": "coal_conveyor",
+    "In the coal conveying trestle scenario,": "coal_conveyor",
+    "In the coal conveyor bridge scenario,": "coal_conveyor",
+    "In the coal conveying bridge scenario,": "coal_conveyor",
+    "In the coal conveying trestle scene,": "coal_conveyor",
+    "In the coal transportation trestle scenario,": "coal_conveyor",
+    "In the coal transportation bridge scene,": "coal_conveyor",
+    "In the coal transportation bridge scenario,": "coal_conveyor",
+    "In the coal conveyor belt bridge scene,": "coal_conveyor",
+    "In the coal conveying bridge scene,": "coal_conveyor",
+    "In the coal conveyor gallery scene,": "coal_conveyor",
+    "In the metallurgical plant scene,": "metallurgy",
+    "In the metallurgical scene,": "metallurgy",
+    "In the oil, gas, and chemical plant scene,": "oil_chemical",
+    "In the oil and gas chemical scenario,": "oil_chemical",
+    "In the oil and gas chemical scene,": "oil_chemical",
+    "In the oil and gas chemical environment,": "oil_chemical",
+    "In the oil, gas, and chemical industry scenario,": "oil_chemical",
+    "In the oil, gas, and chemical industry setting,": "oil_chemical",
+    "In the oil, gas, and chemical industry scenarios,": "oil_chemical",
+    "In the power facility scene,": "power",
+    "In the power scenario,": "power",
+    "In the tunnel scene,": "tunnel",
+    "In the tunnel scenario,": "tunnel",
+}
+
+
 class ManifestTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -121,11 +151,41 @@ class ManifestTests(unittest.TestCase):
                 self.assertIsNone(row["domain_mismatch"])
 
     def test_all_documented_openings(self):
-        for domain, openings in TEXT_OPENINGS.items():
-            for opening in openings:
-                with self.subTest(opening=opening):
-                    self.assertEqual(infer_text_domain(opening + " synthetic details."), domain)
-                    self.assertIsNone(infer_text_domain("Uncertain. " + opening))
+        for opening, domain in AUDITED_OPENINGS.items():
+            with self.subTest(opening=opening):
+                self.assertEqual(infer_text_domain(opening + " synthetic details."), domain)
+                self.assertIsNone(infer_text_domain("Uncertain. " + opening))
+
+    def test_vocabulary_contains_exactly_24_audited_openings(self):
+        actual = {opening: domain for domain, openings in TEXT_OPENINGS.items() for opening in openings}
+        self.assertEqual(sum(len(openings) for openings in TEXT_OPENINGS.values()), 24)
+        self.assertEqual(len(actual), 24)
+        self.assertEqual(actual, AUDITED_OPENINGS)
+
+    def test_retired_sintering_opening_is_unknown(self):
+        text = "In the sintering equipment area scene, a synthetic object stands here."
+        self.assertIsNone(infer_text_domain(text))
+        self.sample(point="metallurgy-Level04-Wheeled-000001", text=text)
+        row = self.collect().rows[0]
+        self.assertIsNone(row["text_domain"])
+        self.assertIsNone(row["domain_mismatch"])
+
+    def test_later_keywords_cannot_override_opening_domain(self):
+        for opening, domain in AUDITED_OPENINGS.items():
+            with self.subTest(opening=opening):
+                text = opening + " a coal conveyor, metallurgical plant, oil, gas, power and tunnel appear."
+                self.assertEqual(infer_text_domain(text), domain)
+
+    def test_opening_matching_does_not_normalize_or_fuzzy_match(self):
+        for text in (
+            " in the metallurgical plant scene, synthetic details.",
+            "In the metallurgical plant scene; synthetic details.",
+            "In the metallurgical  plant scene, synthetic details.",
+            "In the coal conveying bridge scenarios, synthetic details.",
+            "In the oil, gas, and chemical industry settingX, synthetic details.",
+        ):
+            with self.subTest(text=text):
+                self.assertIsNone(infer_text_domain(text))
 
     def test_domain_mismatch_does_not_choose_ground_truth(self):
         self.sample(text="In the oil, gas, and chemical plant scene, a utility tunnel exists.")

@@ -568,7 +568,7 @@ Toàn bộ 789 mẫu được phân loại chính xác vào 12 nhóm mệnh đ�
 
 ### 15.3. Từ vựng hoàn chỉnh trên toàn bộ 5,013 mẫu (Complete Text-Domain Opening Vocabulary)
 
-Khi kết hợp 12 mệnh đề mở đầu đã có trong builder (bao phủ 4,224 mẫu) với 12 mệnh đề mở đầu mới được xác minh qua audit (bao phủ 789 mẫu), toàn bộ dataset InspecSafe-V1 có **đúng 24 mệnh đề mở đầu duy nhất thực tế**, giải thích toàn diện và trọn vẹn $4,224 + 789 = 5,013$ mẫu (100.0% coverage):
+Khi kết hợp 12 mệnh đề cũ có xuất hiện thực tế trong dataset (bao phủ 4,224 mẫu) với 12 mệnh đề mở đầu mới được xác minh qua audit (bao phủ 789 mẫu), toàn bộ dataset InspecSafe-V1 có **đúng 24 mệnh đề mở đầu duy nhất thực tế**, giải thích toàn diện và trọn vẹn $4,224 + 789 = 5,013$ mẫu (100.0% coverage):
 
 | Domain | Mệnh đề mở đầu (Opening clause) | Số mẫu thực tế (Count) | Tình trạng xác minh |
 |---|---|---:|---|

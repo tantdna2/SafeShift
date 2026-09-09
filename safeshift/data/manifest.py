@@ -1,4 +1,4 @@
-"""InspecSafe-V1 manifest, restricted to notes/dataset_schema.md (sections 1–11).
+"""InspecSafe-V1 manifest, restricted to notes/dataset_schema.md (sections 1–11, 15).
 
 Only one annotation JSON is decoded at a time; imageData is immediately dropped.
 No image pixels, polygon coordinates, or embedded image data enter the manifest.
@@ -38,20 +38,31 @@ POINT_PATTERN = re.compile(
     r"(?P<robot_platform>[a-zA-Z0-9_]+)-(?P<point_id>[0-9]{6})"
 )
 
-# Exact opening clauses attested in schema sections 6, 7 and 11. Deliberately
+# All 24 actual opening clauses attested in schema section 15.3. Deliberately
 # case-sensitive: new wording, whitespace or punctuation is unknown, not guessed.
 TEXT_OPENINGS = {
     "coal_conveyor": (
         "In the coal conveyor bridge scene,",
         "In the coal conveyor bridge scenario,",
         "In the coal conveying trestle scenario,",
+        "In the coal conveying bridge scenario,",
+        "In the coal conveying trestle scene,",
+        "In the coal transportation trestle scenario,",
+        "In the coal transportation bridge scene,",
+        "In the coal transportation bridge scenario,",
+        "In the coal conveyor belt bridge scene,",
+        "In the coal conveying bridge scene,",
+        "In the coal conveyor gallery scene,",
     ),
-    "metallurgy": ("In the sintering equipment area scene,", "In the metallurgical scene,"),
+    "metallurgy": ("In the metallurgical plant scene,", "In the metallurgical scene,"),
     "oil_chemical": (
         "In the oil, gas, and chemical plant scene,",
         "In the oil and gas chemical environment,",
         "In the oil and gas chemical scene,",
         "In the oil and gas chemical scenario,",
+        "In the oil, gas, and chemical industry scenario,",
+        "In the oil, gas, and chemical industry setting,",
+        "In the oil, gas, and chemical industry scenarios,",
     ),
     "power": ("In the power facility scene,", "In the power scenario,"),
     "tunnel": ("In the tunnel scene,", "In the tunnel scenario,"),
