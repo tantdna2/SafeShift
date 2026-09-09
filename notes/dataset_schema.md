@@ -265,12 +265,12 @@ Cụm từ chỉ cấp độ an toàn trong tệp TXT không được chuẩn h�
 - **Train Normal:** `metallurgy-Level04-SuspendedRail-000646-001`
   - TXT: *"In the sintering equipment area scene, the pipeline, valve, and stent are all securely in place, no abnormalities observed."*
   - Shapes (10): `Valve` (x2), `Pipeline` (x4), `Stent` (x4).
-- **Train Anomaly (Level 1):** `metallurgy-Level01-SuspendedRail-002658-001`
-  - TXT: *"In the oil and gas chemical environment, there is an open flame. therefore, the safety level is grade one."* *(Lưu ý: mismatch tên miền)*
+- **Train Anomaly (Level 3 - Mẫu dị thường luyện kim thực sự duy nhất):** `metallurgy-Level03-SuspendedRail-002666-001`
+  - TXT: *"In the metallurgical scene, there is water accumulation on the ground. The safety level is grade three."*
+  - Shapes (10): `Sight Hole Cover`, `Person`, `Bellows`, `Pipeline` (x3), `Liquid`, `Bottle`, `Safety Helmet`, `Mobile Phone`.
+- **Train Anomaly (Level 1 - Ví dụ trong 8 mẫu mismatch sang oil_chemical):** `metallurgy-Level01-SuspendedRail-002658-001`
+  - TXT: *"In the oil and gas chemical environment, there is an open flame. Therefore, the safety level is Grade One."* *(Lưu ý: mismatch tên miền; 8 trong số 9 mẫu anomaly gán nhãn metallurgy thực chất mô tả môi trường dầu khí hóa chất)*
   - Shapes (6): `Open Flame`, `Stairs`, `Stent` (x4).
-- **Train Anomaly (Level 1):** `metallurgy-Level01-SuspendedRail-002662-001`
-  - TXT: *"In the sintering equipment area scenario, there is smoke and an open flame. Therefore, the safety level is grade one."*
-  - Shapes (7): `Open Flame`, `Smoke`, `Stairs`, `Stent` (x4).
 - **Test Normal:** `metallurgy-Level04-SuspendedRail-000030-001`
   - TXT: *"In the sintering equipment area scene, the pipeline, stent, and stairs are all securely in place, no abnormalities observed."*
   - Shapes (8): `Stairs`, `Pipeline` (x3), `Stent` (x4).
@@ -385,7 +385,9 @@ Khi xây dựng manifest chuẩn cho SafeShift (ví dụ dạng JSON Lines hoặ
 
 Trước khi viết bất kỳ code parser nào, các giả định sau cần được ghi nhận rõ ràng:
 1. **Đường dẫn lồng:** Do việc giải nén archive tạo ra thư mục lồng `data/raw/InspecSafe-V1/{split}/DATA_PATH/{split}/...`, parser phải duyệt từ `DATA_PATH/{split}/Annotations` thay vì giả định ngay dưới `{split}/Annotations`.
-2. **Quy tắc bộ ba (Triplet):** Mỗi sample luôn có đầy đủ 3 tệp cùng stem (`.jpg`, `.json`, `.txt`). Không cần xử lý trường hợp thiếu tệp lẻ trong thư mục `Annotations`.
+2. **Quy tắc bộ ba (Triplet) và yêu cầu kiểm tra tính toàn vẹn:**
+   - *Hiện trạng dữ liệu thực tế:* Kiểm kê xác nhận 100% mẫu (5,013 / 5,013) hiện có đầy đủ bộ ba tệp (`.jpg`, `.json`, `.txt`) với stem tên trùng khớp.
+   - *Yêu cầu bắt buộc đối với Parser:* Parser **không được chủ quan giả định mọi sample luôn đầy đủ mà bỏ qua việc kiểm tra tệp thiếu**. Parser phải được thiết kế theo nguyên tắc lập trình phòng thủ (defensive programming): bắt buộc kiểm tra sự tồn tại và tính hợp lệ của cả 3 tệp (`.jpg`, `.json`, `.txt`) cho từng mẫu; nếu phát hiện mẫu thiếu tệp hoặc stem không khớp, parser phải ghi log cảnh báo rõ ràng (log error) hoặc báo lỗi có kiểm soát (fail-fast), tuyệt đối không âm thầm bỏ qua lỗi.
 3. **Thư viện đọc ảnh:** Parser **không được giả định toàn bộ `.jpg` là JPEG thuần túy**, vì có 44 tệp thực chất là định dạng PNG. Phải dùng thư viện tự nhận diện magic bytes (như PIL / OpenCV) hoặc xử lý ngoại lệ khi dùng các bộ giải mã JPEG chuyên dụng.
 4. **Trích xuất nhãn an toàn:** Nhãn an toàn chuẩn xác nhất nên lấy từ token `LevelXX` trên tên thư mục điểm (hoặc nhị phân từ `Normal_data`/`Anomaly_data`), **không nên parse regex từ tệp TXT** do các biến thể ngữ nghĩa phức tạp ("grade one", "Grade 1", "classified as Level One", v.v.).
 5. **Dung lượng tệp JSON:** Không nên cache toàn bộ nội dung tệp JSON vào bộ nhớ nếu chỉ cần metadata, vì trường `imageData` chứa chuỗi Base64 rất nặng (~1.3MB/file, tổng cộng hơn 6.5GB nếu load hết 5,013 file). Parser chỉ nên bóc tách `shapes`, `imageWidth`, `imageHeight` và bỏ qua `imageData`.
@@ -400,10 +402,49 @@ Qua khảo sát toàn diện, các bất thường sau đã được ghi nhận:
    - 39 tệp ở tập `train` (đều trong `Anomaly_data`).
    - 5 tệp ở tập `test` (đều trong `Anomaly_data`).
    - Các tệp này có header chuẩn PNG (`89 50 4E 47`) nhưng lại mang đuôi `.jpg`.
-2. **14 mẫu có xung đột miền (Domain Mismatch) giữa tên thư mục và nội dung TXT:**
-   - Thư mục `power-Level04-SuspendedRail-000901` (2 mẫu) và `001700` (2 mẫu): Tên thư mục là `power`, nhưng nội dung TXT bắt đầu bằng *"In the coal conveyor bridge scene..."*.
-   - Thư mục `tunnel-Level04-Wheeled-002232-001` và `002233-002`: Tên thư mục là `tunnel`, nhưng nội dung TXT bắt đầu bằng *"In the oil, gas, and chemical plant scene..."*.
-   - Thư mục `metallurgy-Level01-SuspendedRail-002658-001` đến `002661-001` (4 mẫu): Tên thư mục là `metallurgy`, nhưng nội dung TXT bắt đầu bằng *"In the oil and gas chemical environment..."*.
+2. **36 mẫu có xung đột miền (Domain Mismatch) giữa tên thư mục và nội dung TXT:**
+   - *Giải thích nguyên nhân số liệu:* Khảo sát sơ bộ ban đầu ghi nhận 14 mẫu do bộ lọc từ khóa đơn giản vô tình bỏ qua các mẫu chứa từ khóa phức tạp (như từ "tunnel" xuất hiện trong phần mô tả thiết bị "utility tunnel" của cảnh dầu khí). Khi chạy đối chiếu có hệ thống trên 100% mẫu (5,013 tệp) dựa trên câu mở đầu xác định ngữ cảnh của từng tệp TXT, **xác nhận chính xác 36 mẫu (thuộc 22 điểm tuần tra) có tên miền ở thư mục khác hoàn toàn với tên miền được khẳng định trong câu mở đầu TXT**.
+   - **Ma trận đối chiếu giữa Folder Domain và Text Domain trên toàn bộ 5,013 mẫu:**
+
+| Thư mục điểm (Folder Domain) \ Khẳng định trong TXT | coal_conveyor | metallurgy | oil_chemical | power | tunnel | Tổng theo thư mục |
+|---|---|---|---|---|---|---|
+| **coal_conveyor** | **1,121** | 0 | 0 | 0 | 0 | 1,121 |
+| **metallurgy** | 0 | **712** | **8** | 0 | 0 | 720 |
+| **oil_chemical** | 0 | 0 | **1,023** | 0 | 0 | 1,023 |
+| **power** | **4** | 0 | 0 | **865** | 0 | 869 |
+| **tunnel** | 0 | 0 | **24** | 0 | **1,256** | 1,280 |
+| **Tổng theo câu mở đầu TXT** | 1,125 | 712 | 1,055 | 865 | 1,256 | **5,013** |
+
+   - **Danh sách chi tiết đầy đủ 36 mẫu xung đột (phân theo 3 nhóm):**
+     1. **Nhóm `power` (thư mục) $\rightarrow$ `coal_conveyor` (TXT):** 4 mẫu thuộc 2 điểm tuần tra (Train `Normal_data`).
+        - `power-Level04-SuspendedRail-000901-001.txt` & `-002.txt` (TXT: *"In the coal conveyor bridge scene..."*)
+        - `power-Level04-SuspendedRail-001700-001.txt` & `-002.txt` (TXT: *"In the coal conveyor bridge scene..."*)
+     2. **Nhóm `metallurgy` (thư mục) $\rightarrow$ `oil_chemical` (TXT):** 8 mẫu thuộc 8 điểm tuần tra (Train `Anomaly_data`).
+        - `metallurgy-Level01-SuspendedRail-002658-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - `metallurgy-Level01-SuspendedRail-002659-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - `metallurgy-Level01-SuspendedRail-002660-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - `metallurgy-Level01-SuspendedRail-002661-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - `metallurgy-Level01-SuspendedRail-002662-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - `metallurgy-Level01-SuspendedRail-002663-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - `metallurgy-Level01-SuspendedRail-002664-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - `metallurgy-Level01-SuspendedRail-002665-001.txt` (TXT: *"In the oil and gas chemical environment..."*)
+        - *Phát hiện nghiên cứu hệ quả:* Toàn bộ tập Train `Anomaly_data` của domain `metallurgy` chỉ có đúng 9 mẫu; 8 mẫu trên thực chất là cảnh dầu khí hóa chất. Cả dataset InspecSafe-V1 chỉ có duy nhất **1 mẫu dị thường luyện kim thực sự** (`metallurgy-Level03-SuspendedRail-002666-001`).
+     3. **Nhóm `tunnel` (thư mục) $\rightarrow$ `oil_chemical` (TXT):** 24 mẫu thuộc 12 điểm tuần tra (mỗi điểm gồm 2 mẫu `-001` và `-002`, TXT đều mở đầu bằng *"In the oil, gas, and chemical plant scene..."*).
+        - Tập Train `Normal_data` (20 mẫu / 10 điểm):
+          - `tunnel-Level04-Wheeled-002224` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002225` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002226` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002227` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002228` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002229` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002230` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002231` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002232` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-002233` (`-001`, `-002`)
+        - Tập Test `Normal_data` (4 mẫu / 2 điểm):
+          - `tunnel-Level04-Wheeled-000558` (`-001`, `-002`)
+          - `tunnel-Level04-Wheeled-000559` (`-001`, `-002`)
+     - Tổng cộng chính xác: $4 + 8 + 24 = 36$ mẫu. 4,977 mẫu còn lại khớp hoàn toàn giữa tên thư mục và khẳng định miền trong TXT.
 3. **Sự mất cân bằng nghiêm trọng và thiếu hụt dữ liệu dị thường ở domain `metallurgy`:**
    - Trong tập `test`: Domain `metallurgy` có 90 mẫu `Normal_data`, nhưng có **0 mẫu `Anomaly_data`**!
    - Trong tập `train`: Domain `metallurgy` có 271 mẫu `Normal_data`, nhưng chỉ có **9 mẫu `Anomaly_data`** (trong đó có tới 4 mẫu nội dung TXT lại nói về dầu khí).
@@ -453,9 +494,23 @@ Sau khi khảo sát toàn bộ 37,434 đa giác gán nhãn trong 5,013 tệp JSO
 2. **Chiến lược phân chia Cross-Domain Generalization:**
    - Ngành `metallurgy` ở tập test có 0 mẫu dị thường và chỉ có 9 mẫu dị thường ở train. Có nên loại `metallurgy` khỏi vai trò target test domain trong bài toán phát hiện bất thường hay không?
    - Cần chốt rõ các cặp source/target domain (ví dụ train trên 3-4 domain, evaluate zero-shot trên domain còn lại) để tránh sai lệch dữ liệu.
-3. **Xử lý 14 mẫu mâu thuẫn domain:**
+3. **Xử lý 36 mẫu mâu thuẫn domain:**
    - Nên tin cậy nhãn domain từ tên thư mục (hệ thống tuần tra robot thực tế ghi nhận) hay từ câu mô tả cảnh trong tệp TXT? Cần ghi nhận thành quy tắc trong manifest.
 4. **Phương pháp đánh giá Grounding cho vi phạm thiếu bảo hộ (Negative PPE):**
    - Khi mô hình VLM giải thích *"không đội mũ bảo hiểm"*, bounding box mô hình đưa ra cần khớp với vùng đầu của công nhân hay chấp nhận khớp với toàn bộ cơ thể `Person`?
 5. **Khai thác dữ liệu đa phương thức (`Other_modalities`):**
    - Do `Other_modalities` hoàn toàn không có mẫu dị thường nào, dataset hiện tại ở dạng multimodal chỉ phục vụ bài toán unsupervised / one-class anomaly detection (học phân bố bình thường từ video/cảm biến rồi phát hiện ngoại lai). Đối với bài toán đánh giá an toàn qua VLM (Zero-shot / Few-shot Safety Assessment), chúng ta chủ yếu khai thác nhánh thị giác khả kiến (`Annotations`) hay có kế hoạch mở rộng sang video/cảm biến không?
+
+---
+
+## 14. Nguồn gốc và phương pháp kiểm chứng số liệu (Provenance of Audit Statistics)
+
+Nhằm đảm bảo tính minh bạch và khả năng tái lập theo quy định tại `AGENTS.md`, toàn bộ số liệu thống kê trong báo cáo này được tạo ra từ quy trình kiểm kê trực tiếp trên dữ liệu gốc như sau:
+
+- **Môi trường thực thi:** Python 3.11.9 (sử dụng hoàn toàn thư viện chuẩn: `pathlib`, `json`, `re`, `struct`, `collections.Counter`, `collections.defaultdict`), hệ điều hành Windows 10/11 x64, thực hiện trong workspace `d:\SafeShift`.
+- **Các script kiểm kê cục bộ:** Được lưu và thực thi tại thư mục scratch cục bộ của tiến trình phân tích (`.gemini/antigravity/brain/<conversation-id>/scratch/`), gồm:
+  1. `scratch/comprehensive_survey.py`: Quét toàn bộ cây thư mục, kiểm đếm 3,234 thư mục waypoint, 5,013 mẫu, phân bố instance trên mỗi waypoint theo split và phân loại nhãn, kiểm chứng 100% regex đặt tên thư mục và tệp.
+  2. `scratch/survey_json.py` & `scratch/check_shape_fields.py`: Phân tích toàn diện 5,013 tệp JSON, kiểm tra 7 trường top-level, quét 37,434 đa giác, 231 nhãn đối tượng, xác minh 100% các trường metadata (`attributes`, `flags`, `description`, `group_id`, `score`, `difficult`, `kie_linking`) rỗng/null, và kiểm tra ranh giới Point ID giữa train và test (overlap = 0).
+  3. `scratch/check_magic_bytes.py` & `scratch/verify_jpegs.py`: Đọc trực tiếp magic bytes nhị phân ở cấp byte (`\xff\xd8\xff` và `\x89PNG\r\n\x1a\n`) của toàn bộ 5,013 ảnh, phát hiện chính xác 4,969 ảnh JPEG và 44 ảnh PNG bị đổi đuôi thành `.jpg`; giải mã kích thước nhị phân từ SOF0/IHDR và đối chiếu khớp 100% với trường `imageWidth`/`imageHeight` trong JSON.
+  4. `scratch/check_txt.py` & `scratch/list_all_mismatches.py`: Đọc 5,013 tệp TXT, kiểm tra định dạng văn bản một dòng tiếng Anh, trích xuất các biến thể từ vựng đánh giá mức độ an toàn; phân loại câu mở đầu xác định ngữ cảnh không gian và lập ma trận đối chiếu 5x5 với tên thư mục điểm, xác nhận chính xác 36 mẫu xung đột miền.
+- **Ghi chú về phạm vi:** Toàn bộ mã nguồn trên là các script kiểm toán cục bộ dùng một lần (ad-hoc audit scripts) phục vụ khảo sát Week 1, không được đưa vào repository chính thức và chưa phải là production dataset parser. Bộ parser hoàn chỉnh với unit tests và schema validation sẽ được xây dựng độc lập trong các task tiếp theo.
