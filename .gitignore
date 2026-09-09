@@ -3,6 +3,9 @@
 !/data/raw/.gitkeep
 /data/processed/**
 !/data/processed/.gitkeep
+# Generated full-text manifest and run provenance remain local; regenerate via CLI.
+/data/manifests/dataset_manifest.csv
+/data/manifests/dataset_manifest.provenance.json
 **/InspecSafe-V1/
 **/inspecsafe-v1/
 /datasets/
