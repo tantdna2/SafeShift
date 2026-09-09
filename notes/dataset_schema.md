@@ -259,12 +259,13 @@ Cụm từ chỉ cấp độ an toàn trong tệp TXT không được chuẩn h�
   - Shapes (16): `Cigarette`, `Stent` (x4), `Pipeline` (x2), `Protective Net` (x2), `Belt` (x2), `Idler Roller` (x2), `Window` (x2), `Person`.
 
 ### 7.2. Domain `metallurgy` (Luyện kim / Thiêu kết)
-- **Train Normal:** `metallurgy-Level04-SuspendedRail-000645-001`
-  - TXT: *"In the sintering equipment area scene, the pipeline, stent, and fire extinguisher are all properly installed and positioned, with no abnormalities observed."*
-  - Shapes (9): `Pipeline`, `Stent` (x5), `Fire Extinguisher` (x3).
-- **Train Normal:** `metallurgy-Level04-SuspendedRail-000646-001`
-  - TXT: *"In the sintering equipment area scene, the pipeline, valve, and stent are all securely in place, no abnormalities observed."*
-  - Shapes (10): `Valve` (x2), `Pipeline` (x4), `Stent` (x4).
+- **Train Normal:** `metallurgy-Level04-SuspendedRail-001178-001`
+  - TXT: *"In the metallurgical plant scene, the exhaust hood is positioned above the sintering furnace body, which is supported by the sintering furnace frame and connected to the ventilation duct, no abnormalities observed."*
+  - Shapes (8): `Exhaust Hood` (x4), `Ventilation Duct`, `Sintering Furnace Frame` (x2), `Sintering Furnace Body`.
+  - *(Đính chính audit: Bản thảo ban đầu từng trích dẫn nhầm ID `000645` và mệnh đề `"In the sintering equipment area scene,"` vốn không tồn tại trong dataset; 100% mẫu Normal metallurgy thực tế đều mở đầu bằng `"In the metallurgical plant scene,"`)*
+- **Train Normal:** `metallurgy-Level04-SuspendedRail-001179-001`
+  - TXT: *"In the metallurgical plant scene, the exhaust hood is positioned above the sintering furnace body, which is securely mounted within the sintering furnace frame, no abnormalities observed."*
+  - Shapes (7): `Exhaust Hood` (x4), `Sintering Furnace Frame` (x2), `Sintering Furnace Body`.
 - **Train Anomaly (Level 3):** `metallurgy-Level03-SuspendedRail-002666-001`
   - TXT: *"In the metallurgical scene, there is water accumulation on the ground. The safety level is grade three."*
   - Shapes (10): `Sight Hole Cover`, `Person`, `Bellows`, `Pipeline` (x3), `Liquid`, `Bottle`, `Safety Helmet`, `Mobile Phone`.
@@ -272,9 +273,9 @@ Cụm từ chỉ cấp độ an toàn trong tệp TXT không được chuẩn h�
 - **Train Anomaly (Level 1 - Ví dụ mẫu có TXT mô tả oil_chemical):** `metallurgy-Level01-SuspendedRail-002658-001`
   - TXT: *"In the oil and gas chemical environment, there is an open flame. Therefore, the safety level is Grade One."* *(Lưu ý: mismatch tên miền giữa folder và TXT)*
   - Shapes (6): `Open Flame`, `Stairs`, `Stent` (x4).
-- **Test Normal:** `metallurgy-Level04-SuspendedRail-000030-001`
-  - TXT: *"In the sintering equipment area scene, the pipeline, stent, and stairs are all securely in place, no abnormalities observed."*
-  - Shapes (8): `Stairs`, `Pipeline` (x3), `Stent` (x4).
+- **Test Normal:** `metallurgy-Level04-SuspendedRail-000206-001`
+  - TXT: *"In the metallurgical plant scene, the exhaust hood is positioned above the sintering furnace body, which is supported by the sintering furnace frame and connected to the ventilation duct, no abnormalities observed."*
+  - Shapes (9): `Exhaust Hood` (x5), `Ventilation Duct` (x2), `Sintering Furnace Frame` (x2), `Sintering Furnace Body`.
 
 ### 7.3. Domain `oil_chemical` (Dầu khí / Hóa chất)
 - **Train Normal:** `oil_chemical-Level04-SuspendedRail-000958-001`
@@ -522,3 +523,89 @@ Nhằm đảm bảo tính minh bạch và khả năng tái lập theo quy địn
   3. `scratch/check_magic_bytes.py` & `scratch/verify_jpegs.py`: Đọc trực tiếp magic bytes nhị phân ở cấp byte (`\xff\xd8\xff` và `\x89PNG\r\n\x1a\n`) của toàn bộ 5,013 ảnh, phát hiện chính xác 4,969 ảnh JPEG và 44 ảnh PNG bị đổi đuôi thành `.jpg`; giải mã kích thước nhị phân từ SOF0/IHDR và đối chiếu khớp 100% với trường `imageWidth`/`imageHeight` trong JSON.
   4. `scratch/check_txt.py` & `scratch/list_all_mismatches.py`: Đọc 5,013 tệp TXT, kiểm tra định dạng văn bản một dòng tiếng Anh, trích xuất các biến thể từ vựng đánh giá mức độ an toàn; phân loại câu mở đầu xác định ngữ cảnh không gian và lập ma trận đối chiếu 5x5 với tên thư mục điểm, xác nhận chính xác 36 mẫu xung đột miền.
 - **Ghi chú về phạm vi:** Toàn bộ mã nguồn trên là các script kiểm toán cục bộ dùng một lần (ad-hoc audit scripts) phục vụ khảo sát Week 1, không được đưa vào repository chính thức và chưa phải là production dataset parser. Bộ parser hoàn chỉnh với unit tests và schema validation sẽ được xây dựng độc lập trong các task tiếp theo.
+
+---
+
+## 15. Complete Text-Domain Opening Vocabulary
+
+Mục này ghi nhận kết quả kiểm toán bổ sung Week 1 cho toàn bộ 5,013 tệp TXT trong InspecSafe-V1 theo yêu cầu của Research Lead, nhằm làm rõ và giải quyết dứt điểm 789 mẫu chưa được nhận diện `text_domain` bởi tập mệnh đề mở đầu ban đầu của Dataset Manifest Builder.
+
+### 15.1. Bối cảnh và phương pháp kiểm toán 789 mẫu chưa nhận diện
+
+- **Hiện trạng trước audit:** Dataset Manifest Builder (`safeshift/data/manifest.py`) áp dụng tập từ vựng mở đầu ban đầu gồm 13 cụm từ được trích dẫn trực tiếp từ các mục 6, 7 và 11. Bộ quy tắc này nhận diện đúng 4,224 mẫu và phát hiện chính xác 36 mẫu xung đột miền (Domain Mismatch). Tuy nhiên, có 789 mẫu bị trả về `text_domain = null` và `domain_mismatch = null`, phân bố theo thư mục như sau:
+  - `metallurgy`: 711 mẫu (toàn bộ là `Normal_data`)
+  - `coal_conveyor`: 69 mẫu (toàn bộ là `Anomaly_data`)
+  - `oil_chemical`: 9 mẫu (toàn bộ là `Anomaly_data`)
+- **Nguyên tắc kiểm toán:**
+  1. Trích xuất chính xác mệnh đề trạng ngữ mở đầu chỉ không gian/ngữ cảnh (đoạn văn bản tính từ đầu câu cho đến dấu phẩy trước phần mô tả đối tượng/nguy cơ).
+  2. Gom nhóm các mệnh đề giống nhau tuyệt đối, kiểm đếm số lượng và ghi nhận `sample_id` đại diện.
+  3. Chỉ đề xuất `text_domain` nếu chính nội dung câu chữ của mệnh đề mở đầu thể hiện domain một cách rõ ràng, không suy diễn từ `folder_domain`, không ép kết quả theo bất kỳ giả định nào trước đó.
+  4. Nếu mệnh đề mở đầu mơ hồ hoặc thiếu từ khóa ngữ cảnh công nghiệp, giữ nguyên `proposed text_domain = null` kèm giải thích.
+
+### 15.2. Bảng kiểm toán 12 nhóm mệnh đề mở đầu mới (tổng đúng 789 mẫu)
+
+Toàn bộ 789 mẫu được phân loại chính xác vào 12 nhóm mệnh đề mở đầu dưới đây. 100% (789/789) mẫu đều chứa từ khóa định danh ngành công nghiệp rõ ràng trong chính câu TXT, không có trường hợp nào mơ hồ:
+
+| Opening clause | Count | Proposed text_domain | Evidence/Reason | Example sample_id |
+|---|---:|---|---|---|
+| `In the metallurgical plant scene,` | 711 | `metallurgy` | Cụm từ "metallurgical plant scene" (khung cảnh nhà máy luyện kim) khẳng định trực tiếp domain luyện kim. Toàn bộ 711 mẫu đều nằm trong thư mục `metallurgy` (`Normal_data`). | `metallurgy-Level04-SuspendedRail-001178-001` |
+| `In the coal conveying bridge scenario,` | 43 | `coal_conveyor` | Cụm từ "coal conveying bridge" (cầu dẫn than / cầu băng chuyền than) khẳng định trực tiếp domain băng tải than. Toàn bộ 43 mẫu đều nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002496-001` |
+| `In the coal conveying trestle scene,` | 18 | `coal_conveyor` | Cụm từ "coal conveying trestle" (giàn cầu cạn vận chuyển than) khẳng định trực tiếp domain băng tải than. Toàn bộ 18 mẫu đều nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002505-001` |
+| `In the oil, gas, and chemical industry scenario,` | 4 | `oil_chemical` | Cụm từ "oil, gas, and chemical industry" (ngành công nghiệp dầu khí hóa chất) khẳng định trực tiếp domain dầu khí hóa chất. Toàn bộ 4 mẫu đều nằm trong thư mục `oil_chemical` (`Anomaly_data`). | `oil_chemical-Level01-Wheeled-002753-001` |
+| `In the coal transportation trestle scenario,` | 3 | `coal_conveyor` | Cụm từ "coal transportation trestle" (giàn cầu cạn vận chuyển than) khẳng định trực tiếp ngữ cảnh vận chuyển than (`coal_conveyor`). Toàn bộ 3 mẫu đều nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002497-001` |
+| `In the oil, gas, and chemical industry setting,` | 3 | `oil_chemical` | Cụm từ "oil, gas, and chemical industry" dạng bối cảnh ("setting") khẳng định trực tiếp domain dầu khí hóa chất. Toàn bộ 3 mẫu đều nằm trong thư mục `oil_chemical` (`Anomaly_data`). | `oil_chemical-Level01-Wheeled-002825-001` |
+| `In the oil, gas, and chemical industry scenarios,` | 2 | `oil_chemical` | Biến thể số nhiều ("scenarios") của "oil, gas, and chemical industry", khẳng định trực tiếp domain dầu khí hóa chất. Toàn bộ 2 mẫu đều nằm trong thư mục `oil_chemical` (`Anomaly_data`). | `oil_chemical-Level01-Wheeled-002834-001` |
+| `In the coal transportation bridge scene,` | 1 | `coal_conveyor` | Cụm từ "coal transportation bridge" (cầu vận chuyển than) khẳng định trực tiếp domain băng tải than. Mẫu nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002489-001` |
+| `In the coal transportation bridge scenario,` | 1 | `coal_conveyor` | Cụm từ "coal transportation bridge scenario" (kịch bản cầu vận chuyển than) khẳng định trực tiếp domain băng tải than. Mẫu nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002543-001` |
+| `In the coal conveyor belt bridge scene,` | 1 | `coal_conveyor` | Cụm từ "coal conveyor belt bridge" (cầu băng chuyền tải than) khẳng định trực tiếp domain băng tải than. Mẫu nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002565-001` |
+| `In the coal conveying bridge scene,` | 1 | `coal_conveyor` | Biến thể "conveying" (thay vì "conveyor") của cầu dẫn than trong `Anomaly_data`. Mẫu nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002244-001` |
+| `In the coal conveyor gallery scene,` | 1 | `coal_conveyor` | Cụm từ "coal conveyor gallery" (hành lang kín băng chuyền than) khẳng định trực tiếp domain băng tải than. Mẫu nằm trong thư mục `coal_conveyor` (`Anomaly_data`). | `coal_conveyor-Level01-SuspendedRail-002263-001` |
+
+**Kiểm tra tính toàn vẹn số liệu:**
+- Tổng số mẫu của 12 nhóm: $711 + 43 + 18 + 4 + 3 + 3 + 2 + 1 + 1 + 1 + 1 + 1 = 789$ mẫu (khớp chính xác 100%).
+- Số mẫu thực sự phải để `null`: **0 mẫu** (do cả 12 mệnh đề đều chỉ rõ ngữ cảnh công nghiệp đặc trưng).
+- Số mẫu xung đột miền (Domain Mismatch) trong 789 mẫu này: **0 mẫu** (100% mẫu có `folder_domain` trùng khớp với `proposed text_domain`).
+
+### 15.3. Từ vựng hoàn chỉnh trên toàn bộ 5,013 mẫu (Complete Text-Domain Opening Vocabulary)
+
+Khi kết hợp 12 mệnh đề mở đầu đã có trong builder (bao phủ 4,224 mẫu) với 12 mệnh đề mở đầu mới được xác minh qua audit (bao phủ 789 mẫu), toàn bộ dataset InspecSafe-V1 có **đúng 24 mệnh đề mở đầu duy nhất thực tế**, giải thích toàn diện và trọn vẹn $4,224 + 789 = 5,013$ mẫu (100.0% coverage):
+
+| Domain | Mệnh đề mở đầu (Opening clause) | Số mẫu thực tế (Count) | Tình trạng xác minh |
+|---|---|---:|---|
+| **coal_conveyor** (11 openings, tổng 1,125 mẫu) | `In the coal conveyor bridge scene,` | 890 | Attested trong builder |
+| | `In the coal conveying trestle scenario,` | 96 | Attested trong builder |
+| | `In the coal conveyor bridge scenario,` | 70 | Attested trong builder |
+| | `In the coal conveying bridge scenario,` | 43 | Audit bổ sung (789) |
+| | `In the coal conveying trestle scene,` | 18 | Audit bổ sung (789) |
+| | `In the coal transportation trestle scenario,` | 3 | Audit bổ sung (789) |
+| | `In the coal transportation bridge scene,` | 1 | Audit bổ sung (789) |
+| | `In the coal transportation bridge scenario,` | 1 | Audit bổ sung (789) |
+| | `In the coal conveyor belt bridge scene,` | 1 | Audit bổ sung (789) |
+| | `In the coal conveying bridge scene,` | 1 | Audit bổ sung (789) |
+| | `In the coal conveyor gallery scene,` | 1 | Audit bổ sung (789) |
+| **metallurgy** (2 openings, tổng 712 mẫu) | `In the metallurgical plant scene,` | 711 | Audit bổ sung (789) |
+| | `In the metallurgical scene,` | 1 | Attested trong builder |
+| | *(Lưu ý: `In the sintering equipment area scene,` có count = 0)* | 0 | Đính chính lỗi trích dẫn giả định |
+| **oil_chemical** (7 openings, tổng 1,055 mẫu) | `In the oil, gas, and chemical plant scene,` | 686 | Attested trong builder |
+| | `In the oil and gas chemical scenario,` | 202 | Attested trong builder |
+| | `In the oil and gas chemical scene,` | 150 | Attested trong builder |
+| | `In the oil and gas chemical environment,` | 8 | Attested trong builder |
+| | `In the oil, gas, and chemical industry scenario,` | 4 | Audit bổ sung (789) |
+| | `In the oil, gas, and chemical industry setting,` | 3 | Audit bổ sung (789) |
+| | `In the oil, gas, and chemical industry scenarios,` | 2 | Audit bổ sung (789) |
+| **power** (2 openings, tổng 865 mẫu) | `In the power facility scene,` | 763 | Attested trong builder |
+| | `In the power scenario,` | 102 | Attested trong builder |
+| **tunnel** (2 openings, tổng 1,256 mẫu) | `In the tunnel scene,` | 990 | Attested trong builder |
+| | `In the tunnel scenario,` | 266 | Attested trong builder |
+| **Tổng cộng toàn bộ dataset** | **24 unique openings thực tế** | **5,013** | **Coverage: 100.0%** |
+
+### 15.4. Đánh giá Discrepancy so với ma trận Mục 11
+
+- **Về ma trận 5x5 giữa `folder_domain` và `text_domain`:** Ma trận đối chiếu tổng thể giữa tên thư mục và nội dung khẳng định trong TXT sau khi bổ sung 12 opening mới **hoàn toàn trùng khớp từng ô với ma trận tại Mục 11**:
+  - Không có bất kỳ ô nào bị thay đổi giá trị.
+  - Tổng số mẫu Domain Mismatch vẫn giữ nguyên tuyệt đối là **36 mẫu** (gồm 8 mẫu `metallurgy` $\rightarrow$ `oil_chemical`, 4 mẫu `power` $\rightarrow$ `coal_conveyor`, 24 mẫu `tunnel` $\rightarrow$ `oil_chemical`).
+  - Ma trận tại Mục 11 do script audit Bước 1 trước đây tính toán là hoàn toàn chính xác về mặt số liệu tổng quát; điểm thiếu sót trước đây chỉ là **chưa liệt kê đầy đủ danh mục từ vựng các biến thể mở đầu vào tài liệu schema**, dẫn đến việc builder áp dụng tập whitelist thu hẹp và tạm thời để 789 mẫu ở trạng thái `null`.
+- **Về lỗi trích dẫn mệnh đề mở đầu domain `metallurgy`:**
+  - Mục 7.2 trước đây trích dẫn mệnh đề `"In the sintering equipment area scene,"` trên các sample ID `metallurgy-Level04-SuspendedRail-000645` và `...-000030`. Qua kiểm tra trực tiếp toàn bộ 5,013 tệp dữ liệu thật, không có tệp nào chứa chuỗi ký tự này (count = 0), đồng thời các ID `000645` và `000030` thuộc về domain `coal_conveyor`.
+  - Trên thực tế, 100% mẫu Normal data của `metallurgy` (711 mẫu) đều dùng mệnh đề mở đầu `"In the metallurgical plant scene,"`. Mục 7.2 đã được đính chính lại bằng các mẫu thật (`metallurgy-Level04-SuspendedRail-001178-001` và `...-000206-001`).
+
