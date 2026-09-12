@@ -455,8 +455,9 @@ Qua khảo sát toàn diện, các bất thường sau đã được ghi nhận:
           - `tunnel-Level04-Wheeled-000559` (`-001`, `-002`)
      - Tổng cộng chính xác: $4 + 8 + 24 = 36$ mẫu. 4,977 mẫu còn lại khớp hoàn toàn giữa tên thư mục và khẳng định miền trong TXT.
 3. **Sự mất cân bằng nghiêm trọng và thiếu hụt dữ liệu dị thường ở domain `metallurgy`:**
-   - Trong tập `test`: Domain `metallurgy` có 90 mẫu `Normal_data`, nhưng có **0 mẫu `Anomaly_data`**!
-   - Trong tập `train`: Domain `metallurgy` có 271 mẫu `Normal_data`, nhưng chỉ có **9 mẫu `Anomaly_data`** (trong 9 anomaly samples có folder domain metallurgy, 8 mẫu có TXT mô tả oil_chemical; chỉ 1 mẫu có folder domain và TXT cùng xác nhận metallurgy).
+   - Trong tập `test`: Domain `metallurgy` có 177 mẫu `Normal_data`, nhưng có **0 mẫu `Anomaly_data`**!
+   - Trong tập `train`: Domain `metallurgy` có 534 mẫu `Normal_data`, nhưng chỉ có **9 mẫu `Anomaly_data`** (trong 9 anomaly samples có folder domain metallurgy, 8 mẫu có TXT mô tả oil_chemical; chỉ 1 mẫu có folder domain và TXT cùng xác nhận metallurgy).
+   - Đây là distribution quan sát trên bản InspecSafe-V1 đã audit, không phải official semantic rule. Các số Normal_data được đính chính theo full validation 5,013 samples trong `notes/dataset_validation.md`; tổng folder domain `metallurgy` là **534 + 177 + 9 + 0 = 720 mẫu**.
    - Điều này tạo ra rủi ro nghiêm trọng nếu dùng `metallurgy` làm tập test cross-domain cho bài toán phát hiện dị thường / thẩm định an toàn.
 4. **Mất cân bằng cực đoan giữa các cấp độ an toàn (Extreme Class Imbalance):**
    - `Level04` (Bình thường): 4,013 mẫu (**80.05%**).

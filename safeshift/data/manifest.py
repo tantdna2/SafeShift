@@ -166,25 +166,27 @@ def _annotation(path: Path) -> tuple[dict[str, Any], str]:
             "object_labels": labels, "num_shapes": len(shapes)}, digest
 
 
+def image_format_from_header(header: bytes) -> str:
+    """Identify the two audited formats independently of filename extension."""
+    if header.startswith(b"\xff\xd8\xff"):
+        return "JPEG"
+    if header[:8] == b"\x89PNG\r\n\x1a\n":
+        return "PNG"
+    raise ManifestError("unrecognized image magic bytes (expected JPEG or PNG)")
+
+
 def _image(path: Path) -> tuple[str, str]:
     with path.open("rb") as stream:
         header = stream.read(8)
-        if header.startswith(b"\xff\xd8\xff"):
-            image_format = "JPEG"
-        elif header == b"\x89PNG\r\n\x1a\n":
-            image_format = "PNG"
-        else:
-            raise ManifestError("unrecognized image magic bytes (expected JPEG or PNG)")
+        image_format = image_format_from_header(header)
         digest = hashlib.sha256(header)
         while chunk := stream.read(1024 * 1024):
             digest.update(chunk)
     return image_format, digest.hexdigest()
 
 
-def parse_sample(
-    point_dir: Path, stem: str, *, split: str, data_type: str, repo_root: Path,
-) -> tuple[dict[str, Any], list[tuple[str, str]]]:
-    """Validate one triplet and return a row plus relative file SHA-256 records."""
+def sample_metadata(point_dir: Path, stem: str, *, split: str, data_type: str) -> dict[str, str]:
+    """Validate the audited naming convention, shared by inventory and quality checks."""
     match = POINT_PATTERN.fullmatch(point_dir.name)
     if not match:
         raise ManifestError("malformed folder name")
@@ -199,6 +201,14 @@ def parse_sample(
         raise ManifestError("invalid split or data_type")
     if not re.fullmatch(re.escape(point_dir.name) + r"-[0-9]{3}", stem):
         raise ManifestError("sample stem does not match folder name and instance pattern")
+    return metadata
+
+
+def parse_sample(
+    point_dir: Path, stem: str, *, split: str, data_type: str, repo_root: Path,
+) -> tuple[dict[str, Any], list[tuple[str, str]]]:
+    """Validate one triplet and return a row plus relative file SHA-256 records."""
+    metadata = sample_metadata(point_dir, stem, split=split, data_type=data_type)
     paths = {ext: point_dir / f"{stem}.{ext}" for ext in ("jpg", "json", "txt")}
     missing = [ext for ext, path in paths.items() if not path.is_file()]
     if missing:
@@ -232,23 +242,12 @@ def parse_sample(
                  (("jpg", image_digest), ("json", json_digest), ("txt", text_digest))]
 
 
-def collect_manifest(dataset_root: Path, repo_root: Path) -> BuildResult:
-    """Inventory the union of all file stems, including orphan annotations.
+def iter_sample_candidates(dataset_root: Path, repo_root: Path, structural):
+    """Yield (point directory, stem, split, type), reporting layout issues to a callback.
 
-    Collect every error. Callers must refuse to publish rows when errors exist.
-    Structural errors count unexpected entries, empty points or missing branches;
-    incomplete_malformed counts failed candidate stems, once per candidate.
+    Inventory the union of file stems, including orphan annotations. Directory
+    enumeration failures propagate: callers cannot claim a complete audit then.
     """
-    repo_root = repo_root.resolve()
-    dataset_root = repository_path(dataset_root, repo_root)
-    result = BuildResult()
-    fingerprint = hashlib.sha256()
-    seen: set[str] = set()
-
-    def structural(path: Path, reason: str) -> None:
-        result.errors.append(f"{path.relative_to(repo_root).as_posix()}: {reason}")
-        result.structural_errors += 1
-
     for split in SPLITS:
         annotations = dataset_root / split / "DATA_PATH" / split / "Annotations"
         repository_path(annotations, repo_root)
@@ -276,27 +275,43 @@ def collect_manifest(dataset_root: Path, repo_root: Path) -> BuildResult:
                 if not stems:
                     structural(point_dir, "empty point directory")
                 for stem in stems:
-                    result.discovered_samples += 1
-                    try:
-                        row, records = parse_sample(
-                            point_dir, stem, split=split, data_type=data_type, repo_root=repo_root,
-                        )
-                        if stem in seen:
-                            raise ManifestError("duplicate sample_id")
-                        seen.add(stem)
-                    except (ManifestError, OSError, UnicodeError) as exc:
-                        reason = exc.strerror if isinstance(exc, OSError) else str(exc)
-                        if isinstance(exc, UnicodeError):
-                            reason = "TXT is not valid UTF-8"
-                        result.errors.append(
-                            f"{point_dir.relative_to(repo_root).as_posix()}/{stem}: {reason}"
-                        )
-                        result.incomplete_malformed += 1
-                        continue
-                    result.rows.append(row)
-                    for record in records:
-                        fingerprint.update(json.dumps(record, ensure_ascii=True).encode("ascii") + b"\n")
-                    fingerprint.update(json.dumps([stem, row["has_other_modalities"]]).encode("ascii") + b"\n")
+                    yield point_dir, stem, split, data_type
+
+
+def collect_manifest(dataset_root: Path, repo_root: Path) -> BuildResult:
+    """Collect every candidate error; refuse publication when any errors exist."""
+    repo_root = repo_root.resolve()
+    dataset_root = repository_path(dataset_root, repo_root)
+    result = BuildResult()
+    fingerprint = hashlib.sha256()
+    seen: set[str] = set()
+
+    def structural(path: Path, reason: str) -> None:
+        result.errors.append(f"{path.relative_to(repo_root).as_posix()}: {reason}")
+        result.structural_errors += 1
+
+    for point_dir, stem, split, data_type in iter_sample_candidates(dataset_root, repo_root, structural):
+        result.discovered_samples += 1
+        try:
+            row, records = parse_sample(
+                point_dir, stem, split=split, data_type=data_type, repo_root=repo_root,
+            )
+            if stem in seen:
+                raise ManifestError("duplicate sample_id")
+            seen.add(stem)
+        except (ManifestError, OSError, UnicodeError) as exc:
+            reason = exc.strerror if isinstance(exc, OSError) else str(exc)
+            if isinstance(exc, UnicodeError):
+                reason = "TXT is not valid UTF-8"
+            result.errors.append(
+                f"{point_dir.relative_to(repo_root).as_posix()}/{stem}: {reason}"
+            )
+            result.incomplete_malformed += 1
+            continue
+        result.rows.append(row)
+        for record in records:
+            fingerprint.update(json.dumps(record, ensure_ascii=True).encode("ascii") + b"\n")
+        fingerprint.update(json.dumps([stem, row["has_other_modalities"]]).encode("ascii") + b"\n")
     if result.discovered_samples == 0:
         structural(dataset_root, "no sample candidates found")
     result.input_sha256 = fingerprint.hexdigest()
