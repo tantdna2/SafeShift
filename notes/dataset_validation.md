@@ -225,11 +225,15 @@ chỉ áp dụng cho tập checks này, không chứng nhận mọi câu trong t
    Base64 decode strict hợp lệ; external image đều verify/decode thành công.
    Chỉ kết luận byte mismatch, chưa kiểm tra decoded embedded pixels để kết luận
    cùng/khác nội dung hoặc nguồn nào chuẩn. Chuyển review annotation/image pairing.
-4. **Sai số có sẵn trong narrative schema §11.3:** đếm từ sample metadata trong
+4. **RESOLVED — Sai số có sẵn trong narrative schema §11.3:** đếm từ sample metadata trong
    report cho `folder_domain=metallurgy` cho thấy train Normal = **534**, test
-   Normal = **177** (tổng Normal 711), khác con số **271/90** được ghi tại §11.3.
-   Train Anomaly = 9, test Anomaly = 0 vẫn khớp. Đây là discrepancy tài liệu,
-   không sửa label/domain hoặc `notes/dataset_schema.md` trong task này.
+   Normal = **177** (tổng Normal 711), khác con số **271/90** từng được ghi tại §11.3.
+   Train Anomaly = 9, test Anomaly = 0 vẫn khớp. Khi phát hiện, discrepancy tài liệu
+   này được ghi nhận và schema chưa được sửa. Nay `notes/dataset_schema.md` §11.3
+   đã được đính chính theo full validation 5.013 samples nêu trên, giữ nguyên lịch sử
+   phát hiện. Tổng folder domain metallurgy: **534 + 177 + 9 + 0 = 720**. Đây là
+   distribution quan sát trên bản đã audit; rủi ro anomaly evaluation vẫn còn vì
+   test có 0 anomaly và train chỉ có 9 anomaly. Không thay đổi label/domain/split.
 
 Các bước review trên chỉ đọc fields cần thiết từng JSON; không xuất raw text,
 embedded data hoặc tên nguồn dài vào artifact được commit. Không chạy image
