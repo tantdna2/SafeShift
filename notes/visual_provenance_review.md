@@ -36,7 +36,7 @@ Nghiên cứu tuân thủ nguyên tắc toàn vẹn dữ liệu: **chỉ đọc 
 
 ## 2. Thẩm định chi tiết 7 cặp trùng lặp tuyệt đối xuyên Split (Cross-Split Exact Pairs)
 
-Tại Bước 4 (Audit Trùng lặp & Rò rỉ), phân tích SHA-256 đã phát hiện chính xác **7 cặp ảnh trùng lặp tuyệt đối xuyên split (cross-split exact pairs)** giữa `train` và `test` (thuộc 5 nhóm trùng lặp byte-exact / pixel-exact). Cả 7 cặp đều có kích thước ảnh và mã băm SHA-256 hoàn toàn đồng nhất 100% (`IDENTICAL_VISIBLE_CONTENT`).
+Tại Bước 4 (Audit Trùng lặp & Rò rỉ), phân tích SHA-256 đã phát hiện chính xác **7 cặp ảnh trùng lặp tuyệt đối xuyên split (cross-split exact pairs)** giữa `train` và `test` (thuộc 7 exact groups spanning train/test, với largest group size = 2). Cả 7 cặp đều có kích thước ảnh và mã băm SHA-256 hoàn toàn đồng nhất 100% (`IDENTICAL_VISIBLE_CONTENT`).
 
 ### 2.1 Bảng đối chiếu tổng hợp 7 cặp Exact
 
@@ -99,14 +99,19 @@ Phân tích mã nguồn và dấu vết tệp cho thấy rõ cơ chế sinh ra c
 Tại Bước 4, dựa trên quy tắc biểu thức chính quy (regex) `(?P<family>.+)_frame_(?P<counter>[0-9]+)\.(?:jpg|jpeg|png)` quét trên trường `imagePath` của tệp JSON, kiểm toán đã ghi nhận **12 nhóm nguồn (source families)** có mặt xuyên qua cả hai tập `train` và `test`.
 
 Khảo sát trực quan và thống kê toàn bộ 5.013 mẫu của InspecSafe-V1 xác nhận các sự thật then chốt sau:
-1. **Phạm vi tồn tại:** Cả 12 họ nguồn này bao trùm **toàn bộ 1.000 mẫu dữ liệu Anomaly (`Anomaly_data`)** của toàn bộ tập dữ liệu (749 mẫu trong `train` và 251 mẫu trong `test`). Tuyệt đối không có bất kỳ mẫu dữ liệu bình thường (`Normal_data`) nào thuộc 12 nhóm này.
-2. **Không phải là 12 video đơn lẻ:** Một "family" (ví dụ: `nonmask`, `head`, `others`) không phải là một tệp video duy nhất. Đó là **thư mục gom nhóm theo chủng loại nguy cơ (hazard category pools)** do tác giả upstream tập hợp từ nhiều nguồn quay khác nhau.
-3. **Quy luật cắt phân chia có hệ thống (Systematic 25/75 Split Boundary):** Trong tất cả 12 họ nguồn, số thứ tự khung hình (`frame counter`) luôn bắt đầu từ `000001` đến `0000N`. Trong đó:
-   - Tập `test` **luôn luôn** nhận các khung hình từ `000001` đến `0000K` (với $K \approx 0.25 \times N$).
-   - Tập `train` **luôn luôn** nhận các khung hình tiếp theo từ `0000(K+1)` đến `0000N`.
-   - **Tỉ lệ trùng lặp chỉ số khung hình giữa train và test bằng 0%**: Tác giả đã thực hiện cắt liên tục theo thứ tự số học (sequential cut) trên danh sách tệp của từng loại nguy cơ.
+1. **Phạm vi tồn tại:** Cả 12 họ nguồn này bao trùm **toàn bộ 1.000 mẫu dữ liệu Anomaly (`Anomaly_data`)** của toàn bộ tập dữ liệu (749 mẫu trong `train` và 251 mẫu trong `test`). Tất cả 12 family đều có thành viên ở cả `train` và `test`. Tuyệt đối không có bất kỳ mẫu dữ liệu bình thường (`Normal_data`) nào thuộc 12 nhóm này.
+2. **Không đồng nhất họ nguồn với một video duy nhất:** Các family như `phone`, `fire`, `nonmask`, `hand`, v.v. là các **thư mục gom nhóm theo chủng loại nguy cơ / nguồn thu thập (hazard-category / source pools)** do tác giả upstream tập hợp từ nhiều nguồn quay, bối cảnh và trạm khác nhau, chứ không phải mỗi family là một video duy nhất.
+3. **Quy luật phân chia có hệ thống theo chỉ số (Systematic Index-Based Split):** Trong tất cả 12 họ nguồn, số thứ tự khung hình (`frame counter`) luôn bắt đầu từ `000001` đến `0000N`. Trong đó:
+   - Tập `test` **luôn luôn** nhận các khung hình có prefix chỉ số thấp từ `000001` đến `0000K` (với $K \approx 0.25 \times N$).
+   - Tập `train` **luôn luôn** nhận các khung hình có chỉ số phần sau từ `0000(K+1)` đến `0000N`.
+   - **Ý nghĩa phương pháp luận:** Pattern phân bố chỉ số frame counter ~25/75 này chứng minh một **phân chia có hệ thống theo chỉ số thứ tự nội bộ của từng họ upstream (systematic index-based split within each upstream family)**. Tuy nhiên, điều này **KHÔNG tự động chứng minh toàn bộ family là một temporal video sequence duy nhất**.
 
 ### 3.2 Bảng tổng hợp chi tiết 12 họ nguồn Anomaly
+
+> **Định nghĩa phân loại bằng chứng chuỗi (`Sequence Evidence`) trong bảng:**
+> - **`STRONG_SHARED_SEQUENCE_EVIDENCE`**: Họ nguồn chứa các ví dụ được xác nhận trực quan là chia sẻ chuỗi video hoặc chuỗi chụp xuyên split (**Family contains visually confirmed cross-split shared-sequence examples**), chứ **KHÔNG** có nghĩa mọi thành viên trong family đều thuộc cùng một video duy nhất. Bằng chứng này được thiết lập dựa trên các cặp mẫu được chọn để thẩm định trực quan (targeted sampled pairs); mức độ bao phủ (visual inspection coverage) tập trung vào các mẫu ranh giới split và các cặp near-duplicate nghi vấn, không suy rộng ra toàn bộ các thành viên khác chưa thẩm định của họ.
+> - **`PLAUSIBLE_SHARED_SOURCE`**: Có bằng chứng tương đồng bối cảnh/nguồn có khả năng cao giữa các mẫu train và test được kiểm tra, nhưng chưa đủ các cặp liên tiếp chặt chẽ theo từng giây để khẳng định chuỗi thời gian liên tục.
+> - **`NO_SHARED_SOURCE_EVIDENCE`**: Trong số các mẫu được khảo sát trực quan của họ này (ví dụ các họ có số lượng mẫu rất nhỏ như `fall`, `dooropen`), không phát hiện bằng chứng chia sẻ chuỗi hoặc góc máy giữa train và test.
 
 | Tên họ (`Family`) | Tổng số mẫu | Số mẫu Test | Dải frame Test | Số mẫu Train | Dải frame Train | Tỉ lệ Test (%) | Miền Test | Miền Train | Phân loại bằng chứng chuỗi (`Sequence Evidence`) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :--- | :--- |
@@ -170,15 +175,15 @@ Toàn bộ 50 cặp ứng viên đã được kiểm tra trực quan độc lậ
 | `SAME_CAMERA_OR_VIEWPOINT` | `NO_VISIBLE_HAZARD` | **21** | **Normal_data ↔ Normal_data**: Robot tuần tra quay lại đúng điểm dừng vật lý cố định (waypoint) vào các ngày khác nhau (ví dụ: ngày 14/11/2025 và 15/11/2025). |
 | `SAME_SCENE_NEARBY_FRAME` | `SAME_HAZARD` | **22** | **Anomaly_data ↔ Anomaly_data**: Khung hình trích xuất từ cùng một video sự cố liên tục bị cắt chia sang hai bên split. |
 | `SAME_CAMERA_OR_VIEWPOINT` | `DIFFERENT_HAZARD` | **7** | **Anomaly_data ↔ Anomaly_data**: Cùng góc máy/bối cảnh sự cố nhưng mô tả và gán nhãn nguy cơ khác nhau do bối cảnh đa nguy cơ hoặc định vị nhãn lệch. |
-| `DISTINCT_SCENE_COINCIDENTAL_NEAR_MATCH` | Bất kỳ | **0** | **Không có bất kỳ trường hợp nào trùng hợp ngẫu nhiên!** |
+| `DISTINCT_SCENE_COINCIDENTAL_NEAR_MATCH` | Bất kỳ | **0** | Trong 50 cặp được chọn để review, không có cặp nào được phân loại DISTINCT_SCENE_COINCIDENTAL_NEAR_MATCH. |
 | **Tổng cộng** | | **50** | |
 
-#### Phân bố theo loại dữ liệu và miền công nghiệp:
-- **Tập con `Normal_data` (21 cặp):** 100% thuộc quan hệ `SAME_CAMERA_OR_VIEWPOINT`.
+#### Phân bố theo loại dữ liệu và miền công nghiệp trong tập mẫu 50 cặp:
+- **Tập con `Normal_data` (21 cặp):** 21/21 Normal_data pairs trong reviewed subset thuộc quan hệ `SAME_CAMERA_OR_VIEWPOINT`.
   - Phân bố miền: `tunnel` (11 cặp), `coal_conveyor` (10 cặp).
-  - Bản chất: Robot tuần tra tự hành chạy theo lịch trình định kỳ. Cùng một tủ điện, cùng một đoạn ray hoặc cùng một ngách cứu hỏa được robot chụp tại cùng một góc máy và tọa độ chính xác qua các ca trực tuần tra khác nhau. Khi chia split ngẫu nhiên hoặc theo phiên tuần tra, các bức ảnh chụp cùng một thiết bị tĩnh ở trạng thái bình thường đã bị rải rác sang cả `train` và `test`.
+  - Bản chất quan sát được trong tập con này: Robot tuần tra tự hành chạy theo lịch trình định kỳ. Cùng một tủ điện, cùng một đoạn ray hoặc cùng một ngách cứu hỏa được robot chụp tại cùng một góc máy và tọa độ chính xác qua các ca trực tuần tra khác nhau. Trong các cặp được rà soát, các bức ảnh chụp cùng một thiết bị tĩnh ở trạng thái bình thường đã xuất hiện ở cả `train` và `test`. Cần lưu ý đây là kết luận trực tiếp trên 21 cặp được thẩm định trực quan, không suy diễn cho toàn bộ 826 cặp ứng viên.
 - **Tập con `Anomaly_data` (29 cặp):**
-  - Gồm 22 cặp `SAME_SCENE_NEARBY_FRAME` (cùng chuỗi video, dải frame cách nhau vài giây).
+  - Gồm 22 cặp `SAME_SCENE_NEARBY_FRAME` (cùng chuỗi video/sự cố, dải frame cách nhau vài giây trong các mẫu được kiểm tra).
   - Gồm 7 cặp `SAME_CAMERA_OR_VIEWPOINT` (cùng vị trí máy quay quan sát công nhân vi phạm, nhưng nhãn mô tả găng tay vs điện thoại vs mũ bảo hộ).
   - Phân bố miền: `tunnel` (21 cặp), `power` (6 cặp), `oil_chemical` (2 cặp).
 
@@ -249,22 +254,26 @@ Dưới đây là bảng dữ liệu chi tiết của toàn bộ 50 cặp ứng 
 
 ### 5.2 Đánh giá chính thức
 
-> ### Kết luận: **STRONG EVIDENCE (BẰNG CHỨNG VỮNG CHẮC VÀ TOÀN DIỆN)**
+> ### Kết luận: **STRONG EVIDENCE (BẰNG CHỨNG VỮNG CHẮC)**
+> 
+> **Official split chứa confirmed exact image reuse và nhiều visually confirmed shared-sequence/shared-viewpoint cases xuyên train/test.**
+> 
+> *(Lưu ý phương pháp luận: Kết luận này được xác lập trên các bằng chứng đã được kiểm chứng trực quan từ tập mẫu audit; không suy diễn rằng toàn bộ anomaly dataset chắc chắn bị leakage video).*
 
-Kết luận này được xác lập dựa trên 4 trụ cột bằng chứng vật lý và dữ liệu không thể bác bỏ:
+Kết luận này được xác lập dựa trên 4 trụ cột bằng chứng vật lý và dữ liệu đã được kiểm chứng:
 
-1. **Bằng chứng Byte & Pixel Exact:** Phát hiện 7 cặp ảnh xuyên split hoàn toàn giống nhau từng byte và từng điểm ảnh sau giải mã. Các cặp này phát sinh do hiện tượng nhân bản ảnh đa nguy cơ sang nhiều danh mục nguy cơ upstream rồi phân chia theo chỉ số thứ tự độc lập.
-2. **Bằng chứng Chuỗi Video liên tục (Video Slicing Leakage):** Toàn bộ 1.000 mẫu Anomaly bị chi phối bởi 12 họ nguồn nguy cơ, trong đó tác giả đã thực hiện thao tác cắt danh sách khung hình theo trật tự thời gian (khoảng 25% đầu cho Test và 75% sau cho Train). Các trường hợp như họ `nonmobile` (xe đạp trong hầm), `cigarette` (công nhân hút thuốc cách nhau 1 giây), `fire` (đám cháy cách nhau 1 giây) chứng minh trực tiếp rằng các khung hình liên tiếp từ cùng một đoạn video giám sát đã bị xé lẻ và đưa sang hai bên của split.
-3. **Bằng chứng Trùng lặp Điểm dừng Robot (Waypoint Viewpoint Repetition):** 100% các mẫu tương đồng cao trong tập dữ liệu `Normal_data` phản ánh cùng một góc máy và tọa độ dừng vật lý của robot quan sát cùng một thiết bị tĩnh qua các ngày tuần tra khác nhau.
-4. **Xung đột Nhãn nghiêm trọng (Direct Label Contradictions):** Cùng một hình ảnh nhưng tập Train học là Cấp 1 (không đội mũ bảo hộ) trong khi tập Test đánh giá là Cấp 2 (không đeo găng tay); cùng một ảnh Train xếp vào luyện kim (`metallurgy`), Test lại xếp vào hóa dầu (`oil_chemical`).
+1. **Bằng chứng Byte & Pixel Exact:** Xác nhận 7 cặp ảnh xuyên split (thuộc 7 exact groups spanning train/test, largest group size = 2) hoàn toàn giống nhau từng byte và từng điểm ảnh sau giải mã. Các cặp này phát sinh do hiện tượng nhân bản ảnh đa nguy cơ sang nhiều danh mục nguy cơ upstream rồi phân chia theo chỉ số thứ tự độc lập.
+2. **Bằng chứng Phân vùng Chỉ số có Hệ thống và Chuỗi Chia sẻ (Systematic Index Partitioning & Shared Sequences):** 12 họ nguồn bao phủ đúng 1.000 mẫu `Anomaly_data` (749 train / 251 test) đều có quy luật phân chia chỉ số theo trật tự (~25% prefix chỉ số thấp cho Test và ~75% chỉ số sau cho Train). Thẩm định trực quan trên các mẫu đại diện xác nhận nhiều trường hợp trích xuất từ cùng chuỗi video/sự cố liên tục bị phân chia sang hai bên split (tiêu biểu như họ `nonmobile` với 100 khung hình cùng một video xe đạp trong hầm, hoặc các cặp cách nhau 1 giây trong `cigarette`, `fire`). Tuy nhiên, do các family đóng vai trò là các hazard-category pools có thể chứa nhiều cảnh/video khác nhau, hiện tượng này chứng minh "phân chia theo chỉ số có hệ thống trong từng family", chứ không đồng nhất toàn bộ 1.000 mẫu Anomaly thành một chuỗi video duy nhất.
+3. **Bằng chứng Trùng lặp Điểm dừng Robot (Waypoint Viewpoint Repetition):** 21/21 cặp `Normal_data` trong tập 50 cặp được thẩm định trực quan phản ánh cùng một góc máy và tọa độ dừng vật lý của robot quan sát cùng một thiết bị tĩnh qua các ngày tuần tra khác nhau; không suy diễn tuyệt đối cho toàn bộ 826 cặp ứng viên.
+4. **Xung đột Nhãn trực tiếp (Direct Label Contradictions):** Cùng một hình ảnh nhưng tập Train gán nhãn là Cấp 1 (không đội mũ bảo hộ) trong khi tập Test đánh giá là Cấp 2 (không đeo găng tay); cùng một ảnh Train xếp vào luyện kim (`metallurgy`), Test lại xếp vào hóa dầu (`oil_chemical`).
 
 ### 5.3 Tác động phương pháp luận đối với SafeShift
 
 1. **Nguy cơ ước lượng sai lệch hiệu năng VLM (Overestimation Bias):**
-   - Nếu sử dụng nguyên bản phân chia `train`/`test` chính thức của InspecSafe-V1 để tinh chỉnh (fine-tuning) hoặc đánh giá các mô hình thị giác-ngôn ngữ (VLM), mô hình có thể dễ dàng đạt điểm số giả tạo nhờ ghi nhớ (memorization) cảnh nền, thiết bị cố định tại điểm tuần tra hoặc nhận diện các khung hình liền kề của cùng một sự cố.
-   - Benchmark hiện tại không phản ánh năng lực khái quát hóa thực sự đối với các mối nguy hiểm mới hoặc các trạm tuần tra chưa từng gặp (unseen environments).
+   - Nếu đánh giá mô hình thị giác-ngôn ngữ (VLM) thuần túy trên `official split` mà không kiểm soát hiện tượng lặp ảnh và chia sẻ chuỗi/góc máy, mô hình có thể hưởng lợi từ việc ghi nhớ (memorization) cảnh nền, thiết bị cố định tại điểm tuần tra hoặc các khung hình tương tự từ cùng sự cố.
+   - Điều này đặt ra câu hỏi mở về mức độ phản ánh năng lực khái quát hóa thực sự đối với các môi trường chưa từng quan sát (unseen environments).
 
 2. **Khuyến nghị chiến lược cho Giai đoạn Week 2 (Research Lead):**
-   - **Tái thiết kế giao thức đánh giá (Benchmark Re-protocolization):** Không thể giữ nguyên `official split` làm thước đo chính cho SafeShift. Cần thiết lập phân chia dựa trên nhóm độc lập (Group Split) theo trạm vật lý, theo chuỗi video (video-level) hoặc theo miền công nghiệp (Cross-Domain Zero-Shot Split).
-   - **Xử lý tập dữ liệu:** Xây dựng danh mục loại trừ (exclusion list) hoặc lọc sạch các cặp trùng lặp exact và near-duplicates liền kề trước khi tiến hành huấn luyện để tránh ô nhiễm dữ liệu (data contamination).
-   - **Lưu trữ toàn vẹn:** Tiếp tục bảo tồn nguyên vẹn thư mục dữ liệu gốc `data/raw/InspecSafe-V1/` theo đúng nguyên tắc nghiên cứu; mọi phân chia mới hoặc tập dữ liệu tinh chỉnh sẽ được tạo ra dưới dạng manifest dẫn xuất trong `data/processed/` với mã nguồn và kiểm toán minh bạch.
+   - **Giao thức đánh giá (Evaluation Protocol):** W2 cần đánh giá official split song song với một leakage-controlled hoặc group-aware protocol, rồi quyết định protocol chính thức trong `DECISIONS.md`. Không tự tạo split mới ở task này.
+   - **Xử lý tập dữ liệu:** Đề xuất và thảo luận danh mục loại trừ (exclusion list) cho các cặp exact duplicates có nhãn mâu thuẫn hoặc các nhóm chia sẻ góc máy/chuỗi liền kề, ghi nhận vào `DECISIONS.md` trước khi áp dụng.
+   - **Lưu trữ toàn vẹn:** Tiếp tục bảo tồn nguyên vẹn thư mục dữ liệu gốc `data/raw/InspecSafe-V1/` theo đúng nguyên tắc nghiên cứu; mọi phân chia mới hoặc tập dữ liệu tinh chỉnh nếu được thông qua sẽ được tạo ra dưới dạng manifest dẫn xuất trong `data/processed/` với mã nguồn và kiểm toán minh bạch.
