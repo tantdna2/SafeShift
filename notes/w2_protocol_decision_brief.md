@@ -293,17 +293,19 @@ Dưới đây là phân tích khoa học toàn diện đối với 4 phương á
 ```
 
 ### 5.1 Protocol 1 (P1): Frozen VLM + Official Test Only
-- **Scientific Question:** *Các mô hình VLM nền tảng thể hiện năng lực đánh giá an toàn công nghiệp và bám bằng chứng đối tượng như thế nào khi suy luận trực tiếp trên tập kiểm tra chính thức do tác giả công bố?*
-- **Appropriate Terminology:** `Frozen Zero-Shot Evaluation on Official Benchmark Test Split` (hoặc `Official Benchmark Replication`). Tuyệt đối không gọi là Domain Generalization.
+- **Scientific Question:** *Các mô hình VLM nền tảng thể hiện năng lực dự đoán cấp an toàn và mô tả ngữ nghĩa như thế nào khi tái lập thực nghiệm trên tập kiểm tra chính thức 1.250 mẫu do tác giả InspecSafe công bố; và năng lực bám bằng chứng đối tượng hỗ trợ (SafeShift Grounding Extension) trên tập kiểm thử này đạt mức độ nào?*
+- **Appropriate Terminology:** `Frozen Zero-Shot Evaluation on Official Benchmark Test Split` (phân định rõ: `Official Baseline Replication` cho bài toán phân loại cấp an toàn & tương đồng ngữ nghĩa; kết hợp `SafeShift Grounding Extension` cho bài toán bám vùng đối tượng hỗ trợ trên evaluation pool chính thức). Tuyệt đối không gọi là Domain Generalization.
 - **Required Training:** **KHÔNG**. Toàn bộ mô hình được giữ nguyên trọng số (Frozen weights), suy luận thuần túy qua prompting.
 - **Use of Official Split:** Sử dụng nguyên trạng tập `test` chính thức gồm đúng **1.250 mẫu** (999 Normal, 251 Anomaly). Bỏ qua tập `train` 3.763 mẫu trong khâu kiểm chuẩn này.
 - **Leakage Sensitivity:** **RẤT THẤP đối với rò rỉ phát sinh từ quy trình huấn luyện của SafeShift (SafeShift-induced train→test leakage)** vì SafeShift không huấn luyện mô hình trên tập train của benchmark. Tuy nhiên, **sự phụ thuộc giữa các mẫu kiểm thử (evaluation sample dependence) và rủi ro ô nhiễm dữ liệu tiền huấn luyện (pretraining contamination) vẫn là các vấn đề mở**. Lưu ý: 7 cặp exact cross-split tự chúng là bằng chứng về việc tái sử dụng ảnh giữa train/test của benchmark, **không phải bằng chứng chứng minh mô hình đã bị ô nhiễm tiền huấn luyện**.
 - **Platform Confounding Sensitivity:** **CAO**. Kết quả quan sát trên từng miền phản ánh đồng thời cả miền công nghiệp lẫn loại robot tuần tra của miền đó.
 - **Metallurgy Feasibility:** **KHÔNG KHẢ THI cho phát hiện bất thường** (`NOT_CURRENTLY_FEASIBLE FOR ANOMALY EVALUATION`). Tập test chính thức của metallurgy có **0 mẫu Anomaly** (177/177 mẫu là Normal). Do đó, chỉ có thể đo Specificity / False Positive Rate, hoàn toàn không tính được Recall hay F1 cho lớp Anomaly của miền này.
-- **Ability to Compare with InspecSafe Official Results:** **HIGHEST / DIRECTEST COMPARABILITY (Khả năng so sánh trực tiếp cao nhất)**, với điều kiện bắt buộc là phải tái lập chính xác: (1) câu prompt yêu cầu, (2) quy trình tiền xử lý ảnh, (3) phiên bản mô hình cụ thể, (4) cấu hình giải mã (temperature, top_p, seed), và (5) mốc snapshot API nếu dùng dịch vụ thương mại. Cần lưu ý rằng hiện tượng trôi dạt phiên bản API (API model drift) có thể khiến kết quả số học không trùng khớp tuyệt đối.
+- **Ability to Compare with InspecSafe Official Results:**  
+  - *Đối với nhiệm vụ phân loại cấp an toàn (Safety Accuracy) và mô tả giải thích ngữ nghĩa (BGE-M3 Semantic Similarity):* **HIGHEST / DIRECTEST COMPARABILITY (Khả năng so sánh trực tiếp cao nhất)**, với điều kiện bắt buộc là phải tái lập chính xác: (1) câu prompt yêu cầu, (2) quy trình tiền xử lý ảnh, (3) phiên bản mô hình cụ thể, (4) cấu hình giải mã (temperature, top_p, seed), và (5) mốc snapshot API nếu dùng dịch vụ thương mại. Cần lưu ý rằng hiện tượng trôi dạt phiên bản API (API model drift) có thể khiến kết quả số học không trùng khớp tuyệt đối.  
+  - *Đối với nhiệm vụ định vị vùng đối tượng (Grounding):* **KHÔNG CÓ BASELINE ĐỐI CHỨNG TỪ BÀI BÁO GỐC**. Bài báo InspecSafe chính thức không công bố bất kỳ giao thức hay kết quả đánh giá grounding nào. Mọi đánh giá bám vùng đối tượng hỗ trợ (object-support / weak-proxy grounding) trên 1.250 mẫu test này thuần túy là **SafeShift grounding extension on the official-test evaluation pool**, không phải là kết quả replicate từ upstream paper.
 - **Reproducibility:** **RẤT CAO**. 1.250 mẫu cố định theo bản phát hành upstream.
 - **Compute / API Cost:** **THẤP NHẤT**. Chỉ chạy suy luận cho 1.250 mẫu.
-- **Suitability for Seminar:** **RẤT CAO (Vai trò: Baseline Replication Protocol)**. Giúp đạt được mục tiêu tái lập kết quả cơ sở nhanh chóng, an toàn và có đối chứng thượng nguồn rõ ràng tại W3.
+- **Suitability for Seminar:** **RẤT CAO (Vai trò: Baseline Replication Protocol cho phân loại/ngữ nghĩa + SafeShift Grounding Extension)**. Giúp đạt được mục tiêu tái lập kết quả cơ sở nhanh chóng, an toàn và có đối chứng thượng nguồn rõ ràng tại W3 cho các nhiệm vụ chính thức, đồng thời tạo cơ sở cho mở rộng grounding của SafeShift.
 - **Suitability for Thesis:** **THẤP nếu đứng độc lập**. Một luận văn chuyên sâu không thể chỉ dừng lại ở việc chạy inference trên tập test có sẵn bị khiếm khuyết mà không có đóng góp phương pháp luận.
 - **Main Scientific Weakness:** Không giải quyết được hiện tượng Test Metallurgy có 0 mẫu Anomaly; không đánh giá được toàn diện 5 miền công nghiệp một cách công bằng; bỏ qua 75% dữ liệu quan sát được.
 
@@ -465,8 +467,8 @@ Kiểm toán xác nhận chính xác **36 mẫu có sự xung đột trực ti�
 ### Mối quan hệ ràng buộc giữa Quyết định Protocol (D1) và Quyết định Nhãn miền (D3):
 - **Ở bước W2.1 này, chúng ta CHƯA tự ý quyết định D3 (chưa chốt cách xử lý 36 mẫu; quyết định D3 được chuyển giao cho bước W2.2).**
 - Tuy nhiên, sự lựa chọn giao thức (D1) sẽ quy định trực tiếp mức độ nhạy cảm đối với D3:
-  - **Trên P1 (Official Test Only):** Có 18 mẫu bị xung đột (12 mẫu folder `tunnel` nhưng text ghi `oil_chemical`; 6 mẫu khác).
-  - **Trên P2 (Full Dataset):** Toàn bộ 36 mẫu xung đột sẽ tham gia vào đánh giá, đặc biệt là 8 mẫu Anomaly của `metallurgy` mang text claim `oil_chemical`.
+  - **Trên P1 (Official Test Only):** Chỉ có chính xác **4 mẫu** bị xung đột tên miền (`tunnel-Level04-Wheeled-000558-001`, `tunnel-Level04-Wheeled-000558-002`, `tunnel-Level04-Wheeled-000559-001`, `tunnel-Level04-Wheeled-000559-002`, đều mang `folder_domain: tunnel` nhưng `text_domain: oil_chemical`). 32 mẫu xung đột còn lại nằm trong tập `train`.
+  - **Trên P2 (Full Dataset):** Toàn bộ **36 mẫu** xung đột (Train: 32 mẫu, Test: 4 mẫu) sẽ tham gia vào đánh giá, đặc biệt là 8 mẫu Anomaly của `metallurgy` mang text claim `oil_chemical`.
   - **Trên P3 (Group-aware Subset):** 36 mẫu này có thể được xử lý riêng biệt trong thiết kế nhóm.
 - **Hệ quả phương pháp luận:** Bất kể protocol nào được lựa chọn, báo cáo thực nghiệm bắt buộc phải công bố rõ phân nhóm theo `folder_domain` hay `text_domain`, và tiến hành phân tích độ nhạy (sensitivity analysis) đối với 36 mẫu này.
 
@@ -580,7 +582,7 @@ Các giả thuyết được thiết kế lại dưới dạng giả thuyết th
 Tuân thủ tính thận trọng học thuật, **ở bước W2.1 này SafeShift KHÔNG chốt cứng các công thức kiểm định thống kê** (như ANOVA trên 5 giá trị Macro-F1 hay Spearman trên các mẫu số cực nhỏ). Việc lựa chọn kiểm định chính thức phụ thuộc vào: đơn vị phân tích (unit of analysis), chính sách gom nhóm mẫu, mức độ tương quan chuỗi và định nghĩa metric cuối cùng.
 
 Các phương pháp phân tích thống kê ứng viên được đưa vào danh mục xem xét cho W2.2/W2.4:
-1. **Cluster-aware Bootstrap:** Lấy mẫu lại có hoàn lại theo cụm điểm tuần tra (`point_id`) hoặc họ nguồn để ước lượng khoảng tin cậy 95% (95% CI) cho các chỉ số tổng hợp mà không bị thiên lệch bởi tương quan chuỗi.
+1. **Cluster-aware Bootstrap (Phương án ứng viên):** Lấy mẫu lại có hoàn lại theo cụm điểm tuần tra (`point_id`) hoặc họ nguồn như một phương án ứng viên nhằm **giảm nguy cơ khoảng tin cậy quá lạc quan (overconfident / anti-conservative confidence intervals)** phát sinh do các quan sát có tương quan chuỗi, **với điều kiện bước W2.2 xác lập được định nghĩa cụm có cơ sở phương pháp luận**. Cần lưu ý rằng do SafeShift không có video ID thực chứng và 12 họ nguồn chỉ là heuristic, phương pháp này không cam kết loại bỏ hoàn toàn thiên lệch thống kê.
 2. **Stratified Bootstrap:** Lấy mẫu phân tầng theo miền và cấp an toàn để kiểm soát độ lệch mẫu số giữa các lớp.
 3. **Permutation Tests (Kiểm định hoán vị):** Đánh giá ý nghĩa thống kê của khoảng cách hiệu năng giữa các miền mà không đòi hỏi giả định về phân bố chuẩn của dữ liệu.
 
