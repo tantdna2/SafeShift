@@ -9,6 +9,7 @@
 /data/manifests/dataset_validation*.json
 # Detailed duplicate pairs and upstream provenance stay local.
 /data/manifests/duplicate_leakage_audit*.json
+/data/manifests/distribution_imbalance_audit*.json
 **/InspecSafe-V1/
 **/inspecsafe-v1/
 /datasets/
