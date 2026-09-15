@@ -1,7 +1,7 @@
 # SafeShift Research Feasibility Audit
 
 **Đánh giá khả năng nghiên cứu Cross-Domain Generalization và Evidence Grounding trên InspecSafe-V1**  
-*Dự án SafeShift — Tuần 1 (Dataset Audit), Bước 8*  
+*Dự án SafeShift — Tuần 1 (Dataset Audit), Bước 8 (Hiệu đính phương pháp luận)*  
 *Ngày audit: 15/09/2026*  
 *Trạng thái: Hoàn thành kiểm định khả thi (Research Feasibility Verified)*  
 
@@ -35,15 +35,15 @@ Báo cáo khả thi này kế thừa trực tiếp các kết quả kiểm đị
    - 100% kích thước ảnh nhị phân khớp metadata `imageWidth`/`imageHeight` trong JSON; 309 đa giác có tọa độ vượt nhẹ biên ảnh (được giữ nguyên).
    - Xác nhận 36 mẫu có sự xung đột giữa tên thư mục (`folder_domain`) và câu mở đầu mô tả ngữ nghĩa (`text_domain`).
 3. **Trùng lặp và Rò rỉ phân tách ([duplicate_leakage_audit.md](duplicate_leakage_audit.md)):**  
-   - Phát hiện **53 cặp trùng lặp pixel tuyệt đối** (`CONFIRMED_PIXEL_EXACT`), trong đó có **7 cặp trùng lặp xuyên split (`cross-split exact pairs`)**.
-   - Phát hiện **833 cặp ứng viên dHash $\le 8$ xuyên split** (gồm 7 cặp exact và 826 cặp near candidates).
-   - Nhận diện **12 họ nguồn ảnh suy luận (`source families`)** bao trùm toàn bộ 1.000 mẫu `Anomaly_data`.
+   - Xác nhận **53 cặp trùng lặp pixel tuyệt đối** (`CONFIRMED_PIXEL_EXACT`), trong đó có **7 cặp trùng lặp xuyên split (`cross-split exact pairs`)** đại diện cho việc tái sử dụng ảnh tuyệt đối đã được kiểm chứng chéo.
+   - Sàng lọc **833 cặp dHash $\le 8$ xuyên split**, bóc tách rõ gồm: **7 cặp exact** và **826 cặp ứng viên chưa kiểm chứng (nonexact candidates)**; không đánh đồng toàn bộ 833 cặp này là near duplicates đã xác nhận.
+   - Nhận diện **12 nhóm nguồn ảnh suy luận (`source-family pools`)** bao trùm toàn bộ 1.000 mẫu `Anomaly_data`.
 4. **Kiểm tra nguồn gốc thị giác ([visual_provenance_review.md](visual_provenance_review.md)):**  
    - 7 cặp exact bộc lộ xung đột gán nhãn trực tiếp: Cấp 1 vs Cấp 2, miền luyện kim vs miền hóa chất, không đeo găng vs hút thuốc.
-   - Cả 12 source families đều bị phân chia cứng theo chỉ số thứ tự (`~25% test` với index đầu, `~75% train` với index sau), dẫn đến rò rỉ chuỗi video liên tục (temporal sequence leakage) và dùng chung góc máy camera robot xuyên split.
+   - Toàn bộ 12 source-family pools bộc lộ quy luật phân chia có hệ thống theo chỉ số thứ tự nội bộ (`~25% test` nhận counter thấp, `~75% train` nhận counter cao). Khảo sát trực quan có phương pháp (targeted visual review ở Bước 5) đã xác nhận bằng chứng chia sẻ chuỗi video (shared-sequence) hoặc dùng chung góc máy camera robot (shared-viewpoint) ở nhiều trường hợp lấy mẫu; **tuy nhiên, tư cách thành viên trong một source-family pool tự thân nó không chứng minh rằng mọi thành viên trong họ đều thuộc cùng một chuỗi thời gian video duy nhất**, và không thể suy rộng rằng toàn bộ 1.000 mẫu Anomaly đều là rò rỉ chuỗi video liên tục.
 5. **Phân bố và Mất cân bằng ([distribution_imbalance_audit.md](distribution_imbalance_audit.md)):**  
    - Tỷ lệ mất cân bằng an toàn cực đoan: Level04 (4.013 mẫu) so với Level03 (15 mẫu) đạt tỷ số **267,5:1**.
-   - Miền `metallurgy` có 720 mẫu nhưng chỉ có 9 mẫu Anomaly ở train và **0 mẫu Anomaly ở test**; 8/9 mẫu Anomaly này có text mô tả `oil_chemical`.
+   - Miền `metallurgy` có 720 mẫu nhưng chỉ có 9 mẫu Anomaly ở train và **0 mẫu Anomaly ở test**; 8/9 mẫu Anomaly này mang khẳng định ngữ cảnh văn bản là `oil_chemical` (`8/9 carry an oil_chemical textual domain claim`).
    - Có **231 chuỗi nhãn đối tượng thô duy nhất** trên 37.434 đa giác (207 ở train, 166 ở test; 65 nhãn chỉ có ở train, 24 nhãn chỉ có ở test).
 6. **Nguồn gốc và Pháp lý ([source_license_audit.md](source_license_audit.md)):**  
    - Dataset phát hành dưới giấy phép **CC-BY-4.0** (hợp lệ cho nghiên cứu học thuật của SafeShift).
@@ -53,7 +53,7 @@ Báo cáo khả thi này kế thừa trực tiếp các kết quả kiểm đị
 
 ## 3. Domain Metadata Inventory (Kiểm kê siêu dữ liệu miền và nguồn)
 
-Để đánh giá khả năng thiết lập bài toán cross-domain, toàn bộ các trường dữ liệu có liên quan đến ngữ cảnh miền, nguồn thu thập và thiết bị được lập bảng và phân loại theo mức độ tin cậy:
+Toàn bộ các trường dữ liệu có liên quan đến ngữ cảnh miền, nguồn thu thập và thiết bị được lập bảng và phân loại theo độ tin cậy:
 
 | Tên trường (Metadata Field) | Nguồn trích xuất (Source) | Định nghĩa & Ý nghĩa | Độ phủ (Coverage) | Độ tin cậy (Reliability) | Xung đột đã biết (Known Conflicts) | Được dùng làm Domain Ground Truth? | Phân loại (Classification) |
 |---|---|---|---|---|---|:---:|---|
@@ -61,7 +61,7 @@ Báo cáo khả thi này kế thừa trực tiếp các kết quả kiểm đị
 | `text_domain` | Câu mở đầu tệp `.txt` (`"In the <setting> scene..."`) | Ngữ cảnh công nghiệp được khẳng định trong câu mô tả ngôn ngữ của annotator. | 5.013/5.013 (100%) | Trung bình - Cao | Lệch với `folder_domain` ở 36 mẫu; dùng nhiều biến thể từ vựng (`coal conveying trestle`, `oil and gas chemical plant`). | **KHÔNG** (Chỉ là semantic claim, không có metadata gốc) | **DETERMINISTIC_DERIVED_METADATA** |
 | `robot_platform` | Token thứ 3 trong tên thư mục (`SuspendedRail` / `Wheeled`) | Dạng robot tuần tra: ray treo trên cao (`SuspendedRail`) hoặc xe tự hành bánh lăn mặt đất (`Wheeled`). | 5.013/5.013 (100%) | Cao (theo quy ước đặt tên) | Cặp exact duplicate cross-split số 4 bị gán lệch: Train gán `SuspendedRail`, Test gán `Wheeled`. | **KHÔNG** (Là thuộc tính robot, không phải nhãn miền) | **DETERMINISTIC_DERIVED_METADATA** |
 | `point_id` | Chuỗi 6 chữ số trong tên thư mục (`000001`–`003234`) | Mã định danh điểm dừng tuần tra logic của robot. | 5.013/5.013 (100%) | Cao (về mặt cú pháp) | Không trùng lặp train/test (overlap = 0), nhưng cùng một bối cảnh vật lý có thể được gán nhiều point ID khác nhau. | **KHÔNG** (Chỉ là mã định danh điểm logic) | **DETERMINISTIC_DERIVED_METADATA** |
-| `split` | Đường dẫn thư mục gốc (`train/` hoặc `test/`) | Phân chia tập huấn luyện và kiểm thử chính thức của tác giả. | 5.013/5.013 (100%) | Tuyệt đối (về vị trí đĩa) | Bị rò rỉ 7 cặp exact và hàng trăm cặp near-duplicate chia sẻ chuỗi/góc máy. | **KHÔNG** (Chỉ là phân vùng split của tác giả) | **DETERMINISTIC_DERIVED_METADATA** |
+| `split` | Đường dẫn thư mục gốc (`train/` hoặc `test/`) | Phân chia tập huấn luyện và kiểm thử chính thức của tác giả. | 5.013/5.013 (100%) | Tuyệt đối (về vị trí đĩa) | Bị rò rỉ 7 cặp exact và nhiều cặp candidates chia sẻ chuỗi/góc máy. | **KHÔNG** (Chỉ là phân vùng split của tác giả) | **DETERMINISTIC_DERIVED_METADATA** |
 | `data_type` | Tên thư mục cấp 2 (`Normal_data` / `Anomaly_data`) | Phân loại nhị phân trạng thái an toàn: Bình thường (4.013) vs Bất thường (1.000). | 5.013/5.013 (100%) | Tuyệt đối | Khớp 100% với `Level04` vs `Level01-03`. | **KHÔNG** (Là nhãn an toàn, không phải domain) | **DETERMINISTIC_DERIVED_METADATA** |
 | `safety_level` | Token thứ 2 trong tên thư mục (`Level01`–`Level04`) | Cấp độ rủi ro an toàn 4 mức từ Cấp 1 (nguy hiểm nhất) đến Cấp 4 (bình thường). | 5.013/5.013 (100%) | Cao (về mặt cú pháp) | Xung đột ở Cặp Exact 1 (Train gán Level 1, Test gán Level 2). | **KHÔNG** (Là nhãn an toàn mục tiêu) | **DETERMINISTIC_DERIVED_METADATA** |
 | JSON `imagePath` | Trường `imagePath` trong tệp `.json` | Tên tệp gốc từ hệ thống thu thập upstream trước khi tác giả đổi tên chuẩn hóa. | 5.013/5.013 (100%) | Cao (chỉ thị provenance) | Tên tệp phản ánh thư mục thu thập ban đầu (`hand_frame_...`, `phone_frame_...`). | **KHÔNG** (Chỉ dùng để truy vết nguồn gốc) | **OBSERVED_ORIGINAL_METADATA** |
@@ -81,7 +81,7 @@ Năm miền công nghiệp trong cấu trúc thư mục local tương ứng ch�
 | Thuật ngữ chính thức trong Paper (*Scientific Data*) | Thuật ngữ thư mục Local (`folder_domain`) | Mức độ tương ứng (Correspondence) | Sai lệch & Mơ hồ nhận diện được (Mismatch / Ambiguity) |
 |---|---|:---:|---|
 | **Coal conveyor trestles** | `coal_conveyor` | **Trùng khớp trực tiếp** | Bối cảnh hành lang băng chuyền tải than kín. Có 4 mẫu Normal trong thư mục `power` nhưng TXT ghi nhận bối cảnh `coal conveyor bridge`. |
-| **Sintering equipment / Metallurgy** | `metallurgy` | **Trùng khớp trực tiếp** | Khu vực máy thiêu kết, làm nguội và xử lý phôi kim loại. **Mơ hồ nghiêm trọng:** 8/9 mẫu Anomaly trong thư mục này có TXT mô tả nhà máy hóa chất (`oil_chemical`). |
+| **Sintering equipment / Metallurgy** | `metallurgy` | **Trùng khớp trực tiếp** | Khu vực máy thiêu kết, làm nguội và xử lý phôi kim loại. **Mơ hồ nghiêm trọng:** 8/9 mẫu Anomaly trong thư mục này mang khẳng định ngữ cảnh văn bản là `oil_chemical`. |
 | **Oil & gas plants** | `oil_chemical` | **Trùng khớp trực tiếp** | Khu vực tháp chưng cất, cụm van công nghiệp, bồn chứa hóa chất. Nhận thêm 24 mẫu Normal từ thư mục `tunnel` và 8 mẫu Anomaly từ `metallurgy` theo khẳng định của TXT. |
 | **Power facilities** | `power` | **Trùng khớp trực tiếp** | Trạm biến áp, phòng điều khiển điện phân phối, dàn pin quang điện. 4 mẫu Normal có TXT ghi nhận băng tải than. |
 | **Tunnels** | `tunnel` | **Trùng khớp trực tiếp** | Hầm cáp kỹ thuật đô thị, hầm giao thông ngầm. Có 24 mẫu Normal (12 cặp) lưu ở thư mục `tunnel` nhưng TXT ghi rõ `"In the oil, gas, and chemical plant scene..."`. |
@@ -98,10 +98,10 @@ Bảng tổng hợp năng lực thực tế của từng miền công nghiệp t
 | Miền (`Domain`) | Tổng số mẫu | Mẫu Normal | Mẫu Anomaly | Mẫu Train | Mẫu Test | Độ phủ Safety-level | Phân bố Platform Robot | Xung đột Domain Mismatch | Nguy cơ Rò rỉ / Nguồn | Tính khả thi làm Source Domain | Tính khả thi làm Held-out Target | Hạn chế cốt lõi (Main Limitation) |
 |---|:---:|:---:|:---:|:---:|:---:|---|---|:---:|---|:---:|:---:|---|
 | **`coal_conveyor`** | 1.121 | 865 | 256 | 822 | 299 | Đầy đủ (L1: 169, L2: 83, L3: 4, L4: 865) | 100% SuspendedRail (1.121/1.121) | 0 | Rò rỉ chuỗi `cigarette`, `hand`, `phone` xuyên split; 3 cặp Exact | **CAO** | **TRUNG BÌNH** | 100% gắn chặt với robot ray treo; góc nhìn từ trên cao cố định. |
-| **`metallurgy`** | 720 | 711 | **9** | 543 | 177 | L4: 711, L1: 8, L2: **0**, L3: 1 | 91,8% Wheeled (661), 8,2% Rail (59) | **8 mẫu** Anomaly có text `oil_chemical` | Cặp Exact số 4 rò rỉ sang `oil_chemical`; chỉ số frame index ~25/75 | **RẤT THẤP** (Thiếu Anomaly) | **KHÔNG KHẢ THI** (cho Anomaly) | **Test Anomaly = 0**. 8/9 Anomaly ở Train thực chất là ảnh bối cảnh hóa chất. Không thể đo F1/Recall bất thường trên target này. |
+| **`metallurgy`** | 720 | 711 | **9** | 543 | 177 | L4: 711, L1: 8, L2: **0**, L3: 1 | 91,8% Wheeled (661), 8,2% Rail (59) | **8/9 mẫu** Anomaly mang text claim `oil_chemical` | Cặp Exact số 4 rò rỉ sang `oil_chemical`; chỉ số frame index ~25/75 | **RẤT THẤP** (Thiếu Anomaly) | **NOT_RECOMMENDED AS PRIMARY TARGET** *(Official Test: NOT_CURRENTLY_FEASIBLE)* | **Metallurgy is a severely under-supported target domain:** chỉ có 9 mẫu Anomaly trong toàn bộ dataset local, 8/9 mang text claim `oil_chemical`, và tập Test chính thức có **0 mẫu Anomaly**. Đánh giá phát hiện bất thường trên official split là không khả thi; việc dùng tập con gộp ở custom split sẽ bị yếu về mặt thống kê và mơ hồ về danh tính miền. |
 | **`oil_chemical`** | 1.023 | 662 | **361** | 778 | 245 | L1: 304, L2: 57, L3: **0**, L4: 662 | 90,2% Wheeled (923), 9,8% Rail (100) | Nhận 32 mẫu từ domain khác theo TXT | 3 cặp Exact rò rỉ xuyên split (`phone`, `hand`); rò rỉ chuỗi video liên tục | **CAO** | **CAO** | Không có mẫu Level03 nào; tỷ lệ Anomaly cao áp đảo (35,3%) tạo chênh lệch phân bố lớn. |
 | **`power`** | 869 | 767 | 102 | 656 | 213 | L1: 33, L2: 68, L3: 1, L4: 767 | 87,8% Wheeled (763), 12,2% Rail (106) | 4 mẫu Normal có text `coal_conveyor` | Rò rỉ chuỗi `others`, `fire`; dHash candidates cao | **TRUNG BÌNH** | **TRUNG BÌNH** | Test chỉ có 2 mẫu Level01 (0,94%); chủ yếu là lỗi đóng/mở tủ và người ngã; ít đa dạng nguy cơ. |
-| **`tunnel`** | 1.280 | 1.008 | 272 | 964 | 316 | Đầy đủ nhất (L1: 145, L2: 118, L3: 9, L4: 1.008) | 98,1% SuspendedRail (1.256), 1,9% Wheeled (24) | 24 mẫu Normal có text `oil_chemical` | 1 cặp Exact; rò rỉ tuyệt đối chuỗi video `nonmobile` (người đi xe đạp 40 giây) | **CAO** | **CAO** | Chiếm 60% tổng số mẫu Level03 của toàn bộ dataset (9/15 mẫu); gần như thuần túy robot ray treo. |
+| **`tunnel`** | 1.280 | 1.008 | 272 | 964 | 316 | Đầy đủ nhất (L1: 145, L2: 118, L3: 9, L4: 1.008) | 98,1% SuspendedRail (1.256), 1,9% Wheeled (24) | 24 mẫu Normal có text `oil_chemical` | 1 cặp Exact; rò rỉ chuỗi video `nonmobile` (người đi xe đạp 40 giây) | **CAO** | **CAO** | Chiếm 60% tổng số mẫu Level03 của toàn bộ dataset (9/15 mẫu); gần như thuần túy robot ray treo. |
 
 ---
 
@@ -127,15 +127,15 @@ Phân tích chéo ma trận `robot_platform × folder_domain` bộc lộ sự g�
 Sự phân bố các cấp độ an toàn (`safety_level`) giữa các miền là cực kỳ bất đối xứng:
 
 1. **Hiếm mẫu Level03:** Toàn bộ 5.013 mẫu chỉ có **15 mẫu Level03 (0,299%)**. Đáng chú ý, **100% mẫu Level03 (15/15) đều được thu thập bởi robot ray treo `SuspendedRail`** (9 ở tunnel, 4 ở coal_conveyor, 1 ở power, 1 ở metallurgy, 0 ở oil_chemical).
-2. **Metallurgy gần như thuần khiết Normal:** 98,75% mẫu là Level04 (711/720). Trong 9 mẫu bất thường, có 8 mẫu Level01 nhưng cả 8 mẫu đều mang text mô tả `oil_chemical`.
+2. **Metallurgy gần như thuần khiết Normal:** 98,75% mẫu là Level04 (711/720). Trong 9 mẫu bất thường, có 8 mẫu Level01 nhưng cả 8 mẫu đều mang khẳng định ngữ cảnh văn bản là `oil_chemical`.
 3. **Oil & Gas là tâm điểm Anomaly:** Chiếm tới 36,1% tổng số mẫu bất thường của toàn bộ dataset (361/1.000) và 46,1% tổng số mẫu Level01 (304/659).
 4. **Hệ quả nghiên cứu:** Nhận diện miền và dự đoán an toàn bị liên kết chặt (confounded). Một mô hình học máy có thể chỉ cần ghi nhớ shortcut: *"Nếu thấy khung cảnh nhà máy dầu khí hoặc góc nhìn bánh lăn -> khả năng cao là Level01; nếu thấy khung cảnh luyện kim -> luôn đoán Level04"*. Điều này tạo ra rủi ro shortcut learning nghiêm trọng.
 
 ### 6.3 Source / Sequence Confounding (Nhiễu nguồn và chuỗi thời gian)
 
-1. **Rò rỉ xuyên Split:** Kiểm định Bước 4–5 đã xác nhận 7 cặp ảnh trùng khớp từng pixel và 833 cặp tương đồng perceptual cao xuyên qua `train` và `test`.
-2. **Phân chia theo thứ tự chỉ số nội bộ họ nguồn (~25/75 partition):** Cả 12 họ nguồn Anomaly đều bị chia cắt cơ học (khung hình đầu cho test, khung hình sau cho train). Điển hình như họ `nonmobile`, khung hình thứ 25 (`test`) và khung hình thứ 26 (`train`) chỉ cách nhau một phần giây trong cùng một đoạn video ngắn 40 giây ghi cảnh một người đi xe đạp trong hầm.
-3. **Ý nghĩa đối với Split chính thức:** Phân chia `train`/`test` chính thức của tác giả **không bảo đảm tính độc lập về mặt ngữ cảnh và chuỗi thời gian**. Dù `point_id overlap = 0`, các điểm logic này thực chất chia sẻ chung chuỗi quay và góc máy. Sử dụng nguyên trạng split chính thức để tuyên bố năng lực tổng quát hóa sẽ khiến kết quả bị thổi phồng do hiện tượng ghi nhớ chuỗi (sequence memorization).
+1. **Rò rỉ xuyên Split đã xác nhận:** Kiểm định Bước 4–5 xác nhận chính xác **7 cặp ảnh cross-split exact** đại diện cho sự tái sử dụng khung hình tuyệt đối (confirmed exact image reuse). Đối với **833 cặp dHash $\le 8$**, phân tích bóc tách rõ gồm 7 cặp exact và 826 cặp ứng viên (candidates); khảo sát trực quan Bước 5 ghi nhận nhiều trường hợp chia sẻ chuỗi/góc máy nhưng **không đánh đồng toàn bộ 826 candidates là near duplicates**.
+2. **Phân chia chỉ số nội bộ họ nguồn (~25/75 partition):** The 12 source-family pools show systematic index partitioning. Targeted visual review confirmed shared-sequence/shared-viewpoint evidence in multiple sampled cases, but source-family membership alone does not establish that all members belong to one temporal sequence. Do đó, SafeShift ghi nhận rủi ro rò rỉ chuỗi thời gian ở các ca đã kiểm chứng mà không võ đoán cho toàn bộ 1.000 mẫu Anomaly.
+3. **Ý nghĩa đối với Split chính thức:** Phân chia `train`/`test` chính thức của tác giả không bảo đảm tính độc lập về mặt ngữ cảnh và chuỗi thời gian cho bài toán cross-domain chuẩn. Dù `point_id overlap = 0`, các điểm logic này thực chất chia sẻ chung chuỗi quay và góc máy. Sử dụng nguyên trạng split chính thức để tuyên bố năng lực tổng quát hóa sẽ khiến kết quả bị thổi phồng do hiện tượng ghi nhớ chuỗi (sequence memorization).
 
 ---
 
@@ -146,9 +146,9 @@ Dưới đây là phân tích khoa học đối với các giao thức thử ngh
 | Protocol ứng viên | Ý nghĩa khoa học (Scientifically Meaningful?) | Dữ liệu InspecSafe-V1 có hỗ trợ? (Supported?) | Rào cản cốt lõi (Major Blocker) | Thuật ngữ khuyến nghị sử dụng |
 |---|:---:|:---:|---|---|
 | **A. Official split + Per-domain reporting** | Thấp - Trung bình | **CÓ** (Dùng nguyên trạng) | Bị rò rỉ chuỗi thời gian xuyên split; miền `metallurgy` có Test Anomaly = 0 nên không đo được khả năng phát hiện lỗi. | *Per-Domain In-Distribution Evaluation* (Đánh giá theo miền trên phân chia chính thức) |
-| **B. Leave-One-Domain-Out (LODO)** | Rất cao (Chuẩn mực của Domain Generalization) | **MỘT PHẦN** | Không thể dùng `metallurgy` làm target độc lập (vì không có Anomaly ở test, và tổng anomaly chỉ có 9 mẫu bị nghi ngờ về domain). | *Cross-Domain Generalization (Sub-benchmark on 4 domains)* |
+| **B. Leave-One-Domain-Out (LODO)** | Rất cao (Chuẩn mực của Domain Generalization) | **MỘT PHẦN** | `metallurgy` là target bị thiếu dữ liệu trầm trọng (Test Anomaly = 0, chỉ có 9 mẫu ở train và 8/9 mang text claim `oil_chemical`); nếu dùng metallurgy làm target thì đánh giá thống kê rất yếu. | *Cross-Domain Generalization (Sub-benchmark on 4 domains)* |
 | **C. Train on Source Domains $\rightarrow$ Evaluate Unseen Target** | Cao | **CÓ** (Ngoại trừ target `metallurgy`) | Bị nhiễu nghiêm trọng bởi platform: nếu train trên các miền dùng `Wheeled` (oil, power) rồi test trên miền `SuspendedRail` (coal, tunnel), mô hình chịu đồng thời cả domain-shift lẫn platform/viewpoint-shift. | *Cross-Domain & Platform Transfer Evaluation* |
-| **D. Frozen Pretrained VLM Per-Domain Evaluation** | **CAO NHẤT (Thực tế nhất)** | **HOÀN TOÀN HỖ TRỢ** | Không cần train/tune nên loại trừ được rủi ro rò rỉ tập train vào tập test; đánh giá được zero-shot robustness thuần túy của các foundation models hiện đại. | **Cross-Domain Robustness Evaluation** hoặc **Zero-shot Cross-Domain Evaluation** |
+| **D. Frozen Pretrained VLM Per-Domain Evaluation** | **CAO NHẤT (Thực tế nhất)** | **HOÀN TOÀN HỖ TRỢ** | **Zero-shot frozen evaluation reduces the train/test leakage pathway, but does not guarantee independent evaluation samples:** giao thức này loại bỏ được rủi ro rò rỉ từ bước huấn luyện benchmark của SafeShift, nhưng không bảo đảm các mẫu test độc lập với nhau (do tương quan chuỗi), và không loại trừ hoàn toàn khả năng benchmark công khai đã bị đưa vào pretraining data của mô hình nền tảng. | **Cross-Domain Robustness Evaluation** hoặc **Zero-shot Cross-Domain Evaluation** |
 | **E. Group-aware / Site-aware Domain Split** | Cao | **MỘT PHẦN** (Đòi hỏi thiết kế split mới ở W2) | Khó tái lập hoàn toàn ranh giới video nếu không gom nhóm triệt để 12 source families; đòi hỏi sự đồng thuận và phê duyệt chính thức trong `DECISIONS.md`. | *Leakage-Free Grouped Domain Split* |
 
 ---
@@ -173,7 +173,7 @@ Khảo sát toàn diện 100% tệp JSON và TXT xác minh danh mục các dạn
 
 | Loại Annotation | Tình trạng thực tế trong InspecSafe-V1 | Định dạng lưu trữ | Ý nghĩa đối với bài toán Grounding |
 |---|:---:|---|---|
-| **Polygon annotations** | **CÓ** (37.434 đa giác) | Tọa độ điểm thực tế `points: [[x, y], ...]` trong trường `shapes[]` của LabelMe JSON. | Là chú thích đối tượng hình học (Object Bounding Polygons), không phải nhãn lý do an toàn. |
+| **Polygon annotations** | **CÓ** (37.434 đa giác) | Tọa độ điểm thực tế `points: [[x, y], ...]` trong trường `shapes[]` của LabelMe JSON. | Là chú thích đối tượng hình học dạng đa giác (**object polygon annotations / polygon instance annotations**), không phải nhãn lý do an toàn. Dataset có polygon, không có native bounding-box ground truth. |
 | **Raw Object Labels** | **CÓ** (231 nhãn duy nhất) | Chuỗi văn bản trong trường `label` (tiếng Anh, trừ 1 nhãn tiếng Trung `"出口"`). | Danh mục định danh vật thể (ví dụ: `Person`, `Cigarette`, `Pipeline`, `Motor`). |
 | **One-line Text Descriptions** | **CÓ** (5.013 tệp) | Chuỗi văn bản tiếng Anh một dòng trong tệp `.txt`. | Mô tả ngữ nghĩa tổng quát bối cảnh và kết luận cấp độ an toàn; **không chứa tọa độ**. |
 | **Safety Level Ground Truth** | **CÓ** (4 cấp độ) | Token `Level01`–`Level04` trong tên thư mục điểm. | Nhãn mục tiêu phân loại mức độ an toàn cấp hình ảnh (Image-level Safety Classification). |
@@ -229,6 +229,8 @@ Một sai lầm phương pháp luận phổ biến là mặc định xem các đ
 - **Tầng 2 (Toàn bộ Anomaly của Level03):** Lấy toàn bộ **14 mẫu Level03 còn lại** trên toàn dataset (4 coal_conveyor, 1 power, 9 tunnel; mẫu Level03 của metallurgy đã nằm ở Tầng 1). Như vậy kiểm toán bao phủ **100% mẫu Level03 (15/15)** của dataset.
 - **Tầng 3 (Các mẫu thuộc 7 cặp Exact Duplicates Cross-split):** Lấy toàn bộ **13 mẫu Anomaly còn lại** tham gia vào 7 cặp trùng lặp pixel tuyệt đối (1 mẫu đã nằm ở Tầng 1).
 - **Tầng 4 (Bao phủ có hệ thống 12 Họ nguồn và 5 Miền):** Bổ sung xác định các mẫu có chỉ số nhỏ nhất (`counter` nhỏ nhất) trong từng họ nguồn chưa có đại diện ở train hoặc test, và bổ sung các mẫu đại diện cho Level01/Level02 của `power`, `oil_chemical`, `coal_conveyor`, `tunnel`.
+
+> **Lưu ý phương pháp luận:** Tập 63 mẫu này là **tập mẫu kiểm toán phân tầng định hướng (targeted stratified audit sample)** nhằm bao quát tối đa các góc cạnh khó và trường hợp biên (edge cases, rare classes, exact duplicates), **KHÔNG phải là mẫu ngẫu nhiên đại diện thống kê (representative random sample)**. Mọi tỷ lệ phần trăm phân tích dưới đây chỉ có giá trị mô tả trên tập 63 mẫu được thẩm định, tuyệt đối không ngoại suy trực tiếp sang toàn bộ 1.000 mẫu Anomaly của dataset.
 
 Danh mục đầy đủ 63 mẫu kiểm toán được lưu trữ cục bộ trong artifact:  
 `data/manifests/research_feasibility_sample.json` (giữ local, không commit lên Git).
@@ -309,36 +311,43 @@ Từ bảng khảo sát 63 mẫu thực nghiệm:
 
 ### 13.1 Phân bố trạng thái hỗ trợ của Polygon (Support Status)
 
+*(Tất cả tỷ lệ dưới đây được tính trên tập 63 mẫu được thẩm định — in the 63-sample reviewed subset; không ngoại suy sang toàn bộ 1.000 mẫu Anomaly)*:
+
 - **Tổng số mẫu thẩm định chuyên sâu:** **63 mẫu Anomaly** (35 train / 28 test).
-- **`DIRECT_SUPPORT` (Hỗ trợ trực tiếp):** **13 mẫu (20,6%)**  
-  Chỉ có khoảng 1/5 số mẫu bất thường sở hữu đa giác bao quanh chính xác thực thể nguy cơ (như `Open Flame`, `Liquid`, `Smoke`, `Mobile Phone`, `Plastic Bag`).
-- **`PARTIAL_PROXY` (Hỗ trợ đại diện gián tiếp):** **46 mẫu (73,0%)**  
-  Gần 3/4 số mẫu chỉ có thể đánh giá qua đối tượng đại diện: đa giác `Person` cho các vi phạm thiếu PPE (mũ, găng tay, khẩu trang) hoặc tư thế người ngã; hoặc các mẫu kết hợp đa nguy cơ (có điện thoại/thuốc lá nhưng đồng thời có vi phạm không đeo găng).
-- **`NO_DIRECT_SUPPORT` (Hoàn toàn không có hỗ trợ):** **3 mẫu (4,8%)**  
+- **`DIRECT_SUPPORT` (Hỗ trợ trực tiếp):** **13 / 63 mẫu (20,6% in the reviewed subset)**  
+  Chỉ có khoảng 1/5 số mẫu trong tập thẩm định sở hữu đa giác bao quanh chính xác thực thể nguy cơ (như `Open Flame`, `Liquid`, `Smoke`, `Mobile Phone`, `Plastic Bag`).
+- **`PARTIAL_PROXY` (Hỗ trợ đại diện gián tiếp):** **46 / 63 mẫu (73,0% in the reviewed subset)**  
+  Gần 3/4 số mẫu trong tập thẩm định chỉ có thể đánh giá qua đối tượng đại diện: đa giác `Person` cho các vi phạm thiếu PPE (mũ, găng tay, khẩu trang) hoặc tư thế người ngã; hoặc các mẫu kết hợp đa nguy cơ (có điện thoại/thuốc lá nhưng đồng thời có vi phạm không đeo găng).
+- **`NO_DIRECT_SUPPORT` (Hoàn toàn không có hỗ trợ):** **3 / 63 mẫu (4,8% in the reviewed subset)**  
   Toàn bộ các mẫu thuộc họ `dooropen` (cửa tủ mở bất thường: mẫu 26, 52, 55) hoàn toàn không có đa giác nào khoanh vùng chiếc tủ hay cánh cửa bị mở.
-- **`AMBIGUOUS` (Mơ hồ / Không thể ánh xạ):** **1 mẫu (1,6%)**  
+- **`AMBIGUOUS` (Mơ hồ / Không thể ánh xạ):** **1 / 63 mẫu (1,6% in the reviewed subset)**  
   Mẫu mô tả "foreign object" (dị vật) nhưng annotation chỉ khoanh `Plastic Bag` và `Protective Net` mà không có định nghĩa chuẩn hóa.
 
 ### 13.2 Phân bố theo 6 loại hình bằng chứng nguy cơ
 
-- **`PRESENT_OBJECT_LOCALIZABLE`:** **31 mẫu (49,2%)**  
-  (13 mẫu có direct support, 18 mẫu là ca đa nguy cơ kết hợp có proxy PPE).
-- **`ABSENCE_BASED`:** **21 mẫu (33,3%)**  
+*(Phân loại chính xác trên 63 mẫu kiểm toán)*:
+
+- **`PRESENT_OBJECT_LOCALIZABLE`:** **31 / 63 mẫu (49,2% in the reviewed subset)**  
+  (Gồm 13 mẫu có direct support từ vật thể hiện hữu, và 18 mẫu là ca đa nguy cơ kết hợp có proxy PPE).
+- **`ABSENCE_BASED`:** **21 / 63 mẫu (33,3% in the reviewed subset)**  
   (100% thuộc nhóm này chỉ có thể đánh giá qua proxy `Person`).
-- **`PERSON_OR_OBJECT_STATE`:** **8 mẫu (12,7%)**  
-  (5 mẫu người ngã có proxy `Person`, 3 mẫu cửa tủ mở không có hỗ trợ).
-- **`RELATIONAL_OR_INTERACTION`:** **2 mẫu (3,2%)**  
+- **`PERSON_OR_OBJECT_STATE`:** **8 / 63 mẫu (12,7% in the reviewed subset)**  
+  (5 mẫu người ngã có proxy `Person`, 3 mẫu cửa tủ mở không có đa giác hỗ trợ).
+- **`RELATIONAL_OR_INTERACTION`:** **2 / 63 mẫu (3,2% in the reviewed subset)**  
   (2 mẫu xe thô sơ đi vào làn ô tô trong hầm; có proxy `Person` và `Bicycle`).
-- **`SCENE_OR_CONTEXT_LEVEL`:** **0 mẫu (0,0%)** trong tập 63 mẫu chọn lọc (do các mẫu khói trong tập này đều được vẽ đa giác `Smoke`).
-- **`AMBIGUOUS_OR_UNMAPPABLE`:** **1 mẫu (1,6%)**.
+- **`SCENE_OR_CONTEXT_LEVEL`:** **0 / 63 mẫu (0,0% in the reviewed subset)** trong tập 63 mẫu chọn lọc (do các mẫu khói trong tập này đều được vẽ đa giác `Smoke`).
+- **`AMBIGUOUS_OR_UNMAPPABLE`:** **1 / 63 mẫu (1,6% in the reviewed subset)**.
 
 ### 13.3 Đánh giá khả năng thực thi Grounding không cần nhãn mới
 
-- **`YES` (Khả thi trực tiếp không cần nhãn mới):** **13 mẫu (20,6%)**
-- **`PARTIAL` (Chỉ khả thi dưới dạng Proxy / Có điều kiện hạn chế):** **46 mẫu (73,0%)**
-- **`NO` (Hoàn toàn không thể đánh giá với nhãn hiện tại):** **4 mẫu (6,3%)**
+- **`YES` (Khả thi trực tiếp không cần nhãn mới):** **13 / 63 mẫu (20,6% in the reviewed subset)**
+- **`PARTIAL` (Chỉ khả thi dưới dạng Proxy / Có điều kiện hạn chế):** **46 / 63 mẫu (73,0% in the reviewed subset)**
+- **`NO` (Hoàn toàn không thể đánh giá với nhãn hiện tại):** **4 / 63 mẫu (6,3% in the reviewed subset)** (gồm 3 mẫu `NO_DIRECT_SUPPORT` và 1 mẫu `AMBIGUOUS`)
 
-> **Nhận định thực tế:** Bằng chứng cho thấy **đại đa số các sự kiện nguy cơ an toàn công nghiệp trong InspecSafe-V1 (>79%) là các nguy cơ thiếu hụt trang thiết bị (Absence-based), trạng thái bất thường (State-based), hoặc quan hệ vi phạm (Relational)**. Do đó, việc kỳ vọng bộ dữ liệu có sẵn ground truth hoàn hảo cho Evidence Grounding tổng quát là **hoàn toàn phi thực tế**.
+> **Nhận định thực tế và đính chính số học:**  
+> - Xét về loại hình sự kiện nguy cơ (evidence types), nhóm nguy cơ thiếu hụt trang bị (`ABSENCE_BASED`: 21 mẫu, 33,3%), trạng thái (`PERSON_OR_OBJECT_STATE`: 8 mẫu, 12,7%) và quan hệ vi phạm (`RELATIONAL_OR_INTERACTION`: 2 mẫu, 3,2%) chiếm **31 / 63 mẫu (49,2% in the reviewed subset)**.  
+> - Xét về trạng thái hỗ trợ của polygon (support status), có tới **50 / 63 mẫu (79,4% in the reviewed subset)** trong tập thẩm định không có hỗ trợ trực tiếp đầy đủ (`PARTIAL_PROXY` 46 mẫu + `NO_DIRECT_SUPPORT` 3 mẫu + `AMBIGUOUS` 1 mẫu = 50 mẫu, tương ứng 79,37%), trong khi chỉ có 13 / 63 mẫu (20,6%) đạt mức `DIRECT_SUPPORT`.  
+> Điều này khẳng định rằng trong tập mẫu được khảo sát, kỳ vọng bộ dữ liệu có sẵn ground truth hoàn hảo cho Evidence Grounding tổng quát mà không dùng proxy là hoàn toàn phi thực tế.
 
 ---
 
@@ -349,7 +358,7 @@ Từ bảng khảo sát 63 mẫu thực nghiệm:
 ### CẤP ĐỘ A: Object-Support Grounding (Bám bằng chứng ở mức đối tượng hiện hữu)
 - **Định nghĩa:** Đánh giá khả năng mô hình phát hiện và khoanh vùng các vật thể nguy cơ hiện hữu cụ thể (`Cigarette`, `Mobile Phone`, `Open Flame`, `Liquid`, `Smoke`, `Water Bottle`, `Plastic Bag`).
 - **Tính khả thi hiện tại:** **FEASIBLE_WITH_CONSTRAINTS (Khả thi với tập con giới hạn)**.
-- **Ràng buộc:** Phải lọc ra một **Evaluation Subset** chuyên biệt từ 1.000 mẫu Anomaly (khoảng 200–250 mẫu chứa các vật thể này). Chỉ đo IoU / Pointing Game trên tập con này.
+- **Ràng buộc:** **A full-dataset census is required in W2 to determine the size of the direct object-support subset.** Cần thực hiện tổng điều tra toàn diện trên toàn bộ 1.000 mẫu Anomaly ở Tuần 2 để xác định quy mô chính xác của tập con có hỗ trợ đối tượng trực tiếp; không tự ý nhân tỷ lệ 20,6% từ tập 63 mẫu phân tầng sang toàn bộ dataset. Chỉ đo lường các metric bám đối tượng trên tập con đã được xác minh này.
 
 ### CẤP ĐỘ B: Weak Proxy Grounding (Bám bằng chứng qua vùng đại diện yếu)
 - **Định nghĩa:** Sử dụng đa giác cơ thể người (`Person`) làm vùng proxy để kiểm tra xem mô hình VLM khi phát hiện vi phạm không đội mũ, không đeo găng, không đeo khẩu trang hay người ngã có hướng sự chú ý (attention/bounding box) vào cơ thể người đó hay không.
@@ -371,7 +380,7 @@ SafeShift từng đặt mục tiêu nghiên cứu hiện tượng mô hình VLM:
 1. **Thiếu Ground Truth cho "Lý do đúng":** Dataset hiện tại không có human rationale annotation hay attention maps của chuyên gia.
 2. **Nguy cơ đánh giá chủ quan:** Nếu mô hình dự đoán đúng `Level01` cho một ảnh công nhân vừa hút thuốc vừa không đeo găng tay, nhưng mô hình chỉ output bounding box vào điếu thuốc mà bỏ qua bàn tay, ta **không thể kết luận một cách khách quan rằng mô hình "sai lý do"**, bởi vì điếu thuốc hoàn toàn đủ điều kiện cấu thành rủi ro Cấp 1!
 3. **Giới hạn của tệp TXT:** Tệp văn bản `.txt` chỉ là câu mô tả quan sát chung của annotator, **không phải Ground Truth định vị lý do**. Văn bản không có tọa độ gắn với ảnh.
-4. **Kết luận:** safeShift **CHƯA THỂ** nghiên cứu hiện tượng "Correct Answer, Wrong Reason" trên toàn bộ dataset một cách tự động và khách quan. Đề tài này chỉ có thể thực hiện được nếu:
+4. **Kết luận:** SafeShift **CHƯA THỂ** nghiên cứu hiện tượng "Correct Answer, Wrong Reason" trên toàn bộ dataset một cách tự động và khách quan. Đề tài này chỉ có thể thực hiện được nếu:
    - Thu hẹp vào tập con đối chứng có đơn nguy cơ rõ ràng (Single-Hazard Subset), hoặc
    - Bổ sung bộ chú thích Rationale Ground Truth thủ công ở W2.
 
@@ -396,19 +405,19 @@ Kiểm định phân bố Bước 6 đã ghi nhận:
 ### 17.1 Đối soát 2.239 Sites vs. 3.234 Point Folders
 - **Tài liệu chính thức (*Scientific Data*):** Khai báo **2.239 valid inspection sites/waypoints**.
 - **Dữ liệu cục bộ kiểm toán:** Ghi nhận chính xác **3.234 thư mục điểm logic (`point_id` từ `000001` đến `003234`)**, gồm 2.424 điểm ở train và 810 điểm ở test.
-- **Giải thích khoa học khả dĩ:**  
-  1. *Điểm dừng vật lý vs Thư mục logic:* Con số 2.239 phản ánh các tọa độ dừng vật lý cố định của robot tại nhà xưởng công nghiệp.
-  2. *Lặp lại phiên tuần tra (Repeat Visits):* Khi một điểm vật lý được robot tuần tra quay lại nhiều lần ở các thời điểm khác nhau (ví dụ ca sáng, ca tối, hoặc khi phát sinh sự cố), tác giả có thể đã sinh ra các mã point ID logic mới (từ đó tạo ra 3.234 thư mục).
-  3. *Tách rời Train/Test:* Tác giả phân chia 3.234 thư mục thành hai tập train/test hoàn toàn không trùng ID số (`000001`–`003234`).
-- **Kết luận:** Do upstream **không cung cấp tệp ánh xạ (mapping table)** giữa 2.239 physical sites và 3.234 point folders, SafeShift giữ nguyên trạng thái **`UNRESOLVED`** về mặt ánh xạ kỹ thuật chi tiết, nhưng xác nhận cấu trúc 3.234 điểm là hoàn toàn nhất quán trên hệ thống tệp.
+- **Các giả thuyết thuần túy (Explicitly Hypothetical Explanations):**  
+  1. *Giả thuyết Điểm dừng vật lý vs Thư mục logic:* Con số 2.239 có thể phản ánh các tọa độ dừng vật lý cố định của robot tại nhà xưởng công nghiệp.
+  2. *Giả thuyết Lặp lại phiên tuần tra (Repeat Visits):* Khi một trạm vật lý được robot tuần tra quay lại nhiều lần ở các thời điểm khác nhau, tác giả có thể đã sinh ra các mã point ID logic mới (từ đó tạo ra 3.234 thư mục).
+  3. *Giả thuyết Tách rời Train/Test:* Tác giả có thể đã phân chia các phiên của cùng một điểm thành hai tập train/test với mã ID khác nhau.
+- **Kết luận:** Do upstream **không cung cấp tệp ánh xạ (mapping table)** giữa 2.239 physical sites và 3.234 point folders, các giải thích trên **chỉ là giả thuyết thuần túy, không phải sự thật đã được chứng minh**. SafeShift giữ nguyên trạng thái **`UNRESOLVED`** về mặt ánh xạ kỹ thuật chi tiết, nhưng xác nhận cấu trúc 3.234 điểm là hoàn toàn nhất quán trên hệ thống tệp.
 
 ### 17.2 Đối soát 234 Categories vs. 231 Unique Raw Labels
 - **Tài liệu chính thức (*Scientific Data* & GitHub):** Khai báo *"covering 234 key industrial inspection object categories"*.
 - **Dữ liệu cục bộ kiểm toán:** Thu được chính xác **231 chuỗi nhãn gốc duy nhất (`unique raw label strings`)** xuất hiện trong 37.434 đa giác.
-- **Giải thích khoa học khả dĩ:**  
-  1. Ba danh mục lớp trong taxonomy lý thuyết của tác giả có thể là các lớp cực hiếm và không có bất kỳ mẫu nào xuất hiện trong 5.013 ảnh công bố công khai.
-  2. Sự gộp/tách nhãn văn bản hoặc lỗi chính tả (typo) trong quá trình gán nhãn thủ công.
-- **Kết luận:** SafeShift kiên định nguyên tắc **không tự ý chuẩn hóa (normalize) hay suy đoán để ép 231 thành 234**. Trạng thái danh tính 3 lớp bị thiếu được ghi nhận là **`UNRESOLVED`** và sẽ chờ tác giả phản hồi hoặc công bố taxonomy đầy đủ.
+- **Các giả thuyết thuần túy (Explicitly Hypothetical Explanations):**  
+  1. Giả thuyết ba danh mục lớp trong taxonomy lý thuyết của tác giả có thể là các lớp cực hiếm và không có bất kỳ mẫu nào xuất hiện trong 5.013 ảnh công bố công khai.
+  2. Giả thuyết sự gộp/tách nhãn văn bản hoặc lỗi chính tả (typo) trong quá trình gán nhãn thủ công ban đầu.
+- **Kết luận:** SafeShift kiên định nguyên tắc **không tự ý chuẩn hóa (normalize) hay suy đoán để ép 231 thành 234**. Các cách giải thích trên vẫn là giả thuyết; trạng thái danh tính 3 lớp bị thiếu được ghi nhận là **`UNRESOLVED`**.
 
 ---
 
@@ -419,9 +428,9 @@ Căn cứ trên toàn bộ bằng chứng thực nghiệm thu thập được tr
 | Hạng mục nghiên cứu | Phán quyết khả thi (Feasibility Verdict) | Bằng chứng ủng hộ cốt lõi (Supporting Evidence) | Rào cản lớn nhất (Major Blocker) | Quyết định bắt buộc cho W2 (What W2 Must Decide) |
 |---|:---:|---|---|---|
 | **A. Cross-Domain Analysis (Phân tích so sánh xuyên miền)** | **`FEASIBLE_WITH_CONSTRAINTS`** | Tồn tại 5 miền công nghiệp rõ rệt với dung lượng mẫu lớn (720 đến 1.280 mẫu mỗi miền). Có sự tương đồng cao với kịch bản công bố trên *Scientific Data*. | Platform confounding nghiêm trọng (ray treo vs xe bánh lăn); 36 ca domain mismatch; phân bố nhãn an toàn bị lệch theo miền. | Quyết định cách thức báo cáo kết quả per-domain có kèm điều kiện kiểm soát platform; xử lý 36 mẫu mismatch. |
-| **B. Standard Domain Generalization (Khái quát hóa miền chuẩn)** | **`NOT_CURRENTLY_FEASIBLE`** *(trên official split)*<br>**`PARTIALLY_FEASIBLE`** *(nếu tạo split mới)* | Khái niệm 5 miền công nghiệp độc lập về mặt ngữ cảnh vận hành lý thuyết. | **Miền `metallurgy` có Test Anomaly = 0** (không thể làm target); Split chính thức bị rò rỉ 7 cặp exact và hàng trăm chuỗi video liên tục; platform bị confound. | W2 phải quyết định: hoặc chuyển sang giao thức **Zero-shot Robustness** trên mô hình frozen, hoặc phải thiết kế một **Group-aware Split mới** loại trừ rò rỉ. |
+| **B. Standard Domain Generalization (Khái quát hóa miền chuẩn)** | **`NOT_CURRENTLY_FEASIBLE / NOT SUITABLE AS-IS`** *(trên Official Split)*<br>**`PARTIALLY_FEASIBLE`** *(với Custom Group-aware Split)* | Khái niệm 5 miền công nghiệp độc lập về mặt ngữ cảnh vận hành lý thuyết. | **Official Split:** Miền `metallurgy` có Test Anomaly = 0 (không thể làm target); Split chính thức bị rò rỉ 7 cặp exact confirmed và correlation chuỗi; platform bị confound. | W2 phải quyết định: chuyển sang giao thức **Zero-shot Cross-Domain Robustness** trên mô hình frozen, hoặc thiết kế một **Custom Group-aware Split mới** loại trừ rò rỉ (không coi DG là bất khả thi về nguyên lý). |
 | **C. Evidence Grounding with Existing Annotations (Grounding với nhãn có sẵn)** | **`PARTIALLY_FEASIBLE`** | Có sẵn 37.434 đa giác phân vùng đối tượng với 231 nhãn; có tệp TXT mô tả nguy cơ; ảnh có độ phân giải cao (Full HD, 2K). | **Không có nhãn bằng chứng nguy cơ chuyên biệt**. Đa giác chỉ khoanh đối tượng hiện hữu; không có chú thích cho vi phạm thiếu PPE (absence) hay trạng thái cơ học. | W2 phải quyết định giới hạn phạm vi bài toán Grounding: chỉ coi đây là bài toán kiểm tra sự chú ý của VLM đối với các đối tượng liên quan (Object Support). |
-| **D. Evidence Grounding with Proxy Subset (Grounding trên tập con Proxy)** | **`FEASIBLE_WITH_CONSTRAINTS`** | 20,6% mẫu có Direct Support (vật thể hiện hữu: điện thoại, thuốc lá, lửa, nước); 73,0% mẫu có thể dùng `Person` làm weak proxy hợp lý. | Vẫn là proxy gián tiếp; phạt oan mô hình nếu mô hình khoanh vùng chính xác vị trí cục bộ của lỗi (ví dụ đầu người khi không có mũ). | W2 phải chuẩn hóa **Evaluation Protocol cho Proxy Subset**: chấp nhận metric Pointing Game / Soft IoU trên vùng Person, hoặc lọc riêng tập Present Objects. |
+| **D. Evidence Grounding with Proxy Subset (Grounding trên tập con Proxy)** | **`FEASIBLE_WITH_CONSTRAINTS`** | Trong tập 63 mẫu kiểm toán: 20,6% mẫu có Direct Support từ vật thể hiện hữu; 73,0% mẫu có thể dùng `Person` làm weak proxy hợp lý. | Vẫn là proxy gián tiếp; phạt oan mô hình nếu mô hình khoanh vùng chính xác vị trí cục bộ của lỗi (ví dụ đầu người khi không có mũ). | W2 phải chuẩn hóa **Evaluation Protocol cho Proxy Subset**: chấp nhận candidate metrics trên vùng Person, hoặc lọc riêng tập Present Objects sau census toàn diện. |
 | **E. Full Hazard-Specific Rationale Grounding (Grounding lý do an toàn đầy đủ)** | **`NOT_CURRENTLY_FEASIBLE`** | Nhu cầu học thuật và thực tiễn rất cao trong an toàn công nghiệp. | **Hoàn toàn thiếu Ground Truth về vùng lý do**. Tệp TXT không có phrase-region alignment; không thể xác định "Correct Answer, Wrong Reason" một cách tự động. | W2 phải quyết định: chấp nhận hoãn mục tiêu này cho Luận văn mở rộng, hoặc phải tiến hành gán nhãn bổ sung (Annotation Campaign) cho 100–200 mẫu mẫu mực. |
 | **F. SafeShift Seminar Overall (Tổng thể đề tài Seminar)** | **`FEASIBLE_WITH_CONSTRAINTS`** | Dữ liệu InspecSafe-V1 là bộ tiêu chuẩn đa phương thức công nghiệp thực tế độc nhất vô nhị; tài liệu và quyền pháp lý CC-BY-4.0 hoàn toàn vững chắc. | Không thể giữ nguyên các tuyên bố nghiên cứu lý tưởng hóa ban đầu mà không có bằng chứng; cần điều chỉnh phạm vi và ngôn từ học thuật cho chuẩn xác. | W2 chuẩn hóa lại tiêu đề, mục tiêu và metric đánh giá theo hướng tiếp cận thực chứng vững chắc. |
 
@@ -435,7 +444,7 @@ Ban đầu, đề tài SafeShift định hướng:
 > *"Benchmarking Cross-Domain Generalization and Evidence Grounding in VLMs for Industrial Safety Assessment"*
 
 Dựa trên các rào cản thực chứng phát hiện trong Tuần 1:
-1. Thiếu điều kiện cho Domain Generalization chuẩn do rò rỉ split chính thức và khiếm khuyết dữ liệu bất thường của miền luyện kim.
+1. Thiếu điều kiện cho Domain Generalization chuẩn trên official split do rò rỉ chuỗi và khiếm khuyết dữ liệu bất thường của miền luyện kim.
 2. Thiếu chú thích lý do an toàn đầy đủ cho Evidence Grounding tổng quát.
 
 SafeShift khuyến nghị nhóm nghiên cứu cân nhắc điều chỉnh ngôn từ (wording) theo hướng bảo thủ, chặt chẽ và không thể bị phản biện:
@@ -453,25 +462,29 @@ SafeShift khuyến nghị nhóm nghiên cứu cân nhắc điều chỉnh ngôn 
 
 ## 20. Danh mục khuyến nghị bắt buộc cho Tuần 2 (W2 Action Items)
 
-Trước khi bắt đầu bất kỳ thí nghiệm VLM nào, Tuần 2 (Research Protocol & Setup) bắt buộc phải đưa ra quyết định chính thức và ghi vào `DECISIONS.md` cho 5 vấn đề cốt lõi sau:
+Trước khi bắt đầu bất kỳ thí nghiệm VLM nào, Tuần 2 (Research Protocol & Setup) bắt buộc phải đưa ra quyết định chính thức và ghi vào `DECISIONS.md` cho các vấn đề cốt lõi sau:
 
 1. **Quyết định về Giao thức Cross-Domain (Protocol Decision):**  
-   - Quyết định lựa chọn giữa: (a) Giao thức Zero-shot Pretrained VLM Robustness trên 5 miền (không huấn luyện lại), hay (b) Giao thức Leave-One-Domain-Out trên 4 miền khả thi (loại trừ `metallurgy` làm target).
+   - Quyết định lựa chọn giữa: (a) Giao thức Zero-shot Pretrained VLM Robustness trên 5 miền (không huấn luyện lại), hay (b) Giao thức Leave-One-Domain-Out trên 4 miền khả thi (loại trừ `metallurgy` làm target chính).
 2. **Quyết định về Xử lý Rò rỉ và Thiết kế Split (Leakage & Split Policy):**  
-   - Quyết định giữ nguyên Official Split (kèm báo cáo hạn chế) hay xây dựng một **SafeShift Clean Split** độc lập nhằm loại bỏ 7 cặp exact và cách ly các chuỗi thời gian của 12 source families.
-3. **Quyết định về Định nghĩa Grounding và Metric (Grounding Scope & Metrics):**  
-   - Chốt ranh giới bài toán Grounding ở **Level A (Object Support)** và **Level B (Weak Proxy)**; ban hành công thức tính metric (Pointing Game, Soft IoU, Attention Map Overlap) phù hợp với nhãn đa giác hiện có.
+   - Quyết định giữ nguyên Official Split (kèm báo cáo hạn chế rò rỉ chuỗi) hay xây dựng một **SafeShift Clean / Group-aware Split** độc lập nhằm loại bỏ 7 cặp exact confirmed và cách ly các chuỗi thời gian của 12 source families.
+3. **Quyết định về Định nghĩa Grounding và Metric Ứng viên (Grounding Scope & Candidate Metrics):**  
+   - **Grounding output interface must be defined before metric selection:** Cần xác định rõ giao diện đầu ra của mô hình (tọa độ bounding box văn bản, điểm trỏ, hay heat map) trước khi chốt công thức đánh giá.
+   - Các metric như **Pointing Game, Soft IoU, Attention Map Overlap** chỉ được coi là **candidate metric families for W2 consideration (các họ chỉ số ứng viên để W2 cân nhắc)**; W1 tuyệt đối không chốt metric bắt buộc.
+   - Đối với **Attention Map Overlap**: chỉ áp dụng được nếu kiến trúc mô hình nội bộ mở ra biểu diễn attention/saliency tương thích, **không được mặc định khả dụng cho các API-based VLM hộp đen (black-box APIs)**; đồng thời không tự động coi attention map là lời giải thích hoàn chỉnh.
 4. **Quyết định về 36 mẫu Domain Mismatch:**  
-   - Thống nhất quy tắc xử lý: loại bỏ khỏi tập đánh giá cross-domain, hay phân loại lại theo `text_domain`, hay giữ nguyên kèm cờ cảnh báo rủi ro nhạy cảm.
-5. **Quyết định về Chiến dịch Gán nhãn Bổ sung (Annotation Campaign Decision):**  
-   - Đánh giá khả năng và nguồn lực có cho phép thực hiện gán nhãn thủ công vùng lý do (Rationale Bounding Box) cho một tập chuẩn hóa nhỏ (100 mẫu) phục vụ nghiên cứu sâu "Correct Answer, Wrong Reason" hay không.
+   - Thống nhất quy tắc xử lý đối với 36 mẫu xung đột giữa thư mục và văn bản: loại bỏ khỏi tập đánh giá cross-domain, hay phân loại lại theo `text_domain`, hay giữ nguyên kèm cờ cảnh báo rủi ro nhạy cảm.
+5. **Đánh giá Khả năng Nhiễm dữ liệu Tiền huấn luyện (Pretraining Data Contamination Check):**  
+   - W2 cần ghi nhận ngày phát hành chính thức và mốc thời gian cutoff dữ liệu huấn luyện của từng mô hình VLM được đánh giá (nếu có thông tin công khai); thảo luận khả năng benchmark InspecSafe-V1 công khai (từ tháng 04/2026) có thể đã nằm trong tập tiền huấn luyện của các mô hình mới hơn (chỉ nêu như một câu hỏi mở và rủi ro phương pháp luận, không khẳng định có nhiễm nếu chưa có bằng chứng thực tế).
+6. **Quyết định về Điều tra Toàn diện Tập Direct Support (Full Census) và Gán nhãn Bổ sung:**  
+   - Thực hiện census toàn dataset để xác định chính xác quy mô tập Direct Support; đồng thời đánh giá khả năng thực hiện gán nhãn thủ công vùng lý do (Rationale Bounding Box) cho một tập chuẩn hóa nhỏ (100 mẫu) nếu muốn phục vụ nghiên cứu chuyên sâu hiện tượng "Correct Answer, Wrong Reason".
 
 ---
 
 ## 21. Giới hạn của đợt Audit (Limitations of Audit)
 
-1. **Quy mô mẫu khảo sát chuyên sâu:** Phân tích định lượng về grounding được thực hiện trên 63 mẫu Anomaly có chọn lọc phân tầng (chiếm 6,3% tổng số mẫu bất thường). Mặc dù tập mẫu bao trùm 100% miền luyện kim, 100% mẫu Level03, toàn bộ 7 cặp exact và cả 12 họ nguồn, các tỷ lệ phần trăm cụ thể không nên bị ngoại suy tuyệt đối ra toàn bộ 1.000 mẫu mà cần được xem như chỉ dấu phân bố thực nghiệm.
-2. **Thiếu ánh xạ Upstream:** Không thể giải quyết triệt để sự chênh lệch giữa 2.239 trạm kiểm tra và 3.234 thư mục điểm, cũng như danh tính của 3 lớp RGB bị thiếu do không có metadata bổ sung từ phía tác giả.
+1. **Bản chất của tập mẫu khảo sát chuyên sâu:** Phân tích định lượng về grounding được thực hiện trên 63 mẫu Anomaly có chọn lọc phân tầng (chiếm 6,3% tổng số mẫu bất thường). Do tập mẫu được thiết kế có chủ đích để kiểm tra các trường hợp khó (100% miền luyện kim, 100% mẫu Level03, toàn bộ 7 cặp exact confirmed, và cả 12 họ nguồn), các tỷ lệ phần trăm mô tả trong tập này (như 20,6% Direct Support, 73,0% Partial Proxy) **không được ngoại suy trực tiếp sang toàn bộ 1.000 mẫu Anomaly**.
+2. **Thiếu ánh xạ Upstream:** Không thể giải quyết triệt để sự chênh lệch giữa 2.239 trạm kiểm tra và 3.234 thư mục điểm, cũng như danh tính của 3 lớp RGB bị thiếu do không có metadata bổ sung từ phía tác giả; các cách giải thích hiện tại vẫn là giả thuyết thuần túy.
 3. **Chưa có dữ liệu định lượng về Attention của VLM:** Mọi phân tích về khả năng grounding ở bước này đều dựa trên sự đối chiếu tĩnh giữa câu mô tả TXT và đa giác JSON; mức độ bám bằng chứng thực tế của từng mô hình VLM cụ thể sẽ được đo đạc bằng thực nghiệm suy luận tại Tuần 3.
 
 ---
