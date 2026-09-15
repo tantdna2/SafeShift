@@ -193,7 +193,7 @@ Toàn bộ các bảng số liệu dưới đây được tổng hợp từ cens
 - **Danh mục nhãn đối tượng thô:** **231 chuỗi nhãn duy nhất** (Train: 207; Test: 166; Giao nhau: 142; 65 chỉ có ở Train; 24 chỉ có ở Test).
   *(Lưu ý: Bài báo chính thức công bố 234 categories; khoảng cách 3 lớp là `UNRESOLVED`, SafeShift không chuẩn hóa nhãn để ép khớp).*
 - **Độ phân giải hình ảnh:** Xác nhận **66 độ phân giải duy nhất**, trong đó 3 độ phân giải chuẩn chiếm 96,19%:
-  - `2560 x 1440` (2K QHD): **2.576 ảnh (51,39%)**
+  - `2560 x 1440` (QHD / 1440p): **2.576 ảnh (51,39%)**
   - `1920 x 1080` (Full HD): **2.124 ảnh (42,37%)**
   - `1280 x 720` (HD): **122 ảnh (2,43%)**
   - 63 biến thể kích thước khác: **191 ảnh (3,81%)**
@@ -267,7 +267,7 @@ Kiểm toán ghi nhận 5 nhóm cảnh báo kỹ thuật với tổng cộng 5.4
 - `Level04` (Normal) chiếm **80,05%** (4.013 mẫu), trong khi `Level03` chỉ chiếm **0,30% (15 mẫu)**.
 - Tỷ số mất cân bằng lớp lớn nhất / nhỏ nhất là **267,53 : 1**.
 - Toàn bộ 15 mẫu `Level03` đều thuộc về robot ray treo `SuspendedRail` (9 ở tunnel, 4 ở coal_conveyor, 1 ở power, 1 ở metallurgy, 0 ở oil_chemical).
-- **Hệ quả:** Thước đo độ chính xác tổng thể đơn thuần (Plain Accuracy) sẽ che khuất hoàn toàn sự thất bại trên các lớp rủi ro thiểu số. W2 bắt buộc phải cân nhắc các metric nhạy với mất cân bằng (như Macro-F1, Balanced Accuracy, Per-class Recall).
+- **Hệ quả:** Thước đo độ chính xác tổng thể đơn thuần (Plain accuracy) có nguy cơ che khuất hiệu năng trên các lớp hiếm. W2 bắt buộc phải cân nhắc các metric nhạy với mất cân bằng (như Macro-F1, Balanced Accuracy, Per-class Recall).
 
 ### 8.2 Giới hạn Dữ liệu của Miền Luyện kim (`metallurgy`)
 
@@ -370,10 +370,10 @@ Bảng tổng hợp phán quyết khả thi chính thức cho từng định hư
 | **Cross-Domain Analysis** *(Phân tích so sánh 5 miền)* | **`FEASIBLE_WITH_CONSTRAINTS`** | Tồn tại 5 miền công nghiệp rõ rệt với quy mô lớn (720–1.280 mẫu). | Báo cáo per-domain có kiểm soát yếu tố platform; xử lý 36 ca domain mismatch. |
 | **Official Split as Clean DG Protocol** *(DG chuẩn trên split chính thức)* | **`NOT_CURRENTLY_FEASIBLE / NOT SUITABLE AS-IS`** | Official split bị rò rỉ 7 cặp exact confirmed và tương quan chuỗi; `metallurgy` có Test Anomaly = 0. | Chuyển sang Zero-shot Robustness trên mô hình frozen, hoặc dùng custom split. |
 | **Custom Group-Aware DG Design** *(Thiết kế split mới kiểm soát nhóm)* | **`PARTIALLY_FEASIBLE`** | Khái niệm 5 miền độc lập về lý thuyết; có thể gom cụm cách ly 12 source families. | Thiết kế và thẩm định split mới tại W2, ghi nhận vào `DECISIONS.md`. |
-| **Evidence Grounding with Existing Annotations** *(Grounding với nhãn có sẵn)* | **`PARTIALLY_FEASIBLE`** | Có 37.434 đa giác đối tượng chất lượng cao; nhưng thiếu hoàn toàn nhãn bằng chứng lý do an toàn. | Giới hạn bài toán ở mức bám đối tượng liên quan (Object Support); không claim full grounding. |
+| **Evidence Grounding with Existing Annotations** *(Grounding với nhãn có sẵn)* | **`PARTIALLY_FEASIBLE`** | Có 37.434 object polygon annotations (chú thích đa giác đối tượng); nhưng thiếu hoàn toàn nhãn bằng chứng lý do an toàn. | Giới hạn bài toán ở mức bám đối tượng liên quan (Object Support); không claim full grounding. |
 | **Weak Proxy Grounding** *(Grounding qua vùng đại diện Person)* | **`FEASIBLE_WITH_CONSTRAINTS`** | 73,0% mẫu trong tập 63 mẫu khảo sát có thể dùng đa giác `Person` làm proxy cho lỗi PPE. | Chuẩn hóa giao thức đánh giá Proxy; ghi rõ hạn chế proxy trong báo cáo. |
 | **Full Hazard-Specific Grounding** *(Grounding lý do an toàn chuyên sâu)* | **`NOT_CURRENTLY_FEASIBLE`** | InspecSafe-V1 hoàn toàn không có bounding box cho "vật thể bị thiếu" hoặc lý do chuyên gia. | Bắt buộc phải tổ chức chiến dịch gán nhãn bổ sung (Annotation Campaign) nếu muốn làm. |
-| **SafeShift Seminar Overall** *(Tổng thể đề tài Seminar)* | **`FEASIBLE_WITH_CONSTRAINTS`** | Bộ dữ liệu độc nhất vô nhị về kiểm tra an toàn công nghiệp; giấy phép CC-BY-4.0 vững chắc. | Điều chỉnh phạm vi, mục tiêu và câu chữ học thuật phù hợp với thực chứng dữ liệu. |
+| **SafeShift Seminar Overall** *(Tổng thể đề tài Seminar)* | **`FEASIBLE_WITH_CONSTRAINTS`** | Một real-world multimodal industrial safety benchmark (benchmark an toàn công nghiệp đa phương thức ngoài thực tế) phù hợp với phạm vi nghiên cứu SafeShift; giấy phép CC-BY-4.0 vững chắc. | Điều chỉnh phạm vi, mục tiêu và câu chữ học thuật phù hợp với thực chứng dữ liệu. |
 
 ---
 

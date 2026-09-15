@@ -204,7 +204,7 @@ def plot_safety_distribution(output_path: Path) -> None:
             draw.text((callout_x - 62, callout_y + 6), "Rare Class: 15 samples", fill=(180, 83, 9), font=alert_font)
             draw.line([(callout_x, callout_y + 28), (callout_x, y0 - 36)], fill=(217, 119, 6), width=1)
 
-    footer_text = "SafeShift Week 1 Dataset Audit — Level04 accounts for 80.05% of dataset. Plain accuracy will hide minority class performance."
+    footer_text = "SafeShift Week 1 Dataset Audit — Level04 accounts for 80.05% of dataset. Plain accuracy may obscure minority-class performance."
     draw.text((margin_left, height - 25), footer_text, fill=(156, 163, 175), font=note_font)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
