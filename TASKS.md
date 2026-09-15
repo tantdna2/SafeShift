@@ -9,9 +9,9 @@ Mục tiêu: khảo sát, kiểm tra và hiểu InspecSafe-V1 trước bất k�
 
 ## 1. Xác minh nguồn và quyền sử dụng
 
-- [ ] Xác định nguồn phát hành chính thức và tài liệu đi kèm InspecSafe-V1; ghi URL, ngày truy cập và version/release nếu có.
-- [ ] Đọc license, điều kiện truy cập, quyền dùng/chia sẻ ảnh, annotation và ví dụ trong paper; ghi lại các ràng buộc hoặc thông tin chưa rõ.
-- [ ] Ghi cách lấy dữ liệu local, tên archive và checksum nếu có; không đưa archive hoặc credentials lên Git.
+- [x] Xác định nguồn phát hành chính thức và tài liệu đi kèm InspecSafe-V1; ghi URL, ngày truy cập và version/release nếu có. Đã xác minh: Hugging Face (`Tetrabot2026/InspecSafe-V1`, commit `f3cb7d3e`), Zenodo (`10.5281/zenodo.19885643`, v1.0.1), GitHub (`liuzy0708/InspecSafe`), paper arXiv:2601.21173 (Zeyi Liu, Xiao He et al., 2026). Tài liệu chi tiết: `notes/source_license_audit.md`.
+- [x] Đọc license, điều kiện truy cập, quyền dùng/chia sẻ ảnh, annotation và ví dụ trong paper; ghi lại các ràng buộc hoặc thông tin chưa rõ. Đã xác minh: Dataset phát hành dưới CC-BY-4.0 (cho phép sử dụng học thuật, tạo phái sinh và trích dẫn ảnh mẫu kèm attribution); paper giữ bản quyền arXiv non-exclusive; khuôn mặt người đã được làm mờ mosaic; raw dataset bị cấm commit/redistribute lên SafeShift Git. Rights Matrix và giới hạn: `notes/source_license_audit.md`.
+- [x] Ghi cách lấy dữ liệu local, tên archive và checksum nếu có; không đưa archive hoặc credentials lên Git. Đã ghi rõ: dữ liệu máy hiện tại khôi phục từ backup `D:\SafeShift.zip` vào `data/raw/InspecSafe-V1/`; fingerprint SHA-256 nội bộ `1a52f907...` khớp bản audit cũ; kích thước `train.tar.gz` (17.886.855.594 bytes) và `test.tar.gz` (5.748.799.871 bytes) khớp tuyệt đối 100% với Hugging Face LFS và Zenodo upstream checksums. Toàn bộ archives được ignore, không đưa lên Git.
 
 ## 2. Kiểm kê dữ liệu local
 
