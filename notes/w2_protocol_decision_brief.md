@@ -3,7 +3,7 @@
 **Phân tích phương pháp luận để lựa chọn câu hỏi nghiên cứu và giao thức đánh giá xuyên miền cho SafeShift**  
 *Dự án SafeShift — Giai đoạn: Tuần 2 (Research Protocol), Bước W2.1*  
 *Tài liệu hỗ trợ quyết định (Decision Brief) trình Research Lead và Hội đồng dự án*  
-*Ngày lập: 15/09/2026 (Hiệu đính: 15/09/2026)*  
+*Ngày lập: 15/09/2026 (Bản hoàn thiện: 15/09/2026)*  
 *Trạng thái tài liệu: `PROPOSED, NOT APPROVED` (Chờ phê duyệt chính thức)*  
 
 ---
@@ -23,7 +23,7 @@ Vấn đề cốt lõi cần giải quyết cho phạm vi đề tài Seminar là
 > hay  
 > **(B) Domain Generalization** *(Khái quát hóa miền theo định nghĩa học máy truyền thống có huấn luyện trên source domain)*?  
 > hay  
-> **(C) Hai giao thức song song** *(với phân định rõ ràng vai trò Baseline Replication Protocol và Primary Research Protocol)*?
+> **(C) Hai giao thức song song** *(với phân định rõ ràng vai trò Baseline Replication Protocol và Primary Research Protocol Candidate)*?
 
 ---
 
@@ -151,19 +151,19 @@ Danh mục công trình khảo sát:
 - **Protocol:** Huấn luyện bộ decoder nhẹ (lightweight prompt learner / decoder) trên ảnh bất thường mô phỏng kết hợp với LLM.
 - **Source/Target:** Thử nghiệm trên MVTec AD và VisA; đánh giá cross-object generalization.
 - **Model state:** Fine-tuned lightweight layers trên nền frozen LLM.
-- **Metrics:** Image-level Accuracy, Precision, Recall, Localization IoU.
+- **Metrics:** Báo cáo các kết quả chủ đạo gồm: **Accuracy**, **Image-level AUC**, và **Pixel-level AUC**. (Không mô tả Precision / Recall / Localization IoU như các chỉ số chính thức nếu không được thẩm định từ paper).
 - **Relevance:** Chứng minh tiềm năng đối thoại và khả năng định vị lỗi của VLM trong ngữ cảnh công nghiệp.
 - **What SafeShift should NOT copy blindly:** Không vội vàng huấn luyện thêm adapter/decoder ở giai đoạn Seminar khi dữ liệu InspecSafe-V1 có rủi ro rò rỉ chuỗi nghiêm trọng.
 
-#### 4. Multimodal Contamination Analysis
-- **Title:** *Both Text and Images Leaked! A Systematic Analysis of Multimodal LLM Data Contamination*
-- **Year / Venue:** 2024/2025 / Findings of EMNLP 2025 (arXiv:2411.03823).
+#### 4. Multimodal Contamination Analysis (MM-Detect)
+- **Title:** *Both Text and Images Leaked! A Systematic Analysis of Data Contamination in Multimodal LLM*
+- **Year / Venue:** 2024/2025 / Findings of EMNLP 2025 (arXiv:2411.03823 đóng vai trò là bản lưu trữ preprint).
 - **Link:** [https://arxiv.org/abs/2411.03823](https://arxiv.org/abs/2411.03823)
 - **Problem:** Phân tích có hệ thống hiện tượng rò rỉ đồng thời cả văn bản lẫn hình ảnh của các benchmark phổ biến vào tập tiền huấn luyện của MLLMs.
-- **Protocol:** Đề xuất khung kiểm định MM-Detect nhằm phát hiện mức độ ghi nhớ (memorization) của mô hình đối với benchmark.
-- **Source/Target:** Đối chiếu giữa dữ liệu benchmark công khai và phản ứng bất thường của mô hình khi xáo trộn hình ảnh/văn bản.
+- **Protocol:** Đề xuất khung kiểm định MM-Detect nhằm phát hiện mức độ rò rỉ dữ liệu đa phương thức.
+- **Source/Target:** Đối chiếu giữa dữ liệu benchmark công khai và phản ứng của mô hình khi đưa vào biến đổi kiểm định.
 - **Model state:** Frozen Frontier Models.
-- **Metrics:** Memorization Score, Degradation Ratio dưới biến đổi ngữ nghĩa.
+- **Metrics / Detection quantities:** Sử dụng các đại lượng kiểm định: **CR** (Correct Rate), **PCR** (Perturbed Correct Rate), **$\Delta$** (dataset-level performance change), **$\Phi$** (instance leakage metric), và các cấp độ ô nhiễm (**contamination degree categories**).
 - **Relevance:** Cung cấp cơ sở lý thuyết chứng minh rằng zero-shot evaluation trên mô hình thương mại không miễn nhiễm với benchmark leakage nếu benchmark đã được crawl lên mạng.
 - **What SafeShift should NOT copy blindly:** Không tự tiện tuyên bố rằng mô hình VLM "chắc chắn chưa thấy" InspecSafe-V1; cần tra cứu và ghi nhận rõ mốc training cutoff của từng mô hình.
 
@@ -172,11 +172,11 @@ Danh mục công trình khảo sát:
 - **Year / Venue:** 2026 / ICLR 2026 Conference Paper (Authors: Jaden Park, Mu Cai, Feng Yao, et al.).
 - **Link:** [https://openreview.net/forum?id=gk6OC3XIZW](https://openreview.net/forum?id=gk6OC3XIZW)
 - **Problem:** Phân biệt khả năng tổng quát hóa thực sự với việc học vẹt (rote memorization) do ô nhiễm dữ liệu tiền huấn luyện.
-- **Protocol:** Đưa vào các nhiễu loạn ngữ nghĩa nhỏ (semantic perturbations) trên cả ảnh và câu hỏi; nếu đáp án của mô hình không đổi dù ngữ cảnh đã bị lật ngược, đó là bằng chứng nhiễm dữ liệu.
+- **Protocol:** Đưa vào các nhiễu loạn ngữ nghĩa nhỏ (semantic perturbations) trên cả ảnh và câu hỏi để kiểm tra độ nhạy của mô hình dưới các thiết lập ô nhiễm có kiểm soát.
 - **Source/Target:** Các benchmark VQA và reasoning chuẩn.
 - **Model state:** Frozen VLMs.
-- **Metrics:** Perturbation Sensitivity Score, Contamination Index.
-- **Relevance:** Là phương pháp luận giá trị để SafeShift xem xét kiểm chứng tính độc lập của các mô hình VLM đối với các mẫu trùng lặp của InspecSafe-V1.
+- **Metrics / Evaluation:** Quy trình đánh giá so sánh hiệu năng của mô hình trên benchmark gốc so với benchmark bị nhiễu loạn ngữ nghĩa (original vs semantically perturbed benchmarks) và xem xét độ sụt giảm hiệu năng tương ứng dưới các thiết lập ô nhiễm có kiểm soát (*controlled contamination settings*).
+- **Relevance:** Phương pháp luận giá trị để SafeShift nhận thức rõ về tính độc lập của các mô hình VLM đối với dữ liệu kiểm chuẩn.
 - **What SafeShift should NOT copy blindly:** Không đưa bài toán phát hiện contamination thành mục tiêu chính của Seminar vì vượt quá phạm vi tài nguyên tính toán.
 
 #### 6. LVLM Attention Heads for Visual Grounding
@@ -206,7 +206,7 @@ Danh mục công trình khảo sát:
 #### 8. OneRef: Unified Grounding
 - **Title:** *OneRef: Unified One-tower Expression Grounding and Segmentation with Mask Referring Modeling*
 - **Year / Venue:** 2024 / NeurIPS 2024 (Authors: Linhui Xiao, Xiaoshan Yang, Fang Peng, Yaowei Wang, Changsheng Xu).
-- **Link:** [https://proceedings.neurips.cc/paper_files/paper/2024/hash/OneRef.pdf](https://proceedings.neurips.cc/paper_files/paper/2024/hash/OneRef.pdf)
+- **Link:** [https://proceedings.neurips.cc/paper_files/paper/2024/hash/fcd812a51b8f8d05cfea22e3c9c4b369-Abstract-Conference.html](https://proceedings.neurips.cc/paper_files/paper/2024/hash/fcd812a51b8f8d05cfea22e3c9c4b369-Abstract-Conference.html) (PDF chính thức: [Paper-Conference.pdf](https://proceedings.neurips.cc/paper_files/paper/2024/file/fcd812a51b8f8d05cfea22e3c9c4b369-Paper-Conference.pdf)).
 - **Problem:** Hợp nhất bài toán định vị bounding box và phân đoạn mặt nạ pixel dưới một kiến trúc tháp đơn (one-tower) với mô hình hóa tham chiếu mặt nạ.
 - **Protocol:** Đánh giá năng lực liên kết cụm từ - vùng ảnh (phrase-to-region alignment).
 - **Source/Target:** RefCOCO, RefCOCO+, RefCOCOg.
@@ -229,7 +229,7 @@ Danh mục công trình khảo sát:
 
 #### 10. Leveraging VLMs for Domain Generalization (Addepalli et al.)
 - **Title:** *Leveraging Vision-Language Models for Improving Domain Generalization in Image Classification*
-- **Year / Venue:** 2024 / IEEE/CVF CVPR 2024, pp. 22820–22830 (Authors: Sravanti Addepalli, et al.).
+- **Year / Venue:** 2024 / IEEE/CVF CVPR 2024, pp. 23922–23932 (Authors: Sravanti Addepalli, Ashish Ramayee Asokan, Lakshay Sharma, R. Venkatesh Babu).
 - **Link:** [https://openaccess.thecvf.com/content/CVPR2024/html/Addepalli_Leveraging_Vision-Language_Models_for_Improving_Domain_Generalization_in_Image_Classification_CVPR_2024_paper.html](https://openaccess.thecvf.com/content/CVPR2024/html/Addepalli_Leveraging_Vision-Language_Models_for_Improving_Domain_Generalization_in_Image_Classification_CVPR_2024_paper.html)
 - **Problem:** Khai thác đặc trưng từ các mô hình VLM lớn để tăng cường năng lực khái quát hóa miền (DG) cho các bộ phân loại hình ảnh.
 - **Protocol:** Huấn luyện trên miền nguồn (source-domain learning) sử dụng thông tin ngôn ngữ đa phương thức để định hướng không gian đặc trưng bất biến miền.
@@ -241,7 +241,7 @@ Danh mục công trình khảo sát:
 
 #### 11. PracticalDG (Chen et al.)
 - **Title:** *PracticalDG: Perturbation Distillation on Vision-Language Models for Hybrid Domain Generalization*
-- **Year / Venue:** 2024 / IEEE/CVF CVPR 2024, pp. 28659–28669 (Authors: Guanxiong Chen, et al.).
+- **Year / Venue:** 2024 / IEEE/CVF CVPR 2024, pp. 23501–23511 (Authors: Zining Chen, Weiqiu Wang, Zhicheng Zhao, Fei Su, Aidong Men, Hongying Meng).
 - **Link:** [https://openaccess.thecvf.com/content/CVPR2024/html/Chen_PracticalDG_Perturbation_Distillation_on_Vision-Language_Models_for_Hybrid_Domain_Generalization_CVPR_2024_paper.html](https://openaccess.thecvf.com/content/CVPR2024/html/Chen_PracticalDG_Perturbation_Distillation_on_Vision-Language_Models_for_Hybrid_Domain_Generalization_CVPR_2024_paper.html)
 - **Problem:** Chuyển giao tri thức khái quát hóa miền thông qua chưng cất nhiễu loạn trên VLM cho bài toán DG thực tế.
 - **Protocol:** Huấn luyện mô hình học sinh thông qua cơ chế chưng cất đặc trưng có định hướng từ VLM trên tập nguồn.
@@ -253,7 +253,7 @@ Danh mục công trình khảo sát:
 
 #### 12. Test-Time Zero-Shot Generalization of VLMs (Zanella & Ben Ayed)
 - **Title:** *On the Test-Time Zero-Shot Generalization of Vision-Language Models: Do We Really Need Prompt Learning?*
-- **Year / Venue:** 2024 / IEEE/CVF CVPR 2024, pp. 23821–23830 (Authors: Maxime Zanella, Ismail Ben Ayed).
+- **Year / Venue:** 2024 / IEEE/CVF CVPR 2024, pp. 23783–23793 (Authors: Maxime Zanella, Ismail Ben Ayed).
 - **Link:** [https://openaccess.thecvf.com/content/CVPR2024/html/Zanella_On_the_Test-Time_Zero-Shot_Generalization_of_Vision-Language_Models_Do_We_CVPR_2024_paper.html](https://openaccess.thecvf.com/content/CVPR2024/html/Zanella_On_the_Test-Time_Zero-Shot_Generalization_of_Vision-Language_Models_Do_We_CVPR_2024_paper.html)
 - **Problem:** Khảo sát năng lực tổng quát hóa zero-shot tại thời điểm kiểm thử (test-time) của VLM và đặt câu hỏi liệu các kỹ thuật prompt learning có thực sự vượt trội hơn các giải pháp không huấn luyện hay không.
 - **Protocol:** Đánh giá so sánh trực tiếp giữa frozen zero-shot inference, unsupervised test-time adaptation và source-domain prompt learning trên 15 bộ dữ liệu OOD.
@@ -297,7 +297,7 @@ Dưới đây là phân tích khoa học toàn diện đối với 4 phương á
 - **Appropriate Terminology:** `Frozen Zero-Shot Evaluation on Official Benchmark Test Split` (hoặc `Official Benchmark Replication`). Tuyệt đối không gọi là Domain Generalization.
 - **Required Training:** **KHÔNG**. Toàn bộ mô hình được giữ nguyên trọng số (Frozen weights), suy luận thuần túy qua prompting.
 - **Use of Official Split:** Sử dụng nguyên trạng tập `test` chính thức gồm đúng **1.250 mẫu** (999 Normal, 251 Anomaly). Bỏ qua tập `train` 3.763 mẫu trong khâu kiểm chuẩn này.
-- **Leakage Sensitivity:** **RẤT THẤP đối với pipeline của SafeShift** (vì SafeShift không huấn luyện mô hình trên tập train của benchmark, do đó không kích hoạt đường rò rỉ train-to-test của bản thân quy trình nghiên cứu). Tuy nhiên, **pretraining contamination vẫn là một rủi ro mở** (mô hình thương mại có thể đã thấy dữ liệu web từ trước). Lưu ý: 7 cặp exact cross-split tự chúng là bằng chứng về việc tái sử dụng ảnh giữa train/test của benchmark, **không phải bằng chứng chứng minh mô hình đã bị ô nhiễm tiền huấn luyện**.
+- **Leakage Sensitivity:** **RẤT THẤP đối với rò rỉ phát sinh từ quy trình huấn luyện của SafeShift (SafeShift-induced train→test leakage)** vì SafeShift không huấn luyện mô hình trên tập train của benchmark. Tuy nhiên, **sự phụ thuộc giữa các mẫu kiểm thử (evaluation sample dependence) và rủi ro ô nhiễm dữ liệu tiền huấn luyện (pretraining contamination) vẫn là các vấn đề mở**. Lưu ý: 7 cặp exact cross-split tự chúng là bằng chứng về việc tái sử dụng ảnh giữa train/test của benchmark, **không phải bằng chứng chứng minh mô hình đã bị ô nhiễm tiền huấn luyện**.
 - **Platform Confounding Sensitivity:** **CAO**. Kết quả quan sát trên từng miền phản ánh đồng thời cả miền công nghiệp lẫn loại robot tuần tra của miền đó.
 - **Metallurgy Feasibility:** **KHÔNG KHẢ THI cho phát hiện bất thường** (`NOT_CURRENTLY_FEASIBLE FOR ANOMALY EVALUATION`). Tập test chính thức của metallurgy có **0 mẫu Anomaly** (177/177 mẫu là Normal). Do đó, chỉ có thể đo Specificity / False Positive Rate, hoàn toàn không tính được Recall hay F1 cho lớp Anomaly của miền này.
 - **Ability to Compare with InspecSafe Official Results:** **HIGHEST / DIRECTEST COMPARABILITY (Khả năng so sánh trực tiếp cao nhất)**, với điều kiện bắt buộc là phải tái lập chính xác: (1) câu prompt yêu cầu, (2) quy trình tiền xử lý ảnh, (3) phiên bản mô hình cụ thể, (4) cấu hình giải mã (temperature, top_p, seed), và (5) mốc snapshot API nếu dùng dịch vụ thương mại. Cần lưu ý rằng hiện tượng trôi dạt phiên bản API (API model drift) có thể khiến kết quả số học không trùng khớp tuyệt đối.
@@ -328,7 +328,7 @@ Dưới đây là phân tích khoa học toàn diện đối với 4 phương á
   *Trạng thái hiện tại:* **DESIGN NOT YET DEFINED (Thiết kế chưa được định nghĩa chính thức; chờ W2.2 quyết định chính sách gom nhóm)**.
 - **Required Training:** **KHÔNG**. Mô hình hoàn toàn frozen.
 - **Use of Official Split:** Đề xuất một tập con đánh giá có kiểm soát nhóm (Group-aware Evaluation Subset). Với mẫu Normal: sử dụng `point_id` hoặc thông tin chuỗi ảnh chụp liền kề làm căn cứ gom nhóm ứng viên. Với mẫu Anomaly: sử dụng heuristic 12 họ nguồn làm tín hiệu tham khảo (lưu ý: heuristic này không phải là video ID chính thức). Tuyệt đối không đưa ra con số ước lượng quy mô mẫu (như 1.500–2.000 mẫu) khi manifest thực tế chưa được tạo lập và kiểm chứng. Không dùng tên gọi "Deduplicated Benchmark" như một sản phẩm đã hoàn thành.
-- **Leakage Sensitivity:** **ĐƯỢC KIỂM SOÁT TỐT HƠN VỀ MẶT THIẾT KẾ**. Giảm thiểu ảnh hưởng của các khung hình chụp liên tiếp và loại trừ 7 cặp exact confirmed.
+- **Leakage Sensitivity:** **ĐƯỢC CẢI THIỆN TIỀM NĂNG / PHỤ THUỘC TÍNH HỢP LỆ CỦA QUY TẮC GOM NHÓM**. Giảm thiểu ảnh hưởng của các khung hình chụp liên tiếp và loại trừ 7 cặp exact confirmed nếu các giả định grouping được xác thực ở W2.2.
 - **Platform Confounding Sensitivity:** **TRUNG BÌNH - CAO**. Vẫn chịu ảnh hưởng bởi tương quan platform tự nhiên giữa các phân xưởng.
 - **Metallurgy Feasibility:** **CỰC KỲ YẾU**. Nếu loại bỏ các mẫu mang text claim `oil_chemical`, miền này chỉ còn đúng 1 mẫu Anomaly duy nhất.
 - **Ability to Compare with InspecSafe Official Results:** **KHÔNG THỂ SO SÁNH TRỰC TIẾP**.
@@ -519,7 +519,7 @@ Dưới đây là 3 câu hỏi nghiên cứu ứng viên (RQs) được thiết 
 - **Dữ liệu trả lời:** Toàn bộ 5 miền của InspecSafe-V1 (P1 Official Test 1.250 mẫu và P2 Full Dataset 5.013 mẫu).
 - **Khái niệm so sánh:** Đo lường sự biến thiên (variation) hoặc khoảng cách hiệu năng (performance gap) giữa các miền so với hiệu năng gộp chung (pooled performance) hoặc miền tham chiếu được chọn.
 - **Họ chỉ số phù hợp (Candidate Metric Families):** Macro-F1, Balanced Accuracy, Per-class Recall, True Negative Rate (Specificity). Bỏ chỉ số "Expected Cost of Misclassification" do chưa có ma trận chi phí hợp lệ.
-- **Tính khả thi từ W1:** **HOÀN TOÀN HỖ TRỢ (`FEASIBLE_WITH_CONSTRAINTS`)**.
+- **Tính khả thi từ W1:** **`FEASIBLE_WITH_CONSTRAINTS`**. (Không dùng cách diễn đạt tự mâu thuẫn "HOÀN TOÀN HỖ TRỢ (FEASIBLE_WITH_CONSTRAINTS)").
 
 ### 11.2 Research Question 2 (RQ2)
 - **Precise English Wording:**  
@@ -527,12 +527,12 @@ Dưới đây là 3 câu hỏi nghiên cứu ứng viên (RQs) được thiết 
 - **Diễn giải tiếng Việt:**  
   *RQ2: Những cấp độ an toàn và phân tầng nguy cơ đã được xác minh nào bộc lộ mức độ tập trung lỗi cao nhất trong các dự đoán của VLM đóng băng, và mức độ tập trung lỗi này liên hệ như thế nào với tính hiển hiện của nguy cơ hoặc tính chất hiếm của mẫu dữ liệu?*
 - **Bản chất biến số:**
-  - **Yếu tố phân tầng:** Cấp độ rủi ro quy chuẩn (Level01–Level04); Phân tầng nguy cơ đã xác minh (Verified Hazard Strata — chỉ được sử dụng sau khi cuộc tổng điều tra census D6 được hoàn thành ở W2.3).
+  - **Yếu tố phân tầng:** Cấp độ rủi ro quy chuẩn (Level01–Level04); Phân tầng nguy cơ đã xác minh (Verified Hazard Strata — **lưu ý: danh mục phân tầng nguy cơ chưa được chốt chính thức và chỉ được xác định sau khi hoàn thành cuộc tổng điều tra census D6 ở W2.3**).
   - **Biến đo lường:** Tỷ lệ bỏ sót vi phạm (False Negative Rate); Tỷ lệ nhầm lẫn giữa các cấp độ an toàn (Confusion Matrix).
 - **Nguyên tắc phương pháp luận:** Tuyệt đối không giả định rằng mẫu hiếm trong benchmark đồng nghĩa với hiếm trong dữ liệu tiền huấn luyện của VLM; không đưa ra kết luận nhân quả từ tần suất lớp trong benchmark.
 - **Dữ liệu trả lời:** Tập 1.000 mẫu `Anomaly_data` và phân bố 4 cấp độ an toàn Level01–Level04.
 - **Họ chỉ số phù hợp:** Per-stratum Recall, Confusion Matrix, Error Distribution Analysis, độ bất định thống kê do mẫu số nhỏ.
-- **Tính khả thi từ W1:** **HOÀN TOÀN HỖ TRỢ**.
+- **Tính khả thi từ W1:** **`FEASIBLE_WITH_CONSTRAINTS, PENDING D6 HAZARD-STRATA CENSUS`**.
 
 ### 11.3 Research Question 3 (RQ3)
 - **Precise English Wording:**  
@@ -543,7 +543,7 @@ Dưới đây là 3 câu hỏi nghiên cứu ứng viên (RQs) được thiết 
   - **Tập dữ liệu đánh giá:** Tập con có hỗ trợ đối tượng trực tiếp (Direct Object-Support Subset) và tập con đại diện yếu (Weak-Proxy Subset qua `Person`), được báo cáo hoàn toàn tách biệt.
   - **Biến đo lường:** Điểm số bám vùng đối tượng hỗ trợ (Bounding Box IoU / Pointing Game Hit Rate); Tỷ lệ phân ly quan sát được (`correct safety prediction + grounding miss relative to the available object-support annotation`).
 - **Nguyên tắc phương pháp luận:** Tuyệt đối không tự ý diễn giải hiện tượng này là "Correct Answer, Wrong Reason" (vì dataset không có Rationale Ground Truth); attention map không tự động được xem là lời giải thích nhân quả hoàn chỉnh, chỉ sử dụng định vị dựa trên attention cho các kiến trúc mô hình hỗ trợ trích xuất.
-- **Tính khả thi từ W1:** **KHẢ THI CÓ RÀNG BUỘC (`FEASIBLE_WITH_CONSTRAINTS`)**.
+- **Tính khả thi từ W1:** **`FEASIBLE_WITH_CONSTRAINTS`**.
 
 ---
 
@@ -562,7 +562,8 @@ Các giả thuyết được thiết kế lại dưới dạng giả thuyết th
 - **Null Hypothesis ($H_{2,0}$):**  
   *Tỷ lệ sai số phân loại an toàn của mô hình VLM phân bố đồng đều xuyên qua các cấp độ an toàn và các phân tầng nguy cơ.*
 - **Alternative Hypothesis ($H_{2,1}$):**  
-  *Tỷ lệ sai số phân bố không đồng nhất, trong đó các cấp độ rủi ro hiếm (đặc biệt là Level03) và các nguy cơ thiếu hụt trang bị bộc lộ tỷ lệ bỏ sót (False Negative Rate) cao hơn đáng kể so với các phân tầng nguy cơ có vật thể hiện hữu rõ ràng.*
+  *Tỷ lệ sai số phân bố không đồng nhất xuyên qua các cấp độ an toàn và phân tầng nguy cơ đã được xác minh.*  
+  *(Lưu ý: Giả thuyết có hướng về việc các nguy cơ thiếu hụt trang bị absence-based bộc lộ tỷ lệ bỏ sót cao hơn chỉ là **giả thuyết đề xuất (PROPOSED hypothesis)** có điều kiện phụ thuộc vào kết quả census và taxonomy tại W2.3).*
 
 ### 12.3 Giả thuyết 3 (Cho RQ3 — Tính nhất quán giữa Phân loại và Bám vùng)
 - **Null Hypothesis ($H_{3,0}$):**  
@@ -594,9 +595,9 @@ Bảng đối chiếu tổng hợp 4 phương án giao thức trên 8 tiêu chí
 | **1. Scientific Validity** *(Tính giá trị khoa học)* | **MEDIUM** (Hạn chế do Test Metallurgy Anomaly = 0) | **HIGH** (Bao quát trọn vẹn 5 miền thực tế) | **QUALIFIED HIGH** (Phụ thuộc vào thiết kế grouping ở W2.2) | **QUALIFIED / CONSTRAINED** (Đúng lý thuyết nhưng bị nhiễu nền tảng làm lu mờ) |
 | **2. Fit to W1 Evidence** *(Khớp với bằng chứng W1)* | **MEDIUM** (Bỏ phí 75% dữ liệu audit W1) | **HIGH** (Tận dụng toàn bộ census W1) | **HIGH** (Giải quyết trực tiếp các cảnh báo W1) | **LOW FIT FOR SEMINAR** (Metallurgy quá yếu, platform bị confound) |
 | **3. Seminar Feasibility** *(Tính khả thi cho Seminar)* | **VERY HIGH** (Đơn giản, chuẩn mực, an toàn) | **HIGH** (Khả thi cao, quản lý được chi phí) | **MEDIUM** (Cần thêm nỗ lực tạo manifest ở W2) | **PARTIALLY_FEASIBLE / NOT RECOMMENDED** (Gánh nặng thực nghiệm lớn) |
-| **4. Leakage Robustness** *(Khả năng chống rò rỉ)* | **HIGH** (SafeShift không train trên benchmark) | **MEDIUM** (Cần xử lý tương quan chuỗi) | **HIGH** (Kỳ vọng kiểm soát tốt nếu grouping đúng) | **LOW** (Nguy cơ rò rỉ exact và chuỗi xuyên miền) |
+| **4. Leakage Robustness** *(Khả năng chống rò rỉ)* | **HIGH ONLY AGAINST SAFESHIFT TRAIN→TEST LEAKAGE** (Evaluation dependence và pretraining contamination vẫn là rủi ro mở) | **MEDIUM** (Cần xử lý tương quan chuỗi) | **POTENTIALLY IMPROVED / CONDITIONAL ON GROUPING VALIDITY** (Phụ thuộc vào quy tắc gom nhóm ở W2.2) | **LOW** (Nguy cơ rò rỉ exact và chuỗi xuyên miền) |
 | **5. Comparability** *(Khả năng so sánh với bài báo gốc)* | **DIRECTEST / HIGHEST** (Đối soát 1:1 với điều kiện cấu hình) | **INDIRECT** (Khác biệt về quy mô mẫu kiểm thử) | **LOW** (Benchmark độc lập mới) | **NONE** (Tác giả không có thí nghiệm này) |
-| **6. Interpretability** *(Tính diễn giải khoa học)* | **MEDIUM** (Bị che khuất ở miền luyện kim) | **HIGH** (Rõ ràng trên từng phân xưởng) | **HIGH** (Loại trừ được các chuỗi trùng lặp) | **LOW** (Bị nhiễu kép domain + platform) |
+| **6. Interpretability** *(Tính diễn giải khoa học)* | **MEDIUM** (Bị che khuất ở miền luyện kim) | **HIGH** (Rõ ràng trên từng phân xưởng) | **QUALIFIED / POTENTIALLY HIGH** (Có tiềm năng giảm phụ thuộc chuỗi nếu grouping được xác thực; true video IDs không có sẵn) | **LOW** (Bị nhiễu kép domain + platform) |
 | **7. Compute / Token Burden** *(Gánh nặng tính toán/chi phí)* | **LOW** (1.250 mẫu suy luận) | **MODERATE** (~4,01x mẫu so với P1) | **MODERATE** (Phụ thuộc quy mô manifest) | **HIGH** (Đòi hỏi huấn luyện lặp lại mô hình) |
 | **8. Thesis Extensibility** *(Khả năng mở rộng cho Luận văn)* | **LOW** (Chỉ là bước chạy lại) | **MEDIUM** (Tài liệu tham chiếu thực nghiệm) | **HIGH** (Nền tảng cho công bố độc lập) | **HIGH** (Hướng nghiên cứu trọng tâm sau này) |
 
@@ -665,15 +666,15 @@ Nhằm đảm bảo tiến độ và đúng phạm vi của từng bước, các
 1. **Liu, Z., Liu, S., Min, J., Zhang, Z., Cen, J., Han, P., Hu, S., Meng, Z., He, X., & Zhou, D.** (2026). *Multimodal Benchmark for Safety Assessment in Industrial Inspection Scenarios*. Nature Scientific Data, 13, Article 1198. DOI: [10.1038/s41597-026-07796-x](https://doi.org/10.1038/s41597-026-07796-x).
 2. **Wang, C., Guan, X., et al.** (2024). *Real-IAD: A Real-World Multi-View Dataset for Benchmarking Versatile Industrial Anomaly Detection*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2024), pp. 22883–22892. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2024/html/Wang_Real-IAD_A_Real-World_Multi-View_Dataset_for_Benchmarking_Versatile_Industrial_Anomaly_CVPR_2024_paper.html).
 3. **Gu, Z., Zhu, B., Zhu, G., Chen, Y., Tang, M., & Wang, J.** (2024). *AnomalyGPT: Detecting Industrial Anomalies Using Large Vision-Language Models*. In Proceedings of the AAAI Conference on Artificial Intelligence (AAAI 2024), 38(3), pp. 1932–1940. Article: 27963. DOI: [10.1609/aaai.v38i3.27963](https://doi.org/10.1609/aaai.v38i3.27963).
-4. **Song, Y., et al.** (2024/2025). *Both Text and Images Leaked! A Systematic Analysis of Multimodal LLM Data Contamination*. Findings of EMNLP 2025 (arXiv:2411.03823). [arXiv](https://arxiv.org/abs/2411.03823).
+4. **Song, Y., et al.** (2025). *Both Text and Images Leaked! A Systematic Analysis of Data Contamination in Multimodal LLM*. In Findings of the Association for Computational Linguistics: EMNLP 2025 (Bản lưu trữ preprint: arXiv:2411.03823). [arXiv](https://arxiv.org/abs/2411.03823).
 5. **Park, J., Cai, M., Yao, F., et al.** (2026). *Contamination Detection for VLMs using Multi-Modal Semantic Perturbations*. In International Conference on Learning Representations (ICLR 2026). [OpenReview](https://openreview.net/forum?id=gk6OC3XIZW).
 6. **Kang, S., Kim, J., Kim, J., & Hwang, S. J.** (2025). *Your Large Vision-Language Model Only Needs A Few Attention Heads For Visual Grounding*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2025), pp. 9339–9350. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2025/html/Kang_Your_Large_Vision-Language_Model_Only_Needs_A_Few_Attention_Heads_CVPR_2025_paper.html).
 7. **Yan, S., Bai, M., Chen, W., Zhou, X., Huang, Q., & Li, L. E.** (2024). *ViGoR: Improving Visual Grounding of Large Vision-Language Models with Fine-Grained Reward Modeling*. In Proceedings of the European Conference on Computer Vision (ECCV 2024), Paper ID: 07792. [ECVA](https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/07792.pdf).
-8. **Xiao, L., Yang, X., Peng, F., Wang, Y., & Xu, C.** (2024). *OneRef: Unified One-tower Expression Grounding and Segmentation with Mask Referring Modeling*. In Advances in Neural Information Processing Systems (NeurIPS 2024). [NeurIPS](https://proceedings.neurips.cc/paper_files/paper/2024/hash/OneRef.pdf).
+8. **Xiao, L., Yang, X., Peng, F., Wang, Y., & Xu, C.** (2024). *OneRef: Unified One-tower Expression Grounding and Segmentation with Mask Referring Modeling*. In Advances in Neural Information Processing Systems (NeurIPS 2024). [NeurIPS Abstract](https://proceedings.neurips.cc/paper_files/paper/2024/hash/fcd812a51b8f8d05cfea22e3c9c4b369-Abstract-Conference.html) / [NeurIPS PDF](https://proceedings.neurips.cc/paper_files/paper/2024/file/fcd812a51b8f8d05cfea22e3c9c4b369-Paper-Conference.pdf).
 9. **Saxena, R., Suglia, A., & Minervini, P.** (2026). *VLM-RobustBench: A Comprehensive Benchmark for Robustness of Vision-Language Models*. arXiv preprint arXiv:2603.06148. [arXiv](https://arxiv.org/abs/2603.06148).
-10. **Addepalli, S., et al.** (2024). *Leveraging Vision-Language Models for Improving Domain Generalization in Image Classification*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2024), pp. 22820–22830. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2024/html/Addepalli_Leveraging_Vision-Language_Models_for_Improving_Domain_Generalization_in_Image_Classification_CVPR_2024_paper.html).
-11. **Chen, G., et al.** (2024). *PracticalDG: Perturbation Distillation on Vision-Language Models for Hybrid Domain Generalization*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2024), pp. 28659–28669. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2024/html/Chen_PracticalDG_Perturbation_Distillation_on_Vision-Language_Models_for_Hybrid_Domain_Generalization_CVPR_2024_paper.html).
-12. **Zanella, M., & Ben Ayed, I.** (2024). *On the Test-Time Zero-Shot Generalization of Vision-Language Models: Do We Really Need Prompt Learning?*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2024), pp. 23821–23830. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2024/html/Zanella_On_the_Test-Time_Zero-Shot_Generalization_of_Vision-Language_Models_Do_We_CVPR_2024_paper.html).
+10. **Addepalli, S., Asokan, A. R., Sharma, L., & Babu, R. V.** (2024). *Leveraging Vision-Language Models for Improving Domain Generalization in Image Classification*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2024), pp. 23922–23932. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2024/html/Addepalli_Leveraging_Vision-Language_Models_for_Improving_Domain_Generalization_in_Image_Classification_CVPR_2024_paper.html).
+11. **Chen, Z., Wang, W., Zhao, Z., Su, F., Men, A., & Meng, H.** (2024). *PracticalDG: Perturbation Distillation on Vision-Language Models for Hybrid Domain Generalization*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2024), pp. 23501–23511. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2024/html/Chen_PracticalDG_Perturbation_Distillation_on_Vision-Language_Models_for_Hybrid_Domain_Generalization_CVPR_2024_paper.html).
+12. **Zanella, M., & Ben Ayed, I.** (2024). *On the Test-Time Zero-Shot Generalization of Vision-Language Models: Do We Really Need Prompt Learning?*. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR 2024), pp. 23783–23793. [OpenAccess](https://openaccess.thecvf.com/content/CVPR2024/html/Zanella_On_the_Test-Time_Zero-Shot_Generalization_of_Vision-Language_Models_Do_We_CVPR_2024_paper.html).
 13. **Gulrajani, I., & Lopez-Paz, D.** (2021). *In Search of Lost Domain Generalization*. In Proceedings of the International Conference on Learning Representations (ICLR 2021). [OpenReview](https://openreview.net/forum?id=lQdXeXDoWtI).
 14. **Hendrycks, D., et al.** (2021). *The Many Faces of Robustness: A Critical Analysis of Out-of-Distribution Generalization*. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV 2021), pp. 8340–8349. [OpenAccess](https://openaccess.thecvf.com/content/ICCV2021/html/Hendrycks_The_Many_Faces_of_Robustness_A_Critical_Analysis_of_ICCV_2021_paper.html).
 15. **Zhou, K., Liu, Z., Qiao, Y., Xiang, T., & Loy, C. C.** (2022). *Domain Generalization: A Survey*. IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI), 45(4), pp. 4396–4415. DOI: [10.1109/TPAMI.2022.3195549](https://doi.org/10.1109/TPAMI.2022.3195549).
