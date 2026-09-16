@@ -14,9 +14,9 @@
   - Báo cáo phân tích phương pháp luận toàn diện và khảo sát y văn chuẩn mực tại [notes/w2_protocol_decision_brief.md](notes/w2_protocol_decision_brief.md) (đã hoàn thành tại bước W2.1 và được hợp nhất vào nhánh `main` qua PR #10).
 - **Các phương án:**
   - *Phương án A — Thuần túy Domain Generalization (LODO Training / P4):* Huấn luyện/tinh chỉnh mô hình trên các miền nguồn và đánh giá trên miền đích chưa thấy.  
-    *Trade-off:* Đúng định nghĩa học thuật truyền thống của DG nhưng đòi hỏi tài nguyên huấn luyện/tinh chỉnh lớn, bị nhiễu nền tảng robot nghiêm trọng làm lu mờ khả năng giải thích nguyên nhân dịch chuyển miền, miền Luyện kim không đủ mẫu bất thường làm target, không khả thi cho khuôn khổ Seminar 8 tuần.
+    *Trade-off:* Đúng định nghĩa học thuật truyền thống của DG; tuy nhiên phương án này chỉ khả thi một phần về nguyên lý nhưng không được khuyến nghị làm giao thức chính cho Seminar 8 tuần (`PARTIALLY_FEASIBLE, BUT NOT RECOMMENDED AS PRIMARY SEMINAR PROTOCOL`) do: cần huấn luyện/tinh chỉnh (training/tuning), chính sách phân nhóm nguồn/đích (grouping source/target) chưa được chốt, hiện tượng nhiễu nền tảng robot (platform confounding), miền Luyện kim bị thiếu hụt dữ liệu bất thường nghiêm trọng (*severely under-supported*), và gánh nặng thực nghiệm lớn hơn nhiều.
   - *Phương án B — Thuần túy Replicate Test Chính thức (P1 Only):* Đánh giá zero-shot trên tập test 1.250 mẫu của InspecSafe-V1.  
-    *Trade-off:* Đơn giản, an toàn, đối chiếu trực tiếp 1:1 với bài báo gốc cho phân loại an toàn và tương đồng ngữ nghĩa. Tuy nhiên, bỏ qua 75% dữ liệu quan sát được, hoàn toàn không đánh giá được phát hiện bất thường của miền Luyện kim (0 mẫu test Anomaly), và thiếu đóng góp nghiên cứu mới ngoài việc chạy lại baseline.
+    *Trade-off:* Đơn giản, an toàn, có khả năng đối chiếu trực tiếp cao nhất với bài báo gốc cho phân loại an toàn và tương đồng ngữ nghĩa, với điều kiện tái lập được prompt, preprocessing, model/version, decoding settings và API snapshot nếu có (ghi nhận hiện tượng trôi dạt API/model drift có thể khiến kết quả số học không trùng tuyệt đối). Tuy nhiên, bỏ qua 75% dữ liệu quan sát được, hoàn toàn không đánh giá được phát hiện bất thường của miền Luyện kim (0 mẫu test Anomaly), và thiếu đóng góp nghiên cứu mới ngoài việc chạy lại baseline.
   - *Phương án C — Phân tầng giao thức đa cấp (Protocol Hierarchy: P1 + P2 + P3 + P4) kết hợp Research Framing chuẩn mực (Được chọn):*  
     *Trade-off:* Phân định rạch ròi bản chất bài toán khoa học (Cross-Domain Robustness cho Seminar trên frozen VLM; DG cho Thesis sau này); kết hợp song song Baseline Replication Protocol (P1 trên 1.250 mẫu test) và Primary Research Protocol (P2 trên toàn bộ 5.013 mẫu); duy trì P3 như một ứng viên kiểm tra độ nhạy (phụ thuộc vào W2.2); bảo lưu P4 cho nghiên cứu mở rộng (Thesis). Cần quản lý ngân sách tính toán/API lớn hơn (~4x so với P1) và xử lý thận trọng tương quan chuỗi trong phân tích thống kê.
 - **Quyết định:**
@@ -35,7 +35,7 @@
       - Đánh giá trên toàn bộ **5.013 mẫu** (toàn bộ không gian dữ liệu quan sát được).
       - Báo cáo kết quả phân rã chi tiết theo **5 miền công nghiệp** (*5 industrial domains*).
       - **Bảo lưu nguyên vẹn siêu dữ liệu phân tách gốc (`split: train/test`)** trong mọi manifest và báo cáo để bảo toàn nguồn gốc dữ liệu (*provenance*) và phục vụ phân tích độ nhạy (*sensitivity analysis*). Tuyệt đối không xóa bỏ metadata split.
-      - Mục tiêu chính: Trả lời các câu hỏi nghiên cứu trung tâm về độ bền vững xuyên miền (*Cross-Domain Robustness*) của SafeShift Seminar, khắc phục khiếm khuyết thiếu mẫu bất thường của miền Luyện kim ở P1.
+      - Mục tiêu chính: Trả lời các câu hỏi nghiên cứu trung tâm về độ bền vững xuyên miền (*Cross-Domain Robustness*) của SafeShift Seminar; giảm bớt hạn chế của official test đối với metallurgy bằng cách đưa toàn bộ 9 anomaly samples trong full dataset vào evaluation pool (*mitigates but does not resolve the metallurgy limitation*). Ghi nhận rõ: $N_{\text{anomaly}} = 9$ vẫn là cỡ mẫu quá nhỏ (*severely under-supported*), 8/9 mẫu mang khẳng định văn bản `text_domain = oil_chemical`, và sự mơ hồ nhãn miền vẫn tồn tại (*domain ambiguity remains*).
     - **P3 — SENSITIVITY PROTOCOL CANDIDATE (Ứng viên giao thức phân tích độ nhạy):**
       - Đánh giá có xét nhóm (*Group-aware evaluation*).
       - **Chưa được coi là clean benchmark (benchmark sạch)**.
@@ -67,7 +67,7 @@
   2. Việc gọi giao thức chính của Seminar là Domain Generalization theo nghĩa học máy chuẩn sẽ gây hiểu sai phương pháp luận học thuật.
   3. Khái niệm Cross-Domain Robustness Evaluation phản ánh trung thực và chính xác việc đánh giá một mô hình huấn luyện sẵn giữ nguyên trọng số (*frozen pretrained model*) trên nhiều phân xưởng công nghiệp khác nhau.
   4. Giao thức P1 là bắt buộc và cần thiết để đối chiếu trực tiếp với bài báo gốc trên *Scientific Data*.
-  5. Giao thức P2 là cần thiết để tạo đóng góp nghiên cứu vượt ra ngoài việc chỉ tái lập (*replicate*), đồng thời khắc phục khiếm khuyết tập test của miền Luyện kim không có mẫu bất thường.
+  5. Giao thức P2 là cần thiết để tạo đóng góp nghiên cứu vượt ra ngoài việc chỉ tái lập (*replicate*), đồng thời giảm bớt hạn chế của official test đối với metallurgy bằng cách đưa toàn bộ 9 anomaly samples trong full dataset vào evaluation pool (dù vẫn còn tồn tại hạn chế $N_{\text{anomaly}} = 9$ severely under-supported và domain ambiguity).
   6. Giao thức P3 có giá trị cho phân tích độ nhạy (*sensitivity analysis*), nhưng hiện tại thiếu ID video thực chứng để tạo lập benchmark sạch hoàn toàn.
   7. Giao thức P4 phù hợp hơn với Luận văn tốt nghiệp (*Thesis*) vì cần quy trình huấn luyện/tinh chỉnh và thiết kế giao thức miền nguồn/miền đích phức tạp, tránh gây rủi ro trễ tiến độ Seminar 8 tuần.
 - **Ảnh hưởng tới dataset, split, metric và reproducibility:**
