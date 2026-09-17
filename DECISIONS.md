@@ -104,7 +104,7 @@
 - **Bối cảnh và bằng chứng:**
   - Kế thừa quyết định phân tầng giao thức [DEC-W2-D1-001](#dec-w2-d1-001) và các phát hiện kiểm toán độc lập tại [notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/duplicate_leakage_audit.md](notes/duplicate_leakage_audit.md), [notes/visual_provenance_review.md](notes/visual_provenance_review.md), [notes/distribution_imbalance_audit.md](notes/distribution_imbalance_audit.md).
   - Bộ dữ liệu InspecSafe-V1 gồm 5.013 ảnh: tập test chính thức gồm 1.250 ảnh (999 Normal, 251 Anomaly); 4.013 ảnh Normal được phân bố trong 2.234 thư mục điểm logic (`point_id`), mỗi điểm chứa 1–4 khung hình liền kề; 1.000 ảnh Anomaly nằm trong 1.000 thư mục điểm logic riêng biệt.
-  - Có 53 cặp trùng lặp pixel tuyệt đối (106 ảnh), gồm 44 cặp within-train, 2 cặp within-test (4 ảnh) và 7 cặp cross-split (14 ảnh, đều là Anomaly). Không có ID video thật (`true video ID`) hay ID trạm vật lý (`physical site ID`) trong metadata phát hành công khai; quan hệ ánh xạ giữa 3.234 thư mục điểm logic và 2.239 trạm kiểm tra thượng nguồn vẫn chưa được giải quyết (`unresolved mapping`).
+  - Có 53 cặp trùng lặp pixel tuyệt đối (106 ảnh), gồm 44 cặp within-train, 2 cặp within-test (4 ảnh) và 7 cặp cross-split (14 ảnh, đều là Anomaly). Không có ID video thật (`true video ID`) hay ID trạm vật lý (`physical site ID`) trong metadata phát hành công khai; quan hệ ánh xạ giữa 3.234 thư mục điểm logic (*logical point folders*) và 2.239 điểm/trạm kiểm tra hợp lệ (*valid inspection sites/waypoints*) được tài liệu upstream công bố vẫn chưa được giải quyết (`unresolved mapping`), và không suy diễn 2.239 điểm này là các vị trí vật lý độc lập (*independent physical locations*).
   - Báo cáo phân tích phương pháp luận chi tiết tại [notes/w2_domain_split_decision_brief.md](notes/w2_domain_split_decision_brief.md).
 - **Các phương án:**
   - *Phương án 1 — Naive Image-Level (IID giả định):* Coi 5.013 ảnh hoàn toàn độc lập trong mọi khâu suy luận và thống kê. Bỏ qua phụ thuộc đa khung hình và tương quan chuỗi.
@@ -128,15 +128,15 @@
     - Đối với dữ liệu Bình thường (`Normal_data`): trường **`point_id` được phê duyệt là tín hiệu gom nhóm / lấy mẫu lại ứng viên ưu tiên (*preferred candidate grouping/resampling signal*)**.
     - *Cơ sở:* Nhiều điểm Normal chứa từ 1 đến 4 khung hình liền kề; `point_id` nắm bắt được cấu trúc phụ thuộc đa khung hình nội bộ điểm đã biết (*known within-point dependence*).
     - *Giới hạn bắt buộc phải ghi rõ:*
-      - `point_id` là mã định danh điểm logic (*logical point identifier*).
-      - `point_id` **KHÔNG phải là ID địa điểm/nhà máy vật lý (*physical site ID*)**.
+      - `point_id` là mã định danh điểm logic (*logical point identifier*); 3.234 point folders là logical point folders.
+      - `point_id` **KHÔNG phải là ID địa điểm/nhà máy vật lý (*physical site ID*)**; hoàn toàn không có sample-level physical site ID trong metadata công khai.
       - `point_id` **không chứng minh tính độc lập giữa các điểm (*between-point independence*)**.
-      - Mối quan hệ ánh xạ (*mapping*) giữa 3.234 thư mục điểm logic và 2.239 trạm tuần tra vật lý upstream vẫn **chưa được giải quyết (*unresolved mapping*)**.
+      - Mối quan hệ ánh xạ (*mapping*) giữa 3.234 logical point folders và **2.239 điểm/trạm kiểm tra hợp lệ (*valid inspection sites/waypoints*) được tài liệu upstream công bố** vẫn **chưa được giải quyết (*unresolved mapping*)**; không được gọi 2.239 điểm đó là confirmed physical sites hay suy diễn chúng là các vị trí vật lý độc lập (*independent physical locations*).
   - **5. Anomaly Dependence (Sự phụ thuộc của dữ liệu Bất thường):**
     - Đối với dữ liệu Bất thường (`Anomaly_data`): đơn vị dự đoán (*prediction unit*) vẫn là từng ảnh đơn lẻ (*image-level*).
     - Mặc dù 1.000 mẫu Anomaly được tổ chức trong 1.000 thư mục điểm logic riêng biệt, nhưng **KHÔNG được coi đây là bằng chứng rằng 1.000 mẫu Anomaly là 1.000 sự kiện độc lập về mặt thống kê (*1,000 independent events*)**.
     - *Lý do:* Tồn tại bằng chứng thực chứng về chia sẻ chuỗi/góc máy quan sát (*shared-sequence / shared-viewpoint evidence*); định danh video thật (*true video IDs*) hoàn toàn không tồn tại trong siêu dữ liệu công khai.
-    - Họ nguồn suy luận (*`source-family`*) **KHÔNG được dùng như cụm video thật (*true video cluster*)** vì một họ nguồn chứa nhiều cảnh quay và video clip phân tán khác nhau.
+    - Họ nguồn suy luận (*`source-family`*) **KHÔNG được dùng như cụm video thật (*true video cluster*)** vì tư cách thành viên trong cùng một family không đủ để chứng minh tất cả thành viên thuộc cùng một video hay temporal sequence. Một family CÓ THỂ chứa nhiều scene/video/viewpoint, trong khi một số family hoặc subset lại có bằng chứng chuỗi liên tục mạnh (*strong shared-sequence evidence*). `source-family` chỉ là tín hiệu kinh nghiệm (*heuristic signal*), **không phải là true video ID**.
   - **6. P3 Status (Trạng thái của giao thức P3):**
     - Giao thức P3 tiếp tục duy trì ở trạng thái: **Giao thức phân tích độ nhạy ứng viên (*Candidate Sensitivity Protocol*)**.
     - P3 **KHÔNG phải là benchmark sạch (*clean benchmark*)** và **KHÔNG được gọi là benchmark không rò rỉ (*leakage-free benchmark*)**.
@@ -273,7 +273,7 @@
   5. Cơ chế báo cáo kép (Primary + Sensitivity Dual-Report) giúp giữ vững tính tái lập (*reproducibility*) đồng thời minh bạch hoàn toàn về sự mơ hồ nhãn miền (*domain ambiguity*).
   6. Miền Luyện kim (`metallurgy`) là trường hợp nhạy cảm nhất: có 9 mẫu bất thường theo thư mục, nhưng chỉ còn đúng 1 mẫu bất thường nếu phân loại lại theo văn bản.
 - **Ảnh hưởng tới dataset, split, metric và reproducibility:**
-  - **Dataset:** Tuyệt đối không sửa đổi tên thư mục hoặc nhãn văn bản gốc trong dữ liệu thô. Cờ `domain_mismatch = True` được bổ sung trong manifest phái sinh tại `data/processed/`.
+  - **Dataset:** Tuyệt đối không sửa đổi tên thư mục hoặc nhãn văn bản gốc trong dữ liệu thô. Cờ `domain_mismatch = True` phải được bảo toàn trong manifest/metadata phái sinh khi triển khai. Đường dẫn artifact cụ thể tuân theo convention của dự án (`data/manifests/` hoặc `data/processed/` tùy loại artifact) và không được D3 khóa cứng. Ghi rõ: bước W2.2 chưa tạo production split hay production manifest mới.
   - **Split:** Không làm thay đổi phân chia train/test; bảo toàn 5 miền công nghiệp.
   - **Metrics:** Chưa chốt công thức đo lường hoặc cách triệt tiêu metric cho Metallurgy (chuyển sang W2.4).
   - **Reproducibility:** Mọi báo cáo phân rã 5 miền phải công bố rõ việc sử dụng `folder_domain` làm nhãn chính và đi kèm bảng phân tích độ nhạy đối chứng theo danh sách 36 mẫu mismatch cố định.
