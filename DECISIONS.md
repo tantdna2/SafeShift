@@ -285,6 +285,297 @@
   - Định hướng trực tiếp cho thiết kế manifest tại W2.2, điều tra phân tầng nguy cơ tại W2.3, định nghĩa metric tại W2.4 và thực thi baseline tại W3.
 - **Thay thế quyết định:** Không.
 
+## DEC-W2-D4-004 — Canonical Grounding Output Interface
+
+- **ID:** DEC-W2-D4-004
+- **Ngày:** 2026-09-17
+- **Trạng thái:** ĐƯỢC CHẤP THUẬN
+- **Vấn đề cần quyết định:**
+  - Chuẩn hóa định dạng biểu diễn không gian nội bộ chuẩn mực (Internal Canonical Representation) cho đầu ra bám bằng chứng (Grounding Output) của các mô hình Vision-Language Models (VLM).
+  - Thiết lập chính sách bảo toàn phản hồi thô của mô hình (Raw Model Response Preservation) và các trường siêu dữ liệu tối thiểu bắt buộc lưu trữ trước khi phân tích cú pháp (parse).
+  - Xác lập vai trò và nguyên tắc chuyển đổi tất định (deterministic conversion) của bộ điều hợp / phân tích cú pháp (Adapter / Parser) từ định dạng gốc của từng mô hình (native format) sang định dạng chuẩn hóa nội bộ.
+  - Thiết lập chính sách phân tầng theo năng lực mô hình (Capability-Aware Policy B) cho đường đua định vị không gian (Spatial Grounding Benchmark) so với phân loại an toàn (Classification Benchmark).
+  - Phân định rõ các nội dung kỹ thuật mà D4 chưa chốt và chuyển giao cho W2.4 và W2.5.
+- **Bối cảnh và bằng chứng:**
+  - Kế thừa quyết định phân tầng giao thức [DEC-W2-D1-001](#dec-w2-d1-001) (RQ3 Consistency), [DEC-W2-D2-002](#dec-w2-d2-002) (Image-level Prediction Unit, Raw Output Storage Requirement) và [DEC-W2-D3-003](#dec-w2-d3-003).
+  - Báo cáo căn cứ kỹ thuật phương pháp luận chi tiết tại [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (Mục 13, 14, 18.1, 19).
+  - Bộ dữ liệu InspecSafe-V1 chứa 37.434 đa giác đối tượng gốc trong tệp JSON, hoàn toàn không có bounding box nguy cơ chuyên biệt hay nhãn rationale của con người ([notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/dataset_schema.md](notes/dataset_schema.md), [notes/research_feasibility_audit.md](notes/research_feasibility_audit.md)). Bounding box chỉ có thể được suy biến toán học tất định (derived) từ tọa độ cực biên của đa giác: $[x_{\min}, y_{\min}, x_{\max}, y_{\max}]$.
+  - Các họ mô hình VLM có giao diện và định dạng gốc rất khác nhau: một số mô hình tài liệu chính thức công bố hỗ trợ normalized bounding box theo thang $[0, 1000]$ và thứ tự $y$-first `[ymin, xmin, ymax, xmax]` (ví dụ Google Gemini); một số mô hình mã nguồn mở hỗ trợ `[xmin, ymin, xmax, ymax]` trên thang $[0, 1]$; trong khi các giao diện API thương mại đóng (Closed-API) nhìn chung không công bố bản đồ chú ý (attention maps). Khả năng xuất tọa độ thực tế của từng mô hình/phiên bản cần được kiểm chứng thực nghiệm tại bước W2.5.
+- **Các phương án:**
+  - *Phương án D4-A — Textual Normalized Bounding Box (Được chọn làm ứng viên chuẩn hóa):* Mô hình xuất hộp bao chuẩn hóa dạng chuỗi văn bản trong luồng sinh; adapter chuẩn hóa về canonical format nội bộ.  
+    *Ưu điểm:* Gọn gàng, dễ parse tự động bằng biểu thức chính quy, tương thích tự nhiên với việc suy biến từ đa giác ground truth gốc, lưu giữ đầy đủ thông tin không gian (vị trí, kích thước, tỷ lệ khung hình) và có tính tái lập thực nghiệm cao.
+  - *Phương án D4-B — Pointing Point (Tọa độ điểm trỏ tâm):* Mô hình xuất cặp tọa độ $[x, y]$. Cú pháp cực ngắn nhưng mất hoàn toàn thông tin về quy mô kích thước và ranh giới không gian, không thể tính toán chỉ số giao thoa diện tích (IoU).
+  - *Phương án D4-C — Polygon / Segmentation Mask (Đa giác / Mặt nạ nhị phân):* Khớp 1:1 với định dạng đa giác gốc nhưng tiêu tốn token khổng lồ và tỷ lệ lỗi parse/lỗi cú pháp rất cao trên các mô hình tổng quát.
+  - *Phương án D4-D — Attention Map / Visual Heatmap (Bản đồ chú ý thị giác):* Nhìn chung không được mở (not exposed) trên các giao diện Closed-API ứng viên; không phản ánh suy luận nhân quả và khác biệt kiến trúc giữa các mô hình triệt tiêu tính so sánh công bằng.
+- **Quyết định:**
+  - **1. Internal Canonical Bounding Box (Hộp bao chuẩn nội bộ):**
+    - SafeShift xác lập định dạng biểu diễn không gian nội bộ chuẩn mực duy nhất (`Internal Canonical Representation`) cho mọi phép tính toán hình học và đánh giá bám bằng chứng:
+      $$\mathbf{b}_{\text{canonical}} = [x_{\min}, y_{\min}, x_{\max}, y_{\max}]$$
+      với các giá trị tọa độ được chuẩn hóa duy nhất trong đoạn:
+      $$[0.0, 1.0]$$
+    - Thứ tự tọa độ chuẩn hóa bắt buộc là: **$x$-first** (hoành độ trước, tung độ sau: $x_{\min}, y_{\min}, x_{\max}, y_{\max}$).
+  - **2. Raw Model Response (Phản hồi thô của mô hình):**
+    - Toàn bộ chuỗi văn bản phản hồi thô nguyên gốc của mô hình (`Raw Model Response`) **bắt buộc phải được lưu trữ nguyên văn trước khi thực hiện bất kỳ phép phân tích cú pháp (parse) hay tổng hợp nào**.
+    - **Tuyệt đối không ghi đè (không overwrite)** tệp raw response trong bất kỳ trường hợp nào.
+    - Mọi bản ghi phản hồi thô bắt buộc phải lưu trữ siêu dữ liệu tối thiểu:
+      - `sample_id` (định danh mẫu ảnh)
+      - `run_id` (định danh lần chạy thực nghiệm)
+      - `model_name` (tên mô hình)
+      - `model_version` (phiên bản cụ thể / snapshot mô hình)
+      - `prompt_template_id` (định danh mẫu prompt sử dụng)
+      - `decoding settings` / `decoding_parameters` (temperature, top_p, seed, v.v.)
+      - `timestamp` (thời gian thực thi, ISO 8601 / UTC)
+  - **3. Adapter / Parser (Bộ chuyển đổi / Phân tích cú pháp):**
+    - Thừa nhận thực tế mỗi mô hình VLM có thể trả về định dạng gốc (`native format`) khác nhau.
+    - Bộ điều hợp / phân tích cú pháp (`Adapter / Parser`) được phép và có nhiệm vụ chuyển đổi tất định:
+      - Thứ tự tọa độ từ $y$-first sang $x$-first (ví dụ: `[ymin, xmin, ymax, xmax]` $\rightarrow$ `[xmin, ymin, xmax, ymax]`).
+      - Thang đo từ $[0, 1000]$ sang $[0, 1]$ (ví dụ: chia cho 1000.0).
+      - Các định dạng tọa độ đặc thù của từng mô hình (`model-specific coordinate formats`) sang định dạng chuẩn hóa nội bộ `[x_min, y_min, x_max, y_max]`.
+    - Quy trình chuyển đổi (`Conversion`) bắt buộc phải **tất định hoàn toàn (deterministic)**, không dùng giải thuật ước lượng ngẫu nhiên hay heuristic không có tài liệu kỹ thuật kiểm chứng.
+  - **4. Capability-Aware Policy B (Chính sách phân tầng theo năng lực mô hình):**
+    - **Classification Benchmark (Benchmark phân loại an toàn):** Chạy và đánh giá trên toàn bộ danh sách các mô hình được lựa chọn tham gia thử nghiệm.
+    - **Spatial Grounding Benchmark (Benchmark bám vùng không gian):** Chỉ chạy trên tập con các mô hình / giao diện thực sự có năng lực hỗ trợ đầu ra định vị (`localization output`).
+    - **Tính đủ điều kiện (Eligibility) của từng mô hình / phiên bản:** Quyết định D4 **chưa tự giả định** tính đủ điều kiện của bất kỳ mô hình nào. Năng lực định vị thực tế của từng mô hình/phiên bản/giao diện bắt buộc phải được khảo sát và xác minh thực nghiệm tại bước **W2.5**.
+    - **Các quy tắc cấm tuyệt đối trong đánh giá:**
+      - **Tuyệt đối không được** coi việc một mô hình không tham gia track grounding (do không hỗ trợ xuất tọa độ) là một lỗi bám bằng chứng (`grounding failure`).
+      - **Tuyệt đối không được** xếp hạng các mô hình không tham gia grounding track trong bảng xếp hạng năng lực bám bằng chứng (`grounding ranking`).
+      - **Tuyệt đối không được** tùy biến nội dung câu lệnh ngữ nghĩa riêng (`custom semantic prompt`) cho từng mô hình để "cứu" mô hình yếu. Mọi mô hình tham gia grounding track phải sử dụng chung một cấu trúc prompt ngữ nghĩa chuẩn hóa.
+  - **5. Những nội dung kỹ thuật D4 KHÔNG chốt (Deferred Items chuyển giao sang W2.4 / W2.5):**
+    - Quyết định D4 **chưa quyết định và không ấn định**:
+      - Ngưỡng IoU đánh giá hộp bao trúng đích (`IoU threshold`).
+      - Ngưỡng / bán kính dung sai của Pointing Game (`Pointing Game threshold / tolerance radius`).
+      - Các chỉ số đánh giá bám bằng chứng cuối cùng (`final grounding metrics`).
+      - Danh sách các mô hình cụ thể tham gia benchmark (`final model list`).
+      - Câu chữ chi tiết của câu lệnh chỉ dẫn cuối cùng (`final prompt wording`).
+    - Toàn bộ các chỉ số và ngưỡng thống kê thuộc thẩm quyền của bước **W2.4 (DEC-W2-D5)**; danh sách mô hình và kiểm chứng năng lực prompt thuộc thẩm quyền của bước **W2.5**.
+- **Lý do:**
+  1. Chuẩn hóa định dạng nội bộ `[x_min, y_min, x_max, y_max] \in [0.0, 1.0]` tạo ra một giao diện toán học thống nhất, cho phép so sánh công bằng giữa các mô hình bất kể định dạng native của nhà cung cấp.
+  2. Bắt buộc lưu trữ nguyên văn Raw Model Response là nguyên tắc sống còn của nghiên cứu tái lập, cho phép kiểm tra lại và sửa đổi bộ parser trong tương lai mà không phải chạy lại các lệnh gọi API tốn kém.
+  3. Cơ chế adapter tất định tôn trọng sự đa dạng kiến trúc của VLM mà không áp đặt định dạng của một nhà cung cấp đơn lẻ thành chuẩn toàn ngành.
+  4. Chính sách phân tầng Policy B ngăn ngừa thiên lệch đánh giá: không phạt oan mô hình phân loại thuần túy, không xếp hạng sai lệch, và giữ nguyên tính so sánh khoa học qua việc dùng chung cấu trúc prompt ngữ nghĩa.
+- **Ảnh hưởng tới dataset, split, metric và reproducibility:**
+  - **Dataset:** Giữ nguyên dữ liệu thô và các tệp JSON chú thích gốc.
+  - **Split:** Không làm thay đổi phân chia train/test.
+  - **Metrics:** Chưa chốt ngưỡng IoU hay công thức metric (chuyển sang W2.4).
+  - **Reproducibility:** Mọi lần chạy suy luận grounding bắt buộc phải ghi lại raw output và metadata đầy đủ; adapter chuyển đổi phải có kiểm thử đơn vị bảo đảm tính tất định.
+- **Người chấp thuận và thời điểm:** Project Owner / Research Lead (Chủ dự án / Người phụ trách nghiên cứu), ngày 2026-09-17.
+- **Task/thí nghiệm liên quan:**
+  - [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (W2.3 Decision Brief, Mục 13, 14, 18.1, 19)
+  - [notes/research_feasibility_audit.md](notes/research_feasibility_audit.md)
+  - [notes/dataset_schema.md](notes/dataset_schema.md)
+  - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003)
+  - Định hướng trực tiếp cho định nghĩa metric tại W2.4, khảo sát mô hình tại W2.5 và thực thi baseline tại W3.
+- **Thay thế quyết định:** Không.
+
+## DEC-W2-D6-006 — Hazard Taxonomy and Grounding Support Census
+
+- **ID:** DEC-W2-D6-006
+- **Ngày:** 2026-09-17
+- **Trạng thái:** ĐƯỢC CHẤP THUẬN
+- **Vấn đề cần quyết định:**
+  - Phê duyệt Hệ phân loại nguy cơ thao tác nghiên cứu (Operational Research Hazard Taxonomy) gồm 12 nguy cơ nguyên tử (Hazard Atoms) bao phủ trọn vẹn 1.000 mẫu Bất thường (Anomaly) của bộ dữ liệu InspecSafe-V1.
+  - Phê chuẩn định nghĩa ba trạng thái hỗ trợ không gian của chú thích đối tượng đối với mệnh đề nguy cơ: `DIRECT_OBJECT_SUPPORT`, `WEAK_PROXY_SUPPORT` và `NO_CURRENT_SPATIAL_GT`.
+  - Phê chuẩn kết quả cuộc tổng điều tra thực chứng (Full Census) trên 100% mẫu Anomaly ở cả cấp độ Mẫu (`Sample-level`) và cấp độ Nguy cơ Nguyên tử (`Hazard-atom level`), cùng quy mô các tập con đánh giá (Direct-Support Pool, Weak-Proxy Pool, Unsupported Only) và ranh giới giao thoa tập hợp.
+  - Thiết lập cấu trúc câu hỏi nghiên cứu RQ3: phân rã độc lập thành RQ3-A (Direct Object-Support Grounding) và RQ3-B (Weak Proxy Grounding) kèm chuẩn hóa thuật ngữ khoa học.
+  - Phê chuẩn 7 phân tầng nguy cơ gom nhóm ứng viên (Candidate Grouped Hazard Strata) cho câu hỏi nghiên cứu RQ2 cùng các cảnh báo về yếu tố gây nhiễu.
+- **Bối cảnh và bằng chứng:**
+  - Kế thừa khung câu hỏi nghiên cứu RQ1, RQ2, RQ3 tại [DEC-W2-D1-001](#dec-w2-d1-001), chính sách đánh giá P2 trên 5.013 mẫu tại [DEC-W2-D2-002](#dec-w2-d2-002), và chính sách nhãn miền tại [DEC-W2-D3-003](#dec-w2-d3-003).
+  - Báo cáo tổng điều tra thực chứng phương pháp luận độc lập tại [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (Mục 4–12, 19).
+  - Dữ liệu InspecSafe-V1 gồm 1.000 mẫu Anomaly (749 train, 251 test; 659 Level01, 326 Level02, 15 Level03). Toàn bộ dữ liệu có 37.434 đa giác đối tượng phân vùng, hoàn toàn không có bounding box nguy cơ hay rationale annotations ([notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/dataset_schema.md](notes/dataset_schema.md), [notes/research_feasibility_audit.md](notes/research_feasibility_audit.md)).
+  - Cuộc điều tra W2.3 được thực hiện trên tập con xác định tất định gồm 1.000 mẫu Anomaly từ bộ dữ liệu có dấu vân tay mật mã SHA-256 đã xác minh `7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5`; script điều tra `scratch/full_census_engine.py` (SHA-256: `348860eabbe06c7908b3f4b198804033b3bd61917da4dbf8d6ec06e9cc4b5c03`); artifact kết quả chi tiết cấp mẫu `data/manifests/w2_grounding_census.json` (SHA-256: `cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`).
+  - Toàn bộ 1.000 mẫu Anomaly khớp 100% mệnh đề mở đầu ngữ cảnh chuẩn mực; bóc tách được 100% mệnh đề nguy cơ; số lượng mệnh đề nguy cơ không ánh xạ được (`Hazard-clause unmapped count`) là đúng **0 mệnh đề**; số lượng trường hợp ánh xạ mơ hồ (`Support-mapping ambiguous count`) là đúng **0 trường hợp** theo các quy tắc ánh xạ tất định hiện tại.
+- **Các phương án:**
+  - *Phương án 1 — Gán nhãn đơn lẻ cấp Mẫu (Sample-level Single Label):* Ép mỗi mẫu ảnh vào một danh mục nguy cơ duy nhất. Thất bại trước thực tế công nghiệp khi 51,2% mẫu Anomaly chứa từ 2 đến 5 nguy cơ đồng thời (đa nguy cơ / multi-hazard).
+  - *Phương án 2 — Đánh đồng Đa giác Đối tượng với Vùng Lý do Con người (Object GT = Human Rationale GT):* Coi đa giác vật thể có sẵn là ground truth lý do con người. Sai lệch nghiêm trọng về phương pháp luận vì đa giác đối tượng không mã hóa hành vi, trạng thái hay quan hệ vi phạm.
+  - *Phương án 3 — Phân tầng Nguy cơ Nguyên tử hai cấp độ kết hợp bóc tách trạng thái hỗ trợ (Được chọn):* Phân biệt rạch ròi cấp Mẫu ($N=1.000$) và cấp Nguy cơ Nguyên tử ($N=1.788$); phê chuẩn 12 Hazard Atoms; xác lập 3 trạng thái hỗ trợ; phân rã độc lập RQ3-A và RQ3-B; thiết lập 7 strata phân tích cho RQ2.
+- **Quyết định:**
+  - **1. Phê duyệt Hệ phân loại 12 Nguy cơ Nguyên tử (Hazard Atom Taxonomy):**
+    - Phê duyệt danh mục đúng **12 Hazard Atoms** đã census trên 1.000 Anomaly, giải thích trọn vẹn toàn bộ 1.000 mẫu Anomaly của bộ dữ liệu InspecSafe-V1:
+      1. `NO_GLOVES` (Công nhân không mang găng tay bảo hộ lao động): **453 atoms**
+      2. `NO_HELMET` (Công nhân không đội mũ bảo hộ lao động): **229 atoms**
+      3. `NO_MASK` (Công nhân không đeo khẩu trang bảo hộ): **200 atoms**
+      4. `USE_MOBILE_PHONE` (Công nhân sử dụng điện thoại di động / gọi điện thoại): **167 atoms**
+      5. `LIQUID_ON_GROUND` (Chất lỏng đọng bất thường, nước đọng, rò rỉ dầu trên sàn/thiết bị): **134 atoms**
+      6. `SMOKING` (Công nhân hút thuốc lá trong phân xưởng): **120 atoms**
+      7. `OPEN_FLAME` (Ngọn lửa trần nguy hiểm trong môi trường công nghiệp): **117 atoms**
+      8. `FOREIGN_OBJECT` (Dị vật / rác thải bất thường trên băng chuyền than, sàn hầm, thiết bị): **115 atoms**
+      9. `SMOKE` (Khói bất thường bốc lên từ thiết bị hoặc môi trường): **108 atoms**
+      10. `NONMOTORIZED_VEHICLE` (Xe thô sơ / xe đạp / xe điện / xe ba bánh lấn vào làn đường xe cơ giới): **101 atoms**
+      11. `DOOR_OPEN` (Cửa tủ điện phân phối / tủ điều khiển bị mở bất thường): **34 atoms**
+      12. `PERSON_FALLEN` (Công nhân ngã gục / nằm bất động trên mặt sàn): **10 atoms**
+    - **Tổng số lượng:** Đúng **1.788 hazard atoms** trên **1.000 Anomaly samples** (trung bình 1,79 atoms/mẫu; phân bố: 488 mẫu có 1 atom, 287 mẫu có 2 atoms, 181 mẫu có 3 atoms, 37 mẫu có 4 atoms, 7 mẫu có 5 atoms).
+    - **Mệnh đề nguy cơ chưa ánh xạ (`Unmapped hazard clause`):** Đúng **0 mệnh đề** theo quy tắc ánh xạ tất định (`deterministic mapping rules`) hiện tại.
+    - **Bản chất bắt buộc phải ghi rõ:** Hệ phân loại này là **Hệ phân loại nghiên cứu thao tác (`operational research taxonomy`)** được xây dựng và kiểm chứng thực nghiệm từ dữ liệu InspecSafe-V1, **KHÔNG PHẢI là hệ phân loại an toàn công nghiệp phổ quát (`universal industrial-safety taxonomy`)**.
+  - **2. Phê chuẩn Ba trạng thái hỗ trợ không gian (Support Status Definitions):**
+    - **A. `DIRECT_OBJECT_SUPPORT` (Hỗ trợ đối tượng trực tiếp):**
+      - Định nghĩa: Có chú thích không gian (spatial annotation) của đối tượng/thực thể (object/entity) trực tiếp hỗ trợ cho khẳng định nguy cơ (hazard claim).
+      - *Quy tắc chuẩn hóa bắt buộc:* `DIRECT_OBJECT_SUPPORT` **TUYỆT ĐỐI KHÔNG ĐỒNG NGHĨA VỚI**:
+        - Mệnh đề nguy cơ đầy đủ đã được chứng minh (`full hazard proposition proven`).
+        - Nhãn chuẩn về lý do của con người (`human rationale ground truth`).
+        - Bám lý do nguy cơ đầy đủ (`full hazard rationale grounding`).
+        - *(Ví dụ: Đa giác `Cigarette` khoanh điếu thuốc không chứng minh hành vi đang hút; đa giác `Bicycle` khoanh chiếc xe nhưng hoàn toàn không mã hóa mối quan hệ vi phạm làn đường cơ giới).*
+    - **B. `WEAK_PROXY_SUPPORT` (Hỗ trợ đại diện yếu):**
+      - Định nghĩa: Không có chú thích không gian trực tiếp cho khẳng định nguy cơ (hazard claim), nhưng có vùng đại diện yếu, chủ yếu là đối tượng `Person` (khoanh toàn thân người cho vi phạm thiếu găng tay, thiếu mũ, thiếu khẩu trang, người ngã, hoặc xe thô sơ chỉ có người lái).
+    - **C. `NO_CURRENT_SPATIAL_GT` (Hiện chưa có GT không gian):**
+      - Định nghĩa: Hiện hoàn toàn không có chú thích không gian phù hợp để đánh giá hazard atom đó (toàn bộ 34 atoms `DOOR_OPEN` do không có nhãn cánh cửa tủ mở; cùng 26 atoms annotator gốc bỏ sót không vẽ đa giác chất lỏng, khói, dị vật, người).
+  - **3. Số liệu kiểm kê chính xác và Đẳng thức Toàn vẹn (Sanity Identity):**
+    - **Cấp độ Nguy cơ Nguyên tử (Hazard-Atom Level, tổng = 1.788 atoms):**
+      - Direct atoms: **781 atoms** (43,7%)
+      - Weak-Proxy atoms: **947 atoms** (53,0%)
+      - No-current-spatial-GT atoms: **60 atoms** (3,4%)
+      - Đẳng thức rời rạc: $781 + 947 + 60 = \mathbf{1.788\text{ atoms}}$.
+    - **Cấp độ Mẫu ảnh (Sample Categories, tổng = 1.000 Anomaly samples):**
+      - `ALL_DIRECT` (100% atom trong mẫu là Direct): **367 mẫu** (36,7%)
+      - `MIXED_DIRECT_PROXY` (Chứa cả Direct và Proxy, không có Unsupported): **323 mẫu** (32,3%)
+      - `PROXY_ONLY` (100% atom trong mẫu là Proxy): **251 mẫu** (25,1%)
+      - `HAS_UNSUPPORTED` (Chứa $\ge 1$ Unsupported atom): **59 mẫu** (5,9%) (gồm 24 mẫu Direct+Proxy+Unsupported, 7 mẫu Direct+Unsupported, 10 mẫu Proxy+Unsupported, 18 mẫu Unsupported Only).
+      - Đẳng thức tổng thể: $367 + 323 + 251 + 59 = \mathbf{1.000\text{ mẫu}}$.
+    - **Tập mẫu Đánh giá Ứng viên (Evaluation Pools) và Phần Giao thoa:**
+      - **Direct-Support Sample Pool ($\ge 1$ Direct atom):** Đúng **721 mẫu** (367 `ALL_DIRECT` + 323 `MIXED_DIRECT_PROXY` + 31 mẫu có direct atom trong `HAS_UNSUPPORTED`).
+      - **Weak-Proxy Sample Pool ($\ge 1$ Weak-Proxy atom):** Đúng **608 mẫu** (251 `PROXY_ONLY` + 323 `MIXED_DIRECT_PROXY` + 34 mẫu có proxy atom trong `HAS_UNSUPPORTED`).
+      - **Phần Giao thoa (Intersection):** Đúng **347 mẫu** ($323 + 24 = 347$ mẫu thuộc đồng thời cả hai pool).
+      - **Unsupported Only (Không có Direct, không có Proxy):** Đúng **18 mẫu** (1,8%).
+    - **Cảnh báo tính cộng gộp và Đẳng thức toàn vẹn (Sanity Identity):**
+      - Bắt buộc ghi rõ: **721 mẫu và 608 mẫu KHÔNG PHẢI là hai tập rời nhau!** Có chính xác **347 mẫu** nằm trong cả hai tập.
+      - **TUYỆT ĐỐI KHÔNG ĐƯỢC CỘNG CƠ HỌC $721 + 608$** để suy ra tổng số mẫu ảnh.
+      - Đẳng thức kiểm tra toàn vẹn bắt buộc bảo toàn:
+        $$\text{Pool}_{\text{Direct}} \cup \text{Pool}_{\text{Proxy}} = 721 + 608 - 347 = \mathbf{982\text{ mẫu có GT đánh giá được}}$$
+        $$982 + 18 (\text{Unsupported Only}) = \mathbf{1.000\text{ mẫu Anomaly}}$$
+  - **4. Phê chuẩn Cấu trúc Đánh giá Câu hỏi Nghiên cứu RQ3:**
+    - Phê duyệt tách câu hỏi nghiên cứu RQ3 thành hai track đánh giá độc lập:
+      - **RQ3-A: Direct Object-Support Grounding (Bám bằng chứng đối tượng trực tiếp):** Đánh giá trên tập con có hỗ trợ thực thể trực tiếp (367 mẫu `ALL_DIRECT` hoặc 721 mẫu `Direct-Support Sample Pool` phân rã theo 781 Direct atoms).
+      - **RQ3-B: Weak Proxy Grounding (Bám bằng chứng đại diện yếu):** Đánh giá trên tập con chỉ có hỗ trợ đại diện (251 mẫu `PROXY_ONLY` hoặc 608 mẫu `Weak-Proxy Sample Pool` phân rã theo 947 Weak-Proxy atoms qua `Person`).
+    - **Nguyên tắc báo cáo bắt buộc:** Hai nhóm này **bắt buộc phải báo cáo riêng**, không gộp thành một điểm số duy nhất (`single pooled score`) mà không phân biệt rõ ràng.
+    - **Full Hazard Rationale Grounding (Bám lý do nguy cơ đầy đủ):** Vẫn tiếp tục được xác định là **NOT CURRENTLY FEASIBLE** (hiện không khả thi) nếu không có chú thích vùng lý do (rationale annotation) mới.
+    - **Chuẩn hóa thuật ngữ khoa học:** Khi mô hình phân loại an toàn đúng nhưng trượt bounding box (`Correct classification + grounding miss`), **TUYỆT ĐỐI KHÔNG TỰ ĐỘNG ĐƯỢC GỌI LÀ "Correct Answer, Wrong Reason"** (Đúng đáp án nhưng sai lý do). Hiện tượng này chỉ được phép gọi chính xác là:
+      **"Classification-Grounding Inconsistency relative to available object-support annotation"** (Sự không nhất quán giữa phân loại và bám bằng chứng đối với chú thích hỗ trợ đối tượng hiện có).
+  - **5. Phê duyệt 7 Candidate Grouped Hazard Strata cho RQ2:**
+    - Phê chuẩn 7 tầng nguy cơ gom nhóm ứng viên (`Candidate Grouped Hazard Strata`) phục vụ phân tích tập trung lỗi của RQ2:
+      - **A. `FIRE_AND_SMOKE`:** `OPEN_FLAME` + `SMOKE` (200 mẫu, 225 atoms; 100% Level01; 97,8% Direct).
+      - **B. `PPE_ABSENCE`:** `NO_GLOVES` + `NO_HELMET` + `NO_MASK` (545 mẫu, 882 atoms; 99,7% Weak-Proxy).
+      - **C. `UNAUTHORIZED_BEHAVIOR`:** `USE_MOBILE_PHONE` + `SMOKING` (247 mẫu, 287 atoms; 98,6% Direct).
+      - **D. `ENVIRONMENTAL_SLIP_HAZARD`:** `LIQUID_ON_GROUND` (134 mẫu, 134 atoms; 91,0% Direct).
+      - **E. `OBSTRUCTION_AND_FOREIGN_OBJECT`:** `FOREIGN_OBJECT` + `NONMOTORIZED_VEHICLE` (211 mẫu, 216 atoms; 72,2% Direct, 25,0% Proxy).
+      - **F. `EQUIPMENT_STATE_ANOMALY`:** `DOOR_OPEN` (34 mẫu, 34 atoms; 100% No-Current-Spatial-GT).
+      - **G. `PERSONNEL_FALLEN`:** `PERSON_FALLEN` (10 mẫu, 10 atoms; 100% Level01; 100% Weak-Proxy).
+    - **Quy tắc bắt buộc phải ghi rõ:**
+      - Đây là các **tầng phân tích gom nhóm (`grouped analytical strata`)**, **KHÔNG PHẢI là hệ phân loại chân lý tuyệt đối (`ground-truth taxonomy`)**.
+      - Số lượng mẫu giữa các tầng **KHÔNG CÓ TÍNH CỘNG GỘP (`sample counts across strata are NOT additive`)**, do các mẫu đa nguy cơ có thể đồng thời thuộc về nhiều tầng khác nhau.
+    - **Các cảnh báo về yếu tố gây nhiễu và hạn chế phương pháp luận:**
+      - `LIQUID_ON_GROUND`: Bị nhiễu miền nghiêm trọng (`domain confounding`), 94,0% atom tập trung tại `oil_chemical`.
+      - `NONMOTORIZED_VEHICLE`: Tập trung 100% tại hầm (`tunnel`).
+      - `DOOR_OPEN`: 100% không có ground truth không gian, chỉ phù hợp đánh giá phân loại, loại khỏi grounding.
+      - `PERSONNEL_FALLEN`: Cỡ mẫu rất nhỏ ($N=10$), thiếu lực thống kê, không khuyến nghị phân tích độc lập.
+      - Miền Luyện kim (`metallurgy`): Cực kỳ thiếu dữ liệu bất thường (toàn miền chỉ có 9 mẫu Anomaly / 25 atoms).
+- **Lý do:**
+  1. Cuộc tổng điều tra 100% trên 1.000 mẫu loại bỏ hoàn toàn nguy cơ sai số do ngoại suy từ tập thẩm định pilot 63 mẫu ở Tuần 1.
+  2. Việc bóc tách rạch ròi cấp Mẫu ($N=1.000$) và cấp Nguy cơ Nguyên tử ($N=1.788$) giải quyết trọn vẹn hiện tượng đa nguy cơ phức tạp trong sản xuất công nghiệp.
+  3. Phân định khắt khe giữa Direct Object-Support và Weak Proxy bảo vệ tính trung thực khoa học, ngăn chặn việc ngộ nhận đa giác toàn thân người là vùng chứng minh vi phạm an toàn.
+  4. Đẳng thức kiểm tra toàn vẹn ($721 + 608 - 347 = 982$; $982 + 18 = 1.000$) thiết lập sự minh bạch tuyệt đối về tập hợp dữ liệu thực nghiệm.
+- **Ảnh hưởng tới dataset, split, metric và reproducibility:**
+  - **Dataset:** Giữ nguyên dữ liệu thô và các tệp JSON/TXT gốc; không sửa nhãn hay annotations.
+  - **Split:** Bảo lưu phân chia train/test và 5 miền; không tạo split mới.
+  - **Metrics:** Quyết định D6 chưa chốt các công thức metric hay ngưỡng IoU (chuyển sang W2.4).
+  - **Reproducibility:** Dữ liệu điều tra có mã băm SHA-256 xác minh đầy đủ; toàn bộ logic phân loại và ánh xạ nhãn được lưu trữ trong script và artifact kiểm kê có mã kiểm tra tính toàn vẹn.
+- **Người chấp thuận và thời điểm:** Project Owner / Research Lead (Chủ dự án / Người phụ trách nghiên cứu), ngày 2026-09-17.
+- **Task/thí nghiệm liên quan:**
+  - [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (W2.3 Decision Brief, Mục 4–12, 19)
+  - [notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/dataset_schema.md](notes/dataset_schema.md), [notes/research_feasibility_audit.md](notes/research_feasibility_audit.md)
+  - [notes/distribution_imbalance_audit.md](notes/distribution_imbalance_audit.md)
+  - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003)
+  - Định hướng trực tiếp cho định nghĩa metric tại W2.4, khảo sát mô hình tại W2.5 và thực thi baseline tại W3.
+- **Thay thế quyết định:** Không.
+
+## DEC-W2-D7-007 — Rationale Annotation Policy
+
+- **ID:** DEC-W2-D7-007
+- **Ngày:** 2026-09-17
+- **Trạng thái:** ĐƯỢC CHẤP THUẬN
+- **Vấn đề cần quyết định:**
+  - Xác lập chính sách chính thức về việc gán nhãn vùng lý do do con người xác định (Human Rationale Regions) trong khuôn khổ giai đoạn SafeShift Seminar 8 tuần: có triển khai chiến dịch tự tạo nhãn mới hay không.
+  - Xác định ranh giới phương pháp luận và các tuyên bố giới hạn bắt buộc (limitations) khi sử dụng các chú thích đối tượng có sẵn của InspecSafe-V1.
+  - Định hướng và tiêu chuẩn phương pháp luận cho hướng mở rộng chiến dịch gán nhãn rationale trong giai đoạn Luận văn tốt nghiệp (Thesis Extension).
+  - Thiết lập chính sách phương pháp luận đối với chỉ số Tỷ lệ Ảo giác Đối tượng (Object Hallucination Rate) trên toàn bộ bộ dữ liệu.
+  - Tái khẳng định các nội dung kỹ thuật mà bộ ba quyết định D4, D6, D7 không chốt và chuyển giao cho W2.4 và W2.5.
+- **Bối cảnh và bằng chứng:**
+  - Kế thừa các nguyên tắc phương pháp luận tại [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003), [DEC-W2-D4-004](#dec-w2-d4-004) và [DEC-W2-D6-006](#dec-w2-d6-006).
+  - Báo cáo căn cứ kỹ thuật phương pháp luận chi tiết tại [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (Mục 15, 16, 17, 18.2, 19).
+  - Bộ dữ liệu InspecSafe-V1 gồm 37.434 đa giác đối tượng gốc trong tệp JSON, hoàn toàn không có bounding box nguy cơ hay chú thích vùng lý do con người ([notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/dataset_schema.md](notes/dataset_schema.md), [notes/research_feasibility_audit.md](notes/research_feasibility_audit.md)).
+  - Cuộc tổng điều tra D6 khẳng định dataset đã sở hữu sẵn **781 Direct atoms** (nằm trong **721 mẫu** thuộc Direct-Support Sample Pool) có đa giác đối tượng hỗ trợ trực tiếp cho khẳng định nguy cơ, cùng **947 Weak-Proxy atoms** (nằm trong **608 mẫu** thuộc Weak-Proxy Sample Pool).
+  - Bộ dữ liệu InspecSafe-V1 không phải là bộ dữ liệu chú thích đối tượng triệt để (`annotation is not exhaustive`); có nhiều trường hợp vật thể có thật trong ảnh nhưng annotator gốc không vẽ đa giác trong tệp JSON (như 12 ca nước/dầu tràn thiếu nhãn `Liquid`/`Oil`, 5 ca khói thiếu nhãn `Smoke`, 6 ca dị vật thiếu nhãn).
+- **Các phương án:**
+  - *Phương án D7-A — Không tạo nhãn rationale mới trong giai đoạn Seminar (Được chọn):* Sử dụng nguyên trạng các phân tầng Direct Object-Support và Weak Proxy có sẵn; công bố rõ ràng giới hạn dữ liệu.  
+    *Đánh giá:* Tuyệt đối an toàn về tiến độ 8 tuần; không phát sinh thêm tính chủ quan từ việc tự gán nhãn mới; tập trung trọn vẹn tài nguyên vào việc chuẩn hóa benchmark và tái lập baseline mô hình.
+  - *Phương án D7-B — Chiến dịch gán nhãn 100 mẫu đơn lẻ (100-Sample Rationale Campaign):* Nhóm nghiên cứu tự vẽ hộp bao vùng lý do giải thích cho 100 mẫu Anomaly.  
+    *Đánh giá:* Phát sinh rủi ro phương pháp luận rất lớn do tính chủ quan cá nhân của người gán nhãn; chi phí thời gian ước tính sơ bộ khoảng ~20–30 giờ (ước lượng kế hoạch sơ bộ, không phải số đo thực nghiệm); có nguy cơ làm méo mó tính khách quan của benchmark.
+  - *Phương án D7-C — Chiến dịch gán nhãn kép 50–100 mẫu có thẩm định chuyên gia (Double-Annotated Subset):* Gán nhãn kép độc lập bởi 2 người, đo lường độ nhất quán liên gán nhãn, trọng tài phân xử bất đồng và có chuyên gia an toàn thẩm định.  
+    *Đánh giá:* Đảm bảo tính khoa học cao hơn D7-B; tuy nhiên chi phí rất lớn (~40–60 giờ planning estimate), nguy cơ cao gây vỡ tiến độ Seminar 8 tuần.
+- **Quyết định:**
+  - **1. Chính sách Gán nhãn trong giai đoạn Seminar (CHỌN D7-A):**
+    - Trong giai đoạn Seminar, SafeShift chính thức **CHỌN D7-A: KHÔNG TẠO RATIONALE ANNOTATION MỚI**.
+    - Cụ thể:
+      - **Không tự vẽ Human Rationale Boxes (Hộp vùng lý do của con người)**.
+      - **Không tạo 100-sample rationale campaign (Chiến dịch gán nhãn 100 mẫu)**.
+      - **Không gọi object polygons hiện có là human rationale GT**.
+    - SafeShift Seminar sử dụng:
+      - **Direct Object-Support**
+      - **Weak Proxy**
+      và công bố limitation (giới hạn phương pháp luận) rõ ràng.
+  - **2. Bốn Lý do Cốt lõi Lựa chọn D7-A:**
+    1. *Dataset hiện đã có 781 Direct atoms* (trên 721 mẫu) đủ để xây grounding benchmark có ý nghĩa khoa học độc lập.
+    2. *Tự gán rationale bởi nhóm sinh viên có rủi ro subjectivity (tính chủ quan)*, thiếu quy chuẩn an toàn công nghiệp chuẩn mực và có thể làm giảm tính khách quan của một benchmark kiểm toán độc lập.
+    3. *Giai đoạn Seminar 8 tuần ưu tiên benchmark/protocol và baseline reproduction* (tái lập các baseline của mô hình VLM ở W3–W4), không nên phân tán tài nguyên.
+    4. *Tạo rationale annotation sẽ làm mở rộng scope (phạm vi)* và có nguy cơ trực tiếp ảnh hưởng tiến độ hoàn thành Seminar.
+  - **3. Bảo lưu Hướng mở rộng cho Luận văn Tốt nghiệp (Thesis Extension):**
+    - SafeShift **bảo lưu D7-C cho Thesis (Khóa luận tốt nghiệp)**:
+      - Quy mô: **50–100 samples**.
+      - **Double annotation (gán nhãn kép)** độc lập bởi 2 người.
+      - **Disagreement resolution (xử lý bất đồng)** có trọng tài phân xử.
+      - **Domain-expert review (thẩm định chuyên gia an toàn lao động)** nếu khả thi.
+    - Quy tắc xác lập trạng thái: Đây là **future thesis candidate (ứng viên nghiên cứu cho khóa luận tương lai)**, **KHÔNG PHẢI nhiệm vụ Seminar hiện tại**.
+  - **4. Chính sách đối với Chỉ số Ảo giác Đối tượng (Object Hallucination Policy):**
+    - **Không phê duyệt full-dataset Object Hallucination Rate (Tỷ lệ ảo giác đối tượng trên toàn bộ dataset)**, vì annotation không exhaustive (chú thích hình học không mang tính triệt để).
+    - **Không dùng:**
+      $$\text{missing JSON label} = \text{object absent}$$
+      *(nhãn thiếu trong JSON đồng nghĩa với đối tượng không tồn tại trong ảnh)*.
+    - Nếu sau này muốn đánh giá ảo giác đối tượng:
+      - Sử dụng **closed critical vocabulary (từ điển đối tượng nguy cơ đóng)** KẾT HỢP VỚI **manually verified positive/negative subset (tập dương/âm kiểm tra thủ công)**, HOẶC:
+      - Một cuộc **annotation-completeness audit (kiểm toán độ đầy đủ chú thích)** dành riêng cho tập từ điển đó.
+      Toàn bộ các nội dung này sẽ được xem xét và quyết định tại bước **W2.4**.
+  - **5. Những nội dung kỹ thuật D4, D6, D7 KHÔNG CHỐT (Deferred Items):**
+    - Ba quyết định này (D4, D6, D7) **tuyệt đối KHÔNG chốt**:
+      - Macro-F1 formula (Công thức Macro-F1).
+      - Balanced Accuracy formula (Công thức Balanced Accuracy).
+      - FPR/FNR details (Chi tiết FPR/FNR).
+      - Cross-Domain Drop formula (Công thức suy giảm hiệu năng xuyên miền).
+      - IoU threshold (Ngưỡng IoU).
+      - Pointing Game threshold (Ngưỡng Pointing Game).
+      - Confidence interval (Khoảng tin cậy).
+      - Bootstrap procedure (Quy trình bootstrap).
+      - Hypothesis tests (Các bài kiểm định giả thuyết thống kê).
+      - Final model list (Danh sách mô hình cuối cùng).
+      - Final prompt wording (Câu chữ prompt cuối cùng).
+    - **D5 / statistical protocol (giao thức thống kê)** vẫn thuộc về bước **W2.4**.
+    - **Model capability / model list** thuộc về bước **W2.5**.
+- **Lý do:**
+  1. Bảo toàn tính toàn vẹn nghiên cứu và tiến độ của Seminar 8 tuần.
+  2. Tránh đưa vào nhãn tự tạo thiếu kiểm chứng khách quan làm méo mó benchmark.
+  3. Minh bạch về sự không đầy đủ của chú thích đối tượng gốc, ngăn chặn việc tính toán chỉ số ảo giác sai lệch.
+  4. Xác lập lộ trình phân kỳ rạch ròi: hoàn thành Seminar vững chắc trước khi mở rộng sang gán nhãn chuyên sâu ở Luận văn.
+- **Ảnh hưởng tới dataset, split, metric và reproducibility:**
+  - **Dataset:** Giữ nguyên dữ liệu gốc; không bổ sung nhãn rationale tự tạo vào bộ dữ liệu Seminar.
+  - **Split:** Không làm thay đổi phân chia train/test hay 5 miền.
+  - **Metrics:** Không tính Object Hallucination Rate trên toàn bộ dataset; toàn bộ công thức metric khác chuyển sang W2.4.
+  - **Reproducibility:** Báo cáo trung thực các hạn chế dữ liệu; các kết luận thực nghiệm bám chắc vào các phân tầng đã kiểm chứng của D6.
+- **Người chấp thuận và thời điểm:** Project Owner / Research Lead (Chủ dự án / Người phụ trách nghiên cứu), ngày 2026-09-17.
+- **Task/thí nghiệm liên quan:**
+  - [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (W2.3 Decision Brief, Mục 15–19)
+  - [notes/research_feasibility_audit.md](notes/research_feasibility_audit.md)
+  - [notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/dataset_schema.md](notes/dataset_schema.md)
+  - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003), [DEC-W2-D4-004](#dec-w2-d4-004), [DEC-W2-D6-006](#dec-w2-d6-006)
+  - Định hướng trực tiếp cho định nghĩa metric tại W2.4, khảo sát mô hình tại W2.5 và thực thi baseline tại W3.
+- **Thay thế quyết định:** Không.
+
 ## Template
 
 - **ID:** <DEC-...>
