@@ -4,7 +4,7 @@
 - **Giai đoạn:** Week 2 — Research Protocol (W2.5) — Final Implementation-Policy Patch
 - **Ngày audit / cập nhật:** 2026-09-18
 - **Trạng thái:** **PROPOSED, NOT APPROVED** (Chờ Project Owner xem xét và phê duyệt; chưa ghi vào `DECISIONS.md`)
-- **Phạm vi áp dụng:** Giao thức mô hình, câu lệnh chỉ dẫn (prompt), phân lập quy tắc nhiệm vụ (task policy), kiến trúc lệnh gọi (call architecture), từ điển nguy cơ (hazard vocabulary), giao diện đầu ra (interface), bộ chuyển đổi (adapter), cấu hình suy luận và giải mã ít biến động theo từng nhà cung cấp (provider-supported low-variance decoding policy), tường lửa kiểm chuẩn (benchmark firewall), cổng năng lực không gian ngoài benchmark có đối chứng vật thể gây nhiễu (external target+distractor sanity gate không dùng ngưỡng số tùy tiện), chốt tuyến phục vụ Qwen và giới hạn tái lập (pinned Qwen serving route & hosted reproducibility limitation), cơ chế đóng băng giao thức (protocol freeze), và quản lý truy vết nguồn gốc cho Giao thức Tái lập Baseline (P1) và Giao thức Nghiên cứu Chính (P2) của SafeShift Seminar.
+- **Phạm vi áp dụng:** Giao thức mô hình, câu lệnh chỉ dẫn (prompt), phân lập quy tắc nhiệm vụ (task policy), kiến trúc lệnh gọi (call architecture), từ điển nguy cơ (hazard vocabulary), giao diện đầu ra (interface), bộ chuyển đổi (adapter), cấu hình suy luận và giải mã ít biến động theo từng nhà cung cấp (provider-supported low-variance decoding policy), tường lửa kiểm chuẩn (benchmark firewall), cổng năng lực không gian ngoài benchmark có đối chứng vật thể gây nhiễu (external target+distractor sanity gate không dùng ngưỡng số tùy tiện), chốt tuyến phục vụ Qwen khu vực Singapore và giới hạn tái lập (pinned Qwen Singapore route, ROUTE_REGION_PINNED, QWEN_DECODING_PENDING_ROUTE_CONFIRMATION & hosted reproducibility limitation), cơ chế đóng băng giao thức (protocol freeze), và quản lý truy vết nguồn gốc cho Giao thức Tái lập Baseline (P1) và Giao thức Nghiên cứu Chính (P2) của SafeShift Seminar.
 
 ---
 
@@ -17,7 +17,7 @@ Mục đích của báo cáo thẩm định kỹ thuật phương pháp luận W
 4. **Bảo toàn Định nghĩa Nhiệm vụ Phân loại (Task Policy Specification)**: phân biệt rạch ròi giữa việc công khai Quy tắc Nhiệm vụ An toàn Ngành (*Task Policy Disclosure* — cần thiết để bài toán phân loại có đầy đủ ngữ nghĩa) và việc công khai Từ điển Nguy cơ Định vị (*Grounding Vocabulary Disclosure*), ngăn ngừa nguy cơ phân loại bị thiếu đặc tả (under-specified).
 5. **Tái thiết kế Cổng Năng lực Không gian Ngoài Benchmark (External Target+Distractor Sanity Gate)**: loại bỏ hoàn toàn các ngưỡng số tùy tiện ($\text{IoU} \ge 0.30$, $\text{Distractor IoU} < 0.10$, $\text{Area} \le 2.5\times$); giữ IoU như chỉ số chẩn đoán mô tả (*descriptive diagnostic*); thiết lập bài kiểm tra định vị chọn lọc mục tiêu (*target-selective localization*) trên các ca kiểm thử ngoại vi đối chứng có hệ thống (tâm hộp bao nằm trong target, không chứa tâm distractor, di chuyển theo target, không có hành vi giant box).
 6. **Xác lập Chính sách Giải mã Ít Biến động Phù hợp Năng lực Từng Nhà cung cấp (Provider-Supported Low-Variance Decoding Policy)**: loại bỏ quy định áp đặt máy móc `temperature = 0.0` đồng loạt cho mọi mô hình; thay bằng cấu hình ít biến động mà API hiện hành của từng nhà cung cấp thực sự hỗ trợ (Gemini 3.8 Flash dùng `low` thinking, Claude Sonnet 5 dùng adaptive thinking / supported effort policy, GPT-5.6-Terra dùng `reasoning_effort: "low"`), tôn trọng nguyên tắc công bằng: *cùng một nhiệm vụ ngữ nghĩa, không phải các tham số API giống hệt nhau một cách khiên cưỡng*.
-7. **Chốt Tuyến Phục vụ Qwen và Công bố Giới hạn Tái lập (Pinning Qwen Serving Route & Hosted Reproducibility Limitation)**: lựa chọn Alibaba Cloud DashScope API làm tuyến chính thức ưu tiên; gắn cờ cảnh báo `HOSTED_BACKEND_NOT_FULLY_PINNABLE` và thừa nhận trung thực giới hạn không thể cam kết tương đương từng bit (*bit-for-bit*) với mô hình tự host tham chiếu.
+7. **Chốt Tuyến Phục vụ Qwen Khu vực Singapore và Công bố Giới hạn Tái lập (Pinning Qwen Singapore Route & Hosted Reproducibility Limitation)**: lựa chọn Alibaba Cloud Model Studio / DashScope (Region Singapore, `ap-southeast-1`) làm tuyến chính thức ưu tiên với trạng thái **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**; xác lập trạng thái giải mã **`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`**; ghi nhận precision là **`UNDISCLOSED BY PROVIDER`**; gắn cờ cảnh báo **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`** và thừa nhận trung thực giới hạn không thể cam kết tương đương từng bit (*bit-for-bit*) với mô hình tự host tham chiếu.
 8. **Định lượng Điều kiện Hóa Bảng Dự toán Chi phí (Cost Table Qualification)**: công bố rõ ràng các giả định tính toán token, sự khác biệt về cách tính token ảnh giữa các nhà cung cấp, tác động của reasoning token và tính chất ước tính gần đúng của ngân sách.
 9. **Phân tích quy trình tái lập baseline chính thức của InspecSafe-V1 (P1)**: phục hồi chính xác prompt, cấu hình giải mã, đường dẫn API và logic đánh giá văn bản của bài báo gốc (*Scientific Data* 2026); loại bỏ tiêu chí dung sai sai số tùy tiện ($\pm 1–2\%$).
 10. **Thiết lập Chính sách Đóng băng Giao thức (Protocol Freeze)** và Kiểm soát Thay đổi Sau Đóng băng với commit SHA cố định trước khi thực hiện bất kỳ lệnh suy luận nào trên dữ liệu InspecSafe.
@@ -367,7 +367,7 @@ Condition(A3)|  A3 + B1 (X)  |  A3 + B2 (X)   |  A3 + B3 (X)   |
 ### 13.3. Đánh giá Trade-off khi Phân rã Độc lập (Decoupled Advantage)
 Khi **Call 1 đã được phân lập hoàn toàn khỏi Call 2** (sử dụng kiến trúc A2 - Independent Two-Call):
 - Từ điển đóng 12 nguy cơ (B2) trong Call 2 **KHÔNG CÒN TÁC ĐỘNG TRỰC TIẾP LÊN QUYẾT ĐỊNH PHÂN LOẠI CỦA CALL 1**.
-- Điều này giải tỏa rủi ro lớn nhất của từ điển đóng (label hinting đối với safety level), đồng thời tận dụng triệt để ưu thế của từ điển đóng trong Call 2: **tính tất định tuyệt đối cho thuật toán ghép cặp bipartite matching Mode A / Mode B của Quyết định D5**.
+- Điều này giải tỏa rủi ro lớn nhất của từ điển đóng (label hinting đối với safety level), đồng thời tận dụng triệt để ưu thế của từ điển đóng trong Call 2: **tính ánh xạ/parser tất định theo protocol cho thuật toán ghép cặp bipartite matching Mode A / Mode B của Quyết định D5**.
 - *Đề xuất Tổ hợp Ứng viên Hàng đầu (Top Candidate):* **A2 (Independent Two-Call) kết hợp C1 (Policy-Aware Classification) cho Call 1 và B2 (Closed 12-Hazard Grounding) cho Call 2**. *(Trạng thái: PROPOSED, NOT APPROVED)*.
 
 ---
@@ -498,7 +498,7 @@ Nguyên tắc phương pháp luận cốt lõi: **Đánh giá trên cùng một 
 | **Google Gemini 3.8 Flash** | Thinking Levels (`LOW`, `MEDIUM`, `HIGH`). *(Lưu ý: `minimal` không tồn tại)* | **Cấu hình `thinking: "low"`** cho Call 2 (Grounding); **Provider Default (`medium`/`low`)** cho Call 1 (Phân loại). Tuyệt đối **không gửi tham số `temperature`/`top_p`/`top_k`** nếu tài liệu API chính thức hướng dẫn loại bỏ chúng. | Tuân thủ hướng dẫn kỹ thuật chính thức của Gemini 3.8: giảm thinking xuống `low` để tránh trôi dạt định dạng bbox và tọa độ; tôn trọng khuyến nghị loại bỏ các sampling parameters khi bật thinking. |
 | **OpenAI GPT-5.6-Terra** | Tham số `reasoning_effort` (`none`, `low`, `medium`, `high`, `xhigh`, `max`) | **Thiết lập `reasoning_effort: "low"`** (hoặc `none` cho Zero-Shot thuần túy), cố định trước khi đóng băng giao thức. Chỉ truyền `seed` nếu API route hỗ trợ. Không áp đặt custom temperature. | Tối ưu hóa giữa khả năng hiểu quy tắc an toàn phức tạp và kiểm soát độ trễ/chi phí token sinh ra; tuân thủ cơ chế nội tại của dòng mô hình suy luận OpenAI. |
 | **Anthropic Claude Sonnet 5** | Adaptive Thinking / Effort Controls. *(Cú pháp Extended Thinking manual cũ đã lỗi thời)* | **Sử dụng cấu hình Adaptive Thinking ở mức nỗ lực tối thiểu (`effort: "low"`)** hoặc Provider Default. **Tuyệt đối không ép `temperature`/`top_p` phi mặc định** khi API từ chối. | API Claude 5 từ chối các tham số sampling tùy ý khi bật cơ chế thinking. SafeShift tuân thủ giao thức chuẩn của nhà cung cấp để tránh lỗi HTTP 400 Bad Request. |
-| **Qwen3-VL-8B-Instruct** | Standard Direct Decoding / Serving Backend Parameters | **Cấu hình theo tham số chuẩn của tuyến phục vụ DashScope đã chốt** (Greedy decoding: `temperature=0.0` hoặc `top_p=0.001` tùy backend hỗ trợ). | Mô hình nguồn mở chạy qua DashScope API hỗ trợ greedy decoding trực tiếp; cấu hình được chốt bất biến trước freeze. |
+| **Qwen3-VL-8B-Instruct** | Standard Direct Decoding / Serving Backend Parameters | **Cấu hình giải mã ít biến động duy nhất được hỗ trợ sau khi chốt tuyến endpoint (`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`)**. Tránh kết hợp sampling tùy ý. | Chọn đúng một cấu hình low-variance (hoặc provider default) phù hợp với tuyến phục vụ Singapore của DashScope; ghi nhận chính xác trước freeze. |
 
 ---
 
@@ -513,7 +513,7 @@ Nguyên tắc phương pháp luận cốt lõi: **Đánh giá trên cùng một 
   1. **Google Gemini 3.8 Flash:** Sử dụng cấu hình thinking được hỗ trợ (`low` cho Call 2 Grounding); không truyền các tham số giải mã mà API cấm hoặc cảnh báo khi dùng thinking.
   2. **OpenAI GPT-5.6-Terra:** Khóa tham số `reasoning_effort: "low"` trước khi đóng băng; chỉ thiết lập `temperature` hoặc `seed = 42` nếu tuyến API cụ thể đó cho phép.
   3. **Anthropic Claude Sonnet 5:** Khóa cấu hình adaptive thinking / effort được hỗ trợ trước khi đóng băng; tôn trọng các ràng buộc sampling mặc định của Claude API.
-  4. **Qwen3-VL-8B-Instruct (DashScope):** Thiết lập giải mã tất định chuẩn (greedy decoding) theo đúng đặc tả của Alibaba Cloud DashScope API.
+  4. **Qwen3-VL-8B-Instruct (Alibaba Cloud DashScope, Region Singapore):** Trạng thái cấu hình giải mã là **`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`** cho tới thời điểm protocol freeze. Tại freeze, sẽ chốt đúng một cấu hình ít biến động duy nhất được tài liệu API hỗ trợ (hoặc provider default nếu API không khuyến nghị can thiệp); không áp đặt kết hợp tham số tùy ý; ghi nhận nguyên văn trong run metadata.
 - *Ghi nhận bắt buộc:* Toàn bộ cấu hình gọi API thực tế của từng mô hình phải được chốt trước thời điểm đóng băng (`protocol_freeze_commit_sha`) và lưu nguyên văn trong metadata của từng lượt chạy (`decoding_parameters`).
 
 ---
@@ -663,14 +663,21 @@ Một mô hình ở diện `LEVEL 3 (Prompt-Only)` đạt chuẩn **`LEVEL 2A (E
 Thay vì chọn 2 mô hình cùng họ Google Gemini, SafeShift tái cấu trúc shortlist tối thiểu 4 mô hình nhằm **tối đa hóa tính đa dạng nhà cung cấp (Provider Diversity)** trên 4 nền tảng công nghệ độc lập:
 1. **Google Gemini 3.8 Flash (`gemini-3.8-flash`):**
    - *Vai trò:* Đại diện Closed-API của Google có năng lực Object Detection nguyên bản (**LEVEL 1 — DOC-VERIFIED**). Chi phí thấp, tốc độ cao. Tham gia cả Phân loại và Grounding. Cấu hình Call 2 Grounding: `thinking: "low"`.
-2. **Qwen3-VL-8B-Instruct (Tuyến phục vụ đã chốt: Alibaba Cloud DashScope API):**
-   - *Serving Provider:* Alibaba Cloud (DashScope Model Studio).
+2. **Qwen3-VL-8B-Instruct (Tuyến phục vụ: Alibaba Cloud Model Studio / DashScope, Region Singapore):**
+   - *Serving Provider:* Alibaba Cloud Model Studio / DashScope.
+   - *Intended Region:* Singapore (`ap-southeast-1`).
    - *Exact API Model ID:* `qwen3-vl-8b-instruct`.
    - *Hugging Face Reference Repository:* `Qwen/Qwen3-VL-8B-Instruct`.
-   - *Decoding Configuration:* Greedy decoding chuẩn DashScope (`temperature=0.0` hoặc `top_p=0.001` tùy endpoint).
-   - *Serving Quantization:* Server-side hosted (FP16 / bfloat16 do Alibaba Cloud phục vụ).
-   - *SDK / API Endpoint:* DashScope OpenAI-Compatible Endpoint (`https://dashscope.aliyuncs.com/compatible-mode/v1`).
-   - *Cảnh báo Giới hạn Bắt buộc:* Gắn nhãn **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`**. Công bố rõ ràng rằng suy luận qua Hosted API không cam kết tương đương từng bit (*bit-for-bit*) với mô hình tự host tham chiếu.
+   - *API Protocol:* OpenAI-compatible vision API.
+   - *Base URL Endpoint:*
+     + Workspace-Dedicated Endpoint Template: `https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` (theo tài liệu chính thức của Alibaba Cloud Model Studio; không tự tạo Workspace ID giả định).
+     + Fallback Legacy International Endpoint: `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` (nếu dự án sử dụng tài khoản quốc tế tiêu chuẩn không theo workspace-dedicated domain).
+     + *Trạng thái Tuyến:* **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**.
+   - *Decoding Configuration:*
+     + *Trạng thái:* **`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`** cho tới protocol freeze.
+     + *Chính sách:* Chọn đúng MỘT cấu hình ít biến động được tài liệu hỗ trợ (hoặc provider default nếu API không khuyến nghị can thiệp sampling) sau khi xác nhận endpoint; ghi nhận nguyên văn thông số trong run metadata.
+   - *Serving Precision / Quantization:* **`UNDISCLOSED BY PROVIDER`** cho suy luận hosted. (Loại bỏ khẳng định không có căn cứ về FP16 / bfloat16).
+   - *Cảnh báo Giới hạn Bắt buộc:* Gắn nhãn **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`**. Công bố rõ ràng rằng suy luận qua Hosted API không cam kết tương đương từng bit (*bit-for-bit*) với mô hình tự host trọng số tham chiếu gốc.
 3. **OpenAI GPT-5.6-Terra (`gpt-5.6-terra`):**
    - *Vai trò:* Đại diện họ mô hình thương mại hàng đầu của OpenAI. Cân bằng tối ưu giữa trí tuệ và chi phí. Cấu hình: `reasoning_effort: "low"`. Trạng thái **LEVEL 3 (Prompt-Only)**; tham gia Phân loại (chắc chắn) và tham gia Grounding nếu vượt qua External Target+Distractor Sanity Gate đạt Level 2A.
 4. **Anthropic Claude Sonnet 5 (`claude-sonnet-5`):**
@@ -688,15 +695,15 @@ Thay vì chọn 2 mô hình cùng họ Google Gemini, SafeShift tái cấu trúc
 | :--- | :--- | :--- | :--- | :--- |
 | **A. Tường lửa Kiểm chuẩn (Benchmark Firewall)** | Bắt buộc (Required): Toàn bộ 5.013 ảnh là Evaluation-Only; cấm probe/tune trên InspecSafe | Không bắt buộc: Cho phép dùng ảnh InspecSafe để probe/tune | N/A | **Phương án 1 (Bắt buộc)**: Giảm thiểu nguy cơ thích nghi benchmark nội sinh. |
 | **B. Cổng Năng lực Không gian (Spatial Capability Gate)** | Target+Distractor Sanity Gate: kiểm tra định vị chọn lọc mục tiêu (center in target, distractor excluded, di chuyển theo target, không giant box), không dùng ngưỡng số tùy tiện; chỉ Level 1/2A được Grounding | Dùng ngưỡng số cứng tùy tiện (IoU >= 0.30, v.v.) hoặc Format-only probe | Cho phép mọi mô hình tham gia Grounding | **Phương án 1 (Target+Distractor Sanity Gate không ngưỡng tùy tiện)**: Bảo đảm tính khách quan và hợp lý kỹ thuật. |
-| **C. Nguồn Dữ liệu Capability Probe** | External-Only: ảnh công cộng ngoài benchmark có known GT mục tiêu và vật thể gây nhiễu | Lấy một tập con nhỏ từ InspecSafe | N/A | **Phương án 1 (External-Only)**: Bảo vệ Benchmark Firewall tuyệt đối. |
+| **C. Nguồn Dữ liệu Capability Probe** | External-Only: ảnh công cộng ngoài benchmark có known GT mục tiêu và vật thể gây nhiễu | Lấy một tập con nhỏ từ InspecSafe | N/A | **Phương án 1 (External-Only)**: Giảm nguy cơ vi phạm Benchmark Firewall. |
 | **D. Thời điểm Đóng băng Giao thức (Protocol Freeze)** | Đóng băng tuyệt đối trước lần inference đầu tiên trên InspecSafe (ghi nhận commit SHA) | Đóng băng linh hoạt trong quá trình chạy | N/A | **Phương án 1 (Freeze trước inference đầu tiên)**: Bảo toàn tính tái lập khoa học. |
 | **E. Chính sách Sửa lỗi Sau Đóng băng** | Cấm sửa prompt theo hiệu năng; lỗi kỹ thuật phải bump version & rerun toàn bộ | Cho phép sửa riêng prompt của mô hình yếu | N/A | **Phương án 1 (Strict Version Bump & Full Rerun)**: Bảo đảm tính công bằng tuyệt đối. |
 | **F. Trục A: Kiến trúc Lệnh gọi P2** | A1. One Combined Call (Chung 1 request lấy cả nhãn và box) | A2. Two Independent Calls (Call 1: Classify; Call 2: Grounding độc lập, không nhận output Call 1) | A3. Two Conditioned Calls (Call 2 nhận kết quả Call 1) | **Cần Quyết định**: A1 tiết kiệm chi phí; A2 giảm thiểu điều kiện hóa trực tiếp giữa phân loại và grounding. |
 | **G. Trục B: Từ điển Nguy cơ Định vị** | B1. Open Vocabulary (Mô tả tự do, ánh xạ sau) | B2. Closed 12-Hazard Vocabulary (Chọn trong 12 nhãn D6) | B3. Hybrid (Nhãn đóng + Mô tả tự do) | **Cần Quyết định**: B2 tương thích toán học cao nhất với D5/D6; đặc biệt tối ưu khi đi cùng A2. |
 | **H. Quy tắc Nhiệm vụ Phân loại (Task Policy)** | C1. Upstream Policy-Aware (cung cấp bảng quy chuẩn an toàn ngành nguyên bản trong Call 1) | C2. Abstract Level-Definition (chỉ mô tả trừu tượng Level 1–4) | C3. No-Policy (chỉ yêu cầu chọn nhãn) | **Phương án C1**: Đầy đủ ngữ nghĩa, ngăn ngừa bài toán phân loại bị under-specified. |
-| **I. Danh sách Mô hình P2** | 4 Mô hình Đa Nhà cung cấp (Gemini 3.8 Flash, Qwen3-VL-8B DashScope, GPT-5.6-Terra, Claude Sonnet 5) | 4 Mô hình Tập trung (2 Gemini + 1 Qwen + 1 OpenAI) | Rút gọn 3 mô hình | **Phương án 1 (4 Nhà cung cấp Đa dạng)**: Đạt cân bằng tối ưu giữa độ đa dạng khoa học và chi phí kiểm soát (~ $78–$123). |
+| **I. Danh sách Mô hình P2** | 4 Mô hình Đa Nhà cung cấp (Gemini 3.8 Flash, Qwen3-VL-8B DashScope Singapore, GPT-5.6-Terra, Claude Sonnet 5) | 4 Mô hình Tập trung (2 Gemini + 1 Qwen + 1 OpenAI) | Rút gọn 3 mô hình | **Phương án 1 (4 Nhà cung cấp Đa dạng)**: Đạt cân bằng tối ưu giữa độ đa dạng khoa học và chi phí kiểm soát (~ $78–$123). |
 | **J. Chế độ Suy luận & Giải mã (Decoding & Thinking)** | Áp đặt `temperature = 0.0` đồng loạt cho mọi mô hình | Cấu hình giải mã ít biến động phù hợp năng lực từng nhà cung cấp (Provider-Supported Low-Variance Decoding Policy) | Cấu hình tự do không ghi metadata | **Phương án 2 (Provider-Supported Low-Variance)**: Tôn trọng thiết kế API chuẩn; tránh lỗi HTTP và hành vi sai lệch. |
-| **K. Quản lý Tuyến Phục Vụ Nguồn Mở (Qwen Serving)** | Chốt tuyến chính thức Alibaba Cloud DashScope, gắn nhãn `HOSTED_BACKEND_NOT_FULLY_PINNABLE` | Để mở DashScope / OpenRouter hoán đổi tùy ý | Tự host trên GPU 4GB | **Phương án 1 (Chốt DashScope kèm cảnh báo minh bạch)**: Rõ ràng, khả thi và trung thực về giới hạn tái lập. |
+| **K. Quản lý Tuyến Phục Vụ Nguồn Mở (Qwen Serving)** | Chốt tuyến Alibaba Cloud DashScope (Singapore, `ROUTE_REGION_PINNED`), gắn nhãn `HOSTED_BACKEND_NOT_FULLY_PINNABLE`, decoding `QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`, precision `UNDISCLOSED BY PROVIDER` | Để mở DashScope / OpenRouter hoán đổi tùy ý | Tự host trên GPU 4GB | **Phương án 1 (Chốt DashScope Singapore kèm cảnh báo minh bạch)**: Rõ ràng, khả thi và trung thực về giới hạn tái lập. |
 
 ---
 
@@ -715,14 +722,14 @@ Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể c
 3. **Về Danh sách Mô hình Nghiên cứu (4 Nhà Cung Cấp Đa Dạng):**
    - Phê duyệt shortlist 4 mô hình: `gemini-3.8-flash` (Google), `qwen3-vl-8b-instruct` (Alibaba / DashScope), `gpt-5.6-terra` (OpenAI), và `claude-sonnet-5` (Anthropic).
    - Xác nhận loại bỏ hoàn toàn `claude-3-7-sonnet` (đã retired) và các ID không chính thức (`gemini-2.5-flash-001`).
-   - Chốt tuyến phục vụ cho Qwen là **Alibaba Cloud DashScope API** kèm nhãn cảnh báo `HOSTED_BACKEND_NOT_FULLY_PINNABLE`.
+   - Chốt tuyến phục vụ cho Qwen là **Alibaba Cloud Model Studio / DashScope (Region Singapore)** với trạng thái **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**, precision **`UNDISCLOSED BY PROVIDER`**, kèm nhãn cảnh báo **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`**.
 4. **Về Chính sách Giải mã và Suy luận (Decoding & Thinking Policy):**
-   - Phê duyệt **Provider-Supported Low-Variance Decoding Policy**: Gemini 3.8 Flash dùng `thinking: "low"` cho Grounding; GPT-5.6-Terra dùng `reasoning_effort: "low"`; Claude Sonnet 5 dùng Adaptive Thinking chuẩn; Qwen DashScope dùng greedy decoding chuẩn.
+   - Phê duyệt **Provider-Supported Low-Variance Decoding Policy**: Gemini 3.8 Flash dùng `thinking: "low"` cho Grounding; GPT-5.6-Terra dùng `reasoning_effort: "low"`; Claude Sonnet 5 dùng Adaptive Thinking chuẩn; Qwen DashScope áp dụng cấu hình giải mã ít biến động duy nhất được xác nhận tại freeze (**`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`**).
 5. **Về Kiến trúc Đánh giá P2 (Đề xuất Tổ hợp Ứng viên Hàng đầu):**
    - **Tổ hợp Khuyến nghị:** **A2 (Two Independent Calls) + C1 (Policy-Aware Classification) + B2 (Closed 12-Hazard Grounding)**:
      - *Call 1 (Safety Classification):* Gửi Image + Bảng quy chuẩn an toàn ngành (C1) $\rightarrow$ chỉ xuất `safety_level`. Áp dụng cho 100% mô hình.
      - *Call 2 (Hazard & Grounding):* Gửi Image + Từ điển đóng 12 nguy cơ (B2) $\rightarrow$ xuất tọa độ hộp bao cho các mô hình Grounding-Eligible. **Call 2 hoàn toàn độc lập, không nhận kết quả từ Call 1**.
-     - *Lợi ích phương pháp luận:* Bảo vệ tính khách quan của bài toán phân loại an toàn (không bị gợi ý bởi 12 nhãn nguy cơ); đồng thời tận dụng tính tất định tuyệt đối của từ điển đóng 12 nguy cơ trong Call 2 để phục vụ thuật toán ghép cặp Mode A/B của D5.
+     - *Lợi ích phương pháp luận:* Bảo vệ tính khách quan của bài toán phân loại an toàn (không bị gợi ý bởi 12 nhãn nguy cơ); đồng thời tận dụng tính ánh xạ/parser tất định theo protocol của từ điển đóng 12 nguy cơ trong Call 2 để phục vụ thuật toán ghép cặp Mode A/B của D5.
    - *Tổ hợp Thay thế (Nếu ưu tiên tối đa ngân sách):* **A1 (One Combined Call) + B2 (Closed 12-Hazard)**: Giảm chi phí từ ~\$123 xuống ~\$78 USD, nhưng chấp nhận việc công khai không gian nhãn nguy cơ trong cùng prompt phân loại.
 
 ---
@@ -730,7 +737,7 @@ Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể c
 ## 32. Risks & Limitations (Rủi ro và Giới hạn Phương pháp luận)
 
 1. **Rủi ro Không khả dụng của Snapshot Upstream:** Tên định danh `claude-opus-4-5-20251101` có thể là định danh nội bộ qua proxy DMX. Nếu gọi trực tiếp từ Anthropic API, cần dùng phiên bản Claude tương đương và ghi rõ trạng thái *Compatibility Reproduction*.
-2. **Giới hạn Tái lập của Tuyến Hosted API Qwen (`HOSTED_BACKEND_NOT_FULLY_PINNABLE`):** GPU máy trạm 4 GB VRAM buộc phải dùng Hosted API của Alibaba Cloud DashScope. Điều này phát sinh giới hạn phương pháp luận khách quan: không thể bảo đảm tương đương bit-for-bit với mô hình tự chạy tham chiếu do các kỹ thuật tối ưu hóa máy chủ đám mây của nhà cung cấp.
+2. **Giới hạn Tái lập của Tuyến Hosted API Qwen (`HOSTED_BACKEND_NOT_FULLY_PINNABLE`):** GPU máy trạm 4 GB VRAM buộc phải dùng Hosted API của Alibaba Cloud DashScope (Region Singapore, trạng thái `ROUTE_REGION_PINNED`). Precision nội bộ là `UNDISCLOSED BY PROVIDER`. Điều này phát sinh giới hạn phương pháp luận khách quan: không thể bảo đảm tương đương bit-for-bit với mô hình tự chạy tham chiếu do các kỹ thuật tối ưu hóa máy chủ đám mây của nhà cung cấp.
 3. **Giới hạn Nhận thức luận về Nhiễm Dữ liệu:** Không thể chứng minh sự vắng mặt tuyệt đối của nhiễm dữ liệu tiền huấn luyện trên các mô hình Closed-API. SafeShift định vị trung thực là benchmark đánh giá thực nghiệm trên các mô hình đóng băng trọng số hiện hành.
 4. **Sự Không Hoàn hảo của Chú thích Bằng chứng:** Nhắc lại cảnh báo từ Quyết định D6 và D7: các đa giác vật thể có sẵn không mã hóa trọn vẹn lý do vi phạm an toàn của con người. Mọi chỉ số IoU và PLC phải được diễn giải thận trọng trong phạm vi chú thích hiện hữu.
 5. **Đồng bộ Thứ bậc RQ2:** Cần lưu ý rằng: *"RQ2 hierarchy requires separate decision-record consistency check before W3 implementation."*
@@ -754,7 +761,7 @@ Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể c
 11. **Phê chuẩn Mô hình Tham chiếu P1:** Chấp thuận phương án sử dụng Claude Opus (hoặc phiên bản Claude tương thích khả dụng trên official API) và `bge-m3` cục bộ để tái lập P1 hay có chỉ đạo khác?
 12. **Phê chuẩn Danh sách Mô hình P2 Cốt lõi (4 Nhà Cung Cấp):** Chấp thuận shortlist 4 mô hình đa dạng nhà cung cấp (`Gemini 3.8 Flash`, `Qwen3-VL-8B-Instruct`, `GPT-5.6-Terra`, `Claude Sonnet 5`) hay muốn điều chỉnh?
 13. **Xác nhận Loại bỏ Mô hình Retired:** Xác nhận chính thức loại bỏ `claude-3-7-sonnet` (đã retired) và các ID không chính thức khỏi candidate list?
-14. **Chính sách Chốt Tuyến Phục Vụ Qwen:** Đồng thuận việc chốt tuyến phục vụ chính thức là **Alibaba Cloud DashScope API** cho Qwen3-VL và chấp thuận gắn nhãn cảnh báo `HOSTED_BACKEND_NOT_FULLY_PINNABLE` cùng tuyên bố giới hạn tái lập không?
+14. **Chính sách Chốt Tuyến Phục Vụ Qwen:** Đồng thuận việc chốt tuyến phục vụ chính thức là **Alibaba Cloud Model Studio / DashScope (Region Singapore)** cho Qwen3-VL với trạng thái **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**, cấu hình giải mã **`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`**, precision **`UNDISCLOSED BY PROVIDER`**, và chấp thuận gắn nhãn cảnh báo **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`** cùng tuyên bố giới hạn tái lập không?
 15. **Phê chuẩn Cấu trúc Đầu ra Chuẩn hóa:** Đồng thuận với đặc tả JSON Schema nội bộ và nguyên tắc chuyển đổi tọa độ của Adapter theo Quyết định D4?
 16. **Chính sách Mô hình Chỉ Phân loại:** Tái khẳng định chính sách phân loại thuần túy: mô hình không tham gia grounding được ghi nhận `NOT PARTICIPATING`, không bị gán lỗi $\text{IoU} = 0.0$?
 17. **Chính sách Chế độ Suy luận (Thinking Policy):** Chấp thuận cấu hình suy luận phù hợp từng provider (`thinking: "low"` cho Gemini 3.8, `reasoning_effort: "low"` cho GPT-5.6, Adaptive Thinking cho Claude Sonnet 5)?
