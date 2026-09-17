@@ -91,6 +91,200 @@
   - Cơ sở định hướng trực tiếp cho các bước W2.2, W2.3, W2.4, W2.5 và thực thi baseline W3.
 - **Thay thế quyết định:** Không (Quyết định đầu tiên của Week 2).
 
+## DEC-W2-D2-002 — Split, Evaluation Pool, and Grouping Policy
+
+- **ID:** DEC-W2-D2-002
+- **Ngày:** 2026-09-17
+- **Trạng thái:** ĐƯỢC CHẤP THUẬN
+- **Vấn đề cần quyết định:**
+  - Xác lập chính sách phân chia dữ liệu và không gian đánh giá cho các giao thức thực nghiệm P1 (Baseline Replication), P2 (Primary Research Protocol) và P3 (Sensitivity Protocol Candidate).
+  - Phân định rạch ròi giữa đơn vị dự đoán của mô hình VLM (Prediction Unit) và đơn vị phân tích thống kê / lấy mẫu lại (Resampling / Grouping Unit).
+  - Xác định tín hiệu gom nhóm ứng viên ưu tiên (preferred candidate grouping signal) cho dữ liệu Bình thường (`Normal_data`) và bản chất phụ thuộc của dữ liệu Bất thường (`Anomaly_data`).
+  - Phê duyệt các tập con phân tích độ nhạy phụ trợ kiểm soát hiện tượng lặp lại ảnh nội bộ test và tái sử dụng ảnh exact xuyên split.
+- **Bối cảnh và bằng chứng:**
+  - Kế thừa quyết định phân tầng giao thức [DEC-W2-D1-001](#dec-w2-d1-001) và các phát hiện kiểm toán độc lập tại [notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/duplicate_leakage_audit.md](notes/duplicate_leakage_audit.md), [notes/visual_provenance_review.md](notes/visual_provenance_review.md), [notes/distribution_imbalance_audit.md](notes/distribution_imbalance_audit.md).
+  - Bộ dữ liệu InspecSafe-V1 gồm 5.013 ảnh: tập test chính thức gồm 1.250 ảnh (999 Normal, 251 Anomaly); 4.013 ảnh Normal được phân bố trong 2.234 thư mục điểm logic (`point_id`), mỗi điểm chứa 1–4 khung hình liền kề; 1.000 ảnh Anomaly nằm trong 1.000 thư mục điểm logic riêng biệt.
+  - Có 53 cặp trùng lặp pixel tuyệt đối (106 ảnh), gồm 44 cặp within-train, 2 cặp within-test (4 ảnh) và 7 cặp cross-split (14 ảnh, đều là Anomaly). Không có ID video thật (`true video ID`) hay ID trạm vật lý (`physical site ID`) trong metadata phát hành công khai; quan hệ ánh xạ giữa 3.234 thư mục điểm logic (*logical point folders*) và 2.239 điểm/trạm kiểm tra hợp lệ (*valid inspection sites/waypoints*) được tài liệu upstream công bố vẫn chưa được giải quyết (`unresolved mapping`), và không suy diễn 2.239 điểm này là các vị trí vật lý độc lập (*independent physical locations*).
+  - Báo cáo phân tích phương pháp luận chi tiết tại [notes/w2_domain_split_decision_brief.md](notes/w2_domain_split_decision_brief.md).
+- **Các phương án:**
+  - *Phương án 1 — Naive Image-Level (IID giả định):* Coi 5.013 ảnh hoàn toàn độc lập trong mọi khâu suy luận và thống kê. Bỏ qua phụ thuộc đa khung hình và tương quan chuỗi.
+  - *Phương án 2 — Rút gọn dữ liệu cơ học (Subsampling):* Chỉ lấy khung hình đại diện `-001` cho mỗi điểm Normal (giảm 1.779 ảnh Normal) hoặc loại bỏ toàn bộ các cặp trùng lặp/ứng viên dHash. Làm méo mó quy mô dữ liệu và giảm độ bao phủ quan sát.
+  - *Phương án 3 — Phân tầng giao thức kết hợp tách bạch Đơn vị dự đoán và Đơn vị gom nhóm độ nhạy (Được chọn):* P1 giữ nguyên 1.250 mẫu test; P2 đánh giá toàn bộ 5.013 mẫu với đơn vị dự đoán là từng ảnh (Image-level); phê duyệt `point_id` làm tín hiệu gom nhóm ứng viên ưu tiên cho Normal; duy trì P3 ở trạng thái Candidate Sensitivity Protocol và triển khai hai phân tích độ nhạy phụ trợ (1.248 mẫu và 1.241 mẫu).
+- **Quyết định:**
+  - **1. P1 — Baseline Replication Protocol (Giao thức tái lập baseline):**
+    - Tập kiểm thử chính thức (*Official Test*) **giữ nguyên đúng 1.250 mẫu (samples)**.
+    - **Không lọc bỏ duplicate (ảnh trùng lặp)** khỏi baseline chính.
+    - *Lý do:* Giữ khả năng đối chiếu trực tiếp cao nhất với upstream baseline công bố trong bài báo gốc (*Scientific Data* 2026).
+    - *Cảnh báo tái lập:* Không bảo đảm tái lập số học tuyệt đối 1:1 (*numerical 1:1 reproduction*) vì còn phụ thuộc vào: câu prompt, quy trình tiền xử lý (preprocessing), phiên bản mô hình (model/version), cấu hình giải mã (decoding settings), và hiện tượng trôi dạt snapshot/drift của API nếu có.
+  - **2. P2 — Primary Evaluation Pool (Tập đánh giá nghiên cứu chính):**
+    - P2 sử dụng **toàn bộ 5.013 ảnh (images)** làm Tập đánh giá nghiên cứu chính (*Primary Evaluation Pool*).
+    - Bắt buộc **phải giữ nguyên siêu dữ liệu phân chia gốc (`split = train/test`)** cho từng sample trong mọi manifest và báo cáo.
+    - Tuyệt đối **không được xóa bỏ nguồn gốc phân chia (*provenance*)**.
+  - **3. Prediction Unit (Đơn vị dự đoán):**
+    - Đơn vị dự đoán (*Prediction Unit*) được xác lập duy nhất là: **ẢNH (IMAGE)**.
+    - Mỗi ảnh vẫn được mô hình VLM thực hiện suy luận riêng biệt.
+    - Đầu ra thô của mô hình (*Raw model outputs*) **phải được lưu trữ ở cấp độ từng mẫu/ảnh (sample/image level)** kèm định danh sample ID, prompt, model/version, cấu hình sinh (decoding settings) và run ID trước khi thực hiện bất kỳ phép parse hay tổng hợp nào. Không chỉ lưu nhãn hoặc điểm tổng hợp.
+  - **4. Normal Grouping Signal (Tín hiệu gom nhóm cho dữ liệu Bình thường):**
+    - Đối với dữ liệu Bình thường (`Normal_data`): trường **`point_id` được phê duyệt là tín hiệu gom nhóm / lấy mẫu lại ứng viên ưu tiên (*preferred candidate grouping/resampling signal*)**.
+    - *Cơ sở:* Nhiều điểm Normal chứa từ 1 đến 4 khung hình liền kề; `point_id` nắm bắt được cấu trúc phụ thuộc đa khung hình nội bộ điểm đã biết (*known within-point dependence*).
+    - *Giới hạn bắt buộc phải ghi rõ:*
+      - `point_id` là mã định danh điểm logic (*logical point identifier*); 3.234 point folders là logical point folders.
+      - `point_id` **KHÔNG phải là ID địa điểm/nhà máy vật lý (*physical site ID*)**; hoàn toàn không có sample-level physical site ID trong metadata công khai.
+      - `point_id` **không chứng minh tính độc lập giữa các điểm (*between-point independence*)**.
+      - Mối quan hệ ánh xạ (*mapping*) giữa 3.234 logical point folders và **2.239 điểm/trạm kiểm tra hợp lệ (*valid inspection sites/waypoints*) được tài liệu upstream công bố** vẫn **chưa được giải quyết (*unresolved mapping*)**; không được gọi 2.239 điểm đó là confirmed physical sites hay suy diễn chúng là các vị trí vật lý độc lập (*independent physical locations*).
+  - **5. Anomaly Dependence (Sự phụ thuộc của dữ liệu Bất thường):**
+    - Đối với dữ liệu Bất thường (`Anomaly_data`): đơn vị dự đoán (*prediction unit*) vẫn là từng ảnh đơn lẻ (*image-level*).
+    - Mặc dù 1.000 mẫu Anomaly được tổ chức trong 1.000 thư mục điểm logic riêng biệt, nhưng **KHÔNG được coi đây là bằng chứng rằng 1.000 mẫu Anomaly là 1.000 sự kiện độc lập về mặt thống kê (*1,000 independent events*)**.
+    - *Lý do:* Tồn tại bằng chứng thực chứng về chia sẻ chuỗi/góc máy quan sát (*shared-sequence / shared-viewpoint evidence*); định danh video thật (*true video IDs*) hoàn toàn không tồn tại trong siêu dữ liệu công khai.
+    - Họ nguồn suy luận (*`source-family`*) **KHÔNG được dùng như cụm video thật (*true video cluster*)** vì tư cách thành viên trong cùng một family không đủ để chứng minh tất cả thành viên thuộc cùng một video hay temporal sequence. Một family CÓ THỂ chứa nhiều scene/video/viewpoint, trong khi một số family hoặc subset lại có bằng chứng chuỗi liên tục mạnh (*strong shared-sequence evidence*). `source-family` chỉ là tín hiệu kinh nghiệm (*heuristic signal*), **không phải là true video ID**.
+  - **6. P3 Status (Trạng thái của giao thức P3):**
+    - Giao thức P3 tiếp tục duy trì ở trạng thái: **Giao thức phân tích độ nhạy ứng viên (*Candidate Sensitivity Protocol*)**.
+    - P3 **KHÔNG phải là benchmark sạch (*clean benchmark*)** và **KHÔNG được gọi là benchmark không rò rỉ (*leakage-free benchmark*)**.
+  - **7. Exact-Reuse Sensitivity Analyses (Phân tích độ nhạy lặp/tái sử dụng ảnh exact):**
+    - Phê duyệt hai phân tích độ nhạy phụ trợ đi kèm P1:
+      1. *Within-test exact-repeat sensitivity (Độ nhạy với ảnh exact lặp trong nội bộ test):* Đánh giá trên tập con **1.248 mẫu (samples)** (loại bỏ 2 mẫu lặp lại trong 2 cặp within-test).
+      2. *Cross-split exact-reuse sensitivity (Độ nhạy với ảnh exact tái sử dụng xuyên split):* Đánh giá trên tập con **1.241 mẫu (samples)** (loại bỏ 2 mẫu lặp nội bộ test và 7 mẫu test có bản sao exact trong train).
+    - *Quy tắc bắt buộc phải ghi:*
+      - Đây thuần túy là các phân tích độ nhạy (*sensitivity analyses*), không thay thế tập kiểm thử chính thức của P1 (*official baseline*).
+      - Các tập con này **không chứng minh benchmark sạch rò rỉ (*leakage-free*)**.
+      - 7 cặp exact xuyên split **không tạo ra rò rỉ từ train sang test do SafeShift gây ra (*SafeShift-induced train $\rightarrow$ test leakage*)**, vì trong giao thức P1 SafeShift không thực hiện huấn luyện hay tinh chỉnh trên tập train của benchmark.
+  - **8. Những nội dung kỹ thuật D2 KHÔNG chốt (Deferred Items chuyển giao sang W2.4):**
+    - Quyết định D2 **KHÔNG chốt**:
+      - Công thức bootstrap (*bootstrap formula*).
+      - Mức khoảng tin cậy (*confidence interval level*).
+      - Số lượng lượt lấy mẫu lại (*number of resamples*).
+      - Các bài kiểm định giả thuyết thống kê (*hypothesis test*), kiểm định McNemar, kiểm định hoán vị (*permutation test*).
+      - Mức ý nghĩa $\alpha$.
+    - D2 **chỉ chốt rằng**: `point_id` là tín hiệu gom nhóm ứng viên (*candidate grouping signal*) cho `Normal_data`. Toàn bộ các nội dung phương pháp thống kê trên được chuyển giao cho bước **W2.4**.
+- **Lý do:**
+  1. Giao thức P1 cần bảo toàn nguyên vẹn tập kiểm thử chính thức (1.250 mẫu) để đảm bảo khả năng đối chiếu trực tiếp với upstream baseline.
+  2. Giao thức P2 cần toàn bộ 5.013 ảnh để tăng độ bao phủ quan sát (*observational coverage*) giữa các miền công nghiệp và các điều kiện an toàn (*safety conditions*).
+  3. Khung hình ảnh (*Image*) vẫn là đơn vị mà mô hình VLM thực sự tiếp nhận và dự đoán.
+  4. Các khung hình Normal trong cùng một điểm tuần tra có tương quan góc máy và bối cảnh cao, không nên mặc định là độc lập về mặt thống kê.
+  5. Đối với Anomaly, siêu dữ liệu công khai không đủ để xây dựng cấu trúc gom nhóm video thật (*true video grouping*).
+  6. Vì vậy, SafeShift tách biệt rõ ràng: đánh giá nghiên cứu chính (*primary evaluation*) và phân tích độ nhạy / gom nhóm thống kê (*sensitivity / grouping analysis*).
+- **Ảnh hưởng tới dataset, split, metric và reproducibility:**
+  - **Dataset:** Giữ nguyên dữ liệu thô và cấu trúc tệp; không tạo dataset đã khử trùng lặp (*deduplicated dataset*).
+  - **Split:** P1 giữ nguyên vẹn 1.250 mẫu test chính thức; P2 dùng toàn bộ 5.013 mẫu và bắt buộc bảo lưu trường siêu dữ liệu `split: train/test` trên từng mẫu; không tạo split sản xuất mới (*production split*).
+  - **Metrics:** Chưa chốt công thức metric hay quy trình thống kê (chuyển sang W2.4).
+  - **Reproducibility:** Mọi raw model outputs bắt buộc phải lưu trữ ở cấp độ sample/image kèm đầy đủ siêu dữ liệu cấu hình trước khi tổng hợp; các tập con phân tích độ nhạy (1.248 và 1.241 mẫu) được xác định tất định theo mã băm SHA-256 đã kiểm toán.
+- **Người chấp thuận và thời điểm:** Project Owner / Research Lead (Chủ dự án / Người phụ trách nghiên cứu), ngày 2026-09-17.
+- **Task/thí nghiệm liên quan:**
+  - [notes/w2_domain_split_decision_brief.md](notes/w2_domain_split_decision_brief.md) (W2.2 Decision Brief)
+  - [notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/duplicate_leakage_audit.md](notes/duplicate_leakage_audit.md), [notes/visual_provenance_review.md](notes/visual_provenance_review.md), [notes/distribution_imbalance_audit.md](notes/distribution_imbalance_audit.md)
+  - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001)
+  - Định hướng trực tiếp cho thiết kế manifest tại W2.2, điều tra nguy cơ tại W2.3, giao thức thống kê tại W2.4 và thực thi baseline tại W3.
+- **Thay thế quyết định:** Không.
+
+## DEC-W2-D3-003 — Operational Domain Definition and Mismatch Policy
+
+- **ID:** DEC-W2-D3-003
+- **Ngày:** 2026-09-17
+- **Trạng thái:** ĐƯỢC CHẤP THUẬN
+- **Vấn đề cần quyết định:**
+  - Xác lập nhãn miền thao tác chính thức (Operational Domain Label) cho báo cáo phân rã 5 miền công nghiệp và trả lời câu hỏi nghiên cứu RQ1 (Cross-Domain Analysis).
+  - Thiết lập chính sách xử lý minh bạch đối với 36 mẫu dữ liệu xung đột giữa tên thư mục và khẳng định ngữ cảnh văn bản (`folder_domain != text_domain`).
+  - Xác định chính sách báo cáo kết quả đối với miền Luyện kim (`metallurgy`) trước tình trạng thiếu hụt dữ liệu bất thường nghiêm trọng và xung đột nhãn văn bản.
+  - Chuẩn hóa thuật ngữ khoa học khi phân tích mối quan hệ giữa miền công nghiệp và nền tảng robot tuần tra.
+- **Bối cảnh và bằng chứng:**
+  - Kế thừa quyết định phân tầng giao thức [DEC-W2-D1-001](#dec-w2-d1-001) và các phát hiện kiểm toán độc lập tại [notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/distribution_imbalance_audit.md](notes/distribution_imbalance_audit.md), [notes/visual_provenance_review.md](notes/visual_provenance_review.md).
+  - Cấu trúc thư mục cấp 1 chia dataset thành 5 miền: `coal_conveyor` (1.121 mẫu), `metallurgy` (720 mẫu), `oil_chemical` (1.023 mẫu), `power` (869 mẫu), `tunnel` (1.280 mẫu).
+  - Kiểm toán độc lập phát hiện đúng 36 mẫu có tên thư mục khác với khẳng định mở đầu trong tệp văn bản (`folder_domain != text_domain`): 4 mẫu `power` $\rightarrow$ `coal_conveyor` (train), 8 mẫu `metallurgy` $\rightarrow$ `oil_chemical` (train), 24 mẫu `tunnel` $\rightarrow$ `oil_chemical` (20 train, 4 test).
+  - Miền `metallurgy` có tổng cộng 720 mẫu (711 Normal, 9 Anomaly); tập kiểm thử chính thức (Official Test) có 177 Normal và đúng 0 Anomaly; trong 9 mẫu Anomaly ở train, có tới 8/9 mẫu mang khẳng định văn bản `text_domain = oil_chemical`; chỉ duy nhất 1 mẫu mang cả folder và text là `metallurgy` (`metallurgy-Level03-SuspendedRail-002666-001`).
+  - Báo cáo phân tích phương pháp luận chi tiết tại [notes/w2_domain_split_decision_brief.md](notes/w2_domain_split_decision_brief.md).
+- **Các phương án:**
+  - *Chính sách D3-A (`folder_domain` Primary):* Dùng tên thư mục làm nhãn chính; giữ nguyên 36 mẫu mismatch tại thư mục, gắn cờ cảnh báo. Khớp cấu trúc đĩa và số lượng upstream; bảo toàn 720 mẫu cho metallurgy.
+  - *Chính sách D3-B (`text_domain` Primary):* Dùng khẳng định văn bản làm nhãn chính; chuyển 36 mẫu theo văn bản. Gây hậu quả cực đoan: metallurgy chỉ còn 1 mẫu Anomaly.
+  - *Chính sách D3-C (Exclude Mismatch):* Loại bỏ 36 mẫu khỏi phân tích từng miền; giữ trong pooled overall. Miền metallurgy vẫn chỉ còn 1 Anomaly.
+  - *Chính sách D3-D (Dual-Report Sensitivity — Được chọn):* Báo cáo phân tích chính theo `folder_domain` (D3-A) kèm cờ cảnh báo; đồng thời bắt buộc báo cáo độ nhạy đối chứng theo D3-C (loại bỏ mismatch) và D3-B (tái phân bổ theo text) để kiểm tra kết luận cross-domain có bị phụ thuộc vào sự mơ hồ nhãn miền hay không.
+- **Quyết định:**
+  - **1. Primary Operational Domain Label (Nhãn miền thao tác chính):**
+    - SafeShift sử dụng trường **`folder_domain`** làm **Nhãn miền thao tác chính (*Primary Operational Domain Label*)**.
+    - Áp dụng cho:
+      - Báo cáo phân rã 5 miền công nghiệp (*five-domain reporting*): `coal_conveyor`, `metallurgy`, `oil_chemical`, `power`, `tunnel`.
+      - Phân tích độ bền vững xuyên miền theo câu hỏi nghiên cứu **RQ1** (*cross-domain analysis*).
+  - **2. Nguyên tắc chuẩn hóa — Không gọi là Physical Ground Truth:**
+    - `folder_domain` **TUYỆT ĐỐI KHÔNG ĐƯỢC GỌI LÀ**:
+      - Danh tính thực địa vật lý chuẩn (*physical site ground truth*).
+      - Nhận diện nhà máy đã kiểm chứng (*verified factory identity*).
+      - Chân lý miền tuyệt đối (*absolute domain truth*).
+    - `folder_domain` chỉ là **nhãn thao tác (*operational label*)** dựa trên cấu trúc tổ chức thư mục phát hành của bộ dữ liệu.
+  - **3. Vai trò của `text_domain` (Khẳng định văn bản):**
+    - Trường `text_domain` được lưu giữ như một **nhãn thao tác thay thế / dùng cho phân tích độ nhạy (*alternate / sensitivity operational label*)**.
+    - `text_domain` cũng **KHÔNG phải là physical ground truth**; nó phản ánh khẳng định về bối cảnh/phân xưởng (*scene/context claim*) trong chú thích văn bản (*textual annotation*).
+    - **Không mặc định tệp văn bản chuẩn (ground-truth TXT) là đầu vào (input) của mô hình VLM**.
+  - **4. Chính sách xử lý 36 mẫu Domain Mismatch:**
+    - Có chính xác **36 mẫu** có `folder_domain != text_domain`.
+    - Phân bố chi tiết không đổi:
+      - `power` $\rightarrow$ `coal_conveyor`: **4 mẫu**
+      - `metallurgy` $\rightarrow$ `oil_chemical`: **8 mẫu**
+      - `tunnel` $\rightarrow$ `oil_chemical`: **24 mẫu**
+      - Phân chia split: **Train = 32 mẫu, Test = 4 mẫu**.
+    - *Trong phân tích chính (Primary Analysis):*
+      - Giữ nguyên mẫu theo miền thư mục (**`folder_domain`**).
+      - Bắt buộc gắn cờ thuộc tính rõ ràng: **`domain_mismatch = True`**.
+      - Tuyệt đối **không tự ý sửa đổi nhãn gốc (*no editing of raw labels*)**.
+  - **5. Chính sách báo cáo độ nhạy kép (Dual-Report Sensitivity Policy):**
+    - Bắt buộc phải thực hiện phân tích độ nhạy theo ít nhất:
+      - *Phân tích chính (Primary):* Phân bổ theo `folder_domain`.
+      - *Độ nhạy A (Sensitivity A):* Loại bỏ (*exclude*) 36 mẫu mismatch khỏi các phân tích theo từng miền (*per-domain analysis*), nhưng vẫn có thể giữ lại trong tập đánh giá tổng thể gộp (*pooled overall*) nếu quy tắc metric sau này quy định.
+      - *Độ nhạy B (Sensitivity B):* Tái phân bổ (*reassign*) các mẫu mismatch theo khẳng định văn bản `text_domain`.
+    - *Mục đích:* Kiểm tra xem kết luận so sánh xuyên miền (*cross-domain conclusions*) có phụ thuộc mạnh vào sự mơ hồ về nhãn miền (*domain-label ambiguity*) hay không.
+  - **6. Chính sách đặc thù cho Miền Luyện kim (`metallurgy`):**
+    - **Giữ nguyên miền `metallurgy`** trong bảng báo cáo 5 miền công nghiệp.
+    - *Các sự thật thực chứng bắt buộc ghi rõ:*
+      - Tổng số mẫu (Total): **720 mẫu**.
+      - Mẫu bình thường (Normal): **711 mẫu**.
+      - Mẫu bất thường (Anomaly): **9 mẫu**.
+      - Số mẫu bất thường trong tập test chính thức (Official test anomaly): **0 mẫu**.
+      - Có **8/9 mẫu Anomaly** thuộc thư mục `metallurgy` mang khẳng định văn bản: **`text_domain = oil_chemical`**.
+      - Nếu tái phân bổ theo `text_domain` (Sensitivity B), số mẫu Anomaly của `metallurgy` giảm từ **9 mẫu xuống còn đúng 1 mẫu duy nhất** ($9 \rightarrow 1$).
+      - Mẫu duy nhất có cả `folder_domain` và `text_domain` cùng là `metallurgy` là: `metallurgy-Level03-SuspendedRail-002666-001`.
+    - *Quy tắc diễn giải khoa học:*
+      - Ghi nhận rõ ràng: lớp bất thường của miền luyện kim bị thiếu hụt dữ liệu hỗ trợ nghiêm trọng (*metallurgy anomaly class is severely under-supported*).
+      - **Tuyệt đối không tuyên bố cỡ mẫu $N=9$ là đủ cho suy luận thống kê (*statistical inference*)**.
+      - Nếu theo phân tích độ nhạy số mẫu chỉ còn $N=1$: mọi con số nhạy với mẫu bất thường (*anomaly-sensitive metrics*) **chỉ mang tính mô tả đơn thuần (*descriptive only*)**, hoàn toàn không đủ cho suy luận thống kê ổn định (*not sufficient for stable inference*).
+      - Cách thức xử lý chỉ số định lượng cuối cùng (*final metric handling*) được chuyển giao cho **bước W2.4 quyết định**.
+  - **7. Chuẩn hóa thuật ngữ nền tảng robot (Robot Platform Terminology):**
+    - Khi phân tích mối liên hệ giữa miền công nghiệp và nền tảng robot tuần tra:
+      - Bắt buộc sử dụng thuật ngữ: **"đồng biến thiên với nền tảng robot" (*co-variation with robot platform*)** hoặc **"nhiễu nền tảng robot" (*platform confounding*)**.
+      - **Tuyệt đối KHÔNG đưa ra khẳng định nhân quả (*causal claim*)**: "nền tảng robot gây ra suy giảm hiệu năng" (*robot platform causes performance drop*).
+  - **8. Những nội dung kỹ thuật D2/D3 KHÔNG chốt (Deferred Items chuyển giao sang W2.3–W2.5):**
+    - Quyết định D2 và D3 **KHÔNG chốt**:
+      - Các chỉ số đánh giá cuối cùng (*final metrics*).
+      - Chi tiết triển khai Macro-F1 (*Macro-F1 implementation details*).
+      - Chi tiết Balanced Accuracy (*Balanced Accuracy details*).
+      - Định nghĩa tỷ lệ dương tính giả / âm tính giả (*FPR/FNR definitions*).
+      - Công thức suy giảm hiệu năng xuyên miền (*cross-domain drop formula*).
+      - Quy trình bootstrap cuối cùng (*final bootstrap procedure*).
+      - Mức độ tin cậy (*confidence level*).
+      - Các bài kiểm định giả thuyết thống kê (*statistical hypothesis tests*).
+      - Các chỉ số bám bằng chứng không gian (*grounding metrics*).
+      - Hệ thống phân loại nguy cơ (*hazard taxonomy*).
+      - Danh sách mô hình baseline (*model list*).
+      - Câu lệnh chỉ dẫn (*prompt*).
+      - Chính sách xử lý nguy cơ nhiễm dữ liệu tiền huấn luyện (*contamination policy*).
+    - Toàn bộ các mục trên thuộc về các bước tiếp theo: **W2.3, W2.4, W2.5** tùy nội dung.
+- **Lý do:**
+  1. Trường `folder_domain` có độ bao phủ 100% và hoàn toàn tất định theo cấu trúc phát hành của bộ dữ liệu.
+  2. Nhưng 36 mẫu mismatch chứng minh thực tế rằng `folder_domain` không phải là chân lý tuyệt đối (*not absolute truth*).
+  3. Trường `text_domain` cung cấp bằng chứng ngữ nghĩa (*semantic evidence*) nhưng cũng có thể chứa lỗi sao chép hoặc định dạng mẫu văn bản của annotator.
+  4. Do không có danh tính trạm vật lý thực địa (*physical site ground truth*), không có nguồn siêu dữ liệu nào được coi là chân lý tuyệt đối.
+  5. Cơ chế báo cáo kép (Primary + Sensitivity Dual-Report) giúp giữ vững tính tái lập (*reproducibility*) đồng thời minh bạch hoàn toàn về sự mơ hồ nhãn miền (*domain ambiguity*).
+  6. Miền Luyện kim (`metallurgy`) là trường hợp nhạy cảm nhất: có 9 mẫu bất thường theo thư mục, nhưng chỉ còn đúng 1 mẫu bất thường nếu phân loại lại theo văn bản.
+- **Ảnh hưởng tới dataset, split, metric và reproducibility:**
+  - **Dataset:** Tuyệt đối không sửa đổi tên thư mục hoặc nhãn văn bản gốc trong dữ liệu thô. Cờ `domain_mismatch = True` phải được bảo toàn trong manifest/metadata phái sinh khi triển khai. Đường dẫn artifact cụ thể tuân theo convention của dự án (`data/manifests/` hoặc `data/processed/` tùy loại artifact) và không được D3 khóa cứng. Ghi rõ: bước W2.2 chưa tạo production split hay production manifest mới.
+  - **Split:** Không làm thay đổi phân chia train/test; bảo toàn 5 miền công nghiệp.
+  - **Metrics:** Chưa chốt công thức đo lường hoặc cách triệt tiêu metric cho Metallurgy (chuyển sang W2.4).
+  - **Reproducibility:** Mọi báo cáo phân rã 5 miền phải công bố rõ việc sử dụng `folder_domain` làm nhãn chính và đi kèm bảng phân tích độ nhạy đối chứng theo danh sách 36 mẫu mismatch cố định.
+- **Người chấp thuận và thời điểm:** Project Owner / Research Lead (Chủ dự án / Người phụ trách nghiên cứu), ngày 2026-09-17.
+- **Task/thí nghiệm liên quan:**
+  - [notes/w2_domain_split_decision_brief.md](notes/w2_domain_split_decision_brief.md) (W2.2 Decision Brief)
+  - [notes/w1_dataset_audit.md](notes/w1_dataset_audit.md), [notes/distribution_imbalance_audit.md](notes/distribution_imbalance_audit.md), [notes/visual_provenance_review.md](notes/visual_provenance_review.md)
+  - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001)
+  - Định hướng trực tiếp cho thiết kế manifest tại W2.2, điều tra phân tầng nguy cơ tại W2.3, định nghĩa metric tại W2.4 và thực thi baseline tại W3.
+- **Thay thế quyết định:** Không.
+
 ## Template
 
 - **ID:** <DEC-...>
