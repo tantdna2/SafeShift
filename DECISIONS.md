@@ -386,21 +386,21 @@
   - Xác lập chính sách đối với độ hiệu chỉnh xác suất (Calibration) và chỉ số ảo giác đối tượng (Object Hallucination).
 - **Bối cảnh và bằng chứng:**
   - Kế thừa toàn bộ hệ thống quyết định đã khóa: [DEC-W2-D1-001](#dec-w2-d1-001) (Research Framing & Protocol Hierarchy: P1/P2/P3/P4, RQ1/RQ2/RQ3), [DEC-W2-D2-002](#dec-w2-d2-002) (Image-level Prediction Unit, Normal `point_id` Resampling Cluster, Anomaly Dependence), [DEC-W2-D3-003](#dec-w2-d3-003) (`folder_domain` Primary, 36 Mismatch Dual-Report Sensitivity), [DEC-W2-D4-004](#dec-w2-d4-004) (Canonical Bounding Box $[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0, 1]$, Raw Response Preservation, Capability-Aware Policy B), [DEC-W2-D6-006](#dec-w2-d6-006) (12 Hazard Atoms, 3 Support Statuses: 781 Direct / 947 Proxy / 60 Unsupported atoms, 7 Grouped Hazard Strata), và [DEC-W2-D7-007](#dec-w2-d7-007) (Chọn D7-A không tạo nhãn rationale mới, loại bỏ Object Hallucination Rate toàn bộ dataset).
-  - Báo cáo căn cứ kỹ thuật phương pháp luận chi tiết tại [notes/w2_metrics_statistics_decision_brief.md](notes/w2_metrics_statistics_decision_brief.md) (W2.4 Decision Brief, PR #13).
+  - Báo cáo căn cứ kỹ thuật phương pháp luận chi tiết tại [notes/w2_metrics_statistics_decision_brief.md](notes/w2_metrics_statistics_decision_brief.md) (W2.4 Decision Brief, branch protocol/w2-metrics-statistics, technical evidence finalized at commit a0118b44b674146e3588d4f0616ecdbe52eff089).
   - Kết quả kiểm toán thực chứng bổ sung (Provenance & Audit Evidence):
     - *Kiểm toán tập vùng GT Direct (Direct Region Audit):* Trên toàn bộ 781 Direct hazard atoms (phân bố trên 721 mẫu thuộc `Direct-Support Sample Pool`), 100% sở hữu ít nhất một đa giác GT hỗ trợ hợp lệ ($|R_j| \ge 1$, đúng 0 trường hợp rỗng); trong đó 680 atoms đơn vùng ($|R_j|=1$, 87,07%) và 101 atoms đa vùng ($|R_j|>1$, 12,93%, chứa từ 2 đến 8 đa giác hỗ trợ).
     - *Kiểm toán vùng đại diện người (Weak-Proxy Person Audit):* Trên toàn bộ 608 mẫu thuộc `Weak-Proxy Sample Pool`, có 410 mẫu đơn người ($|\text{Person}|=1$, 67,43%) và 198 mẫu đa người ($|\text{Person}|>1$, 32,57%, chứa từ 2 đến 8 người); trong 947 Weak-Proxy atoms, có 614 atoms nằm trong ảnh đơn người (64,84%) và 333 atoms nằm trong ảnh đa người (35,16%).
     - *Kiểm toán mẫu đa nguy cơ (Multi-Hazard):* Có 512 / 1.000 mẫu Anomaly (51,2%) chứa từ 2 nguyên tử nguy cơ trở lên; 7 tầng nguy cơ gom nhóm tạo ra 1.381 lượt thành viên (memberships) trên 1.000 mẫu ảnh độc nhất.
     - *Hồ sơ nguồn gốc kiểm toán (Audit Provenance):* Lệnh thực thi `python scratch/audit_gt_regions.py`, Python 3.11.9, Windows 11 x64, timestamp `2026-09-17 05:22:14 UTC`; Input Fingerprint SHA-256: `7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5`; D6 Census SHA-256 (`data/manifests/w2_grounding_census.json`): `cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`; Audit Script SHA-256: `90c704af291fb34725b6a679f3bdb2a84d18297628c569497e34309ed49cee50`. (Ghi rõ: Script là local scratch script, không commit vào Git repository, không tuyên bố khả năng tái lập chỉ bằng repo thuần túy).
 - **Các phương án:**
-  - *Chỉ số phân loại 4 lớp:* (1) Raw Accuracy: Bị chi phối hoàn toàn bởi 80% Normal; (2) Balanced Accuracy đơn độc: Đo trực tiếp Recall không thiên vị nhưng không phạt báo động giả; (3) Macro-F1 đơn độc: Cân bằng FP và FN nhưng cực kỳ nhạy cảm với lớp hiếm $N=15$; (4) Balanced Accuracy + Macro-F1 song hành (Được chọn): Bổ trợ hoàn hảo cho nhau, đo trọn vẹn cả độ bao quát an toàn và khả năng kiểm soát báo động giả.
+  - *Chỉ số phân loại 4 lớp:* (1) Raw Accuracy: Bị chi phối hoàn toàn bởi 80% Normal; (2) Balanced Accuracy đơn độc: Đo trực tiếp Recall không thiên vị nhưng không phạt báo động giả; (3) Macro-F1 đơn độc: Cân bằng FP và FN nhưng cực kỳ nhạy cảm với lớp hiếm $N=15$; (4) Balanced Accuracy + Macro-F1 song hành (Được chọn): Bổ sung cho nhau, đo trọn vẹn cả độ bao quát an toàn và khả năng kiểm soát báo động giả.
   - *Chỉ số sai số an toàn:* (1) FNR gộp chung: Mơ hồ và ngụy biện phương pháp luận; (2) Tách Track A (Binary Anomaly Detection) và Track B (Level01 One-vs-Rest) riêng biệt (Được chọn): Phân định rạch ròi giữa rủi ro bỏ sót bất thường tổng thể và bỏ sót sự cố nguy hiểm thảm khốc.
   - *Chính sách miền thiếu lớp:* (1) Support-only macro average: Ngụy biện so sánh các miền trên đề bài khác nhau ($K=3$ vs $K=4$); (2) Cố định 4 lớp (gán NA khi thiếu): Làm khuyết 40% số miền; (3) Dual-Layer Support-Aware Policy (Được chọn): Báo cáo mô tả có gắn cờ $K_d$ và lấy Class-Conditional Recall làm mỏ neo so sánh chính.
-  - *Độ suy giảm xuyên miền (RQ1):* (1) Balanced Accuracy Spread thuần túy: Bỏ qua 2/5 miền; (2) Class-Conditional Domain Analysis (Được chọn): So sánh trên từng lớp có hỗ trợ ground truth để triệt tiêu nhiễu tỷ lệ lớp, kết hợp Balanced Accuracy Spread trên tập so sánh được ($K=4$) làm chẩn đoán phụ trợ.
+  - *Độ suy giảm xuyên miền (RQ1):* (1) Balanced Accuracy Spread thuần túy: Bỏ qua 2/5 miền; (2) Class-Conditional Domain Analysis (Được chọn): So sánh trên từng lớp có hỗ trợ ground truth để giảm ảnh hưởng của class-prevalence confounding (nhiễu do tỷ lệ lớp), kết hợp Balanced Accuracy Spread trên tập so sánh được ($K=4$) làm chẩn đoán phụ trợ.
   - *Báo cáo Worst-Domain:* (1) Ngưỡng cơ học $N \ge 30$: Tùy tiện, thiếu cơ sở toán học; (2) Observed numerical minimum among comparable domains (Được chọn): Minh bạch mẫu số, kèm khoảng tin cậy và gắn nhãn Sparse-Support / Descriptive-Only cho `metallurgy`.
   - *Định vị Direct Grounding:* (1) Hit@0.25 đơn độc: Dễ gây tranh cãi về ngưỡng; (2) Continuous IoU làm Primary kết hợp Threshold Sensitivity (Hit@0.25, Hit@0.50 xác định trước) và phân định 2 chế độ ghép cặp Mode A / Mode B (Được chọn).
   - *Định vị Weak Proxy:* (1) Áp dụng IoU với Person: Ngụy biện, phạt mô hình nhìn đúng vùng đầu/tay; (2) Identity-Agnostic Proxy Localization Consistency (Center-in-Proxy + Box Containment) kết hợp kiểm tra độ nhạy trên Single-Person Proxy Subset (Được chọn).
-  - *Ước lượng bất định:* (1) Stratified theo Domain $\times$ Level: Gây lỗi phương sai 0 giả tạo (artificial zero resampling variance) trên các phân tầng đơn mẫu ($N=1$); (2) Domain-Stratified Point-Cluster Bootstrap (Được chọn): Phân tầng duy nhất theo miền, lấy mẫu lại theo cụm `point_id`, kiểm soát đúng cấu trúc phụ thuộc mà không bóp méo phương sai.
+  - *Ước lượng bất định:* (1) Stratified theo Domain $\times$ Level: Gây lỗi phương sai 0 giả tạo (artificial zero resampling variance) trên các phân tầng đơn mẫu ($N=1$); (2) Domain-Stratified Point-Cluster Bootstrap (Được chọn): Phân tầng duy nhất theo miền, lấy mẫu lại theo cụm `point_id`, xử lý known within-point dependence của các frame liên quan mà không bóp méo phương sai.
   - *So sánh mô hình:* (1) Phép kiểm định 2 mẫu độc lập: Sai phương pháp luận (dữ liệu theo cặp); (2) Paired Bootstrap Difference CI 95% trên cùng tập replicate (Được chọn): Tập trung vào độ lớn hiệu ứng và hướng phân hóa thực chất.
 - **Quyết định:**
   - **1. Phê duyệt Cặp Chỉ số Phân loại Chính (Classification Primary Co-Metrics):**
@@ -512,7 +512,7 @@
     - Phê chuẩn chỉ số: **Identity-Agnostic Proxy Localization Consistency (Identity-Agnostic PLC — Mức độ nhất quán định vị đại diện không phụ thuộc danh tính)** trên 947 Weak-Proxy atoms (608 mẫu ảnh):
       - **PRIMARY:** **Center-in-Proxy**: Tọa độ tâm hộp dự đoán nằm bên trong **bất kỳ đa giác `Person` gốc nào** trong ảnh. Không khẳng định mô hình đã chọn đúng công nhân vi phạm cụ thể.
       - **DIAGNOSTIC:** **Predicted Box Containment** liên tục (tỷ lệ diện tích hộp dự đoán nằm trong đa giác người). Ngưỡng $\text{Containment} \ge 0.50$ chỉ là **ngưỡng heuristic kiểm tra độ nhạy (`sensitivity heuristic`)**, không phải chân lý khoa học.
-      - **Bắt buộc phân tích độ nhạy trên Single-Person Proxy Subset:** Đánh giá đối chứng trên đúng **410 mẫu ảnh (chứa 614 proxy atoms)** chỉ có duy nhất 1 đối tượng `Person` ($|\text{Person}|=1$) để triệt tiêu hoàn toàn sự mập mờ danh tính người.
+      - **Bắt buộc phân tích độ nhạy trên Single-Person Proxy Subset:** Đánh giá đối chứng trên đúng **410 mẫu ảnh (chứa 614 proxy atoms)** chỉ có duy nhất 1 đối tượng `Person` ($|\text{Person}|=1$) để loại trừ ambiguity về danh tính người (nhưng không loại bỏ semantic proxy limitation).
     - **Quy tắc bắt buộc:** Direct Grounding và Weak Proxy Grounding **bắt buộc phải báo cáo tách biệt hoàn toàn**. Tuyệt đối không gọi PLC là "True Evidence Grounding Accuracy".
   - **13. Chuẩn hóa Chỉ số Không nhất quán Phân loại – Định vị ($\text{CGI}@\tau$):**
     - Tên gọi chính thức duy nhất: **"Classification-Grounding Inconsistency relative to available object-support annotation"**.
@@ -547,7 +547,7 @@
   - **19. Phê chuẩn Phương pháp Ước lượng Bất định Chính thức (Domain-Stratified Point-Cluster Bootstrap):**
     - SafeShift chính thức phê duyệt **Domain-Stratified Point-Cluster Bootstrap** làm phương pháp ước lượng bất định chính thức (PRIMARY):
       - Đối với P2 toàn thể: **Phân tầng DUY NHẤT theo 5 miền thao tác `folder_domain`**. Trong mỗi miền, lấy mẫu lại có hoàn lại các cụm thư mục điểm logic `point_id` (đối với Normal) và các mẫu/cụm Anomaly của chính miền đó cho tới khi đạt đúng số cụm quan sát gốc của miền đó, sau đó gộp 5 miền lại thành một replicate toàn thể.
-      - **TUYỆT ĐỐI KHÔNG PHÂN TẦNG THEO CẤP AN TOÀN (`NO STRATIFICATION BY SAFETY LEVEL`)** để loại trừ triệt để nguy cơ tạo phương sai 0 giả tạo trên các phân tầng đơn mẫu (`singleton strata`).
+      - **TUYỆT ĐỐI KHÔNG PHÂN TẦNG THEO CẤP AN TOÀN (`NO STRATIFICATION BY SAFETY LEVEL`)** để tránh zero-resampling-variance artifact do ép phân tầng singleton theo safety level.
       - Đối với chỉ số từng miền: Lấy mẫu lại các cụm điểm logic trong nội bộ chính miền đó.
       - **Cấu hình chuẩn hóa:** $B = 2.000$ replicates (chính thức); $B = 5.000$ replicates (kiểm tra hội tụ); khóa `seed = 42`.
       - **Khoảng tin cậy:** 95% Percentile Bootstrap CI $\left[ q_{0,025}, \, q_{0,975} \right]$.
@@ -583,12 +583,12 @@
       - Chi tiết triển khai mã nguồn của các baseline.
     - Toàn bộ các nội dung này thuộc thẩm quyền giải quyết độc quyền của bước **W2.5**.
 - **Lý do:**
-  1. Cặp chỉ số chính Balanced Accuracy và Macro-F1 xử lý triệt để thách thức mất cân bằng nhãn cực đoan (80% Normal), đo lường công bằng cả khả năng bao quát an toàn và kiểm soát báo động giả.
+  1. Balanced Accuracy và Macro-F1 giảm ảnh hưởng của mất cân bằng nhãn và cung cấp hai góc nhìn bổ sung: recall theo lớp và cân bằng precision/recall.
   2. Phân lập Track A (Binary Anomaly) và Track B (Level01 OvR) phản ánh trung thực bản chất phi đối xứng của rủi ro công nghiệp, bảo vệ các sự cố đe dọa tính mạng không bị chìm lấp trong các chỉ số gộp.
   3. Chính sách hai tầng và Class-Conditional Domain Analysis cung cấp một mỏ neo so sánh khách quan, ngăn chặn ngụy biện so sánh các phân xưởng có mức độ hỗ trợ nhãn khác nhau.
-  4. Phân định khắt khe hai chế độ ghép cặp Mode A (đo lường hàm liên tục không ngưỡng) và Mode B (phân định quyết định nhị phân có ngưỡng) bảo đảm tính chính xác toán học tuyệt đối của bài toán bám bằng chứng trực tiếp.
-  5. Chỉ số Identity-Agnostic PLC trên đa giác người gốc kết hợp kiểm tra độ nhạy Single-Person Proxy Subset hóa giải thách thức mập mờ danh tính người mà không phạt oan mô hình định vị đúng bộ phận vi phạm.
-  6. Domain-Stratified Point-Cluster Bootstrap kiểm soát chính xác cấu trúc tương quan đa khung hình nội bộ điểm logic mà không gây lỗi phương sai 0 giả tạo từ các phân tầng đơn mẫu.
+  4. Phân định khắt khe hai chế độ ghép cặp Mode A (đo lường hàm liên tục không ngưỡng) và Mode B (phân định quyết định nhị phân có ngưỡng) bảo đảm tính nhất quán toán học giữa metric liên tục và metric có ngưỡng của bài toán bám bằng chứng trực tiếp.
+  5. Identity-Agnostic PLC giảm ảnh hưởng của ambiguity về danh tính người, nhưng không biến Person polygon thành true hazard rationale GT; đồng thời Single-Person Proxy Subset chỉ loại identity ambiguity, không loại semantic proxy limitation.
+  6. Domain-Stratified Point-Cluster Bootstrap xử lý known within-point dependence (phụ thuộc đã biết trong cùng point_id) của các frame liên quan mà không gây zero-resampling-variance artifact do ép phân tầng singleton theo safety level; đồng thời ghi nhận rõ: không chứng minh between-point independence, anomaly dependence vẫn chưa được giải quyết hoàn toàn, và source-family không phải true video ID.
   7. Paired Bootstrap Difference CI tập trung vào hướng và độ lớn hiệu ứng thực chất giữa các mô hình trên cùng một tập replicate, ngăn chặn thói quen suy diễn quá mức từ ma trận $p$-value dày đặc.
 - **Ảnh hưởng tới dataset, split, metric và reproducibility:**
   - **Dataset:** Giữ nguyên dữ liệu thô và các tệp JSON/TXT gốc; không chỉnh sửa bất kỳ nhãn hay tọa độ không gian nào.
@@ -597,7 +597,7 @@
   - **Reproducibility:** Mọi thuật toán ghép cặp và quy trình bootstrap được đặc tả tất định; khóa `seed = 42`; toàn bộ chuỗi phản hồi thô nguyên văn (`Raw Model Response`) bắt buộc phải lưu trữ kèm metadata đầy đủ trước khi phân tích cú pháp; các artifact kiểm toán có mã băm SHA-256 xác minh tính toàn vẹn.
 - **Người chấp thuận và thời điểm:** Project Owner / Research Lead (Chủ dự án / Người phụ trách nghiên cứu), ngày 2026-09-17.
 - **Task/thí nghiệm liên quan:**
-  - [notes/w2_metrics_statistics_decision_brief.md](notes/w2_metrics_statistics_decision_brief.md) (W2.4 Decision Brief, PR #13)
+  - [notes/w2_metrics_statistics_decision_brief.md](notes/w2_metrics_statistics_decision_brief.md) (W2.4 Decision Brief, branch protocol/w2-metrics-statistics, commit a0118b44b674146e3588d4f0616ecdbe52eff089)
   - [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (W2.3 Decision Brief)
   - [notes/w2_domain_split_decision_brief.md](notes/w2_domain_split_decision_brief.md) (W2.2 Decision Brief)
   - [notes/w2_protocol_decision_brief.md](notes/w2_protocol_decision_brief.md) (W2.1 Decision Brief)
