@@ -16,11 +16,11 @@ Văn bản này thiết lập cơ sở lý thuyết, bằng chứng thực nghi�
 Báo cáo giải quyết toàn diện 7 câu hỏi phương pháp luận cốt lõi:
 1. **Chỉ số phân loại (Classification Metrics):** Lựa chọn và chuẩn hóa các chỉ số đo lường năng lực phân loại mức độ an toàn công nghiệp (`Level01`–`Level04`) trong bối cảnh mất cân bằng dữ liệu cực đoan.
 2. **Suy giảm hiệu năng xuyên miền (Cross-Domain Robustness Drop):** Đặt phân tích theo từng lớp (`Class-Conditional Domain Analysis`) làm mỏ neo chính để giảm thiểu nhiễu tỷ lệ nhãn, đồng thời định vị đúng vai trò của các chỉ số chẩn đoán tổng hợp.
-3. **Đánh giá bám bằng chứng trực tiếp (Direct Grounding Evaluation):** Xác lập chỉ số liên tục (`Continuous IoU`) làm thước đo định vị chính, đi kèm các ngưỡng nhạy được đăng ký trước (`Hit@0.25`, `Hit@0.50`) và thuật toán ghép cặp tối ưu hai phía (`Optimal Bipartite Matching`).
-4. **Phân rã Direct Object-Support và Weak Proxy:** Phân định phương pháp đo lường và cách diễn giải riêng biệt giữa bằng chứng trực tiếp và vùng đại diện thân người (`Proxy Localization Consistency`), sử dụng đa giác gốc cho Pointing Hit.
-5. **Định lượng bất định và khoảng tin cậy (Uncertainty & Confidence Intervals):** Xây dựng quy trình `Point-Cluster Bootstrap` kiểm soát phụ thuộc cụm thư mục điểm logic (`point_id`), loại bỏ phân tầng theo nhãn an toàn để tránh hiện tượng tạo phương sai 0 giả tạo trên các tầng đơn mẫu (`singleton strata`).
+3. **Đánh giá bám bằng chứng trực tiếp (Direct Grounding Evaluation):** Xác lập chỉ số liên tục (`Continuous IoU`) làm thước đo định vị chính, đi kèm các ngưỡng nhạy được xác định trước khi xem kết quả mô hình (`pre-specified before model-result inspection`: `Hit@0.25`, `Hit@0.50`) và thuật toán ghép cặp tối ưu hai phía (`Optimal Bipartite Matching`).
+4. **Phân rã Direct Object-Support và Weak Proxy:** Phân định phương pháp đo lường và cách diễn giải riêng biệt giữa bằng chứng trực tiếp và vùng đại diện thân người (`Identity-Agnostic Proxy Localization Consistency`), sử dụng đa giác gốc cho Pointing Hit và kiểm soát mập mờ nhiều người qua tập con đơn người (`Single-Person Proxy Subset`).
+5. **Định lượng bất định và khoảng tin cậy (Uncertainty & Confidence Intervals):** Xây dựng quy trình `Domain-Stratified Point-Cluster Bootstrap` kiểm soát phụ thuộc cụm thư mục điểm logic (`point_id`), loại bỏ phân tầng theo nhãn an toàn để tránh hiện tượng tạo phương sai 0 giả tạo trên các tầng đơn mẫu (`singleton strata`).
 6. **Chính sách miền luyện kim và dữ liệu thưa (Metallurgy & Sparse-Support Policy):** Xử lý trung thực các miền có mẫu số nhỏ ($N_{\text{anomaly}}=9$, $N_{\text{Level03}}=15$) thông qua công bố mẫu số và khoảng tin cậy, loại bỏ quy tắc ngưỡng $N \ge 30$ tùy ý.
-7. **So sánh đa mô hình VLM (Model Comparison):** Thiết lập khoảng tin cậy hiệu số theo cặp (`Paired Bootstrap Difference CI`) làm thước đo hướng phân hóa chính, coi trọng độ lớn hiệu ứng và không kết luận tương đương khi khoảng tin cậy chứa 0.
+7. **So sánh đa mô hình VLM (Model Comparison):** Thiết lập khoảng tin cậy hiệu số theo cặp (`Paired Bootstrap Difference CI`) trên cùng tập replicate làm thước đo hướng phân hóa chính, coi trọng độ lớn hiệu ứng và không kết luận tương đương khi khoảng tin cậy chứa 0.
 
 > [!IMPORTANT]
 > **Giới hạn và tính độc lập của W2.4:**
@@ -147,7 +147,7 @@ $$\text{Macro-F1} = \frac{1}{|\mathcal{C}_{\text{eval}}|} \sum_{c \in \mathcal{C
 Quy ước kỹ thuật bắt buộc: Nếu $\text{TP}_c + \text{FP}_c = 0$ (mô hình không bao giờ dự đoán lớp $c$), đặt $\text{Precision}_c = 0.0$. Nếu $\text{TP}_c = 0$, đặt $\text{F1}_c = 0.0$.
 
 - *Ưu điểm:* Cân bằng đồng thời cả hai yếu tố: bỏ sót nguy cơ ($\text{FN}$) và báo động giả ($\text{FP}$). Ngăn ngừa mô hình "ăn gian" recall bằng cách dự đoán ồ ạt lớp hiếm.
-- *Nhược điểm:* Cực kỳ nhạy cảm và trừng phạt rất nặng khi một lớp hiếm có $N_c$ rất nhỏ bị $\text{TP}_c = 0$ (khi đó $\text{F1}_c = 0$, kéo tụt toàn bộ Macro-F1 xuống 25%).
+- *Nhược điểm:* Cực kỳ nhạy cảm và trừng phạt rất nặng khi một lớp hiếm có $N_c$ rất nhỏ bị $\text{TP}_c = 0$ (khi đó $\text{F1}_c = 0$, làm giảm đáng kể Macro-F1; với 4 lớp, class đó mất toàn bộ 1/4 contribution của nó).
 
 #### C. Per-Class Recall, Precision, và F1
 Báo cáo độc lập bộ 3 chỉ số cho từng lớp:
@@ -173,7 +173,7 @@ $$\text{Raw Accuracy} = \frac{\sum_{c} \text{TP}_c}{\sum_{c} N_c}$$
 | **Vai trò đề xuất** | **Mô tả phụ** | **Chỉ số chính 1 (Co-Primary)** | **Chỉ số chính 2 (Co-Primary)** | **Chẩn đoán bắt buộc** |
 
 **Khuyến nghị phương pháp luận:**
-SafeShift đề xuất áp dụng **Balanced Accuracy** và **Macro-F1** làm **hai chỉ số chính song hành (Primary Co-Metrics)** cho bài toán phân loại 4 lớp. Sự kết hợp này bù trừ hoàn hảo cho nhau: Balanced Accuracy đo lường năng lực bao quát an toàn không phụ thuộc tần suất xuất hiện, trong khi Macro-F1 bảo đảm mô hình duy trì độ đặc hiệu và không tạo ra tỷ lệ báo động giả mất kiểm soát.
+SafeShift đề xuất áp dụng **Balanced Accuracy** và **Macro-F1** làm **hai chỉ số chính song hành (Primary Co-Metrics)** cho bài toán phân loại 4 lớp. Sự kết hợp này bổ sung cho nhau: Balanced Accuracy đo lường năng lực bao quát an toàn không phụ thuộc tần suất xuất hiện, trong khi Macro-F1 bảo đảm mô hình duy trì độ đặc hiệu và không tạo ra tỷ lệ báo động giả mất kiểm soát.
 
 ---
 
@@ -313,6 +313,38 @@ Thay vì dựa vào một chỉ số tổng hợp bị bóp méo bởi tỷ lệ
    Đo lường độ chênh lệch Anomaly Recall giữa các miền có hỗ trợ bất thường. Đây chỉ là chỉ số chẩn đoán, bởi vì việc gộp chung Level01/Level02/Level03 thành Anomaly vẫn bị nhiễu bởi thành phần mức độ nghiêm trọng khác nhau giữa các phân xưởng.
 3. **Chuẩn hóa thuật ngữ:** Bắt buộc sử dụng cụm từ **"Cross-Domain Robustness Drop / Gap"** (Độ suy giảm / độ lệch bền vững xuyên miền). **TUYỆT ĐỐI KHÔNG DÙNG** thuật ngữ **"Domain Generalization Drop"** vì Seminar không thực hiện huấn luyện trên miền nguồn.
 
+### 7.3 Phân tích phân tầng nguy cơ theo RQ2 (RQ2 Hazard Strata Metrics & Multi-Stratum Overlap)
+
+Câu hỏi nghiên cứu RQ2 yêu cầu làm rõ sự tập trung sai số của mô hình VLM theo từng cấp độ an toàn và từng phân tầng nguy cơ đặc thù trong công nghiệp. Kế thừa 7 Phân tầng Nguy cơ Gom nhóm Ứng viên (`Candidate Grouped Hazard Strata` A–G) đã được phê duyệt tại D6, SafeShift xác lập hệ thống chỉ số đo lường hiệu năng an toàn chuyên biệt cho từng tầng nguy cơ:
+
+#### A. Bộ 4 chỉ số an toàn cốt lõi cho từng tầng nguy cơ
+Đối với mỗi phân tầng nguy cơ $s \in \{\text{Strata A}, \dots, \text{Strata G}\}$ gồm $N_s$ mẫu ảnh:
+
+1. **Tỷ lệ sai số cấp an toàn chính xác (Exact Safety-Level Error Rate):**
+   $$\text{ErrorRate}_{\text{exact}}(s) = \frac{\sum_{i \in \text{Strata}_s} \mathbb{I}(\hat{y}_i \neq y_i)}{N_s}$$
+   Đo lường tỷ lệ các mẫu trong tầng $s$ bị mô hình dự đoán lệch khỏi cấp an toàn thực tế (dù là nhầm giữa các mức nguy cơ hay nhầm sang bình thường).
+
+2. **Tỷ lệ bỏ sót nguy cơ thành bình thường (Anomaly-to-Normal Miss Rate):**
+   $$\text{MissRate}_{\text{anom}\rightarrow\text{norm}}(s) = \frac{\sum_{i \in \text{Strata}_s} \mathbb{I}(\hat{y}_i = \text{Level04})}{N_s}$$
+   Chỉ số rủi ro vận hành then chốt: Đo lường tỷ lệ sự cố nguy hiểm thuộc tầng $s$ bị mô hình bỏ lọt hoàn toàn thành trạng thái an toàn bình thường (`Level04`).
+
+3. **Độ thu hồi nguy cơ nghiêm trọng và Tỷ lệ bỏ sót thảm khốc (Level01 Recall & Critical Miss Rate):**
+   Áp dụng cho các phân tầng có chứa mẫu nguy cơ cấp 1 ($N_{s, \text{L01}} > 0$, bao gồm toàn bộ các phân tầng từ A đến G):
+   $$\text{Recall}_{\text{L01}}(s) = \frac{\sum_{i \in \text{Strata}_s, y_i = \text{Level01}} \mathbb{I}(\hat{y}_i = \text{Level01})}{N_{s, \text{L01}}}$$
+   $$\text{CriticalMissRate}_{\text{L01}\rightarrow\text{L04}}(s) = \frac{\sum_{i \in \text{Strata}_s, y_i = \text{Level01}} \mathbb{I}(\hat{y}_i = \text{Level04})}{N_{s, \text{L01}}}$$
+   Phân định rõ rủi ro bỏ sót các sự cố đe dọa tính mạng (như cháy, khói, người ngã) trong từng phân tầng cụ thể.
+
+4. **Phân bố nhầm lẫn mức an toàn (Safety Confusion Distribution):**
+   Bảng phân bố tần suất 4 mức $\{\text{Level01}, \text{Level02}, \text{Level03}, \text{Level04}\}$ của dự đoán $\hat{y}$ trên từng phân tầng nguy cơ, chỉ ra khuynh hướng hạ cấp mức rủi ro (risk downgrade).
+
+#### B. Cảnh báo phương pháp luận: Giao thoa đa nguy cơ và Tính không cộng gộp mẫu
+> [!WARNING]
+> **Quy tắc không cộng gộp mẫu giữa các tầng nguy cơ (Non-Additive Sample Counts):**
+> - Do đặc thù các bối cảnh công nghiệp phức tạp chứa đồng thời nhiều vi phạm an toàn, **323 mẫu ảnh Anomaly là các mẫu đa nguy cơ (`MIXED_DIRECT_PROXY`)**.
+> - Vì vậy, một mẫu ảnh có thể thuộc về đồng thời 2 hoặc nhiều tầng nguy cơ (ví dụ: một ảnh vừa có ngọn lửa vừa có công nhân không đeo găng tay sẽ đồng thời nằm trong Strata A `FIRE_AND_SMOKE` và Strata B `PPE_ABSENCE`).
+> - Hệ quả toán học: Tổng số mẫu trên 7 tầng nguy cơ là **$200 + 545 + 247 + 134 + 211 + 34 + 10 = 1.381\text{ lượt mẫu}$**, vượt xa tổng số 1.000 mẫu Anomaly thực tế.
+> - **Quy tắc bắt buộc:** Các chỉ số của mỗi phân tầng nguy cơ phải được tính toán độc lập trên tập con mẫu tương ứng. Tuyệt đối không tính trung bình số học gộp các chỉ số giữa 7 tầng để suy ra hiệu năng tổng thể của dataset.
+
 ---
 
 ## 8. Worst-Domain Reporting Policy
@@ -341,25 +373,43 @@ Thay vào đó, SafeShift thiết lập quy trình báo cáo minh bạch và có
 
 Đường đua **RQ3-A — Direct Object-Support Grounding** đánh giá năng lực của VLM trong việc khoanh vùng chính xác đối tượng vật lý trực tiếp làm bằng chứng cho khẳng định nguy cơ.
 
-### 9.1 Cơ sở dữ liệu và định dạng hộp bao
+### 9.1 Cơ sở dữ liệu, định dạng hộp bao và Tập vùng GT ứng viên ($R_j$)
 
 - **Quy mô tập đánh giá:** Theo Quyết định D6, toàn bộ tập dữ liệu có đúng **781 Direct atoms** phân bố trên **721 mẫu ảnh** thuộc `Direct-Support Sample Pool`.
 - **Định dạng hộp bao chuẩn mực (D4):**
   $$\mathbf{b} = [x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0.0, 1.0]$$
   với gốc tọa độ $(0, 0)$ ở góc trên bên trái, chuẩn hóa theo kích thước ảnh thực tế $(W, H)$.
-- **Hộp bao Ground Truth:** Được suy biến toán học tất định (`derived`) từ đa giác cực biên của các đối tượng trực tiếp.
+- **Định nghĩa Tập vùng GT Ứng viên hỗ trợ ($R_j$ — Candidate Supporting GT Region Set):**
+  Trong thực tế bối cảnh công nghiệp, một nguy cơ nguyên tử có thể tương ứng với nhiều nhãn đối tượng ứng viên, nhiều đa giác cùng nhãn, hoặc nhiều thực thể hỗ trợ phân tán trên ảnh (ví dụ: nhiều mảnh dị vật vương vãi, nhiều vũng dầu loang). Do đó, SafeShift bãi bỏ giả định ngầm cơ học "1 hazard atom = 1 GT box".
+  
+  Đối với mỗi Direct hazard atom $j$ trong một mẫu ảnh, tập các đa giác GT ứng viên hỗ trợ $R_j$ được xác định tất định từ bảng ánh xạ D6:
+  $$R_j = \left\{ r \in \text{Polygons}(\text{sample}) \mid \text{label}(r) \in \text{CandidateLabels}(j) \right\}$$
+  trong đó $\text{bbox}(r)$ là hộp bao suy biến toán học tất định $[x_{\min}, y_{\min}, x_{\max}, y_{\max}]$ của đa giác $r$.
 
-### 9.2 Các chỉ số định vị không gian ứng viên
+- **Kết quả Kiểm toán Thực chứng Toàn diện trên 781 Direct Atoms:**
+  - **Kiểm tra tính toàn vẹn (Sanity Check $|R_j| \ge 1$):** Đúng **781 / 781 Direct atoms (100,0%)** sở hữu ít nhất một đa giác đối tượng hỗ trợ hợp lệ trong tệp JSON gốc ($0$ trường hợp rỗng).
+  - **Trường hợp Đơn vùng ($|R_j| = 1$):** Đúng **680 / 781 atoms (87,07%)** chỉ có duy nhất 1 đa giác hỗ trợ.
+  - **Trường hợp Đa vùng ($|R_j| > 1$):** Đúng **101 / 781 atoms (12,93%)** chứa từ 2 đến 8 đa giác hỗ trợ độc lập trong cùng một ảnh.
+  - **Phân rã chi tiết theo từng loại Hazard Atom:**
+    - `FOREIGN_OBJECT` (109 atoms): 66 atoms có $|R_j|=1$; **43 atoms có $|R_j|>1$** (phân bố: 2 dị vật: 34; 3 dị vật: 1; 4 dị vật: 2; 5 dị vật: 1; 7 dị vật: 2; 8 dị vật: 3 mẫu).
+    - `LIQUID_ON_GROUND` (122 atoms): 79 atoms có $|R_j|=1$; **43 atoms có $|R_j|>1$** (phân bố: 2 vũng: 32; 3 vũng: 4; 4 vũng: 5; 6 vũng: 2 mẫu).
+    - `USE_MOBILE_PHONE` (165 atoms): 155 atoms có $|R_j|=1$; **10 atoms có $|R_j|>1$** (2 điện thoại: 8; 3 điện thoại: 2 mẫu).
+    - `OPEN_FLAME` (117 atoms): 113 atoms có $|R_j|=1$; **4 atoms có $|R_j|>1$** (2 ngọn lửa: 4 mẫu).
+    - `SMOKING` (118 atoms): 117 atoms có $|R_j|=1$; **1 atom có $|R_j|>1$** (2 điếu thuốc: 1 mẫu).
+    - `SMOKE` (103 atoms): **103 / 103 atoms (100,0%)** có $|R_j|=1$.
+    - `NONMOTORIZED_VEHICLE` (47 atoms direct): **47 / 47 atoms (100,0%)** có $|R_j|=1$.
 
-#### A. Chỉ số giao thoa trên diện tích hợp (Intersection over Union — IoU)
-Với hộp bao dự đoán $\mathbf{b}_{\text{pred}}$ và hộp bao chuẩn $\mathbf{b}_{\text{gt}}$:
-$$\text{IoU}(\mathbf{b}_{\text{pred}}, \mathbf{b}_{\text{gt}}) = \frac{\text{Area}(\mathbf{b}_{\text{pred}} \cap \mathbf{b}_{\text{gt}})}{\text{Area}(\mathbf{b}_{\text{pred}} \cup \mathbf{b}_{\text{gt}})}$$
+### 9.2 Trọng số cạnh và Các chỉ số định vị không gian
+
+#### A. Trọng số cạnh IoU giữa Dự đoán và Nguy cơ Nguyên tử (Edge IoU Score)
+Với một hộp bao dự đoán $\mathbf{b}_{\text{pred}}^p$ ($p \in \{1, \dots, P\}$) và một Direct hazard atom $j$ có tập vùng hỗ trợ $R_j$, điểm giao thoa trên diện tích hợp cực đại được định nghĩa là:
+$$\text{IoU}(p, j) = \max_{r \in R_j} \text{IoU}\left(\mathbf{b}_{\text{pred}}^p, \text{bbox}(r)\right) = \max_{r \in R_j} \frac{\text{Area}\left(\mathbf{b}_{\text{pred}}^p \cap \text{bbox}(r)\right)}{\text{Area}\left(\mathbf{b}_{\text{pred}}^p \cup \text{bbox}(r)\right)}$$
 
 #### B. Chuẩn hóa ba định nghĩa Mean IoU
 Để đảm bảo tính nhất quán tuyệt đối trong báo cáo, SafeShift phân định rạch ròi ba định nghĩa Mean IoU:
 1. **End-to-End Mean IoU (Chỉ số định vị liên tục chính — PRIMARY):**
    - Mẫu số: Toàn bộ 781 Direct atoms có thể đánh giá được.
-   - Quy tắc gán điểm 0: Không nhận diện được nguy cơ = $\text{IoU} = 0.0$; không xuất hộp bao = $\text{IoU} = 0.0$; lỗi phân tích cú pháp = $\text{IoU} = 0.0$; hộp bao hợp lệ nhưng không giao thoa với GT = $\text{IoU} = 0.0$.
+   - Quy tắc gán điểm 0: Không nhận diện được nguy cơ = $\text{IoU} = 0.0$; không xuất hộp bao = $\text{IoU} = 0.0$; lỗi phân tích cú pháp = $\text{IoU} = 0.0$; hộp bao hợp lệ nhưng không ghép trúng GT atom = $\text{IoU} = 0.0$.
    - Phản ánh trung thực năng lực định vị tổng thể của mô hình trong thực tế.
 2. **Parse-Conditional Mean IoU (Chẩn đoán theo điều kiện parse thành công):**
    - Mẫu số: Chỉ tính trên các đầu ra nguy cơ có tọa độ hộp bao parse thành công.
@@ -369,66 +419,83 @@ $$\text{IoU}(\mathbf{b}_{\text{pred}}, \mathbf{b}_{\text{gt}}) = \frac{\text{Are
    - Cảnh báo phương pháp luận: Chỉ mang tính chẩn đoán phụ trợ, có thiên lệch chọn mẫu (`selection bias`); tuyệt đối không gọi tập con này là "mô hình đã nhìn đúng đối tượng".
 4. **Median IoU:** Báo cáo kèm theo để kháng ảnh hưởng của các giá trị ngoại lai cực đoan.
 
-#### C. Localization Hit@$\tau$ (Độ nhạy phân ngưỡng đăng ký trước)
-Một nguyên tử nguy cơ GT được coi là định vị trúng đích nếu tồn tại ít nhất một hộp bao dự đoán tương ứng đạt $\text{IoU}(\mathbf{b}_{\text{pred}}, \mathbf{b}_{\text{gt}}) \ge \tau$.
+#### C. Localization Hit@$\tau$ (Độ nhạy phân ngưỡng xác định trước)
+Một nguyên tử nguy cơ GT $j$ được coi là định vị trúng đích nếu tồn tại một hộp bao dự đoán $p$ được ghép cặp thành công đạt $\text{IoU}(p, j) \ge \tau$.
 - **Hit@0.25:** Ngưỡng độ nhạy chính phản ánh định vị phân vùng có ý nghĩa.
 - **Hit@0.50:** Ngưỡng độ nhạy khắt khe đối chiếu với chuẩn phát hiện đối tượng truyền thống.
-- Cả hai ngưỡng này được **đăng ký trước (`pre-registered`)** và không thay đổi sau khi quan sát kết quả. Loại bỏ mọi tuyên bố chưa được kiểm chứng về tính chuẩn mực phổ quát hay xác suất đoán ngẫu nhiên.
+- Cả hai ngưỡng này được **xác định trước khi xem kết quả mô hình (`pre-specified before model-result inspection`)** và không thay đổi sau khi quan sát kết quả. Loại bỏ mọi tuyên bố chưa được kiểm chứng về tính chuẩn mực phổ quát hay xác suất đoán ngẫu nhiên.
 
-#### D. Pointing Hit chuẩn mực (Canonical Pointing Hit using Original Polygon)
+#### D. Pointing Hit chuẩn mực trên Đa giác GT gốc (Canonical Pointing Hit using Original Polygons)
 Đo lường năng lực định hướng thị giác thô:
-- Xác định điểm tâm của hộp bao dự đoán:
-  $$\mathbf{c}_{\text{pred}} = \left(\frac{x_{\min}^p + x_{\max}^p}{2}, \frac{y_{\min}^p + y_{\max}^p}{2}\right)$$
-- **Định nghĩa chuẩn mực duy nhất:** Điểm tâm $\mathbf{c}_{\text{pred}}$ **phải nằm bên trong ĐA GIÁC GT GỐC (`Original GT Polygon`)** nếu đa giác tồn tại:
-  $$\text{PointingHit} = \mathbb{I}\left(\mathbf{c}_{\text{pred}} \in \text{Polygon}_{\text{gt}}\right)$$
-- *Căn cứ phương pháp luận:* Hộp bao derived bbox thường chứa các vùng nền trống xung quanh các vật thể phi lồi (như vũng chất lỏng loang hay ngọn lửa). Việc yêu cầu điểm tâm nằm trong đa giác gốc ngăn chặn việc tính điểm trúng đích vào vùng nền trống. Hộp bao derived bbox chỉ dùng cho các chỉ số diện tích IoU.
+- Xác định điểm tâm của hộp bao dự đoán $p$:
+  $$\mathbf{c}_{\text{pred}}^p = \left(\frac{x_{\min}^p + x_{\max}^p}{2}, \frac{y_{\min}^p + y_{\max}^p}{2}\right)$$
+- **Định nghĩa chuẩn mực duy nhất:** Điểm tâm $\mathbf{c}_{\text{pred}}^p$ **phải nằm bên trong BẤT KỲ ĐA GIÁC GT GỐC NÀO** thuộc tập vùng ứng viên $R_j$:
+  $$\text{PointingHit}(p, j) = \mathbb{I}\left(\exists r \in R_j \text{ sao cho } \mathbf{c}_{\text{pred}}^p \in \text{Polygon}(r)\right)$$
+- *Căn cứ phương pháp luận:* Hộp bao derived bbox thường chứa các vùng nền trống xung quanh các vật thể phi lồi (như vũng chất lỏng loang hay ngọn lửa). Việc yêu cầu điểm tâm nằm trong đa giác gốc ngăn chặn việc tính điểm trúng đích vào vùng nền trống. Tuyệt đối không dùng derived bbox cho Pointing Hit.
 
 ### 9.3 Ghép cặp tối ưu hai phía một-một (Optimal One-to-One Bipartite Matching)
 
-SafeShift loại bỏ quy tắc Greedy One-to-One làm khuyến nghị chính vì giải thuật tham lam theo IoU cực đại có thể không đạt được số lượng cặp ghép hợp lệ tối đa. Thay vào đó, SafeShift đề xuất:
+SafeShift áp dụng giải thuật ghép cặp chuẩn tắc giữa tập các hộp bao dự đoán $\{p\}_{p=1}^P$ và tập các nguyên tử nguy cơ chuẩn $\{j\}_{j=1}^M$ trong cùng một mẫu ảnh:
 
-**Optimal One-to-One Bipartite Matching (Ghép hai phía tối ưu một-một) trong cùng loại nguy cơ:**
-1. *Mục tiêu tối ưu hóa cấp 1:* Tối đa hóa số lượng cặp ghép thỏa mãn tiêu chí $\text{IoU} \ge \tau$.
-2. *Mục tiêu phân xử cấp 2 (Tie-break):* Trong số các phương án đạt cực đại số cặp ghép, chọn phương án tối đa hóa tổng IoU.
-3. *Triển khai:* Sử dụng thuật toán Hungarian (hoặc Maximum Cardinality Matching) với hàm chi phí được thiết kế thích hợp và cơ chế phân xử hòa tất định (`deterministic tie-break`).
-4. *Ràng buộc:* Một hộp bao dự đoán chỉ ghép tối đa 1 GT atom; một GT atom chỉ ghép tối đa 1 hộp bao dự đoán.
+1. **Phạm vi ghép:** Chỉ ghép giữa các dự đoán và các GT atoms có **cùng loại nguy cơ (`within the same hazard atom class`)**.
+2. **Ma trận trọng số:** Sử dụng điểm cạnh $\text{IoU}(p, j) = \max_{r \in R_j} \text{IoU}(\mathbf{b}_{\text{pred}}^p, \text{bbox}(r))$.
+3. **Mục tiêu tối ưu hóa cấp 1 (Cardinality):** Tối đa hóa số lượng cặp ghép thỏa mãn tiêu chí $\text{IoU}(p, j) \ge \tau$.
+4. **Mục tiêu phân xử cấp 2 (Tie-break):** Trong số các phương án đạt cực đại số cặp ghép, chọn phương án tối đa hóa tổng IoU.
+5. **Triển khai:** Sử dụng thuật toán Hungarian / Maximum Weight Bipartite Matching với cơ chế phân xử hòa tất định (`deterministic tie-break`).
+6. **Ràng buộc một-một:** Mỗi GT hazard atom chỉ ghép tối đa 1 hộp bao dự đoán (mỗi atom tối đa 1 TP); mỗi hộp bao dự đoán chỉ ghép tối đa 1 GT hazard atom. Mọi hộp bao dự đoán dư thừa đều tính là False Positive ($\text{FP}$).
 
 ---
 
 ## 10. Weak-Proxy Metrics
 
-Đường đua **RQ3-B — Weak Proxy Grounding** xử lý **947 Weak-Proxy atoms** trên **608 mẫu ảnh** (chủ yếu là các vi phạm thiếu trang bị bảo hộ lao động: `NO_GLOVES`, `NO_HELMET`, `NO_MASK`, hành vi `SMOKING`, hoặc `PERSON_FALLEN`).
+Đường đua **RQ3-B — Weak Proxy Grounding** xử lý **947 Weak-Proxy atoms** trên **608 mẫu ảnh** thuộc `Weak-Proxy Sample Pool`. 
+- **Thành phần cấu thành chuẩn xác từ D6:** Khác với quan niệm sai lầm rằng hút thuốc hay điện thoại là proxy, `SMOKING` có tới 118 Direct (chỉ 2 Proxy) và `USE_MOBILE_PHONE` có 165 Direct (chỉ 2 Proxy). Tập Weak Proxy thực chất đại diện cho các vi phạm thiếu trang bị bảo hộ và trạng thái con người: `NO_GLOVES` (451 atoms), `NO_HELMET` (229 atoms), `NO_MASK` (199 atoms), `NONMOTORIZED_VEHICLE` (54 atoms — trường hợp JSON chỉ khoanh người điều khiển thay vì phương tiện), `PERSON_FALLEN` (10 atoms), cùng 2 atoms `USE_MOBILE_PHONE` và 2 atoms `SMOKING` bị thiếu nhãn trực tiếp.
+- Đối tượng hỗ trợ không gian duy nhất có sẵn trong JSON là đa giác **`Person`**.
 
 ### 10.1 Bản chất ngụy biện nếu áp dụng IoU cho Weak Proxy
 
-Trong dữ liệu InspecSafe-V1, khi công nhân vi phạm không đội mũ bảo hộ (`NO_HELMET`), annotator gốc **chỉ khoanh đa giác toàn thân người (`Person`)**, hoàn toàn không có hộp bao vùng đầu hay chiếc mũ vắng mặt.
-- Diện tích vùng đầu chỉ chiếm khoảng $10\% - 15\%$ diện tích toàn thân người.
-- Nếu mô hình VLM định vị chính xác vùng đầu của người công nhân, diện tích giao nhau chỉ bằng diện tích đầu trong khi diện tích hợp bằng diện tích toàn thân, dẫn đến $\text{IoU} \approx 0,12$.
-- Nếu áp dụng máy móc tiêu chí $\text{IoU} \ge 0.25$, mô hình định vị chính xác vùng đầu sẽ bị chấm là thất bại, trong khi mô hình khoanh bừa toàn thân lại đạt điểm cao.
+Trong dữ liệu InspecSafe-V1, khi công nhân vi phạm không đội mũ bảo hộ (`NO_HELMET`) hay không đeo găng tay (`NO_GLOVES`), annotator gốc **chỉ khoanh đa giác toàn thân người (`Person`)**, hoàn toàn không có hộp bao vùng đầu, bàn tay hay vật thể vắng mặt.
+- Diện tích vùng đầu chỉ chiếm khoảng $10\% - 15\%$, và hai bàn tay chỉ chiếm khoảng $3\% - 5\%$ diện tích toàn thân người.
+- Nếu mô hình VLM định vị chính xác vùng đầu hoặc bàn tay trần của người công nhân, diện tích giao nhau chỉ bằng diện tích bộ phận trong khi diện tích hợp bằng diện tích toàn thân, dẫn đến $\text{IoU} \approx 0,05 - 0,15$.
+- Nếu áp dụng máy móc tiêu chí $\text{IoU} \ge 0.25$, mô hình định vị chính xác bộ phận vi phạm sẽ bị chấm là thất bại ($\text{IoU} < 0.25$), trong khi một mô hình chỉ biết khoanh bừa toàn thân người lại đạt điểm cao.
 
-### 10.2 Các chỉ số ứng viên cho Weak Proxy
+### 10.2 Hiện tượng Mập mờ Nhiều người (Multi-Person Ambiguity) và Kiểm toán Thực chứng
 
-SafeShift xác lập hệ thống đo lường mức độ nhất quán vị trí:
+Một thách thức phương pháp luận nghiêm trọng trong InspecSafe-V1 là sự hiện diện của nhiều công nhân trong cùng một khung hình nhưng văn bản nguy cơ không định danh cá nhân cụ thể:
+- **Kiểm toán thực chứng cấp độ Mẫu ($N=608$ Proxy Samples):**
+  - **Đơn người ($|\text{Person}| = 1$):** Đúng **410 / 608 mẫu (67,43%)** chỉ có duy nhất 1 đa giác `Person`.
+  - **Đa người ($|\text{Person}| > 1$):** Đúng **198 / 608 mẫu (32,57%)** chứa từ 2 đến 8 đa giác `Person` (phân bố: 2 người: 127 mẫu; 3 người: 44 mẫu; 4 người: 20 mẫu; 5 người: 1 mẫu; 6 người: 1 mẫu; 7 người: 3 mẫu; 8 người: 2 mẫu).
+- **Kiểm toán thực chứng cấp độ Nguy cơ Nguyên tử ($N=947$ Proxy Atoms):**
+  - Nằm trong ảnh đơn người: **614 / 947 atoms (64,84%)**.
+  - Nằm trong ảnh đa người: **333 / 947 atoms (35,16%)**.
+
+Khi ảnh có từ 2 người trở lên, bộ dữ liệu không ghi rõ công nhân nào đang không đeo găng tay hay không đội mũ. Nếu quy ước máy móc, việc đánh giá sẽ bị tê liệt. Do đó, SafeShift thiết lập quy tắc chuẩn tắc: Một dự đoán được coi là nhất quán nếu nó trúng đích vào **bất kỳ đa giác người nào** trong ảnh, đồng thời thiết lập tên gọi chuẩn hóa và bài kiểm tra độ nhạy tương ứng.
+
+### 10.3 Các chỉ số đo lường mức độ nhất quán vị trí
+
+SafeShift xác lập hệ thống đo lường chuẩn mực cho Weak Proxy:
 
 #### 1. Center-in-Proxy (Chỉ số chính — PRIMARY):
-Kiểm tra xem tọa độ tâm của hộp bao dự đoán $\mathbf{c}_{\text{pred}}$ có nằm bên trong vùng đại diện hay không. Nếu có sẵn đa giác gốc `Person`, ưu tiên sử dụng đa giác thay vì derived bbox để kiểm tra tính bao chứa của điểm tâm:
-$$\text{Center-in-Proxy} = \mathbb{I}\left(\mathbf{c}_{\text{pred}} \in \text{Polygon}_{\text{person}}\right)$$
+Kiểm tra xem tọa độ tâm của hộp bao dự đoán $\mathbf{c}_{\text{pred}}^p$ có nằm bên trong **BẤT KỲ ĐA GIÁC NGƯỜI GỐC NÀO** trong ảnh hay không:
+$$\text{Center-in-Proxy}(p) = \mathbb{I}\left(\exists r \in \text{Polygons}_{\text{person}} \text{ sao cho } \mathbf{c}_{\text{pred}}^p \in \text{Polygon}(r)\right)$$
+Ưu tiên tuyệt đối việc sử dụng đa giác `Person` thay vì derived bbox để loại trừ trường hợp điểm tâm rơi vào vùng nền trống giữa hai chân hoặc cánh tay.
 
 #### 2. Predicted Box Containment (Chẩn đoán liên tục — DIAGNOSTIC):
-Đo lường tỷ lệ phần trăm diện tích của hộp bao dự đoán nằm gọn bên trong vùng đại diện của con người:
-$$\text{Containment}(\mathbf{b}_{\text{pred}}, \mathbf{b}_{\text{proxy}}) = \frac{\text{Area}(\mathbf{b}_{\text{pred}} \cap \mathbf{b}_{\text{proxy}})}{\text{Area}(\mathbf{b}_{\text{pred}})}$$
-- Ngưỡng $\text{Containment} \ge 0.50$ chỉ được xem là **ngưỡng heuristic kiểm tra độ nhạy (`sensitivity heuristic`)**, không được coi là ngưỡng chân lý khoa học.
+Đo lường tỷ lệ diện tích của hộp bao dự đoán nằm gọn bên trong vùng đại diện cực đại của đối tượng người:
+$$\text{Containment}(\mathbf{b}_{\text{pred}}^p, \mathbf{b}_{\text{person}}) = \max_{r \in \text{Polygons}_{\text{person}}} \frac{\text{Area}\left(\mathbf{b}_{\text{pred}}^p \cap \text{bbox}(r)\right)}{\text{Area}\left(\mathbf{b}_{\text{pred}}^p\right)}$$
+- Ngưỡng $\text{Containment} \ge 0.50$ chỉ được xem là **ngưỡng heuristic kiểm tra độ nhạy (`sensitivity heuristic`)**, không được coi là chân lý khoa học.
 
-#### 3. Any-Overlap và IoU:
-Chỉ mang tính chất chẩn đoán phụ trợ (`diagnostic only`).
+### 10.4 Chuẩn hóa tên gọi và Phân tích độ nhạy Single-Person Proxy Subset
 
-### 10.3 Chuẩn hóa tên gọi và quy tắc báo cáo tách biệt
-
-- **Chuẩn hóa tên gọi bắt buộc:** Chỉ số này được gọi chính thức là:
-  **"Proxy Localization Consistency" (PLC — Mức độ nhất quán định vị với vùng đại diện)**.
+- **Chuẩn hóa tên gọi chính thức bắt buộc:** Chỉ số này được gọi chính thức là:
+  **"Identity-Agnostic Proxy Localization Consistency" (Identity-Agnostic PLC — Mức độ nhất quán định vị đại diện không phụ thuộc danh tính)**.
+- **Phân tích độ nhạy chuẩn mực — Single-Person Proxy Subset:**
+  Để kiểm chứng xem kết quả PLC trên toàn bộ 608 mẫu có bị thổi phồng do việc mô hình dễ dàng "trúng hú họa" vào bất kỳ ai trong đám đông hay không, SafeShift thiết lập tập con phân tích độ nhạy:
+  - **Single-Person Proxy Subset:** Gồm đúng **410 mẫu ảnh (chứa 614 proxy atoms)** chỉ có duy nhất 1 đối tượng `Person` ($|\text{Person}| = 1$).
+  - Trên tập con này, sự mập mờ danh tính hoàn toàn bị triệt tiêu. Đây là mỏ neo đối chiếu bắt buộc để chứng minh tính vững chắc của năng lực định vị proxy.
 - **Quy tắc cấm tuyệt đối:**
   - **TUYỆT ĐỐI KHÔNG GỌI** chỉ số này là "True Evidence Grounding Accuracy" (Độ chính xác bám bằng chứng thật).
-  - **TUYỆT ĐỐI KHÔNG ĐƯỢC GỘP** điểm số của Direct Track và Proxy Track thành một điểm trung bình duy nhất. Hai đường đua này bắt buộc phải báo cáo tách biệt hoàn toàn.
+  - **TUYỆT ĐỐI KHÔNG ĐƯỢC GỘP** điểm số của Direct Track và Proxy Track thành một điểm trung bình duy nhất. Hai đường đua này bắt buộc phải báo cáo tách biệt hoàn toàn trong hai bảng/cột riêng biệt.
 
 ---
 
@@ -451,12 +518,26 @@ $$\text{Evidence Recall}_h@\tau = \frac{\text{TP}_h@\tau}{N_{\text{evaluable\_GT
 $$\text{Evidence Precision}_h@\tau = \frac{\text{TP}_h@\tau}{\text{Total\_Predicted\_Boxes}_h}$$
 $$\text{Evidence F1}_h@\tau = \frac{2 \cdot \text{Evidence Precision}_h@\tau \cdot \text{Evidence Recall}_h@\tau}{\text{Evidence Precision}_h@\tau + \text{Evidence Recall}_h@\tau}$$
 
-SafeShift đề xuất báo cáo song song ở hai ngưỡng đăng ký trước: **Evidence P/R@0.25** và **Evidence P/R@0.50**.
+SafeShift đề xuất báo cáo song song ở hai ngưỡng được xác định trước khi xem kết quả mô hình (`pre-specified before model-result inspection`): **Evidence P/R@0.25** và **Evidence P/R@0.50**.
 
 ### 11.3 Phân rã sai số: Nhận diện sai vs Định vị sai
 
 $$\text{Evidence Recall}@\tau = \text{Hazard Recognition Recall} \times \text{Localization Recall | Correct Hazard}@\tau$$
 giúp phân định rõ ràng giữa việc mô hình không hiểu ngữ nghĩa nguy cơ hay không định vị được không gian.
+
+### 11.4 Phân tích chẩn đoán Kích thước đối tượng và Mức độ hiếm (Object Size & Rarity Diagnostic Covariates)
+
+Để hiểu sâu bản chất cơ chế thị giác của mô hình VLM mà không làm nhiễu loạn thang đo chính, SafeShift thiết lập hai phép phân tích biến đồng biến chẩn đoán (`diagnostic covariates`):
+
+1. **Biến đồng biến liên tục về Kích thước Đối tượng (Continuous Object Size Covariate):**
+   - Sử dụng diện tích đa giác chuẩn hóa theo kích thước khung hình (`Normalized Polygon Area`):
+     $$\text{Area}_{\text{norm}}(r) = \frac{\text{Area}(r)}{W \times H} \in [0, 1]$$
+   - Phân tích tương quan giữa $\text{Area}_{\text{norm}}$ và chỉ số định vị ($\text{IoU}$, $\text{Hit}@\tau$) nhằm chẩn đoán: Liệu VLM có đang chỉ đạt điểm cao nhờ các đối tượng có diện tích lớn (như khói dày, vũng nước loang chiếm $>10\%$ khung hình) và thất bại hoàn toàn trên các vật thể vi mô có độ phân giải thấp (như điếu thuốc lá $\text{Area}_{\text{norm}} < 0.001$ hay điện thoại di động)?
+2. **Biến đồng biến về Mức độ Hiếm (Rarity Covariate):**
+   - Khảo sát mối quan hệ giữa tần suất xuất hiện $N$ của các nhãn đối tượng/hazard atoms (từ $N=453$ của `NO_GLOVES` đến $N=10$ của `PERSON_FALLEN`) với năng lực nhận diện của mô hình.
+3. **Phân định vai trò phương pháp luận:**
+   - Cả kích thước đối tượng và mức độ hiếm đều được định vị là **các phân tích chẩn đoán phụ trợ (`Diagnostic Covariate Analyses`)**.
+   - **TUYỆT ĐỐI KHÔNG COI ĐÂY LÀ CHỈ SỐ CHÍNH (PRIMARY BENCHMARK METRICS)**. Các phân tích này đóng vai trò làm sáng tỏ nguyên nhân biến thiên của RQ3, không làm thay đổi các bảng tổng hợp kết quả chính thức.
 
 ---
 
@@ -509,26 +590,29 @@ Cuộc tổng điều tra D6 đã xác định chính xác có **60 nguyên tử
 
 ---
 
-## 16. Classification-Grounding Inconsistency
+## 16. Classification-Grounding Inconsistency ($\text{CGI}@\tau$)
 
 Để thay thế cho khái niệm chủ quan "Correct Answer, Wrong Reason", SafeShift xác lập chỉ số hoạt động chuẩn mực:
 
-**"Classification-Grounding Inconsistency relative to available object-support annotation" (Sự không nhất quán giữa phân loại và bám bằng chứng đối với chú thích đối tượng hiện có)**.
+**"Classification-Grounding Inconsistency relative to available object-support annotation" ($\text{CGI}@\tau$ — Sự không nhất quán giữa phân loại và bám bằng chứng đối với chú thích đối tượng hiện có tại ngưỡng $\tau$)**.
 
-### 16.1 Công thức chuẩn hóa mẫu số có điều kiện (Conditional Metric)
+### 16.1 Công thức chuẩn hóa mẫu số có điều kiện và Tham số hóa ngưỡng ($\text{CGI}@\tau$)
+
+Quy ước ký hiệu bắt buộc: **TUYỆT ĐỐI KHÔNG VIẾT KÝ HIỆU $\text{CGI}$ TRỐNG TRƠN THIẾU HẬU TỐ NGƯỠNG**. Mọi chỉ số CGI bắt buộc phải gắn kèm ngưỡng phân vị định vị $\tau$ tương ứng: SafeShift báo cáo song song **$\text{CGI}@0.25$** và **$\text{CGI}@0.50$**.
 
 Công thức phải lấy mẫu số là **tập các trường hợp phân loại đúng**, không lấy toàn bộ tập mẫu:
 
-#### A. Cấp độ Mẫu ảnh (Sample-level CGI):
-$$\text{CGI}_{\text{zero\_grounding}} = \frac{\sum_{i \in \text{Direct}} \mathbb{I}\left(\text{Classification Correct}_i \land \text{No Direct Atom Grounded}_i\right)}{\sum_{i \in \text{Direct}} \mathbb{I}\left(\text{Classification Correct}_i\right)}$$
-Đo lường tỷ lệ các mẫu ảnh được mô hình phân loại đúng mức độ an toàn nhưng hoàn toàn không định vị trúng bất kỳ nguyên tử nguy cơ trực tiếp nào trong ảnh ($\text{Hit}@0.25 = 0$).
+#### A. Cấp độ Mẫu ảnh ($\text{CGI}_{\text{zero\_grounding}}@\tau$):
+$$\text{CGI}_{\text{zero\_grounding}}@\tau = \frac{\sum_{i \in \text{Direct}} \mathbb{I}\left(\text{Classification Correct}_i \land \text{No Direct Atom Grounded}@\tau_i\right)}{\sum_{i \in \text{Direct}} \mathbb{I}\left(\text{Classification Correct}_i\right)}$$
+Đo lường tỷ lệ các mẫu ảnh được mô hình phân loại đúng mức độ an toàn nhưng hoàn toàn không định vị trúng bất kỳ nguyên tử nguy cơ trực tiếp nào trong ảnh ở ngưỡng $\tau$ (tức 100% các Direct atoms trong ảnh đều có $\text{Hit}@\tau = 0$).
 
-#### B. Cấp độ Nguy cơ Nguyên tử (Atom-level CGI cho ảnh đa nguy cơ):
-$$\text{CGI}_{\text{atom}} = \frac{\sum_{i \in \text{Direct, ClassifCorrect}} N_{\text{missed\_atoms}, i}}{\sum_{i \in \text{Direct, ClassifCorrect}} N_{\text{direct\_atoms}, i}}$$
+#### B. Cấp độ Nguy cơ Nguyên tử ($\text{CGI}_{\text{atom}}@\tau$ cho ảnh đa nguy cơ):
+$$\text{CGI}_{\text{atom}}@\tau = \frac{\sum_{i \in \text{Direct, ClassifCorrect}} N_{\text{missed\_atoms}@\tau, i}}{\sum_{i \in \text{Direct, ClassifCorrect}} N_{\text{direct\_atoms}, i}}$$
+trong đó $N_{\text{missed\_atoms}@\tau, i}$ là số lượng nguyên tử nguy cơ trực tiếp trong ảnh $i$ không đạt tiêu chí ghép cặp định vị ở ngưỡng $\tau$.
 
 ### 16.2 Diễn giải phương pháp luận trung thực
 
-Chỉ số này **CHỈ PHẢN ÁNH**: hiện tượng thành công trong phân loại cấp an toàn diễn ra đồng thời với sự thất bại trong việc bám vào vùng chú thích đối tượng hiện có (`classification success co-occurs with failure to align with available object-support annotation`).
+Chỉ số này **CHỈ PHẢN ÁNH**: hiện tượng thành công trong phân loại cấp an toàn diễn ra đồng thời với sự thất bại trong việc bám vào vùng chú thích đối tượng hiện có ở ngưỡng $\tau$ (`classification success co-occurs with failure to align with available object-support annotation at threshold` $\tau$).
 - **Tuyệt đối không diễn giải:** Mô hình "đoán mò từ bối cảnh nền", "suy luận sai lý do", hay "hoạt động như hộp đen mù quáng", vì mô hình có thể đã dựa vào các đặc trưng bối cảnh hợp lệ khác chưa được khoanh vùng trong tệp JSON.
 
 ---
@@ -544,15 +628,21 @@ Trong đề xuất ban đầu, phương án phân tầng theo tổ hợp `Domain
 - Nếu phân tầng theo nhãn an toàn, việc lấy mẫu lại có hoàn lại 1 lần từ 1 phần tử duy nhất đồng nghĩa với việc cụm điểm đó **xuất hiện chính xác ở 100% các lượt replicate bootstrap**.
 - **Hậu quả:** Tạo ra phương sai lấy mẫu lại bằng 0 giả tạo (`artificial zero resampling variance / fake precision`), che giấu hoàn toàn độ bất định thực tế. Việc ép giữ lớp hiếm trong mọi replicate không phải là ưu điểm mà là sự bóp méo thống kê.
 
-### 17.2 Phương án đề xuất chính thức: Point-Cluster Bootstrap
+### 17.2 Phương án đề xuất chính thức: Domain-Stratified Point-Cluster Bootstrap
 
-SafeShift đề xuất **Point-Cluster Bootstrap** làm phương pháp ước lượng bất định chính thức:
-1. **Bảo toàn cụm thư mục điểm logic:** Toàn bộ các khung hình thuộc cùng một thư mục điểm logic `point_id` luôn đi cùng nhau trong mọi lượt rút mẫu.
-2. **Đối với chỉ số từng miền (Domain-specific metric):** Lấy mẫu lại có hoàn lại trên các cụm điểm **TRONG NỘI BỘ MIỀN ĐÓ** (resample point clusters within domain).
-3. **Đối với chỉ số toàn cục P2:** Lấy mẫu lại các cụm điểm trên toàn bộ P2 (hoặc phân tầng theo miền để giữ quy mô miền), nhưng **TUYỆT ĐỐI KHÔNG PHÂN TẦNG THEO CẤP AN TOÀN**.
-4. **Xử lý lượt replicate thiếu lớp:**
-   - Nếu trong một lượt replicate bootstrap không có mẫu ground truth nào cho lớp đang tính (ví dụ không rút trúng mẫu Level03 nào), giá trị metric của lượt đó được ghi nhận là **`NA` (Undefined)**.
-   - Bắt buộc phải công bố: **Tỷ lệ số lượt replicate hợp lệ trên tổng số lượt rút mẫu (`Valid Replicate Count / B`)**. Tuyệt đối không ép metric thành xác định một cách khiên cưỡng.
+SafeShift xác lập **Domain-Stratified Point-Cluster Bootstrap** làm phương pháp ước lượng bất định chính thức (Primary Resampling Method), dứt khoát và không mâu thuẫn:
+
+1. **Bảo toàn cụm thư mục điểm logic (`point_id`):** Toàn bộ các khung hình thuộc cùng một thư mục điểm logic `point_id` luôn đi cùng nhau trong mọi lượt rút mẫu.
+2. **Quy trình phân tầng theo miền cho P2 toàn thể (Domain-Stratified for Pooled P2):**
+   - Phân tầng **DUY NHẤT theo 5 miền thao tác `folder_domain`**.
+   - Trong mỗi miền công nghiệp $d$, lấy mẫu lại có hoàn lại các cụm `point_id` (đối với Normal) và các mẫu/cụm Anomaly của chính miền đó cho tới khi đạt đúng quy mô số cụm gốc của miền $d$.
+   - Gộp các tập con lấy mẫu lại từ 5 miền lại thành một replicate toàn thể P2.
+   - **TUYỆT ĐỐI KHÔNG PHÂN TẦNG THEO CẤP AN TOÀN (`NO STRATIFICATION BY SAFETY LEVEL`)**, qua đó loại trừ triệt để nguy cơ tạo phương sai 0 giả tạo trên các tầng đơn mẫu (`singleton strata`).
+3. **Đối với chỉ số từng miền riêng biệt (Domain-specific metrics):**
+   - Lấy mẫu lại có hoàn lại các cụm điểm nội bộ trong chính miền đó (`resample point clusters within domain`).
+4. **Chính sách xử lý Replicate khuyết lớp ground truth (Missing Class Policy in Replicates):**
+   - Nếu trong một lượt replicate bootstrap không rút trúng bất kỳ mẫu ground truth nào cho lớp hoặc phân tầng đang đánh giá (ví dụ: không có mẫu Level03 nào xuất hiện trong replicate), giá trị metric của lượt đó được ghi nhận là **`NA` (Undefined)**.
+   - Bắt buộc phải công bố tường minh: **Tỷ lệ số lượt replicate hợp lệ trên tổng số lượt lấy mẫu lại (`Valid Replicates / B`)**. Tuyệt đối không thay thế giả tạo (`no artificial imputation`) hay ép buộc lớp hiếm phải xuất hiện.
 5. **Đối với các phân tầng $N=1$ hoặc siêu nhỏ:**
    - Thừa nhận trung thực: Bootstrap không thể tạo ra thông tin thống kê mới từ một quan sát duy nhất.
    - Công bố: Ước lượng điểm (`point estimate`), mẫu số thực tế, cảnh báo độ bất định mô tả, và có thể xem xét khoảng tin cậy nhị thức chính xác (Wilson / Clopper-Pearson interval) cho độ thu hồi đơn giản nếu phù hợp, tuyệt đối không tạo độ chính xác giả bằng phân tầng ép buộc.
@@ -593,13 +683,17 @@ Khi so sánh hiệu năng giữa hai mô hình VLM (ví dụ: Mô hình A vs Mô
 
 ### 19.1 Paired Bootstrap Difference CI làm phương pháp so sánh chính
 
-Đối với mỗi lượt lấy mẫu lại bootstrap $b \in \{1, \dots, B\}$:
+Mọi so sánh theo cặp giữa hai mô hình (hoặc hai biến thể prompt) bắt buộc phải được đánh giá trên **CÙNG MỘT TẬP CÁC LƯỢT DRAW REPLICATE BOOTSTRAP $b \in \{1, \dots, B\}$**:
+Đối với mỗi lượt lấy mẫu lại $b$:
 $$\Delta M^{(b)} = M_A^{(b)} - M_B^{(b)}$$
-Xác lập khoảng tin cậy 95% cho hiệu số: $\text{CI}_{95\%}(\Delta M) = \left[ \Delta_{0,025}, \, \Delta_{0,975} \right]$.
+
+- **Chính sách Replicate theo cặp hợp lệ (Valid Paired Replicates):**
+  Nếu trong lượt replicate $b$, một trong hai mô hình bị giá trị `NA` (do khuyết lớp ground truth trong lượt rút đó), hiệu số $\Delta M^{(b)}$ của lượt đó được tính là `NA`. Khoảng tin cậy theo cặp chỉ được xây dựng trên các replicate hợp lệ đồng thời cho cả hai mô hình, và **bắt buộc phải công bố tỷ lệ `Valid Paired Replicates / B`**.
+- **Khoảng tin cậy:** $\text{CI}_{95\%}(\Delta M) = \left[ \Delta_{0,025}, \, \Delta_{0,975} \right]$.
 
 > [!IMPORTANT]
 > **Chuẩn hóa phát biểu kết luận khoa học:**
-> - Nếu khoảng tin cậy $\text{CI}_{95\%}(\Delta M)$ không chứa giá trị 0: Được diễn đạt là **"Khoảng tin cậy bootstrap theo cặp 95% không chứa 0 cho thấy một sự chênh lệch có hướng rõ ràng dưới giao thức lấy mẫu lại đã đăng ký trước (`indicates a directionally clear difference under the pre-specified resampling protocol`)"**.
+> - Nếu khoảng tin cậy $\text{CI}_{95\%}(\Delta M)$ không chứa giá trị 0: Được diễn đạt là **"Khoảng tin cậy bootstrap theo cặp 95% không chứa 0 cho thấy một sự chênh lệch có hướng rõ ràng dưới giao thức lấy mẫu lại đã xác định trước khi xem kết quả mô hình (`indicates a directionally clear difference under the pre-specified resampling protocol`)"**.
 > - **Tuyệt đối không tự động tuyên bố:** "Có ý nghĩa thống kê ở mức $\alpha = 0,05$" như thể đã chạy một kiểm định giả thuyết chuẩn tắc (formal hypothesis test) nếu giao thức D5 chưa chạy gói kiểm định chính thức.
 > - Nếu khoảng tin cậy chứa giá trị 0: **TUYỆT ĐỐI KHÔNG TUYÊN BỐ HAI MÔ HÌNH "TƯƠNG ĐƯƠNG NHAU" HAY "GIỐNG NHAU"**. Chỉ được kết luận dữ liệu chưa cho thấy sự phân hóa rõ ràng.
 
@@ -649,11 +743,11 @@ Bảng tổng hợp ma trận quyết định cho các cấu phần kỹ thuật
 | **Chỉ số suy giảm xuyên miền (RQ1)** | 1. Balanced Accuracy Spread thuần túy trên K=4<br>2. Class-Conditional Domain Analysis (Primary) + Chẩn đoán phụ trợ | - Chỉ số vĩ mô trên K=4 bỏ qua 2/5 miền.<br>- Class-Conditional Analysis giảm thiểu nhiễu tỷ lệ nhãn và bao quát các miền có hỗ trợ. | **CHỌN PHƯƠNG ÁN 2**<br>Primary: Class-Conditional Domain Recall & Pooled-to-Domain Gap. Diagnostic: Balanced Accuracy Spread trên K=4. |
 | **Xử lý lớp thiếu ở từng miền** | 1. Support-only macro average<br>2. Yêu cầu cố định 4 lớp (gán NA)<br>3. Dual-Layer Support-Aware Policy | - Phương án 1 so sánh trên bài toán khác nhau.<br>- Phương án 2 làm khuyết 40% số miền.<br>- Phương án 3 vừa minh bạch số lớp vừa có mỏ neo so sánh. | **CHỌN PHƯƠNG ÁN 3**<br>Descriptive macro có gắn cờ số lớp $K_d$; dùng Class-Conditional metrics làm mỏ neo so sánh. |
 | **Báo cáo Worst-Domain** | 1. Quy tắc ngưỡng cơ học N >= 30<br>2. Báo cáo giá trị nhỏ nhất quan sát được kèm mẫu số, CI và cảnh báo so sánh | - Ngưỡng N >= 30 tùy ý, thiếu cơ sở toán học.<br>- Phương án 2 minh bạch, giữ metallurgy là Descriptive / Sparse-Support. | **CHỌN PHƯƠNG ÁN 2**<br>Báo cáo minimum quan sát được giữa các miền so sánh được; công bố đầy đủ mẫu số và CI. |
-| **Định vị Direct Grounding** | 1. Hit@0.25 thuần túy<br>2. Continuous IoU (Primary) + Hit@0.25 / Hit@0.50 (Sensitivity) + Evidence P/R | - Chỉ dựa vào ngưỡng đơn độc dễ gây tranh cãi.<br>- Continuous IoU đo lường trọn vẹn dải phân bố; các ngưỡng đóng vai trò kiểm tra độ nhạy đăng ký trước. | **CHỌN PHƯƠNG ÁN 2**<br>End-to-End Mean IoU & Median IoU làm Primary; Hit@0.25 và Hit@0.50 làm Thresholded Sensitivity. |
-| **Ghép cặp nhiều đối tượng (Matching)** | 1. Greedy One-to-One<br>2. Optimal One-to-One Bipartite Matching (Hungarian) | - Greedy theo IoU cực đại có thể không đạt cực đại số cặp trúng.<br>- Ghép tối ưu hai phía tối đa hóa số cặp ghép đạt ngưỡng. | **CHỌN PHƯƠNG ÁN 2**<br>Optimal Bipartite Matching (cực đại số cặp đạt ngưỡng, tie-break bằng tổng IoU). |
-| **Định vị Weak Proxy** | 1. Dùng IoU với Person<br>2. Proxy Localization Consistency (Center-in-Proxy + Box Containment) | - IoU với Person phạt mô hình nhìn đúng đầu người (NO_HELMET).<br>- PLC phản ánh trung thực mức độ nhất quán vị trí. | **CHỌN PHƯƠNG ÁN 2**<br>Primary: Center-in-Proxy (ưu tiên polygon gốc). Diagnostic: Box Containment (ngưỡng 0.50 là heuristic). |
-| **Ước lượng bất định (CI)** | 1. Stratified theo Domain x Level<br>2. Point-Cluster Bootstrap (resample theo logical point folder) | - Phân tầng theo nhãn tạo phương sai 0 giả tạo trên singleton strata.<br>- Point-Cluster Bootstrap phản ánh trung thực độ bất định. | **CHỌN PHƯƠNG ÁN 2**<br>Point-Cluster Bootstrap ($B=2.000$, seed=42); replicate thiếu lớp ghi nhận NA. |
-| **So sánh các mô hình** | 1. Phép thử 2 mẫu độc lập<br>2. Paired Bootstrap Difference CI 95% | - Phép thử độc lập sai phương pháp luận (dữ liệu theo cặp).<br>- Paired Difference CI minh bạch, tập trung vào effect size có hướng. | **CHỌN PHƯƠNG ÁN 2**<br>Paired Difference CI 95% làm primary; không tuyên bố tương đương khi CI chứa 0. |
+| **Định vị Direct Grounding** | 1. Hit@0.25 thuần túy<br>2. Continuous IoU (Primary) + Hit@0.25 / Hit@0.50 (Sensitivity) + Evidence P/R | - Chỉ dựa vào ngưỡng đơn độc dễ gây tranh cãi.<br>- Continuous IoU đo lường trọn vẹn dải phân bố; các ngưỡng đóng vai trò kiểm tra độ nhạy xác định trước. | **CHỌN PHƯƠNG ÁN 2**<br>End-to-End Mean IoU & Median IoU làm Primary; Hit@0.25 và Hit@0.50 làm Thresholded Sensitivity (pre-specified). |
+| **Ghép cặp nhiều đối tượng (Matching)** | 1. Greedy One-to-One<br>2. Optimal One-to-One Bipartite Matching (Hungarian) | - Greedy theo IoU cực đại có thể không đạt cực đại số cặp trúng.<br>- Ghép tối ưu hai phía tối đa hóa số cặp ghép đạt ngưỡng trên tập vùng ứng viên $R_j$. | **CHỌN PHƯƠNG ÁN 2**<br>Optimal Bipartite Matching (cực đại số cặp đạt ngưỡng, tie-break bằng tổng IoU). |
+| **Định vị Weak Proxy** | 1. Dùng IoU với Person<br>2. Identity-Agnostic Proxy Localization Consistency (Center-in-Proxy + Box Containment) | - IoU với Person phạt mô hình nhìn đúng đầu người (NO_HELMET).<br>- PLC phản ánh trung thực mức độ nhất quán vị trí không phụ thuộc danh tính người. | **CHỌN PHƯƠNG ÁN 2**<br>Primary: Center-in-Proxy (ưu tiên polygon gốc). Diagnostic: Box Containment (ngưỡng 0.50 là heuristic). Sensitivity: Single-Person Proxy Subset. |
+| **Ước lượng bất định (CI)** | 1. Stratified theo Domain x Level<br>2. Domain-Stratified Point-Cluster Bootstrap (resample theo cụm point_id trong từng miền) | - Phân tầng theo nhãn tạo phương sai 0 giả tạo trên singleton strata.<br>- Domain-Stratified Point-Cluster Bootstrap phản ánh trung thực độ bất định, không làm méo mó phương sai. | **CHỌN PHƯƠNG ÁN 2**<br>Domain-Stratified Point-Cluster Bootstrap ($B=2.000$, seed=42); replicate thiếu lớp ghi nhận NA, báo cáo valid replicates / B. |
+| **So sánh các mô hình** | 1. Phép thử 2 mẫu độc lập<br>2. Paired Bootstrap Difference CI 95% | - Phép thử độc lập sai phương pháp luận (dữ liệu theo cặp).<br>- Paired Difference CI minh bạch, tập trung vào effect size có hướng trên cùng tập replicate. | **CHỌN PHƯƠNG ÁN 2**<br>Paired Bootstrap Difference CI 95% trên cùng tập replicate làm primary; báo cáo valid paired replicates / B; không tuyên bố tương đương khi CI chứa 0. |
 
 ---
 
@@ -678,23 +772,32 @@ SafeShift đề xuất bộ nguyên tắc thực thi chính thức cho Quyết �
    - **Primary Anchor:** **Class-Conditional Domain Analysis** (Recall theo từng lớp và Pooled-to-Domain Gap theo từng lớp $\Delta(c, d)$) nhằm giảm thiểu nhiễu tỷ lệ nhãn.
    - **Secondary Diagnostic:** Balanced Accuracy Domain Spread trên tập các miền $K=4$; Binary Anomaly Recall Spread làm chẩn đoán phụ trợ.
    - Tuyệt đối không dùng thuật ngữ "Domain Generalization Drop".
-5. **Đánh giá bám bằng chứng trực tiếp (RQ3-A Direct Grounding):**
+5. **Chỉ số phân tầng nguy cơ RQ2 (RQ2 Hazard Strata Metrics):**
+   - Đánh giá trên 7 tầng nguy cơ gom nhóm ứng viên (Strata A–G): Báo cáo Exact Safety-Level Error Rate, Anomaly-to-Normal Miss Rate, Level01 Recall và Critical Miss Rate (cho các tầng có Level01), và ma trận nhầm lẫn mức an toàn.
+   - Lưu ý phương pháp luận: Số lượng mẫu giữa các tầng không có tính cộng gộp do hiện tượng giao thoa đa nguy cơ (`multi-stratum overlap`).
+6. **Đánh giá bám bằng chứng trực tiếp (RQ3-A Direct Grounding):**
+   - **Tập vùng GT ứng viên ($R_j$):** Định nghĩa tường minh tập vùng $R_j$ theo D6 mapping; tính điểm cạnh IoU là cực đại trên các đa giác thuộc $R_j$.
    - **Primary Metric:** **End-to-End Mean IoU** và **Median IoU** (đo lường liên tục).
-   - **Thresholded Sensitivity:** **Hit@0.25** và **Hit@0.50** (đăng ký trước).
-   - **Pointing Hit:** Bắt buộc dùng **đa giác GT gốc (`Original GT Polygon`)** để kiểm tra điểm tâm dự đoán.
-   - **Matching:** Áp dụng **Optimal Bipartite Matching** trong cùng loại nguy cơ.
+   - **Thresholded Sensitivity:** **Hit@0.25** và **Hit@0.50** (xác định trước khi xem kết quả mô hình).
+   - **Pointing Hit:** Bắt buộc dùng **đa giác GT gốc (`Original GT Polygon`)** thuộc tập vùng ứng viên $R_j$ để kiểm tra điểm tâm dự đoán.
+   - **Matching:** Áp dụng **Optimal One-to-One Bipartite Matching** trong cùng loại nguy cơ.
    - **Comprehensive Metric:** Evidence Precision, Evidence Recall, Evidence F1 ở cấp độ nguy cơ nguyên tử (báo cáo song song tại ngưỡng 0.25 và 0.50).
-6. **Đánh giá đại diện yếu (RQ3-B Weak Proxy Grounding):**
-   - Đo lường bằng **Proxy Localization Consistency (PLC)**: Primary là **Center-in-Proxy** (ưu tiên đa giác `Person`); Continuous Box Containment làm chẩn đoán (ngưỡng 0.50 là heuristic).
+7. **Đánh giá đại diện yếu (RQ3-B Weak Proxy Grounding):**
+   - Đo lường bằng **Identity-Agnostic Proxy Localization Consistency (Identity-Agnostic PLC)**: Primary là **Center-in-Proxy** trên bất kỳ đa giác `Person` gốc nào trong ảnh; Continuous Box Containment làm chẩn đoán.
+   - **Sensitivity Analysis:** Bắt buộc kiểm tra độ nhạy chéo trên **Single-Person Proxy Subset** ($N=410$ mẫu, 614 atoms) để loại trừ triệt để nhiễu mập mờ danh tính.
    - Báo cáo tách biệt hoàn toàn khỏi Direct Grounding; cấm gọi là "bám bằng chứng thật".
-7. **Xử lý lỗi phân tích cú pháp (Parse Failure):**
+8. **Chỉ số không nhất quán phân loại - định vị ($\text{CGI}@\tau$):**
+   - Bắt buộc tham số hóa theo ngưỡng: Báo cáo song song **$\text{CGI}@0.25$** và **$\text{CGI}@0.50$** (cả cấp độ mẫu và cấp độ atom); cấm dùng ký hiệu CGI thiếu hậu tố ngưỡng.
+9. **Xử lý lỗi phân tích cú pháp (Parse Failure):**
    - Áp dụng đồng thời: **End-to-End Grounding** (lỗi parse tính là $\text{IoU}=0.0$) làm chỉ số chính; báo cáo tường minh **$\text{PSR}_{\text{response}}$** và **$\text{PSR}_{\text{box}}$** đi kèm **Parse-Conditional Mean IoU** làm chẩn đoán.
-8. **Định lượng bất định và khoảng tin cậy:**
-   - Áp dụng **Point-Cluster Bootstrap** (lấy mẫu lại theo cụm thư mục điểm logic `point_id`), không phân tầng theo cấp an toàn.
-   - Cấu hình: $B = 2.000$ replicates, khoảng tin cậy Percentile 95%, cố định `seed = 42`. Các replicate khuyết lớp ghi nhận `NA`.
-9. **So sánh đa mô hình:**
-   - Áp dụng **Paired Bootstrap Difference CI 95%** làm phương pháp so sánh chính.
-   - Nếu CI không chứa 0: kết luận chênh lệch có hướng rõ ràng; nếu CI chứa 0: không tuyên bố hai mô hình tương đương.
+10. **Biến đồng biến chẩn đoán kích thước và độ hiếm:**
+    - Sử dụng `Normalized Polygon Area` và tần suất xuất hiện $N$ làm biến chẩn đoán phụ trợ, không dùng làm primary benchmark.
+11. **Định lượng bất định và khoảng tin cậy:**
+    - Áp dụng **Domain-Stratified Point-Cluster Bootstrap** (phân tầng theo 5 miền `folder_domain`, lấy mẫu lại theo cụm thư mục điểm logic `point_id` trong từng miền), tuyệt đối không phân tầng theo cấp an toàn.
+    - Cấu hình: $B = 2.000$ replicates, khoảng tin cậy Percentile 95%, cố định `seed = 42`. Các replicate khuyết lớp ghi nhận `NA`, công bố tỷ lệ `Valid Replicates / B`.
+12. **So sánh đa mô hình:**
+    - Áp dụng **Paired Bootstrap Difference CI 95%** trên cùng tập draw replicate làm phương pháp so sánh chính; công bố tỷ lệ `Valid Paired Replicates / B`.
+    - Nếu CI không chứa 0: kết luận chênh lệch có hướng rõ ràng; nếu CI chứa 0: không tuyên bố hai mô hình tương đương.
 
 ---
 
@@ -724,16 +827,16 @@ Báo cáo W2.4 nhận diện các rủi ro và giới hạn phương pháp luậ
 3. **Chính sách xử lý lớp thiếu ở từng miền:** Chấp thuận Chính sách hai tầng (Dual-Layer Support-Aware Policy C): công bố chỉ số vĩ mô có gắn cờ số lớp $K_d$ và dùng Class-Conditional Recall làm mỏ neo so sánh chính hay không?
 4. **Mỏ neo chính cho suy giảm xuyên miền (RQ1):** Chấp thuận sử dụng **Class-Conditional Domain Analysis** (Recall từng lớp và Pooled-to-Domain Gap $\Delta(c, d)$) làm mỏ neo chính cho RQ1, xếp Balanced Accuracy Spread trên $K=4$ vào nhóm chẩn đoán phụ trợ, và cấm dùng thuật ngữ "Domain Generalization Drop" hay không?
 5. **Chính sách xác định Worst-Domain:** Chấp thuận loại bỏ quy tắc $N \ge 30$ cơ học, chuyển sang báo cáo giá trị nhỏ nhất quan sát được kèm đầy đủ mẫu số, CI, và xếp `metallurgy` vào diện "Descriptive / Sparse-Support" hay không?
-6. **Chỉ số chính cho Direct Grounding:** Chấp thuận sử dụng **End-to-End Mean IoU** và **Median IoU** làm thước đo định vị liên tục chính, đi kèm **Hit@0.25** và **Hit@0.50** làm ngưỡng độ nhạy đăng ký trước hay không?
-7. **Định nghĩa chuẩn mực cho Pointing Hit:** Chấp thuận quy tắc điểm tâm dự đoán bắt buộc phải nằm trong **đa giác GT gốc (`Original GT Polygon`)** để tránh tính điểm trúng vào vùng nền trống của derived bbox hay không?
-8. **Thuật toán ghép cặp nhiều đối tượng:** Chấp thuận áp dụng **Optimal One-to-One Bipartite Matching** (tối đa hóa số cặp đạt ngưỡng IoU, tie-break bằng tổng IoU) thay vì giải thuật Greedy hay không?
-9. **Chỉ số đánh giá Weak Proxy:** Chấp thuận chỉ số **Proxy Localization Consistency (PLC)** (Primary là Center-in-Proxy trên đa giác người; Box Containment $\ge 0.50$ là heuristic chẩn đoán), cấm gọi là true grounding accuracy và bắt buộc báo cáo tách biệt khỏi Direct track hay không?
+6. **Chỉ số chính cho Direct Grounding:** Chấp thuận sử dụng **End-to-End Mean IoU** và **Median IoU** làm thước đo định vị liên tục chính, đi kèm **Hit@0.25** và **Hit@0.50** làm ngưỡng độ nhạy được xác định trước khi xem kết quả mô hình (`pre-specified before model-result inspection`) hay không?
+7. **Định nghĩa chuẩn mực cho Pointing Hit:** Chấp thuận quy tắc điểm tâm dự đoán bắt buộc phải nằm trong **bất kỳ đa giác GT gốc nào (`Original GT Polygon`)** thuộc tập vùng ứng viên $R_j$ để tránh tính điểm trúng vào vùng nền trống của derived bbox hay không?
+8. **Thuật toán ghép cặp nhiều đối tượng:** Chấp thuận áp dụng **Optimal One-to-One Bipartite Matching** (tối đa hóa số cặp đạt ngưỡng IoU trên ma trận trọng số cực đại của $R_j$, tie-break bằng tổng IoU) thay vì giải thuật Greedy hay không?
+9. **Chỉ số đánh giá Weak Proxy:** Chấp thuận chỉ số **Identity-Agnostic Proxy Localization Consistency (Identity-Agnostic PLC)** (Primary là Center-in-Proxy trên bất kỳ đa giác người nào; Box Containment làm chẩn đoán), kiểm soát độ nhạy qua **Single-Person Proxy Subset** (410 mẫu, 614 atoms), cấm gọi là true grounding accuracy và bắt buộc báo cáo tách biệt khỏi Direct track hay không?
 10. **Bản chất của Evidence Precision / Recall:** Chấp thuận công nhận Evidence P/R là chỉ số tương đối theo benchmark hiện có (không đồng nhất unmatched prediction với ảo giác ngoài đời thực), báo cáo song song ở ngưỡng 0.25 và 0.50 hay không?
-11. **Đơn vị và chính sách Parse Failure:** Chấp thuận đo lường tường minh **$\text{PSR}_{\text{response}}$** và **$\text{PSR}_{\text{box}}$**, coi lỗi parse là miss ($\text{IoU}=0.0$) trong End-to-End Grounding, và báo cáo Parse-Conditional Mean IoU làm chẩn đoán hay không?
-12. **Phạm vi chỉ số Object Hallucination:** Chấp thuận loại bỏ hoàn toàn chỉ số Object Hallucination Rate trên toàn bộ dataset trong khuôn khổ Seminar 8 tuần, và không mở thêm chiến dịch kiểm tra thủ công 30–50 ảnh trong scope cốt lõi hay không?
-13. **Tính khả thi của Calibration:** Chấp thuận xác định Calibration là phụ thuộc năng lực giao diện (sẽ xác minh tại W2.5), không phải chỉ số chính xuyên mô hình, và cấm dùng độ tự tin tự thuật làm xác suất hay không?
-14. **Phương pháp Point-Cluster Bootstrap:** Chấp thuận áp dụng **Point-Cluster Bootstrap** (resample theo logical point folder, không phân tầng theo nhãn an toàn để tránh lỗi singleton strata), cấu hình $B = 2.000$ replicates, seed = 42, khoảng tin cậy Percentile 95% hay không?
-15. **Phương pháp so sánh mô hình VLM:** Chấp thuận sử dụng **Paired Bootstrap Difference CI 95%** làm công cụ so sánh chính, diễn giải CI không chứa 0 là chênh lệch có hướng rõ ràng, và không chạy ma trận $p$-value mặc định hay không?
+11. **Tham số hóa chỉ số không nhất quán phân loại - định vị:** Chấp thuận tham số hóa thành **$\text{CGI}@\tau$**, báo cáo song song tại $\text{CGI}@0.25$ và $\text{CGI}@0.50$, và cấm dùng ký hiệu CGI thiếu hậu tố ngưỡng hay không?
+12. **Đơn vị và chính sách Parse Failure:** Chấp thuận đo lường tường minh **$\text{PSR}_{\text{response}}$** và **$\text{PSR}_{\text{box}}$**, coi lỗi parse là miss ($\text{IoU}=0.0$) trong End-to-End Grounding, và báo cáo Parse-Conditional Mean IoU làm chẩn đoán hay không?
+13. **Phạm vi chỉ số Object Hallucination:** Chấp thuận loại bỏ hoàn toàn chỉ số Object Hallucination Rate trên toàn bộ dataset trong khuôn khổ Seminar 8 tuần, và không mở thêm chiến dịch kiểm tra thủ công 30–50 ảnh trong scope cốt lõi hay không?
+14. **Phương pháp Domain-Stratified Point-Cluster Bootstrap:** Chấp thuận áp dụng **Domain-Stratified Point-Cluster Bootstrap** (phân tầng theo miền, resample theo cụm `point_id` trong từng miền, không phân tầng theo nhãn an toàn để tránh lỗi singleton strata), cấu hình $B = 2.000$ replicates, seed = 42, khoảng tin cậy Percentile 95%, replicate khuyết lớp ghi nhận NA và báo cáo tỷ lệ `Valid Replicates / B` hay không?
+15. **Phương pháp so sánh mô hình VLM:** Chấp thuận sử dụng **Paired Bootstrap Difference CI 95%** trên cùng tập replicate (báo cáo `Valid Paired Replicates / B`) làm công cụ so sánh chính, diễn giải CI không chứa 0 là chênh lệch có hướng rõ ràng, và không chạy ma trận $p$-value mặc định hay không?
 
 *(Lưu ý: Danh sách mô hình thử nghiệm chi tiết và câu chữ câu lệnh prompt không thuộc thẩm quyền của D5 và sẽ được giải quyết tại bước W2.5).*
 
