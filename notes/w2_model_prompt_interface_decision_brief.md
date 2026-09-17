@@ -1,10 +1,10 @@
 # W2.5 Model, Prompt & Interface Decision Brief
 
 - **ID ứng viên:** DEC-W2-D8-008 (Candidate Decision Brief — D8)
-- **Giai đoạn:** Week 2 — Research Protocol (W2.5)
-- **Ngày audit / lập báo cáo:** 2026-09-17
+- **Giai đoạn:** Week 2 — Research Protocol (W2.5) — Methodology Patch
+- **Ngày audit / cập nhật:** 2026-09-17
 - **Trạng thái:** **PROPOSED, NOT APPROVED** (Chờ Project Owner xem xét và phê duyệt; chưa ghi vào `DECISIONS.md`)
-- **Phạm vi áp dụng:** Giao thức mô hình, câu lệnh chỉ dẫn (prompt), giao diện đầu ra (interface), bộ chuyển đổi (adapter), cấu hình suy luận và cơ chế bảo toàn dữ liệu cho Giao thức Tái lập Baseline (P1) và Giao thức Nghiên cứu Chính (P2) của SafeShift Seminar.
+- **Phạm vi áp dụng:** Giao thức mô hình, câu lệnh chỉ dẫn (prompt), giao diện đầu ra (interface), bộ chuyển đổi (adapter), cấu hình suy luận, tường lửa kiểm chuẩn (benchmark firewall), cơ chế đóng băng giao thức (protocol freeze), và quản lý truy vết nguồn gốc cho Giao thức Tái lập Baseline (P1) và Giao thức Nghiên cứu Chính (P2) của SafeShift Seminar.
 
 ---
 
@@ -12,12 +12,13 @@
 
 Mục đích của báo cáo thẩm định phương pháp luận W2.5 là:
 1. **Thiết lập giao thức thực nghiệm chuẩn mực** kết nối các quyết định nền tảng đã khóa từ D1 đến D7 vào kiến trúc thực thi cụ thể của các mô hình Vision-Language Models (VLM).
-2. **Khảo sát và kiểm toán độc lập năng lực thực tế** của các họ mô hình VLM ứng viên (OpenAI, Google Gemini, Qwen-VL, Anthropic Claude, Grok, v.v.) dựa trên tài liệu kỹ thuật chính thức cập nhật đến ngày **2026-09-17**, phân định rõ ràng giữa năng lực phân loại an toàn tổng quát và năng lực định vị không gian (bounding-box localization).
-3. **Phân tích chi tiết quy trình tái lập baseline chính thức của InspecSafe-V1 (P1)**: phục hồi chính xác prompt, cấu hình giải mã, đường dẫn API và logic đánh giá văn bản của bài báo gốc (*Scientific Data* 2026).
-4. **Xác lập nguyên tắc công bằng ngữ nghĩa (Prompt Fairness)** cho Giao thức Nghiên cứu Chính (P2): bảo đảm mọi mô hình được đánh giá trên cùng một nội dung nhiệm vụ ngữ nghĩa, nghiêm cấm việc tối ưu prompt riêng lẻ (performance prompt-tuning) cho từng mô hình.
-5. **Định hình cấu trúc giao diện chuẩn hóa (Canonical Output Schema)** và đặc tả kỹ thuật cho các bộ điều hợp (Adapters) chuyển đổi tất định từ định dạng gốc của nhà cung cấp (provider native format) sang định dạng chuẩn hóa nội bộ của SafeShift theo Quyết định D4.
-6. **Xác định tiêu chí đủ điều kiện (Eligibility Criteria)** cho các đường đua: phân loại an toàn 4 lớp, bám bằng chứng trực tiếp (Direct Grounding), bám bằng chứng đại diện yếu (Weak Proxy Grounding) và hiệu chỉnh xác suất (Calibration).
-7. **Lập kế hoạch quản lý chi phí, kiểm soát phần cứng cục bộ, phòng ngừa nhiễm dữ liệu tiền huấn luyện và bảo toàn nguồn gốc dữ liệu (provenance)** phục vụ chuẩn bị triển khai thực nghiệm tại Week 3.
+2. **Thiết lập Tường lửa Bộ kiểm chuẩn (Benchmark Firewall)**: bảo đảm toàn bộ 5.013 ảnh của InspecSafe-V1 được bảo vệ ở chế độ thuần túy đánh giá (EVALUATION-ONLY); nghiêm cấm mọi hành vi rò rỉ dữ liệu qua việc thăm dò năng lực, tinh chỉnh prompt hay gỡ lỗi parser trên ảnh benchmark.
+3. **Khảo sát và kiểm toán độc lập năng lực thực tế** của các họ mô hình VLM ứng viên (OpenAI, Google Gemini, Qwen-VL, Anthropic Claude, Grok, v.v.) dựa trên tài liệu kỹ thuật chính thức cập nhật đến ngày **2026-09-17**, phân định rõ ràng giữa năng lực phân loại an toàn tổng quát và năng lực định vị không gian (bounding-box localization).
+4. **Phân tích chi tiết quy trình tái lập baseline chính thức của InspecSafe-V1 (P1)**: phục hồi chính xác prompt, cấu hình giải mã, đường dẫn API và logic đánh giá văn bản của bài báo gốc (*Scientific Data* 2026).
+5. **Xác lập nguyên tắc công bằng ngữ nghĩa (Prompt Fairness)** cho Giao thức Nghiên cứu Chính (P2): bảo đảm mọi mô hình được đánh giá trên cùng một nội dung nhiệm vụ ngữ nghĩa, nghiêm cấm việc tối ưu prompt riêng lẻ (performance prompt-tuning) cho từng mô hình.
+6. **Tái mở rộng và phân tích khách quan bài toán Từ điển Nguy cơ (Hazard Vocabulary) và Kiến trúc Lệnh gọi (One-Call vs Two-Call)**: phân lập rõ ranh giới giữa phân loại cấp an toàn và bóc tách nguy cơ để ngăn ngừa hiện tượng gợi ý nhãn (label hinting / conditioning).
+7. **Định hình cấu trúc giao diện chuẩn hóa (Canonical Output Schema)** và đặc tả kỹ thuật cho các bộ điều hợp (Adapters) chuyển đổi tất định từ định dạng gốc của nhà cung cấp sang định dạng chuẩn hóa nội bộ theo Quyết định D4.
+8. **Thiết lập Chính sách Đóng băng Giao thức (Protocol Freeze)** và Kiểm soát Thay đổi Sau Đóng băng (Post-Freeze Change Control) trước khi thực hiện bất kỳ lệnh suy luận nào trên dữ liệu InspecSafe.
 
 ---
 
@@ -37,11 +38,88 @@ Mọi đề xuất trong W2.5 phải tuân thủ nghiêm ngặt và không đư�
 
 ---
 
-## 3. Upstream Baseline Audit (Kiểm toán Baseline Nghiên cứu Gốc)
+## 3. Benchmark Firewall & Blind Development Rule (Tường lửa Kiểm chuẩn & Quy tắc Phát triển Mù)
+
+Để ngăn ngừa triệt để hiện tượng thích nghi benchmark do người nghiên cứu (Researcher Benchmark Overfitting) và bảo vệ tính vô tư khách quan tuyệt đối của SafeShift:
+
+### 3.1. Quy tắc Tường lửa Kiểm chuẩn (Benchmark Firewall Policy)
+1. **EVALUATION-ONLY cho Toàn bộ 5.013 Ảnh:** Toàn bộ 5.013 mẫu ảnh của InspecSafe-V1 được xác lập tình trạng phương pháp luận duy nhất là **TẬP ĐÁNH GIÁ THUẦN TÚY (EVALUATION-ONLY)** cho Giao thức P2 (và 1.250 ảnh cho P1).
+2. **Các Hành vi Bị Cấm Tuyệt đối trên Dữ liệu InspecSafe:**
+   - **CẤM THĂM DÒ NĂNG LỰC (No Capability Probing):** Không sử dụng bất kỳ ảnh nào trong InspecSafe để thử nghiệm xem mô hình có xuất được bounding box hay không.
+   - **CẤM GỠ LỖI CÂU LỆNH (No Prompt Debugging / Engineering):** Không chạy thử prompt trên ảnh InspecSafe rồi điều chỉnh câu từ dựa trên phản hồi của mô hình.
+   - **CẤM GỠ LỖI PARSER QUAN SÁT OUTPUT (No Output-Conditioned Parser Debugging):** Không quan sát output của mô hình trên ảnh InspecSafe để viết regex hoặc tinh chỉnh logic bóc tách.
+   - **CẤM LỰA CHỌN MÔ HÌNH DỰA TRÊN ĐIỂM (No Output-Driven Model Selection):** Không chạy thử các mô hình trên một vài ảnh InspecSafe để "chọn model cho điểm cao nhất".
+   - **CẤM TINH CHỈNH NGƯỠNG (No Threshold Tuning):** Không dùng dữ liệu InspecSafe để điều chỉnh các ngưỡng quyết định (IoU threshold, confidence threshold, detection cutoff).
+3. **Tính Hợp lệ của Kiểm toán W1–W2:**
+   - Các công việc kiểm toán cấu trúc dữ liệu, metadata, nhãn ground-truth, phát hiện duplicate và cuộc tổng điều tra D6 Census thực hiện ở Week 1 và Week 2 **HOÀN TOÀN HỢP LỆ** vì đây là quá trình kiểm toán tính toàn vẹn của nhãn chuẩn (Ground Truth Audit), hoàn toàn chưa hề gọi bất kỳ mô hình VLM nào và chưa hề quan sát dự đoán của mô hình.
+
+### 3.2. Quy tắc Phát triển Mù (Blind Development Rule)
+Khi các kỹ sư và nghiên cứu viên xây dựng mã nguồn (pipeline, parser, adapter) trước khi chạy benchmark:
+1. **Kiểm thử Parser & Adapter:** Chỉ được sử dụng:
+   - Các phản hồi giả định tự tạo (handcrafted dummy responses / synthetic JSON).
+   - Dữ liệu cấu trúc tổng hợp nhân tạo (synthetic payloads).
+   - Các ví dụ minh họa chính thức trong tài liệu kỹ thuật của nhà cung cấp (provider documentation examples).
+2. **Kiểm thử Pipeline Xử lý Ảnh (Image Pipeline / Preprocessing):**
+   - Chỉ được sử dụng các hình ảnh bên ngoài (external images) có giấy phép công cộng rõ ràng hoặc ảnh tổng hợp.
+   - Tuyệt đối không nạp ảnh InspecSafe vào các script kiểm thử tạm thời.
+
+---
+
+## 4. Freeze Policy & Change Control (Chính sách Đóng băng và Kiểm soát Thay đổi)
+
+### 4.1. Đóng băng Tuyệt đối Trước Lần Chạy Đầu tiên (Protocol Freeze Policy)
+**TRƯỚC lần chạy suy luận đầu tiên** trên bất kỳ ảnh InspecSafe nào ở Week 3, toàn bộ các thành phần phương pháp luận sau đây bắt buộc phải được đóng băng hoàn toàn (FROZEN):
+1. Danh sách rút gọn mô hình P2 (P2 Model Shortlist) và mã định danh cố định (Pinned Model IDs).
+2. Cấu trúc câu lệnh chỉ dẫn chuẩn (Prompt Template & System Instructions).
+3. Chính sách từ điển nguy cơ (Hazard Vocabulary Policy).
+4. Cấu trúc đầu ra chuẩn hóa (Output JSON Schema).
+5. Quy tắc chuyển đổi tọa độ của bộ điều hợp (Adapter Coordinate Conversion Rules).
+6. Cấu hình chế độ suy luận (Reasoning / Thinking Policy).
+7. Cấu hình giải mã và lấy mẫu (Decoding & Temperature Parameters).
+8. Phân định vai trò mô hình (Model Roles: Classification-Only vs Grounding-Eligible).
+9. Logic phân tích cú pháp (Parser Implementation & Fail-Safe Handling).
+10. Phiên bản mã nguồn tính toán metric (Metric Engine Version).
+
+*Thủ tục ghi nhận bắt buộc:* Ghi lại chính xác mã băm Git commit đóng băng giao thức (**`protocol_freeze_commit_sha`**) vào tài liệu dự án trước khi thực thi bất kỳ lệnh gọi API benchmark nào.
+
+### 4.2. Kiểm soát Thay đổi Sau Đóng băng (Post-Freeze Change Control)
+Sau khi đã khởi chạy bất kỳ mô hình nào trên dữ liệu InspecSafe:
+1. **NGHIÊM CẤM SỬA PROMPT THEO HIỆU NĂNG:** Tuyệt đối không sửa đổi prompt, không bổ sung ví dụ, không chỉnh sửa hướng dẫn dựa trên:
+   - Điểm số cao/thấp quan sát được.
+   - Mô hình phân loại sai ở một số mẫu.
+   - Suy giảm hiệu năng ở một miền công nghiệp cụ thể.
+   - Mô hình trượt bounding box (grounding misses).
+2. **Quy trình Xử lý Sự cố Kỹ thuật (Parser Bug / API Incompatibility / Malformed Schema):**
+   Nếu phát hiện lỗi lập trình khách quan (như parser bị vỡ do API đổi định dạng bao bọc, hoặc adapter tính sai tỷ lệ ảnh):
+   - **Bước 1:** Lập biên bản sự cố, ghi nhận chi tiết nguyên nhân kỹ thuật khách quan và commit hash bị ảnh hưởng.
+   - **Bước 2:** Nâng phiên bản giao thức (Bump Protocol Version, ví dụ `P2.0` $\rightarrow$ `P2.1`).
+   - **Bước 3:** **TUYỆT ĐỐI KHÔNG SỬA RIÊNG CHO MỘT MÔ HÌNH YẾU**. Không được có hành vi "thấy mô hình A lỗi cú pháp nên thêm prompt riêng cho mô hình A".
+   - **Bước 4:** **CHẠY LẠI TOÀN BỘ (FULL RERUN)** toàn bộ các mô hình bị ảnh hưởng trên toàn bộ tập mẫu đánh giá liên quan, bảo đảm tính so sánh công bằng trên cùng một phiên bản giao thức đã sửa.
+
+---
+
+## 5. Model Selection Policy (Chính sách Lựa chọn Mô hình Nghiên cứu)
+
+Để bảo đảm tính khách quan khoa học, các mô hình tham gia SafeShift được lựa chọn dựa trên 6 nguyên tắc phương pháp luận:
+
+1. **Tài liệu Chính thức (Official Documentation):** Có tài liệu kỹ thuật công khai xác nhận khả năng tiếp nhận ảnh và giao diện tương tác.
+2. **Tính Khả dụng và Truy cập (Accessibility):** Có thể truy cập thông qua API thương mại hoặc hạ tầng điện toán đám mây ổn định.
+3. **Tính Khả thi về Chi phí (Cost Feasibility):** Chi phí thực thi trên 5.013 mẫu nằm trong ngân sách nghiên cứu cho phép của Seminar.
+4. **Tính Đa dạng Kiến trúc và Nhà cung cấp (Provider & Architecture Diversity):** Bao gồm cả mô hình thương mại đóng (Closed API) và mô hình mở (Open-weight); bao gồm các gia đình công nghệ khác nhau (Google, Alibaba, OpenAI, Anthropic).
+5. **Khả năng Tái lập và Cố định Phiên bản (Reproducibility & Pinning):** Hỗ trợ dated model snapshots hoặc commit hash bất biến.
+6. **Bằng chứng Năng lực Định vị Không gian (Localization Evidence):** Có bằng chứng tài liệu hoặc kiểm chứng vi mô hợp lệ về khả năng xuất tọa độ hình học.
+
+### Nguyên tắc Cấm Tuyệt đối:
+- **TUYỆT ĐỐI KHÔNG CHỌN MÔ HÌNH DỰA TRÊN HIỆU NĂNG TRÊN INSPECSAFE:** Không thử nghiệm để chọn ra mô hình "đạt điểm cao nhất".
+- **Sử dụng Kết quả Bài báo Gốc:** Các mô hình đã xuất hiện trong bài báo InspecSafe 2026 (như Claude Opus 4.5, Grok 4.1 Fast) chỉ được xem xét như **Mốc tham chiếu lịch sử (Historical Reference)** để phục vụ tái lập P1. Bảng xếp hạng trong bài báo gốc không được dùng để khẳng định trước "mô hình chiến thắng" trong SafeShift.
+
+---
+
+## 6. Upstream Baseline Audit (Kiểm toán Baseline Nghiên cứu Gốc)
 
 Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thức của InspecSafe-V1 tại `data/raw/InspecSafe-V1/` và kho lưu trữ GitHub `liuzy0708/InspecSafe`:
 
-### 3.1. Phân tích Script Sinh Kết quả (`model_api_generate_results.py`)
+### 6.1. Phân tích Script Sinh Kết quả (`model_api_generate_results.py`)
 - **Provider & Tuyến API:**
   - Script sử dụng `BASE_URL = "https://www.dmxapi.cn/"` và `API_ENDPOINT = BASE_URL + "v1/chat/completions"`. Đây là một dịch vụ tổng hợp API proxy bên thứ ba tại Trung Quốc, sử dụng giao diện tương thích hoàn toàn với OpenAI Chat Completions API.
 - **Model Name được hard-code:**
@@ -58,7 +136,7 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
   - Toàn bộ nội dung chuỗi văn bản của `choices[0].message.content` được lưu nguyên văn vào tệp văn bản riêng biệt: `{OUTPUT_DIR}/{img_name}.txt`.
   - Mỗi ảnh tương ứng 1 tệp `.txt`.
 
-### 3.2. Phân tích Script Đánh giá Tương đồng Văn bản (`model_benchmark_evaluation.py`)
+### 6.2. Phân tích Script Đánh giá Tương đồng Văn bản (`model_benchmark_evaluation.py`)
 - **Mô hình nhúng (Embedding Model):**
   - Sử dụng mô hình `bge-m3` (BAAI/bge-m3) chạy cục bộ thông qua máy chủ Ollama: `http://localhost:11434/api/embeddings`.
 - **Model đối chiếu được cấu hình sẵn trong script:**
@@ -69,7 +147,7 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
   - Tính toán độ tương đồng Cosine: $\text{CosineSim}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\|_2 \|\mathbf{v}\|_2}$.
   - Tính trung bình cộng độ tương đồng trên toàn bộ các cặp tệp hợp lệ.
 
-### 3.3. Phân tích Script Phân loại và Ma trận Nhầm lẫn (`model_confusion_matrix.py`)
+### 6.3. Phân tích Script Phân loại và Ma trận Nhầm lẫn (`model_confusion_matrix.py`)
 - **Tập nhãn phân loại:**
   - `classes = ["level one", "level two", "level three", "no abnormalities observed", "unrecognizable"]`.
   - Gắn nhãn hiển thị: `["level Ⅰ", "level Ⅱ", "level Ⅲ", "level Ⅳ", "unrecognizable"]`.
@@ -88,7 +166,7 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
 - **Đặc điểm Ground Truth đối chiếu:**
   - Ground truth thực tế trong tập test chỉ gồm 4 lớp chuẩn: Level one, Level two, Level three, no abnormalities observed. Lớp `"unrecognizable"` thuần túy là cột lỗi dự đoán của mô hình.
 
-### 3.4. Bằng chứng Trọng yếu về Bám Bằng chứng Không gian (Grounding)
+### 6.4. Bằng chứng Trọng yếu về Bám Bằng chứng Không gian (Grounding)
 - **Kiểm toán khẳng định:** Trong toàn bộ 3 script phát hành chính thức, cũng như trong các phụ lục và bảng kết quả của bài báo InspecSafe, **HOÀN TOÀN KHÔNG CÓ BẤT KỲ PROMPT, CODE, HAY BASELINE NÀO DÀNH CHO NHIỆM VỤ GROUNDING / LOCALIZATION**.
 - Toàn bộ kết quả công bố của bài báo gốc thuần túy là:
   1. *Safety Accuracy* (Phân loại 4 cấp độ an toàn).
@@ -97,11 +175,11 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
 
 ---
 
-## 4. Current Model Landscape (Toàn cảnh Mô hình Hiện hành tính đến 2026-09-17)
+## 7. Current Model Landscape (Toàn cảnh Mô hình Hiện hành tính đến 2026-09-17)
 
 Để tránh thiên kiến danh tiếng và đảm bảo tính khả thi thực chứng, cuộc kiểm toán tài liệu kỹ thuật chính thức (Official Documentation Audit) được thực hiện vào ngày **2026-09-17** trên 5 họ mô hình VLM tiêu biểu:
 
-### 4.1. Họ Google Gemini (Google AI / Vertex AI)
+### 7.1. Họ Google Gemini (Google AI / Vertex AI)
 - **Tài liệu kiểm toán:** Google Cloud Vertex AI & Google AI Studio official documentation, mục *"Object detection and spatial understanding with Gemini"* và *"Structured Outputs guide"*.
 - **Đặc điểm năng lực:**
   - Hỗ trợ chính thức khả năng **Object Detection / 2D Spatial Grounding** dạng nguyên bản (Native Capability, **LEVEL 1 — DOC-VERIFIED**).
@@ -112,7 +190,7 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
   - Cung cấp các phiên bản sản xuất có định danh cố định (ví dụ dòng Flash tối ưu chi phí và dòng Pro tối ưu suy luận sâu).
   - Hỗ trợ tham số cấu hình suy luận mở rộng (Thinking mode) có thể kiểm soát linh hoạt.
 
-### 4.2. Họ Qwen-VL (Alibaba Cloud / Open-Weight Community)
+### 7.2. Họ Qwen-VL (Alibaba Cloud / Open-Weight Community)
 - **Tài liệu kiểm toán:** Qwen official GitHub repository (`QwenLM/Qwen2.5-VL` / `Qwen3-VL`), Model Cards trên Hugging Face, và tài liệu Alibaba Cloud DashScope API.
 - **Đặc điểm năng lực:**
   - Mô hình mã nguồn mở trọng số công khai (Open-weight), phát hành dưới giấy phép cho phép nghiên cứu học thuật (Apache 2.0 / Qwen License).
@@ -121,7 +199,7 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
   - Có các kích thước mô hình phù hợp nghiên cứu: 7B/8B (cỡ nhỏ) và 32B/72B (cỡ trung/lớn).
   - Khả dụng thông qua cả việc triển khai tự host (self-hosted via vLLM / SGLang) và các cổng Hosted API chính thức (Alibaba Cloud DashScope, OpenRouter).
 
-### 4.3. Họ OpenAI Multimodal (OpenAI API)
+### 7.3. Họ OpenAI Multimodal (OpenAI API)
 - **Tài liệu kiểm toán:** OpenAI official documentation, mục *"Vision / Images"*, *"Structured Outputs"*, và *"Model lifecycle / snapshots"*.
 - **Đặc điểm năng lực:**
   - Hỗ trợ tiếp nhận đầu vào đa phương thức (Text + Image URL / Base64) với độ phân giải cao (`detail: "high"` hoặc `"auto"`).
@@ -130,7 +208,7 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
   - **Tình trạng định vị không gian (Spatial Grounding):** Tài liệu chính thức của OpenAI **KHÔNG** công bố hợp đồng API định vị đối tượng nguyên bản (không có native detection head hay bảo đảm định dạng box). Mô hình chỉ xuất tọa độ khi được yêu cầu thông qua câu lệnh văn bản (**LEVEL 3 — PROMPT-ONLY**). Độ tin cậy và độ trôi dạt tọa độ cần được kiểm chứng thực nghiệm trước khi đưa vào đường đua grounding.
   - Hỗ trợ cố định phiên bản thông qua các dated model snapshots.
 
-### 4.4. Họ Anthropic Claude (Anthropic API)
+### 7.4. Họ Anthropic Claude (Anthropic API)
 - **Tài liệu kiểm toán:** Anthropic official documentation, mục *"Vision capabilities"*, *"Extended Thinking"*, và *"Model retirement / release dates"*.
 - **Đặc điểm năng lực:**
   - Là họ mô hình được sử dụng trong script phát hành chính thức của InspecSafe (`claude-opus-4-5-20251101`).
@@ -139,26 +217,26 @@ Dựa trên việc kiểm tra trực tiếp mã nguồn phát hành chính thứ
   - **Tình trạng định vị không gian (Spatial Grounding):** Tương tự OpenAI, Anthropic không công bố hợp đồng định vị bounding box chính thức (**LEVEL 3 — PROMPT-ONLY**).
   - Cơ chế Extended Thinking cho phép điều chỉnh ngân sách token suy luận (`budget_tokens`).
 
-### 4.5. Các họ mô hình mở rộng khác (Grok / xAI, InternVL, GLM-V)
+### 7.5. Các họ mô hình mở rộng khác (Grok / xAI, InternVL, GLM-V)
 - **Grok (xAI):** Xuất hiện trong mã nguồn đánh giá văn bản của bài báo gốc (`grok-4.1-fast`). Hỗ trợ multimodal input qua API tương thích OpenAI. Năng lực định vị không gian ở mức Prompt-only.
 - **InternVL / GLM-V:** Các mô hình học thuật nguồn mở hàng đầu trong các bảng xếp hạng thị giác ngôn ngữ, có khả năng định vị tọa độ tốt, nhưng đòi hỏi tài nguyên tính toán lớn khi tự host hoặc qua các cổng API khu vực.
 
 ---
 
-## 5. Capability Evidence Levels (Các Cấp độ Bằng chứng Năng lực)
+## 8. Capability Evidence Levels (Các Cấp độ Bằng chứng Năng lực)
 
 Để bảo đảm tính nghiêm ngặt về phương pháp luận và tuân thủ Quyết định D4 (Capability-Aware Policy B), SafeShift phân định 4 cấp độ bằng chứng kỹ thuật:
 
 | Cấp độ Bằng chứng | Định danh | Định nghĩa phương pháp luận | Ý nghĩa đối với SafeShift |
 | :--- | :--- | :--- | :--- |
-| **LEVEL 1** | **DOC-VERIFIED** | Năng lực được nhà cung cấp/tác giả mô hình công bố chính thức trong tài liệu kỹ thuật (official API docs, developer guides, model cards) kèm theo cam kết định dạng, hợp đồng API và ví dụ chuẩn. | Đủ điều kiện tiên quyết (Eligible) để tham gia đường đua tương ứng mà không cần suy đoán. |
-| **LEVEL 2** | **MICROTEST-VERIFIED** | Năng lực không được ghi thành hợp đồng chính thức trong docs nhưng đã được nhóm nghiên cứu SafeShift kiểm chứng thực nghiệm độc lập thông qua bộ kiểm tra vi mô (Microtest Probe) trên tập mẫu kiểm chuẩn xác định. | Chuyển trạng thái từ CONDITIONALLY_ELIGIBLE sang ELIGIBLE cho đường đua tương ứng. |
-| **LEVEL 3** | **PROMPT-ONLY** | Mô hình có thể xuất dữ liệu (ví dụ xuất tọa độ `[xmin, ymin, xmax, ymax]`) thuần túy do làm theo hướng dẫn ngữ nghĩa của câu prompt, nhưng nhà cung cấp không có cơ chế bảo đảm tính hợp lệ hình học hay độ chính xác không gian. | Mặc định xếp diện **DOC-UNVERIFIED / MICROTEST-REQUIRED**. Không được tự ý đưa vào đường đua Grounding nếu chưa đạt Level 2. |
+| **LEVEL 1** | **DOC-VERIFIED** | Năng lực được nhà cung cấp/tác giả mô hình công bố chính thức trong tài liệu kỹ thuật (official API docs, developer guides, model cards) kèm theo cam kết định dạng, hợp đồng API và ví dụ chuẩn. | Đủ điều kiện tiên quyết (Eligible) để tham gia đường đua tương ứng mà không cần suy đoán. Không bắt buộc phải chạy capability probe. |
+| **LEVEL 2** | **MICROTEST-VERIFIED** | Năng lực không được ghi thành hợp đồng chính thức trong docs nhưng đã được nhóm nghiên cứu SafeShift kiểm chứng thực nghiệm độc lập thông qua bộ kiểm tra vi mô **trên ảnh bên ngoài (External Capability Probe)**, đạt các tiêu chí kỹ thuật vận hành. | Chuyển trạng thái từ CONDITIONALLY_ELIGIBLE sang ELIGIBLE cho đường đua tương ứng. Không được nâng cấp thành DOC-VERIFIED. |
+| **LEVEL 3** | **PROMPT-ONLY** | Mô hình có thể xuất dữ liệu (ví dụ xuất tọa độ `[xmin, ymin, xmax, ymax]`) thuần túy do làm theo hướng dẫn ngữ nghĩa của câu prompt, nhưng nhà cung cấp không có cơ chế bảo đảm tính hợp lệ hình học hay độ chính xác không gian. | Mặc định xếp diện **DOC-UNVERIFIED / MICROTEST-REQUIRED**. Bắt buộc phải qua External Probe để đạt Level 2 trước khi tham gia Grounding. |
 | **LEVEL 4** | **UNVERIFIED** | Năng lực chưa được xác minh tài liệu, chưa có kiểm chứng thực nghiệm, hoặc tài liệu cảnh báo không hỗ trợ. | Xếp diện **INELIGIBLE** cho đường đua liên quan. |
 
 ---
 
-## 6. Model Candidate Matrix (Bảng Ma trận Mô hình Ứng viên)
+## 9. Model Candidate Matrix (Bảng Ma trận Mô hình Ứng viên)
 
 Bảng ma trận tổng hợp đánh giá sơ bộ các ứng viên VLM đại diện theo 10 tiêu chí kỹ thuật:
 
@@ -174,15 +252,9 @@ Bảng ma trận tổng hợp đánh giá sơ bộ các ứng viên VLM đại d
 | `grok-4.1-fast` | xAI | Closed API | Secondary Reference | ELIGIBLE | UNVERIFIED | UNVERIFIED | Prompted JSON | LEVEL 3 (Prompt-Only) | INELIGIBLE (No logprobs) | API Model String | Cloud API Only | **OPTIONAL (Extended Set)** |
 | `bge-m3` (Text Embedding) | BAAI | Open-Weight | P1 Text Similarity | N/A (Text-only) | N/A | N/A | Dense Vector (1024d) | N/A | N/A | HF Commit / Ollama Tag | **FEASIBLE** (Ollama Local / CPU) | **ELIGIBLE (P1 Metric Tool Only)** |
 
-*Ghi chú quy ước trạng thái:*
-- `ELIGIBLE`: Đủ điều kiện tham gia đường đua dựa trên tài liệu chính thức đã kiểm chứng (Level 1).
-- `CONDITIONALLY_ELIGIBLE` / `MICROTEST-REQ`: Đủ điều kiện tham gia phân loại, nhưng cần kiểm chứng thực nghiệm vi mô (Level 2) trước khi đưa vào đường đua bám bằng chứng không gian.
-- `INELIGIBLE`: Không đủ điều kiện tham gia đường đua cụ thể (ví dụ mô hình văn bản thuần túy hoặc không hỗ trợ trích xuất xác suất).
-- `UNVERIFIED`: Chưa có tài liệu xác nhận và chưa thực hiện kiểm tra vi mô.
-
 ---
 
-## 7. Local Hardware Feasibility (Kiểm toán Khả thi Phần cứng Cục bộ)
+## 10. Local Hardware Feasibility (Kiểm toán Khả thi Phần cứng Cục bộ)
 
 Kết quả kiểm toán thực chứng cấu hình phần cứng của máy trạm phát triển SafeShift (thực hiện lúc 16:22:00 ngày 2026-09-17):
 - **Hệ điều hành:** Windows 11 x64.
@@ -206,9 +278,9 @@ Kết quả kiểm toán thực chứng cấu hình phần cứng của máy tr�
 
 ---
 
-## 8. Upstream P1 Prompt (Câu lệnh Chỉ dẫn Upstream P1)
+## 11. Upstream P1 Prompt (Câu lệnh Chỉ dẫn Upstream P1)
 
-### 8.1. Trích xuất Cấu trúc Nguyên bản
+### 11.1. Trích xuất Cấu trúc Nguyên bản
 Câu prompt được trích xuất nguyên văn từ dòng 80–105 của `data/raw/InspecSafe-V1/model_api_generate_results.py`:
 
 ```text
@@ -244,7 +316,7 @@ Strictly follow the structure below (do not add extra content,only include Image
 [Level one / Level two / Level three / no abnormalities observed]
 ```
 
-### 8.2. Phân tích Phương pháp luận về Cấu trúc Prompt Upstream
+### 11.2. Phân tích Phương pháp luận về Cấu trúc Prompt Upstream
 1. **Sự hiện diện của Bảng Quy tắc Ngành (Industry Rule Table):**
    - Prompt cung cấp tường minh một bảng ma trận ánh xạ giữa Cấp độ An toàn và các loại vi phạm/nguy cơ cụ thể theo 5 ngành công nghiệp.
    - *Phân tích rò rỉ (Leakage Analysis):* Bảng này **KHÔNG PHẢI là rò rỉ dữ liệu (Data Leakage)** theo nghĩa học máy, mà chính là **Quy chuẩn Định nghĩa Nhiệm vụ (Task Specification / Domain Policy)**. Trong bối cảnh công nghiệp thực tế, hệ thống AI giám sát an toàn bắt buộc phải được nạp quy chuẩn an toàn lao động của từng phân xưởng để có thể xếp loại chính xác.
@@ -257,44 +329,67 @@ Strictly follow the structure below (do not add extra content,only include Image
 
 ---
 
-## 9. SafeShift P2 Prompt Candidates (Các Phương án Prompt P2 cho SafeShift)
+## 12. SafeShift P2 Prompt Architecture: Separation of Classification and Hazard Extraction
 
-Giao thức Nghiên cứu Chính (P2) đặt mục tiêu đánh giá toàn diện cả Phân loại An toàn (RQ1, RQ2) và Bám Bằng chứng Không gian (RQ3). Cần một cấu trúc prompt chuẩn mực hỗ trợ đầu ra có cấu trúc (Structured Output).
+Một vấn đề phương pháp luận cốt lõi nảy sinh khi thiết kế P2: **Liệu có nên phân lập hoàn toàn bài toán Phân loại Cấp An toàn (Safety-Level Classification) khỏi bài toán Nhận diện và Định vị Nguy cơ (Hazard/Evidence Extraction) hay không?**
 
-### Phương án P2-A: Kế thừa Bảng Quy tắc Upstream + Mở rộng Bounding Box (Upstream-Derived)
-- Giữ nguyên toàn bộ Bảng Quy tắc 5 ngành của Upstream, nhưng thay thế phần Output Format bằng yêu cầu xuất JSON chứa `safety_level`, danh sách `hazards` và tọa độ `evidence`.
-- *Ưu điểm:* Giữ tính liên tục ngữ nghĩa cao nhất với nghiên cứu gốc.
-- *Nhược điểm:* Token prompt rất dài (~650 tokens văn bản), làm tăng chi phí API trên 5.013 mẫu; cấu trúc bảng Markdown phức tạp có thể gây nhiễu cho bộ giải mã JSON của một số mô hình.
+### 12.1. Phân tích Nguy cơ Gợi ý Nhãn (Label Hinting & Conditioning)
+Nếu một câu lệnh duy nhất (One Combined Call) vừa yêu cầu phân loại an toàn, vừa cung cấp danh mục 12 nguy cơ đóng (`OPEN_FLAME`, `SMOKING`, `NO_HELMET`, v.v.):
+- **Hiện tượng Gợi ý Nhãn (Label-Space Disclosure):** Mô hình được "mớm" trước chính xác 12 nguy cơ mà chuyên gia an toàn đang tìm kiếm. Điều này làm bài toán phân loại trở nên dễ hơn rất nhiều so với kịch bản quan sát tự nhiên ngoài thực địa.
+- **Nhiễu điều kiện hóa (Conditioning Bias):** Mô hình có xu hướng tìm kiếm vật thể khớp với 12 nhãn trước rồi mới suy ra cấp an toàn, thay vì thực hiện đánh giá an toàn tổng thể một cách độc lập.
 
-### Phương án P2-B: Prompt Chuẩn hóa Gọn gàng (Simplified Canonical SafeShift Prompt — ĐƯỢC ĐỀ XUẤT)
-- Chuyển tải bản chất định nghĩa 4 cấp độ an toàn và 12 nguyên tử nguy cơ thành hướng dẫn rõ ràng, cô đọng, kèm đặc tả JSON Schema trực tiếp.
-- Cấu trúc đề xuất:
-  1. *Role:* Chuyên gia giám sát an toàn công nghiệp độc lập.
-  2. *Context & Guidelines:* Định nghĩa ngắn gọn 4 cấp độ an toàn (Level 01: Nguy cơ nghiêm trọng/thảm khốc; Level 02: Vi phạm an toàn mức trung bình; Level 03: Nguy cơ nhỏ cần lưu ý; Level 04: Hoàn toàn bình thường).
-  3. *Instruction:* Yêu cầu nhận diện cấp độ an toàn tổng thể, liệt kê các nguy cơ quan sát được và định vị tọa độ hộp bao chứng cứ trực quan.
-  4. *Schema Contract:* Yêu cầu xuất duy nhất một khối JSON hợp lệ theo schema chuẩn.
-- *Ưu điểm:* Gọn gàng (~250–300 tokens), tiết kiệm 50% chi phí input token, giảm thiểu sai sót cú pháp, công bằng giữa các mô hình.
-
-### Phương án P2-C: Giao thức Hai Lệnh gọi Độc lập (Two-Stage / Two-Call Protocol)
-- Lệnh gọi 1: Chỉ yêu cầu phân loại an toàn và nhận diện nguy cơ (Classification & Hazard Recognition).
-- Lệnh gọi 2: Đưa ra danh sách nguy cơ và yêu cầu định vị tọa độ trên ảnh (Spatial Grounding Only).
-- *Ưu/Nhược điểm chi tiết được phân tích tại Mục 10 và 11.*
+### 12.2. Hai Kiến trúc Đánh giá P2 Ứng viên
+1. **Kiến trúc Tích hợp (Joint Architecture):** Một prompt duy nhất xử lý cả hai tác vụ.
+2. **Kiến trúc Phân rã Độc lập (Decoupled Independent Architecture — ĐƯỢC ĐỀ XUẤT ĐÁNH GIÁ NGHIÊM TÚC):**
+   - **Track 1 (Safety Classification Prompt):** Hoàn toàn thuần túy đánh giá an toàn 4 lớp (`Level01`–`Level04`). Không liệt kê 12 định danh nguy cơ. Mô hình chỉ tiếp nhận hình ảnh và tiêu chí định nghĩa cấp độ an toàn tổng quát.
+   - **Track 2 (Hazard & Grounding Prompt):** Tác vụ chuyên biệt dành riêng cho việc phát hiện nguy cơ và định vị bằng chứng không gian, thực thi trên các mô hình đủ điều kiện.
 
 ---
 
-## 10. Hazard Vocabulary Policy (Chính sách Từ điển Nguy cơ)
+## 13. Hazard Vocabulary Policy (Chính sách Từ điển Nguy cơ: Mở lại Phân tích Khách quan)
 
-Việc quy định cách thức mô hình gọi tên các nguy cơ trong P2 ảnh hưởng trực tiếp đến tính tự động và độ tin cậy của thuật toán ghép cặp Mode A/Mode B theo Quyết định D5:
+Chính sách từ điển nguy cơ được đưa về trạng thái **PROPOSED, NOT APPROVED** để Project Owner xem xét toàn diện 3 phương án cạnh tranh:
 
-| Phương án | Cơ chế hoạt động | Ưu điểm phương pháp luận | Nhược điểm / Rủi ro | Đánh giá Khả thi |
+| Phương án | Cơ chế hoạt động | Ưu điểm phương pháp luận | Nhược điểm / Rủi ro | Tương thích RQ2 / RQ3 |
 | :--- | :--- | :--- | :--- | :--- |
-| **OPTION A: Open Vocabulary** (Từ vựng Mở) | Mô hình tự do dùng ngôn ngữ tự nhiên để mô tả nguy cơ (ví dụ: *"worker without safety hat"*, *"oil slick"*). Sau đó dùng LLM judge hoặc regex để ánh xạ về 12 hazard atoms. | Phản ánh khả năng giao tiếp mở tự nhiên của mô hình; không cung cấp gợi ý nhãn (no label hints). | Quá trình ánh xạ ngữ nghĩa (semantic mapping) tiềm ẩn tranh cãi chủ quan; tỷ lệ không nhất quán giữa các mô hình cao; khó bảo đảm tính tái lập toán học 1:1. | **KHÔNG KHUYẾN NGHỊ** cho P2 chính. (Phù hợp cho nghiên cứu định tính mở rộng). |
-| **OPTION B: Closed 12-Hazard Vocabulary** (Từ điển Đóng 12 Nguy cơ) | Prompt cung cấp danh sách cố định đúng 12 định danh chuẩn đã census ở D6: `NO_GLOVES`, `NO_HELMET`, `NO_MASK`, `USE_MOBILE_PHONE`, `LIQUID_ON_GROUND`, `SMOKING`, `OPEN_FLAME`, `FOREIGN_OBJECT`, `SMOKE`, `NONMOTORIZED_VEHICLE`, `DOOR_OPEN`, `PERSON_FALLEN`. Yêu cầu mô hình chọn từ danh sách này. | **Tương thích 100% với D6 Census và D5 Metrics**. Bộ parser hoạt động tất định hoàn toàn, loại bỏ hoàn toàn mơ hồ ánh xạ; bảo đảm tính công bằng tuyệt đối trong thuật toán ghép cặp bipartite matching Mode A/B. | Cung cấp danh sách nhãn có thể đóng vai trò gợi ý (hints), làm bài toán nhận diện dễ hơn so với quan sát mù hoàn toàn. | **KHUYẾN NGHỊ CAO NHẤT CHO P2**. |
-| **OPTION C: Hybrid Policy** (Chính sách Lai) | Prompt yêu cầu mô hình xuất trường `hazard_type` bắt buộc chọn từ 12 nhãn đóng, kèm trường `description` tự do giải thích ngữ cảnh chi tiết. | Kết hợp sự chặt chẽ toán học của từ điển đóng với khả năng giải thích phong phú của văn bản tự do. | Tiêu tốn thêm token đầu ra, nhưng không ảnh hưởng đến độ tất định của parser. | **ỨNG VIÊN KHẢ DĨ THAY THẾ CHO OPTION B**. |
+| **OPTION A: Open Vocabulary** (Từ vựng Mở) | Mô hình tự do dùng ngôn ngữ tự nhiên để mô tả nguy cơ (ví dụ: *"worker without safety hat"*, *"oil slick"*). Sau đó dùng deterministic rule mapper hoặc human-blind mapper để ánh xạ về 12 hazard atoms. | Phản ánh khả năng giao tiếp mở tự nhiên của mô hình; **hoàn toàn không làm lộ không gian nhãn (no label-space disclosure)**; đo lường năng lực thị giác không thiên vị. | Quá trình ánh xạ ngữ nghĩa (semantic mapping) tiềm ẩn tranh cãi chủ quan; tỷ lệ không nhất quán giữa các mô hình cao; khó bảo đảm tính tái lập toán học 1:1. | Phức tạp cho Mode A/Mode B matching của D5 do cần tầng trung gian phân giải nhãn. |
+| **OPTION B: Closed 12-Hazard Vocabulary** (Từ điển Đóng 12 Nguy cơ) | Prompt cung cấp danh sách cố định đúng 12 định danh chuẩn đã census ở D6: `NO_GLOVES`, `NO_HELMET`, `NO_MASK`, `USE_MOBILE_PHONE`, `LIQUID_ON_GROUND`, `SMOKING`, `OPEN_FLAME`, `FOREIGN_OBJECT`, `SMOKE`, `NONMOTORIZED_VEHICLE`, `DOOR_OPEN`, `PERSON_FALLEN`. Yêu cầu mô hình chọn từ danh sách này. | **Tương thích 100% với D6 Census và D5 Metrics**. Bộ parser hoạt động tất định hoàn toàn, loại bỏ hoàn toàn mơ hồ ánh xạ; bảo đảm tính công bằng tuyệt đối trong thuật toán ghép cặp bipartite matching Mode A/B. | Cung cấp danh sách nhãn có thể đóng vai trò gợi ý (hints), làm bài toán nhận diện dễ hơn so với quan sát mù hoàn toàn; thay đổi bản chất của bài toán VLM mở. | **Tương thích toán học cao nhất với D5/D6**, nhưng cần xử lý rủi ro gợi ý nhãn nếu gộp chung với classification. |
+| **OPTION C: Hybrid Policy** (Chính sách Lai) | Mô hình xuất văn bản tự do miêu tả hiện trường (free-text hazard description), kèm theo một trường phân loại tùy chọn (hoặc lệnh gọi thứ hai) ánh xạ sang 12 atoms chuẩn hóa. | Kết hợp sự phong phú diễn đạt tự nhiên với độ chặt chẽ của nhãn chuẩn. Cho phép kiểm tra chéo giữa mô tả ngữ nghĩa và nhãn được chọn. | Cấu trúc payload phức tạp hơn; tiêu tốn thêm token đầu ra. | Tương thích tốt với cả phân tích định tính và định lượng. |
 
 ---
 
-## 11. Canonical Output Schema (Cấu trúc Đầu ra Chuẩn hóa Nội bộ)
+## 14. Revisit: One-Call vs Independent Two-Call Protocol (Tái Thẩm định Cơ chế Lệnh gọi)
+
+Việc lựa chọn cơ chế gọi API cho P2 cần được phân tích đa chiều, không mặc định thiên vị One-Call:
+
+### 14.1. Phương án A: One Combined Call (Một Lệnh gọi Tích hợp)
+- **Cơ chế:** Gửi 1 request duy nhất: Image $\rightarrow$ `{"safety_level": ..., "hazards": [{"hazard_type": ..., "evidence": [...]}]}`.
+- **Ưu điểm:**
+  - Tiết kiệm 50% chi phí gọi API và thời gian thực thi (rất quan trọng với 5.013 ảnh).
+  - Phản ánh tính đồng thời tự nhiên giữa nhận thức cấp độ an toàn và việc định vị vật thể nguy cơ.
+- **Nhược điểm:**
+  - Buộc phải công khai không gian nhãn nguy cơ trong cùng prompt phân loại (gây rủi ro label hinting cho safety level).
+  - Khó khăn cho các mô hình Classification-Only vì schema phức tạp có thể gây lỗi cú pháp.
+
+### 14.2. Phương án B: Two Independent Calls (Hai Lệnh gọi Độc lập — ĐƯỢC ĐÁNH GIÁ CAO VỀ MẶT KHOA HỌC)
+- **Cơ chế:**
+  - **Call 1 (Classification Call):** Gửi Image $\rightarrow$ Prompt thuần túy phân loại 4 cấp an toàn (không chứa 12 nhãn nguy cơ). Áp dụng cho 100% mô hình.
+  - **Call 2 (Grounding Call):** Gửi Image $\rightarrow$ Prompt chuyên trách phát hiện và định vị 12 nguy cơ. **HOÀN TOÀN KHÔNG TRUYỀN DỰ ĐOÁN CỦA CALL 1 SANG CALL 2**. Chỉ áp dụng cho các mô hình Grounding-Eligible.
+- **Ưu điểm:**
+  - **Tách bạch hoàn toàn rủi ro gợi ý nhãn:** Call 1 đo lường năng lực phân loại an toàn khách quan tuyệt đối.
+  - **Tuân thủ triệt để D4 Policy B:** Mô hình chỉ phân loại không bao giờ phải tiếp xúc với cú pháp bounding box.
+  - Cho phép đo lường tính nhất quán thực chất giữa Call 1 và Call 2 mà không bị phụ thuộc luồng sinh (unconditioned consistency).
+- **Nhược điểm:**
+  - Chi phí API tăng gần gấp đôi đối với các mô hình tham gia cả 2 track (~ \$100 thay vì ~ \$60).
+  - Thời gian chạy tăng lên.
+
+### 14.3. Phương án C: Two Conditioned Calls (Hai Lệnh gọi Điều kiện hóa)
+- **Cơ chế:** Call 1 phân loại an toàn $\rightarrow$ Lấy kết quả Call 1 nhúng vào prompt của Call 2 để yêu cầu "hãy tìm bằng chứng chứng minh cho cấp an toàn đã dự đoán".
+- **Phán quyết Phương pháp luận:** **LOẠI BỎ (REJECTED)**. Phương án C tạo ra sự phụ thuộc nhân tạo (Conditioning Bias); nếu Call 1 sai thì Call 2 bị ép phải tìm bằng chứng sai; hoàn toàn phá vỡ mục tiêu đo lường tính độc lập của câu hỏi nghiên cứu RQ3.
+
+---
+
+## 15. Canonical Output Schema (Cấu trúc Đầu ra Chuẩn hóa Nội bộ)
 
 Để phục vụ phân tích tự động và bảo đảm tính tương thích với Quyết định D4, SafeShift xác lập Cấu trúc Đầu ra Chuẩn hóa Nội bộ (Canonical Logical JSON Schema) cho Giao thức P2:
 
@@ -319,25 +414,11 @@ Việc quy định cách thức mô hình gọi tên các nguy cơ trong P2 ản
         "properties": {
           "hazard_type": {
             "type": "string",
-            "enum": [
-              "NO_GLOVES",
-              "NO_HELMET",
-              "NO_MASK",
-              "USE_MOBILE_PHONE",
-              "LIQUID_ON_GROUND",
-              "SMOKING",
-              "OPEN_FLAME",
-              "FOREIGN_OBJECT",
-              "SMOKE",
-              "NONMOTORIZED_VEHICLE",
-              "DOOR_OPEN",
-              "PERSON_FALLEN"
-            ],
-            "description": "Standardized hazard atom identifier from D6 census."
+            "description": "Hazard atom identifier (standardized or free-text depending on vocabulary policy)."
           },
           "evidence": {
             "type": "array",
-            "description": "List of bounding boxes localizing the visual evidence. Empty if model is classification-only or cannot localize.",
+            "description": "List of bounding boxes localizing visual evidence. Empty if model is classification-only.",
             "items": {
               "type": "object",
               "required": ["bbox"],
@@ -363,17 +444,13 @@ Việc quy định cách thức mô hình gọi tên các nguy cơ trong P2 ản
 }
 ```
 
-### Nguyên tắc Phân định Rạch ròi giữa Raw Response và Parsed Output
-- **Raw Model Response (Phản hồi Thô):** Toàn bộ chuỗi ký tự UTF-8 nguyên văn nhận về từ API (kể cả khối markdown ````json ... ````, khoảng trắng thừa, hoặc lỗi cú pháp) bắt buộc phải được ghi nguyên trạng vào đĩa trước khi gọi parser.
-- **Parsed Canonical Output (Đầu ra Chuẩn hóa Đã phân tích):** Đối tượng dữ liệu cấu trúc Python/JSON sau khi bộ điều hợp (Adapter) đã bóc tách, chuẩn hóa nhãn và chuyển đổi hệ tọa độ.
-
 ---
 
-## 12. Model-Specific Adapters (Các Bộ Chuyển đổi Đặc thù theo Mô hình)
+## 16. Model-Specific Adapters (Các Bộ Chuyển đổi Đặc thù theo Mô hình)
 
 Theo Quyết định D4, không bắt buộc nhà cung cấp phải xuất đúng quy chuẩn tọa độ nội bộ của SafeShift nếu mô hình của họ có quy ước bản địa (native convention) khác. Việc chuẩn hóa là trách nhiệm của **Adapter tất định**:
 
-### 12.1. Google Gemini Adapter
+### 16.1. Google Gemini Adapter
 - **Native Convention:** Google Gemini xuất mảng tọa độ 4 phần tử theo thứ tự:
   $$\mathbf{b}_{\text{gemini}} = [y_{\min}, x_{\min}, y_{\max}, x_{\max}], \quad \text{với } y, x \in [0, 1000] \text{ (số nguyên)}$$
 - **Công thức chuyển đổi tất định sang Canonical:**
@@ -381,15 +458,15 @@ Theo Quyết định D4, không bắt buộc nhà cung cấp phải xuất đún
   $$x_{\max} = \text{clamp}\left(\frac{\mathbf{b}_{\text{gemini}}[3]}{1000.0}, 0.0, 1.0\right), \quad y_{\max} = \text{clamp}\left(\frac{\mathbf{b}_{\text{gemini}}[2]}{1000.0}, 0.0, 1.0\right)$$
   *(Kèm kiểm tra tính hợp lệ hình học: $x_{\max} \ge x_{\min}$ và $y_{\max} \ge y_{\min}$)*.
 
-### 12.2. Qwen-VL Adapter
+### 16.2. Qwen-VL Adapter
 - **Native Convention:** Tùy thuộc vào chế độ gọi API (Chat format hoặc Function format), Qwen-VL có thể xuất thẻ đặc biệt `<|box_start|>(ymin,xmin),(ymax,xmax)<|box_end|>` hoặc đối tượng JSON với tọa độ $[0, 1000]$.
 - **Công thức chuyển đổi:** Adapter sử dụng biểu thức chính quy (Regex) tất định để trích xuất 4 số nguyên, hoán đổi vị trí $y \leftrightarrow x$ nếu ở dạng $y$-first, và chia cho $1000.0$ để đưa về đoạn $[0.0, 1.0]$.
 
-### 12.3. OpenAI / Claude Adapter
+### 16.3. OpenAI / Claude Adapter
 - **Native Convention:** Mô hình được yêu cầu trực tiếp qua prompt xuất định dạng JSON với mảng `[xmin, ymin, xmax, ymax]` trong đoạn $[0.0, 1.0]$.
 - **Nhiệm vụ của Adapter:** Kiểm tra tính hợp lệ của mảng 4 số thực, kẹp giá trị (clamp) vào đoạn $[0.0, 1.0]$, và xác minh $x_{\min} \le x_{\max}, y_{\min} \le y_{\max}$. Nếu tọa độ không hợp lệ, gắn cờ lỗi parse hộp bao (`box_parse_error = True`).
 
-### 12.4. Yêu cầu Kiểm thử Đơn vị (Unit Test Contract)
+### 16.4. Yêu cầu Kiểm thử Đơn vị (Unit Test Contract)
 Mọi Adapter khi được cài đặt ở Week 3 bắt buộc phải vượt qua bộ kiểm thử đơn vị với các ca kiểm thử cố định:
 1. Chuyển đổi đúng tọa độ cực biên ($[0, 0, 1000, 1000] \rightarrow [0.0, 0.0, 1.0, 1.0]$).
 2. Hoán vị chính xác thứ tự $y$-first sang $x$-first.
@@ -398,23 +475,24 @@ Mọi Adapter khi được cài đặt ở Week 3 bắt buộc phải vượt qu
 
 ---
 
-## 13. Grounding Eligibility (Tiêu chuẩn Đủ Điều kiện Tham gia Bám Bằng chứng)
+## 17. Grounding Eligibility (Tiêu chuẩn Đủ Điều kiện Tham gia Bám Bằng chứng)
 
 Tuân thủ Quyết định D4 (Capability-Aware Policy B), việc xác lập quyền tham gia đường đua bám bằng chứng không gian được phân định như sau:
 
 1. **Đủ điều kiện trực tiếp (Eligible):**
-   - Mô hình có tài liệu kỹ thuật chính thức xác nhận hỗ trợ xuất tọa độ hộp bao định vị đối tượng với hợp đồng cụ thể (LEVEL 1 — DOC-VERIFIED).
+   - Mô hình có tài liệu kỹ thuật chính thức xác nhận hỗ trợ xuất tọa độ hộp bao định vị đối tượng với hợp đồng cụ thể (**LEVEL 1 — DOC-VERIFIED**).
    - *Ứng viên hiện tại:* **Google Gemini** (Gemini 2.5 Flash / Pro) và **Qwen-VL** (Qwen3-VL-8B / 32B).
+   - *Quy tắc kiểm tra:* Các mô hình này **KHÔNG BẮT BUỘC phải qua Empirical Probe**, do tài liệu chính thức đã xác thực hợp đồng API.
 2. **Đủ điều kiện có điều kiện (Conditionally Eligible / Microtest-Required):**
-   - Mô hình hỗ trợ nhập ảnh và có thể xuất tọa độ theo prompt nhưng tài liệu không có API contract chuyên trách (LEVEL 3 — PROMPT-ONLY).
+   - Mô hình hỗ trợ nhập ảnh và có thể xuất tọa độ theo prompt nhưng tài liệu không có API contract chuyên trách (**LEVEL 3 — PROMPT-ONLY**).
    - *Ứng viên hiện tại:* **OpenAI** (GPT-4o / GPT-5.6 candidate) và **Anthropic Claude** (Claude 3.5 / 3.7 Sonnet).
-   - *Điều kiện mở khóa:* Bắt buộc phải vượt qua bài kiểm tra vi mô thăm dò năng lực (Capability Probe Microtest trên 5–10 ảnh kiểm chuẩn, xem Mục 24) với tỷ lệ parse tọa độ hợp lệ $\text{PSR}_{\text{box}} \ge 80\%$.
+   - *Điều kiện mở khóa:* Bắt buộc phải vượt qua bài kiểm tra vi mô **trên ảnh bên ngoài (External Capability Probe)** để đạt trạng thái **LEVEL 2 — MICROTEST-VERIFIED**.
 3. **Không đủ điều kiện (Ineligible):**
    - Các mô hình thuần văn bản hoặc các mô hình thị giác không có khả năng xuất tọa độ.
 
 ---
 
-## 14. Classification-Only Policy (Chính sách Mô hình Chỉ Tham gia Phân loại)
+## 18. Classification-Only Policy (Chính sách Mô hình Chỉ Tham gia Phân loại)
 
 Để bảo đảm tính công bằng khoa học và bảo vệ các mô hình có thế mạnh phân loại nhưng không được huấn luyện chuyên sâu cho định vị không gian:
 1. **Tham gia trọn vẹn Track Phân loại:** Mô hình chỉ tham gia phân loại vẫn được đánh giá đầy đủ trên toàn bộ 5.013 mẫu của P2 cho các chỉ số phân loại an toàn 4 lớp (Balanced Accuracy, Macro-F1), sai số an toàn trọng yếu (Track A, Track B), và phân tầng nguy cơ RQ2.
@@ -426,7 +504,7 @@ Tuân thủ Quyết định D4 (Capability-Aware Policy B), việc xác lập qu
 
 ---
 
-## 15. Reasoning / Thinking Policy (Chính sách Chế độ Suy luận / Thinking)
+## 19. Reasoning / Thinking Policy (Chính sách Chế độ Suy luận / Thinking)
 
 Các họ mô hình VLM hiện đại sở hữu các cơ chế suy luận mở rộng (Extended Thinking / Reasoning) rất đa dạng. Cần một chính sách kiểm soát để bảo đảm tính công bằng:
 
@@ -442,14 +520,14 @@ Các họ mô hình VLM hiện đại sở hữu các cơ chế suy luận mở 
 
 ---
 
-## 16. Decoding Policy (Chính sách Giải mã và Nhiệt độ)
+## 20. Decoding Policy (Chính sách Giải mã và Nhiệt độ)
 
-### 16.1. Đối với Giao thức Tái lập P1
+### 20.1. Đối với Giao thức Tái lập P1
 - Bắt buộc tuân thủ đúng cấu hình đã được ghi nhận trong mã nguồn phát hành chính thức của bài báo gốc:
   - `temperature = 0.1`.
   - Không truyền các tham số lấy mẫu ngẫu nhiên không có trong script gốc.
 
-### 16.2. Đối với Giao thức Nghiên cứu Chính P2
+### 20.2. Đối với Giao thức Nghiên cứu Chính P2
 - Mục tiêu phương pháp luận của SafeShift là đánh giá năng lực bền vững nội tại, do đó ưu tiên giải mã tất định hoặc có phương sai thấp nhất (**Low-Variance / Deterministic Decoding**):
   - **Khuyến nghị chính:** Thiết lập `temperature = 0.0` (hoặc mức tối thiểu mà API cho phép, ví dụ `0.0` trên OpenAI/Anthropic/Google).
   - Khóa giá trị `seed` nếu API hỗ trợ (ví dụ `seed = 42` trên OpenAI API).
@@ -458,14 +536,14 @@ Các họ mô hình VLM hiện đại sở hữu các cơ chế suy luận mở 
 
 ---
 
-## 17. Structured Output & Parse Policy (Chính sách Đầu ra Có Cấu trúc và Phân tích Cú pháp)
+## 21. Structured Output & Parse Policy (Chính sách Đầu ra Có Cấu trúc và Phân tích Cú pháp)
 
-### 17.1. Phân loại Cơ chế Xuất Cấu trúc
+### 21.1. Phân loại Cơ chế Xuất Cấu trúc
 1. **Native JSON Schema Mode:** API hỗ trợ tham số cấu trúc cấp hệ thống (OpenAI `response_format: json_schema`, Gemini `response_schema`). Đây là cơ chế bền vững nhất, bảo đảm đầu ra tuân thủ 100% cú pháp JSON hợp lệ.
 2. **Tool / Function Calling Mode:** Mô hình xuất cấu trúc thông qua cơ chế gọi hàm giả định (Anthropic Tools). Độ bền cú pháp cao.
 3. **Prompted JSON Mode:** Mô hình thuần túy làm theo hướng dẫn xuất JSON trong câu prompt văn bản. Dễ gặp lỗi cú pháp (thiếu dấu ngoặc, xuất thừa khối markdown ````json ... ````).
 
-### 17.2. Chính sách Xử lý Lỗi Phân tích Cú pháp (Parse-Failure Policy)
+### 21.2. Chính sách Xử lý Lỗi Phân tích Cú pháp (Parse-Failure Policy)
 Kế thừa Quyết định D5, SafeShift xử lý lỗi phân tích cú pháp theo nguyên tắc minh bạch hai lớp:
 1. **Lớp Đo lường Độ bền Cú pháp (Diagnostic PSR):**
    - Báo cáo **Tỷ lệ Phân tích Phản hồi Thành công:**
@@ -478,11 +556,11 @@ Kế thừa Quyết định D5, SafeShift xử lý lỗi phân tích cú pháp t
 
 ---
 
-## 18. Calibration Eligibility (Tính Đủ Điều kiện Đánh giá Độ Hiệu chỉnh Xác suất)
+## 22. Calibration Eligibility (Tính Đủ Điều kiện Đánh giá Độ Hiệu chỉnh Xác suất)
 
 Theo Quyết định D5, độ hiệu chỉnh xác suất (Calibration: ECE, Brier Score) là chỉ số phụ thuộc năng lực đặc thù (`Capability-Specific`):
 
-### 18.1. Kiểm toán Khả năng Truy cập Xác suất
+### 22.1. Kiểm toán Khả năng Truy cập Xác suất
 1. **Closed-API Models (OpenAI, Google Gemini, Anthropic Claude):**
    - Các API thương mại hiện nay nhìn chung **KHÔNG cung cấp phân bố xác suất phân loại chuẩn hóa (Normalized Softmax Probabilities)** trên toàn bộ không gian 4 lớp an toàn.
    - OpenAI chỉ cung cấp `logprobs` cho một số token hàng đầu tại vị trí sinh, nhưng giá trị này phụ thuộc vào chuỗi token hóa (tokenization artifacts) và tiền điều kiện của toàn bộ văn bản sinh trước đó, không tương đương với $P(\text{Level} \mid \text{Image})$.
@@ -490,19 +568,21 @@ Theo Quyết định D5, độ hiệu chỉnh xác suất (Calibration: ECE, Bri
 2. **Open-Weight Models (Qwen-VL tự host):**
    - Có thể trích xuất trực tiếp logit của các token tương ứng với các lớp an toàn để tính softmax chuẩn xác.
 
-### 18.2. Quy tắc Cấm Tuyệt đối
+### 22.2. Quy tắc Cấm Tuyệt đối
 - **TUYỆT ĐỐI CẤM SỬ DỤNG ĐỘ TỰ TIN TỰ THUẬT (Self-Reported Textual Confidence):** Nghiêm cấm việc yêu cầu mô hình tự viết ra câu văn như `"confidence: 95%"` hoặc `"probability: 0.9"` để làm đại diện cho xác suất hiệu chuẩn. Hiện tượng tự tin thái quá (overconfidence) và ảo giác số học trong văn bản tự sinh đã được y văn chứng minh là không có giá trị thống kê.
 - **Phán quyết:** Ngoại trừ trường hợp có mô hình mở tự trích xuất logit, toàn bộ các mô hình Closed-API được phân loại là **`CALIBRATION_INELIGIBLE`**. Calibration không tham gia vào bảng chỉ số so sánh chính xuyên mô hình của SafeShift Seminar.
 
 ---
 
-## 19. Version Pinning & Provenance (Cố định Phiên bản và Truy vết Nguồn gốc)
+## 23. Version Pinning & Provenance (Cố định Phiên bản và Truy vết Nguồn gốc)
 
 Để ngăn chặn hiện tượng trôi dạt mô hình (Model Drift) làm phá vỡ tính tái lập của nghiên cứu khoa học, mọi lần chạy thực nghiệm ở Week 3 bắt buộc phải tuân thủ chính sách cố định phiên bản nghiêm ngặt:
 
-### 19.1. Bảng Siêu dữ liệu Bắt buộc Lưu trữ (Mandatory Execution Metadata)
+### 23.1. Bảng Siêu dữ liệu Bắt buộc Lưu trữ (Mandatory Execution Metadata)
 Mỗi tệp kết quả thực nghiệm (cho từng mẫu ảnh hoặc từng batch) bắt buộc phải gắn kèm đối tượng siêu dữ liệu:
 - `protocol_id`: `"P1_BASELINE_REPLICATION"` hoặc `"P2_PRIMARY_RESEARCH"`.
+- `protocol_version`: Phiên bản giao thức (ví dụ `"P2.0"`).
+- `protocol_freeze_commit_sha`: Mã băm Git commit đóng băng giao thức.
 - `run_id`: Định danh duy nhất của lần chạy (UUIDv4 kèm timestamp ISO 8601).
 - `sample_id`: Định danh mẫu ảnh chuẩn (ví dụ `oil_chemical-Level01-SuspendedRail-000101-001`).
 - `image_sha256`: Mã băm SHA-256 của tệp ảnh đầu vào để bảo đảm toàn vẹn dữ liệu.
@@ -520,25 +600,25 @@ Mỗi tệp kết quả thực nghiệm (cho từng mẫu ảnh hoặc từng ba
 - `raw_response_id`: Định danh duy nhất của response từ nhà cung cấp (ví dụ `chatcmpl-...`).
 - `adapter_version`: Phiên bản bộ chuyển đổi được sử dụng để parse.
 
-### 19.2. Chính sách đối với Bí danh Động (Moving Aliases)
+### 23.2. Chính sách đối với Bí danh Động (Moving Aliases)
 - Nghiêm cấm việc sử dụng các bí danh động không cố định thời gian (như `gpt-4o-latest`, `claude-3-5-sonnet-latest`, `gemini-flash`).
 - Bắt buộc phải sử dụng các định danh có gắn ngày hoặc phiên bản cố định (dated snapshot, ví dụ `gpt-4o-2024-08-06`, `gemini-2.5-flash-001`, `claude-3-5-sonnet-20241022`).
 - Nếu nhà cung cấp chỉ hỗ trợ bí danh động, bắt buộc phải ghi lại `resolved_model_version` trả về trong response header và đánh dấu cờ cảnh báo `moving_alias = True`.
 
 ---
 
-## 20. Cost & Runtime Feasibility (Phân tích Chi phí và Thời gian Thực thi)
+## 24. Cost & Runtime Feasibility (Phân tích Chi phí và Thời gian Thực thi)
 
 Bảng ước tính chi phí và thời lượng tính toán dựa trên biểu giá công khai của các nhà cung cấp (cập nhật ngày 2026-09-17) cho hai giao thức thực nghiệm:
 
-### 20.1. Giả định Kỹ thuật Ước tính
-- **Kích thước đầu vào:** 1 ảnh trung bình của InspecSafe tương đương ~1.000–1.600 visual tokens (tùy thuộc vào tile resolution của từng nhà cung cấp) + ~300 tokens prompt văn bản $\approx$ **1.500 input tokens / request**.
+### 24.1. Giả định Kỹ thuật Ước tính
+- **Kích thước đầu vào:** 1 ảnh trung bình của InspecSafe tương đương ~1.000–1.600 visual tokens + ~300 tokens prompt văn bản $\approx$ **1.500 input tokens / request**.
 - **Kích thước đầu ra:** JSON phản hồi gồm cấp an toàn, danh sách nguy cơ và tọa độ hộp bao $\approx$ **200–400 output tokens / request**.
 - **Quy mô mẫu:**
   - P1 Replication: **1.250 ảnh** $\approx$ ~1,9 triệu input tokens + ~0,4 triệu output tokens.
   - P2 Primary Protocol: **5.013 ảnh** $\approx$ ~7,5 triệu input tokens + ~1,5 triệu output tokens.
 
-### 20.2. Bảng Ước tính Ngân sách Chi phí (Đơn vị: USD)
+### 24.2. Bảng Ước tính Ngân sách Chi phí (Đơn vị: USD)
 
 | Mô hình Ứng viên | Biểu giá Input (USD/1M tokens) | Biểu giá Output (USD/1M tokens) | Chi phí Ước tính P1 (1.250 ảnh) | Chi phí Ước tính P2 (5.013 ảnh) | Thời gian chạy ước tính (ở tốc độ 2 req/s) | Khả thi Ngân sách Seminar |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -550,40 +630,36 @@ Bảng ước tính chi phí và thời lượng tính toán dựa trên biểu 
 | **Claude Opus 4.5** (P1 Ref) | ~\$15.00 | ~\$75.00 | ~\$58.50 | N/A (Chỉ chạy P1) | ~60 phút | **KHẢ THI TRONG P1** (~ \$60) |
 | **BGE-M3 (Ollama Local)** | \$0.00 (Local) | \$0.00 (Local) | \$0.00 | N/A (Chỉ chạy P1) | ~15 phút | **HOÀN TOÀN MIỄN PHÍ** |
 
-### 20.3. Nhận định Tổng quát về Ngân sách
-- Một bộ thí nghiệm tối thiểu gồm **4 mô hình đại diện cho P2** (ví dụ: Gemini 2.5 Flash + Gemini 2.5 Pro + Qwen3-VL-8B + GPT-4o) chỉ tiêu tốn tổng ngân sách khoảng **\$50 – \$60 USD** cho toàn bộ 5.013 ảnh.
+### 24.3. Nhận định Tổng quát về Ngân sách
+- Một bộ thí nghiệm tối thiểu gồm **4 mô hình đại diện cho P2** (Gemini Flash + Gemini Pro + Qwen3-VL-8B + GPT-4o) chỉ tiêu tốn tổng ngân sách khoảng **\$50 – \$60 USD** cho toàn bộ 5.013 ảnh ở chế độ One-Call (hoặc ~\$80 – \$100 USD ở chế độ Two-Call).
 - Toàn bộ ngân sách hoàn toàn nằm trong khả năng hỗ trợ nghiên cứu của đề tài Seminar, không có rào cản tài chính nghiêm trọng.
 
 ---
 
-## 21. Pretraining Contamination Caveat (Cảnh báo Nhiễm Dữ liệu Tiền Huấn luyện)
+## 25. Pretraining Contamination vs Researcher Adaptation (Phân định Nhiễm Dữ liệu Tiền Huấn luyện và Thích nghi Benchmark)
 
-### 21.1. Bối cảnh Thực tế về Thời gian
-- Bộ dữ liệu InspecSafe-V1 được tải lên Hugging Face và xuất bản bản thảo arXiv:2601.21173 vào **tháng 01/2026**; bài báo chính thức xuất bản trên *Scientific Data* vào **tháng 03/2026**.
-- Ngày audit hiện tại là **2026-09-17**. Đã có khoảng thời gian ~8 tháng kể từ khi dữ liệu được công khai trên Internet.
+Cần phân định rạch ròi hai khái niệm phương pháp luận hoàn toàn khác nhau:
 
-### 21.2. Bảng Đánh giá Nguy cơ Nhiễm Dữ liệu cho Từng Họ Mô hình
+### 25.1. Nhiễm Dữ liệu Tiền Huấn luyện (Pretraining Contamination — Biến số Ngoại sinh UNKNOWN)
+- **Bản chất:** Bộ dữ liệu InspecSafe-V1 được công khai từ tháng 01/2026. Các mô hình được huấn luyện sau mốc này có thể đã thu thập dữ liệu web chứa InspecSafe.
+- **Tình trạng:** Đối với các mô hình thương mại đóng (Closed API), danh sách dữ liệu huấn luyện không được công bố chi tiết, do đó tình trạng nhiễm dữ liệu tiền huấn luyện là **`UNKNOWN` (Không thể xác định chắc chắn)**.
+- **Nguyên tắc phát biểu:** SafeShift là benchmark đánh giá thực nghiệm trên các mô hình đóng băng trọng số hiện hành; **tuyệt đối không tuyên bố chắc chắn** mô hình chưa từng thấy hoặc đã thấy dữ liệu.
 
-| Model Family | Mốc Kiến thức Công bố (Knowledge Cutoff) | Ngày Phát hành Snapshot | Tình trạng Nhiễm Dữ liệu Tiền Huấn luyện | Bằng chứng / Cơ sở Đánh giá |
-| :--- | :--- | :--- | :--- | :--- |
-| **Claude Opus 4.5** (`20251101`) | Tháng 10/2025 (hoặc cuối 2025) | 2025-11-01 | **UNLIKELY (Ít khả năng)** | Snapshot mang ngày 2025-11-01, trước thời điểm dataset InspecSafe-V1 được đưa lên Hugging Face và arXiv (tháng 01/2026). |
-| **OpenAI GPT-4o** (`2024-08-06`) | Tháng 10/2023 | 2024-08-06 | **UNLIKELY (Rất ít khả năng)** | Snapshot được đóng băng vào tháng 08/2024, cách thời điểm công bố dữ liệu hơn 1 năm. |
-| **Google Gemini 2.5 Series** | Giữa năm 2025 – đầu 2026 | Đầu/Giữa 2026 | **PLAUSIBLE (Có thể xảy ra)** | Các mô hình huấn luyện hoặc cập nhật vào năm 2026 có khả năng đã thu thập các tệp dữ liệu hoặc bài báo công khai từ Zenodo/GitHub/Hugging Face. |
-| **Qwen3-VL Series** | Đầu/Giữa 2026 | Năm 2026 | **PLAUSIBLE (Có thể xảy ra)** | Tương tự, dữ liệu web công khai năm 2026 có thể chứa một phần hình ảnh hoặc tài liệu liên quan đến InspecSafe. |
-| **Các mô hình đóng khác** | Không công bố chi tiết | Liên tục cập nhật | **UNKNOWN (Không xác định)** | Nhiều nhà cung cấp không công bố chi tiết danh sách URL web scrape trong tập huấn luyện. |
-
-### 21.3. Quy tắc Phát biểu Khoa học Bắt buộc
-1. **Tuyệt đối không đưa ra khẳng định chắc chắn:** Không bao giờ tuyên bố trong báo cáo rằng *"mô hình A chắc chắn chưa từng nhìn thấy dữ liệu InspecSafe"* hoặc ngược lại *"mô hình B đã học vẹt toàn bộ dữ liệu"*.
-2. **Bản chất của SafeShift:** SafeShift được định nghĩa là **Benchmark Đánh giá Thực nghiệm (Empirical Benchmark Evaluation)** trên các mô hình đóng băng trọng số có sẵn trên thị trường. Nhiễm dữ liệu tiền huấn luyện là một biến số ngoại sinh không thể kiểm soát tuyệt đối đối với các mô hình thương mại đóng. Mọi báo cáo kết quả bắt buộc phải công bố mục giới hạn này.
+### 25.2. Thích nghi Benchmark do Người Nghiên cứu (Researcher Benchmark Adaptation — Biến số Nội sinh Chủ động Ngăn ngừa)
+- **Bản chất:** Hiện tượng nhóm nghiên cứu vô tình hoặc cố ý điều chỉnh prompt, tinh chỉnh parser, hoặc lựa chọn mô hình sau khi đã quan sát kết quả chạy trên benchmark (Data peeking / Overfitting to test set).
+- **Cơ chế SafeShift Chủ động Ngăn ngừa:**
+  1. **Tường lửa Kiểm chuẩn (Benchmark Firewall):** Toàn bộ 5.013 ảnh là Evaluation-Only; cấm mọi hình thức probe hay debug trên dữ liệu InspecSafe.
+  2. **Đóng băng Giao thức (Protocol Freeze):** Đóng băng prompt, schema, danh sách model và parser trước lần chạy đầu tiên; ghi nhận `protocol_freeze_commit_sha`.
+  3. **Kiểm tra Năng lực Hoàn toàn Bên ngoài (External Capability Probe):** Chỉ dùng ảnh bên ngoài benchmark để xác minh tính vận hành kỹ thuật.
 
 ---
 
-## 22. P1 Reproduction Plan (Kế hoạch Thực hiện Giao thức Tái lập Baseline P1)
+## 26. P1 Reproduction Plan (Kế hoạch Thực hiện Giao thức Tái lập Baseline P1)
 
-### 22.1. Mục tiêu
+### 26.1. Mục tiêu
 Tái lập trung thực và kiểm chứng các số liệu baseline công bố trong bài báo gốc của InspecSafe trên đúng **1.250 mẫu test chính thức**.
 
-### 22.2. Các Bước Triển khai Chi tiết
+### 26.2. Các Bước Triển khai Chi tiết
 1. **Bước 1: Chuẩn bị Môi trường Cục bộ:**
    - Khởi chạy dịch vụ Ollama cục bộ với mô hình `bge-m3`: `ollama run bge-m3`.
    - Kiểm tra kết nối endpoint: `http://localhost:11434/api/embeddings`.
@@ -591,7 +667,7 @@ Tái lập trung thực và kiểm chứng các số liệu baseline công bố 
    - Sử dụng đúng 1.250 ảnh thuộc `test/Annotations/` (gồm 999 Normal và 251 Anomaly).
    - Kiểm tra mã băm xác thực tính toàn vẹn của tập test.
 3. **Bước 3: Thực thi Sinh Kết quả Phân loại:**
-   - Sử dụng nguyên văn câu prompt Upstream P1 (Mục 8.1).
+   - Sử dụng nguyên văn câu prompt Upstream P1 (Mục 11.1).
    - Gửi yêu cầu tới mô hình tham chiếu upstream (`claude-opus-4-5-20251101` hoặc mô hình thay thế tương thích nếu snapshot gốc không thể truy cập).
    - Cấu hình giải mã: `temperature = 0.1`.
    - Lưu toàn bộ 1.250 tệp phản hồi văn bản thô vào `data/raw/p1_reproduction/{model_name}/`.
@@ -606,16 +682,16 @@ Tái lập trung thực và kiểm chứng các số liệu baseline công bố 
 
 ---
 
-## 23. P2 Research Run Plan (Kế hoạch Thực hiện Giao thức Nghiên cứu Chính P2)
+## 27. P2 Research Run Plan (Kế hoạch Thực hiện Giao thức Nghiên cứu Chính P2)
 
-### 23.1. Mục tiêu
+### 27.1. Mục tiêu
 Thực thi đánh giá độ bền vững xuyên miền (RQ1), phân tầng nguy cơ (RQ2), và tính nhất quán phân loại – bám bằng chứng không gian (RQ3) trên toàn bộ **5.013 mẫu ảnh** của SafeShift.
 
-### 23.2. Quy trình Thực thi Chuẩn hóa
+### 27.2. Quy trình Thực thi Chuẩn hóa
 1. **Bước 1: Nạp Manifest Dữ liệu Chuẩn:**
    - Nạp `data/manifests/dataset_manifest.csv` (5.013 mẫu) kèm đầy đủ siêu dữ liệu `folder_domain`, `split`, `point_id`, và cờ `domain_mismatch`.
 2. **Bước 2: Gói Payload Đồng nhất:**
-   - Sử dụng Mẫu Prompt Chuẩn hóa P2 (Canonical SafeShift Prompt) với từ điển đóng 12 nguy cơ (Option B).
+   - Sử dụng Mẫu Prompt Chuẩn hóa P2 đã được đóng băng theo quyết định của Project Owner.
    - Mã hóa ảnh theo yêu cầu kỹ thuật của từng API (Base64 hoặc Image URL).
 3. **Bước 3: Thực thi Suy luận theo Lô (Batching & Rate-Limiting):**
    - Thiết lập cơ chế kiểm soát tốc độ (Rate-limiter) và thử lại khi gặp lỗi mạng (Exponential Backoff Retry) để tránh lỗi hạn chế lưu lượng (HTTP 429).
@@ -623,7 +699,7 @@ Thực thi đánh giá độ bền vững xuyên miền (RQ1), phân tầng nguy
 4. **Bước 4: Lưu trữ Raw Outputs Bất biến:**
    - Ghi nhận nguyên văn phản hồi thô vào cấu trúc lưu trữ:
      `outputs/raw_runs/P2/{model_id}/{run_id}/{sample_id}.json`
-     kèm toàn bộ siêu dữ liệu truy vết quy định tại Mục 19.
+     kèm toàn bộ siêu dữ liệu truy vết quy định tại Mục 23.
 5. **Bước 5: Chuyển đổi Tất định qua Adapter:**
    - Áp dụng Adapter đặc thù cho từng mô hình để trích xuất `safety_level`, chuẩn hóa nhãn `hazard_type`, và chuyển đổi tọa độ hộp bao về hệ chuẩn nội bộ $[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0.0, 1.0]$.
 6. **Bước 6: Tính toán Chỉ số và Thống kê:**
@@ -638,45 +714,40 @@ Thực thi đánh giá độ bền vững xuyên miền (RQ1), phân tầng nguy
 
 ---
 
-## 24. Capability Probe Plan (Kế hoạch Thử nghiệm Vi mô Năng lực Sơ bộ)
+## 28. External Capability Probe Plan (Kế hoạch Thử nghiệm Năng lực Ngoài Benchmark)
 
-Để xác minh thực nghiệm các mô hình ở diện `LEVEL 3 (Prompt-Only)` (như OpenAI GPT-4o hoặc Claude 3.5 Sonnet) có đủ điều kiện tham gia đường đua Grounding hay không, một quy trình thử nghiệm vi mô (Capability Probe) được thiết kế sẵn:
+Để bảo đảm tính tuân thủ tuyệt đối với Benchmark Firewall, **toàn bộ các đề xuất dùng ảnh InspecSafe để probe trước đây bị hủy bỏ hoàn toàn**. Việc kiểm tra năng lực kỹ thuật (Capability Probe) cho các mô hình ở diện `LEVEL 3 (Prompt-Only)` bắt buộc phải thực hiện trên dữ liệu bên ngoài:
 
-### 24.1. Quy tắc Tuyệt đối
-- **KHÔNG CHẠY TRÊN PAID API TRƯỚC KHI ĐƯỢC PHÊ DUYỆT:** Kế hoạch này là tài liệu thiết kế phương pháp luận; tuyệt đối không tự ý gọi API có tính phí trong bước W2.5.
-- Chỉ thực hiện sau khi Project Owner phê chuẩn và cấp phép rõ ràng.
+### 28.1. Nguồn Ảnh Thử nghiệm Hợp lệ
+Chỉ được sử dụng một trong 3 nguồn sau:
+- **Nguồn A (Public Non-InspecSafe Images):** Các hình ảnh công cộng có giấy phép mở rõ ràng (ví dụ COCO, Open Images, Wikimedia Commons) chứa các vật thể thông thường (người, điện thoại, chai lọ, xe cộ).
+- **Nguồn B (Synthetic Images):** Hình ảnh do nhóm nghiên cứu tự tạo hoặc tổng hợp nhân tạo.
+- **Nguồn C (Provider Documentation Examples):** Các hình ảnh mẫu chuẩn được cung cấp trong tài liệu hướng dẫn chính thức của nhà cung cấp API.
 
-### 24.2. Thiết kế Tập Mẫu Thử nghiệm Vi mô (Microtest Probe Set)
-Chọn một tập con cực nhỏ gồm đúng **8 mẫu ảnh đại diện** từ tập dữ liệu (bao phủ các đặc trưng không gian và mức độ phức tạp khác nhau):
-1. *Mẫu 1 (Vật thể nhỏ đơn lẻ):* `USE_MOBILE_PHONE` (Điện thoại di động trên tay công nhân).
-2. *Mẫu 2 (Vật thể phát sáng/nhiệt):* `OPEN_FLAME` (Ngọn lửa trần).
-3. *Mẫu 3 (Khói lan tỏa, ranh giới mờ):* `SMOKE` (Khói bốc lên từ thiết bị).
-4. *Mẫu 4 (Vùng bề mặt phẳng):* `LIQUID_ON_GROUND` (Vũng nước / dầu tràn trên sàn).
-5. *Mẫu 5 (Dị vật cơ học):* `FOREIGN_OBJECT` (Chai nhựa / túi rác trên băng chuyền).
-6. *Mẫu 6 (Xe cộ kích thước lớn):* `NONMOTORIZED_VEHICLE` (Xe ba bánh / xe đạp trong hầm).
-7. *Mẫu 7 (Đa đối tượng đồng thời):* Mẫu Anomaly chứa cả `NO_HELMET` và `USE_MOBILE_PHONE`.
-8. *Mẫu 8 (Đa người trong ảnh):* Mẫu Anomaly thuộc Weak-Proxy chứa $\ge 3$ công nhân.
+### 28.2. Tiêu chí Đánh giá Thuần túy Năng lực Kỹ thuật (Capability-Only Criteria)
+Probe **KHÔNG ĐƯỢC DÙNG ĐỂ ĐO ĐỘ CHÍNH XÁC (Accuracy / IoU)** hay chọn ra mô hình định vị tốt nhất. Probe chỉ nhằm xác nhận tính khả thi vận hành kỹ thuật (Technical Operability) theo 6 tiêu chí:
+1. **Khả năng phân tích cấu trúc (Schema Parseable):** Mô hình có xuất được khối JSON hợp lệ theo schema yêu cầu không.
+2. **Tọa độ dạng số (Coordinate Numeric):** Tọa độ trả về có phải là các giá trị số thực/nguyên hợp lệ không (không phải chuỗi văn bản mô tả).
+3. **Thứ tự tọa độ rõ ràng (Coordinate Order Known):** Xác định được rõ quy ước tọa độ là $[x_{\min}, y_{\min}, x_{\max}, y_{\max}]$ hay $[y_{\min}, x_{\min}, y_{\max}, x_{\max}]$.
+4. **Miền giá trị hợp lệ (Range Valid):** Tọa độ nằm trong khoảng chuẩn hóa $[0, 1]$ hoặc $[0, 1000]$, thỏa mãn $x_{\min} \le x_{\max}$ và $y_{\min} \le y_{\max}$.
+5. **Khả năng xuất đa hộp bao (Multi-Box Technically Possible):** Mô hình có khả năng xuất $\ge 2$ hộp bao khi ảnh có nhiều đối tượng không.
+6. **Liên kết nguy cơ – bằng chứng biểu diễn được (Representable Association):** Tọa độ hộp bao có gắn liền với định danh loại nguy cơ tương ứng trong cấu trúc dữ liệu không.
 
-### 24.3. Tiêu chí Đánh giá Vượt qua (Pass Criteria)
-Một mô hình được coi là **Đạt chuẩn Năng lực Bám bằng chứng (Grounding Eligible)** nếu trên 8 mẫu thử nghiệm:
-1. Tỷ lệ phản hồi đúng định dạng JSON đạt 100% (8/8).
-2. Tỷ lệ hộp bao có 4 tọa độ số thực hợp lệ trong $[0.0, 1.0]$ đạt $\ge 87,5\%$ (ít nhất 7/8 mẫu có tọa độ hợp lệ).
-3. Không xảy ra hiện tượng đảo ngược tọa độ nghiêm trọng ($x_{\min} > x_{\max}$ hoặc $y_{\min} > y_{\max}$).
-4. Có khả năng xuất nhiều hơn 1 hộp bao khi hiện trường có nhiều vật thể nguy cơ.
+*Quy tắc trạng thái:* Nếu vượt qua 6 tiêu chí trên, mô hình được xếp trạng thái **`LEVEL 2 — MICROTEST-VERIFIED`** và đủ điều kiện tham gia đường đua Grounding. Trạng thái này không được tự động nâng thành `DOC-VERIFIED`.
 
 ---
 
-## 25. Model Shortlists (Các Danh sách Mô hình Đề xuất)
+## 29. Model Shortlists (Các Danh sách Mô hình Đề xuất)
 
 Để phục vụ nghiên cứu Seminar trong thời gian 8 tuần mà không làm phân tán tài nguyên, SafeShift đề xuất cơ cấu 3 danh sách mô hình có định hướng khoa học rõ ràng:
 
-### 25.1. Danh sách Tái lập Upstream (Upstream Reproduction Set)
+### 29.1. Danh sách Tái lập Upstream (Upstream Reproduction Set)
 Dành riêng cho Giao thức P1 (1.250 mẫu test):
 1. **`claude-opus-4-5-20251101`** (hoặc Claude 3.5/3.7 Sonnet làm mô hình thay thế tương thích nếu snapshot gốc không truy cập được trực tiếp từ Anthropic API).
 2. **`grok-4.1-fast`** (Mô hình đối chiếu trong mã nguồn đánh giá văn bản của bài báo gốc).
 3. **`bge-m3`** (Mô hình cục bộ qua Ollama dùng để tính điểm tương đồng ngữ nghĩa văn bản).
 
-### 25.2. Danh sách Nghiên cứu Cốt lõi Tối thiểu (Minimal SafeShift Research Set — 4 Mô hình)
+### 29.2. Danh sách Nghiên cứu Cốt lõi Tối thiểu (Minimal SafeShift Research Set — 4 Mô hình)
 Dành cho Giao thức Chính P2 (5.013 mẫu toàn thể). Đáp ứng trọn vẹn tiêu chí đa dạng kiến trúc, cân bằng mã nguồn mở và dịch vụ đóng, bao phủ cả năng lực phân loại chuyên sâu lẫn định vị không gian nguyên bản:
 
 1. **Google Gemini 2.5 Flash (`gemini-2.5-flash-001`):**
@@ -690,9 +761,9 @@ Dành cho Giao thức Chính P2 (5.013 mẫu toàn thể). Đáp ứng trọn v�
    - *Tham gia:* P2 Classification, RQ3-A Direct Grounding, RQ3-B Proxy Grounding.
 4. **OpenAI GPT-4o (`gpt-4o-2024-08-06`):**
    - *Vai trò:* Đại diện tiêu chuẩn vàng (Golden standard) về phân loại và lập luận thị giác tổng quát của ngành công nghiệp VLM; đóng vai trò mỏ neo đối sánh phân loại đa mô hình.
-   - *Tham gia:* P2 Classification (Chắc chắn); Tham gia RQ3 Grounding nếu vượt qua Microtest Probe.
+   - *Tham gia:* P2 Classification (Chắc chắn); Tham gia RQ3 Grounding nếu vượt qua External Capability Probe.
 
-### 25.3. Danh sách Mở rộng Tùy chọn (Optional Extended Set)
+### 29.3. Danh sách Mở rộng Tùy chọn (Optional Extended Set)
 Nếu có thêm tài nguyên tính toán và được phê duyệt:
 1. **Claude 3.7 Sonnet:** Bổ sung góc nhìn về lập luận an toàn với cơ chế Extended Thinking.
 2. **Qwen3-VL-32B-Instruct:** Đánh giá ảnh hưởng của quy mô tham số (model scaling) trong dòng họ mô hình mở.
@@ -700,51 +771,53 @@ Nếu có thêm tài nguyên tính toán và được phê duyệt:
 
 ---
 
-## 26. D8 Decision Matrix (Ma trận Quyết định D8)
+## 30. D8 Decision Matrix (Ma trận Quyết định D8 Cập nhật)
 
-Tổng hợp các phương án kỹ thuật then chốt của Quyết định D8 để xin ý kiến chỉ đạo từ Project Owner:
+Tổng hợp toàn diện các phương án kỹ thuật then chốt của Quyết định D8 để xin ý kiến chỉ đạo từ Project Owner:
 
-| Chiều Kỹ thuật | Phương án 1 (Option A) | Phương án 2 (Option B) | Phương án 3 (Option C) | Phương án Đề xuất của SafeShift |
+| Chiều Kỹ thuật | Phương án 1 (Option A) | Phương án 2 (Option B) | Phương án 3 (Option C) | Gợi ý Đánh giá của SafeShift |
 | :--- | :--- | :--- | :--- | :--- |
-| **A. Quy mô Mô hình P2** | 3 Mô hình (Gemini Flash, Qwen-VL-8B, GPT-4o) | 4 Mô hình (Gemini Flash, Gemini Pro, Qwen-VL-8B, GPT-4o) | Mở rộng $\ge 6$ mô hình | **Phương án 2 (4 Mô hình)**: Đạt cân bằng tối ưu giữa độ đa dạng khoa học và chi phí kiểm soát (~ \$60). |
-| **B. Từ điển Nguy cơ P2** | Open Vocabulary (Mô tả tự do, ánh xạ sau) | Closed 12-Hazard Vocabulary (Chọn trong 12 nhãn D6) | Hybrid (Nhãn đóng + Mô tả mở) | **Phương án 2 (Closed 12-Hazard)**: Bảo đảm tính tất định và tương thích toán học 100% với D5/D6. |
-| **C. Kiến trúc Prompt P2** | Kế thừa nguyên vẹn bảng quy tắc Upstream | Simplified Canonical SafeShift Prompt | Hai giai đoạn (Phân loại rồi mới Định vị) | **Phương án 2 (Simplified Canonical)**: Giảm 50% chi phí token, cấu trúc JSON sạch, công bằng ngữ nghĩa. |
-| **D. Cơ chế Gọi API P2** | One Combined Call (Chung 1 request lấy cả nhãn và box) | Two Separate Calls (Call 1: Classify; Call 2: Grounding) | Independent Grounding Call với fixed GT query | **Phương án 1 (One Combined Call)**: Tiết kiệm chi phí, phản ánh tính đồng thời giữa nhận thức nguy cơ và bằng chứng thị giác. |
-| **E. Chế độ Suy luận (Thinking)** | Cưỡng bức tắt hoàn toàn (`budget=0`) | Sử dụng cấu hình mặc định (Provider Default) | Chuẩn hóa nỗ lực cố định cho mọi mô hình | **Phương án 2 (Provider Default)**: Tôn trọng thiết kế nguyên bản của nhà cung cấp; ghi nhận chi tiết trong metadata. |
-| **F. Đầu ra Có cấu trúc** | Chỉ dùng Prompted JSON văn bản thuần | Ép buộc Native JSON Schema chặt chẽ | Kết hợp linh hoạt theo API hỗ trợ + Adapter | **Phương án 3 (Linh hoạt + Adapter)**: Tối ưu theo từng API nhưng bảo đảm đầu ra được chuẩn hóa tất định qua Adapter. |
-| **G. Điều kiện Tham gia Grounding** | Chỉ tin tài liệu chính thức (Doc-verified only) | Tài liệu chính thức + Kiểm chứng Vi mô (Microtest) | Cho phép mọi mô hình tham gia bình đẳng | **Phương án 2 (Doc + Microtest)**: Tuân thủ nghiêm ngặt D4 Policy B, không phạt oan mô hình không hỗ trợ box. |
-| **H. Quản lý Phiên bản** | Dùng bí danh động mới nhất (Moving latest) | Bắt buộc ghim phiên bản cố định (Dated Pinned IDs) | Chấp nhận hỗn hợp có gắn cờ cảnh báo | **Phương án 2 (Dated Pinned IDs)**: Bảo đảm tính tái lập khoa học lâu dài. |
+| **A. Tường lửa Kiểm chuẩn (Benchmark Firewall)** | Bắt buộc (Required): Toàn bộ 5.013 ảnh là Evaluation-Only; cấm probe trên InspecSafe | Không bắt buộc: Cho phép dùng một vài ảnh InspecSafe để probe | N/A | **Phương án 1 (Bắt buộc)**: Nguyên tắc sống còn để bảo vệ tính toàn vẹn khoa học. |
+| **B. Nguồn Ảnh Capability Probe** | External-Only (Ảnh ngoài benchmark, ảnh tổng hợp, doc examples) | Cho phép lấy một tập con nhỏ từ InspecSafe | N/A | **Phương án 1 (External-Only)**: Ngăn chặn rò rỉ dữ liệu và thích nghi benchmark. |
+| **C. Thời điểm Đóng băng Giao thức (Protocol Freeze)** | Đóng băng tuyệt đối trước lần inference đầu tiên trên InspecSafe | Đóng băng linh hoạt trong quá trình chạy | N/A | **Phương án 1 (Freeze trước inference đầu tiên)**: Ghi nhận commit SHA cố định. |
+| **D. Chính sách Sửa lỗi Sau Đóng băng** | Cấm sửa prompt theo hiệu năng; lỗi kỹ thuật phải bump version & rerun toàn bộ | Cho phép sửa riêng prompt của mô hình yếu | N/A | **Phương án 1 (Strict Version Bump & Full Rerun)**: Bảo đảm tính công bằng tuyệt đối. |
+| **E. Quy mô Mô hình P2** | 3 Mô hình (Gemini Flash, Qwen-VL-8B, GPT-4o) | 4 Mô hình (Gemini Flash, Gemini Pro, Qwen-VL-8B, GPT-4o) | Mở rộng $\ge 6$ mô hình | **Phương án 2 (4 Mô hình)**: Đạt cân bằng tối ưu giữa độ đa dạng khoa học và chi phí kiểm soát (~ \$60–\$100). |
+| **F. Từ điển Nguy cơ P2** | Open Vocabulary (Mô tả tự do, ánh xạ sau) | Closed 12-Hazard Vocabulary (Chọn trong 12 nhãn D6) | Hybrid (Nhãn đóng + Mô tả tự do) | **Cần Quyết định**: Option B dễ parse và khớp D5/D6 nhất; Option A/C giảm rủi ro gợi ý nhãn. |
+| **G. Tách biệt Phân loại An toàn & Bóc tách Nguy cơ** | Tách biệt hoàn toàn (Decoupled Prompts) | Gộp chung trong cùng một prompt duy nhất | N/A | **Cần Quyết định**: Tách biệt bảo vệ tính khách quan của phân loại an toàn. |
+| **H. Cơ chế Gọi API P2** | One Combined Call (Chung 1 request lấy cả nhãn và box) | Two Independent Calls (Call 1: Classify; Call 2: Grounding không truyền kết quả Call 1) | Two Conditioned Calls (Call 2 nhận kết quả Call 1) | **Cần Quyết định**: Option A tiết kiệm chi phí; Option B bảo đảm tính độc lập phương pháp luận cao nhất. |
+| **I. Chế độ Suy luận (Thinking)** | Cưỡng bức tắt hoàn toàn (`budget=0`) | Sử dụng cấu hình mặc định (Provider Default) | Chuẩn hóa nỗ lực cố định cho mọi mô hình | **Phương án 2 (Provider Default)**: Tôn trọng thiết kế nguyên bản của nhà cung cấp; ghi nhận chi tiết trong metadata. |
+| **J. Quản lý Phiên bản Mô hình** | Dùng bí danh động mới nhất (Moving latest) | Bắt buộc ghim phiên bản cố định (Dated Pinned IDs) | Chấp nhận hỗn hợp có gắn cờ cảnh báo | **Phương án 2 (Dated Pinned IDs)**: Bảo đảm tính tái lập khoa học lâu dài. |
 
 ---
 
-## 27. Preliminary D8 Recommendation (Đề xuất Sơ bộ cho D8)
+## 31. Preliminary D8 Recommendation (Đề xuất Sơ bộ cho D8)
 
-Nhóm nghiên cứu trân trọng đề xuất phương án tổng thể cho Quyết định D8 với trạng thái **PROPOSED, NOT APPROVED**:
+Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể cho Quyết định D8 với trạng thái **PROPOSED, NOT APPROVED**:
 
-1. **Về Giao thức P1 (Baseline Replication):**
+1. **Về Tường lửa Kiểm chuẩn và Đóng băng Giao thức:**
+   - Phê duyệt chính sách **Benchmark Firewall**: Toàn bộ 5.013 ảnh InspecSafe-V1 là Evaluation-Only. Cấm dùng ảnh InspecSafe cho bất kỳ mục đích thăm dò, gỡ lỗi hay chọn mô hình nào.
+   - Phê duyệt chính sách **Protocol Freeze**: Đóng băng toàn bộ prompt, schema, danh sách mô hình, adapter và parser trước lần chạy đầu tiên; ghi nhận `protocol_freeze_commit_sha`.
+   - Phê duyệt chính sách **Post-Freeze Change Control**: Nghiêm cấm sửa prompt theo hiệu năng; lỗi kỹ thuật chỉ được sửa bằng cách bump protocol version và rerun toàn bộ tập mô hình liên quan.
+2. **Về Giao thức P1 (Baseline Replication):**
    - Giữ nguyên 100% câu prompt Upstream và Bảng Quy tắc 5 ngành.
    - Chạy trên 1.250 mẫu test chính thức với mô hình tham chiếu `claude-opus-4-5-20251101` (hoặc mô hình thay thế tương thích nếu cần), thiết lập `temperature = 0.1`.
    - Sử dụng `bge-m3` cục bộ qua Ollama để tái lập chỉ số Semantic Similarity; tính Safety Accuracy theo đúng logic parsing của upstream.
-2. **Về Giao thức P2 (Primary Research Protocol):**
-   - Áp dụng **Một Prompt Ngữ nghĩa Thống nhất (Same Semantic Task Prompt)** cho toàn bộ mô hình để bảo đảm nguyên tắc công bằng (Prompt Fairness). Tuyệt đối không tối ưu câu chữ riêng cho bất kỳ mô hình nào.
-   - Sử dụng **Từ điển Đóng 12 Nguy cơ Nguyên tử (Closed 12-Hazard Vocabulary)** đồng bộ với D6 Census.
-   - Sử dụng **Cơ chế Một Lệnh gọi Tích hợp (One Combined Call)** trích xuất đồng thời `safety_level` và mảng `hazards` chứa tọa độ `evidence`.
-   - Cấu hình giải mã: Ưu tiên `temperature = 0.0` (hoặc mức tối thiểu của nhà cung cấp) để tối đa hóa tính tất định; chế độ suy luận sử dụng mặc định của nhà cung cấp (Provider Default).
 3. **Về Danh sách Mô hình Nghiên cứu (4 Mô hình):**
    - `gemini-2.5-flash-001` (Google)
    - `gemini-2.5-pro-001` (Google)
    - `qwen3-vl-8b-instruct` (Alibaba / Open-weight qua Hosted API)
    - `gpt-4o-2024-08-06` (OpenAI)
 4. **Về Phân tầng Năng lực Grounding:**
-   - Gemini và Qwen-VL đủ điều kiện tham gia trực tiếp đường đua Grounding (LEVEL 1 — DOC-VERIFIED).
-   - GPT-4o tham gia đầy đủ Phân loại; chỉ tham gia Grounding nếu vượt qua bài kiểm tra vi mô (Microtest Probe). Nếu không tham gia, ghi nhận trạng thái `NOT PARTICIPATING`, không phạt điểm lỗi grounding theo D4.
-5. **Về Bộ chuyển đổi và Lưu trữ:**
-   - Cài đặt các Adapter tất định để đưa tọa độ bản địa ($y$-first, thang đo $[0, 1000]$) về chuẩn nội bộ $[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0.0, 1.0]$.
-   - Lưu trữ nguyên văn Raw Model Response cho 100% mẫu ảnh trước khi phân tích cú pháp.
+   - Gemini và Qwen-VL đủ điều kiện tham gia trực tiếp đường đua Grounding (**LEVEL 1 — DOC-VERIFIED**).
+   - GPT-4o tham gia đầy đủ Phân loại; chỉ tham gia Grounding nếu vượt qua bài kiểm tra vi mô ngoài benchmark (**External Capability Probe**). Nếu không tham gia, ghi nhận trạng thái `NOT PARTICIPATING`, không phạt điểm lỗi grounding theo D4.
+5. **Về Từ điển Nguy cơ và Kiến trúc Lệnh gọi P2 (Đệ trình xin ý kiến lựa chọn):**
+   - Đệ trình 2 hướng tiếp cận để Project Owner quyết định:
+     - *Hướng 1 (Tối ưu Ngân sách & Gọn gàng):* One Combined Call với Closed 12-Hazard Vocabulary (~ \$60 USD).
+     - *Hướng 2 (Tối ưu Tính Khách quan Khoa học & Tách biệt Rò rỉ Nhãn):* Independent Two-Call Protocol trong đó Call 1 phân loại an toàn thuần túy không chứa 12 nhãn nguy cơ, và Call 2 bóc tách nguy cơ/tọa độ độc lập (~ \$100 USD).
 
 ---
 
-## 28. Risks & Limitations (Rủi ro và Giới hạn Phương pháp luận)
+## 32. Risks & Limitations (Rủi ro và Giới hạn Phương pháp luận)
 
 1. **Rủi ro Không khả dụng của Snapshot Upstream:** Tên định danh `claude-opus-4-5-20251101` trong mã nguồn phát hành có thể là định danh nội bộ của cổng proxy DMX. Nếu không thể gọi trực tiếp từ Anthropic API chính thức, việc tái lập P1 sẽ phải chuyển sang chế độ *Compatibility Reproduction* với một phiên bản Claude hiện hành, điều này có thể dẫn đến sai lệch số học nhất định so với bảng kết quả gốc.
 2. **Hạn chế Phần cứng Cục bộ:** Việc GPU cục bộ chỉ có 4 GB VRAM buộc SafeShift phải phụ thuộc vào Hosted API cho mô hình nguồn mở Qwen-VL. Điều này phát sinh chi phí mạng và phụ thuộc vào tính sẵn sàng của nhà cung cấp dịch vụ đám mây.
@@ -753,30 +826,32 @@ Nhóm nghiên cứu trân trọng đề xuất phương án tổng thể cho Quy
 
 ---
 
-## 29. Questions Requiring Approval (Các Câu hỏi Cần Xin Ý kiến Phê duyệt)
+## 33. Questions Requiring Approval (Các Câu hỏi Cần Xin Ý kiến Phê duyệt)
 
-Để hoàn thiện và chính thức khóa Quyết định D8 tại Week 2, nhóm nghiên cứu kính trình Project Owner xem xét và cho ý kiến về **16 câu hỏi then chốt**:
+Để hoàn thiện và chính thức khóa Quyết định D8 tại Week 2, nhóm nghiên cứu kính trình Project Owner xem xét và cho ý kiến về **18 câu hỏi then chốt**:
 
-1. **Phê chuẩn Mô hình Tham chiếu P1:** Chấp thuận phương án sử dụng Claude Opus (hoặc phiên bản Claude tương thích khả dụng trên official API) và `bge-m3` cục bộ để tái lập P1 hay có chỉ đạo khác?
-2. **Phê chuẩn Danh sách Mô hình P2 Cốt lõi:** Chấp thuận danh sách 4 mô hình đề xuất (`Gemini 2.5 Flash`, `Gemini 2.5 Pro`, `Qwen3-VL-8B`, `GPT-4o`) hay muốn rút gọn xuống 3 mô hình hoặc mở rộng thêm?
-3. **Chính sách Mô hình Nguồn mở:** Đồng thuận việc sử dụng Hosted API thương mại (DashScope / OpenRouter) cho Qwen3-VL do hạn chế VRAM cục bộ 4 GB của máy trạm?
-4. **Phê chuẩn Từ điển Nguy cơ P2:** Chấp thuận **Option B (Closed 12-Hazard Vocabulary)** để đồng bộ tuyệt đối với D6 Census và D5 Bipartite Matching?
-5. **Phê chuẩn Cấu trúc Câu lệnh P2:** Đồng ý áp dụng Mẫu Prompt Chuẩn hóa Gọn gàng (Simplified Canonical SafeShift Prompt) cho toàn bộ mô hình trong P2?
-6. **Cơ chế Lệnh gọi:** Phê duyệt cơ chế **Một Lệnh gọi Kết hợp (One Combined Call)** trích xuất đồng thời phân loại và tọa độ chứng cứ?
-7. **Phê chuẩn Cấu trúc Đầu ra Chuẩn hóa:** Đồng thuận với đặc tả JSON Schema nội bộ và nguyên tắc chuyển đổi tọa độ của Adapter theo Quyết định D4?
-8. **Tiêu chuẩn Tham gia Grounding:** Chấp thuận quy trình kiểm chứng vi mô (Microtest Probe trên 8 mẫu) đối với các mô hình ở diện Prompt-Only (như GPT-4o) trước khi cho phép tham gia track Grounding?
-9. **Chính sách Mô hình Chỉ Phân loại:** Tái khẳng định chính sách phân loại thuần túy: mô hình không tham gia grounding được ghi nhận `NOT PARTICIPATING`, không bị gán lỗi $\text{IoU} = 0.0$?
-10. **Chính sách Chế độ Suy luận (Thinking):** Chấp thuận việc sử dụng cấu hình suy luận mặc định của nhà cung cấp (Provider Default) và cho phép áp dụng khuyến nghị kỹ thuật của Google đối với Gemini Object Detection?
-11. **Chính sách Giải mã và Nhiệt độ:** Đồng thuận thiết lập `temperature = 0.0` (hoặc giá trị tối thiểu của API) cho toàn bộ các lượt chạy của P2?
-12. **Chính sách Đầu ra Có Cấu trúc:** Đồng ý sử dụng Native JSON Schema trên các API hỗ trợ và kết hợp kiểm tra tính hợp lệ bằng Adapter tất định?
-13. **Chính sách Cố định Phiên bản:** Bắt buộc sử dụng các định danh mô hình có gắn ngày/phiên bản cố định (Dated Pinned IDs)?
-14. **Chính sách Hiệu chỉnh Xác suất (Calibration):** Xác nhận xếp diện `CALIBRATION_INELIGIBLE` cho các mô hình Closed-API và cấm sử dụng độ tự tin tự thuật bằng văn bản?
-15. **Hạn mức Ngân sách Thực nghiệm:** Phê chuẩn hạn mức ngân sách thực nghiệm ước tính khoảng \$60 – \$100 USD cho toàn bộ quá trình chạy baseline ở Week 3?
-16. **Tuyên bố về Nhiễm Dữ liệu Tiền Huấn luyện:** Chấp thuận phát biểu khoa học tiêu chuẩn: SafeShift là benchmark đánh giá thực nghiệm trên mô hình đóng băng trọng số, không thể chứng minh sự vắng mặt tuyệt đối của rò rỉ dữ liệu tiền huấn luyện?
+1. **Phê chuẩn Benchmark Firewall:** Có phê duyệt toàn bộ 5.013 ảnh của InspecSafe-V1 là **Evaluation-Only**, nghiêm cấm dùng cho thăm dò năng lực, gỡ lỗi prompt hay chọn mô hình không?
+2. **Phê chuẩn Nguồn Ảnh Thử nghiệm Năng lực:** Có chấp thuận cấm dùng ảnh InspecSafe cho capability probe và bắt buộc chỉ dùng **ảnh bên ngoài benchmark (External-Only)** không?
+3. **Phê chuẩn Chính sách Đóng băng Giao thức:** Có đồng ý đóng băng toàn diện giao thức (Protocol Freeze) và ghi nhận `protocol_freeze_commit_sha` trước lần inference đầu tiên trên InspecSafe không?
+4. **Phê chuẩn Kiểm soát Thay đổi Sau Đóng băng:** Có chấp thuận quy tắc cấm sửa prompt theo hiệu năng và bắt buộc bump protocol version kèm rerun toàn bộ khi sửa lỗi kỹ thuật không?
+5. **Chính sách Lựa chọn Mô hình:** Có phê duyệt nguyên tắc chọn mô hình hoàn toàn độc lập với điểm số trên InspecSafe không?
+6. **Lựa chọn Từ điển Nguy cơ P2:** Project Owner lựa chọn phương án nào cho P2: **Open Vocabulary**, **Closed 12-Hazard Vocabulary**, hay **Hybrid Policy**?
+7. **Tách biệt Phân loại An toàn khỏi Nguy cơ:** Có phê duyệt việc tách riêng câu lệnh phân loại cấp an toàn để tránh bị ảnh hưởng bởi gợi ý từ 12 nhãn nguy cơ không?
+8. **Lựa chọn Cơ chế Gọi API P2:** Project Owner lựa chọn **One Combined Call** (tiết kiệm chi phí) hay **Independent Two-Call Protocol** (tách bạch phương pháp luận cao nhất)?
+9. **Phê chuẩn Mô hình Tham chiếu P1:** Chấp thuận phương án sử dụng Claude Opus (hoặc phiên bản Claude tương thích khả dụng trên official API) và `bge-m3` cục bộ để tái lập P1 hay có chỉ đạo khác?
+10. **Phê chuẩn Danh sách Mô hình P2 Cốt lõi:** Chấp thuận danh sách 4 mô hình đề xuất (`Gemini 2.5 Flash`, `Gemini 2.5 Pro`, `Qwen3-VL-8B`, `GPT-4o`) hay muốn rút gọn xuống 3 mô hình hoặc mở rộng thêm?
+11. **Chính sách Mô hình Nguồn mở:** Đồng thuận việc sử dụng Hosted API thương mại (DashScope / OpenRouter) cho Qwen3-VL do hạn chế VRAM cục bộ 4 GB của máy trạm?
+12. **Phê chuẩn Cấu trúc Đầu ra Chuẩn hóa:** Đồng thuận với đặc tả JSON Schema nội bộ và nguyên tắc chuyển đổi tọa độ của Adapter theo Quyết định D4?
+13. **Tiêu chuẩn Tham gia Grounding:** Chấp thuận việc chỉ yêu cầu External Capability Probe đối với các mô hình ở diện Prompt-Only (như GPT-4o), còn các mô hình Doc-Verified (Gemini, Qwen) đủ điều kiện trực tiếp?
+14. **Chính sách Mô hình Chỉ Phân loại:** Tái khẳng định chính sách phân loại thuần túy: mô hình không tham gia grounding được ghi nhận `NOT PARTICIPATING`, không bị gán lỗi $\text{IoU} = 0.0$?
+15. **Chính sách Chế độ Suy luận (Thinking):** Chấp thuận việc sử dụng cấu hình suy luận mặc định của nhà cung cấp (Provider Default) và cho phép áp dụng khuyến nghị kỹ thuật của Google đối với Gemini Object Detection?
+16. **Chính sách Giải mã và Nhiệt độ:** Đồng thuận thiết lập `temperature = 0.0` (hoặc giá trị tối thiểu của API) cho toàn bộ các lượt chạy của P2?
+17. **Chính sách Hiệu chỉnh Xác suất (Calibration):** Xác nhận xếp diện `CALIBRATION_INELIGIBLE` cho các mô hình Closed-API và cấm sử dụng độ tự tin tự thuật bằng văn bản?
+18. **Tuyên bố về Nhiễm Dữ liệu Tiền Huấn luyện:** Chấp thuận phát biểu khoa học tiêu chuẩn phân biệt rõ rò rỉ tiền huấn luyện ngoại sinh (Unknown) với sự thích nghi benchmark nội sinh được SafeShift chủ động ngăn bằng Firewall?
 
 ---
 
-## 30. Evidence Sources (Nguồn Bằng chứng và Tài liệu Tham chiếu)
+## 34. Evidence Sources (Nguồn Bằng chứng và Tài liệu Tham chiếu)
 
 1. **Mã nguồn và Dữ liệu Phát hành Chính thức Upstream:**
    - Kho lưu trữ Hugging Face: `https://huggingface.co/datasets/Tetrabot2026/InspecSafe-V1` (Commit `f3cb7d3e`).
