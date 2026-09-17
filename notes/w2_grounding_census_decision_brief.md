@@ -5,7 +5,7 @@
 - **Bộ dữ liệu:** InspecSafe-V1 (5.013 mẫu ảnh: 4.013 Normal, 1.000 Anomaly)
 - **Trạng thái:** BÁO CÁO CĂN CỨ KỸ THUẬT (TECHNICAL EVIDENCE BRIEF) — ĐỀ XUẤT CHO D4, D6, D7 (CHƯA PHÊ DUYỆT)
 - **Ngày lập:** 2026-09-17
-- **Phiên bản:** 1.1.0 (Qualified Edition)
+- **Phiên bản:** 1.2.0 (Final Patched Edition)
 
 ---
 
@@ -81,7 +81,9 @@ Kiểm toán độc lập tại Tuần 1 ([notes/w1_dataset_audit.md](w1_dataset
   - **Môi trường:** Python 3.11.9 (thư viện chuẩn: `pathlib`, `json`, `re`, `collections`, `hashlib`), Windows 11 x64, workspace `d:\SafeShift`.
   - **Thời điểm thực thi:** `2026-09-17 03:55:00 UTC`.
   - **Lệnh thực thi:** `python scratch/full_census_engine.py`
-  - **Dấu vân tay dữ liệu đầu vào:** 1.000 cặp tệp `.json` và `.txt` tại `data/raw/InspecSafe-V1/{train,test}/DATA_PATH/{train,test}/Annotations/Anomaly_data/`.
+  - **Dấu vân tay mật mã dữ liệu đầu vào (Input Cryptographic Fingerprint):**  
+    `7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5`  
+    *(Lưu ý phương pháp luận: Đây là mã băm SHA-256 đã kiểm chứng tại W1 cho **toàn bộ 5.013 mẫu ảnh của bộ dữ liệu InspecSafe-V1**. Cuộc điều tra W2.3 lựa chọn tập con xác định tất định — `deterministic subset` — gồm đúng 1.000 mẫu Anomaly từ bộ dữ liệu có dấu vân tay này. Đây không phải là mã băm tính riêng cho tập con Anomaly — `not an Anomaly-only cryptographic hash`).*
   - **Mã nguồn script điều tra cục bộ:** `scratch/full_census_engine.py` (Mã băm SHA-256: `348860eabbe06c7908b3f4b198804033b3bd61917da4dbf8d6ec06e9cc4b5c03`).
   - **Artifact kết quả chi tiết cấp mẫu cục bộ:** `data/manifests/w2_grounding_census.json` (Dung lượng: 762.487 bytes, mã băm SHA-256: `cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`).
   - *Ghi chú bảo vệ dữ liệu:* Do script nằm trong thư mục scratch và artifact chứa bản ghi chi tiết từng mẫu, tài liệu này có **tính chất truy vết và có thể tái lập cục bộ thông qua mã băm của script và artifact đã ghi nhận (`traceable and locally reproducible with the recorded script/artifact hashes`)**. Bản thân artifact chi tiết không được commit vào Git repository theo đúng quy tắc bảo vệ dữ liệu thô/dẫn xuất lớn.
@@ -149,26 +151,28 @@ Phân loại tổng hợp trạng thái hỗ trợ không gian trên toàn thể
 | **`HAS_UNSUPPORTED`** | Mẫu chứa ít nhất một hazard atom hoàn toàn không có ground truth không gian (`NO_CURRENT_SPATIAL_GT`). | **59** | **5,9%** |
 | **Tổng cộng** | **Toàn bộ tập Anomaly của InspecSafe-V1** | **1.000** | **100,0%** |
 
-### 6.2 Phân biệt rạch ròi Hai Tập Mẫu Đánh giá: Direct-Support Pool vs Weak-Proxy Pool
+### 6.2 Phân biệt rạch ròi Hai Tập Mẫu Đánh giá và Giao thoa Tập hợp (Pool Overlap Analysis)
 
-Để tránh nhầm lẫn giữa tập mẫu thuần túy một loại hỗ trợ và tập mẫu có thể tham gia đánh giá, SafeShift xác lập ranh giới định lượng chính xác:
+Hai tập mẫu đánh giá Direct-Support Pool và Weak-Proxy Pool **KHÔNG PHẢI LÀ HAI TẬP RỜI NHAU (`THEY ARE NOT DISJOINT`)**. Việc phân tích giao thoa giữa hai tập hợp là bắt buộc để tránh sai lầm thống kê:
 
 1. **Direct-Support Sample Pool Candidate ($\ge 1$ Direct Atom):**
    - **Quy mô:** Đúng **721 mẫu ảnh (72,1%)**.
-   - **Thành phần cấu thành:**
-     - *Thuần túy trực tiếp (`ALL_DIRECT`):* **367 mẫu**.
-     - *Hỗn hợp trực tiếp và đại diện (`MIXED_DIRECT_PROXY`):* **323 mẫu**.
-     - *Chứa trực tiếp đi kèm nguy cơ thiếu nhãn (`HAS_UNSUPPORTED` có direct atom):* **31 mẫu** (gồm 24 mẫu Direct+Proxy+Unsupported và 7 mẫu Direct+Unsupported).
+   - **Thành phần:** 367 `ALL_DIRECT` + 323 `MIXED_DIRECT_PROXY` + 31 mẫu có direct atom trong `HAS_UNSUPPORTED`.
 2. **Weak-Proxy Sample Pool Candidate ($\ge 1$ Weak-Proxy Atom):**
    - **Quy mô:** Đúng **608 mẫu ảnh (60,8%)**.
-   - **Thành phần cấu thành:**
-     - *Thuần túy đại diện (`PROXY_ONLY`):* **251 mẫu**.
-     - *Hỗn hợp trực tiếp và đại diện (`MIXED_DIRECT_PROXY`):* **323 mẫu**.
-     - *Chứa đại diện đi kèm nguy cơ thiếu nhãn (`HAS_UNSUPPORTED` có weak-proxy atom):* **34 mẫu** (gồm 24 mẫu Direct+Proxy+Unsupported và 10 mẫu Proxy+Unsupported).
-3. **Mẫu Hoàn toàn Chưa có Ground Truth Không gian (`Unsupported Only`):**
-   - Đúng **18 mẫu ảnh (1,8%)** hoàn toàn không chứa bất kỳ atom nào thuộc Direct hay Proxy (ví dụ: chỉ chứa `DOOR_OPEN` hoặc `LIQUID_ON_GROUND` bị thiếu nhãn mà không có người hay vật thể nguy cơ nào khác).
-4. **Quan hệ Phân hoạch Toàn vẹn ($N=1.000$):**
-   - $367 (\text{ALL\_DIRECT}) + 251 (\text{PROXY\_ONLY}) + 18 (\text{Unsupported Only}) + 323 (\text{MIXED}) + 7 (\text{Direct+Unsupp}) + 10 (\text{Proxy+Unsupp}) + 24 (\text{Direct+Proxy+Unsupp}) = \mathbf{1.000\text{ mẫu}}$.
+   - **Thành phần:** 251 `PROXY_ONLY` + 323 `MIXED_DIRECT_PROXY` + 34 mẫu có proxy atom trong `HAS_UNSUPPORTED`.
+3. **Phần Giao thoa giữa Hai Tập Mẫu (Intersection $N = 347$):**
+   - Có chính xác **347 mẫu ảnh** thuộc đồng thời cả hai pool trên:
+     $$\text{Intersection} = 323 (\text{MIXED\_DIRECT\_PROXY}) + 24 (\text{Direct + Proxy + Unsupported}) = \mathbf{347\text{ mẫu}}$$
+4. **Đẳng thức Kiểm tra Toàn vẹn Tổng thể (Sanity Identity):**
+   - Số mẫu có ít nhất một nguy cơ đánh giá được (Direct hoặc Weak-Proxy):
+     $$\text{Pool}_{\text{Direct}} \cup \text{Pool}_{\text{Proxy}} = 721 + 608 - 347 = \mathbf{982\text{ mẫu}}$$
+   - Số mẫu hoàn toàn không có ground truth không gian (`Unsupported Only`): đúng **18 mẫu** (1,8%).
+   - Tổng thể mẫu Anomaly được giải thích trọn vẹn:
+     $$982 + 18 = \mathbf{1.000\text{ mẫu}}$$
+
+> [!CAUTION]
+> **Cảnh báo tính cộng gộp:** **TUYỆT ĐỐI KHÔNG ĐƯỢC CỘNG $721 + 608$** để suy ra tổng số mẫu ảnh, vì phép cộng cơ học này sẽ đếm lặp 347 mẫu giao thoa. Ở cấp độ Nguy cơ Nguyên tử, các số lượng atom mới có tính cộng rời hoàn toàn: **781 Direct atoms + 947 Weak-Proxy atoms + 60 Unsupported atoms = 1.788 atoms**.
 
 ### 6.3 Tổng hợp ở cấp độ Nguy cơ Nguyên tử (Hazard-Atom Level Support Status)
 
@@ -393,7 +397,7 @@ Câu hỏi nghiên cứu RQ2 yêu cầu phân tích sự tập trung lỗi của
   - Lưu giữ đầy đủ thông tin không gian hơn điểm tâm (`retains more spatial information than a point`: vị trí, diện tích, tỷ lệ khung hình).
 - *Làm rõ về năng lực thực tế của mô hình:*
   - Tài liệu chính thức của Google Gemini hiện tại có công bố chính thức hỗ trợ xuất normalized bounding box. Tuy nhiên, SafeShift **không ngoại suy điều này cho mọi mô hình VLM thương mại khác**.
-  - Năng lực định vị thực tế của từng mô hình/phiên bản/giao diện (`actual model localization capability`) bắt buộc phải được kiểm chứng thực nghiệm tại bước **W2.5**.
+  - Textual Bounding Box được đề xuất như một **ứng viên giao diện chuẩn hóa (`canonical interface candidate`)**, **KHÔNG PHẢI là năng lực được bảo đảm (`not a guaranteed capability`)** trên toàn bộ các mô hình. Năng lực định vị thực tế của từng mô hình/phiên bản/giao diện (`actual model localization capability`) bắt buộc phải được kiểm chứng thực nghiệm tại bước **W2.5**.
 
 ### Phương án D4-B: Pointing Point (Điểm trỏ tâm / Tọa độ điểm)
 - *Định dạng chuẩn:* Mô hình xuất một cặp tọa độ duy nhất: `[x, y]`.
@@ -407,7 +411,9 @@ Câu hỏi nghiên cứu RQ2 yêu cầu phân tích sự tập trung lỗi của
 
 ### Phương án D4-D: Attention Map / Visual Heatmap (Bản đồ chú ý thị giác / Bản đồ nhiệt)
 - *Định dạng chuẩn:* Trích xuất ma trận trọng số chú ý (Cross-attention weights) từ các tầng transformer của mô hình.
-- *Hạn chế chí mạng:* Closed APIs hoàn toàn không cung cấp attention weights; attention weights không đồng nhất với suy luận nhân quả; khác biệt kiến trúc giữa các mô hình triệt tiêu tính so sánh công bằng.
+- *Hạn chế chí mạng:*
+  - **Nhìn chung không hỗ trợ trên các giao diện Closed-API ứng viên (`Generally unavailable / not exposed for candidate closed-API interfaces`):** Các nhà cung cấp API thương mại (OpenAI, Google Gemini, Anthropic) nhìn chung không expose attention maps; hiện trạng này bắt buộc phải được xác minh theo từng provider/phiên bản cụ thể tại bước **W2.5**.
+  - **Không phản ánh suy luận nhân quả:** Nhiều nghiên cứu đã chứng minh attention weights không đồng nhất với giải thích nhân quả. Khác biệt kiến trúc giữa các mô hình triệt tiêu tính so sánh công bằng.
 
 ---
 
@@ -483,11 +489,11 @@ SafeShift xem xét ba phương án giải quyết bài toán nhãn lý do của 
 
 ### Phương án D7-B: Tạo khoảng 100 hộp bao lý do đơn lẻ (100-Sample Rationale Campaign)
 - Chọn lọc 100 mẫu Anomaly đại diện theo phân tầng có phương pháp. Nhóm nghiên cứu SafeShift tự vẽ hộp bao vùng lý do giải thích an toàn (`Human Rationale Boxes`).
-- *Đánh giá:* Tạo thêm giá trị nhỏ cho việc đo lường "Wrong Reason" trên 100 mẫu; tuy nhiên đối mặt rủi ro phương pháp luận lớn do tính chủ quan cá nhân của người gán nhãn.
+- *Đánh giá:* Tạo thêm giá trị nhỏ cho việc đo lường "Wrong Reason" trên 100 mẫu; tuy nhiên đối mặt rủi ro phương pháp luận lớn do tính chủ quan cá nhân của người gán nhãn. Chi phí thời gian ước tính sơ bộ khoảng ~20–30 giờ *(lưu ý: đây là ước lượng kế hoạch sơ bộ, không phải số đo thực nghiệm — rough planning estimate, not empirically measured; không dùng làm bằng chứng khoa học)*.
 
 ### Phương án D7-C: Tạo tập con nhỏ 50–100 mẫu có kiểm định kép (Double-Annotated Subset)
 - Tương tự D7-B nhưng áp dụng quy trình gán nhãn chéo độc lập bởi 2 người (`double annotation`), đo lường độ đồng thuận liên gán nhãn (Inter-Annotator Agreement — Cohen's $\kappa$ hoặc Box IoU agreement), và có trọng tài giải quyết bất đồng. Sự tham gia thẩm định của chuyên gia an toàn lao động (`domain-expert review`) là điều rất mong muốn nếu triển khai.
-- *Đánh giá:* Đảm bảo tính khoa học cao hơn D7-B; tuy nhiên tiêu tốn chi phí thời gian đáng kể, có nguy cơ làm chậm tiến độ thực thi baseline của Seminar.
+- *Đánh giá:* Đảm bảo tính khoa học cao hơn D7-B; tuy nhiên tiêu tốn chi phí thời gian đáng kể khoảng ~40–60 giờ *(ước lượng kế hoạch sơ bộ, không phải số đo thực nghiệm — rough planning estimate, not empirically measured)*, có nguy cơ làm chậm tiến độ thực thi baseline của Seminar.
 
 ---
 
@@ -497,8 +503,8 @@ SafeShift xem xét ba phương án giải quyết bài toán nhãn lý do của 
 
 | Tiêu chí Đánh giá | D4-A: Text Bounding Box | D4-B: Pointing Point | D4-C: Polygon / Mask | D4-D: Attention / Heatmap |
 |---|:---:|:---:|:---:|:---:|
-| **Khả năng hỗ trợ trên VLM thương mại** | **KHẢ THI** (Gemini documents officially; cần test model khác) | KHẢ THI | HẠN CHẾ | **KHÔNG HỖ TRỢ TRÊN CLOSED APIS** |
-| **Khả năng hỗ trợ trên VLM mã nguồn mở** | **RẤT CAO** (Chuẩn công nghiệp) | CAO | TRUNG BÌNH | TRUNG BÌNH (Cần can thiệp code) |
+| **Khả năng hỗ trợ trên VLM thương mại** | **KHẢ THI** (Gemini documents officially; cần test model khác tại W2.5) | KHẢ THI | HẠN CHẾ | **Nhìn chung không expose trên candidate closed APIs (cần verify tại W2.5)** |
+| **Khả năng hỗ trợ trên VLM mã nguồn mở** | **PHỤ THUỘC TỪNG MÔ HÌNH (MODEL-DEPENDENT) — Cần verify tại W2.5** | CAO | TRUNG BÌNH | TRUNG BÌNH (Cần can thiệp code) |
 | **Tính so sánh cùng Prompt (Prompt Comparability)** | **TỐT** (Dùng chung cấu trúc JSON/coords) | TỐT | KÉM (Token tràn lan) | **KHÔNG KHẢ THI** |
 | **Khả năng parse tự động (Parseability)** | **CAO** (Regex cấu trúc tốt) | RẤT CAO | RẤT KÉM (Dễ lỗi JSON/cú pháp) | N/A |
 | **Tương thích với Polygon GT có sẵn** | **TỐT** (Derive chuẩn xác sang BBox) | TRUNG BÌNH (Chỉ lấy điểm tâm) | **XUẤT SẮC** (Cùng định dạng) | KÉM (Cần ngưỡng hóa heuristic) |
@@ -506,14 +512,14 @@ SafeShift xem xét ba phương án giải quyết bài toán nhãn lý do của 
 | **Tính tái lập thực nghiệm (Reproducibility)** | **RẤT CAO** (Tất định) | RẤT CAO | TRUNG BÌNH | KÉM (Khác biệt kiến trúc) |
 | **Gánh nặng triển khai (Implementation Burden)** | **THẤP** (Chuẩn hóa nhẹ) | RẤT THẤP | RẤT CAO | RẤT CAO (Bế tắc trên API) |
 
-> **Nhận định ma trận D4:** **Phương án D4-A (Textual Normalized Bounding Box)** là ứng viên cân bằng và khoa học nhất để làm chuẩn biểu diễn nội bộ thống nhất giữa các mô hình.
+> **Nhận định ma trận D4:** **Phương án D4-A (Textual Normalized Bounding Box)** là ứng viên giao diện chuẩn hóa cân bằng và khoa học nhất (`canonical interface candidate`), không phải năng lực được bảo đảm của mọi mô hình.
 
 ### 18.2 Ma trận Quyết định D7 — Chiến dịch Gán nhãn Rationale Bổ sung
 
 | Tiêu chí Đánh giá | D7-A: Không tạo nhãn mới | D7-B: Gán nhãn 100 mẫu đơn lẻ | D7-C: Tập nhỏ 50–100 mẫu kiểm định kép |
 |---|:---:|:---:|:---:|
 | **Giá trị khoa học cho Seminar 8 tuần** | **CHUẨN MỰC** (Trung thực với benchmark gốc) | TRUNG BÌNH (Rủi ro chủ quan) | KHÁ (Có kiểm soát qua độ đồng thuận) |
-| **Chi phí thời gian & Nỗ lực** | **TỐI ƯU (0 giờ làm nhãn)** | ĐÁNG KỂ (~20–30 giờ) | **RẤT LỚN (~40–60 giờ)** |
+| **Chi phí thời gian & Nỗ lực (Rough planning estimate, not empirical)** | **TỐI ƯU (0 giờ làm nhãn)** | ĐÁNG KỂ (~20–30 giờ planning estimate) | **RẤT LỚN (~40–60 giờ planning estimate)** |
 | **Tính chủ quan của nhãn mới** | **Không phát sinh thêm tính chủ quan gán nhãn** | **RẤT CAO** (Ý kiến cá nhân) | TRUNG BÌNH (Đã kiểm soát qua 2 người) |
 | **Yêu cầu thẩm định chuyên gia an toàn** | Không áp dụng | Rất mong muốn nhưng khó khả thi | Rất mong muốn nhưng khó khả thi |
 | **Mức độ phù hợp với tiến độ Seminar 8 tuần** | **HOÀN TOÀN PHÙ HỢP (Kịp W3 baseline)** | NGUY CƠ TRỄ TIẾN ĐỘ | **NGUY CƠ CAO GÂY VỠ TIẾN ĐỘ** |
@@ -538,12 +544,13 @@ Căn cứ trên toàn bộ bằng chứng thực nghiệm của W2.3, nhóm nghi
 ### Khuyến nghị cho D6 (Full Direct-Support Census)
 - **Phê chuẩn Hệ phân loại 12 Nguy cơ Nguyên tử (`12 Hazard Atoms`)** đã được kiểm chứng bao phủ 100% dữ liệu Anomaly.
 - **Phê chuẩn việc phân định rạch ròi:** Sample-level counts ($N=1.000$) và Hazard-atom counts ($N=1.788$).
-- **Phê chuẩn quy mô các tập con thực nghiệm:**
+- **Phê chuẩn quy mô các tập con thực nghiệm và ranh giới giao thoa:**
   - *Direct-Support Sample Pool:* **721 mẫu** (gồm 367 mẫu `ALL_DIRECT`, 323 mẫu `MIXED_DIRECT_PROXY`, 31 mẫu có direct atom trong `HAS_UNSUPPORTED`).
   - *Weak-Proxy Sample Pool:* **608 mẫu** (gồm 251 mẫu `PROXY_ONLY`, 323 mẫu `MIXED_DIRECT_PROXY`, 34 mẫu có proxy atom trong `HAS_UNSUPPORTED`).
+  - *Giao thoa giữa Hai Pool:* Đúng **347 mẫu** (không cộng gộp 721 + 608; $721 + 608 - 347 = 982$ mẫu).
   - *Direct Hazard Atoms:* **781 atoms**.
   - *Weak-Proxy Hazard Atoms:* **947 atoms**.
-  - *Unsupported Samples:* **59 mẫu** (`HAS_UNSUPPORTED`) / **60 hazard atoms** (trong đó có 18 mẫu hoàn toàn không có cả Direct lẫn Proxy).
+  - *Unsupported Samples:* **59 mẫu** (`HAS_UNSUPPORTED`) / **60 hazard atoms** (trong đó có 18 mẫu `Unsupported Only`).
 - **Phê chuẩn Khung RQ3:** Báo cáo tách biệt hoàn toàn giữa RQ3-A (Direct Object-Support) và RQ3-B (Weak Proxy qua `Person`).
 
 ### Khuyến nghị cho D7 (Optional Rationale Annotation Campaign)
@@ -573,7 +580,7 @@ Nhằm chuẩn bị phê duyệt dứt điểm các quyết định trong tuần
 
 ### Nhóm câu hỏi sẵn sàng phê duyệt cho Quyết định D6:
 1. *Research Lead có phê chuẩn **Hệ phân loại 12 Nguy cơ Nguyên tử (`Hazard Atom Taxonomy`)** và bảng ánh xạ nhãn đối tượng hỗ trợ tại Mục 5 & Mục 7 không?*
-2. *Research Lead có chấp thuận định nghĩa và quy mô của **Direct-Support Sample Pool (721 mẫu)** và **Weak-Proxy Sample Pool (608 mẫu)** đi kèm yêu cầu bắt buộc báo cáo chi tiết thành phần nội bộ không?*
+2. *Research Lead có chấp thuận định nghĩa và quy mô của **Direct-Support Sample Pool (721 mẫu)** và **Weak-Proxy Sample Pool (608 mẫu)** đi kèm việc xác nhận ranh giới giao thoa 347 mẫu và yêu cầu bắt buộc báo cáo chi tiết thành phần nội bộ không?*
 3. *Research Lead có phê chuẩn việc **phân tách độc lập kết quả thực nghiệm của RQ3** thành RQ3-A (Direct Object-Support) và RQ3-B (Weak Proxy qua `Person`) không?*
 4. *Research Lead có phê chuẩn danh mục **7 Tầng Nguy cơ Gom nhóm Ứng viên cho RQ2** tại Mục 11 không?*
 
@@ -587,8 +594,10 @@ Nhằm chuẩn bị phê duyệt dứt điểm các quyết định trong tuần
 
 Tất cả các kết luận và số liệu thống kê trong báo cáo này đều có thể truy vết và tái lập cục bộ (`traceable and locally reproducible with the recorded script/artifact hashes`) dựa trên các nguồn tài liệu và artifact sau trong kho lưu trữ SafeShift:
 
-1. **Kho lưu trữ Dữ liệu Gốc:**
+1. **Kho lưu trữ Dữ liệu Gốc & Dấu vân tay Mật mã:**
    - `data/raw/InspecSafe-V1/{train,test}/DATA_PATH/{train,test}/Annotations/Anomaly_data/` (1.000 cặp tệp `.json` và `.txt`).
+   - Dấu vân tay mật mã toàn bộ bộ dữ liệu InspecSafe-V1 (5.013 mẫu) đã kiểm chứng tại W1:  
+     `7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5`
 2. **Tài liệu Kiểm toán và Quyết định Nền tảng:**
    - [notes/w1_dataset_audit.md](w1_dataset_audit.md) — Báo cáo kiểm toán tổng thể dữ liệu Week 1.
    - [notes/dataset_schema.md](dataset_schema.md) — Đặc tả schema chi tiết và 24 mệnh đề mở đầu ngữ cảnh.
