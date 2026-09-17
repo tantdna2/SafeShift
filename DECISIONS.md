@@ -367,6 +367,244 @@
   - Định hướng trực tiếp cho định nghĩa metric tại W2.4, khảo sát mô hình tại W2.5 và thực thi baseline tại W3.
 - **Thay thế quyết định:** Không.
 
+## DEC-W2-D5-005 — Metrics & Statistical Evaluation Protocol
+
+- **ID:** DEC-W2-D5-005
+- **Ngày:** 2026-09-17
+- **Trạng thái:** ĐƯỢC CHẤP THUẬN
+- **Vấn đề cần quyết định:**
+  - Xác lập các chỉ số phân loại an toàn chính thức (Classification Metrics) và chỉ số sai số an toàn trọng yếu (Safety-Critical Error Metrics) cho bài toán phân loại 4 cấp độ an toàn và phát hiện bất thường nhị phân.
+  - Thiết lập chính sách xử lý hiện tượng thiếu hụt lớp / hỗ trợ thưa thớt ở từng miền công nghiệp (Missing-Class / Domain Support Policy) và chính sách báo cáo miền có hiệu năng thấp nhất (Worst-Domain Reporting Policy).
+  - Chuẩn hóa mỏ neo so sánh chính cho độ bền vững xuyên miền (Cross-Domain Robustness Gap / Drop) phục vụ câu hỏi nghiên cứu RQ1.
+  - Phê chuẩn hệ thống chỉ số phân tầng nguy cơ RQ2 trên 7 tầng nguy cơ gom nhóm (Candidate Grouped Hazard Strata) và quy tắc phương pháp luận kiểm soát hiện tượng chồng lấn đa nguy cơ (Multi-Stratum Overlap).
+  - Xác lập giao thức đánh giá bám bằng chứng trực tiếp (RQ3-A Direct Grounding): định nghĩa tập vùng GT ứng viên ($R_j$), chỉ số liên tục chính (End-to-End Mean IoU, Median IoU), các ngưỡng nhạy xác định trước (Hit@0.25, Hit@0.50), chuẩn hóa Pointing Hit trên đa giác gốc, và phân định triệt để hai chế độ ghép cặp tối ưu (Mode A vs Mode B).
+  - Phê chuẩn giao thức đánh giá bám bằng chứng đại diện yếu (RQ3-B Weak Proxy Grounding) qua chỉ số Identity-Agnostic Proxy Localization Consistency (PLC), phân tích độ nhạy trên tập con đơn người (Single-Person Proxy Subset), và các biến đồng biến chẩn đoán kích thước/độ hiếm.
+  - Chuẩn hóa chỉ số không nhất quán phân loại – bám bằng chứng ($\text{CGI}@\tau$) theo ngưỡng phân vị xác định trước.
+  - Xác định chính sách xử lý lỗi phân tích cú pháp (Parse Failure) và loại trừ các nguyên tử không có GT không gian (Unsupported Atoms).
+  - Phê chuẩn phương pháp ước lượng bất định và khoảng tin cậy chính thức (Domain-Stratified Point-Cluster Bootstrap) cùng phương pháp so sánh mô hình theo cặp (Paired Bootstrap Difference CI 95%).
+  - Xác định phạm vi áp dụng trên các phân tầng giao thức P1, P2, P3 và phân tích độ nhạy với 36 mẫu xung đột nhãn miền.
+  - Xác lập chính sách đối với độ hiệu chỉnh xác suất (Calibration) và chỉ số ảo giác đối tượng (Object Hallucination).
+- **Bối cảnh và bằng chứng:**
+  - Kế thừa toàn bộ hệ thống quyết định đã khóa: [DEC-W2-D1-001](#dec-w2-d1-001) (Research Framing & Protocol Hierarchy: P1/P2/P3/P4, RQ1/RQ2/RQ3), [DEC-W2-D2-002](#dec-w2-d2-002) (Image-level Prediction Unit, Normal `point_id` Resampling Cluster, Anomaly Dependence), [DEC-W2-D3-003](#dec-w2-d3-003) (`folder_domain` Primary, 36 Mismatch Dual-Report Sensitivity), [DEC-W2-D4-004](#dec-w2-d4-004) (Canonical Bounding Box $[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0, 1]$, Raw Response Preservation, Capability-Aware Policy B), [DEC-W2-D6-006](#dec-w2-d6-006) (12 Hazard Atoms, 3 Support Statuses: 781 Direct / 947 Proxy / 60 Unsupported atoms, 7 Grouped Hazard Strata), và [DEC-W2-D7-007](#dec-w2-d7-007) (Chọn D7-A không tạo nhãn rationale mới, loại bỏ Object Hallucination Rate toàn bộ dataset).
+  - Báo cáo căn cứ kỹ thuật phương pháp luận chi tiết tại [notes/w2_metrics_statistics_decision_brief.md](notes/w2_metrics_statistics_decision_brief.md) (W2.4 Decision Brief, PR #13).
+  - Kết quả kiểm toán thực chứng bổ sung (Provenance & Audit Evidence):
+    - *Kiểm toán tập vùng GT Direct (Direct Region Audit):* Trên toàn bộ 781 Direct hazard atoms (phân bố trên 721 mẫu thuộc `Direct-Support Sample Pool`), 100% sở hữu ít nhất một đa giác GT hỗ trợ hợp lệ ($|R_j| \ge 1$, đúng 0 trường hợp rỗng); trong đó 680 atoms đơn vùng ($|R_j|=1$, 87,07%) và 101 atoms đa vùng ($|R_j|>1$, 12,93%, chứa từ 2 đến 8 đa giác hỗ trợ).
+    - *Kiểm toán vùng đại diện người (Weak-Proxy Person Audit):* Trên toàn bộ 608 mẫu thuộc `Weak-Proxy Sample Pool`, có 410 mẫu đơn người ($|\text{Person}|=1$, 67,43%) và 198 mẫu đa người ($|\text{Person}|>1$, 32,57%, chứa từ 2 đến 8 người); trong 947 Weak-Proxy atoms, có 614 atoms nằm trong ảnh đơn người (64,84%) và 333 atoms nằm trong ảnh đa người (35,16%).
+    - *Kiểm toán mẫu đa nguy cơ (Multi-Hazard):* Có 512 / 1.000 mẫu Anomaly (51,2%) chứa từ 2 nguyên tử nguy cơ trở lên; 7 tầng nguy cơ gom nhóm tạo ra 1.381 lượt thành viên (memberships) trên 1.000 mẫu ảnh độc nhất.
+    - *Hồ sơ nguồn gốc kiểm toán (Audit Provenance):* Lệnh thực thi `python scratch/audit_gt_regions.py`, Python 3.11.9, Windows 11 x64, timestamp `2026-09-17 05:22:14 UTC`; Input Fingerprint SHA-256: `7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5`; D6 Census SHA-256 (`data/manifests/w2_grounding_census.json`): `cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`; Audit Script SHA-256: `90c704af291fb34725b6a679f3bdb2a84d18297628c569497e34309ed49cee50`. (Ghi rõ: Script là local scratch script, không commit vào Git repository, không tuyên bố khả năng tái lập chỉ bằng repo thuần túy).
+- **Các phương án:**
+  - *Chỉ số phân loại 4 lớp:* (1) Raw Accuracy: Bị chi phối hoàn toàn bởi 80% Normal; (2) Balanced Accuracy đơn độc: Đo trực tiếp Recall không thiên vị nhưng không phạt báo động giả; (3) Macro-F1 đơn độc: Cân bằng FP và FN nhưng cực kỳ nhạy cảm với lớp hiếm $N=15$; (4) Balanced Accuracy + Macro-F1 song hành (Được chọn): Bổ trợ hoàn hảo cho nhau, đo trọn vẹn cả độ bao quát an toàn và khả năng kiểm soát báo động giả.
+  - *Chỉ số sai số an toàn:* (1) FNR gộp chung: Mơ hồ và ngụy biện phương pháp luận; (2) Tách Track A (Binary Anomaly Detection) và Track B (Level01 One-vs-Rest) riêng biệt (Được chọn): Phân định rạch ròi giữa rủi ro bỏ sót bất thường tổng thể và bỏ sót sự cố nguy hiểm thảm khốc.
+  - *Chính sách miền thiếu lớp:* (1) Support-only macro average: Ngụy biện so sánh các miền trên đề bài khác nhau ($K=3$ vs $K=4$); (2) Cố định 4 lớp (gán NA khi thiếu): Làm khuyết 40% số miền; (3) Dual-Layer Support-Aware Policy (Được chọn): Báo cáo mô tả có gắn cờ $K_d$ và lấy Class-Conditional Recall làm mỏ neo so sánh chính.
+  - *Độ suy giảm xuyên miền (RQ1):* (1) Balanced Accuracy Spread thuần túy: Bỏ qua 2/5 miền; (2) Class-Conditional Domain Analysis (Được chọn): So sánh trên từng lớp có hỗ trợ ground truth để triệt tiêu nhiễu tỷ lệ lớp, kết hợp Balanced Accuracy Spread trên tập so sánh được ($K=4$) làm chẩn đoán phụ trợ.
+  - *Báo cáo Worst-Domain:* (1) Ngưỡng cơ học $N \ge 30$: Tùy tiện, thiếu cơ sở toán học; (2) Observed numerical minimum among comparable domains (Được chọn): Minh bạch mẫu số, kèm khoảng tin cậy và gắn nhãn Sparse-Support / Descriptive-Only cho `metallurgy`.
+  - *Định vị Direct Grounding:* (1) Hit@0.25 đơn độc: Dễ gây tranh cãi về ngưỡng; (2) Continuous IoU làm Primary kết hợp Threshold Sensitivity (Hit@0.25, Hit@0.50 xác định trước) và phân định 2 chế độ ghép cặp Mode A / Mode B (Được chọn).
+  - *Định vị Weak Proxy:* (1) Áp dụng IoU với Person: Ngụy biện, phạt mô hình nhìn đúng vùng đầu/tay; (2) Identity-Agnostic Proxy Localization Consistency (Center-in-Proxy + Box Containment) kết hợp kiểm tra độ nhạy trên Single-Person Proxy Subset (Được chọn).
+  - *Ước lượng bất định:* (1) Stratified theo Domain $\times$ Level: Gây lỗi phương sai 0 giả tạo (artificial zero resampling variance) trên các phân tầng đơn mẫu ($N=1$); (2) Domain-Stratified Point-Cluster Bootstrap (Được chọn): Phân tầng duy nhất theo miền, lấy mẫu lại theo cụm `point_id`, kiểm soát đúng cấu trúc phụ thuộc mà không bóp méo phương sai.
+  - *So sánh mô hình:* (1) Phép kiểm định 2 mẫu độc lập: Sai phương pháp luận (dữ liệu theo cặp); (2) Paired Bootstrap Difference CI 95% trên cùng tập replicate (Được chọn): Tập trung vào độ lớn hiệu ứng và hướng phân hóa thực chất.
+- **Quyết định:**
+  - **1. Phê duyệt Cặp Chỉ số Phân loại Chính (Classification Primary Co-Metrics):**
+    - **Primary Co-Metrics (Hai chỉ số chính song hành):**
+      1. **Balanced Accuracy (Độ chính xác cân bằng / Macro-Recall):**
+         $$\text{Balanced Accuracy} = \frac{1}{|\mathcal{C}_{\text{eval}}|} \sum_{c \in \mathcal{C}_{\text{eval}}} \text{Recall}_c = \frac{1}{|\mathcal{C}_{\text{eval}}|} \sum_{c \in \mathcal{C}_{\text{eval}}} \frac{\text{TP}_c}{\text{TP}_c + \text{FN}_c}$$
+      2. **Macro-F1 (F1 trung bình không trọng số giữa các lớp):**
+         $$\text{Macro-F1} = \frac{1}{|\mathcal{C}_{\text{eval}}|} \sum_{c \in \mathcal{C}_{\text{eval}}} \text{F1}_c, \quad \text{với } \text{F1}_c = \frac{2 \cdot \text{Precision}_c \cdot \text{Recall}_c}{\text{Precision}_c + \text{Recall}_c} = \frac{2 \cdot \text{TP}_c}{2 \cdot \text{TP}_c + \text{FP}_c + \text{FN}_c}$$
+         *(Quy ước kỹ thuật: Nếu $\text{TP}_c + \text{FP}_c = 0$, đặt $\text{Precision}_c = 0.0$; nếu $\text{TP}_c = 0$, đặt $\text{F1}_c = 0.0$)*.
+    - **Raw Accuracy (Độ chính xác thông thường):**
+      - Xếp vào diện **DESCRIPTIVE ONLY (Chỉ dùng mô tả phụ trợ / đối chiếu upstream)**.
+      - **Tuyệt đối không dùng làm chỉ số chính** để so sánh hay kết luận năng lực mô hình, do bị chi phối hoàn toàn bởi 80% mẫu Normal.
+    - **Báo cáo chẩn đoán bắt buộc:**
+      - Bắt buộc công bố đầy đủ: **Per-Class Precision**, **Per-Class Recall**, **Per-Class F1** cho từng cấp độ an toàn (`Level01`–`Level04`).
+      - Bắt buộc công bố **Row-Normalized Confusion Matrix (Ma trận nhầm lẫn chuẩn hóa theo hàng)** để phản ánh trực quan phân bố sai số theo từng cấp nhãn thực tế.
+  - **2. Phê duyệt Chỉ số Sai số An toàn Trọng yếu (Safety-Critical Error Metrics):**
+    - Phê duyệt cấu trúc đánh giá hai track độc lập, phản ánh tính phi đối xứng của rủi ro công nghiệp:
+      - **TRACK A — Binary Anomaly Detection (Phát hiện bất thường nhị phân):**
+        - Dương tính (Positive Class): $\text{Level01} \cup \text{Level02} \cup \text{Level03}$ ($N=1.000$ ở P2; $N=251$ ở P1).
+        - Âm tính (Negative Class): $\text{Level04}$ ($N=4.013$ ở P2; $N=999$ ở P1).
+        - Báo cáo:
+          - **Anomaly FNR (Tỷ lệ bỏ sót nguy cơ bất thường):**
+            $$\text{FNR}_{\text{anomaly}} = \frac{\sum_{i \in \mathcal{P}_{\text{anom}}} \mathbb{I}(\hat{y}_i = \text{Level04})}{N_{\text{anomaly}}} = 1 - \text{Recall}_{\text{anomaly}}$$
+          - **Anomaly FPR (Tỷ lệ báo động nhầm):**
+            $$\text{FPR}_{\text{anomaly}} = \frac{\sum_{i \in \mathcal{N}_{\text{anom}}} \mathbb{I}(\hat{y}_i \in \{\text{Level01, Level02, Level03}\})}{N_{\text{normal}}}$$
+      - **TRACK B — Level01 One-vs-Rest (Phân loại nguy cơ nghiêm trọng cấp 1):**
+        - Dương tính: $\text{Level01}$ ($N=659$ ở P2; $N=169$ ở P1).
+        - Âm tính: $\text{Level02} \cup \text{Level03} \cup \text{Level04}$.
+        - Báo cáo:
+          - **Level01 Recall ($\text{Recall}_{\text{L01}}$)** và **Level01 FNR ($\text{FNR}_{\text{L01}} = 1 - \text{Recall}_{\text{L01}}$)**.
+          - Phân rã bắt buộc: **Tỷ lệ bỏ sót hoàn toàn thành bình thường (`Critical Miss Rate`:** $\hat{y}_i = \text{Level04}$) và **Tỷ lệ hạ cấp nguy cơ (`Critical Downgrade Rate`:** $\hat{y}_i \in \{\text{Level02, Level03}\}$).
+    - **Quy tắc cấm tuyệt đối:** Tuyệt đối không dùng một chỉ số "FNR" chung chung mà không ghi rõ mẫu số và định danh $\text{FNR}_{\text{anomaly}}$ hay $\text{FNR}_{\text{L01}}$.
+  - **3. Phê duyệt Chính sách Miền thiếu lớp (Dual-Layer Support-Aware Policy):**
+    - Nhằm xử lý trung thực hiện tượng miền `metallurgy` thiếu `Level02` và `oil_chemical` thiếu `Level03` ở P2:
+      - **A. Chỉ số vĩ mô từng miền (Domain Macro Metrics):** Được phép báo cáo mô tả nhưng **bắt buộc phải ghi rõ số lớp ground truth thực tế $K_d$** (ví dụ: $\text{Macro-F1}_{(K=3)}$), kèm cảnh báo không so sánh trực tiếp với các miền có $K=4$.
+      - **B. So sánh xuyên miền (Cross-Domain Comparison):** Xác lập **Class-Conditional Recall (Recall theo từng lớp)** làm mỏ neo chính.
+      - **Quy tắc cấm kỵ:** Tuyệt đối không so sánh máy móc Macro-F1 hay Balanced Accuracy giữa các miền công nghiệp có label support khác nhau.
+  - **4. Phê duyệt Mỏ neo Đánh giá Độ bền vững Xuyên miền (RQ1 Cross-Domain Robustness):**
+    - **Primary Anchor (Mỏ neo chính):** **Class-Conditional Domain Analysis (Phân tích xuyên miền theo từng lớp)**:
+      - Với mỗi lớp an toàn $c$ và miền $d$ có ground truth ($N_{c, d} > 0$):
+        $$\text{Recall}(c, d) = \frac{\text{TP}_{c, d}}{N_{c, d}}$$
+        $$\Delta(c, d) = \text{Recall}_{c, \text{pooled}} - \text{Recall}_{c, d}$$
+      - Báo cáo đầy đủ: Per-class domain recall, Pooled-to-domain gap $\Delta(c, d)$, Per-class domain spread $\left(\max_d \text{Recall}(c, d) - \min_d \text{Recall}(c, d)\right)$, và Worst adverse gap.
+    - **Secondary Diagnostics (Chẩn đoán phụ trợ):**
+      - **Balanced Accuracy Domain Spread** trên tập các miền so sánh được có đủ 4 lớp ($K=4$, gồm `coal_conveyor`, `power`, `tunnel`).
+      - **Binary Anomaly Recall Spread** trên các miền có dữ liệu bất thường.
+    - **Chuẩn hóa thuật ngữ:** Bắt buộc dùng **"Cross-Domain Robustness Gap / Drop"**; tuyệt đối không dùng thuật ngữ "Domain Generalization Drop".
+    - **Cảnh báo phương pháp luận bắt buộc:** Phân tích class-conditional chỉ giúp giảm thiểu nhiễu do tỷ lệ lớp (`reduces class-prevalence confounding`), **KHÔNG LOẠI BỎ ĐƯỢC** các yếu tố gây nhiễu về: thành phần nguy cơ (`hazard composition`), nền tảng robot tuần tra (`robot platform`), góc máy (`viewpoint`), điều kiện chiếu sáng/bối cảnh (`lighting/scene`), và các đặc trưng vật lý riêng biệt của từng phân xưởng.
+  - **5. Phê duyệt Chính sách Báo cáo Miền có Hiệu năng Thấp nhất (Worst-Domain Policy):**
+    - **Bãi bỏ quy tắc ngưỡng cơ học $N \ge 30$** làm tiêu chuẩn khoa học phân định quyền tham gia xếp hạng.
+    - Báo cáo chính thức là: **"Observed numerical minimum among comparable domains" (Giá trị số học quan sát thấp nhất trong số các miền có thể so sánh được)**.
+    - Mọi ô số liệu Worst-Domain bắt buộc phải công bố đi kèm: định nghĩa metric cụ thể, mẫu số thực tế ($k / N_d$), mức độ hỗ trợ nhãn, khoảng tin cậy bootstrap, và lưu ý về tính so sánh được (`comparability warning`).
+    - Miền Luyện kim (`metallurgy`): Bắt buộc gắn nhãn **`[Sparse-Support / Descriptive-Only]`** cho toàn bộ các chỉ số bất thường ($N_{\text{anomaly}}=9$ ở P2; $N_{\text{anomaly}}=0$ ở P1). Tuyệt đối không đưa ra các tuyên bố xếp hạng mạnh (`strong ranking claims`) khi khoảng tin cậy rộng hoặc mức độ hỗ trợ nhãn khác nhau.
+  - **6. Phê duyệt Hệ thống Chỉ số Phân tầng Nguy cơ RQ2 (RQ2 Grouped Hazard Strata Metrics):**
+    - Đánh giá trên đúng **7 tầng nguy cơ gom nhóm ứng viên (Candidate Grouped Hazard Strata A–G)** đã khóa tại D6.
+    - Đối với mỗi stratum $s \in \{\text{Strata A}, \dots, \text{Strata G}\}$ gồm $N_s$ mẫu, báo cáo bộ 4 chỉ số an toàn:
+      1. **Exact Safety-Level Error Rate:** $\text{ErrorRate}_{\text{exact}}(s) = \frac{1}{N_s} \sum_{i \in \text{Strata}_s} \mathbb{I}(\hat{y}_i \neq y_i)$.
+      2. **Anomaly-to-Normal Miss Rate:** $\text{MissRate}_{\text{anom}\rightarrow\text{norm}}(s) = \frac{1}{N_s} \sum_{i \in \text{Strata}_s} \mathbb{I}(\hat{y}_i = \text{Level04})$.
+      3. **Level01 Recall & Critical Miss Rate:** $\text{Recall}_{\text{L01}}(s)$ và $\text{CriticalMissRate}_{\text{L01}\rightarrow\text{L04}}(s)$ áp dụng cho các stratum có chứa Level01.
+      4. **Safety-Level Confusion Distribution:** Phân bố dự đoán 4 mức $\{\text{Level01}, \text{Level02}, \text{Level03}, \text{Level04}\}$ trên từng tầng.
+    - **Cảnh báo phương pháp luận bắt buộc về Mẫu đa nguy cơ và Tính không cộng dồn (Non-Additive Counts):**
+      - Bằng chứng kiểm toán thực chứng: Đúng **512 / 1.000 mẫu Anomaly (51,2%)** chứa $\ge 2$ hazard atoms; 7 tầng nguy cơ gom nhóm tạo ra tổng cộng **1.381 lượt thành viên (sample memberships)** trên 1.000 mẫu ảnh độc nhất.
+      - Hệ quả bắt buộc:
+        1. Số lượng mẫu giữa các tầng **KHÔNG CÓ TÍNH CỘNG DỒN (`counts are NOT additive`, $\sum N_s \neq 1.000$)**.
+        2. Cùng một mẫu ảnh xuất hiện trong nhiều tầng nguy cơ khác nhau.
+        3. Các ước lượng chỉ số giữa các tầng **hoàn toàn không độc lập về mặt thống kê (`strata estimates are not statistically independent`)**.
+        4. **Tuyệt đối cấm cộng dồn số lượng lỗi hoặc tính trung bình gộp sai số giữa các tầng** để đại diện cho toàn bộ dataset (`do not sum error counts across strata`).
+  - **7. Direct Grounding — Định nghĩa Tập Vùng GT Ứng viên (Candidate GT Region Set $R_j$):**
+    - Đối với mỗi Direct hazard atom $j$, tập vùng GT ứng viên hỗ trợ $R_j$ được xác định tất định từ quy tắc ánh xạ D6:
+      $$R_j = \left\{ r \in \text{Polygons}(\text{sample}) \mid \text{label}(r) \in \text{CandidateLabels}(j) \right\}$$
+    - Kết quả kiểm toán thực chứng: **781 / 781 Direct atoms (100%)** sở hữu $|R_j| \ge 1$; gồm **680 atoms đơn vùng** ($|R_j|=1$) và **101 atoms đa vùng** ($|R_j|>1$, từ 2 đến 8 vùng GT).
+    - Trọng số cạnh IoU giữa hộp bao dự đoán $p$ và GT atom $j$ là giá trị cực đại trên tập $R_j$:
+      $$\text{IoU}(p, j) = \max_{r \in R_j} \text{IoU}\left(\mathbf{b}_{\text{pred}}^p, \text{bbox}(r)\right)$$
+    - **Quy tắc phương pháp luận:** Mỗi hazard atom $j$ vẫn là **MỘT đơn vị đánh giá duy nhất (ONE evaluation unit)**; tuyệt đối không biến nhiều đa giác hỗ trợ thành nhiều hazard atoms giả tạo.
+  - **8. Direct Grounding — Chỉ số Liên tục Chính và Độ nhạy Phân ngưỡng:**
+    - **Primary Continuous Metrics (Chỉ số liên tục chính):**
+      - **End-to-End Mean IoU:** Mẫu số là toàn bộ 781 Direct atoms; lỗi không nhận diện, lỗi parse tọa độ, hộp trượt đích đều gán $\text{IoU} = 0.0$.
+      - **Median IoU:** Báo cáo kèm theo để kháng giá trị ngoại lai cực đoan.
+    - **Threshold Sensitivity (Độ nhạy phân ngưỡng):**
+      - Báo cáo tại hai ngưỡng: **Hit@0.25** và **Hit@0.50**.
+      - Cả hai ngưỡng này được **xác định trước khi xem kết quả mô hình (`pre-specified before model-result inspection`)** và không thay đổi sau đó.
+      - Tuyệt đối không tuyên bố ngưỡng $\text{IoU} = 0.25$ là "chuẩn phổ quát" (universal standard).
+  - **9. Direct Grounding — Phân định Rạch ròi Hai Chế độ Ghép cặp (Two Matching Modes):**
+    - Phê duyệt hai chế độ ghép cặp tối ưu hai phía độc lập, tách biệt hoàn toàn và **tuyệt đối không được trộn lẫn**:
+      - **MODE A — Continuous IoU Assignment (Gán ghép liên tục không ngưỡng):**
+        - Dành riêng cho: **End-to-End Mean IoU**, **Median IoU**, và **Parse-Conditional Mean IoU**.
+        - Phạm vi: Ghép giữa các dự đoán $\{p\}$ và Direct GT atoms $\{j\}$ trong cùng mẫu ảnh và cùng loại nguy cơ.
+        - Mục tiêu: Ghép tối ưu một-một cực đại hóa tổng điểm IoU: $\max \sum \text{IoU}(p, j)$.
+        - **Tuyệt đối không áp dụng ngưỡng $\tau$**.
+        - Mỗi hộp dự đoán chỉ được dùng tối đa 1 lần, không tái sử dụng hộp dự đoán (`no predicted box reuse`).
+        - GT atom không có dự đoán ghép cặp: $\text{IoU} = 0.0$. Nguy cơ bị bỏ sót: $\text{IoU} = 0.0$. Lỗi cú pháp parse: $\text{IoU} = 0.0$ trong bài toán End-to-End.
+      - **MODE B — Thresholded Bipartite Matching (Ghép hai phía có phân ngưỡng):**
+        - Dành riêng cho: **Hit@0.25**, **Hit@0.50**, **Evidence P/R/F1 (@0.25, @0.50)**, và **$\text{CGI}@\tau$** ($\tau \in \{0.25, 0.50\}$).
+        - Điều kiện cạnh hợp lệ: Chỉ đưa vào đồ thị các cạnh thỏa mãn $\text{IoU}(p, j) \ge \tau$.
+        - Mục tiêu: (1) Tối đa hóa số lượng cặp ghép hợp lệ (Maximum Cardinality $|\mathcal{M}_\tau|$); (2) Tie-break: Tối đa hóa tổng điểm IoU giữa các phương án có cùng số cặp ghép cực đại.
+        - Ràng buộc một-một nghiêm ngặt.
+  - **10. Pointing Hit trên Đa giác GT Gốc (Canonical Pointing Hit):**
+    - Điểm tâm của hộp bao dự đoán $\mathbf{c}_{\text{pred}}^p$ **bắt buộc phải nằm bên trong BẤT KỲ ĐA GIÁC GT GỐC NÀO** thuộc tập vùng ứng viên $R_j$:
+      $$\text{PointingHit}(p, j) = \mathbb{I}\left(\exists r \in R_j \text{ sao cho } \mathbf{c}_{\text{pred}}^p \in \text{Polygon}(r)\right)$$
+    - **Hộp bao derived bbox TUYỆT ĐỐI KHÔNG ĐƯỢC DÙNG cho Pointing Hit** để ngăn chặn việc tính điểm trúng đích vào vùng nền trống của các vật thể phi lồi.
+  - **11. Phê duyệt Evidence Precision / Recall / F1:**
+    - Đánh giá ở cấp độ **Nguy cơ Nguyên tử (`Hazard-Atom Level`)** trên Direct track ($N=781$), sử dụng thuật toán ghép cặp **Mode B**:
+      $$\text{Evidence Recall}_h@\tau = \frac{\text{TP}_h@\tau}{N_{\text{evaluable\_GT\_atoms}, h}}$$
+      $$\text{Evidence Precision}_h@\tau = \frac{\text{TP}_h@\tau}{\text{Total\_Predicted\_Boxes}_h}$$
+      $$\text{Evidence F1}_h@\tau = \frac{2 \cdot \text{Evidence Precision}_h@\tau \cdot \text{Evidence Recall}_h@\tau}{\text{Evidence Precision}_h@\tau + \text{Evidence Recall}_h@\tau}$$
+    - Báo cáo song song tại **@0.25** và **@0.50**.
+    - **Bản chất bắt buộc phải ghi rõ:** Đây là **Chỉ số benchmark tương đối theo chú thích (`Annotation-Relative Benchmark Metric`)**, **KHÔNG PHẢI độ chính xác nguy cơ triệt để ngoài đời thực (`NOT real-world exhaustive hazard precision`)**. Dự đoán không khớp với nhãn GT **tuyệt đối không được tự động đồng nhất với ảo giác ngoài đời thực (`unmatched prediction != hallucination`)**.
+  - **12. Đánh giá Bám bằng chứng Đại diện Yếu (RQ3-B Weak Proxy Grounding):**
+    - Phê chuẩn chỉ số: **Identity-Agnostic Proxy Localization Consistency (Identity-Agnostic PLC — Mức độ nhất quán định vị đại diện không phụ thuộc danh tính)** trên 947 Weak-Proxy atoms (608 mẫu ảnh):
+      - **PRIMARY:** **Center-in-Proxy**: Tọa độ tâm hộp dự đoán nằm bên trong **bất kỳ đa giác `Person` gốc nào** trong ảnh. Không khẳng định mô hình đã chọn đúng công nhân vi phạm cụ thể.
+      - **DIAGNOSTIC:** **Predicted Box Containment** liên tục (tỷ lệ diện tích hộp dự đoán nằm trong đa giác người). Ngưỡng $\text{Containment} \ge 0.50$ chỉ là **ngưỡng heuristic kiểm tra độ nhạy (`sensitivity heuristic`)**, không phải chân lý khoa học.
+      - **Bắt buộc phân tích độ nhạy trên Single-Person Proxy Subset:** Đánh giá đối chứng trên đúng **410 mẫu ảnh (chứa 614 proxy atoms)** chỉ có duy nhất 1 đối tượng `Person` ($|\text{Person}|=1$) để triệt tiêu hoàn toàn sự mập mờ danh tính người.
+    - **Quy tắc bắt buộc:** Direct Grounding và Weak Proxy Grounding **bắt buộc phải báo cáo tách biệt hoàn toàn**. Tuyệt đối không gọi PLC là "True Evidence Grounding Accuracy".
+  - **13. Chuẩn hóa Chỉ số Không nhất quán Phân loại – Định vị ($\text{CGI}@\tau$):**
+    - Tên gọi chính thức duy nhất: **"Classification-Grounding Inconsistency relative to available object-support annotation"**.
+    - Bắt buộc tham số hóa theo ngưỡng: Báo cáo song song **$\text{CGI}@0.25$** và **$\text{CGI}@0.50$**; cấm dùng ký hiệu $\text{CGI}$ thiếu hậu tố ngưỡng.
+    - Mẫu số cấp mẫu: Tập các mẫu Direct-support được phân loại đúng cấp độ an toàn.
+    - Mẫu số cấp atom: Toàn bộ Direct atoms nằm trong các mẫu phân loại đúng.
+    - **Quy tắc cấm kỵ:** Tuyệt đối không diễn giải chỉ số này là "suy luận sai" (`wrong reasoning`), "đoán mò" (`guessing`), hay "đúng đáp án sai lý do" (`correct answer wrong reason`).
+  - **14. Chính sách Xử lý Lỗi Phân tích Cú pháp (Parse-Failure Policy):**
+    - Báo cáo tường minh:
+      - **Response-level Parse Success Rate ($\text{PSR}_{\text{response}}$):** Tỷ lệ phản hồi tuân thủ cú pháp.
+      - **Evidence-item Box Parse Rate ($\text{PSR}_{\text{box}}$):** Tỷ lệ hộp bao có tọa độ hợp lệ trong $[0, 1]$.
+    - **End-to-End Grounding:** Mọi lỗi parse phản hồi hoặc lỗi tọa độ đều được tính là thất bại hoàn toàn ($\text{IoU} = 0.0$).
+    - **Diagnostic:** Báo cáo **Parse-Conditional Mean IoU** (chỉ tính trên các hộp parse thành công; hộp parse hợp lệ nhưng trượt định vị vẫn nhận $\text{IoU} = 0.0$).
+  - **15. Chính sách Nguyên tử Nguy cơ Không có GT Không gian (Unsupported Atoms Policy):**
+    - Đúng **60 nguyên tử nguy cơ `NO_CURRENT_SPATIAL_GT`** (34 atoms `DOOR_OPEN` và 26 atoms annotator gốc bỏ sót đa giác) trên 59 mẫu ảnh:
+      - **Bị loại bỏ hoàn toàn khỏi mẫu số** của các chỉ số bám bằng chứng không gian (IoU, Hit, Evidence P/R, PLC, CGI).
+      - **Vẫn giữ nguyên vẹn trong bài toán đánh giá phân loại an toàn**.
+      - Bắt buộc công bố công khai số lượng 60 atoms này; **tuyệt đối không loại bỏ ngầm (no silent drop)**.
+  - **16. Biến đồng biến Chẩn đoán Kích thước Đối tượng và Độ hiếm (Diagnostic Covariates):**
+    - Định vị độc quyền là **phân tích chẩn đoán phụ trợ (DIAGNOSTIC ONLY)**, không làm thay đổi các bảng tổng hợp kết quả chính thức:
+      - **Vô hướng kích thước Direct atom:** $\text{AtomSize}(j) = \max_{r \in R_j} \frac{\text{Area}(r)}{W \times H} \in [0, 1]$, giữ nguyên thang đo liên tục, hoàn toàn độc lập với đầu ra mô hình và đồng bộ với điểm cạnh IoU. **Tuyệt đối không chia thành các khoảng Small / Medium / Large cơ học** bằng các ngưỡng tùy ý trong giao thức W2.4.
+      - **Biến số lượng vùng hỗ trợ ($|R_j|$ Covariate):** Báo cáo kèm theo như biến chẩn đoán rời rạc (phân biệt 87,07% đơn vùng và 12,93% đa vùng).
+      - **Biến mức độ hiếm (Rarity Covariate):** Khảo sát tần suất xuất hiện liên tục $N$ của các loại nguy cơ. Không tạo ngưỡng rare/common tùy ý; tuyệt đối không suy diễn nhân quả "độ hiếm gây ra lỗi mô hình".
+  - **17. Chính sách về Chỉ số Ảo giác Đối tượng (Object Hallucination Policy):**
+    - **Không phê duyệt Tỷ lệ Ảo giác Đối tượng (Object Hallucination Rate) trên toàn bộ dataset**, do chú thích không mang tính triệt để. Cấm ngụy biện $\text{missing JSON label} = \text{object absent}$.
+    - **Không mở thêm chiến dịch kiểm toán thủ công 30–50 ảnh** trong phạm vi cốt lõi của Seminar 8 tuần. Bảo lưu cho Luận văn tốt nghiệp sau này.
+  - **18. Chính sách về Độ hiệu chỉnh Xác suất (Calibration Policy):**
+    - Độ hiệu chỉnh xác suất (Calibration: ECE, Brier Score) là **đặc thù phụ thuộc năng lực mô hình/giao diện (`Capability-Specific`)**.
+    - Tính đủ điều kiện (`Eligibility`) của từng mô hình/phiên bản sẽ được kiểm chứng thực nghiệm tại bước **W2.5**.
+    - **Tuyệt đối không dùng độ tự tin tự thuật bằng văn bản (`self-reported textual confidence`)** làm xác suất hiệu chỉnh.
+    - Calibration **không phải là chỉ số chính xuyên mô hình (cross-model primary metric)** của SafeShift Seminar.
+  - **19. Phê chuẩn Phương pháp Ước lượng Bất định Chính thức (Domain-Stratified Point-Cluster Bootstrap):**
+    - SafeShift chính thức phê duyệt **Domain-Stratified Point-Cluster Bootstrap** làm phương pháp ước lượng bất định chính thức (PRIMARY):
+      - Đối với P2 toàn thể: **Phân tầng DUY NHẤT theo 5 miền thao tác `folder_domain`**. Trong mỗi miền, lấy mẫu lại có hoàn lại các cụm thư mục điểm logic `point_id` (đối với Normal) và các mẫu/cụm Anomaly của chính miền đó cho tới khi đạt đúng số cụm quan sát gốc của miền đó, sau đó gộp 5 miền lại thành một replicate toàn thể.
+      - **TUYỆT ĐỐI KHÔNG PHÂN TẦNG THEO CẤP AN TOÀN (`NO STRATIFICATION BY SAFETY LEVEL`)** để loại trừ triệt để nguy cơ tạo phương sai 0 giả tạo trên các phân tầng đơn mẫu (`singleton strata`).
+      - Đối với chỉ số từng miền: Lấy mẫu lại các cụm điểm logic trong nội bộ chính miền đó.
+      - **Cấu hình chuẩn hóa:** $B = 2.000$ replicates (chính thức); $B = 5.000$ replicates (kiểm tra hội tụ); khóa `seed = 42`.
+      - **Khoảng tin cậy:** 95% Percentile Bootstrap CI $\left[ q_{0,025}, \, q_{0,975} \right]$.
+      - **Chính sách replicate khuyết lớp:** Nếu một replicate không rút trúng mẫu ground truth nào cho lớp đang đánh giá, metric của lượt đó ghi nhận là `NA`. Bắt buộc phải công bố: **Tỷ lệ Replicate Hợp lệ (`Valid Replicates / B`)**.
+      - **Cảnh báo nhận thức luận bắt buộc:** `point_id` là mã định danh thư mục điểm logic (`logical point folder`), không phải ID trạm vật lý đã xác minh (`not verified physical site ID`); trường `source-family` tuyệt đối không được dùng làm cụm bootstrap chính thức.
+  - **20. Phê chuẩn Phương pháp So sánh Đa Mô hình (Paired Bootstrap Difference CI 95%):**
+    - Phương pháp so sánh chính thức duy nhất giữa hai mô hình: **Paired Bootstrap Difference CI 95% (Khoảng tin cậy hiệu số bootstrap theo cặp 95%)**.
+    - Hai mô hình A và B **bắt buộc phải được đánh giá trên CÙNG MỘT TẬP CÁC LƯỢT DRAW REPLICATE BOOTSTRAP**: $\Delta M^{(b)} = M_A^{(b)} - M_B^{(b)}$.
+    - Nếu một replicate có giá trị undefined ở bất kỳ mô hình nào, $\Delta M^{(b)}$ nhận giá trị `NA`. Bắt buộc công bố: **Tỷ lệ Replicate theo cặp Hợp lệ (`Valid Paired Replicates / B`)**.
+    - **Chuẩn hóa phát biểu khoa học bắt buộc:**
+      - Nếu CI 95% không chứa giá trị 0: Chỉ được kết luận là **"Chênh lệch có hướng rõ ràng dưới giao thức lấy mẫu lại đã xác định trước (`directionally clear difference under pre-specified resampling protocol`)"**. Tuyệt đối không tự động tuyên bố "có ý nghĩa thống kê ở mức $\alpha = 0,05$".
+      - Nếu CI 95% chứa giá trị 0: **TUYỆT ĐỐI KHÔNG KẾT LUẬN HAI MÔ HÌNH TƯƠNG ĐƯƠNG NHAU**. Chỉ kết luận dữ liệu chưa thể hiện sự phân hóa rõ ràng.
+      - **Không chạy mặc định ma trận $p$-value dày đặc giữa mọi cặp mô hình** để tránh hiện tượng săn lùng $p$-value (`p-value hunting`).
+  - **21. Áp dụng trên Phân tầng Giao thức P1 / P2 / P3:**
+    - **P1 — Baseline Replication Protocol (1.250 mẫu test chính thức):** Áp dụng Safety Accuracy, BGE-M3 Similarity, và Grounding extension. Do miền `metallurgy` ở P1 có đúng 0 mẫu Anomaly, mọi chỉ số Anomaly Recall và Anomaly FNR của `metallurgy` là **UNDEFINED (Không xác định)**. Tuyệt đối không tự ý gán undefined thành 0% hay 100%.
+    - **P2 — Primary Research Protocol (5.013 mẫu toàn thể):** Áp dụng đầy đủ toàn bộ hệ thống chỉ số đã phê chuẩn.
+    - **P3 — Sensitivity Protocol Candidate (1.248 và 1.241 mẫu):** Giữ nguyên vẹn toàn bộ định nghĩa công thức toán học của P1 khi có thể áp dụng; tuyệt đối không gọi P3 là "clean benchmark" hay "leakage-free benchmark".
+  - **22. Phân tích Độ nhạy với 36 Mẫu Xung đột Nhãn Miền (Domain-Mismatch Sensitivity):**
+    - Phân tích chính thức thực hiện theo `folder_domain`.
+    - Phân tích độ nhạy bắt buộc: Sensitivity A (loại bỏ 36 mẫu khỏi phân tích từng miền) và Sensitivity B (tái phân bổ 36 mẫu theo `text_domain`).
+    - **Công thức toán học của mọi chỉ số KHÔNG THAY ĐỔI**, sự thay đổi duy nhất là phép gán miền cho 36 mẫu ảnh.
+  - **23. Hồ sơ Nguồn gốc và Kiểm toán Thực chứng (Provenance & Audit Trail):**
+    - Quyết định D5 căn cứ trên [notes/w2_metrics_statistics_decision_brief.md](notes/w2_metrics_statistics_decision_brief.md).
+    - Bộ dữ liệu kiểm chứng mang dấu vân tay SHA-256: `7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5`.
+    - Kết quả tổng điều tra D6: `data/manifests/w2_grounding_census.json` (SHA-256: `cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`).
+    - Lệnh kiểm toán vùng GT và phân tầng nguy cơ: `python scratch/audit_gt_regions.py` (Script SHA-256: `90c704af291fb34725b6a679f3bdb2a84d18297628c569497e34309ed49cee50`, thực thi trên Python 3.11.9 lúc `2026-09-17 05:22:14 UTC`). Script là local scratch script, không commit vào repo và không tuyên bố tái lập chỉ bằng Git repo đơn lẻ.
+  - **24. Những Nội dung Kỹ thuật D5 KHÔNG Chốt (Deferred Items chuyển sang W2.5):**
+    - Quyết định D5 **tuyệt đối KHÔNG chốt**:
+      - Danh sách các mô hình cụ thể tham gia thử nghiệm (`final model list`).
+      - Câu chữ chi tiết của prompt chỉ dẫn (`final prompt wording`).
+      - Tính đủ điều kiện về mặt năng lực của từng mô hình / API (`capability eligibility`).
+      - Giao diện và wrapper cụ thể cho từng mô hình VLM.
+      - Chi tiết triển khai mã nguồn của các baseline.
+    - Toàn bộ các nội dung này thuộc thẩm quyền giải quyết độc quyền của bước **W2.5**.
+- **Lý do:**
+  1. Cặp chỉ số chính Balanced Accuracy và Macro-F1 xử lý triệt để thách thức mất cân bằng nhãn cực đoan (80% Normal), đo lường công bằng cả khả năng bao quát an toàn và kiểm soát báo động giả.
+  2. Phân lập Track A (Binary Anomaly) và Track B (Level01 OvR) phản ánh trung thực bản chất phi đối xứng của rủi ro công nghiệp, bảo vệ các sự cố đe dọa tính mạng không bị chìm lấp trong các chỉ số gộp.
+  3. Chính sách hai tầng và Class-Conditional Domain Analysis cung cấp một mỏ neo so sánh khách quan, ngăn chặn ngụy biện so sánh các phân xưởng có mức độ hỗ trợ nhãn khác nhau.
+  4. Phân định khắt khe hai chế độ ghép cặp Mode A (đo lường hàm liên tục không ngưỡng) và Mode B (phân định quyết định nhị phân có ngưỡng) bảo đảm tính chính xác toán học tuyệt đối của bài toán bám bằng chứng trực tiếp.
+  5. Chỉ số Identity-Agnostic PLC trên đa giác người gốc kết hợp kiểm tra độ nhạy Single-Person Proxy Subset hóa giải thách thức mập mờ danh tính người mà không phạt oan mô hình định vị đúng bộ phận vi phạm.
+  6. Domain-Stratified Point-Cluster Bootstrap kiểm soát chính xác cấu trúc tương quan đa khung hình nội bộ điểm logic mà không gây lỗi phương sai 0 giả tạo từ các phân tầng đơn mẫu.
+  7. Paired Bootstrap Difference CI tập trung vào hướng và độ lớn hiệu ứng thực chất giữa các mô hình trên cùng một tập replicate, ngăn chặn thói quen suy diễn quá mức từ ma trận $p$-value dày đặc.
+- **Ảnh hưởng tới dataset, split, metric và reproducibility:**
+  - **Dataset:** Giữ nguyên dữ liệu thô và các tệp JSON/TXT gốc; không chỉnh sửa bất kỳ nhãn hay tọa độ không gian nào.
+  - **Split:** P1 giữ nguyên 1.250 mẫu test; P2 sử dụng 5.013 mẫu toàn thể và bảo lưu metadata `split: train/test`; 36 mẫu mismatch được kiểm tra độ nhạy theo Sensitivity A và B.
+  - **Metrics:** Xác lập và đóng băng chính thức toàn bộ công thức toán học cho phân loại 4 lớp, sai số an toàn trọng yếu, suy giảm xuyên miền RQ1, phân tầng nguy cơ RQ2, bám bằng chứng trực tiếp RQ3-A (Mode A và Mode B), đại diện yếu RQ3-B (PLC), chỉ số $\text{CGI}@\tau$, tỷ lệ parse PSR, và loại trừ 60 unsupported atoms khỏi mẫu số không gian.
+  - **Reproducibility:** Mọi thuật toán ghép cặp và quy trình bootstrap được đặc tả tất định; khóa `seed = 42`; toàn bộ chuỗi phản hồi thô nguyên văn (`Raw Model Response`) bắt buộc phải lưu trữ kèm metadata đầy đủ trước khi phân tích cú pháp; các artifact kiểm toán có mã băm SHA-256 xác minh tính toàn vẹn.
+- **Người chấp thuận và thời điểm:** Project Owner / Research Lead (Chủ dự án / Người phụ trách nghiên cứu), ngày 2026-09-17.
+- **Task/thí nghiệm liên quan:**
+  - [notes/w2_metrics_statistics_decision_brief.md](notes/w2_metrics_statistics_decision_brief.md) (W2.4 Decision Brief, PR #13)
+  - [notes/w2_grounding_census_decision_brief.md](notes/w2_grounding_census_decision_brief.md) (W2.3 Decision Brief)
+  - [notes/w2_domain_split_decision_brief.md](notes/w2_domain_split_decision_brief.md) (W2.2 Decision Brief)
+  - [notes/w2_protocol_decision_brief.md](notes/w2_protocol_decision_brief.md) (W2.1 Decision Brief)
+  - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003), [DEC-W2-D4-004](#dec-w2-d4-004), [DEC-W2-D6-006](#dec-w2-d6-006), [DEC-W2-D7-007](#dec-w2-d7-007).
+  - Định hướng trực tiếp cho khảo sát năng lực mô hình tại W2.5 và triển khai bộ đánh giá baseline tại W3.
+- **Thay thế quyết định:** Không.
+
 ## DEC-W2-D6-006 — Hazard Taxonomy and Grounding Support Census
 
 - **ID:** DEC-W2-D6-006
