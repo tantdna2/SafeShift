@@ -479,6 +479,13 @@ Tuân thủ Quyết định D4 (Capability-Aware Policy B), quyền tham gia đ�
    - Bắt buộc phải trải qua **External Target+Distractor Sanity Gate** (Mục 28) và đạt chuẩn **LEVEL 2A (EXTERNAL SPATIAL-PROBE VERIFIED)** mới được tham gia Grounding.
    - Nếu mô hình chỉ đạt **LEVEL 2B (FORMAT-OPERABILITY VERIFIED ONLY)**: **KHÔNG ĐƯỢC THAM GIA GROUNDING**.
 
+> [!NOTE]
+> **Nguyên tắc Phân định Bản chất Cấp độ Năng lực (Consistency Note):**  
+> Cấp độ năng lực (`Capability Level`) thuần túy là phân loại trạng thái bằng chứng tài liệu và thực nghiệm (`evidence-status classification`), **tuyệt đối không phải là bảng xếp hạng hiệu năng hay năng lực suy luận tổng thể của mô hình (`not a benchmark performance ranking`)**.  
+> - **Level 1** có nghĩa là tài liệu kỹ thuật chính thức của nhà cung cấp đã công bố và mô tả định dạng tọa độ không gian.  
+> - **Level 3** có nghĩa là năng lực định vị không gian chưa được công bố chính thức hoặc chưa được kiểm chứng thực nghiệm theo tiêu chuẩn của giao thức.  
+> Nghiêm cấm mọi suy diễn về chất lượng mô hình, độ chính xác phân loại an toàn hay trí thông minh tổng thể từ số thứ tự cấp độ năng lực này.
+
 ---
 
 ## 18. Classification-Only Policy (Chính sách Mô hình Chỉ Tham gia Phân loại)
@@ -766,7 +773,7 @@ Toàn bộ 18 nội dung kỹ thuật trọng yếu được giải quyết và 
 9. **Đã Phê chuẩn Từ điển Nguy cơ Định vị B2 (Closed 12-Hazard Vocabulary):** Áp dụng 12 Hazard Atoms của D6 làm từ điển định vị đóng cho Call 2 độc lập để bảo đảm tính ánh xạ tất định 100% cho thuật toán ghép cặp Mode A/B của D5. Khẳng định đây không phải là phát hiện từ vựng mở; không đánh đồng phân tầng phân loại RQ2 (cấp ảnh) với đánh giá bám bằng chứng RQ3 (cấp hộp bao).
 10. **Đã Phê chuẩn Loại bỏ Tiêu chí Dung sai P1 Tùy tiện:** Bỏ tiêu chí tùy tiện $\pm 1–2\%$; thay bằng báo cáo $\text{Metric}_{\text{reproduced}}$, $\text{Metric}_{\text{published}}$, sai số tuyệt đối $\Delta$ và giải thích tương thích kỹ thuật.
 11. **Đã Phê chuẩn Mô hình Tham chiếu P1:** Sử dụng Claude Opus (hoặc phiên bản tương thích chính thức) và mô hình `bge-m3` cục bộ để tái lập P1 theo đúng pipeline upstream.
-12. **Đã Phê chuẩn Shortlist Mô hình P2 Cốt lõi (4 Nhà Cung Cấp):** Shortlist chính thức gồm 4 mô hình: `gemini-3.8-flash` (Google), `qwen3-vl-8b-instruct` (Alibaba Cloud / DashScope), `gpt-5.6-terra` (OpenAI), và `claude-sonnet-5` (Anthropic). Không tự ý thay đổi ID mô hình.
+12. **Đã Phê chuẩn Shortlist Mô hình P2 Cốt lõi (4 Nhà Cung Cấp):** Shortlist chính thức gồm 4 mô hình: `gemini-3.8-flash` (Google, Level 1 — Doc-Verified Spatial, Grounding-Eligible), `qwen3-vl-8b-instruct` (Alibaba Cloud / DashScope, Level 1 — Doc-Verified Spatial, Grounding-Eligible qua các giả định tuyến DashScope Singapore), `gpt-5.6-terra` (OpenAI, Level 3 — Prompt-Only / Unverified Spatial, Classification-Only trừ khi thăng hạng qua sanity gate lên Level 2A), và `claude-sonnet-5` (Anthropic, Level 3 — Prompt-Only / Unverified Spatial, Classification-Only trừ khi thăng hạng qua sanity gate lên Level 2A). Không tự ý thay đổi ID mô hình.
 13. **Đã Xác nhận Loại bỏ Mô hình Retired:** Xác nhận loại bỏ hoàn toàn `claude-3-7-sonnet` (đã retired) và các ID không chính thức khỏi candidate list.
 14. **Đã Phê chuẩn Tuyến Phục vụ Qwen Khu vực Singapore:** Tuyến phục vụ chính thức là **Alibaba Cloud Model Studio / DashScope (Region Singapore)** với trạng thái **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**, cấu hình giải mã **`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`**, precision **`UNDISCLOSED BY PROVIDER`**, gắn cờ **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`** và công bố giới hạn tái lập trung thực.
 15. **Đã Phê chuẩn Cấu trúc Đầu ra Chuẩn hóa:** Đồng thuận với JSON Schema nội bộ và nguyên tắc chuyển đổi tọa độ chuẩn hóa $[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0.0, 1.0]$ theo thứ tự $x$-first của Quyết định D4.
@@ -785,7 +792,7 @@ Toàn bộ 18 nội dung kỹ thuật trọng yếu được giải quyết và 
 - [ ] **1. Resolve exact Qwen Singapore workspace endpoint:** Xác định URL endpoint cụ thể của workspace Alibaba Cloud Model Studio Singapore khi API key chính thức được kích hoạt.
 - [ ] **2. Resolve one supported Qwen decoding configuration:** Chốt một cấu hình giải mã ít biến động cụ thể được endpoint Singapore hỗ trợ chính thức.
 - [ ] **3. Prepare and freeze external Target+Distractor sanity cases:** Chuẩn bị và cố định tập dữ liệu ảnh kiểm tra ngoại vi (COCO / Open Images / Synthetic) kèm tọa độ GT khách quan.
-- [ ] **4. Execute external capability gate for Level-3 models:** Thực thi cổng kiểm tra tính hợp lý kỹ thuật Target+Distractor cho các mô hình Level 3 (`qwen3-vl-8b-instruct`, `claude-sonnet-5`) trên dữ liệu ngoại vi (không dùng ảnh InspecSafe).
+- [ ] **4. Execute external capability gate for Level-3 models:** Thực thi cổng kiểm tra tính hợp lý kỹ thuật Target+Distractor cho các mô hình Level 3 (`gpt-5.6-terra`, `claude-sonnet-5`) trên dữ liệu ngoại vi (không dùng ảnh InspecSafe). Qwen3-VL-8B-Instruct không cần cổng này theo bằng chứng năng lực Level 1 (Doc-Verified) đã được phê duyệt tại Mục 17.
 - [ ] **5. Assign final grounding eligibility and model roles:** Phân bổ dứt khoát vai trò tham gia cho từng mô hình (`Grounding-Eligible` hoặc `Classification-Only / NOT PARTICIPATING`) dựa trên kết quả cổng năng lực.
 - [ ] **6. Verify exact provider model IDs and serving routes still available:** Xác minh các model ID và tuyến phục vụ vẫn còn khả dụng trên live API tại thời điểm đóng băng.
 - [ ] **7. Freeze prompt, schema, adapters, parsers, and metric engine:** Cố định toàn bộ mã nguồn prompt, JSON Schema, bộ chuyển đổi adapter, parser và động cơ metric D5 trong repository.

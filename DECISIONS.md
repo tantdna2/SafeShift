@@ -924,12 +924,13 @@
     - Thứ bậc RQ2 giữ nguyên vẹn theo Erratum PR #15: **12 Hazard Atoms là PRIMARY RQ2 STRATA**, **7 Grouped Categories A–G là SECONDARY EXPLORATORY SUMMARIES**.
   - **7. Chính sách Danh sách Rút gọn Mô hình P2 (Core 4-Provider Shortlist):**
     - Phê chuẩn shortlist 4 nhà cung cấp chính thức:
-      1. *Google:* `gemini-3.8-flash` (Grounding-Eligible, Level 1 — Doc-Verified Spatial).
-      2. *Alibaba Cloud:* `qwen3-vl-8b-instruct` (Candidate Level 3, Hosted DashScope Singapore).
-      3. *OpenAI:* `gpt-5.6-terra` (Grounding-Eligible, Level 1 — Doc-Verified Spatial).
-      4. *Anthropic:* `claude-sonnet-5` / `claude-sonnet-5-20260301` (Candidate Level 3).
+      1. *Google:* `gemini-3.8-flash` (Level 1 — DOC-VERIFIED SPATIAL, Grounding-Eligible).
+      2. *Alibaba Cloud:* `qwen3-vl-8b-instruct` (Level 1 — DOC-VERIFIED SPATIAL, Grounding-Eligible qua các giả định tuyến DashScope Singapore đã duyệt).
+      3. *OpenAI:* `gpt-5.6-terra` (Level 3 — PROMPT-ONLY / UNVERIFIED SPATIAL, Classification-Only trừ khi cổng thử nghiệm ngoại vi thăng hạng lên Level 2A).
+      4. *Anthropic:* `claude-sonnet-5` / `claude-sonnet-5-20260301` (Level 3 — PROMPT-ONLY / UNVERIFIED SPATIAL, Classification-Only trừ khi cổng thử nghiệm ngoại vi thăng hạng lên Level 2A).
     - Tuyệt đối không tự ý thay đổi model ID. Lựa chọn mô hình hoàn toàn độc lập với điểm số trên InspecSafe.
     - Nếu một snapshot API cụ thể của nhà cung cấp không còn khả dụng trước thời điểm đóng băng: ghi nhận trạng thái vòng đời/tương thích (`compatibility/lifecycle status`) thay vì âm thầm thay thế.
+    - *Ghi chú về tính nhất quán của cấp độ năng lực (Consistency Note):* Cấp độ năng lực (`Capability Level`) là một phân loại trạng thái bằng chứng tài liệu/thực nghiệm (`evidence-status classification`), tuyệt đối không phải là bảng xếp hạng hiệu năng mô hình (`not a benchmark performance ranking`). Level 1 có nghĩa là tài liệu kỹ thuật chính thức của nhà cung cấp có công bố và hướng dẫn năng lực không gian. Level 3 có nghĩa là năng lực không gian chưa được kiểm chứng theo tiêu chuẩn của giao thức. Tuyệt đối không suy diễn chất lượng hay trí thông minh của mô hình từ số thứ tự cấp độ.
   - **8. Định vị Nhận biết Năng lực (Capability-Aware Grounding Eligibility):**
     - Nhiệm vụ phân loại an toàn áp dụng cho 100% mô hình trong shortlist.
     - Quyền tham gia đánh giá định vị (Grounding) tuân thủ chính sách nhận biết năng lực:
