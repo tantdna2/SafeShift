@@ -64,7 +64,7 @@ Báo cáo W2.4 kế thừa tuyệt đối và không thay đổi các quyết đ
   - Phê chuẩn 3 trạng thái hỗ trợ: `DIRECT_OBJECT_SUPPORT` (781 atoms / 721 mẫu), `WEAK_PROXY_SUPPORT` (947 atoms / 608 mẫu), `NO_CURRENT_SPATIAL_GT` (60 atoms / 59 mẫu).
   - Đẳng thức kiểm tra toàn vẹn tập hợp: $721 + 608 - 347 = 982$ mẫu có GT đánh giá được; $982 + 18 (\text{Unsupported Only}) = 1.000$ mẫu Anomaly.
   - Phân rã RQ3 thành RQ3-A (Direct Object-Support Grounding) và RQ3-B (Weak Proxy Grounding), báo cáo tách biệt bắt buộc.
-  - Phê chuẩn 7 tầng nguy cơ gom nhóm (`Candidate Grouped Hazard Strata`) cho RQ2; chuẩn hóa thuật ngữ "Classification-Grounding Inconsistency relative to available object-support annotation".
+  - Phê chuẩn 12 Nguy cơ Nguyên tử (`Hazard Atoms`) làm PRIMARY RQ2 STRATA và 7 tầng nguy cơ gom nhóm (`Candidate Grouped Hazard Strata A–G`) làm SECONDARY EXPLORATORY SUMMARIES cho RQ2 (đã cập nhật theo Erratum được phê duyệt ngày 2026-09-18); chuẩn hóa thuật ngữ "Classification-Grounding Inconsistency relative to available object-support annotation".
 - **DEC-W2-D7-007 (Rationale Annotation Policy):**
   - Chọn Phương án D7-A: Không tạo nhãn rationale mới trong giai đoạn Seminar 8 tuần.
   - Không phê duyệt Tỷ lệ Ảo giác Đối tượng (`Object Hallucination Rate`) trên toàn bộ dataset vì chú thích đối tượng gốc không triệt để (`annotation is not exhaustive`); cấm ngụy biện $\text{missing JSON label} = \text{object absent}$. Bảo lưu D7-C cho Luận văn tốt nghiệp.
@@ -315,27 +315,36 @@ Thay vì dựa vào một chỉ số tổng hợp bị bóp méo bởi tỷ lệ
 
 ### 7.3 Phân tích phân tầng nguy cơ theo RQ2 (RQ2 Hazard Strata Metrics & Multi-Stratum Overlap)
 
-Câu hỏi nghiên cứu RQ2 yêu cầu làm rõ sự tập trung sai số của mô hình VLM theo từng cấp độ an toàn và từng phân tầng nguy cơ đặc thù trong công nghiệp. Kế thừa 7 Phân tầng Nguy cơ Gom nhóm Ứng viên (`Candidate Grouped Hazard Strata` A–G) đã được phê duyệt tại D6, SafeShift xác lập hệ thống chỉ số đo lường hiệu năng an toàn chuyên biệt cho từng tầng nguy cơ:
+Câu hỏi nghiên cứu RQ2 yêu cầu làm rõ sự tập trung sai số của mô hình VLM theo từng cấp độ an toàn và từng phân tầng nguy cơ đặc thù trong công nghiệp. 
+
+> [!IMPORTANT]
+> **Đính chính Thứ bậc Phân tầng RQ2 (RQ2 Hierarchy Clarification — Approved: 2026-09-18):**  
+> Căn cứ theo quyết định đính chính đã được Research Lead phê duyệt chính thức:
+> - **PRIMARY RQ2 STRATA (Phân tầng phân tích chính):** Đúng **12 Nguy cơ Nguyên tử (`Hazard Atoms`)** đã được thẩm định tại D6 (`NO_GLOVES`, `NO_HELMET`, `NO_MASK`, `USE_MOBILE_PHONE`, `LIQUID_ON_GROUND`, `SMOKING`, `OPEN_FLAME`, `FOREIGN_OBJECT`, `SMOKE`, `NONMOTORIZED_VEHICLE`, `DOOR_OPEN`, `PERSON_FALLEN`). Đây là hệ phân loại nghiên cứu thao tác (*operational research taxonomy*) cung cấp độ phân giải chẩn đoán kỹ thuật chi tiết nhất cho SafeShift.
+> - **SECONDARY EXPLORATORY SUMMARIES (Tóm tắt khám phá phụ trợ):** Đúng **7 Phân tầng Nguy cơ Gom nhóm Ứng viên (`Candidate Grouped Hazard Strata A–G`)**, phục vụ góc nhìn tổng hợp vĩ mô, không thay thế cho bảng kết quả 12 atoms.
+> - **Đơn vị dự đoán:** Vẫn duy trì là **ẢNH (`Image`)** theo D2. Mỗi ảnh cho một dự đoán an toàn duy nhất. Do 512/1.000 mẫu Anomaly chứa $\ge 2$ atoms, dự đoán cấp ảnh có thể đóng góp đồng thời vào nhiều atomic strata. Các ước lượng stratum có sự phụ thuộc thống kê, số lượng mẫu/lỗi **không có tính cộng dồn (non-additive)**.
 
 #### A. Bộ 4 chỉ số an toàn cốt lõi cho từng tầng nguy cơ
-Đối với mỗi phân tầng nguy cơ $s \in \{\text{Strata A}, \dots, \text{Strata G}\}$ gồm $N_s$ mẫu ảnh:
+Bộ 4 chỉ số an toàn cốt lõi được áp dụng **CHÍNH YẾU (PRIMARY)** cho từng stratum nguyên tử $a \in \{\text{Atom}_1, \dots, \text{Atom}_{12}\}$ với mẫu số $N_a$ (số lượng mẫu ảnh độc nhất chứa atom $a$), và đồng thời có thể được báo cáo như **PHÂN TÍCH PHỤ TRỢ (SECONDARY)** trên từng nhóm gom $s \in \{\text{Strata A}, \dots, \text{Strata G}\}$ gồm $N_s$ mẫu ảnh:
 
 1. **Tỷ lệ sai số cấp an toàn chính xác (Exact Safety-Level Error Rate):**
-   $$\text{ErrorRate}_{\text{exact}}(s) = \frac{\sum_{i \in \text{Strata}_s} \mathbb{I}(\hat{y}_i \neq y_i)}{N_s}$$
-   Đo lường tỷ lệ các mẫu trong tầng $s$ bị mô hình dự đoán lệch khỏi cấp an toàn thực tế (dù là nhầm giữa các mức nguy cơ hay nhầm sang bình thường).
+   $$\text{ErrorRate}_{\text{exact}}(a) = \frac{\sum_{i \in \mathcal{S}_a} \mathbb{I}(\hat{y}_i \neq y_i)}{N_a}$$
+   Đo lường tỷ lệ các mẫu ảnh trong stratum $a$ bị mô hình dự đoán lệch khỏi cấp an toàn thực tế (dù là nhầm giữa các mức nguy cơ hay nhầm sang bình thường).
 
 2. **Tỷ lệ bỏ sót nguy cơ thành bình thường (Anomaly-to-Normal Miss Rate):**
-   $$\text{MissRate}_{\text{anom}\rightarrow\text{norm}}(s) = \frac{\sum_{i \in \text{Strata}_s} \mathbb{I}(\hat{y}_i = \text{Level04})}{N_s}$$
-   Chỉ số rủi ro vận hành then chốt: Đo lường tỷ lệ sự cố nguy hiểm thuộc tầng $s$ bị mô hình bỏ lọt hoàn toàn thành trạng thái an toàn bình thường (`Level04`).
+   $$\text{MissRate}_{\text{anom}\rightarrow\text{norm}}(a) = \frac{\sum_{i \in \mathcal{S}_a} \mathbb{I}(\hat{y}_i = \text{Level04})}{N_a}$$
+   Chỉ số rủi ro vận hành then chốt: Đo lường tỷ lệ sự cố nguy hiểm thuộc stratum $a$ bị mô hình bỏ lọt hoàn toàn thành trạng thái an toàn bình thường (`Level04`).
 
 3. **Độ thu hồi nguy cơ nghiêm trọng và Tỷ lệ bỏ sót thảm khốc (Level01 Recall & Critical Miss Rate):**
-   Áp dụng cho các phân tầng có chứa mẫu nguy cơ cấp 1 ($N_{s, \text{L01}} > 0$, bao gồm toàn bộ các phân tầng từ A đến G):
-   $$\text{Recall}_{\text{L01}}(s) = \frac{\sum_{i \in \text{Strata}_s, y_i = \text{Level01}} \mathbb{I}(\hat{y}_i = \text{Level01})}{N_{s, \text{L01}}}$$
-   $$\text{CriticalMissRate}_{\text{L01}\rightarrow\text{L04}}(s) = \frac{\sum_{i \in \text{Strata}_s, y_i = \text{Level01}} \mathbb{I}(\hat{y}_i = \text{Level04})}{N_{s, \text{L01}}}$$
-   Phân định rõ rủi ro bỏ sót các sự cố đe dọa tính mạng (như cháy, khói, người ngã) trong từng phân tầng cụ thể.
+   Áp dụng cho các phân tầng có chứa mẫu nguy cơ cấp 1 ($N_{a, \text{L01}} > 0$):
+   $$\text{Recall}_{\text{L01}}(a) = \frac{\sum_{i \in \mathcal{S}_a, y_i = \text{Level01}} \mathbb{I}(\hat{y}_i = \text{Level01})}{N_{a, \text{L01}}}$$
+   $$\text{CriticalMissRate}_{\text{L01}\rightarrow\text{L04}}(a) = \frac{\sum_{i \in \mathcal{S}_a, y_i = \text{Level01}} \mathbb{I}(\hat{y}_i = \text{Level04})}{N_{a, \text{L01}}}$$
+   Phân định rõ rủi ro bỏ sót các sự cố đe dọa tính mạng trong từng phân tầng cụ thể. *(Quy ước: Nếu stratum không có mẫu Level01, bắt buộc ghi nhận `NA`, tuyệt đối không gán 0.0 hay 1.0; không tự ý đặt ngưỡng cắt tối thiểu N)*.
 
 4. **Phân bố nhầm lẫn mức an toàn (Safety Confusion Distribution):**
    Bảng phân bố tần suất 4 mức $\{\text{Level01}, \text{Level02}, \text{Level03}, \text{Level04}\}$ của dự đoán $\hat{y}$ trên từng phân tầng nguy cơ, chỉ ra khuynh hướng hạ cấp mức rủi ro (risk downgrade).
+
+*(Công thức tương tự áp dụng cho nhóm gom $s \in \{\text{Strata A}, \dots, \text{Strata G}\}$ khi báo cáo Secondary Exploratory Analysis).*
 
 #### B. Cảnh báo phương pháp luận: Giao thoa đa nguy cơ và Tính không cộng gộp mẫu
 > [!WARNING]
@@ -791,7 +800,7 @@ Bảng tổng hợp ma trận quyết định cho các cấu phần kỹ thuật
 | **Chỉ số suy giảm xuyên miền (RQ1)** | 1. Balanced Accuracy Spread thuần túy trên K=4<br>2. Class-Conditional Domain Analysis (Primary) + Chẩn đoán phụ trợ | - Chỉ số vĩ mô trên K=4 bỏ qua 2/5 miền.<br>- Class-Conditional Analysis giảm thiểu nhiễu tỷ lệ nhãn và bao quát các miền có hỗ trợ. | **CHỌN PHƯƠNG ÁN 2**<br>Primary: Class-Conditional Domain Recall & Pooled-to-Domain Gap. Diagnostic: Balanced Accuracy Spread trên K=4. |
 | **Xử lý lớp thiếu ở từng miền** | 1. Support-only macro average<br>2. Yêu cầu cố định 4 lớp (gán NA)<br>3. Dual-Layer Support-Aware Policy | - Phương án 1 so sánh trên bài toán khác nhau.<br>- Phương án 2 làm khuyết 40% số miền.<br>- Phương án 3 vừa minh bạch số lớp vừa có mỏ neo so sánh. | **CHỌN PHƯƠNG ÁN 3**<br>Descriptive macro có gắn cờ số lớp $K_d$; dùng Class-Conditional metrics làm mỏ neo so sánh. |
 | **Báo cáo Worst-Domain** | 1. Quy tắc ngưỡng cơ học N >= 30<br>2. Báo cáo giá trị nhỏ nhất quan sát được kèm mẫu số, CI và cảnh báo so sánh | - Ngưỡng N >= 30 tùy ý, thiếu cơ sở toán học.<br>- Phương án 2 minh bạch, giữ metallurgy là Descriptive / Sparse-Support. | **CHỌN PHƯƠNG ÁN 2**<br>Báo cáo minimum quan sát được giữa các miền so sánh được; công bố đầy đủ mẫu số và CI. |
-| **Chỉ số phân tầng nguy cơ (RQ2)** | 1. Gộp chung toàn bộ dataset<br>2. Bộ 4 chỉ số trên 7 tầng nguy cơ gom nhóm (Strata A–G) + cảnh báo non-additive overlap | - Gộp chung che giấu chênh lệch sâu sắc giữa các dạng nguy cơ.<br>- Đa số mẫu Anomaly (51,2%) chứa $\ge 2$ hazard atoms, tạo 1.381 lượt thành viên trên 7 tầng khiến các tầng không độc lập. | **CHỌN PHƯƠNG ÁN 2**<br>Báo cáo bộ 4 chỉ số: Exact Safety-Level Error Rate, Anomaly-to-Normal Miss Rate, Level01 Recall & Critical Miss Rate, và Ma trận nhầm lẫn mức an toàn. Cấm tuyệt đối cộng dồn mẫu hoặc sai số giữa các tầng (non-additive counts). |
+| **Chỉ số phân tầng nguy cơ (RQ2)** | 1. Gộp chung toàn bộ dataset<br>2. Bộ 4 chỉ số an toàn phân tầng + cảnh báo non-additive overlap (Primary: 12 Hazard Atoms; Secondary: 7 Grouped Strata A–G theo Erratum 2026-09-18) | - Gộp chung che giấu chênh lệch sâu sắc giữa các dạng nguy cơ.<br>- Đa số mẫu Anomaly (51,2%) chứa $\ge 2$ hazard atoms, tạo 1.788 lượt thành viên nguyên tử và 1.381 lượt thành viên trên 7 tầng khiến các tầng không độc lập. | **CHỌN PHƯƠNG ÁN 2 (Có cập nhật theo Erratum đã duyệt 2026-09-18)**<br>Primary RQ2: 12 Hazard Atoms. Secondary Exploratory: 7 nhóm gom A–G. Báo cáo bộ 4 chỉ số an toàn: Exact Error Rate, Anomaly Miss Rate, Level01 Recall & Critical Miss Rate, và Ma trận nhầm lẫn mức an toàn. Cấm tuyệt đối cộng dồn mẫu hoặc sai số giữa các tầng (non-additive counts). |
 | **Định vị Direct Grounding** | 1. Hit@0.25 thuần túy<br>2. Continuous IoU (Primary) + Hit@0.25 / Hit@0.50 (Sensitivity) + Evidence P/R | - Chỉ dựa vào ngưỡng đơn độc dễ gây tranh cãi.<br>- Continuous IoU đo lường trọn vẹn dải phân bố; các ngưỡng đóng vai trò kiểm tra độ nhạy xác định trước. | **CHỌN PHƯƠNG ÁN 2**<br>End-to-End Mean IoU & Median IoU làm Primary; Hit@0.25 và Hit@0.50 làm Thresholded Sensitivity (pre-specified). |
 | **Ghép cặp Direct Grounding (2 Matching Modes)** | 1. Ghép tham lam (Greedy)<br>2. Phân định rõ Mode A (Continuous IoU Assignment) và Mode B (Thresholded Bipartite Matching) | - Ghép tham lam không tối ưu toàn cục.<br>- Việc dùng lẫn lộn giữa hàm đo liên tục và quyết định nhị phân có ngưỡng gây sai lệch chỉ số. | **CHỌN PHƯƠNG ÁN 2**<br>- Mode A (Threshold-Free): Dành cho Mean/Median IoU, cực đại hóa tổng IoU cạnh $\max_{r \in R_j}$, không áp ngưỡng $\tau$, atom thiếu gán $0.0$.<br>- Mode B: Dành cho Hit@$\tau$, Evidence P/R@$\tau$, CGI@$\tau$, chỉ giữ cạnh $\text{IoU} \ge \tau$, cực đại hóa số cặp ghép, tie-break bằng tổng IoU.<br>Cấm tuyệt đối trộn lẫn 2 modes. |
 | **Định vị Weak Proxy** | 1. Dùng IoU với Person<br>2. Identity-Agnostic Proxy Localization Consistency (Center-in-Proxy + Box Containment) | - IoU với Person phạt mô hình nhìn đúng đầu người (NO_HELMET).<br>- PLC phản ánh trung thực mức độ nhất quán vị trí không phụ thuộc danh tính người. | **CHỌN PHƯƠNG ÁN 2**<br>Primary: Center-in-Proxy (ưu tiên polygon gốc). Diagnostic: Box Containment (ngưỡng 0.50 là heuristic). Sensitivity: Single-Person Proxy Subset. |
@@ -822,13 +831,14 @@ SafeShift đề xuất bộ nguyên tắc thực thi chính thức cho Quyết �
    - **Primary Anchor:** **Class-Conditional Domain Analysis** (Recall theo từng lớp và Pooled-to-Domain Gap theo từng lớp $\Delta(c, d)$) nhằm giảm thiểu nhiễu tỷ lệ nhãn.
    - **Secondary Diagnostic:** Balanced Accuracy Domain Spread trên tập các miền $K=4$; Binary Anomaly Recall Spread làm chẩn đoán phụ trợ.
    - Tuyệt đối không dùng thuật ngữ "Domain Generalization Drop".
-5. **Chỉ số phân tầng nguy cơ RQ2 (RQ2 Hazard Strata Metrics):**
-   - Đánh giá trên 7 tầng nguy cơ gom nhóm ứng viên (Strata A–G): Báo cáo bắt buộc bộ 4 chỉ số:
+5. **Chỉ số phân tầng nguy cơ RQ2 (RQ2 Hazard Strata Metrics - Cập nhật theo Erratum đã duyệt 2026-09-18):**
+   - **Primary RQ2 Strata:** Đánh giá bộ 4 chỉ số an toàn chính yếu trên **12 Nguy cơ Nguyên tử (`Hazard Atoms`)**:
      1. **Exact Safety-Level Error Rate**
      2. **Anomaly-to-Normal Miss Rate**
-     3. **Level01 Recall và Critical Miss Rate** (cho các tầng có Level01)
+     3. **Level01 Recall và Critical Miss Rate** (cho các atom có Level01; ghi `NA` nếu không có Level01; không đặt ngưỡng cắt $N$ tối thiểu)
      4. **Ma trận nhầm lẫn mức an toàn** (Safety-Level Confusion Matrix).
-   - **Cơ sở thực chứng & Cảnh báo phương pháp luận bắt buộc:** Đa số mẫu ảnh bất thường (512 / 1.000 mẫu Anomaly, tức 51,2%) chứa từ 2 nguy cơ nguyên tử trở lên, tạo ra tổng cộng 1.381 lượt thành viên (memberships) trên 7 tầng. Do đó, các tầng nguy cơ **hoàn toàn không độc lập thống kê**, số lượng mẫu **không có tính cộng dồn (non-additive counts)**. Báo cáo bắt buộc phải kèm theo cảnh báo rõ ràng; **tuyệt đối cấm cộng dồn sai số hoặc tính tổng số mẫu giữa các tầng**.
+   - **Secondary Exploratory Summaries:** Báo cáo bộ 4 chỉ số trên **7 tầng nguy cơ gom nhóm ứng viên (Strata A–G)** như một bản tóm tắt khám phá phụ trợ cấp cao.
+   - **Cơ sở thực chứng & Cảnh báo phương pháp luận bắt buộc:** Đơn vị dự đoán duy nhất là ẢNH (`Image`). Đa số mẫu ảnh bất thường (512 / 1.000 mẫu Anomaly, tức 51,2%) chứa từ 2 nguy cơ nguyên tử trở lên, tạo ra tổng cộng 1.788 lượt thành viên nguyên tử trên ảnh và 1.381 lượt thành viên trên 7 tầng. Do đó, các tầng nguy cơ **hoàn toàn không độc lập thống kê**, số lượng mẫu **không có tính cộng dồn (non-additive counts)**. Báo cáo bắt buộc phải kèm theo cảnh báo rõ ràng; **tuyệt đối cấm cộng dồn sai số hoặc tính tổng số mẫu giữa các tầng**.
 6. **Đánh giá bám bằng chứng trực tiếp (RQ3-A Direct Grounding):**
    - **Tập vùng GT ứng viên ($R_j$):** Định nghĩa tường minh tập vùng $R_j$ theo D6 mapping; tính điểm cạnh IoU là cực đại trên các đa giác thuộc $R_j$: $\text{IoU}(p, j) = \max_{r \in R_j} \text{IoU}(p, \text{bbox}(r))$.
    - **Primary Metric:** **End-to-End Mean IoU** và **Median IoU** (đo lường liên tục).
@@ -888,7 +898,7 @@ Báo cáo W2.4 nhận diện các rủi ro và giới hạn phương pháp luậ
 3. **Chính sách xử lý lớp thiếu ở từng miền:** Chấp thuận Chính sách hai tầng (Dual-Layer Support-Aware Policy C): công bố chỉ số vĩ mô có gắn cờ số lớp $K_d$ và dùng Class-Conditional Recall làm mỏ neo so sánh chính hay không?
 4. **Mỏ neo chính cho suy giảm xuyên miền (RQ1):** Chấp thuận sử dụng **Class-Conditional Domain Analysis** (Recall từng lớp và Pooled-to-Domain Gap $\Delta(c, d)$) làm mỏ neo chính cho RQ1, xếp Balanced Accuracy Spread trên $K=4$ vào nhóm chẩn đoán phụ trợ, và cấm dùng thuật ngữ "Domain Generalization Drop" hay không?
 5. **Chính sách xác định Worst-Domain:** Chấp thuận loại bỏ quy tắc $N \ge 30$ cơ học, chuyển sang báo cáo giá trị nhỏ nhất quan sát được kèm đầy đủ mẫu số, CI, và xếp `metallurgy` vào diện "Descriptive / Sparse-Support" hay không?
-6. **Chính sách chỉ số phân tầng nguy cơ RQ2 & Hiện tượng giao thoa đa nguy cơ:** Chấp thuận đánh giá trên 7 tầng nguy cơ gom nhóm (Strata A–G) với bộ 4 chỉ số (Exact Safety-Level Error Rate, Anomaly-to-Normal Miss Rate, Level01 Recall & Critical Miss Rate cho các tầng có Level01, và Ma trận nhầm lẫn mức an toàn); đồng thời phê chuẩn nguyên tắc phương pháp luận: thừa nhận hiện tượng đa nguy cơ (512 / 1.000 mẫu Anomaly chứa $\ge 2$ hazard atoms, tạo ra 1.381 lượt thành viên trên 7 tầng), coi các tầng là không độc lập thống kê và cấm tuyệt đối việc cộng dồn sai số hoặc tính tổng số mẫu giữa các tầng (non-additive counts) hay không?
+6. **Chính sách chỉ số phân tầng nguy cơ RQ2 & Hiện tượng giao thoa đa nguy cơ:** Chấp thuận áp dụng bộ 4 chỉ số an toàn (Exact Safety-Level Error Rate, Anomaly-to-Normal Miss Rate, Level01 Recall & Critical Miss Rate cho các phân tầng có Level01, và Ma trận nhầm lẫn mức an toàn); đồng thời phê chuẩn nguyên tắc phương pháp luận: thừa nhận hiện tượng đa nguy cơ (512 / 1.000 mẫu Anomaly chứa $\ge 2$ hazard atoms, tạo ra 1.788 lượt thành viên nguyên tử trên ảnh và 1.381 lượt thành viên trên 7 nhóm gom), coi các tầng là không độc lập thống kê và cấm tuyệt đối việc cộng dồn sai số hoặc tính tổng số mẫu giữa các tầng (non-additive counts); *(Lưu ý: Sau khi được phê duyệt ngày 2026-09-18, thứ bậc phân tầng đã được đính chính chuẩn hóa: 12 Hazard Atoms là PRIMARY RQ2 STRATA, 7 nhóm gom A–G là SECONDARY EXPLORATORY SUMMARIES theo Erratum [notes/w2_rq2_hierarchy_erratum_brief.md](w2_rq2_hierarchy_erratum_brief.md))* hay không?
 7. **Chỉ số chính cho Direct Grounding:** Chấp thuận sử dụng **End-to-End Mean IoU** và **Median IoU** làm thước đo định vị liên tục chính, đi kèm **Hit@0.25** và **Hit@0.50** làm ngưỡng độ nhạy được xác định trước khi xem kết quả mô hình (`pre-specified before model-result inspection`) hay không?
 8. **Định nghĩa chuẩn mực cho Pointing Hit:** Chấp thuận quy tắc điểm tâm dự đoán bắt buộc phải nằm trong **bất kỳ đa giác GT gốc nào (`Original GT Polygon`)** thuộc tập vùng ứng viên $R_j$ để tránh tính điểm trúng vào vùng nền trống của derived bbox hay không?
 9. **Định nghĩa tập vùng ứng viên $R_j$ & Phân định 2 chế độ ghép cặp Direct Grounding:** Chấp thuận định nghĩa tập vùng GT ứng viên $R_j$ cho mỗi Direct atom theo D6 mapping; đồng thời phê chuẩn việc phân định rạch ròi hai chế độ ghép cặp:
