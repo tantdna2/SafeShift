@@ -855,6 +855,147 @@
   - Định hướng trực tiếp cho định nghĩa metric tại W2.4, khảo sát mô hình tại W2.5 và thực thi baseline tại W3.
 - **Thay thế quyết định:** Không.
 
+## DEC-W2-D8-008 — Model, Prompt & Interface Protocol
+
+- **ID:** DEC-W2-D8-008
+- **Ngày:** 2026-09-18
+- **Trạng thái:** ĐƯỢC CHẤP THUẬN
+- **Vấn đề cần quyết định:**
+  - Thiết lập giao thức toàn diện về mô hình, câu lệnh chỉ dẫn (prompt), phân lập quy tắc nhiệm vụ (task policy), kiến trúc lệnh gọi (call architecture), từ điển nguy cơ định vị (hazard vocabulary), giao diện đầu ra chuẩn hóa (canonical interface & schema), cấu hình giải mã ít biến động theo từng nhà cung cấp (provider-supported low-variance decoding), và kiểm soát nguồn gốc (provenance).
+  - Phê chuẩn Tường lửa Kiểm chuẩn (Benchmark Firewall) và Quy tắc Phát triển Mù (Blind Development Rules) để bảo vệ tính độc lập của tập dữ liệu InspecSafe-V1.
+  - Thiết lập Chính sách Đóng băng Giao thức (Protocol Freeze Policy) và Quy tắc Kiểm soát Thay đổi Sau Đóng băng (Post-Freeze Change Control).
+  - Lựa chọn danh sách rút gọn mô hình P2 (Core 4-Provider Shortlist) và chính sách phân tầng nhận biết năng lực định vị không gian (Capability-Aware Grounding Eligibility: Level 1, 2A, 2B, 3).
+  - Xác lập chính sách tái lập baseline upstream (P1 Baseline Reproduction Policy).
+- **Bối cảnh và bằng chứng:**
+  - Báo cáo phân tích phương pháp luận toàn diện tại [notes/w2_model_prompt_interface_decision_brief.md](notes/w2_model_prompt_interface_decision_brief.md) (W2.5).
+  - Kế thừa toàn bộ hệ thống quyết định đã khóa: [DEC-W2-D1-001](#dec-w2-d1-001) (Cross-Domain Robustness, P1/P2/P3/P4), [DEC-W2-D2-002](#dec-w2-d2-002) (Prediction Unit là ẢNH, lưu trữ raw outputs cấp ảnh), [DEC-W2-D3-003](#dec-w2-d3-003) (Domain mismatch và platform confounding), [DEC-W2-D4-004](#dec-w2-d4-004) (Canonical grounding format $x$-first, Capability-Aware Policy B), [DEC-W2-D5-005](#dec-w2-d5-005) (Hệ thống metric phân loại và định vị RQ1/RQ2/RQ3, bootstrap), [DEC-W2-D6-006](#dec-w2-d6-006) (Census 12 Hazard Atoms, 3 trạng thái hỗ trợ không gian Direct/Weak-Proxy/Unsupported), [DEC-W2-D7-007](#dec-w2-d7-007) (Chọn D7-A không tạo nhãn rationale mới, không tính Object Hallucination full-dataset).
+  - Đính chính thứ bậc RQ2 đã được phê duyệt ngày 2026-09-18 (PR #15): 12 Hazard Atoms là PRIMARY RQ2 STRATA, 7 nhóm gom A–G là SECONDARY EXPLORATORY SUMMARIES ([notes/w2_rq2_hierarchy_erratum_brief.md](notes/w2_rq2_hierarchy_erratum_brief.md)).
+  - Khảo sát kỹ thuật chính thức từ tài liệu các nhà cung cấp tại mốc 2026-09-18 (Google Cloud AI Studio/Vertex AI, OpenAI Platform, Anthropic Developer Docs, Alibaba Cloud DashScope / Hugging Face).
+  - GPU máy trạm 4 GB VRAM áp đặt giới hạn không thể tự host mô hình cục bộ lớn, dẫn đến việc phải dùng Hosted API với các ràng buộc về tính ổn định của snapshot và giới hạn tái lập (`HOSTED_BACKEND_NOT_FULLY_PINNABLE`).
+  - Phê duyệt chính thức của Project Owner vào ngày 2026-09-18 với tuyên bố nguyên văn:
+    > *"Tôi phê duyệt D8 theo phương án đề xuất: Benchmark Firewall, Protocol Freeze, C1, A2, B2, shortlist 4 provider, capability-aware grounding, provider-specific low-variance decoding và P1 reproduction policy."*
+- **Các phương án:**
+  - *Kiến trúc Lệnh gọi (Trục A):* A1 (One Combined Call: tiết kiệm chi phí nhưng gây rủi ro search conditioning), A2 (Two Independent Calls: tách bạch độc lập Call 1 và Call 2, bảo vệ RQ3, được chọn), A3 (Two Conditioned Calls: tạo thiên lệch điều kiện hóa nhân tạo, bị loại bỏ hoàn toàn).
+  - *Từ điển Nguy cơ Định vị (Trục B):* B1 (Open Vocabulary: tự do miêu tả nhưng khó ánh xạ tất định), B2 (Closed 12-Hazard Vocabulary: khớp toán học 100% với D5/D6, được chọn cho Call 2 độc lập), B3 (Hybrid Vocabulary).
+  - *Quy tắc Nhiệm vụ Phân loại (Trục C):* C1 (Policy-Aware Classification: cung cấp bảng an toàn ngành, được chọn), C2 (Abstract Policy: thiếu quy tắc cụ thể), C3 (No-Policy: under-specified nghiêm trọng, bị loại bỏ).
+  - *Cổng Năng lực Không gian Ngoại vi:* Loại bỏ các ngưỡng số tùy tiện ($\text{IoU} \ge 0.30$, distractor $\text{IoU} < 0.10$); thay bằng Sanity Check Gate kiểm tra tính hợp lý kỹ thuật trên dữ liệu ngoài benchmark có GT khách quan.
+  - *Chính sách Giải mã:* Loại bỏ quy định áp đặt máy móc `temperature = 0.0` đồng loạt; thay bằng Provider-Supported Low-Variance Configuration phù hợp với từng API.
+  - *Chính sách Tái lập P1:* Loại bỏ dung sai tùy tiện $\pm 1–2\%$; thay bằng báo cáo sai số tuyệt đối $\Delta$ và phân loại trạng thái tái lập có căn cứ kỹ thuật.
+- **Quyết định:**
+  - **1. Phê chuẩn Toàn văn và Tuyên bố của Project Owner:**
+    Chính thức phê duyệt Quyết định D8 theo văn bản trình duyệt tại [notes/w2_model_prompt_interface_decision_brief.md](notes/w2_model_prompt_interface_decision_brief.md).
+    Ghi nhận nguyên văn tuyên bố phê duyệt của Project Owner ngày 2026-09-18:
+    > *"Tôi phê duyệt D8 theo phương án đề xuất: Benchmark Firewall, Protocol Freeze, C1, A2, B2, shortlist 4 provider, capability-aware grounding, provider-specific low-variance decoding và P1 reproduction policy."*
+  - **2. Tường lửa Kiểm chuẩn & Quy tắc Phát triển Mù (Benchmark Firewall & Blind Development):**
+    - Toàn bộ **5.013 ảnh của InspecSafe-V1 trong Giao thức P2 là EVALUATION-ONLY** (và 1.250 ảnh cho P1).
+    - Các hành vi bị nghiêm cấm trước khi đóng băng giao thức:
+      1. Cấm thăm dò năng lực trên ảnh InspecSafe (*No capability probing using benchmark images*).
+      2. Cấm tinh chỉnh hoặc gỡ lỗi prompt dựa trên output của benchmark (*No prompt tuning/debugging using benchmark outputs*).
+      3. Cấm lựa chọn mô hình dựa trên hiệu năng trên benchmark (*No model selection using benchmark performance*).
+      4. Cấm phát triển parser điều kiện hóa theo output cụ thể của InspecSafe (*No output-conditioned parser development*).
+      5. Cấm tinh chỉnh ngưỡng quyết định dựa trên kết quả InspecSafe (*No threshold tuning using InspecSafe results*).
+    - Các hoạt động phát triển mù được phép:
+      1. Phản hồi giả định tự tạo bằng tay (*Handcrafted dummy responses*).
+      2. Dữ liệu JSON tổng hợp (*Synthetic JSON*).
+      3. Tài liệu kỹ thuật chính thức từ nhà cung cấp (*Provider documentation*).
+      4. Hình ảnh bên ngoài có giấy phép mở hoặc ảnh tổng hợp (*External openly licensed / synthetic images*) phục vụ kiểm thử pipeline ảnh và xác thực năng lực không gian.
+  - **3. Chính sách Đóng băng Giao thức (Protocol Freeze Policy):**
+    - Giao thức thực nghiệm bắt buộc phải được đóng băng toàn diện **TRƯỚC LẦN SUY LUẬN ĐẦU TIÊN** trên bất kỳ ảnh nào của InspecSafe-V1.
+    - Nội dung đóng băng tương lai bao gồm: shortlist mô hình và model ID chính xác, tuyến phục vụ mô hình (serving routes), prompt hệ thống + người dùng, task policy, kiến trúc lệnh gọi, từ điển nguy cơ, JSON Schema đầu ra, adapter/parser, cấu hình decoding/thinking, vai trò/năng lực mô hình, công cụ tính toán metric, và phiên bản giao thức tương ứng.
+    - **Trạng thái đóng băng hiện tại:**
+      `protocol_freeze_commit_sha: PENDING`
+      *(Lưu ý: Phê duyệt D8 chưa đồng nghĩa với Protocol Freeze; tuyệt đối KHÔNG điền mã commit SHA tại thời điểm này)*.
+  - **4. Chính sách Nhiệm vụ Phân loại An toàn (Classification Task Policy):**
+    - Phê chuẩn phương án **C1 — Policy-Aware Classification**.
+    - Call 1 nhận: `Image` + Bảng quy chuẩn an toàn ngành / Quy tắc nhiệm vụ (Safety Policy / Task Rules).
+    - Call 1 xuất: Đúng nhãn `safety_level` (`Level01`, `Level02`, `Level03`, `Level04`).
+    - Quy tắc độc lập: Call 1 **TUYỆT ĐỐI KHÔNG NHẬN** kết quả dự đoán của Call 2, không nhận danh sách nguy cơ dự đoán từ Call 2, và không nhận bất kỳ đầu ra định vị nào.
+  - **5. Kiến trúc Lệnh gọi (Call Architecture):**
+    - Phê chuẩn phương án **A2 — Two Independent Calls** cho giao thức nghiên cứu chính P2.
+      - *Call 1:* Phân loại an toàn (Safety Classification) với Task Policy C1 $\rightarrow$ xuất `safety_level`. Áp dụng cho 100% mô hình.
+      - *Call 2:* Định vị nguy cơ & Bám bằng chứng (Hazard Localization / Grounding) với từ điển đóng B2 $\rightarrow$ xuất tọa độ hộp bao chuẩn hóa. Chỉ áp dụng cho các mô hình Grounding-Eligible.
+    - Quy tắc phương pháp luận tối quan trọng: **Call 2 hoàn toàn độc lập, KHÔNG nhận kết quả dự đoán của Call 1**.
+    - Loại bỏ hoàn toàn phương án điều kiện hóa A3. Phương án A1 (One Combined Call) bị loại bỏ khỏi giao thức chính P2.
+  - **6. Từ điển Nguy cơ Định vị (Hazard Vocabulary):**
+    - Phê chuẩn phương án **B2 — Closed 12-Hazard Vocabulary** CHỈ dành riêng cho Call 2 độc lập.
+    - Đúng 12 Hazard Atoms của D6 được sử dụng làm **từ điển định vị nguy cơ đóng (`closed-set hazard localization vocabulary`)**.
+    - Khẳng định rõ ràng: Đây **KHÔNG PHẢI là bài toán phát hiện nguy cơ từ vựng mở (`open-vocabulary hazard discovery`)**.
+    - Phân định độc lập: Tuyệt đối không đánh đồng bài toán phân tích phân tầng sai số phân loại an toàn cấp ảnh của RQ2 (**RQ2: Image-level classification error stratification**) với bài toán định vị nguy cơ / bám bằng chứng không gian của RQ3 (**RQ3: Hazard localization / spatial evidence grounding**).
+    - Thứ bậc RQ2 giữ nguyên vẹn theo Erratum PR #15: **12 Hazard Atoms là PRIMARY RQ2 STRATA**, **7 Grouped Categories A–G là SECONDARY EXPLORATORY SUMMARIES**.
+  - **7. Chính sách Danh sách Rút gọn Mô hình P2 (Core 4-Provider Shortlist):**
+    - Phê chuẩn shortlist 4 nhà cung cấp chính thức:
+      1. *Google:* `gemini-3.8-flash` (Level 1 — DOC-VERIFIED SPATIAL, Grounding-Eligible).
+      2. *Alibaba Cloud:* `qwen3-vl-8b-instruct` (Level 1 — DOC-VERIFIED SPATIAL, Grounding-Eligible qua các giả định tuyến DashScope Singapore đã duyệt).
+      3. *OpenAI:* `gpt-5.6-terra` (Level 3 — PROMPT-ONLY / UNVERIFIED SPATIAL, Classification-Only trừ khi cổng thử nghiệm ngoại vi thăng hạng lên Level 2A).
+      4. *Anthropic:* `claude-sonnet-5` / `claude-sonnet-5-20260301` (Level 3 — PROMPT-ONLY / UNVERIFIED SPATIAL, Classification-Only trừ khi cổng thử nghiệm ngoại vi thăng hạng lên Level 2A).
+    - Tuyệt đối không tự ý thay đổi model ID. Lựa chọn mô hình hoàn toàn độc lập với điểm số trên InspecSafe.
+    - Nếu một snapshot API cụ thể của nhà cung cấp không còn khả dụng trước thời điểm đóng băng: ghi nhận trạng thái vòng đời/tương thích (`compatibility/lifecycle status`) thay vì âm thầm thay thế.
+    - *Ghi chú về tính nhất quán của cấp độ năng lực (Consistency Note):* Cấp độ năng lực (`Capability Level`) là một phân loại trạng thái bằng chứng tài liệu/thực nghiệm (`evidence-status classification`), tuyệt đối không phải là bảng xếp hạng hiệu năng mô hình (`not a benchmark performance ranking`). Level 1 có nghĩa là tài liệu kỹ thuật chính thức của nhà cung cấp có công bố và hướng dẫn năng lực không gian. Level 3 có nghĩa là năng lực không gian chưa được kiểm chứng theo tiêu chuẩn của giao thức. Tuyệt đối không suy diễn chất lượng hay trí thông minh của mô hình từ số thứ tự cấp độ.
+  - **8. Định vị Nhận biết Năng lực (Capability-Aware Grounding Eligibility):**
+    - Nhiệm vụ phân loại an toàn áp dụng cho 100% mô hình trong shortlist.
+    - Quyền tham gia đánh giá định vị (Grounding) tuân thủ chính sách nhận biết năng lực:
+      - Chỉ các mô hình đạt **LEVEL 1 — DOC-VERIFIED SPATIAL** hoặc **LEVEL 2A — EXTERNAL SPATIAL-PROBE VERIFIED** mới được tham gia vào benchmark định lượng RQ3 Grounding.
+      - **LEVEL 2B — FORMAT-OPERABILITY ONLY** (chỉ biết xuất JSON hợp lệ cú pháp nhưng chưa kiểm chứng định vị không gian) **KHÔNG ĐỦ ĐIỀU KIỆN** tham gia grounding benchmark.
+      - **LEVEL 3 — PROMPT-ONLY / UNVERIFIED** bắt buộc phải giữ nguyên trạng thái chỉ phân loại (`Classification-Only`), trừ khi vượt qua cổng thử nghiệm năng lực ngoại vi Target+Distractor.
+      - Các mô hình không đủ điều kiện định vị được ghi nhận là **`NOT PARTICIPATING`**, tuyệt đối không bị gán lỗi giả mạo $\text{IoU} = 0.0$ và không bị tính vào bảng xếp hạng grounding.
+  - **9. Cổng Thử nghiệm Năng lực Ngoại vi (External Target+Distractor Sanity Gate):**
+    - Cổng kiểm tra tính hợp lý kỹ thuật ngoại vi chỉ sử dụng hình ảnh bên ngoài InspecSafe (ảnh COCO / Open Images / Synthetic) có ground-truth tọa độ khách quan.
+    - Tiêu chí vượt qua (Pass logic):
+      1. Xuất đúng cấu trúc JSON và tọa độ hợp lệ.
+      2. Tâm hộp bao dự đoán nằm trong bounding box mục tiêu ($T$).
+      3. Hộp bao dự đoán không bao trùm tâm của vật thể gây nhiễu ($D$).
+      4. Bám vị trí mục tiêu có hệ thống khi hoán đổi vị trí $T$ và $D$.
+      5. Không có hành vi xuất hộp bao khổng lồ bao trùm ảnh (*giant box*).
+    - Điểm số IoU chỉ mang tính chẩn đoán mô tả (*descriptive diagnostic*), tuyệt đối không dùng làm ngưỡng đóng mở cổng tùy tiện.
+    - **Không thực thi cổng này trong bước phê duyệt D8** (chuyển sang danh sách kiểm tra trước đóng băng).
+  - **10. Chính sách Giải mã Ít Biến động Được Nhà Cung Cấp Hỗ Trợ (Provider-Supported Low-Variance Decoding Policy):**
+    - Nguyên tắc: *Cùng một nhiệm vụ ngữ nghĩa, sử dụng các tham số kỹ thuật ít biến động tương thích với từng nhà cung cấp*.
+    - Tuyệt đối không ép buộc `temperature = 0.0` đồng loạt cho mọi mô hình nếu API không hỗ trợ hoặc khuyến nghị khác.
+    - Bảo lưu cấu hình riêng biệt đã thẩm định:
+      - *Gemini 3.8 Flash:* `thinking: "low"`.
+      - *GPT-5.6-Terra:* `reasoning_effort: "low"`.
+      - *Claude Sonnet 5:* Adaptive thinking / supported effort policy.
+    - *Tuyến phục vụ Qwen:* Giữ nguyên các trạng thái đã chốt:
+      - `ROUTE_REGION_PINNED` (Alibaba Cloud DashScope, Singapore `ap-southeast-1`).
+      - `WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`.
+      - `QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`.
+      - `HOSTED_BACKEND_NOT_FULLY_PINNABLE`.
+      - Serving precision / quantization: `UNDISCLOSED BY PROVIDER`.
+      - Việc phê duyệt D8 không tự động giải quyết các trường triển khai kỹ thuật này; chúng bắt buộc phải được giải quyết tại thời điểm đóng băng giao thức.
+  - **11. Chính sách Tái lập Baseline Upstream (P1 Baseline Reproduction Policy):**
+    - Giao thức P1 sử dụng:
+      1. Tập kiểm thử chính thức gồm đúng **1.250 ảnh**.
+      2. Prompt và task policy nguyên bản của tác giả gốc.
+      3. Cấu hình giải mã nguyên bản `temperature = 0.1`.
+      4. Mô hình tham chiếu upstream khi truy cập được; nếu không thì dùng phiên bản Claude tương thích và ghi rõ nhãn `Compatibility Reproduction`.
+      5. Pipeline tương đồng văn bản BGE-M3 cục bộ theo đúng mã nguồn gốc.
+    - Loại bỏ tiêu chí dung sai tùy tiện $\pm 1–2\%$. Báo cáo:
+      $$\text{Metric}_{\text{reproduced}}, \quad \text{Metric}_{\text{published}}, \quad \Delta, \quad \text{Giải thích tương thích kỹ thuật}$$
+    - Chuẩn hóa hệ thống nhãn trạng thái: `REPRODUCIBLE`, `COMPATIBILITY_REPRODUCTION`, `NOT_EXACTLY_REPRODUCIBLE`.
+  - **12. Quy tắc Kiểm soát Thay đổi Sau Đóng băng (Post-Freeze Change Control):**
+    - Nghiêm cấm mọi hành vi sửa đổi prompt dựa trên hiệu năng (*No performance-driven prompt modification*) sau lần suy luận đầu tiên trên InspecSafe.
+    - Sửa lỗi kỹ thuật (bug fix) bắt buộc phải tuân thủ: ghi nhận issue/nguyên nhân, tăng phiên bản giao thức (*protocol version bump*), vô hiệu hóa các lượt chạy bị ảnh hưởng, và chạy lại toàn bộ các evaluation pool liên quan. Nghiêm cấm tùy biến cứu điểm riêng cho một mô hình (*No one-model rescue tuning*).
+- **Lý do:**
+  1. Bảo đảm tính khách quan, ngăn ngừa thích nghi benchmark nội sinh thông qua Tường lửa Kiểm chuẩn và Quy tắc Phát triển Mù.
+  2. Kiến trúc hai lệnh gọi độc lập A2 giải tỏa hoàn toàn thiên lệch điều kiện hóa giữa phân loại và định vị, bảo vệ tính trung thực của chỉ số nhất quán $\text{CGI}@\tau$ (RQ3).
+  3. Cung cấp task policy C1 giúp bài toán phân loại an toàn có đầy đủ ngữ nghĩa, phản ánh đúng tiêu chuẩn an toàn công nghiệp gốc.
+  4. Từ điển đóng 12 nguy cơ B2 trong Call 2 cho phép ánh xạ tất định 100% vào các phân tầng của D5/D6 mà không làm ảnh hưởng đến quyết định phân loại an toàn của Call 1.
+  5. Chính sách nhận biết năng lực (Capability-Aware) ngăn chặn việc phạt oan mô hình không hỗ trợ xuất tọa độ hoặc cấp quyền sai cho mô hình chỉ có năng lực định dạng bề mặt (Level 2B).
+  6. Tôn trọng thực tế kỹ thuật của các API thương mại hiện hành thay vì áp đặt tham số giải mã phi thực tế.
+  7. Minh bạch hóa quy trình tái lập P1 và công bố trung thực các giới hạn tái lập của tuyến Hosted API Qwen.
+- **Ảnh hưởng tới dataset, split, metric và reproducibility:**
+  - **Dataset:** 5.013 ảnh InspecSafe-V1 là Evaluation-Only. Tuyệt đối không thay đổi dữ liệu gốc, không sửa nhãn thô.
+  - **Split:** P1 (1.250 ảnh test) và P2 (5.013 ảnh full) giữ nguyên vẹn.
+  - **Metrics:** Không thay đổi bất kỳ công thức nào của D5. Bảo toàn phân cấp RQ2 (12 Primary Atoms, 7 Secondary Groups).
+  - **Reproducibility:** Bắt buộc ghi nhận commit SHA khi freeze (`protocol_freeze_commit_sha: PENDING`), lưu trữ nguyên văn raw outputs cấp ảnh, ghi nhận đầy đủ metadata môi trường, phiên bản API và thông số sinh cho từng mẫu.
+- **Người chấp thuận và thời điểm:** Project Owner / Research Lead, ngày 2026-09-18.
+- **Task/thí nghiệm liên quan:**
+  - [notes/w2_model_prompt_interface_decision_brief.md](notes/w2_model_prompt_interface_decision_brief.md) (W2.5 Technical Decision Brief)
+  - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003), [DEC-W2-D4-004](#dec-w2-d4-004), [DEC-W2-D5-005](#dec-w2-d5-005), [DEC-W2-D6-006](#dec-w2-d6-006), [DEC-W2-D7-007](#dec-w2-d7-007)
+  - [notes/w2_rq2_hierarchy_erratum_brief.md](notes/w2_rq2_hierarchy_erratum_brief.md) (PR #15)
+  - Cơ sở trực tiếp để triển khai mã nguồn prompt, adapters, test suite và thực thi baseline W3.
+- **Thay thế quyết định:** Không.
+
 ## Template
 
 - **ID:** <DEC-...>
