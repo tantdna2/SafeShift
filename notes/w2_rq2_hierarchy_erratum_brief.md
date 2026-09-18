@@ -6,7 +6,7 @@
 - **Nhánh Git:** `protocol/rq2-hierarchy-erratum`
 - **Trạng thái:** **BÁO CÁO PHÂN TÍCH ĐỀ XUẤT (PROPOSED, NOT APPROVED)** — Đang chờ phê duyệt chính thức từ Research Lead / Project Owner
 - **Ngày lập:** 2026-09-18
-- **Phiên bản:** 1.0.0
+- **Phiên bản:** 1.1.0 (Qualified Semantics Edition)
 
 ---
 
@@ -32,7 +32,7 @@ Tài liệu D1 ghi chú rõ ràng rằng danh mục phân tầng nguy cơ đã x
 
 ### 1.2 Thực trạng mâu thuẫn phát sinh giữa D5 và D6
 Khi hoàn thiện cuộc tổng điều tra tại W2.3 (D6) và xây dựng hệ thống chỉ số tại W2.4 (D5):
-1. **D6 đã thẩm định và xác lập hệ thống 12 Nguy cơ Nguyên tử (`Hazard Atoms`):** Đây là hệ thống phân loại duy nhất phản ánh trung thực nhãn gốc, giải thích 100% (1.000 / 1.000) mẫu Bất thường, bao gồm 1.788 lượt xuất hiện của nguy cơ nguyên tử.
+1. **D6 đã thẩm định và xác lập hệ thống 12 Nguy cơ Nguyên tử (`Hazard Atoms`):** Đây là hệ phân loại nghiên cứu thao tác (*operational research taxonomy*), được xây dựng và kiểm chứng thực nghiệm từ các mệnh đề nguy cơ của InspecSafe-V1, giải thích trọn vẹn 100% (1.000 / 1.000) mẫu Bất thường, bao gồm 1.788 lượt xuất hiện của nguy cơ nguyên tử.
 2. **Tuy nhiên, D6 cũng đề xuất thêm "7 Phân tầng Nguy cơ Gom nhóm Ứng viên" (`Candidate Grouped Hazard Strata A–G`):** Các nhóm này được xây dựng như một cách tiếp cận phân nhóm cấp cao (coarse-grained grouping) nhằm quan sát xu hướng tổng thể.
 3. **D5 đã gán toàn bộ định nghĩa chỉ số RQ2 vào 7 nhóm gom A–G này:** Quyết định D5 (mục DEC-W2-D5-005) định nghĩa hệ thống 4 chỉ số cốt lõi của RQ2 (`RQ2 Grouped Hazard Strata Metrics`) và chỉ quy định tính toán trên 7 nhóm A–G. 
 4. **Hệ quả tiêu cực:** Cách trình bày này đã vô tình tạo ra một ngụ ý sai lệch rằng: **7 nhóm gom A–G là các phân tầng chính (Primary Strata) của RQ2**, trong khi **12 nguy cơ nguyên tử bị đẩy xuống hàng thứ yếu hoặc bị bỏ sót hoàn toàn trong báo cáo định lượng RQ2**.
@@ -65,23 +65,33 @@ Việc rà soát toàn diện mã nguồn tài liệu xác định các vị tr�
 
 ## 3. Tầm quan trọng phương pháp luận của việc phân định (Why the Distinction Matters)
 
-Việc phân định rạch ròi giữa **12 Hazard Atoms (Primary)** và **7 Grouped Strata (Secondary)** không đơn thuần là thay đổi câu chữ, mà là một nguyên tắc sống còn về tính toàn vẹn khoa học của bài báo và benchmark:
+Việc phân định rạch ròi giữa **12 Hazard Atoms (Primary)** và **7 Grouped Strata (Secondary)** không đơn thuần là thay đổi câu chữ, mà là một nguyên tắc phương pháp luận quan trọng nhằm đảm bảo tính chặt chẽ của benchmark:
 
-### 3.1 12 Hazard Atoms là Hệ Phân loại Ground-Truth Trung thực Duy nhất
-- **Nguồn gốc thực chứng:** 12 Hazard Atoms được chiết xuất tất định từ 187 mệnh đề nguy cơ gốc và đối chiếu trực tiếp với hệ quy chuẩn 5 ngành công nghiệp của InspecSafe-V1.
-- **Tính bao phủ toàn diện:** 12 Hazard Atoms giải thích trọn vẹn 100% (1.000 / 1.000) mẫu Anomaly, không để sót bất kỳ mẫu nào (`unmapped_count = 0`).
-- **Tính nguyên tử:** Mỗi atom đại diện cho một vi phạm an toàn cụ thể, độc lập về mặt ngữ nghĩa (ví dụ: `NO_HELMET` là thiếu mũ, `USE_MOBILE_PHONE` là dùng điện thoại).
+### 3.1 12 Hazard Atoms là Hệ Phân loại Nghiên cứu Thao tác Phù hợp Nhất làm Phân tầng Phân tích Chính (Primary Analytical Strata)
+Hệ thống 12 Hazard Atoms là **hệ phân loại nghiên cứu thao tác (`operational 12-atom research taxonomy`)** được sử dụng làm các phân tầng phân tích chính của RQ2 (`primary RQ2 analytical strata`). 
+
+Lý do xác lập 12 Hazard Atoms làm **PRIMARY RQ2 STRATA** hoàn toàn dựa trên các căn cứ khoa học thực nghiệm:
+1. **Độ phân giải chẩn đoán chi tiết hơn (`Finer Diagnostic Granularity`):** Phân tích ở cấp độ nguyên tử cho phép phát hiện chính xác các điểm yếu chuyên biệt của từng mô hình (ví dụ: mô hình có thể phát hiện tốt mũ bảo hộ nhưng lại bỏ sót găng tay; phát hiện tốt ngọn lửa trần nhưng lại nhầm lẫn khói).
+2. **Độ bao phủ ánh xạ tất định trọn vẹn (`Deterministic Mapping Coverage`):** Toàn bộ 1.000 mẫu Anomaly (187 mệnh đề nguy cơ duy nhất) được ánh xạ 100% vào 12 atoms này mà không để sót bất kỳ mẫu nào (`unmapped_count = 0`).
+3. **Khớp nối trực tiếp với Tổng điều tra D6 (`Direct Alignment with D6 Census`):** Đã được kiểm chứng thực tế và định lượng chính xác ở cả cấp độ mẫu và cấp độ nguyên tử.
+
+> [!WARNING]
+> **Loại trừ các tuyên bố quá mức (Exclusion of Overclaims):**  
+> Hệ phân loại 12 nguyên tử này là **hệ phân loại thao tác nội bộ của đề tài nghiên cứu (`operational research taxonomy`)**, được xây dựng và kiểm chứng thực nghiệm từ dữ liệu InspecSafe-V1. Hệ phân loại này **TUYỆT ĐỐI KHÔNG PHẢI**:
+> - Hệ phân loại an toàn công nghiệp phổ quát (`universal industrial-safety taxonomy`).
+> - Hệ phân loại chân lý tuyệt đối (`absolute ground-truth taxonomy`).
+> - Bản thể học chân thực duy nhất (`uniquely true ontology`).
 
 ### 3.2 7 Nhóm Gom A–G là Cấu trúc Phái sinh Cấp cao (Derived Coarse Grouping)
-- 7 nhóm gom là sản phẩm tổng hợp nhân tạo phục vụ tóm tắt trực quan, **không phải là nhãn ground truth có sẵn trong tập dữ liệu**.
+- 7 nhóm gom là sản phẩm tổng hợp nhân tạo phục vụ tóm tắt trực quan, không phải là hệ phân loại có sẵn trong nhãn gốc.
 - 7 nhóm gom tạo ra **1.381 lượt thành viên (memberships)** trên 1.000 mẫu Anomaly, nghĩa là mức độ trùng lặp và phụ thuộc thống kê rất cao.
 - **Làm lu mờ độ phân giải chẩn đoán an toàn (Loss of Diagnostic Granularity):**
-  - *Ví dụ về PPE (Nhóm B - `PPE_ABSENCE`):* Nếu gộp chung `NO_HELMET`, `NO_GLOVES` và `NO_MASK` vào Nhóm B ($N=545$ mẫu, 882 atoms), ta không thể biết được mô hình VLM thường xuyên bỏ sót vi phạm mũ bảo hộ (tín hiệu ở vùng đầu) hay vi phạm găng tay (tín hiệu ở bàn tay nhỏ và dễ bị che khuất).
-  - *Ví dụ về Cháy/Nhiệt (Nhóm A - `FIRE_AND_SMOKE`):* Gộp `OPEN_FLAME` ($N=117$) và `SMOKE` ($N=108$) sẽ xóa nhòa sự khác biệt giữa phát hiện ngọn lửa (đặc trưng màu sắc/độ sáng nổi bật) và phát hiện khói (đặc trưng bán trong suốt, biên mờ).
-  - *Ví dụ về Hành vi/Vật thể (Nhóm C - `UNAUTHORIZED_BEHAVIOR` vs Nhóm E - `OBSTRUCTION_AND_FOREIGN_OBJECT`):* Khiến cho việc so sánh khả năng nhận diện vật thể ngoại lai (`FOREIGN_OBJECT`) và nhận diện vi phạm quy tắc vận hành bị phân tán.
+  - *Ví dụ về PPE (Nhóm B - `PPE_ABSENCE`):* Nếu gộp chung `NO_HELMET`, `NO_GLOVES` và `NO_MASK` vào Nhóm B ($N=545$ mẫu, 882 atoms), ta không thể phân biệt được mô hình VLM bỏ sót vi phạm mũ bảo hộ (đặc trưng vùng đầu) hay vi phạm găng tay (đặc trưng bàn tay nhỏ, dễ bị che khuất).
+  - *Ví dụ về Cháy/Khói (Nhóm A - `FIRE_AND_SMOKE`):* Gộp `OPEN_FLAME` ($N=117$) và `SMOKE` ($N=108$) sẽ xóa nhòa sự khác biệt giữa phát hiện ngọn lửa (đặc trưng màu sắc/độ sáng cao) và phát hiện khói (đặc trưng bán trong suốt, biên mờ).
+  - *Ví dụ về Hành vi/Vật thể (Nhóm C - `UNAUTHORIZED_BEHAVIOR` vs Nhóm E - `OBSTRUCTION_AND_FOREIGN_OBJECT`):* Làm lẫn lộn giữa vi phạm hành vi vận hành và sự hiện diện của dị vật cơ học.
 
-### 3.3 Yêu cầu khắt khe về Đánh giá An toàn Công nghiệp
-Trong kiểm định an toàn công nghiệp thực tế, một hệ thống AI không thể chỉ báo cáo "phát hiện lỗi PPE chung chung" mà phải chỉ rõ loại vi phạm để kích hoạt quy trình ứng phó tương ứng. Do đó, việc đặt 12 Hazard Atoms làm phân tầng chính là yêu cầu bắt buộc để benchmark SafeShift có giá trị thực tiễn và tính học thuật cao.
+### 3.3 Duy trì Độ Phân giải Chẩn đoán Kỹ thuật cho Benchmark (Preserving Diagnostic Resolution)
+Báo cáo ở cấp độ nguy cơ nguyên tử (*atom-level reporting*) giúp bảo toàn độ phân giải chẩn đoán chi tiết hơn cho các phân tích của SafeShift (*preserves finer diagnostic resolution for SafeShift analysis*). Điều này cho phép benchmark xác định rõ ràng mô hình VLM gặp khó khăn cụ thể ở loại vi phạm nào, thay vì bị che lấp bởi các nhóm tóm tắt gộp chung.
 
 ---
 
@@ -92,28 +102,28 @@ SafeShift xác lập lại thứ bậc phân tầng chính thống hai cấp đ�
 ```mermaid
 graph TD
     subgraph PrimaryRQ2 ["TẦNG PHÂN TÍCH CHÍNH (PRIMARY RQ2 STRATA) - 12 HAZARD ATOMS"]
-        A1["NO_GLOVES (N=453)"]
-        A2["NO_HELMET (N=229)"]
-        A3["NO_MASK (N=200)"]
-        A4["USE_MOBILE_PHONE (N=167)"]
-        A5["LIQUID_ON_GROUND (N=134)"]
-        A6["SMOKING (N=120)"]
-        A7["OPEN_FLAME (N=117)"]
-        A8["FOREIGN_OBJECT (N=115)"]
-        A9["SMOKE (N=108)"]
-        A10["NONMOTORIZED_VEHICLE (N=101)"]
-        A11["DOOR_OPEN (N=34)"]
-        A12["PERSON_FALLEN (N=10)"]
+        A1["NO_GLOVES<br/>(Atom Count: 453 | Image Support Na: 453)"]
+        A2["NO_HELMET<br/>(Atom Count: 229 | Image Support Na: 229)"]
+        A3["NO_MASK<br/>(Atom Count: 200 | Image Support Na: 200)"]
+        A4["USE_MOBILE_PHONE<br/>(Atom Count: 167 | Image Support Na: 167)"]
+        A5["LIQUID_ON_GROUND<br/>(Atom Count: 134 | Image Support Na: 134)"]
+        A6["SMOKING<br/>(Atom Count: 120 | Image Support Na: 120)"]
+        A7["OPEN_FLAME<br/>(Atom Count: 117 | Image Support Na: 117)"]
+        A8["FOREIGN_OBJECT<br/>(Atom Count: 115 | Image Support Na: 115)"]
+        A9["SMOKE<br/>(Atom Count: 108 | Image Support Na: 108)"]
+        A10["NONMOTORIZED_VEHICLE<br/>(Atom Count: 101 | Image Support Na: 101)"]
+        A11["DOOR_OPEN<br/>(Atom Count: 34 | Image Support Na: 34)"]
+        A12["PERSON_FALLEN<br/>(Atom Count: 10 | Image Support Na: 10)"]
     end
 
     subgraph SecondaryRQ2 ["TẦNG TÓM TẮT KHÁM PHÁ PHỤ TRỢ (SECONDARY EXPLORATORY SUMMARIES) - 7 GROUPS"]
-        G1["Group A: FIRE_AND_SMOKE (Sample N=200, Atom N=225)"]
-        G2["Group B: PPE_ABSENCE (Sample N=545, Atom N=882)"]
-        G3["Group C: UNAUTHORIZED_BEHAVIOR (Sample N=247, Atom N=287)"]
-        G4["Group D: ENVIRONMENTAL_SLIP_HAZARD (Sample N=134, Atom N=134)"]
-        G5["Group E: OBSTRUCTION_AND_FOREIGN_OBJECT (Sample N=211, Atom N=216)"]
-        G6["Group F: EQUIPMENT_STATE_ANOMALY (Sample N=34, Atom N=34)"]
-        G7["Group G: PERSONNEL_FALLEN (Sample N=10, Atom N=10)"]
+        G1["Group A: FIRE_AND_SMOKE<br/>(Sample N=200, Atom N=225)"]
+        G2["Group B: PPE_ABSENCE<br/>(Sample N=545, Atom N=882)"]
+        G3["Group C: UNAUTHORIZED_BEHAVIOR<br/>(Sample N=247, Atom N=287)"]
+        G4["Group D: ENVIRONMENTAL_SLIP_HAZARD<br/>(Sample N=134, Atom N=134)"]
+        G5["Group E: OBSTRUCTION_AND_FOREIGN_OBJECT<br/>(Sample N=211, Atom N=216)"]
+        G6["Group F: EQUIPMENT_STATE_ANOMALY<br/>(Sample N=34, Atom N=34)"]
+        G7["Group G: PERSONNEL_FALLEN<br/>(Sample N=10, Atom N=10)"]
     end
 
     A7 --> G1
@@ -132,19 +142,6 @@ graph TD
 
 ### 4.1 Phân tầng Chính (Primary RQ2 Strata): 12 Hazard Atoms
 - **Đối tượng:** Đúng **12 Hazard Atoms** đã kiểm toán tại D6, giải thích 100% 1.000 mẫu Anomaly (tổng cộng 1.788 atoms).
-- **Quy mô mẫu theo Atom và theo Mẫu ảnh chứa Atom:**
-  1. `NO_GLOVES`: 453 atoms (phân bố trên các mẫu chứa vi phạm không đeo găng tay).
-  2. `NO_HELMET`: 229 atoms (phân bố trên các mẫu chứa vi phạm không đội mũ).
-  3. `NO_MASK`: 200 atoms (phân bố trên các mẫu chứa vi phạm không đeo khẩu trang).
-  4. `USE_MOBILE_PHONE`: 167 atoms (phân bố trên các mẫu dùng điện thoại).
-  5. `LIQUID_ON_GROUND`: 134 atoms (phân bố trên các mẫu tràn dầu/đọng nước).
-  6. `SMOKING`: 120 atoms (phân bố trên các mẫu hút thuốc).
-  7. `OPEN_FLAME`: 117 atoms (phân bố trên các mẫu ngọn lửa trần).
-  8. `FOREIGN_OBJECT`: 115 atoms (phân bố trên các mẫu có dị vật/rác).
-  9. `SMOKE`: 108 atoms (phân bố trên các mẫu có khói).
-  10. `NONMOTORIZED_VEHICLE`: 101 atoms (phân bố trên các mẫu xe thô sơ lấn làn).
-  11. `DOOR_OPEN`: 34 atoms (phân bố trên các mẫu cửa tủ điện mở).
-  12. `PERSON_FALLEN`: 10 atoms (phân bố trên các mẫu người ngã gục).
 - **Vai trò:** Là mỏ neo đánh giá chính thức bắt buộc trong toàn bộ các bảng kết quả chính của RQ2.
 
 ### 4.2 Phân tầng Khám phá Phụ trợ (Secondary Exploratory Summaries): 7 Grouped Categories A–G
@@ -156,8 +153,34 @@ graph TD
 
 ## 5. Phân tích RQ2 trên 12 Hazard Atoms chính (Primary 12-Atom RQ2 Analysis)
 
-### 5.1 Áp dụng Bộ 4 Chỉ số Cốt lõi của D5
-Toàn bộ bộ 4 chỉ số an toàn đã được phê duyệt tại DEC-W2-D5-005 được áp dụng trực tiếp cho từng stratum nguyên tử $a \in \{\text{Atom}_1, \dots, \text{Atom}_{12}\}$:
+### 5.1 Kiểm toán Thực chứng: Số lượng Atom vs Số lượng Mẫu Ảnh Độc nhất ($N_a$)
+Theo nguyên tắc D2, đơn vị dự đoán duy nhất của bài toán phân loại an toàn là **ẢNH (`Image`)** — tức là mỗi bức ảnh chỉ nhận **một dự đoán an toàn duy nhất (`one safety prediction per image`)**. Do đó, mẫu số $N_a$ của các chỉ số RQ2 bắt buộc phải là **Số lượng Mẫu Ảnh Độc nhất (`Unique Image Support Count`)**, không thể mặc định lấy `Atom Count` nếu chưa qua kiểm chứng.
+
+Thực hiện kiểm toán trực tiếp (Read-Only) trên artifact cuộc tổng điều tra W2.3 ([`data/manifests/w2_grounding_census.json`](file:///D:/SafeShift/data/manifests/w2_grounding_census.json)), kết quả xác minh chính xác như sau:
+
+| STT | Mã Nguy cơ Nguyên tử (`Hazard Atom`) | Số lượng Atom (`Atom Count`) | Số mẫu ảnh độc nhất (`Unique Sample Support` $N_a$) | Chênh lệch (`Diff`) | Hỗ trợ theo Cấp An toàn: Level01 | Hỗ trợ theo Cấp An toàn: Level02 | Hỗ trợ theo Cấp An toàn: Level03 |
+|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1 | `NO_GLOVES` | **453** | **453** | 0 | 303 | 147 | 3 |
+| 2 | `NO_HELMET` | **229** | **229** | 0 | 126 | 103 | 0 |
+| 3 | `NO_MASK` | **200** | **200** | 0 | 109 | 84 | 7 |
+| 4 | `USE_MOBILE_PHONE` | **167** | **167** | 0 | 96 | 71 | 0 |
+| 5 | `LIQUID_ON_GROUND` | **134** | **134** | 0 | 73 | 55 | 6 |
+| 6 | `SMOKING` | **120** | **120** | 0 | 120 | 0 | 0 |
+| 7 | `OPEN_FLAME` | **117** | **117** | 0 | 117 | 0 | 0 |
+| 8 | `FOREIGN_OBJECT` | **115** | **115** | 0 | 40 | 75 | 0 |
+| 9 | `SMOKE` | **108** | **108** | 0 | 108 | 0 | 0 |
+| 10 | `NONMOTORIZED_VEHICLE` | **101** | **101** | 0 | 101 | 0 | 0 |
+| 11 | `DOOR_OPEN` | **34** | **34** | 0 | 8 | 26 | 0 |
+| 12 | `PERSON_FALLEN` | **10** | **10** | 0 | 10 | 0 | 0 |
+| **Tổng** | **12 Hazard Atoms** | **1.788** | **1.788** | **0** | **1.211** | **561** | **16** |
+
+> [!NOTE]
+> **Kết luận kiểm toán thực chứng về Mẫu số $N_a$:**  
+> Kết quả kiểm toán trên 1.000 mẫu ảnh xác nhận: **Không có bất kỳ mẫu ảnh nào chứa lặp lại 2 lần cùng một loại hazard atom** (`multiple_same_atom_in_single_sample = {}`). Do đó, đối với toàn bộ 12 atoms, **`Atom Count` hoàn toàn bằng với `Unique Sample Support Count` ($N_a$)**.  
+> Tổng số 1.788 lượt xuất hiện của nguy cơ nguyên tử phân bố trên đúng 1.000 mẫu ảnh độc nhất do có 512 mẫu đa nguy cơ chứa từ 2 đến 5 atoms khác nhau.
+
+### 5.2 Áp dụng Bộ 4 Chỉ số Cốt lõi của D5
+Bộ 4 chỉ số an toàn của DEC-W2-D5-005 được áp dụng trực tiếp trên từng stratum nguyên tử $a \in \{\text{Atom}_1, \dots, \text{Atom}_{12}\}$ với mẫu số $N_a$:
 
 1. **Exact Safety-Level Error Rate trên Atom $a$:**
    $$\text{ErrorRate}_{\text{exact}}(a) = \frac{1}{N_a} \sum_{i \in \mathcal{S}_a} \mathbb{I}(\hat{y}_i \neq y_i)$$
@@ -165,7 +188,7 @@ Toàn bộ bộ 4 chỉ số an toàn đã được phê duyệt tại DEC-W2-D5
 
 2. **Anomaly-to-Normal Miss Rate trên Atom $a$:**
    $$\text{MissRate}_{\text{anom}\rightarrow\text{norm}}(a) = \frac{1}{N_a} \sum_{i \in \mathcal{S}_a} \mathbb{I}(\hat{y}_i = \text{Level04})$$
-   *(Tỷ lệ mẫu ảnh nguy hiểm chứa atom $a$ bị mô hình bỏ sót hoàn toàn thành bình thường Level04 — lỗi nghiêm trọng nhất).*
+   *(Tỷ lệ mẫu ảnh nguy hiểm chứa atom $a$ bị mô hình bỏ sót hoàn toàn thành bình thường Level04 — lỗi nguy hiểm nhất).*
 
 3. **Level01 Recall & Critical Miss Rate trên Atom $a$:**
    - Chỉ áp dụng trên tập con các mẫu chứa atom $a$ có nhãn thực tế là $\text{Level01}$ ($N_{a, \text{L01}} > 0$):
@@ -174,17 +197,17 @@ Toàn bộ bộ 4 chỉ số an toàn đã được phê duyệt tại DEC-W2-D5
    - *Quy tắc xử lý mẫu số:* Nếu atom không có mẫu Level01 ($N_{a, \text{L01}} = 0$), bắt buộc ghi **`NA`** (Not Applicable), không gán $0.0$ hay $1.0$.
 
 4. **Safety-Level Confusion Distribution trên Atom $a$:**
-   - Phân bố tỷ lệ dự đoán 4 mức an toàn $\{\text{Level01}, \text{Level02}, \text{Level03}, \text{Level04}\}$ trên tập mẫu chứa atom $a$.
+   - Phân bố tỷ lệ dự đoán 4 mức an toàn $\{\text{Level01}, \text{Level02}, \text{Level03}, \text{Level04}\}$ trên tập mẫu ảnh chứa atom $a$.
 
-### 5.2 Báo cáo Cỡ Mẫu Hỗ trợ (Support N) và Cảnh báo Mẫu Thưa (Sparse-Support Warning)
+### 5.3 Báo cáo Cỡ Mẫu Hỗ trợ (Support N) và Cảnh báo Mẫu Thưa (Sparse-Support Warning)
 - Trong mọi bảng báo cáo RQ2 của 12 atoms, bắt buộc ghi kèm:
   - Cỡ mẫu ảnh thực tế $N_a$.
   - Phân rã theo cấp an toàn ($N_{a, \text{L01}}$, $N_{a, \text{L02}}$, $N_{a, \text{L03}}$).
   - Khoảng tin cậy Bootstrap 95% tương ứng.
 - **Cảnh báo mẫu thưa (Sparse-Support Warning):**
   - Bắt buộc gắn cờ cảnh báo `[Sparse-Support / Descriptive-Only]` cho các atom có quy mô mẫu nhỏ:
-    + `PERSON_FALLEN` ($N=10$ atoms, 100% Level01).
-    + `DOOR_OPEN` ($N=34$ atoms; 8 Level01, 26 Level02).
+    + `PERSON_FALLEN` ($N_a=10$ mẫu, 100% Level01).
+    + `DOOR_OPEN` ($N_a=34$ mẫu; 8 Level01, 26 Level02).
   - Đối với các atom này, khoảng tin cậy sẽ rất rộng; cấm đưa ra các kết luận xếp hạng mạnh (`strong ranking claims`) về năng lực mô hình trên các phân tầng này.
 - **Quy tắc cấm ngưỡng cắt tùy tiện:** Tuyệt đối không tự ý đặt ra một ngưỡng cơ học (như $N \ge 30$ hay $N \ge 50$) để loại bỏ các atom hiếm ra khỏi báo cáo. Mọi atom đều phải được công bố đầy đủ và trung thực cùng độ bất định thống kê.
 
@@ -195,7 +218,7 @@ Toàn bộ bộ 4 chỉ số an toàn đã được phê duyệt tại DEC-W2-D5
 ### 6.1 Vai trò và Vị trí Báo cáo
 - 7 nhóm gom (A–G) được duy trì như một phân tích tóm tắt khám phá phụ trợ (`Secondary Exploratory Roll-Up`).
 - Được trình bày trong các mục thảo luận mở rộng, phụ lục hoặc các biểu đồ tổng quan vĩ mô trong bài báo.
-- Áp dụng cùng bộ 4 chỉ số an toàn như mục 5.1 trên các tập mẫu tương ứng của từng nhóm $s \in \{\text{Strata A}, \dots, \text{Strata G}\}$.
+- Áp dụng cùng bộ 4 chỉ số an toàn như mục 5.2 trên các tập mẫu tương ứng của từng nhóm $s \in \{\text{Strata A}, \dots, \text{Strata G}\}$.
 
 ### 6.2 Nhắc lại Bắt buộc về Tính Không Cộng dồn (Non-Additive Nature)
 - Báo cáo phải luôn in đậm cảnh báo:
@@ -240,7 +263,7 @@ Nhằm bảo toàn tính lịch sử của repository và tuân thủ nguyên t�
    - Xác định bộ 4 chỉ số: (1) Exact Error Rate, (2) Miss Rate anom $\rightarrow$ norm, (3) Level01 Recall & Critical Miss Rate, (4) Safety Confusion Matrix được áp dụng **trước hết và chủ yếu trên 12 Primary Hazard Atoms**.
    - Việc áp dụng trên 7 nhóm gom A–G là phân tích tóm tắt khám phá phụ trợ (`Secondary Exploratory Analysis`).
 2. **Bảo toàn công thức toán học:**
-   - Giữ nguyên 100% định nghĩa toán học, mẫu số và logic tính toán của bộ 4 chỉ số; chỉ chuẩn hóa lại thứ bậc các tập con dữ liệu mà chỉ số được áp dụng.
+   - Giữ nguyên 100% định nghĩa toán học, mẫu số $N_a$ và logic tính toán của bộ 4 chỉ số; chỉ chuẩn hóa lại thứ bậc các tập con dữ liệu mà chỉ số được áp dụng.
 
 ---
 
@@ -267,11 +290,18 @@ Tài liệu này chỉ giải quyết duy nhất mâu thuẫn về thứ bậc p
    - Giữ nguyên 947 Weak-Proxy atoms (phân bố trên 608 mẫu thuộc `Weak-Proxy Sample Pool`).
    - Giữ nguyên 60 Unsupported atoms (trong 59 mẫu ảnh).
 2. **Giao diện Grounding Đầu ra D4:**
-   - Giữ nguyên chuẩn hóa hộp bao cực biên $[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0, 1000]$ (hoặc $[0, 1]$ chuẩn hóa) và Point-of-Interest.
-3. **Cơ chế Đánh giá Bám bằng chứng D5:**
-   - Giữ nguyên hai chế độ ghép cặp tối ưu độc lập: **Mode A** (Primary Detection / Target Object) và **Mode B** (Context / Supporting Evidence).
-   - Giữ nguyên các ngưỡng xác định trước (Hit@0.25, Hit@0.50, Pointing Hit trên đa giác).
-   - Giữ nguyên công thức Chỉ số Không nhất quán Phân loại – Bám bằng chứng ($\text{CGI}@\tau$).
+   - Hộp bao tọa độ nội bộ chuẩn mực (**Canonical Internal Bounding Box**) **CHỈ LÀ DUY NHẤT**:
+     $$[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0.0, 1.0]$$
+   - Thang đo $[0, 1000]$ chỉ có thể xuất hiện như quy ước tọa độ gốc của nhà cung cấp mô hình (*provider-native coordinate convention*) trước khi đi qua bộ chuyển đổi tất định (*deterministic adapter conversion*), tuyệt đối không phải là định dạng canonical nội bộ.
+   - Loại bỏ hoàn toàn mọi tuyên bố coi Point-of-Interest là yêu cầu canonical bắt buộc của D4.
+3. **Cơ chế Đánh giá Bám bằng chứng D5 (Mode A vs Mode B):**
+   - Giữ nguyên định nghĩa chuẩn mực hai chế độ ghép cặp đối tượng:
+     - **MODE A — Continuous IoU Assignment (Gán ghép IoU liên tục):**
+       - Cơ chế: Ghép cặp 1-1 trọng số IoU cực đại (one-to-one maximum-weight matching), không dùng ngưỡng (threshold-free), cùng lớp nguy cơ (same hazard class).
+       - Ứng dụng: Dùng cho các chỉ số liên tục chính: End-to-End Mean IoU, Median IoU, Parse-Conditional Mean IoU.
+     - **MODE B — Thresholded Bipartite Matching (Ghép hai phía có ngưỡng):**
+       - Cơ chế: Ghép hai phía tại ngưỡng $\tau$ xác định trước, cùng lớp nguy cơ, ưu tiên tối đa hóa số cặp ghép (maximize cardinality), sau đó tối đa hóa tổng IoU.
+       - Ứng dụng: Dùng cho các chỉ số nhị phân và phát hiện: Hit@0.25, Hit@0.50, Evidence Precision/Recall/F1, và Chỉ số Không nhất quán Phân loại – Bám bằng chứng ($\text{CGI}@\tau$).
 4. **Quy trình Kiểm định Thống kê D5:**
    - Giữ nguyên phương pháp Domain-Stratified Point-Cluster Bootstrap và Paired Difference CI 95%.
 5. **Định nghĩa Cấp độ An toàn và Miền Thao tác:**
@@ -282,10 +312,10 @@ Tài liệu này chỉ giải quyết duy nhất mâu thuẫn về thứ bậc p
 ## 12. Rủi ro phương pháp luận và Giới hạn (Risks & Limitations)
 
 1. **Độ bất định ở các Atom hiếm (Small-Sample Uncertainty):**
-   - Các atom như `PERSON_FALLEN` ($N=10$) và `DOOR_OPEN` ($N=34$) có số lượng mẫu hạn chế. Khoảng tin cậy ước lượng cho các atom này sẽ rộng, đòi hỏi người nghiên cứu không được diễn giải quá đà các sai khác nhỏ.
+   - Các atom như `PERSON_FALLEN` ($N_a=10$) và `DOOR_OPEN` ($N_a=34$) có số lượng mẫu hạn chế. Khoảng tin cậy ước lượng cho các atom này sẽ rộng, đòi hỏi người nghiên cứu không được diễn giải quá đà các sai khác nhỏ.
 2. **Nhiễu do Đồng xuất hiện (Co-occurrence Confounding):**
    - Do 51,2% mẫu Anomaly chứa nhiều nguy cơ đồng thời, các sai số quan sát được trên một atom có thể bị tương quan với sự hiện diện của một atom khác trong cùng ảnh. 
-   - Báo cáo SafeShift sẽ trình bày ma trận đồng xuất hiện giữa các atom để độc giả có thể đánh giá mức độ tương quan này một cách minh bạch.
+   - **Chẩn đoán mô tả tùy chọn (Optional Descriptive Diagnostic):** Ma trận đồng xuất hiện giữa các nguy cơ nguyên tử (*atom co-occurrence matrix*) có thể được đưa vào như một công cụ chẩn đoán mô tả tùy chọn nhằm hỗ trợ người đọc quan sát mức độ tương quan dữ liệu, **tuyệt đối không phải là một chỉ số bắt buộc mới hay một kết quả bàn giao bổ sung (not a new required metric or deliverable)**.
 3. **Giới hạn quy kết nhân quả (No Causal Attribution):**
    - Nhắc lại nguyên tắc nền tảng: Benchmark này đánh giá độ bền vững và tính nhất quán trên các mô hình đóng băng (`Frozen VLMs`), không thực hiện can thiệp nhân quả. Mọi kết luận chỉ dừng lại ở mức độ tương quan và chẩn đoán thực nghiệm.
 
