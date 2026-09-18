@@ -4,19 +4,20 @@
 - **Dự án:** SafeShift: Benchmarking Cross-Domain Generalization and Evidence Grounding in Vision-Language Models for Industrial Safety Assessment
 - **Bộ dữ liệu:** InspecSafe-V1 (5.013 mẫu ảnh: 4.013 Normal, 1.000 Anomaly)
 - **Nhánh Git:** `protocol/rq2-hierarchy-erratum`
-- **Trạng thái:** **BÁO CÁO PHÂN TÍCH ĐỀ XUẤT (PROPOSED, NOT APPROVED)** — Đang chờ phê duyệt chính thức từ Research Lead / Project Owner
+- **Trạng thái:** **ĐÃ ĐƯỢC PHÊ DUYỆT (APPROVED)** — Đã phê duyệt chính thức bởi Research Lead / Project Owner
 - **Ngày lập:** 2026-09-18
-- **Phiên bản:** 1.1.0 (Qualified Semantics Edition)
+- **Ngày phê duyệt:** 2026-09-18
+- **Phiên bản:** 1.2.0 (Approved Hierarchy Clarification Edition)
 
 ---
 
 > [!IMPORTANT]
-> **VỊ TRÍ PHƯƠNG PHÁP LUẬN VÀ GIỚI HẠN PHẠM VI CỦA TÀI LIỆU:**  
-> 1. Tài liệu này là **Báo cáo phân tích chuyên sâu (Analysis Brief Only)** nhằm xác định, làm rõ và đề xuất phương án giải quyết dứt điểm mâu thuẫn ngữ nghĩa về thứ bậc phân tầng nguy cơ trong câu hỏi nghiên cứu RQ2 giữa các quyết định đã được phê duyệt D5 ([DEC-W2-D5-005](../DECISIONS.md#dec-w2-d5-005)) và D6 ([DEC-W2-D6-006](../DECISIONS.md#dec-w2-d6-006)).  
-> 2. Tài liệu này ở trạng thái **`PROPOSED, NOT APPROVED`**.  
-> 3. **TUYỆT ĐỐI KHÔNG SỬA ĐỔI `DECISIONS.md`** tại bước này. Mọi thay đổi vào văn kiện quyết định chính thức chỉ được thực hiện sau khi Research Lead phê duyệt rõ ràng câu hỏi tại Mục 13.  
-> 4. **TUYỆT ĐỐI KHÔNG THỰC HIỆN SUY LUẬN VLM (VLM INFERENCE)** hoặc gọi API thương mại trong tài liệu này.  
-> 5. Giữ nguyên 100% các quyết định kỹ thuật nền tảng: Giao thức Grounding RQ3-A / RQ3-B từ D6/D5, Định dạng Bounding Box D4, Cơ chế Ghép cặp Mode A / Mode B D5, Chỉ số CGI, và Phương pháp Bootstrap lấy mẫu lại cụm.
+> **QUYẾT ĐỊNH ĐÃ ĐƯỢC PHÊ DUYỆT (APPROVED RECORD):**  
+> 1. Tài liệu này là **Báo cáo phân tích chuyên sâu (Analysis Brief)** đã được Research Lead / Project Owner **CHÍNH THỨC PHÊ DUYỆT vào ngày 2026-09-18**.  
+> 2. **Tuyên bố phê duyệt nguyên văn:**  
+>    > *"Tôi phê duyệt RQ2 hierarchy clarification: 12 hazard atoms là PRIMARY RQ2 strata, còn 7 grouped A–G categories chỉ là SECONDARY EXPLORATORY summaries."*  
+> 3. Quyết định làm rõ này thiết lập thứ bậc chính thống: **12 Hazard Atoms là PRIMARY RQ2 STRATA** (các tầng phân tích RQ2 chính), trong khi **7 Grouped Categories A–G là SECONDARY EXPLORATORY SUMMARIES** (các nhóm tóm tắt phụ trợ khám phá).  
+> 4. Giữ nguyên 100% các quyết định kỹ thuật nền tảng: Giao thức Grounding RQ3-A / RQ3-B từ D6/D5, Định dạng Bounding Box D4, Cơ chế Ghép cặp Mode A / Mode B D5, Chỉ số CGI, và Phương pháp Bootstrap lấy mẫu lại cụm.
 
 ---
 
@@ -172,12 +173,13 @@ Thực hiện kiểm toán trực tiếp (Read-Only) trên artifact cuộc tổn
 | 10 | `NONMOTORIZED_VEHICLE` | **101** | **101** | 0 | 101 | 0 | 0 |
 | 11 | `DOOR_OPEN` | **34** | **34** | 0 | 8 | 26 | 0 |
 | 12 | `PERSON_FALLEN` | **10** | **10** | 0 | 10 | 0 | 0 |
-| **Tổng** | **12 Hazard Atoms** | **1.788** | **1.788** | **0** | **1.211** | **561** | **16** |
+| **Tổng cộng** | **Tổng lượt thành viên (Sum of per-atom image memberships)** | **1.788** | **1.788** | **0** | **1.211** | **561** | **16** |
+| **Quy mô mẫu độc nhất** | **Tổng số mẫu ảnh bất thường độc nhất (Unique anomaly images)** | — | **1.000** | — | **659** | **326** | **15** |
 
 > [!NOTE]
 > **Kết luận kiểm toán thực chứng về Mẫu số $N_a$:**  
-> Kết quả kiểm toán trên 1.000 mẫu ảnh xác nhận: **Không có bất kỳ mẫu ảnh nào chứa lặp lại 2 lần cùng một loại hazard atom** (`multiple_same_atom_in_single_sample = {}`). Do đó, đối với toàn bộ 12 atoms, **`Atom Count` hoàn toàn bằng với `Unique Sample Support Count` ($N_a$)**.  
-> Tổng số 1.788 lượt xuất hiện của nguy cơ nguyên tử phân bố trên đúng 1.000 mẫu ảnh độc nhất do có 512 mẫu đa nguy cơ chứa từ 2 đến 5 atoms khác nhau.
+> Kết quả kiểm toán trên 1.000 mẫu ảnh Anomaly xác nhận: **Không có bất kỳ mẫu ảnh nào chứa lặp lại 2 lần cùng một loại hazard atom** (`multiple_same_atom_in_single_sample = {}`). Do đó, đối với từng atom đơn lẻ, **`Atom Count` hoàn toàn bằng với `Unique Sample Support Count` ($N_a$)**.  
+> **Tổng số lượt thành viên theo nguy cơ nguyên tử trên ảnh là 1.788 (`Sum of per-atom image memberships = 1788`)**, phân bố trên đúng **1.000 mẫu ảnh bất thường độc nhất (`Unique anomaly images = 1000`)** do có 512 mẫu đa nguy cơ chứa từ 2 đến 5 atoms khác nhau. Tuyệt đối không gọi 1.788 là số lượng ảnh độc nhất.
 
 ### 5.2 Áp dụng Bộ 4 Chỉ số Cốt lõi của D5
 Bộ 4 chỉ số an toàn của DEC-W2-D5-005 được áp dụng trực tiếp trên từng stratum nguyên tử $a \in \{\text{Atom}_1, \dots, \text{Atom}_{12}\}$ với mẫu số $N_a$:
@@ -321,16 +323,20 @@ Tài liệu này chỉ giải quyết duy nhất mâu thuẫn về thứ bậc p
 
 ---
 
-## 13. Câu hỏi Trình Phê duyệt Chính thức (Questions Requiring Owner Approval)
+## 13. Hồ sơ Phê duyệt Chính thức (Official Approval Record)
 
-Văn bản này hiện ở trạng thái **PROPOSED, NOT APPROVED**.
-
-Để tiến hành áp dụng chính thức thứ bậc này vào hệ thống tài liệu và văn kiện quyết định của SafeShift, câu hỏi sau đây được trình lên Project Owner / Research Lead xem xét và phê duyệt:
+- **Trạng thái:** **ĐÃ ĐƯỢC PHÊ DUYỆT (APPROVED)**
+- **Ngày phê duyệt:** 2026-09-18
+- **Người phê duyệt:** Project Owner / Research Lead
 
 > [!IMPORTANT]
-> **CÂU HỎI QUYẾT ĐỊNH (DECISION QUESTION FOR RESEARCH LEAD):**  
-> ***"Do you approve the RQ2 hierarchy clarification that the 12 hazard atoms are the PRIMARY RQ2 strata, while the 7 grouped A–G categories are SECONDARY EXPLORATORY summaries only?"***  
-> *(Bạn có phê duyệt việc làm rõ thứ bậc RQ2 rằng 12 hazard atoms là các phân tầng RQ2 CHÍNH [PRIMARY], trong khi 7 danh mục gom nhóm A–G chỉ là các bản tóm tắt KHÁM PHÁ PHỤ TRỢ [SECONDARY EXPLORATORY] hay không?)*
+> **QUYẾT ĐỊNH PHÊ DUYỆT NGUYÊN VĂN (EXACT APPROVED STATEMENT):**  
+> *"Tôi phê duyệt RQ2 hierarchy clarification: 12 hazard atoms là PRIMARY RQ2 strata, còn 7 grouped A–G categories chỉ là SECONDARY EXPLORATORY summaries."*  
+> 
+> **Hiệu lực thi hành:**  
+> 1. Danh mục 12 Hazard Atoms chính thức trở thành **PRIMARY RQ2 STRATA** cho mọi phân tích phân tầng nguy cơ và báo cáo bảng kết quả chính của SafeShift.  
+> 2. Danh mục 7 nhóm gom A–G chính thức được định vị là **SECONDARY EXPLORATORY SUMMARIES**, đóng vai trò tóm tắt trực quan cấp cao phụ trợ.  
+> 3. Quyết định này được áp dụng và đồng bộ vào `DECISIONS.md` (DEC-W2-D5-005, DEC-W2-D6-006) và các báo cáo căn cứ liên quan.
 
 ---
 *Báo cáo kết thúc tại đây. Tài liệu được lưu trữ tại `notes/w2_rq2_hierarchy_erratum_brief.md` trên branch `protocol/rq2-hierarchy-erratum`.*

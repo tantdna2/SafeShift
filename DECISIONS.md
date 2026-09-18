@@ -603,7 +603,36 @@
   - [notes/w2_protocol_decision_brief.md](notes/w2_protocol_decision_brief.md) (W2.1 Decision Brief)
   - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003), [DEC-W2-D4-004](#dec-w2-d4-004), [DEC-W2-D6-006](#dec-w2-d6-006), [DEC-W2-D7-007](#dec-w2-d7-007).
   - Định hướng trực tiếp cho khảo sát năng lực mô hình tại W2.5 và triển khai bộ đánh giá baseline tại W3.
-- **Thay thế quyết định:** Không.
+- **Đính chính và làm rõ thứ bậc phân tầng RQ2 (RQ2 Hierarchy Clarification / Erratum - Approved: 2026-09-18):**
+  - **Phê duyệt chính thức:** Project Owner / Research Lead đã phê duyệt chính thức vào ngày 2026-09-18 với tuyên bố nguyên văn: *"Tôi phê duyệt RQ2 hierarchy clarification: 12 hazard atoms là PRIMARY RQ2 strata, còn 7 grouped A–G categories chỉ là SECONDARY EXPLORATORY summaries."* (Căn cứ chi tiết tại [notes/w2_rq2_hierarchy_erratum_brief.md](notes/w2_rq2_hierarchy_erratum_brief.md)).
+  - **A. Áp dụng Bộ 4 Chỉ số An toàn cho 12 Primary Atomic Hazard Strata:**
+    - Bộ 4 chỉ số an toàn đã phê duyệt tại Mục 6 ở trên được áp dụng **CHÍNH YẾU (PRIMARY)** cho từng phân tầng trong **12 atomic hazard strata**:
+      1. **Exact Safety-Level Error Rate** trên từng atom.
+      2. **Anomaly-to-Normal Miss Rate** trên từng atom.
+      3. **Level01 Recall / Critical Miss Rate** trên các atom có hỗ trợ mẫu Level01 ($N_{a, \text{L01}} > 0$). (Nếu atom không có mẫu Level01, bắt buộc ghi nhận `NA`, tuyệt đối không gán 0.0 hay 1.0; không tự ý đặt ngưỡng cắt tối thiểu $N$).
+      4. **Safety-Level Confusion Distribution** trên từng atom.
+    - Với mỗi atom, bắt buộc công bố: cỡ mẫu hỗ trợ ảnh độc nhất $N_a$, phân rã theo cấp an toàn ($N_{a, \text{L01}}$, $N_{a, \text{L02}}$, $N_{a, \text{L03}}$), độ bất định/khoảng tin cậy Bootstrap 95%, và gắn nhãn cảnh báo mẫu thưa `[Sparse-Support / Descriptive-Only]` cho các atom hiếm (`PERSON_FALLEN`: $N_a=10$, `DOOR_OPEN`: $N_a=34$).
+    - Bảng kiểm kê mẫu số thực chứng đã xác minh từ W2.3 Census:
+      + `NO_GLOVES`: $N_a = 453$ (L01: 303, L02: 147, L03: 3)
+      + `NO_HELMET`: $N_a = 229$ (L01: 126, L02: 103, L03: 0)
+      + `NO_MASK`: $N_a = 200$ (L01: 109, L02: 84, L03: 7)
+      + `USE_MOBILE_PHONE`: $N_a = 167$ (L01: 96, L02: 71, L03: 0)
+      + `LIQUID_ON_GROUND`: $N_a = 134$ (L01: 73, L02: 55, L03: 6)
+      + `SMOKING`: $N_a = 120$ (L01: 120, L02: 0, L03: 0)
+      + `OPEN_FLAME`: $N_a = 117$ (L01: 117, L02: 0, L03: 0)
+      + `FOREIGN_OBJECT`: $N_a = 115$ (L01: 40, L02: 75, L03: 0)
+      + `SMOKE`: $N_a = 108$ (L01: 108, L02: 0, L03: 0)
+      + `NONMOTORIZED_VEHICLE`: $N_a = 101$ (L01: 101, L02: 0, L03: 0)
+      + `DOOR_OPEN`: $N_a = 34$ (L01: 8, L02: 26, L03: 0)
+      + `PERSON_FALLEN`: $N_a = 10$ (L01: 10, L02: 0, L03: 0)
+      + *Tổng lượt thành viên:* **Tổng lượt thành viên theo nguy cơ nguyên tử trên ảnh = 1.788 (`Sum of per-atom image memberships = 1788`)** phân bố trên đúng **1.000 mẫu ảnh Anomaly độc nhất (`Unique anomaly images = 1000`)**. (Với mọi atom, đã thẩm định từ census: `atom_count == unique_sample_count = N_a`).
+  - **B. Báo cáo 7 Nhóm Gom A–G là SECONDARY EXPLORATORY ANALYSIS:**
+    - Bộ 4 chỉ số trên cũng có thể được báo cáo trên 7 nhóm gom A–G, nhưng **chỉ với vai trò là phân tích tóm tắt khám phá phụ trợ (`Secondary Exploratory Analysis`)**.
+  - **C. Duy trì tường minh Đơn vị Dự đoán là ẢNH (Image-level Prediction Unit):**
+    - Đơn vị dự đoán duy nhất vẫn là **ẢNH (`Image`)** theo đúng [DEC-W2-D2-002](#dec-w2-d2-002). Một bức ảnh cho ra một dự đoán an toàn duy nhất.
+    - Nếu một ảnh chứa nhiều nguy cơ nguyên tử, dự đoán an toàn của ảnh đó sẽ đóng góp đồng thời vào nhiều phân tầng nguy cơ nguyên tử RQ2.
+    - Do đó: các ước lượng theo phân tầng atom có sự phụ thuộc thống kê (`statistically dependent`), số lượng mẫu/lỗi giữa các atom **KHÔNG CÓ TÍNH CỘNG DỒN (`counts/errors across atoms are NOT additive`)**, và tuyệt đối không đưa ra kết luận nhân quả từ kết quả phân loại RQ2 đơn độc nếu không kết hợp với phân tích Grounding RQ3. Tuyệt đối không định nghĩa lại đơn vị dự đoán thành hazard atom.
+- **Thay thế quyết định:** Không (Bổ sung làm rõ thứ bậc phân tầng RQ2 ngày 2026-09-18).
 
 ## DEC-W2-D6-006 — Hazard Taxonomy and Grounding Support Census
 
@@ -722,7 +751,19 @@
   - [notes/distribution_imbalance_audit.md](notes/distribution_imbalance_audit.md)
   - Quyết định nền tảng [DEC-W2-D1-001](#dec-w2-d1-001), [DEC-W2-D2-002](#dec-w2-d2-002), [DEC-W2-D3-003](#dec-w2-d3-003)
   - Định hướng trực tiếp cho định nghĩa metric tại W2.4, khảo sát mô hình tại W2.5 và thực thi baseline tại W3.
-- **Thay thế quyết định:** Không.
+- **Đính chính và làm rõ thứ bậc phân tầng RQ2 (RQ2 Hierarchy Clarification / Erratum - Approved: 2026-09-18):**
+  - **Phê duyệt chính thức:** Project Owner / Research Lead đã phê duyệt chính thức vào ngày 2026-09-18 với tuyên bố nguyên văn: *"Tôi phê duyệt RQ2 hierarchy clarification: 12 hazard atoms là PRIMARY RQ2 strata, còn 7 grouped A–G categories chỉ là SECONDARY EXPLORATORY summaries."* (Căn cứ chi tiết tại [notes/w2_rq2_hierarchy_erratum_brief.md](notes/w2_rq2_hierarchy_erratum_brief.md)).
+  - **A. 12 Hazard Atoms là PRIMARY RQ2 STRATA (Các tầng phân tích RQ2 chính):**
+    - Danh mục 12 Hazard Atoms đã phê duyệt tại Mục 1 ở trên chính thức là **PRIMARY RQ2 STRATA** cho mọi phân tích tập trung sai số của câu hỏi nghiên cứu RQ2.
+    - Bản chất phương pháp luận: Hệ phân loại này là **Hệ phân loại nghiên cứu thao tác (`Operational Research Taxonomy`)** được xây dựng và kiểm chứng thực nghiệm từ các mệnh đề nguy cơ của InspecSafe-V1; **KHÔNG PHẢI** là hệ phân loại an toàn công nghiệp phổ quát (`universal industrial safety taxonomy`) hay hệ phân loại chân lý tuyệt đối (`absolute ground-truth taxonomy`).
+    - Lý do xác lập làm Primary: Bảo toàn độ phân giải chẩn đoán kỹ thuật chi tiết (`finer diagnostic granularity`), đạt độ bao phủ ánh xạ tất định 100% mẫu Anomaly, và khớp nối trực tiếp với cuộc tổng điều tra Census D6.
+  - **B. 7 Grouped Categories A–G là SECONDARY EXPLORATORY SUMMARIES (Các nhóm tổng hợp phụ mang tính khám phá):**
+    - 7 nhóm gom ứng viên đã nêu tại Mục 5 ở trên được chuẩn hóa thành **SECONDARY EXPLORATORY SUMMARIES**.
+    - Đặc điểm: Là cấu trúc phân nhóm phái sinh cấp cao (`derived groupings`), có tính chồng chéo cao, **không có tính cộng dồn (`non-additive`)**, và không phải là taxonomy chính của giao thức đánh giá RQ2.
+  - **C. Bảo toàn các sự thật thực chứng về đa nguy cơ:**
+    - Đúng **512 / 1.000 mẫu ảnh Anomaly (51,2%)** chứa từ 2 nguy cơ nguyên tử trở lên ($\ge 2$ hazard atoms).
+    - 7 nhóm gom A–G tạo ra **1.381 lượt thành viên (sample memberships)** trên 1.000 mẫu ảnh bất thường độc nhất.
+- **Thay thế quyết định:** Không (Bổ sung làm rõ thứ bậc phân tầng RQ2 ngày 2026-09-18).
 
 ## DEC-W2-D7-007 — Rationale Annotation Policy
 

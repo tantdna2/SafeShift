@@ -106,7 +106,11 @@ Một sai lầm phổ biến là gộp toàn bộ một mẫu ảnh thành một
   - **Đơn vị nguy cơ nguyên tử (`Hazard Atom`):** Là một phát biểu nguy cơ đơn lẻ, độc lập, có thể đánh giá trạng thái hỗ trợ không gian một cách riêng biệt.
   - **Mẫu số thống kê:** Bắt buộc phân biệt rạch ròi **Số lượng theo Mẫu (`Sample-Level Counts`, tổng cố định = 1.000)** và **Số lượng theo Nguy cơ Nguyên tử (`Hazard-Atom Counts`, tổng > 1.000)**. Tuyệt đối không đánh đồng hai mẫu số này.
 
-### 5.2 Danh mục 12 Nguy cơ Nguyên tử được kiểm chứng thực tế
+### 5.2 Danh mục 12 Nguy cơ Nguyên tử được kiểm chứng thực tế (Primary RQ2 Analytical Strata)
+
+> [!IMPORTANT]
+> **Định vị Thứ bậc Phân tầng RQ2 (RQ2 Hierarchy Clarification — Approved: 2026-09-18):**  
+> Danh mục 12 Hazard Atoms dưới đây là **hệ phân loại nghiên cứu thao tác (`operational research taxonomy`)** và chính thức là **PRIMARY RQ2 ANALYTICAL STRATA** (các phân tầng phân tích RQ2 chính) của SafeShift. Hệ phân loại này không phải là hệ phân loại an toàn công nghiệp phổ quát hay chân lý phân loại tuyệt đối, nhưng được chọn làm phân tầng chính vì bảo toàn độ phân giải chẩn đoán kỹ thuật chi tiết (`finer diagnostic granularity`), đạt độ bao phủ ánh xạ tất định 100% mẫu Anomaly, và khớp nối trực tiếp với cuộc tổng điều tra Census D6.
 
 Khảo sát toàn bộ 187 mệnh đề nguy cơ duy nhất trên 1.000 mẫu Anomaly xác nhận hệ phân loại gồm đúng **12 Hazard Atoms**, giải thích trọn vẹn 100% mẫu mà không có bất kỳ trường hợp nào bị bỏ sót:
 
@@ -341,13 +345,19 @@ Cuộc tổng điều tra D6 phát hiện chính xác **60 hazard atoms** nằm 
 
 ---
 
-## 11. Các tầng nguy cơ gom nhóm ứng viên cho RQ2 (Candidate Grouped Hazard Strata)
+## 11. Các tầng nguy cơ gom nhóm ứng viên cho RQ2 — Tóm tắt Khám phá Phụ trợ (Candidate Grouped Hazard Strata — Secondary Exploratory RQ2 Summaries)
 
-Câu hỏi nghiên cứu RQ2 yêu cầu phân tích sự tập trung lỗi của mô hình VLM theo các phân tầng nguy cơ. Dựa trên 12 verified hazard atoms, SafeShift đề xuất **7 Phân tầng Nguy cơ Gom nhóm Ứng viên (`Candidate Grouped Hazard Strata`)**:
+> [!IMPORTANT]
+> **Đính chính và Làm rõ Thứ bậc Phân tầng RQ2 (RQ2 Hierarchy Clarification — Approved: 2026-09-18):**  
+> Căn cứ theo quyết định đính chính đã được phê duyệt chính thức ngày 2026-09-18:
+> - **PRIMARY RQ2 ANALYTICAL STRATA:** Đúng **12 Nguy cơ Nguyên tử (`Hazard Atoms`)** tại Mục 5 là các phân tầng phân tích chính thức bắt buộc cho RQ2 nhằm bảo toàn độ phân giải chẩn đoán an toàn kỹ thuật.
+> - **SECONDARY EXPLORATORY RQ2 SUMMARIES:** 7 nhóm nguy cơ gom nhóm dưới đây đóng vai trò là **bản tóm tắt khám phá phụ trợ cấp cao (`Secondary Exploratory Summaries`)**, mang tính khái niệm phái sinh, không thay thế cho bảng kết quả phân tích 12-atom.
+
+Câu hỏi nghiên cứu RQ2 yêu cầu phân tích sự tập trung lỗi của mô hình VLM theo các phân tầng nguy cơ. Dựa trên 12 verified hazard atoms, SafeShift duy trì **7 Phân tầng Nguy cơ Gom nhóm Ứng viên (`Candidate Grouped Hazard Strata`)** làm phân tích phụ trợ khám phá:
 
 > [!WARNING]
 > **Quy tắc diễn giải số lượng mẫu giữa các tầng:**  
-> **Số lượng mẫu giữa các tầng nguy cơ KHÔNG CÓ TÍNH CỘNG GỘP (`Sample counts across strata are NOT additive`)**, bởi vì một mẫu ảnh đa nguy cơ (multi-hazard sample) có thể thuộc về đồng thời nhiều tầng nguy cơ khác nhau. Các con số phân bổ theo miền trong bảng dưới đây được tính ở **Cấp độ Nguy cơ Nguyên tử (`Atom-level counts`)**.
+> **Số lượng mẫu giữa các tầng nguy cơ KHÔNG CÓ TÍNH CỘNG GỘP (`Sample counts across strata are NOT additive`)**, bởi vì một mẫu ảnh đa nguy cơ (multi-hazard sample) có thể thuộc về đồng thời nhiều tầng nguy cơ khác nhau. Các con số phân bổ theo miền trong bảng dưới đây được tính ở **Cấp độ Nguy cơ Nguyên tử (`Atom-level counts`)**. Nhóm 7 tầng này tạo ra tổng cộng **1.381 lượt thành viên (memberships)** trên 1.000 mẫu ảnh Anomaly độc nhất (512 mẫu chứa $\ge 2$ atoms).
 
 | Mã Tầng Nguy cơ Ứng viên | Thành phần Hazard Atoms cấu thành | Số mẫu liên quan (`Sample N`) | Số lượng Atom (`Atom N`) | Phân bố theo Miền (`Atom-level Counts`) | Phân bố Cấp An toàn | Trạng thái Hỗ trợ chính | Yếu tố gây nhiễu lớn (`Major Confounders`) | Đánh giá Mức độ Phù hợp cho RQ2 |
 |---|---|:---:|:---:|---|---|:---:|---|:---:|
@@ -582,7 +592,7 @@ Nhằm chuẩn bị phê duyệt dứt điểm các quyết định trong tuần
 1. *Research Lead có phê chuẩn **Hệ phân loại 12 Nguy cơ Nguyên tử (`Hazard Atom Taxonomy`)** và bảng ánh xạ nhãn đối tượng hỗ trợ tại Mục 5 & Mục 7 không?*
 2. *Research Lead có chấp thuận định nghĩa và quy mô của **Direct-Support Sample Pool (721 mẫu)** và **Weak-Proxy Sample Pool (608 mẫu)** đi kèm việc xác nhận ranh giới giao thoa 347 mẫu và yêu cầu bắt buộc báo cáo chi tiết thành phần nội bộ không?*
 3. *Research Lead có phê chuẩn việc **phân tách độc lập kết quả thực nghiệm của RQ3** thành RQ3-A (Direct Object-Support) và RQ3-B (Weak Proxy qua `Person`) không?*
-4. *Research Lead có phê chuẩn danh mục **7 Tầng Nguy cơ Gom nhóm Ứng viên cho RQ2** tại Mục 11 không?*
+4. *Research Lead có phê chuẩn danh mục **7 Tầng Nguy cơ Gom nhóm Ứng viên cho RQ2** tại Mục 11 không? (Lưu ý: Sau khi được phê duyệt ngày 2026-09-18, thứ bậc đã được đính chính chuẩn hóa: 12 Hazard Atoms là PRIMARY RQ2 ANALYTICAL STRATA, 7 nhóm gom A–G là SECONDARY EXPLORATORY RQ2 SUMMARIES theo Erratum [notes/w2_rq2_hierarchy_erratum_brief.md](w2_rq2_hierarchy_erratum_brief.md)).*
 
 ### Nhóm câu hỏi sẵn sàng phê duyệt cho Quyết định D7:
 1. *Research Lead có chấp thuận **Phương án D7-A (Không tạo nhãn rationale mới trong giai đoạn Seminar 8 tuần)** nhằm bảo toàn tính khách quan và tập trung nguồn lực tái lập baseline không?*
