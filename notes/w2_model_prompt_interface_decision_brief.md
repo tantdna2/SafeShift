@@ -1,9 +1,12 @@
 # W2.5 Model, Prompt & Interface Decision Brief
 
-- **ID ứng viên:** DEC-W2-D8-008 (Candidate Decision Brief — D8)
-- **Giai đoạn:** Week 2 — Research Protocol (W2.5) — Final Implementation-Policy Patch
-- **Ngày audit / cập nhật:** 2026-09-18
-- **Trạng thái:** **PROPOSED, NOT APPROVED** (Chờ Project Owner xem xét và phê duyệt; chưa ghi vào `DECISIONS.md`)
+- **ID Quyết định:** DEC-W2-D8-008 (Approved Decision Record — D8)
+- **Giai đoạn:** Week 2 — Research Protocol (W2.5) — Protocol Approved
+- **Ngày phê duyệt:** 2026-09-18
+- **Trạng thái:** **ĐƯỢC CHẤP THUẬN (APPROVED)** — Đã chính thức ghi nhận vào `DECISIONS.md` ngày 2026-09-18
+- **Tuyên bố Phê duyệt Chính thức của Project Owner (2026-09-18):**
+  > *"Tôi phê duyệt D8 theo phương án đề xuất: Benchmark Firewall, Protocol Freeze, C1, A2, B2, shortlist 4 provider, capability-aware grounding, provider-specific low-variance decoding và P1 reproduction policy."*
+- **Trạng thái Đóng băng Giao thức (Protocol Freeze Status):** `protocol_freeze_commit_sha: PENDING` *(D8 approval != Protocol Freeze. Chưa đóng băng giao thức, chưa điền commit SHA. Nghiêm cấm chạy InspecSafe inference và paid benchmark calls trước khi freeze).*
 - **Phạm vi áp dụng:** Giao thức mô hình, câu lệnh chỉ dẫn (prompt), phân lập quy tắc nhiệm vụ (task policy), kiến trúc lệnh gọi (call architecture), từ điển nguy cơ (hazard vocabulary), giao diện đầu ra (interface), bộ chuyển đổi (adapter), cấu hình suy luận và giải mã ít biến động theo từng nhà cung cấp (provider-supported low-variance decoding policy), tường lửa kiểm chuẩn (benchmark firewall), cổng năng lực không gian ngoài benchmark có đối chứng vật thể gây nhiễu (external target+distractor sanity gate không dùng ngưỡng số tùy tiện), chốt tuyến phục vụ Qwen khu vực Singapore và giới hạn tái lập (pinned Qwen Singapore route, ROUTE_REGION_PINNED, QWEN_DECODING_PENDING_ROUTE_CONFIRMATION & hosted reproducibility limitation), cơ chế đóng băng giao thức (protocol freeze), và quản lý truy vết nguồn gốc cho Giao thức Tái lập Baseline (P1) và Giao thức Nghiên cứu Chính (P2) của SafeShift Seminar.
 
 ---
@@ -369,7 +372,7 @@ Khi **Call 1 đã được phân lập hoàn toàn khỏi Call 2** (sử dụng 
 - Từ điển đóng 12 nguy cơ (B2) trong Call 2 **KHÔNG CÒN TÁC ĐỘNG TRỰC TIẾP LÊN QUYẾT ĐỊNH PHÂN LOẠI CỦA CALL 1**.
 - Điều này giải tỏa rủi ro lớn nhất của từ điển đóng (label hinting đối với safety level), đồng thời tận dụng triệt để ưu thế của từ điển đóng trong Call 2: **tính ánh xạ/parser tất định theo protocol cho thuật toán ghép cặp bipartite matching Mode A / Mode B của Quyết định D5**.
 - **Phân định Phương pháp luận Độc lập giữa RQ2 và RQ3:** Cần nhấn mạnh rằng việc Call 2 áp dụng từ điển đóng 12 atoms làm từ vựng định vị phục vụ đánh giá bám bằng chứng không gian (**RQ3: Spatial evidence grounding**) hoàn toàn độc lập và không được đánh đồng với bài toán phân tích phân tầng sai số phân loại an toàn cấp ảnh (**RQ2: Image-level safety classification stratification**) trên 12 atoms chính yếu (Primary Strata) và 7 nhóm gom A–G phụ trợ (Secondary Exploratory Summaries). Đơn vị dự đoán của RQ2 vẫn là cấp ảnh (`Image`), trong khi Call 2 của RQ3 đánh giá sự khớp nối tọa độ hộp bao với chú thích đối tượng.
-- *Đề xuất Tổ hợp Ứng viên Hàng đầu (Top Candidate):* **A2 (Independent Two-Call) kết hợp C1 (Policy-Aware Classification) cho Call 1 và B2 (Closed 12-Hazard Grounding) cho Call 2**. *(Trạng thái: PROPOSED, NOT APPROVED)*.
+- *Tổ hợp Được Phê Duyệt Chính Thức (Approved Primary Protocol):* **A2 (Independent Two-Call) kết hợp C1 (Policy-Aware Classification) cho Call 1 và B2 (Closed 12-Hazard Grounding) cho Call 2**. *(Trạng thái: ĐÃ ĐƯỢC PHÊ DUYỆT / APPROVED ngày 2026-09-18 theo DEC-W2-D8-008)*.
 
 ---
 
@@ -708,13 +711,13 @@ Thay vì chọn 2 mô hình cùng họ Google Gemini, SafeShift tái cấu trúc
 
 ---
 
-## 31. Preliminary D8 Recommendation (Đề xuất Sơ bộ cho D8)
+## 31. Approved D8 Decisions & Protocol Architecture (Quyết định và Kiến trúc Giao thức D8 Đã Phê Duyệt)
 
-Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể cho Quyết định D8 với trạng thái **PROPOSED, NOT APPROVED**:
+Căn cứ phê chuẩn chính thức của Project Owner ngày 2026-09-18, khung phương án tổng thể cho Quyết định D8 (DEC-W2-D8-008) được xác lập với trạng thái **ĐÃ ĐƯỢC PHÊ DUYỆT (APPROVED)**:
 
 1. **Về Tường lửa Kiểm chuẩn, Đóng băng Giao thức & Cổng Năng lực Không gian:**
    - Phê duyệt **Benchmark Firewall**: Toàn bộ 5.013 ảnh InspecSafe-V1 là Evaluation-Only.
-   - Phê duyệt **Protocol Freeze**: Đóng băng toàn bộ giao thức và ghi nhận `protocol_freeze_commit_sha` trước lần chạy đầu tiên.
+   - Phê duyệt **Protocol Freeze**: Đóng băng toàn bộ giao thức và ghi nhận `protocol_freeze_commit_sha` trước lần chạy đầu tiên. Hiện trạng thái là `PENDING`.
    - Phê duyệt **External Target+Distractor Sanity Gate**: Xác minh năng lực định vị chọn lọc mục tiêu trên ảnh ngoài (tâm hộp bao nằm trong target, không chứa tâm distractor, di chuyển theo target, không có giant box); loại bỏ hoàn toàn các ngưỡng số tùy tiện. Chỉ cấp quyền Grounding cho Level 1 (Doc-Verified) hoặc Level 2A (Probe-Verified). Mô hình Level 2B (Format only) không được tham gia Grounding.
 2. **Về Giao thức P1 (Baseline Replication):**
    - Giữ nguyên 100% câu prompt Upstream và Bảng Quy tắc 5 ngành.
@@ -726,12 +729,12 @@ Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể c
    - Chốt tuyến phục vụ cho Qwen là **Alibaba Cloud Model Studio / DashScope (Region Singapore)** với trạng thái **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**, precision **`UNDISCLOSED BY PROVIDER`**, kèm nhãn cảnh báo **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`**.
 4. **Về Chính sách Giải mã và Suy luận (Decoding & Thinking Policy):**
    - Phê duyệt **Provider-Supported Low-Variance Decoding Policy**: Gemini 3.8 Flash dùng `thinking: "low"` cho Grounding; GPT-5.6-Terra dùng `reasoning_effort: "low"`; Claude Sonnet 5 dùng Adaptive Thinking chuẩn; Qwen DashScope áp dụng cấu hình giải mã ít biến động duy nhất được xác nhận tại freeze (**`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`**).
-5. **Về Kiến trúc Đánh giá P2 (Đề xuất Tổ hợp Ứng viên Hàng đầu):**
-   - **Tổ hợp Khuyến nghị:** **A2 (Two Independent Calls) + C1 (Policy-Aware Classification) + B2 (Closed 12-Hazard Grounding)**:
+5. **Về Kiến trúc Đánh giá P2 (Tổ hợp Được Phê Duyệt Chính Thức):**
+   - **Tổ hợp Được Phê Duyệt Chính Thức (`APPROVED`):** **A2 (Two Independent Calls) + C1 (Policy-Aware Classification) + B2 (Closed 12-Hazard Grounding)**:
      - *Call 1 (Safety Classification):* Gửi Image + Bảng quy chuẩn an toàn ngành (C1) $\rightarrow$ chỉ xuất `safety_level`. Áp dụng cho 100% mô hình.
      - *Call 2 (Hazard & Grounding):* Gửi Image + Từ điển đóng 12 nguy cơ (B2) $\rightarrow$ xuất tọa độ hộp bao cho các mô hình Grounding-Eligible. **Call 2 hoàn toàn độc lập, không nhận kết quả từ Call 1**.
      - *Lợi ích phương pháp luận:* Bảo vệ tính khách quan của bài toán phân loại an toàn (không bị gợi ý bởi 12 nhãn nguy cơ); đồng thời tận dụng tính ánh xạ/parser tất định theo protocol của từ điển đóng 12 nguy cơ trong Call 2 để phục vụ thuật toán ghép cặp Mode A/B của D5.
-   - *Tổ hợp Thay thế (Nếu ưu tiên tối đa ngân sách):* **A1 (One Combined Call) + B2 (Closed 12-Hazard)**: Giảm chi phí từ ~\$123 xuống ~\$78 USD, nhưng chấp nhận việc công khai không gian nhãn nguy cơ trong cùng prompt phân loại.
+   - *Phương án Bãi bỏ đối với Giao thức P2 Chính:* **A1 (One Combined Call)** bị loại bỏ khỏi giao thức P2 chính thức; chỉ lưu trong tài liệu như phân tích trade-off lịch sử.
 
 ---
 
@@ -745,32 +748,54 @@ Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể c
 
 ---
 
-## 33. Questions Requiring Approval (Các Câu hỏi Cần Xin Ý kiến Phê duyệt)
+## 33. Approved D8 Decision Record & Resolved Status Summary (Bản ghi Phê chuẩn Quyết định D8 & Trạng thái Khóa Phương pháp luận)
 
-Để hoàn thiện và chính thức khóa Quyết định D8 tại Week 2, nhóm nghiên cứu kính trình Project Owner xem xét và cho ý kiến về **18 câu hỏi then chốt**:
+Vào ngày **2026-09-18**, Project Owner / Research Lead đã chính thức phê duyệt toàn diện Quyết định D8 ([DEC-W2-D8-008](../DECISIONS.md#dec-w2-d8-008)) với tuyên bố nguyên văn:
+> *"Tôi phê duyệt D8 theo phương án đề xuất: Benchmark Firewall, Protocol Freeze, C1, A2, B2, shortlist 4 provider, capability-aware grounding, provider-specific low-variance decoding và P1 reproduction policy."*
 
-1. **Phê chuẩn Benchmark Firewall:** Có phê duyệt toàn bộ 5.013 ảnh của InspecSafe-V1 là **Evaluation-Only**, nghiêm cấm dùng cho thăm dò năng lực, gỡ lỗi prompt hay chọn mô hình không?
-2. **Phê chuẩn Cổng Năng lực Không gian Target+Distractor Sanity Gate:** Có đồng thuận với thiết kế cổng năng lực kiểm tra tính hợp lý kỹ thuật (yêu cầu tâm hộp bao nằm trong target, không chứa tâm distractor, di chuyển theo target, không có giant box; loại bỏ hoàn toàn các ngưỡng số tùy tiện), và chỉ cấp quyền Grounding cho Level 1 hoặc Level 2A không?
-3. **Phê chuẩn Nguồn Dữ liệu Thử nghiệm Năng lực:** Có chấp thuận cấm dùng ảnh InspecSafe cho capability probe và bắt buộc chỉ dùng **ảnh bên ngoài benchmark có ground truth tọa độ khách quan** không?
-4. **Phê chuẩn Chính sách Đóng băng Giao thức:** Có đồng ý đóng băng toàn diện giao thức (Protocol Freeze) và ghi nhận `protocol_freeze_commit_sha` trước lần inference đầu tiên trên InspecSafe không?
-5. **Phê chuẩn Kiểm soát Thay đổi Sau Đóng băng:** Có chấp thuận quy tắc cấm sửa prompt theo hiệu năng và bắt buộc bump protocol version kèm rerun toàn bộ khi sửa lỗi kỹ thuật không?
-6. **Chính sách Lựa chọn Mô hình & Vòng đời:** Có phê duyệt nguyên tắc chọn mô hình hoàn toàn độc lập với điểm số trên InspecSafe và hệ thống nhãn vòng đời mô hình không?
-7. **Phê chuẩn Quy tắc Nhiệm vụ Phân loại (Task Policy):** Có chấp thuận phương án **C1 (Upstream Policy-Aware Classification)** cung cấp bảng quy chuẩn an toàn ngành trong Call 1 để bảo đảm bài toán phân loại không bị thiếu đặc tả ngữ nghĩa (under-specified) không?
-8. **Lựa chọn Kiến trúc Lệnh gọi P2 (Trục A):** Project Owner lựa chọn **A2. Two Independent Calls** (tách bạch phương pháp luận cao nhất) hay **A1. One Combined Call** (tối ưu chi phí)?
-9. **Lựa chọn Từ điển Nguy cơ Định vị (Trục B):** Project Owner lựa chọn phương án nào cho Grounding: **B2. Closed 12-Hazard Vocabulary** (khớp D5/D6 tất định), **B1. Open Vocabulary**, hay **B3. Hybrid**?
-10. **Phê chuẩn Loại bỏ Tiêu chí Dung sai P1 Tùy tiện:** Có chấp thuận việc bỏ tiêu chí tùy tiện $\pm 1–2\%$ và thay bằng báo cáo sai số tuyệt đối $\Delta$ kèm giải thích kỹ thuật không?
-11. **Phê chuẩn Mô hình Tham chiếu P1:** Chấp thuận phương án sử dụng Claude Opus (hoặc phiên bản Claude tương thích khả dụng trên official API) và `bge-m3` cục bộ để tái lập P1 hay có chỉ đạo khác?
-12. **Phê chuẩn Danh sách Mô hình P2 Cốt lõi (4 Nhà Cung Cấp):** Chấp thuận shortlist 4 mô hình đa dạng nhà cung cấp (`Gemini 3.8 Flash`, `Qwen3-VL-8B-Instruct`, `GPT-5.6-Terra`, `Claude Sonnet 5`) hay muốn điều chỉnh?
-13. **Xác nhận Loại bỏ Mô hình Retired:** Xác nhận chính thức loại bỏ `claude-3-7-sonnet` (đã retired) và các ID không chính thức khỏi candidate list?
-14. **Chính sách Chốt Tuyến Phục Vụ Qwen:** Đồng thuận việc chốt tuyến phục vụ chính thức là **Alibaba Cloud Model Studio / DashScope (Region Singapore)** cho Qwen3-VL với trạng thái **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**, cấu hình giải mã **`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`**, precision **`UNDISCLOSED BY PROVIDER`**, và chấp thuận gắn nhãn cảnh báo **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`** cùng tuyên bố giới hạn tái lập không?
-15. **Phê chuẩn Cấu trúc Đầu ra Chuẩn hóa:** Đồng thuận với đặc tả JSON Schema nội bộ và nguyên tắc chuyển đổi tọa độ của Adapter theo Quyết định D4?
-16. **Chính sách Mô hình Chỉ Phân loại:** Tái khẳng định chính sách phân loại thuần túy: mô hình không tham gia grounding được ghi nhận `NOT PARTICIPATING`, không bị gán lỗi $\text{IoU} = 0.0$?
-17. **Chính sách Chế độ Suy luận (Thinking Policy):** Chấp thuận cấu hình suy luận phù hợp từng provider (`thinking: "low"` cho Gemini 3.8, `reasoning_effort: "low"` cho GPT-5.6, Adaptive Thinking cho Claude Sonnet 5)?
-18. **Chính sách Giải mã Ít Biến động (Provider-Supported Low-Variance Decoding Policy):** Phê duyệt chính sách giải mã ít biến động phù hợp với từng API (thay vì ép buộc `temperature = 0.0` đồng loạt) và giữ `temperature = 0.1` cho P1?
+Toàn bộ 18 nội dung kỹ thuật trọng yếu được giải quyết và khóa trạng thái chính thức như sau:
+
+1. **Đã Phê chuẩn Benchmark Firewall:** Toàn bộ 5.013 ảnh của InspecSafe-V1 trong Giao thức P2 (và 1.250 ảnh cho P1) có tình trạng duy nhất là **EVALUATION-ONLY**. Nghiêm cấm mọi hành vi probing năng lực, gỡ lỗi prompt hay chọn mô hình bằng dữ liệu benchmark trước khi đóng băng giao thức.
+2. **Đã Phê chuẩn Cổng Năng lực Không gian Target+Distractor Sanity Gate:** Loại bỏ hoàn toàn các ngưỡng số tùy tiện. Cổng kiểm tra tính hợp lý kỹ thuật trên dữ liệu ngoài benchmark có ground truth khách quan. Chỉ cấp quyền Grounding cho Level 1 (Doc-Verified) hoặc Level 2A (External Probe-Verified). Mô hình Level 2B (Format only) tuyệt đối không đủ điều kiện.
+3. **Đã Phê chuẩn Nguồn Dữ liệu Thử nghiệm Năng lực Ngoại vi:** Nghiêm cấm dùng ảnh InspecSafe; chỉ dùng ảnh bên ngoài có giấy phép mở hoặc ảnh tổng hợp có tọa độ GT khách quan.
+4. **Đã Phê chuẩn Chính sách Đóng băng Giao thức (Protocol Freeze):** Đóng băng toàn bộ giao thức và ghi nhận `protocol_freeze_commit_sha` trước lần suy luận đầu tiên trên InspecSafe. Hiện ghi nhận: `protocol_freeze_commit_sha: PENDING` *(D8 approval != Protocol Freeze)*.
+5. **Đã Phê chuẩn Quy tắc Kiểm soát Thay đổi Sau Đóng băng:** Cấm sửa prompt theo hiệu năng sau lần inference đầu tiên. Sửa lỗi kỹ thuật bắt buộc phải ghi nhận issue, bump version giao thức, vô hiệu hóa run bị ảnh hưởng và rerun toàn bộ pool liên quan. Không tùy biến cứu điểm riêng 1 mô hình.
+6. **Đã Phê chuẩn Chính sách Chọn Mô hình & Vòng đời:** Lựa chọn hoàn toàn độc lập với điểm số trên InspecSafe. Áp dụng hệ thống nhãn vòng đời mô hình và theo dõi tình trạng khả dụng của snapshot API.
+7. **Đã Phê chuẩn Quy tắc Nhiệm vụ Phân loại C1 (Policy-Aware Classification):** Cung cấp bảng quy chuẩn an toàn ngành trong Call 1 để bài toán phân loại an toàn có đầy đủ ngữ nghĩa; Call 1 không nhận bất kỳ thông tin nào từ Call 2.
+8. **Đã Phê chuẩn Kiến trúc Lệnh gọi A2 (Two Independent Calls):** Phân rã độc lập Call 1 (Phân loại an toàn) và Call 2 (Định vị nguy cơ & bám bằng chứng). Call 2 hoàn toàn không nhận dự đoán từ Call 1. Phương án A1 chính thức bị bãi bỏ đối với giao thức P2 chính.
+9. **Đã Phê chuẩn Từ điển Nguy cơ Định vị B2 (Closed 12-Hazard Vocabulary):** Áp dụng 12 Hazard Atoms của D6 làm từ điển định vị đóng cho Call 2 độc lập để bảo đảm tính ánh xạ tất định 100% cho thuật toán ghép cặp Mode A/B của D5. Khẳng định đây không phải là phát hiện từ vựng mở; không đánh đồng phân tầng phân loại RQ2 (cấp ảnh) với đánh giá bám bằng chứng RQ3 (cấp hộp bao).
+10. **Đã Phê chuẩn Loại bỏ Tiêu chí Dung sai P1 Tùy tiện:** Bỏ tiêu chí tùy tiện $\pm 1–2\%$; thay bằng báo cáo $\text{Metric}_{\text{reproduced}}$, $\text{Metric}_{\text{published}}$, sai số tuyệt đối $\Delta$ và giải thích tương thích kỹ thuật.
+11. **Đã Phê chuẩn Mô hình Tham chiếu P1:** Sử dụng Claude Opus (hoặc phiên bản tương thích chính thức) và mô hình `bge-m3` cục bộ để tái lập P1 theo đúng pipeline upstream.
+12. **Đã Phê chuẩn Shortlist Mô hình P2 Cốt lõi (4 Nhà Cung Cấp):** Shortlist chính thức gồm 4 mô hình: `gemini-3.8-flash` (Google), `qwen3-vl-8b-instruct` (Alibaba Cloud / DashScope), `gpt-5.6-terra` (OpenAI), và `claude-sonnet-5` (Anthropic). Không tự ý thay đổi ID mô hình.
+13. **Đã Xác nhận Loại bỏ Mô hình Retired:** Xác nhận loại bỏ hoàn toàn `claude-3-7-sonnet` (đã retired) và các ID không chính thức khỏi candidate list.
+14. **Đã Phê chuẩn Tuyến Phục vụ Qwen Khu vực Singapore:** Tuyến phục vụ chính thức là **Alibaba Cloud Model Studio / DashScope (Region Singapore)** với trạng thái **`ROUTE_REGION_PINNED, WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE`**, cấu hình giải mã **`QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`**, precision **`UNDISCLOSED BY PROVIDER`**, gắn cờ **`HOSTED_BACKEND_NOT_FULLY_PINNABLE`** và công bố giới hạn tái lập trung thực.
+15. **Đã Phê chuẩn Cấu trúc Đầu ra Chuẩn hóa:** Đồng thuận với JSON Schema nội bộ và nguyên tắc chuyển đổi tọa độ chuẩn hóa $[x_{\min}, y_{\min}, x_{\max}, y_{\max}] \in [0.0, 1.0]$ theo thứ tự $x$-first của Quyết định D4.
+16. **Đã Phê chuẩn Chính sách Mô hình Chỉ Phân loại:** Mô hình không đủ điều kiện định vị được ghi nhận là `NOT PARTICIPATING`, tuyệt đối không bị gán lỗi giả mạo $\text{IoU} = 0.0$ và không bị tính vào benchmark định vị.
+17. **Đã Phê chuẩn Chính sách Chế độ Suy luận (Thinking Policy):** Áp dụng cấu hình suy luận phù hợp từng provider (`thinking: "low"` cho Gemini 3.8 Flash, `reasoning_effort: "low"` cho GPT-5.6-Terra, Adaptive Thinking cho Claude Sonnet 5).
+18. **Đã Phê chuẩn Chính sách Giải mã Ít Biến động (Provider-Supported Low-Variance Decoding Policy):** Phê duyệt chính sách cấu hình giải mã ít biến động tương thích với API của từng nhà cung cấp (thay vì ép buộc `temperature = 0.0` đồng loạt) và giữ `temperature = 0.1` cho P1.
 
 ---
 
-## 34. Evidence Sources (Nguồn Bằng chứng và Tài liệu Tham chiếu)
+## 34. Pre-Freeze Implementation Checklist (Danh sách Kiểm tra Triển khai Trước Đóng băng Giao thức)
+
+> [!IMPORTANT]
+> Phê duyệt Quyết định D8 (`D8 Approval`) thiết lập khung phương pháp luận đã được khóa, nhưng **CHƯA ĐỒNG NGHĨA VỚI ĐÓNG BĂNG GIAO THỨC (`D8 Approval != Protocol Freeze`)**.
+> Trước khi ghi nhận `protocol_freeze_commit_sha` và chạy lệnh suy luận đầu tiên trên InspecSafe-V1, toàn bộ các mục kiểm tra kỹ thuật sau đây bắt buộc phải hoàn tất:
+
+- [ ] **1. Resolve exact Qwen Singapore workspace endpoint:** Xác định URL endpoint cụ thể của workspace Alibaba Cloud Model Studio Singapore khi API key chính thức được kích hoạt.
+- [ ] **2. Resolve one supported Qwen decoding configuration:** Chốt một cấu hình giải mã ít biến động cụ thể được endpoint Singapore hỗ trợ chính thức.
+- [ ] **3. Prepare and freeze external Target+Distractor sanity cases:** Chuẩn bị và cố định tập dữ liệu ảnh kiểm tra ngoại vi (COCO / Open Images / Synthetic) kèm tọa độ GT khách quan.
+- [ ] **4. Execute external capability gate for Level-3 models:** Thực thi cổng kiểm tra tính hợp lý kỹ thuật Target+Distractor cho các mô hình Level 3 (`qwen3-vl-8b-instruct`, `claude-sonnet-5`) trên dữ liệu ngoại vi (không dùng ảnh InspecSafe).
+- [ ] **5. Assign final grounding eligibility and model roles:** Phân bổ dứt khoát vai trò tham gia cho từng mô hình (`Grounding-Eligible` hoặc `Classification-Only / NOT PARTICIPATING`) dựa trên kết quả cổng năng lực.
+- [ ] **6. Verify exact provider model IDs and serving routes still available:** Xác minh các model ID và tuyến phục vụ vẫn còn khả dụng trên live API tại thời điểm đóng băng.
+- [ ] **7. Freeze prompt, schema, adapters, parsers, and metric engine:** Cố định toàn bộ mã nguồn prompt, JSON Schema, bộ chuyển đổi adapter, parser và động cơ metric D5 trong repository.
+- [ ] **8. Record protocol_freeze_commit_sha:** Ghi nhận mã commit SHA chính thức đóng băng toàn diện giao thức vào tài liệu và metadata của run.
+
+*Lưu ý:* Các mục trên thuần túy là điều kiện tiên quyết về triển khai kỹ thuật (*implementation prerequisites*), **tuyệt đối không phải là các quyết định nghiên cứu chưa giải quyết** của D8.
+
+---
+
+## 35. Evidence Sources (Nguồn Bằng chứng và Tài liệu Tham chiếu)
 
 1. **Mã nguồn và Dữ liệu Phát hành Chính thức Upstream:**
    - Kho lưu trữ Hugging Face: `https://huggingface.co/datasets/Tetrabot2026/InspecSafe-V1` (Commit `f3cb7d3e`).
@@ -782,6 +807,6 @@ Nhóm nghiên cứu trân trọng đề xuất khung phương án tổng thể c
    - OpenAI Platform: *"OpenAI Model Catalog"*, *"Responses API"*, *"Vision Guide"*, *"Structured Outputs Guide"*.
    - Anthropic Developer Docs: *"Models Overview"*, *"Messages API"*, *"Vision Capabilities"*, *"Model Lifecycle & Deprecations"*.
 3. **Hệ thống Văn bản Quyết định Nội bộ SafeShift:**
-   - `DECISIONS.md`: Quyết định D1, D2, D3, D4, D5, D6, D7.
+   - `DECISIONS.md`: Quyết định D1, D2, D3, D4, D5, D6, D7, D8.
    - Báo cáo kiểm toán phương pháp luận: `notes/w1_dataset_audit.md`, `notes/research_feasibility_audit.md`, `notes/source_license_audit.md`.
-   - Các Decision Brief đã duyệt: `notes/w2_protocol_decision_brief.md` (D1), `notes/w2_domain_split_decision_brief.md` (D2, D3), `notes/w2_grounding_census_decision_brief.md` (D4, D6, D7), `notes/w2_metrics_statistics_decision_brief.md` (D5).
+   - Các Decision Brief đã duyệt: `notes/w2_protocol_decision_brief.md` (D1), `notes/w2_domain_split_decision_brief.md` (D2, D3), `notes/w2_grounding_census_decision_brief.md` (D4, D6, D7), `notes/w2_metrics_statistics_decision_brief.md` (D5), `notes/w2_rq2_hierarchy_erratum_brief.md` (PR #15).
