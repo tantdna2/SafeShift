@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:safeshift:external-target-distractor-v1",
+  "title": "External Target+Distractor case manifest",
+  "description": "Format only. Runtime also validates strict bbox inequalities, separated T/D, unique IDs, reciprocal swap groups and benchmark firewall. Image paths are repository-relative; images are not read by format validation.",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "source_kind", "provenance", "cases"],
+  "properties": {
+    "schema_version": {"const": "external-target-distractor-v1"},
+    "source_kind": {"enum": ["synthetic", "open_external"]},
+    "provenance": {"type": "string", "minLength": 1},
+    "cases": {"type": "array", "minItems": 2, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["case_id", "image_path", "target_gt_bbox", "distractor_gt_bbox", "target_query", "swap_group"],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "image_path": {"type": "string", "minLength": 1, "description": "Repository-relative POSIX path; no absolute paths, parent traversal, raw data or InspecSafe aliases."},
+        "target_gt_bbox": {"$ref": "canonical.schema.json#/$defs/bbox"},
+        "distractor_gt_bbox": {"$ref": "canonical.schema.json#/$defs/bbox"},
+        "target_query": {"type": "string", "minLength": 1},
+        "swap_group": {"type": "string", "minLength": 1}
+      }
+    }}
+  }
+}

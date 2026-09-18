@@ -1,0 +1,23 @@
+{
+  "schema_version": "external-target-distractor-v1",
+  "source_kind": "synthetic",
+  "provenance": "Handcrafted geometry FORMAT EXAMPLE ONLY. Images are placeholders, not generated/frozen live cases. Target is a red square; distractor is a blue square; exchange their positions in the second case.",
+  "cases": [
+    {
+      "case_id": "synthetic-left",
+      "image_path": "data/processed/pre_freeze/external/red-left.png",
+      "target_gt_bbox": [0.1, 0.2, 0.3, 0.4],
+      "distractor_gt_bbox": [0.7, 0.6, 0.9, 0.8],
+      "target_query": "Locate only the red square, excluding the blue square.",
+      "swap_group": "red-blue-swap"
+    },
+    {
+      "case_id": "synthetic-right",
+      "image_path": "data/processed/pre_freeze/external/red-right.png",
+      "target_gt_bbox": [0.7, 0.6, 0.9, 0.8],
+      "distractor_gt_bbox": [0.1, 0.2, 0.3, 0.4],
+      "target_query": "Locate only the red square, excluding the blue square.",
+      "swap_group": "red-blue-swap"
+    }
+  ]
+}

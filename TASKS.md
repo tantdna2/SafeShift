@@ -51,3 +51,8 @@ Mục tiêu: khảo sát, kiểm tra và hiểu InspecSafe-V1 trước bất k�
 - [x] Rà soát checklist và điều kiện chuyển giai đoạn trong `ROADMAP.md` trước khi đánh dấu W1 hoàn thành. W1 audit package ready for independent review before W2. Báo cáo tổng hợp `notes/w1_dataset_audit.md` đã đáp ứng đầy đủ điều kiện cổng kiểm soát W1 -> W2: có báo cáo audit truy vết nguồn gốc, danh sách 10 điểm chưa rõ (unresolved), phán quyết khả thi thực chứng cho cross-domain (FEASIBLE_WITH_CONSTRAINTS) và evidence grounding (PARTIALLY_FEASIBLE), cùng hàng đợi 10 quyết định W2; trạng thái cổng: READY_FOR_REVIEW.
 
 **Ngoài phạm vi bước khởi tạo:** code parse dataset, inference VLM, chọn metric chính thức và tuyên bố kết quả nghiên cứu.
+
+## W2 — Pre-freeze implementation (2026-09-18)
+
+- [x] Triển khai hạ tầng offline theo D8 đã duyệt: Call 1/Call 2 độc lập, canonical schema, raw preservation, bốn adapter skeletons, external gate harness, benchmark firewall, D5 interfaces và freeze-manifest template. Kiểm thử: 199/199 tests pass, gồm 54 tests mới. Chi tiết và 8 prerequisite: [notes/pre_freeze_implementation.md](notes/pre_freeze_implementation.md).
+- [ ] Hoàn tất 8 prerequisite D8 trước protocol freeze: endpoint/decoding Qwen, external cases và gates, final roles, live model/route verification, đóng băng toàn bộ implementation và ghi freeze SHA. `protocol_freeze_commit_sha: PENDING`; chưa chạy inference InspecSafe.

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:safeshift:canonical-v1",
+  "title": "SafeShift independent P2 outputs",
+  "description": "Select the task-specific definition. Python bbox validation additionally enforces strict xmin<xmax and ymin<ymax; JSON Schema alone cannot express those cross-field inequalities.",
+  "oneOf": [{"$ref": "#/$defs/classification"}, {"$ref": "#/$defs/grounding"}],
+  "$defs": {
+    "bbox": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+    "classification": {
+      "type": "object", "additionalProperties": false, "required": ["safety_level"],
+      "properties": {"safety_level": {"enum": ["Level01", "Level02", "Level03", "Level04"]}}
+    },
+    "grounding": {
+      "type": "object", "additionalProperties": false, "required": ["hazards"],
+      "properties": {"hazards": {"type": "array", "items": {"$ref": "#/$defs/hazard"}}}
+    },
+    "hazard": {
+      "type": "object", "additionalProperties": false, "required": ["hazard_type", "evidence"],
+      "properties": {
+        "hazard_type": {"enum": ["NO_GLOVES", "NO_HELMET", "NO_MASK", "USE_MOBILE_PHONE", "LIQUID_ON_GROUND", "SMOKING", "OPEN_FLAME", "FOREIGN_OBJECT", "SMOKE", "NONMOTORIZED_VEHICLE", "DOOR_OPEN", "PERSON_FALLEN"]},
+        "evidence": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["bbox"],
+          "properties": {"bbox": {"$ref": "#/$defs/bbox"}, "label": {"type": "string"}}
+        }}
+      }
+    },
+    "external_probe": {
+      "type": "object", "additionalProperties": false, "required": ["bbox"],
+      "properties": {"bbox": {"$ref": "#/$defs/bbox"}}
+    }
+  }
+}
