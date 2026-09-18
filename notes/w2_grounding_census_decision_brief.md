@@ -359,7 +359,7 @@ Câu hỏi nghiên cứu RQ2 yêu cầu phân tích sự tập trung lỗi của
 > **Quy tắc diễn giải số lượng mẫu giữa các tầng:**  
 > **Số lượng mẫu giữa các tầng nguy cơ KHÔNG CÓ TÍNH CỘNG GỘP (`Sample counts across strata are NOT additive`)**, bởi vì một mẫu ảnh đa nguy cơ (multi-hazard sample) có thể thuộc về đồng thời nhiều tầng nguy cơ khác nhau. Các con số phân bổ theo miền trong bảng dưới đây được tính ở **Cấp độ Nguy cơ Nguyên tử (`Atom-level counts`)**. Nhóm 7 tầng này tạo ra tổng cộng **1.381 lượt thành viên (memberships)** trên 1.000 mẫu ảnh Anomaly độc nhất (512 mẫu chứa $\ge 2$ atoms).
 
-| Mã Tầng Nguy cơ Ứng viên | Thành phần Hazard Atoms cấu thành | Số mẫu liên quan (`Sample N`) | Số lượng Atom (`Atom N`) | Phân bố theo Miền (`Atom-level Counts`) | Phân bố Cấp An toàn | Trạng thái Hỗ trợ chính | Yếu tố gây nhiễu lớn (`Major Confounders`) | Đánh giá Mức độ Phù hợp cho RQ2 |
+| Mã Tầng Nguy cơ Ứng viên | Thành phần Hazard Atoms cấu thành | Số mẫu liên quan (`Sample N`) | Số lượng Atom (`Atom N`) | Phân bố theo Miền (`Atom-level Counts`) | Phân bố Cấp An toàn | Trạng thái Hỗ trợ chính | Yếu tố gây nhiễu lớn (`Major Confounders`) | Đánh giá Mức độ Phù hợp làm Secondary Summary |
 |---|---|:---:|:---:|---|---|:---:|---|:---:|
 | **Strata A: `FIRE_AND_SMOKE`** | `OPEN_FLAME` + `SMOKE` | 200 | 225 | `oil_chem` (110), `tunnel` (42), `power` (19), `coal_con` (53), `metallur` (1) | 100% Level01 (225) | DIRECT (97,8%) | Đi kèm vi phạm PPE trong các mẫu phức tạp. | **RẤT PHÙ HỢP (HIGHLY SUITABLE)**. Tín hiệu thị giác trực tiếp rõ ràng. |
 | **Strata B: `PPE_ABSENCE`** | `NO_GLOVES` + `NO_HELMET` + `NO_MASK` | 545 | 882 | `coal_con` (297), `oil_chem` (264), `tunnel` (196), `power` (108), `metallur` (17) | Level01 (538), Level02 (334), Level03 (10) | WEAK_PROXY (99,7%) | Đa giác toàn thân `Person` gây thiên lệch diện tích lớn. | **RẤT PHÙ HỢP (HIGHLY SUITABLE)**. Phân tầng quy mô lớn nhất, đại diện cho an toàn lao động. |
@@ -367,7 +367,12 @@ Câu hỏi nghiên cứu RQ2 yêu cầu phân tích sự tập trung lỗi của
 | **Strata D: `ENVIRONMENTAL_SLIP_HAZARD`** | `LIQUID_ON_GROUND` | 134 | 134 | `oil_chem` (126), `tunnel` (4), `coal_con` (3), `metallur` (1), `power` (0) | Level01 (73), Level02 (55), Level03 (6) | DIRECT (91,0%) | **Nhiễu miền nghiêm trọng (Domain Confounder):** 94,0% atom nằm ở hóa chất dầu khí. | **PHÙ HỢP CÓ ĐIỀU KIỆN (CONDITIONALLY SUITABLE)**. Cần kiểm soát biến miền khi phân tích. |
 | **Strata E: `OBSTRUCTION_AND_FOREIGN_OBJECT`** | `FOREIGN_OBJECT` + `NONMOTORIZED_VEHICLE` | 211 | 216 | `tunnel` (135), `coal_con` (64), `power` (17) | Level01 (141), Level02 (75) | DIRECT (72,2%) / PROXY (25,0%) | Nonmotorized vehicle tập trung 100% tại tunnel. | **PHÙ HỢP (SUITABLE)**. Cần tách rã giữa dị vật tĩnh và phương tiện giao thông. |
 | **Strata F: `EQUIPMENT_STATE_ANOMALY`** | `DOOR_OPEN` | 34 | 34 | `tunnel` (30), `oil_chem` (3), `power` (1) | Level01 (8), Level02 (26) | NO_CURRENT_SPATIAL_GT (100%) | **Hoàn toàn không có ground truth không gian.** | **CHỈ PHÙ HỢP CHO PHÂN LOẠI (Classification Only)**, loại khỏi Grounding. |
-| **Strata G: `PERSONNEL_FALLEN`** | `PERSON_FALLEN` | 10 | 10 | `power` (8), `coal_con` (2) | 100% Level01 (10) | WEAK_PROXY (100%) | Cỡ mẫu quá nhỏ ($N=10$), thiếu lực thống kê. | **KHÔNG KHUYẾN NGHỊ LÀM TẦNG ĐỘC LẬP (NOT RECOMMENDED ALONE)**. |
+| **Strata G: `PERSONNEL_FALLEN`** | `PERSON_FALLEN` | 10 | 10 | `power` (8), `coal_con` (2) | 100% Level01 (10) | WEAK_PROXY (100%) | Cỡ mẫu quá nhỏ ($N=10$), thiếu lực thống kê. | **HẠN CHẾ VÌ MẪU THƯA (SPARSE / DESCRIPTIVE ONLY)**. Tóm tắt gom nhóm bị hạn chế, nhưng atom `PERSON_FALLEN` vẫn là 1 trong 12 Primary Strata. |
+
+> [!NOTE]
+> **Nguyên tắc phương pháp luận về cột "Đánh giá Mức độ Phù hợp làm Secondary Summary":**  
+> Các mức đánh giá trong bảng trên **chỉ mô tả tính hữu ích và độ tin cậy của từng nhóm khi đóng vai trò là BẢN TÓM TẮT KHÁM PHÁ PHỤ TRỢ (`SECONDARY EXPLORATORY SUMMARIES`)**. Các đánh giá này **TUYỆT ĐỐI KHÔNG QUYẾT ĐỊNH** việc một nguy cơ nguyên tử có được đưa vào phân tích chính của RQ2 hay không.  
+> - Cụ thể đối với `PERSONNEL_FALLEN` (Nhóm G): Mặc dù việc gom nhóm này bị hạn chế do cỡ mẫu nhỏ ($N=10$) và chỉ mang tính mô tả (`Sparse / Descriptive-Only`), nhưng bản thân nguy cơ nguyên tử **`PERSON_FALLEN` vẫn là một trong 12 PRIMARY RQ2 STRATA** được báo cáo chính thức và bắt buộc trong mọi bảng kết quả chính của RQ2 với quy mô $N_a=10$ (100% Level01) đi kèm nhãn cảnh báo hỗ trợ thưa thớt `[Sparse-Support / Descriptive-Only]`.
 
 ---
 

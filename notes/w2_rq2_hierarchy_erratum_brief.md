@@ -157,7 +157,7 @@ graph TD
 ### 5.1 Kiểm toán Thực chứng: Số lượng Atom vs Số lượng Mẫu Ảnh Độc nhất ($N_a$)
 Theo nguyên tắc D2, đơn vị dự đoán duy nhất của bài toán phân loại an toàn là **ẢNH (`Image`)** — tức là mỗi bức ảnh chỉ nhận **một dự đoán an toàn duy nhất (`one safety prediction per image`)**. Do đó, mẫu số $N_a$ của các chỉ số RQ2 bắt buộc phải là **Số lượng Mẫu Ảnh Độc nhất (`Unique Image Support Count`)**, không thể mặc định lấy `Atom Count` nếu chưa qua kiểm chứng.
 
-Thực hiện kiểm toán trực tiếp (Read-Only) trên artifact cuộc tổng điều tra W2.3 ([`data/manifests/w2_grounding_census.json`](file:///D:/SafeShift/data/manifests/w2_grounding_census.json)), kết quả xác minh chính xác như sau:
+Thực hiện kiểm toán trực tiếp (Read-Only) trên artifact cuộc tổng điều tra W2.3 cục bộ (`data/manifests/w2_grounding_census.json`, artifact nội bộ không commit vào repository theo chính sách bảo vệ dữ liệu), kết quả xác minh chính xác như sau:
 
 | STT | Mã Nguy cơ Nguyên tử (`Hazard Atom`) | Số lượng Atom (`Atom Count`) | Số mẫu ảnh độc nhất (`Unique Sample Support` $N_a$) | Chênh lệch (`Diff`) | Hỗ trợ theo Cấp An toàn: Level01 | Hỗ trợ theo Cấp An toàn: Level02 | Hỗ trợ theo Cấp An toàn: Level03 |
 |:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|
