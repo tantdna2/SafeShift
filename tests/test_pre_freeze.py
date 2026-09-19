@@ -530,14 +530,15 @@ class MetricContractTests(unittest.TestCase):
 
 
 class ConfigTests(unittest.TestCase):
-    def test_qwen_unresolved_fields_and_adapter_contracts(self):
+    def test_qwen_pinned_policy_and_adapter_contracts(self):
         config = json.loads((REPO / "configs/pre_freeze/providers.json").read_text())
         qwen = config["providers"]["qwen_dashscope"]
         self.assertEqual(qwen["model_id"], "qwen3-vl-8b-instruct")
         self.assertEqual(qwen["region"], "ap-southeast-1")
         self.assertEqual(qwen["status"], "ROUTE_REGION_PINNED")
-        self.assertEqual(qwen["workspace_endpoint"], "UNRESOLVED")
-        self.assertEqual(qwen["decoding"], "QWEN_DECODING_PENDING_ROUTE_CONFIRMATION")
+        self.assertEqual(qwen["workspace_endpoint"], "ENVIRONMENT_ONLY")
+        self.assertEqual(qwen["workspace_endpoint_status"], "PENDING_USER_CONFIGURATION")
+        self.assertEqual(qwen["decoding"], {"temperature": 0})
         self.assertEqual(qwen["precision"], "UNDISCLOSED_BY_PROVIDER")
         self.assertEqual(qwen["hosted_reproducibility"], "HOSTED_BACKEND_NOT_FULLY_PINNABLE")
         self.assertNotIn("WorkspaceId", qwen)

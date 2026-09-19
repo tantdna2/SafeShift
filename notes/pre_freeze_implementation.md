@@ -1,14 +1,22 @@
 # Pre-freeze implementation
 
-Authoritative base: `main` at `ec40d9080f8c6847355ec22cc5bad54ea1dda876`.
-Implementation branch: `implementation/pre-freeze`. D8 is approved; **D8 approval != protocol freeze**.
+Historical bases (each names a different milestone):
+
+- `D8_APPROVAL_BASE`: `ec40d9080f8c6847355ec22cc5bad54ea1dda876`.
+- `PRE_FREEZE_INFRASTRUCTURE_MERGE`: `d6350cea7ff7dadc2bbd444f37ed8c81766b7195`.
+- `SYNTHETIC_EXTERNAL_CASES_MERGE`: `9dcf157d5026d11755a4f1e3f9e075da8f5fe747`,
+  the starting `main` for steps 1–2 on `implementation/qwen-route-decoding`.
+
+Original infrastructure branch: `implementation/pre-freeze`. D8 is approved; **D8 approval != protocol freeze**.
 `protocol_freeze_commit_sha: PENDING`.
 
 Scope follows [D8](../DECISIONS.md#dec-w2-d8-008),
 [D5](w2_metrics_statistics_decision_brief.md), and
 [D6 vocabulary/support definitions](w2_grounding_census_decision_brief.md).
-No dataset, split, label or D5 formula was changed. No web/provider calls, model-output
-inspection, InspecSafe inference or prompt tuning occurred. No secrets are required.
+No dataset, split, label or D5 formula was changed. The original infrastructure task
+used no web/provider calls. Steps 1–2 read public Alibaba documentation only; no model
+API calls, model-output inspection, InspecSafe inference or prompt tuning occurred.
+No API credentials are required for configuration validation.
 
 ## Approved eight-item checklist
 
@@ -17,8 +25,8 @@ An implemented interface is not evidence that its freeze prerequisite is complet
 
 | # | Approved prerequisite | Status | Evidence / remaining work |
 |---|---|---|---|
-| 1 | Exact Qwen Singapore workspace endpoint | PENDING | Region `ap-southeast-1` and `ROUTE_REGION_PINNED`; endpoint `UNRESOLVED / REQUIRED BEFORE FREEZE`. No WorkspaceId invented. |
-| 2 | One supported Qwen decoding configuration | PENDING | `QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`; precision `UNDISCLOSED_BY_PROVIDER`; `HOSTED_BACKEND_NOT_FULLY_PINNABLE`. |
+| 1 | Exact Qwen Singapore workspace endpoint | PENDING_USER_CONFIGURATION | Documented workspace route pinned; neither `QWEN_WORKSPACE_ENDPOINT` nor `QWEN_WORKSPACE_ID` is set in the local process environment. No actual WorkspaceId invented. |
+| 2 | One supported Qwen decoding configuration | DONE | Frozen P2 policy `qwen-singapore-instruct-temperature-zero-v1`: `{"temperature": 0}` only; other sampling controls omitted. Documentation verified; no empirical comparison. |
 | 3 | Prepare and freeze external Target+Distractor cases | DONE | **SYNTHETIC V1**: 8 tracked PNGs, 4 reciprocal swap groups, frozen manifest and SHA-256 provenance. Deterministic regeneration and existing validator passed; see evidence below. |
 | 4 | Execute external capability gates for Level-3 models | PENDING | GPT gate **NOT RUN**; Claude gate **NOT RUN**. Dummy geometry tests are not provider capability evidence. |
 | 5 | Assign final grounding eligibility and model roles | PENDING | Preserve D8 evidence assignments: Gemini/Qwen Level 1; GPT/Claude Level 3, grounding `NOT PARTICIPATING` pending a qualifying gate. |
@@ -32,10 +40,10 @@ No item is marked BLOCKED: the remaining work is intentionally outside this offl
 
 - `safeshift/protocol/prompts.py`: Call 1 accepts image path + caller-supplied industry safety policy and requests only `safety_level`. Call 2 accepts image path + exactly the D6 closed 12-hazard vocabulary; its signature has no Call 1 output/history argument. Call 1 likewise has no Call 2 input. Exact industry policy text must still be pinned before freeze; no substitute safety policy was invented.
 - `schemas/canonical.schema.json` and `schema.py`: canonical x-first `[xmin, ymin, xmax, ymax]`, normalized `[0,1]`, top-left origin. Python enforces strict coordinate inequalities in addition to JSON Schema. Extra task fields, unknown hazard IDs, duplicate JSON keys, non-finite values, string/bool coordinates and malformed JSON are rejected. Empty hazard/evidence arrays are retained as valid explicit outputs; missing evidence does not imply localization success.
-- `adapters.py`: Gemini, Qwen DashScope, OpenAI and Anthropic offline skeletons. `prepare()` renders the provider coordinate convention; `extract_text()` supports explicitly selected handcrafted envelope contracts. Gemini y-first/1000 and Qwen x-first/1000 are reordered/scaled deterministically. OpenAI/Anthropic use canonical coordinates. There is no inference transport: every `send()` raises `OFFLINE_ONLY`. Qwen's compatible-chat envelope is a skeleton assumption awaiting route confirmation.
+- `adapters.py`: Gemini, Qwen DashScope, OpenAI and Anthropic offline skeletons. `prepare()` renders the provider coordinate convention; `extract_text()` supports explicitly selected handcrafted envelope contracts. Gemini y-first/1000 and Qwen x-first/1000 are reordered/scaled deterministically. OpenAI/Anthropic use canonical coordinates. There is no inference transport: every `send()` raises `OFFLINE_ONLY`. Qwen's compatible-chat route is now documentation verified; the adapter still has no live verification.
 - `records.py`: `preserve_and_parse()` writes unchanged response bytes and metadata before extracting provider text or parsing. Metadata links run/sample/call IDs, image checksum, exact rendered prompt/hash, provider/model/version, endpoint, SDK, generation configuration, Git SHA and environment. Artifacts are local under `data/processed/`; existing call directories cannot be overwritten. Persistence failures abort parsing. This pre-freeze entrypoint accepts only `handcrafted_dummy` provenance.
 - `metrics.py`: D5 interfaces for image-level classification, GT RQ2 atom lookups, complete Call 2 predictions, Direct/Weak Proxy candidate original polygons, explicit unsupported atoms and parse metadata. A missing membership raises an error; it is not treated as an empty/normal sample. Direct and Proxy support stay separate. Nonparticipants have no synthetic zero-score result. No metric formulas or tuned thresholds are implemented.
-- `configs/pre_freeze/providers.json` and `freeze_manifest.template.json`: model/route placeholders and explicit pending freeze state. API key and endpoint environment variable **names** only; credentials are never loaded or embedded. Decoding fields describe approved policy, not verified SDK request kwargs.
+- `configs/pre_freeze/providers.json` and `freeze_manifest.template.json`: model/route policy and explicit pending freeze state. API key and endpoint environment variable **names** only; credentials are never loaded or embedded. Qwen decoding is documented compatible-chat configuration, still untested on a live workspace. `qwen_config.py` resolves the actual endpoint in memory from environment only.
 
 Implementation follows approved D8 section 16 deterministic coordinate normalization:
 provider-native reorder/scale, then clamp each coordinate to `[0,1]`, then strict
@@ -159,6 +167,107 @@ later remain **PENDING**. GPT capability gate: **NOT RUN**; Claude capability ga
 `final_model_roles: PENDING`; `protocol_freeze_commit_sha: PENDING`.
 Approved D1-D8 decisions and existing audit notes are unchanged.
 
+## Qwen route and decoding: steps 1–2 (2026-09-19)
+
+Scope: offline configuration verification for P2. This implements the authorized D8
+prerequisites without changing P1's upstream `temperature = 0.1` reproduction policy.
+The historical D8 approval record retains its original pending wording; this section
+records the implementation resolution. Full protocol freeze remains pending.
+
+### Official documentation evidence
+
+All sources below are official Alibaba Cloud Model Studio documentation, accessed
+**2026-09-19**. Public documentation availability does not demonstrate access by a
+specific workspace/API key. Evidence is `DOC_VERIFIED_AVAILABLE_IN_REGION` and route
+`DOC_VERIFIED`; `LIVE_ROUTE_VERIFIED` / `live_route_verified` remains **false**.
+
+| Official title / URL | Evidence used |
+|---|---|
+| [Regions and endpoints](https://www.alibabacloud.com/help/en/model-studio/regions) (updated 2026-09-17) | Singapore is `ap-southeast-1`; dedicated host is `{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com`. Alibaba recommends workspace-dedicated domains; the existing DashScope domain is also listed. Singapore's service deployment scope is International. |
+| [qwen3-vl-8b-instruct](https://www.alibabacloud.com/help/en/model-studio/qwen3-vl-8b-instruct) (updated 2026-09-11) | Exact model ID and Instruct variant; the Singapore model-capability section lists text/image/video input and text output. Official Singapore availability: **YES**. |
+| [OpenAI compatible - Chat](https://www.alibabacloud.com/help/en/model-studio/qwen-api-via-openai-chat-completions) | Singapore compatible base URL and POST chat URL; `temperature` supports `[0,2)`, lower values reduce diversity, and only one of `temperature`/`top_p` should be set. |
+| [Alibaba Cloud Model Studio model pricing](https://www.alibabacloud.com/help/en/model-studio/model-pricing) | Qwen-VL open-source Singapore table explicitly lists `qwen3-vl-8b-instruct` as non-thinking only. No price or performance comparison is used. |
+
+Frozen route templates:
+
+```text
+Base: https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1
+POST https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/chat/completions
+```
+
+The legacy Singapore base `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
+may remain functional for existing integrations. SafeShift selects the recommended
+workspace-dedicated route and rejects legacy/trial endpoints; it never silently
+substitutes them. No claim of successful legacy or workspace access is made.
+
+### Frozen decoding rationale
+
+Policy: **`qwen-singapore-instruct-temperature-zero-v1`**, **`{"temperature": 0}`**,
+for both P2 calls. The compatible-chat reference does not specify a separate
+`do_sample=false` switch. Its documented lower-temperature guidance supports choosing
+the allowed lower bound for reduced output variability. This is SafeShift's
+pre-specified protocol choice, not a claim that Alibaba recommends this exact setting
+for every task or guarantees deterministic hosted execution. No outputs were compared.
+
+Only `temperature` is explicitly set. `top_p`, `top_k`, seed, penalties and other
+sampling controls remain provider defaults by omission; no numeric defaults are
+copied into request settings. The model is Instruct/non-thinking only. No
+`enable_thinking`, `thinking`, `thinking_budget` or reasoning controls are sent,
+including through `extra_body`. `thinking_enabled: false` is policy metadata, not an
+additional API argument. The explicit sampling override is fixed before any model call.
+
+Retained limitations: `precision: UNDISCLOSED_BY_PROVIDER` and
+`hosted_reproducibility: HOSTED_BACKEND_NOT_FULLY_PINNABLE`. Temperature zero does not
+establish bit-for-bit reproducibility or live request acceptance. Future authorized
+route verification remains checklist #6; transport and SDK integration are absent.
+
+### Environment-only resolution and validation
+
+Set `QWEN_WORKSPACE_ENDPOINT` in the local process environment to the actual base URL
+copied from the Singapore workspace's API Host. Alternatively set `QWEN_WORKSPACE_ID`
+to the actual ID: derivation uses exactly the frozen template above. An explicit
+endpoint takes precedence; an invalid/empty explicit endpoint fails without falling
+back to the ID. No endpoint/ID is accepted from CLI flags, inline JSON or dotenv files.
+
+`validate_workspace_endpoint()` accepts only the exact lowercase HTTPS base URL with
+one ASCII DNS label (1–63 characters, alphanumerics and internal hyphens) before the
+Singapore suffix. This is a local URL-safety rule, not a provider allocation rule or
+proof that the ID exists. Wrong regions, trial/legacy hosts, malformed labels,
+userinfo, ports, query/fragment, whitespace and extra paths are rejected. Use the
+base URL without a trailing slash. Errors do not include supplied values.
+
+`resolve_qwen_configuration()` validates the pinned model/decoding policy, reads only
+the two route variables, and retains a validated endpoint in memory. It does not read
+`DASHSCOPE_API_KEY`, contact a provider, write files, or change tracked checklist state.
+Its report omits the endpoint; the committed template uses `ENVIRONMENT_ONLY`.
+No variables were set locally at this verification, so checklist #1 stays
+**PENDING_USER_CONFIGURATION**. A future local `RESOLVED` result means syntactic route
+validation only, with checklist #1 `DONE` and live verification still **false**.
+
+From repository root:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/validate_qwen_config.py
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+git diff --check
+```
+
+The validator exits 0 for a valid policy (including an explicitly reported pending
+endpoint), and 2 for invalid configuration. It prints only safe policy/status fields.
+It does not freeze the protocol or authorize inference. Synthetic DNS labels in tests
+are fixtures only, never workspace allocation or access evidence.
+
+Validation: **233/233 repository tests PASS**, including 16 new configuration tests.
+The offline validator reports checklist #1 `PENDING_USER_CONFIGURATION`, checklist
+#2 `DONE`, and live route false. `git diff --check`: **PASS**. Environment: Python
+3.11.9, Pillow 12.3.0, existing `.venv`; no dependency changes or random sampling.
+The branch's Git revision identifies the implementation; no run artifacts are created.
+SYNTHETIC V1 manifest SHA-256 remains
+`fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379`.
+GPT gate: **NOT RUN**; Claude gate: **NOT RUN**; InspecSafe inference: **NO**;
+paid inference calls: **NO**; `final_model_roles: PENDING`;
+`protocol_freeze_commit_sha: PENDING`.
+
 ## Offline verification and reproduction
 
 Run from repository root using the existing environment (Python 3.11.9, Pillow 12.3.0;
@@ -186,7 +295,7 @@ passed** using the same `.venv`, including six added regression tests for clampi
 and invalid coordinates. Raw-preservation tests also cover clamped provider outputs.
 `git diff --check` passed. Approved D8 and all other protocol policies are unchanged.
 
-Not run: GPT/Claude live gates, provider/model availability verification, InspecSafe
+Not run: GPT/Claude live gates, live provider/model availability verification, InspecSafe
 inference, paid API calls, complete D5 metric evaluation and protocol freeze. These
 are outside this task. The versioned source tree identifies the implementation commit;
 when materializing the freeze template later, fill `git_commit_sha` from the reviewed

@@ -2,7 +2,9 @@
   "protocol_version": "P2-pre-freeze-v1",
   "protocol_freeze_commit_sha": "PENDING",
   "git_commit_sha": "PENDING_IMPLEMENTATION_COMMIT_AT_MATERIALIZATION",
-  "authoritative_base_commit_sha": "ec40d9080f8c6847355ec22cc5bad54ea1dda876",
+  "d8_approval_base_commit_sha": "ec40d9080f8c6847355ec22cc5bad54ea1dda876",
+  "pre_freeze_infrastructure_merge_commit_sha": "d6350cea7ff7dadc2bbd444f37ed8c81766b7195",
+  "synthetic_external_cases_merge_commit_sha": "9dcf157d5026d11755a4f1e3f9e075da8f5fe747",
   "model_ids": {
     "gemini": "gemini-3.8-flash",
     "qwen_dashscope": "qwen3-vl-8b-instruct",
@@ -12,7 +14,22 @@
   "model_ids_live_verified": false,
   "provider_routes": {
     "gemini": "UNRESOLVED",
-    "qwen_dashscope": {"region": "ap-southeast-1", "status": "ROUTE_REGION_PINNED", "workspace_endpoint": "UNRESOLVED / REQUIRED BEFORE FREEZE"},
+    "qwen_dashscope": {
+      "region": "ap-southeast-1",
+      "status": "ROUTE_REGION_PINNED",
+      "endpoint_env": "QWEN_WORKSPACE_ENDPOINT",
+      "workspace_id_env": "QWEN_WORKSPACE_ID",
+      "workspace_endpoint": "ENVIRONMENT_ONLY",
+      "workspace_endpoint_status": "PENDING_USER_CONFIGURATION",
+      "workspace_endpoint_template": "https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+      "chat_endpoint_template": "https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/chat/completions",
+      "http_method": "POST",
+      "legacy_endpoint_fallback": false,
+      "route_evidence": "DOC_VERIFIED",
+      "model_availability": "DOC_VERIFIED_AVAILABLE_IN_REGION",
+      "live_route_verified": false,
+      "documentation_access_date": "2026-09-19"
+    },
     "openai": "UNRESOLVED",
     "anthropic": "UNRESOLVED"
   },
@@ -23,9 +40,18 @@
   "parser_version": "strict-json-v1",
   "decoding_parameters": {
     "gemini": {"classification": "PROVIDER_DEFAULT_PENDING_ROUTE_VERIFICATION", "grounding": {"thinking": "low"}},
-    "qwen_dashscope": "QWEN_DECODING_PENDING_ROUTE_CONFIRMATION",
+    "qwen_dashscope": {"temperature": 0},
     "openai": {"reasoning_effort": "low"},
     "anthropic": "ADAPTIVE_THINKING_SUPPORTED_EFFORT_PENDING_ROUTE_VERIFICATION"
+  },
+  "qwen_decoding_policy": {
+    "decoding_policy_version": "qwen-singapore-instruct-temperature-zero-v1",
+    "decoding_status": "FROZEN_DOC_VERIFIED",
+    "other_sampling_parameters": "PROVIDER_DEFAULT_OMITTED",
+    "thinking_enabled": false,
+    "thinking_policy": "INSTRUCT_NON_THINKING_OMIT_THINKING_PARAMETERS",
+    "precision": "UNDISCLOSED_BY_PROVIDER",
+    "hosted_reproducibility": "HOSTED_BACKEND_NOT_FULLY_PINNABLE"
   },
   "grounding_eligibility": {"gemini": "ELIGIBLE_PER_D8", "qwen_dashscope": "ELIGIBLE_PER_D8_ROUTE_ASSUMPTIONS", "openai": "NOT PARTICIPATING", "anthropic": "NOT PARTICIPATING"},
   "final_model_roles": "PENDING",
