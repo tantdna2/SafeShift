@@ -996,6 +996,33 @@
   - Cơ sở trực tiếp để triển khai mã nguồn prompt, adapters, test suite và thực thi baseline W3.
 - **Thay thế quyết định:** Không.
 
+## D8 implementation resolution — Qwen route and decoding (2026-09-19)
+
+- **Authority:** Project Owner's PRE-FREEZE STEPS 1–2 request, implementing the
+  already approved provider-specific low-variance policy in DEC-W2-D8-008.
+- **Scope:** P2 Qwen configuration only. D1–D8 research definitions and P1's
+  `temperature = 0.1` reproduction policy are unchanged.
+- **Resolution:** Pin `qwen3-vl-8b-instruct`, Singapore `ap-southeast-1`, and the
+  workspace-dedicated compatible-chat template. Actual endpoint comes only from
+  `QWEN_WORKSPACE_ENDPOINT`, or deterministic `QWEN_WORKSPACE_ID` derivation;
+  explicit endpoint wins and no legacy fallback is allowed.
+- **Decoding:** Freeze `qwen-singapore-instruct-temperature-zero-v1`,
+  `{"temperature": 0}` only, all other sampling controls omitted. This is the
+  non-thinking Instruct model; no thinking parameters are enabled or sent.
+- **Evidence:** Official Alibaba documentation accessed 2026-09-19 supports the
+  model in Singapore and compatible-chat temperature range `[0,2)` with reduced
+  variability at lower values and one sampling control at a time. Exact URLs,
+  titles, rationale and reproducibility limits are recorded in
+  [pre-freeze implementation](notes/pre_freeze_implementation.md#qwen-route-and-decoding-steps-12-2026-09-19).
+- **Status:** Checklist #2 DONE. Checklist #1 PENDING_USER_CONFIGURATION: neither
+  workspace environment variable is set locally. Documentation evidence does not
+  establish workspace/key access; live route remains false. No model calls,
+  empirical selection, GPT/Claude gates or InspecSafe inference. Protocol freeze
+  SHA and final model roles remain PENDING.
+- **Historical record:** Earlier D8 pending statements describe the approval
+  milestone; this entry records the authorized implementation resolution, not a
+  new dataset, split, label or metric decision.
+
 ## Template
 
 - **ID:** <DEC-...>
