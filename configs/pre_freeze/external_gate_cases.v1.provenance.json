@@ -1,0 +1,289 @@
+{
+  "schema_version": "external-synthetic-provenance-v1",
+  "external_case_schema_version": "external-target-distractor-v1",
+  "suite_version": "synthetic-v1",
+  "source_kind": "synthetic",
+  "statement": "NO_INSPECSAFE_CONTENT_USED",
+  "source_description": "Only locally drawn geometric primitives; no source images, benchmark content, downloaded assets or provider calls.",
+  "generator_script_path": "scripts/generate_external_gate_cases.py",
+  "generator_script_version": "synthetic-v1",
+  "generator_script_sha256": "c5fc2140d1bd2ce9ef323884834911c1e3ef4234172cd3d37c0e6ba4341f4f6c",
+  "manifest_path": "configs/pre_freeze/external_gate_cases.v1.json",
+  "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+  "canvas": {
+    "width": 256,
+    "height": 256,
+    "mode": "RGB",
+    "background_rgb": [
+      255,
+      255,
+      255
+    ]
+  },
+  "coordinate_convention": "Pixel-edge xyxy: xmin/ymin inclusive, xmax/ymax exclusive. Canonical xyxy = pixel edges divided by width/height.",
+  "rendering": "Pillow integer primitives, no antialiasing/resampling; PNG optimize=False, compress_level=9; no optional metadata",
+  "generation_command": ".venv/Scripts/python.exe scripts/generate_external_gate_cases.py",
+  "python_version": "3.11.9",
+  "pillow_version": "12.3.0",
+  "zlib_runtime_version": "1.3.1",
+  "git_commit_used_to_generate": "d6350cea7ff7dadc2bbd444f37ed8c81766b7195",
+  "git_commit_context": "HEAD at generation; generator may be a working-tree addition. The separate generator SHA-256 identifies its exact bytes.",
+  "randomness": "NONE; seed not applicable",
+  "deterministic_regeneration": {
+    "status": "PASS",
+    "method": "Regenerated into a fresh temporary directory and compared SHA-256 of all 8 PNGs and manifest",
+    "all_image_hashes_reproduced": true,
+    "manifest_hash_reproduced": true,
+    "scope": "Verified in the recorded environment; no cross-version byte guarantee"
+  },
+  "images": [
+    {
+      "case_id": "A_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/A_1.png",
+      "sha256": "dfefe1c732e529115802c4ee55c4aab94bc40f0c0fc36319ff8cb4b734ca70fc",
+      "width": 256,
+      "height": 256,
+      "shape": "square",
+      "movement": "horizontal",
+      "target_pixel_bbox": [
+        32,
+        96,
+        96,
+        160
+      ],
+      "distractor_pixel_bbox": [
+        160,
+        96,
+        224,
+        160
+      ],
+      "target_rgb": [
+        255,
+        0,
+        0
+      ],
+      "distractor_rgb": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "case_id": "A_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/A_2.png",
+      "sha256": "9ed5abecd7ae3a9484acad11d936d5c7aab6454c43a393941d167b468f848c54",
+      "width": 256,
+      "height": 256,
+      "shape": "square",
+      "movement": "horizontal",
+      "target_pixel_bbox": [
+        160,
+        96,
+        224,
+        160
+      ],
+      "distractor_pixel_bbox": [
+        32,
+        96,
+        96,
+        160
+      ],
+      "target_rgb": [
+        255,
+        0,
+        0
+      ],
+      "distractor_rgb": [
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "case_id": "B_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/B_1.png",
+      "sha256": "10c8f42dade5a70cbe916a878e06ec249f9f185745afee88e061f5c0b1476070",
+      "width": 256,
+      "height": 256,
+      "shape": "circle",
+      "movement": "vertical",
+      "target_pixel_bbox": [
+        96,
+        32,
+        160,
+        96
+      ],
+      "distractor_pixel_bbox": [
+        96,
+        160,
+        160,
+        224
+      ],
+      "target_rgb": [
+        0,
+        160,
+        0
+      ],
+      "distractor_rgb": [
+        255,
+        128,
+        0
+      ]
+    },
+    {
+      "case_id": "B_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/B_2.png",
+      "sha256": "ed8babe0eace73f5cf286b34b07f1330586bfa4e2f5e4ba254fc666cfd39a0a7",
+      "width": 256,
+      "height": 256,
+      "shape": "circle",
+      "movement": "vertical",
+      "target_pixel_bbox": [
+        96,
+        160,
+        160,
+        224
+      ],
+      "distractor_pixel_bbox": [
+        96,
+        32,
+        160,
+        96
+      ],
+      "target_rgb": [
+        0,
+        160,
+        0
+      ],
+      "distractor_rgb": [
+        255,
+        128,
+        0
+      ]
+    },
+    {
+      "case_id": "C_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/C_1.png",
+      "sha256": "9914c200f80361f14957b58cb75e2f6f943ebde05ab8fcaf93d608ab101d0ab2",
+      "width": 256,
+      "height": 256,
+      "shape": "triangle",
+      "movement": "top-left_to_bottom-right",
+      "target_pixel_bbox": [
+        32,
+        32,
+        96,
+        96
+      ],
+      "distractor_pixel_bbox": [
+        160,
+        160,
+        224,
+        224
+      ],
+      "target_rgb": [
+        255,
+        224,
+        0
+      ],
+      "distractor_rgb": [
+        128,
+        0,
+        160
+      ]
+    },
+    {
+      "case_id": "C_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/C_2.png",
+      "sha256": "a83debd32c9de6ed910f7aa59625b80276cd8f57958e8073dc52d75202acc7ca",
+      "width": 256,
+      "height": 256,
+      "shape": "triangle",
+      "movement": "top-left_to_bottom-right",
+      "target_pixel_bbox": [
+        160,
+        160,
+        224,
+        224
+      ],
+      "distractor_pixel_bbox": [
+        32,
+        32,
+        96,
+        96
+      ],
+      "target_rgb": [
+        255,
+        224,
+        0
+      ],
+      "distractor_rgb": [
+        128,
+        0,
+        160
+      ]
+    },
+    {
+      "case_id": "D_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/D_1.png",
+      "sha256": "745b96b2c141c76884f91916813d89a375dabe0df9d022422234d099681bff3f",
+      "width": 256,
+      "height": 256,
+      "shape": "rectangle",
+      "movement": "top-right_to_bottom-left",
+      "target_pixel_bbox": [
+        144,
+        40,
+        224,
+        88
+      ],
+      "distractor_pixel_bbox": [
+        32,
+        168,
+        112,
+        216
+      ],
+      "target_rgb": [
+        0,
+        192,
+        224
+      ],
+      "distractor_rgb": [
+        64,
+        64,
+        64
+      ]
+    },
+    {
+      "case_id": "D_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/D_2.png",
+      "sha256": "8c70516f3eaba128c8ece8fafa53758bd2840a184421487176d6661803af3ebd",
+      "width": 256,
+      "height": 256,
+      "shape": "rectangle",
+      "movement": "top-right_to_bottom-left",
+      "target_pixel_bbox": [
+        32,
+        168,
+        112,
+        216
+      ],
+      "distractor_pixel_bbox": [
+        144,
+        40,
+        224,
+        88
+      ],
+      "target_rgb": [
+        0,
+        192,
+        224
+      ],
+      "distractor_rgb": [
+        64,
+        64,
+        64
+      ]
+    }
+  ]
+}

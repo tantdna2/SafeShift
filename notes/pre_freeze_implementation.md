@@ -19,7 +19,7 @@ An implemented interface is not evidence that its freeze prerequisite is complet
 |---|---|---|---|
 | 1 | Exact Qwen Singapore workspace endpoint | PENDING | Region `ap-southeast-1` and `ROUTE_REGION_PINNED`; endpoint `UNRESOLVED / REQUIRED BEFORE FREEZE`. No WorkspaceId invented. |
 | 2 | One supported Qwen decoding configuration | PENDING | `QWEN_DECODING_PENDING_ROUTE_CONFIRMATION`; precision `UNDISCLOSED_BY_PROVIDER`; `HOSTED_BACKEND_NOT_FULLY_PINNABLE`. |
-| 3 | Prepare and freeze external Target+Distractor cases | PENDING | External case **format DONE**; external live/frozen cases **PENDING**. Example paths are placeholders; no image collection has been frozen. |
+| 3 | Prepare and freeze external Target+Distractor cases | DONE | **SYNTHETIC V1**: 8 tracked PNGs, 4 reciprocal swap groups, frozen manifest and SHA-256 provenance. Deterministic regeneration and existing validator passed; see evidence below. |
 | 4 | Execute external capability gates for Level-3 models | PENDING | GPT gate **NOT RUN**; Claude gate **NOT RUN**. Dummy geometry tests are not provider capability evidence. |
 | 5 | Assign final grounding eligibility and model roles | PENDING | Preserve D8 evidence assignments: Gemini/Qwen Level 1; GPT/Claude Level 3, grounding `NOT PARTICIPATING` pending a qualifying gate. |
 | 6 | Verify exact model IDs and serving routes on live APIs | PENDING | IDs are copied from approved D8. Availability, wire formats and routes have not been checked live. |
@@ -75,8 +75,9 @@ Full-image boxes are automatically rejected. Because D8 gives no numeric definit
 of "near full-image / giant", a separate `GiantBoxReview` records `NO_GIANT`, `GIANT`
 or `PENDING`, reviewer and rationale. Automated checks passing without that review
 return `PENDING_REVIEW`, never PASS. This preserves the qualitative approved criterion
-without inventing an area cutoff. The review procedure and actual cases still need
-to be fixed before the live gate. A harness result does not update model roles.
+without inventing an area cutoff. The actual cases are now frozen as SYNTHETIC V1;
+the qualitative review procedure still needs to be fixed before the live gate.
+A harness result does not update model roles.
 
 `firewall.py` guards every new development CLI input, embedded case image path,
 request builder, adapter preparation and artifact path before reading/writing inputs.
@@ -86,6 +87,77 @@ The protected repository root is application-supplied, not manifest-controlled.
 This detects paths, not copied/relabelled benchmark content; external provenance
 review remains required. Existing W1 audit commands are unchanged and are not
 pre-freeze capability/development entrypoints.
+
+## Frozen external cases: SYNTHETIC V1 (2026-09-19)
+
+Step 3 base: `main` at `d6350cea7ff7dadc2bbd444f37ed8c81766b7195`.
+Branch: `implementation/external-gate-cases`. External frozen cases: **SYNTHETIC V1**.
+Case count: **8**; swap groups: **4**, two images each. This freezes only the external
+case assets, not the overall protocol or any provider capability result.
+
+The [manifest](../configs/pre_freeze/external_gate_cases.v1.json) uses the existing
+external case schema and contains fixed target queries, canonical normalized GT
+boxes and repository-relative PNG paths. Images are tracked in
+`tests/fixtures/pre_freeze/frozen_external_gate/`; the existing synthetic fixture
+exception in `.gitignore` already permits them. No benchmark image is stored there.
+
+| Group | Target / distractor | Target movement (reciprocal) |
+|---|---|---|
+| A | Red square / blue square | Left to right |
+| B | Green circle / orange circle | Top to bottom |
+| C | Yellow triangle / purple triangle | Top-left to bottom-right |
+| D | Cyan rectangle / dark gray rectangle | Top-right to bottom-left |
+
+The [generator](../scripts/generate_external_gate_cases.py), version `synthetic-v1`,
+draws fixed integer primitives on a white 256 x 256 RGB canvas using the existing
+Pillow 12.3.0 / Python 3.11.9 environment. There is no randomness, seed, resampling,
+antialiasing, text, external source image or network access. PNG compression is fixed
+and no optional metadata is added. Pixel-edge boxes use inclusive minima and exclusive
+maxima; dividing x by width and y by height gives canonical coordinates. Pixel tests
+independently verify the tight colored-object bounds against manifest GT.
+
+[Provenance](../configs/pre_freeze/external_gate_cases.v1.provenance.json) records each
+image SHA-256, dimensions, coordinates, RGB colors, movement, generator version/hash,
+manifest hash, generation command, Python/Pillow/zlib versions and generation Git HEAD.
+The recorded Git SHA is the base HEAD during generation with the new generator in the
+working tree; its separate SHA-256 identifies the exact script used. No self-referential
+claim that the base commit already contained the generator is made.
+Source kind: `synthetic`. **NO_INSPECSAFE_CONTENT_USED**. No COCO, Open Images,
+web-downloaded images or copyrighted external assets were used.
+
+- Manifest SHA-256: `fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379`.
+- Generator SHA-256: `c5fc2140d1bd2ce9ef323884834911c1e3ef4234172cd3d37c0e6ba4341f4f6c`.
+- Deterministic regeneration: **PASS**. A second generation into a fresh temporary
+  directory reproduced all 8 PNG hashes and the manifest hash exactly. This is verified
+  only in the recorded environment, not a guarantee across dependency versions.
+- Existing gate validation: **PASS**, output `FORMAT_VALID`, case count 8,
+  `live_gate: NOT RUN`. `gate.py` and the approved schema are unchanged.
+- Full repository tests: **217/217 PASS**, including 12 frozen-suite tests covering
+  hashes, paths, pixel GT, all motion patterns, reciprocal swaps, invalid cases,
+  unsafe output rejection, regeneration and existing validator acceptance.
+
+Reproduce from repository root (the generator writes only the fixed assets and
+provenance; `--output-dir` stages a copy under a repository-relative directory):
+
+```powershell
+.\.venv\Scripts\python.exe scripts/generate_external_gate_cases.py
+.\.venv\Scripts\python.exe scripts/pre_freeze.py validate-cases --manifest configs/pre_freeze/external_gate_cases.v1.json
+.\.venv\Scripts\python.exe -m unittest discover -s tests
+git diff --check
+```
+
+Each generator invocation also rerenders into a temporary directory and checks hashes
+before recording PASS. Provenance describes the current invocation, so its own bytes
+can change with Git HEAD or the command; only images and manifest are frozen outputs.
+Narrow `.gitattributes` entries preserve LF bytes for the generator, manifest and
+provenance across Git checkouts. The freeze template pins the actual manifest hash
+and suite version `synthetic-v1`.
+
+Checklist #3: **DONE** in this commit with the manifest and images. Checklist #4 and
+later remain **PENDING**. GPT capability gate: **NOT RUN**; Claude capability gate:
+**NOT RUN**; provider API calls: **NO**; InspecSafe content used: **NO**.
+`final_model_roles: PENDING`; `protocol_freeze_commit_sha: PENDING`.
+Approved D1-D8 decisions and existing audit notes are unchanged.
 
 ## Offline verification and reproduction
 
