@@ -32,6 +32,7 @@ def strict_json(raw: str | bytes):
 
 
 def bbox(value, convention: str = "xyxy_1") -> BBox:
+    """D8 normalization: reorder, scale, clamp, then validate strict geometry."""
     if not isinstance(value, (list, tuple)) or len(value) != 4:
         raise ValueError("bbox must contain exactly four numbers")
     if any(type(v) not in (int, float) or not math.isfinite(v) for v in value):
@@ -40,7 +41,7 @@ def bbox(value, convention: str = "xyxy_1") -> BBox:
         raise ValueError("unknown coordinate convention")
     scale = 1 if convention == "xyxy_1" else 1000
     order = (1, 0, 3, 2) if convention == "yxyx_1000" else (0, 1, 2, 3)
-    x0, y0, x1, y1 = (value[i] / scale for i in order)
+    x0, y0, x1, y1 = (min(1.0, max(0.0, value[i] / scale)) for i in order)
     if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
         raise ValueError("bbox must satisfy 0 <= xmin < xmax <= 1 and 0 <= ymin < ymax <= 1")
     return x0, y0, x1, y1
@@ -96,7 +97,7 @@ class ParseResult:
 
 
 def parse_text(text: str, task: Task, convention: str = "xyxy_1") -> ParseResult:
-    """Parse exactly one JSON object. No regex recovery, clipping or label repair."""
+    """Parse one JSON object with D8 bbox normalization; no regex or label repair."""
     if task not in ("classification", "grounding", "external_probe"):
         raise ValueError("unknown task")
     try:

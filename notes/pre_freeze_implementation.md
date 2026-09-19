@@ -37,9 +37,12 @@ No item is marked BLOCKED: the remaining work is intentionally outside this offl
 - `metrics.py`: D5 interfaces for image-level classification, GT RQ2 atom lookups, complete Call 2 predictions, Direct/Weak Proxy candidate original polygons, explicit unsupported atoms and parse metadata. A missing membership raises an error; it is not treated as an empty/normal sample. Direct and Proxy support stay separate. Nonparticipants have no synthetic zero-score result. No metric formulas or tuned thresholds are implemented.
 - `configs/pre_freeze/providers.json` and `freeze_manifest.template.json`: model/route placeholders and explicit pending freeze state. API key and endpoint environment variable **names** only; credentials are never loaded or embedded. Decoding fields describe approved policy, not verified SDK request kwargs.
 
-Per this implementation request, adapters **do not clamp, sort, infer units or repair
-semantic outputs**, including out-of-range native coordinates. This strict behavior
-supersedes the clipping examples in the earlier D8 adapter discussion for this task.
+Implementation follows approved D8 section 16 deterministic coordinate normalization:
+provider-native reorder/scale, then clamp each coordinate to `[0,1]`, then strict
+geometry validation (`xmin < xmax`, `ymin < ymax`). This applies to `xyxy_1`,
+`xyxy_1000` and `yxyx_1000`. Clamping does not modify the stored raw response.
+No sorting, coordinate-convention inference or semantic repair is performed;
+reversed boxes and boxes that become degenerate after clamping remain invalid.
 Mixed valid/invalid boxes yield `COORDINATE_ERROR`, with no successful canonical
 response. Valid items survive only in `diagnostic_evidence`. `response_schema_valid`,
 `boxes_attempted` (unknown = `null`) and `boxes_valid` support separate D5 response/box
@@ -105,6 +108,11 @@ Initial `python` invocation lacked Pillow and produced four test-import errors;
 rerunning with the existing `.venv` resolved this without installation/network access.
 Dummy CLI replay is explicitly labelled `handcrafted_dummy`, `live_gate: NOT RUN`.
 Temporary test artifacts are synthetic and cleaned up; no benchmark artifacts are read.
+
+D8 normalization correction verified on 2026-09-19: **205/205 repository tests
+passed** using the same `.venv`, including six added regression tests for clamping
+and invalid coordinates. Raw-preservation tests also cover clamped provider outputs.
+`git diff --check` passed. Approved D8 and all other protocol policies are unchanged.
 
 Not run: GPT/Claude live gates, provider/model availability verification, InspecSafe
 inference, paid API calls, complete D5 metric evaluation and protocol freeze. These

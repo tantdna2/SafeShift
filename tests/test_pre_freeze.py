@@ -49,7 +49,7 @@ class SchemaTests(unittest.TestCase):
 
     def test_invalid_boxes_are_not_repaired(self):
         invalid = [[], [0, 1, 2], [0, 0, 1, 1, 1], [0.8, 0, 0.2, 1],
-                   [0, 0.8, 1, 0.2], [-0.1, 0, 1, 1], [0, 0, 1.1, 1],
+                   [0, 0.8, 1, 0.2],
                    [0, 0, 0, 1], [0, 0, 1, 0], [False, 0, 1, 1],
                    ["0", 0, 1, 1], [0, 0, float("inf"), 1], [0, float("nan"), 1, 1], None]
         for value in invalid:
@@ -60,9 +60,62 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(bbox([200, 100, 400, 300], "yxyx_1000"), (0.1, 0.2, 0.3, 0.4))
         self.assertEqual(bbox([100, 200, 300, 400], "xyxy_1000"), (0.1, 0.2, 0.3, 0.4))
         with self.assertRaises(ValueError):
-            bbox([-1, 0, 1000, 1000], "xyxy_1000")
-        with self.assertRaises(ValueError):
             bbox([0, 0, 1, 1], "guessed")
+
+    def assert_clamped(self, raw_box, convention, expected):
+        original = list(raw_box)
+        self.assertEqual(bbox(raw_box, convention), expected)
+        self.assertEqual(raw_box, original)
+        result = parse_text(grounding_text([raw_box]), "grounding", convention)
+        self.assertTrue(result.success)
+        self.assertEqual(result.value.hazards[0].evidence[0].bbox, expected)
+        self.assertEqual((result.boxes_attempted, result.boxes_valid), (1, 1))
+
+    def test_canonical_clamping(self):
+        self.assert_clamped([-.1, .2, 1.1, .8], "xyxy_1", (0.0, .2, 1.0, .8))
+        self.assert_clamped([.2, -.1, .8, 1.1], "xyxy_1", (.2, 0.0, .8, 1.0))
+
+    def test_xyxy_1000_clamping(self):
+        self.assert_clamped([-10, 200, 1010, 800], "xyxy_1000", (0.0, .2, 1.0, .8))
+        self.assert_clamped([200, -10, 800, 1010], "xyxy_1000", (.2, 0.0, .8, 1.0))
+
+    def test_yxyx_1000_clamping(self):
+        self.assert_clamped([200, -10, 800, 1010], "yxyx_1000", (0.0, .2, 1.0, .8))
+        self.assert_clamped([-10, 200, 1010, 800], "yxyx_1000", (.2, 0.0, .8, 1.0))
+
+    def test_reversed_coordinates_remain_invalid_after_clamping(self):
+        for convention in ("xyxy_1", "xyxy_1000", "yxyx_1000"):
+            scale = 1 if convention == "xyxy_1" else 1000
+            for box in ([.8, .2, .1, .9], [.2, .8, .9, .1], [1.1, .2, -.1, .8]):
+                native = [value * scale for value in box]
+                with self.subTest(convention=convention, box=box):
+                    with self.assertRaises(ValueError):
+                        bbox(native, convention)
+                    result = parse_text(grounding_text([native]), "grounding", convention)
+                    self.assertEqual(result.status, "COORDINATE_ERROR")
+                    self.assertIsNone(result.value)
+
+    def test_degenerate_after_clamping_remains_invalid(self):
+        for convention in ("xyxy_1", "xyxy_1000", "yxyx_1000"):
+            scale = 1 if convention == "xyxy_1" else 1000
+            for box in ([-.2, .2, -.1, .8], [1.1, .2, 1.2, .8],
+                        [.2, -.2, .8, -.1], [.2, 1.1, .8, 1.2]):
+                native = [value * scale for value in box]
+                with self.subTest(convention=convention, box=box):
+                    with self.assertRaises(ValueError):
+                        bbox(native, convention)
+                    result = parse_text(grounding_text([native]), "grounding", convention)
+                    self.assertEqual(result.status, "COORDINATE_ERROR")
+                    self.assertIsNone(result.value)
+
+    def test_clamping_rejects_boolean_string_and_nonfinite_values(self):
+        for convention in ("xyxy_1", "xyxy_1000", "yxyx_1000"):
+            for invalid in (False, True, "0", float("inf"), float("-inf"), float("nan")):
+                for index in range(4):
+                    box = [0, 0, 1, 1]
+                    box[index] = invalid
+                    with self.subTest(convention=convention, invalid=invalid, index=index), self.assertRaises(ValueError):
+                        bbox(box, convention)
 
     def test_classification_only_accepts_exact_output(self):
         for level in ("Level01", "Level02", "Level03", "Level04"):
@@ -202,7 +255,7 @@ class RawPreservationTests(unittest.TestCase):
                                   adapter or ADAPTERS["openai"], self.request, metadata or self.metadata)
 
     def test_raw_is_on_disk_before_extract_text(self):
-        raw = envelope("openai", '{"hazards": []}')
+        raw = envelope("openai", grounding_text([[-.1, .2, 1.1, .8]]))
         from safeshift.protocol.adapters import ProviderAdapter
         extract = ProviderAdapter.extract_text
 
@@ -215,6 +268,8 @@ class RawPreservationTests(unittest.TestCase):
         with patch.object(ProviderAdapter, "extract_text", assert_saved):
             result = self.persist(raw)
         self.assertTrue(result.success)
+        self.assertEqual(result.value.hazards[0].evidence[0].bbox, (0.0, .2, 1.0, .8))
+        self.assertEqual((self.repo / result.raw_artifact).read_bytes(), raw)
         metadata = json.loads((self.repo / result.raw_artifact).with_name("metadata.json").read_text())
         self.assertEqual(metadata["raw_response_sha256"], hashlib.sha256(raw).hexdigest())
         self.assertEqual(metadata["prompt_sha256"], self.request.prompt_sha256)
@@ -257,8 +312,8 @@ class RawPreservationTests(unittest.TestCase):
                 self.persist(b"raw", metadata=metadata)
 
     def test_all_provider_envelopes_normalize_after_preservation(self):
-        coordinates = {"gemini": [200, 100, 400, 300], "qwen_dashscope": [100, 200, 300, 400],
-                       "openai": [.1, .2, .3, .4], "anthropic": [.1, .2, .3, .4]}
+        coordinates = {"gemini": [200, -10, 800, 1010], "qwen_dashscope": [-10, 200, 1010, 800],
+                       "openai": [-.1, .2, 1.1, .8], "anthropic": [-.1, .2, 1.1, .8]}
         for provider, adapter in ADAPTERS.items():
             with self.subTest(provider=provider):
                 request = adapter.prepare(self.repo, self.request)
@@ -266,7 +321,7 @@ class RawPreservationTests(unittest.TestCase):
                 result = preserve_and_parse(self.repo, "data/processed/pre_freeze", raw, adapter, request,
                                             replace(self.metadata, call_id=provider))
                 self.assertTrue(result.success)
-                self.assertEqual(result.value.hazards[0].evidence[0].bbox, (.1, .2, .3, .4))
+                self.assertEqual(result.value.hazards[0].evidence[0].bbox, (0.0, .2, 1.0, .8))
                 self.assertEqual((self.repo / result.raw_artifact).read_bytes(), raw)
 
     def test_artifact_directory_cannot_escape_processed_or_target_raw(self):
