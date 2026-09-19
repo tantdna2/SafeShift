@@ -4,7 +4,7 @@
 
 Repository nghiên cứu cho đề tài Seminar về Computer Vision, sử dụng **InspecSafe-V1** để nghiên cứu khả năng khái quát hóa giữa các domain và mức độ gắn kết đánh giá an toàn công nghiệp của VLM với bằng chứng hình ảnh.
 
-Mục tiêu **Week 1 là Dataset Audit**: hiểu cấu trúc, nhãn, chất lượng, split và khả năng hỗ trợ đánh giá cross-domain/evidence grounding của dataset trước khi chạy VLM. Repository hiện chỉ có cấu trúc và tài liệu; chưa có parser, inference hoặc kết quả nghiên cứu.
+**Week 1 là Dataset Audit**: hiểu cấu trúc, nhãn, chất lượng, split và khả năng hỗ trợ đánh giá cross-domain/evidence grounding của dataset trước khi chạy VLM. Repository hiện có công cụ audit và hạ tầng pre-freeze offline theo D8. **D8 đã duyệt chưa đồng nghĩa protocol freeze**; chưa chạy inference VLM trên InspecSafe.
 
 ## Bắt đầu
 
@@ -13,6 +13,11 @@ Mục tiêu **Week 1 là Dataset Audit**: hiểu cấu trúc, nhãn, chất lư�
 3. Thực hiện checklist W1; ghi phát hiện thực tế trong `notes/`, quyết định trong [DECISIONS.md](DECISIONS.md), và các lần chạy sau này trong [EXPERIMENTS.md](EXPERIMENTS.md).
 
 Mọi đường dẫn được tính từ repository root. Dependency và lệnh chạy audit sẽ được bổ sung khi triển khai code; hiện chưa cần cài môi trường ML.
+
+Hạ tầng pre-freeze, lệnh kiểm thử offline và trạng thái 8 prerequisite được ghi tại
+[notes/pre_freeze_implementation.md](notes/pre_freeze_implementation.md).
+Config/template: `configs/pre_freeze/`; schema: `schemas/`; code: `safeshift/protocol/`.
+`protocol_freeze_commit_sha: PENDING`. Adapter chưa có transport gọi API.
 
 ## Cấu trúc
 

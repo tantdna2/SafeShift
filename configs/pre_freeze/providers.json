@@ -1,0 +1,61 @@
+{
+  "status": "PRE_FREEZE_OFFLINE_ONLY",
+  "protocol_freeze_commit_sha": "PENDING",
+  "providers": {
+    "gemini": {
+      "model_id": "gemini-3.8-flash",
+      "api_key_env": "GEMINI_API_KEY",
+      "endpoint_env": "GEMINI_ENDPOINT",
+      "endpoint": "UNRESOLVED",
+      "coordinate_convention": "yxyx_1000",
+      "decoding": {"classification": "PROVIDER_DEFAULT_PENDING_ROUTE_VERIFICATION", "grounding": {"thinking": "low"}},
+      "capability_evidence": "LEVEL_1_DOC_VERIFIED",
+      "grounding_eligibility": "ELIGIBLE_PER_D8",
+      "live_route_verified": false
+    },
+    "qwen_dashscope": {
+      "model_id": "qwen3-vl-8b-instruct",
+      "region": "ap-southeast-1",
+      "status": "ROUTE_REGION_PINNED",
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "endpoint_env": "QWEN_WORKSPACE_ENDPOINT",
+      "workspace_endpoint": "UNRESOLVED",
+      "workspace_endpoint_status": "REQUIRED BEFORE FREEZE",
+      "workspace_endpoint_requirement": "WORKSPACE_ENDPOINT_TO_BE_RESOLVED_BEFORE_FREEZE",
+      "coordinate_convention": "xyxy_1000",
+      "envelope_contract": "OPENAI_COMPATIBLE_CHAT_SKELETON_PENDING_ROUTE_VERIFICATION",
+      "decoding": "QWEN_DECODING_PENDING_ROUTE_CONFIRMATION",
+      "precision": "UNDISCLOSED_BY_PROVIDER",
+      "hosted_reproducibility": "HOSTED_BACKEND_NOT_FULLY_PINNABLE",
+      "capability_evidence": "LEVEL_1_DOC_VERIFIED",
+      "grounding_eligibility": "ELIGIBLE_PER_D8_ROUTE_ASSUMPTIONS",
+      "live_route_verified": false
+    },
+    "openai": {
+      "model_id": "gpt-5.6-terra",
+      "api_key_env": "OPENAI_API_KEY",
+      "endpoint_env": "OPENAI_ENDPOINT",
+      "endpoint": "UNRESOLVED",
+      "coordinate_convention": "xyxy_1",
+      "decoding": {"reasoning_effort": "low"},
+      "capability_evidence": "LEVEL_3_UNVERIFIED",
+      "external_gate": "NOT RUN",
+      "grounding_eligibility": "NOT PARTICIPATING",
+      "live_route_verified": false
+    },
+    "anthropic": {
+      "model_id": "claude-sonnet-5",
+      "snapshot_candidate": "claude-sonnet-5-20260301",
+      "snapshot_selection": "PENDING_LIVE_VERIFICATION",
+      "api_key_env": "ANTHROPIC_API_KEY",
+      "endpoint_env": "ANTHROPIC_ENDPOINT",
+      "endpoint": "UNRESOLVED",
+      "coordinate_convention": "xyxy_1",
+      "decoding": "ADAPTIVE_THINKING_SUPPORTED_EFFORT_PENDING_ROUTE_VERIFICATION",
+      "capability_evidence": "LEVEL_3_UNVERIFIED",
+      "external_gate": "NOT RUN",
+      "grounding_eligibility": "NOT PARTICIPATING",
+      "live_route_verified": false
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "protocol_version": "P2-pre-freeze-v1",
+  "protocol_freeze_commit_sha": "PENDING",
+  "git_commit_sha": "PENDING_IMPLEMENTATION_COMMIT_AT_MATERIALIZATION",
+  "authoritative_base_commit_sha": "ec40d9080f8c6847355ec22cc5bad54ea1dda876",
+  "model_ids": {
+    "gemini": "gemini-3.8-flash",
+    "qwen_dashscope": "qwen3-vl-8b-instruct",
+    "openai": "gpt-5.6-terra",
+    "anthropic": "claude-sonnet-5"
+  },
+  "model_ids_live_verified": false,
+  "provider_routes": {
+    "gemini": "UNRESOLVED",
+    "qwen_dashscope": {"region": "ap-southeast-1", "status": "ROUTE_REGION_PINNED", "workspace_endpoint": "UNRESOLVED / REQUIRED BEFORE FREEZE"},
+    "openai": "UNRESOLVED",
+    "anthropic": "UNRESOLVED"
+  },
+  "prompt_versions": {"classification": "p2-call1-draft-v1", "grounding": "p2-call2-draft-v1", "external_probe": "external-target-draft-v1"},
+  "prompt_sha256": "PENDING_EXACT_RENDERED_PROMPTS_AND_INDUSTRY_POLICIES",
+  "schema_version": "canonical-v1",
+  "adapter_versions": {"gemini": "offline-skeleton-v1", "qwen_dashscope": "offline-skeleton-v1", "openai": "offline-skeleton-v1", "anthropic": "offline-skeleton-v1"},
+  "parser_version": "strict-json-v1",
+  "decoding_parameters": {
+    "gemini": {"classification": "PROVIDER_DEFAULT_PENDING_ROUTE_VERIFICATION", "grounding": {"thinking": "low"}},
+    "qwen_dashscope": "QWEN_DECODING_PENDING_ROUTE_CONFIRMATION",
+    "openai": {"reasoning_effort": "low"},
+    "anthropic": "ADAPTIVE_THINKING_SUPPORTED_EFFORT_PENDING_ROUTE_VERIFICATION"
+  },
+  "grounding_eligibility": {"gemini": "ELIGIBLE_PER_D8", "qwen_dashscope": "ELIGIBLE_PER_D8_ROUTE_ASSUMPTIONS", "openai": "NOT PARTICIPATING", "anthropic": "NOT PARTICIPATING"},
+  "final_model_roles": "PENDING",
+  "external_case_manifest_sha256": "PENDING",
+  "external_gate_artifacts": {"openai": "NOT RUN", "anthropic": "NOT RUN"},
+  "metric_engine_version": "d5-interface-v1-NOT_IMPLEMENTED",
+  "environment_and_dependency_versions": "PENDING_FREEZE_ENVIRONMENT",
+  "artifact_root": "data/processed/pre_freeze",
+  "freeze_status": "PENDING"
+}
