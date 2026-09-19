@@ -1,0 +1,151 @@
+{
+  "schema_version": "external-target-distractor-v1",
+  "source_kind": "synthetic",
+  "provenance": "Deterministic local generation by scripts/generate_external_gate_cases.py version synthetic-v1 using fixed integer geometry and RGB colors on a white 256x256 canvas, without randomness, antialiasing or external assets. NO_INSPECSAFE_CONTENT_USED. Pixel-edge boxes normalized by canvas dimensions; checksums and environment: configs/pre_freeze/external_gate_cases.v1.provenance.json.",
+  "cases": [
+    {
+      "case_id": "A_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/A_1.png",
+      "target_gt_bbox": [
+        0.125,
+        0.375,
+        0.375,
+        0.625
+      ],
+      "distractor_gt_bbox": [
+        0.625,
+        0.375,
+        0.875,
+        0.625
+      ],
+      "target_query": "Locate the red square.",
+      "swap_group": "A"
+    },
+    {
+      "case_id": "A_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/A_2.png",
+      "target_gt_bbox": [
+        0.625,
+        0.375,
+        0.875,
+        0.625
+      ],
+      "distractor_gt_bbox": [
+        0.125,
+        0.375,
+        0.375,
+        0.625
+      ],
+      "target_query": "Locate the red square.",
+      "swap_group": "A"
+    },
+    {
+      "case_id": "B_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/B_1.png",
+      "target_gt_bbox": [
+        0.375,
+        0.125,
+        0.625,
+        0.375
+      ],
+      "distractor_gt_bbox": [
+        0.375,
+        0.625,
+        0.625,
+        0.875
+      ],
+      "target_query": "Locate the green circle.",
+      "swap_group": "B"
+    },
+    {
+      "case_id": "B_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/B_2.png",
+      "target_gt_bbox": [
+        0.375,
+        0.625,
+        0.625,
+        0.875
+      ],
+      "distractor_gt_bbox": [
+        0.375,
+        0.125,
+        0.625,
+        0.375
+      ],
+      "target_query": "Locate the green circle.",
+      "swap_group": "B"
+    },
+    {
+      "case_id": "C_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/C_1.png",
+      "target_gt_bbox": [
+        0.125,
+        0.125,
+        0.375,
+        0.375
+      ],
+      "distractor_gt_bbox": [
+        0.625,
+        0.625,
+        0.875,
+        0.875
+      ],
+      "target_query": "Locate the yellow triangle.",
+      "swap_group": "C"
+    },
+    {
+      "case_id": "C_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/C_2.png",
+      "target_gt_bbox": [
+        0.625,
+        0.625,
+        0.875,
+        0.875
+      ],
+      "distractor_gt_bbox": [
+        0.125,
+        0.125,
+        0.375,
+        0.375
+      ],
+      "target_query": "Locate the yellow triangle.",
+      "swap_group": "C"
+    },
+    {
+      "case_id": "D_1",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/D_1.png",
+      "target_gt_bbox": [
+        0.5625,
+        0.15625,
+        0.875,
+        0.34375
+      ],
+      "distractor_gt_bbox": [
+        0.125,
+        0.65625,
+        0.4375,
+        0.84375
+      ],
+      "target_query": "Locate the cyan rectangle.",
+      "swap_group": "D"
+    },
+    {
+      "case_id": "D_2",
+      "image_path": "tests/fixtures/pre_freeze/frozen_external_gate/D_2.png",
+      "target_gt_bbox": [
+        0.125,
+        0.65625,
+        0.4375,
+        0.84375
+      ],
+      "distractor_gt_bbox": [
+        0.5625,
+        0.15625,
+        0.875,
+        0.34375
+      ],
+      "target_query": "Locate the cyan rectangle.",
+      "swap_group": "D"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+# Preserve the exact bytes hashed by synthetic-v1 provenance across checkouts.
+/scripts/generate_external_gate_cases.py text eol=lf
+/configs/pre_freeze/external_gate_cases.v1.json text eol=lf
+/configs/pre_freeze/external_gate_cases.v1.provenance.json text eol=lf
