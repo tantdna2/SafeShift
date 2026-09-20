@@ -1,5 +1,96 @@
 # Pre-freeze implementation
 
+## D9 transition and active P2 checklist (2026-09-20)
+
+[DEC-W2-D9-009](../DECISIONS.md#dec-w2-d9-009--p2-open-weight-self-hosted-model-roster)
+supersedes **only D8's P2 commercial-hosted-provider roster/backend assumptions**.
+The active P2 path is open-weight self-hosted/user-controlled GPU execution, using
+the four candidates and ordered backups in the [D9 brief](w2_open_weight_self_hosted_model_roster_decision_brief.md).
+Local workstations, Colab, Kaggle and rented GPU hosts are execution venues; a venue
+change is equivalent only if all frozen model/runtime conditions remain equivalent
+and recorded. No model capability, access, license clearance or run success is
+established by adding a candidate to the roster.
+
+The **active checklist** is [TASKS.md's D9 checklist](../TASKS.md#w2--active-d9-pre-freeze-checklist-2026-09-20),
+with pending fields mirrored in [local_models.d9.json](../configs/pre_freeze/local_models.d9.json)
+and [freeze_manifest.d9.template.json](../configs/pre_freeze/freeze_manifest.d9.template.json):
+
+| # | Active D9 prerequisite | Current status |
+|---|---|---|
+| 1 | Exact IDs/revisions, access/license evidence and weight provenance for primaries/backups | PENDING |
+| 2 | Local/self-hosted runners, preprocessing/device/precision/software and raw-output provenance | PENDING; no runners implemented |
+| 3 | One supported low-variance decoding policy per model | PENDING; hosted settings do not transfer automatically |
+| 4 | Deterministic native-output adapters compatible with the existing canonical box schema | PENDING; point-only compatibility unresolved |
+| 5 | Interface eligibility review for four primaries and unchanged SYNTHETIC V1 gate for qualifying box interfaces | PENDING; no model execution; qualitative giant-box review procedure still pending |
+| 6 | Final classification/grounding roles and any permitted pre-freeze backup substitutions | PENDING; activated backups require the same prerequisites and gate |
+| 7 | Freeze exact prompts/task policy, schema, adapters/parsers, runners/environment and full D5 engine | PENDING |
+| 8 | Approved protocol freeze commit | PENDING; `protocol_freeze_commit_sha: PENDING` |
+
+The original D8 checklist and every D8/Qwen section below are preserved as historical
+evidence. Their status statements describe those milestones. The current P2 overlay is:
+
+| Historical provider requirement | Current P2 status |
+|---|---|
+| Qwen Singapore workspace endpoint | `SUPERSEDED_FOR_P2_BY_D9` |
+| Qwen hosted decoding configuration | `SUPERSEDED_FOR_P2_BY_D9` |
+| GPT/Claude hosted capability gates | `SUPERSEDED_FOR_P2_BY_D9` |
+| Commercial provider billing/access setup | `SUPERSEDED_FOR_P2_BY_D9` |
+| Provider live-route verification | `SUPERSEDED_FOR_P2_BY_D9` |
+
+`providers.json`, the original `freeze_manifest.template.json`, hosted adapter
+skeletons and `scripts/validate_qwen_config.py` retain their historical scope. Their
+offline success is not D9 runner validation or permission to execute a model.
+Provider requirements are superseded for P2 only; P1's upstream reproduction policy,
+including `temperature = 0.1` and compatibility reporting, is unchanged.
+
+D9 preserves Benchmark Firewall, Protocol Freeze, C1, A2, B2, the canonical schema,
+raw-output preservation before parsing, capability-aware grounding, D5 metrics and
+statistics, and post-freeze change control. Seminar remains frozen zero-shot
+cross-domain robustness evaluation; no training or fine-tuning is introduced.
+D1–D7, evaluation pools, domain policy and the RQ2 hierarchy erratum remain binding.
+
+Consistency review found that the original D9 wording implied a native-point D5
+track. D5 Pointing Hit actually uses a predicted box's center on original polygons;
+the current schema and external gate require boxes. The D9 brief/templates now leave
+Molmo's box compatibility unresolved. Preserve native points in raw outputs, never
+fabricate boxes. A point-only model may participate in classification after validation
+but remains `NOT PARTICIPATING` in current grounding unless a qualifying box interface
+is verified. Adding a point-only schema/gate/metric track requires a separate approved
+decision and is not part of D9. Nonparticipants receive no artificial zero score.
+
+The SYNTHETIC V1 manifest, provenance, generator and eight PNG assets remain unchanged.
+Manifest SHA-256 remains
+`fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379`;
+generator SHA-256 remains
+`c5fc2140d1bd2ce9ef323884834911c1e3ef4234172cd3d37c0e6ba4341f4f6c`.
+Frozen assets do not imply a completed model gate or protocol freeze.
+
+This task synchronizes documentation/configuration only. No runners, model weight
+downloads, model/provider API calls, InspecSafe image inspection or inference.
+**NO_INSPECSAFE_INFERENCE**. All eight execution prerequisites remain pending.
+
+### D9 synchronization validation
+
+Full existing suite: **233/233 tests PASS**, zero failures/errors, with
+`.venv/Scripts/python.exe -m unittest discover -s tests`. Environment: existing
+Python 3.11.9 / Pillow 12.3.0; no dependency changes. `git diff --check`: **PASS**.
+Tests use synthetic fixtures and temporary outputs, not InspecSafe images.
+Additional offline checks parsed both D9 JSON files and compared roster/backup order,
+shared policies, pending freeze fields and gate metadata. SHA-256 verification matched
+all eight synthetic images, the manifest and generator to the existing provenance.
+Comparison with the parent revision confirmed that the D1–D8 ledger text and the
+entire historical implementation text below remain unchanged.
+
+The synchronization commit on `protocol/d9-local-open-weight-roster` identifies this
+documentation revision; it is not a protocol freeze commit. No benchmark run or new
+run artifact exists. Not run: model gates, runner validation, weight/access validation,
+model/provider API calls, full D5 evaluation or InspecSafe inference, because this
+task authorizes protocol/documentation synchronization only. Model facts in the D9
+brief retain their prior documentary-review provenance; this check does not establish
+live availability or finalize immutable revisions and license/access records.
+
+## Historical D8 implementation record
+
 Historical bases (each names a different milestone):
 
 - `D8_APPROVAL_BASE`: `ec40d9080f8c6847355ec22cc5bad54ea1dda876`.

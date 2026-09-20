@@ -1,11 +1,15 @@
 {
   "status": "D9_PRE_FREEZE_SELF_HOSTED",
+  "decision_id": "DEC-W2-D9-009",
   "protocol_freeze_commit_sha": "PENDING",
+  "inspecsafe_inference_authorized": false,
+  "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
   "selection_basis": "RESEARCH_VALUE_BEFORE_COMPUTE; NO_INSPECSAFE_PERFORMANCE_USED",
   "execution_policy": {
     "allowed_venues": ["local_workstation", "google_colab", "kaggle", "rented_gpu_host"],
-    "venue_is_not_model_condition": true,
+    "venue_is_not_model_condition_if_frozen_conditions_equivalent": true,
     "require_equivalent_frozen_model_revision": true,
+    "require_equivalent_preprocessing_decoding_precision_software_prompts_adapters": true,
     "require_recorded_environment_and_precision": true
   },
   "primary_models": [
@@ -32,7 +36,8 @@
       "model_id": "allenai/Molmo2-O-7B",
       "role": "INDEPENDENT_OLMO_FAMILY",
       "classification": "CANDIDATE",
-      "grounding": "DOC_SUPPORTED_POINT_PENDING_SYNTHETIC_GATE",
+      "grounding": "NOT_PARTICIPATING_UNLESS_BOX_INTERFACE_VERIFIED",
+      "native_point_evidence": "DOC_SUPPORTED; BOX_INTERFACE_COMPATIBILITY_UNRESOLVED",
       "immutable_revision": "PENDING",
       "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
     },
@@ -62,7 +67,9 @@
     }
   ],
   "replacement_policy": {
+    "before_protocol_freeze_only": true,
     "before_inspecsafe_only": true,
+    "activated_backup_requires_same_prerequisites_and_gate": true,
     "allowed_reasons": [
       "MODEL_OR_WEIGHT_UNAVAILABLE",
       "LICENSE_OR_ACCESS_INCOMPATIBLE",
@@ -74,18 +81,44 @@
   },
   "preserved_protocol": {
     "benchmark_firewall": true,
+    "protocol_freeze_before_first_inspecsafe_inference": true,
     "c1_policy_aware_classification": true,
     "a2_two_independent_calls": true,
     "b2_closed_12_hazard_vocabulary": true,
     "d4_canonical_spatial_contract": true,
+    "canonical_schema": "schemas/canonical.schema.json",
+    "raw_output_preservation_before_parsing": true,
+    "capability_aware_grounding": true,
     "d5_metrics_and_statistics_unchanged": true,
+    "d1_d7_and_rq2_hierarchy_erratum_unchanged": true,
     "p1_reproduction_policy_unchanged": true,
+    "post_freeze_change_control_unchanged": true,
+    "seminar_evaluation": "FROZEN_ZERO_SHOT_CROSS_DOMAIN_ROBUSTNESS",
     "seminar_training_or_finetuning": false
   },
   "synthetic_gate": {
     "suite_version": "synthetic-v1",
+    "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
     "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+    "interface_contract": "EXISTING_BOX_GATE_UNCHANGED",
+    "eligibility_review_scope": "FOUR_PRIMARY_CANDIDATES_AND_ANY_ACTIVATED_BACKUP",
+    "execution_scope": "QUALIFYING_BOX_INTERFACES; POINT_ONLY_IS_NOT_PARTICIPATING",
+    "qualitative_giant_box_review_procedure": "PENDING_BEFORE_GATE_EXECUTION",
     "status": "NOT_RUN_FOR_D9_MODELS"
+  },
+  "point_only_policy": {
+    "preserve_native_points_in_raw_output": true,
+    "fabricate_boxes_from_points": false,
+    "approved_d5_native_point_only_track": false,
+    "extension_requires_separate_approved_decision": true
+  },
+  "historical_d8_provider_items": {
+    "qwen_singapore_workspace_endpoint": "SUPERSEDED_FOR_P2_BY_D9",
+    "qwen_hosted_decoding_configuration": "SUPERSEDED_FOR_P2_BY_D9",
+    "gpt_claude_provider_spatial_gates": "SUPERSEDED_FOR_P2_BY_D9",
+    "commercial_provider_billing": "SUPERSEDED_FOR_P2_BY_D9",
+    "commercial_live_route_verification": "SUPERSEDED_FOR_P2_BY_D9",
+    "historical_artifacts_preserved": true
   },
   "d9_checklist": {
     "1_model_revisions_and_license_provenance": "PENDING",

@@ -1,10 +1,21 @@
 {
   "protocol_version": "D9-PRE-FREEZE",
   "decision_id": "DEC-W2-D9-009",
+  "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
   "status": "PENDING_PROTOCOL_FREEZE",
   "protocol_freeze_commit_sha": "PENDING",
   "benchmark_firewall": "ACTIVE",
   "inspecsafe_inference_authorized": false,
+  "preserved_protocol": {
+    "d1_d7_and_rq2_hierarchy_erratum_unchanged": true,
+    "protocol_freeze_before_first_inspecsafe_inference": true,
+    "canonical_schema": "schemas/canonical.schema.json",
+    "raw_output_preservation_before_parsing": true,
+    "capability_aware_grounding": true,
+    "d5_metrics_and_statistics_unchanged": true,
+    "post_freeze_change_control_unchanged": true,
+    "seminar_evaluation": "FROZEN_ZERO_SHOT_CROSS_DOMAIN_ROBUSTNESS"
+  },
   "p1_policy": {
     "status": "UNCHANGED_FROM_D8",
     "official_test_samples": 1250,
@@ -12,6 +23,7 @@
   },
   "p2_policy": {
     "evaluation_pool_samples": 5013,
+    "preserve_original_train_test_metadata": true,
     "training_or_finetuning_on_inspecsafe": false,
     "execution_mode": "OPEN_WEIGHT_SELF_HOSTED_OR_USER_CONTROLLED_GPU",
     "call_architecture": "A2_TWO_INDEPENDENT_CALLS",
@@ -42,7 +54,8 @@
       "model_id": "allenai/Molmo2-O-7B",
       "immutable_revision": "PENDING",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "PENDING_SYNTHETIC_GATE_POINT_NATIVE",
+      "grounding_role": "NOT_PARTICIPATING_UNLESS_BOX_INTERFACE_VERIFIED",
+      "native_point_evidence": "DOC_SUPPORTED; BOX_INTERFACE_COMPATIBILITY_UNRESOLVED",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING"
@@ -65,7 +78,17 @@
     "suite_version": "synthetic-v1",
     "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
     "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+    "interface_contract": "EXISTING_BOX_GATE_UNCHANGED",
+    "eligibility_review_scope": "FOUR_PRIMARY_CANDIDATES_AND_ANY_ACTIVATED_BACKUP",
+    "execution_scope": "QUALIFYING_BOX_INTERFACES; POINT_ONLY_IS_NOT_PARTICIPATING",
+    "qualitative_giant_box_review_procedure": "PENDING_BEFORE_GATE_EXECUTION",
     "status": "PENDING_D9_MODEL_EXECUTION"
+  },
+  "point_only_policy": {
+    "preserve_native_points_in_raw_output": true,
+    "fabricate_boxes_from_points": false,
+    "approved_d5_native_point_only_track": false,
+    "extension_requires_separate_approved_decision": true
   },
   "frozen_components": {
     "exact_model_revisions": "PENDING",
@@ -83,7 +106,9 @@
   },
   "historical_d8_provider_items": {
     "qwen_singapore_workspace_endpoint": "SUPERSEDED_FOR_P2_BY_D9",
+    "qwen_hosted_decoding_configuration": "SUPERSEDED_FOR_P2_BY_D9",
     "gpt_claude_provider_spatial_gates": "SUPERSEDED_FOR_P2_BY_D9",
+    "commercial_provider_billing": "SUPERSEDED_FOR_P2_BY_D9",
     "commercial_live_route_verification": "SUPERSEDED_FOR_P2_BY_D9",
     "historical_artifacts_preserved": true
   }
