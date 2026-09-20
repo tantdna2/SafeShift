@@ -69,14 +69,27 @@
   "replacement_policy": {
     "before_protocol_freeze_only": true,
     "before_inspecsafe_only": true,
+    "required_condition": "OBJECTIVE_PRE_SPECIFIED_BLOCKER_PREVENTS_CLASSIFICATION_PARTICIPATION",
+    "reason_and_validation_evidence_required_before_substitution": true,
+    "validation_procedure_required_before_validation": true,
     "activated_backup_requires_same_prerequisites_and_gate": true,
+    "spatial_gate_pass_required_only_for_grounding": true,
     "allowed_reasons": [
       "MODEL_OR_WEIGHT_UNAVAILABLE",
       "LICENSE_OR_ACCESS_INCOMPATIBLE",
-      "RUNTIME_OR_MEMORY_INFEASIBLE",
-      "REPRODUCIBILITY_BLOCKER",
-      "SYNTHETIC_INTERFACE_OR_CAPABILITY_GATE_FAILURE"
+      "CLASSIFICATION_RUNNER_LOAD_OR_STABILITY_FAILURE",
+      "CLASSIFICATION_OUTPUT_INVALID_OR_UNPARSEABLE",
+      "REPEATED_MODEL_OR_RUNTIME_CRASH_UNDER_VALIDATION_PROCEDURE",
+      "CONFIRMED_COMPUTE_OR_RUNTIME_INCOMPATIBILITY_PREVENTS_CLASSIFICATION"
     ],
+    "on_grounding_only_failure_with_valid_parseable_classification": {
+      "applies_to": "PRIMARY_MODELS_AND_ACTIVATED_BACKUPS",
+      "includes": ["SPATIAL_GATE_FAILURE", "NATIVE_POINT_ONLY_INCOMPATIBLE_WITH_D5_BOX_GROUNDING"],
+      "classification_participation": "MUST_CONTINUE",
+      "grounding_role": "NOT_PARTICIPATING",
+      "activate_backup_substitution": false,
+      "assign_artificial_zero_iou": false
+    },
     "forbidden_reason": "INSPECSAFE_PERFORMANCE"
   },
   "preserved_protocol": {

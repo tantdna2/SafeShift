@@ -22,7 +22,7 @@ and [freeze_manifest.d9.template.json](../configs/pre_freeze/freeze_manifest.d9.
 | 3 | One supported low-variance decoding policy per model | PENDING; hosted settings do not transfer automatically |
 | 4 | Deterministic native-output adapters compatible with the existing canonical box schema | PENDING; point-only compatibility unresolved |
 | 5 | Interface eligibility review for four primaries and unchanged SYNTHETIC V1 gate for qualifying box interfaces | PENDING; no model execution; qualitative giant-box review procedure still pending |
-| 6 | Final classification/grounding roles and any permitted pre-freeze backup substitutions | PENDING; activated backups require the same prerequisites and gate |
+| 6 | Final classification/grounding roles and any permitted pre-freeze backup substitutions | PENDING; only evidenced classification blockers permit substitution; activated backups require the same prerequisites and applicable gate |
 | 7 | Freeze exact prompts/task policy, schema, adapters/parsers, runners/environment and full D5 engine | PENDING |
 | 8 | Approved protocol freeze commit | PENDING; `protocol_freeze_commit_sha: PENDING` |
 
@@ -57,6 +57,22 @@ fabricate boxes. A point-only model may participate in classification after vali
 but remains `NOT PARTICIPATING` in current grounding unless a qualifying box interface
 is verified. Adding a point-only schema/gate/metric track requires a separate approved
 decision and is not part of D9. Nonparticipants receive no artificial zero score.
+
+Backup clarification after the audit of `864b61f5e70296c3d1a1e9faeeb055fc571766b7`:
+valid classification execution and parseable classification output require continued
+classification participation, even after spatial-gate failure or native-point-only
+incompatibility. Grounding role is `NOT_PARTICIPATING`; no backup substitution or
+artificial zero IoU is allowed. Full-model substitution requires an objective,
+pre-specified blocker preventing classification, with evidence recorded before freeze
+and before any InspecSafe inference, following the D9 brief's replacement policy.
+InspecSafe scores are forbidden as a selection basis. The same rule applies to
+activated backups; a spatial-gate pass is required only for grounding participation.
+
+Cleanup validation: **233/233 existing tests PASS** with
+`.venv/Scripts/python.exe -m unittest discover -s tests`; D9 JSON parse/consistency,
+SYNTHETIC V1 manifest/generator hashes and `git diff --check` (including the full
+diff from base main) PASS. The four trailing-whitespace lines in the D9 brief were
+cleaned. No model validation or inference was run; all freeze prerequisites remain pending.
 
 The SYNTHETIC V1 manifest, provenance, generator and eight PNG assets remain unchanged.
 Manifest SHA-256 remains

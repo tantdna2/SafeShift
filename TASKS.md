@@ -100,9 +100,15 @@ Documentation synchronization does not complete any execution prerequisite.
   candidates and run the unchanged eight-case SYNTHETIC V1 gate on qualifying box
   interfaces. Fix the qualitative giant-box review procedure before execution;
   record point-only incompatibility as nonparticipation, not PASS or a zero score.
-  Any activated backup must meet the same prerequisites and gate before freeze.
+  Any activated backup must meet the same prerequisites and applicable gate before
+  freeze; a spatial-gate pass is required only for grounding participation.
 - [ ] **6. Final roles:** Assign classification/grounding roles and record any allowed
-  backup substitution before protocol freeze and before any InspecSafe inference.
+  backup substitution before protocol freeze and before any InspecSafe inference,
+  only for a pre-specified objective blocker preventing classification participation,
+  with validation evidence recorded. If classification runs validly and its output
+  parses, grounding-only failure or incompatible native points must retain the model
+  in classification with grounding role `NOT_PARTICIPATING`: no substitution and no
+  artificial zero IoU. This also applies to activated backups. Never use InspecSafe scores.
 - [ ] **7. Implementation freeze:** Complete and freeze exact prompts/task policy,
   canonical schema, adapters/parsers, runner environment and full unchanged D5 engine.
 - [ ] **8. Protocol freeze:** Record the approved freeze commit only after all

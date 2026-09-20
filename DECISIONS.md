@@ -1051,11 +1051,25 @@
   GPU execution on a local workstation, Colab, Kaggle or a rented GPU host. A venue
   change preserves a model condition only with equivalent frozen model revision,
   preprocessing, decoding, precision/quantization, software, prompts and adapters,
-  with provenance recorded. Replacement is allowed only before protocol freeze and
-  before any InspecSafe inference, for documented unavailability, incompatible
-  access/license, runtime/memory infeasibility, reproducibility blockers or failure
-  of the pre-specified synthetic interface/capability gate. An activated backup must
-  satisfy the same freeze prerequisites and gate before final role assignment.
+  with provenance recorded. Full-model backup substitution is allowed only before
+  protocol freeze and before any InspecSafe inference, when a pre-specified objective
+  blocker prevents classification participation: unavailable exact model/weights,
+  incompatible license/access, inability to load/run the classification runner stably,
+  invalid or unparseable classification output, repeated model/runtime crashes under
+  the validation procedure, or confirmed compute/runtime incompatibility preventing
+  classification. Record the reason and validation evidence before substitution;
+  specify the validation procedure before validation (execution remains pending).
+  InspecSafe scores must never inform replacement. An activated backup must satisfy
+  the same freeze prerequisites and applicable gate before final role assignment;
+  passing the spatial gate is required only for grounding participation.
+- **Grounding-only failure is not a replacement trigger:** If the classification
+  runner/interface is valid and classification output parses, the model **must remain
+  in classification** even if it fails the spatial gate or has only native points
+  incompatible with D5 bounding-box grounding. Set grounding role to
+  `NOT_PARTICIPATING`; do not activate a backup or assign artificial `IoU = 0`.
+  This rule applies equally to primary models and activated backups. This D9
+  clarification follows the Project Owner's cleanup request after the audit of
+  `864b61f5e70296c3d1a1e9faeeb055fc571766b7`; it does not change D1–D8 or D5 metrics.
 - **Preserved contracts:** D1–D7 (including the approved RQ2 hierarchy erratum) and
   every D8 contract outside the stated P2 roster/backend boundary remain binding:
   Benchmark Firewall and blind development; Protocol Freeze before first InspecSafe

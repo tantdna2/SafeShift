@@ -1,9 +1,9 @@
 # W2.5 D9 Decision Brief — Open-Weight Self-Hosted Model Roster Revision
 
-**Decision ID:** `DEC-W2-D9-009`  
-**Date:** 2026-09-20  
-**Status:** APPROVED FOR IMPLEMENTATION, PRE-FREEZE  
-**Protocol freeze:** `PENDING`  
+**Decision ID:** `DEC-W2-D9-009`
+**Date:** 2026-09-20
+**Status:** APPROVED FOR IMPLEMENTATION, PRE-FREEZE
+**Protocol freeze:** `PENDING`
 **InspecSafe inference under this revision:** `NOT RUN`
 
 ## 1. Decision scope
@@ -42,7 +42,22 @@ The P2 roster is chosen **before any InspecSafe inference** and based on researc
 
 Allowed execution venues include a local workstation, Google Colab, Kaggle, or a rented GPU host. A change of venue does not create a new model condition if the exact frozen model revision, preprocessing, decoding, precision/quantization policy, software environment, prompts, and adapters remain equivalent and are recorded.
 
-No model may be promoted, removed, or replaced because of its InspecSafe score. Before protocol freeze, replacement is allowed only for objective pre-benchmark reasons such as weight/model unavailability, incompatible access/license terms, runtime or memory infeasibility, reproducibility blockers, or failure of the pre-specified synthetic interface/capability gate.
+No model may be promoted, removed, or replaced because of its InspecSafe score.
+Full-model backup substitution is allowed only before protocol freeze and before
+any InspecSafe inference, when an objective, pre-specified blocker prevents the model
+from participating in classification. Allowed reasons are unavailable exact model/weights,
+incompatible license/access, inability to load or run the classification runner stably,
+failure to produce valid parseable classification output, repeated model/runtime crashes
+under the validation procedure, or confirmed compute/runtime incompatibility preventing
+classification. Record the reason and validation evidence before substitution. The
+validation procedure must be specified before validation; its execution remains pending.
+
+If the classification runner/interface is valid and its output parses, the model
+**must remain in the classification track**, even if it fails the spatial grounding
+gate or has only a native-point interface incompatible with D5 bounding-box grounding.
+Set its grounding role to `NOT_PARTICIPATING`; **do not activate a backup** and do not
+assign artificial `IoU = 0`. Grounding-only failure is never a reason to remove a model
+from the classification roster.
 
 ## 4. Primary P2 roster
 
@@ -86,7 +101,7 @@ Backups are frozen by order before benchmark results are visible:
 1. `google/paligemma2-10b-mix-448` — explicit object-detection/segmentation task support; Hugging Face access requires accepting Google's Gemma usage terms. It is not treated as an Apache-2.0 model.
 2. `openbmb/MiniCPM-V-4.6` — compact open-weight multimodal model; useful if a primary model is operationally infeasible. License observed at review: Apache-2.0.
 
-Backups are not extra benchmark entrants by default. A backup enters the primary roster only through the replacement policy above, with the reason recorded before protocol freeze and before any InspecSafe inference. An activated backup must meet the same revision/provenance, runner, decoding, interface and synthetic-gate prerequisites before final role assignment; substitution is not a gate exemption.
+Backups are not extra benchmark entrants by default. A backup enters the primary roster only through the classification-blocking replacement policy above, with the reason recorded before protocol freeze and before any InspecSafe inference. An activated backup must meet the same revision/provenance, runner, decoding, interface and applicable synthetic-gate prerequisites before final role assignment. Passing the spatial gate is required only for grounding participation; a classification-valid backup with grounding-only failure also remains in classification with grounding role `NOT_PARTICIPATING`, without further substitution or an artificial zero grounding score.
 
 ## 6. Capability policy under D9
 
@@ -122,8 +137,8 @@ approved decision; D9 does not introduce one. No D5 definition changes here.
 2. Implement local/self-hosted runners with explicit preprocessing, precision/quantization, device, software-version, and raw-output provenance.
 3. Pin one low-variance decoding policy per model before benchmark inference; no empirical selection on InspecSafe.
 4. Implement deterministic native-output adapters/parsers compatible with the unchanged canonical box schema. Preserve native points in raw output; no fabricated boxes or implicit point-only track.
-5. Review interface eligibility for all four primary candidates and execute the unchanged 8-case `SYNTHETIC V1` Target+Distractor gate on qualifying box interfaces; no InspecSafe images. Fix the qualitative giant-box review procedure before execution, without inventing numeric pass thresholds. Record point-only incompatibility as nonparticipation, not PASS. An activated backup must meet the same prerequisites and gate.
-6. Assign final classification/grounding roles and record any backup substitution with an allowed reason before protocol freeze and before any InspecSafe inference.
+5. Review interface eligibility for all four primary candidates and execute the unchanged 8-case `SYNTHETIC V1` Target+Distractor gate on qualifying box interfaces; no InspecSafe images. Fix the qualitative giant-box review procedure before execution, without inventing numeric pass thresholds. Record point-only incompatibility or spatial-gate failure as `NOT_PARTICIPATING` in grounding; retain valid classification participation without substitution or an artificial zero score. The same rule applies to activated backups.
+6. Assign final classification/grounding roles and record any backup substitution only for an evidenced, pre-specified classification blocker before protocol freeze and before any InspecSafe inference; never use InspecSafe scores.
 7. Complete and freeze exact prompts, schema, adapters/parsers, runner environment, and the full D5 metric engine.
 8. Record `protocol_freeze_commit_sha`, then and only then begin W3 InspecSafe inference.
 
