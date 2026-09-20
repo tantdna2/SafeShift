@@ -1023,6 +1023,94 @@
   milestone; this entry records the authorized implementation resolution, not a
   new dataset, split, label or metric decision.
 
+## DEC-W2-D9-009 — P2 Open-Weight Self-Hosted Model Roster
+
+- **ID:** DEC-W2-D9-009
+- **Date:** 2026-09-20
+- **Status:** APPROVED FOR IMPLEMENTATION, PRE-FREEZE. Approval is not protocol freeze;
+  `protocol_freeze_commit_sha: PENDING`.
+- **Authority and evidence:** Project Owner / Research Lead's 2026-09-20 approval
+  recorded in the [D9 decision brief](notes/w2_open_weight_self_hosted_model_roster_decision_brief.md),
+  followed by the explicit request to synchronize PR #20. This entry records that
+  authority; it does not claim model execution, weight access or capability-gate success.
+- **Decision and supersession boundary:** D9 supersedes **ONLY the P2 commercial
+  hosted-provider roster/backend assumptions of DEC-W2-D8-008**, including the
+  associated Qwen hosted-route/decoding implementation resolution. The Qwen workspace
+  endpoint, GPT/Claude hosted capability gates, commercial provider billing and
+  provider live-route verification are `SUPERSEDED_FOR_P2_BY_D9`. Historical D8
+  records, configurations, validators and results remain audit evidence.
+- **P2 roster:** The four primary candidates, in order, are
+  `Qwen/Qwen3-VL-8B-Instruct`, `AIDC-AI/Ovis2.5-9B`, `allenai/Molmo2-O-7B`, and
+  `google/gemma-4-12B-it`. Ordered backups are `google/paligemma2-10b-mix-448`, then
+  `openbmb/MiniCPM-V-4.6`; backups are not additional entrants by default. Selection
+  is based on research value before benchmark inference, never InspecSafe scores.
+  Exact immutable revisions, access/license and weight provenance, decoding,
+  preprocessing, precision/quantization, runtime environment and final roles remain
+  pending. No D8 hosted setting automatically becomes a validated self-hosted setting.
+- **Execution and replacement policy:** P2 uses open-weight self-hosted/user-controlled
+  GPU execution on a local workstation, Colab, Kaggle or a rented GPU host. A venue
+  change preserves a model condition only with equivalent frozen model revision,
+  preprocessing, decoding, precision/quantization, software, prompts and adapters,
+  with provenance recorded. Full-model backup substitution is allowed only before
+  protocol freeze and before any InspecSafe inference, when a pre-specified objective
+  blocker prevents classification participation: unavailable exact model/weights,
+  incompatible license/access, inability to load/run the classification runner stably,
+  invalid or unparseable classification output, repeated model/runtime crashes under
+  the validation procedure, or confirmed compute/runtime incompatibility preventing
+  classification. Record the reason and validation evidence before substitution;
+  specify the validation procedure before validation (execution remains pending).
+  InspecSafe scores must never inform replacement. An activated backup must satisfy
+  the same freeze prerequisites and applicable gate before final role assignment;
+  passing the spatial gate is required only for grounding participation.
+- **Grounding-only failure is not a replacement trigger:** If the classification
+  runner/interface is valid and classification output parses, the model **must remain
+  in classification** even if it fails the spatial gate or has only native points
+  incompatible with D5 bounding-box grounding. Set grounding role to
+  `NOT_PARTICIPATING`; do not activate a backup or assign artificial `IoU = 0`.
+  This rule applies equally to primary models and activated backups. This D9
+  clarification follows the Project Owner's cleanup request after the audit of
+  `864b61f5e70296c3d1a1e9faeeb055fc571766b7`; it does not change D1–D8 or D5 metrics.
+- **Preserved contracts:** D1–D7 (including the approved RQ2 hierarchy erratum) and
+  every D8 contract outside the stated P2 roster/backend boundary remain binding:
+  Benchmark Firewall and blind development; Protocol Freeze before first InspecSafe
+  inference; C1 policy-aware classification; A2 independent calls without cross-call
+  outputs; B2 closed 12-hazard vocabulary; D4/D8 canonical schema and deterministic
+  parsing; raw-output preservation before parsing; capability-aware grounding;
+  unchanged D5 metric definitions/statistics; and post-freeze change control.
+  Technical fixes after freeze still require an issue, protocol version bump,
+  invalidation of affected runs and rerunning the relevant evaluation pools; no
+  performance-driven prompt/model rescue is permitted.
+- **Grounding compatibility:** D9 retains the D8 evidence levels (Level 1 or 2A
+  required; Level 2B/3 insufficient) and requires SYNTHETIC V1 wrapper validation
+  for the selected self-hosted roster. The existing canonical schema and gate are
+  box-based. D5 Pointing Hit uses the center of a predicted box on original GT
+  polygons; D5 does not approve a native-point-only track. Preserve native points
+  in raw output, never fabricate boxes. Molmo's point documentation alone does not
+  establish eligibility for the current box contract. Point-only models remain
+  classification candidates and `NOT PARTICIPATING` in the current grounding track
+  unless a qualifying box interface is verified. A point-only schema/gate/metric
+  extension requires a separate approved decision; D9 does not authorize it.
+  Nonparticipation never becomes an artificial zero grounding score or ranking.
+- **P1 unchanged:** Preserve the official 1,250-test-sample upstream reproduction
+  policy, upstream prompt/task policy, `temperature = 0.1`, upstream model access
+  and compatible-Claude fallback/reporting, local upstream BGE-M3 pipeline, and
+  `REPRODUCIBLE` / `COMPATIBILITY_REPRODUCTION` / `NOT_EXACTLY_REPRODUCIBLE` statuses.
+  The D9 P2 roster does not replace P1's reference models or resolve P1 access.
+- **Scientific scope unchanged:** Seminar remains frozen zero-shot cross-domain
+  robustness evaluation. No training or fine-tuning is introduced. P2 remains the
+  5,013-image evaluation pool with original train/test provenance; dataset, labels,
+  domain policy, support census, metrics and bootstrap remain unchanged. P3 stays
+  a sensitivity candidate and P4 stays later Thesis/DG work.
+- **Active prerequisites and artifacts:** The active checklist is the D9 checklist
+  in [TASKS.md](TASKS.md#w2--active-d9-pre-freeze-checklist-2026-09-20), mirrored by
+  [local_models.d9.json](configs/pre_freeze/local_models.d9.json) and
+  [freeze_manifest.d9.template.json](configs/pre_freeze/freeze_manifest.d9.template.json).
+  SYNTHETIC V1 assets, manifest and hashes remain unchanged; no D9 model gate has run.
+  This synchronization implements no runners, downloads no weights, calls no model
+  APIs, and inspects no InspecSafe images. **NO_INSPECSAFE_INFERENCE**.
+- **Supersedes:** DEC-W2-D8-008 only for the P2 commercial-hosted-provider
+  roster/backend assumptions specified above; no other D8 or P1 policy is superseded.
+
 ## Template
 
 - **ID:** <DEC-...>

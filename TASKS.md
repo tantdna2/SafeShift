@@ -54,6 +54,68 @@ Mục tiêu: khảo sát, kiểm tra và hiểu InspecSafe-V1 trước bất k�
 
 ## W2 — Pre-freeze implementation (2026-09-18)
 
+Historical D8 evidence. The original completion/pending statements below describe
+their recorded milestones; the active P2 prerequisites are now the D9 checklist below.
+
 - [x] Triển khai hạ tầng offline theo D8 đã duyệt: Call 1/Call 2 độc lập, canonical schema, raw preservation, bốn adapter skeletons, external gate harness, benchmark firewall, D5 interfaces và freeze-manifest template. Kiểm thử: 199/199 tests pass, gồm 54 tests mới. Chi tiết và 8 prerequisite: [notes/pre_freeze_implementation.md](notes/pre_freeze_implementation.md).
 - [ ] Hoàn tất 8 prerequisite D8 trước protocol freeze: endpoint/decoding Qwen, external cases và gates, final roles, live model/route verification, đóng băng toàn bộ implementation và ghi freeze SHA. `protocol_freeze_commit_sha: PENDING`; chưa chạy inference InspecSafe.
 - [x] Pre-freeze steps 1–2 (2026-09-19): pin Qwen Singapore workspace route policy and documented P2 `temperature = 0` configuration; checklist #2 DONE. Checklist #1 remains PENDING_USER_CONFIGURATION because neither workspace environment variable is set locally. Offline validator and full repository tests: 233/233 PASS. No live route verification, gates or inference. Evidence: [notes/pre_freeze_implementation.md](notes/pre_freeze_implementation.md).
+
+### D9 status overlay on historical provider work
+
+| Historical D8 item | Current P2 status | Retained evidence |
+|---|---|---|
+| Qwen Singapore workspace endpoint (#1) | `SUPERSEDED_FOR_P2_BY_D9` | Historical `PENDING_USER_CONFIGURATION`; route policy and offline validator retained. |
+| Qwen hosted decoding (#2) | `SUPERSEDED_FOR_P2_BY_D9` | Historical `DONE`; hosted temperature-zero policy is not self-hosted validation. |
+| GPT/Claude hosted capability gates (#4) | `SUPERSEDED_FOR_P2_BY_D9` | Both `NOT RUN`; D9 models require their own capability review. |
+| Commercial provider billing/access setup | `SUPERSEDED_FOR_P2_BY_D9` | No paid inference or billing completion claimed; GPU access/license review remains pending under D9. |
+| Provider live-route verification (#6) | `SUPERSEDED_FOR_P2_BY_D9` | Historical live route remains false; no successful API access claimed. |
+
+The historical eight-item D8 checklist is no longer the active P2 checklist.
+SYNTHETIC V1 external assets (#3) remain DONE and unchanged; final roles, full
+implementation freeze and protocol freeze (#5/#7/#8) remain pending under D9.
+This supersession does not change P1 upstream reproduction or its access requirements.
+
+## W2 — Active D9 pre-freeze checklist (2026-09-20)
+
+Authority: [DEC-W2-D9-009](DECISIONS.md#dec-w2-d9-009--p2-open-weight-self-hosted-model-roster)
+and the [D9 brief](notes/w2_open_weight_self_hosted_model_roster_decision_brief.md).
+This is the **active P2 checklist**, mirrored in
+`configs/pre_freeze/local_models.d9.json` and `configs/pre_freeze/freeze_manifest.d9.template.json`.
+Documentation synchronization does not complete any execution prerequisite.
+
+- [x] Synchronize the D9 decision ledger, checklist, implementation note and two
+  configuration templates; preserve historical D8 evidence and SYNTHETIC V1 assets.
+- [ ] **1. Model provenance:** Freeze exact IDs and immutable revisions, access/license
+  evidence and weight provenance for the four primary candidates and ordered backups.
+- [ ] **2. Runners:** Implement and validate local/self-hosted runners with explicit
+  preprocessing, precision/quantization, device/software versions and raw-output
+  preservation before parsing. Deferred; no runners implemented in this task.
+- [ ] **3. Decoding:** Pin one supported low-variance configuration per model;
+  no selection from InspecSafe outputs and no automatic reuse of hosted settings.
+- [ ] **4. Adapters/parsers:** Validate deterministic native-output conversion to the
+  unchanged canonical box schema. Preserve point-only outputs as raw evidence, never
+  fabricate boxes; native-point-only grounding is not an approved D5 track.
+- [ ] **5. External gate:** Resolve interface eligibility for all four primary
+  candidates and run the unchanged eight-case SYNTHETIC V1 gate on qualifying box
+  interfaces. Fix the qualitative giant-box review procedure before execution;
+  record point-only incompatibility as nonparticipation, not PASS or a zero score.
+  Any activated backup must meet the same prerequisites and applicable gate before
+  freeze; a spatial-gate pass is required only for grounding participation.
+- [ ] **6. Final roles:** Assign classification/grounding roles and record any allowed
+  backup substitution before protocol freeze and before any InspecSafe inference,
+  only for a pre-specified objective blocker preventing classification participation,
+  with validation evidence recorded. If classification runs validly and its output
+  parses, grounding-only failure or incompatible native points must retain the model
+  in classification with grounding role `NOT_PARTICIPATING`: no substitution and no
+  artificial zero IoU. This also applies to activated backups. Never use InspecSafe scores.
+- [ ] **7. Implementation freeze:** Complete and freeze exact prompts/task policy,
+  canonical schema, adapters/parsers, runner environment and full unchanged D5 engine.
+- [ ] **8. Protocol freeze:** Record the approved freeze commit only after all
+  prerequisites are complete. **`protocol_freeze_commit_sha: PENDING`**.
+
+Seminar remains frozen zero-shot cross-domain robustness evaluation; no training or
+fine-tuning. P1 remains unchanged. D8 Benchmark Firewall, C1, A2, B2, raw preservation,
+capability-aware grounding, D5 metrics/statistics and post-freeze change control remain
+binding. No model/provider calls, weight downloads or InspecSafe image inspection
+are part of this synchronization. **NO_INSPECSAFE_INFERENCE**.

@@ -1,0 +1,146 @@
+{
+  "status": "D9_PRE_FREEZE_SELF_HOSTED",
+  "decision_id": "DEC-W2-D9-009",
+  "protocol_freeze_commit_sha": "PENDING",
+  "inspecsafe_inference_authorized": false,
+  "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
+  "selection_basis": "RESEARCH_VALUE_BEFORE_COMPUTE; NO_INSPECSAFE_PERFORMANCE_USED",
+  "execution_policy": {
+    "allowed_venues": ["local_workstation", "google_colab", "kaggle", "rented_gpu_host"],
+    "venue_is_not_model_condition_if_frozen_conditions_equivalent": true,
+    "require_equivalent_frozen_model_revision": true,
+    "require_equivalent_preprocessing_decoding_precision_software_prompts_adapters": true,
+    "require_recorded_environment_and_precision": true
+  },
+  "primary_models": [
+    {
+      "key": "qwen3_vl_8b_instruct",
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "role": "ANCHOR_REPRODUCTION_BRIDGE",
+      "classification": "CANDIDATE",
+      "grounding": "DOC_SUPPORTED_PENDING_SYNTHETIC_GATE",
+      "immutable_revision": "PENDING",
+      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+    },
+    {
+      "key": "ovis2_5_9b",
+      "model_id": "AIDC-AI/Ovis2.5-9B",
+      "role": "VISUAL_STACK_CONTRAST",
+      "classification": "CANDIDATE",
+      "grounding": "DOC_SUPPORTED_POINT_AND_BOX_PENDING_SYNTHETIC_GATE",
+      "immutable_revision": "PENDING",
+      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+    },
+    {
+      "key": "molmo2_o_7b",
+      "model_id": "allenai/Molmo2-O-7B",
+      "role": "INDEPENDENT_OLMO_FAMILY",
+      "classification": "CANDIDATE",
+      "grounding": "NOT_PARTICIPATING_UNLESS_BOX_INTERFACE_VERIFIED",
+      "native_point_evidence": "DOC_SUPPORTED; BOX_INTERFACE_COMPATIBILITY_UNRESOLVED",
+      "immutable_revision": "PENDING",
+      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+    },
+    {
+      "key": "gemma4_12b_it",
+      "model_id": "google/gemma-4-12B-it",
+      "role": "INDEPENDENT_GOOGLE_FAMILY",
+      "classification": "CANDIDATE",
+      "grounding": "PENDING_EXTERNAL_GATE_CLASSIFICATION_ONLY_UNTIL_PROMOTED",
+      "immutable_revision": "PENDING",
+      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+    }
+  ],
+  "backups_in_order": [
+    {
+      "key": "paligemma2_10b_mix_448",
+      "model_id": "google/paligemma2-10b-mix-448",
+      "replacement_status": "BACKUP_1_ONLY",
+      "immutable_revision": "PENDING",
+      "access_note": "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED"
+    },
+    {
+      "key": "minicpm_v_4_6",
+      "model_id": "openbmb/MiniCPM-V-4.6",
+      "replacement_status": "BACKUP_2_ONLY",
+      "immutable_revision": "PENDING"
+    }
+  ],
+  "replacement_policy": {
+    "before_protocol_freeze_only": true,
+    "before_inspecsafe_only": true,
+    "required_condition": "OBJECTIVE_PRE_SPECIFIED_BLOCKER_PREVENTS_CLASSIFICATION_PARTICIPATION",
+    "reason_and_validation_evidence_required_before_substitution": true,
+    "validation_procedure_required_before_validation": true,
+    "activated_backup_requires_same_prerequisites_and_gate": true,
+    "spatial_gate_pass_required_only_for_grounding": true,
+    "allowed_reasons": [
+      "MODEL_OR_WEIGHT_UNAVAILABLE",
+      "LICENSE_OR_ACCESS_INCOMPATIBLE",
+      "CLASSIFICATION_RUNNER_LOAD_OR_STABILITY_FAILURE",
+      "CLASSIFICATION_OUTPUT_INVALID_OR_UNPARSEABLE",
+      "REPEATED_MODEL_OR_RUNTIME_CRASH_UNDER_VALIDATION_PROCEDURE",
+      "CONFIRMED_COMPUTE_OR_RUNTIME_INCOMPATIBILITY_PREVENTS_CLASSIFICATION"
+    ],
+    "on_grounding_only_failure_with_valid_parseable_classification": {
+      "applies_to": "PRIMARY_MODELS_AND_ACTIVATED_BACKUPS",
+      "includes": ["SPATIAL_GATE_FAILURE", "NATIVE_POINT_ONLY_INCOMPATIBLE_WITH_D5_BOX_GROUNDING"],
+      "classification_participation": "MUST_CONTINUE",
+      "grounding_role": "NOT_PARTICIPATING",
+      "activate_backup_substitution": false,
+      "assign_artificial_zero_iou": false
+    },
+    "forbidden_reason": "INSPECSAFE_PERFORMANCE"
+  },
+  "preserved_protocol": {
+    "benchmark_firewall": true,
+    "protocol_freeze_before_first_inspecsafe_inference": true,
+    "c1_policy_aware_classification": true,
+    "a2_two_independent_calls": true,
+    "b2_closed_12_hazard_vocabulary": true,
+    "d4_canonical_spatial_contract": true,
+    "canonical_schema": "schemas/canonical.schema.json",
+    "raw_output_preservation_before_parsing": true,
+    "capability_aware_grounding": true,
+    "d5_metrics_and_statistics_unchanged": true,
+    "d1_d7_and_rq2_hierarchy_erratum_unchanged": true,
+    "p1_reproduction_policy_unchanged": true,
+    "post_freeze_change_control_unchanged": true,
+    "seminar_evaluation": "FROZEN_ZERO_SHOT_CROSS_DOMAIN_ROBUSTNESS",
+    "seminar_training_or_finetuning": false
+  },
+  "synthetic_gate": {
+    "suite_version": "synthetic-v1",
+    "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
+    "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+    "interface_contract": "EXISTING_BOX_GATE_UNCHANGED",
+    "eligibility_review_scope": "FOUR_PRIMARY_CANDIDATES_AND_ANY_ACTIVATED_BACKUP",
+    "execution_scope": "QUALIFYING_BOX_INTERFACES; POINT_ONLY_IS_NOT_PARTICIPATING",
+    "qualitative_giant_box_review_procedure": "PENDING_BEFORE_GATE_EXECUTION",
+    "status": "NOT_RUN_FOR_D9_MODELS"
+  },
+  "point_only_policy": {
+    "preserve_native_points_in_raw_output": true,
+    "fabricate_boxes_from_points": false,
+    "approved_d5_native_point_only_track": false,
+    "extension_requires_separate_approved_decision": true
+  },
+  "historical_d8_provider_items": {
+    "qwen_singapore_workspace_endpoint": "SUPERSEDED_FOR_P2_BY_D9",
+    "qwen_hosted_decoding_configuration": "SUPERSEDED_FOR_P2_BY_D9",
+    "gpt_claude_provider_spatial_gates": "SUPERSEDED_FOR_P2_BY_D9",
+    "commercial_provider_billing": "SUPERSEDED_FOR_P2_BY_D9",
+    "commercial_live_route_verification": "SUPERSEDED_FOR_P2_BY_D9",
+    "historical_artifacts_preserved": true
+  },
+  "d9_checklist": {
+    "1_model_revisions_and_license_provenance": "PENDING",
+    "2_local_self_hosted_runners": "PENDING",
+    "3_low_variance_decoding_per_model": "PENDING",
+    "4_deterministic_native_output_adapters": "PENDING",
+    "5_synthetic_gate_four_primary_models": "PENDING",
+    "6_final_model_roles_and_backup_substitutions": "PENDING",
+    "7_freeze_prompts_schema_adapters_runner_metric_engine": "PENDING",
+    "8_record_protocol_freeze_commit": "PENDING"
+  }
+}
