@@ -1,0 +1,90 @@
+{
+  "protocol_version": "D9-PRE-FREEZE",
+  "decision_id": "DEC-W2-D9-009",
+  "status": "PENDING_PROTOCOL_FREEZE",
+  "protocol_freeze_commit_sha": "PENDING",
+  "benchmark_firewall": "ACTIVE",
+  "inspecsafe_inference_authorized": false,
+  "p1_policy": {
+    "status": "UNCHANGED_FROM_D8",
+    "official_test_samples": 1250,
+    "upstream_temperature": 0.1
+  },
+  "p2_policy": {
+    "evaluation_pool_samples": 5013,
+    "training_or_finetuning_on_inspecsafe": false,
+    "execution_mode": "OPEN_WEIGHT_SELF_HOSTED_OR_USER_CONTROLLED_GPU",
+    "call_architecture": "A2_TWO_INDEPENDENT_CALLS",
+    "classification_policy": "C1_POLICY_AWARE",
+    "grounding_vocabulary": "B2_CLOSED_12_HAZARDS"
+  },
+  "model_roster_config": "configs/pre_freeze/local_models.d9.json",
+  "primary_models": [
+    {
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "immutable_revision": "PENDING",
+      "classification_role": "PENDING_FINAL_GATE",
+      "grounding_role": "PENDING_SYNTHETIC_GATE",
+      "decoding_policy_id": "PENDING",
+      "precision_or_quantization": "PENDING",
+      "preprocessing_id": "PENDING"
+    },
+    {
+      "model_id": "AIDC-AI/Ovis2.5-9B",
+      "immutable_revision": "PENDING",
+      "classification_role": "PENDING_FINAL_GATE",
+      "grounding_role": "PENDING_SYNTHETIC_GATE",
+      "decoding_policy_id": "PENDING",
+      "precision_or_quantization": "PENDING",
+      "preprocessing_id": "PENDING"
+    },
+    {
+      "model_id": "allenai/Molmo2-O-7B",
+      "immutable_revision": "PENDING",
+      "classification_role": "PENDING_FINAL_GATE",
+      "grounding_role": "PENDING_SYNTHETIC_GATE_POINT_NATIVE",
+      "decoding_policy_id": "PENDING",
+      "precision_or_quantization": "PENDING",
+      "preprocessing_id": "PENDING"
+    },
+    {
+      "model_id": "google/gemma-4-12B-it",
+      "immutable_revision": "PENDING",
+      "classification_role": "PENDING_FINAL_GATE",
+      "grounding_role": "CLASSIFICATION_ONLY_UNLESS_PROMOTED_BY_SYNTHETIC_GATE",
+      "decoding_policy_id": "PENDING",
+      "precision_or_quantization": "PENDING",
+      "preprocessing_id": "PENDING"
+    }
+  ],
+  "backup_order": [
+    "google/paligemma2-10b-mix-448",
+    "openbmb/MiniCPM-V-4.6"
+  ],
+  "synthetic_external_gate": {
+    "suite_version": "synthetic-v1",
+    "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
+    "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+    "status": "PENDING_D9_MODEL_EXECUTION"
+  },
+  "frozen_components": {
+    "exact_model_revisions": "PENDING",
+    "license_and_weight_provenance": "PENDING",
+    "local_runners": "PENDING",
+    "preprocessing": "PENDING",
+    "precision_quantization": "PENDING",
+    "decoding": "PENDING",
+    "prompts": "PENDING",
+    "schema": "PENDING",
+    "adapters_and_parsers": "PENDING",
+    "full_d5_metric_engine": "PENDING",
+    "software_environment": "PENDING",
+    "final_model_roles": "PENDING"
+  },
+  "historical_d8_provider_items": {
+    "qwen_singapore_workspace_endpoint": "SUPERSEDED_FOR_P2_BY_D9",
+    "gpt_claude_provider_spatial_gates": "SUPERSEDED_FOR_P2_BY_D9",
+    "commercial_live_route_verification": "SUPERSEDED_FOR_P2_BY_D9",
+    "historical_artifacts_preserved": true
+  }
+}
