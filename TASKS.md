@@ -90,7 +90,9 @@ Documentation synchronization does not complete any execution prerequisite.
   evidence and weight provenance for the four primary candidates and ordered backups.
 - [ ] **2. Runners:** Implement and validate local/self-hosted runners with explicit
   preprocessing, precision/quantization, device/software versions and raw-output
-  preservation before parsing. Deferred; no runners implemented in this task.
+  preservation before parsing. W2.6A generic contracts/scaffolding and dummy unit
+  tests are complete; model-specific execution and real runner validation remain
+  **PENDING**. See [W2.6A implementation](notes/w2_local_runner_contracts.md).
 - [ ] **3. Decoding:** Pin one supported low-variance configuration per model;
   no selection from InspecSafe outputs and no automatic reuse of hosted settings.
 - [ ] **4. Adapters/parsers:** Validate deterministic native-output conversion to the
