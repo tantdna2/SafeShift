@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.provision_qwen3vl_snapshot import (
     MODEL_ID, REVISION, cached_snapshot, sha256_file, verify_weights, weight_files, write_json,
 )
-from safeshift.runners.contracts import Request, RunContext, Task, execute_call
+from safeshift.runners.contracts import ErrorCode, Request, RunContext, Task, execute_call
 from safeshift.runners.qwen3_vl import Qwen3VLRunner, Qwen3VLAdapter
 from safeshift.runners.storage import FileRawStore
 
@@ -299,9 +299,9 @@ def run_smoke(run_id, *, repo=ROOT, rerun_of=None, rerun_reason=None,
                                        "sha256": sha256_file(metadata)}
                 store.save_result(result)
                 report["memory"].append(memory_snapshot(torch, f"after_call_{index}"))
-                if result.parse_status.value == "INVALID":
+                if result.error and result.error.code == ErrorCode.INVALID_CLASSIFICATION:
                     report["notes"].append("CLASSIFICATION_PARSE_INVALID")
-                if result.error and result.error.stage != "adapt":
+                elif result.error is not None:
                     report["blocker"] = {**asdict(result.error),
                                          "runtime_check_failure": report["runtime_check_failure"],
                                          "native_errors": report["native_errors"]}
@@ -309,7 +309,9 @@ def run_smoke(run_id, *, repo=ROOT, rerun_of=None, rerun_reason=None,
                 if not row["raw_output"] or not row["cache_state_cleared"]:
                     raise ValueError("RAW_EVIDENCE_OR_CACHE_CLEANUP_MISSING")
             if (len(report["calls"]) == 2 and report["blocker"] is None
-                    and report["native_generate_calls"] == 2 and not report["native_errors"]):
+                    and report["native_generate_calls"] == 2 and not report["native_errors"]
+                    and all(call["parse_status"] in {"SUCCESS", "INVALID"}
+                            for call in report["calls"])):
                 report["status"] = "RUNTIME_SMOKE_PASS"
     except Exception as exc:
         report["blocker"] = {"stage": stage, "exception_type": type(exc).__name__,

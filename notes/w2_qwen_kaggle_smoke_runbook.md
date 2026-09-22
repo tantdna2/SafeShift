@@ -201,8 +201,12 @@ print(json.dumps(report["calls"], indent=2))
 one load lifecycle, two observable native generations with raw+metadata preserved,
 cache/RoPE cleared after each independent request, no native exception/OOM and no disk
 offload. `CLASSIFICATION_PARSE_INVALID` does **not** fail runtime or measure accuracy.
-An adapter exception is likewise separate from generation/raw operability and is
-retained as `PARSER_FAILURE`; it does not qualify the classification interface.
+Only `INVALID_CLASSIFICATION_OUTPUT` is a nonblocking runtime note.
+`PARSER_FAILURE`, including adapter exceptions or structural failures, is a smoke
+runtime/integration blocker in the runner → raw envelope → adapter path, even when
+native generation worked. It is not a model capability failure. PASS requires both
+classification parse statuses to be `SUCCESS` or `INVALID`; `FAILED`, `UNSUPPORTED`
+and `NOT_ATTEMPTED` cannot pass.
 Load/generation/storage failures stop further calls. CPU offload is
 `RUNTIME_NOTE_CPU_OFFLOAD` for Research Lead review. Both `cuda:0` and `cuda:1` are
 the expected map; absence of either produces a separate review note rather than

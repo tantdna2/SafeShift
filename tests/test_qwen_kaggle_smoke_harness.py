@@ -2,6 +2,7 @@
 
 import builtins
 import ast
+from dataclasses import replace
 from contextlib import ExitStack
 import hashlib
 import json
@@ -17,6 +18,7 @@ from unittest.mock import Mock, patch
 from scripts import provision_qwen3vl_snapshot as provision
 from scripts import w2_qwen_kaggle_smoke as smoke
 from safeshift.runners.qwen3_vl import Qwen3VLRunner
+from safeshift.runners.contracts import ErrorCode, ParseStatus
 from tests.test_qwen_runner import Runtime
 
 
@@ -233,6 +235,48 @@ class SmokeTests(unittest.TestCase):
         self.assertEqual((self.repo / smoke.PLAN).read_bytes(), (smoke.ROOT / smoke.PLAN).read_bytes())
         for call in report["calls"]:
             self.assertEqual(call["parse_status"], "INVALID")
+
+    def test_parser_failure_blocks_runtime_smoke(self):
+        def fail_adapter(adapter, raw, task):
+            paths = list((self.repo / smoke.ARTIFACTS).glob("*/raw/*/response.raw"))
+            self.assertEqual(len(paths), 1)
+            self.assertEqual(paths[0].read_bytes(), raw)
+            self.assertTrue(paths[0].with_name("metadata.json").exists())
+            raise RuntimeError("controlled adapter exception")
+
+        with patch.object(smoke.Qwen3VLAdapter, "adapt", fail_adapter):
+            report = self.run_fake()
+        self.assertEqual(report["status"], "RUNTIME_SMOKE_FAIL")
+        self.assertEqual(report["blocker"]["code"], ErrorCode.PARSER_FAILURE)
+        self.assertEqual(report["native_generate_calls"], 1)
+        self.assertEqual(report["native_errors"], [])
+        self.assertEqual(len(report["calls"]), 1)
+        call = report["calls"][0]
+        self.assertEqual(call["parse_status"], ParseStatus.FAILED)
+        self.assertEqual(call["error"]["code"], ErrorCode.PARSER_FAILURE)
+        self.assertTrue(call["cache_state_cleared"])
+        for key in ("raw_output", "metadata"):
+            path = self.repo / call[key]["path"]
+            self.assertEqual(provision.sha256_file(path), call[key]["sha256"])
+        self.assertNotIn("CLASSIFICATION_PARSE_INVALID", report["notes"])
+        self.assertEqual((self.repo / smoke.PLAN).read_bytes(), (smoke.ROOT / smoke.PLAN).read_bytes())
+
+    def test_completed_invalid_statuses_fail_closed_without_error(self):
+        original = smoke.execute_call
+        for status in (ParseStatus.FAILED, ParseStatus.UNSUPPORTED, ParseStatus.NOT_ATTEMPTED):
+            def altered_result(*args, **kwargs):
+                # Preserve two actual fake-backend generations and raw artifacts,
+                # but inject an inconsistent completed status with no error code.
+                result = original(*args, **kwargs)
+                return replace(result, parse_status=status, error=None)
+
+            with self.subTest(status=status), patch.object(smoke, "execute_call", altered_result):
+                report = self.run_fake("fail-closed-" + status.value)
+            self.assertEqual(report["status"], "RUNTIME_SMOKE_FAIL")
+            self.assertEqual(report["native_generate_calls"], 2)
+            self.assertIsNone(report["blocker"])
+            self.assertTrue(all(c["raw_output"] and c["cache_state_cleared"]
+                                and c["parse_status"] == status for c in report["calls"]))
 
     def test_native_oom_stops_without_retry_or_fallback(self):
         class OutOfMemoryError(RuntimeError):
