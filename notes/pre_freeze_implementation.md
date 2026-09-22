@@ -110,7 +110,7 @@ live availability or finalize immutable revisions and license/access records.
 The [Qwen implementation note](w2_qwen_runner_implementation.md) records the exact
 8B checkpoint runner, injected native factories, idempotent lifecycle, in-memory
 image processing, deterministic raw envelope and classification adapter. All
-53 new contract tests and 350 full-suite tests pass using fake runtime objects.
+63 contract tests and 360 full-suite tests pass using fake runtime objects.
 No ML runtime, weights or GPU were used. This proves **implementation contract is
 structurally correct**, not **Qwen runtime works on GPU**.
 
@@ -120,6 +120,12 @@ kwargs are caller-supplied, with inherited configuration recorded; no decoding,
 precision or quantization policy is selected. Blocking generation has
 `BLOCKING_GENERATE_NO_PARTIAL_GUARANTEE`. W2.6A core, canonical schema, D5 and D9
 configuration/provenance records are unchanged.
+
+PR #23 review fix preserves observed native IDs and any completed decode in a
+separate versioned failure envelope when post-generation validation, decoding or
+serialization fails. W2.6A stores it through `GenerationFailure.partial_raw` with
+parsing NOT_ATTEMPTED; the adapter is never invoked. An exception before any
+serializable native observation still has `partial_raw=None`.
 
 Checklist #1 remains COMPLETE documentary; #2–#8 remain PENDING. Real runtime
 validation, remaining runners, interface qualification, external gate, final roles

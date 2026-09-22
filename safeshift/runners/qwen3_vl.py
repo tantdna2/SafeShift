@@ -24,6 +24,7 @@ MODEL_ID = "Qwen/Qwen3-VL-8B-Instruct"
 REVISION = "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"
 BACKEND = "qwen3_vl_transformers"
 ENVELOPE_VERSION = "safeshift-qwen3-vl-raw-v1"
+FAILURE_ENVELOPE_VERSION = "safeshift-qwen3-vl-failure-v1"
 IDENTITY = ModelIdentity(
     MODEL_ID, REVISION,
     "configs/pre_freeze/local_model_provenance.d9.json#qwen3_vl_8b_instruct",
@@ -37,6 +38,53 @@ DECODING_KEYS = frozenset({
 def _json_bytes(value) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True,
                       separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+
+def _observe(evidence, name, value):
+    """Snapshot plain JSON native values before validation or further decoding.
+
+    Do not coerce objects with repr/str/default hooks. Escaped JSON also preserves
+    an observed string containing lone surrogates without invalid UTF-8 bytes.
+    An unrepresentable observation must not erase earlier serializable evidence.
+    """
+    def check(item):
+        if type(item) is list:
+            for child in item:
+                check(child)
+        elif type(item) is dict:
+            for key, child in item.items():
+                if type(key) is not str:
+                    raise TypeError("JSON object keys must not be coerced")
+                check(child)
+        elif item is not None and type(item) not in (str, int, float, bool):
+            raise TypeError("native observation is not a plain JSON value")
+
+    try:
+        check(value)
+        snapshot = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"),
+                              allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, OverflowError, RecursionError):
+        return
+    evidence[name] = snapshot
+
+
+def _failure_raw(evidence, count, stage, error):
+    if not evidence:
+        return None
+    metadata = {
+        "schema_version": FAILURE_ENVELOPE_VERSION, "backend": BACKEND,
+        "model_id": MODEL_ID, "model_revision": REVISION,
+        "generation_observation_status": "RETURNED_NATIVE_OUTPUT",
+        "input_token_count": count, "post_generation_stage": stage,
+        "post_generation_error_type": type(error).__name__,
+    }
+    fragments = {key: json.dumps(value, ensure_ascii=True).encode("utf-8")
+                 for key, value in metadata.items()}
+    fragments.update(evidence)
+    # Assemble already serialized observations independently of success metadata
+    # and its serializer. No exception message or unobserved placeholders.
+    return b"{" + b",".join(json.dumps(key).encode("utf-8") + b":" + fragments[key]
+                            for key in sorted(fragments)) + b"}"
 
 
 def _decoding(values):
@@ -95,7 +143,7 @@ def _ids(value):
 
 class Qwen3VLRunner(LocalRunner):
     identity = IDENTITY
-    version = "qwen3-vl-runner-v1"
+    version = "qwen3-vl-runner-v2"
     partial_generation = "BLOCKING_GENERATE_NO_PARTIAL_GUARANTEE"
 
     def __init__(self, *, backend_factory=_native_backend):
@@ -228,6 +276,9 @@ class Qwen3VLRunner(LocalRunner):
         effective = {**config.to_dict(), **kwargs}
         _json_bytes(effective)
         self._clear_call_state(model)
+        evidence = {}
+        count = len(prepared.input_ids)
+        stage = "GENERATE"
         try:
             with self._backend.torch.inference_mode():
                 try:
@@ -235,29 +286,43 @@ class Qwen3VLRunner(LocalRunner):
                 except Exception:
                     # Blocking backend has returned no observable tokens or text.
                     raise GenerationFailure(partial_raw=None) from None
-            rows = generated.tolist()
+                stage = "TOKEN_OBSERVATION"
+                rows = generated.tolist()
+                _observe(evidence, "observed_generated_ids", rows)
+            stage = "ROW_VALIDATION"
             if type(rows) is not list or len(rows) != 1:
                 raise ValueError("expected one generated token sequence")
+            stage = "TOKEN_VALIDATION"
             full = _ids(rows[0])
-            count = len(prepared.input_ids)
+            _observe(evidence, "generated_ids_full", full)
+            stage = "PREFIX_VALIDATION"
             if full[:count] != prepared.input_ids:
                 raise ValueError("native generation did not retain the input prefix")
             continuation = full[count:]
+            _observe(evidence, "continuation_ids", continuation)
 
             def decode(skip):
                 texts = processor.batch_decode(
-                    [continuation], skip_special_tokens=skip, clean_up_tokenization_spaces=False,
+                    [deepcopy(continuation)], skip_special_tokens=skip, clean_up_tokenization_spaces=False,
                 )
+                _observe(evidence, "observed_parser_decode" if skip else "observed_special_decode", texts)
                 if len(texts) != 1 or type(texts[0]) is not str:
                     raise ValueError("expected one decoded string")
                 return texts[0]
 
+            stage = "DECODE_SPECIAL_TOKENS"
+            special_text = decode(False)
+            _observe(evidence, "decoded_with_special_tokens", special_text)
+            stage = "DECODE_FOR_PARSER"
+            parser_text = decode(True)
+            _observe(evidence, "decoded_for_parser", parser_text)
+            stage = "SERIALIZATION"
             return _json_bytes({
                 "schema_version": ENVELOPE_VERSION, "backend": BACKEND,
                 "model_id": MODEL_ID, "model_revision": REVISION,
                 "input_token_count": count, "generated_ids_full": full,
                 "continuation_ids": continuation,
-                "decoded_with_special_tokens": decode(False), "decoded_for_parser": decode(True),
+                "decoded_with_special_tokens": special_text, "decoded_for_parser": parser_text,
                 "generation_kwargs": kwargs, "effective_generation_config": effective,
                 "runtime": {"software_versions": deepcopy(self._backend.software_versions),
                             "input_device": str(model.device),
@@ -265,6 +330,8 @@ class Qwen3VLRunner(LocalRunner):
                                            getattr(model, "hf_device_map", {}).items()},
                             "model_dtype": str(model.dtype), "runner_version": self.version},
             })
+        except Exception as exc:
+            raise GenerationFailure(partial_raw=_failure_raw(evidence, count, stage, exc)) from None
         finally:
             self._clear_call_state(model)
 

@@ -23,7 +23,8 @@ from safeshift.runners.contracts import (
     Request, RunContext, SpatialKind, Task, execute_call,
 )
 from safeshift.runners.qwen3_vl import (
-    BACKEND, ENVELOPE_VERSION, MODEL_ID, REVISION, QwenBackend, Qwen3VLAdapter, Qwen3VLRunner,
+    BACKEND, ENVELOPE_VERSION, FAILURE_ENVELOPE_VERSION, MODEL_ID, REVISION,
+    QwenBackend, Qwen3VLAdapter, Qwen3VLRunner,
 )
 from safeshift.runners.storage import FileRawStore
 
@@ -193,6 +194,24 @@ class QwenRunnerTests(unittest.TestCase):
 
     def raw(self, result):
         return (self.repo / result.raw_output.path).read_bytes()
+
+    def execute_failure(self, **kwargs):
+        with patch.object(self.adapter, "adapt") as adapter:
+            result = self.execute(**kwargs)
+            adapter.assert_not_called()
+        self.assertEqual(result.error.code, ErrorCode.GENERATION_FAILURE)
+        self.assertEqual(result.parse_status, ParseStatus.NOT_ATTEMPTED)
+        self.assertIsNone(result.canonical)
+        self.assertIsNotNone(result.raw_output)
+        raw = self.raw(result)
+        obj = strict_json(raw.decode("utf-8"))
+        self.assertEqual(obj["schema_version"], FAILURE_ENVELOPE_VERSION)
+        self.assertEqual(obj["model_id"], MODEL_ID)
+        self.assertEqual(obj["model_revision"], REVISION)
+        self.assertEqual(obj["generation_observation_status"], "RETURNED_NATIVE_OUTPUT")
+        metadata = strict_json((self.repo / result.raw_output.path).with_name("metadata.json").read_bytes())
+        self.assertEqual(metadata["parse_status"], "NOT_ATTEMPTED")
+        return result, obj
 
     def generate(self, ctx=None, req=None):
         ctx = ctx or context()
@@ -550,8 +569,12 @@ class QwenRunnerTests(unittest.TestCase):
 
     def test_decode_error_still_clears_native_per_image_state(self):
         with patch.object(self.runtime.processor, "batch_decode", side_effect=RuntimeError()):
-            result = self.execute()
-        self.assertEqual(result.error.code, ErrorCode.GENERATION_FAILURE)
+            _, obj = self.execute_failure()
+        self.assertEqual(obj["generated_ids_full"], [11, 22, 33, 701, 702, 703])
+        self.assertEqual(obj["continuation_ids"], [701, 702, 703])
+        self.assertEqual(obj["post_generation_stage"], "DECODE_SPECIAL_TOKENS")
+        self.assertNotIn("decoded_with_special_tokens", obj)
+        self.assertNotIn("decoded_for_parser", obj)
         self.assertIsNone(self.runtime.model.model.rope_deltas)
         self.assertIsNone(self.runtime.model._cache)
         self.assertIsNone(self.execute(ctx=context(call_id="b")).error)
@@ -661,9 +684,121 @@ Qwen3VLRunner(backend_factory=lambda: None)
 
     def test_incorrect_backend_prefix_fails_without_semantic_parse(self):
         with patch.object(self.runtime.model, "generate", return_value=Tensor([[9, 8, 7]])):
-            result = self.execute()
+            _, obj = self.execute_failure()
+        self.assertEqual(obj["observed_generated_ids"], [[9, 8, 7]])
+        self.assertEqual(obj["generated_ids_full"], [9, 8, 7])
+        self.assertEqual(obj["input_token_count"], 3)
+        self.assertEqual(obj["post_generation_stage"], "PREFIX_VALIDATION")
+        self.assertNotIn("continuation_ids", obj)
+        self.assertEqual(self.runtime.processor.decodes, [])
+
+    def test_parser_decode_failure_preserves_successful_special_decode(self):
+        special = '<control> tiếng Việt\n{"safety_level":"Level04"}<end>'
+        with patch.object(self.runtime.processor, "batch_decode", side_effect=[[special], RuntimeError()]):
+            _, obj = self.execute_failure()
+        self.assertEqual(obj["observed_generated_ids"], [[11, 22, 33, 701, 702, 703]])
+        self.assertEqual(obj["generated_ids_full"], [11, 22, 33, 701, 702, 703])
+        self.assertEqual(obj["continuation_ids"], [701, 702, 703])
+        self.assertEqual(obj["decoded_with_special_tokens"], special)
+        self.assertNotIn("decoded_for_parser", obj)
+        self.assertEqual(obj["post_generation_stage"], "DECODE_FOR_PARSER")
+
+    def test_invalid_row_structure_preserves_exact_observed_representation(self):
+        for index, rows in enumerate(([], [11, 22, 33], [[1, 2], [3, 4]], [[11, True, -9]],
+                                      {"unexpected_tokens": [7, 8]})):
+            with self.subTest(rows=rows), patch.object(self.runtime.model, "generate", return_value=Tensor(rows)):
+                _, obj = self.execute_failure(ctx=context(call_id=str(index)))
+            self.assertEqual(obj["observed_generated_ids"], rows)
+            self.assertIn(obj["post_generation_stage"], ("ROW_VALIDATION", "TOKEN_VALIDATION"))
+            self.assertNotIn("continuation_ids", obj)
+        self.assertEqual(self.runtime.processor.decodes, [])
+
+    def test_tolist_failure_without_observed_ids_has_no_invented_partial(self):
+        returned = SimpleNamespace(tolist=Mock(side_effect=RuntimeError("private information")))
+        with patch.object(self.runtime.model, "generate", return_value=returned):
+            with self.assertRaises(GenerationFailure) as caught:
+                self.generate()
+            self.assertIsNone(caught.exception.partial_raw)
+            with patch.object(self.adapter, "adapt") as adapter, patch.object(self.store, "preserve") as store:
+                result = self.execute()
+            adapter.assert_not_called()
+            store.assert_not_called()
         self.assertEqual(result.error.code, ErrorCode.GENERATION_FAILURE)
+        self.assertEqual(result.parse_status, ParseStatus.NOT_ATTEMPTED)
         self.assertIsNone(result.raw_output)
+
+    def test_failure_envelope_is_deterministic_strict_utf8_without_exception_message(self):
+        special = "<control>tiếng Việt\n"
+        raws = []
+        for index in range(2):
+            with patch.object(self.runtime.processor, "batch_decode", side_effect=[
+                    [special], RuntimeError("PRIVATE_PATH_DO_NOT_COPY")]):
+                result, obj = self.execute_failure(ctx=context(call_id=str(index)))
+            raw = self.raw(result)
+            raws.append(raw)
+            self.assertNotIn(b"PRIVATE_PATH_DO_NOT_COPY", raw)
+            self.assertEqual(obj["post_generation_error_type"], "RuntimeError")
+            self.assertEqual(raw, json.dumps(obj, ensure_ascii=True, allow_nan=False,
+                                            sort_keys=True, separators=(",", ":")).encode("utf-8"))
+        self.assertEqual(raws[0], raws[1])
+
+    def test_partial_preservation_storage_failure_blocks_adapter(self):
+        with patch.object(self.runtime.processor, "batch_decode", side_effect=RuntimeError()), \
+                patch.object(self.store, "preserve", side_effect=OSError()) as store, \
+                patch.object(self.adapter, "adapt") as adapter:
+            result = self.execute()
+        self.assertEqual(result.error.code, ErrorCode.RAW_PRESERVATION_FAILURE)
+        self.assertEqual(result.parse_status, ParseStatus.NOT_ATTEMPTED)
+        self.assertIsNone(result.raw_output)
+        store.assert_called_once()
+        self.assertEqual(strict_json(store.call_args.args[0])["schema_version"], FAILURE_ENVELOPE_VERSION)
+        adapter.assert_not_called()
+
+    def test_success_envelope_serialization_failure_preserves_all_observations(self):
+        from safeshift.runners.qwen3_vl import _json_bytes
+
+        def fail_success(value):
+            if isinstance(value, dict) and value.get("schema_version") == ENVELOPE_VERSION:
+                raise TypeError("PRIVATE_SERIALIZATION_DETAIL")
+            return _json_bytes(value)
+
+        with patch("safeshift.runners.qwen3_vl._json_bytes", side_effect=fail_success):
+            _, obj = self.execute_failure()
+        self.assertEqual(obj["post_generation_stage"], "SERIALIZATION")
+        self.assertEqual(obj["generated_ids_full"], [11, 22, 33, 701, 702, 703])
+        self.assertEqual(obj["continuation_ids"], [701, 702, 703])
+        self.assertEqual(obj["decoded_for_parser"], self.runtime.processor.text)
+        self.assertEqual(obj["decoded_with_special_tokens"], "<control>" + self.runtime.processor.text + "<end>")
+        self.assertIsNone(self.execute(ctx=context(call_id="b")).error)
+
+    def test_unencodable_success_text_survives_as_lossless_json_escape(self):
+        self.runtime.processor.text = "observed\ud800text"
+        _, obj = self.execute_failure()
+        self.assertEqual(obj["post_generation_stage"], "SERIALIZATION")
+        self.assertEqual(obj["decoded_for_parser"], self.runtime.processor.text)
+        self.assertEqual(obj["continuation_ids"], [701, 702, 703])
+
+    def test_invalid_decode_structure_preserved_without_losing_tokens(self):
+        with patch.object(self.runtime.processor, "batch_decode", return_value=["first", "second"]):
+            _, obj = self.execute_failure()
+        self.assertEqual(obj["observed_special_decode"], ["first", "second"])
+        self.assertEqual(obj["continuation_ids"], [701, 702, 703])
+        self.assertNotIn("decoded_with_special_tokens", obj)
+
+    def test_unserializable_decode_does_not_erase_prior_token_evidence(self):
+        with patch.object(self.runtime.processor, "batch_decode", return_value=[object()]):
+            _, obj = self.execute_failure()
+        self.assertNotIn("observed_special_decode", obj)
+        self.assertEqual(obj["observed_generated_ids"], [[11, 22, 33, 701, 702, 703]])
+        self.assertEqual(obj["continuation_ids"], [701, 702, 703])
+
+    def test_adapter_rejects_failure_envelope_even_if_called_directly(self):
+        with patch.object(self.runtime.processor, "batch_decode", side_effect=RuntimeError()):
+            result, _ = self.execute_failure()
+        with patch("safeshift.runners.qwen3_vl.parse_text") as parser:
+            with self.assertRaises(ValueError):
+                self.adapter.adapt(self.raw(result), Task.CLASSIFICATION)
+            parser.assert_not_called()
 
 
 if __name__ == "__main__":

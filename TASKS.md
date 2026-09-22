@@ -96,7 +96,7 @@ Documentation synchronization does not complete any execution prerequisite.
 - [ ] **2. Runners:** Implement and validate local/self-hosted runners with explicit
   preprocessing, precision/quantization, device/software versions and raw-output
   preservation before parsing. W2.6A generic contracts/scaffolding and dummy unit
-  tests are complete. W2.6B1A Qwen runner code + 53 offline contract tests are
+  tests are complete. W2.6B1A Qwen runner code + 63 offline contract tests are
   implemented; real runtime validation and remaining model runners are **PENDING**.
   This establishes structural implementation contracts, not GPU runtime success.
   See [W2.6A implementation](notes/w2_local_runner_contracts.md) and

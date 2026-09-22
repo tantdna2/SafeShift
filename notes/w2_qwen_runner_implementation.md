@@ -148,9 +148,49 @@ Existing W2.6A stage mapping is unchanged:
 **BLOCKING_GENERATE_NO_PARTIAL_GUARANTEE**: when blocking `model.generate` raises,
 the wrapper raises `GenerationFailure(partial_raw=None)`. It cannot observe internal
 partial tokens; error messages never become output and the parser never runs.
-No streamer is implemented. B1B/B1C may evaluate observed streaming evidence and
-post-generation decode/serialization failure recovery if needed. Process/device
-crashes and all runtime-specific partial recovery remain unqualified.
+No streamer is implemented. B1B/B1C may evaluate observed streaming evidence if
+needed. Process/device crashes and runtime-specific partial recovery remain
+unqualified.
+
+### PR #23 blocking review fix: post-generation evidence
+
+Reviewed HEAD: `b4a7e34ab54408a7dae3f24204d6b4de4f337e11`.
+Runner version is now `qwen3-vl-runner-v2`; success-envelope schema and its required
+fields remain unchanged. The previous implementation lost returned native IDs when
+prefix validation or decoding failed. Observation is now separated from structural
+validation, decoding and semantic parsing: each serializable observation is captured
+as immutable JSON bytes immediately, before later steps can fail or mutate it.
+
+Failures use `safeshift-qwen3-vl-failure-v1` with exact backend/model/revision,
+`generation_observation_status=RETURNED_NATIVE_OUTPUT`, input token count, failing
+stage and exception **type only**. Native evidence fields are present only when
+observed and losslessly representable:
+
+- `observed_generated_ids`: exact `.tolist()` result, including invalid row shapes;
+  capture occurs before row/token/prefix validation.
+- `generated_ids_full`: validated single token sequence, captured before prefix checks.
+- `continuation_ids`: recorded only after prefix validation and slicing succeed.
+- `observed_special_decode` / `observed_parser_decode`: returned decode representation,
+  captured before validating it as a single string.
+- `decoded_with_special_tokens` / `decoded_for_parser`: each completed valid decode,
+  independently retained if the following decode or success serialization fails.
+
+The failure serializer assembles those already captured fragments independently
+of success metadata/serialization. It produces deterministic strict UTF-8 JSON;
+Unicode escaping preserves even an observed lone surrogate without invalid UTF-8.
+Only plain JSON values are accepted, without object/string coercion, non-finite
+values, output repair, exception messages or semantic parsing. An unrepresentable
+later observation does not erase earlier evidence. If `.tolist()` itself fails
+before any token representation is obtained, `partial_raw=None`; no token sequence
+is inferred from the returned opaque object. A blocking `generate()` exception
+before return likewise retains its existing no-output behavior.
+
+After a post-generation failure, `GenerationFailure(partial_raw=...)` routes this
+envelope through unchanged W2.6A storage: raw plus metadata are preserved, status
+stays `NOT_ATTEMPTED`, error is `GENERATION_RUNTIME_FAILURE`, and no adapter runs.
+Storage failure maps to `RAW_PRESERVATION_FAILURE`. The adapter also rejects this
+separate envelope if called directly. Native cache cleanup still runs on errors,
+and a later independent call can succeed using the already loaded resources.
 
 ## Validation and boundaries
 
@@ -171,7 +211,9 @@ Run from repository root:
 git diff --check
 ```
 
-Results: **53/53 new tests PASS; 350/350 full-suite tests PASS**, no failures/errors.
+Results after the review fix: **63/63 Qwen tests PASS; 360/360 full-suite tests PASS**,
+no failures/errors. The fix adds 10 tests and updates 2 existing tests (prefix
+failure and first-decode failure); the reviewed baseline had 53 Qwen tests.
 Coverage includes AC-A and AC-B, exact factory pins, lazy imports, image and prompt
 packaging, caller decoding, raw-before-adapter persistence, strict envelopes,
 canonical classification, unqualified grounding, failure recovery, and state cleanup.
