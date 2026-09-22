@@ -2,6 +2,7 @@
   "status": "D9_PRE_FREEZE_SELF_HOSTED",
   "decision_id": "DEC-W2-D9-009",
   "protocol_freeze_commit_sha": "PENDING",
+  "model_provenance_config": "configs/pre_freeze/local_model_provenance.d9.json",
   "inspecsafe_inference_authorized": false,
   "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
   "selection_basis": "RESEARCH_VALUE_BEFORE_COMPUTE; NO_INSPECSAFE_PERFORMANCE_USED",
@@ -19,8 +20,10 @@
       "role": "ANCHOR_REPRODUCTION_BRIDGE",
       "classification": "CANDIDATE",
       "grounding": "DOC_SUPPORTED_PENDING_SYNTHETIC_GATE",
-      "immutable_revision": "PENDING",
-      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+      "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "qwen3_vl_8b_instruct",
+      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     },
     {
       "key": "ovis2_5_9b",
@@ -28,8 +31,10 @@
       "role": "VISUAL_STACK_CONTRAST",
       "classification": "CANDIDATE",
       "grounding": "DOC_SUPPORTED_POINT_AND_BOX_PENDING_SYNTHETIC_GATE",
-      "immutable_revision": "PENDING",
-      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+      "immutable_revision": "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "ovis2_5_9b",
+      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     },
     {
       "key": "molmo2_o_7b",
@@ -38,8 +43,10 @@
       "classification": "CANDIDATE",
       "grounding": "NOT_PARTICIPATING_UNLESS_BOX_INTERFACE_VERIFIED",
       "native_point_evidence": "DOC_SUPPORTED; BOX_INTERFACE_COMPATIBILITY_UNRESOLVED",
-      "immutable_revision": "PENDING",
-      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+      "immutable_revision": "784410650d12be9bc086118fdefa32d2c3bced86",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "molmo2_o_7b",
+      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     },
     {
       "key": "gemma4_12b_it",
@@ -47,8 +54,10 @@
       "role": "INDEPENDENT_GOOGLE_FAMILY",
       "classification": "CANDIDATE",
       "grounding": "PENDING_EXTERNAL_GATE_CLASSIFICATION_ONLY_UNTIL_PROMOTED",
-      "immutable_revision": "PENDING",
-      "license_access_review": "DOC_REVIEWED_PENDING_FREEZE_RECORD"
+      "immutable_revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "gemma4_12b_it",
+      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     }
   ],
   "backups_in_order": [
@@ -56,14 +65,18 @@
       "key": "paligemma2_10b_mix_448",
       "model_id": "google/paligemma2-10b-mix-448",
       "replacement_status": "BACKUP_1_ONLY",
-      "immutable_revision": "PENDING",
+      "immutable_revision": "b26d16fb4251090ba4a4aa5af9fca1f8248ed5b6",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "paligemma2_10b_mix_448",
       "access_note": "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED"
     },
     {
       "key": "minicpm_v_4_6",
       "model_id": "openbmb/MiniCPM-V-4.6",
       "replacement_status": "BACKUP_2_ONLY",
-      "immutable_revision": "PENDING"
+      "immutable_revision": "36f34a661a4bd35d0dc2294cb044d2584646c7d3",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "minicpm_v_4_6"
     }
   ],
   "replacement_policy": {
@@ -134,7 +147,7 @@
     "historical_artifacts_preserved": true
   },
   "d9_checklist": {
-    "1_model_revisions_and_license_provenance": "PENDING",
+    "1_model_revisions_and_license_provenance": "COMPLETE",
     "2_local_self_hosted_runners": "PENDING",
     "3_low_variance_decoding_per_model": "PENDING",
     "4_deterministic_native_output_adapters": "PENDING",
