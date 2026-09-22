@@ -18,7 +18,7 @@ and [freeze_manifest.d9.template.json](../configs/pre_freeze/freeze_manifest.d9.
 | # | Active D9 prerequisite | Current status |
 |---|---|---|
 | 1 | Exact IDs/revisions, access/license evidence and weight provenance for primaries/backups | PENDING |
-| 2 | Local/self-hosted runners, preprocessing/device/precision/software and raw-output provenance | PENDING; no runners implemented |
+| 2 | Local/self-hosted runners, preprocessing/device/precision/software and raw-output provenance | PENDING; W2.6A contracts/scaffolding complete, model-specific execution and real validation pending |
 | 3 | One supported low-variance decoding policy per model | PENDING; hosted settings do not transfer automatically |
 | 4 | Deterministic native-output adapters compatible with the existing canonical box schema | PENDING; point-only compatibility unresolved |
 | 5 | Interface eligibility review for four primaries and unchanged SYNTHETIC V1 gate for qualifying box interfaces | PENDING; no model execution; qualitative giant-box review procedure still pending |
@@ -104,6 +104,18 @@ model/provider API calls, full D5 evaluation or InspecSafe inference, because th
 task authorizes protocol/documentation synchronization only. Model facts in the D9
 brief retain their prior documentary-review provenance; this check does not establish
 live availability or finalize immutable revisions and license/access records.
+
+## W2.6A — Local Runner Contracts (2026-09-21)
+
+The [W2.6A implementation note](w2_local_runner_contracts.md) records the generic
+runner lifecycle, raw-before-parse storage, independent task/participation status,
+native box/point/no-spatial/malformed distinction, error taxonomy and seven dummy
+cases. This completes infrastructure contracts/scaffolding only. Active D9 checklist
+#2 and all model-specific prerequisites remain **PENDING**; the unchanged D9 JSON
+templates still correctly describe the pending execution/freeze prerequisites.
+No real runner validation, model provenance completion, decoding freeze, adapter
+qualification, synthetic gate, final roles or protocol freeze is claimed.
+The earlier D9 synchronization and D8 records describe their historical milestones.
 
 ## Historical D8 implementation record
 
