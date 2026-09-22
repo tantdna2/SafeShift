@@ -101,6 +101,10 @@ Documentation synchronization does not complete any execution prerequisite.
   This establishes structural implementation contracts, not GPU runtime success.
   See [W2.6A implementation](notes/w2_local_runner_contracts.md) and
   [Qwen offline implementation](notes/w2_qwen_runner_implementation.md).
+  W2.6B1B Kaggle T4×2 runtime-validation harness prepared; real Kaggle execution
+  pending. The [smoke runbook](notes/w2_qwen_kaggle_smoke_runbook.md) locks a
+  smoke-only FP16 candidate and two independent handcrafted calls, not a research
+  precision/decoding freeze. Checklist #2 remains **PENDING**.
 - [ ] **3. Decoding:** Pin one supported low-variance configuration per model;
   no selection from InspecSafe outputs and no automatic reuse of hosted settings.
 - [ ] **4. Adapters/parsers:** Validate deterministic native-output conversion to the
