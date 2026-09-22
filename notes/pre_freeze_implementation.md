@@ -18,7 +18,7 @@ and [freeze_manifest.d9.template.json](../configs/pre_freeze/freeze_manifest.d9.
 | # | Active D9 prerequisite | Current status |
 |---|---|---|
 | 1 | Exact IDs/revisions, access/license evidence and weight provenance for primaries/backups | COMPLETE: W2.6B0 documentary records for all six; not access/use clearance or protocol freeze |
-| 2 | Local/self-hosted runners, preprocessing/device/precision/software and raw-output provenance | PENDING; W2.6A contracts/scaffolding complete, model-specific execution and real validation pending |
+| 2 | Local/self-hosted runners, preprocessing/device/precision/software and raw-output provenance | PENDING; W2.6A contracts and W2.6B1A Qwen code/offline tests implemented; real runtime validation and remaining model runners pending |
 | 3 | One supported low-variance decoding policy per model | PENDING; hosted settings do not transfer automatically |
 | 4 | Deterministic native-output adapters compatible with the existing canonical box schema | PENDING; point-only compatibility unresolved |
 | 5 | Interface eligibility review for four primaries and unchanged SYNTHETIC V1 gate for qualifying box interfaces | PENDING; no model execution; qualitative giant-box review procedure still pending |
@@ -104,6 +104,27 @@ model/provider API calls, full D5 evaluation or InspecSafe inference, because th
 task authorizes protocol/documentation synchronization only. Model facts in the D9
 brief retain their prior documentary-review provenance; this check does not establish
 live availability or finalize immutable revisions and license/access records.
+
+## W2.6B1A — Qwen runner offline implementation (2026-09-22)
+
+The [Qwen implementation note](w2_qwen_runner_implementation.md) records the exact
+8B checkpoint runner, injected native factories, idempotent lifecycle, in-memory
+image processing, deterministic raw envelope and classification adapter. All
+53 new contract tests and 350 full-suite tests pass using fake runtime objects.
+No ML runtime, weights or GPU were used. This proves **implementation contract is
+structurally correct**, not **Qwen runtime works on GPU**.
+
+Qwen grounding remains `UNCERTAIN_REQUIRES_EXTERNAL_GATE`; the adapter reports
+`UNSUPPORTED` / `NOT_YET_QUALIFIED` without interpreting boxes or points. Generation
+kwargs are caller-supplied, with inherited configuration recorded; no decoding,
+precision or quantization policy is selected. Blocking generation has
+`BLOCKING_GENERATE_NO_PARTIAL_GUARANTEE`. W2.6A core, canonical schema, D5 and D9
+configuration/provenance records are unchanged.
+
+Checklist #1 remains COMPLETE documentary; #2–#8 remain PENDING. Real runtime
+validation, remaining runners, interface qualification, external gate, final roles
+and freeze are outstanding. No SYNTHETIC V1 model gate or InspecSafe inference ran.
+`protocol_freeze_commit_sha: PENDING`.
 
 ## W2.6B0 — Model Provenance & Runner Specification (2026-09-22)
 
