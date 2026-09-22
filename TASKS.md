@@ -86,8 +86,13 @@ Documentation synchronization does not complete any execution prerequisite.
 
 - [x] Synchronize the D9 decision ledger, checklist, implementation note and two
   configuration templates; preserve historical D8 evidence and SYNTHETIC V1 assets.
-- [ ] **1. Model provenance:** Freeze exact IDs and immutable revisions, access/license
-  evidence and weight provenance for the four primary candidates and ordered backups.
+- [x] **1. Model provenance:** COMPLETE (W2.6B0 documentary scope): exact D9 IDs,
+  immutable repository SHAs, official revision/weight metadata and separate
+  license/access/caveat records for all four primaries and both ordered backups.
+  `VERIFIED_DOCUMENTARY` is not protocol freeze, runtime validation or use clearance.
+  PaliGemma access acceptance and documented usage caveats remain execution
+  prerequisites. See [provenance and runner specification](notes/w2_model_provenance_runner_spec.md)
+  and `configs/pre_freeze/local_model_provenance.d9.json`.
 - [ ] **2. Runners:** Implement and validate local/self-hosted runners with explicit
   preprocessing, precision/quantization, device/software versions and raw-output
   preservation before parsing. W2.6A generic contracts/scaffolding and dummy unit

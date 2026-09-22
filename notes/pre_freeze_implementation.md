@@ -17,7 +17,7 @@ and [freeze_manifest.d9.template.json](../configs/pre_freeze/freeze_manifest.d9.
 
 | # | Active D9 prerequisite | Current status |
 |---|---|---|
-| 1 | Exact IDs/revisions, access/license evidence and weight provenance for primaries/backups | PENDING |
+| 1 | Exact IDs/revisions, access/license evidence and weight provenance for primaries/backups | COMPLETE: W2.6B0 documentary records for all six; not access/use clearance or protocol freeze |
 | 2 | Local/self-hosted runners, preprocessing/device/precision/software and raw-output provenance | PENDING; W2.6A contracts/scaffolding complete, model-specific execution and real validation pending |
 | 3 | One supported low-variance decoding policy per model | PENDING; hosted settings do not transfer automatically |
 | 4 | Deterministic native-output adapters compatible with the existing canonical box schema | PENDING; point-only compatibility unresolved |
@@ -104,6 +104,36 @@ model/provider API calls, full D5 evaluation or InspecSafe inference, because th
 task authorizes protocol/documentation synchronization only. Model facts in the D9
 brief retain their prior documentary-review provenance; this check does not establish
 live availability or finalize immutable revisions and license/access records.
+
+## W2.6B0 — Model Provenance & Runner Specification (2026-09-22)
+
+The [documentary audit and runner specification](w2_model_provenance_runner_spec.md)
+records full immutable Hugging Face revisions and official source evidence for all
+four D9 primary candidates and both ordered backups. The machine-readable record
+is [local_model_provenance.d9.json](../configs/pre_freeze/local_model_provenance.d9.json);
+the existing roster and freeze template now reference it and carry matching SHAs.
+Published weight file names/sizes/LFS hashes are metadata only: no weight bytes
+were downloaded or checked. D9 #1 is COMPLETE in this documentary scope; #2–#8
+remain PENDING, including all `frozen_components` in the eventual freeze template.
+
+Ovis's official repository redirect is recorded separately without changing its D9
+ID. Molmo's Apache license and academic/non-commercial training-data caveat both
+remain visible. PaliGemma remains gated under Gemma terms with owner acceptance
+NOT_VERIFIED / ACCESS_REQUIRES_USER_ACCEPTANCE, not a model failure. Qwen's official
+family cookbook uses a different checkpoint and has contradictory bbox-order
+text/code; the exact 8B spatial grammar remains UNRESOLVED. No adapter choice or
+model eligibility follows from these records.
+
+The spec inventories official runtime, spatial and classification interfaces,
+supported decoding controls, preprocessing and precision/quantization. All are
+DOCUMENTED_NOT_RUNTIME_VALIDATED; no final decoding/precision setting is selected.
+PR #21's idempotent initialize/load and partial-generation preservation notes are
+mandatory W2.6B acceptance criteria. No real runners, prompts, D1–D9 decisions,
+canonical schema, D5 definitions, final roles or backup ordering were changed.
+Validation counts and exact commands are in the linked specification.
+No model weights, GPU/model/provider inference, InspecSafe images or synthetic
+model gate were used. Census remains untracked/untouched.
+`protocol_freeze_commit_sha: PENDING`.
 
 ## W2.6A — Local Runner Contracts (2026-09-21)
 

@@ -4,6 +4,7 @@
   "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
   "status": "PENDING_PROTOCOL_FREEZE",
   "protocol_freeze_commit_sha": "PENDING",
+  "model_provenance_config": "configs/pre_freeze/local_model_provenance.d9.json",
   "benchmark_firewall": "ACTIVE",
   "inspecsafe_inference_authorized": false,
   "preserved_protocol": {
@@ -34,7 +35,9 @@
   "primary_models": [
     {
       "model_id": "Qwen/Qwen3-VL-8B-Instruct",
-      "immutable_revision": "PENDING",
+      "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "qwen3_vl_8b_instruct",
       "classification_role": "PENDING_FINAL_GATE",
       "grounding_role": "PENDING_SYNTHETIC_GATE",
       "decoding_policy_id": "PENDING",
@@ -43,7 +46,9 @@
     },
     {
       "model_id": "AIDC-AI/Ovis2.5-9B",
-      "immutable_revision": "PENDING",
+      "immutable_revision": "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "ovis2_5_9b",
       "classification_role": "PENDING_FINAL_GATE",
       "grounding_role": "PENDING_SYNTHETIC_GATE",
       "decoding_policy_id": "PENDING",
@@ -52,7 +57,9 @@
     },
     {
       "model_id": "allenai/Molmo2-O-7B",
-      "immutable_revision": "PENDING",
+      "immutable_revision": "784410650d12be9bc086118fdefa32d2c3bced86",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "molmo2_o_7b",
       "classification_role": "PENDING_FINAL_GATE",
       "grounding_role": "NOT_PARTICIPATING_UNLESS_BOX_INTERFACE_VERIFIED",
       "native_point_evidence": "DOC_SUPPORTED; BOX_INTERFACE_COMPATIBILITY_UNRESOLVED",
@@ -62,7 +69,9 @@
     },
     {
       "model_id": "google/gemma-4-12B-it",
-      "immutable_revision": "PENDING",
+      "immutable_revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "gemma4_12b_it",
       "classification_role": "PENDING_FINAL_GATE",
       "grounding_role": "CLASSIFICATION_ONLY_UNLESS_PROMOTED_BY_SYNTHETIC_GATE",
       "decoding_policy_id": "PENDING",

@@ -1,0 +1,1406 @@
+{
+  "schema_version": 1,
+  "task": "W2.6B0",
+  "base_main_sha": "73fd0b3d112464755fe8c473db107bfff8e1e642",
+  "status": "VERIFIED_DOCUMENTARY_NOT_PROTOCOL_FROZEN",
+  "protocol_freeze_commit_sha": "PENDING",
+  "runtime_validation_status": "PENDING",
+  "decoding_freeze_status": "PENDING",
+  "final_roles_status": "PENDING",
+  "inspecsafe_inference_authorized": false,
+  "evidence_semantics": "Each evidence list applies to all factual fields in its enclosing section. NOT_DOCUMENTED/NOT_VERIFIED are bounded to reviewed sources, not claims of impossibility. Requirements in the companion note are SafeShift contracts, not provider promises.",
+  "sources": {
+    "hf_generation": {
+      "url": "https://huggingface.co/docs/transformers/main_classes/text_generation",
+      "locator": "GenerationConfig; generate; streamer",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "hf_generation_451": {
+      "url": "https://huggingface.co/docs/transformers/v4.51.3/main_classes/text_generation",
+      "locator": "GenerationConfig and GenerationMixin.generate for Ovis runtime",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "hf_streaming": {
+      "url": "https://huggingface.co/docs/transformers/v4.57.1/internal/generation_utils",
+      "locator": "TextIteratorStreamer; timeout and exception handling",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "hf_seed": {
+      "url": "https://huggingface.co/docs/transformers/internal/trainer_utils",
+      "locator": "set_seed; enable_full_determinism; runtime controls, not generate keyword arguments",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "hf_dtype": {
+      "url": "https://huggingface.co/docs/transformers/main_classes/model",
+      "locator": "PreTrainedModel.from_pretrained dtype/torch_dtype and device_map",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "hf_bnb": {
+      "url": "https://huggingface.co/docs/transformers/quantization/bitsandbytes",
+      "locator": "8-bit/4-bit; requires Accelerate support and Linear layers; hardware restrictions",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "hf_pali": {
+      "url": "https://huggingface.co/docs/transformers/model_doc/paligemma",
+      "locator": "PaliGemma 2 support; non-conversational processor; torchao int4 example is another checkpoint",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "hf_gemma_unified": {
+      "url": "https://huggingface.co/docs/transformers/en/model_doc/gemma4_unified",
+      "locator": "Gemma4Unified classes; image patch merging and soft-token budgets",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "gemma_terms": {
+      "url": "https://ai.google.dev/gemma/terms",
+      "locator": "Gemma terms, distribution and use restrictions; not the Gemma 4 Apache license",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "gemma_license": {
+      "url": "https://ai.google.dev/gemma/docs/gemma_4_license",
+      "locator": "Apache License 2.0",
+      "accessed_at_utc": "2026-09-22"
+    },
+    "pali_readme": {
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/main/big_vision/configs/proj/paligemma/README.md",
+      "locator": "Tokenizer; PaliGemma 2 reference implementation",
+      "accessed_at_utc": "2026-09-22T03:07:58.701725+00:00",
+      "content_sha256": "c9b435f758ab3a134ee59a0f28160f3d7401f0a9fc49e96e39f221b80407f48e"
+    },
+    "pali_seg": {
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/main/big_vision/pp/proj/paligemma/segmentation.py",
+      "locator": "get_refcoco_mask2str: y1,x1,y2,x2; round(bbox*1023)",
+      "accessed_at_utc": "2026-09-22T03:07:58.717707+00:00",
+      "content_sha256": "f1b8f482c1bf0636ec370ce91f1974c3c9e5f84321a980832acc2b43c914d2b1"
+    },
+    "pali_processor": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/paligemma/processing_paligemma.py",
+      "locator": "IMAGE_TOKEN, EXTRA_TOKENS, build_string_from_input; v4.57.1",
+      "accessed_at_utc": "2026-09-22T03:07:58.717707+00:00",
+      "content_sha256": "9c3ae88a139677cf315a234f368247a6e98ff8acc7853cb43307c27fb5518047"
+    },
+    "qwen_grounding": {
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/cookbooks/2d_grounding.ipynb",
+      "locator": "Markdown coordinate-system introduction; plot_bounding_boxes docstring versus indexing; bbox_2d / point_2d examples",
+      "accessed_at_utc": "2026-09-22T03:06:28.038908+00:00",
+      "repository_revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da"
+    },
+    "qwen3_vl_8b_instruct.api": {
+      "url": "https://huggingface.co/api/models/Qwen/Qwen3-VL-8B-Instruct",
+      "locator": "$.id, $.sha, $.gated, $.cardData.license; HTTP redirect resolved_url",
+      "accessed_at_utc": "2026-09-22T03:04:08.706599+00:00",
+      "resolved_url": "https://huggingface.co/api/models/Qwen/Qwen3-VL-8B-Instruct",
+      "response_sha256": "969f2f3fa7a5f60ff08cd4384a367a130190204f21fe426c6a92e0dd95ca5c4d"
+    },
+    "qwen3_vl_8b_instruct.revision_api": {
+      "url": "https://huggingface.co/api/models/Qwen/Qwen3-VL-8B-Instruct/revision/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b?blobs=true",
+      "locator": "$.sha, $.id, $.siblings[].lfs.sha256/size, $.safetensors; metadata only",
+      "accessed_at_utc": "2026-09-22T03:05:39.422487+00:00",
+      "response_sha256": "7018d377e188af90b21db988490532877021e2dcc5b46e93042d3e1f929a18e6"
+    },
+    "qwen3_vl_8b_instruct.README.md": {
+      "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct/blob/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b/README.md",
+      "locator": "README.md at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "6d5d06e0c3f069097002445d30dce9ee107db3afaf15563f09e6df49b8dcb4d7"
+    },
+    "qwen3_vl_8b_instruct.config.json": {
+      "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct/blob/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b/config.json",
+      "locator": "config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "5cd452860dc1e9c29dd71cc3cef7f39b338b7a40793f7a260655c2d3568f3661"
+    },
+    "qwen3_vl_8b_instruct.preprocessor_config.json": {
+      "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct/blob/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b/preprocessor_config.json",
+      "locator": "preprocessor_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516"
+    },
+    "qwen3_vl_8b_instruct.generation_config.json": {
+      "url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct/blob/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b/generation_config.json",
+      "locator": "generation_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44"
+    },
+    "ovis2_5_9b.api": {
+      "url": "https://huggingface.co/api/models/AIDC-AI/Ovis2.5-9B",
+      "locator": "$.id, $.sha, $.gated, $.cardData.license; HTTP redirect resolved_url",
+      "accessed_at_utc": "2026-09-22T03:04:09.254403+00:00",
+      "resolved_url": "https://huggingface.co/api/models/ATH-MaaS/Ovis2.5-9B",
+      "response_sha256": "794d49fb0153214884d5d8be1af3fe4bd69e269934b8168e1455af57dfb9a7f7"
+    },
+    "ovis2_5_9b.revision_api": {
+      "url": "https://huggingface.co/api/models/AIDC-AI/Ovis2.5-9B/revision/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd?blobs=true",
+      "locator": "$.sha, $.id, $.siblings[].lfs.sha256/size, $.safetensors; metadata only",
+      "accessed_at_utc": "2026-09-22T03:05:39.787159+00:00",
+      "response_sha256": "f362aaf3884dffb5010ee78dd83fd09078f2c925e8ace8f323867c03ab54938d"
+    },
+    "ovis2_5_9b.README.md": {
+      "url": "https://huggingface.co/AIDC-AI/Ovis2.5-9B/blob/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd/README.md",
+      "locator": "README.md at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "0ffb1f8cfd24b3a263e3d50f396035689eb19f83d018e405e35e843464b54f57"
+    },
+    "ovis2_5_9b.config.json": {
+      "url": "https://huggingface.co/AIDC-AI/Ovis2.5-9B/blob/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd/config.json",
+      "locator": "config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "d495d8004929648201106241b43dd67b96243762d22fbf90f2f43366992e033e"
+    },
+    "ovis2_5_9b.preprocessor_config.json": {
+      "url": "https://huggingface.co/AIDC-AI/Ovis2.5-9B/blob/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd/preprocessor_config.json",
+      "locator": "preprocessor_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "63ff380d3e424f93e6fbca5cc8e74eeed882e96fd6be2b7728aed308f3ad1513"
+    },
+    "ovis2_5_9b.generation_config.json": {
+      "url": "https://huggingface.co/AIDC-AI/Ovis2.5-9B/blob/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd/generation_config.json",
+      "locator": "generation_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "f12d4b54c91ffda6a118067044ef4beffae0a500c20a25b5542ea676b0bcfffa"
+    },
+    "ovis2_5_9b.modeling_ovis2_5.py": {
+      "url": "https://huggingface.co/AIDC-AI/Ovis2.5-9B/blob/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd/modeling_ovis2_5.py",
+      "locator": "modeling_ovis2_5.py at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "c97d70152fb1bb1cc337aa82c567a3a50869a7965da11f07de4c444a1d146161"
+    },
+    "molmo2_o_7b.api": {
+      "url": "https://huggingface.co/api/models/allenai/Molmo2-O-7B",
+      "locator": "$.id, $.sha, $.gated, $.cardData.license; HTTP redirect resolved_url",
+      "accessed_at_utc": "2026-09-22T03:04:08.673601+00:00",
+      "resolved_url": "https://huggingface.co/api/models/allenai/Molmo2-O-7B",
+      "response_sha256": "f863a0eeeb24e59be3e53fcaf8709050dcf1eb3a192b1a9fc9f18c91adda9506"
+    },
+    "molmo2_o_7b.revision_api": {
+      "url": "https://huggingface.co/api/models/allenai/Molmo2-O-7B/revision/784410650d12be9bc086118fdefa32d2c3bced86?blobs=true",
+      "locator": "$.sha, $.id, $.siblings[].lfs.sha256/size, $.safetensors; metadata only",
+      "accessed_at_utc": "2026-09-22T03:05:38.979890+00:00",
+      "response_sha256": "c81c8a2b999e3a8fc4f34bb9b0b5b4b1088aeefcec3415215ef846d49d038ed3"
+    },
+    "molmo2_o_7b.README.md": {
+      "url": "https://huggingface.co/allenai/Molmo2-O-7B/blob/784410650d12be9bc086118fdefa32d2c3bced86/README.md",
+      "locator": "README.md at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "f41a022d2f1e0c33829dd62e8aaf0ac81144bbc6afdeb990bf7c43691566d5dc"
+    },
+    "molmo2_o_7b.config.json": {
+      "url": "https://huggingface.co/allenai/Molmo2-O-7B/blob/784410650d12be9bc086118fdefa32d2c3bced86/config.json",
+      "locator": "config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "918491a079e7c26062393a95b3eb5ee25e4b0ab7d4dbd262edc7b1c6b613a159"
+    },
+    "molmo2_o_7b.preprocessor_config.json": {
+      "url": "https://huggingface.co/allenai/Molmo2-O-7B/blob/784410650d12be9bc086118fdefa32d2c3bced86/preprocessor_config.json",
+      "locator": "preprocessor_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "026ee03897ff86cb0d3f7c638145a04a253d4c0722fc5bcc3cf996bb0ebed211"
+    },
+    "molmo2_o_7b.generation_config.json": {
+      "url": "https://huggingface.co/allenai/Molmo2-O-7B/blob/784410650d12be9bc086118fdefa32d2c3bced86/generation_config.json",
+      "locator": "generation_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "27b93746ce5b6d57e999cec810501d9cefb494cb69fbe69db2646764b9ae8ae7"
+    },
+    "molmo2_o_7b.processing_molmo2.py": {
+      "url": "https://huggingface.co/allenai/Molmo2-O-7B/blob/784410650d12be9bc086118fdefa32d2c3bced86/processing_molmo2.py",
+      "locator": "processing_molmo2.py at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "61ef1329d8a02caebaa5e5acd07a329fdbf9772e18ff32cd7256c09a3231360b"
+    },
+    "molmo2_o_7b.modeling_molmo2.py": {
+      "url": "https://huggingface.co/allenai/Molmo2-O-7B/blob/784410650d12be9bc086118fdefa32d2c3bced86/modeling_molmo2.py",
+      "locator": "modeling_molmo2.py at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "d3cafcb5300dee41dc9b6d6e8b59e7d3b710bce0408672e8fd78a3bcb28669ce"
+    },
+    "gemma4_12b_it.api": {
+      "url": "https://huggingface.co/api/models/google/gemma-4-12B-it",
+      "locator": "$.id, $.sha, $.gated, $.cardData.license; HTTP redirect resolved_url",
+      "accessed_at_utc": "2026-09-22T03:04:08.647603+00:00",
+      "resolved_url": "https://huggingface.co/api/models/google/gemma-4-12B-it",
+      "response_sha256": "a6e220a6cf4e6e65f1b4e4b8cdf712c1d1510411e3eb0731212a2c8fa6d054d7"
+    },
+    "gemma4_12b_it.revision_api": {
+      "url": "https://huggingface.co/api/models/google/gemma-4-12B-it/revision/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7?blobs=true",
+      "locator": "$.sha, $.id, $.siblings[].lfs.sha256/size, $.safetensors; metadata only",
+      "accessed_at_utc": "2026-09-22T03:05:38.980891+00:00",
+      "response_sha256": "00075ddde66692769dd2a106d05fe9b726e0f834276835adb8d2c8d8fc00ae75"
+    },
+    "gemma4_12b_it.README.md": {
+      "url": "https://huggingface.co/google/gemma-4-12B-it/blob/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7/README.md",
+      "locator": "README.md at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "04a06469e3d83b941eaa776a3647b8690b5a7cc5c833af2381e5345bb1bb45c0"
+    },
+    "gemma4_12b_it.config.json": {
+      "url": "https://huggingface.co/google/gemma-4-12B-it/blob/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7/config.json",
+      "locator": "config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "478c46e8d2c52d5c2d85bf67e3b3e8c90e7c9d91086cee27e3c267907e936bd9"
+    },
+    "gemma4_12b_it.processor_config.json": {
+      "url": "https://huggingface.co/google/gemma-4-12B-it/blob/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7/processor_config.json",
+      "locator": "processor_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "6b938e76555b3e9946890770e1abcd442a4718f34041a58e8139dc8ad34545c9"
+    },
+    "gemma4_12b_it.generation_config.json": {
+      "url": "https://huggingface.co/google/gemma-4-12B-it/blob/707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7/generation_config.json",
+      "locator": "generation_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "a8349d9bd64cc5841297fcb5002f0fdc4749c473c8f1b10ea337f9ce4ee7014e"
+    },
+    "paligemma2_10b_mix_448.api": {
+      "url": "https://huggingface.co/api/models/google/paligemma2-10b-mix-448",
+      "locator": "$.id, $.sha, $.gated, $.cardData.license; HTTP redirect resolved_url",
+      "accessed_at_utc": "2026-09-22T03:04:08.645607+00:00",
+      "resolved_url": "https://huggingface.co/api/models/google/paligemma2-10b-mix-448",
+      "response_sha256": "b764ad7fc586793f7984351fef270a642727d1942b6765a582f9519ea115b365"
+    },
+    "paligemma2_10b_mix_448.revision_api": {
+      "url": "https://huggingface.co/api/models/google/paligemma2-10b-mix-448/revision/b26d16fb4251090ba4a4aa5af9fca1f8248ed5b6?blobs=true",
+      "locator": "$.sha, $.id, $.siblings[].lfs.sha256/size, $.safetensors; metadata only",
+      "accessed_at_utc": "2026-09-22T03:05:39.595255+00:00",
+      "response_sha256": "76ddee22940a9f9ae99cc2fe94a154f092cf0d58128325d8671628c5c4ee7574"
+    },
+    "paligemma2_10b_mix_448.README.md": {
+      "url": "https://huggingface.co/google/paligemma2-10b-mix-448/blob/b26d16fb4251090ba4a4aa5af9fca1f8248ed5b6/README.md",
+      "locator": "Public rendered model card at revision; raw endpoint returned HTTP 401; Use in Transformers, License/Usage",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "24bd1989f9e014490b4f2ade879099115599ca45d7ecdcae27724ba4c81c6809",
+      "content_hash_scope": "HTML response, not raw README bytes"
+    },
+    "minicpm_v_4_6.api": {
+      "url": "https://huggingface.co/api/models/openbmb/MiniCPM-V-4.6",
+      "locator": "$.id, $.sha, $.gated, $.cardData.license; HTTP redirect resolved_url",
+      "accessed_at_utc": "2026-09-22T03:04:08.674599+00:00",
+      "resolved_url": "https://huggingface.co/api/models/openbmb/MiniCPM-V-4.6",
+      "response_sha256": "cb5fc73a704f913a2d452095d7aed4bf878500d636180cf9db52f90c7042575d"
+    },
+    "minicpm_v_4_6.revision_api": {
+      "url": "https://huggingface.co/api/models/openbmb/MiniCPM-V-4.6/revision/36f34a661a4bd35d0dc2294cb044d2584646c7d3?blobs=true",
+      "locator": "$.sha, $.id, $.siblings[].lfs.sha256/size, $.safetensors; metadata only",
+      "accessed_at_utc": "2026-09-22T03:05:39.064891+00:00",
+      "response_sha256": "4ce9f2d6d674a38bdc140ed18a25eeef97b4f0a62c092d8aecd342f40f2c7310"
+    },
+    "minicpm_v_4_6.README.md": {
+      "url": "https://huggingface.co/openbmb/MiniCPM-V-4.6/blob/36f34a661a4bd35d0dc2294cb044d2584646c7d3/README.md",
+      "locator": "README.md at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "d08f69f90aa371f85fccb9369eb43d9261bed706a9b48e73f0a4553f6a954e50"
+    },
+    "minicpm_v_4_6.config.json": {
+      "url": "https://huggingface.co/openbmb/MiniCPM-V-4.6/blob/36f34a661a4bd35d0dc2294cb044d2584646c7d3/config.json",
+      "locator": "config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "72d83ac9089bebddf28131b9953908acaf0a5740b868263c8aaac7c40b97991c"
+    },
+    "minicpm_v_4_6.preprocessor_config.json": {
+      "url": "https://huggingface.co/openbmb/MiniCPM-V-4.6/blob/36f34a661a4bd35d0dc2294cb044d2584646c7d3/preprocessor_config.json",
+      "locator": "preprocessor_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "eb7cd430865c06eeaad22fcd28c6c606ce26b6fd54d3d6d0e99370779b3197a5"
+    },
+    "minicpm_v_4_6.generation_config.json": {
+      "url": "https://huggingface.co/openbmb/MiniCPM-V-4.6/blob/36f34a661a4bd35d0dc2294cb044d2584646c7d3/generation_config.json",
+      "locator": "generation_config.json at recorded model revision",
+      "accessed_at_utc": "2026-09-22",
+      "content_sha256": "355e944b910ce784e4c561d67b8e7fee9c6c89385cc790e5a6affb7747b1f118"
+    }
+  },
+  "models": [
+    {
+      "key": "qwen3_vl_8b_instruct",
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "roster_group": "primary",
+      "order": 1,
+      "repository_url": "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct",
+      "resolved_repository_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET model API $.sha, then GET /revision/{sha}?blobs=true and compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-22T03:05:39.422487+00:00",
+        "evidence": [
+          "qwen3_vl_8b_instruct.api",
+          "qwen3_vl_8b_instruct.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "files": [
+          {
+            "path": "model-00001-of-00004.safetensors",
+            "size_bytes": 4902275944,
+            "lfs_sha256": "d5d0aef0eb170fc7453a296c43c0849a56f510555d3588e4fd662bb35490aefa"
+          },
+          {
+            "path": "model-00002-of-00004.safetensors",
+            "size_bytes": 4915962496,
+            "lfs_sha256": "8be88fb5501e4d5719a6d4cc212e6a13480330e74f3e8c77daa1a68f199106b5"
+          },
+          {
+            "path": "model-00003-of-00004.safetensors",
+            "size_bytes": 4999831048,
+            "lfs_sha256": "83de00eafe6e0d57ccd009dbcf71c9974d74df2f016c27afb7e95aafd16b2192"
+          },
+          {
+            "path": "model-00004-of-00004.safetensors",
+            "size_bytes": 2716270024,
+            "lfs_sha256": "0a88b98e9f96270973f567e6a2c103ede6ccdf915ca3075e21c755604d0377a5"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "evidence": [
+          "qwen3_vl_8b_instruct.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "apache-2.0",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "additional_model_card_conditions": "No separate additional use restriction identified in the reviewed card; not a training-data clearance.",
+        "training_data_licensing_caveat": "NOT_IDENTIFIED_IN_REVIEWED_CARD; no assertion that every upstream dataset has been cleared.",
+        "intended_use_warning": "NOT_IDENTIFIED_IN_REVIEWED_CARD",
+        "evidence": [
+          "qwen3_vl_8b_instruct.api",
+          "qwen3_vl_8b_instruct.README.md"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "framework": "PyTorch + Hugging Face Transformers",
+        "generation_entry_point": "model.generate",
+        "evidence": [
+          "qwen3_vl_8b_instruct.README.md"
+        ],
+        "transformers_support": "Native Qwen3VL implementation; card recommends source install and mentions then-unreleased 4.57.0. This is historical guidance, not a present minimum-version assertion.",
+        "model_class": "Qwen3VLForConditionalGeneration",
+        "processor_class": "AutoProcessor -> Qwen3VLProcessor",
+        "trust_remote_code": false,
+        "documented_dtype": "dtype=\"auto\"; optional torch.bfloat16 example",
+        "device_mapping": "device_map=\"auto\" explicitly demonstrated",
+        "package_requirements": [
+          "transformers with Qwen3VL support; exact environment PENDING",
+          "torch",
+          "Optional flash-attn for flash_attention_2; not required for default path"
+        ],
+        "preprocessing_entry_point": "processor.apply_chat_template(..., tokenize=True, add_generation_prompt=True, return_dict=True, return_tensors=\"pt\")"
+      },
+      "spatial": {
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "status": "UNCERTAIN_REQUIRES_EXTERNAL_GATE",
+        "native_output_format": "Exact 8B card claims spatial grounding but does not specify its complete output grammar. Official family cookbook uses JSON bbox_2d / point_2d with a 235B hosted model; not transferred to this 8B checkpoint.",
+        "coordinate_convention": "NOT_ESTABLISHED_FOR_EXACT_8B: family cookbook documents relative x/y; exact interface requires qualification",
+        "normalization_range": "NOT_ESTABLISHED_FOR_EXACT_8B; family cookbook reference only: [0,1000]",
+        "coordinate_origin": "NOT_ESTABLISHED_FOR_EXACT_8B; top-left is inferred only for family cookbook drawing code",
+        "bbox_ordering": "UNRESOLVED_FOR_EXACT_8B. Additionally, family cookbook example/indexing use [x1,y1,x2,y2], while plot_bounding_boxes docstring says [y1,x1,y2,x2]. Neither is selected.",
+        "point_representation": "NOT_ESTABLISHED_FOR_EXACT_8B; family cookbook reference only: point_2d: [x,y]",
+        "evidence": [
+          "qwen_grounding",
+          "qwen3_vl_8b_instruct.README.md"
+        ]
+      },
+      "classification_integration": {
+        "status": "SPECIFIED_NOT_QUALIFIED",
+        "canonical_parser": "safeshift.protocol.schema.parse_text(text, \"classification\")",
+        "canonical_schema": "schemas/canonical.schema.json",
+        "evidence": [
+          "qwen3_vl_8b_instruct.README.md"
+        ],
+        "native_output_extraction": "Record full returned token IDs plus input token length and uncleaned decode; adapter selects new tokens by input length, then uses processor.batch_decode(..., clean_up_tokenization_spaces=False) for the classification text. Preserve before selecting/stripping special tokens."
+      },
+      "decoding": {
+        "status": "SUPPORTED_DECODING_INVENTORY",
+        "policy_status": "PENDING",
+        "selected_parameters": {},
+        "parameters": [
+          "temperature",
+          "do_sample",
+          "top_p",
+          "top_k",
+          "max_new_tokens",
+          "repetition_penalty"
+        ],
+        "support_scope": "Transformers GenerationConfig/GenerationMixin API; exact runner acceptance is not runtime validated. Sampling controls act only in compatible sampling modes.",
+        "seed_controls": "transformers.set_seed / enable_full_determinism are runtime helpers, not a generate(seed=...) argument; seed and determinism settings remain PENDING. No cross-device or cross-version reproducibility guarantee.",
+        "evidence": [
+          "hf_generation",
+          "hf_seed",
+          "qwen3_vl_8b_instruct.README.md",
+          "qwen3_vl_8b_instruct.generation_config.json"
+        ],
+        "additional_controls": "Card lists presence_penalty for serving guidance; not asserted as supported by every Transformers version. Do not translate it silently into runner settings."
+      },
+      "preprocessing": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "official_processor": "Qwen3VLProcessor / Qwen2VLImageProcessorFast",
+        "resize_behavior": "Processor controls dynamic resolution; published size shortest_edge=65536, longest_edge=16777216 (pixel-budget config, not a requested fixed shape). Do not hand-resize.",
+        "image_token_handling": "patch_size=16, temporal_patch_size=2, merge_size=2; image_token_id=151655",
+        "chat_template": "Required via apply_chat_template; model repository chat_template.json",
+        "special_image_marker": "Processor-owned image content and image_token_id=151655; do not manually interpolate markers",
+        "evidence": [
+          "qwen3_vl_8b_instruct.README.md",
+          "qwen3_vl_8b_instruct.preprocessor_config.json",
+          "qwen3_vl_8b_instruct.config.json"
+        ]
+      },
+      "precision_quantization": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "FP32": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "BF16": "PUBLISHED_WEIGHTS_AND_DOCUMENTED_LOAD",
+        "FP16": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "8_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "4_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "AWQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GPTQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GGUF": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "evidence": [
+          "qwen3_vl_8b_instruct.revision_api",
+          "qwen3_vl_8b_instruct.README.md",
+          "hf_dtype",
+          "hf_bnb"
+        ]
+      },
+      "partial_generation": {
+        "blocking_generate": "NO_PARTIAL_RETURN_GUARANTEE_ON_EXCEPTION",
+        "streaming": "RUNTIME_STREAMER_API_DOCUMENTED; exact model failure path NOT_RUNTIME_VALIDATED",
+        "contract": "Capture only emitted tokens/text/bytes; GenerationFailure(partial_raw=...) if captured, otherwise partial_raw=None. Never reconstruct missing output.",
+        "evidence": [
+          "hf_generation",
+          "hf_streaming",
+          "qwen3_vl_8b_instruct.README.md"
+        ]
+      }
+    },
+    {
+      "key": "ovis2_5_9b",
+      "model_id": "AIDC-AI/Ovis2.5-9B",
+      "roster_group": "primary",
+      "order": 2,
+      "repository_url": "https://huggingface.co/AIDC-AI/Ovis2.5-9B",
+      "resolved_repository_id": "ATH-MaaS/Ovis2.5-9B",
+      "immutable_revision": "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET model API $.sha, then GET /revision/{sha}?blobs=true and compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-22T03:05:39.787159+00:00",
+        "evidence": [
+          "ovis2_5_9b.api",
+          "ovis2_5_9b.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "files": [
+          {
+            "path": "model-00001-of-00004.safetensors",
+            "size_bytes": 4905356464,
+            "lfs_sha256": "156f99e6196bf357567737efe2658cd81498731071cf7102af75a62f62563a0f"
+          },
+          {
+            "path": "model-00002-of-00004.safetensors",
+            "size_bytes": 4915960936,
+            "lfs_sha256": "79aed96720f1dbc0b8b4f0e59284235a2300b40255f39d31c39fa6f82de075cb"
+          },
+          {
+            "path": "model-00003-of-00004.safetensors",
+            "size_bytes": 4974672744,
+            "lfs_sha256": "16eaccd4c4fbd3a1721fe9ed50ea99ee36d16effbd2ba1ccf62ddb86d9136559"
+          },
+          {
+            "path": "model-00004-of-00004.safetensors",
+            "size_bytes": 3553737368,
+            "lfs_sha256": "79cb70a40fc3720d6e90a84e59ed035be93f84a832c423f999acc651f3b2c811"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "evidence": [
+          "ovis2_5_9b.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "apache-2.0",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "additional_model_card_conditions": "No separate additional use restriction identified in the reviewed card; not a training-data clearance.",
+        "training_data_licensing_caveat": "Card disclaimer explicitly does not guarantee absence of copyright issues or improper content despite training compliance checks.",
+        "intended_use_warning": "Card asks users to report infringement or improper content.",
+        "evidence": [
+          "ovis2_5_9b.api",
+          "ovis2_5_9b.README.md"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "framework": "PyTorch + Hugging Face Transformers",
+        "generation_entry_point": "model.generate",
+        "evidence": [
+          "ovis2_5_9b.README.md",
+          "ovis2_5_9b.config.json",
+          "ovis2_5_9b.modeling_ovis2_5.py"
+        ],
+        "transformers_support": "Repository custom Ovis2_5 implementation via AutoModelForCausalLM",
+        "model_class": "AutoModelForCausalLM -> modeling_ovis2_5.Ovis2_5",
+        "processor_class": "model.preprocess_inputs; model.text_tokenizer; VisualTokenizer wrapping SiglipImageProcessor",
+        "trust_remote_code": true,
+        "documented_dtype": "torch_dtype=torch.bfloat16",
+        "device_mapping": "Single-device .cuda() documented; automatic multi-device mapping NOT_DOCUMENTED for this wrapper",
+        "package_requirements": [
+          "torch==2.4.0",
+          "transformers==4.51.3",
+          "numpy==1.25.0",
+          "pillow==10.3.0",
+          "moviepy==1.0.3 (video example)",
+          "flash-attn==2.7.0.post2 --no-build-isolation (card setup)"
+        ],
+        "preprocessing_entry_point": "model.preprocess_inputs(messages, add_generation_prompt=True, enable_thinking=...) -> input_ids, pixel_values, grid_thws"
+      },
+      "spatial": {
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "status": "DOCUMENTED_BOX_AND_POINT",
+        "native_output_format": "<point>(x,y)</point>; <box>(x1,y1),(x2,y2)</box>; lists permitted",
+        "coordinate_convention": "Normalized x-first",
+        "normalization_range": "[0,1)",
+        "coordinate_origin": "top-left (0,0)",
+        "bbox_ordering": "[xmin,ymin,xmax,ymax]; first pair top-left, second bottom-right",
+        "point_representation": "<point>(x,y)</point>",
+        "evidence": [
+          "ovis2_5_9b.README.md"
+        ]
+      },
+      "classification_integration": {
+        "status": "SPECIFIED_NOT_QUALIFIED",
+        "canonical_parser": "safeshift.protocol.schema.parse_text(text, \"classification\")",
+        "canonical_schema": "schemas/canonical.schema.json",
+        "evidence": [
+          "ovis2_5_9b.README.md"
+        ],
+        "native_output_extraction": "model.generate returns generated IDs from inputs_embeds (including any two-phase budget text). Preserve every returned ID and full decode. Do not subtract input length as for Qwen. Adapter uses model.text_tokenizer.decode; thinking/final-answer extraction remains PENDING and must not add the card suggested suffix to the frozen prompt."
+      },
+      "decoding": {
+        "status": "SUPPORTED_DECODING_INVENTORY",
+        "policy_status": "PENDING",
+        "selected_parameters": {},
+        "parameters": [
+          "temperature",
+          "do_sample",
+          "top_p",
+          "top_k",
+          "max_new_tokens",
+          "repetition_penalty"
+        ],
+        "support_scope": "Custom generate forwards remaining kwargs to self.llm.generate (Transformers 4.51.3); documentary API support only.",
+        "seed_controls": "transformers.set_seed / enable_full_determinism are runtime helpers, not a generate(seed=...) argument; seed and determinism settings remain PENDING. No cross-device or cross-version reproducibility guarantee.",
+        "evidence": [
+          "ovis2_5_9b.README.md",
+          "ovis2_5_9b.modeling_ovis2_5.py",
+          "ovis2_5_9b.generation_config.json",
+          "hf_generation_451",
+          "hf_seed"
+        ],
+        "additional_controls": [
+          "enable_thinking",
+          "enable_thinking_budget",
+          "thinking_budget"
+        ]
+      },
+      "preprocessing": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "official_processor": "Ovis2_5.preprocess_inputs -> VisualTokenizer.preprocess -> SiglipImageProcessor",
+        "resize_behavior": "NaViT variable resolution; wrapper smart_resize preserves aspect ratio approximately and aligns to patch_size*hidden_stride. Entry defaults min_pixels=448*448, max_pixels=1792*1792. Static Siglip 512x512 config is overridden with calculated size; not a SafeShift fixed resize.",
+        "image_token_handling": "pixel_values and grid_thws; _merge_inputs expands visual placeholders",
+        "chat_template": "model.text_tokenizer.apply_chat_template inside preprocess_inputs; enable_thinking is an unselected condition",
+        "special_image_marker": "<image>; internal IMAGE_PLACEHOLDER_ID=-200; processor owns insertion",
+        "evidence": [
+          "ovis2_5_9b.README.md",
+          "ovis2_5_9b.modeling_ovis2_5.py",
+          "ovis2_5_9b.preprocessor_config.json"
+        ]
+      },
+      "precision_quantization": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "FP32": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "BF16": "PUBLISHED_WEIGHTS_AND_DOCUMENTED_LOAD",
+        "FP16": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "8_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "4_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "AWQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GPTQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GGUF": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "evidence": [
+          "ovis2_5_9b.revision_api",
+          "ovis2_5_9b.README.md",
+          "hf_dtype",
+          "hf_bnb"
+        ]
+      },
+      "partial_generation": {
+        "blocking_generate": "NO_PARTIAL_RETURN_GUARANTEE_ON_EXCEPTION",
+        "streaming": "BudgetAwareTextStreamer documented; default TextIteratorStreamer is explicitly incompatible with two-phase generation. Capture emitted data across phases and flush only observed cached tokens on error; backend-inserted budget text must remain distinguishable from sampled tokens.",
+        "contract": "Capture only emitted tokens/text/bytes; GenerationFailure(partial_raw=...) if captured, otherwise partial_raw=None. Never reconstruct missing output.",
+        "evidence": [
+          "ovis2_5_9b.README.md",
+          "ovis2_5_9b.modeling_ovis2_5.py"
+        ]
+      }
+    },
+    {
+      "key": "molmo2_o_7b",
+      "model_id": "allenai/Molmo2-O-7B",
+      "roster_group": "primary",
+      "order": 3,
+      "repository_url": "https://huggingface.co/allenai/Molmo2-O-7B",
+      "resolved_repository_id": "allenai/Molmo2-O-7B",
+      "immutable_revision": "784410650d12be9bc086118fdefa32d2c3bced86",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET model API $.sha, then GET /revision/{sha}?blobs=true and compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-22T03:05:38.979890+00:00",
+        "evidence": [
+          "molmo2_o_7b.api",
+          "molmo2_o_7b.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "files": [
+          {
+            "path": "model-00001-of-00007.safetensors",
+            "size_bytes": 4883320888,
+            "lfs_sha256": "c59d83290b402186c5f07dbc1d3824049b7c45e2bf5f699d0149292370c834c1"
+          },
+          {
+            "path": "model-00002-of-00007.safetensors",
+            "size_bytes": 4857403152,
+            "lfs_sha256": "78cc21ba267dda59d9f4c861e7210c8ae349ec32c9b1b0b7c2d2d611618c3ade"
+          },
+          {
+            "path": "model-00003-of-00007.safetensors",
+            "size_bytes": 4857403200,
+            "lfs_sha256": "431192bae063707006a111b4fcd0d9a4f3728c84b31e9acaf477198063d29d5a"
+          },
+          {
+            "path": "model-00004-of-00007.safetensors",
+            "size_bytes": 4857403200,
+            "lfs_sha256": "d2dfac91d5ce48477afd12741ccd6e3985094208bf59eebbe6854b9d139bdb68"
+          },
+          {
+            "path": "model-00005-of-00007.safetensors",
+            "size_bytes": 4857403200,
+            "lfs_sha256": "924470fc671372515ed78e7badd7aa50e0fd30ae4e7d9f2d0afd516c25d19874"
+          },
+          {
+            "path": "model-00006-of-00007.safetensors",
+            "size_bytes": 4856272712,
+            "lfs_sha256": "537acbfd6608f7ebc9c1a51452f98462b34d80986ac2a64fc0e20cbbd5022a28"
+          },
+          {
+            "path": "model-00007-of-00007.safetensors",
+            "size_bytes": 1874035072,
+            "lfs_sha256": "3f3ec2f54f58925598edcccef2ec19b4d97e28a459d663eaea1e9491a52fb286"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "F32"
+        ],
+        "evidence": [
+          "molmo2_o_7b.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "apache-2.0",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "additional_model_card_conditions": "Research and educational intended use under Ai2 Responsible Use Guidelines; review third-party data sources before use.",
+        "training_data_licensing_caveat": "Model card says third-party training datasets are subject to academic and non-commercial research use only. Apache-2.0 repository metadata does not remove this caveat.",
+        "intended_use_warning": "Research and education; use-case/source compatibility review remains unresolved before execution.",
+        "evidence": [
+          "molmo2_o_7b.api",
+          "molmo2_o_7b.README.md"
+        ],
+        "responsible_use_url": "https://allenai.org/responsible-use"
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "framework": "PyTorch + Hugging Face Transformers",
+        "generation_entry_point": "model.generate",
+        "evidence": [
+          "molmo2_o_7b.README.md",
+          "molmo2_o_7b.config.json",
+          "molmo2_o_7b.processing_molmo2.py"
+        ],
+        "transformers_support": "Repository custom code on Transformers 4.57.1",
+        "model_class": "AutoModelForImageTextToText -> Molmo2ForConditionalGeneration",
+        "processor_class": "AutoProcessor -> Molmo2Processor / Molmo2ImageProcessor / AutoTokenizer",
+        "trust_remote_code": true,
+        "documented_dtype": "dtype=\"auto\"; repository config=float32 and API tensor metadata=F32",
+        "device_mapping": "device_map=\"auto\" explicitly demonstrated",
+        "package_requirements": [
+          "Python 3.11",
+          "transformers==4.57.1",
+          "torch",
+          "pillow",
+          "einops",
+          "torchvision",
+          "accelerate",
+          "decord2 and molmo_utils in full video setup"
+        ],
+        "preprocessing_entry_point": "processor.apply_chat_template(..., tokenize=True, add_generation_prompt=True, return_tensors=\"pt\", return_dict=True)"
+      },
+      "spatial": {
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "status": "DOCUMENTED_NATIVE_POINT",
+        "native_output_format": "<points ... coords=\"...\"> / <tracks ... coords=\"...\"> in card video/multi-image examples",
+        "coordinate_convention": "Point x,y scaled by 1000 to source image width/height; includes image/frame and point IDs",
+        "normalization_range": "[0,1000] accepted by card extraction code",
+        "coordinate_origin": "Top-left image convention inferred from width/height scaling; explicit single-image origin statement NOT_IDENTIFIED",
+        "bbox_ordering": "NOT_APPLICABLE_NO_DOCUMENTED_BOX",
+        "point_representation": "coords groups include frame/image index and point id x y; single-image exact serialization still needs qualification",
+        "evidence": [
+          "molmo2_o_7b.README.md"
+        ]
+      },
+      "classification_integration": {
+        "status": "SPECIFIED_NOT_QUALIFIED",
+        "canonical_parser": "safeshift.protocol.schema.parse_text(text, \"classification\")",
+        "canonical_schema": "schemas/canonical.schema.json",
+        "evidence": [
+          "molmo2_o_7b.README.md"
+        ],
+        "native_output_extraction": "Preserve full generated_ids, input length and full decode. Adapter takes generated_ids[0,input_length:] and processor.tokenizer.decode for native classification text; point/track content never becomes a canonical box."
+      },
+      "decoding": {
+        "status": "SUPPORTED_DECODING_INVENTORY",
+        "policy_status": "PENDING",
+        "selected_parameters": {},
+        "parameters": [
+          "temperature",
+          "do_sample",
+          "top_p",
+          "top_k",
+          "max_new_tokens",
+          "repetition_penalty"
+        ],
+        "support_scope": "Transformers GenerationConfig/GenerationMixin API; exact runner acceptance is not runtime validated. Sampling controls act only in compatible sampling modes.",
+        "seed_controls": "transformers.set_seed / enable_full_determinism are runtime helpers, not a generate(seed=...) argument; seed and determinism settings remain PENDING. No cross-device or cross-version reproducibility guarantee.",
+        "evidence": [
+          "hf_generation",
+          "hf_seed",
+          "molmo2_o_7b.README.md"
+        ]
+      },
+      "preprocessing": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "official_processor": "Molmo2Processor / Molmo2ImageProcessor",
+        "resize_behavior": "High-resolution crops plus low-resolution image; config size=378x378, max_crops=8, overlap_margins=[4,4], RGB, mean/std=0.5",
+        "image_token_handling": "patch_size=14, pooling_size=[2,2]; image_grids and image_token_pooling returned by processor",
+        "chat_template": "Required; repository chat_template.jinja through apply_chat_template",
+        "special_image_marker": "<|image|> expands into <im_start>, <im_patch>, <im_col>, <im_end> and low-resolution tokens",
+        "evidence": [
+          "molmo2_o_7b.preprocessor_config.json",
+          "molmo2_o_7b.processing_molmo2.py",
+          "molmo2_o_7b.README.md"
+        ]
+      },
+      "precision_quantization": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "FP32": "PUBLISHED_F32_WEIGHTS; config float32 and card dtype=auto",
+        "BF16": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "FP16": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "8_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "4_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "AWQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GPTQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GGUF": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "evidence": [
+          "molmo2_o_7b.revision_api",
+          "molmo2_o_7b.README.md",
+          "hf_dtype",
+          "hf_bnb"
+        ]
+      },
+      "partial_generation": {
+        "blocking_generate": "NO_PARTIAL_RETURN_GUARANTEE_ON_EXCEPTION",
+        "streaming": "RUNTIME_STREAMER_API_DOCUMENTED; exact model failure path NOT_RUNTIME_VALIDATED",
+        "contract": "Capture only emitted tokens/text/bytes; GenerationFailure(partial_raw=...) if captured, otherwise partial_raw=None. Never reconstruct missing output.",
+        "evidence": [
+          "hf_generation",
+          "hf_streaming",
+          "molmo2_o_7b.README.md",
+          "molmo2_o_7b.modeling_molmo2.py"
+        ]
+      }
+    },
+    {
+      "key": "gemma4_12b_it",
+      "model_id": "google/gemma-4-12B-it",
+      "roster_group": "primary",
+      "order": 4,
+      "repository_url": "https://huggingface.co/google/gemma-4-12B-it",
+      "resolved_repository_id": "google/gemma-4-12B-it",
+      "immutable_revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET model API $.sha, then GET /revision/{sha}?blobs=true and compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-22T03:05:38.980891+00:00",
+        "evidence": [
+          "gemma4_12b_it.api",
+          "gemma4_12b_it.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "files": [
+          {
+            "path": "model.safetensors",
+            "size_bytes": 23919549408,
+            "lfs_sha256": "5a84cb313260ac447237b890387116dfa8682e49a6b44bc585ae8353abbff18d"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "evidence": [
+          "gemma4_12b_it.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "apache-2.0",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "additional_model_card_conditions": "Apache-2.0 link and responsible-use guidance; no separate gated Gemma terms acceptance required by this repository.",
+        "training_data_licensing_caveat": "NOT_IDENTIFIED_IN_REVIEWED_CARD; no assertion that every upstream dataset has been cleared.",
+        "intended_use_warning": "Card discusses research/education and content applications; training-data bias, inaccurate output, misuse and privacy risks.",
+        "evidence": [
+          "gemma4_12b_it.api",
+          "gemma4_12b_it.README.md",
+          "gemma_license"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "framework": "PyTorch + Hugging Face Transformers",
+        "generation_entry_point": "model.generate",
+        "evidence": [
+          "gemma4_12b_it.README.md",
+          "gemma4_12b_it.config.json",
+          "hf_gemma_unified"
+        ],
+        "transformers_support": "Native Gemma4Unified, not the different Gemma4 encoder architecture",
+        "model_class": "AutoModelForMultimodalLM -> Gemma4UnifiedForConditionalGeneration",
+        "processor_class": "AutoProcessor -> Gemma4UnifiedProcessor",
+        "trust_remote_code": false,
+        "documented_dtype": "dtype=\"auto\"; config bfloat16",
+        "device_mapping": "device_map=\"auto\" explicitly demonstrated",
+        "package_requirements": [
+          "Latest Transformers per card; config records 5.10.0.dev0, not an established minimum or pinned environment",
+          "torch",
+          "torchvision for images",
+          "accelerate"
+        ],
+        "preprocessing_entry_point": "processor.apply_chat_template(..., tokenize=True, return_dict=True, return_tensors=\"pt\", add_generation_prompt=True)"
+      },
+      "spatial": {
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "status": "UNCERTAIN_REQUIRES_EXTERNAL_GATE",
+        "native_output_format": "No exact generic bbox/point serialization identified for this checkpoint",
+        "coordinate_convention": "NOT_DOCUMENTED",
+        "normalization_range": "NOT_DOCUMENTED",
+        "coordinate_origin": "NOT_DOCUMENTED",
+        "bbox_ordering": "NOT_DOCUMENTED",
+        "point_representation": "NOT_DOCUMENTED",
+        "evidence": [
+          "gemma4_12b_it.README.md",
+          "hf_gemma_unified"
+        ]
+      },
+      "classification_integration": {
+        "status": "SPECIFIED_NOT_QUALIFIED",
+        "canonical_parser": "safeshift.protocol.schema.parse_text(text, \"classification\")",
+        "canonical_schema": "schemas/canonical.schema.json",
+        "evidence": [
+          "gemma4_12b_it.README.md"
+        ],
+        "native_output_extraction": "Record complete generated IDs, input prefix/length and processor.decode(new_ids, skip_special_tokens=False). Only after W2.6A preservation may adapter invoke processor.parse_response(response, prefix=input_ids) and select the final answer channel. Keep thinking and control tokens in raw evidence; final answer extraction qualification PENDING."
+      },
+      "decoding": {
+        "status": "SUPPORTED_DECODING_INVENTORY",
+        "policy_status": "PENDING",
+        "selected_parameters": {},
+        "parameters": [
+          "temperature",
+          "do_sample",
+          "top_p",
+          "top_k",
+          "max_new_tokens",
+          "repetition_penalty"
+        ],
+        "support_scope": "Transformers GenerationConfig/GenerationMixin API; exact runner acceptance is not runtime validated. Sampling controls act only in compatible sampling modes.",
+        "seed_controls": "transformers.set_seed / enable_full_determinism are runtime helpers, not a generate(seed=...) argument; seed and determinism settings remain PENDING. No cross-device or cross-version reproducibility guarantee.",
+        "evidence": [
+          "hf_generation",
+          "hf_seed",
+          "gemma4_12b_it.README.md",
+          "gemma4_12b_it.generation_config.json"
+        ],
+        "additional_controls": "enable_thinking is a chat-template/input control, not a chosen decoding policy."
+      },
+      "preprocessing": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "official_processor": "Gemma4UnifiedProcessor / Gemma4UnifiedImageProcessor",
+        "resize_behavior": "Variable aspect ratio/resolution; do_resize=true, RGB, rescale=1/255, do_normalize=false, resample=3 in published processor config",
+        "image_token_handling": "Encoder-free image patches; patch_size=16, pooling_kernel_size=3, max_soft_tokens=280, image_seq_length=280",
+        "chat_template": "Required via apply_chat_template; enable_thinking option is not frozen",
+        "special_image_marker": "Processor-owned image_token_id=258880 and repository chat_template.jinja; no manual rewriting",
+        "evidence": [
+          "gemma4_12b_it.processor_config.json",
+          "gemma4_12b_it.config.json",
+          "gemma4_12b_it.README.md",
+          "hf_gemma_unified"
+        ]
+      },
+      "precision_quantization": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "FP32": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "BF16": "PUBLISHED_WEIGHTS_AND_DOCUMENTED_LOAD",
+        "FP16": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "8_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "4_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "AWQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GPTQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GGUF": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "evidence": [
+          "gemma4_12b_it.revision_api",
+          "gemma4_12b_it.README.md",
+          "hf_dtype",
+          "hf_bnb"
+        ]
+      },
+      "partial_generation": {
+        "blocking_generate": "NO_PARTIAL_RETURN_GUARANTEE_ON_EXCEPTION",
+        "streaming": "RUNTIME_STREAMER_API_DOCUMENTED; exact model failure path NOT_RUNTIME_VALIDATED",
+        "contract": "Capture only emitted tokens/text/bytes; GenerationFailure(partial_raw=...) if captured, otherwise partial_raw=None. Never reconstruct missing output.",
+        "evidence": [
+          "hf_generation",
+          "hf_streaming",
+          "gemma4_12b_it.README.md"
+        ]
+      }
+    },
+    {
+      "key": "paligemma2_10b_mix_448",
+      "model_id": "google/paligemma2-10b-mix-448",
+      "roster_group": "backup",
+      "order": 1,
+      "repository_url": "https://huggingface.co/google/paligemma2-10b-mix-448",
+      "resolved_repository_id": "google/paligemma2-10b-mix-448",
+      "immutable_revision": "b26d16fb4251090ba4a4aa5af9fca1f8248ed5b6",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET model API $.sha, then GET /revision/{sha}?blobs=true and compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-22T03:05:39.595255+00:00",
+        "evidence": [
+          "paligemma2_10b_mix_448.api",
+          "paligemma2_10b_mix_448.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "files": [
+          {
+            "path": "model-00001-of-00004.safetensors",
+            "size_bytes": 4954265240,
+            "lfs_sha256": "dff25264a99bb491b0def8f2b54dfa1902039eebd73e8e2a10d8bac062b8e602"
+          },
+          {
+            "path": "model-00002-of-00004.safetensors",
+            "size_bytes": 4947572960,
+            "lfs_sha256": "b0c88cb9b084c8c4c13bdf7ae8c73fee9642d2a21cc620bd22b7401815b8dc78"
+          },
+          {
+            "path": "model-00003-of-00004.safetensors",
+            "size_bytes": 4962223472,
+            "lfs_sha256": "9c7294db3e17bd03b74ba5613f5c22ea0260e7819e7898c68cbb11db686dc14f"
+          },
+          {
+            "path": "model-00004-of-00004.safetensors",
+            "size_bytes": 4463107504,
+            "lfs_sha256": "faea080b43b56a18b86e4070f3aad6d290e75f3f4860b52367840bac2a7dd9c2"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "evidence": [
+          "paligemma2_10b_mix_448.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "gemma",
+        "gated": "manual",
+        "access_status": "ACCESS_REQUIRES_USER_ACCEPTANCE",
+        "requires_accept_terms": true,
+        "owner_acceptance_status": "NOT_VERIFIED",
+        "additional_model_card_conditions": "Google Gemma usage terms require acceptance; card describes the released BF16 checkpoint as for research purposes only. Preserve both statements; final use-case clearance not asserted.",
+        "training_data_licensing_caveat": "WebLI/CC3M/OpenImages/WIT sources are listed; no blanket training-data rights clearance established.",
+        "intended_use_warning": "Research-purpose wording in exact model card; terms and prohibited-use restrictions require review.",
+        "evidence": [
+          "paligemma2_10b_mix_448.api",
+          "paligemma2_10b_mix_448.README.md",
+          "gemma_terms"
+        ],
+        "terms_url": "https://ai.google.dev/gemma/terms"
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "framework": "PyTorch + Hugging Face Transformers",
+        "generation_entry_point": "model.generate",
+        "evidence": [
+          "paligemma2_10b_mix_448.README.md"
+        ],
+        "transformers_support": "Native PaliGemma implementation; exact card explicitly names this 10b-mix-448 checkpoint",
+        "model_class": "PaliGemmaForConditionalGeneration",
+        "processor_class": "PaliGemmaProcessor (AutoProcessor also documented by HF)",
+        "trust_remote_code": false,
+        "documented_dtype": "torch_dtype=torch.bfloat16",
+        "device_mapping": "device_map=\"auto\" explicitly demonstrated",
+        "package_requirements": [
+          "Transformers with PaliGemma 2 support; no minimum version specified in exact card",
+          "torch",
+          "accelerate for auto device mapping"
+        ],
+        "preprocessing_entry_point": "processor(text=frozen_prompt, images=image, return_tensors=\"pt\")"
+      },
+      "spatial": {
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "status": "DOCUMENTED_NATIVE_BOX",
+        "native_output_format": "Task-generated text containing location tokens <loc0000>...<loc1023>; segmentation has separate <seg...> tokens",
+        "coordinate_convention": "Quantized normalized image-space; reference segmentation encoder maps y1,x1,y2,x2",
+        "normalization_range": "1024 discrete location tokens, indices [0,1023]; exact detection adapter dequantization NOT_YET_QUALIFIED",
+        "coordinate_origin": "Top-left inferred from reference image slicing",
+        "bbox_ordering": "Reference implementation: [ymin,xmin,ymax,xmax]; exact mix detection serialization needs qualification",
+        "point_representation": "NO_DOCUMENTED_GENERIC_POINT",
+        "evidence": [
+          "paligemma2_10b_mix_448.README.md",
+          "pali_readme",
+          "pali_processor",
+          "pali_seg"
+        ]
+      },
+      "classification_integration": {
+        "status": "SPECIFIED_NOT_QUALIFIED",
+        "canonical_parser": "safeshift.protocol.schema.parse_text(text, \"classification\")",
+        "canonical_schema": "schemas/canonical.schema.json",
+        "evidence": [
+          "paligemma2_10b_mix_448.README.md"
+        ],
+        "native_output_extraction": "If later activated, preserve full IDs and decode, select continuation by input length after storage, then processor.decode and canonical classification parser; no task-prefix prompt is designed here."
+      },
+      "decoding": {
+        "status": "SUPPORTED_DECODING_INVENTORY",
+        "policy_status": "PENDING",
+        "selected_parameters": {},
+        "parameters": [
+          "temperature",
+          "do_sample",
+          "top_p",
+          "top_k",
+          "max_new_tokens",
+          "repetition_penalty"
+        ],
+        "support_scope": "Transformers GenerationConfig/GenerationMixin API; exact runner acceptance is not runtime validated. Sampling controls act only in compatible sampling modes.",
+        "seed_controls": "transformers.set_seed / enable_full_determinism are runtime helpers, not a generate(seed=...) argument; seed and determinism settings remain PENDING. No cross-device or cross-version reproducibility guarantee.",
+        "evidence": [
+          "hf_generation",
+          "hf_seed",
+          "paligemma2_10b_mix_448.README.md"
+        ]
+      },
+      "preprocessing": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "official_processor": "PaliGemmaProcessor",
+        "resize_behavior": "448x448 image input explicitly in exact card; gated raw preprocessor config not read, interpolation/default details NOT_VERIFIED",
+        "image_token_handling": "PaliGemmaProcessor expands <image> using image_seq_length, then BOS + prompt + newline; exact checkpoint token count awaits gated config access",
+        "chat_template": "Plain image+text prefix interface; no chat history or conversational template required in card",
+        "special_image_marker": "<image> expansion and <bos> are processor-owned; location tokens must be retained in raw output",
+        "evidence": [
+          "paligemma2_10b_mix_448.README.md",
+          "pali_processor",
+          "hf_pali"
+        ]
+      },
+      "precision_quantization": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "FP32": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "BF16": "PUBLISHED_WEIGHTS_AND_DOCUMENTED_LOAD",
+        "FP16": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "8_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "4_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; HF PaliGemma docs also show torchao int4 on a different checkpoint, NOT validation of this 10b-mix-448 revision",
+        "AWQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GPTQ": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "GGUF": "NOT_VERIFIED_FOR_EXACT_REVISION",
+        "evidence": [
+          "paligemma2_10b_mix_448.revision_api",
+          "paligemma2_10b_mix_448.README.md",
+          "hf_dtype",
+          "hf_bnb",
+          "hf_pali"
+        ]
+      },
+      "partial_generation": {
+        "blocking_generate": "NO_PARTIAL_RETURN_GUARANTEE_ON_EXCEPTION",
+        "streaming": "RUNTIME_STREAMER_API_DOCUMENTED; exact model failure path NOT_RUNTIME_VALIDATED",
+        "contract": "Capture only emitted tokens/text/bytes; GenerationFailure(partial_raw=...) if captured, otherwise partial_raw=None. Never reconstruct missing output.",
+        "evidence": [
+          "hf_generation",
+          "hf_streaming",
+          "paligemma2_10b_mix_448.README.md"
+        ]
+      }
+    },
+    {
+      "key": "minicpm_v_4_6",
+      "model_id": "openbmb/MiniCPM-V-4.6",
+      "roster_group": "backup",
+      "order": 2,
+      "repository_url": "https://huggingface.co/openbmb/MiniCPM-V-4.6",
+      "resolved_repository_id": "openbmb/MiniCPM-V-4.6",
+      "immutable_revision": "36f34a661a4bd35d0dc2294cb044d2584646c7d3",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET model API $.sha, then GET /revision/{sha}?blobs=true and compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-22T03:05:39.064891+00:00",
+        "evidence": [
+          "minicpm_v_4_6.api",
+          "minicpm_v_4_6.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "files": [
+          {
+            "path": "model.safetensors",
+            "size_bytes": 2600957528,
+            "lfs_sha256": "aa67da5820411176d0f9593a00265bc25a73c45f62dc5a605a93b1b5516a0d34"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "evidence": [
+          "minicpm_v_4_6.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "apache-2.0",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "additional_model_card_conditions": "Card explicitly applies Apache-2.0 to model weights and code; no additional acceptance gate identified.",
+        "training_data_licensing_caveat": "NOT_IDENTIFIED_IN_REVIEWED_CARD; no assertion that every upstream dataset has been cleared.",
+        "intended_use_warning": "Generated content does not represent developer views; card disclaims liability for security/misuse/misdirection risks.",
+        "evidence": [
+          "minicpm_v_4_6.api",
+          "minicpm_v_4_6.README.md"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "framework": "PyTorch + Hugging Face Transformers",
+        "generation_entry_point": "model.generate",
+        "evidence": [
+          "minicpm_v_4_6.README.md",
+          "minicpm_v_4_6.config.json",
+          "minicpm_v_4_6.preprocessor_config.json"
+        ],
+        "transformers_support": "Native Transformers >=5.7.0 path documented for exact 4.6 checkpoint; do not reuse older MiniCPM remote-code chat interface",
+        "model_class": "AutoModelForImageTextToText -> MiniCPMV4_6ForConditionalGeneration",
+        "processor_class": "AutoProcessor -> MiniCPMV4_6Processor / MiniCPMV4_6ImageProcessor",
+        "trust_remote_code": false,
+        "documented_dtype": "torch_dtype=\"auto\"; optional torch.bfloat16 example",
+        "device_mapping": "device_map=\"auto\" explicitly demonstrated",
+        "package_requirements": [
+          "transformers[torch]>=5.7.0",
+          "torchvision",
+          "torchcodec for video or documented av alternative; CUDA compatibility caveat",
+          "Optional flash-attn"
+        ],
+        "preprocessing_entry_point": "processor.apply_chat_template(..., downsample_mode=..., max_slice_nums=..., tokenize=True, add_generation_prompt=True, return_dict=True, return_tensors=\"pt\")"
+      },
+      "spatial": {
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "status": "NO_DOCUMENTED_GENERIC_SPATIAL_INTERFACE",
+        "native_output_format": "Generated text; no generic coordinate grammar in reviewed exact card/config",
+        "coordinate_convention": "NOT_DOCUMENTED",
+        "normalization_range": "NOT_DOCUMENTED",
+        "coordinate_origin": "NOT_DOCUMENTED",
+        "bbox_ordering": "NOT_DOCUMENTED",
+        "point_representation": "NOT_DOCUMENTED",
+        "evidence": [
+          "minicpm_v_4_6.README.md",
+          "minicpm_v_4_6.config.json"
+        ]
+      },
+      "classification_integration": {
+        "status": "SPECIFIED_NOT_QUALIFIED",
+        "canonical_parser": "safeshift.protocol.schema.parse_text(text, \"classification\")",
+        "canonical_schema": "schemas/canonical.schema.json",
+        "evidence": [
+          "minicpm_v_4_6.README.md"
+        ],
+        "native_output_extraction": "If later activated, preserve full IDs and uncleaned decode; adapter selects continuation using input length and processor.batch_decode(..., clean_up_tokenization_spaces=False) before canonical classification parse."
+      },
+      "decoding": {
+        "status": "SUPPORTED_DECODING_INVENTORY",
+        "policy_status": "PENDING",
+        "selected_parameters": {},
+        "parameters": [
+          "temperature",
+          "do_sample",
+          "top_p",
+          "top_k",
+          "max_new_tokens",
+          "repetition_penalty"
+        ],
+        "support_scope": "Transformers GenerationConfig/GenerationMixin API; exact runner acceptance is not runtime validated. Sampling controls act only in compatible sampling modes.",
+        "seed_controls": "transformers.set_seed / enable_full_determinism are runtime helpers, not a generate(seed=...) argument; seed and determinism settings remain PENDING. No cross-device or cross-version reproducibility guarantee.",
+        "evidence": [
+          "hf_generation",
+          "hf_seed",
+          "minicpm_v_4_6.README.md",
+          "minicpm_v_4_6.generation_config.json"
+        ],
+        "additional_controls": "downsample_mode is preprocessing/model-condition metadata, not a decoding candidate selected by scores."
+      },
+      "preprocessing": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "official_processor": "MiniCPMV4_6Processor / MiniCPMV4_6ImageProcessor",
+        "resize_behavior": "Slice mode; scale_resolution=448, patch_size=14, use_image_id=true; config max_slice_nums=9 while example explicitly overrides to 36 (different settings, not equivalent)",
+        "image_token_handling": "Documented 4x/16x visual compression; downsample_mode must match processor and generate",
+        "chat_template": "Required; repository chat_template.jinja through apply_chat_template",
+        "special_image_marker": "Processor-owned image content and image_token_id=248056",
+        "evidence": [
+          "minicpm_v_4_6.README.md",
+          "minicpm_v_4_6.preprocessor_config.json",
+          "minicpm_v_4_6.config.json"
+        ]
+      },
+      "precision_quantization": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "FP32": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "BF16": "PUBLISHED_WEIGHTS_AND_DOCUMENTED_LOAD",
+        "FP16": "RUNTIME_DTYPE_API_ONLY_NOT_EXACT_MODEL_VALIDATED",
+        "8_bit": "RUNTIME_CONDITIONAL_ONLY: bitsandbytes; exact architecture/device/module compatibility unverified",
+        "4_bit": "Card advertises BNB and Q4_K_M GGUF deployment; no variant downloaded or substituted. Runtime compatibility remains PENDING.",
+        "AWQ": "EXACT_MODEL_CARD_ADVERTISES_VARIANTS; separate weights/runtime not pinned, selected or validated",
+        "GPTQ": "EXACT_MODEL_CARD_ADVERTISES_VARIANTS; separate weights/runtime not pinned, selected or validated",
+        "GGUF": "EXACT_MODEL_CARD_ADVERTISES_VARIANTS; separate weights/runtime not pinned, selected or validated",
+        "evidence": [
+          "minicpm_v_4_6.revision_api",
+          "minicpm_v_4_6.README.md",
+          "hf_dtype",
+          "hf_bnb"
+        ]
+      },
+      "partial_generation": {
+        "blocking_generate": "NO_PARTIAL_RETURN_GUARANTEE_ON_EXCEPTION",
+        "streaming": "RUNTIME_STREAMER_API_DOCUMENTED; exact model failure path NOT_RUNTIME_VALIDATED",
+        "contract": "Capture only emitted tokens/text/bytes; GenerationFailure(partial_raw=...) if captured, otherwise partial_raw=None. Never reconstruct missing output.",
+        "evidence": [
+          "hf_generation",
+          "hf_streaming",
+          "minicpm_v_4_6.README.md"
+        ]
+      }
+    }
+  ],
+  "unresolved_items": [
+    {
+      "id": "QWEN_BBOX_ORDER",
+      "status": "UNRESOLVED",
+      "detail": "Official family cookbook runs qwen3-vl-235b-a22b-instruct, not the roster's exact 8B checkpoint. Its docstring y-first also contradicts its x-first example/indexing. No family-to-checkpoint interface inference, silent coordinate choice or adapter freeze.",
+      "evidence": [
+        "qwen_grounding"
+      ]
+    },
+    {
+      "id": "OVIS_REDIRECT_RUNTIME",
+      "status": "PENDING",
+      "detail": "D9 ID redirects to ATH-MaaS/Ovis2.5-9B with same verified SHA. Preserve D9 model_id; future loader must verify redirect and code revision, not substitute another model.",
+      "evidence": [
+        "ovis2_5_9b.api",
+        "ovis2_5_9b.revision_api"
+      ]
+    },
+    {
+      "id": "MOLMO_DATA_USE",
+      "status": "UNRESOLVED",
+      "detail": "Owner must review third-party academic/non-commercial training-data and intended-use caveat before execution; documentary recording is not legal clearance.",
+      "evidence": [
+        "molmo2_o_7b.README.md"
+      ]
+    },
+    {
+      "id": "PALIGEMMA_ACCESS",
+      "status": "ACCESS_REQUIRES_USER_ACCEPTANCE",
+      "detail": "Owner acceptance NOT_VERIFIED; unauthenticated raw README/config requests returned 401. Public revision API and rendered revision card are readable. Access prerequisite, not model failure.",
+      "evidence": [
+        "paligemma2_10b_mix_448.api",
+        "paligemma2_10b_mix_448.README.md"
+      ]
+    },
+    {
+      "id": "PALIGEMMA_USE_SCOPE",
+      "status": "UNRESOLVED",
+      "detail": "Record both Gemma terms and exact model-card research-purpose wording; do not infer unrestricted commercial clearance.",
+      "evidence": [
+        "paligemma2_10b_mix_448.README.md",
+        "gemma_terms"
+      ]
+    },
+    {
+      "id": "RUNNER_QUALIFICATION",
+      "status": "PENDING",
+      "detail": "Exact environments, device mapping, decoding/thinking, precision/quantization, preprocessing, partial-output failure behavior, adapters and applicable gate remain unvalidated for all six entries.",
+      "evidence": []
+    }
+  ]
+}
