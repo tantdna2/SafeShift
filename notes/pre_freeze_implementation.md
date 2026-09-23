@@ -8,9 +8,11 @@ BF16 single-device candidate, native generated-ID semantics, raw/failure envelop
 classification adapter, and unqualified grounding evidence. Fake-backend tests
 cover the lifecycle and post-generation preservation; no real model runtime or
 external gate is claimed. Checklist #1 remains documentary COMPLETE; #2 stays
-PENDING overall (Qwen offline implementation and real Kaggle smoke VALIDATED,
-Ovis review fixes implemented with offline completion PENDING REVIEW and real runtime
-PENDING, Molmo/Gemma PENDING). #3–#8 and `protocol_freeze_commit_sha` remain PENDING. D5, canonical
+PENDING overall (Qwen offline implementation COMPLETE and real Kaggle smoke PASS /
+VALIDATED; Ovis offline runner implementation COMPLETE after Research Lead review,
+real runtime PENDING; Molmo/Gemma PENDING). Ovis grounding is
+`DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`. #3–#8 and
+`protocol_freeze_commit_sha` remain PENDING. D5, canonical
 schema, D9 roster, Qwen records and SYNTHETIC V1 assets are unchanged.
 
 ## W2.6B1B — real Kaggle smoke recorded (2026-09-23)

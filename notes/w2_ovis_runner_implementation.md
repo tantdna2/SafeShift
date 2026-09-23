@@ -4,8 +4,10 @@ Base main: `9995f6d6247c3b506ee995ed993ee57e339b0dbf` (PR #24).
 Branch: `implementation/d9-ovis-runner`. This is an offline implementation and
 fake-backend validation only. Checklist #2 stays PENDING overall; Ovis real runtime
 validation, decoding/precision freeze and grounding qualification remain pending.
-Review fixes for PR #25 are implemented and awaiting Research Lead review / independent
-audit. Ovis offline implementation must not be marked COMPLETE until that review passes.
+Research Lead reviewed the fix diff from `6f7b4d1` to `641c869` and returned
+`PASS_WITH_GOVERNANCE_CLEANUP`, with no remaining technical blockers. Ovis offline
+runner implementation is **COMPLETE**; real runtime validation is **PENDING**.
+Grounding remains `DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`.
 `protocol_freeze_commit_sha: PENDING`.
 
 ## Pinned source and identity
