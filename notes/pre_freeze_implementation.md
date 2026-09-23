@@ -1,5 +1,80 @@
 # Pre-freeze implementation
 
+## W2.6B1B — real Kaggle smoke recorded (2026-09-23)
+
+**Qwen real runtime smoke PASS / VALIDATED**, per Research Lead's direct audit
+reported by the Project Owner. The [result note](w2_qwen_kaggle_smoke_result.md)
+and [summary JSON](../configs/pre_freeze/qwen_kaggle_smoke_result.v1.json) record
+run `kaggle-t4x2-20260923T012029667885Z` at execution commit
+`784c465cae5188ed6ede5673140a4a281f2ffb52`. Bundle SHA-256:
+`ae3e9e1002ce94bf78bb0ac856f1a7f54a48283d64db51cdb8d5eed37f6b8a69`.
+The recording agent transcribes the supplied audit; no independent bundle inspection
+or new model execution is claimed. The separate RESULT_RECORDING_COMMIT is in PR #24;
+B1B_PREP_HEAD stays pinned to the exact code executed, not the new PR head.
+
+All four local weight shards matched hash and size for this run. Two T4s used
+both GPUs without CPU/disk offload; FP16 / NONE / auto with observed sdpa.
+One runner lifecycle completed two classification calls with SUCCESS, preserved
+raw/metadata and cleared cache state, without OOM/native exception. Identical
+raw outputs for distinct images are runtime observations only, not accuracy or
+semantic capability evidence. Recorded memory peaks were unchanged between calls.
+
+Checklist #1 COMPLETE documentary; #2 PENDING overall (Qwen offline implementation
+COMPLETE and Kaggle smoke VALIDATED; Ovis/Molmo/Gemma runners/runtime PENDING).
+#3–#8 and `protocol_freeze_commit_sha` remain PENDING. FP16 is a validated smoke
+candidate, not frozen research precision. Grounding stays NOT_YET_QUALIFIED /
+UNCERTAIN_REQUIRES_EXTERNAL_GATE. No gate, InspecSafe, new downloads, rerun, tuning,
+backup activation, final roles, D5/schema changes, protocol freeze or merge.
+No ZIP/raw/runtime metadata/weights/cache are committed.
+
+Recording checks: 413/413 full-suite tests PASS, including 10 summary tests;
+`git diff --check` PASS. Existing local `.venv` used without dependency changes.
+
+The PREP entry below retains the historical 2026-09-22 state and test counts;
+its pending-execution statements are superseded by this audited result.
+
+## W2.6B1B-PREP — Kaggle runtime harness (2026-09-22)
+
+Base main: `bd18a64bc76653893abaf5d36a3d9d6dd2665073` (PR #23 / W2.6B1A).
+Branch: `validation/d9-qwen-kaggle-smoke`.
+The [runbook](w2_qwen_kaggle_smoke_runbook.md) provides ten copy-ready Kaggle
+cells: exact PREP checkout, dependency candidate installation preserving Kaggle
+torch/CUDA, pinned snapshot provisioning and local shard verification, offline
+execution, report summary and a small allowlisted evidence bundle.
+
+Prepared scripts separate online provisioning from offline smoke. The new
+`qwen_kaggle_smoke.v1.json` is a **PRE_RUNTIME_VALIDATION_PLAN**, with FP16 / NONE /
+auto / official processor / native attention, Transformers 4.57.1, and smoke-only
+`do_sample=false, max_new_tokens=32`. One literal prompt serves exactly two
+deterministic geometric images, distinct from all eight SYNTHETIC V1 hashes.
+These settings are locked before output, not a protocol precision/decoding freeze.
+
+The existing Qwen runner/executor/storage/adapter are unchanged. Diagnostic hooks
+observe its actual model lifecycle, device map, native exception type and memory;
+two independent sequential requests reuse one runner. Raw+metadata are preserved
+before parsing. INVALID classification is a note, not a runtime failure. GPU/count,
+weight mismatch, load/generation/OOM, storage and disk-offload failures stop;
+CPU offload is a Research Lead review note. Every attempt uses an exclusive run ID;
+reruns require prior ID and reason. No automatic retry, fallback or tuning.
+
+Offline validation: **41/41 harness tests and 401/401 full-suite tests PASS**.
+Commands from repository root, with existing `.venv/Scripts` first on PATH:
+`python -m unittest tests.test_qwen_kaggle_smoke_harness -v`,
+`python -m unittest discover -s tests`, `git diff --check` (PASS).
+The first system-Python attempt could not import Pillow; no dependency was installed.
+Tests use tiny fake shard bytes and the real runner with injected fake backends,
+blocked network/real ML imports, and temporary repositories. No fake runtime report
+or generated fixture/artifact is committed. Notebook Python cells are syntax-checked;
+their pip installation, weights, CUDA and real inference are **not executed**.
+
+**W2.6B1B Kaggle T4×2 runtime-validation harness prepared; real Kaggle execution
+pending.** Checklist #1 COMPLETE documentary; #2–#8 PENDING;
+`protocol_freeze_commit_sha=PENDING`. Protected D9 configs, SYNTHETIC V1, decisions,
+D5 and canonical schema are unchanged. Census remains untracked and untouched
+(SHA-256 `cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`).
+NO_MODEL_WEIGHTS_DOWNLOADED. NO_REAL_MODEL_INFERENCE. SYNTHETIC_GATE_NOT_RUN.
+NO_INSPECSAFE_INFERENCE. No grounding, final roles, backup activation or merge.
+
 ## D9 transition and active P2 checklist (2026-09-20)
 
 [DEC-W2-D9-009](../DECISIONS.md#dec-w2-d9-009--p2-open-weight-self-hosted-model-roster)

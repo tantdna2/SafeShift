@@ -96,11 +96,16 @@ Documentation synchronization does not complete any execution prerequisite.
 - [ ] **2. Runners:** Implement and validate local/self-hosted runners with explicit
   preprocessing, precision/quantization, device/software versions and raw-output
   preservation before parsing. W2.6A generic contracts/scaffolding and dummy unit
-  tests are complete. W2.6B1A Qwen runner code + 63 offline contract tests are
-  implemented; real runtime validation and remaining model runners are **PENDING**.
-  This establishes structural implementation contracts, not GPU runtime success.
+  tests are complete. Qwen offline runner implementation is **COMPLETE**;
+  real Kaggle T4×2 runtime smoke is **PASS / VALIDATED** for run
+  `kaggle-t4x2-20260923T012029667885Z`, per Research Lead's evidence-bundle audit.
+  Ovis, Molmo and Gemma runner/runtime work remains **PENDING**.
   See [W2.6A implementation](notes/w2_local_runner_contracts.md) and
   [Qwen offline implementation](notes/w2_qwen_runner_implementation.md).
+  See the [audited smoke result](notes/w2_qwen_kaggle_smoke_result.md).
+  FP16 is a validated smoke runtime candidate only; this result does not establish
+  capability, grounding, accuracy, or research precision/decoding freeze.
+  Checklist #2 remains **PENDING overall**; #3–#8 remain **PENDING**.
 - [ ] **3. Decoding:** Pin one supported low-variance configuration per model;
   no selection from InspecSafe outputs and no automatic reuse of hosted settings.
 - [ ] **4. Adapters/parsers:** Validate deterministic native-output conversion to the

@@ -1,0 +1,121 @@
+{
+  "schema_version": "qwen-kaggle-smoke-result-summary-v1",
+  "record_kind": "RESEARCH_LEAD_AUDITED_RUNTIME_SUMMARY",
+  "recorded_on": "2026-09-23",
+  "source": {
+    "authority": "Project Owner / Research Lead instruction dated 2026-09-23",
+    "execution_by": "Project Owner on Kaggle",
+    "bundle_audited_by": "Research Lead",
+    "recording_basis": "User-supplied audit findings and hashes; bundle not independently inspected by the recording agent",
+    "evidence_bundle_sha256": "ae3e9e1002ce94bf78bb0ac856f1a7f54a48283d64db51cdb8d5eed37f6b8a69",
+    "bundle_committed": false
+  },
+  "run_id": "kaggle-t4x2-20260923T012029667885Z",
+  "status": "RUNTIME_SMOKE_PASS",
+  "validation_scope": "RUNTIME_INTERFACE_ONLY",
+  "execution_commit": "784c465cae5188ed6ede5673140a4a281f2ffb52",
+  "result_recording_commit_reference": "PR #24 body: RESULT_RECORDING_COMMIT; separate from execution_commit",
+  "smoke_config_path": "configs/pre_freeze/qwen_kaggle_smoke.v1.json",
+  "smoke_config_sha256": "ecd34ba5a8880458734e26f2bf0932f5f820607c2b9f3233b4e092980bf79ef9",
+  "prompt_sha256": "681fb3f051871bd9dd52a8100816f864ceb82ea0b5ac332bb2c7a22aed6bda48",
+  "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+  "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+  "task": "classification",
+  "runtime_condition": {
+    "precision": "FP16",
+    "precision_status": "VALIDATED_SMOKE_RUNTIME_CANDIDATE",
+    "quantization": "NONE",
+    "device": {"placement": "auto"},
+    "preprocessing": {"mode": "official_processor"},
+    "attention_implementation_observed": "sdpa",
+    "decoding": {"do_sample": false, "max_new_tokens": 32}
+  },
+  "local_weight_verification": {
+    "LOCAL_WEIGHT_BYTES_VERIFIED": true,
+    "scope": "THIS_RUN_ONLY_NOT_GLOBAL_OR_FROZEN_VERIFICATION",
+    "documentary_provenance_path": "configs/pre_freeze/local_model_provenance.d9.json",
+    "files": [
+      {"path": "model-00001-of-00004.safetensors", "sha256": "d5d0aef0eb170fc7453a296c43c0849a56f510555d3588e4fd662bb35490aefa", "size_bytes": 4902275944, "sha256_and_size_match": true},
+      {"path": "model-00002-of-00004.safetensors", "sha256": "8be88fb5501e4d5719a6d4cc212e6a13480330e74f3e8c77daa1a68f199106b5", "size_bytes": 4915962496, "sha256_and_size_match": true},
+      {"path": "model-00003-of-00004.safetensors", "sha256": "83de00eafe6e0d57ccd009dbcf71c9974d74df2f016c27afb7e95aafd16b2192", "size_bytes": 4999831048, "sha256_and_size_match": true},
+      {"path": "model-00004-of-00004.safetensors", "sha256": "0a88b98e9f96270973f567e6a2c103ede6ccdf915ca3075e21c755604d0377a5", "size_bytes": 2716270024, "sha256_and_size_match": true}
+    ]
+  },
+  "hardware": {
+    "platform": "KAGGLE",
+    "gpu_count": 2,
+    "gpus": [
+      {"index": 0, "name": "Tesla T4", "memory_total_mib": 15360, "compute_capability": [7, 5]},
+      {"index": 1, "name": "Tesla T4", "memory_total_mib": 15360, "compute_capability": [7, 5]}
+    ],
+    "driver_version": "580.159.04",
+    "torch_cuda_runtime": "12.8"
+  },
+  "device_map_summary": {
+    "representation": "AUDITED_PLACEMENT_SUMMARY_NOT_FULL_HF_DEVICE_MAP",
+    "visual_encoder": "cuda:0",
+    "language_layers_0_through_13": "predominantly cuda:0",
+    "language_layers_14_through_35": "predominantly cuda:1",
+    "lm_head": "cuda:1",
+    "cpu_offload": false,
+    "disk_offload": false
+  },
+  "software_versions": {
+    "python": "3.12.13",
+    "torch": "2.10.0+cu128",
+    "transformers": "4.57.1",
+    "accelerate": "1.11.0",
+    "huggingface_hub": "0.36.0",
+    "safetensors": "0.6.2",
+    "pillow": "11.3.0",
+    "zlib": "1.2.11"
+  },
+  "environment": {"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "HF_HUB_DISABLE_TELEMETRY": "1"},
+  "lifecycle": {"same_runner_instance": true, "load_lifecycles": 1, "native_generate_calls": 2, "native_errors": [], "oom_observed": false},
+  "calls": [
+    {
+      "sample_id": "RUNTIME_SMOKE_01",
+      "input_sha256": "30e703660685855a5bd957938f5711c3b67532156844ed445c3e951ee2c429cf",
+      "parse_status": "SUCCESS",
+      "cache_state_cleared": true,
+      "raw_preserved": true,
+      "metadata_preserved": true,
+      "artifact_hashes_match_audited_files": true,
+      "metadata_parse_status_before_adapter": "NOT_ATTEMPTED",
+      "metadata_sha256": "e851fb01a9d590c08ecf05890276f0f0ff2c3c9f805d9a1052550878fdbbe97f",
+      "response_raw_sha256": "6c147f887f4c762b5dfcb5909b18e1de0acc54919fb1f56d15d0d7b7491fb9a0"
+    },
+    {
+      "sample_id": "RUNTIME_SMOKE_02",
+      "input_sha256": "e4b3d272a708c3c2f1ca3c98a354a4f01716ecada1dbec4e42bcdb0d11dc4b18",
+      "parse_status": "SUCCESS",
+      "cache_state_cleared": true,
+      "raw_preserved": true,
+      "metadata_preserved": true,
+      "artifact_hashes_match_audited_files": true,
+      "metadata_parse_status_before_adapter": "NOT_ATTEMPTED",
+      "metadata_sha256": "02038e125dc60c0d92480c7dda89f8ffa4f287dddc3ea85d8f25de1f1e425a7b",
+      "response_raw_sha256": "6c147f887f4c762b5dfcb5909b18e1de0acc54919fb1f56d15d0d7b7491fb9a0"
+    }
+  ],
+  "output_observation": {"input_hashes_distinct": true, "raw_hashes_identical": true, "semantic_interpretation": "NONE_RUNTIME_OBSERVATION_ONLY"},
+  "memory_diagnostics": {
+    "unit": "bytes",
+    "before_load_free": {"gpu0": 15526068224, "gpu1": 15526068224},
+    "after_load_max_allocated": {"gpu0": 7800528384, "gpu1": 9735371264},
+    "after_call_1_max_allocated": {"gpu0": 7845763584, "gpu1": 9777359360},
+    "after_call_2_max_allocated": {"gpu0": 7845763584, "gpu1": 9777359360},
+    "observation": "Reported allocation peaks unchanged between calls; no large growth signal in these observations only"
+  },
+  "claims": {"capability_pass": false, "grounding_pass": false, "benchmark_result": false, "accuracy_result": false, "performance_benchmark": false, "decoding_frozen": false, "precision_frozen": false, "protocol_frozen": false},
+  "qwen_grounding": {"status": "UNCERTAIN_REQUIRES_EXTERNAL_GATE", "qualification": "NOT_YET_QUALIFIED"},
+  "d9_checklist": {"1": "COMPLETE_DOCUMENTARY", "2": "PENDING", "3": "PENDING", "4": "PENDING", "5": "PENDING", "6": "PENDING", "7": "PENDING", "8": "PENDING"},
+  "runner_progress": {
+    "qwen_offline_implementation": "COMPLETE",
+    "qwen_real_kaggle_runtime_smoke": "PASS_VALIDATED",
+    "remaining_runner_runtime": ["Ovis", "Molmo", "Gemma"]
+  },
+  "synthetic_gate": "NOT_RUN",
+  "inspecsafe_inference": "NOT_RUN",
+  "protocol_freeze_commit_sha": "PENDING"
+}

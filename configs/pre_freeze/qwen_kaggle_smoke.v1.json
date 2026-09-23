@@ -1,0 +1,31 @@
+{
+  "schema_version": "qwen-kaggle-smoke-plan-v1",
+  "status": "PRE_RUNTIME_VALIDATION_PLAN",
+  "scope": "SMOKE_ONLY_TECHNICAL_CONFIGURATION",
+  "platform": "KAGGLE",
+  "accelerator": "T4_X2",
+  "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+  "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+  "precision": "FP16",
+  "quantization": "NONE",
+  "device": {
+    "placement": "auto"
+  },
+  "preprocessing": {
+    "mode": "official_processor"
+  },
+  "attention": "native_default",
+  "transformers": "4.57.1",
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 32
+  },
+  "prompt": "You are performing an interface smoke test. Inspect the image and return exactly one JSON object with one key named safety_level. Its value must be one of: Level01, Level02, Level03, Level04. Do not output markdown or any other text.",
+  "prompt_sha256": "681fb3f051871bd9dd52a8100816f864ceb82ea0b5ac332bb2c7a22aed6bda48",
+  "case_ids": [
+    "RUNTIME_SMOKE_01",
+    "RUNTIME_SMOKE_02"
+  ],
+  "generator_version": "runtime-smoke-geometry-v1",
+  "protocol_freeze_commit_sha": "PENDING"
+}
