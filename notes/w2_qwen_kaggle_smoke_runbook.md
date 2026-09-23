@@ -1,5 +1,12 @@
 # W2.6B1B-PREP — Kaggle T4 x2 Qwen runtime smoke
 
+**Historical execution procedure.** The [2026-09-23 audited result](w2_qwen_kaggle_smoke_result.md)
+records PASS at `784c465cae5188ed6ede5673140a4a281f2ffb52`. The pending statements
+below describe PREP, before that run. `B1B_PREP_HEAD` now retains that execution
+commit while PR HEAD includes result-recording changes. Cell 2's original equality
+guard will therefore stop on the current PR; keep it intact. This recording task
+does not authorize a rerun or updating the execution pin to the recording commit.
+
 **PREPARED; REAL KAGGLE EXECUTION PENDING.** Base main:
 `bd18a64bc76653893abaf5d36a3d9d6dd2665073` (PR #23).
 Branch: `validation/d9-qwen-kaggle-smoke`. This is an Owner-run technical smoke,

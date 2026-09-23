@@ -1,5 +1,38 @@
 # Pre-freeze implementation
 
+## W2.6B1B — real Kaggle smoke recorded (2026-09-23)
+
+**Qwen real runtime smoke PASS / VALIDATED**, per Research Lead's direct audit
+reported by the Project Owner. The [result note](w2_qwen_kaggle_smoke_result.md)
+and [summary JSON](../configs/pre_freeze/qwen_kaggle_smoke_result.v1.json) record
+run `kaggle-t4x2-20260923T012029667885Z` at execution commit
+`784c465cae5188ed6ede5673140a4a281f2ffb52`. Bundle SHA-256:
+`ae3e9e1002ce94bf78bb0ac856f1a7f54a48283d64db51cdb8d5eed37f6b8a69`.
+The recording agent transcribes the supplied audit; no independent bundle inspection
+or new model execution is claimed. The separate RESULT_RECORDING_COMMIT is in PR #24;
+B1B_PREP_HEAD stays pinned to the exact code executed, not the new PR head.
+
+All four local weight shards matched hash and size for this run. Two T4s used
+both GPUs without CPU/disk offload; FP16 / NONE / auto with observed sdpa.
+One runner lifecycle completed two classification calls with SUCCESS, preserved
+raw/metadata and cleared cache state, without OOM/native exception. Identical
+raw outputs for distinct images are runtime observations only, not accuracy or
+semantic capability evidence. Recorded memory peaks were unchanged between calls.
+
+Checklist #1 COMPLETE documentary; #2 PENDING overall (Qwen offline implementation
+COMPLETE and Kaggle smoke VALIDATED; Ovis/Molmo/Gemma runners/runtime PENDING).
+#3–#8 and `protocol_freeze_commit_sha` remain PENDING. FP16 is a validated smoke
+candidate, not frozen research precision. Grounding stays NOT_YET_QUALIFIED /
+UNCERTAIN_REQUIRES_EXTERNAL_GATE. No gate, InspecSafe, new downloads, rerun, tuning,
+backup activation, final roles, D5/schema changes, protocol freeze or merge.
+No ZIP/raw/runtime metadata/weights/cache are committed.
+
+Recording checks: 413/413 full-suite tests PASS, including 10 summary tests;
+`git diff --check` PASS. Existing local `.venv` used without dependency changes.
+
+The PREP entry below retains the historical 2026-09-22 state and test counts;
+its pending-execution statements are superseded by this audited result.
+
 ## W2.6B1B-PREP — Kaggle runtime harness (2026-09-22)
 
 Base main: `bd18a64bc76653893abaf5d36a3d9d6dd2665073` (PR #23 / W2.6B1A).
