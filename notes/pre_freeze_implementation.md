@@ -9,8 +9,8 @@ classification adapter, and unqualified grounding evidence. Fake-backend tests
 cover the lifecycle and post-generation preservation; no real model runtime or
 external gate is claimed. Checklist #1 remains documentary COMPLETE; #2 stays
 PENDING overall (Qwen offline implementation and real Kaggle smoke VALIDATED,
-Ovis offline implementation COMPLETE but real runtime PENDING, Molmo/Gemma
-PENDING). #3–#8 and `protocol_freeze_commit_sha` remain PENDING. D5, canonical
+Ovis review fixes implemented with offline completion PENDING REVIEW and real runtime
+PENDING, Molmo/Gemma PENDING). #3–#8 and `protocol_freeze_commit_sha` remain PENDING. D5, canonical
 schema, D9 roster, Qwen records and SYNTHETIC V1 assets are unchanged.
 
 ## W2.6B1B — real Kaggle smoke recorded (2026-09-23)

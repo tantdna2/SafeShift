@@ -4,15 +4,19 @@ Base main: `9995f6d6247c3b506ee995ed993ee57e339b0dbf` (PR #24).
 Branch: `implementation/d9-ovis-runner`. This is an offline implementation and
 fake-backend validation only. Checklist #2 stays PENDING overall; Ovis real runtime
 validation, decoding/precision freeze and grounding qualification remain pending.
+Review fixes for PR #25 are implemented and awaiting Research Lead review / independent
+audit. Ovis offline implementation must not be marked COMPLETE until that review passes.
 `protocol_freeze_commit_sha: PENDING`.
 
 ## Pinned source and identity
 
 The requested D9 model ID is `AIDC-AI/Ovis2.5-9B`; its repository redirect is
 `ATH-MaaS/Ovis2.5-9B`, recorded separately. Both refer to immutable revision
-`d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd`. The loader uses the requested ID,
-exact revision, `trust_remote_code=True`, `local_files_only=True`, and
-`AutoModelForCausalLM`. Tests inject a fake factory and never execute remote code.
+`d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd`. The loader resolves that exact revision
+of the **resolved** repository locally, then passes the validated local path to
+`AutoModelForCausalLM` with `trust_remote_code=True`, the same `revision`, and
+`local_files_only=True`. Research identity and raw provenance retain both IDs.
+Tests inject both a fake resolver and a fake model factory; no remote code executes.
 The checked source is the [pinned model implementation](https://huggingface.co/ATH-MaaS/Ovis2.5-9B/blob/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd/modeling_ovis2_5.py)
 and [pinned README](https://huggingface.co/ATH-MaaS/Ovis2.5-9B/blob/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd/README.md),
 read as source text on 2026-09-23. Provenance inventory remains in
@@ -27,17 +31,57 @@ early-stopping text IDs. The README decodes `outputs[0]` directly. Therefore the
 runner records `input_ids` and `native_generated_ids` separately and never assumes
 an input prefix in generated output.
 
+Ovis image `input_ids` contain model-internal negative visual sentinel IDs, distinct
+from generated tokenizer IDs. In the pinned still-image preprocessing path,
+`_merge_inputs` replaces the `IMAGE_PLACEHOLDER_ID = -200` with image indicators
+`-301` / `-302` and `VISUAL_ATOM_ID = -300`. The input validator accepts exactly
+a list of integers (excluding booleans), with nonnegative text IDs or those three
+negative values. It rejects arbitrary negatives, leftover `-200`, and the video
+placeholder/indicators `-201`, `-303`, `-304`. The separate generated-ID validator
+accepts only nonnegative integers, excluding booleans. The adapter uses the same
+two distinct validators. Input sentinel values are preserved without conversion.
+
+## Exact local snapshot and nested assets
+
+The backend lazily imports `huggingface_hub.snapshot_download` and resolves only
+`repo_id="ATH-MaaS/Ovis2.5-9B"`, `revision=REVISION`, `local_files_only=True`.
+The returned path must be an existing absolute directory with the full cache suffix
+`models--ATH-MaaS--Ovis2.5-9B/snapshots/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd`.
+Both the supplied and resolved directory paths must match that suffix; checking
+only the final basename would not establish repository identity. A wrong repo,
+wrong commit, mutable ref, missing directory or incompatible directory alias fails
+before model construction. Resolver errors map to `MODEL_LOAD_FAILURE` through
+the existing executor, and a failed attempt publishes no model.
+
+This is necessary because the pinned Ovis constructor calls
+`AutoTokenizer.from_pretrained(self.config.name_or_path)`, and its VisualTokenizer
+loads the image processor using that same model-local path. Those nested calls
+do not inherit the outer revision/local-only arguments. Loading the custom model
+from the exact local snapshot makes `config.name_or_path` local during construction,
+so the tokenizer and image processor resolve from that snapshot. The runner also
+checks that the returned model config retains the same exact snapshot before
+publishing the resource. The absolute cache path is runtime-local and is not placed
+in the raw envelope, versioned configuration or manifest.
+
+The injected test resolver returns empty synthetic directory trees in temporary
+storage; no real snapshot is downloaded or loaded. Layout and call-boundary tests
+are **not local byte verification**. Snapshot completeness, code/asset/weight hashes,
+and actual nested-loader behavior still require real provisioning and runtime
+validation. This task neither runs nor claims those checks.
+
 ## Execution condition and lifecycle
 
 Import is lazy. `initialize` constructs the backend once and checks recorded
-torch/Transformers/Pillow versions. `load` runs once for one condition; an altered
+torch/Transformers/Pillow/Hugging Face Hub versions. `load` runs once for one condition; an altered
 model ID, revision, backend, runner version, precision, quantization, device,
 preprocessing, software version, loader policy, or thinking condition requires a
 new runner. Failed loads do not publish a model and can be retried. No fallback,
 pipeline, `model.chat`, backup activation or automatic reload is present.
 
 The documented BF16 single-CUDA path is the only implemented placement candidate:
-`BF16`, `NONE`, `{"placement":"cuda:0"}`. Loading calls `.cuda()` and `.eval()`.
+`BF16`, `NONE`, `{"placement":"cuda:0"}`. Loading calls `.cuda(0)` and `.eval()`;
+input IDs, pixel values and grid metadata also use `.cuda(0)`, independent of the
+current CUDA device. Fake model/tensor objects record and assert all four arguments.
 No FP16/FP32 or automatic device mapping support is asserted for this wrapper.
 This path is **not runtime validated**. Qwen's FP16 Kaggle smoke result is not
 transferred to Ovis.
@@ -83,10 +127,12 @@ Classification adaptation validates the raw envelope and delegates unchanged to
 `INVALID_CLASSIFICATION_OUTPUT`; structural adapter failure is `PARSER_FAILURE`.
 Grounding remains `UNSUPPORTED_GROUNDING_INTERFACE` / `NOT_YET_QUALIFIED` with
 `SpatialKind.NONE`, even when native box tags are present. The optional native
-evidence helper recognizes only complete documented point/box tag sequences or
-bracketed comma-separated lists, finite coordinates in `[0,1)`, x-first top-left
+evidence helper recognizes exactly one point or box tag, or a square-bracketed
+comma-separated list, with finite coordinates in `[0,1)` and x-first top-left
 box ordering, and returns diagnostic candidates only. It does not convert points
 to boxes, clamp coordinates, calculate IoU or produce a D5 canonical result.
+Multiple unbracketed tags, prose extraction, missing list commas, trailing commas,
+malformed tags and arbitrary four-number strings are rejected.
 
 No persistent per-call state mutation was found in the pinned
 `preprocess_inputs`/`generate` path: `NO_DOCUMENTED_PERSISTENT_CALL_STATE`.
@@ -104,9 +150,15 @@ Run from repository root using the existing virtual environment:
 git diff --check
 ```
 
-Validation on 2026-09-23: **22/22 Ovis tests** and **435/435 repository tests**
+Validation of the review fix: **32/32 Ovis tests** and **445/445 repository tests**
 PASS; `git diff --check` passes. The tests use fake torch/Transformers/model
 behavior and tiny in-memory images;
 no model weights, GPU, Hugging Face cache, network access during tests, real
 inference, SYNTHETIC V1 gate or InspecSafe data are used. Exact test counts and
 commit/PR identifiers are recorded in the implementation report after validation.
+Tests reject socket connections and real torch/Transformers/Hub imports; the fresh
+module-import subprocess applies the same guards. Ten added regression tests cover
+sentinel preservation/rejection, generated-ID rejection, snapshot repo/revision and
+path checks, resolver failures/retry, returned config locality, explicit CUDA 0,
+and documented multi-result spatial syntax. Existing lifecycle, raw preservation,
+classification, thinking and grounding-firewall tests continue to run.

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from io import BytesIO
 import json
 import math
+from pathlib import Path
 import re
 import warnings
 
@@ -31,6 +32,11 @@ IDENTITY = ModelIdentity(
 )
 MIN_PIXELS = 448 * 448
 MAX_PIXELS = 1792 * 1792
+# Pinned preprocess_inputs replaces IMAGE_PLACEHOLDER_ID (-200) via
+# _merge_inputs(..., INDICATOR_IDS[0], INDICATOR_IDS[1]). Only the image
+# start/end indicators and visual atoms remain in this still-image path.
+IMAGE_INPUT_SENTINELS = frozenset({-300, -301, -302})
+SNAPSHOT_REPOSITORY_DIR = "models--" + RESOLVED_REPOSITORY_ID.replace("/", "--")
 DECODING_KEYS = frozenset({
     "temperature", "do_sample", "top_p", "top_k", "max_new_tokens",
     "repetition_penalty", "enable_thinking", "enable_thinking_budget",
@@ -84,10 +90,37 @@ def _failure_raw(evidence, stage, error):
                             for key in sorted(fragments)) + b"}"
 
 
-def _ids(value):
-    if type(value) is not list or any(type(v) is not int or v < 0 for v in value):
-        raise ValueError("token IDs must be nonnegative integers")
+def _validate_ovis_input_ids(value):
+    if type(value) is not list or any(
+        type(v) is not int or (v < 0 and v not in IMAGE_INPUT_SENTINELS) for v in value
+    ):
+        raise ValueError("Ovis image input IDs must be integers with only pinned image sentinels")
     return value
+
+
+def _validate_generated_ids(value):
+    if type(value) is not list or any(type(v) is not int or v < 0 for v in value):
+        raise ValueError("generated token IDs must be nonnegative integers")
+    return value
+
+
+def _validate_local_snapshot(value):
+    """Check repository AND immutable revision in the local HF cache layout.
+
+    This validates location, not file completeness or byte integrity. Asset/hash
+    verification belongs to later provisioning. Resolve directory aliases before
+    loading so nested custom-code loaders receive the same exact local snapshot.
+    """
+    if not isinstance(value, (str, Path)):
+        raise ValueError("snapshot resolver must return a local path")
+    path = Path(value)
+    expected = (SNAPSHOT_REPOSITORY_DIR, "snapshots", REVISION)
+    if not path.is_absolute() or tuple(path.parts[-3:]) != expected:
+        raise ValueError("snapshot path must identify the resolved repository and exact revision")
+    resolved = path.resolve(strict=True)
+    if tuple(resolved.parts[-3:]) != expected or not resolved.is_dir():
+        raise ValueError("resolved snapshot directory has the wrong repository or revision")
+    return resolved
 
 
 def _decoding(values):
@@ -132,6 +165,7 @@ class OvisBackend:
     torch: object
     model_factory: object
     software_versions: dict
+    snapshot_resolver: object
 
 
 def _native_backend():
@@ -139,11 +173,13 @@ def _native_backend():
     import transformers
     import PIL
     from transformers import AutoModelForCausalLM
+    from huggingface_hub import snapshot_download, __version__ as hub_version
 
     return OvisBackend(torch, AutoModelForCausalLM, {
         "torch": torch.__version__, "transformers": transformers.__version__,
         "pillow": PIL.__version__,
-    })
+        "huggingface_hub": hub_version,
+    }, snapshot_download)
 
 
 @dataclass(frozen=True)
@@ -157,7 +193,7 @@ class PreparedInput:
 
 class Ovis2_5Runner(LocalRunner):
     identity = IDENTITY
-    version = "ovis2-5-runner-v1"
+    version = "ovis2-5-runner-v2"
     partial_generation = "BLOCKING_GENERATE_NO_PARTIAL_GUARANTEE"
     persistent_call_state = "NO_DOCUMENTED_PERSISTENT_CALL_STATE"
 
@@ -178,7 +214,9 @@ class Ovis2_5Runner(LocalRunner):
             "preprocessing": context.preprocessing,
             "thinking_condition": {k: context.decoding.get(k) for k in
                                    ("enable_thinking", "enable_thinking_budget", "thinking_budget")},
-            "loader": {"trust_remote_code": True, "local_files_only": True},
+            "loader": {"trust_remote_code": True, "local_files_only": True,
+                       "source": "EXACT_LOCAL_SNAPSHOT",
+                       "repository_id": RESOLVED_REPOSITORY_ID, "revision": REVISION},
         })
 
     def _check_condition(self, context):
@@ -210,16 +248,24 @@ class Ovis2_5Runner(LocalRunner):
             raise ValueError("only explicit single-device cuda:0 is implemented")
         _preprocessing(context.preprocessing)
         _decoding(context.decoding)
+        snapshot = _validate_local_snapshot(self._backend.snapshot_resolver(
+            repo_id=RESOLVED_REPOSITORY_ID, revision=REVISION, local_files_only=True,
+        ))
+        # Ovis's constructor loads its tokenizer and image processor from
+        # config.name_or_path. A repository ID here would let those nested loads
+        # escape the pinned outer revision/local-only arguments.
         model = self._backend.model_factory.from_pretrained(
-            MODEL_ID, revision=REVISION, trust_remote_code=True,
+            str(snapshot), revision=REVISION, trust_remote_code=True,
             local_files_only=True, torch_dtype=self._backend.torch.bfloat16,
         )
         try:
+            if _validate_local_snapshot(model.config.name_or_path) != snapshot:
+                raise ValueError("Ovis config must retain the exact local snapshot path")
             if not callable(getattr(model, "preprocess_inputs", None)) or not callable(getattr(model, "generate", None)):
                 raise ValueError("Ovis custom model interface unavailable")
             if not callable(getattr(getattr(model, "text_tokenizer", None), "decode", None)):
                 raise ValueError("Ovis text tokenizer interface unavailable")
-            model = model.cuda()
+            model = model.cuda(0)
             model.eval()
             self._model = model
         finally:
@@ -260,11 +306,11 @@ class Ovis2_5Runner(LocalRunner):
             image.close()
         if len(input_ids) != 1:
             raise ValueError("expected one input token row")
-        ids = _ids(input_ids[0].tolist())
+        ids = _validate_ovis_input_ids(input_ids[0].tolist())
         if not ids:
             raise ValueError("empty input token sequence")
-        return PreparedInput(input_ids.cuda(), pixel_values.cuda() if pixel_values is not None else None,
-                             grid_thws.cuda() if grid_thws is not None else None, ids, key)
+        return PreparedInput(input_ids.cuda(0), pixel_values.cuda(0) if pixel_values is not None else None,
+                             grid_thws.cuda(0) if grid_thws is not None else None, ids, key)
 
     def generate_raw(self, prepared: PreparedInput, context: RunContext) -> bytes:
         key, model = self._loaded(context)
@@ -295,7 +341,7 @@ class Ovis2_5Runner(LocalRunner):
             if type(rows) is not list or len(rows) != 1:
                 raise ValueError("expected one native generated token row")
             stage = "TOKEN_VALIDATION"
-            ids = _ids(rows[0])
+            ids = _validate_generated_ids(rows[0])
             _observe(evidence, "native_generated_ids", ids)
             stage = "DECODE_SPECIAL_TOKENS"
             observed_special = model.text_tokenizer.decode(
@@ -344,7 +390,7 @@ _BOX = re.compile(rf"<box>\s*\(({_NUMBER}),\s*({_NUMBER})\),\s*\(({_NUMBER}),\s*
 
 
 def parse_ovis_native_spatial_evidence(text):
-    """Parse only complete documented tag sequences; never produce a D5 result."""
+    """Parse one tag or a documented bracketed list; never produce a D5 result."""
     if type(text) is not str:
         raise TypeError("native spatial text must be a string")
     source = text.strip()
@@ -380,11 +426,11 @@ def parse_ovis_native_spatial_evidence(text):
                     return []
     if bracketed and not result:
         return []
-    return result
+    return result if bracketed or len(result) == 1 else []
 
 
 class Ovis2_5Adapter:
-    version = "ovis2-5-adapter-v1"
+    version = "ovis2-5-adapter-v2"
     parser_version = ENVELOPE_VERSION + "/" + PARSER_VERSION
 
     def adapt(self, raw: bytes, task: Task) -> AdaptedOutput:
@@ -404,10 +450,10 @@ class Ovis2_5Adapter:
             if obj[key] != expected:
                 raise ValueError("wrong raw envelope identity/version")
         if (type(obj["input_token_count"]) is not int or obj["input_token_count"] < 1
-                or _ids(obj["input_ids"]) != obj["input_ids"]
+                or _validate_ovis_input_ids(obj["input_ids"]) != obj["input_ids"]
                 or len(obj["input_ids"]) != obj["input_token_count"]):
             raise ValueError("invalid input tokens")
-        _ids(obj["native_generated_ids"])
+        _validate_generated_ids(obj["native_generated_ids"])
         if any(type(obj[k]) is not str for k in ("decoded_with_special_tokens", "decoded_for_parser")):
             raise ValueError("decoded outputs must be strings")
         _decoding(obj["generation_kwargs"])

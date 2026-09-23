@@ -99,9 +99,9 @@ Documentation synchronization does not complete any execution prerequisite.
   tests are complete. Qwen offline runner implementation is **COMPLETE**;
   real Kaggle T4×2 runtime smoke is **PASS / VALIDATED** for run
   `kaggle-t4x2-20260923T012029667885Z`, per Research Lead's evidence-bundle audit.
-  Ovis offline runner implementation is **COMPLETE** under W2.6B2A; real Ovis
-  runtime validation remains **PENDING**. Molmo and Gemma runner/runtime work
-  remains **PENDING**.
+  Ovis W2.6B2A review fixes are implemented; offline completion is **PENDING REVIEW**
+  until the corrections pass review. Real Ovis runtime validation remains **PENDING**.
+  Molmo and Gemma runner/runtime work remains **PENDING**.
   See [W2.6A implementation](notes/w2_local_runner_contracts.md) and
   [Qwen offline implementation](notes/w2_qwen_runner_implementation.md).
   See the [audited smoke result](notes/w2_qwen_kaggle_smoke_result.md).

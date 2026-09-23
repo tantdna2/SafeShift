@@ -9,6 +9,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from PIL import Image, __version__ as PILLOW_VERSION
 
@@ -26,7 +27,8 @@ from safeshift.runners.storage import FileRawStore
 
 
 VERSIONS = {"torch": "fake-torch", "transformers": "fake-transformers",
-            "pillow": PILLOW_VERSION}
+            "pillow": PILLOW_VERSION, "huggingface_hub": "fake-hub"}
+IMAGE_INPUT_IDS = [11, -301, -300, -300, -302, 12, 13]
 
 
 def context(call_id="call-1", **changes):
@@ -60,6 +62,7 @@ def request(task=Task.CLASSIFICATION, input_bytes=None):
 class Tensor:
     def __init__(self, value):
         self.value = value
+        self.cuda_devices = []
 
     def __len__(self):
         return len(self.value)
@@ -70,7 +73,8 @@ class Tensor:
     def tolist(self):
         return self.value
 
-    def cuda(self):
+    def cuda(self, device=None):
+        self.cuda_devices.append(device)
         return self
 
 
@@ -91,6 +95,7 @@ class FakeModel:
         self.llm = SimpleNamespace(generation_config=SimpleNamespace(
             to_dict=lambda: {"eos_token_id": 42, "pad_token_id": 0}))
         self.text = '{"safety_level":"Level02"}'
+        self.input_ids = list(IMAGE_INPUT_IDS)
         self.output = [[92, 93]]
         self.fail_generate = False
         self.fail_decode = None
@@ -98,10 +103,12 @@ class FakeModel:
         self.generate_calls = []
         self.decode_calls = []
         self.cuda_calls = 0
+        self.cuda_devices = []
         self.eval_calls = 0
 
-    def cuda(self):
+    def cuda(self, device=None):
         self.cuda_calls += 1
+        self.cuda_devices.append(device)
         return self
 
     def eval(self):
@@ -110,7 +117,7 @@ class FakeModel:
 
     def preprocess_inputs(self, **kwargs):
         self.preprocess_calls.append(kwargs)
-        return Tensor([[11, 12, 13]]), Tensor([1]), Tensor([2])
+        return Tensor([self.input_ids]), Tensor([1]), Tensor([2])
 
     def generate(self, **kwargs):
         self.generate_calls.append(kwargs)
@@ -125,16 +132,31 @@ class FakeFactory:
         self.models = []
         self.fail = False
         self.missing = None
+        self.config_path_override = None
 
-    def from_pretrained(self, model_id, **kwargs):
-        self.calls.append((model_id, kwargs))
+    def from_pretrained(self, local_path, **kwargs):
+        self.calls.append((local_path, kwargs))
         if self.fail:
             raise RuntimeError("load failure")
         model = FakeModel()
+        model.config = SimpleNamespace(name_or_path=self.config_path_override or local_path)
         if self.missing:
             setattr(model, self.missing, None)
         self.models.append(model)
         return model
+
+
+class FakeSnapshotResolver:
+    def __init__(self, path):
+        self.result = str(path)
+        self.calls = []
+        self.fail = False
+
+    def __call__(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.fail:
+            raise FileNotFoundError("fake local snapshot unavailable")
+        return self.result
 
 
 class InferenceMode:
@@ -147,19 +169,35 @@ class InferenceMode:
 
 class OvisTests(unittest.TestCase):
     def setUp(self):
+        # Fail immediately if a regression tries network access or real ML imports.
+        self.enterContext(patch("socket.socket.connect", side_effect=AssertionError("network forbidden")))
+        self.enterContext(patch("socket.create_connection", side_effect=AssertionError("network forbidden")))
+        import builtins
+        original_import = builtins.__import__
+
+        def offline_import(name, *args, **kwargs):
+            if name.split(".")[0] in {"torch", "transformers", "huggingface_hub"}:
+                raise AssertionError("real ML backend import forbidden in offline tests")
+            return original_import(name, *args, **kwargs)
+
+        self.enterContext(patch("builtins.__import__", side_effect=offline_import))
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name)
+        self.snapshot = (self.repo / "fake-cache" / "models--ATH-MaaS--Ovis2.5-9B"
+                         / "snapshots" / REVISION)
+        self.snapshot.mkdir(parents=True)
+        self.resolver = FakeSnapshotResolver(self.snapshot)
         self.factory = FakeFactory()
         self.backend_calls = 0
 
         def backend():
             self.backend_calls += 1
             return OvisBackend(SimpleNamespace(bfloat16="bf16", inference_mode=InferenceMode),
-                               self.factory, VERSIONS)
+                               self.factory, VERSIONS, self.resolver)
 
         self.runner = Ovis2_5Runner(backend_factory=backend)
         self.adapter = Ovis2_5Adapter()
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.repo = Path(self.temp.name)
         self.store = FileRawStore(self.repo)
 
     def loaded(self, ctx=None):
@@ -182,13 +220,32 @@ class OvisTests(unittest.TestCase):
         self.assertEqual(MODEL_ID, "AIDC-AI/Ovis2.5-9B")
         self.assertEqual(RESOLVED_REPOSITORY_ID, "ATH-MaaS/Ovis2.5-9B")
         self.assertEqual(REVISION, "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd")
-        self.assertEqual(self.factory.calls, [(MODEL_ID, {
+        self.assertEqual(self.resolver.calls, [{
+            "repo_id": "ATH-MaaS/Ovis2.5-9B", "revision": REVISION, "local_files_only": True,
+        }])
+        self.assertEqual(self.factory.calls, [(str(self.snapshot.resolve()), {
             "revision": REVISION, "trust_remote_code": True,
             "local_files_only": True, "torch_dtype": "bf16",
         })])
+        self.assertEqual(self.factory.models[0].config.name_or_path, str(self.snapshot.resolve()))
 
     def test_import_is_lazy(self):
-        code = "import sys; import safeshift.runners.ovis2_5; assert 'torch' not in sys.modules; assert 'transformers' not in sys.modules"
+        code = """
+import builtins
+import socket
+import sys
+original_import = builtins.__import__
+def offline_import(name, *args, **kwargs):
+    if name.split('.')[0] in {'torch', 'transformers', 'huggingface_hub', 'PIL'}:
+        raise AssertionError('runtime import at module load')
+    return original_import(name, *args, **kwargs)
+def no_network(*args, **kwargs):
+    raise AssertionError('network at module load')
+builtins.__import__ = offline_import
+socket.socket.connect = socket.create_connection = no_network
+import safeshift.runners.ovis2_5
+assert not {'torch', 'transformers', 'huggingface_hub', 'PIL'} & sys.modules.keys()
+"""
         result = subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).resolve().parents[1],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -199,6 +256,7 @@ class OvisTests(unittest.TestCase):
         self.runner.load(ctx)
         self.assertEqual(self.backend_calls, 1)
         self.assertEqual(len(self.factory.calls), 1)
+        self.assertEqual(len(self.resolver.calls), 1)
         self.assertEqual((model.cuda_calls, model.eval_calls), (1, 1))
 
     def test_changed_condition_fails_without_reloading(self):
@@ -222,13 +280,134 @@ class OvisTests(unittest.TestCase):
         self.runner.load(ctx)
         self.assertEqual(len(self.factory.calls), 2)
 
+    def test_snapshot_wrong_or_mutable_identity_fails_before_factory(self):
+        ctx = context()
+        self.runner.initialize(ctx)
+        wrong_paths = [
+            self.snapshot.parent / "main",
+            self.snapshot.parent / "latest",
+            self.snapshot.parent / ("a" * 40),
+            self.repo / "models--AIDC-AI--Ovis2.5-9B" / "snapshots" / REVISION,
+            self.repo / "models--other--model" / "snapshots" / REVISION,
+            self.snapshot.parent.parent / "refs" / REVISION,
+            self.repo / "arbitrary" / REVISION,
+        ]
+        for wrong in wrong_paths:
+            wrong.mkdir(parents=True)
+            with self.subTest(path=wrong):
+                self.resolver.result = str(wrong)
+                with self.assertRaises(ValueError):
+                    self.runner.load(ctx)
+                self.assertIsNone(self.runner._model)
+        self.assertEqual(self.factory.calls, [])
+
+    def test_snapshot_must_be_an_existing_absolute_directory(self):
+        ctx = context()
+        self.runner.initialize(ctx)
+        missing = self.repo / "missing" / "models--ATH-MaaS--Ovis2.5-9B" / "snapshots" / REVISION
+        file_path = self.repo / "file" / "models--ATH-MaaS--Ovis2.5-9B" / "snapshots" / REVISION
+        file_path.parent.mkdir(parents=True)
+        file_path.write_text("synthetic non-directory", encoding="utf-8")
+        for value in (str(missing), str(file_path), str(self.snapshot.relative_to(self.repo)),
+                      MODEL_ID, RESOLVED_REPOSITORY_ID, None):
+            with self.subTest(value=value):
+                self.resolver.result = value
+                with self.assertRaises((ValueError, FileNotFoundError)):
+                    self.runner.load(ctx)
+                self.assertIsNone(self.runner._model)
+        self.assertEqual(self.factory.calls, [])
+
+    def test_snapshot_directory_alias_to_other_identity_is_rejected(self):
+        # Exercise the resolved-path check without requiring Windows symlink privileges.
+        ctx = context()
+        self.runner.initialize(ctx)
+        wrong = self.repo / "models--other--model" / "snapshots" / REVISION
+        wrong.mkdir(parents=True)
+        with patch.object(Path, "resolve", return_value=wrong):
+            with self.assertRaises(ValueError):
+                self.runner.load(ctx)
+        self.assertEqual(self.factory.calls, [])
+
+    def test_snapshot_resolver_failure_maps_to_load_failure_and_can_retry(self):
+        self.resolver.fail = True
+        result = self.execute()
+        self.assertEqual(result.error.code, ErrorCode.MODEL_LOAD_FAILURE)
+        self.assertEqual(result.parse_status, ParseStatus.NOT_ATTEMPTED)
+        self.assertIsNone(result.raw_output)
+        self.assertIsNone(self.runner._model)
+        self.assertEqual(self.factory.calls, [])
+        self.resolver.fail = False
+        self.assertEqual(self.execute(context("retry")).parse_status, ParseStatus.SUCCESS)
+        self.assertEqual(len(self.resolver.calls), 2)
+        self.assertEqual(len(self.factory.calls), 1)
+        self.assertEqual(self.backend_calls, 1)
+
+    def test_model_config_must_retain_the_same_local_snapshot(self):
+        self.factory.config_path_override = MODEL_ID
+        result = self.execute()
+        self.assertEqual(result.error.code, ErrorCode.MODEL_LOAD_FAILURE)
+        self.assertIsNone(self.runner._model)
+        self.assertEqual(self.factory.models[0].cuda_calls, 0)
+
+    def test_cuda_zero_is_explicit_for_model_and_all_inputs(self):
+        ctx, model = self.loaded()
+        prepared = self.runner.prepare_input(request(), ctx)
+        self.assertEqual(model.cuda_devices, [0])
+        for tensor in (prepared.input_ids_tensor, prepared.pixel_values, prepared.grid_thws):
+            self.assertEqual(tensor.cuda_devices, [0])
+        self.runner.generate_raw(prepared, ctx)
+        call = model.generate_calls[0]
+        self.assertIs(call["inputs"], prepared.input_ids_tensor)
+        self.assertIs(call["pixel_values"], prepared.pixel_values)
+        self.assertIs(call["grid_thws"], prepared.grid_thws)
+
+    def test_image_sentinels_survive_preparation_raw_bytes_and_adapter(self):
+        ctx, _ = self.loaded()
+        prepared = self.runner.prepare_input(request(), ctx)
+        self.assertEqual(prepared.input_ids, IMAGE_INPUT_IDS)
+        raw = self.runner.generate_raw(prepared, ctx)
+        self.assertIn(b'"input_ids":[11,-301,-300,-300,-302,12,13]', raw)
+        self.assertEqual(strict_json(raw)["input_ids"], IMAGE_INPUT_IDS)
+        self.assertEqual(self.adapter.adapt(raw, Task.CLASSIFICATION).value, Classification("Level02"))
+
+    def test_invalid_image_input_ids_rejected_by_preparation_and_adapter(self):
+        obj, model = self.raw()
+        for invalid in ([11, -999], [True], [False], [-200], [-201], [-303], [-304],
+                        [-1], [1.5], ["11"], "11", {"token": 11}):
+            with self.subTest(input_ids=invalid):
+                model.input_ids = invalid
+                with self.assertRaises(ValueError):
+                    self.runner.prepare_input(request(), context())
+                malformed = {**obj, "input_ids": invalid, "input_token_count": len(invalid)}
+                with self.assertRaises(ValueError):
+                    self.adapter.adapt(json.dumps(malformed).encode(), Task.CLASSIFICATION)
+        model.input_ids = tuple(IMAGE_INPUT_IDS)
+        with self.assertRaises(ValueError):
+            self.runner.prepare_input(request(), context())
+
+    def test_generated_ids_reject_negative_sentinels_and_bool(self):
+        obj, model = self.raw()
+        prepared = self.runner.prepare_input(request(), context())
+        for invalid in (-300, -301, -302, -999, True, False):
+            with self.subTest(generated_id=invalid):
+                model.output = [[92, invalid]]
+                with self.assertRaises(GenerationFailure) as caught:
+                    self.runner.generate_raw(prepared, context())
+                evidence = strict_json(caught.exception.partial_raw)
+                self.assertEqual(evidence["observed_native_generated_ids"], [[92, invalid]])
+                self.assertEqual(evidence["post_generation_stage"], "TOKEN_VALIDATION")
+                with self.assertRaises(ValueError):
+                    self.adapter.adapt(json.dumps({**obj, "native_generated_ids": [92, invalid]}).encode(),
+                                       Task.CLASSIFICATION)
+
     def test_interface_rejected_without_fallback(self):
         for missing in ("preprocess_inputs", "generate", "text_tokenizer"):
             with self.subTest(missing=missing):
                 self.factory.missing = missing
                 ctx = context()
                 self.runner = Ovis2_5Runner(backend_factory=lambda: OvisBackend(
-                    SimpleNamespace(bfloat16="bf16", inference_mode=InferenceMode), self.factory, VERSIONS))
+                    SimpleNamespace(bfloat16="bf16", inference_mode=InferenceMode),
+                    self.factory, VERSIONS, self.resolver))
                 self.runner.initialize(ctx)
                 with self.assertRaises(ValueError):
                     self.runner.load(ctx)
@@ -241,7 +420,8 @@ class OvisTests(unittest.TestCase):
             with self.subTest(changes=changes):
                 ctx = context(**changes)
                 runner = Ovis2_5Runner(backend_factory=lambda: OvisBackend(
-                    SimpleNamespace(bfloat16="bf16", inference_mode=InferenceMode), self.factory, VERSIONS))
+                    SimpleNamespace(bfloat16="bf16", inference_mode=InferenceMode),
+                    self.factory, VERSIONS, self.resolver))
                 runner.initialize(ctx)
                 with self.assertRaises(ValueError):
                     runner.load(ctx)
@@ -290,7 +470,7 @@ class OvisTests(unittest.TestCase):
         raw2 = self.runner.generate_raw(prepared, ctx)
         self.assertEqual(raw1, raw2)
         obj = strict_json(raw1)
-        self.assertEqual(obj["input_ids"], [11, 12, 13])
+        self.assertEqual(obj["input_ids"], IMAGE_INPUT_IDS)
         self.assertEqual(obj["native_generated_ids"], [92, 93])
         self.assertEqual(obj["decoded_with_special_tokens"],
                          '<think>reason</think>{"safety_level":"Level02"}')
@@ -424,9 +604,10 @@ class OvisTests(unittest.TestCase):
 
     def test_native_spatial_helper_is_strict_and_not_canonical(self):
         parse = parse_ovis_native_spatial_evidence
-        self.assertEqual([item["kind"] for item in parse(
-            "<point>(0.1,0.2)</point>\n<box>(0.1,0.2),(0.8,0.9)</box>")],
-                         ["point", "box"])
+        self.assertEqual(parse("<point>(0.1,0.2)</point>"),
+                         [{"kind": "point", "coordinates": [0.1, 0.2]}])
+        self.assertEqual(parse("<box>(0.1,0.2),(0.8,0.9)</box>"),
+                         [{"kind": "box", "coordinates": [0.1, 0.2, 0.8, 0.9]}])
         self.assertEqual(len(parse("[<box>(0.1,0.2),(0.8,0.9)</box>,"
                                    " <point>(0.4,0.5)</point> ]")), 2)
         for bad in ("0.1 0.2 0.8 0.9", "here <point>(0.1,0.2)</point>",
@@ -436,6 +617,17 @@ class OvisTests(unittest.TestCase):
                     "[<point>(0.1,0.2)</point>,]"):
             with self.subTest(bad=bad):
                 self.assertEqual(parse(bad), [])
+
+    def test_multiple_spatial_results_require_brackets_and_commas(self):
+        point = "<point>(0.1,0.2)</point>"
+        box = "<box>(0.1,0.2),(0.8,0.9)</box>"
+        for pair in ((point, point), (box, box), (point, box)):
+            with self.subTest(pair=pair):
+                self.assertEqual(len(parse_ovis_native_spatial_evidence("[" + ",".join(pair) + "]")), 2)
+                for separator in ("", " ", "\n", ","):
+                    self.assertEqual(parse_ovis_native_spatial_evidence(separator.join(pair)), [])
+                self.assertEqual(parse_ovis_native_spatial_evidence("[" + " ".join(pair) + "]"), [])
+        self.assertEqual(parse_ovis_native_spatial_evidence("[" + point + ",]"), [])
 
 
 if __name__ == "__main__":
