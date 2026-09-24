@@ -114,12 +114,12 @@ class CensusTensor:
 
 class CensusModel(FakeModel):
     def __init__(self, *, parameter_device="cuda:0", parameter_dtype="torch.bfloat16",
-                 include_meta=False, failure_on_call=None, network_attempt=False,
+                 include_meta=False, failure_on_call=None, network_attempt_mode=None,
                  text='{"safety_level":"Level02"}'):
         super().__init__()
         self.text = text
         self.failure_on_call = failure_on_call
-        self.network_attempt = network_attempt
+        self.network_attempt_mode = network_attempt_mode
         self._parameters = [CensusTensor(parameter_device, parameter_dtype)]
         if include_meta:
             self._parameters.append(CensusTensor("meta", parameter_dtype))
@@ -135,8 +135,16 @@ class CensusModel(FakeModel):
     def generate(self, **kwargs):
         self.generate_calls.append(kwargs)
         call_number = len(self.generate_calls)
-        if self.network_attempt:
+        if self.network_attempt_mode == "create_connection":
             socket.create_connection(("example.invalid", 443))
+        elif self.network_attempt_mode == "getaddrinfo":
+            socket.getaddrinfo("example.invalid", 443)
+        elif self.network_attempt_mode == "sendto":
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client:
+                client.sendto(b"offline-test", ("127.0.0.1", 9))
+        elif self.network_attempt_mode in {"connect", "connect_ex"}:
+            with socket.socket() as client:
+                getattr(client, self.network_attempt_mode)(("127.0.0.1", 9))
         if self.failure_on_call == call_number:
             error = RuntimeError("synthetic native failure")
             if getattr(self, "oom", False):
@@ -194,6 +202,8 @@ class SmokeHarnessTests(unittest.TestCase):
     def setUp(self):
         self.stack = ExitStack()
         self.addCleanup(self.stack.close)
+        self.stack.enter_context(patch.dict(os.environ, {"B2B_PREP_HEAD": "a" * 40}))
+        self.network_guards = []
         for target in (
             "socket.socket.connect",
             "socket.socket.connect_ex",
@@ -201,9 +211,9 @@ class SmokeHarnessTests(unittest.TestCase):
             "socket.create_connection",
             "socket.getaddrinfo",
         ):
-            self.stack.enter_context(
+            self.network_guards.append(self.stack.enter_context(
                 patch(target, side_effect=AssertionError("network forbidden in unit tests"))
-            )
+            ))
         self.temp = self.stack.enter_context(tempfile.TemporaryDirectory())
         self.repo = Path(self.temp)
         for relative in (smoke.PLAN, provision.PROVENANCE, "scripts/w2_ovis_gpu_smoke.py"):
@@ -246,7 +256,8 @@ class SmokeHarnessTests(unittest.TestCase):
         return runner_factory
 
     def run_fake(self, run_id=None, *, runner_options=None, environment=True,
-                 hardware_result=None, snapshot_verification=None, rerun=True):
+                 hardware_result=None, snapshot_verification=None, rerun=True,
+                 execution_pin="a" * 40):
         self.run_counter += 1
         run_id = run_id or f"offline-{self.run_counter}"
         runner_factory = self.make_runner(**(runner_options or {}))
@@ -261,19 +272,23 @@ class SmokeHarnessTests(unittest.TestCase):
         }
         with ExitStack() as stack:
             stack.enter_context(patch.dict(os.environ, env, clear=False))
+            if execution_pin is None:
+                os.environ.pop("B2B_PREP_HEAD", None)
+            else:
+                os.environ["B2B_PREP_HEAD"] = execution_pin
             stack.enter_context(patch.object(
                 smoke.subprocess, "check_output", return_value="a" * 40
             ))
-            stack.enter_context(patch.object(
+            self.software_probe = stack.enter_context(patch.object(
                 smoke, "software_versions", return_value=dict(PINNED_SOFTWARE)
             ))
-            stack.enter_context(patch.object(
+            self.hardware_probe = stack.enter_context(patch.object(
                 smoke, "probe_hardware", return_value=hardware_result or hardware()
             ))
-            stack.enter_context(patch.object(
+            self.snapshot_resolver = stack.enter_context(patch.object(
                 smoke, "cached_snapshot", return_value=self.snapshot
             ))
-            stack.enter_context(patch.object(
+            self.snapshot_verifier = stack.enter_context(patch.object(
                 smoke, "verify_snapshot",
                 return_value=snapshot_verification or verification_ok(),
             ))
@@ -303,6 +318,15 @@ class SmokeHarnessTests(unittest.TestCase):
         self.assertNotIn("temperature", plan["decoding"])
         self.assertEqual(plan["protocol_freeze_commit_sha"], "PENDING")
         self.assertEqual(plan["task"], "classification")
+        self.assertEqual(plan["accelerator_requirement"], "NVIDIA_SINGLE_GPU_BF16_MIN_40GB")
+        self.assertEqual(plan["hardware"], {
+            "visible_cuda_gpu_count": 1,
+            "logical_device_index": 0,
+            "min_total_memory_bytes": 40_000_000_000,
+            "min_compute_capability": [8, 0],
+            "bf16_required": True,
+            "reject_undersized_mig": True,
+        })
 
     def test_prompt_hash_and_explicit_runner_decoding(self):
         plan = smoke.load_plan()
@@ -438,19 +462,87 @@ class SmokeHarnessTests(unittest.TestCase):
         self.assertEqual(firewall.violation_count, 1)
 
     # PREFLIGHT coverage.
-    def test_no_cuda_multiple_gpu_non_a100_low_vram_and_no_bf16_fail(self):
-        invalid = [
-            hardware(available=False, names=()),
-            hardware(names=("NVIDIA A100", "NVIDIA A100")),
-            hardware(names=("Tesla T4",)),
-            hardware(memory=39_000_000_000),
-            hardware(bf16=False),
-            hardware(capability=(7, 5)),
-        ]
-        for item in invalid:
-            with self.subTest(item=item), self.assertRaises(ValueError):
-                smoke.require_single_a100(item)
-        self.assertTrue(smoke.require_single_a100(hardware()))
+    def test_hardware_capabilities_pass_independently_of_gpu_name(self):
+        for name, memory, capability in (
+            ("NVIDIA A40", 48_000_000_000, (8, 6)),
+            ("NVIDIA RTX A6000", 48_000_000_000, (8, 6)),
+            ("NVIDIA L40S", 48_000_000_000, (8, 9)),
+            ("NVIDIA A100 40GB", 40_000_000_000, (8, 0)),
+            ("NVIDIA A100 80GB", 80_000_000_000, (8, 0)),
+            ("Unlisted CUDA GPU", 48_000_000_000, (8, 6)),
+            ("MIG logical GPU", 40_000_000_000, (8, 0)),
+        ):
+            with self.subTest(name=name):
+                observed = hardware(names=(name,), memory=memory, capability=capability)
+                self.assertTrue(smoke.require_single_bf16_gpu(observed))
+                report = self.run_fake(hardware_result=observed)
+                self.assertEqual(report["status"], "RUNTIME_SMOKE_PASS")
+                self.assertEqual(report["hardware"]["gpus"][0]["name"], name)
+
+    def test_hardware_capability_failures_block_before_runner(self):
+        for observed, code in (
+            (hardware(available=False, names=()), "CUDA_NOT_AVAILABLE"),
+            (hardware(names=("Tesla T4",), memory=16_000_000_000,
+                      capability=(7, 5), bf16=False), "GPU_VRAM_BELOW_40GB"),
+            (hardware(memory=24_000_000_000, capability=(8, 6)), "GPU_VRAM_BELOW_40GB"),
+            (hardware(memory=39_999_999_999), "GPU_VRAM_BELOW_40GB"),
+            (hardware(names=("MIG logical GPU",), memory=20_000_000_000),
+             "GPU_VRAM_BELOW_40GB"),
+            (hardware(names=("GPU 0", "GPU 1"), memory=24_000_000_000),
+             "REQUIRES_EXACTLY_ONE_VISIBLE_CUDA_GPU"),
+            (hardware(names=("GPU 0", "GPU 1"), memory=48_000_000_000),
+             "REQUIRES_EXACTLY_ONE_VISIBLE_CUDA_GPU"),
+            (hardware(current=1), "REQUIRES_LOGICAL_DEVICE_ZERO"),
+            (hardware(bf16=False), "BF16_NOT_SUPPORTED"),
+            (hardware(capability=(7, 5)), "COMPUTE_CAPABILITY_BELOW_8_0"),
+        ):
+            with self.subTest(hardware=observed, code=code):
+                with self.assertRaisesRegex(ValueError, code):
+                    smoke.require_single_bf16_gpu(observed)
+                report = self.run_fake(hardware_result=observed)
+                self.assertEqual(report["status"], "RUNTIME_SMOKE_FAIL")
+                self.assertEqual(report["blocker"]["code"], code)
+                self.assertEqual(self.runner_factory_calls, 0)
+                self.snapshot_resolver.assert_not_called()
+
+    def assert_pin_failure(self, pin, code):
+        report = self.run_fake(execution_pin=pin)
+        self.assertEqual(report["status"], "RUNTIME_SMOKE_FAIL")
+        self.assertEqual(report["blocker"]["stage"], "EXECUTION_IDENTITY")
+        self.assertEqual(report["blocker"]["code"], code)
+        self.assertEqual(report["git_commit"], "a" * 40)
+        self.assertEqual(report["execution_pin"], pin)
+        self.assertFalse(report["execution_identity_verified"])
+        self.assertEqual(self.runner_factory_calls, 0)
+        self.assertEqual(self.factory.calls, [])
+        self.assertEqual(report["native_generate_calls"], 0)
+        for probe in (self.software_probe, self.hardware_probe,
+                      self.snapshot_resolver, self.snapshot_verifier):
+            probe.assert_not_called()
+
+    def test_missing_execution_pin_blocks_before_all_preflights(self):
+        self.assert_pin_failure(None, "B2B_PREP_HEAD_REQUIRED")
+
+    def test_invalid_execution_pin_blocks_before_all_preflights(self):
+        for pin in ("", "abc", "A" * 40, "g" * 40, "a" * 39, "a" * 41,
+                    "a" * 40 + "\n"):
+            with self.subTest(pin=pin):
+                self.assert_pin_failure(pin, "B2B_PREP_HEAD_INVALID")
+
+    def test_mismatched_execution_pin_blocks_before_all_preflights(self):
+        self.assert_pin_failure("b" * 40, "EXECUTION_COMMIT_MISMATCH")
+
+    def test_exact_execution_pin_continues_and_records_identity(self):
+        report = self.run_fake()
+        self.assertEqual(report["status"], "RUNTIME_SMOKE_PASS")
+        self.assertEqual(report["git_commit"], "a" * 40)
+        self.assertEqual(report["execution_pin"], "a" * 40)
+        self.assertTrue(report["execution_identity_verified"])
+        root = self.repo / smoke.ARTIFACTS / report["run_id"]
+        self.assertEqual(json.loads((root / "runtime_report.json").read_text()), report)
+        environment = json.loads((root / "environment.json").read_text())
+        self.assertEqual(environment["environment"]["B2B_PREP_HEAD"], "a" * 40)
+        self.assertEqual(self.runner_factory_calls, 1)
 
     def test_software_pins_and_resolver_selected_hub_version(self):
         self.assertTrue(smoke.validate_software_versions(PINNED_SOFTWARE))
@@ -535,11 +627,34 @@ class SmokeHarnessTests(unittest.TestCase):
         self.assertEqual(report["blocker"]["stage"], "OFFLINE_PREFLIGHT")
         self.assertEqual(self.runner_factory_calls, 0)
 
-    def test_socket_attempt_is_counted_and_fails(self):
-        report = self.run_fake(runner_options={"network_attempt": True})
+    def assert_production_network_denial(self, mode):
+        report = self.run_fake(runner_options={"network_attempt_mode": mode})
         self.assertEqual(report["status"], "RUNTIME_SMOKE_FAIL")
         self.assertEqual(report["network_violation_count"], 1)
         self.assertEqual(report["native_generate_calls"], 1)
+        self.assertEqual(report["native_errors"][0]["exception_type"], "RuntimeError")
+        self.assertEqual(self.runner_factory_calls, 1)
+        self.assertEqual(len(self.factory.calls), 1)
+        self.assertEqual(len(report["calls"]), 1)
+        self.assertEqual((report["precision"], report["quantization"]), ("BF16", "NONE"))
+        # The outer safety guards must never handle this attempt: production's
+        # firewall must override them and increment its own violation counter.
+        for guard in self.network_guards:
+            guard.assert_not_called()
+
+    def test_production_firewall_create_connection_counts_and_fails(self):
+        self.assert_production_network_denial("create_connection")
+
+    def test_production_firewall_sendto_counts_and_fails(self):
+        self.assert_production_network_denial("sendto")
+
+    def test_production_firewall_getaddrinfo_counts_and_fails(self):
+        self.assert_production_network_denial("getaddrinfo")
+
+    def test_production_firewall_connect_and_connect_ex_count_and_fail(self):
+        for mode in ("connect", "connect_ex"):
+            with self.subTest(mode=mode):
+                self.assert_production_network_denial(mode)
 
     # PLACEMENT and DTYPE coverage.
     def test_parameter_placement_cuda_zero_passes_cpu_and_meta_block(self):

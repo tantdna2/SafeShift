@@ -1,4 +1,4 @@
-# W2.6B2B-PREP — Ovis2.5-9B single-A100 runtime smoke
+# W2.6B2B-PREP — Ovis2.5-9B single-GPU BF16 runtime smoke
 
 **PREPARED / NOT RUN.** This task prepares a future owner-run technical
 runtime/interface smoke. No Ovis snapshot or weight was downloaded, no GPU or custom
@@ -28,7 +28,7 @@ overrides.
 | Requested research model ID | `AIDC-AI/Ovis2.5-9B` |
 | Resolved download repository | `ATH-MaaS/Ovis2.5-9B` |
 | Immutable revision | `d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd` |
-| Hardware | `NVIDIA_A100_SINGLE_MIN_40GB` |
+| Hardware | `NVIDIA_SINGLE_GPU_BF16_MIN_40GB` |
 | Precision / quantization | `BF16` / `NONE` |
 | Placement | explicit `cuda:0` |
 | Preprocessing | `official_preprocess_inputs`, `448*448` through `1792*1792` pixels |
@@ -57,28 +57,38 @@ multi-GPU sharding or an attention implementation override.
 
 ## Hardware and software prerequisites
 
-Use one visible NVIDIA A100 with at least the 40 GB VRAM class. The preflight requires
+Use one visible NVIDIA CUDA GPU with at least 40,000,000,000 bytes of VRAM.
+An A100 is not required. The preflight requires
 all of the following before model construction:
 
 - CUDA is available and exactly one CUDA device is visible;
-- the visible device is logical index 0 and its name contains `A100`;
-- total memory meets the A100 40 GB class threshold;
+- the visible device is logical index 0, exposed as `cuda:0`;
+- total memory is at least 40,000,000,000 bytes;
 - compute capability is at least 8.0;
 - `torch.cuda.is_bf16_supported()` is true; and
 - no undersized MIG partition is exposed as the selected device.
 
-Do not use Kaggle T4 x2 for this run. The checkpoint is approximately 18.4 GB while
+Examples that may meet this gate are A40 48GB, RTX A6000 48GB, L40S 48GB, and
+A100 40/80GB. These are examples, not a whitelist: actual runtime capabilities
+determine PASS. GPU name, UUID, driver, total VRAM and MIG mode remain observed
+evidence. MIG is not rejected by name; a logical MIG device may pass if every
+capability check passes, while a partition below 40GB fails the VRAM check.
+
+Do not use Kaggle T4 x2 for this run. The checkpoint weight bytes total
+18,349,727,512 (approximately 18.35 GB), while
 each T4 has approximately 16 GB, and the current Ovis runner implements one explicit
 device, `cuda:0`, without multi-GPU sharding. Two visible T4s do not combine into a
-supported Ovis placement.
+single device's VRAM or a supported Ovis placement. A BF16-capable 24GB GPU fails
+the memory gate, and two visible GPUs fail regardless of their combined VRAM.
 
 When a host has multiple GPUs, set `CUDA_VISIBLE_DEVICES` to one qualifying physical
-A100 index or UUID **before starting any Python process**. Inside the smoke process
+GPU index or UUID **before starting any Python process**. Inside the smoke process
 that selected device must appear as the sole logical `cuda:0`; do not expose several
 GPUs and rely on an automatic mapper.
 
-Use Python 3.11 and the full documented image/video package recipe to minimize
-deviation from the pinned Ovis card:
+Python 3.11 is a SafeShift-selected smoke environment candidate, not a
+provider-documented Ovis requirement. Use the full Ovis documentary image/video
+package recipe below:
 
 | Package | Required smoke candidate |
 |---|---|
@@ -142,8 +152,8 @@ local verification gates pass; provisioning and PREP unit tests never import it.
 
 ## Execution procedure
 
-Run these steps on the authorized single-A100 host. Stop immediately on a failed
-checkout, install, provision, byte verification or preflight. Do not repair the
+Run these steps on an authorized host meeting the single-GPU capability gate. Stop
+immediately on a failed checkout, install, provision, byte verification or preflight. Do not repair the
 condition by switching precision, quantizing, offloading, exposing another GPU or
 changing the prompt.
 
@@ -164,18 +174,25 @@ git merge-base --is-ancestor 609964fe04024d51a6f329ec78f1e578dfeb227c "$B2B_PREP
 test -z "$(git status --porcelain --untracked-files=no)"
 ```
 
-The checkout assertion intentionally stops if the reviewed execution pin and local
-source differ. Updating the PR later must not silently move an already published
-execution pin.
+Keep `B2B_PREP_HEAD` exported through the later Python smoke invocation; do not unset
+it after checkout. The harness checks it again before software/GPU preflight,
+snapshot verification, runner creation or model load. It requires exactly 40
+lowercase hexadecimal characters and equality with `git rev-parse HEAD`. Missing,
+invalid or mismatched pins fail closed with `B2B_PREP_HEAD_REQUIRED`,
+`B2B_PREP_HEAD_INVALID` or `EXECUTION_COMMIT_MISMATCH` respectively.
+The runtime report preserves actual `git_commit` separately from `execution_pin`
+and records `execution_identity_verified`; `environment.json` also records the pin.
+After a reviewed code update, the PR body must publish the new `B2B_PREP_HEAD`, and
+the operator must check out and export that reviewed SHA before a new attempt.
 
-### 2. Expose exactly one A100 and install the documented candidate
+### 2. Expose exactly one qualifying GPU and install the smoke candidate
 
-Choose one qualifying A100 index or UUID from `nvidia-smi -L`, then set it before
+Choose one qualifying GPU index or UUID from `nvidia-smi -L`, then set it before
 the virtual environment's Python is invoked:
 
 ```bash
 nvidia-smi -L
-export CUDA_VISIBLE_DEVICES="<one qualifying A100 index or GPU UUID>"
+export CUDA_VISIBLE_DEVICES="<one qualifying GPU index or GPU UUID>"
 python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip install torch==2.4.0 transformers==4.51.3 numpy==1.25.0 pillow==10.3.0 moviepy==1.0.3
@@ -235,16 +252,18 @@ test "$HF_HUB_DISABLE_TELEMETRY" = 1
 ```
 
 The harness independently requires these values, resolves only the exact cached
-snapshot and denies Python socket connection attempts after this transition. Every
-attempted connection is counted and blocked. `network_violation_count` must be zero;
-any positive count is a blocking failure and must not trigger an online retry.
+snapshot and denies Python TCP, UDP and DNS attempts after this transition through
+`socket.socket.connect`, `socket.socket.connect_ex`, `socket.socket.sendto`,
+`socket.create_connection` and `socket.getaddrinfo`. Each uses the same counting
+firewall and raises a controlled runtime failure. `network_violation_count` must be
+zero; any positive count is a blocking failure and must not trigger an online retry.
 
 ### 6. Run one lifecycle with two sequential classification calls
 
 Create one new run ID and invoke the harness once:
 
 ```bash
-export RUN_ID="a100-ovis-$(date -u +%Y%m%dT%H%M%S%NZ)"
+export RUN_ID="gpu-bf16-ovis-$(date -u +%Y%m%dT%H%M%S%NZ)"
 python scripts/w2_ovis_gpu_smoke.py --run-id "$RUN_ID"
 export SMOKE_EXIT=$?
 echo "Smoke exit code: $SMOKE_EXIT"
@@ -257,8 +276,8 @@ underlying successful native model-load lifecycle and exactly two native
 `generate` calls on that same model instance. No direct parallel generation path or
 second runner is allowed.
 
-Before load, the harness verifies hardware, installed versions, offline state,
-snapshot identity and local bytes. After load it records:
+Before load, the harness verifies the execution pin, hardware, installed versions,
+offline state, snapshot identity and local bytes. After load it records:
 
 - distinct parameter devices and parameter counts/bytes by device;
 - a separate buffer-device census;
@@ -304,7 +323,8 @@ import json, os
 from pathlib import Path
 root = Path("data/processed/runtime_validation/w2_ovis_gpu_smoke") / os.environ["RUN_ID"]
 report = json.loads((root / "runtime_report.json").read_text(encoding="utf-8"))
-keys = ("run_id", "status", "blocker", "load_lifecycles", "native_generate_calls",
+keys = ("run_id", "status", "blocker", "git_commit", "execution_pin",
+        "execution_identity_verified", "load_lifecycles", "native_generate_calls",
         "network_violation_count", "claims", "calls")
 print(json.dumps({key: report.get(key) for key in keys}, indent=2))
 print((root / "ovis_gpu_smoke_evidence.zip.sha256").read_text(encoding="utf-8"))
@@ -369,7 +389,7 @@ old one:
 
 ```bash
 export OLD_RUN_ID="<failed run ID>"
-export NEW_RUN_ID="a100-ovis-$(date -u +%Y%m%dT%H%M%S%NZ)"
+export NEW_RUN_ID="gpu-bf16-ovis-$(date -u +%Y%m%dT%H%M%S%NZ)"
 python scripts/w2_ovis_gpu_smoke.py \
   --run-id "$NEW_RUN_ID" \
   --rerun-of "$OLD_RUN_ID" \

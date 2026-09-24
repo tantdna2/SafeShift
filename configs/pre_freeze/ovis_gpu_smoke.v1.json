@@ -3,7 +3,7 @@
   "status": "PRE_RUNTIME_VALIDATION_PLAN",
   "scope": "SMOKE_ONLY_TECHNICAL_CONFIGURATION",
   "platform": "USER_CONTROLLED_SINGLE_GPU",
-  "accelerator_requirement": "NVIDIA_A100_SINGLE_MIN_40GB",
+  "accelerator_requirement": "NVIDIA_SINGLE_GPU_BF16_MIN_40GB",
   "model_id": "AIDC-AI/Ovis2.5-9B",
   "resolved_repository_id": "ATH-MaaS/Ovis2.5-9B",
   "revision": "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
@@ -15,7 +15,6 @@
   "hardware": {
     "visible_cuda_gpu_count": 1,
     "logical_device_index": 0,
-    "gpu_name_contains": "A100",
     "min_total_memory_bytes": 40000000000,
     "min_compute_capability": [
       8,

@@ -1,4 +1,4 @@
-"""Owner-run offline Ovis2.5-9B single-A100 runtime/interface smoke.
+"""Owner-run offline Ovis2.5-9B single-GPU BF16 runtime/interface smoke.
 
 This harness never selects a fallback, changes the pinned runner condition, or
 performs grounding.  Online snapshot provisioning is a separate command; this
@@ -87,7 +87,7 @@ def expected_plan():
         "status": "PRE_RUNTIME_VALIDATION_PLAN",
         "scope": "SMOKE_ONLY_TECHNICAL_CONFIGURATION",
         "platform": "USER_CONTROLLED_SINGLE_GPU",
-        "accelerator_requirement": "NVIDIA_A100_SINGLE_MIN_40GB",
+        "accelerator_requirement": "NVIDIA_SINGLE_GPU_BF16_MIN_40GB",
         "model_id": MODEL_ID,
         "resolved_repository_id": RESOLVED_REPOSITORY_ID,
         "revision": REVISION,
@@ -97,7 +97,6 @@ def expected_plan():
         "hardware": {
             "visible_cuda_gpu_count": 1,
             "logical_device_index": 0,
-            "gpu_name_contains": "A100",
             "min_total_memory_bytes": MIN_VRAM_BYTES,
             "min_compute_capability": [8, 0],
             "bf16_required": True,
@@ -266,7 +265,7 @@ def probe_hardware(torch):
     }
 
 
-def require_single_a100(hardware):
+def require_single_bf16_gpu(hardware):
     if not hardware.get("cuda_available"):
         raise ValueError("CUDA_NOT_AVAILABLE")
     if hardware.get("visible_gpu_count") != 1 or len(hardware.get("gpus", [])) != 1:
@@ -274,10 +273,8 @@ def require_single_a100(hardware):
     gpu = hardware["gpus"][0]
     if hardware.get("current_device") != 0 or gpu.get("index") != 0:
         raise ValueError("REQUIRES_LOGICAL_DEVICE_ZERO")
-    if re.search("A100", gpu.get("name", ""), re.IGNORECASE) is None:
-        raise ValueError("REQUIRES_NVIDIA_A100")
     if int(gpu.get("total_memory_bytes", 0)) < MIN_VRAM_BYTES:
-        raise ValueError("A100_VRAM_BELOW_40GB_CLASS")
+        raise ValueError("GPU_VRAM_BELOW_40GB")
     if tuple(gpu.get("compute_capability", [])) < (8, 0):
         raise ValueError("COMPUTE_CAPABILITY_BELOW_8_0")
     if not hardware.get("bf16_supported"):
@@ -509,6 +506,8 @@ def _initial_report(run_id, rerun_of, rerun_reason, clock=None):
         "started_at_utc": _now(clock),
         "finished_at_utc": None,
         "git_commit": None,
+        "execution_pin": None,
+        "execution_identity_verified": False,
         "model_id": MODEL_ID,
         "requested_model_id": MODEL_ID,
         "resolved_repository_id": RESOLVED_REPOSITORY_ID,
@@ -554,7 +553,7 @@ def _initial_report(run_id, rerun_of, rerun_reason, clock=None):
         "load_lifecycles": 0,
         "native_generate_calls": 0,
         "native_errors": [],
-        "network_policy": "OFFLINE_ENV_AND_COUNTING_SOCKET_CONNECTION_DENIAL",
+        "network_policy": "OFFLINE_ENV_AND_COUNTING_TCP_UDP_DNS_DENIAL",
         "network_violation_count": 0,
         "claims": dict(CLAIMS),
         "protocol_freeze_commit_sha": "PENDING",
@@ -588,11 +587,10 @@ def run_smoke(run_id, *, repo=ROOT, rerun_of=None, rerun_reason=None,
         plan = load_plan(repo)
         report["smoke_config_sha256"] = sha256_file(repo / PLAN)
         report["prompt_sha256"] = plan["prompt_sha256"]
-        report["git_commit"] = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=repo, text=True
-        ).strip()
-        stage = "OFFLINE_PREFLIGHT"
+        stage = "EXECUTION_IDENTITY"
+        report["execution_pin"] = os.environ.get("B2B_PREP_HEAD")
         safe_environment_names = (
+            "B2B_PREP_HEAD",
             "HF_HUB_OFFLINE",
             "TRANSFORMERS_OFFLINE",
             "HF_HUB_DISABLE_TELEMETRY",
@@ -602,13 +600,26 @@ def run_smoke(run_id, *, repo=ROOT, rerun_of=None, rerun_reason=None,
         report["environment"] = {
             name: os.environ.get(name) for name in safe_environment_names
         }
+        report["git_commit"] = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=repo, text=True
+        ).strip()
+        if report["execution_pin"] is None:
+            raise ValueError("B2B_PREP_HEAD_REQUIRED")
+        if re.fullmatch(r"[0-9a-f]{40}", report["execution_pin"]) is None:
+            raise ValueError("B2B_PREP_HEAD_INVALID")
+        if report["git_commit"] != report["execution_pin"]:
+            raise ValueError("EXECUTION_COMMIT_MISMATCH")
+        report["execution_identity_verified"] = True
+        stage = "OFFLINE_PREFLIGHT"
         if any(os.environ.get(name) != "1" for name in (
             "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "HF_HUB_DISABLE_TELEMETRY"
         )):
             raise ValueError("SET_ALL_OFFLINE_VARIABLES_BEFORE_PROCESS_START")
         with patch.object(socket.socket, "connect", firewall.deny), \
                 patch.object(socket.socket, "connect_ex", firewall.deny), \
-                patch.object(socket, "create_connection", firewall.deny):
+                patch.object(socket.socket, "sendto", firewall.deny), \
+                patch.object(socket, "create_connection", firewall.deny), \
+                patch.object(socket, "getaddrinfo", firewall.deny):
             stage = "SOFTWARE_PREFLIGHT"
             if torch_module is None:
                 import torch as torch_module
@@ -617,7 +628,7 @@ def run_smoke(run_id, *, repo=ROOT, rerun_of=None, rerun_reason=None,
             validate_software_versions(report["software_versions"])
             stage = "GPU_PREFLIGHT"
             report["hardware"] = probe_hardware(torch)
-            require_single_a100(report["hardware"])
+            require_single_bf16_gpu(report["hardware"])
             stage = "LOCAL_SNAPSHOT_VERIFICATION"
             snapshot = cached_snapshot(offline=True)
             verification = verify_snapshot(snapshot, repo)
