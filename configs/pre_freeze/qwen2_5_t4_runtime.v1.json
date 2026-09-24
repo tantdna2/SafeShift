@@ -1,0 +1,226 @@
+{
+  "schema_version": "qwen2-5-t4-runtime-plan-v1",
+  "status": "PRE_RUNTIME_VALIDATION_PLAN",
+  "revision_reason": "PRE_FREEZE_RESOURCE_QUALIFICATION_REVISION",
+  "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+  "model_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "target_gpu": "NVIDIA_T4_16GB",
+  "precision": "FP16",
+  "quantization": "NONE",
+  "batch_size": 1,
+  "attention_implementation": "sdpa",
+  "processor": {
+    "mode": "official_processor_capped",
+    "min_pixels": 200704,
+    "max_pixels": 1003520
+  },
+  "device_policy": {
+    "placement": "single_cuda_0",
+    "cpu_offload": "FORBIDDEN",
+    "disk_offload": "FORBIDDEN",
+    "automatic_precision_fallback": "FORBIDDEN",
+    "automatic_quantization_fallback": "FORBIDDEN",
+    "attention_fallback": "FORBIDDEN",
+    "model_substitution": "FORBIDDEN"
+  },
+  "software": {
+    "python": "3.11.11",
+    "torch": "2.6.0+cu124",
+    "torchvision": "0.21.0+cu124",
+    "transformers": "4.51.3",
+    "qwen-vl-utils": "0.0.8",
+    "accelerate": "1.6.0",
+    "pillow": "11.2.1",
+    "huggingface-hub": "0.30.2",
+    "tokenizers": "0.21.1",
+    "safetensors": "0.5.3"
+  },
+  "software_evidence": {
+    "python": {
+      "source": "https://www.python.org/downloads/release/python-31111/",
+      "compatibility": "CPython 3.11 ABI; exact patch candidate. Linux x86_64 interpreter must be provisioned separately, not assumed in hosted default."
+    },
+    "torch": {
+      "source": "https://pypi.org/pypi/torch/2.6.0/json",
+      "requires_python": ">=3.9.0",
+      "wheel_filename": "torch-2.6.0+cu124-cp311-cp311-linux_x86_64.whl",
+      "wheel_url": "https://download-r2.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp311-cp311-linux_x86_64.whl",
+      "wheel_sha256": "d4c3e9a8d31a7c0fcbb9da17c31a1917e1fac26c566a4cfbd8c9568ad7cade79",
+      "compatibility": "Transformers torch>=2.0; official torch/vision pair; CUDA 12.4 build supports SDPA.",
+      "wheel_index": "https://download.pytorch.org/whl/cu124/torch/"
+    },
+    "torchvision": {
+      "source": "https://pypi.org/pypi/torchvision/0.21.0/json",
+      "requires_python": ">=3.9",
+      "wheel_filename": "torchvision-0.21.0+cu124-cp311-cp311-linux_x86_64.whl",
+      "wheel_url": "https://download-r2.pytorch.org/whl/cu124/torchvision-0.21.0%2Bcu124-cp311-cp311-linux_x86_64.whl",
+      "wheel_sha256": "137376805aca5ba57bd2c7a3ecb8569df961dbe82b128aac9b3b0a7125ef9385",
+      "compatibility": "Official paired torch==2.6.0; qwen utility imports torchvision even for still images.",
+      "wheel_index": "https://download.pytorch.org/whl/cu124/torchvision/"
+    },
+    "transformers": {
+      "source": "https://pypi.org/pypi/transformers/4.51.3/json",
+      "requires_python": ">=3.9.0",
+      "wheel_filename": "transformers-4.51.3-py3-none-any.whl",
+      "wheel_url": "https://files.pythonhosted.org/packages/a9/b6/5257d04ae327b44db31f15cce39e6020cc986333c715660b1315a9724d82/transformers-4.51.3-py3-none-any.whl",
+      "wheel_sha256": "fd3279633ceb2b777013234bbf0b4f5c2d23c4626b05497691f00cfda55e8a83",
+      "compatibility": "Exact audited source and native Qwen2.5 class."
+    },
+    "qwen-vl-utils": {
+      "source": "https://pypi.org/pypi/qwen-vl-utils/0.0.8/json",
+      "requires_python": ">=3.8",
+      "wheel_filename": "qwen_vl_utils-0.0.8-py3-none-any.whl",
+      "wheel_url": "https://files.pythonhosted.org/packages/4f/e5/5db523e7e2bd7d0043b2dfcb03dc3e87d3f9bbf257fcee6f926f83568699/qwen_vl_utils-0.0.8-py3-none-any.whl",
+      "wheel_sha256": "2988aa08256f3d7ee6f08d7b27b004e840608b61ed36d0b32d1775be56a1639d",
+      "compatibility": "Exact pinned model documentation version; official vision preparation."
+    },
+    "accelerate": {
+      "source": "https://pypi.org/pypi/accelerate/1.6.0/json",
+      "requires_python": ">=3.9.0",
+      "wheel_filename": "accelerate-1.6.0-py3-none-any.whl",
+      "wheel_url": "https://files.pythonhosted.org/packages/63/b1/8198e3cdd11a426b1df2912e3381018c4a4a55368f6d0857ba3ca418ef93/accelerate-1.6.0-py3-none-any.whl",
+      "wheel_sha256": "1aee717d3d3735ad6d09710a7c26990ee4652b79b4e93df46551551b5227c2aa",
+      "compatibility": "Transformers accelerate>=0.26.0; device_map loader participates."
+    },
+    "pillow": {
+      "source": "https://pypi.org/pypi/pillow/11.2.1/json",
+      "requires_python": ">=3.9",
+      "wheel_filename": "pillow-11.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "wheel_url": "https://files.pythonhosted.org/packages/1f/e3/0a58b5d838687f40891fff9cbaf8669f90c96b64dc8f91f87894413856c6/pillow-11.2.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "wheel_sha256": "b93a07e76d13bff9444f1a029e0af2964e654bfc2e2c2d46bfd080df5ad5f3d8",
+      "compatibility": "Transformers vision Pillow>=10.0.1,<=15.0 and torchvision Pillow>=5.3.0,!=8.3.*."
+    },
+    "huggingface-hub": {
+      "source": "https://pypi.org/pypi/huggingface-hub/0.30.2/json",
+      "requires_python": ">=3.8.0",
+      "wheel_filename": "huggingface_hub-0.30.2-py3-none-any.whl",
+      "wheel_url": "https://files.pythonhosted.org/packages/93/27/1fb384a841e9661faad1c31cbfa62864f59632e876df5d795234da51c395/huggingface_hub-0.30.2-py3-none-any.whl",
+      "wheel_sha256": "68ff05969927058cfa41df4f2155d4bb48f5f54f719dd0390103eefa9b191e28",
+      "compatibility": "Transformers >=0.30.0,<1.0; accelerate >=0.21.0; tokenizers >=0.16.4,<1.0."
+    },
+    "tokenizers": {
+      "source": "https://pypi.org/pypi/tokenizers/0.21.1/json",
+      "requires_python": ">=3.9",
+      "wheel_filename": "tokenizers-0.21.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "wheel_url": "https://files.pythonhosted.org/packages/8a/63/38be071b0c8e06840bc6046991636bcb30c27f6bb1e670f4f4bc87cf49cc/tokenizers-0.21.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "wheel_sha256": "2dd9a0061e403546f7377df940e866c3e678d7d4e9643d0461ea442b4f89e61a",
+      "compatibility": "Transformers >=0.21,<0.22."
+    },
+    "safetensors": {
+      "source": "https://pypi.org/pypi/safetensors/0.5.3/json",
+      "requires_python": ">=3.7",
+      "wheel_filename": "safetensors-0.5.3-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "wheel_url": "https://files.pythonhosted.org/packages/a6/f8/dae3421624fcc87a89d42e1898a798bc7ff72c61f38973a65d60df8f124c/safetensors-0.5.3-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "wheel_sha256": "cead1fa41fc54b1e61089fa57452e8834f798cb1dc7a09ba3524f1eb08e0317a",
+      "compatibility": "Transformers and accelerate >=0.4.3."
+    }
+  },
+  "platform": "Linux_x86_64",
+  "cuda_runtime": "12.4",
+  "transformers_source_commit": "5f4ecf2d9f867a1255131d2461d75793c0cf1db2",
+  "qwen_vl_utils_version": "0.0.8",
+  "qwen_vl_utils_wheel_sha256": "2988aa08256f3d7ee6f08d7b27b004e840608b61ed36d0b32d1775be56a1639d",
+  "snapshot_metadata_source": "https://huggingface.co/api/models/Qwen/Qwen2.5-VL-3B-Instruct/revision/66285546d2b821cf421d4f5eb2576359d3770cd3?blobs=true",
+  "snapshot_files": [
+    {
+      "path": "LICENSE",
+      "size_bytes": 7387,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "87f48cf86671d627b4dd4b8e5189b8e32ae11dd8"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 18276,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "d09bc2825f7d1dc394ee6766e2e95bcc59f47196"
+    },
+    {
+      "path": "chat_template.json",
+      "size_bytes": 1050,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "732bd68bc5427d1fb6c06a59b3bf2456b2155d24"
+    },
+    {
+      "path": "config.json",
+      "size_bytes": 1373,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "0ae1866f05ab0153ad293bdc92bb1b842c4d95b1"
+    },
+    {
+      "path": "generation_config.json",
+      "size_bytes": 216,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "1dfafa23e24b68b694722c6211e7da36730e9917"
+    },
+    {
+      "path": "merges.txt",
+      "size_bytes": 1671839,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0"
+    },
+    {
+      "path": "model-00001-of-00002.safetensors",
+      "size_bytes": 3982649232,
+      "hash_algorithm": "sha256",
+      "expected_hash": "41a8895c164b4d32bae6b302f4603fcbc1797f32dafa45c7e9bcda23c6755df8"
+    },
+    {
+      "path": "model-00002-of-00002.safetensors",
+      "size_bytes": 3526688744,
+      "hash_algorithm": "sha256",
+      "expected_hash": "365531ff8752420e89dee707b79d021fb2d6e25abafe486f080555a4fe6972e4"
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "size_bytes": 65448,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "7a3ec4f48662e38593f8cab48fe12a4f28003aba"
+    },
+    {
+      "path": "preprocessor_config.json",
+      "size_bytes": 350,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "7f3b746825e5eef53ed8ed57a91df9e86ee62c0a"
+    },
+    {
+      "path": "tokenizer.json",
+      "size_bytes": 7031645,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "443909a61d429dff23010e5bddd28ff530edda00"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "size_bytes": 5702,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "91684ea3dc135a7d815e2c932054ce88c1aab41f"
+    },
+    {
+      "path": "vocab.json",
+      "size_bytes": 2776833,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "4783fe10ac3adce15ac8f358ef5462739852c569"
+    }
+  ],
+  "smoke": {
+    "scope": "RUNTIME_INTERFACE_ONLY",
+    "case_ids": [
+      "case_01",
+      "case_02"
+    ],
+    "task": "classification",
+    "decoding": {
+      "do_sample": false,
+      "max_new_tokens": 32
+    },
+    "prompt": "This is an interface test using a drawing of colored shapes. Return one JSON object with the key safety_level and a value from Level01, Level02, Level03, Level04. No explanation.",
+    "invalid_classification_policy": "INTERFACE_OBSERVATION_NOT_ACCURACY_FAILURE",
+    "performance_scoring": false
+  },
+  "real_runtime_status": "NOT_RUN",
+  "t4_status": "T4_FEASIBILITY_CANDIDATE",
+  "inspecsafe_used": false,
+  "inspecsafe_authorized": false,
+  "synthetic_gate_used": false,
+  "protocol_freeze": "PENDING",
+  "protocol_freeze_commit_sha": "PENDING"
+}

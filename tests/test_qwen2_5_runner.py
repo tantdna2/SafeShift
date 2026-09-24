@@ -36,7 +36,7 @@ VERSIONS = {'torch': 'fake-torch', 'transformers': 'fake-transformers', 'pillow'
 def context(**changes):
     return replace(RunContext(
         run_id='offline-qwen2-5-contract', call_id='a', decoding={},
-        preprocessing={'mode': 'official_processor'}, precision='FP16', quantization='NONE',
+        preprocessing=deepcopy(module.PREPROCESSING), precision='FP16', quantization='NONE',
         device={'placement': 'cuda:0'}, software_versions=deepcopy(VERSIONS),
         git_commit_sha='92545ff4071c7055f7003995379b4af8993b6840',
         command='python -m unittest tests.test_qwen2_5_runner -v', source_kind='handcrafted_dummy',
@@ -73,6 +73,7 @@ class Inputs(dict):
 
 class Processor:
     def __init__(self):
+        self.image_processor = SimpleNamespace(min_pixels=200704, max_pixels=1003520)
         self.template_calls = []
         self.calls = []
         self.decodes = []
@@ -126,7 +127,7 @@ class Model:
         self.device = 'cuda:0'
         self.dtype = 'torch.float16'
         self.hf_device_map = {'': 'cuda:0'}
-        self.config = SimpleNamespace(cache_implementation=None)
+        self.config = SimpleNamespace(cache_implementation=None, _attn_implementation='sdpa')
         self.model = SimpleNamespace()  # Qwen2.5 reviewed layout differs from Qwen3.
         self.rope_deltas = None
         self.generation_config = Config()
@@ -355,7 +356,7 @@ Qwen2_5VLRunner()
         kwargs = self.runtime.model_factory.from_pretrained.call_args.kwargs
         self.assertEqual(kwargs['torch_dtype'], 'torch.float16')
         self.assertEqual(kwargs['device_map'], {'': 'cuda:0'})
-        self.assertEqual(kwargs['attn_implementation'], 'eager')
+        self.assertEqual(kwargs['attn_implementation'], 'sdpa')
         self.assertNotIn('quantization_config', kwargs)
 
     def test_failed_model_load_publishes_nothing_and_retry_is_explicit(self):

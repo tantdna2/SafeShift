@@ -192,3 +192,20 @@ This overlays D9R1's historical runner-PENDING milestone without changing roster
 model identity, metrics or freeze configs. See [implementation and validation](notes/w2_qwen2_5_runner_implementation.md).
 No model/weight download, GPU, real inference, synthetic gate, prompt tuning or
 backup activation. **NO_INSPECSAFE_INFERENCE**.
+
+## W2.6-D9R2B-PREP ? Qwen2.5 single-T4 runtime preparation (2026-09-25)
+
+- [x] Offline runner **COMPLETE**; SDPA-only and explicit upstream processor
+  caps 200704?1003520 pixels (256?1280 visual tokens), fake-only verified.
+- [x] Runtime plan, pinned environment, snapshot provision/verify script and
+  two-call classification smoke harness: **PREPARED_NOT_RUN**.
+- [ ] Real single-T4 runtime **NOT_RUN**; **T4_FEASIBILITY_CANDIDATE**.
+- [ ] Grounding **DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED**.
+- [ ] Checklist #2 overall **PENDING**; #3?#8 **PENDING**.
+  `protocol_freeze_commit_sha: PENDING`; InspecSafe authorization **false**.
+
+This pre-freeze resource qualification revision supersedes only D9R2A's eager /
+processor-default candidate. Model/revision, roster, D5/P1 and historical evidence
+remain unchanged. No performance results were used. See the
+[PREP runbook and evidence contract](notes/w2_qwen2_5_t4_runtime_prep.md).
+No weights/model download, GPU, real inference, synthetic gate or InspecSafe inference.
