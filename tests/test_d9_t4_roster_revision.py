@@ -205,9 +205,13 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                      'tests/test_molmo_gpu_smoke_harness.py'):
             self.assertFalse((ROOT / path).exists(), path)
 
-    def test_23_no_new_runner_or_inference_source(self):
+    def test_23_only_explicitly_authorized_post_d9r1_runner_source(self):
+        # D9R1's no-runner boundary applied to that decision PR. D9R2A now
+        # authorizes exactly this additional source; old blob hashes stay fixed.
+        authorized = {'safeshift/runners/qwen2_5_vl.py'}
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
+            expected |= {p for p in authorized if p.startswith(directory + '/')}
             observed = {p.relative_to(ROOT).as_posix() for p in (ROOT / directory).rglob('*.py')}
             self.assertEqual(observed, expected)
 
