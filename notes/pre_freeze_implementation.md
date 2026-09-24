@@ -1,5 +1,43 @@
 # Pre-freeze implementation
 
+## W2.6B3B-PREP — Molmo runtime smoke preparation (2026-09-24)
+
+Base main: `36b934b37ff064bb097860f0a0aef43897938a64`.
+Branch: `validation/d9-molmo-gpu-smoke`. The
+[platform-neutral runbook](w2_molmo_gpu_smoke_runbook.md), exact smoke config,
+snapshot provisioner, local-byte verifier and evidence harness prepare one future
+owner-run attempt for `allenai/Molmo2-O-7B` at
+`784410650d12be9bc086118fdefa32d2c3bced86`. B3A runner version
+`molmo2-o-runner-v1` is unchanged. **Real runtime: PREPARED / NOT_RUN**.
+
+The sole candidate is FP32 / NONE / auto, following README automatic dtype,
+float32 config and F32 documentary weight metadata. The hardware gate is
+`OBSERVATIONAL_MEMORY_GATE`, with no invented min-VRAM or GPU-name requirement.
+Actual CPU/disk/meta placement and dtype deviations block. Python 3.11 /
+Transformers 4.57.1 and exact direct runtime dependency versions are recorded in
+the plan. The seven shard sizes/hashes and 14 critical source/config hashes have
+documentary bases; five tokenizer assets remain local-hash-only. No real local
+weight bytes have been verified during PREP.
+
+The harness checks `B3B_PREP_HEAD` against exact Git HEAD before runtime work,
+requires a clean tracked tree and exact config bytes, rehashes the snapshot,
+denies/counts TCP/UDP/DNS, and uses one initialize/load lifecycle for exactly two
+classification calls. Raw and metadata are persisted before parsing. Evidence
+includes device/dtype census, per-visible-GPU memory observations, a strict ZIP
+allowlist and checksum sidecar. No automatic rerun/fallback occurs.
+
+No model download, model execution, GPU, SYNTHETIC V1, InspecSafe or grounding
+qualification was performed. Source-text and package-metadata retrieval were
+documentary only. Census stays untracked and untouched. Checklist #1 COMPLETE
+documentary; #2 PENDING overall; Qwen/Ovis offline COMPLETE and prior runtime
+PASS / VALIDATED; Molmo offline COMPLETE, runtime PREPARED / NOT_RUN; Gemma and
+#3–#8 PENDING. Grounding remains DOCUMENTED_NATIVE_POINT / NOT_YET_QUALIFIED,
+box/IoU NOT_PARTICIPATING. `protocol_freeze_commit_sha: PENDING`.
+
+PREP validation: **59/59 harness tests**, **51/51 Molmo runner tests**,
+**610/610 full-suite tests PASS**; Python compilation and `git diff --check` PASS.
+Existing `.venv`, Python 3.11.9 / Pillow 12.3.0; no dependency installation.
+
 ## W2.6B3A — Molmo2-O-7B offline runner (2026-09-24)
 
 Base main: `8f121eda1485c5984e8f9cde6944388ac7b7c351`.

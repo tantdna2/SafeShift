@@ -1,0 +1,77 @@
+{
+  "schema_version": "molmo-gpu-smoke-plan-v1",
+  "status": "PREPARED_NOT_RUN",
+  "validation_scope": "RUNTIME_INTERFACE_ONLY",
+  "scope": "SMOKE_ONLY_TECHNICAL_CONFIGURATION",
+  "platform": "PLATFORM_NEUTRAL",
+  "model_id": "allenai/Molmo2-O-7B",
+  "revision": "784410650d12be9bc086118fdefa32d2c3bced86",
+  "runner_version": "molmo2-o-runner-v1",
+  "precision": "FP32",
+  "quantization": "NONE",
+  "device": {
+    "placement": "auto"
+  },
+  "hardware": {
+    "memory_gate": "OBSERVATIONAL_MEMORY_GATE",
+    "min_vram_bytes": null,
+    "min_visible_cuda_gpus": 1,
+    "required_dtype": "torch.float32",
+    "placement_policy": "ALL_PARAMETERS_ON_VISIBLE_CUDA_NO_CPU_DISK_META",
+    "gpu_name_allowlist": null,
+    "multi_gpu_validated": false
+  },
+  "preprocessing": {
+    "mode": "official_processor"
+  },
+  "loader": {
+    "processor": "AutoProcessor",
+    "model": "AutoModelForImageTextToText",
+    "trust_remote_code": true,
+    "local_files_only": true
+  },
+  "software_environment": {
+    "python": "3.11",
+    "torch_cuda_runtime": "12.8",
+    "torch_distribution": "2.8.0+cu128",
+    "torchvision": "0.23.0+cu128",
+    "transformers": "4.57.1",
+    "numpy": "2.2.6",
+    "pillow": "12.3.0",
+    "huggingface_hub": "0.36.0",
+    "accelerate": "1.10.1",
+    "einops": "0.8.1",
+    "requests": "2.32.5",
+    "safetensors": "0.6.2",
+    "tokenizers": "0.22.1",
+    "jinja2": "3.1.6"
+  },
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 32
+  },
+  "prompt": "You are performing an interface smoke test. Inspect the image and return exactly one JSON object with one key named safety_level. Its value must be one of: Level01, Level02, Level03, Level04. Do not output markdown or any other text.",
+  "prompt_sha256": "681fb3f051871bd9dd52a8100816f864ceb82ea0b5ac332bb2c7a22aed6bda48",
+  "number_of_calls": 2,
+  "case_ids": [
+    "RUNTIME_SMOKE_01",
+    "RUNTIME_SMOKE_02"
+  ],
+  "case_image_sha256": [
+    "3a0b33888342ac3008b8fefe76b4f2c9cbc4908d2200e5f592e1cd948da8184e",
+    "44e1e4bc6391cab8b9187a46d18cf293ae5507832bba6503a2a22aa1e9a36c05"
+  ],
+  "generator_version": "runtime-smoke-geometry-v2-stored-png",
+  "task": "classification",
+  "claims": {
+    "capability_pass": false,
+    "grounding_pass": false,
+    "accuracy_pass": false,
+    "benchmark_pass": false,
+    "precision_frozen": false,
+    "decoding_frozen": false,
+    "thinking_frozen": false,
+    "protocol_frozen": false
+  },
+  "protocol_freeze_commit_sha": "PENDING"
+}

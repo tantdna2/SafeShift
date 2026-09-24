@@ -106,7 +106,9 @@ Documentation synchronization does not complete any execution prerequisite.
   `c2a5d97945b27d16425f82592a352722ee935118`.
   Ovis grounding is `DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`.
   Molmo W2.6B3A offline runner implementation is **COMPLETE** with fake-backend
-  tests; real runtime remains **PENDING** for separate B3B validation.
+  tests. W2.6B3B-PREP runtime infrastructure is **PREPARED / NOT_RUN**;
+  real runtime validation remains pending. The sole technical candidate is
+  FP32 / NONE / auto with an observational memory gate, not precision freeze.
   Molmo grounding is `DOCUMENTED_NATIVE_POINT / NOT_YET_QUALIFIED`;
   box/IoU participation is `NOT_PARTICIPATING`. Local weight bytes are not verified.
   Gemma runner/runtime work remains **PENDING**.
@@ -117,6 +119,7 @@ Documentation synchronization does not complete any execution prerequisite.
   See the [Ovis single-GPU BF16 smoke runbook](notes/w2_ovis_gpu_smoke_runbook.md).
   See the [audited Ovis runtime result](notes/w2_ovis_gpu_smoke_result.md).
   See the [Molmo offline runner implementation](notes/w2_molmo_runner_implementation.md).
+  See the [Molmo platform-neutral runtime smoke runbook](notes/w2_molmo_gpu_smoke_runbook.md).
   Qwen FP16 is a validated smoke runtime candidate only. Ovis BF16 / NONE / `cuda:0`
   is a validated smoke runtime candidate only. Neither status establishes Ovis
   capability, grounding, accuracy, or research precision/decoding/thinking freeze.
