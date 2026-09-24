@@ -1,5 +1,23 @@
 # Pre-freeze implementation
 
+## W2.6-D9R2A — Qwen2.5-VL-3B offline runner (2026-09-24)
+
+[Implementation record](w2_qwen2_5_runner_implementation.md): **IMPLEMENTED /
+OFFLINE_TESTED**, exact `Qwen/Qwen2.5-VL-3B-Instruct` revision
+`66285546d2b821cf421d4f5eb2576359d3770cd3`. Native Transformers and
+qwen-vl-utils preprocessing were independently checked; no Qwen3 interface/state
+assumption is transferred. Strict FP16/NONE/single-device candidate, local-only
+loading, explicit software metadata, independent sequential calls and token/text
+raw envelopes are covered by fake tests. FileRawStore preserves before adaptation.
+
+Real T4 runtime remains **PENDING / NOT_RUN**, `T4_FEASIBILITY_CANDIDATE` only.
+Grounding is **DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED**; the adapter returns
+UNSUPPORTED and retains raw evidence without D5 coordinates. No roster/provenance,
+schema, metric, P1, synthetic asset or freeze-config changes. InternVL/Moondream
+runners and checklist #2 overall remain PENDING; #3–#8 and protocol freeze SHA
+remain PENDING. No weights, GPU, real inference, gate, tuning or backup activation.
+**NO_INSPECSAFE_INFERENCE**. Validation and source limitations are in the record.
+
 ## W2.6-D9R1 — resource roster supersession (2026-09-24)
 
 The [D9R1 record](w2_d9_t4_roster_revision.md) revises DEC-W2-D9-009 for

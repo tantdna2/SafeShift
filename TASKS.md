@@ -175,3 +175,20 @@ are part of this synchronization. **NO_INSPECSAFE_INFERENCE**.
 No D5/P1 changes, new runner, model/weight download, GPU, real inference, synthetic
 gate execution or InspecSafe inference. No research precision, prompt or decoding
 freeze. See [D9R1 validation and evidence](notes/w2_d9_t4_roster_revision.md).
+
+## W2.6-D9R2A — Qwen2.5 offline runner (2026-09-24)
+
+- [x] Qwen2.5-VL-3B offline runner: **IMPLEMENTED / OFFLINE_TESTED**, exact pin
+  `66285546d2b821cf421d4f5eb2576359d3770cd3`; native Transformers/official
+  qwen-vl-utils preprocessing, fake-only contracts and raw-before-parser storage.
+- [ ] Qwen2.5 real T4 runtime: **PENDING / NOT_RUN**; `T4_FEASIBILITY_CANDIDATE`.
+  FP16/NONE/batch 1/single cuda:0 is only the qualification candidate.
+- [ ] Grounding: **DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED**. Adapter returns
+  UNSUPPORTED; no canonical boxes, coordinate assumptions or point-to-box conversion.
+- [ ] Checklist #2 overall **PENDING**: InternVL/Moondream runners remain pending.
+  Checklist #3–#8 **PENDING**; `protocol_freeze_commit_sha: PENDING`.
+
+This overlays D9R1's historical runner-PENDING milestone without changing roster,
+model identity, metrics or freeze configs. See [implementation and validation](notes/w2_qwen2_5_runner_implementation.md).
+No model/weight download, GPU, real inference, synthetic gate, prompt tuning or
+backup activation. **NO_INSPECSAFE_INFERENCE**.
