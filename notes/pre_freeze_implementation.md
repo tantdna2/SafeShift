@@ -1,5 +1,153 @@
 # Pre-freeze implementation
 
+## W2.6B2B — audited Ovis real GPU runtime result
+
+Research Lead directly audited the evidence bundle for
+`ckey-a40-ovis-20260924T042034999220552Z` and concluded **RUNTIME_SMOKE_PASS /
+VALIDATED**, scope `RUNTIME_INTERFACE_ONLY`. The [result note](w2_ovis_gpu_smoke_result.md)
+and [machine-readable summary](../configs/pre_freeze/ovis_gpu_smoke_result.v1.json)
+record the supplied audit findings; the recording agent did not independently
+inspect the ZIP, reverify the model host or rerun inference.
+
+`B2B_PREP_HEAD` / `EXECUTION_COMMIT` remain immutable at
+`c2a5d97945b27d16425f82592a352722ee935118`, the code that actually ran. PR #26's
+separate `RESULT_RECORDING_COMMIT` identifies the later summary/docs/tests commit
+and must not replace that execution pin. Evidence ZIP SHA-256:
+`f6b4756d3e57a213e6302f3170de10c46d334865aed5735ea906647ede46ce76`.
+
+One NVIDIA A40 (47,708,110,848 bytes VRAM, CC 8.6, BF16 supported) passed the
+capability-based single-GPU gate. The run used BF16 / NONE / `cuda:0`, explicit
+thinking false/false and greedy 32-token decoding. One load and two sequential
+classification calls succeeded, with raw-before-parse preserved, zero network
+violations/native errors, BF16-only parameters on `cuda:0`, and no OOM. All four
+weight shards and five critical source files passed run-scoped local verification;
+other required assets remain `RECORDED_LOCAL_HASH_ONLY`. Documentary provenance
+is unchanged.
+
+Torch distribution was 2.4.0, runtime version 2.4.0+cu121 and torch CUDA runtime
+12.1; host build toolkit 12.4 is separate. Python 3.11.16 instantiates SafeShift's
+Python 3.11 candidate. flash-attn 2.7.0.post2 was installed, but both observed
+attention config fields reported `eager` with no runner override. This is a
+nonblocking observation, not evidence of actual FlashAttention execution.
+Identical raw outputs on distinct geometry inputs carry no accuracy/capability
+conclusion. Stable call-1/call-2 allocator values are diagnostic only.
+
+Checklist #1 remains documentary COMPLETE; #2 remains PENDING overall. Qwen and
+Ovis offline work is COMPLETE and real runtime smoke PASS / VALIDATED; Molmo,
+Gemma and #3–#8 remain PENDING. Ovis grounding stays
+`DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`; all research claims remain false
+and `protocol_freeze_commit_sha` remains PENDING. No rerun, GPU, download,
+SYNTHETIC V1 gate, InspecSafe inference or merge occurs in this recording task.
+Only summary/hashes, notes, status docs and offline tests are committed; runtime
+artifacts remain outside Git and the census remains untracked and untouched.
+
+Recording validation: **16/16 result tests**, **39/39 smoke-harness tests**,
+**32/32 Ovis-runner tests**, **500/500 full-suite tests PASS**;
+`git diff --check` PASS. The existing local `.venv` was used without dependency
+changes. Result tests also match the supplied config hash against Git blob bytes
+at the immutable execution commit; no external evidence was rehashed.
+
+## W2.6B2B-PREP — Ovis single-GPU BF16 runtime harness (2026-09-24)
+
+Historical PREP milestone below: its NOT_RUN status describes preparation only;
+the audited runtime result above is the current status. Execution pin
+`c2a5d97945b27d16425f82592a352722ee935118` is retained after result recording.
+
+Base main: `609964fe04024d51a6f329ec78f1e578dfeb227c` (PR #25 merge).
+Branch: `validation/d9-ovis-gpu-smoke`. This milestone prepares the
+[single-GPU BF16 runbook](w2_ovis_gpu_smoke_runbook.md), immutable smoke plan, exact
+snapshot provisioner, local-byte verification and offline evidence harness. It does
+not execute the model. **Ovis runtime status is PREPARED / NOT_RUN**, and actual
+runtime validation remains PENDING.
+
+The plan preserves requested identity `AIDC-AI/Ovis2.5-9B`, resolved download
+repository `ATH-MaaS/Ovis2.5-9B` and immutable revision
+`d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd`. It fixes a smoke-only BF16 / NONE /
+explicit `cuda:0` condition, official `preprocess_inputs` bounds, thinking disabled
+explicitly and greedy `max_new_tokens=32` before any output exists. These are
+technical PREP candidates, not research precision, thinking or decoding freeze.
+Python 3.11 is a SafeShift-selected smoke environment candidate, not an Ovis
+provider-documented requirement. The Ovis documentary package recipe pins torch 2.4.0,
+Transformers 4.51.3, NumPy 1.25.0, Pillow 10.3.0, MoviePy 1.0.3 and flash-attn
+2.7.0.post2; the future report records the resolver-selected huggingface_hub version.
+No attention override is added to the existing runner.
+
+The hardware requirement is `NVIDIA_SINGLE_GPU_BF16_MIN_40GB`: one visible NVIDIA
+CUDA GPU with at least 40,000,000,000 bytes of VRAM, logical device `cuda:0`,
+compute capability at least 8.0 and BF16 support. GPU names are evidence only;
+there is no A100 name gate or GPU whitelist. A qualifying MIG logical device may
+pass; undersized partitions fail the VRAM gate. Kaggle T4 x2 is not used: the
+checkpoint weight bytes are approximately 18.35 GB while each T4 is approximately
+16 GB, and the Ovis runner has explicit single-device placement with
+no supported multi-GPU sharding; two T4s cannot pool VRAM into one device.
+Preflight, package, snapshot, weight, critical-file,
+placement and dtype failures all stop before generation or before later calls as
+applicable; no FP16, quantized, CPU-offload, automatic-map or multi-GPU rescue exists.
+
+Provisioning is the only online phase and uses the resolved repository plus exact
+revision in the native Hugging Face cache layout. A separate `--verify-only` pass is
+local-only and verifies all four weight shard sizes/hashes, the five critical files
+with documentary hashes, and existence plus locally recorded hashes for required
+assets that have no provenance hash. Such assets are explicitly
+`RECORDED_LOCAL_HASH_ONLY`, not falsely verified against provenance. The later smoke
+requires `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` and
+`HF_HUB_DISABLE_TELEMETRY=1`, denies socket `connect`, `connect_ex`, `sendto`,
+`create_connection` and `getaddrinfo` through the same counting firewall, and fails
+on any network violation. Regression attempts originate inside `run_smoke` from the
+fake model and prove that production denial, not the outer test guards, blocks them.
+
+The harness also requires exported `B2B_PREP_HEAD` to contain exactly 40 lowercase
+hexadecimal characters and equal actual `git rev-parse HEAD`. Missing, invalid or
+mismatched pins fail before software/GPU preflight, snapshot verification or runner
+creation. The report keeps `git_commit`, `execution_pin` and
+`execution_identity_verified` separately. Before real execution, PR #26 published
+the reviewed execution pin after each code fix. Following the audited run, that
+historical pin is immutable and result-recording commits do not update it.
+
+One `Ovis2_5Runner` instance serves exactly two sequential
+`Task.CLASSIFICATION` cases, `RUNTIME_SMOKE_01` and `RUNTIME_SMOKE_02`, generated as
+deterministic local geometry. They are not SYNTHETIC V1 inputs, are not InspecSafe
+inputs and do not execute grounding. A PASS candidate requires one underlying model
+load lifecycle, two native generate calls, two preserved raw/metadata pairs, no
+native exception or blocker, and final adapter statuses only `SUCCESS` or
+`INVALID`, with the latter paired only to `INVALID_CLASSIFICATION_OUTPUT`. Parser
+failure and every other error block. The
+harness records actual parameter/buffer placement, an exact floating-parameter dtype
+census, four GPU-memory stages, software/driver evidence and raw-before-parse
+metadata. Any non-BF16 floating parameter is a blocking review deviation; it is not
+silently cast.
+
+The future run creates an allowlisted `ovis_gpu_smoke_evidence.zip` and SHA-256 with
+small reports, case manifest and the two raw/metadata pairs only. Weights, snapshot,
+HF cache, secrets, generated images and arbitrary logs are excluded. Failures are
+preserved without automatic rerun; a reviewed rerun requires a new run ID plus
+explicit `rerun_of` and `rerun_reason`. Even a future `RUNTIME_SMOKE_PASS` keeps
+capability, grounding, accuracy, benchmark and all precision/decoding/thinking/
+protocol-freeze claims false.
+
+Offline validation for this PREP uses fake runtime/CUDA objects only. Commands:
+`python -m unittest tests.test_ovis_gpu_smoke_harness -v`,
+`python -m unittest tests.test_ovis_runner -v`,
+`python -m unittest discover -s tests`, and `git diff --check`.
+Validation after PR #26 review fixes, from the existing `.venv` (Python 3.11.9 /
+Pillow 12.3.0): **39/39 smoke-harness tests PASS**, **32/32 Ovis-runner tests PASS**,
+and **484/484 full-suite
+tests PASS**; `git diff --check` PASS. No dependency was installed or changed.
+The tests use fake runtime/CUDA objects, block network entry points, and use no real
+model, GPU or weights. Python compilation checks for the provisioner, harness and
+new test module also pass.
+
+Checklist #1 remains documentary COMPLETE. Checklist #2 remains PENDING overall:
+Qwen offline is COMPLETE and its real Kaggle smoke is PASS / VALIDATED; Ovis offline
+is COMPLETE and runtime is PREPARED / NOT_RUN; Molmo and Gemma remain PENDING. Ovis
+grounding remains `DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`. Checklist #3–#8
+and `protocol_freeze_commit_sha` remain PENDING. The D9 roster, D5, canonical schema,
+Qwen evidence and SYNTHETIC V1 assets are unchanged. The census remains untracked and
+untouched (SHA-256
+`cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`).
+CENSUS_UNTRACKED_UNTOUCHED. NO_MODEL_DOWNLOAD. NO_REAL_INFERENCE.
+SYNTHETIC_GATE_NOT_RUN. NO_INSPECSAFE_INFERENCE.
+
 ## W2.6B2A — Ovis2.5-9B offline runner (2026-09-23)
 
 The [Ovis implementation note](w2_ovis_runner_implementation.md) records the

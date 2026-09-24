@@ -1,0 +1,60 @@
+{
+  "schema_version": "ovis-gpu-smoke-plan-v1",
+  "status": "PRE_RUNTIME_VALIDATION_PLAN",
+  "scope": "SMOKE_ONLY_TECHNICAL_CONFIGURATION",
+  "platform": "USER_CONTROLLED_SINGLE_GPU",
+  "accelerator_requirement": "NVIDIA_SINGLE_GPU_BF16_MIN_40GB",
+  "model_id": "AIDC-AI/Ovis2.5-9B",
+  "resolved_repository_id": "ATH-MaaS/Ovis2.5-9B",
+  "revision": "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
+  "precision": "BF16",
+  "quantization": "NONE",
+  "device": {
+    "placement": "cuda:0"
+  },
+  "hardware": {
+    "visible_cuda_gpu_count": 1,
+    "logical_device_index": 0,
+    "min_total_memory_bytes": 40000000000,
+    "min_compute_capability": [
+      8,
+      0
+    ],
+    "bf16_required": true,
+    "reject_undersized_mig": true
+  },
+  "preprocessing": {
+    "mode": "official_preprocess_inputs",
+    "min_pixels": 200704,
+    "max_pixels": 3211264
+  },
+  "thinking": {
+    "enable_thinking": false,
+    "enable_thinking_budget": false
+  },
+  "attention": "DOCUMENTED_FLASH_ATTN_RECIPE",
+  "software_environment": {
+    "python": "3.11",
+    "torch": "2.4.0",
+    "transformers": "4.51.3",
+    "numpy": "1.25.0",
+    "pillow": "10.3.0",
+    "flash_attn": "2.7.0.post2",
+    "moviepy": "1.0.3",
+    "moviepy_policy": "FULL_OFFICIAL_RECIPE",
+    "huggingface_hub": "RESOLVER_SELECTED_RECORD_EXACT"
+  },
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 32
+  },
+  "prompt": "You are performing an interface smoke test. Inspect the image and return exactly one JSON object with one key named safety_level. Its value must be one of: Level01, Level02, Level03, Level04. Do not output markdown or any other text.",
+  "prompt_sha256": "681fb3f051871bd9dd52a8100816f864ceb82ea0b5ac332bb2c7a22aed6bda48",
+  "case_ids": [
+    "RUNTIME_SMOKE_01",
+    "RUNTIME_SMOKE_02"
+  ],
+  "generator_version": "runtime-smoke-geometry-v1",
+  "task": "classification",
+  "protocol_freeze_commit_sha": "PENDING"
+}

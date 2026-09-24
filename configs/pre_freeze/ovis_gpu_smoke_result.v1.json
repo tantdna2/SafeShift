@@ -1,0 +1,377 @@
+{
+  "schema_version": "ovis-gpu-smoke-result-summary-v1",
+  "record_kind": "RESEARCH_LEAD_AUDITED_RUNTIME_SUMMARY",
+  "source": {
+    "authority": "Project Owner / Research Lead instruction",
+    "bundle_audited_by": "Research Lead",
+    "recording_basis": "User-supplied audit findings and hashes; bundle not independently inspected or rehashed by the recording agent",
+    "credential_scan": "Research Lead reported no GitHub token, password, AWS key or secret-like credential",
+    "bundle_committed": false,
+    "raw_runtime_artifacts_committed": false
+  },
+  "validation_scope": "RUNTIME_INTERFACE_ONLY",
+  "status": "RUNTIME_SMOKE_PASS",
+  "run_id": "ckey-a40-ovis-20260924T042034999220552Z",
+  "evidence_bundle_filename": "ovis_gpu_smoke_evidence.zip",
+  "evidence_bundle_sha256": "f6b4756d3e57a213e6302f3170de10c46d334865aed5735ea906647ede46ce76",
+  "evidence_bundle_members": [
+    "calls/RUNTIME_SMOKE_01/metadata.json",
+    "calls/RUNTIME_SMOKE_01/response.raw",
+    "calls/RUNTIME_SMOKE_02/metadata.json",
+    "calls/RUNTIME_SMOKE_02/response.raw",
+    "case_manifest.json",
+    "critical_file_verification.json",
+    "environment.json",
+    "runtime_report.json",
+    "snapshot_verification.json",
+    "weight_verification.json"
+  ],
+  "execution_commit": "c2a5d97945b27d16425f82592a352722ee935118",
+  "B2B_PREP_HEAD": "c2a5d97945b27d16425f82592a352722ee935118",
+  "git_commit": "c2a5d97945b27d16425f82592a352722ee935118",
+  "execution_pin": "c2a5d97945b27d16425f82592a352722ee935118",
+  "execution_identity_verified": true,
+  "result_recording_commit_reference": "PR #26 body: RESULT_RECORDING_COMMIT; records the audit only and does not replace execution_commit or B2B_PREP_HEAD",
+  "blocker": null,
+  "runtime_check_failure": null,
+  "rerun_of": null,
+  "rerun_reason": null,
+  "notes": [],
+  "model_id": "AIDC-AI/Ovis2.5-9B",
+  "requested_model_id": "AIDC-AI/Ovis2.5-9B",
+  "resolved_repository_id": "ATH-MaaS/Ovis2.5-9B",
+  "revision": "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
+  "runner_version": "ovis2-5-runner-v2",
+  "precision": "BF16",
+  "precision_status": "VALIDATED_SMOKE_RUNTIME_CANDIDATE",
+  "quantization": "NONE",
+  "device": {
+    "placement": "cuda:0"
+  },
+  "thinking": {
+    "enable_thinking": false,
+    "enable_thinking_budget": false
+  },
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 32
+  },
+  "prompt_sha256": "681fb3f051871bd9dd52a8100816f864ceb82ea0b5ac332bb2c7a22aed6bda48",
+  "smoke_config_path": "configs/pre_freeze/ovis_gpu_smoke.v1.json",
+  "smoke_config_sha256": "52fc7a3a10fb47124bf51883de8017d39fde8c906ad6a150fdc880106478cb75",
+  "hardware": {
+    "accelerator_requirement": "NVIDIA_SINGLE_GPU_BF16_MIN_40GB",
+    "name": "NVIDIA A40",
+    "visible_gpu_count": 1,
+    "logical_device_index": 0,
+    "total_memory_bytes": 47708110848,
+    "nvidia_smi_memory_total_mib": 46068,
+    "compute_capability": [
+      8,
+      6
+    ],
+    "bf16_supported": true,
+    "driver_version": "570.195.03",
+    "mig_mode": "N/A"
+  },
+  "software_versions": {
+    "python": "3.11.16",
+    "torch_distribution": "2.4.0",
+    "torch": "2.4.0+cu121",
+    "torch_cuda_runtime": "12.1",
+    "transformers": "4.51.3",
+    "numpy": "1.25.0",
+    "pillow": "10.3.0",
+    "flash_attn": "2.7.0.post2",
+    "moviepy": "1.0.3",
+    "huggingface_hub": "0.36.2"
+  },
+  "environment_build_note": {
+    "host_cuda_toolkit": "12.4",
+    "distinction": "Host build toolkit only; reported torch CUDA runtime is 12.1",
+    "python_policy": "SAFESHIFT_SELECTED_SMOKE_ENVIRONMENT_CANDIDATE"
+  },
+  "attention": {
+    "plan": "DOCUMENTED_FLASH_ATTN_RECIPE",
+    "runner_override": false,
+    "effective": "eager",
+    "observations": [
+      {
+        "source": "model.config._attn_implementation",
+        "value": "eager"
+      },
+      {
+        "source": "model.llm.config._attn_implementation",
+        "value": "eager"
+      }
+    ],
+    "package_observation": "FLASH_ATTN_PACKAGE_INSTALLED",
+    "effective_observation": "EFFECTIVE_ATTENTION_OBSERVED_EAGER",
+    "blocking": false,
+    "flash_attention_actually_used_claim": false
+  },
+  "snapshot_verification": {
+    "LOCAL_SNAPSHOT_VERIFIED": true,
+    "SNAPSHOT_PATH_VERIFIED": true,
+    "expected_cache_suffix": "models--ATH-MaaS--Ovis2.5-9B/snapshots/d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
+    "operation": {
+      "mode": "RUNTIME_OFFLINE_REVERIFICATION",
+      "local_files_only": true,
+      "network_firewall_enabled": true,
+      "network_violation_count_at_verification": 0
+    },
+    "component_verdicts": {
+      "snapshot_path": true,
+      "weight_bytes": true,
+      "critical_provenance_hashes": true,
+      "required_local_assets": true
+    }
+  },
+  "weight_verification": {
+    "LOCAL_WEIGHT_BYTES_VERIFIED": true,
+    "scope": "THIS_RUN_ONLY_NOT_GLOBAL_OR_FROZEN_VERIFICATION",
+    "documentary_provenance_path": "configs/pre_freeze/local_model_provenance.d9.json",
+    "files": [
+      {
+        "path": "model-00001-of-00004.safetensors",
+        "size_bytes": 4905356464,
+        "sha256": "156f99e6196bf357567737efe2658cd81498731071cf7102af75a62f62563a0f",
+        "sha256_and_size_match": true
+      },
+      {
+        "path": "model-00002-of-00004.safetensors",
+        "size_bytes": 4915960936,
+        "sha256": "79aed96720f1dbc0b8b4f0e59284235a2300b40255f39d31c39fa6f82de075cb",
+        "sha256_and_size_match": true
+      },
+      {
+        "path": "model-00003-of-00004.safetensors",
+        "size_bytes": 4974672744,
+        "sha256": "16eaccd4c4fbd3a1721fe9ed50ea99ee36d16effbd2ba1ccf62ddb86d9136559",
+        "sha256_and_size_match": true
+      },
+      {
+        "path": "model-00004-of-00004.safetensors",
+        "size_bytes": 3553737368,
+        "sha256": "79cb70a40fc3720d6e90a84e59ed035be93f84a832c423f999acc651f3b2c811",
+        "sha256_and_size_match": true
+      }
+    ]
+  },
+  "critical_file_verification": {
+    "CRITICAL_PROVENANCE_HASHES_VERIFIED": true,
+    "REQUIRED_LOCAL_ASSETS_PRESENT": true,
+    "files": [
+      {
+        "path": "README.md",
+        "sha256": "0ffb1f8cfd24b3a263e3d50f396035689eb19f83d018e405e35e843464b54f57",
+        "verification_status": "VERIFIED_AGAINST_PROVENANCE"
+      },
+      {
+        "path": "config.json",
+        "sha256": "d495d8004929648201106241b43dd67b96243762d22fbf90f2f43366992e033e",
+        "verification_status": "VERIFIED_AGAINST_PROVENANCE"
+      },
+      {
+        "path": "preprocessor_config.json",
+        "sha256": "63ff380d3e424f93e6fbca5cc8e74eeed882e96fd6be2b7728aed308f3ad1513",
+        "verification_status": "VERIFIED_AGAINST_PROVENANCE"
+      },
+      {
+        "path": "generation_config.json",
+        "sha256": "f12d4b54c91ffda6a118067044ef4beffae0a500c20a25b5542ea676b0bcfffa",
+        "verification_status": "VERIFIED_AGAINST_PROVENANCE"
+      },
+      {
+        "path": "modeling_ovis2_5.py",
+        "sha256": "c97d70152fb1bb1cc337aa82c567a3a50869a7965da11f07de4c444a1d146161",
+        "verification_status": "VERIFIED_AGAINST_PROVENANCE"
+      }
+    ],
+    "other_required_assets": {
+      "paths": [
+        "configuration_ovis2_5.py",
+        "tokenizer_config.json",
+        "tokenizer.json",
+        "vocab.json",
+        "merges.txt",
+        "special_tokens_map.json",
+        "added_tokens.json",
+        "chat_template.json",
+        "model.safetensors.index.json"
+      ],
+      "verification_status": "RECORDED_LOCAL_HASH_ONLY",
+      "verified_against_provenance": false,
+      "local_hashes_in_summary": false,
+      "note": "Individual local hashes were not supplied in the audit instruction; retained in the uncommitted evidence bundle"
+    }
+  },
+  "network_violation_count": 0,
+  "native_errors": [],
+  "online_retry": false,
+  "fallback": false,
+  "runner_instances": 1,
+  "load_lifecycles": 1,
+  "native_generate_calls": 2,
+  "call_order": "SEQUENTIAL_CLASSIFICATION_ONLY",
+  "calls": [
+    {
+      "call_id": "call_01",
+      "sample_id": "RUNTIME_SMOKE_01",
+      "task": "classification",
+      "parse_status": "SUCCESS",
+      "error": null,
+      "input_image_sha256": "eafc937f391461f0b29816f3a69654041ec77d543860705cc49a19941785a7bb",
+      "metadata_sha256": "5c64dcbe4cb05b1cd2b9cc06a731fee7ae761bd246607f5a86c73d878738bf5a",
+      "metadata_size_bytes": 2778,
+      "raw_sha256": "d3d0b69070ddbd8628e5a90792f1e9b5d43643837c996c85fc87aaad91b20021",
+      "raw_size_bytes": 4156,
+      "raw_metadata_before_adapter": {
+        "parse_status": "NOT_ATTEMPTED",
+        "source_kind": "HANDCRAFTED_RUNTIME_SMOKE",
+        "task": "classification"
+      }
+    },
+    {
+      "call_id": "call_02",
+      "sample_id": "RUNTIME_SMOKE_02",
+      "task": "classification",
+      "parse_status": "SUCCESS",
+      "error": null,
+      "input_image_sha256": "91b0fc7fd00e1d279c10218c4a54d922302e369ac5c5afdfa35cae618451e73a",
+      "metadata_sha256": "6cbf46a19ee5462369fe16ba4bcb353f438f1883ee24e2b42fa87d2b5b1dfd4f",
+      "metadata_size_bytes": 2778,
+      "raw_sha256": "d3d0b69070ddbd8628e5a90792f1e9b5d43643837c996c85fc87aaad91b20021",
+      "raw_size_bytes": 4156,
+      "raw_metadata_before_adapter": {
+        "parse_status": "NOT_ATTEMPTED",
+        "source_kind": "HANDCRAFTED_RUNTIME_SMOKE",
+        "task": "classification"
+      }
+    }
+  ],
+  "output_observation": {
+    "input_hashes_distinct": true,
+    "raw_hashes_identical": true,
+    "decoded_safety_level": "Level01",
+    "special_token_suffix": "<|im_end|>",
+    "semantic_interpretation": "NONE_RUNTIME_OBSERVATION_ONLY",
+    "model_ignored_image_inference": false,
+    "semantic_correctness_claim": false
+  },
+  "parameter_placement": {
+    "passed": true,
+    "expected_device": "cuda:0",
+    "distinct_parameter_devices": [
+      "cuda:0"
+    ],
+    "total": {
+      "tensor_count": 840,
+      "numel": 9174807784,
+      "bytes": 18349615568
+    },
+    "by_device": {
+      "cuda:0": {
+        "tensor_count": 840,
+        "numel": 9174807784,
+        "bytes": 18349615568
+      }
+    },
+    "violations": [],
+    "cpu_offload": false,
+    "meta_parameters": false,
+    "multi_gpu": false
+  },
+  "dtype_evidence": {
+    "passed": true,
+    "status": "EXPECTED_BF16_ONLY",
+    "expected_primary_dtype": "torch.bfloat16",
+    "floating_parameter_census": {
+      "torch.bfloat16": {
+        "tensor_count": 840,
+        "numel": 9174807784,
+        "bytes": 18349615568
+      }
+    },
+    "deviations": {},
+    "silent_cast": false
+  },
+  "memory_summary": {
+    "unit": "bytes",
+    "oom_observed": false,
+    "stages": [
+      {
+        "stage": "before_load",
+        "free_bytes": 47428993024,
+        "total_bytes": 47708110848,
+        "memory_allocated": 0,
+        "memory_reserved": 0
+      },
+      {
+        "stage": "after_load",
+        "free_bytes": 28976152576,
+        "memory_allocated": 18359789568,
+        "memory_reserved": 18452840448,
+        "max_memory_allocated": 18359789568,
+        "max_memory_reserved": 18452840448
+      },
+      {
+        "stage": "after_call_1",
+        "free_bytes": 28598665216,
+        "memory_allocated": 18368309248,
+        "memory_reserved": 18763218944,
+        "max_memory_allocated": 18511427584,
+        "max_memory_reserved": 18763218944
+      },
+      {
+        "stage": "after_call_2",
+        "free_bytes": 28598665216,
+        "memory_allocated": 18368309248,
+        "memory_reserved": 18763218944,
+        "max_memory_allocated": 18511427584,
+        "max_memory_reserved": 18763218944
+      }
+    ],
+    "observation": "Reported allocator values unchanged from call 1 to call 2; diagnostic only, not a performance or long-run stability claim",
+    "performance_claim": false
+  },
+  "claims": {
+    "capability_pass": false,
+    "grounding_pass": false,
+    "accuracy_pass": false,
+    "benchmark_pass": false,
+    "precision_frozen": false,
+    "decoding_frozen": false,
+    "thinking_frozen": false,
+    "protocol_frozen": false
+  },
+  "ovis_grounding": {
+    "status": "DOCUMENTED_BOX_AND_POINT",
+    "qualification": "NOT_YET_QUALIFIED"
+  },
+  "d9_checklist": {
+    "1": "COMPLETE_DOCUMENTARY",
+    "2": "PENDING",
+    "3": "PENDING",
+    "4": "PENDING",
+    "5": "PENDING",
+    "6": "PENDING",
+    "7": "PENDING",
+    "8": "PENDING"
+  },
+  "runner_progress": {
+    "qwen": {
+      "offline": "COMPLETE",
+      "runtime": "PASS_VALIDATED"
+    },
+    "ovis": {
+      "offline": "COMPLETE",
+      "runtime": "PASS_VALIDATED"
+    },
+    "molmo": "PENDING",
+    "gemma": "PENDING"
+  },
+  "synthetic_gate": "NOT_RUN",
+  "inspecsafe_inference": "NOT_RUN",
+  "protocol_freeze_commit_sha": "PENDING"
+}
