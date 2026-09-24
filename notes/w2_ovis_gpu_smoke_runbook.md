@@ -1,6 +1,14 @@
 # W2.6B2B-PREP — Ovis2.5-9B single-GPU BF16 runtime smoke
 
-**PREPARED / NOT RUN.** This task prepares a future owner-run technical
+Historical execution result: Research Lead audited run
+`ckey-a40-ovis-20260924T042034999220552Z` on NVIDIA A40 as
+**RUNTIME_SMOKE_PASS / VALIDATED**, runtime/interface only. See the
+[result note](w2_ovis_gpu_smoke_result.md). `B2B_PREP_HEAD` / `EXECUTION_COMMIT`
+remain `c2a5d97945b27d16425f82592a352722ee935118`; a later result-recording
+HEAD is not the execution pin. The procedure below is retained as historical
+PREP documentation and does not instruct a rerun of the completed smoke.
+
+**Historical PREP status: PREPARED / NOT RUN.** This task prepared an owner-run technical
 runtime/interface smoke. No Ovis snapshot or weight was downloaded, no GPU or custom
 remote code was executed, and no real inference occurred while preparing this
 runbook. A future `RUNTIME_SMOKE_PASS` may be recorded only from the real run evidence

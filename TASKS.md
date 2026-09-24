@@ -100,8 +100,10 @@ Documentation synchronization does not complete any execution prerequisite.
   real Kaggle T4×2 runtime smoke is **PASS / VALIDATED** for run
   `kaggle-t4x2-20260923T012029667885Z`, per Research Lead's evidence-bundle audit.
   Ovis W2.6B2A offline runner implementation is **COMPLETE** after Research Lead
-  review (`PASS_WITH_GOVERNANCE_CLEANUP`). Its W2.6B2B-PREP single-GPU BF16 harness is
-  **PREPARED / NOT_RUN**; actual Ovis runtime validation remains **PENDING**.
+  review (`PASS_WITH_GOVERNANCE_CLEANUP`). Its W2.6B2B real single-A40 GPU runtime
+  smoke is **PASS / VALIDATED** for run `ckey-a40-ovis-20260924T042034999220552Z`,
+  per Research Lead's evidence-bundle audit; execution commit is
+  `c2a5d97945b27d16425f82592a352722ee935118`.
   Ovis grounding is `DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`.
   Molmo and Gemma runner/runtime work remains **PENDING**.
   See [W2.6A implementation](notes/w2_local_runner_contracts.md) and
@@ -109,8 +111,9 @@ Documentation synchronization does not complete any execution prerequisite.
   See the [audited smoke result](notes/w2_qwen_kaggle_smoke_result.md).
   See the [Ovis offline runner implementation](notes/w2_ovis_runner_implementation.md).
   See the [Ovis single-GPU BF16 smoke runbook](notes/w2_ovis_gpu_smoke_runbook.md).
+  See the [audited Ovis runtime result](notes/w2_ovis_gpu_smoke_result.md).
   Qwen FP16 is a validated smoke runtime candidate only. Ovis BF16 / NONE / `cuda:0`
-  is a smoke-only **PREPARED / NOT_RUN** candidate. Neither status establishes Ovis
+  is a validated smoke runtime candidate only. Neither status establishes Ovis
   capability, grounding, accuracy, or research precision/decoding/thinking freeze.
   Checklist #2 remains **PENDING overall**; #3–#8 remain **PENDING**.
 - [ ] **3. Decoding:** Pin one supported low-variance configuration per model;

@@ -1,6 +1,57 @@
 # Pre-freeze implementation
 
+## W2.6B2B — audited Ovis real GPU runtime result
+
+Research Lead directly audited the evidence bundle for
+`ckey-a40-ovis-20260924T042034999220552Z` and concluded **RUNTIME_SMOKE_PASS /
+VALIDATED**, scope `RUNTIME_INTERFACE_ONLY`. The [result note](w2_ovis_gpu_smoke_result.md)
+and [machine-readable summary](../configs/pre_freeze/ovis_gpu_smoke_result.v1.json)
+record the supplied audit findings; the recording agent did not independently
+inspect the ZIP, reverify the model host or rerun inference.
+
+`B2B_PREP_HEAD` / `EXECUTION_COMMIT` remain immutable at
+`c2a5d97945b27d16425f82592a352722ee935118`, the code that actually ran. PR #26's
+separate `RESULT_RECORDING_COMMIT` identifies the later summary/docs/tests commit
+and must not replace that execution pin. Evidence ZIP SHA-256:
+`f6b4756d3e57a213e6302f3170de10c46d334865aed5735ea906647ede46ce76`.
+
+One NVIDIA A40 (47,708,110,848 bytes VRAM, CC 8.6, BF16 supported) passed the
+capability-based single-GPU gate. The run used BF16 / NONE / `cuda:0`, explicit
+thinking false/false and greedy 32-token decoding. One load and two sequential
+classification calls succeeded, with raw-before-parse preserved, zero network
+violations/native errors, BF16-only parameters on `cuda:0`, and no OOM. All four
+weight shards and five critical source files passed run-scoped local verification;
+other required assets remain `RECORDED_LOCAL_HASH_ONLY`. Documentary provenance
+is unchanged.
+
+Torch distribution was 2.4.0, runtime version 2.4.0+cu121 and torch CUDA runtime
+12.1; host build toolkit 12.4 is separate. Python 3.11.16 instantiates SafeShift's
+Python 3.11 candidate. flash-attn 2.7.0.post2 was installed, but both observed
+attention config fields reported `eager` with no runner override. This is a
+nonblocking observation, not evidence of actual FlashAttention execution.
+Identical raw outputs on distinct geometry inputs carry no accuracy/capability
+conclusion. Stable call-1/call-2 allocator values are diagnostic only.
+
+Checklist #1 remains documentary COMPLETE; #2 remains PENDING overall. Qwen and
+Ovis offline work is COMPLETE and real runtime smoke PASS / VALIDATED; Molmo,
+Gemma and #3–#8 remain PENDING. Ovis grounding stays
+`DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`; all research claims remain false
+and `protocol_freeze_commit_sha` remains PENDING. No rerun, GPU, download,
+SYNTHETIC V1 gate, InspecSafe inference or merge occurs in this recording task.
+Only summary/hashes, notes, status docs and offline tests are committed; runtime
+artifacts remain outside Git and the census remains untracked and untouched.
+
+Recording validation: **16/16 result tests**, **39/39 smoke-harness tests**,
+**32/32 Ovis-runner tests**, **500/500 full-suite tests PASS**;
+`git diff --check` PASS. The existing local `.venv` was used without dependency
+changes. Result tests also match the supplied config hash against Git blob bytes
+at the immutable execution commit; no external evidence was rehashed.
+
 ## W2.6B2B-PREP — Ovis single-GPU BF16 runtime harness (2026-09-24)
+
+Historical PREP milestone below: its NOT_RUN status describes preparation only;
+the audited runtime result above is the current status. Execution pin
+`c2a5d97945b27d16425f82592a352722ee935118` is retained after result recording.
 
 Base main: `609964fe04024d51a6f329ec78f1e578dfeb227c` (PR #25 merge).
 Branch: `validation/d9-ovis-gpu-smoke`. This milestone prepares the
@@ -49,8 +100,9 @@ The harness also requires exported `B2B_PREP_HEAD` to contain exactly 40 lowerca
 hexadecimal characters and equal actual `git rev-parse HEAD`. Missing, invalid or
 mismatched pins fail before software/GPU preflight, snapshot verification or runner
 creation. The report keeps `git_commit`, `execution_pin` and
-`execution_identity_verified` separately. PR #26 publishes the current reviewed
-execution pin; it must be updated to the new HEAD after each reviewed fix.
+`execution_identity_verified` separately. Before real execution, PR #26 published
+the reviewed execution pin after each code fix. Following the audited run, that
+historical pin is immutable and result-recording commits do not update it.
 
 One `Ovis2_5Runner` instance serves exactly two sequential
 `Task.CLASSIFICATION` cases, `RUNTIME_SMOKE_01` and `RUNTIME_SMOKE_02`, generated as
