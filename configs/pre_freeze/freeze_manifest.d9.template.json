@@ -42,46 +42,53 @@
       "grounding_role": "PENDING_SYNTHETIC_GATE",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
-      "preprocessing_id": "PENDING"
+      "preprocessing_id": "PENDING",
+      "role": "ANCHOR_REPRODUCTION_BRIDGE",
+      "resource_role": "KAGGLE_T4X2_VALIDATED_ANCHOR"
     },
     {
-      "model_id": "AIDC-AI/Ovis2.5-9B",
-      "immutable_revision": "d73b2283ae2a930b7762f8d7b8b8a3f0f3b5c3bd",
+      "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
       "revision_status": "VERIFIED_DOCUMENTARY",
-      "provenance_key": "ovis2_5_9b",
+      "provenance_key": "qwen2_5_vl_3b_instruct",
+      "role": "RESOURCE_EFFICIENT_QWEN_CONTRAST",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "PENDING_SYNTHETIC_GATE",
+      "grounding_role": "DOCUMENTED_BOX_AND_POINT_PENDING_SYNTHETIC_GATE",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING"
     },
     {
-      "model_id": "allenai/Molmo2-O-7B",
-      "immutable_revision": "784410650d12be9bc086118fdefa32d2c3bced86",
+      "model_id": "OpenGVLab/InternVL3-2B-hf",
+      "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
       "revision_status": "VERIFIED_DOCUMENTARY",
-      "provenance_key": "molmo2_o_7b",
+      "provenance_key": "internvl3_2b_hf",
+      "role": "INDEPENDENT_INTERNVL_FAMILY",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "NOT_PARTICIPATING_UNLESS_BOX_INTERFACE_VERIFIED",
-      "native_point_evidence": "DOC_SUPPORTED; BOX_INTERFACE_COMPATIBILITY_UNRESOLVED",
+      "grounding_role": "NOT_YET_DOCUMENTARILY_QUALIFIED",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING"
     },
     {
-      "model_id": "google/gemma-4-12B-it",
-      "immutable_revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "model_id": "vikhyatk/moondream2",
+      "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
       "revision_status": "VERIFIED_DOCUMENTARY",
-      "provenance_key": "gemma4_12b_it",
+      "provenance_key": "moondream2_2025_06_21",
+      "role": "INDEPENDENT_SMALL_VLM_WITH_NATIVE_SPATIAL_APIS",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "CLASSIFICATION_ONLY_UNLESS_PROMOTED_BY_SYNTHETIC_GATE",
+      "grounding_role": "DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING"
     }
   ],
   "backup_order": [
-    "google/paligemma2-10b-mix-448",
-    "openbmb/MiniCPM-V-4.6"
+    "google/paligemma-3b-mix-448",
+    "HuggingFaceTB/SmolVLM2-2.2B-Instruct"
   ],
   "synthetic_external_gate": {
     "suite_version": "synthetic-v1",
@@ -120,5 +127,55 @@
     "commercial_provider_billing": "SUPERSEDED_FOR_P2_BY_D9",
     "commercial_live_route_verification": "SUPERSEDED_FOR_P2_BY_D9",
     "historical_artifacts_preserved": true
-  }
+  },
+  "roster_revision": "D9R1_T4_RESOURCE_FEASIBILITY",
+  "roster_revision_reason": "PRE_FREEZE_RESOURCE_CONSTRAINT",
+  "roster_revision_before_protocol_freeze": true,
+  "roster_revision_before_inspecsafe": true,
+  "inspecsafe_performance_used": false,
+  "paid_gpu_required_by_policy": false,
+  "free_gpu_target": "COLAB_T4_OR_KAGGLE_T4_CLASS",
+  "resource_qualification_policy": {
+    "applies_to": "NEW_PRIMARY_CANDIDATES_AND_ACTIVATED_BACKUPS_EXCLUDING_QWEN3_ANCHOR",
+    "gpu_target": "SINGLE_NVIDIA_T4_16GB",
+    "precision_candidate": "FP16",
+    "quantization": "NONE",
+    "batch_size": 1,
+    "cpu_offload": "FORBIDDEN_FOR_PRIMARY_T4_QUALIFICATION",
+    "disk_offload": "FORBIDDEN_FOR_PRIMARY_T4_QUALIFICATION",
+    "automatic_precision_fallback": "FORBIDDEN",
+    "automatic_quantization_fallback": "FORBIDDEN",
+    "model_substitution_after_inspecsafe": "FORBIDDEN",
+    "qualification_status": "PENDING_REAL_T4_SMOKE",
+    "failure_reason": "PRE_FREEZE_RESOURCE_CONSTRAINT",
+    "failure_requires_prespecified_smoke_evidence": true,
+    "backup_consideration": "ONLY_AFTER_DOCUMENTED_FAILURE_OF_PRESPECIFIED_T4_QUALIFICATION_BEFORE_FREEZE_AND_INSPECSAFE",
+    "kaggle_fallback": "ALLOWED; DOES_NOT_WAIVE_SINGLE_T4_REQUIREMENT_FOR_NEW_PRIMARY_CANDIDATES",
+    "anchor_exception": {
+      "key": "qwen3_vl_8b_instruct",
+      "gpu_target": "KAGGLE_T4X2",
+      "resource_role": "KAGGLE_T4X2_VALIDATED_ANCHOR",
+      "evidence": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json"
+    },
+    "research_precision_decoding_prompts_frozen": false
+  },
+  "backups_in_order": [
+    {
+      "model_id": "google/paligemma-3b-mix-448",
+      "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "provenance_key": "paligemma_3b_mix_448",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "replacement_status": "BACKUP_1_ONLY",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE"
+    },
+    {
+      "model_id": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+      "immutable_revision": "482adb537c021c86670beed01cd58990d01e72e4",
+      "provenance_key": "smolvlm2_2_2b_instruct",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "replacement_status": "BACKUP_2_ONLY",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE"
+    }
+  ],
+  "historical_d9_roster_config": "configs/pre_freeze/local_models.d9.json#retired_primary_models"
 }

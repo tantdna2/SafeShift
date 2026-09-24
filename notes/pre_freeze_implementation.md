@@ -1,5 +1,28 @@
 # Pre-freeze implementation
 
+## W2.6-D9R1 — resource roster supersession (2026-09-24)
+
+The [D9R1 record](w2_d9_t4_roster_revision.md) revises DEC-W2-D9-009 for
+`PRE_FREEZE_RESOURCE_CONSTRAINT`, before freeze and InspecSafe, with no performance
+selection. The current primaries are unchanged Qwen3-VL-8B anchor plus Qwen2.5-VL-3B,
+InternVL3-2B-hf and Moondream2 (2025-06-21). Backups are PaliGemma-3B-mix-448 and
+SmolVLM2-2.2B-Instruct. New candidates have documentary COMPLETE, runners and real
+T4 smoke PENDING; none is T4 validated. Qwen3 retains its Kaggle T4×2 PASS evidence.
+
+Ovis/Molmo/Gemma and old backups are retired from the current roster. Their entries
+below remain historical implementation/runtime evidence, with no code/config/result
+deletion. Ovis offline/runtime remain COMPLETE / PASS_VALIDATED; Molmo offline is
+COMPLETE, runtime NOT_RUN. PR #28 B3B-PREP is a separate open draft, unmerged and
+untouched. Close-as-superseded is considered only after the roster revision merges.
+
+New qualification policy: single T4 16 GB, FP16 candidate, NONE quantization,
+batch 1, no CPU/disk offload or automatic precision/quantization fallback; no paid
+GPU requirement. Qwen3 is the sole multi-T4 exception. No new runner or inference
+code is implemented here. P1/D5, synthetic manifest/assets and historical evidence
+are unchanged. Checklist #2 overall and #3–#8 remain PENDING;
+`protocol_freeze_commit_sha: PENDING`; InspecSafe inference remains unauthorized.
+Validation commands/results and documentary limitations are in the D9R1 record.
+
 ## W2.6B3A — Molmo2-O-7B offline runner (2026-09-24)
 
 Base main: `8f121eda1485c5984e8f9cde6944388ac7b7c351`.

@@ -84,6 +84,10 @@ This is the **active P2 checklist**, mirrored in
 `configs/pre_freeze/local_models.d9.json` and `configs/pre_freeze/freeze_manifest.d9.template.json`.
 Documentation synchronization does not complete any execution prerequisite.
 
+**D9R1 supersession (2026-09-24):** Current roster/resource policy is in
+[W2.6-D9R1](notes/w2_d9_t4_roster_revision.md). The B0/B2/B3 milestones below
+remain historical evidence; Ovis, Molmo and Gemma are no longer current primaries.
+
 - [x] Synchronize the D9 decision ledger, checklist, implementation note and two
   configuration templates; preserve historical D8 evidence and SYNTHETIC V1 assets.
 - [x] **1. Model provenance:** COMPLETE (W2.6B0 documentary scope): exact D9 IDs,
@@ -149,3 +153,25 @@ fine-tuning. P1 remains unchanged. D8 Benchmark Firewall, C1, A2, B2, raw preser
 capability-aware grounding, D5 metrics/statistics and post-freeze change control remain
 binding. No model/provider calls, weight downloads or InspecSafe image inspection
 are part of this synchronization. **NO_INSPECSAFE_INFERENCE**.
+
+## W2.6-D9R1 — current roster after pre-freeze resource revision
+
+- [x] Revise decision/config/provenance before freeze for
+  `PRE_FREEZE_RESOURCE_CONSTRAINT`; no InspecSafe performance used.
+- [x] Documentary metadata for Qwen2.5-VL-3B, InternVL3-2B-hf, Moondream2 and
+  ordered PaliGemma-3B/SmolVLM2 backups; immutable pins, exact license evidence,
+  access constraints and FP16 candidate limits recorded.
+- [x] Preserve Qwen3 identity/pin and `ANCHOR_REPRODUCTION_BRIDGE`, offline COMPLETE,
+  historical Kaggle T4×2 PASS / VALIDATED; sole multi-T4 exception.
+- [x] Preserve retired Ovis offline COMPLETE / historical runtime PASS_VALIDATED;
+  retired Molmo offline COMPLETE / runtime NOT_RUN; Gemma retired before completion.
+  Old backups remain explicit historical records. PR #28 PREP stays unmerged,
+  open draft and untouched; any close-as-superseded review follows D9R1 merge.
+- [ ] Implement separate runners and single-T4 real smoke for Qwen2.5, InternVL3
+  and Moondream2. Each: documentary COMPLETE, runner PENDING, T4 runtime PENDING,
+  classification CANDIDATE, `T4_FEASIBILITY_CANDIDATE` only.
+- [ ] Checklist #2 overall PENDING; #3–#8 PENDING. Protocol freeze SHA PENDING.
+
+No D5/P1 changes, new runner, model/weight download, GPU, real inference, synthetic
+gate execution or InspecSafe inference. No research precision, prompt or decoding
+freeze. See [D9R1 validation and evidence](notes/w2_d9_t4_roster_revision.md).

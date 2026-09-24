@@ -1111,6 +1111,37 @@
 - **Supersedes:** DEC-W2-D8-008 only for the P2 commercial-hosted-provider
   roster/backend assumptions specified above; no other D8 or P1 policy is superseded.
 
+## DEC-W2-D9-009 — D9R1 T4 resource roster revision (2026-09-24)
+
+- **Authority:** Research Lead's explicit W2.6-D9R1 instruction; revision of the
+  existing decision ID, `D9R1_T4_RESOURCE_FEASIBILITY`, before protocol freeze and
+  before any InspecSafe inference. Reason: `PRE_FREEZE_RESOURCE_CONSTRAINT`.
+  No InspecSafe selection/performance was used.
+- **Supersession:** The earlier D9 roster and paid-rental venue assumption above
+  are historical. Current primaries are Qwen3-VL-8B (unchanged pin and reproduction
+  anchor), Qwen2.5-VL-3B, InternVL3-2B-hf and Moondream2 release 2025-06-21.
+  Backups become PaliGemma-3B-mix-448 then SmolVLM2-2.2B-Instruct. Exact verified
+  pins, license nuances and documentary sources are in the
+  [D9R1 record](notes/w2_d9_t4_roster_revision.md) and linked configs.
+- **Resource policy:** Free Colab single T4 16 GB preferred, Kaggle fallback allowed.
+  New primaries/activated backups: FP16 candidate, no quantization, batch 1,
+  no CPU/disk offload, no automatic dtype/quantization fallback. Real T4 smoke
+  remains required. Qwen3 alone retains the validated Kaggle T4×2 exception.
+  Paid GPU is not required. A documented pre-specified resource qualification
+  failure can trigger backup consideration only before freeze and InspecSafe;
+  no substitution after InspecSafe and no grounding-only substitution.
+- **History:** Ovis, Molmo, Gemma and old backups are explicitly
+  `RETIRED_PRE_FREEZE` for `PRE_FREEZE_RESOURCE_CONSTRAINT`. Ovis offline/runtime
+  evidence and Molmo offline code remain intact. PR #28 B3B-PREP remains open,
+  draft, unmerged, untouched; closing it as superseded can be considered only
+  after this revision merges. No model execution or new runner is authorized here.
+- **Unchanged:** Qwen3 is `ANCHOR_REPRODUCTION_BRIDGE`; Qwen2.5 is only the
+  resource-efficient contrast. P1 and D5 are unchanged; SafeShift extended metrics
+  are not original-paper metrics unless reported upstream. All three new primaries
+  are `T4_FEASIBILITY_CANDIDATE`, not runtime validated. Precision/decoding/prompts
+  remain unfrozen; checklist #2–#8 and `protocol_freeze_commit_sha` remain PENDING.
+  InspecSafe inference remains unauthorized. Historical entries are preserved.
+
 ## Template
 
 - **ID:** <DEC-...>
