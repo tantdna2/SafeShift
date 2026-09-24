@@ -784,3 +784,23 @@ inference, paid API calls, complete D5 metric evaluation and protocol freeze. Th
 are outside this task. The versioned source tree identifies the implementation commit;
 when materializing the freeze template later, fill `git_commit_sha` from the reviewed
 implementation revision while keeping the separate freeze SHA pending until approval.
+
+## D9R2B-PREP ? Qwen2.5 resource qualification candidate (2026-09-25)
+
+Append-only supersession of D9R2A's eager/default-processor candidate:
+**PRE_FREEZE_RESOURCE_QUALIFICATION_REVISION** selects SDPA only and upstream
+256?1280 visual tokens (`min_pixels=200704`, `max_pixels=1003520`). This precedes
+real smoke, protocol freeze and InspecSafe; no benchmark performance was used.
+
+Offline runner **COMPLETE**. Snapshot provisioner, exact environment manifest and
+two-call single-T4 interface harness **PREPARED_NOT_RUN**. FP16/NONE/batch 1,
+single cuda:0, no CPU/disk offload and no automatic fallback remain mandatory.
+Successful strict raw metadata is v2; raw-before-parser and grounding firewall
+remain intact. [Runbook](w2_qwen2_5_t4_runtime_prep.md) records sources, package
+wheel compatibility, future commands, placement/memory observations and evidence.
+
+Real T4 runtime **NOT_RUN**; model remains **T4_FEASIBILITY_CANDIDATE**.
+Grounding **DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED**. Checklist #2 overall
+**PENDING**, #3?#8 **PENDING**, `protocol_freeze_commit_sha: PENDING`, InspecSafe
+authorization **false**. No weights download, GPU, Colab/Kaggle execution, real
+inference, synthetic gate, InspecSafe inference, prompt tuning or protocol freeze.

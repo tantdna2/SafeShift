@@ -22,7 +22,12 @@ from .contracts import (
 MODEL_ID = "Qwen/Qwen2.5-VL-3B-Instruct"
 REVISION = "66285546d2b821cf421d4f5eb2576359d3770cd3"
 BACKEND = "qwen2_5_vl_transformers"
-ENVELOPE_VERSION = "safeshift-qwen2-5-vl-raw-v1"
+ENVELOPE_VERSION = "safeshift-qwen2-5-vl-raw-v2"
+ATTENTION_IMPLEMENTATION = "sdpa"
+MIN_PIXELS = 200704
+MAX_PIXELS = 1003520
+PREPROCESSING = {"mode": "official_processor_capped",
+                 "min_pixels": MIN_PIXELS, "max_pixels": MAX_PIXELS}
 FAILURE_ENVELOPE_VERSION = "safeshift-qwen2-5-vl-failure-v1"
 IDENTITY = ModelIdentity(
     MODEL_ID, REVISION,
@@ -136,7 +141,7 @@ class PreparedInput:
 
 class Qwen2_5VLRunner(LocalRunner):
     identity = IDENTITY
-    version = "qwen2-5-vl-runner-v1"
+    version = "qwen2-5-vl-runner-v2"
     partial_generation = "BLOCKING_GENERATE_NO_PARTIAL_GUARANTEE"
     persistent_call_state = "RESET_TOP_LEVEL_ROPE_DELTAS_AND_NATIVE_CACHE_PER_CALL"
 
@@ -153,8 +158,10 @@ class Qwen2_5VLRunner(LocalRunner):
             raise ValueError("FP16 candidate and quantization NONE required; no fallback")
         if context.device != {"placement": "cuda:0"}:
             raise ValueError("only explicit single-device cuda:0; no auto/offload")
-        if context.preprocessing not in ({}, {"mode": "official_processor"}):
-            raise ValueError("only official processor defaults are supported")
+        if (context.preprocessing != PREPROCESSING
+                or type(context.preprocessing.get("min_pixels")) is not int
+                or type(context.preprocessing.get("max_pixels")) is not int):
+            raise ValueError("explicit official processor 256-1280 token policy required")
         if context.seed is not None:
             raise ValueError("seed is not applied by this runner")
         decoding = _decoding(context.decoding)
@@ -164,7 +171,9 @@ class Qwen2_5VLRunner(LocalRunner):
             "device": context.device, "software_versions": context.software_versions,
             "preprocessing": context.preprocessing, "decoding": decoding,
             "loader": {"local_files_only": True, "trust_remote_code": False,
-                       "attn_implementation": "eager", "device_map": {"": "cuda:0"}},
+                       "attn_implementation": ATTENTION_IMPLEMENTATION,
+                       "min_pixels": MIN_PIXELS, "max_pixels": MAX_PIXELS,
+                       "device_map": {"": "cuda:0"}},
         })
 
     def _check_condition(self, context):
@@ -189,6 +198,9 @@ class Qwen2_5VLRunner(LocalRunner):
         self._condition = key
 
     def _validate_model(self, model):
+        if (getattr(model.config, "_attn_implementation", None) != ATTENTION_IMPLEMENTATION
+                or getattr(model.config, "output_attentions", False)):
+            raise ValueError("SDPA only; native eager fallback is forbidden")
         if str(model.device) != "cuda:0" or model.dtype != self._backend.torch.float16:
             raise ValueError("model must reside on cuda:0 with FP16 parameters")
         if getattr(model, "is_quantized", False) or getattr(model.config, "quantization_config", None) is not None:
@@ -232,10 +244,12 @@ class Qwen2_5VLRunner(LocalRunner):
         processor = model = None
         try:
             kwargs = dict(revision=REVISION, local_files_only=True, trust_remote_code=False)
-            processor = self._backend.processor_factory.from_pretrained(MODEL_ID, **kwargs)
+            processor = self._backend.processor_factory.from_pretrained(
+                MODEL_ID, **kwargs, min_pixels=MIN_PIXELS, max_pixels=MAX_PIXELS)
+            self._validate_processor(processor)
             model = self._backend.model_factory.from_pretrained(
                 MODEL_ID, **kwargs, torch_dtype=self._backend.torch.float16,
-                device_map={"": "cuda:0"}, attn_implementation="eager",
+                device_map={"": "cuda:0"}, attn_implementation=ATTENTION_IMPLEMENTATION,
             )
             model.eval()
             self._validate_model(model)
@@ -251,7 +265,15 @@ class Qwen2_5VLRunner(LocalRunner):
         key = self._check_condition(context)
         if self._resources is None:
             raise RuntimeError("load before preparing/generating")
+        self._validate_processor(self._resources[0])
         return key, self._resources
+
+    @staticmethod
+    def _validate_processor(processor):
+        image_processor = processor.image_processor
+        if (image_processor.min_pixels != MIN_PIXELS
+                or image_processor.max_pixels != MAX_PIXELS):
+            raise ValueError("loaded processor does not match the capped pixel policy")
 
     @staticmethod
     def _input_ids(inputs):
@@ -364,7 +386,8 @@ class Qwen2_5VLRunner(LocalRunner):
                     "model_dtype": str(model.dtype), "model_device": str(model.device),
                     "input_device": str(prepared.inputs["input_ids"].device),
                     "device_map": {str(k): str(v) for k, v in getattr(model, "hf_device_map", {}).items()},
-                    "runner_version": self.version, "attn_implementation": "eager",
+                    "runner_version": self.version, "attn_implementation": ATTENTION_IMPLEMENTATION,
+                    "preprocessing": deepcopy(PREPROCESSING),
                     "generation_config_scope": "CHECKPOINT_SNAPSHOT_PLUS_CALLER_KWARGS_BEFORE_DISPATCH",
                 },
             })
@@ -375,7 +398,7 @@ class Qwen2_5VLRunner(LocalRunner):
 
 
 class Qwen2_5VLAdapter:
-    version = "qwen2-5-vl-adapter-v1"
+    version = "qwen2-5-vl-adapter-v2"
     parser_version = ENVELOPE_VERSION + "/" + PARSER_VERSION
 
     def adapt(self, raw: bytes, task: Task) -> AdaptedOutput:
@@ -405,14 +428,15 @@ class Qwen2_5VLAdapter:
             raise ValueError("inconsistent generation metadata")
         runtime = obj["runtime"]
         fields(runtime, {"software_versions", "model_dtype", "model_device", "input_device", "device_map",
-                         "runner_version", "attn_implementation", "generation_config_scope"})
+                         "runner_version", "attn_implementation", "preprocessing", "generation_config_scope"})
         versions = runtime["software_versions"]
         if (type(versions) is not dict or not REQUIRED_SOFTWARE <= versions.keys()
                 or any(type(v) is not str or not v for v in versions.values())
                 or runtime["runner_version"] != Qwen2_5VLRunner.version
                 or runtime["model_dtype"] != "torch.float16"
                 or runtime["model_device"] != "cuda:0" or runtime["input_device"] != "cuda:0"
-                or runtime["attn_implementation"] != "eager"
+                or runtime["attn_implementation"] != ATTENTION_IMPLEMENTATION
+                or _json_bytes(runtime["preprocessing"]) != _json_bytes(PREPROCESSING)
                 or runtime["generation_config_scope"] != "CHECKPOINT_SNAPSHOT_PLUS_CALLER_KWARGS_BEFORE_DISPATCH"
                 or type(runtime["device_map"]) is not dict
                 or any(v not in ("cuda:0", "0") for v in runtime["device_map"].values())):
