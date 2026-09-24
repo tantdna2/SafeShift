@@ -105,13 +105,18 @@ Documentation synchronization does not complete any execution prerequisite.
   per Research Lead's evidence-bundle audit; execution commit is
   `c2a5d97945b27d16425f82592a352722ee935118`.
   Ovis grounding is `DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED`.
-  Molmo and Gemma runner/runtime work remains **PENDING**.
+  Molmo W2.6B3A offline runner implementation is **COMPLETE** with fake-backend
+  tests; real runtime remains **PENDING** for separate B3B validation.
+  Molmo grounding is `DOCUMENTED_NATIVE_POINT / NOT_YET_QUALIFIED`;
+  box/IoU participation is `NOT_PARTICIPATING`. Local weight bytes are not verified.
+  Gemma runner/runtime work remains **PENDING**.
   See [W2.6A implementation](notes/w2_local_runner_contracts.md) and
   [Qwen offline implementation](notes/w2_qwen_runner_implementation.md).
   See the [audited smoke result](notes/w2_qwen_kaggle_smoke_result.md).
   See the [Ovis offline runner implementation](notes/w2_ovis_runner_implementation.md).
   See the [Ovis single-GPU BF16 smoke runbook](notes/w2_ovis_gpu_smoke_runbook.md).
   See the [audited Ovis runtime result](notes/w2_ovis_gpu_smoke_result.md).
+  See the [Molmo offline runner implementation](notes/w2_molmo_runner_implementation.md).
   Qwen FP16 is a validated smoke runtime candidate only. Ovis BF16 / NONE / `cuda:0`
   is a validated smoke runtime candidate only. Neither status establishes Ovis
   capability, grounding, accuracy, or research precision/decoding/thinking freeze.
