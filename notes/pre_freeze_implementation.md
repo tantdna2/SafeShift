@@ -1,5 +1,34 @@
 # Pre-freeze implementation
 
+## W2.6B3A — Molmo2-O-7B offline runner (2026-09-24)
+
+Base main: `8f121eda1485c5984e8f9cde6944388ac7b7c351`.
+Branch: `implementation/d9-molmo-runner`. The
+[implementation note](w2_molmo_runner_implementation.md) records pinned documentary
+sources, exact local-snapshot loading, retryable lifecycle, still-image processing,
+raw-before-parse preservation and failure evidence. Model identity stays
+`allenai/Molmo2-O-7B@784410650d12be9bc086118fdefa32d2c3bced86`.
+Python 3.11 / Transformers 4.57.1 is the native documentary target, with
+AutoProcessor and AutoModelForImageTextToText, trusted custom code and local-only
+loading. Explicit FP32/BF16/FP16 and automatic placement are implementation
+contracts, not precision freeze or hardware validation.
+
+Molmo offline implementation is **COMPLETE**; real runtime is **PENDING** for B3B.
+Validation: **51/51 Molmo tests**, **551/551 full-suite tests PASS**, compilation
+and `git diff --check` PASS, using fake backends and the existing local `.venv`.
+No model/weight download, real inference, GPU, SYNTHETIC V1, InspecSafe or real
+grounding call occurred. No runtime harness, notebook or provisioner is added.
+Snapshot layout validation is not byte verification. Census remains untracked,
+untouched and excluded from the commit.
+
+Checklist #1 remains COMPLETE documentary; #2 remains **PENDING overall**.
+Qwen/Ovis offline are COMPLETE and their previously audited runtime is
+PASS / VALIDATED. Molmo offline is COMPLETE / runtime PENDING; Gemma is PENDING.
+Molmo grounding stays `DOCUMENTED_NATIVE_POINT / NOT_YET_QUALIFIED`, with box/IoU
+`NOT_PARTICIPATING`: no point-to-box conversion or canonical grounding success.
+Checklist #3–#8 and `protocol_freeze_commit_sha` remain **PENDING**.
+Earlier milestone sections below retain their historical pending statements.
+
 ## W2.6B2B — audited Ovis real GPU runtime result
 
 Research Lead directly audited the evidence bundle for
