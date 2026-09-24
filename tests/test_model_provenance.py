@@ -1,4 +1,9 @@
-"""Offline documentary D9 invariants; never imports or executes a model backend."""
+"""Historical B0 documentary invariants plus current roster links, offline only.
+
+D9R1 retains the original six records unchanged for audit. Their detailed interface
+assertions below remain historical checks; new candidates are covered separately in
+test_d9_t4_roster_revision, without inheriting another model's interface assumptions.
+"""
 
 from datetime import datetime
 from pathlib import Path
@@ -51,7 +56,7 @@ class ModelProvenanceTests(unittest.TestCase):
         cls.spec = load("local_model_provenance.d9.json")
         cls.roster = load("local_models.d9.json")
         cls.freeze = load("freeze_manifest.d9.template.json")
-        cls.models = cls.spec["models"]
+        cls.models = [next(m for m in cls.spec["models"] if m["key"] == key) for key in KEYS]
         cls.sources = cls.spec["sources"]
 
     def test_six_exact_ids_and_primary_backup_order(self):
@@ -61,14 +66,13 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertEqual([m["order"] for m in self.models], [1, 2, 3, 4, 1, 2])
 
     def test_roster_consistency_across_all_three_configs(self):
-        self.assertEqual([m["model_id"] for m in self.roster["primary_models"]], PRIMARY)
-        self.assertEqual([m["model_id"] for m in self.freeze["primary_models"]], PRIMARY)
-        self.assertEqual([m["model_id"] for m in self.roster["backups_in_order"]], BACKUPS)
-        self.assertEqual(self.freeze["backup_order"], BACKUPS)
+        self.assertEqual([m["model_id"] for m in self.roster["primary_models"]],
+                         [m["model_id"] for m in self.freeze["primary_models"]])
+        self.assertEqual([m["model_id"] for m in self.roster["backups_in_order"]], self.freeze["backup_order"])
         for config in (self.roster, self.freeze):
             self.assertEqual(config["model_provenance_config"], PROVENANCE_PATH)
             for entry in config["primary_models"] + config.get("backups_in_order", []):
-                spec = next(m for m in self.models if m["model_id"] == entry["model_id"])
+                spec = next(m for m in self.spec["models"] if m["model_id"] == entry["model_id"])
                 self.assertEqual(entry["immutable_revision"], spec["immutable_revision"])
                 self.assertEqual(entry["provenance_key"], spec["key"])
                 self.assertEqual(entry["revision_status"], "VERIFIED_DOCUMENTARY")
@@ -293,7 +297,7 @@ class ModelProvenanceTests(unittest.TestCase):
             for key, value in walk(config):
                 self.assertIsNone(re.search(r"score|benchmark_result|selection_metric|inspecsafe_derived|sample_prediction", key, re.I), key)
                 if key == "selection_basis":
-                    self.assertEqual(value, "RESEARCH_VALUE_BEFORE_COMPUTE; NO_INSPECSAFE_PERFORMANCE_USED")
+                    self.assertEqual(value, "PRE_FREEZE_RESOURCE_CONSTRAINT; NO_INSPECSAFE_PERFORMANCE_USED")
                 if isinstance(value, str):
                     self.assertNotIn("data/raw/", value)
                     self.assertNotRegex(value, r"\b[A-Za-z]:[\\/]")

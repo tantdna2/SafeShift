@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "task": "W2.6B0",
   "base_main_sha": "73fd0b3d112464755fe8c473db107bfff8e1e642",
   "status": "VERIFIED_DOCUMENTARY_NOT_PROTOCOL_FROZEN",
@@ -306,6 +306,181 @@
       "locator": "generation_config.json at recorded model revision",
       "accessed_at_utc": "2026-09-22",
       "content_sha256": "355e944b910ce784e4c561d67b8e7fee9c6c89385cc790e5a6affb7747b1f118"
+    },
+    "qwen2_5_vl_3b_instruct.resolution": {
+      "url": "https://huggingface.co/api/models/Qwen/Qwen2.5-VL-3B-Instruct/revision/66285546d2b821cf421d4f5eb2576359d3770cd3?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/Qwen/Qwen2.5-VL-3B-Instruct/revision/66285546d2b821cf421d4f5eb2576359d3770cd3?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.119848+00:00",
+      "response_sha256": "caaf517db16f56170350dbc52f0c3ebc5d969c98611d3a16b0d7cdcd7c57a740",
+      "locator": "$.sha"
+    },
+    "qwen2_5_vl_3b_instruct.revision_api": {
+      "url": "https://huggingface.co/api/models/Qwen/Qwen2.5-VL-3B-Instruct/revision/66285546d2b821cf421d4f5eb2576359d3770cd3?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/Qwen/Qwen2.5-VL-3B-Instruct/revision/66285546d2b821cf421d4f5eb2576359d3770cd3?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.572026+00:00",
+      "response_sha256": "caaf517db16f56170350dbc52f0c3ebc5d969c98611d3a16b0d7cdcd7c57a740",
+      "locator": "revision_api at resolved immutable revision"
+    },
+    "qwen2_5_vl_3b_instruct.README.md": {
+      "url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/README.md",
+      "resolved_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/README.md",
+      "accessed_at_utc": "2026-09-24T12:11:36.954689+00:00",
+      "response_sha256": "0b6da5a154b923da4dc66e416140c9b7f235f9b08fbbcc27fd9df7b586e3150d",
+      "locator": "README.md at resolved immutable revision"
+    },
+    "qwen2_5_vl_3b_instruct.LICENSE": {
+      "url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/LICENSE",
+      "resolved_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/LICENSE",
+      "accessed_at_utc": "2026-09-24T12:11:37.391159+00:00",
+      "response_sha256": "b5c0e5cf74cf51af1ecbc4af597cfcd13fd9925611838884a681070838a14a50",
+      "locator": "LICENSE at resolved immutable revision"
+    },
+    "qwen2_5_vl_3b_instruct.config.json": {
+      "url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/config.json",
+      "resolved_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/config.json",
+      "accessed_at_utc": "2026-09-24T12:11:37.691771+00:00",
+      "response_sha256": "7ed3eed5be6924cc800e8a5e53fc405c1aab1aaf36bad65c33403b36c56827f5",
+      "locator": "config.json at resolved immutable revision"
+    },
+    "qwen2_5_vl_3b_instruct.preprocessor_config.json": {
+      "url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/preprocessor_config.json",
+      "resolved_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/raw/66285546d2b821cf421d4f5eb2576359d3770cd3/preprocessor_config.json",
+      "accessed_at_utc": "2026-09-24T12:11:37.998404+00:00",
+      "response_sha256": "f2058c716eef96ccaed1cc1e2d0c08306b62586d535b28d9d08e691b2fab7ca0",
+      "locator": "preprocessor_config.json at resolved immutable revision"
+    },
+    "internvl3_2b_hf.resolution": {
+      "url": "https://huggingface.co/api/models/OpenGVLab/InternVL3-2B-hf/revision/main?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/OpenGVLab/InternVL3-2B-hf/revision/main?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.117846+00:00",
+      "response_sha256": "0068c0f114c61af11b4357b96c1c569881fdb2f8d25d87baea10e9d86264b1a0",
+      "locator": "$.sha"
+    },
+    "internvl3_2b_hf.revision_api": {
+      "url": "https://huggingface.co/api/models/OpenGVLab/InternVL3-2B-hf/revision/cb57a075cb75a2e6d1b668b128d48bb00ae321d2?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/OpenGVLab/InternVL3-2B-hf/revision/cb57a075cb75a2e6d1b668b128d48bb00ae321d2?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.571028+00:00",
+      "response_sha256": "0068c0f114c61af11b4357b96c1c569881fdb2f8d25d87baea10e9d86264b1a0",
+      "locator": "revision_api at resolved immutable revision"
+    },
+    "internvl3_2b_hf.README.md": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/README.md",
+      "resolved_url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/README.md",
+      "accessed_at_utc": "2026-09-24T12:11:36.982686+00:00",
+      "response_sha256": "1f8d0baf3d21588d874f5a6e328ce6e43974fe10ce72f1d222ed0d04a38a1b07",
+      "locator": "README.md at resolved immutable revision"
+    },
+    "internvl3_2b_hf.config.json": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/config.json",
+      "resolved_url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/config.json",
+      "accessed_at_utc": "2026-09-24T12:11:37.304360+00:00",
+      "response_sha256": "5e937511160b956a0be409ddc4185b8167a9855e26c263aa11e36205802e4c38",
+      "locator": "config.json at resolved immutable revision"
+    },
+    "internvl3_2b_hf.preprocessor_config.json": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/preprocessor_config.json",
+      "resolved_url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/preprocessor_config.json",
+      "accessed_at_utc": "2026-09-24T12:11:37.641815+00:00",
+      "response_sha256": "af09ffbe57900d5ae07f93f4c20693559a272e32fa6c5f816132cb71985aac98",
+      "locator": "preprocessor_config.json at resolved immutable revision"
+    },
+    "moondream2_2025_06_21.resolution": {
+      "url": "https://huggingface.co/api/models/vikhyatk/moondream2/revision/2025-06-21?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/vikhyatk/moondream2/revision/2025-06-21?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.121846+00:00",
+      "response_sha256": "5596e1e04f28ca3f86fca13475635e4e9eedebd8e3816b003e9e937455771c21",
+      "locator": "$.sha"
+    },
+    "moondream2_2025_06_21.revision_api": {
+      "url": "https://huggingface.co/api/models/vikhyatk/moondream2/revision/9a7d4024050840e001defacec2b00727e89149e6?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/vikhyatk/moondream2/revision/9a7d4024050840e001defacec2b00727e89149e6?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.810162+00:00",
+      "response_sha256": "43282f8268afa24af14a745137aff58b97a6efeb0c9a52af8033ea18df45cb1a",
+      "locator": "revision_api at resolved immutable revision"
+    },
+    "moondream2_2025_06_21.README.md": {
+      "url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/README.md",
+      "resolved_url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/README.md",
+      "accessed_at_utc": "2026-09-24T12:11:37.181975+00:00",
+      "response_sha256": "3a622db61cf3784c21200f47bc9b4c88292ffb64446acd601dbdd1eee94aa8aa",
+      "locator": "README.md at resolved immutable revision"
+    },
+    "moondream2_2025_06_21.config.json": {
+      "url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/config.json",
+      "resolved_url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/config.json",
+      "accessed_at_utc": "2026-09-24T12:11:37.522668+00:00",
+      "response_sha256": "c4d59ae1179c1792ad49b8aeb59092101cc948d7b1914ed549689aed2c1fa083",
+      "locator": "config.json at resolved immutable revision"
+    },
+    "moondream2_2025_06_21.hf_moondream.py": {
+      "url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/hf_moondream.py",
+      "resolved_url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/hf_moondream.py",
+      "accessed_at_utc": "2026-09-24T12:11:37.847396+00:00",
+      "response_sha256": "7c1d25f918a50547843919e202700780e69c1680fece415c7242ffa11891c9b5",
+      "locator": "hf_moondream.py at resolved immutable revision"
+    },
+    "moondream2_2025_06_21.moondream.py": {
+      "url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/moondream.py",
+      "resolved_url": "https://huggingface.co/vikhyatk/moondream2/raw/9a7d4024050840e001defacec2b00727e89149e6/moondream.py",
+      "accessed_at_utc": "2026-09-24T12:11:38.200533+00:00",
+      "response_sha256": "52e8d0357eb12fdc1be36de13b3a53b225b970cc47fe7798783f177cf2262e59",
+      "locator": "moondream.py at resolved immutable revision"
+    },
+    "paligemma_3b_mix_448.resolution": {
+      "url": "https://huggingface.co/api/models/google/paligemma-3b-mix-448/revision/main?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/google/paligemma-3b-mix-448/revision/main?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.181352+00:00",
+      "response_sha256": "59f3982c82f8f74fa795b374efe5dfffa0d51c296ec8aedad090c3e61f34cc08",
+      "locator": "$.sha"
+    },
+    "paligemma_3b_mix_448.revision_api": {
+      "url": "https://huggingface.co/api/models/google/paligemma-3b-mix-448/revision/ead2d9a35598cb89119af004f5d023b311d1c4a1?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/google/paligemma-3b-mix-448/revision/ead2d9a35598cb89119af004f5d023b311d1c4a1?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.862401+00:00",
+      "response_sha256": "59f3982c82f8f74fa795b374efe5dfffa0d51c296ec8aedad090c3e61f34cc08",
+      "locator": "revision_api at resolved immutable revision"
+    },
+    "paligemma_3b_mix_448.README.md": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/blob/ead2d9a35598cb89119af004f5d023b311d1c4a1/README.md",
+      "resolved_url": "https://huggingface.co/google/paligemma-3b-mix-448/blob/ead2d9a35598cb89119af004f5d023b311d1c4a1/README.md",
+      "accessed_at_utc": "2026-09-24T12:11:37.510384+00:00",
+      "response_sha256": "c49acd3f2e758e196a3ac754e8470be6ae526500bf4e8ad7b6c445704a9bebd8",
+      "locator": "README.md at resolved immutable revision"
+    },
+    "smolvlm2_2_2b_instruct.resolution": {
+      "url": "https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-2.2B-Instruct/revision/main?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-2.2B-Instruct/revision/main?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.225347+00:00",
+      "response_sha256": "9c342f39cd40034743b2ad743f0b0dfb90090729b6cb48c0d2eda177e766ec75",
+      "locator": "$.sha"
+    },
+    "smolvlm2_2_2b_instruct.revision_api": {
+      "url": "https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-2.2B-Instruct/revision/482adb537c021c86670beed01cd58990d01e72e4?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-2.2B-Instruct/revision/482adb537c021c86670beed01cd58990d01e72e4?blobs=true",
+      "accessed_at_utc": "2026-09-24T12:11:36.642017+00:00",
+      "response_sha256": "9c342f39cd40034743b2ad743f0b0dfb90090729b6cb48c0d2eda177e766ec75",
+      "locator": "revision_api at resolved immutable revision"
+    },
+    "smolvlm2_2_2b_instruct.README.md": {
+      "url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/raw/482adb537c021c86670beed01cd58990d01e72e4/README.md",
+      "resolved_url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/raw/482adb537c021c86670beed01cd58990d01e72e4/README.md",
+      "accessed_at_utc": "2026-09-24T12:11:36.981685+00:00",
+      "response_sha256": "8e46e92a3a40643b85a6df905b1a2014bcb7a01daaf6566588c89a95c5c6e700",
+      "locator": "README.md at resolved immutable revision"
+    },
+    "smolvlm2_2_2b_instruct.config.json": {
+      "url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/raw/482adb537c021c86670beed01cd58990d01e72e4/config.json",
+      "resolved_url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/raw/482adb537c021c86670beed01cd58990d01e72e4/config.json",
+      "accessed_at_utc": "2026-09-24T12:11:37.334355+00:00",
+      "response_sha256": "ec1f7e45deeafba7601f8dd0b6ca9ba75985dffc2f053e82341d12d06e2d9d46",
+      "locator": "config.json at resolved immutable revision"
+    },
+    "smolvlm2_2_2b_instruct.preprocessor_config.json": {
+      "url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/raw/482adb537c021c86670beed01cd58990d01e72e4/preprocessor_config.json",
+      "resolved_url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/raw/482adb537c021c86670beed01cd58990d01e72e4/preprocessor_config.json",
+      "accessed_at_utc": "2026-09-24T12:11:37.676774+00:00",
+      "response_sha256": "70d935393e28a5b77b8f46cbd3e3cb74a336e4814bd43983858215bd0be388e7",
+      "locator": "preprocessor_config.json at resolved immutable revision"
     }
   },
   "models": [
@@ -1350,6 +1525,600 @@
           "minicpm_v_4_6.README.md"
         ]
       }
+    },
+    {
+      "key": "qwen2_5_vl_3b_instruct",
+      "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "resolved_repository_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+      "roster_group": "primary",
+      "order": 2,
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_resolution_source": "https://huggingface.co/api/models/Qwen/Qwen2.5-VL-3B-Instruct/revision/66285546d2b821cf421d4f5eb2576359d3770cd3?blobs=true",
+      "revision_resolution_timestamp_utc": "2026-09-24T12:10:14.893954+00:00",
+      "repository_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct",
+      "model_card_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/blob/66285546d2b821cf421d4f5eb2576359d3770cd3/README.md",
+      "files_tree_url": "https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct/tree/66285546d2b821cf421d4f5eb2576359d3770cd3",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET resolution metadata then exact revision API; compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-24T12:10:14.893954+00:00",
+        "evidence": [
+          "qwen2_5_vl_3b_instruct.resolution",
+          "qwen2_5_vl_3b_instruct.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "Qwen Research License",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "conditions": "Exact LICENSE is Qwen RESEARCH LICENSE AGREEMENT (September 19, 2024): non-commercial research/evaluation; commercial use requires separate permission. Later license metadata is not transferred to this pin.",
+        "evidence": [
+          "qwen2_5_vl_3b_instruct.README.md",
+          "qwen2_5_vl_3b_instruct.revision_api",
+          "qwen2_5_vl_3b_instruct.LICENSE"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "documented_loader_api": "Qwen2_5_VLForConditionalGeneration.from_pretrained + AutoProcessor; qwen_vl_utils.process_vision_info; model.generate",
+        "trust_remote_code": false,
+        "runner_status": "PENDING",
+        "documented_dtype": "Exact card: torch_dtype=\"auto\" and optional torch.bfloat16; config/published tensors BF16. FP16 is a SafeShift candidate via explicit dtype API, not an exact-card FP16 runtime validation.",
+        "evidence": [
+          "qwen2_5_vl_3b_instruct.README.md",
+          "qwen2_5_vl_3b_instruct.revision_api",
+          "qwen2_5_vl_3b_instruct.config.json"
+        ]
+      },
+      "precision_quantization": {
+        "precision_candidate": "FP16",
+        "quantization_candidate": "NONE",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "automatic_fallback": "FORBIDDEN",
+        "documented_dtype": "Exact card: torch_dtype=\"auto\" and optional torch.bfloat16; config/published tensors BF16. FP16 is a SafeShift candidate via explicit dtype API, not an exact-card FP16 runtime validation.",
+        "evidence": [
+          "qwen2_5_vl_3b_instruct.README.md",
+          "qwen2_5_vl_3b_instruct.revision_api",
+          "qwen2_5_vl_3b_instruct.config.json"
+        ]
+      },
+      "spatial": {
+        "status": "DOCUMENTED_BOX_AND_POINT_PENDING_SYNTHETIC_GATE",
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "documented_capability": "Exact card documents boxes or points with coordinate/attribute JSON. Exact native coordinate grammar, range and adapter remain PENDING; no D5 gate pass.",
+        "evidence": [
+          "qwen2_5_vl_3b_instruct.README.md",
+          "qwen2_5_vl_3b_instruct.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "files": [
+          {
+            "path": "model-00001-of-00002.safetensors",
+            "size_bytes": 3982649232,
+            "lfs_sha256": "41a8895c164b4d32bae6b302f4603fcbc1797f32dafa45c7e9bcda23c6755df8"
+          },
+          {
+            "path": "model-00002-of-00002.safetensors",
+            "size_bytes": 3526688744,
+            "lfs_sha256": "365531ff8752420e89dee707b79d021fb2d6e25abafe486f080555a4fe6972e4"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "published_parameter_count": 3754622976,
+        "published_safetensors_size_bytes": 7509337976,
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "evidence": [
+          "qwen2_5_vl_3b_instruct.revision_api"
+        ]
+      },
+      "classification": "CANDIDATE",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "t4_status": "FEASIBILITY_CANDIDATE",
+      "local_weight_bytes_verified": false,
+      "downloaded": false,
+      "runtime_validated": false,
+      "inspecsafe_used": false,
+      "required_files_resolution": {
+        "method": "HTTPS HEAD only; no response body downloaded",
+        "results": [
+          {
+            "path": "LICENSE",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "README.md",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "chat_template.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "config.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "generation_config.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "merges.txt",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "model-00001-of-00002.safetensors",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "model-00002-of-00002.safetensors",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "model.safetensors.index.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "preprocessor_config.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "tokenizer.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "tokenizer_config.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          },
+          {
+            "path": "vocab.json",
+            "http_status": 200,
+            "method": "HEAD",
+            "body_downloaded": false
+          }
+        ],
+        "evidence": [
+          "qwen2_5_vl_3b_instruct.revision_api"
+        ]
+      }
+    },
+    {
+      "key": "internvl3_2b_hf",
+      "model_id": "OpenGVLab/InternVL3-2B-hf",
+      "resolved_repository_id": "OpenGVLab/InternVL3-2B-hf",
+      "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+      "roster_group": "primary",
+      "order": 3,
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_resolution_source": "https://huggingface.co/api/models/OpenGVLab/InternVL3-2B-hf/revision/main?blobs=true",
+      "revision_resolution_timestamp_utc": "2026-09-24T12:10:15.004946+00:00",
+      "repository_url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf",
+      "model_card_url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/blob/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/README.md",
+      "files_tree_url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/tree/cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET resolution metadata then exact revision API; compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-24T12:10:15.004946+00:00",
+        "evidence": [
+          "internvl3_2b_hf.resolution",
+          "internvl3_2b_hf.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "MIT project + Qwen component license obligations (card metadata: other / qwen)",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "conditions": "Exact card License section: project MIT; pretrained Qwen2.5 component under Qwen License. Front matter links Qwen/Qwen2.5-72B-Instruct LICENSE at main (mutable upstream link, not an immutable component clearance). Do not label whole checkpoint MIT-only or Apache-2.0.",
+        "evidence": [
+          "internvl3_2b_hf.README.md",
+          "internvl3_2b_hf.revision_api"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "documented_loader_api": "Native Transformers AutoModelForImageTextToText + AutoProcessor.apply_chat_template; model.generate",
+        "trust_remote_code": false,
+        "runner_status": "PENDING",
+        "documented_dtype": "Exact 2B card example uses torch.bfloat16. Its FP16-input video example uses a quantized 8B checkpoint, not evidence for this 2B FP16 path. Explicit dtype API supports proposing FP16; real T4 compatibility PENDING.",
+        "evidence": [
+          "internvl3_2b_hf.README.md",
+          "internvl3_2b_hf.revision_api",
+          "internvl3_2b_hf.config.json"
+        ]
+      },
+      "precision_quantization": {
+        "precision_candidate": "FP16",
+        "quantization_candidate": "NONE",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "automatic_fallback": "FORBIDDEN",
+        "documented_dtype": "Exact 2B card example uses torch.bfloat16. Its FP16-input video example uses a quantized 8B checkpoint, not evidence for this 2B FP16 path. Explicit dtype API supports proposing FP16; real T4 compatibility PENDING.",
+        "evidence": [
+          "internvl3_2b_hf.README.md",
+          "internvl3_2b_hf.revision_api",
+          "internvl3_2b_hf.config.json"
+        ]
+      },
+      "spatial": {
+        "status": "NOT_YET_DOCUMENTARILY_QUALIFIED",
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "documented_capability": "Exact HF card/config do not document a native coordinate output contract. Spatial tokens or family benchmark results do not qualify this interface.",
+        "evidence": [
+          "internvl3_2b_hf.README.md",
+          "internvl3_2b_hf.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "files": [
+          {
+            "path": "model.safetensors",
+            "size_bytes": 4178013768,
+            "lfs_sha256": "8e2c302719a13916a4d276e60fad4fb1c92a57b39dd2ad51af5a63dcf7a16f4a"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "published_parameter_count": 2088957440,
+        "published_safetensors_size_bytes": 4178013768,
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "evidence": [
+          "internvl3_2b_hf.revision_api"
+        ]
+      },
+      "classification": "CANDIDATE",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "t4_status": "FEASIBILITY_CANDIDATE",
+      "local_weight_bytes_verified": false,
+      "downloaded": false,
+      "runtime_validated": false,
+      "inspecsafe_used": false
+    },
+    {
+      "key": "moondream2_2025_06_21",
+      "model_id": "vikhyatk/moondream2",
+      "resolved_repository_id": "vikhyatk/moondream2",
+      "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "roster_group": "primary",
+      "order": 4,
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_resolution_source": "https://huggingface.co/api/models/vikhyatk/moondream2/revision/2025-06-21?blobs=true",
+      "revision_resolution_timestamp_utc": "2026-09-24T12:10:14.942944+00:00",
+      "repository_url": "https://huggingface.co/vikhyatk/moondream2",
+      "model_card_url": "https://huggingface.co/vikhyatk/moondream2/blob/9a7d4024050840e001defacec2b00727e89149e6/README.md",
+      "files_tree_url": "https://huggingface.co/vikhyatk/moondream2/tree/9a7d4024050840e001defacec2b00727e89149e6",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET resolution metadata then exact revision API; compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-24T12:10:14.942944+00:00",
+        "evidence": [
+          "moondream2_2025_06_21.resolution",
+          "moondream2_2025_06_21.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "apache-2.0",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "conditions": "Apache-2.0 in exact release model-card front matter and revision API; no standalone LICENSE file listed in this release.",
+        "evidence": [
+          "moondream2_2025_06_21.README.md",
+          "moondream2_2025_06_21.revision_api"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "documented_loader_api": "AutoModelForCausalLM.from_pretrained(revision=immutable_revision, trust_remote_code=True); model.query, model.detect, model.point",
+        "trust_remote_code": true,
+        "runner_status": "PENDING",
+        "documented_dtype": "Published tensors BF16; exact MoondreamModel constructor defaults to torch.bfloat16; HfMoondream constructs it without dtype override. Explicit FP16 conversion is a candidate requiring inspection of parameters/buffers/cache before any future T4 smoke; not a documented exact-release FP16 success.",
+        "evidence": [
+          "moondream2_2025_06_21.README.md",
+          "moondream2_2025_06_21.revision_api",
+          "moondream2_2025_06_21.config.json",
+          "moondream2_2025_06_21.hf_moondream.py",
+          "moondream2_2025_06_21.moondream.py"
+        ],
+        "additional_dependency_caveat": "Pinned remote code initializes tokenizer moondream/starmie-v1 without revision; runner must resolve and pin this dependency before qualification. No remote code executed in D9R1."
+      },
+      "precision_quantization": {
+        "precision_candidate": "FP16",
+        "quantization_candidate": "NONE",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "automatic_fallback": "FORBIDDEN",
+        "documented_dtype": "Published tensors BF16; exact MoondreamModel constructor defaults to torch.bfloat16; HfMoondream constructs it without dtype override. Explicit FP16 conversion is a candidate requiring inspection of parameters/buffers/cache before any future T4 smoke; not a documented exact-release FP16 success.",
+        "evidence": [
+          "moondream2_2025_06_21.README.md",
+          "moondream2_2025_06_21.revision_api",
+          "moondream2_2025_06_21.config.json",
+          "moondream2_2025_06_21.hf_moondream.py",
+          "moondream2_2025_06_21.moondream.py"
+        ]
+      },
+      "spatial": {
+        "status": "DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE",
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "documented_capability": "Exact card explicitly uses model.detect(image, object)[\"objects\"] and model.point(image, object)[\"points\"]. Pinned code returns x_min/y_min/x_max/y_max boxes or x/y points. Coordinate normalization and canonical adapter still require independent review and synthetic gate.",
+        "evidence": [
+          "moondream2_2025_06_21.README.md",
+          "moondream2_2025_06_21.revision_api",
+          "moondream2_2025_06_21.moondream.py"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "files": [
+          {
+            "path": "model.safetensors",
+            "size_bytes": 3854538968,
+            "lfs_sha256": "70a7d94c0c8349eb58ed2d9e636ef2d0916960f321ecabeac6354b8ba3d7403f"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "BF16"
+        ],
+        "published_parameter_count": 1927237104,
+        "published_safetensors_size_bytes": 3854538968,
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "evidence": [
+          "moondream2_2025_06_21.revision_api"
+        ]
+      },
+      "classification": "CANDIDATE",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "t4_status": "FEASIBILITY_CANDIDATE",
+      "local_weight_bytes_verified": false,
+      "downloaded": false,
+      "runtime_validated": false,
+      "inspecsafe_used": false,
+      "release_tag_resolution": {
+        "tag": "2025-06-21",
+        "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
+        "evidence": [
+          "moondream2_2025_06_21.resolution"
+        ]
+      }
+    },
+    {
+      "key": "paligemma_3b_mix_448",
+      "model_id": "google/paligemma-3b-mix-448",
+      "resolved_repository_id": "google/paligemma-3b-mix-448",
+      "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "roster_group": "backup",
+      "order": 1,
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_resolution_source": "https://huggingface.co/api/models/google/paligemma-3b-mix-448/revision/main?blobs=true",
+      "revision_resolution_timestamp_utc": "2026-09-24T12:10:14.942944+00:00",
+      "repository_url": "https://huggingface.co/google/paligemma-3b-mix-448",
+      "model_card_url": "https://huggingface.co/google/paligemma-3b-mix-448/blob/ead2d9a35598cb89119af004f5d023b311d1c4a1/README.md",
+      "files_tree_url": "https://huggingface.co/google/paligemma-3b-mix-448/tree/ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET resolution metadata then exact revision API; compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-24T12:10:14.942944+00:00",
+        "evidence": [
+          "paligemma_3b_mix_448.resolution",
+          "paligemma_3b_mix_448.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "gemma",
+        "gated": "manual",
+        "access_status": "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED",
+        "requires_accept_terms": true,
+        "owner_acceptance_status": "NOT_VERIFIED",
+        "conditions": "Exact rendered card and revision API identify Gemma terms; gated manual acceptance. Card specifies research purposes only. Owner acceptance NOT_VERIFIED; raw card/config returned HTTP 401.",
+        "evidence": [
+          "paligemma_3b_mix_448.README.md",
+          "paligemma_3b_mix_448.revision_api"
+        ],
+        "terms_url": "https://ai.google.dev/gemma/terms"
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "documented_loader_api": "Card documents PaliGemmaForConditionalGeneration + AutoProcessor; model.generate. Usage example names 3b-mix-224, so it is family guidance, not exact-448 runtime evidence.",
+        "trust_remote_code": false,
+        "runner_status": "PENDING",
+        "documented_dtype": "Exact 448 card explicitly lists float32/bfloat16/float16 formats and converted revisions. Selected immutable HEAD publishes F32. FP16 candidate is explicit load/cast via torch_dtype, with no automatic switch to the separate float16 revision; converted revision not selected or validated.",
+        "evidence": [
+          "paligemma_3b_mix_448.README.md",
+          "paligemma_3b_mix_448.revision_api"
+        ]
+      },
+      "precision_quantization": {
+        "precision_candidate": "FP16",
+        "quantization_candidate": "NONE",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "automatic_fallback": "FORBIDDEN",
+        "documented_dtype": "Exact 448 card explicitly lists float32/bfloat16/float16 formats and converted revisions. Selected immutable HEAD publishes F32. FP16 candidate is explicit load/cast via torch_dtype, with no automatic switch to the separate float16 revision; converted revision not selected or validated.",
+        "evidence": [
+          "paligemma_3b_mix_448.README.md",
+          "paligemma_3b_mix_448.revision_api"
+        ]
+      },
+      "spatial": {
+        "status": "DOCUMENTED_OBJECT_DETECTION_NATIVE_COORDINATE_INTERFACE_NOT_YET_QUALIFIED",
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "documented_capability": "Exact card documents object detection and object segmentation capabilities and OpenImages detection data. Native coordinate grammar for this exact 448 interface is not established by reviewed card; no D5 qualification.",
+        "evidence": [
+          "paligemma_3b_mix_448.README.md",
+          "paligemma_3b_mix_448.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "files": [
+          {
+            "path": "model-00001-of-00003.safetensors",
+            "size_bytes": 4956951424,
+            "lfs_sha256": "570dab6f84d3b784a06707cdc4742f97545dfd57d73742bb2fcb3190a09696a4"
+          },
+          {
+            "path": "model-00002-of-00003.safetensors",
+            "size_bytes": 4999820608,
+            "lfs_sha256": "334b225c0ec1db8f3952121f5f67a78b37167623e2178c0babe3086fcc8ea4ad"
+          },
+          {
+            "path": "model-00003-of-00003.safetensors",
+            "size_bytes": 1740714288,
+            "lfs_sha256": "8c75421941def510a8c2364726d8ab36cf1a0653b355368d2e2a80766b5a4f5f"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "F32"
+        ],
+        "published_parameter_count": 2924351216,
+        "published_safetensors_size_bytes": 11697486320,
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "evidence": [
+          "paligemma_3b_mix_448.revision_api"
+        ]
+      },
+      "classification": "CANDIDATE",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "t4_status": "FEASIBILITY_CANDIDATE",
+      "local_weight_bytes_verified": false,
+      "downloaded": false,
+      "runtime_validated": false,
+      "inspecsafe_used": false
+    },
+    {
+      "key": "smolvlm2_2_2b_instruct",
+      "model_id": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+      "resolved_repository_id": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+      "immutable_revision": "482adb537c021c86670beed01cd58990d01e72e4",
+      "roster_group": "backup",
+      "order": 2,
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "revision_resolution_source": "https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-2.2B-Instruct/revision/main?blobs=true",
+      "revision_resolution_timestamp_utc": "2026-09-24T12:10:14.942944+00:00",
+      "repository_url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+      "model_card_url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/blob/482adb537c021c86670beed01cd58990d01e72e4/README.md",
+      "files_tree_url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/tree/482adb537c021c86670beed01cd58990d01e72e4",
+      "revision_verification": {
+        "method": "Unauthenticated HTTPS GET resolution metadata then exact revision API; compare $.sha; no weights fetched",
+        "accessed_at_utc": "2026-09-24T12:10:14.942944+00:00",
+        "evidence": [
+          "smolvlm2_2_2b_instruct.resolution",
+          "smolvlm2_2_2b_instruct.revision_api"
+        ]
+      },
+      "license_access": {
+        "repository_license": "apache-2.0",
+        "gated": false,
+        "access_status": "PUBLIC_UNGATED_DOCUMENTARY",
+        "requires_accept_terms": false,
+        "owner_acceptance_status": "NOT_REQUIRED_BY_REPOSITORY_GATE",
+        "conditions": "Exact card front matter and Model Summary specify Apache 2.0; revision API agrees. No standalone LICENSE file listed.",
+        "evidence": [
+          "smolvlm2_2_2b_instruct.README.md",
+          "smolvlm2_2_2b_instruct.revision_api"
+        ]
+      },
+      "runtime": {
+        "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+        "documented_loader_api": "AutoModelForImageTextToText + AutoProcessor.apply_chat_template; model.generate",
+        "trust_remote_code": false,
+        "runner_status": "PENDING",
+        "documented_dtype": "Exact card uses torch.bfloat16 and flash_attention_2; published tensors F32. Explicit FP16 is only a runtime API candidate; neither BF16 recipe nor published 5.2 GB claim validates T4 fit. T4-compatible attention implementation remains to be specified.",
+        "evidence": [
+          "smolvlm2_2_2b_instruct.README.md",
+          "smolvlm2_2_2b_instruct.revision_api",
+          "smolvlm2_2_2b_instruct.config.json"
+        ]
+      },
+      "precision_quantization": {
+        "precision_candidate": "FP16",
+        "quantization_candidate": "NONE",
+        "selected_precision": "PENDING",
+        "selected_quantization": "PENDING",
+        "automatic_fallback": "FORBIDDEN",
+        "documented_dtype": "Exact card uses torch.bfloat16 and flash_attention_2; published tensors F32. Explicit FP16 is only a runtime API candidate; neither BF16 recipe nor published 5.2 GB claim validates T4 fit. T4-compatible attention implementation remains to be specified.",
+        "evidence": [
+          "smolvlm2_2_2b_instruct.README.md",
+          "smolvlm2_2_2b_instruct.revision_api",
+          "smolvlm2_2_2b_instruct.config.json"
+        ]
+      },
+      "spatial": {
+        "status": "NOT_YET_DOCUMENTARILY_QUALIFIED",
+        "d5_box_qualification": "NOT_YET_QUALIFIED",
+        "documented_capability": "Reviewed exact card/config document text generation, not a native coordinate output API. No grounding promotion.",
+        "evidence": [
+          "smolvlm2_2_2b_instruct.README.md",
+          "smolvlm2_2_2b_instruct.revision_api"
+        ]
+      },
+      "weight_provenance": {
+        "status": "VERIFIED_DOCUMENTARY_METADATA_ONLY",
+        "files": [
+          {
+            "path": "model-00001-of-00002.safetensors",
+            "size_bytes": 4959390584,
+            "lfs_sha256": "7c88a90e78f567460b2369a0369cc4dafbfda5607c9cb090b30fa4437b0282f2"
+          },
+          {
+            "path": "model-00002-of-00002.safetensors",
+            "size_bytes": 4027833472,
+            "lfs_sha256": "cf3d0958a8240f71054a6812038f2a6bfbe2e5124573a3b363f6b120c9a52657"
+          }
+        ],
+        "published_tensor_dtypes": [
+          "F32"
+        ],
+        "published_parameter_count": 2246784880,
+        "published_safetensors_size_bytes": 8987224056,
+        "downloaded": false,
+        "local_bytes_verified": false,
+        "evidence": [
+          "smolvlm2_2_2b_instruct.revision_api"
+        ]
+      },
+      "classification": "CANDIDATE",
+      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "t4_status": "FEASIBILITY_CANDIDATE",
+      "local_weight_bytes_verified": false,
+      "downloaded": false,
+      "runtime_validated": false,
+      "inspecsafe_used": false
     }
   ],
   "unresolved_items": [
@@ -1402,5 +2171,37 @@
       "detail": "Exact environments, device mapping, decoding/thinking, precision/quantization, preprocessing, partial-output failure behavior, adapters and applicable gate remain unvalidated for all six entries.",
       "evidence": []
     }
-  ]
+  ],
+  "roster_revision": {
+    "roster_revision": "D9R1_T4_RESOURCE_FEASIBILITY",
+    "roster_revision_reason": "PRE_FREEZE_RESOURCE_CONSTRAINT",
+    "roster_revision_before_protocol_freeze": true,
+    "roster_revision_before_inspecsafe": true,
+    "inspecsafe_performance_used": false,
+    "paid_gpu_required_by_policy": false,
+    "free_gpu_target": "COLAB_T4_OR_KAGGLE_T4_CLASS",
+    "task": "W2.6-D9R1",
+    "base_main_sha": "36b934b37ff064bb097860f0a0aef43897938a64",
+    "active_primary_keys": [
+      "qwen3_vl_8b_instruct",
+      "qwen2_5_vl_3b_instruct",
+      "internvl3_2b_hf",
+      "moondream2_2025_06_21"
+    ],
+    "active_backup_keys": [
+      "paligemma_3b_mix_448",
+      "smolvlm2_2_2b_instruct"
+    ],
+    "retired_keys": [
+      "ovis2_5_9b",
+      "molmo2_o_7b",
+      "gemma4_12b_it",
+      "paligemma2_10b_mix_448",
+      "minicpm_v_4_6"
+    ],
+    "historical_record_semantics": "Original six W2.6B0 model records, their roster_group/order, sources and unresolved items are preserved as historical evidence. Current membership is exclusively the active key lists and local_models.d9.json. Historical documentary runtime wording is not the later smoke status.",
+    "retired_records_config": "configs/pre_freeze/local_models.d9.json",
+    "qwen3_runtime_evidence": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json",
+    "ovis_historical_runtime_evidence": "configs/pre_freeze/ovis_gpu_smoke_result.v1.json"
+  }
 }
