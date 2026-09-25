@@ -106,6 +106,51 @@ def is_oom(error, torch):
     return False
 
 
+def empty_visual_observation():
+    # None means not observed/validated; never reuse a previous case's values.
+    return {"observed_image_grid_thw": None, "observed_spatial_merge_size": None,
+            "observed_visual_token_count": None,
+            "observed_image_token_placeholder_count": None}
+
+
+def observe_visual_tokens(prepared, model, processor, evidence):
+    """Inspect the existing prepared tensors once; no preprocessing or generation.
+
+    Contract: Transformers 4.51.3, 5f4ecf2d9f867a1255131d2461d75793c0cf1db2.
+    Validated primitive observations survive subsequent contract failures.
+    """
+    grid = prepared.inputs["image_grid_thw"].tolist()
+    if (type(grid) is not list or len(grid) != 1 or type(grid[0]) is not list
+            or len(grid[0]) != 3 or any(type(v) is not int or v <= 0 for v in grid[0])):
+        raise ValueError("INVALID_IMAGE_GRID_THW")
+    t, h, w = grid[0]
+    evidence["observed_image_grid_thw"] = [[t, h, w]]
+    model_merge = model.config.vision_config.spatial_merge_size
+    processor_merge = processor.image_processor.merge_size
+    if (type(model_merge) is not int or model_merge <= 0
+            or type(processor_merge) is not int or processor_merge <= 0
+            or model_merge != processor_merge):
+        raise ValueError("INVALID_OR_MISMATCHED_SPATIAL_MERGE_SIZE")
+    evidence["observed_spatial_merge_size"] = model_merge
+    if h % model_merge or w % model_merge:
+        raise ValueError("IMAGE_GRID_NOT_DIVISIBLE_BY_MERGE_SIZE")
+    count = t * (h // model_merge) * (w // model_merge)
+    evidence["observed_visual_token_count"] = count
+    if not 256 <= count <= 1280:
+        raise ValueError("VISUAL_TOKEN_COUNT_OUTSIDE_QUALIFICATION_CAP")
+    image_token_id = model.config.image_token_id
+    if type(image_token_id) is not int or image_token_id < 0:
+        raise ValueError("INVALID_IMAGE_TOKEN_ID")
+    rows = prepared.inputs["input_ids"].tolist()
+    if (type(rows) is not list or len(rows) != 1 or type(rows[0]) is not list
+            or not rows[0] or any(type(v) is not int or v < 0 for v in rows[0])):
+        raise ValueError("INVALID_PREPARED_INPUT_TOKEN_IDS")
+    placeholders = rows[0].count(image_token_id)
+    evidence["observed_image_token_placeholder_count"] = placeholders
+    if placeholders != count:
+        raise ValueError("IMAGE_TOKEN_PLACEHOLDER_COUNT_MISMATCH")
+
+
 def placement_gate(model, processor, torch):
     counts = {"parameters": 0, "buffers": 0}
     for kind, items in (("parameters", model.parameters()), ("buffers", model.buffers())):
@@ -203,6 +248,7 @@ def run_smoke(run_id, *, repo=ROOT, cache_dir=None, runner_factory=Qwen2_5VLRunn
             native_generate = model.generate
             original_prepare = runner.prepare_input
             original_generate_raw = runner.generate_raw
+            visual_observations = {}
 
             def observed_generate_raw(*args, **kwargs):
                 try:
@@ -213,9 +259,17 @@ def run_smoke(run_id, *, repo=ROOT, cache_dir=None, runner_factory=Qwen2_5VLRunn
                                                         "resource_failure": True})
                     raise
 
-            def observed_prepare(*args, **kwargs):
+            def observed_prepare(request, context):
                 try:
-                    return original_prepare(*args, **kwargs)
+                    case_id = context.call_id
+                    if (case_id not in CASE_IDS or request.sample_id != case_id
+                            or case_id in visual_observations):
+                        raise ValueError("UNEXPECTED_OR_DUPLICATE_PREPARE_CASE")
+                    evidence = empty_visual_observation()
+                    visual_observations[case_id] = evidence
+                    prepared = original_prepare(request, context)
+                    observe_visual_tokens(prepared, model, processor, evidence)
+                    return prepared
                 except Exception as exc:
                     summary["native_errors"].append({"error_type": type(exc).__name__,
                         "resource_failure": isinstance(exc, torch.cuda.OutOfMemoryError)})
@@ -246,6 +300,7 @@ def run_smoke(run_id, *, repo=ROOT, cache_dir=None, runner_factory=Qwen2_5VLRunn
                     summary["memory"][case] = memory_observation(torch)
                     state_cleared = model.rope_deltas is None and getattr(model, "_cache", None) is None
                     summary["calls"].append({"case_id": case, "parse_status": result.parse_status.value,
+                        **visual_observations.get(case, empty_visual_observation()),
                         "error": asdict(result.error) if result.error else None,
                         "raw": asdict(result.raw_output) if result.raw_output else None,
                         "state_cleared": state_cleared, "input": provenance})

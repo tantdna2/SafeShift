@@ -217,3 +217,87 @@ fail closed. Evidence source hashes separately preserve actual on-disk bytes.
 Census SHA-256 remains
 `cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`;
 it was never staged or committed.
+
+## D9R2B-OBS — Runtime visual-token observability
+
+Base: `801d892ede91c1538f48d002b8704aaeae95ab0c`.
+Qwen2.5 T4 observability: **IMPLEMENTED / OFFLINE_TESTED**. Real runtime remains
+**PENDING / NOT_RUN**; no actual runtime grid or visual-token count exists yet.
+This patch runs no GPU, model inference or snapshot provisioning.
+
+For each case, the harness wraps the existing `runner.prepare_input` once and
+reads `PreparedInput.inputs["image_grid_thw"].tolist()`. It accepts exactly one
+row of three positive Python integers (bool/float/coercions are rejected) and
+stores a fresh nested list, never a tensor or repr. The unchanged runner also
+enforces temporal size 1 for the single still image.
+
+Merge size is read independently from
+`model.config.vision_config.spatial_merge_size` and
+`processor.image_processor.merge_size`. Both must exist, be exact positive ints
+and agree. The harness does not hardcode the currently expected value 2.
+After checking height and width are divisible by the observed merge size:
+
+```text
+observed_visual_token_count = t * (h // spatial_merge_size) * (w // spatial_merge_size)
+```
+
+The computed count must be within **256–1280 inclusive**. This is validation of
+the existing qualification preprocessing contract, not accuracy scoring. Counts
+are derived from prepared grid values, never inferred from min/max pixel caps.
+
+Source reverified: Transformers **4.51.3**, exact commit
+`5f4ecf2d9f867a1255131d2461d75793c0cf1db2`:
+
+- [Model grid calculation](https://github.com/huggingface/transformers/blob/5f4ecf2d9f867a1255131d2461d75793c0cf1db2/src/transformers/models/qwen2_5_vl/modeling_qwen2_5_vl.py#L1570)
+  reads the model's vision merge size; lines 1632–1636 use `t`, `h // merge`,
+  `w // merge`. Source SHA-256:
+  `72bdd5615b7527543ea7e6d69fbe194c40bddd94cab13e2e83696ff1cfb10719`.
+- [Processor expansion](https://github.com/huggingface/transformers/blob/5f4ecf2d9f867a1255131d2461d75793c0cf1db2/src/transformers/models/qwen2_5_vl/processing_qwen2_5_vl.py#L160)
+  repeats the image token by grid product divided by processor merge size squared
+  before tokenization. Source SHA-256:
+  `95ec1231f8123e6949dd328e3035e104a335a0701488949aec444410071474cd`.
+- [Native image-token equality check](https://github.com/huggingface/transformers/blob/5f4ecf2d9f867a1255131d2461d75793c0cf1db2/src/transformers/models/qwen2_5_vl/modeling_qwen2_5_vl.py#L1758)
+  requires `input_ids == model.config.image_token_id` count to equal image features.
+  Therefore the harness enables the same equality preflight for its single-image,
+  fixed-prompt calls: count actual prepared input IDs matching the runtime image
+  token ID and require equality with the computed visual-token count. No token ID
+  is hardcoded; invalid IDs/input rows and mismatches fail closed before generate.
+
+Each `summary["calls"]` entry now includes `case_id` plus:
+
+```text
+observed_image_grid_thw
+observed_spatial_merge_size
+observed_visual_token_count
+observed_image_token_placeholder_count
+```
+
+Observations belong to a per-run dictionary keyed by case ID. Unknown/mismatched
+case IDs and duplicate prepare attempts fail closed. Each case starts with null
+observation fields; valid primitive observations are retained if a later check
+fails. A failed second preparation never inherits the first case's values.
+Successful cases still perform exactly one preparation and one native generate,
+using the same runner lifecycle. Failures stop before generation when possible.
+Observation contract failures are `RUNTIME_INTERFACE_FAILURE`; genuine CUDA OOM
+retains the existing `RUNTIME_RESOURCE_FAILURE` classification.
+
+Runner raw v2, raw-before-parser, FileRawStore, rope/cache resets, placement,
+memory instrumentation, network firewall and snapshot verification are unchanged.
+Model/revision, SDPA, FP16/NONE/batch 1, single T4, preprocessing caps and all ten
+software pins remain unchanged. No full transitive lock was introduced.
+The plan file is untouched; canonical PLAN_SHA256 before and after is:
+`aa4fcff85d670d844025a540d85f10514919c60f6709de8be8f6be0922fd63fb`.
+
+T4 status remains **T4_FEASIBILITY_CANDIDATE**. Grounding remains unqualified,
+InspecSafe authorization false, checklist #2–#8 PENDING and protocol freeze SHA
+PENDING. No weights download, snapshot provisioning, Colab/Kaggle runtime, real
+inference, synthetic gate, InspecSafe, prompt tuning or scoring occurred.
+
+OBS offline validation: **58 PREP tests PASS** (17 added), **71 runner tests PASS**,
+**712 full-suite tests PASS**. Smoke harness `py_compile`, unchanged plan JSON
+validation and `git diff --check` PASS. Fake tests exercise distinct per-case grids,
+exactly two prepares/native generates, no carryover on second-case failure, runtime
+merge values other than 2, malformed/bool/non-divisible inputs, both cap boundaries,
+placeholder mismatches and CUDA OOM classification. No network in tests.
+Census remains untracked/untouched with SHA-256
+`cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb`.

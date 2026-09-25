@@ -47,6 +47,11 @@ class RuntimePrepTests(unittest.TestCase):
         self.repo = Path(temp.name).resolve()
         self.plan = provision.load_plan()
         self.runtime = Runtime()
+        self.runtime.model.config.vision_config = SimpleNamespace(spatial_merge_size=2)
+        self.runtime.model.config.image_token_id = 151655
+        self.runtime.processor.image_processor.merge_size = 2
+        self.runtime.processor.grid = [[1, 32, 32]]
+        self.runtime.processor.rows = [[11] + [151655] * 256 + [22]]
         self.runner = Qwen2_5VLRunner(backend_factory=self.runtime.factory)
 
     def load(self):
@@ -390,6 +395,181 @@ class RuntimePrepTests(unittest.TestCase):
         with self.assertRaises(ValueError): smoke.run_smoke('../escape', repo=self.repo)
         store = smoke.CaseRawStore(self.repo)
         with self.assertRaises(ValueError): store._directory({'call_id': '../escape', 'sample_id': '../escape'})
+
+    def observe(self, grid=None, *, placeholders=256):
+        prepared = SimpleNamespace(inputs={
+            'image_grid_thw': Tensor([[1, 32, 32]] if grid is None else grid),
+            'input_ids': Tensor([[11] + [151655] * placeholders + [22]])})
+        evidence = smoke.empty_visual_observation()
+        smoke.observe_visual_tokens(prepared, self.runtime.model, self.runtime.processor, evidence)
+        return evidence
+
+    def test_observed_grid_is_actual_primitive_copy(self):
+        evidence = self.observe([[1, 40, 32]], placeholders=320)
+        self.assertEqual(evidence, {'observed_image_grid_thw': [[1, 40, 32]],
+            'observed_spatial_merge_size': 2, 'observed_visual_token_count': 320,
+            'observed_image_token_placeholder_count': 320})
+        self.assertEqual(json.loads(json.dumps(evidence)), evidence)
+
+    def test_grid_exact_one_by_three_shape(self):
+        for grid in ([], [1, 32, 32], [[1, 32]], [[1, 32, 32, 1]],
+                     [[1, 32, 32], [1, 32, 32]], [(1, 32, 32)]):
+            with self.subTest(grid=grid), self.assertRaises(ValueError): self.observe(grid)
+
+    def test_grid_positive_exact_ints_not_bool_or_float(self):
+        for position in range(3):
+            for value in (0, -1, True, False, 32.0, '32', None):
+                grid = [[1, 32, 32]]
+                grid[0][position] = value
+                with self.subTest(position=position, value=value), self.assertRaises(ValueError):
+                    self.observe(grid)
+
+    def test_merge_size_read_from_both_runtime_objects_not_hardcoded(self):
+        self.runtime.model.config.vision_config.spatial_merge_size = 3
+        self.runtime.processor.image_processor.merge_size = 3
+        evidence = self.observe([[1, 48, 60]], placeholders=320)
+        self.assertEqual(evidence['observed_spatial_merge_size'], 3)
+        self.assertEqual(evidence['observed_visual_token_count'], 320)
+
+    def test_merge_size_missing_invalid_or_mismatched_rejected(self):
+        for owner, field in ((self.runtime.model.config.vision_config, 'spatial_merge_size'),
+                             (self.runtime.processor.image_processor, 'merge_size')):
+            for value in (0, -2, True, False, 2.0, '2', None, 4):
+                setattr(owner, field, value)
+                with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                    self.observe()
+            delattr(owner, field)
+            with self.assertRaises(AttributeError): self.observe()
+            setattr(owner, field, 2)
+
+    def test_nondivisible_height_and_width_rejected_before_division(self):
+        for grid in ([[1, 33, 32]], [[1, 32, 33]]):
+            with self.subTest(grid=grid), self.assertRaisesRegex(ValueError, 'NOT_DIVISIBLE'):
+                self.observe(grid)
+
+    def test_visual_formula_uses_temporal_dimension(self):
+        # Generic source formula; the unchanged still-image runner separately enforces t=1.
+        self.assertEqual(self.observe([[2, 32, 32]], placeholders=512)['observed_visual_token_count'], 512)
+
+    def test_visual_range_inclusive_boundaries(self):
+        for grid, count in (([[1, 32, 32]], 256), ([[1, 64, 80]], 1280)):
+            with self.subTest(count=count):
+                self.assertEqual(self.observe(grid, placeholders=count)['observed_visual_token_count'], count)
+
+    def test_visual_range_below_and_above_rejected(self):
+        for grid in ([[1, 30, 32]], [[1, 64, 82]]):
+            with self.subTest(grid=grid), self.assertRaisesRegex(ValueError, 'OUTSIDE_QUALIFICATION_CAP'):
+                self.observe(grid)
+
+    def test_placeholder_mismatch_rejected(self):
+        for count in (0, 255, 257):
+            with self.subTest(count=count), self.assertRaisesRegex(ValueError, 'PLACEHOLDER_COUNT_MISMATCH'):
+                self.observe(placeholders=count)
+
+    def test_image_token_id_observed_not_hardcoded(self):
+        self.runtime.model.config.image_token_id = 99
+        prepared = SimpleNamespace(inputs={'image_grid_thw': Tensor([[1, 32, 32]]),
+                                          'input_ids': Tensor([[99] * 256])})
+        evidence = {}
+        smoke.observe_visual_tokens(prepared, self.runtime.model, self.runtime.processor, evidence)
+        self.assertEqual(evidence['observed_image_token_placeholder_count'], 256)
+
+    def test_image_token_id_and_input_rows_must_be_valid(self):
+        for value in (True, -1, 151655.0, None):
+            self.runtime.model.config.image_token_id = value
+            with self.assertRaises(ValueError): self.observe()
+        self.runtime.model.config.image_token_id = 151655
+        for rows in ([], [[], []], [[True]], [[151655.0]], [[-1]], [[]]):
+            prepared = SimpleNamespace(inputs={'image_grid_thw': Tensor([[1, 32, 32]]),
+                                               'input_ids': Tensor(rows)})
+            with self.assertRaises(ValueError):
+                smoke.observe_visual_tokens(prepared, self.runtime.model, self.runtime.processor, {})
+
+    def test_each_case_observed_once_without_carryover(self):
+        original = self.runner.prepare_input
+        grids = iter(([[1, 32, 32]], [[1, 40, 32]]))
+
+        def prepare(request, ctx):
+            self.runtime.processor.grid = next(grids)
+            count = 256 if ctx.call_id == 'case_01' else 320
+            self.runtime.processor.rows = [[11] + [151655] * count + [22]]
+            return original(request, ctx)
+
+        counter = Mock(side_effect=prepare)
+        self.runner.prepare_input = counter
+        result = self.run_fake()
+        self.assertEqual(result['status'], 'RUNTIME_INTERFACE_PASS')
+        self.assertEqual(counter.call_count, 2)
+        self.assertEqual(len(self.runtime.processor.calls), 2)
+        self.assertEqual(len(self.runtime.vision_calls), 2)
+        self.assertEqual(len(self.runtime.model.calls), 2)
+        self.assertEqual(result['native_generate_calls'], 2)
+        self.assertEqual([c['case_id'] for c in result['calls']], ['case_01', 'case_02'])
+        self.assertEqual([c['observed_image_grid_thw'] for c in result['calls']], [[[1, 32, 32]], [[1, 40, 32]]])
+        self.assertEqual([c['observed_visual_token_count'] for c in result['calls']], [256, 320])
+        self.assertEqual([c['observed_image_token_placeholder_count'] for c in result['calls']], [256, 320])
+        persisted = json.loads((self.repo / smoke.ARTIFACTS / 'fake/summary.json').read_text())
+        self.assertEqual(persisted['calls'], result['calls'])
+
+    def test_second_prepare_failure_never_reuses_first_observation(self):
+        original = self.runner.prepare_input
+
+        def prepare(request, ctx):
+            if ctx.call_id == 'case_02':
+                raise ValueError('failed second preparation')
+            return original(request, ctx)
+
+        self.runner.prepare_input = Mock(side_effect=prepare)
+        result = self.run_fake()
+        self.assertEqual(result['status'], 'RUNTIME_INTERFACE_FAILURE')
+        self.assertEqual(result['calls'][0]['observed_visual_token_count'], 256)
+        for key in smoke.empty_visual_observation():
+            self.assertIsNone(result['calls'][1][key])
+        self.assertEqual(result['native_generate_calls'], 1)
+
+    def test_observation_failures_are_interface_failures_before_generate(self):
+        original = self.runner.prepare_input
+        for index, failure in enumerate(('missing_grid', 'malformed_grid', 'merge_mismatch',
+                                        'height', 'width', 'below', 'above', 'placeholders')):
+            def prepare(request, ctx):
+                prepared = original(request, ctx)
+                if failure == 'missing_grid':
+                    del prepared.inputs['image_grid_thw']
+                elif failure == 'merge_mismatch':
+                    self.runtime.processor.image_processor.merge_size = 3
+                elif failure == 'placeholders':
+                    prepared.inputs['input_ids'].data = [[11, 22]]
+                else:
+                    prepared.inputs['image_grid_thw'].data = {
+                        'malformed_grid': [[1, True, 32]], 'height': [[1, 33, 32]],
+                        'width': [[1, 32, 33]], 'below': [[1, 30, 32]],
+                        'above': [[1, 64, 82]]}[failure]
+                return prepared
+            self.runner.prepare_input = prepare
+            result = self.run_fake('invalid_' + str(index))
+            self.runtime.processor.image_processor.merge_size = 2
+            with self.subTest(failure=failure):
+                self.assertEqual(result['status'], 'RUNTIME_INTERFACE_FAILURE')
+                self.assertEqual(result['native_generate_calls'], 0)
+                self.assertIsNone(result['calls'][0]['raw'])
+
+    def test_observation_cuda_oom_retains_resource_classification(self):
+        with patch.object(smoke, 'observe_visual_tokens', side_effect=FakeOOM()):
+            self.assertEqual(self.run_fake()['status'], 'RUNTIME_RESOURCE_FAILURE')
+
+    def test_obs_plan_and_all_software_pins_unchanged(self):
+        expected = 'aa4fcff85d670d844025a540d85f10514919c60f6709de8be8f6be0922fd63fb'
+        self.assertEqual(provision.PLAN_SHA256, expected)
+        canonical = json.dumps(self.plan, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+        self.assertEqual(hashlib.sha256(canonical).hexdigest(), expected)
+        self.assertEqual(self.plan['software'], {'python': '3.11.11', 'torch': '2.6.0+cu124',
+            'torchvision': '0.21.0+cu124', 'transformers': '4.51.3', 'qwen-vl-utils': '0.0.8',
+            'accelerate': '1.6.0', 'pillow': '11.2.1', 'huggingface-hub': '0.30.2',
+            'tokenizers': '0.21.1', 'safetensors': '0.5.3'})
+        self.assertEqual(self.plan['attention_implementation'], 'sdpa')
+        self.assertEqual(self.plan['processor'], {'mode': 'official_processor_capped',
+                         'min_pixels': 200704, 'max_pixels': 1003520})
+        self.assertEqual(runner_module.ENVELOPE_VERSION, 'safeshift-qwen2-5-vl-raw-v2')
 
 
 if __name__ == '__main__':
