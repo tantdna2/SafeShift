@@ -1,5 +1,17 @@
 # Pre-freeze implementation
 
+## W2.6-D9R2C-GATE-PREP — External capability gate prepared, not executed
+
+[Gate harness and separate pinned plan](w2_qwen2_5_external_gate_prep.md) reuse
+the unchanged frozen eight-case SYNTHETIC V1 suite, existing prompt builder,
+strict parser and evaluator. Decoding reuses exact smoke values: do_sample=false,
+max_new_tokens=32. Production runner/adapter and runtime plan remain untouched.
+Automatic success yields GATE_PENDING_REVIEW; eight explicit qualitative human
+reviews remain necessary. No case design/regeneration/tuning, real model outputs,
+real gate result, GPU or InspecSafe. Harness PREPARED; execution/review NOT_RUN;
+grounding NOT_YET_QUALIFIED, classification CANDIDATE, resource PASS_VALIDATED.
+All pending protocol prerequisites and freeze SHA remain PENDING.
+
 ## Current Qwen2.5 status — D9R2B-T4-QUAL
 
 Resource qualification **PASS / PASS_VALIDATED**, scoped to real single-T4
