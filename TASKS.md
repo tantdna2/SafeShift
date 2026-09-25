@@ -241,3 +241,16 @@ No loader/validation repair, resource-plan or software-pin change. No real rerun
 GPU, weights download, provisioning, synthetic gate or InspecSafe in this task.
 Checklist #2–#8 and protocol freeze SHA remain PENDING. See
 [reported facts, diagnostic policy and hypotheses](notes/w2_qwen2_5_t4_load_diagnostics.md).
+
+## W2.6-D9R2B-INIT-DIAG — Initialize diagnostics and init-only probe
+
+- [x] Second real T4 attempt reported **EXECUTED**:
+  `kaggle-t4-qwen25-diag-20260925T053007Z-bd011d`, INITIALIZE / ValueError,
+  zero generates, no model load reached, OOM **NOT_OBSERVED**.
+- [x] Initialize diagnostics and standalone init-only probe implemented with
+  fake-only tests. Existing load diagnostics and qualification plan retained.
+- [ ] Real init probe **NOT_RUN**; root cause **NOT_YET_IDENTIFIED**.
+  T4 remains **T4_FEASIBILITY_CANDIDATE / NOT_YET_VALIDATED**.
+
+No runtime repair or real execution in this patch. See
+[initialize diagnostics](notes/w2_qwen2_5_t4_initialize_diagnostics.md).
