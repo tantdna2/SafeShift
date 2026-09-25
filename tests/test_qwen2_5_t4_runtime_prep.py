@@ -112,20 +112,26 @@ class RuntimePrepTests(unittest.TestCase):
 
     def test_eager_native_load_rejected_no_retry(self):
         self.runtime.model.config._attn_implementation = 'eager'
-        with self.assertRaises(ValueError):
+        with self.assertRaises(runner_module.Qwen2_5LoadDiagnosticFailure) as raised:
             self.load()
+        self.assertIsInstance(raised.exception.__cause__, ValueError)
+        self.assertEqual(raised.exception.diagnostic_stage, 'MODEL_VALIDATE')
         self.assertIsNone(self.runner._resources)
         self.assertEqual(self.runtime.model_factory.from_pretrained.call_count, 1)
 
     def test_native_output_attentions_fallback_blocked(self):
         self.runtime.model.config.output_attentions = True
-        with self.assertRaises(ValueError):
+        with self.assertRaises(runner_module.Qwen2_5LoadDiagnosticFailure) as raised:
             self.load()
+        self.assertIsInstance(raised.exception.__cause__, ValueError)
+        self.assertEqual(raised.exception.diagnostic_stage, 'MODEL_VALIDATE')
 
     def test_loaded_processor_caps_checked(self):
         self.runtime.processor.image_processor.max_pixels = 999
-        with self.assertRaises(ValueError):
+        with self.assertRaises(runner_module.Qwen2_5LoadDiagnosticFailure) as raised:
             self.load()
+        self.assertIsInstance(raised.exception.__cause__, ValueError)
+        self.assertEqual(raised.exception.diagnostic_stage, 'PROCESSOR_VALIDATE')
         self.runtime.model_factory.from_pretrained.assert_not_called()
 
     def test_changed_processor_after_load_blocked(self):

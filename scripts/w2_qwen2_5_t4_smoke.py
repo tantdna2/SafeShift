@@ -21,7 +21,9 @@ from scripts.provision_qwen2_5_snapshot import (
     network_denied, sha256_file, verify_snapshot, write_json,
 )
 from safeshift.runners.contracts import ErrorCode, Request, RunContext, Task, execute_call
-from safeshift.runners.qwen2_5_vl import PREPROCESSING, Qwen2_5VLRunner, Qwen2_5VLAdapter
+from safeshift.runners.qwen2_5_vl import (
+    PREPROCESSING, Qwen2_5VLRunner, Qwen2_5VLAdapter, Qwen2_5LoadDiagnosticFailure,
+)
 from safeshift.runners.storage import FileRawStore
 
 ARTIFACTS = "data/processed/runtime_validation/w2_qwen2_5_t4_smoke"
@@ -232,7 +234,7 @@ def run_smoke(run_id, *, repo=ROOT, cache_dir=None, runner_factory=Qwen2_5VLRunn
                 raise ValueError("CUDA_BUILD_MISMATCH")
             stage = "SNAPSHOT"
             snapshot = verify_snapshot(cached_snapshot(cache_dir), repo=repo)
-            stage = "LOAD"
+            stage = "INITIALIZE"
             runner = runner_factory()
             store = CaseRawStore(repo, ARTIFACTS + "/" + run_id)
             summary["memory"]["before_load"] = memory_observation(torch)
@@ -241,6 +243,7 @@ def run_smoke(run_id, *, repo=ROOT, cache_dir=None, runner_factory=Qwen2_5VLRunn
                                  environment["software"], metadata["git_commit"], metadata["command"],
                                  "HANDCRAFTED_RUNTIME_SMOKE")
             runner.initialize(context)
+            stage = "LOAD"
             runner.load(context)
             processor, model, _ = runner._resources
             summary["memory"]["after_load"] = memory_observation(torch)
@@ -324,6 +327,9 @@ def run_smoke(run_id, *, repo=ROOT, cache_dir=None, runner_factory=Qwen2_5VLRunn
         resource_failure |= any(e["resource_failure"] for e in summary["native_errors"])
         summary["status"] = "RUNTIME_RESOURCE_FAILURE" if resource_failure else "RUNTIME_INTERFACE_FAILURE"
         summary["failure"] = {"stage": stage, "error_type": type(exc).__name__}
+        if isinstance(exc, Qwen2_5LoadDiagnosticFailure):
+            summary["failure"].update(load_substage=exc.diagnostic_stage,
+                                      underlying_error_type=exc.underlying_error_type)
     finally:
         metadata["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
         write_json(root / "run_metadata.json", metadata)
