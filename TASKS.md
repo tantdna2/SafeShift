@@ -274,3 +274,29 @@ Status update; previous attempt and diagnostic records remain historical.
 Resource plan/software pins unchanged. No GPU, downloads, provisioning, real
 inference, synthetic gate or InspecSafe. Protocol freeze remains **PENDING**.
 See [evidence and minimal fix](notes/w2_qwen2_5_t4_initialize_diagnostics.md#d9r2b-init-fix--pytorch-version-metadata-normalization).
+
+## W2.6-D9R2B-T4-QUAL — Recorded single-T4 runtime qualification
+
+Current status supersedes earlier Qwen2.5 runtime pending statements above;
+all failed-attempt records remain historical evidence.
+
+- [x] Research Lead reports **RUNTIME_INTERFACE_PASS**, run
+  `kaggle-t4-qwen25-smoke-after-initfix-20260925T073925Z-bb567e`, execution commit
+  `3124b1f7c2bd8d2311d1a1db6474950e200a689f`. Model load and exactly two native
+  generations PASS; native errors empty; OOM **NOT_OBSERVED**.
+- [x] RESOURCE_QUALIFICATION **PASS**; roster status **PASS_VALIDATED** using
+  existing repository runtime terminology. Single Tesla T4 / FP16 / SDPA / NONE,
+  cuda:0, unchanged processor caps; both cases observed 256 visual tokens.
+- [x] Real init reprobe reported **INITIALIZE_INTERFACE_PASS** after metadata
+  normalization; full smoke also reached load and generation.
+- [ ] SYNTHETIC_CAPABILITY_GATE **PENDING**. Next separate task after merge:
+  exactly **8 external handcrafted synthetic capability cases**.
+- [ ] Classification/grounding capability not validated. Both fenced JSON
+  outputs remain **INVALID_CLASSIFICATION_OUTPUT**, an allowed interface-only
+  observation; parser and prompt unchanged. No accuracy claim.
+- [ ] Checklist #2 overall and #3–#8 **PENDING**; InspecSafe **NOT_RUN** and
+  unauthorized; `protocol_freeze_commit_sha: PENDING`.
+
+Evidence/status only: no new GPU run, downloads, inference or gate execution.
+Plan SHA unchanged. See [record and scope](notes/w2_qwen2_5_t4_initialize_diagnostics.md#d9r2b-t4-qual--successful-real-single-t4-runtime-qualification)
+and [machine-readable evidence summary](configs/pre_freeze/qwen2_5_t4_smoke_result.v1.json).

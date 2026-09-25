@@ -43,14 +43,16 @@
       "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "qwen2_5_vl_3b_instruct",
-      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "resource_status": "PASS_VALIDATED",
+      "runtime_validation_scope": "RUNTIME_INTERFACE_ONLY; SINGLE_T4_LOAD_AND_GENERATION_FEASIBILITY",
       "target_validation": [
         "COLAB_T4_1X16GB_PRIMARY",
         "KAGGLE_T4_FALLBACK_ALLOWED"
       ],
       "documentary_status": "COMPLETE",
-      "offline_runner_status": "PENDING",
-      "runtime_smoke_status": "PENDING",
+      "offline_runner_status": "COMPLETE",
+      "runtime_smoke_status": "PASS_VALIDATED",
+      "runtime_evidence": "configs/pre_freeze/qwen2_5_t4_smoke_result.v1.json",
       "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     },
     {

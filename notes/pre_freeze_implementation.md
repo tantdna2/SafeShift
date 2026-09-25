@@ -1,5 +1,16 @@
 # Pre-freeze implementation
 
+## Current Qwen2.5 status — D9R2B-T4-QUAL
+
+Resource qualification **PASS / PASS_VALIDATED**, scoped to real single-T4
+load and two native generations, per the Research Lead-supplied
+[evidence record](w2_qwen2_5_t4_initialize_diagnostics.md#d9r2b-t4-qual--successful-real-single-t4-runtime-qualification).
+Earlier NOT_RUN/candidate runtime statements below are historical. Both strict
+classification parses remain INVALID_CLASSIFICATION_OUTPUT; parser/prompt unchanged.
+Capability gate PENDING, classification CANDIDATE, grounding NOT_YET_QUALIFIED;
+InspecSafe NOT_RUN, checklist #2 overall/#3–#8 and protocol freeze PENDING.
+This update only records existing evidence; runtime code and plan are unchanged.
+
 ## W2.6-D9R2A — Qwen2.5-VL-3B offline runner (2026-09-24)
 
 [Implementation record](w2_qwen2_5_runner_implementation.md): **IMPLEMENTED /

@@ -1,0 +1,118 @@
+{
+  "schema_version": "qwen2-5-t4-smoke-result-summary-v1",
+  "record_kind": "RESEARCH_LEAD_SUPPLIED_RUNTIME_SUMMARY",
+  "source": {
+    "authority": "Project Owner / Research Lead instruction for W2.6-D9R2B-T4-QUAL",
+    "recording_basis": "User-supplied real-run findings and hashes; bundle not independently inspected or rehashed by recording agent",
+    "evidence_bundle_sha256": "0b04a616a71aa0b063711f2b403c536b7d096f9c758c31c9ac21709e9583c105",
+    "bundle_committed": false
+  },
+  "run_id": "kaggle-t4-qwen25-smoke-after-initfix-20260925T073925Z-bb567e",
+  "execution_commit": "3124b1f7c2bd8d2311d1a1db6474950e200a689f",
+  "plan_path": "configs/pre_freeze/qwen2_5_t4_runtime.v1.json",
+  "plan_sha256": "aa4fcff85d670d844025a540d85f10514919c60f6709de8be8f6be0922fd63fb",
+  "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+  "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "status": "RUNTIME_INTERFACE_PASS",
+  "resource_status": "PASS_VALIDATED",
+  "resource_status_term_source": "configs/pre_freeze/local_models.d9.json: existing Qwen3 runtime_smoke_status and retired Ovis historical_runtime_smoke_status",
+  "resource_qualification": "PASS",
+  "validation_scope": "RUNTIME_INTERFACE_ONLY",
+  "validated_for": "SINGLE_T4_LOAD_AND_GENERATION_FEASIBILITY",
+  "not_validated_for": [
+    "CLASSIFICATION_CAPABILITY",
+    "GROUNDING_CAPABILITY",
+    "SYNTHETIC_CAPABILITY_GATE",
+    "INSPECSAFE_BENCHMARK_PERFORMANCE"
+  ],
+  "hardware": {
+    "platform": "KAGGLE",
+    "visible_gpu_count": 1,
+    "gpu_name": "Tesla T4",
+    "compute_capability": [7, 5],
+    "total_vram_bytes": 15636037632
+  },
+  "runtime_condition": {
+    "precision": "FP16",
+    "attention_implementation": "sdpa",
+    "quantization": "NONE",
+    "batch_size": 1,
+    "device": "cuda:0",
+    "min_pixels": 200704,
+    "max_pixels": 1003520,
+    "visual_token_range": [256, 1280]
+  },
+  "placement": {
+    "all_parameters_and_buffers": "cuda:0",
+    "parameter_dtype": "FP16",
+    "device_map": {"": "cuda:0"},
+    "cpu_offload": false,
+    "disk_offload": false,
+    "attention_classes": ["Qwen2_5_VLSdpaAttention", "Qwen2_5_VLVisionSdpaAttention"]
+  },
+  "snapshot_verification": {
+    "local_bytes_verified": true,
+    "scope": "THIS_REPORTED_RUN_ONLY; NOT_A_NEW_LOCAL_DOWNLOAD_OR_VERIFICATION",
+    "total_bytes": 7520918095,
+    "files": [
+      {
+        "path": "model-00001-of-00002.safetensors",
+        "sha256": "41a8895c164b4d32bae6b302f4603fcbc1797f32dafa45c7e9bcda23c6755df8"
+      },
+      {
+        "path": "model-00002-of-00002.safetensors",
+        "sha256": "365531ff8752420e89dee707b79d021fb2d6e25abafe486f080555a4fe6972e4"
+      }
+    ]
+  },
+  "memory": {
+    "before_load": {"allocated_bytes": 0, "reserved_bytes": 0},
+    "after_load": {
+      "allocated_bytes": 7509421568,
+      "peak_allocated_bytes": 8131575808,
+      "reserved_bytes": 8212447232,
+      "peak_reserved_bytes": 8212447232
+    }
+  },
+  "model_load_status": "PASS",
+  "native_generation_status": "PASS",
+  "native_generate_calls": 2,
+  "native_errors": [],
+  "oom_observed": false,
+  "calls": [
+    {
+      "case_id": "case_01",
+      "peak_allocated_bytes": 7638978560,
+      "observed_image_grid_thw": [[1, 32, 32]],
+      "observed_spatial_merge_size": 2,
+      "observed_visual_token_count": 256,
+      "observed_image_token_placeholder_count": 256,
+      "parse_status": "INVALID",
+      "error": "INVALID_CLASSIFICATION_OUTPUT"
+    },
+    {
+      "case_id": "case_02",
+      "peak_allocated_bytes": 7638978560,
+      "observed_image_grid_thw": [[1, 32, 32]],
+      "observed_spatial_merge_size": 2,
+      "observed_visual_token_count": 256,
+      "observed_image_token_placeholder_count": 256,
+      "parse_status": "INVALID",
+      "error": "INVALID_CLASSIFICATION_OUTPUT"
+    }
+  ],
+  "parser_observation": "Both outputs contain safety_level Level01 inside Markdown JSON fences; strict parser rejects them. No fence stripping, JSON repair, parser or prompt changes, or accuracy claim. Original raw outputs remain primary evidence outside Git.",
+  "previous_init_bug": {
+    "root_cause": "PYTORCH_VERSION_METADATA_NOT_NORMALIZED_TO_BUILTIN_STR",
+    "fix": "str(torch.__version__)",
+    "real_init_reprobe": "INITIALIZE_INTERFACE_PASS",
+    "full_smoke_progress": "INITIALIZE_THEN_LOAD_THEN_TWO_NATIVE_GENERATIONS"
+  },
+  "synthetic_capability_gate_status": "PENDING",
+  "next_step_after_merge": "EXACTLY_8_EXTERNAL_HANDCRAFTED_SYNTHETIC_CAPABILITY_CASES; SEPARATE_TASK",
+  "synthetic_gate_used": false,
+  "inspecsafe_used": false,
+  "inspecsafe_status": "NOT_RUN",
+  "inspecsafe_inference_authorized": false,
+  "protocol_freeze_commit_sha": "PENDING"
+}
