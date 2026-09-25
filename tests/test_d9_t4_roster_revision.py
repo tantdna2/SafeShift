@@ -82,19 +82,23 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             for field in ('key', 'model_id'):
                 self.assertEqual(len(records), len({m[field] for m in records}))
 
-    def test_07_new_primaries_are_feasibility_candidates(self):
+    def test_07_resource_status_tracks_recorded_runtime_evidence(self):
         for m in self.primary[1:]:
             self.assertEqual(m['classification'], 'CANDIDATE')
-            self.assertEqual(m['resource_status'], 'T4_FEASIBILITY_CANDIDATE')
+            expected = 'PASS_VALIDATED' if m['key'] == PRIMARY[1][0] else 'T4_FEASIBILITY_CANDIDATE'
+            self.assertEqual(m['resource_status'], expected)
             self.assertEqual(m['target_validation'], ['COLAB_T4_1X16GB_PRIMARY', 'KAGGLE_T4_FALLBACK_ALLOWED'])
 
-    def test_08_no_new_model_validation_claim(self):
+    def test_08_documentary_history_and_unqualified_models_not_promoted(self):
         for m in self.active[1:]:
             p = self.by_key[m['key']]
+            # Documentary snapshot remains historical; current runtime evidence
+            # is separately linked by the roster, as for the Qwen3 anchor.
             self.assertFalse(p['runtime_validated'])
             self.assertEqual(p['t4_status'], 'FEASIBILITY_CANDIDATE')
-            self.assertEqual(m['runtime_smoke_status'], 'PENDING')
-            for _, value in walk([m, p]):
+            qualified = m['key'] == PRIMARY[1][0]
+            self.assertEqual(m['runtime_smoke_status'], 'PASS_VALIDATED' if qualified else 'PENDING')
+            for _, value in walk([p] if qualified else [m, p]):
                 if isinstance(value, str):
                     self.assertNotIn(value, {'T4_VALIDATED', 'COLAB_VALIDATED', 'KAGGLE_VALIDATED', 'PASS_VALIDATED'})
 
@@ -302,6 +306,44 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertEqual(p['classification_participation'], 'MUST_CONTINUE')
         self.assertIs(p['activate_backup_substitution'], False)
         self.assertIs(p['assign_artificial_zero_iou'], False)
+
+    def test_qwen25_recorded_single_t4_pass_has_bounded_evidence(self):
+        m = self.primary[1]
+        evidence = load(ROOT / m['runtime_evidence'])
+        self.assertEqual(m['offline_runner_status'], 'COMPLETE')
+        self.assertEqual(evidence['model_id'], m['model_id'])
+        self.assertEqual(evidence['immutable_revision'], m['immutable_revision'])
+        self.assertEqual(evidence['run_id'], 'kaggle-t4-qwen25-smoke-after-initfix-20260925T073925Z-bb567e')
+        self.assertEqual(evidence['execution_commit'], '3124b1f7c2bd8d2311d1a1db6474950e200a689f')
+        self.assertEqual(evidence['source']['evidence_bundle_sha256'],
+                         '0b04a616a71aa0b063711f2b403c536b7d096f9c758c31c9ac21709e9583c105')
+        self.assertEqual(evidence['plan_sha256'], digest(load(CONFIG / 'qwen2_5_t4_runtime.v1.json')))
+        self.assertEqual(evidence['resource_status'], m['resource_status'])
+        self.assertEqual(evidence['status'], 'RUNTIME_INTERFACE_PASS')
+        self.assertEqual(evidence['validation_scope'], 'RUNTIME_INTERFACE_ONLY')
+        self.assertEqual(evidence['validated_for'], 'SINGLE_T4_LOAD_AND_GENERATION_FEASIBILITY')
+        self.assertEqual(evidence['not_validated_for'], ['CLASSIFICATION_CAPABILITY', 'GROUNDING_CAPABILITY',
+                                                       'SYNTHETIC_CAPABILITY_GATE', 'INSPECSAFE_BENCHMARK_PERFORMANCE'])
+        self.assertEqual(evidence['hardware']['visible_gpu_count'], 1)
+        self.assertEqual(evidence['hardware']['gpu_name'], 'Tesla T4')
+        self.assertEqual(evidence['native_generate_calls'], 2)
+        self.assertEqual(evidence['native_errors'], [])
+        self.assertIs(evidence['oom_observed'], False)
+        self.assertEqual([c['case_id'] for c in evidence['calls']], ['case_01', 'case_02'])
+        for c in evidence['calls']:
+            self.assertEqual(c['parse_status'], 'INVALID')
+            self.assertEqual(c['error'], 'INVALID_CLASSIFICATION_OUTPUT')
+            self.assertEqual(c['observed_image_grid_thw'], [[1, 32, 32]])
+            self.assertEqual(c['observed_spatial_merge_size'], 2)
+            self.assertEqual(c['observed_visual_token_count'], 256)
+            self.assertEqual(c['observed_image_token_placeholder_count'], 256)
+        shards = self.by_key[m['key']]['weight_provenance']['files']
+        self.assertEqual(evidence['snapshot_verification']['files'],
+                         [{'path': s['path'], 'sha256': s['lfs_sha256']} for s in shards])
+        self.assertEqual(evidence['synthetic_capability_gate_status'], 'PENDING')
+        self.assertEqual(evidence['protocol_freeze_commit_sha'], 'PENDING')
+        for key in ('inspecsafe_used', 'inspecsafe_inference_authorized', 'synthetic_gate_used'):
+            self.assertIs(evidence[key], False)
 
     def test_32_local_census_hash_when_present(self):
         # Optional local artifact; never required or distributed as a test fixture.
