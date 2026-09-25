@@ -1,0 +1,107 @@
+{
+  "schema_version": "qwen3-external-gate-plan-v1",
+  "status": "PREPARED_NOT_RUN",
+  "base_main_sha": "90f36354e16eb66192692b526912e79c2981cce3",
+  "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+  "model_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+  "runtime_plan": "configs/pre_freeze/qwen_kaggle_smoke.v1.json",
+  "runtime_condition_source": "UNCHANGED_PASS_VALIDATED_KAGGLE_T4X2_SMOKE",
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 32
+  },
+  "decoding_provenance": "PRE_EXISTING_RUNTIME_DECODING_REUSED_PRE_GATE",
+  "suite_version": "synthetic-v1",
+  "source_statement": "NO_INSPECSAFE_CONTENT_USED",
+  "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
+  "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+  "provenance": "configs/pre_freeze/external_gate_cases.v1.provenance.json",
+  "provenance_sha256": "0b16be7408784c35bc3dc1a541f008b8086c4fa250957082a236d71ed3fe2e96",
+  "case_ids": [
+    "A_1",
+    "A_2",
+    "B_1",
+    "B_2",
+    "C_1",
+    "C_2",
+    "D_1",
+    "D_2"
+  ],
+  "prompt_version": "external-target-draft-v1",
+  "prompt_sha256": {
+    "A_1": "3a8cf68b0b8370f08f1f11ba760ceb56db5fb6eeb6178fdce6f52f2c4f580cdb",
+    "A_2": "3a8cf68b0b8370f08f1f11ba760ceb56db5fb6eeb6178fdce6f52f2c4f580cdb",
+    "B_1": "d779762da47e9806b2080a877b995083d43b01481e7dce94f7a49eb22fcbea2f",
+    "B_2": "d779762da47e9806b2080a877b995083d43b01481e7dce94f7a49eb22fcbea2f",
+    "C_1": "a20838cd1ef9618a24395c56c3a22496b0171039924123eaa3932e95b5bb1fe9",
+    "C_2": "a20838cd1ef9618a24395c56c3a22496b0171039924123eaa3932e95b5bb1fe9",
+    "D_1": "d933a3b56e0a099046aa9cc7e33aa5935d71784e5447a853291febc244baf2d3",
+    "D_2": "d933a3b56e0a099046aa9cc7e33aa5935d71784e5447a853291febc244baf2d3"
+  },
+  "protected_source_sha256_lf": {
+    "safeshift/runners/qwen3_vl.py": "cf1a557e642fb638ff4b322a569c09ba9ff0d837f5c22d5dd95b2f019e08cf39",
+    "safeshift/protocol/schema.py": "1209ad7cae0b48a49e6f0507e395bee1628b733001c09f82293e58312898efcf",
+    "safeshift/protocol/gate.py": "34c8a2bd27ce5701049c9598287bb2ab477be28fb3da4f57907765e9c97b52ce",
+    "safeshift/protocol/prompts.py": "33c74aff2789016ab4e8ca42cb031ec8c52adbd8261451ce53dba61e5a4de429",
+    "safeshift/runners/storage.py": "11f396657e69850c9cf52444f473c61f0e3b2b368e61469f86b8e79af4391e5b",
+    "safeshift/protocol/firewall.py": "d0b0ec22a685fad6245269521e11dbeda2705a7abd2b88292a36310f6c63304d",
+    "scripts/generate_external_gate_cases.py": "c5fc2140d1bd2ce9ef323884834911c1e3ef4234172cd3d37c0e6ba4341f4f6c",
+    "scripts/w2_qwen_kaggle_smoke.py": "031da7ef675ed77bb3ead67412aa7b6affac31557d2d92294f39baf13e5d2b13",
+    "scripts/provision_qwen3vl_snapshot.py": "9bd99868b24438373c049d068d73aec3b9470c5f9b6202a28a750e793f2f392f",
+    "configs/pre_freeze/local_model_provenance.d9.json": "caf0005303cd96becdf0c66d8699ff9e7313c671137b2d038ec7882a2746e69b",
+    "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json": "6d1ea7a72783fd160f3d9f42631548c0105211785b45b35ec0a092a0d7c5cfce"
+  },
+  "raw_before_parse": true,
+  "parser": "parse_text(decoded_for_parser, external_probe)",
+  "parser_repair": false,
+  "evaluator": "safeshift.protocol.gate.evaluate_gate",
+  "reviews": "NONE_DURING_EXECUTION; SEPARATE_EXPLICIT_HUMAN_GIANT_BOX_REVIEW_REQUIRED_FOR_ALL_8_CASES",
+  "iou_threshold": null,
+  "area_threshold": null,
+  "automatic_pass_allowed": false,
+  "retry": false,
+  "on_execution_failure": "STOP_AND_PRESERVE; RECORD_REMAINING_CASES_NOT_ATTEMPTED; NEVER_CLAIM_COMPLETED_GATE",
+  "inspecsafe_used": false,
+  "real_gate_execution": "NOT_RUN",
+  "grounding_qualification": "PENDING_SYNTHETIC_GATE",
+  "protocol_freeze_commit_sha": "PENDING",
+  "software_source": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json",
+  "software": {
+    "python": "3.12.13",
+    "torch": "2.10.0+cu128",
+    "transformers": "4.57.1",
+    "accelerate": "1.11.0",
+    "huggingface_hub": "0.36.0",
+    "safetensors": "0.6.2",
+    "pillow": "11.3.0",
+    "zlib": "1.2.11",
+    "cuda_runtime": "12.8"
+  },
+  "resource_condition": {
+    "platform": "KAGGLE",
+    "accelerator": "T4_X2",
+    "precision": "FP16",
+    "quantization": "NONE",
+    "device": {
+      "placement": "auto"
+    },
+    "preprocessing": {
+      "mode": "official_processor"
+    },
+    "attention": "native_default",
+    "transformers": "4.57.1"
+  },
+  "snapshot_verification": "EXACT_REVISION_LOCAL_HF_CACHE; EXISTING_QWEN3_FOUR_SHARD_SHA256_AND_SIZE; THREE_DOCUMENTED_CONFIG_SHA256",
+  "runtime_plan_sha256_lf": "ecd34ba5a8880458734e26f2bf0932f5f820607c2b9f3233b4e092980bf79ef9",
+  "hash_conventions": {
+    "gate_plan": "SHA256_EXACT_FILE_BYTES_LF",
+    "runtime_plan": "SHA256_LF_NORMALIZED_SOURCE_BYTES",
+    "protected_source": "SHA256_LF_NORMALIZED_SOURCE_BYTES",
+    "manifest_provenance_images_raw": "SHA256_EXACT_FILE_BYTES"
+  },
+  "snapshot_config_sha256": {
+    "config.json": "5cd452860dc1e9c29dd71cc3cef7f39b338b7a40793f7a260655c2d3568f3661",
+    "preprocessor_config.json": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+    "generation_config.json": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44"
+  }
+}

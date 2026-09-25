@@ -340,3 +340,21 @@ prompt/decoding/strict parser. No general localization-incapability claim, outpu
 repair or post-hoc tuning. No production code, gate/runtime plan or frozen asset
 changes. See [audited result and interpretation](notes/w2_qwen2_5_external_gate_result.md)
 and [machine-readable record](configs/pre_freeze/qwen2_5_external_gate_result.v1.json).
+
+## W2.6-D9R2D-QWEN3-GATE-PREP — Qwen3 frozen external gate preparation
+
+- [x] Qwen3 external gate harness **PREPARED**, with a separately pinned plan,
+  existing eight frozen cases, unchanged smoke decoding/resource condition,
+  strict raw-before-parse and existing evaluator with `reviews=None`.
+- [ ] Qwen3 external gate execution and human giant-box review **NOT_RUN**.
+  Grounding **PENDING_SYNTHETIC_GATE**; roster documentary status remains
+  **DOC_SUPPORTED_PENDING_SYNTHETIC_GATE**, classification **CANDIDATE**.
+- [x] Resource evidence retained: **PASS_VALIDATED /
+  KAGGLE_T4X2_VALIDATED_ANCHOR**; offline runner **COMPLETE** unchanged.
+- [ ] Checklist #2 overall/#3–#8 and protocol freeze SHA remain **PENDING**.
+  InspecSafe **NOT_RUN**, authorization false.
+
+PREP only with fake runtime tests: no GPU, weights download, provisioning, real
+inference or gate execution. Qwen3 production runner/adapter, parser, prompts,
+evaluator, smoke plan, generator and all frozen assets remain unchanged.
+See [Qwen3 gate PREP runbook](notes/w2_qwen3_external_gate_prep.md).

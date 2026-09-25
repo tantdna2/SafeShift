@@ -2,3 +2,4 @@
 /scripts/generate_external_gate_cases.py text eol=lf
 /configs/pre_freeze/external_gate_cases.v1.json text eol=lf
 /configs/pre_freeze/external_gate_cases.v1.provenance.json text eol=lf
+/configs/pre_freeze/qwen3_external_gate.v1.json text eol=lf

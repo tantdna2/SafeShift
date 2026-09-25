@@ -217,6 +217,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                       'scripts/w2_qwen2_5_t4_smoke.py',
                       'scripts/w2_qwen2_5_t4_init_probe.py'}
         authorized.add('scripts/w2_qwen2_5_external_gate.py')
+        # D9R2D authorizes only the separate Qwen3 external gate PREP harness.
+        authorized.add('scripts/w2_qwen3_external_gate.py')
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}
