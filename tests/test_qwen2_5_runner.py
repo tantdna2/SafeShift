@@ -354,6 +354,50 @@ Qwen2_5VLRunner()
             self.assertIsNone(self.execute().error)
             version.assert_called_once_with('qwen-vl-utils')
 
+    def test_native_torch_version_subclass_normalized_and_initialize_succeeds(self):
+        class FakeTorchVersion(str):
+            pass
+
+        previous = builtins.__import__
+        modules = {
+            'torch': SimpleNamespace(__version__=FakeTorchVersion('2.6.0+cu124')),
+            'transformers': SimpleNamespace(__version__=VERSIONS['transformers'],
+                                           AutoProcessor=self.runtime.processor_factory,
+                                           Qwen2_5_VLForConditionalGeneration=self.runtime.model_factory),
+            'accelerate': SimpleNamespace(__version__=VERSIONS['accelerate']),
+            'qwen_vl_utils': SimpleNamespace(process_vision_info=self.runtime.vision),
+        }
+        def importer(name, *args, **kwargs):
+            return modules[name] if name in modules else previous(name, *args, **kwargs)
+        with patch('builtins.__import__', side_effect=importer), \
+                patch('importlib.metadata.version', return_value='0.0.8'):
+            backend = module._native_backend()
+        runner = Qwen2_5VLRunner(backend_factory=lambda: backend)
+        runner.initialize(context(software_versions={**VERSIONS, 'torch': '2.6.0+cu124'}))
+        self.assertIs(type(backend.software_versions['torch']), str)
+        self.assertEqual(backend.software_versions['torch'], '2.6.0+cu124')
+        self.assertIs(type(runner._backend.software_versions['torch']), str)
+        self.assertIsNone(runner._resources)
+        self.runtime.processor_factory.from_pretrained.assert_not_called()
+        self.runtime.model_factory.from_pretrained.assert_not_called()
+
+    def test_injected_backend_nonbuiltin_string_metadata_still_rejected(self):
+        class FakeTorchVersion(str):
+            pass
+
+        for value in (None, 260, True, ['fake-torch'], FakeTorchVersion(VERSIONS['torch'])):
+            with self.subTest(value=value):
+                self.runtime.backend.software_versions['torch'] = value
+                with self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
+                    self.runner.initialize(context())
+                self.assertEqual(raised.exception.diagnostic_stage, 'SOFTWARE_VERSION_VALIDATE')
+                self.assertEqual(raised.exception.underlying_error_type, 'ValueError')
+                self.assertIsInstance(raised.exception.__cause__, ValueError)
+                self.assertIsNone(self.runner._backend)
+                self.assertIsNone(self.runner._resources)
+        self.runtime.processor_factory.from_pretrained.assert_not_called()
+        self.runtime.model_factory.from_pretrained.assert_not_called()
+
     def test_fp16_explicit_single_device_no_flash_requirement(self):
         self.generate()
         kwargs = self.runtime.model_factory.from_pretrained.call_args.kwargs

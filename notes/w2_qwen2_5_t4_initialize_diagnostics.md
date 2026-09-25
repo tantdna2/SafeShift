@@ -105,3 +105,51 @@ The source allowlist adds only the newly authorized probe; historical hashes rem
 AST comparison against exact base confirms initialize operations are identical
 after removing diagnostic labels/wrapper, with all protected runner functions
 unchanged. Census remains untracked/untouched with its expected SHA-256.
+
+## D9R2B-INIT-FIX — PyTorch version metadata normalization
+
+This update supersedes the earlier unidentified-cause / unexecuted-probe status.
+Research Lead-supplied evidence (bundle not independently verified in this task):
+
+```text
+REAL_INIT_PROBE: EXECUTED
+RUN_ID: kaggle-t4-qwen25-init-20260925T063601Z-962127
+BUNDLE_SHA256: 738489f5e41a729826029ffdf5579a9f9ff55af65e17b6dfc8a9c2027846f05a
+STATUS: RUNTIME_INTERFACE_FAILURE
+STAGE: INITIALIZE
+ERROR_TYPE: Qwen2_5InitializeDiagnosticFailure
+OBSERVED_SUBSTAGE: SOFTWARE_VERSION_VALIDATE
+UNDERLYING_ERROR_TYPE: ValueError
+MODEL_LOAD_REACHED: false
+NATIVE_GENERATE_CALLS: 0
+CALLS: []
+OOM: NOT_OBSERVED
+ROOT_CAUSE: IDENTIFIED
+ROOT_CAUSE_STATUS: IDENTIFIED
+ROOT_CAUSE_CODE: PYTORCH_VERSION_METADATA_NOT_NORMALIZED_TO_BUILTIN_STR
+FIX: str(torch.__version__)
+REAL_INIT_PROBE_AFTER_FIX: NOT_RUN
+T4_STATUS: T4_FEASIBILITY_CANDIDATE / NOT_YET_VALIDATED
+```
+
+ROOT_CAUSE_DETAIL: PyTorch 2.6.0 exposes `torch.__version__` as `TorchVersion`,
+a `str` subclass. `_native_backend` stored it without normalization, so the strict
+`type(version) is str` requirement rejected it. The sole production change converts
+this metadata to builtin `str` at collection. Strict validation remains unchanged,
+including rejection of non-string values and unnormalized subclasses injected by
+a backend. No model-fit or performance conclusion follows from this failure.
+
+The fake-import regression
+`test_native_torch_version_subclass_normalized_and_initialize_succeeds` reproduces
+the initialization failure before the fix and passes after it, confirming the
+exact builtin type and unchanged version value without loading a model. The
+companion strictness test rejects non-string metadata and an unnormalized subclass.
+Offline validation: **73 runner**, **58 PREP**, **15 load-diagnostic**, **20
+initialize/probe**, and **749 full-suite tests PASS**. Runner/probe/smoke
+`py_compile`, plan JSON validation and `git diff --check` PASS.
+No real torch import, GPU, init probe, model/weight download, provisioning, inference,
+synthetic gate, InspecSafe or protocol freeze was performed for this patch.
+
+Model/revision, loader arguments, diagnostics, resource policy and software pins
+remain unchanged. Plan JSON is untouched; canonical SHA before/after:
+`aa4fcff85d670d844025a540d85f10514919c60f6709de8be8f6be0922fd63fb`.

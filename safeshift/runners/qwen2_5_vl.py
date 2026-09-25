@@ -126,7 +126,7 @@ def _native_backend():
 
     return Qwen2_5Backend(torch, AutoProcessor, Qwen2_5_VLForConditionalGeneration,
                          process_vision_info, {
-                             "torch": torch.__version__, "transformers": transformers.__version__,
+                             "torch": str(torch.__version__), "transformers": transformers.__version__,
                              "pillow": PIL.__version__, "accelerate": accelerate.__version__,
                              "qwen-vl-utils": version("qwen-vl-utils"),
                          })

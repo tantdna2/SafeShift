@@ -254,3 +254,23 @@ Checklist #2–#8 and protocol freeze SHA remain PENDING. See
 
 No runtime repair or real execution in this patch. See
 [initialize diagnostics](notes/w2_qwen2_5_t4_initialize_diagnostics.md).
+
+## W2.6-D9R2B-INIT-FIX — PyTorch version metadata normalization
+
+Status update; previous attempt and diagnostic records remain historical.
+
+- [x] REAL_INIT_PROBE **EXECUTED** (Research Lead-supplied evidence):
+  `kaggle-t4-qwen25-init-20260925T063601Z-962127`.
+  Bundle SHA-256: `738489f5e41a729826029ffdf5579a9f9ff55af65e17b6dfc8a9c2027846f05a`.
+  Observed substage **SOFTWARE_VERSION_VALIDATE**, underlying ValueError;
+  no model load, zero generates, empty calls; OOM **NOT_OBSERVED**.
+- [x] ROOT_CAUSE **IDENTIFIED**: `torch.__version__` is a `TorchVersion` str
+  subclass stored without normalization; strict builtin-str validation rejected it.
+  FIX: `str(torch.__version__)` at metadata collection; strict validation retained.
+  Fake-only regression reproduces the failure before the fix and passes after it.
+- [ ] REAL_INIT_PROBE_AFTER_FIX **NOT_RUN**.
+  T4 remains **T4_FEASIBILITY_CANDIDATE / NOT_YET_VALIDATED**.
+
+Resource plan/software pins unchanged. No GPU, downloads, provisioning, real
+inference, synthetic gate or InspecSafe. Protocol freeze remains **PENDING**.
+See [evidence and minimal fix](notes/w2_qwen2_5_t4_initialize_diagnostics.md#d9r2b-init-fix--pytorch-version-metadata-normalization).
