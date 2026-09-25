@@ -1,5 +1,10 @@
 # W2.6-D9R2C-GATE-PREP — Frozen external gate execution preparation
 
+Historical PREP record. The subsequent [audited real result](w2_qwen2_5_external_gate_result.md)
+is GATE_FAIL after all eight calls, with zero canonical boxes. Current grounding
+role is NOT_PARTICIPATING; the execution plan and instructions below are preserved,
+and this result recording does not authorize a rerun.
+
 Base: `c967969e31566288917c0aa56f402ab4a45730f3`.
 Branch: `validation/d9-qwen2_5-external-gate-prep`.
 **PREP ONLY: no real model output observed, no GPU/model load, no real gate result.**

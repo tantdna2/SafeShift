@@ -317,3 +317,26 @@ result. Runner/production adapter, parser, prompts, frozen assets and runtime pl
 remain unchanged. No real GPU, model load, download, inference or InspecSafe.
 Checklist #2 overall/#3–#8 and protocol freeze SHA remain **PENDING**.
 See [gate PREP runbook](notes/w2_qwen2_5_external_gate_prep.md).
+
+## W2.6-D9R2C-GATE-RESULT — Audited Qwen2.5 spatial gate failure
+
+Current result supersedes Qwen2.5's historical gate NOT_RUN / grounding pending
+statements above; all PREP and runtime evidence remains preserved.
+
+- [x] Real gate **EXECUTED**, audited/rehashed by Research Lead: run
+  `kaggle-t4-qwen25-external-gate-20260925T092550Z-c1c1d8`.
+  **GATE_FAIL**, exactly 8 native calls completed, native errors/unattempted cases
+  empty; **0** canonical valid boxes, **2 SCHEMA_ERROR**, **6 JSON_ERROR**.
+  Execution failure NONE; OOM NOT_OBSERVED. No rerun.
+- [x] Grounding **NOT_PARTICIPATING**, reason **SPATIAL_GATE_FAILURE**.
+  Giant-box review **NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE**; no reviews fabricated.
+  Resource **PASS_VALIDATED**, classification **CANDIDATE** unchanged.
+  No backup substitution and no artificial zero IoU.
+- [ ] Global D9 synthetic gate/checklist #2–#8 **PENDING**, not COMPLETE.
+  InspecSafe **NOT_RUN**, authorization false; `protocol_freeze_commit_sha: PENDING`.
+
+The failure is bounded to the frozen qualifying box interface under its prescribed
+prompt/decoding/strict parser. No general localization-incapability claim, output
+repair or post-hoc tuning. No production code, gate/runtime plan or frozen asset
+changes. See [audited result and interpretation](notes/w2_qwen2_5_external_gate_result.md)
+and [machine-readable record](configs/pre_freeze/qwen2_5_external_gate_result.v1.json).

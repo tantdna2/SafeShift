@@ -283,8 +283,9 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertIs(policy["activate_backup_substitution"], False)
         self.assertIs(policy["assign_artificial_zero_iou"], False)
 
-    def test_gate_stays_not_run_and_manifest_hash_unchanged(self):
-        self.assertEqual(self.roster["synthetic_gate"]["status"], "NOT_RUN_FOR_D9_MODELS")
+    def test_global_gate_pending_and_manifest_hash_unchanged(self):
+        # Qwen2.5 has a recorded failure; other D9 models remain pending.
+        self.assertEqual(self.roster["synthetic_gate"]["status"], "PENDING")
         self.assertEqual(self.freeze["synthetic_external_gate"]["status"], "PENDING_D9_MODEL_EXECUTION")
         for gate in (self.roster["synthetic_gate"], self.freeze["synthetic_external_gate"]):
             self.assertEqual(gate["manifest_sha256"], "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379")
