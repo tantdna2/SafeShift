@@ -209,3 +209,14 @@ processor-default candidate. Model/revision, roster, D5/P1 and historical eviden
 remain unchanged. No performance results were used. See the
 [PREP runbook and evidence contract](notes/w2_qwen2_5_t4_runtime_prep.md).
 No weights/model download, GPU, real inference, synthetic gate or InspecSafe inference.
+
+## W2.6-D9R2B-OBS — Qwen2.5 visual-token observability
+
+- [x] Qwen2.5 T4 observability: **IMPLEMENTED / OFFLINE_TESTED**. Per-case actual
+  grid, runtime model/processor merge agreement, computed visual-token count and
+  source-supported image-placeholder equality are checked before generate.
+- [ ] Real runtime: **PENDING / NOT_RUN**; **T4_FEASIBILITY_CANDIDATE**.
+
+Plan SHA, software pins, SDPA, preprocessing caps and runner raw v2 are unchanged.
+No GPU, provisioning, real inference, synthetic gate or InspecSafe execution.
+See [D9R2B-OBS evidence contract](notes/w2_qwen2_5_t4_runtime_prep.md#d9r2b-obs--runtime-visual-token-observability).
