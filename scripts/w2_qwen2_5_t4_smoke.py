@@ -23,6 +23,7 @@ from scripts.provision_qwen2_5_snapshot import (
 from safeshift.runners.contracts import ErrorCode, Request, RunContext, Task, execute_call
 from safeshift.runners.qwen2_5_vl import (
     PREPROCESSING, Qwen2_5VLRunner, Qwen2_5VLAdapter, Qwen2_5LoadDiagnosticFailure,
+    Qwen2_5InitializeDiagnosticFailure,
 )
 from safeshift.runners.storage import FileRawStore
 
@@ -327,6 +328,9 @@ def run_smoke(run_id, *, repo=ROOT, cache_dir=None, runner_factory=Qwen2_5VLRunn
         resource_failure |= any(e["resource_failure"] for e in summary["native_errors"])
         summary["status"] = "RUNTIME_RESOURCE_FAILURE" if resource_failure else "RUNTIME_INTERFACE_FAILURE"
         summary["failure"] = {"stage": stage, "error_type": type(exc).__name__}
+        if isinstance(exc, Qwen2_5InitializeDiagnosticFailure):
+            summary["failure"].update(initialize_substage=exc.diagnostic_stage,
+                                      underlying_error_type=exc.underlying_error_type)
         if isinstance(exc, Qwen2_5LoadDiagnosticFailure):
             summary["failure"].update(load_substage=exc.diagnostic_stage,
                                       underlying_error_type=exc.underlying_error_type)

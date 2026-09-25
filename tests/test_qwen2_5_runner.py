@@ -290,21 +290,24 @@ Qwen2_5VLRunner()
 
     def test_wrong_precision_rejected_before_backend_creation(self):
         for precision in ('BF16', 'FP32', 'auto', 'PENDING'):
-            with self.subTest(precision=precision), self.assertRaises(ValueError):
+            with self.subTest(precision=precision), self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
                 self.runner.initialize(context(precision=precision))
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
         self.runtime.factory.assert_not_called()
 
     def test_quantization_rejected(self):
         for q in ('4bit', '8bit', 'AWQ', 'GPTQ', None):
-            with self.subTest(q=q), self.assertRaises(ValueError):
+            with self.subTest(q=q), self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
                 self.runner.initialize(context(quantization=q))
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
 
     def test_offload_auto_cpu_and_multidevice_requests_rejected(self):
         for device in ({}, {'placement': 'auto'}, {'placement': 'cpu'}, {'placement': 'disk'},
                        {'placement': 'cuda:1'}, {'placement': 'cuda:0', 'offload': True},
                        {'placement': {'': 'cuda:0', 'layer': 'cpu'}}):
-            with self.subTest(device=device), self.assertRaises(ValueError):
+            with self.subTest(device=device), self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
                 self.runner.initialize(context(device=device))
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
 
     def test_software_version_mismatch_rejected(self):
         for name in VERSIONS:
@@ -465,8 +468,9 @@ Qwen2_5VLRunner()
 
     def test_no_pixel_overrides(self):
         for p in ({'min_pixels': 1}, {'mode': 'official_processor', 'max_pixels': 4096}):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
                 self.runner.initialize(context(preprocessing=p))
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
         self.runtime.factory.assert_not_called()
 
     def test_vision_utils_cannot_return_video_or_multiple_images(self):
@@ -499,13 +503,15 @@ Qwen2_5VLRunner()
         changes = [dict(decoding={'max_new_tokens': 2}), dict(software_versions={**VERSIONS, 'driver': 'new'}),
                    dict(preprocessing={}), dict(precision='BF16'), dict(device={'placement': 'auto'})]
         for change in changes:
-            with self.subTest(change=change), self.assertRaises(ValueError):
+            with self.subTest(change=change), self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
                 self.runner.initialize(context(**change))
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
 
     def test_identity_cannot_be_reassigned(self):
         self.runner.identity = ModelIdentity('synthetic/other')
-        with self.assertRaises(ValueError):
+        with self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
             self.runner.initialize(context())
+        self.assertIsInstance(raised.exception.__cause__, ValueError)
         self.runtime.factory.assert_not_called()
 
     def test_decoding_values_preserved_without_invented_defaults(self):
@@ -531,14 +537,16 @@ Qwen2_5VLRunner()
                  {'top_k': -1}, {'top_k': True}, {'max_new_tokens': 0}, {'max_new_tokens': 1.5},
                  {'do_sample': 'false'}, {'repetition_penalty': -1}, {'num_return_sequences': 2}]
         for values in cases:
-            with self.subTest(values=values), self.assertRaises(ValueError):
+            with self.subTest(values=values), self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
                 self.runner.initialize(context(decoding=values))
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
         self.runtime.factory.assert_not_called()
 
     def test_unapplied_seed_rejected_even_on_direct_generation(self):
         self.generate()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(module.Qwen2_5InitializeDiagnosticFailure) as raised:
             self.runner.initialize(context(seed=7))
+        self.assertIsInstance(raised.exception.__cause__, ValueError)
 
     def test_one_generated_row_required_with_observable_partial(self):
         for rows in ([], [[11, 22, 33], [11, 22, 33]], [11, 22, 33]):

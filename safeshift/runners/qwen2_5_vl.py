@@ -139,6 +139,15 @@ class PreparedInput:
     condition: bytes
 
 
+class Qwen2_5InitializeDiagnosticFailure(RuntimeError):
+    """Persist only stage/type; retain the cause solely for in-memory checks."""
+
+    def __init__(self, diagnostic_stage, underlying_error_type):
+        super().__init__()
+        self.diagnostic_stage = diagnostic_stage
+        self.underlying_error_type = underlying_error_type
+
+
 class Qwen2_5LoadDiagnosticFailure(RuntimeError):
     """Only stage/type are safe to persist; the cause is for in-memory OOM checks.
 
@@ -195,19 +204,28 @@ class Qwen2_5VLRunner(LocalRunner):
         return key
 
     def initialize(self, context: RunContext):
-        key = self._check_condition(context)
-        if self._backend is not None:
-            return
-        backend = self._backend_factory()
-        versions = deepcopy(backend.software_versions)
-        if not REQUIRED_SOFTWARE <= versions.keys():
-            raise ValueError("backend software metadata is incomplete")
-        for name, version in versions.items():
-            if type(version) is not str or not version or context.software_versions.get(name) != version:
-                raise ValueError("record actual runtime version in RunContext: " + name)
-        self._backend = Qwen2_5Backend(backend.torch, backend.processor_factory, backend.model_factory,
-                                      backend.process_vision_info, versions)
-        self._condition = key
+        diagnostic_stage = "CONDITION_VALIDATE"
+        try:
+            key = self._check_condition(context)
+            if self._backend is not None:
+                return
+            diagnostic_stage = "BACKEND_CONSTRUCT"
+            backend = self._backend_factory()
+            diagnostic_stage = "SOFTWARE_METADATA_COPY"
+            versions = deepcopy(backend.software_versions)
+            diagnostic_stage = "SOFTWARE_REQUIRED_KEYS_VALIDATE"
+            if not REQUIRED_SOFTWARE <= versions.keys():
+                raise ValueError("backend software metadata is incomplete")
+            diagnostic_stage = "SOFTWARE_VERSION_VALIDATE"
+            for name, version in versions.items():
+                if type(version) is not str or not version or context.software_versions.get(name) != version:
+                    raise ValueError("record actual runtime version in RunContext: " + name)
+            diagnostic_stage = "BACKEND_PUBLISH"
+            self._backend = Qwen2_5Backend(backend.torch, backend.processor_factory, backend.model_factory,
+                                          backend.process_vision_info, versions)
+            self._condition = key
+        except Exception as exc:
+            raise Qwen2_5InitializeDiagnosticFailure(diagnostic_stage, type(exc).__name__) from exc
 
     def _validate_model(self, model):
         if (getattr(model.config, "_attn_implementation", None) != ATTENTION_IMPLEMENTATION

@@ -107,8 +107,9 @@ class RuntimePrepTests(unittest.TestCase):
                       {**runner_module.PREPROCESSING, 'max_pixels': 1},
                       {**runner_module.PREPROCESSING, 'max_pixels': 1003520.0},
                       {**runner_module.PREPROCESSING, 'resized_width': 32}):
-            with self.subTest(value=value), self.assertRaises(ValueError):
+            with self.subTest(value=value), self.assertRaises(runner_module.Qwen2_5InitializeDiagnosticFailure) as raised:
                 self.runner.initialize(context(preprocessing=value))
+            self.assertIsInstance(raised.exception.__cause__, ValueError)
 
     def test_eager_native_load_rejected_no_retry(self):
         self.runtime.model.config._attn_implementation = 'eager'
