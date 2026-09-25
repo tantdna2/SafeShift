@@ -220,3 +220,24 @@ No weights/model download, GPU, real inference, synthetic gate or InspecSafe inf
 Plan SHA, software pins, SDPA, preprocessing caps and runner raw v2 are unchanged.
 No GPU, provisioning, real inference, synthetic gate or InspecSafe execution.
 See [D9R2B-OBS evidence contract](notes/w2_qwen2_5_t4_runtime_prep.md#d9r2b-obs--runtime-visual-token-observability).
+
+## W2.6-D9R2B-DIAG — Qwen2.5 safe load diagnostics
+
+Status overlay after the Research Lead's report of the first real T4 attempt;
+the earlier PREP/OBS milestones above remain historical.
+
+- [x] Qwen2.5 offline runner **COMPLETE**; runtime prep **COMPLETE / PREPARED**;
+  observability **COMPLETE / OFFLINE_TESTED**.
+- [x] First real T4 attempt **EXECUTED**:
+  `kaggle-t4-qwen25-20260925T004019Z-21794d`.
+  Result **RUNTIME_INTERFACE_FAILURE_AT_LOAD**, error type ValueError,
+  zero native generates and empty calls; OOM **NOT_OBSERVED**.
+- [x] Diagnostic patch **IMPLEMENTED / OFFLINE_TESTED**: INITIALIZE split from
+  LOAD, safe load substage/type fields, preserved OOM cause-chain classification.
+- [ ] T4 qualification **NOT_YET_VALIDATED**; **T4_FEASIBILITY_CANDIDATE**.
+  Next real T4 rerun **PENDING / NOT_RUN**.
+
+No loader/validation repair, resource-plan or software-pin change. No real rerun,
+GPU, weights download, provisioning, synthetic gate or InspecSafe in this task.
+Checklist #2–#8 and protocol freeze SHA remain PENDING. See
+[reported facts, diagnostic policy and hypotheses](notes/w2_qwen2_5_t4_load_diagnostics.md).

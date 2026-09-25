@@ -139,6 +139,18 @@ class PreparedInput:
     condition: bytes
 
 
+class Qwen2_5LoadDiagnosticFailure(RuntimeError):
+    """Only stage/type are safe to persist; the cause is for in-memory OOM checks.
+
+    Never serialize the exception chain, args, message, repr or traceback.
+    """
+
+    def __init__(self, diagnostic_stage, underlying_error_type):
+        super().__init__()
+        self.diagnostic_stage = diagnostic_stage
+        self.underlying_error_type = underlying_error_type
+
+
 class Qwen2_5VLRunner(LocalRunner):
     identity = IDENTITY
     version = "qwen2-5-vl-runner-v2"
@@ -242,21 +254,32 @@ class Qwen2_5VLRunner(LocalRunner):
         if self._resources is not None:
             return
         processor = model = None
+        diagnostic_stage = "PROCESSOR_LOAD"
         try:
             kwargs = dict(revision=REVISION, local_files_only=True, trust_remote_code=False)
             processor = self._backend.processor_factory.from_pretrained(
                 MODEL_ID, **kwargs, min_pixels=MIN_PIXELS, max_pixels=MAX_PIXELS)
+            diagnostic_stage = "PROCESSOR_VALIDATE"
             self._validate_processor(processor)
+            diagnostic_stage = "MODEL_LOAD"
             model = self._backend.model_factory.from_pretrained(
                 MODEL_ID, **kwargs, torch_dtype=self._backend.torch.float16,
                 device_map={"": "cuda:0"}, attn_implementation=ATTENTION_IMPLEMENTATION,
             )
+            diagnostic_stage = "MODEL_EVAL"
             model.eval()
+            diagnostic_stage = "MODEL_VALIDATE"
             self._validate_model(model)
+            diagnostic_stage = "GENERATION_CONFIG_VALIDATE"
             self._validate_config(model.generation_config)
+            diagnostic_stage = "GENERATION_CONFIG_SNAPSHOT"
             config = deepcopy(model.generation_config)
+            diagnostic_stage = "CALL_STATE_CLEAR"
             self._clear_call_state(model)
+            diagnostic_stage = "RESOURCE_PUBLISH"
             self._resources = (processor, model, config)
+        except Exception as exc:
+            raise Qwen2_5LoadDiagnosticFailure(diagnostic_stage, type(exc).__name__) from exc
         finally:
             # All resources stay unpublished until the entire load validates.
             processor = model = None

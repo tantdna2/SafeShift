@@ -804,3 +804,29 @@ Grounding **DOCUMENTED_BOX_AND_POINT / NOT_YET_QUALIFIED**. Checklist #2 overall
 **PENDING**, #3?#8 **PENDING**, `protocol_freeze_commit_sha: PENDING`, InspecSafe
 authorization **false**. No weights download, GPU, Colab/Kaggle execution, real
 inference, synthetic gate, InspecSafe inference, prompt tuning or protocol freeze.
+
+## D9R2B-DIAG — Safe Qwen2.5 load diagnostics
+
+This appends the subsequently reported first real T4 attempt to the historical
+PREP/OBS statuses. Per Research Lead's task brief, run
+`kaggle-t4-qwen25-20260925T004019Z-21794d` was **EXECUTED**, with result
+**RUNTIME_INTERFACE_FAILURE_AT_LOAD**, ValueError, zero native generate calls,
+empty calls and **NO OOM OBSERVED**. Supplied bundle SHA-256:
+`41cade7b0b3d600c28bddf485055043e1f46b7f6d312e8556bcbe8d7b23ecb82`.
+The bundle was not imported, modified or committed in this patch.
+
+Offline runner **COMPLETE**; runtime prep **COMPLETE / PREPARED**;
+observability **COMPLETE / OFFLINE_TESTED**. Diagnostic patch
+**IMPLEMENTED / OFFLINE_TESTED** separates INITIALIZE from LOAD and records
+sanitized load substage plus underlying error type. Cause chains remain in memory
+for CUDA OOM classification; no exception messages/reprs/tracebacks are persisted.
+All loader arguments, validations, success behavior and the qualification plan
+remain unchanged. [Diagnostic note](w2_qwen2_5_t4_load_diagnostics.md) records facts,
+taxonomy, privacy boundary and explicitly unconfirmed hypotheses.
+
+T4 qualification **NOT_YET_VALIDATED**, roster status **T4_FEASIBILITY_CANDIDATE**;
+next real rerun **PENDING / NOT_RUN**. No model-fit or performance conclusion is
+supported by the load-stage ValueError. No real execution, weights download,
+snapshot provisioning, GPU, synthetic gate, InspecSafe inference, scoring, tuning,
+grounding qualification or backup activation occurred in DIAG. Checklist #2–#8
+and `protocol_freeze_commit_sha` remain **PENDING**; InspecSafe authorization false.
