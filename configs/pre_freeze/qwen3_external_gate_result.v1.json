@@ -1,0 +1,187 @@
+{
+  "schema_version": "qwen3-external-gate-result-v1",
+  "record_kind": "RESEARCH_LEAD_AUDITED_REAL_GATE_RESULT",
+  "source": {
+    "authority": "Research Lead / Project Owner W2.6-D9R2D-QWEN3-GATE-RESULT instruction",
+    "bundle_inspected_and_rehashed_by": "RESEARCH_LEAD",
+    "recording_basis": "Transcribed supplied audit findings; recording agent did not independently inspect or rehash the bundle",
+    "bundle_and_raw_bytes_committed": false
+  },
+  "run_id": "kaggle-t4x2-qwen3-external-gate-20260925T175057Z-08fe69",
+  "execution_commit": "23556cf3f0adc93b76075a3247a18dd4686ff87a",
+  "bundle_sha256": "4d7429ef729c22889af7763e6d9b5c3fd753169c51b9d8c0999d81da9a23a97c",
+  "summary_sha256": "e2f77bebbd5b79674b608f748e5987feec3f0f0381f8aea9be38630db4814f24",
+  "gate_plan_path": "configs/pre_freeze/qwen3_external_gate.v1.json",
+  "gate_plan_sha256": "c7510570f553f3267e65f751b56193a337d3c370dd5c4db45da4d746711888c4",
+  "runtime_plan_path": "configs/pre_freeze/qwen_kaggle_smoke.v1.json",
+  "runtime_plan_sha256_lf": "ecd34ba5a8880458734e26f2bf0932f5f820607c2b9f3233b4e092980bf79ef9",
+  "manifest_path": "configs/pre_freeze/external_gate_cases.v1.json",
+  "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+  "provenance_path": "configs/pre_freeze/external_gate_cases.v1.provenance.json",
+  "provenance_sha256": "0b16be7408784c35bc3dc1a541f008b8086c4fa250957082a236d71ed3fe2e96",
+  "suite_version": "synthetic-v1",
+  "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+  "model_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+  "resource_condition": {
+    "platform": "KAGGLE",
+    "accelerator": "T4_X2",
+    "precision": "FP16",
+    "quantization": "NONE",
+    "device": {
+      "placement": "auto"
+    },
+    "preprocessing": {
+      "mode": "official_processor"
+    },
+    "attention": "native_default",
+    "transformers": "4.57.1"
+  },
+  "resource_condition_basis": "UNCHANGED_PINNED_KAGGLE_T4X2_GATE_CONDITION; NO_ADDITIONAL_TELEMETRY_CLAIM",
+  "prompt_version": "external-target-draft-v1",
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 32
+  },
+  "execution_status": "COMPLETED",
+  "status": "GATE_FAIL",
+  "automatic_gate_status": "FAIL",
+  "systematic_tracking": false,
+  "gate_errors": [
+    "predictions do not track systematic target positions"
+  ],
+  "initialize_calls": 1,
+  "load_calls": 1,
+  "native_generate_calls": 8,
+  "native_errors": [],
+  "not_attempted_case_ids": [],
+  "execution_failure": "NONE",
+  "runtime_failure": "NONE",
+  "resource_failure": "NONE",
+  "oom_status": "NOT_OBSERVED",
+  "cases": [
+    {
+      "case_id": "A_1",
+      "parse_status": "COORDINATE_ERROR",
+      "decoded_for_parser": "{\"bbox\": [36, 125, 168, 468]}",
+      "raw_sha256": "5bd761d444af8b1be06b30d5e8f0578f6cbaf4f4c81a0e47857a91f936b3d4c0"
+    },
+    {
+      "case_id": "A_2",
+      "parse_status": "SUCCESS",
+      "parsed_bbox": [
+        0.5,
+        0.25,
+        0.75,
+        0.75
+      ],
+      "raw_sha256": "7c75ffc2c84b0136c8188e960f723d37a5fcec1dc4678c75080b05c01f61a17f",
+      "center_in_target": true,
+      "excludes_distractor_center": true,
+      "target_iou_diagnostic": 0.2
+    },
+    {
+      "case_id": "B_1",
+      "parse_status": "SUCCESS",
+      "parsed_bbox": [
+        0.37,
+        0.12,
+        0.63,
+        0.38
+      ],
+      "raw_sha256": "a32f6b9eec054024c39b98d5fa4275da353c62ed0009f7d68c441f59d9da20ba",
+      "center_in_target": true,
+      "excludes_distractor_center": true,
+      "target_iou_diagnostic": 0.9245562130177516
+    },
+    {
+      "case_id": "B_2",
+      "parse_status": "SUCCESS",
+      "parsed_bbox": [
+        0.35,
+        0.62,
+        0.65,
+        0.92
+      ],
+      "raw_sha256": "e26ac220c671515c34e515efed62b97ba24afa5c01a2efc4b37ac0e89e33d3d3",
+      "center_in_target": true,
+      "excludes_distractor_center": true,
+      "target_iou_diagnostic": 0.6944444444444443
+    },
+    {
+      "case_id": "C_1",
+      "parse_status": "SUCCESS",
+      "parsed_bbox": [
+        0.0,
+        0.0,
+        0.33,
+        0.33
+      ],
+      "raw_sha256": "b8d3ac63efed597d1def415062516acfb0b322b0aaecb1ad2234785915c0fab2",
+      "center_in_target": true,
+      "excludes_distractor_center": true,
+      "target_iou_diagnostic": 0.3248309178743962
+    },
+    {
+      "case_id": "C_2",
+      "parse_status": "SCHEMA_ERROR",
+      "decoded_for_parser": "{\"bbox\": [0.5, 0.6, 1.0, 0.9], \"label\": \"yellow triangle\"}",
+      "raw_sha256": "36ffccbbe2d3ab8569bf3457468608bcab4823a8d9a06224fa0ef8f56e524f05"
+    },
+    {
+      "case_id": "D_1",
+      "parse_status": "SUCCESS",
+      "parsed_bbox": [
+        0.44,
+        0.07,
+        0.81,
+        0.25
+      ],
+      "raw_sha256": "89a398d88ebb5029be9a3e55a4d4d8b20e0290cc421522992d9045130e4c7816",
+      "center_in_target": true,
+      "excludes_distractor_center": true,
+      "target_iou_diagnostic": 0.22750252780586458
+    },
+    {
+      "case_id": "D_2",
+      "parse_status": "COORDINATE_ERROR",
+      "decoded_for_parser": "{\"bbox\": [36, 537, 260, 771]}",
+      "raw_sha256": "07454ca2908026a232b5ddb76e2dbbc2b5f8447d45a0cf032c57aa784c5536e0"
+    }
+  ],
+  "strict_success_count": 5,
+  "canonical_parsed_bbox_count": 5,
+  "coordinate_error_count": 2,
+  "schema_error_count": 1,
+  "json_error_count": 0,
+  "approved_interpretation": "Qwen3-VL-8B failed the frozen SafeShift qualifying box-interface external gate under the pre-specified prompt, decoding and existing parser.",
+  "coordinate_observation": "A_1 and D_2 produced bbox values outside the required [0,1] interface convention. Resemblance to another coordinate scale does not establish a native convention and does not authorize post-hoc conversion.",
+  "schema_observation": "C_2 produced an otherwise bbox-like response with an extra root field label, violating the frozen external_probe schema.",
+  "parser_boundary": {
+    "convention": "xyxy_1",
+    "pre_existing_behavior": "CLAMP_TO_0_1_THEN_GEOMETRY_VALIDATION",
+    "post_hoc_coordinate_conversion": false,
+    "native_convention_inferred": false,
+    "parser_repair": false
+  },
+  "iou_usage": "DIAGNOSTIC_ONLY",
+  "area_usage": "DIAGNOSTIC_ONLY",
+  "iou_threshold": null,
+  "area_threshold": null,
+  "giant_box_review_status": "NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE",
+  "giant_box_reviews": [],
+  "grounding_role_before": "DOC_SUPPORTED_PENDING_SYNTHETIC_GATE",
+  "grounding_role": "NOT_PARTICIPATING",
+  "grounding_failure_reason": "SPATIAL_GATE_FAILURE",
+  "classification_status": "CANDIDATE",
+  "resource_role": "KAGGLE_T4X2_VALIDATED_ANCHOR",
+  "resource_status": "PASS_VALIDATED",
+  "backup_substitution": false,
+  "artificial_zero_iou": false,
+  "rerun_performed_by_recording_task": false,
+  "post_hoc_changes": false,
+  "inspecsafe_used": false,
+  "inspecsafe_status": "NOT_RUN",
+  "inspecsafe_inference_authorized": false,
+  "global_d9_synthetic_gate_status": "PENDING",
+  "protocol_freeze_commit_sha": "PENDING"
+}

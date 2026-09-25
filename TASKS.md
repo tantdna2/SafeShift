@@ -358,3 +358,29 @@ PREP only with fake runtime tests: no GPU, weights download, provisioning, real
 inference or gate execution. Qwen3 production runner/adapter, parser, prompts,
 evaluator, smoke plan, generator and all frozen assets remain unchanged.
 See [Qwen3 gate PREP runbook](notes/w2_qwen3_external_gate_prep.md).
+
+## W2.6-D9R2D-QWEN3-GATE-RESULT — Audited Qwen3 spatial gate failure
+
+Current result supersedes Qwen3's historical gate NOT_RUN / grounding pending
+statements above; PREP and validated runtime evidence remain preserved.
+
+- [x] Real gate **COMPLETED**, inspected/rehashed by Research Lead: run
+  `kaggle-t4x2-qwen3-external-gate-20260925T175057Z-08fe69`, execution commit
+  `23556cf3f0adc93b76075a3247a18dd4686ff87a`. **GATE_FAIL**, one initialize,
+  one load, exactly eight native generations, no native errors/unattempted cases.
+  Five canonical **SUCCESS**, two **COORDINATE_ERROR**, one **SCHEMA_ERROR**,
+  zero **JSON_ERROR**; systematic_tracking=false. No runtime/resource failure;
+  OOM **NOT_OBSERVED**. No rerun.
+- [x] Grounding **NOT_PARTICIPATING**, reason **SPATIAL_GATE_FAILURE**.
+  Human giant-box review **NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE**;
+  no review performed or fabricated. Classification **CANDIDATE**, resource
+  **PASS_VALIDATED / KAGGLE_T4X2_VALIDATED_ANCHOR** unchanged.
+  No backup substitution or artificial zero IoU.
+- [ ] Global D9 synthetic gate/checklist #2–#8 **PENDING**. InspecSafe **NOT_RUN**,
+  authorization false; `protocol_freeze_commit_sha: PENDING`.
+
+Result recording only: no GPU, model load/download/inference, coordinate
+conversion, parser repair, prompt/decoding tuning or adapter promotion.
+Production files, plans and frozen assets remain unchanged. See the
+[audited result](notes/w2_qwen3_external_gate_result.md) and
+[machine-readable record](configs/pre_freeze/qwen3_external_gate_result.v1.json).
