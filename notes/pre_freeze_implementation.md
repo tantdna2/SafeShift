@@ -1,5 +1,19 @@
 # Pre-freeze implementation
 
+## Current Qwen3 grounding status — D9R2D-QWEN3-GATE-RESULT
+
+[Research Lead-audited real gate](w2_qwen3_external_gate_result.md): **GATE_FAIL**,
+execution **COMPLETED**, one initialize, one load and exactly eight native
+generations. Five canonical SUCCESS, two COORDINATE_ERROR, one SCHEMA_ERROR,
+zero JSON_ERROR; systematic_tracking=false. No runtime/resource failure or OOM
+observed. Human giant-box review is NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE.
+Grounding is **NOT_PARTICIPATING / SPATIAL_GATE_FAILURE**; classification remains
+**CANDIDATE**, resource **KAGGLE_T4X2_VALIDATED_ANCHOR / PASS_VALIDATED**.
+No backup substitution or artificial zero IoU. This is a failure of the frozen
+qualifying box interface, not a general localization-incapability conclusion.
+No rerun, coordinate conversion, tuning or production/plan changes. Global D9
+gate/checklist and protocol freeze remain PENDING; InspecSafe NOT_RUN/unauthorized.
+
 ## Current Qwen2.5 grounding status — D9R2C-GATE-RESULT
 
 [Research Lead-audited real gate](w2_qwen2_5_external_gate_result.md): **GATE_FAIL**,

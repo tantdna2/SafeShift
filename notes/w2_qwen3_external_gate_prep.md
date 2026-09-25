@@ -1,5 +1,14 @@
 # W2.6-D9R2D-QWEN3-GATE-PREP
 
+Historical PREP record. The subsequent [Research Lead-audited real result](w2_qwen3_external_gate_result.md)
+is **GATE_FAIL**, execution **COMPLETED**, with exactly eight native generations:
+five canonical SUCCESS, two COORDINATE_ERROR and one SCHEMA_ERROR.
+Current grounding is **NOT_PARTICIPATING / SPATIAL_GATE_FAILURE**;
+classification remains CANDIDATE and resource KAGGLE_T4X2_VALIDATED_ANCHOR.
+Human giant-box review is NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE.
+The plan and instructions below preserve the pre-execution milestone; they do
+not authorize a rerun. No prompt, parser, decoding, adapter or plan was changed.
+
 Base: `90f36354e16eb66192692b526912e79c2981cce3`.
 Branch: `validation/d9-qwen3-external-gate-prep`.
 **PREP ONLY.** Tests use fake runtime objects and fake native outputs. No GPU,
