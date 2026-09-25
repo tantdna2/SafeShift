@@ -1,0 +1,117 @@
+{
+  "schema_version": "qwen2-5-external-gate-result-v1",
+  "record_kind": "RESEARCH_LEAD_AUDITED_REAL_GATE_RESULT",
+  "source": {
+    "authority": "Research Lead / Project Owner W2.6-D9R2C-GATE-RESULT instruction",
+    "bundle_inspected_and_rehashed_by": "RESEARCH_LEAD",
+    "recording_basis": "Transcribed supplied audit findings; recording agent did not independently inspect or rehash the bundle",
+    "bundle_and_raw_bytes_committed": false
+  },
+  "run_id": "kaggle-t4-qwen25-external-gate-20260925T092550Z-c1c1d8",
+  "execution_commit": "c08fe8420fe0189b8776741eaa5cc2fb945a77fa",
+  "bundle_sha256": "1cea70eaa173efeb594a5c5159b7661362d45fe1f87007b51a9957d16643e6e8",
+  "summary_sha256": "bf2b4a96d9cfb1fb4a89972c155cf0f026f0d213d61c9e4ee9be1144e6ed7155",
+  "gate_plan_path": "configs/pre_freeze/qwen2_5_external_gate.v1.json",
+  "gate_plan_sha256": "d7e09c1400e23a534b97e91aa432d87108ece137ff60f8a918e3c0f977f2bb4b",
+  "runtime_plan_path": "configs/pre_freeze/qwen2_5_t4_runtime.v1.json",
+  "runtime_plan_sha256": "aa4fcff85d670d844025a540d85f10514919c60f6709de8be8f6be0922fd63fb",
+  "manifest_path": "configs/pre_freeze/external_gate_cases.v1.json",
+  "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+  "provenance_path": "configs/pre_freeze/external_gate_cases.v1.provenance.json",
+  "provenance_sha256": "0b16be7408784c35bc3dc1a541f008b8086c4fa250957082a236d71ed3fe2e96",
+  "suite_version": "synthetic-v1",
+  "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+  "model_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "hardware_resource_condition": {
+    "basis": "UNCHANGED_PINNED_SINGLE_T4_GATE_EXECUTION_CONDITION; NO_ADDITIONAL_TELEMETRY_CLAIM",
+    "gpu": "Tesla T4",
+    "gpu_count": 1,
+    "precision": "FP16",
+    "attention_implementation": "sdpa",
+    "quantization": "NONE",
+    "batch_size": 1,
+    "device": "cuda:0",
+    "cpu_offload": false,
+    "disk_offload": false,
+    "min_pixels": 200704,
+    "max_pixels": 1003520
+  },
+  "prompt_version": "external-target-draft-v1",
+  "decoding": {"do_sample": false, "max_new_tokens": 32},
+  "status": "GATE_FAIL",
+  "automatic_gate_status": "FAIL",
+  "systematic_tracking": false,
+  "gate_errors": ["predictions do not track systematic target positions"],
+  "execution_status": "COMPLETED",
+  "native_generate_calls": 8,
+  "native_errors": [],
+  "not_attempted_case_ids": [],
+  "execution_failure": "NONE",
+  "oom_status": "NOT_OBSERVED",
+  "cases": [
+    {
+      "case_id": "A_1",
+      "parse_status": "SCHEMA_ERROR",
+      "raw_sha256": "c77df4ad026fd07af11638c3d8617906b37e17c19628007ac2ec9ba6dae75851",
+      "native_observation": "bbox_2d + label; does not satisfy canonical external_probe schema"
+    },
+    {
+      "case_id": "A_2",
+      "parse_status": "JSON_ERROR",
+      "raw_sha256": "6ab96fea8e6abbb060872b3de5aa71567411cda556b687ad0f4f2b3fafb18888"
+    },
+    {
+      "case_id": "B_1",
+      "parse_status": "SCHEMA_ERROR",
+      "raw_sha256": "08a441cd5a173da47c00beeac6c32cb1f1ce3927467153303c5b0697f35d5fa1",
+      "native_observation": "bbox_2d; does not satisfy canonical external_probe schema"
+    },
+    {
+      "case_id": "B_2",
+      "parse_status": "JSON_ERROR",
+      "raw_sha256": "9e38dbc9ad8d06b80475943a329f35142201e46bc420cb5c22ae076d62a56080"
+    },
+    {
+      "case_id": "C_1",
+      "parse_status": "JSON_ERROR",
+      "raw_sha256": "41b1b6fbb03ebe910aef8ef552a011da74b6658cf85d416485d1bc37c43c0471"
+    },
+    {
+      "case_id": "C_2",
+      "parse_status": "JSON_ERROR",
+      "raw_sha256": "1feeceda5ba1f871151088af199ae74e9325ffe02b2fa0f4c8274af858b65789"
+    },
+    {
+      "case_id": "D_1",
+      "parse_status": "JSON_ERROR",
+      "raw_sha256": "bbc6d467073508af50582fc418fc9a606794eab15bf71c4d38141e11118fb4a4"
+    },
+    {
+      "case_id": "D_2",
+      "parse_status": "JSON_ERROR",
+      "raw_sha256": "202c6273e260755862501c2e06f464a211b461ec6fe99e371a09a873f19e1203"
+    }
+  ],
+  "strict_success_count": 0,
+  "canonical_parsed_bbox_count": 0,
+  "schema_error_count": 2,
+  "json_error_count": 6,
+  "approved_interpretation": "Qwen2.5 failed the frozen SafeShift qualifying box-interface external gate under the pre-specified prompt, decoding and strict parser.",
+  "native_spatial_observation": "Some native outputs appear to contain spatial coordinates but their schema/coordinate convention does not meet the frozen canonical contract; no repair or general localization-incapability conclusion.",
+  "continuation_observation": "Some calls reached 32 continuation tokens and were truncated; no per-case attribution supplied. This does not authorize increasing max_new_tokens after observing output.",
+  "giant_box_review_status": "NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE",
+  "giant_box_reviews": [],
+  "grounding_role": "NOT_PARTICIPATING",
+  "grounding_failure_reason": "SPATIAL_GATE_FAILURE",
+  "classification_status": "CANDIDATE",
+  "resource_status": "PASS_VALIDATED",
+  "backup_substitution": false,
+  "artificial_zero_iou": false,
+  "rerun_performed_by_recording_task": false,
+  "post_hoc_changes": false,
+  "inspecsafe_used": false,
+  "inspecsafe_status": "NOT_RUN",
+  "inspecsafe_inference_authorized": false,
+  "global_d9_synthetic_gate_status": "PENDING",
+  "protocol_freeze_commit_sha": "PENDING"
+}

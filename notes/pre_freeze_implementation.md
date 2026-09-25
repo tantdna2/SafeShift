@@ -1,5 +1,16 @@
 # Pre-freeze implementation
 
+## Current Qwen2.5 grounding status — D9R2C-GATE-RESULT
+
+[Research Lead-audited real gate](w2_qwen2_5_external_gate_result.md): **GATE_FAIL**,
+exactly 8 calls completed, 0 canonical valid boxes (2 SCHEMA_ERROR, 6 JSON_ERROR).
+No execution/resource failure, no OOM; no rerun. Human giant-box review is
+NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE. Grounding is **NOT_PARTICIPATING**
+for SPATIAL_GATE_FAILURE; classification remains CANDIDATE, resource PASS_VALIDATED.
+No backup substitution or artificial zero IoU. Global D9 gate/checklist and protocol
+freeze remain PENDING; InspecSafe NOT_RUN/unauthorized. Earlier status sections
+below record historical milestones; production code, plans and frozen assets remain unchanged.
+
 ## W2.6-D9R2C-GATE-PREP — External capability gate prepared, not executed
 
 [Gate harness and separate pinned plan](w2_qwen2_5_external_gate_prep.md) reuse

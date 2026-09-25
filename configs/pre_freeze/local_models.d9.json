@@ -39,7 +39,13 @@
       "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
       "role": "RESOURCE_EFFICIENT_QWEN_CONTRAST",
       "classification": "CANDIDATE",
-      "grounding": "DOCUMENTED_BOX_AND_POINT_PENDING_SYNTHETIC_GATE",
+      "grounding": "NOT_PARTICIPATING",
+      "grounding_failure_reason": "SPATIAL_GATE_FAILURE",
+      "grounding_documentary_status": "DOCUMENTED_BOX_AND_POINT",
+      "external_gate_status": "GATE_FAIL",
+      "external_gate_evidence": "configs/pre_freeze/qwen2_5_external_gate_result.v1.json",
+      "backup_substitution": false,
+      "artificial_zero_iou": false,
       "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "qwen2_5_vl_3b_instruct",
@@ -195,7 +201,7 @@
     "eligibility_review_scope": "FOUR_PRIMARY_CANDIDATES_AND_ANY_ACTIVATED_BACKUP",
     "execution_scope": "QUALIFYING_BOX_INTERFACES; POINT_ONLY_IS_NOT_PARTICIPATING",
     "qualitative_giant_box_review_procedure": "PENDING_BEFORE_GATE_EXECUTION",
-    "status": "NOT_RUN_FOR_D9_MODELS"
+    "status": "PENDING"
   },
   "point_only_policy": {
     "preserve_native_points_in_raw_output": true,
