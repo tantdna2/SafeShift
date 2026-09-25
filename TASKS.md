@@ -300,3 +300,20 @@ all failed-attempt records remain historical evidence.
 Evidence/status only: no new GPU run, downloads, inference or gate execution.
 Plan SHA unchanged. See [record and scope](notes/w2_qwen2_5_t4_initialize_diagnostics.md#d9r2b-t4-qual--successful-real-single-t4-runtime-qualification)
 and [machine-readable evidence summary](configs/pre_freeze/qwen2_5_t4_smoke_result.v1.json).
+
+## W2.6-D9R2C-GATE-PREP — Frozen eight-case external gate harness
+
+- [x] EXTERNAL_GATE_HARNESS **PREPARED** with a separately pinned gate plan,
+  exact existing smoke decoding and existing external-target-draft-v1 prompts.
+  Uses the eight pre-existing frozen cases, strict raw-before-parse and unchanged
+  evaluator; all automatic checks passing yields **GATE_PENDING_REVIEW**.
+- [ ] EXTERNAL_8_CASE_EXECUTION **NOT_RUN**; GIANT_BOX_REVIEW **NOT_RUN**.
+  Explicit qualitative reviews are required for all eight cases before gate PASS.
+- [ ] Grounding **NOT_YET_QUALIFIED**; classification **CANDIDATE**.
+  Resource qualification remains **PASS_VALIDATED** only.
+
+No cases created/regenerated/tuned, no real model outputs observed and no gate
+result. Runner/production adapter, parser, prompts, frozen assets and runtime plan
+remain unchanged. No real GPU, model load, download, inference or InspecSafe.
+Checklist #2 overall/#3–#8 and protocol freeze SHA remain **PENDING**.
+See [gate PREP runbook](notes/w2_qwen2_5_external_gate_prep.md).

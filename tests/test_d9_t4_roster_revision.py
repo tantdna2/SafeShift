@@ -216,6 +216,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                       'scripts/provision_qwen2_5_snapshot.py',
                       'scripts/w2_qwen2_5_t4_smoke.py',
                       'scripts/w2_qwen2_5_t4_init_probe.py'}
+        authorized.add('scripts/w2_qwen2_5_external_gate.py')
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}
