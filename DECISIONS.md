@@ -1142,6 +1142,21 @@
   remain unfrozen; checklist #2–#8 and `protocol_freeze_commit_sha` remain PENDING.
   InspecSafe inference remains unauthorized. Historical entries are preserved.
 
+## D9R2E Moondream PREP audit stop (2026-09-26)
+
+- **Authority:** Research Lead's task sections 5/8/9 explicitly require STOP if
+  unchanged-source FP16 cannot be guaranteed. This records that boundary; it does
+  not approve a new precision/preprocessing condition.
+- **Finding:** Exact source `vision.py::prepare_crops` allocates/normalizes BF16
+  at call time; converting model parameters/buffers does not remove this path.
+  No patch, hook, autocast or BF16 fallback authorized by this record.
+- **Resolved:** Starmie documentary commit
+  `35192e10a54e36eabe0a7cc57a2c1aab371cafc5` and file hashes. Runtime enforcement
+  is not implemented. [Audit and candidate loading design](notes/w2_moondream_runner_prep.md).
+- **Pending:** Research Lead resolution before runner/smoke implementation.
+  Resource and grounding remain candidates; no roster substitution, D5/P1,
+  dataset/split/label/metric or protocol-freeze change.
+
 ## Template
 
 - **ID:** <DEC-...>
