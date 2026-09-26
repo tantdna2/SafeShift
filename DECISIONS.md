@@ -1157,6 +1157,30 @@
   Resource and grounding remain candidates; no roster substitution, D5/P1,
   dataset/split/label/metric or protocol-freeze change.
 
+## D9R2F Moondream post-normalization precision bridge (2026-09-26)
+
+- **Authority/status:** Research Lead's explicit W2.6-D9R2F instruction;
+  RESEARCH_LEAD_AUTHORIZED_PRE_FREEZE, before model inference, synthetic gate and
+  InspecSafe. This narrowly resolves the D9R2E decision boundary for preparing
+  an image-output bridge; it does not validate the full FP16 runtime.
+- **Authorized condition:** Run original upstream crop, resize, conversion, BF16
+  allocation and BF16 normalization on CPU. Only after `prepare_crops` returns,
+  add explicit BF16-to-FP16 conversion on CPU. Future CUDA transfer must receive
+  validated FP16. No upstream byte edits, normalization/crop/resize changes,
+  autocast or automatic fallback.
+- **Scientific interpretation:** The upstream crop/resize/normalization procedure
+  is preserved; SafeShift adds an intentional post-normalization precision
+  conversion. This is a distinct PRE-FREEZE RUNTIME CONDITION, not the original
+  upstream runtime. No general numerical-equivalence claim is made.
+- **Scope/status:** Helper and CPU tests only; integration design not installed.
+  Model parameters/buffers/caches/vision/text/region FP16 remain unvalidated.
+  Runner PENDING, smoke NOT_RUN, resource T4_FEASIBILITY_CANDIDATE, classification
+  CANDIDATE, grounding DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE.
+  Starmie runtime enforcement remains NOT_IMPLEMENTED; D5/P1, dataset, labels,
+  splits, metrics, roster and protocol freeze PENDING remain unchanged.
+- **Evidence:** [bridge plan](configs/pre_freeze/moondream_precision_bridge.v1.json)
+  and [implementation/integration note](notes/w2_moondream_precision_bridge.md).
+
 ## Template
 
 - **ID:** <DEC-...>

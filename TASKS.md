@@ -401,3 +401,21 @@ Production files, plans and frozen assets remain unchanged. See the
 This status overlay preserves earlier milestones. See
 [source audit and stop rationale](notes/w2_moondream_runner_prep.md).
 No GPU, weights, inference, gate or InspecSafe used.
+
+## W2.6-D9R2F-MOONDREAM-PRECISION-BRIDGE — CPU bridge PREP
+
+- [x] Research Lead authorization recorded for original upstream preprocessing
+  on CPU followed by explicit post-normalization BF16-to-FP16 conversion on CPU.
+  This is an intentional pre-freeze runtime condition, before inference/gate/InspecSafe.
+- [x] Small helper, strict return-structure/device/dtype/finite checks, copy contract,
+  deterministic CPU tests and numerical diagnostic implemented. Status:
+  **PREPARED_NOT_RUNTIME_VALIDATED**. No upstream bytes/crop/resize/normalization edits.
+- [x] Future call-graph integration documented; no hook/binding installed.
+- [ ] Runner **PENDING**, full FP16 runtime **NOT_VALIDATED**, T4 smoke **NOT_RUN**.
+  Starmie runtime enforcement **NOT_IMPLEMENTED**. Resource **T4_FEASIBILITY_CANDIDATE**,
+  classification **CANDIDATE**, grounding
+  **DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE**.
+- [ ] Protocol freeze SHA and remaining overall D9 prerequisites stay **PENDING**.
+
+See [bridge implementation, evidence and remaining work](notes/w2_moondream_precision_bridge.md).
+No GPU, model weights, model inference, real external gate or InspecSafe used.
