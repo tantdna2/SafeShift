@@ -56,6 +56,26 @@ riêng; không suy ra kết quả từ kế hoạch.
   Existing runner, precision bridge and frozen runtime conditions unchanged;
   no qualification or protocol-freeze promotion.
 
+## W2.6-D9R2J-MOONDREAM-FUNCTION-IDENTITY-DIAGNOSTIC-PREP — no new experiment
+
+- Research Lead reports exactly one real load diagnostic:
+  `moondream-load-diagnostic-20260926T124352Z-d0f85ea7`, execution commit
+  `b8a53ca25dad354c378591bf124e73d557a38caf`.
+  FAIL / load / ValueError / `AUDITED_FUNCTION_IDENTITY_REQUIRED` at
+  `verify_function(module.MoondreamModel.__init__, ...)` via `starmie_redirect`.
+- Reported Python 3.11.11/software pins, single visible Tesla T4 CC 7.5 and
+  model/tokenizer verification PASS; provision/verify manifests equal.
+  Query/detect zero, empty state_audits/image_boundaries; no bridge or inference.
+  Original evidence was not independently opened/rehashed here; no rerun.
+- Separate identity-only diagnostic **PREPARED_NOT_RUN**, fake/static tests only.
+  The failing identity subcondition remains **UNKNOWN**. No runtime repair,
+  guard change, new real run ID, model output, metric or qualification claim.
+- Existing redactor's `hf_moondream.py` -> `[REDACTED].py` false positive
+  reproduced with fake strings; no shared redaction fix or artifact rewriting.
+- [Contract and validation](notes/w2_moondream_function_identity_diagnostic.md).
+  No real diagnostic, model construction, GPU/model execution, query/detect,
+  bridge, smoke, gate, InspecSafe, download or merge.
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>
