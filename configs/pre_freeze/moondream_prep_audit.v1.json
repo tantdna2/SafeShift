@@ -1,0 +1,344 @@
+{
+  "schema_version": "safeshift-moondream-prep-audit-v1",
+  "task": "W2.6-D9R2E-MOONDREAM-PREP",
+  "base_main_sha": "62fc3e0507d0187cdd309f611f11bfb6d3f34f99",
+  "status": "STOP_FP16_SOURCE_BLOCKER_RESEARCH_LEAD_REQUIRED",
+  "model_id": "vikhyatk/moondream2",
+  "model_revision": "9a7d4024050840e001defacec2b00727e89149e6",
+  "release": "2025-06-21",
+  "license": "Apache-2.0",
+  "tokenizer_repo": "moondream/starmie-v1",
+  "tokenizer_revision": "35192e10a54e36eabe0a7cc57a2c1aab371cafc5",
+  "tokenizer_pin_status": "RESOLVED_DOCUMENTARY",
+  "tokenizer_runtime_enforcement": "NOT_IMPLEMENTED",
+  "documentary_status": "UPDATED",
+  "remote_code_files_audited": [
+    "hf_moondream.py",
+    "config.py",
+    "moondream.py",
+    "vision.py",
+    "text.py",
+    "region.py",
+    "layers.py",
+    "rope.py",
+    "image_crops.py",
+    "lora.py",
+    "utils.py"
+  ],
+  "remote_code_changed": false,
+  "fp16_source_audit": "BLOCKED_HARDCODED_BF16_VISION_PREPROCESSING",
+  "fp16_plan_status": "NOT_FROZEN_STOP_REQUIRED",
+  "bf16_residual_policy": "REJECT_NO_AUTOMATIC_FALLBACK",
+  "runner_status": "PENDING",
+  "runner_path": null,
+  "provisioner_path": null,
+  "smoke_harness_path": null,
+  "smoke_status": "NOT_PREPARED_NOT_RUN_FP16_BLOCKER",
+  "classification": "CANDIDATE",
+  "grounding": "DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE",
+  "resource_status": "T4_FEASIBILITY_CANDIDATE",
+  "protocol_freeze_commit_sha": "PENDING",
+  "gpu_used": false,
+  "model_inference_used": false,
+  "weights_downloaded": false,
+  "remote_code_executed": false,
+  "synthetic_gate_run": false,
+  "inspecsafe_used": false,
+  "blocking_source": {
+    "path": "vision.py",
+    "function": "prepare_crops",
+    "lines": [
+      25,
+      42
+    ],
+    "call_path": [
+      "query/detect/point",
+      "encode_image",
+      "_run_vision_encoder",
+      "prepare_crops",
+      "vision_encoder",
+      "patch_emb"
+    ]
+  },
+  "required_resource_condition": {
+    "gpu": "EXACTLY_ONE_NVIDIA_T4_16GB",
+    "compute_capability": "7.5",
+    "precision": "FP16",
+    "quantization": "NONE",
+    "batch_size": 1,
+    "cpu_offload": "FORBIDDEN",
+    "disk_offload": "FORBIDDEN",
+    "automatic_precision_fallback": "FORBIDDEN",
+    "automatic_quantization_fallback": "FORBIDDEN"
+  },
+  "detect_contract": {
+    "response_key": "objects",
+    "fields": [
+      "x_min",
+      "y_min",
+      "x_max",
+      "y_max"
+    ],
+    "convention": "NORMALIZED_XYXY_NOT_CLAMPED",
+    "center_formula": "argmax(coordinate_logits)/1024",
+    "size_formula": "2**((argmax(size_logits)/1023)*10-10)",
+    "corner_range": [
+      -0.5,
+      1.4990234375
+    ],
+    "origin": "NOT_EXPLICITLY_DECLARED_IN_PINNED_SOURCE",
+    "ordering": "AUTOREGRESSIVE_EMISSION_NO_SORT_OR_CONFIDENCE",
+    "max_objects_default": 50,
+    "internal_generation": true,
+    "deterministic_algorithm": "GREEDY_ARGMAX_NO_SAMPLING",
+    "runtime_determinism": "NOT_VERIFIED",
+    "canonical_adapter_status": "NOT_IMPLEMENTED"
+  },
+  "point_contract": {
+    "response_key": "points",
+    "fields": [
+      "x",
+      "y"
+    ],
+    "coordinate_range": [
+      0,
+      0.9990234375
+    ],
+    "internal_generation": true,
+    "point_to_box": "FORBIDDEN"
+  },
+  "artifacts": [
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "hf_moondream.py",
+      "sha256": "7c1d25f918a50547843919e202700780e69c1680fece415c7242ffa11891c9b5",
+      "size_bytes": 5534,
+      "git_blob_sha1": "526b6550651a398b255d9aa81ecebfac645e55b7",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/hf_moondream.py",
+      "retrieved_at_utc": "2026-09-25T18:43:22.595265+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "config.py",
+      "sha256": "ee7707c9b4d091dd6d3441ceebc54a36be4023e97d0504e59b5ea7d71147854b",
+      "size_bytes": 2647,
+      "git_blob_sha1": "9856d6b19f1821e0e28f4cf264de3d55cd796f76",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/config.py",
+      "retrieved_at_utc": "2026-09-25T18:43:19.782561+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "moondream.py",
+      "sha256": "52e8d0357eb12fdc1be36de13b3a53b225b970cc47fe7798783f177cf2262e59",
+      "size_bytes": 35501,
+      "git_blob_sha1": "7c02bd9981cad581ba895abdcceb46d69ce4d653",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/moondream.py",
+      "retrieved_at_utc": "2026-09-25T18:43:25.865330+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "vision.py",
+      "sha256": "f524cd4227df0394b0b1e73f281c93791267849729fc13a874a9071fff6f1eed",
+      "size_bytes": 5087,
+      "git_blob_sha1": "de1aa5e8935061c59f5f59f4ebeb2a52e22b0e6f",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/vision.py",
+      "retrieved_at_utc": "2026-09-25T18:43:31.524378+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "text.py",
+      "sha256": "9ec56dd5f1a78c9116c8f60e83db90c887034e0183ec3acb6245a91b493ce352",
+      "size_bytes": 6851,
+      "git_blob_sha1": "07cbafd4f7d235b8e639622494b35ad2e2b96de4",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/text.py",
+      "retrieved_at_utc": "2026-09-25T18:43:28.907387+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "region.py",
+      "sha256": "225bd962af02fedbf6d4a423c3282cada452fdc11efb478558b82df659dbf726",
+      "size_bytes": 4545,
+      "git_blob_sha1": "9224e2c246ff05e559db3df36b1b27840be6fb95",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/region.py",
+      "retrieved_at_utc": "2026-09-25T18:43:26.520797+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "layers.py",
+      "sha256": "9b3bab95b3571b39bd3d37c124bb6205bf881b55652e89cda360e522079962d8",
+      "size_bytes": 4558,
+      "git_blob_sha1": "6fee6e8fa4487a13bac9e34c7d19ff1eeaccf7d9",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/layers.py",
+      "retrieved_at_utc": "2026-09-25T18:43:23.908310+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "rope.py",
+      "sha256": "0032ace75443a81888b957b28b7fd00ac808effdfdace14855d31b5c14ea5770",
+      "size_bytes": 1573,
+      "git_blob_sha1": "737fa0805b07524adc8abf8b52ce529c48222947",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/rope.py",
+      "retrieved_at_utc": "2026-09-25T18:43:27.837705+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "image_crops.py",
+      "sha256": "1f3f469fcbd3291966c6f9fda5c90f8044d39b391261bac14ef6bbcfb76496cb",
+      "size_bytes": 8145,
+      "git_blob_sha1": "1aa2f1e51953eced347b47830080fe2b5211b3d7",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/image_crops.py",
+      "retrieved_at_utc": "2026-09-25T18:43:23.248341+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "lora.py",
+      "sha256": "d180359b1739e9a087a9c756c4671e536debb702d591370741af75ce4e27762d",
+      "size_bytes": 2299,
+      "git_blob_sha1": "b6fc4b91c90cbfc20ff1313be0f6b697d219e08e",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/lora.py",
+      "retrieved_at_utc": "2026-09-25T18:43:24.676356+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "utils.py",
+      "sha256": "08d33430923d83ad26dfdbbc58d6df0f363a4c3c05cbfd8018f6e2c98c82ed59",
+      "size_bytes": 1415,
+      "git_blob_sha1": "a4627a1eb94097bbb1349cf7daf1852a481c46d8",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/utils.py",
+      "retrieved_at_utc": "2026-09-25T18:43:31.081380+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "config.json",
+      "sha256": "c4d59ae1179c1792ad49b8aeb59092101cc948d7b1914ed549689aed2c1fa083",
+      "size_bytes": 277,
+      "git_blob_sha1": "595955a88c97a629afa97f7001ca548bff992561",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/config.json",
+      "retrieved_at_utc": "2026-09-25T18:43:19.113440+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "generation_config.json",
+      "sha256": "a5a8484e27670c431bf1c5c9f972c27bdb8a3873ede65e2118440115b4c8d770",
+      "size_bytes": 69,
+      "git_blob_sha1": "529f4671aff0ac82e201a14349eb86a1f75048e0",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/generation_config.json",
+      "retrieved_at_utc": "2026-09-25T18:43:21.543428+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "README.md",
+      "sha256": "3a622db61cf3784c21200f47bc9b4c88292ffb64446acd601dbdd1eee94aa8aa",
+      "size_bytes": 2891,
+      "git_blob_sha1": "06ef0d3ff271381ed81d62848621526630029b08",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/vikhyatk/moondream2/resolve/9a7d4024050840e001defacec2b00727e89149e6/README.md",
+      "retrieved_at_utc": "2026-09-25T18:43:17.991241+00:00"
+    },
+    {
+      "repo_id": "moondream/starmie-v1",
+      "revision": "35192e10a54e36eabe0a7cc57a2c1aab371cafc5",
+      "path": "tokenizer.json",
+      "sha256": "0512fdcac4a5f9e7746cbefce4a468dc93bf0f93f11e701b84f8b31bff199e9c",
+      "size_bytes": 3694206,
+      "git_blob_sha1": "b34d2539188d02eda1a1a23a1ec575349fb12518",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/moondream/starmie-v1/resolve/35192e10a54e36eabe0a7cc57a2c1aab371cafc5/tokenizer.json",
+      "retrieved_at_utc": "2026-09-25T18:43:36.054857+00:00"
+    },
+    {
+      "repo_id": "moondream/starmie-v1",
+      "revision": "35192e10a54e36eabe0a7cc57a2c1aab371cafc5",
+      "path": "tokenizer_config.json",
+      "sha256": "8a6fc16b0dbe3e267901fb1e4c34101b971b75dbb01629c1b06c8081f6bdc703",
+      "size_bytes": 3981,
+      "git_blob_sha1": "919a21693fb19df30efdc21b4408e5bb2b5dbc1a",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/moondream/starmie-v1/resolve/35192e10a54e36eabe0a7cc57a2c1aab371cafc5/tokenizer_config.json",
+      "retrieved_at_utc": "2026-09-25T18:43:36.683167+00:00"
+    },
+    {
+      "repo_id": "moondream/starmie-v1",
+      "revision": "35192e10a54e36eabe0a7cc57a2c1aab371cafc5",
+      "path": "special_tokens_map.json",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "size_bytes": 3,
+      "git_blob_sha1": "0967ef424bce6791893e9a57bb952f80fd536e93",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/moondream/starmie-v1/resolve/35192e10a54e36eabe0a7cc57a2c1aab371cafc5/special_tokens_map.json",
+      "retrieved_at_utc": "2026-09-25T18:43:35.290224+00:00"
+    },
+    {
+      "repo_id": "moondream/starmie-v1",
+      "revision": "35192e10a54e36eabe0a7cc57a2c1aab371cafc5",
+      "path": "README.md",
+      "sha256": "53f266e1d3e3a8a3cb50e8518c274c5fc4f5c840ec6787f594be44a7a5c1d82d",
+      "size_bytes": 61,
+      "git_blob_sha1": "aac4849cdfb81c9a9f3960026ee122683548b77d",
+      "verification": "LOCAL_BYTES_AND_PINNED_API_GIT_BLOB",
+      "source_url": "https://huggingface.co/moondream/starmie-v1/resolve/35192e10a54e36eabe0a7cc57a2c1aab371cafc5/README.md",
+      "retrieved_at_utc": "2026-09-25T18:43:34.629082+00:00"
+    },
+    {
+      "repo_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "path": "model.safetensors",
+      "sha256": "70a7d94c0c8349eb58ed2d9e636ef2d0916960f321ecabeac6354b8ba3d7403f",
+      "size_bytes": 3854538968,
+      "verification": "PINNED_API_LFS_METADATA_ONLY_NOT_DOWNLOADED"
+    }
+  ],
+  "metadata_responses": [
+    {
+      "url": "https://huggingface.co/api/models/vikhyatk/moondream2/revision/9a7d4024050840e001defacec2b00727e89149e6?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/vikhyatk/moondream2/revision/9a7d4024050840e001defacec2b00727e89149e6?blobs=true",
+      "path": "model_api.json",
+      "timestamp_utc": "2026-09-25T18:43:17.545158+00:00",
+      "sha256": "125d70e5c03ebe42f699076b685eda2df2b2f9af3816014008d5428d99cfbfeb",
+      "size_bytes": 7817
+    },
+    {
+      "url": "https://huggingface.co/api/models/moondream/starmie-v1/revision/35192e10a54e36eabe0a7cc57a2c1aab371cafc5?blobs=true",
+      "resolved_url": "https://huggingface.co/api/models/moondream/starmie-v1/revision/35192e10a54e36eabe0a7cc57a2c1aab371cafc5?blobs=true",
+      "path": "tokenizer_api.json",
+      "timestamp_utc": "2026-09-25T18:43:33.953733+00:00",
+      "sha256": "8d1c20ab726342b6b2b48e13baa83516aae8123a7addd3528a32c66dfa0c4f7d",
+      "size_bytes": 1118
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huggingface/tokenizers/v0.21.2/bindings/python/src/tokenizer.rs",
+      "path": "tokenizers_0_21_2_tokenizer.rs",
+      "timestamp_utc": "2026-09-25T18:44:45.185369+00:00",
+      "sha256": "18e392e1ea718587c0d631b299f7ab36243361371caa9f588d839506e1c74a98",
+      "size_bytes": 58896
+    }
+  ],
+  "notes": "notes/w2_moondream_runner_prep.md"
+}

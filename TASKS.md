@@ -384,3 +384,20 @@ conversion, parser repair, prompt/decoding tuning or adapter promotion.
 Production files, plans and frozen assets remain unchanged. See the
 [audited result](notes/w2_qwen3_external_gate_result.md) and
 [machine-readable record](configs/pre_freeze/qwen3_external_gate_result.v1.json).
+
+## W2.6-D9R2E-MOONDREAM-PREP — STOP after source audit
+
+- [x] Exact model source/API audit and nested Starmie immutable pin resolved:
+  `35192e10a54e36eabe0a7cc57a2c1aab371cafc5`; byte hashes and evidence recorded.
+- [x] Report mandatory FP16 blocker: pinned vision preprocessing allocates and
+  normalizes BF16 independently of model parameter conversion. Remote code unchanged.
+- [ ] Runner, provisioner, native adapter and single-T4 harness remain **PENDING**;
+  **NOT_PREPARED_NOT_RUN_FP16_BLOCKER**, requiring Research Lead resolution.
+  No BF16 fallback or silent preprocessing patch.
+- [ ] Resource **T4_FEASIBILITY_CANDIDATE**; grounding
+  **DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE**; classification
+  **CANDIDATE**. Protocol freeze SHA and overall checklist remain **PENDING**.
+
+This status overlay preserves earlier milestones. See
+[source audit and stop rationale](notes/w2_moondream_runner_prep.md).
+No GPU, weights, inference, gate or InspecSafe used.

@@ -25,6 +25,21 @@ riêng; không suy ra kết quả từ kế hoạch.
   CANDIDATE, resource anchor unchanged. No human giant review, backup substitution,
   artificial zero IoU or post-hoc repair. Global D9 gate and protocol freeze PENDING.
 
+## W2.6-D9R2E-MOONDREAM-PREP — documentary audit, no experiment
+
+- **Status:** STOP_FP16_SOURCE_BLOCKER_RESEARCH_LEAD_REQUIRED. Metadata/source
+  capture only; no remote code executed, weights downloaded or model loaded.
+- **Model / dependency:** exact Moondream `9a7d4024050840e001defacec2b00727e89149e6`;
+  Starmie `35192e10a54e36eabe0a7cc57a2c1aab371cafc5`.
+- **Evidence:** [audit record](configs/pre_freeze/moondream_prep_audit.v1.json),
+  [source findings](notes/w2_moondream_runner_prep.md); local source captures in
+  ignored `data/processed/moondream_prep/`. Hashes are observations of source
+  bytes and metadata, never measurements of model performance.
+- **Runtime / metrics:** NOT_RUN; no GPU, model inference, synthetic gate,
+  InspecSafe or accuracy. No model run ID or raw output exists. Seed not applicable.
+- **Next:** Research Lead must resolve the hard-coded BF16 vision path before
+  runtime PREP can continue. No fallback and no resource/grounding promotion.
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>
