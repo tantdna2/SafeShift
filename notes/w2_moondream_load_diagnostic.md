@@ -82,22 +82,193 @@ rejection, unwritable storage and uncatchable process termination cannot guarant
 a report; those fail before runtime or leave a reserved partial artifact. There
 is no retry loop and the runner's one-load-per-process guard is unchanged.
 
-## Future invocation (not executed in this PREP)
+## D9R2I Kaggle execution preparation — two diagnostic-only amendments
 
-Use a fresh dedicated process in the existing pinned Linux/T4 environment with
-previously provisioned local snapshots, clean tracked checkout at the reviewed
-commit, and the same previously provisioned and verified local snapshot cache at
-`data/processed/moondream_hf`. Do not create a new cache or download again.
-From the repository root:
+Task: **W2.6-D9R2I-MOONDREAM-DIAGNOSTIC-KAGGLE-EXECUTION-PREP**.
+Authority: Research Lead's task instruction, 2026-09-26, after PR #44 merged.
+Base main: `65b8836e11cdc399d26543f17a15412d0da2e3f4`.
+Branch: `prep/d9-moondream-diagnostic-kaggle-execution`.
+Status: **PREPARED_NOT_RUN**; real load diagnostic **NOT_RUN**;
+`protocol_freeze_commit_sha: PENDING`.
 
-```sh
-python scripts/w2_moondream_load_diagnostic.py --execute-load-diagnostic --expected-commit <exact-reviewed-40-character-sha> --cache-dir data/processed/moondream_hf --run-id moondream-load-diagnostic-<unique-id>
+The Research Lead reports that the old Kaggle session was shut down and its local
+`data/processed/moondream_hf` cache no longer exists. This is supplied context,
+not a cache inspection or execution result from this PREP. Only the following two
+pre-freeze amendments are authorized, solely for the separate load-only diagnostic.
+They supersede the earlier diagnostic instruction to reuse the old cache without
+downloading. They do not amend the historical official smoke procedure or assert
+that the old smoke ran with these conditions in a frozen repository. The old
+**FAIL_T4_RUNTIME_INTERFACE / FAIL** and its run ID above remain unchanged.
+
+### A. EPHEMERAL CACHE REPROVISION
+
+When a new Kaggle session has lost the old cache, recreate only
+`data/processed/moondream_hf` using the existing
+[`scripts/provision_moondream_snapshot.py`](../scripts/provision_moondream_snapshot.py)
+with `--provision`, in a separate process before the diagnostic. Its immutable
+allowlist remains authoritative:
+
+| Repository | Exact revision |
+| --- | --- |
+| `vikhyatk/moondream2` | `9a7d4024050840e001defacec2b00727e89149e6` |
+| `moondream/starmie-v1` | `35192e10a54e36eabe0a7cc57a2c1aab371cafc5` |
+
+Do not change revisions, add snapshot files, use an alternative downloader/cache,
+or repair a failed verification. If the cache exists, reuse it with verify-only;
+do not delete it to trigger reprovision. A partial/invalid cache is a STOP condition.
+After provisioning, run `--verify-only` in a fresh process. Both complete manifests
+must match, including every filename, size, SHA-256, immutable identity,
+`local_bytes_verified: true` and `manifest_sha256`. The existing provisioner emits
+deterministic JSON, so byte comparison checks the complete provision/verify pair.
+Both operations independently enforce the unchanged audited hashes/allowlist.
+No old local manifest is claimed to have survived the terminated session.
+
+The diagnostic continues to reverify the same snapshots and enforce local-only
+loading plus permanent Python network/child-process denial. No download during
+initialize/load, fallback, retry loop or new inference path is authorized. The
+diagnostic-only venue Internet policy from PR #44 remains unchanged; Internet may
+be enabled for the separate provisioning process. This does not relax the official
+smoke's venue-network-disabled requirement.
+
+### B. SINGLE-T4 PROCESS VISIBILITY
+
+The Kaggle host may expose more than one Tesla T4 (for example T4x2). Launch the
+diagnostic as a new OS process with **`CUDA_VISIBLE_DEVICES=0` set by the shell
+before Python starts**. Setting it inside an already running notebook/Python
+kernel, using `%run`, or changing visibility after CUDA initialization is not this
+procedure. In Kaggle, run the Bash block below in one `%%bash` cell from the repo
+root, using the pinned Python environment; do not split its shell state across cells.
+
+The existing runner must observe exactly one CUDA GPU at logical `cuda:0`:
+Tesla T4 (the existing validator also accepts its `NVIDIA T4` name), compute
+capability `[7, 5]`, and total VRAM **15,032,385,536–17,179,869,184 bytes inclusive
+(14–16 GiB)**. All other host GPUs must be inaccessible as CUDA devices to this
+diagnostic process. Evidence is the startup mask plus the same process's
+`report.json.gpu.gpu_count == 1` and the remaining validated GPU fields, not host
+`nvidia-smi` count alone. No second CUDA ordinal is visible/usable under this
+condition. This is CUDA process visibility isolation, not an OS security sandbox
+or multi-GPU execution; host inventory may still enumerate physical devices.
+Do not switch to GPU 1 or launch another worker if GPU 0 fails.
+
+FP16, quantization NONE, batch size 1, cuda:0 placement, no CPU/disk offload,
+no fallback, PILLOW_ONLY, software pins and the precision bridge are unchanged.
+No runner, model, diagnostic harness, provisioner, runtime config or helper code
+is modified: existing GPU validation/reporting already provides the required
+process-visible inventory. Host inventory and the launch transcript are separate
+evidence, recorded before the runner denies subprocess creation.
+
+### Future Kaggle procedure — NOT executed in this PR
+
+Use the clean tracked checkout at the exact reviewed execution commit and the
+unchanged pinned Linux x86_64 / Python 3.11.11 environment. This PREP does not
+authorize execution now. For a later authorized diagnostic, replace the two
+placeholder values below. Preserve all artifacts before ending the Kaggle session.
+All paths are relative to the repository root; never reuse an evidence/run ID.
+
+```bash
+set -euo pipefail
+expected_commit='REPLACE_WITH_REVIEWED_40_CHARACTER_SHA'
+run_id='REPLACE_WITH_UNIQUE_DIAGNOSTIC_RUN_ID'
+[[ "$expected_commit" =~ ^[0-9a-f]{40}$ ]]
+[[ "$run_id" != REPLACE_* && "$run_id" =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$ ]]
+test "$(git rev-parse HEAD)" = "$expected_commit"
+git diff --quiet HEAD
+cache='data/processed/moondream_hf'
+evidence="data/processed/moondream_load_diagnostic_execution/$run_id"
+report="data/processed/moondream_load_diagnostic/$run_id/report.json"
+test ! -e "data/processed/moondream_load_diagnostic/$run_id"
+mkdir -p data/processed/moondream_load_diagnostic_execution
+mkdir "$evidence"
+date -u +%Y-%m-%dT%H:%M:%SZ > "$evidence/started_utc.txt"
+git rev-parse HEAD > "$evidence/execution_commit.txt"
+nvidia-smi --query-gpu=index,uuid,pci.bus_id,name,memory.total,driver_version --format=csv > "$evidence/host_gpu_inventory.csv" 2> "$evidence/host_gpu_inventory.stderr"
+
+if [[ ! -e "$cache" && ! -L "$cache" ]]; then
+  printf '%s\n' EPHEMERAL_CACHE_ABSENT_REPROVISION > "$evidence/cache_policy.txt"
+  python scripts/provision_moondream_snapshot.py --provision --cache-dir "$cache" --manifest "$evidence/provision.json" > "$evidence/provision.log" 2>&1
+else
+  printf '%s\n' EXISTING_CACHE_VERIFY_ONLY > "$evidence/cache_policy.txt"
+fi
+python scripts/provision_moondream_snapshot.py --verify-only --cache-dir "$cache" --manifest "$evidence/verify.json" > "$evidence/verify.log" 2>&1
+if [[ -f "$evidence/provision.json" ]]; then
+  cmp "$evidence/provision.json" "$evidence/verify.json"
+fi
+printf '%s\n' VERIFIED_BEFORE_DIAGNOSTIC > "$evidence/verification_status.txt"
+
+# Shell transcript records the exact mask and command before Python startup.
+# The harness alone creates its separate report directory, exclusively.
+if (
+  set -x
+  export CUDA_VISIBLE_DEVICES=0
+  python scripts/w2_moondream_load_diagnostic.py --execute-load-diagnostic --expected-commit "$expected_commit" --cache-dir "$cache" --run-id "$run_id"
+) > "$evidence/diagnostic_launch.log" 2>&1; then
+  diagnostic_exit=0
+else
+  diagnostic_exit=$?
+fi
+printf '%s\n' "$diagnostic_exit" > "$evidence/diagnostic_exit_code.txt"
+date -u +%Y-%m-%dT%H:%M:%SZ > "$evidence/finished_utc.txt"
+sha256sum "$evidence"/* > "$evidence.sha256"
+if [[ -f "$report" ]]; then
+  sha256sum "$report" > "$evidence.report.sha256"
+fi
+exit "$diagnostic_exit"
 ```
 
-Preserve the separate report for review; do not remove the old official ledger,
-alter its FAIL or proceed into any inference/gate as a consequence of this report.
+Stop on inventory, provisioning, verification or comparison failure; retain partial
+logs and report the blocker. Do not continue to load or silently reprovision again.
+The shell preserves the diagnostic exit code even on a captured load failure.
+On interruption/missing report, retain the partial evidence and STOP; no automatic
+retry. Shell success alone is not evidence that all audit conditions were met.
 
-## Validation
+Review the future evidence bundle as follows:
+
+- Link host inventory, launch transcript/mask, provision/verify manifests and logs,
+  timestamps, exit code and checksums by the same run ID and exact execution SHA.
+  Keep them under `data/processed/`, outside Git; retain the corresponding notebook
+  cell/command as launch provenance without secrets.
+- `report.json.gpu` and `runner_evidence.gpu` are the process-visible inventory
+  observed by `runner.initialize`. Require count 1, T4, CC 7.5 and the byte range
+  above. Null/NOT_REACHED is missing evidence, never assumed PASS. Unexpected
+  count/name/capability/memory fails existing validation before model load.
+- Compare `runner_evidence.model_manifest` and `tokenizer_manifest` to the matching
+  entries in `verify.json.snapshots`, including manifest hashes and all file hashes.
+  Missing evidence is NOT_VERIFIED; any mismatch is STOP, never a hash update.
+- Preserve the full diagnostic exception/traceback on failure. Query/detect counts
+  must remain zero and image boundaries empty. LOAD_ONLY_PASS, if later observed,
+  proves only diagnostic load completion; it cannot qualify full FP16 runtime,
+  change the old smoke FAIL, authorize smoke/gate, or promote model participation.
+
+Do not delete/recreate the old smoke ledger or launch an official smoke in a new
+session. Loss of its local ledger/cache does not erase the historical failed
+attempt or create retry permission. No claim about the old smoke's startup mask,
+physical host GPU count or frozen conditions is added.
+
+### D9R2I PREP validation
+
+Validation: **52/52 existing unit tests PASS**, using fake backends/device metadata
+and synthetic bytes only:
+
+```powershell
+.venv/Scripts/python.exe -m unittest tests.test_moondream_load_diagnostic tests.test_moondream_runner_smoke -v
+git diff --check
+```
+
+The Bash block above was extracted and passed to `bash -n` via stdin: **PASS**
+(syntax only; no command in that block executed). Git Bash initially could not
+create a signal pipe inside the Windows sandbox; the same syntax-only check
+passed outside it. `git diff --check` **PASS**. The diff contains only this note
+and `TASKS.md`; runtime/config/protected files are unchanged from the base SHA.
+No new tests or helper were needed for this documentation-only amendment.
+The full suite was not rerun; the direct tests cover the existing manifest,
+GPU validation, load-only and official-ledger isolation contracts. The historical
+D9R2H full-suite result below is not claimed as a new D9R2I run.
+
+Real reprovision/download, GPU inventory, model execution,
+diagnostic, official smoke, query/detect, gate and InspecSafe remain **NOT_RUN in
+this PR**. No merge is part of this task.
+
+## D9R2H validation (historical PR #44 evidence)
 
 Tests use the real runner with a fake backend/model, synthetic exceptions and
 mocked snapshot/network boundaries; they neither execute downloaded code nor

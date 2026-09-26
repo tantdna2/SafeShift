@@ -452,3 +452,16 @@ smoke, synthetic gate or InspecSafe used. See the
 No runner/bridge/runtime-plan change, official smoke retry, model download, GPU,
 query, detect, synthetic gate or InspecSafe execution. Earlier PREP milestones
 remain historical. See [analysis and diagnostic contract](notes/w2_moondream_load_diagnostic.md).
+
+## W2.6-D9R2I-MOONDREAM-DIAGNOSTIC-KAGGLE-EXECUTION-PREP
+
+- [x] Document the two Research Lead-authorized diagnostic-only amendments after
+  PR #44: exact reprovision of a lost ephemeral cache with mandatory verify-only,
+  and shell-set `CUDA_VISIBLE_DEVICES=0` before the dedicated Python process starts.
+- [x] Prepare host inventory, launch transcript, existing process-visible GPU
+  report, manifest comparison and evidence retention procedure; no code/config change.
+- [ ] Real reprovision and load diagnostic **NOT_RUN in this task**; protocol freeze
+  **PENDING**. Old official smoke **FAIL** retained; no retry or retrospective claim.
+
+See the [D9R2I amendments and future Kaggle runbook](notes/w2_moondream_load_diagnostic.md#d9r2i-kaggle-execution-preparation--two-diagnostic-only-amendments).
+No model/GPU/download/diagnostic/smoke/query/detect/gate/InspecSafe execution or merge.
