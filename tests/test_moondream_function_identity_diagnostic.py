@@ -47,7 +47,7 @@ class IdentityTests(unittest.TestCase):
             "class_dict_has_own_init": True, "class_dict_init_is_function": True,
         })
 
-    def test_each_predicate_independently_and_original_guard_still_rejects(self):
+    def test_each_predicate_independently_and_guard_still_rejects(self):
         def factory():
             secret_cell = "DO_NOT_DUMP_CELL"
             def wrapped(self):
@@ -66,7 +66,10 @@ class IdentityTests(unittest.TestCase):
                 result = self.observe(function)
                 self.assertEqual({key: result[key] for key in PREDICATES},
                                  {key: key != failed for key in PREDICATES})
-                with self.assertRaisesRegex(ValueError, "AUDITED_FUNCTION_IDENTITY_REQUIRED"):
+                error = ("AUDITED_BYTECODE_REQUIRED" if failed == "closure_is_none"
+                         else "AUDITED_FUNCTION_IDENTITY_REQUIRED")
+                with patch.object(binding, "verified_source", return_value=SOURCE), \
+                        self.assertRaisesRegex(ValueError, error):
                     binding.verify_function(function, self.module, "unused", "moondream.py",
                                             diagnostic.EXPECTED_QUALNAME)
                 self.assertNotIn("DO_NOT_DUMP_CELL", json.dumps(result))

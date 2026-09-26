@@ -482,3 +482,18 @@ No model/GPU/download/diagnostic/smoke/query/detect/gate/InspecSafe execution or
 See [contract, evidence and validation](notes/w2_moondream_function_identity_diagnostic.md).
 No real diagnostic, model construction, GPU/model execution, query/detect,
 bridge, smoke, gate, InspecSafe, download or merge.
+
+## W2.6-D9R2K-MOONDREAM-EXPECTED-CLOSURE-FIX
+
+- [x] Research Lead reports root cause from identity run
+  `moondream-function-identity-20260926T133534Z-cb4dd2cd`: audited constructor
+  bytecode matches, but its single `__class__` cell violates the old blanket
+  no-closure guard. This supersedes D9R2J's historical UNKNOWN subcondition.
+- [x] Replace only closure validation with the expected-bytecode policy;
+  synthetic/fake-only regression suite: **82 tests PASS**, Python 3.11.9.
+- [ ] Real runtime after fix **NOT_RUN / NOT_VALIDATED**; qualification and
+  protocol freeze remain **PENDING**.
+
+See [exact closure policy and validation](notes/w2_moondream_function_identity_diagnostic.md#d9r2k--expected-closure-fix).
+No redactor/upstream/model patch, fallback or new diagnostic. No real diagnostic,
+GPU/model execution, download, smoke/query/detect/gate/InspecSafe or merge.
