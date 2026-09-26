@@ -419,3 +419,23 @@ No GPU, weights, inference, gate or InspecSafe used.
 
 See [bridge implementation, evidence and remaining work](notes/w2_moondream_precision_bridge.md).
 No GPU, model weights, model inference, real external gate or InspecSafe used.
+
+## W2.6-D9R2G-MOONDREAM-RUNNER-SMOKE-PREP — offline implementation
+
+- [x] Prepare exact pinned offline runner/provisioner; audited-source and complete
+  snapshot hash verification, offline runtime boundary and exact Starmie redirect.
+  Runner and Starmie enforcement: **PREPARED_NOT_RUNTIME_VALIDATED**.
+- [x] Integrate unchanged post-normalization CPU precision helper with audited
+  per-instance bytecode/globals binding and restoration. Pin **PILLOW_ONLY** as a
+  **PRE_FREEZE_RUNTIME_CONDITION**. Integration **PREPARED_NOT_RUNTIME_VALIDATED**.
+- [x] Prepare fixed separate image/hash, one-load/query/detect harness, exact
+  requirements and raw/audit artifacts. Harness **PREPARED_NOT_RUN**.
+- [ ] Real T4 smoke **NOT_RUN**; full FP16 runtime **NOT_VALIDATED**. Resource
+  **T4_FEASIBILITY_CANDIDATE**; classification **CANDIDATE**; grounding
+  **DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE**.
+- [ ] Overall D9 prerequisites and `protocol_freeze_commit_sha` remain **PENDING**.
+
+This overlays historical D9R2E/F pending statuses without editing their audit/bridge
+records. No GPU, weights download, remote model code execution, inference, real
+smoke, synthetic gate or InspecSafe used. See the
+[implementation, validation and future runbook](notes/w2_moondream_runner_smoke_prep.md).

@@ -1181,6 +1181,33 @@
 - **Evidence:** [bridge plan](configs/pre_freeze/moondream_precision_bridge.v1.json)
   and [implementation/integration note](notes/w2_moondream_precision_bridge.md).
 
+## D9R2G Moondream runner and single-T4 smoke PREP (2026-09-26)
+
+- **Authority:** Research Lead's explicit W2.6-D9R2G instruction. This is a
+  **PRE_FREEZE_RUNTIME_CONDITION**, before inference, gate and InspecSafe.
+- **Decision:** Pin **PILLOW_ONLY**; fail if upstream actually selects pyvips or
+  another backend. No numerical-equivalence claim. Keep the approved unchanged
+  CPU BF16 normalization -> post-normalization CPU FP16 bridge -> CUDA FP16 order.
+- **Implementation scope:** Exact snapshot/hash verification, narrowly scoped
+  Starmie constructor redirect with restoration, original vision bytecode with
+  private globals replacing only prepare_crops, instance consumer guard, and
+  dedicated single-owner/non-reentrant process. Exact model/tokenizer identities
+  and prior audit/bridge bytes remain unchanged.
+- **Future condition:** Exactly one T4 16GB/CC 7.5, FP16/NONE/batch 1, no offload,
+  automatic fallback, model substitution or device_map auto. Inspect floating
+  parameters/buffers/caches and image boundaries; no full FP16 validation claimed.
+- **Smoke PREP:** Separate frozen handcrafted image, fixed query/object/settings,
+  exactly one load/query/detect, immutable raw-before-parse, no retry/tuning.
+  Version pins use source and static dependency metadata before model execution.
+  A separate authorization for the reviewed execution commit is required to run.
+- **Status:** Runner/Starmie/bridge integration PREPARED_NOT_RUNTIME_VALIDATED;
+  harness PREPARED_NOT_RUN; full FP16 NOT_VALIDATED. Resource remains
+  T4_FEASIBILITY_CANDIDATE, classification CANDIDATE, grounding
+  DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE. No roster promotion,
+  dataset/split/label/metric, D5/P1 or protocol-freeze change; freeze SHA PENDING.
+- **Evidence:** [runtime plan](configs/pre_freeze/moondream_t4_runtime.v1.json),
+  [implementation and future procedure](notes/w2_moondream_runner_smoke_prep.md).
+
 ## Template
 
 - **ID:** <DEC-...>
