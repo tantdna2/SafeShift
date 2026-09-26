@@ -465,3 +465,20 @@ remain historical. See [analysis and diagnostic contract](notes/w2_moondream_loa
 
 See the [D9R2I amendments and future Kaggle runbook](notes/w2_moondream_load_diagnostic.md#d9r2i-kaggle-execution-preparation--two-diagnostic-only-amendments).
 No model/GPU/download/diagnostic/smoke/query/detect/gate/InspecSafe execution or merge.
+
+## W2.6-D9R2J-MOONDREAM-FUNCTION-IDENTITY-DIAGNOSTIC-PREP
+
+- [x] Record Research Lead-reported one-time load diagnostic FAIL at
+  `AUDITED_FUNCTION_IDENTITY_REQUIRED`, execution commit
+  `b8a53ca25dad354c378591bf124e73d557a38caf`; no rerun.
+- [x] Prepare separate identity-only diagnostic and fake/static tests observing
+  four predicates independently plus expected-code/signature comparison.
+  **PREPARED_NOT_RUN**; guard and runtime behavior unchanged.
+- [x] Characterize `hf_moondream.py` redaction false positive in tests;
+  no redactor fix in this task; separate follow-up proposed.
+- [ ] Real identity-only execution **NOT_RUN**; exact failing subcondition
+  **UNKNOWN**. Runtime qualification and protocol freeze remain **PENDING**.
+
+See [contract, evidence and validation](notes/w2_moondream_function_identity_diagnostic.md).
+No real diagnostic, model construction, GPU/model execution, query/detect,
+bridge, smoke, gate, InspecSafe, download or merge.
