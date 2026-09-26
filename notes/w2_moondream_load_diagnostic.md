@@ -86,11 +86,12 @@ is no retry loop and the runner's one-load-per-process guard is unchanged.
 
 Use a fresh dedicated process in the existing pinned Linux/T4 environment with
 previously provisioned local snapshots, clean tracked checkout at the reviewed
-commit, and repository-relative cache under data/processed. No download command
-is part of this diagnostic. From the repository root:
+commit, and the same previously provisioned and verified local snapshot cache at
+`data/processed/moondream_hf`. Do not create a new cache or download again.
+From the repository root:
 
 ```sh
-python scripts/w2_moondream_load_diagnostic.py --execute-load-diagnostic --expected-commit <exact-reviewed-40-character-sha> --cache-dir data/processed/moondream_cache --run-id moondream-load-diagnostic-<unique-id>
+python scripts/w2_moondream_load_diagnostic.py --execute-load-diagnostic --expected-commit <exact-reviewed-40-character-sha> --cache-dir data/processed/moondream_hf --run-id moondream-load-diagnostic-<unique-id>
 ```
 
 Preserve the separate report for review; do not remove the old official ledger,
