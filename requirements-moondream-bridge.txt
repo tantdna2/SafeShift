@@ -1,0 +1,4 @@
+# CPU-only bridge test environment; NOT a model runtime qualification environment.
+# Install separately from requirements-validation.txt for the full suite.
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0+cpu
