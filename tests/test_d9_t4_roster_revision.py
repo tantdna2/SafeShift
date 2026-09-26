@@ -221,6 +221,12 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         authorized.add('scripts/w2_qwen3_external_gate.py')
         # D9R2F authorizes only the CPU return-value precision helper, no runner.
         authorized.add('safeshift/runners/moondream_precision.py')
+        # D9R2G explicitly authorizes separate Moondream runner/snapshot/binding PREP.
+        authorized.update({'safeshift/runners/moondream2.py',
+                           'safeshift/runners/moondream_binding.py',
+                           'safeshift/runners/moondream_snapshot.py',
+                           'scripts/provision_moondream_snapshot.py',
+                           'scripts/w2_moondream_t4_smoke.py'})
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}
