@@ -40,6 +40,22 @@ riêng; không suy ra kết quả từ kế hoạch.
 - **Next:** Research Lead must resolve the hard-coded BF16 vision path before
   runtime PREP can continue. No fallback and no resource/grounding promotion.
 
+## W2.6-D9R2H-MOONDREAM-LOAD-DIAGNOSTIC-PREP — no new experiment
+
+- Research Lead-reported previous run:
+  `kaggle-t4-moondream-smoke-20260926T070217Z-4c2d43`.
+  FAIL_T4_RUNTIME_INTERFACE / FAIL, load / ValueError, cause_type null;
+  query/detect counts 0, empty state_audits/image_boundaries, peak CUDA memory 0.
+  Snapshot verification, GPU condition and Python/dependencies reported PASS.
+- Original bundle was not independently inspected here; its execution SHA was
+  not supplied. Original FAIL and official ATTEMPT.json remain untouched.
+- Static analysis cannot uniquely identify the exception. Separate load-only
+  diagnostic **PREPARED_NOT_RUN**; no new real run ID, model outputs or metrics.
+  No official smoke rerun, download, GPU, query, detect, gate or InspecSafe.
+- [Static candidates, report contract and future invocation](notes/w2_moondream_load_diagnostic.md).
+  Existing runner, precision bridge and frozen runtime conditions unchanged;
+  no qualification or protocol-freeze promotion.
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>

@@ -439,3 +439,16 @@ This overlays historical D9R2E/F pending statuses without editing their audit/br
 records. No GPU, weights download, remote model code execution, inference, real
 smoke, synthetic gate or InspecSafe used. See the
 [implementation, validation and future runbook](notes/w2_moondream_runner_smoke_prep.md).
+
+## W2.6-D9R2H-MOONDREAM-LOAD-DIAGNOSTIC-PREP
+
+- [x] Static initialize/load analysis: old ValueError **NOT_UNIQUELY_IDENTIFIED**.
+- [x] Separate load-only harness with message/cause/context/traceback, provenance
+  and runner evidence; fake-only tests. **PREPARED_NOT_RUN**.
+- [x] Record Research Lead-reported old smoke FAIL at load, run
+  `kaggle-t4-moondream-smoke-20260926T070217Z-4c2d43`; preserve FAIL and ledger.
+- [ ] Real load diagnostic **NOT_RUN**; root cause and T4 runtime validation pending.
+
+No runner/bridge/runtime-plan change, official smoke retry, model download, GPU,
+query, detect, synthetic gate or InspecSafe execution. Earlier PREP milestones
+remain historical. See [analysis and diagnostic contract](notes/w2_moondream_load_diagnostic.md).

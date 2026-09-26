@@ -227,6 +227,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                            'safeshift/runners/moondream_snapshot.py',
                            'scripts/provision_moondream_snapshot.py',
                            'scripts/w2_moondream_t4_smoke.py'})
+        # D9R2H authorizes only a separate load-only diagnostic harness.
+        authorized.add('scripts/w2_moondream_load_diagnostic.py')
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}
