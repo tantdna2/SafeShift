@@ -114,7 +114,67 @@ existing `data/processed/moondream_hf/`, and venue Internet OFF attestation.
 Use a fresh OS process; no `%run` or reused notebook kernel. Venue networking
 must actually be disabled; the flag records the operator's attestation, not an
 independent network measurement. The runner's permanent Python network/child
-process denial remains defense in depth. No provision/download route is exposed.
+process denial remains defense in depth. No provision/download route is exposed
+inside initialize/load/gate. The narrow pre-execution cache policy below is
+separate; the gate plan's `EXISTING_VERIFIED_ONLY` runtime condition is unchanged.
+
+### EPHEMERAL CACHE REPROVISION FOR EXTERNAL GATE
+
+Authority: Research Lead's D9R2M follow-up reports that the Kaggle session holding
+the smoke cache was shut down after post-fix smoke PASS. Future external-gate
+execution starts in a new Kaggle session without that cache. This policy applies
+**only to future Moondream external gate**, not historical smoke, and does not
+authorize rerunning post-fix smoke or changing model/runner/precision bridge.
+
+Only if `data/processed/moondream_hf` is completely absent (including no dangling
+symlink) may the existing `scripts/provision_moondream_snapshot.py --provision`
+download these exact immutable snapshots, with Internet ON permitted:
+
+- `vikhyatk/moondream2`: `9a7d4024050840e001defacec2b00727e89149e6`.
+- `moondream/starmie-v1`: `35192e10a54e36eabe0a7cc57a2c1aab371cafc5`.
+
+If the cache exists, **verify-only**; never delete it to qualify for reprovision.
+An empty, partial or invalid existing cache means **STOP**: no repair, overwrite,
+reprovision, revision/hash change or fallback. The provisioner is unchanged; the
+absent-cache restriction is this execution policy and the guarded runbook below,
+not a new general permission to use its `--provision` mode elsewhere.
+
+Run the following block from the reviewed clean checkout in a dedicated Bash
+shell (`%%bash` is suitable), before gate execution. Each Python invocation is
+a separate OS process; verify-only installs its own permanent offline boundary.
+Any command failure means STOP. A failed provision that leaves a cache does not
+permit deleting/repairing it or repeating provision. The namespace/ledger must
+be retained across sessions; this exception never resets a gate attempt.
+
+```bash
+set -euo pipefail
+cache=data/processed/moondream_hf
+evidence=data/processed/external_gate/w2_moondream/cache_preflight
+test ! -e data/processed/external_gate/w2_moondream/ATTEMPT.json
+test ! -L data/processed/external_gate/w2_moondream/ATTEMPT.json
+if [ ! -e "$cache" ] && [ ! -L "$cache" ]; then
+  python scripts/provision_moondream_snapshot.py --provision --cache-dir "$cache" --manifest "$evidence/provision.json"
+  test -f "$evidence/provision.json"
+fi
+python scripts/provision_moondream_snapshot.py --verify-only --cache-dir "$cache" --manifest "$evidence/verify.json"
+if [ -e "$evidence/provision.json" ]; then
+  cmp -- "$evidence/provision.json" "$evidence/verify.json"
+fi
+```
+
+Both provision and verify validate every audited file's size/SHA-256 and immutable
+model/tokenizer identity. After provisioning, both manifests must exist and be
+**byte-for-byte identical** (`cmp` exit 0); retain them with exit statuses and
+the launch transcript. Existing-cache execution requires verify-only PASS;
+compare any retained provision manifest too. Missing post-provision evidence,
+manifest mismatch or verification failure means STOP, never gate execution.
+
+After provision + verify + comparison PASS (or existing-cache verify-only PASS),
+the **user must switch Kaggle Internet OFF** before launching the gate in a fresh
+process with `CUDA_VISIBLE_DEVICES=0`. Do not launch the gate in this setup block.
+No download is allowed in initialize/load/gate. Keep all existing execution
+commit, resource, raw-preservation and one-attempt requirements. No download,
+model, GPU or real gate was executed to prepare this policy.
 
 The fixed ledger is
 `data/processed/external_gate/w2_moondream/ATTEMPT.json`, exclusively created and
@@ -154,7 +214,7 @@ case suite, or attempt ledger. No new inference is needed for review.
 
 ## Validation
 
-**285/285 tests PASS**, including **26 new fake gate/adaptation tests**, on
+Initial PREP: **285/285 tests PASS**, including **26 new fake gate/adaptation tests**, on
 Windows / Python 3.11.9. Compilation and diff checks PASS. The historical source
 allowlist adds only the newly authorized gate script; protected hashes stay fixed.
 
@@ -182,3 +242,10 @@ adds a harness and documentary overlay; runner, precision bridge, canonical
 evaluator and dataset tooling are unchanged. Future Linux 3.11.11/T4 execution
 remains untested here. No real GPU/model execution, download, gate, InspecSafe
 inference, training, selection or merge occurred.
+
+Ephemeral-cache policy follow-up: **76/76 fake/static tests PASS**, including one
+new documentary check for exact pins, absent-cache guard, separate provision/
+verify commands, manifest comparison and manual Internet-OFF boundary:
+`.venv/Scripts/python.exe -m unittest tests.test_moondream_external_gate tests.test_moondream_runner_smoke tests.test_moondream_postfix_smoke -q`.
+Compilation and diff checks PASS. No runtime/provisioner/plan code changed;
+broader regressions were not repeated for this documentary amendment.

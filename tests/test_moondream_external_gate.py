@@ -27,6 +27,27 @@ def native(box):
 
 
 class AdaptationTests(unittest.TestCase):
+    def test_ephemeral_cache_policy_keeps_provision_outside_offline_gate(self):
+        document = (ROOT / "notes/w2_moondream_postfix_result_external_gate_prep.md").read_text(encoding="utf-8")
+        policy = document.split("### EPHEMERAL CACHE REPROVISION FOR EXTERNAL GATE\n", 1)[1].split("\nThe fixed ledger is", 1)[0]
+        for pin in (gate.REVISION, gate.TOKENIZER_REVISION):
+            self.assertIn(pin, policy)
+        block = policy.split("```bash\n", 1)[1].split("```", 1)[0]
+        self.assertIn('if [ ! -e "$cache" ] && [ ! -L "$cache" ]; then', block)
+        self.assertIn("set -euo pipefail", block)
+        commands = [line.strip() for line in block.splitlines() if line.strip().startswith("python ")]
+        self.assertEqual(commands, [
+            'python scripts/provision_moondream_snapshot.py --provision --cache-dir "$cache" --manifest "$evidence/provision.json"',
+            'python scripts/provision_moondream_snapshot.py --verify-only --cache-dir "$cache" --manifest "$evidence/verify.json"'])
+        self.assertIn('cmp -- "$evidence/provision.json" "$evidence/verify.json"', block)
+        self.assertIn("user must switch Kaggle Internet OFF", policy)
+        self.assertIn("partial or invalid existing cache means **STOP**", policy)
+        self.assertNotIn("w2_moondream_external_gate.py", block)
+        self.assertNotIn("w2_moondream_postfix_smoke.py", block)
+        source = (ROOT / "scripts/w2_moondream_external_gate.py").read_text(encoding="utf-8")
+        self.assertNotIn("snapshot_download", source)
+        self.assertNotIn("provision_moondream_snapshot", source)
+
     def test_one_box_is_canonical_with_clamp_visible_and_extra_fields_lossless(self):
         value = native([-0.1, 0.2, 0.3, 1.2])
         value["uninterpreted"] = [True, None, -0.0]

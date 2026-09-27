@@ -525,6 +525,10 @@ Current documentary overlay on the historical D9R2L PREP milestone above.
   canonical evaluator and PENDING human giant-box review.
 - [x] Implement separate fixed one-attempt ledger, exact-commit/clean-checkout,
   cache/mask/runtime guards and stop-on-failure behavior; fake/static tests only.
+- [x] Document the external-gate-only ephemeral cache exception: provision exact
+  pinned snapshots only when the cache is wholly absent; separate verify-only
+  and identical manifests required. Existing cache is verify-only; invalid cache
+  STOP without repair/deletion. User switches Internet OFF before the gate.
 - [ ] Real external gate **NOT_RUN**; grounding qualification **PENDING**.
   Protocol freeze **PENDING**; no automatic role promotion.
 

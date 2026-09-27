@@ -1234,6 +1234,17 @@
   not superseded. External gate PREPARED_NOT_RUN; qualification/freeze PENDING.
   No dataset/split/label/metric, runner/upstream/bridge or model-role change.
   [Evidence, rules and future procedure](notes/w2_moondream_postfix_result_external_gate_prep.md).
+- **EPHEMERAL CACHE REPROVISION FOR EXTERNAL GATE (D9R2M follow-up):** Research
+  Lead reports the smoke Kaggle session/cache was lost. Only a completely absent
+  `data/processed/moondream_hf` in the new session permits the existing provisioner
+  `--provision`, for model `9a7d4024050840e001defacec2b00727e89149e6` and tokenizer
+  `35192e10a54e36eabe0a7cc57a2c1aab371cafc5`. Then verify-only in a separate process;
+  provision/verify manifests must be byte-identical and every audited size/hash/
+  identity must PASS. Existing cache: verify-only; partial/invalid: STOP, no
+  deletion, repair, overwrite or changed pins. Provision may use Internet ON;
+  user must switch Internet OFF before the offline gate. Future external gate
+  only: no historical-smoke change, post-fix smoke rerun, runner/bridge change or
+  attempt-ledger reset. Documentary preparation only; no real execution here.
 
 ## Template
 
