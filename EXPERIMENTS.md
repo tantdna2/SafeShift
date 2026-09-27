@@ -76,6 +76,20 @@ riêng; không suy ra kết quả từ kế hoạch.
   No real diagnostic, model construction, GPU/model execution, query/detect,
   bridge, smoke, gate, InspecSafe, download or merge.
 
+## W2.6-D9R2L-MOONDREAM-POSTFIX-SMOKE-PREP — no new experiment
+
+- Research Lead reports `moondream-load-diagnostic-20260927T014821Z-b3c87faa`:
+  LOAD_ONLY_PASS, complete, exit 0, exception null, load count 1, state audit VALID,
+  query/detect 0; exactly one visible Tesla T4 CC 7.5, Python 3.11.11/exact pins,
+  provision == verify manifests, execution `a6f5c012437bf8f404924e8dfb19a11536a92d77`.
+  Original bundle not independently inspected here.
+- Historical `kaggle-t4-moondream-smoke-20260926T070217Z-4c2d43` remains FAIL /
+  consumed before successful load. Its ledger/result are not reset or replaced.
+- Separate post-fix smoke **PREPARED_NOT_RUN**, independent one-attempt ledger;
+  fake/static tests only, no new real run ID, raw model outputs or metrics.
+- [Contract, future commands and validation](notes/w2_moondream_postfix_smoke_prep.md).
+  No GPU/model execution, download, real smoke, external gate, InspecSafe or merge.
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>
