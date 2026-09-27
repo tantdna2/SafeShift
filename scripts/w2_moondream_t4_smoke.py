@@ -46,7 +46,8 @@ def check_native(value, task):
         # No bounds, origin assumption, clamping, box repair or accuracy score.
 
 
-def run_smoke(runner, *, run_id, execution_commit, store, image_bytes):
+def run_smoke(runner, *, run_id, execution_commit, store, image_bytes,
+              command="scripts/w2_moondream_t4_smoke.py"):
     """No retries. Caller must reserve the one-attempt ledger before entry."""
     plan = load_plan()
     report = {"schema_version": "moondream-smoke-result-v1", "run_id": run_id,
@@ -60,7 +61,7 @@ def run_smoke(runner, *, run_id, execution_commit, store, image_bytes):
               "peak_cuda_memory_allocated": None, "peak_cuda_memory_reserved": None}
     context = RunContext(run_id, "query", DECODING, PREPROCESSING, "FP16", "NONE",
                          {"placement": "cuda:0"}, plan["software"], execution_commit,
-                         "scripts/w2_moondream_t4_smoke.py", "HANDCRAFTED_SMOKE_ONLY")
+                         command, "HANDCRAFTED_SMOKE_ONLY")
     stage = "fixture"
     try:
         if hashlib.sha256(image_bytes).hexdigest() != plan["smoke_fixture_sha256"]:

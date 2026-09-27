@@ -229,6 +229,10 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                            'scripts/w2_moondream_t4_smoke.py'})
         # D9R2H authorizes only a separate load-only diagnostic harness.
         authorized.add('scripts/w2_moondream_load_diagnostic.py')
+        # D9R2J's identity-only diagnostic is already present in the base checkout.
+        authorized.add('scripts/w2_moondream_function_identity_diagnostic.py')
+        # D9R2L authorizes a separate post-fix smoke with its own attempt ledger.
+        authorized.add('scripts/w2_moondream_postfix_smoke.py')
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}

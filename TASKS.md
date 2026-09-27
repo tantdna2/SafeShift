@@ -497,3 +497,17 @@ bridge, smoke, gate, InspecSafe, download or merge.
 See [exact closure policy and validation](notes/w2_moondream_function_identity_diagnostic.md#d9r2k--expected-closure-fix).
 No redactor/upstream/model patch, fallback or new diagnostic. No real diagnostic,
 GPU/model execution, download, smoke/query/detect/gate/InspecSafe or merge.
+
+## W2.6-D9R2L-MOONDREAM-POSTFIX-SMOKE-PREP
+
+- [x] Record Research Lead-reported load-only PASS at base
+  `a6f5c012437bf8f404924e8dfb19a11536a92d77`; historical official smoke remains
+  FAIL / consumed. Original evidence not independently inspected in this PREP.
+- [x] Prepare separate post-fix wrapper with fixed namespace/one-attempt ledger,
+  reusing the existing smoke lifecycle and preserving actual command provenance.
+- [x] Fake/static checks: **131/131 tests PASS**; compile and diff checks PASS.
+- [ ] Real post-fix smoke **NOT_RUN**; query/detect feasibility and qualification
+  remain **PENDING**, protocol freeze **PENDING**.
+
+See [contract and fake/static validation](notes/w2_moondream_postfix_smoke_prep.md).
+No real runtime execution, download, external gate, InspecSafe, redaction fix or merge.
