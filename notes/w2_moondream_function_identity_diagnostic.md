@@ -155,3 +155,53 @@ smoke/diagnostic artifact namespaces. Synthetic constructors raise if called.
 Real diagnostic, snapshot import/verification against real cache, GPU/model
 execution and all qualification checks are intentionally NOT_RUN. The fake test
 environment is not claimed to reproduce the pinned runtime identity failure.
+
+## D9R2K — expected closure fix
+
+Base: `47a09acd7573057b0811e521debf22da53705f78` (2026-09-26).
+Source of runtime evidence: Research Lead's task report for
+`moondream-function-identity-20260926T133534Z-cb4dd2cd`; no independent runtime
+rerun or artifact re-audit in this fix. Reported `MoondreamModel.__init__`:
+exact FunctionType, module globals identity and qualname all true;
+`closure_is_none=false`, closure length 1, `co_freevars=["__class__"]`;
+expected code exists and code signature matches. This identifies the old
+blanket closure-None requirement as the failing predicate and supersedes the
+earlier unknown-subcondition status. It does not establish runtime qualification.
+
+`verify_function` retains exact FunctionType, globals identity, qualname,
+verified source size/SHA-256 and exact code-signature comparison. After finding
+and matching the expected audited code, it enforces:
+
+- Expected freevars `()`: actual closure must be `None`, including rejection of
+  an empty tuple. This retains the ordinary-function and vision-helper policy.
+- Expected freevars `("__class__",)`: actual code must have that exact tuple;
+  closure must be an exact tuple of length one with a non-empty cell. The owner
+  is the class name preceding the method in the audited qualname, resolved
+  directly in the module dictionary and required to be a class. Cell contents
+  must be that same object (`is`), specifically `module.MoondreamModel` for
+  `MoondreamModel.__init__`. Missing/nonclass owners fail closed; nested/local
+  class paths are not implicitly resolved or accepted.
+- Every other expected freevar tuple fails closed.
+
+Offline validation, Windows / Python 3.11.9, stdlib unittest with handcrafted
+source and fake backends only; no randomization or downloaded source execution:
+
+```text
+python -m unittest tests.test_moondream_binding tests.test_moondream_function_identity_diagnostic tests.test_moondream_load_diagnostic tests.test_moondream_runner_smoke
+Ran 82 tests; OK
+git diff --check
+PASS
+```
+
+New tests cover class/super closure acceptance, identical bytecode with a wrong
+class, empty/deleted cells, unsupported audited freevars, missing/nonclass owner,
+ordinary and four vision functions (None versus empty tuple), code/freevar
+mismatch, missing expected code, globals/qualname/type mismatch and source
+hash/size tampering. The existing diagnostic rejection test now supplies
+synthetic verified source and expects bytecode rejection for its injected
+unrelated closure; independent observation predicates remain unchanged.
+
+NO runtime/model execution. Real load/identity diagnostics, GPU, downloads,
+smoke, query, detect, gate and InspecSafe intentionally NOT_RUN. No redaction
+fix, upstream/model patch, fallback or additional diagnostic. Only offline
+validation is complete; runtime qualification and protocol freeze stay pending.

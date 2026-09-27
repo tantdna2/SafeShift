@@ -36,7 +36,7 @@ def verified_source(snapshot, filename):
 
 def verify_function(function, module, snapshot, filename, qualname):
     if (type(function) is not types.FunctionType or function.__globals__ is not vars(module)
-            or function.__qualname__ != qualname or function.__closure__ is not None):
+            or function.__qualname__ != qualname):
         raise ValueError("AUDITED_FUNCTION_IDENTITY_REQUIRED")
     compiled = compile(verified_source(snapshot, filename), filename, "exec", dont_inherit=True)
     def find(code):
@@ -51,6 +51,25 @@ def verify_function(function, module, snapshot, filename, qualname):
     expected = find(compiled)
     if expected is None or code_signature(expected) != code_signature(function.__code__):
         raise ValueError("AUDITED_BYTECODE_REQUIRED")
+    # Only the audited class cell is allowed; never accept arbitrary closures.
+    closure = function.__closure__
+    if expected.co_freevars == ():
+        if closure is not None:
+            raise ValueError("AUDITED_FUNCTION_IDENTITY_REQUIRED")
+    elif expected.co_freevars == ("__class__",):
+        owner = vars(module).get(qualname.rpartition(".")[0])
+        if (function.__code__.co_freevars != ("__class__",)
+                or type(closure) is not tuple or len(closure) != 1
+                or not isinstance(owner, type)):
+            raise ValueError("AUDITED_FUNCTION_IDENTITY_REQUIRED")
+        try:
+            cell_class = closure[0].cell_contents
+        except ValueError:
+            raise ValueError("AUDITED_FUNCTION_IDENTITY_REQUIRED") from None
+        if cell_class is not owner:
+            raise ValueError("AUDITED_FUNCTION_IDENTITY_REQUIRED")
+    else:
+        raise ValueError("AUDITED_FUNCTION_IDENTITY_REQUIRED")
     return function
 
 
