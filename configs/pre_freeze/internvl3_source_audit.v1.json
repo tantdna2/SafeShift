@@ -1,0 +1,141 @@
+{
+  "model_id": "OpenGVLab/InternVL3-2B-hf",
+  "model_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+  "transformers_source_commit": "51f94ea06d19a6308c61bbb4dc97c40aabd12bad",
+  "weights_downloaded": false,
+  "remote_code_executed": false,
+  "sources": {
+    "revision_api": {
+      "url": "https://huggingface.co/api/models/OpenGVLab/InternVL3-2B-hf/revision/cb57a075cb75a2e6d1b668b128d48bb00ae321d2?blobs=true",
+      "response_sha256": "66f612274e02729ca9dd696b069ca5c807e2908795e1f3123fde92842685dbe5",
+      "size_bytes": 3748,
+      "accessed_at_utc": "2026-09-28T02:54:59.053516+00:00"
+    },
+    "README.md": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/README.md",
+      "response_sha256": "1f8d0baf3d21588d874f5a6e328ce6e43974fe10ce72f1d222ed0d04a38a1b07",
+      "size_bytes": 16260,
+      "accessed_at_utc": "2026-09-28T02:54:59.411961+00:00"
+    },
+    "config.json": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/config.json",
+      "response_sha256": "5e937511160b956a0be409ddc4185b8167a9855e26c263aa11e36205802e4c38",
+      "size_bytes": 1959,
+      "accessed_at_utc": "2026-09-28T02:54:59.810420+00:00"
+    },
+    "preprocessor_config.json": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/preprocessor_config.json",
+      "response_sha256": "af09ffbe57900d5ae07f93f4c20693559a272e32fa6c5f816132cb71985aac98",
+      "size_bytes": 666,
+      "accessed_at_utc": "2026-09-28T02:55:00.146964+00:00"
+    },
+    "processor_config.json": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/processor_config.json",
+      "response_sha256": "3511f4ae65c2fa5c1ab6a0fb2bb2fe767d6f0ee53ba412953b33acc892327c2a",
+      "size_bytes": 72,
+      "accessed_at_utc": "2026-09-28T02:55:00.477482+00:00"
+    },
+    "generation_config.json": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/generation_config.json",
+      "response_sha256": "c142bebeae7dfc9ef119d3f12fb03022261ceef51320c75ead103af4d8e150c2",
+      "size_bytes": 126,
+      "accessed_at_utc": "2026-09-28T02:55:00.828964+00:00"
+    },
+    "tokenizer_config.json": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/tokenizer_config.json",
+      "response_sha256": "b336af8282760f5e596726eb9834ce20dd6625d55aa7df73030ef4c59028567f",
+      "size_bytes": 6861,
+      "accessed_at_utc": "2026-09-28T02:55:01.173294+00:00"
+    },
+    "chat_template.jinja": {
+      "url": "https://huggingface.co/OpenGVLab/InternVL3-2B-hf/raw/cb57a075cb75a2e6d1b668b128d48bb00ae321d2/chat_template.jinja",
+      "response_sha256": "b3e3fa7cdeceec1d3dfe0d17b77724baf3857714e688f3a700261567e96140eb",
+      "size_bytes": 481,
+      "accessed_at_utc": "2026-09-28T02:55:01.711309+00:00"
+    },
+    "models__internvl__modeling_internvl.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/models/internvl/modeling_internvl.py",
+      "response_sha256": "a4b0500b11232e2ea5508787da7327b4ef7d5aa81872f7e7eee87b1c85b5d7d8",
+      "size_bytes": 49034,
+      "accessed_at_utc": "2026-09-28T02:55:02.290714+00:00"
+    },
+    "models__internvl__processing_internvl.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/models/internvl/processing_internvl.py",
+      "response_sha256": "91caef768f7ba05e62f08d08dc35dc5283c3e22b950e203eec12b73f27c57847",
+      "size_bytes": 17191,
+      "accessed_at_utc": "2026-09-28T02:55:02.806607+00:00"
+    },
+    "models__got_ocr2__image_processing_got_ocr2_fast.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/models/got_ocr2/image_processing_got_ocr2_fast.py",
+      "response_sha256": "91de5ccfdc0fd20eb4999d027dc9d1d3a42c36f1347f21ad7177e899bed45264",
+      "size_bytes": 9481,
+      "accessed_at_utc": "2026-09-28T02:55:03.257688+00:00"
+    },
+    "models__auto__video_processing_auto.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/models/auto/video_processing_auto.py",
+      "response_sha256": "7a69f358d71187d5e8fc6e7ccf44eeee4a00a104a01e01af72122122a1e000d8",
+      "size_bytes": 18709,
+      "accessed_at_utc": "2026-09-28T02:55:03.743807+00:00"
+    },
+    "models__auto__processing_auto.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/models/auto/processing_auto.py",
+      "response_sha256": "402b2e382782c7340e93315d46c1347bd313ecb01e7977dfcae4e73114425678",
+      "size_bytes": 19673,
+      "accessed_at_utc": "2026-09-28T02:55:04.245808+00:00"
+    },
+    "models__auto__modeling_auto.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/models/auto/modeling_auto.py",
+      "response_sha256": "ae6c3f7d5f689792d9bb8e38d8bc44e0343c3b1867e023fb94280c45b9a40848",
+      "size_bytes": 86379,
+      "accessed_at_utc": "2026-09-28T02:55:05.008992+00:00"
+    },
+    "models__qwen2__modeling_qwen2.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/models/qwen2/modeling_qwen2.py",
+      "response_sha256": "a61bb2d35b25a1cec1eebcff887f3ee44c86a908e9abdca049ae447c7e8df1d6",
+      "size_bytes": 42690,
+      "accessed_at_utc": "2026-09-28T02:55:05.463491+00:00"
+    },
+    "generation__utils.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/generation/utils.py",
+      "response_sha256": "9456d3984643f9347b6772aead6392c239702eccbb5872ad0e3f52b492594ba5",
+      "size_bytes": 287207,
+      "accessed_at_utc": "2026-09-28T02:55:06.823736+00:00"
+    },
+    "modeling_utils.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/modeling_utils.py",
+      "response_sha256": "3fb801fc5b5a14a2396bebb9d503dee6a88213e2a2ce56ac9041c488e7f8566a",
+      "size_bytes": 305342,
+      "accessed_at_utc": "2026-09-28T02:55:07.561987+00:00"
+    },
+    "feature_extraction_utils.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/feature_extraction_utils.py",
+      "response_sha256": "ffb7e79ff07d585ac7eadbf82abc30ec87aedeb1b1dbf78361b019e3f6601b95",
+      "size_bytes": 30443,
+      "accessed_at_utc": "2026-09-28T02:55:08.100982+00:00"
+    },
+    "dependency_versions_table.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/dependency_versions_table.py",
+      "response_sha256": "49a483877af34149739c9901163b57d19104a8a4e8ac62a12212af1add2b4250",
+      "size_bytes": 3711,
+      "accessed_at_utc": "2026-09-28T02:55:08.571746+00:00"
+    },
+    "modeling_rope_utils.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/modeling_rope_utils.py",
+      "response_sha256": "3a0bcdd0d4223c7645fc4bdcc53ff43d16689ead85e0751ed604dd173dba4358",
+      "size_bytes": 32960,
+      "accessed_at_utc": "2026-09-28T03:08:22.282060+00:00"
+    },
+    "video_processing_utils.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/51f94ea06d19a6308c61bbb4dc97c40aabd12bad/src/transformers/video_processing_utils.py",
+      "response_sha256": "aa85a54a4948f7eef24ebf18718d4d51ae13ce35a4d6474b602b3b799ee9a099",
+      "size_bytes": 36939,
+      "accessed_at_utc": "2026-09-28T03:08:22.792965+00:00"
+    },
+    "transformers_4.52.4_pypi": {
+      "url": "https://pypi.org/pypi/transformers/4.52.4/json",
+      "response_sha256": "33f1ad1cb8d3e21f02aeec3121c320f2786e31d4ae6363ef0e242378b5dbb007",
+      "size_bytes": 58511,
+      "accessed_at_utc": "2026-09-28T02:55:09.033745+00:00"
+    }
+  }
+}

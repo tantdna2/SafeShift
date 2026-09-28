@@ -97,6 +97,14 @@ PASS, but its production adapter remains NOT_QUALIFIED (grounding UNSUPPORTED,
 classification INVALID). InternVL3 eligibility/gate remains unresolved.
 Checklist #1 COMPLETE; #2–#8 PENDING. Historical milestones below are preserved.
 
+**Current D9R4 PREP overlay (2026-09-28):** InternVL3 offline runner COMPLETE /
+OFFLINE_TESTED; exact-revision source audit, snapshot provision/verification and
+single-T4 smoke harness implemented. Real runtime remains PENDING / NOT_RUN;
+resource T4_FEASIBILITY_CANDIDATE, classification CANDIDATE, grounding
+NOT_YET_DOCUMENTARILY_QUALIFIED. Production adapter NOT_QUALIFIED (classification
+INVALID, grounding UNSUPPORTED). See [D9R4 preparation and runbook](notes/w2_internvl3_runner_smoke_prep.md).
+Checklist #2–#8 remains PENDING; the D9R3 matrix above is its recorded milestone.
+
 - [x] Synchronize the D9 decision ledger, checklist, implementation note and two
   configuration templates; preserve historical D8 evidence and SYNTHETIC V1 assets.
 - [x] **1. Model provenance:** COMPLETE (W2.6B0 documentary scope): exact D9 IDs,
@@ -577,3 +585,21 @@ bridge/frozen-suite/config changes or binary artifacts.
   the primary roster, no backup activation or final role assignment.
 
 Configuration/documentary reconciliation only. **NO REAL RUNTIME EXECUTION**.
+
+## W2.6-D9R4-INTERNVL3-RUNNER-SMOKE-PREP
+
+- [x] Audit exact `OpenGVLab/InternVL3-2B-hf` revision
+  `cb57a075cb75a2e6d1b668b128d48bb00ae321d2`; native Transformers API, no remote code,
+  actual dynamic tiling/token expansion, FP16 candidate and spatial evidence limits.
+- [x] Implement offline lifecycle, pinned snapshot verifier and explicit provisioner;
+  preserve and re-read raw bytes/hash/size before any adapter. Pending adapters only.
+- [x] Prepare one-process-visible-T4 FP16/NONE smoke with exact checkout/environment,
+  one load, two independent native calls, state/VRAM/raw/failure evidence and runbook.
+- [x] Fake/static focused tests and related D9 regressions; no real model execution.
+- [ ] Research Lead audit and separate real single-T4 smoke: PENDING / NOT_RUN.
+- [ ] Classification parser qualification and documentary spatial eligibility remain
+  unresolved; no external gate executed. Checklist #2–#8/protocol freeze PENDING.
+
+Base: `582bc1f6d15fa29dd93cd21a43fb7f8cfaa771c2`. Single Draft PR only, no merge.
+No backup activation, final role assignment, InspecSafe inference or weights fetched.
+**NO REAL RUNTIME EXECUTION.** Evidence and checks: [D9R4 note](notes/w2_internvl3_runner_smoke_prep.md).
