@@ -235,6 +235,11 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         authorized.add('scripts/w2_moondream_postfix_smoke.py')
         # D9R2M authorizes the separate frozen native-detect external gate PREP.
         authorized.add('scripts/w2_moondream_external_gate.py')
+        # D9R4 authorizes InternVL3 runner, snapshot and smoke PREP only.
+        authorized.update({'safeshift/runners/internvl3.py',
+                           'safeshift/runners/internvl3_snapshot.py',
+                           'scripts/provision_internvl3_snapshot.py',
+                           'scripts/w2_internvl3_t4_smoke.py'})
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}
@@ -377,7 +382,9 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertTrue((ROOT / overlay['readiness_matrix']).is_file())
         intern = self.primary[2]
         self.assertEqual(intern['documentary_status'], 'COMPLETE')
-        self.assertEqual(intern['offline_runner_status'], 'PENDING')
+        self.assertEqual(intern['offline_runner_status'], 'COMPLETE')
+        self.assertTrue((ROOT / intern['offline_runner_evidence']).is_file())
+        self.assertEqual(intern['production_adapter_status'], 'NOT_QUALIFIED')
         self.assertEqual(intern['runtime_smoke_status'], 'PENDING')
         self.assertEqual(intern['grounding'], 'NOT_YET_DOCUMENTARILY_QUALIFIED')
 

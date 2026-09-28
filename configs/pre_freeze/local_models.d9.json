@@ -81,7 +81,11 @@
         "KAGGLE_T4_FALLBACK_ALLOWED"
       ],
       "documentary_status": "COMPLETE",
-      "offline_runner_status": "PENDING",
+      "offline_runner_status": "COMPLETE",
+      "offline_runner_evidence": "notes/w2_internvl3_runner_smoke_prep.md",
+      "production_adapter_status": "NOT_QUALIFIED",
+      "production_adapter_grounding": "UNSUPPORTED",
+      "production_adapter_classification": "INVALID",
       "runtime_smoke_status": "PENDING",
       "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     },
