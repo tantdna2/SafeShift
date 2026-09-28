@@ -623,3 +623,28 @@ Result record: [InternVL3 runtime result](configs/pre_freeze/internvl3_t4_runtim
 This is result recording only: **NO REAL RUNTIME EXECUTION IN THIS PR**, no external
 gate execution, no InspecSafe inference, no protocol freeze, final role assignment,
 backup activation or merge.
+
+## W2.6-D9R6-PALIGEMMA-PRIMARY-EXPANSION-PRECOMMIT (2026-09-28)
+
+- [x] Record the Research Lead's sole pre-specified PaliGemma primary-expansion
+  candidate, exact immutable revision and separate precommit qualification
+  contract before protocol freeze and before any InspecSafe inference.
+- [x] Preserve the current four-primary roster and PaliGemma's existing
+  `BACKUP_1` record; link the machine-readable precommit from the local roster
+  and freeze template. This is roster expansion, not backup substitution.
+- [x] Preserve the existing synthetic-v1 eight-case manifest, SHA-256 and gate
+  semantics while allowing the pre-specified expansion candidate to enter the
+  same qualification scope.
+- [ ] Owner access/terms confirmation: PENDING (`GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED`).
+- [ ] PaliGemma exact-source/loader/API audit: PENDING.
+- [ ] Offline runner preparation: PENDING.
+- [ ] Real single-T4 FP16/NONE smoke: PENDING / NOT_RUN.
+- [ ] Deterministic external classification-interface qualification: PENDING.
+- [ ] Frozen synthetic-v1 grounding gate: PENDING / NOT_RUN.
+- [ ] Separate Research Lead promotion decision and independent audit: PENDING.
+
+Governance/configuration precommit only. No model dependency installation,
+weights, GPU, inference, InspecSafe performance, protocol freeze or merge was
+performed in this task. Checklist #1/#2/#5 remain `COMPLETE`; #3/#4/#6/#7/#8
+remain `PENDING`, and protocol freeze remains blocked until the expansion
+candidate is resolved.

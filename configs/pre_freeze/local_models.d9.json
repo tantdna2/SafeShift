@@ -4,6 +4,13 @@
   "protocol_freeze_commit_sha": "PENDING",
   "model_provenance_config": "configs/pre_freeze/local_model_provenance.d9.json",
   "inspecsafe_inference_authorized": false,
+  "primary_expansion_precommit": {
+    "status": "PENDING_QUALIFICATION",
+    "candidate_key": "paligemma_3b_mix_448",
+    "record_path": "configs/pre_freeze/paligemma_primary_expansion_precommit.v1.json",
+    "promotion_requires_separate_review_pr_audit": true,
+    "automatic_promotion": false
+  },
   "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
   "selection_basis": "PRE_FREEZE_RESOURCE_CONSTRAINT; NO_INSPECSAFE_PERFORMANCE_USED",
   "execution_policy": {
@@ -227,7 +234,7 @@
     "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
     "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
     "interface_contract": "EXISTING_BOX_GATE_UNCHANGED",
-    "eligibility_review_scope": "FOUR_PRIMARY_CANDIDATES_AND_ANY_ACTIVATED_BACKUP",
+    "eligibility_review_scope": "CURRENT_FOUR_PRIMARY_CANDIDATES_PLUS_PRESPECIFIED_PRIMARY_EXPANSION_CANDIDATE_AND_ANY_ACTIVATED_BACKUP",
     "execution_scope": "QUALIFYING_BOX_INTERFACES; POINT_ONLY_IS_NOT_PARTICIPATING",
     "qualitative_giant_box_review_procedure": "PENDING_BEFORE_GATE_EXECUTION",
     "status": "PENDING"

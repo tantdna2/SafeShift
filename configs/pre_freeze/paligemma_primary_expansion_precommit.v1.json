@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0",
+  "record_kind": "PRIMARY_EXPANSION_PRECOMMIT",
+  "status": "PENDING_QUALIFICATION",
+  "protocol_freeze_commit_sha": "PENDING",
+  "inspecsafe_inference_authorized": false,
+  "inspecsafe_performance_used": false,
+  "decision_timing": {
+    "before_protocol_freeze": true,
+    "before_inspecsafe": true,
+    "inspecsafe_performance_used": false
+  },
+  "candidate": {
+    "key": "paligemma_3b_mix_448",
+    "model_id": "google/paligemma-3b-mix-448",
+    "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+    "current_role": "BACKUP_1",
+    "intended_role_if_qualified": "PRIMARY_5"
+  },
+  "selection_basis": {
+    "independent_vlm_required": true,
+    "classification_and_native_box_grounding_required": true,
+    "inspecsafe_performance_used": false,
+    "documentary_provenance_present": true,
+    "documented_interfaces_not_qualified": true,
+    "summary": "A further independent VLM is needed with the same classification capability and native box grounding capability. No InspecSafe performance was used to select this candidate. PaliGemma has documentary provenance in this repository; its object-detection interface and native-coordinate behavior are documented, but qualification has not been completed."
+  },
+  "qualification_status": {
+    "access": "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED",
+    "runtime": "PENDING_QUALIFICATION",
+    "classification_interface": "PENDING_QUALIFICATION",
+    "grounding_interface": "PENDING_QUALIFICATION",
+    "external_gate": "PENDING_QUALIFICATION"
+  },
+  "qualification_contract": {
+    "access_terms": {
+      "status": "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED",
+      "owner_must_confirm_gemma_terms_acceptance": true,
+      "codex_may_not_self_assert_acceptance": true,
+      "owner_acceptance_evidence_required": true
+    },
+    "documentary_source_interface": {
+      "exact_revision_must_remain": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "loader_preprocessor_api_verification_required": true,
+      "remote_code_substitution": "FORBIDDEN",
+      "native_classification_route_documentary_basis": "REQUIRED",
+      "native_detection_box_grammar_documentary_basis": "REQUIRED",
+      "canonical_box_conversion": "DETERMINISTIC_REQUIRED",
+      "status": "PENDING_QUALIFICATION"
+    },
+    "real_single_t4_runtime": {
+      "status": "PENDING_QUALIFICATION",
+      "visible_gpu_count": 1,
+      "gpu_model": "NVIDIA_T4",
+      "gpu_memory_gb": 16,
+      "compute_capability": "7.5",
+      "precision": "FP16",
+      "quantization": "NONE",
+      "batch_size": 1,
+      "device": "cuda:0",
+      "cpu_inference_offload": "FORBIDDEN",
+      "disk_offload": "FORBIDDEN",
+      "automatic_precision_fallback": "FORBIDDEN",
+      "automatic_quantization_fallback": "FORBIDDEN",
+      "model_substitution": "FORBIDDEN",
+      "scope": "LOAD_INTERFACE_RESOURCE_FEASIBILITY_ONLY; NOT_ACCURACY_BENCHMARK"
+    },
+    "classification_interface": {
+      "status": "PENDING_QUALIFICATION",
+      "input_scope": "EXTERNAL_HANDCRAFTED_INPUT",
+      "deterministic_parse_to_safeshift_classification_schema": true,
+      "inspecsafe_used_to_design_parser": false,
+      "raw_output_saved_before_parse": true,
+      "accuracy_evaluation_required": false
+    },
+    "grounding_interface": {
+      "status": "PENDING_QUALIFICATION",
+      "native_output_grammar": "<loc y_min><loc x_min><loc y_max><loc x_max>",
+      "canonical_output": "[x_min, y_min, x_max, y_max] in [0,1]",
+      "conversion": "DETERMINISTIC_NATIVE_COORDINATE_MAPPING",
+      "point_to_box": "FORBIDDEN",
+      "prompt_trick": "FORBIDDEN",
+      "fabricated_box": "FORBIDDEN",
+      "artificial_zero_iou": "FORBIDDEN"
+    },
+    "frozen_external_gate": {
+      "status": "PENDING_QUALIFICATION",
+      "suite_version": "synthetic-v1",
+      "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
+      "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+      "cases_unchanged": true,
+      "gate_semantics_unchanged": true,
+      "qualification_requires_gate_result": true,
+      "diagnostic_iou_or_area_is_not_a_new_threshold": true
+    }
+  },
+  "promotion_rule": {
+    "if_all_qualification_contracts_pass": "ELIGIBLE_FOR_PRIMARY_PROMOTION",
+    "promotion_requires_separate_research_lead_review": true,
+    "promotion_requires_separate_pr": true,
+    "promotion_requires_separate_independent_audit": true,
+    "automatic_promotion": false,
+    "if_objective_prespecified_blocker_fails": "DO_NOT_PROMOTE",
+    "automatic_alternate_candidate": false,
+    "future_alternate_requires_new_research_lead_decision": true
+  },
+  "roster_boundary": {
+    "primary_roster_count": 4,
+    "current_primary_roster_unchanged": true,
+    "current_backup_record_preserved": true,
+    "backup_substitution": false,
+    "replacement_policy_is_not_promotion_path": true
+  }
+}

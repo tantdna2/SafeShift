@@ -77,6 +77,10 @@ proof of successful T4 execution. No automatic BF16/quantized fallback is allowe
    not selected here. Explicit FP16 load/cast remains a candidate. Card code uses
    the 224 variant, so it is family guidance, not exact-448 runtime validation.
    Reviewed documentation does not qualify an exact native coordinate grammar.
+   D9R6 records this same backup as the sole pre-specified primary-expansion
+   candidate, with status `PENDING_QUALIFICATION`; it remains `BACKUP_1` until
+   a separate qualification result and promotion decision. This path does not
+   activate replacement policy or alter the current four-primary roster.
 2. `HuggingFaceTB/SmolVLM2-2.2B-Instruct` at
    `482adb537c021c86670beed01cd58990d01e72e4`, classification candidate,
    `T4_FEASIBILITY_CANDIDATE`. The [exact card](https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/blob/482adb537c021c86670beed01cd58990d01e72e4/README.md)
@@ -119,6 +123,11 @@ Other D9 objective access/classification blockers remain explicit in the unchang
 replacement policy. Grounding-only failure never triggers substitution or zero IoU.
 Model substitution after InspecSafe is forbidden. Research precision, decoding
 and prompts are not frozen by this qualification policy.
+
+For the D9R6 expansion path, these same T4 constraints are pre-specified for
+PaliGemma. Its qualification is a separate primary-expansion decision and does
+not reinterpret the existing backup substitution policy or claim runtime,
+classification, grounding or gate completion.
 
 D5 is unchanged: Balanced Accuracy, Macro-F1, FPR/FNR policy and Level01
 safety-critical metrics; Class-Conditional Recall, Pooled-to-domain Gap/Drop and
