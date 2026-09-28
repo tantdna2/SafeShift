@@ -27,6 +27,8 @@ class InternVL3RuntimeResultTests(unittest.TestCase):
         self.assertEqual(r["execution_commit"], "088a7ff7f4d2c9fb6b72accc6922d02317643bdf")
         self.assertEqual(r["model_id"], "OpenGVLab/InternVL3-2B-hf")
         self.assertEqual(r["immutable_revision"], "cb57a075cb75a2e6d1b668b128d48bb00ae321d2")
+        self.assertEqual(r["documentary_status"], "COMPLETE")
+        self.assertEqual(r["offline_runner_status"], "COMPLETE")
         self.assertEqual(r["source"]["evidence_archive_sha256"], "e4de47ec85cc5770f97e987f282aa11eb9ea36b3cfb1c0f7e5b64ceac681a74d")
         self.assertEqual(r["source"]["summary_sha256"], "7edcd9219286bd84bde9a5453285e3e2f6cd9c7f839f2b6aa25e189f312c9edd")
         self.assertIn("Codex did not inspect", r["source"]["recording_basis"])

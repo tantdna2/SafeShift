@@ -15,6 +15,8 @@
   "plan_sha256": "c2ad3137fbdba8809f2d86b75c6869955d51d462431905a7796cf109d1bf65b6",
   "model_id": "OpenGVLab/InternVL3-2B-hf",
   "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+  "documentary_status": "COMPLETE",
+  "offline_runner_status": "COMPLETE",
   "status": "RUNTIME_INTERFACE_PASS",
   "runtime_smoke_status": "PASS_VALIDATED",
   "resource_status": "PASS_VALIDATED",
