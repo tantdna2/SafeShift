@@ -27,6 +27,16 @@ gate plan and remain unchanged. No new status enum or policy is introduced.
 | 7 | Implementation freeze | PENDING | Freeze exact prompts/task policy, canonical schema, adapters/parsers, runners, preprocessing, precision/quantization, decoding, software environment and full unchanged D5 engine after outstanding qualification. All `frozen_components` remain PENDING; existing code/schema is not a completed implementation freeze. |
 | 8 | Protocol freeze | PENDING | #3, #4, #6 and #7 remain unresolved and no approved freeze commit exists. `protocol_freeze_commit_sha=PENDING`; `inspecsafe_inference_authorized=false` in all three D9 configs. |
 
+The current four-primary runtime/interface qualification resolution remains
+recorded above; checklist #2 and #5 `COMPLETE` reflect that existing four-primary
+resolution, not PaliGemma. It does not add a fifth primary or authorize InspecSafe. The
+PaliGemma primary-expansion precommit is a separate
+`PENDING_QUALIFICATION` status for candidate `paligemma_3b_mix_448`; PaliGemma
+remains `BACKUP_1` until qualification and a separate promotion decision.
+Checklist #6, #7 and #8 continue to be `PENDING`. Protocol freeze is blocked
+until this pre-specified expansion candidate is resolved as promoted or
+`DO_NOT_PROMOTE`.
+
 The D9R3 and D9R4 status prose below is preserved historical milestone text;
 the matrix above and the linked D9R5 result are the current overlay.
 

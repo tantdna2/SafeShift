@@ -1290,6 +1290,57 @@
   every primary and the gate runs only on qualifying box interfaces; this does
   not claim that all four primaries executed the gate.
 
+## D9R6 — PaliGemma primary expansion precommit (2026-09-28)
+
+- **Decision timing and scope:** Research Lead approves this governance/configuration
+  precommit **before protocol freeze** and **before any InspecSafe inference**.
+  No InspecSafe performance was used. The current four-primary roster and the
+  existing `BACKUP_1` record are unchanged; this is roster expansion, not backup
+  substitution.
+- **Sole candidate:** `google/paligemma-3b-mix-448`, key
+  `paligemma_3b_mix_448`, exact immutable revision
+  `ead2d9a35598cb89119af004f5d023b311d1c4a1`. Its current role remains
+  `BACKUP_1`; its intended role if fully qualified is `PRIMARY_5`. The
+  machine-readable contract is
+  [the PaliGemma precommit record](configs/pre_freeze/paligemma_primary_expansion_precommit.v1.json).
+- **Qualification contract:** Owner Gemma gated-usage acceptance remains
+  `GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED`; Codex does not assert acceptance.
+  The exact revision, documented loader/preprocessor/API, no-remote-code
+  boundary and native classification route must be verified. The exact pinned
+  448 card documents object-detection/segmentation capability, but reviewed
+  sources have not established its exact native coordinate grammar. The
+  `<loc y_min><loc x_min><loc y_max><loc x_max>` form is only a candidate
+  grammar to verify during the source/API audit; if that audit establishes a
+  different grammar, work must STOP for Research Lead review. The exact grammar
+  and deterministic conversion to D4 canonical boxes must be proven before
+  runner/gate qualification. The real
+  qualification condition is one process-visible NVIDIA T4 16 GB (compute
+  capability 7.5), FP16, no quantization/offload/fallback/substitution, batch
+  size 1 on `cuda:0`. Classification must first parse external handcrafted
+  inputs deterministically with raw output saved before parsing. The exact
+  source-established native detection grammar must then map deterministically
+  to `[x_min, y_min, x_max, y_max]` in `[0,1]`; point-to-box, prompt tricks,
+  fabricated boxes and artificial zero IoU are prohibited.
+- **Frozen gate:** If the interfaces qualify, use the existing `synthetic-v1`
+  suite and unchanged eight-case manifest
+  `configs/pre_freeze/external_gate_cases.v1.json` with SHA-256
+  `fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379`.
+  Its schema/center/distractor/full-image/reciprocal-swap/giant-box semantics
+  remain unchanged; IoU/area remain diagnostic only. The precommit status is
+  `PENDING_QUALIFICATION`; no runtime or grounding result is recorded here.
+- **Promotion rule:** A fully passing contract makes PaliGemma
+  `ELIGIBLE_FOR_PRIMARY_PROMOTION` only. Promotion still requires a separate
+  Research Lead review, separate PR and separate independent audit. A failure
+  on an objective pre-specified blocker means `DO_NOT_PROMOTE`; no alternate
+  model is selected automatically. A future alternate requires a new Research
+  Lead decision before InspecSafe/protocol freeze.
+- **Florence-2 boundary:** The Florence-2 family was considered but is not the
+  current primary-expansion candidate. SafeShift's primary comparison requires
+  one model to participate in both classification and, if qualified, grounding;
+  Florence-2 is better scoped as a grounding specialist/future extension. This
+  is not a performance judgment, and Florence-2 is not added to the roster or
+  used as an automatic fallback.
+
 ## Template
 
 - **ID:** <DEC-...>
