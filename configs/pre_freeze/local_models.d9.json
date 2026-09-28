@@ -90,18 +90,32 @@
       "model_id": "vikhyatk/moondream2",
       "role": "INDEPENDENT_SMALL_VLM_WITH_NATIVE_SPATIAL_APIS",
       "classification": "CANDIDATE",
-      "grounding": "DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE",
+      "grounding": "PASS",
+      "grounding_qualification_scope": "Frozen synthetic-v1 external native-detect gate only; not production adapter qualification or final role assignment.",
+      "external_gate_status": "PASS",
+      "external_gate_evidence": "notes/w2_moondream_postfix_result_external_gate_prep.md#d9r2n--external-gate-final-human-review-record",
+      "production_adapter_status": "NOT_QUALIFIED",
+      "production_adapter_grounding": "UNSUPPORTED",
+      "production_adapter_classification": "INVALID",
       "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "moondream2_2025_06_21",
-      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "resource_status": "PASS_VALIDATED",
+      "runtime_validation_scope": "RUNTIME_INTERFACE_ONLY; SINGLE_T4_LOAD_AND_NATIVE_QUERY_DETECT_FEASIBILITY",
       "target_validation": [
         "COLAB_T4_1X16GB_PRIMARY",
         "KAGGLE_T4_FALLBACK_ALLOWED"
       ],
       "documentary_status": "COMPLETE",
-      "offline_runner_status": "PENDING",
-      "runtime_smoke_status": "PENDING",
+      "offline_runner_status": "COMPLETE",
+      "runtime_smoke_status": "PASS_VALIDATED",
+      "runtime_evidence": "notes/w2_moondream_postfix_result_external_gate_prep.md#post-fix-smoke-research-lead-archive-audit",
+      "historical_official_smoke": {
+        "run_id": "kaggle-t4-moondream-smoke-20260926T070217Z-4c2d43",
+        "status": "FAIL",
+        "attempt_consumed": true,
+        "superseded": false
+      },
       "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     }
   ],
