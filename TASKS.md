@@ -603,3 +603,23 @@ Configuration/documentary reconciliation only. **NO REAL RUNTIME EXECUTION**.
 Base: `582bc1f6d15fa29dd93cd21a43fb7f8cfaa771c2`. Single Draft PR only, no merge.
 No backup activation, final role assignment, InspecSafe inference or weights fetched.
 **NO REAL RUNTIME EXECUTION.** Evidence and checks: [D9R4 note](notes/w2_internvl3_runner_smoke_prep.md).
+
+## W2.6-D9R5 — InternVL3 runtime result and grounding eligibility record
+
+- [x] Record the Research Lead-supplied and independently inspected runtime
+  evidence for run `internvl3-t4-smoke-20260928-01`: runtime/resource
+  `PASS_VALIDATED`, exact model/revision, one load, two native calls and eight
+  stable state audits. The evidence archive and 4+ GB snapshot are not committed.
+- [x] Resolve interface eligibility: the exact source/card audit documents no
+  qualifying generic native bounding-box interface. Grounding is
+  `NOT_PARTICIPATING`; the external gate is `NOT_RUN` with zero cases executed.
+  No point-to-box conversion, prompt trick, artificial zero IoU or backup is used.
+- [x] Reconcile D9 checklist #2 and #5 to `COMPLETE`; #3, #4, #6, #7 and #8
+  remain `PENDING`. Classification remains `CANDIDATE`; production adapter remains
+  `NOT_QUALIFIED` / `INVALID`; protocol freeze remains `PENDING` and InspecSafe
+  authorization remains false.
+
+Result record: [InternVL3 runtime result](configs/pre_freeze/internvl3_t4_runtime_result.v1.json).
+This is result recording only: **NO REAL RUNTIME EXECUTION IN THIS PR**, no external
+gate execution, no InspecSafe inference, no protocol freeze, final role assignment,
+backup activation or merge.
