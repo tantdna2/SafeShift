@@ -1,5 +1,9 @@
 # D9R2M — Moondream post-fix smoke result and external gate PREP
 
+Current result: [D9R2N final human review record](#d9r2n--external-gate-final-human-review-record)
+records external gate **PASS** and grounding qualification **PASS**. The D9R2M
+PREP statements below retain their historical scope.
+
 Base main: `9bc5509ecffcb9d7b2faa4a023cd76bd358e2723`.
 Task: `W2.6-D9R2M-MOONDREAM-POSTFIX-SMOKE-RESULT-AND-EXTERNAL-GATE-PREP`.
 One documentary result + one gate preparation change; **NO REAL RUNTIME
@@ -249,3 +253,65 @@ verify commands, manifest comparison and manual Internet-OFF boundary:
 `.venv/Scripts/python.exe -m unittest tests.test_moondream_external_gate tests.test_moondream_runner_smoke tests.test_moondream_postfix_smoke -q`.
 Compilation and diff checks PASS. No runtime/provisioner/plan code changed;
 broader regressions were not repeated for this documentary amendment.
+
+## D9R2N — external gate final human review record
+
+Task: `W2.6-D9R2N-MOONDREAM-EXTERNAL-GATE-RESULT-RECORD`, recorded 2026-09-28.
+Base main and execution commit: `c801c899a1b63831175ea47d1d77d77f11f8e115`.
+Source: Research Lead/user's explicit task report confirming the existing run
+and all eight human giant-box decisions. This is a documentary transcription;
+the recording agent did not independently inspect/re-hash the runtime archive,
+repeat the visual review, or re-evaluate preserved predictions. No archive path,
+checksum or per-case review rationale was supplied; none is invented.
+
+| Existing runtime observation | User-confirmed value |
+|---|---|
+| Run ID | `moondream-external-gate-20260928T013533Z-d9a1c46b` |
+| Original runtime artifact status | `GATE_PENDING_REVIEW` |
+| `completed_gate` | `true` |
+| `model_load_count` | `1` |
+| `query_call_count` | `0` |
+| `detect_call_count` | `8` |
+| `state_audits` | `17/17 VALID` |
+| Image boundaries | `24/24` in the required order |
+| `systematic_tracking` | `true` |
+| Completed cases | All `8/8` |
+
+Human reviewer: Research Lead/user. The following verdicts were explicitly
+supplied after human giant-box review, not inferred from automatic diagnostics.
+
+| Case ID | Human giant-box decision |
+|---|---|
+| `A_1` | `NO_GIANT` |
+| `A_2` | `NO_GIANT` |
+| `B_1` | `NO_GIANT` |
+| `B_2` | `NO_GIANT` |
+| `C_1` | `NO_GIANT` |
+| `C_2` | `NO_GIANT` |
+| `D_1` | `NO_GIANT` |
+| `D_2` | `NO_GIANT` |
+
+**Final external gate result: PASS. Moondream grounding qualification: PASS.**
+This final human-reviewed result overlays D9R2M's gate/qualification pending
+milestone. The original runtime artifact remains `GATE_PENDING_REVIEW`; raw
+outputs, normalized boxes, review template and attempt ledger are not rewritten.
+The existing harness artifact namespace is
+`data/processed/external_gate/w2_moondream/` (layout reference, not a claim that
+the archive is present in this checkout); large artifacts remain outside Git.
+
+The prior post-fix smoke `moondream-postfix-smoke-20260927T022150Z-1b8def87`
+retains **RUNTIME_INTERFACE_PASS**, already recorded above. Historical official
+smoke `kaggle-t4-moondream-smoke-20260926T070217Z-4c2d43` remains **FAIL** /
+`attempt_consumed=true` / `superseded=false`. Neither smoke is rerun or rejudged.
+
+Qualification is bounded to the unchanged frozen external eight-case gate; it
+does not establish InspecSafe performance, classification qualification, final
+model roles or protocol freeze. Overall D9 prerequisites and protocol freeze
+remain **PENDING**. Protocol, gate/evaluator, model, runner, precision bridge and
+frozen suite/configs are unchanged. **NO REAL RUNTIME EXECUTION** in D9R2N.
+
+Validation: **76/76 existing fake/static tests PASS** on Python 3.11.9:
+`.venv/Scripts/python.exe -m unittest tests.test_moondream_external_gate tests.test_moondream_runner_smoke tests.test_moondream_postfix_smoke -q`.
+`git diff --check` PASS; documentary scope/history/link checks PASS. No new test
+logic was needed. Full repository and real runtime suites were not run because
+this change only records supplied results in four Markdown files.
