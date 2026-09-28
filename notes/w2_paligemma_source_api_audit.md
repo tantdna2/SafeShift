@@ -3,6 +3,8 @@
 Date: 2026-09-28. Same session, branch and draft PR #55.
 Base: `d1ff06d506240df60a19cb094333c9c32e461c73`;
 continuation starts at `e73da240771402ab768eb84688f5bea78ef2d833`.
+Research Lead normalization resolution starts at
+`4f940841f5920b7b3f70d4fd66d7c532a957ee8f`.
 Model: `google/paligemma-3b-mix-448` at
 `ead2d9a35598cb89119af004f5d023b311d1c4a1`.
 The [audit record](../configs/pre_freeze/paligemma_source_api_audit.v1.json)
@@ -79,18 +81,38 @@ No corresponding bbox-to-location **detection encoder** was found in the narrow
 pass (demo detection paths, PaliGemma preprocessing ops and repository tree).
 This is a bounded negative finding, not a claim that no such source exists.
 The [RefCOCO encoding source](https://github.com/google-research/big_vision/blob/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/pp/proj/paligemma/segmentation.py)
-uses `round(bbox * 1023)` and clipping, with scope **SEGMENTATION_ONLY**.
+uses `round(bbox * 1023)` and clipping, with scope
+**REFCOCO_SEGMENTATION_TRAINING_ENCODING** and selection
+**NOT_SELECTED_FOR_DETECTION_DECODING**. This historical evidence is preserved.
 The earlier [Google tutorial](https://ai.google.dev/gemma/docs/paligemma/inference-with-keras)
 uses division by 1024 but currently demonstrates PaliGemma2/Keras; it remains
 family evidence only. PaliGemma 1's /1024 decoding is now independently sourced.
 
-Normalization outcome: **UNRESOLVED_SCOPE_CONFLICT**. The detection visualization
-rule is verified, but its training encoder and linkage to this immutable model
-revision are not. It cannot establish an inverse of segmentation encoding or
-silently settle the requested end-to-end conversion. `selected_divisor=null`;
-canonical conversion is **BLOCKED** pending Research Lead resolution. No mapping,
-clamp or heuristic repair is proposed. Training clipping does not permit repairing
-predictions; malformed output would require parser failure.
+Normalization outcome: **RESOLVED_PALIGEMMA1_OFFICIAL_DETECTION**, under the
+[Research Lead's D9R7 narrow resolution](../DECISIONS.md#d9r7--paligemma-detection-normalization-resolution-2026-09-28).
+The selected rule is **SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION**.
+The Lead accepts the PaliGemma 1 upstream **model-ID-level** detection decoder as
+documentary basis; exact pinned tokenizer/interface artifacts are separately
+verified. `exact_revision_runtime_verified=false`. No weights were executed.
+Detection training encoding remains unverified, a scope limitation rather than
+a normalization blocker. The two conventions are not asserted to be exact inverses;
+1023 is not a candidate detection divisor.
+
+The selected native order is `[y_min, x_min, y_max, x_max]`, represented by four
+adjacent `<loc%04d>` tokens with integer values `0..1023`. D4 conversion is:
+
+```text
+[loc_y_min, loc_x_min, loc_y_max, loc_x_max]
+  -> [loc_x_min/1024.0, loc_y_min/1024.0,
+      loc_x_max/1024.0, loc_y_max/1024.0]
+```
+
+The result lies in `[0,1]`, with maximum representable coordinate
+`1023/1024 = 0.9990234375`. Do not rescale that endpoint to 1.0. No clamp, pixel
+rounding or heuristic repair is part of this normalized mapping. Malformed output
+is `PARSER_FAIL_NO_REPAIR`; point-to-box, fabricated boxes and artificial zero IoU
+remain false. This is a recorded contract, not a parser or runner implementation.
+Exact pinned model conformance to the source-backed grammar awaits qualification.
 
 Multi-box parsing remains **FAMILY_LEVEL_ONLY**: the demo regex associates each
 four-token box with its following label, with optional semicolon-space separation.
@@ -100,12 +122,14 @@ is not evidence of a valid empty model response.
 
 ## Preserved boundaries and static validation
 
-Runner preparation is **not authorized next**, independently of documentary
-progress. PaliGemma stays BACKUP_1; primary count stays four. Runtime,
+Runner preparation is authorized **only after PR #55 independent audit PASS and
+merge**; it is not authorized for execution in this PR and has not been executed.
+PaliGemma stays BACKUP_1; primary count stays four. Runtime,
 classification, grounding and external gate remain PENDING_QUALIFICATION.
-D9R6 precommit, DECISIONS, roster and provenance are unchanged. No weights,
+D9R6 precommit, roster and provenance are unchanged. DECISIONS gains only the
+short Research Lead resolution entry, recorded before runtime/gate/InspecSafe. No weights,
 model import/load, GPU, inference, synthetic gate, InspecSafe, protocol freeze
-or merge. The only changes are this note, audit JSON, tests and TASKS.
+or merge. Changes are limited to this note, audit JSON, tests, TASKS and that entry.
 
 Static commands (repository root):
 
@@ -117,8 +141,8 @@ python -m unittest discover -s tests -p test_d9_t4_roster_revision.py
 git diff --check
 ```
 
-Validation passed with Python 3.11.9: 15 D9R7 tests, 10 D9R6 regression tests,
-26 provenance tests and 35 roster tests (86 total). All 27 pre-freeze JSON files
+Validation passed with Python 3.11.9: 17 D9R7 tests, 10 D9R6 regression tests,
+26 provenance tests and 35 roster tests (88 total). All 27 pre-freeze JSON files
 parsed with the stdlib-only `strict_json` helper; `git diff --check` passed.
 Runtime checks are intentionally not run because only documentary/static work
 is authorized.

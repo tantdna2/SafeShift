@@ -637,8 +637,9 @@ backup activation or merge.
   same qualification scope.
 - [x] Owner confirmed terms acceptance in D9R7 continuation; authenticated exact
   metadata access verified. Historical precommit/provenance access fields unchanged.
-- [ ] PaliGemma source/API audit: exact config/tokenizer/processor verified in
-  D9R7 continuation; detection normalization remains UNRESOLVED_SCOPE_CONFLICT.
+- [x] PaliGemma documentary source/API audit: exact config/tokenizer/processor
+  verified; Research Lead selected source-backed model-ID-level detection /1024.
+  Exact runtime/grounding remain pending; PR #55 independent audit/merge pending.
   See [audit note](notes/w2_paligemma_source_api_audit.md).
 - [ ] Offline runner preparation: PENDING.
 - [ ] Real single-T4 FP16/NONE smoke: PENDING / NOT_RUN.
@@ -661,10 +662,13 @@ candidate is resolved.
   401 evidence retained; no access blockers remain, no terms accepted by Codex.
 - [x] Verify native loader/processor, no remote-code requirement, exact 448
   preprocessing and 1,024 ordinary location vocabulary tokens (IDs 256000..257023).
-- [x] Narrow official PaliGemma 1 detection pass verifies demo decoding /1024;
-  matching detection encoding remains unverified. RefCOCO *1023 encoding is
-  SEGMENTATION_ONLY; UNRESOLVED_SCOPE_CONFLICT remains for Research Lead review.
-- [ ] Exact generated detection grammar/normalization and empty-output contract
-  remain unresolved; no selected divisor or canonical conversion. Runner prep
-  remains explicitly unauthorized; qualification/gate remain pending. Four primaries,
-  BACKUP_1 and D9R6 precommit/roster/provenance/DECISIONS remain unchanged.
+- [x] Record Research Lead's narrow resolution: select PaliGemma 1 upstream
+  model-ID-level /1024 detection decoding and deterministic D4 axis permutation;
+  no clamp/repair. Maximum normalized coordinate is 1023/1024. RefCOCO *1023
+  remains segmentation-training evidence only, not a detection-decoding blocker.
+- [x] Record the decision in DECISIONS before runtime/gate/InspecSafe; preserve
+  exact runtime_verified=false, BACKUP_1, four primaries and unchanged D9R6
+  precommit/roster/provenance. Runtime, grounding and external gate remain pending.
+- [ ] PR #55 independent audit PASS and merge: prerequisites for runner prep.
+  Runner prep is not executed in this PR. Exact generated grammar conformance
+  awaits runtime qualification; empty-output behavior remains NOT_DOCUMENTED.

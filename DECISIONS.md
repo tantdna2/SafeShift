@@ -1341,6 +1341,28 @@
   is not a performance judgment, and Florence-2 is not added to the roster or
   used as an automatic fallback.
 
+## D9R7 — PaliGemma detection normalization resolution (2026-09-28)
+
+- **Authority/timing:** Research Lead's explicit narrow resolution in the D9R7
+  session, before PaliGemma runtime, external gate and any InspecSafe inference.
+- **Selected rule:** Decode native `[y_min, x_min, y_max, x_max]` location integers
+  in `0..1023` to D4 `[x_min, y_min, x_max, y_max]` by axis permutation and division
+  by **1024.0**. Maximum representable coordinate is `1023/1024`, not 1.0.
+  No clamp or heuristic repair; malformed output is `PARSER_FAIL_NO_REPAIR`.
+- **Evidence scope:** Exact pinned tokenizer/interface artifacts are verified.
+  The upstream PaliGemma 1 mix-448 model-ID-level detection decoder and companion
+  JAX demo are accepted as source-backed documentary basis, not exact-revision
+  runtime evidence. Sources and locators are in the
+  [D9R7 audit](configs/pre_freeze/paligemma_source_api_audit.v1.json).
+  `round(bbox * 1023)` and clipping remain historical evidence scoped solely to
+  `REFCOCO_SEGMENTATION_TRAINING_ENCODING`, `NOT_SELECTED_FOR_DETECTION_DECODING`.
+  No exact-inverse relationship is asserted; normalization is no longer blocked.
+- **Boundaries:** Exact runtime, grounding and external gate remain
+  `PENDING_QUALIFICATION`; PaliGemma remains `BACKUP_1` with four primaries.
+  Runner preparation is permitted only after PR #55 independent audit PASS and
+  merge, and is not executed here. No promotion, protocol freeze or InspecSafe
+  authorization; D9R6 precommit and historical roster/provenance remain unchanged.
+
 ## Template
 
 - **ID:** <DEC-...>

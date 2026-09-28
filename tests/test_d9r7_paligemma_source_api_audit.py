@@ -14,6 +14,8 @@ REVISION = "ead2d9a35598cb89119af004f5d023b311d1c4a1"
 ACCESS = "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED"
 PENDING = "PENDING_QUALIFICATION"
 UNVERIFIED = "NOT_VERIFIED"
+SELECTED = "SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION"
+RESOLVED = "RESOLVED_PALIGEMMA1_OFFICIAL_DETECTION"
 
 
 def load(name):
@@ -47,7 +49,7 @@ class PaliGemmaSourceAuditTests(unittest.TestCase):
     def test_owner_confirmation_and_authenticated_access_are_separate(self):
         a = self.audit
         self.assertEqual(a["access_status"], "OWNER_CONFIRMED_TERMS_ACCEPTED_EXACT_FILES_READABLE")
-        self.assertEqual(a["status"], "DOCUMENTARY_PARTIAL_NORMALIZATION_UNRESOLVED")
+        self.assertEqual(a["status"], "DOCUMENTARY_SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION")
         # Historical/precommit records are intentionally unchanged in this PR.
         self.assertEqual(self.precommit["qualification_status"]["access"], ACCESS)
         self.assertEqual(self.provenance["license_access"]["access_status"], ACCESS)
@@ -100,20 +102,23 @@ class PaliGemmaSourceAuditTests(unittest.TestCase):
             self.assertIn("NOT_VERIFIED", route["applicability_scope"])
         self.assertIs(self.audit["classification_route"]["final_safeshift_prompt_designed"], False)
 
-    def test_exact_grammar_is_unresolved(self):
+    def test_source_backed_grammar_is_not_exact_runtime_qualification(self):
         native = self.audit["native_coordinate_interface"]
-        self.assertEqual(native["status"], "PENDING_DOCUMENTARY_VERIFICATION")
+        self.assertEqual(native["status"], SELECTED)
         self.assertEqual(native["exact_checkpoint_status"],
-                         "TOKEN_VOCABULARY_VERIFIED_DETECTION_CONTRACT_NOT_VERIFIED")
-        for field in ("coordinate_order", "normalization_rule", "multiple_detection_grammar"):
-            self.assertEqual(native[field], UNVERIFIED)
+                         "TOKENIZER_INTERFACE_ARTIFACTS_VERIFIED_RUNTIME_PENDING_QUALIFICATION")
+        self.assertEqual(native["coordinate_order"], ["y_min", "x_min", "y_max", "x_max"])
+        self.assertEqual(native["four_location_token_structure"], "<loc%04d>" * 4)
+        self.assertEqual(native["normalization_rule_status"], SELECTED)
+        self.assertIs(native["exact_revision_runtime_verified"], False)
+        self.assertEqual(native["multiple_detection_grammar"], UNVERIFIED)
         self.assertEqual(native["literal_token_format"], "<loc%04d>")
         self.assertEqual(native["literal_token_format_status"], "EXACT_CHECKPOINT_VERIFIED")
         self.assertEqual(native["integer_range"], {
             "minimum": 0, "maximum": 1023, "inclusive": True, "token_count": 1024,
         })
         self.assertEqual(native["integer_range_status"], "EXACT_CHECKPOINT_VERIFIED_TOKEN_VALUES_ONLY")
-        self.assertEqual(native["coordinate_order_status"], "FAMILY_LEVEL_ONLY")
+        self.assertEqual(native["coordinate_order_status"], "SOURCE_BACKED_MODEL_ID_LEVEL")
         self.assertEqual(native["multiple_detection_grammar_status"], "FAMILY_LEVEL_ONLY")
         self.assertEqual(native["empty_output_behavior"], "NOT_DOCUMENTED")
         family = native["family_level_findings"]
@@ -125,29 +130,75 @@ class PaliGemmaSourceAuditTests(unittest.TestCase):
                       "multiple_detection_grammar"):
             self.assertEqual(family[field]["status"], "FAMILY_LEVEL_ONLY")
 
-    def test_conflicting_scales_are_not_resolved_by_guess(self):
-        conflicts = self.audit["native_coordinate_interface"]["unresolved_conflicts"]
-        self.assertEqual(len(conflicts), 1)
-        conflict = conflicts[0]
-        self.assertEqual(conflict["status"], "STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED")
-        self.assertEqual(conflict["resolution"], "UNRESOLVED_SCOPE_CONFLICT")
-        self.assertIsNone(conflict["selected_divisor"])
-        self.assertIn("* 1023", conflict["training_encoding"]["operation"])
-        self.assertIn("/ 1024.0", conflict["visualization_decoding"]["operation"])
-        self.assertEqual(conflict["training_encoding"]["scope"], "SEGMENTATION_ONLY")
-        self.assertIn("PaliGemma2/Keras", conflict["visualization_decoding"]["scope"])
-        source = self.audit["sources"]["google_decode"]
-        self.assertEqual(source["applicability_scope"], "FAMILY_LEVEL_ONLY")
+    def test_research_lead_resolution_preserves_segmentation_history(self):
+        native = self.audit["native_coordinate_interface"]
+        self.assertEqual(native["unresolved_conflicts"], [])
+        self.assertEqual(native["normalization_conflict_status"], RESOLVED)
+        conflict, = native["resolved_conflicts"]
+        self.assertEqual(conflict["status"], "RESOLVED_BY_RESEARCH_LEAD_NARROW_DECISION")
+        self.assertEqual(conflict["resolution"], RESOLVED)
+        self.assertEqual(conflict["selected_divisor"], 1024.0)
+        encoding = conflict["training_encoding"]
+        self.assertIn("round(bbox * 1023)", encoding["operation"])
+        self.assertIn("clip integer indices to [0,1023]", encoding["operation"])
+        self.assertEqual(encoding["scope"], "REFCOCO_SEGMENTATION_TRAINING_ENCODING")
+        self.assertEqual(encoding["detection_decoding_selection"],
+                         "NOT_SELECTED_FOR_DETECTION_DECODING")
+        decision = self.audit["research_lead_resolution"]
+        self.assertEqual(decision["status"], "APPROVED_NARROW_RESOLUTION")
+        self.assertEqual(decision["decision_record"], "DECISIONS.md")
+        self.assertEqual(decision["evidence_scope"], "PALIGEMMA1_UPSTREAM_MODEL_ID_LEVEL_DETECTION")
+        for field in ("before_paligemma_runtime", "before_external_gate", "before_inspecsafe"):
+            self.assertIs(decision[field], True)
+        self.assertIs(decision["exact_revision_runtime_verified"], False)
 
-    def test_no_mapping_clamp_or_heuristic_repair(self):
+    def test_selected_mapping_no_clamp_or_heuristic_repair(self):
         conversion = self.audit["canonical_conversion"]
-        self.assertEqual(conversion["status"], "BLOCKED")
-        self.assertEqual(conversion["deterministic_mapping"], UNVERIFIED)
-        self.assertIsNone(conversion["normalization_divisor"])
-        self.assertEqual(conversion["clamp_policy"], "NO_CLAMP_PROPOSED")
-        self.assertEqual(conversion["malformed_output_policy"], "PROPOSED_PARSER_FAIL_NO_REPAIR")
-        for field in ("heuristic_used", "point_to_box", "fabricated_box", "artificial_zero_iou"):
+        self.assertEqual(conversion["status"], SELECTED)
+        self.assertEqual(conversion["deterministic_mapping"], {
+            "x_min": "loc_x_min / 1024.0", "y_min": "loc_y_min / 1024.0",
+            "x_max": "loc_x_max / 1024.0", "y_max": "loc_y_max / 1024.0",
+        })
+        self.assertEqual(conversion["normalization_divisor"], 1024.0)
+        self.assertEqual(conversion["native_order"], ["y_min", "x_min", "y_max", "x_max"])
+        self.assertEqual(conversion["canonical_order"], ["x_min", "y_min", "x_max", "y_max"])
+        self.assertEqual(conversion["axis_swap"], [1, 0, 3, 2])
+        self.assertEqual(conversion["clamp_policy"], "NO_CLAMP")
+        self.assertEqual(conversion["malformed_output_policy"], "PARSER_FAIL_NO_REPAIR")
+        for field in ("heuristic_used", "point_to_box", "fabricated_box", "artificial_zero_iou",
+                      "exact_revision_runtime_verified"):
             self.assertIs(conversion[field], False)
+
+    def test_mapping_axes_and_endpoint_are_not_rescaled_to_one(self):
+        # Evaluate the recorded permutation/divisor only, not a runtime parser.
+        c = self.audit["canonical_conversion"]
+        native = [0, 256, 768, 1023]
+        mapped = [native[index] / c["normalization_divisor"] for index in c["axis_swap"]]
+        self.assertEqual(mapped, [0.25, 0.0, 0.9990234375, 0.75])
+        self.assertEqual(c["maximum_representable_normalized_coordinate"], 1023 / 1024)
+        self.assertLess(c["maximum_representable_normalized_coordinate"], 1.0)
+        self.assertEqual(c["maximum_representable_normalized_coordinate_exact"], "1023/1024")
+        self.assertEqual(c["native_numerical_range"], {
+            "minimum": 0, "maximum": 1023, "inclusive": True,
+        })
+
+    def test_no_selected_detection_divisor_is_1023(self):
+        selected_divisors = []
+
+        def walk(value):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key in {"selected_divisor", "normalization_divisor",
+                               "source_defined_divisor", "source_defined_detection_divisor"}:
+                        selected_divisors.append(item)
+                    walk(item)
+            elif isinstance(value, list):
+                for item in value:
+                    walk(item)
+
+        walk(self.audit)
+        self.assertTrue(selected_divisors)
+        self.assertTrue(all(value == 1024 for value in selected_divisors))
 
     def test_preprocessing_is_exact_config_with_no_override(self):
         image = self.audit["image_preprocessing"]
@@ -209,16 +260,17 @@ class PaliGemmaSourceAuditTests(unittest.TestCase):
                 self.assertEqual(binding["method"], "git_blob_sha1")
                 self.assertEqual(binding["repo_commit_header"], REVISION)
 
-    def test_paligemma1_detection_decoder_does_not_invent_encoder_or_mapping(self):
+    def test_selected_decoder_scope_does_not_invent_exact_runtime_or_encoder(self):
         detection = self.audit["object_detection_source_pass"]
-        self.assertEqual(detection["status"], "UNRESOLVED_SCOPE_CONFLICT")
+        self.assertEqual(detection["status"], RESOLVED)
         self.assertEqual(detection["encoding"]["status"], UNVERIFIED)
         self.assertEqual(detection["decoding"]["status"], "PALIGEMMA1_OFFICIAL_DETECTION_VERIFIED")
         self.assertEqual(detection["decoding"]["source_defined_divisor"], 1024)
         self.assertIs(detection["decoding"]["exact_checkpoint_revision_bound"], False)
-        self.assertIsNone(detection["selected_divisor"])
+        self.assertEqual(detection["selected_divisor"], 1024.0)
+        self.assertIs(detection["exact_revision_runtime_verified"], False)
         self.assertEqual(self.audit["sources"]["google_training_encoding"]["applicability_scope"],
-                         "SEGMENTATION_ONLY")
+                         "REFCOCO_SEGMENTATION_TRAINING_ENCODING")
         source = self.audit["sources"]["paligemma1_hf_detection"]
         self.assertIn("d914d4446a6ff8c5b3110411abca69887f035c41", source["url"])
         self.assertEqual(source["applicability_scope"], "PALIGEMMA1_OFFICIAL_DETECTION")
@@ -238,7 +290,8 @@ class PaliGemmaSourceAuditTests(unittest.TestCase):
                          runtime["published_safetensors_size_bytes"])
         self.assertEqual(runtime["status"], "DOCUMENTED_NOT_RUNTIME_VALIDATED")
         self.assertEqual(runtime["real_runtime_status"], PENDING)
-        for field in ("t4_runtime_pass", "weights_downloaded", "weight_bytes_verified"):
+        for field in ("t4_runtime_pass", "weights_downloaded", "weight_bytes_verified",
+                      "exact_revision_runtime_verified"):
             self.assertIs(runtime[field], False)
 
     def test_no_promotion_freeze_inspecsafe_or_gate_pass(self):
@@ -249,8 +302,11 @@ class PaliGemmaSourceAuditTests(unittest.TestCase):
         self.assertNotIn(MODEL, [m["model_id"] for m in self.roster["primary_models"]])
         self.assertEqual(self.roster["backups_in_order"][0]["role"], "BACKUP_1")
         for field in ("promotion", "precommit_changed", "inspecsafe_authorized",
-                      "runner_prep_authorized_next"):
+                      "runner_prep_authorized_next", "runner_prep_executed"):
             self.assertIs(governance[field], False)
+        self.assertIs(governance["runner_prep_authorized_after_pr55_audit_and_merge"], True)
+        self.assertEqual(governance["runner_prep_prerequisites"],
+                         ["PR55_INDEPENDENT_AUDIT_PASS", "PR55_MERGED"])
         for field in ("runtime_status", "grounding_status", "external_gate_status"):
             self.assertEqual(governance[field], PENDING)
         self.assertEqual(governance["protocol_freeze"], "PENDING")

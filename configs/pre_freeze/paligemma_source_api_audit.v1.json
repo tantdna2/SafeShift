@@ -6,7 +6,7 @@
   "base_sha": "d1ff06d506240df60a19cb094333c9c32e461c73",
   "model_id": "google/paligemma-3b-mix-448",
   "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
-  "status": "DOCUMENTARY_PARTIAL_NORMALIZATION_UNRESOLVED",
+  "status": "DOCUMENTARY_SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION",
   "access_status": "OWNER_CONFIRMED_TERMS_ACCEPTED_EXACT_FILES_READABLE",
   "access_evidence": {
     "status": "EXACT_FILES_VERIFIED",
@@ -194,17 +194,22 @@
     ]
   },
   "native_coordinate_interface": {
-    "status": "PENDING_DOCUMENTARY_VERIFICATION",
-    "exact_checkpoint_status": "TOKEN_VOCABULARY_VERIFIED_DETECTION_CONTRACT_NOT_VERIFIED",
+    "status": "SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION",
+    "exact_checkpoint_status": "TOKENIZER_INTERFACE_ARTIFACTS_VERIFIED_RUNTIME_PENDING_QUALIFICATION",
     "literal_token_format": "<loc%04d>",
-    "coordinate_order": "NOT_VERIFIED",
+    "coordinate_order": [
+      "y_min",
+      "x_min",
+      "y_max",
+      "x_max"
+    ],
     "integer_range": {
       "minimum": 0,
       "maximum": 1023,
       "inclusive": true,
       "token_count": 1024
     },
-    "normalization_rule": "NOT_VERIFIED",
+    "normalization_rule": "Divide each native location integer by 1024.0",
     "multiple_detection_grammar": "NOT_VERIFIED",
     "empty_output_behavior": "NOT_DOCUMENTED",
     "family_level_findings": {
@@ -270,16 +275,30 @@
       "google_training_encoding",
       "google_decode"
     ],
-    "unresolved_conflicts": [
+    "unresolved_conflicts": [],
+    "literal_token_format_status": "EXACT_CHECKPOINT_VERIFIED",
+    "integer_range_status": "EXACT_CHECKPOINT_VERIFIED_TOKEN_VALUES_ONLY",
+    "coordinate_order_status": "SOURCE_BACKED_MODEL_ID_LEVEL",
+    "multiple_detection_grammar_status": "FAMILY_LEVEL_ONLY",
+    "normalization_conflict_status": "RESOLVED_PALIGEMMA1_OFFICIAL_DETECTION",
+    "normalization_rule_status": "SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION",
+    "source_defined_detection_divisor": 1024,
+    "selected_divisor": 1024.0,
+    "divisor_evidence_scope": "PALIGEMMA1_UPSTREAM_MODEL_ID_LEVEL_DETECTION",
+    "exact_revision_runtime_verified": false,
+    "four_location_token_structure": "<loc%04d><loc%04d><loc%04d><loc%04d>",
+    "four_location_token_structure_status": "SOURCE_BACKED_MODEL_ID_LEVEL",
+    "resolved_conflicts": [
       {
         "id": "COORDINATE_NORMALIZATION_SCOPE_CONFLICT",
-        "status": "STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED",
+        "status": "RESOLVED_BY_RESEARCH_LEAD_NARROW_DECISION",
         "training_encoding": {
           "operation": "round(bbox * 1023), then clip integer indices to [0,1023]",
-          "scope": "SEGMENTATION_ONLY",
+          "scope": "REFCOCO_SEGMENTATION_TRAINING_ENCODING",
           "evidence": [
             "google_training_encoding"
-          ]
+          ],
+          "detection_decoding_selection": "NOT_SELECTED_FOR_DETECTION_DECODING"
         },
         "visualization_decoding": {
           "operation": "float(location_integer) / 1024.0",
@@ -288,9 +307,9 @@
             "google_decode"
           ]
         },
-        "interpretation": "PaliGemma 1 official detection demos also divide by 1024. RefCOCO training multiplication by 1023 is SEGMENTATION_ONLY. Detection encoding and exact-revision linkage remain unverified; no inverse rule or SafeShift divisor selected.",
-        "resolution": "UNRESOLVED_SCOPE_CONFLICT",
-        "selected_divisor": null,
+        "interpretation": "Research Lead accepts PaliGemma 1 model-ID-level detection /1024 as the documentary rule. RefCOCO *1023 is segmentation training encoding, not an alternative detection divisor. No exact-inverse relationship or exact-revision runtime behavior is claimed.",
+        "resolution": "RESOLVED_PALIGEMMA1_OFFICIAL_DETECTION",
+        "selected_divisor": 1024.0,
         "paligemma1_detection_decoding": {
           "status": "PALIGEMMA1_OFFICIAL_DETECTION_VERIFIED",
           "operation": "y_min, x_min, y_max, x_max = int(loc_token_value) / 1024; visualization then rounds y*height and x*width.",
@@ -302,34 +321,65 @@
             "paligemma1_bv_models",
             "exact_card"
           ]
-        }
+        },
+        "decision_record": "DECISIONS.md"
       }
-    ],
-    "literal_token_format_status": "EXACT_CHECKPOINT_VERIFIED",
-    "integer_range_status": "EXACT_CHECKPOINT_VERIFIED_TOKEN_VALUES_ONLY",
-    "coordinate_order_status": "FAMILY_LEVEL_ONLY",
-    "multiple_detection_grammar_status": "FAMILY_LEVEL_ONLY",
-    "normalization_conflict_status": "UNRESOLVED_SCOPE_CONFLICT"
+    ]
   },
   "canonical_conversion": {
-    "status": "BLOCKED",
-    "deterministic_mapping": "NOT_VERIFIED",
-    "normalization_divisor": null,
-    "native_order": "NOT_VERIFIED",
-    "native_numerical_range": "Location token values 0..1023 verified; dequantization unresolved",
-    "axis_swap": "NOT_PROPOSED_UNTIL_SECTION_7_VERIFIED",
-    "clamp_policy": "NO_CLAMP_PROPOSED",
+    "status": "SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION",
+    "deterministic_mapping": {
+      "x_min": "loc_x_min / 1024.0",
+      "y_min": "loc_y_min / 1024.0",
+      "x_max": "loc_x_max / 1024.0",
+      "y_max": "loc_y_max / 1024.0"
+    },
+    "normalization_divisor": 1024.0,
+    "native_order": [
+      "y_min",
+      "x_min",
+      "y_max",
+      "x_max"
+    ],
+    "native_numerical_range": {
+      "minimum": 0,
+      "maximum": 1023,
+      "inclusive": true
+    },
+    "axis_swap": [
+      1,
+      0,
+      3,
+      2
+    ],
+    "clamp_policy": "NO_CLAMP",
     "heuristic_used": false,
-    "malformed_output_policy": "PROPOSED_PARSER_FAIL_NO_REPAIR",
+    "malformed_output_policy": "PARSER_FAIL_NO_REPAIR",
     "point_to_box": false,
     "fabricated_box": false,
     "artificial_zero_iou": false,
     "evidence": [
+      "exact_tokenizer.json",
       "paligemma1_hf_detection",
-      "google_training_encoding",
-      "exact_tokenizer.json"
+      "paligemma1_bv_detection",
+      "DECISIONS.md"
     ],
-    "limitation": "No canonical mapping proposed or implemented; training-time clipping is not authorization for output repair."
+    "limitation": "Selected deterministic documentary mapping only; no parser/runner implemented or model behavior qualified. The maximum 1023/1024 must not be rescaled or clamped to 1.0.",
+    "canonical_order": [
+      "x_min",
+      "y_min",
+      "x_max",
+      "y_max"
+    ],
+    "canonical_domain": [
+      0,
+      1
+    ],
+    "maximum_representable_normalized_coordinate": 0.9990234375,
+    "maximum_representable_normalized_coordinate_exact": "1023/1024",
+    "exact_revision_runtime_verified": false,
+    "evidence_scope": "PALIGEMMA1_UPSTREAM_MODEL_ID_LEVEL_DETECTION",
+    "decision_record": "DECISIONS.md"
   },
   "tokenizer_metadata": {
     "status": "EXACT_CHECKPOINT_VERIFIED",
@@ -418,7 +468,8 @@
       "exact_metadata",
       "exact_card",
       "hf_loading"
-    ]
+    ],
+    "exact_revision_runtime_verified": false
   },
   "governance": {
     "paligemma_role": "BACKUP_1",
@@ -432,20 +483,26 @@
     "protocol_freeze": "PENDING",
     "inspecsafe_authorized": false,
     "runner_prep_authorized_next": false,
-    "authority": "Existing D9R6 contract; this audit does not approve new semantics.",
+    "authority": "D9R6 boundaries plus explicit D9R7 Research Lead narrow normalization resolution in DECISIONS.md; no runtime/gate authorization.",
     "evidence": [
       "configs/pre_freeze/paligemma_primary_expansion_precommit.v1.json",
-      "configs/pre_freeze/local_models.d9.json"
+      "configs/pre_freeze/local_models.d9.json",
+      "DECISIONS.md"
+    ],
+    "runner_prep_authorized_after_pr55_audit_and_merge": true,
+    "runner_prep_executed": false,
+    "runner_prep_prerequisites": [
+      "PR55_INDEPENDENT_AUDIT_PASS",
+      "PR55_MERGED"
     ]
   },
   "inspecsafe_used": false,
   "real_model_execution": false,
   "inspecsafe_execution": false,
   "unresolved_items": [
-    "Detection bbox-to-loc encoding not found in the narrow official source pass; SEGMENTATION_ONLY encoding must not be promoted into a detection contract.",
-    "PaliGemma 1 demo decoding uses /1024 but has no immutable model revision binding; UNRESOLVED_SCOPE_CONFLICT retained for end-to-end normalization. No selected divisor or canonical conversion.",
-    "Exact generated detection grammar and empty/no-detection output contract remain unverified; tokenizer membership does not establish output ordering or delimiters.",
-    "Runner preparation remains explicitly unauthorized by Research Lead, independently of documentary findings. No runtime, classification qualification, external gate, promotion or protocol freeze."
+    "Exact pinned model output conformance to the source-backed four-location detection structure remains PENDING_QUALIFICATION; exact_revision_runtime_verified=false.",
+    "Empty/no-detection behavior remains NOT_DOCUMENTED; multiple-box demo parsing remains source guidance, not a runtime-qualified strict contract.",
+    "Runner preparation requires PR #55 independent audit PASS and merge; no runner preparation executed. Runtime, grounding and external gate remain PENDING_QUALIFICATION."
   ],
   "sources": {
     "exact_card": {
@@ -618,10 +675,11 @@
       "revision_or_version": "0127fb6b337ee2a27bf4e54dea79cff176527356",
       "locator": "get_refcoco_mask2str / _pp: location tokens L42, bbox axes L56-59, encoding L72-74",
       "accessed_date": "2026-09-28",
-      "applicability_scope": "SEGMENTATION_ONLY",
+      "applicability_scope": "REFCOCO_SEGMENTATION_TRAINING_ENCODING",
       "http_status": 200,
       "content_sha256": "f1b8f482c1bf0636ec370ce91f1974c3c9e5f84321a980832acc2b43c914d2b1",
-      "limitations": "RefCOCO segmentation training encoding, not proof of mix-448 detection decoding; scope difference is unresolved, not reconciled by inference."
+      "limitations": "RefCOCO segmentation training encoding only, not an alternative detection decoder. Retained as historical evidence. No exact-inverse relationship with detection decoding is asserted.",
+      "detection_decoding_selection": "NOT_SELECTED_FOR_DETECTION_DECODING"
     },
     "exact_config.json": {
       "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/config.json",
@@ -756,7 +814,7 @@
   },
   "continuation_from_head": "e73da240771402ab768eb84688f5bea78ef2d833",
   "object_detection_source_pass": {
-    "status": "UNRESOLVED_SCOPE_CONFLICT",
+    "status": "RESOLVED_PALIGEMMA1_OFFICIAL_DETECTION",
     "encoding": {
       "status": "NOT_VERIFIED",
       "source": "NOT_FOUND_IN_AUDITED_OFFICIAL_DETECTION_SOURCES",
@@ -765,7 +823,7 @@
         "paligemma1_hf_detection",
         "paligemma1_bv_detection"
       ],
-      "limitation": "Inspected public PaliGemma preprocessing ops, repository tree and official demo detection paths; no matching bbox-to-loc training encoder. RefCOCO mask2str evidence is SEGMENTATION_ONLY."
+      "limitation": "No matching detection training encoder found in bounded source pass. RefCOCO mask2str is REFCOCO_SEGMENTATION_TRAINING_ENCODING only; not selected for detection decoding and not a blocker under the Research Lead resolution."
     },
     "decoding": {
       "status": "PALIGEMMA1_OFFICIAL_DETECTION_VERIFIED",
@@ -779,7 +837,32 @@
         "exact_card"
       ]
     },
-    "selected_divisor": null,
-    "limitation": "PaliGemma 1 detection visualization /1024 is now established independently of the PaliGemma2 tutorial. This does not recover detection training encoding, bind the demo to the exact weight revision, or prove an inverse of segmentation encoding. Leave the requested end-to-end normalization audit unresolved; do not silently select a SafeShift conversion."
+    "selected_divisor": 1024.0,
+    "limitation": "Research Lead accepts upstream PaliGemma 1 model-ID-level /1024 detection decoder as documentary basis. Missing detection training encoder is a scope limitation, not a normalization blocker; no inverse of segmentation encoding or exact pinned runtime behavior is asserted.",
+    "normalization_rule_status": "SOURCE_BACKED_SELECTED_PENDING_RUNTIME_QUALIFICATION",
+    "exact_revision_runtime_verified": false,
+    "decision_record": "DECISIONS.md"
+  },
+  "normalization_resolution_from_head": "4f940841f5920b7b3f70d4fd66d7c532a957ee8f",
+  "research_lead_resolution": {
+    "status": "APPROVED_NARROW_RESOLUTION",
+    "decision_id": "D9R7",
+    "decision_date": "2026-09-28",
+    "authority": "Explicit Research Lead instruction in the continuing PR #55 session",
+    "decision_record": "DECISIONS.md",
+    "selected_divisor": 1024.0,
+    "evidence_scope": "PALIGEMMA1_UPSTREAM_MODEL_ID_LEVEL_DETECTION",
+    "before_paligemma_runtime": true,
+    "before_external_gate": true,
+    "before_inspecsafe": true,
+    "exact_revision_runtime_verified": false,
+    "evidence": [
+      "paligemma1_hf_detection",
+      "paligemma1_bv_detection",
+      "paligemma1_bv_models",
+      "exact_tokenizer.json",
+      "DECISIONS.md"
+    ],
+    "limitation": "Model-ID-level detection decoder accepted as documentary basis; does not assert exact pinned weight execution or detection training encoding."
   }
 }
