@@ -635,10 +635,11 @@ backup activation or merge.
 - [x] Preserve the existing synthetic-v1 eight-case manifest, SHA-256 and gate
   semantics while allowing the pre-specified expansion candidate to enter the
   same qualification scope.
-- [ ] Owner access/terms confirmation: PENDING (`GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED`).
-- [ ] PaliGemma exact-source/loader/API verification: BLOCKED after D9R7
-  documentary audit; exact config/tokenizer/preprocessor HTTP 401 and unresolved
-  normalization-source conflict. See [audit note](notes/w2_paligemma_source_api_audit.md).
+- [x] Owner confirmed terms acceptance in D9R7 continuation; authenticated exact
+  metadata access verified. Historical precommit/provenance access fields unchanged.
+- [ ] PaliGemma source/API audit: exact config/tokenizer/processor verified in
+  D9R7 continuation; detection normalization remains UNRESOLVED_SCOPE_CONFLICT.
+  See [audit note](notes/w2_paligemma_source_api_audit.md).
 - [ ] Offline runner preparation: PENDING.
 - [ ] Real single-T4 FP16/NONE smoke: PENDING / NOT_RUN.
 - [ ] Deterministic external classification-interface qualification: PENDING.
@@ -655,9 +656,15 @@ candidate is resolved.
 
 - [x] Record exact public card/metadata and versioned official API/family sources
   in `configs/pre_freeze/paligemma_source_api_audit.v1.json`; no weights/runtime.
-- [x] Record `ACCESS_EVIDENCE_BLOCKED` and stop exact-file-dependent verification.
-  Preserve owner access status, four primaries, `BACKUP_1` and D9R6 precommit.
-- [x] Escalate the apparent 1023 training / 1024 decoding scope conflict for
-  Research Lead review; no divisor or canonical conversion selected.
-- [ ] Exact grammar, processor/tokenizer and no-remote-code verification remain
-  unresolved. Runner prep is not authorized next; qualification/gate remain pending.
+- [x] After owner-confirmed terms acceptance and credential configuration, read
+  all five exact metadata files and verify pinned Git blob/LFS hashes. Historical
+  401 evidence retained; no access blockers remain, no terms accepted by Codex.
+- [x] Verify native loader/processor, no remote-code requirement, exact 448
+  preprocessing and 1,024 ordinary location vocabulary tokens (IDs 256000..257023).
+- [x] Narrow official PaliGemma 1 detection pass verifies demo decoding /1024;
+  matching detection encoding remains unverified. RefCOCO *1023 encoding is
+  SEGMENTATION_ONLY; UNRESOLVED_SCOPE_CONFLICT remains for Research Lead review.
+- [ ] Exact generated detection grammar/normalization and empty-output contract
+  remain unresolved; no selected divisor or canonical conversion. Runner prep
+  remains explicitly unauthorized; qualification/gate remain pending. Four primaries,
+  BACKUP_1 and D9R6 precommit/roster/provenance/DECISIONS remain unchanged.
