@@ -1266,6 +1266,30 @@
   Overall D9 prerequisites and protocol freeze remain **PENDING**.
   [Reported observations, eight human verdicts and evidence limits](notes/w2_moondream_postfix_result_external_gate_prep.md#d9r2n--external-gate-final-human-review-record).
 
+## D9R5 InternVL3 interface-ineligible grounding semantics (2026-09-28)
+
+- **Authority/status:** Research Lead review of PR #53 explicitly approves this
+  narrow result-recording clarification before independent audit. It is a
+  governance correction for the InternVL3 interface-ineligible case, not a new
+  research policy or protocol freeze.
+- **Approved machine-readable semantics:**
+  `grounding_failure_reason=NO_DOCUMENTED_GENERIC_SPATIAL_INTERFACE` means the
+  exact model/source/card does not document a qualifying generic native
+  bounding-box interface; it denotes interface ineligibility, not a spatial gate
+  failure. `external_gate_status=NOT_RUN` means the external gate was not
+  executed because no qualifying native box interface exists, and
+  `synthetic_gate_cases_executed=0`.
+- **Required outcome/boundaries:** Grounding is `NOT_PARTICIPATING`;
+  classification remains `CANDIDATE`; `artificial_zero_iou=false`,
+  `backup_substitution=false`, and no point-to-box conversion is permitted.
+  These values must not be recorded as `SPATIAL_GATE_FAILURE` or `GATE_FAIL`.
+- **Scope:** This record resolves only the interpretation of the existing
+  result/roster fields for InternVL3. It does not change D5 metrics, synthetic
+  gate logic, dataset/split/label definitions, model facts, or protocol-freeze
+  status. D9 checklist #5 remains COMPLETE because eligibility is resolved for
+  every primary and the gate runs only on qualifying box interfaces; this does
+  not claim that all four primaries executed the gate.
+
 ## Template
 
 - **ID:** <DEC-...>

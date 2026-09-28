@@ -80,6 +80,17 @@ class InternVL3RuntimeResultTests(unittest.TestCase):
         self.assertEqual(m["grounding_failure_reason"], "NO_DOCUMENTED_GENERIC_SPATIAL_INTERFACE")
         self.assertEqual(m["external_gate_status"], "NOT_RUN")
 
+    def test_d9r5_decision_approves_only_the_interface_ineligible_mapping(self):
+        decision = (ROOT / "DECISIONS.md").read_text(encoding="utf-8")
+        record = decision.split("## D9R5 InternVL3 interface-ineligible grounding semantics", 1)[1]
+        self.assertIn("grounding_failure_reason=NO_DOCUMENTED_GENERIC_SPATIAL_INTERFACE", record)
+        self.assertIn("external_gate_status=NOT_RUN", record)
+        self.assertIn("synthetic_gate_cases_executed=0", record)
+        self.assertIn("NOT_PARTICIPATING", record)
+        self.assertIn("classification remains `CANDIDATE`", record)
+        self.assertIn("must not be recorded as `SPATIAL_GATE_FAILURE` or `GATE_FAIL`", record)
+        self.assertIn("all four primaries executed the gate", record)
+
     def test_classification_adapter_and_checklist_boundaries(self):
         r, m = self.result, self.model
         self.assertEqual(r["classification_status"], "CANDIDATE")
