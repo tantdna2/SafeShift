@@ -1208,6 +1208,44 @@
 - **Evidence:** [runtime plan](configs/pre_freeze/moondream_t4_runtime.v1.json),
   [implementation and future procedure](notes/w2_moondream_runner_smoke_prep.md).
 
+## D9R2M Moondream frozen external native-detect gate PREP (2026-09-27)
+
+- **Authority:** Research Lead's explicit
+  `W2.6-D9R2M-MOONDREAM-POSTFIX-SMOKE-RESULT-AND-EXTERNAL-GATE-PREP` instruction.
+  This records the deterministic pre-runtime implementation choice within the
+  authorized scope, not permission to execute the gate.
+- **Query:** Pass frozen `case.target_query` verbatim to native `detect()`.
+  Preserve existing `max_objects=50, variant=null`; no prompt tuning.
+- **Adaptation:** Preserve lossless native bytes + metadata/checksum before
+  deserialize. Exactly one object with finite numeric x_min/y_min/x_max/y_max;
+  zero/multiple/malformed objects fail. Use canonical `bbox(..., "xyxy_1")`,
+  record raw and normalized coordinates and clamp flag separately. Unknown
+  native fields retained but not interpreted. No point-to-box, endpoint sorting,
+  label repair or GT/IoU-based box selection.
+- **Evaluation:** Reuse unchanged `evaluate_gate`; preserve all eight frozen
+  synthetic-v1 cases and canonical PASS semantics. IoU and area diagnostic only.
+  All human giant-box verdicts initially PENDING; no automatic NO_GIANT/PASS.
+- **Execution preparation:** Fixed exclusive/fsynced ledger in
+  `data/processed/external_gate/w2_moondream/` before runtime construction;
+  failures/interruption consume the reserved attempt across run IDs. Stop on
+  runtime failure, remaining cases NOT_ATTEMPTED. No reset/retry/force/fallback.
+- **Status:** Post-fix smoke runtime interface/native feasibility PASS per
+  Research Lead archive audit; historical official smoke FAIL remains consumed,
+  not superseded. External gate PREPARED_NOT_RUN; qualification/freeze PENDING.
+  No dataset/split/label/metric, runner/upstream/bridge or model-role change.
+  [Evidence, rules and future procedure](notes/w2_moondream_postfix_result_external_gate_prep.md).
+- **EPHEMERAL CACHE REPROVISION FOR EXTERNAL GATE (D9R2M follow-up):** Research
+  Lead reports the smoke Kaggle session/cache was lost. Only a completely absent
+  `data/processed/moondream_hf` in the new session permits the existing provisioner
+  `--provision`, for model `9a7d4024050840e001defacec2b00727e89149e6` and tokenizer
+  `35192e10a54e36eabe0a7cc57a2c1aab371cafc5`. Then verify-only in a separate process;
+  provision/verify manifests must be byte-identical and every audited size/hash/
+  identity must PASS. Existing cache: verify-only; partial/invalid: STOP, no
+  deletion, repair, overwrite or changed pins. Provision may use Internet ON;
+  user must switch Internet OFF before the offline gate. Future external gate
+  only: no historical-smoke change, post-fix smoke rerun, runner/bridge change or
+  attempt-ledger reset. Documentary preparation only; no real execution here.
+
 ## Template
 
 - **ID:** <DEC-...>

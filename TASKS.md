@@ -511,3 +511,27 @@ GPU/model execution, download, smoke/query/detect/gate/InspecSafe or merge.
 
 See [contract and fake/static validation](notes/w2_moondream_postfix_smoke_prep.md).
 No real runtime execution, download, external gate, InspecSafe, redaction fix or merge.
+
+## W2.6-D9R2M-MOONDREAM-POSTFIX-SMOKE-RESULT-AND-EXTERNAL-GATE-PREP
+
+Current documentary overlay on the historical D9R2L PREP milestone above.
+
+- [x] Record Research Lead archive-checked post-fix smoke
+  `moondream-postfix-smoke-20260927T022150Z-1b8def87`: runtime interface PASS,
+  native query/detect feasibility PASS and bridge exercised for both calls.
+  Historical official smoke remains FAIL / consumed / not superseded.
+- [x] Prepare unchanged eight-case synthetic-v1 external gate with native detect,
+  raw-before-deserialize, deterministic exactly-one-box canonical adaptation,
+  canonical evaluator and PENDING human giant-box review.
+- [x] Implement separate fixed one-attempt ledger, exact-commit/clean-checkout,
+  cache/mask/runtime guards and stop-on-failure behavior; fake/static tests only.
+- [x] Document the external-gate-only ephemeral cache exception: provision exact
+  pinned snapshots only when the cache is wholly absent; separate verify-only
+  and identical manifests required. Existing cache is verify-only; invalid cache
+  STOP without repair/deletion. User switches Internet OFF before the gate.
+- [ ] Real external gate **NOT_RUN**; grounding qualification **PENDING**.
+  Protocol freeze **PENDING**; no automatic role promotion.
+
+See [reported smoke result, gate contract and validation](notes/w2_moondream_postfix_result_external_gate_prep.md).
+No real model/GPU/download/gate execution, InspecSafe, training, model selection
+or merge in this task. One Draft PR contains result documentation and gate PREP.

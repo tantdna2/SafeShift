@@ -90,6 +90,27 @@ riêng; không suy ra kết quả từ kế hoạch.
 - [Contract, future commands and validation](notes/w2_moondream_postfix_smoke_prep.md).
   No GPU/model execution, download, real smoke, external gate, InspecSafe or merge.
 
+## W2.6-D9R2M — post-fix smoke result and external gate PREP
+
+- **Reported completed smoke:** Research Lead checked archive for
+  `moondream-postfix-smoke-20260927T022150Z-1b8def87`, execution commit
+  `9bc5509ecffcb9d7b2faa4a023cd76bd358e2723`: `RUNTIME_INTERFACE_PASS`, exit 0,
+  one load/query/detect, 5/5 VALID state audits, two correct boundary triples,
+  13/13 recorded SHA-256 entries verified. This PR does not independently rehash
+  the archive or run the smoke again.
+- Native query/detect feasibility **PASS**; CPU FP16 -> CUDA FP16 -> vision
+  consumption FP16 bridge successfully exercised for both calls. Exactly one
+  visible Tesla T4 CC 7.5, 15636037632 bytes, host T4 x2, mask 0, Internet OFF;
+  peak allocated/reserved 4436097536/4513071104 bytes.
+- Historical official smoke stays **FAIL / consumed / not superseded**.
+  Grounding qualification and protocol freeze remain **PENDING**.
+- Separate eight-case native-detect external gate **PREPARED_NOT_RUN**; unchanged
+  synthetic-v1 suite, canonical evaluator, explicit human giant-box review and
+  fixed one-attempt ledger. No new real run ID, raw model output or gate metric.
+- [Full reported query/bbox, provenance, frozen rules and validation](notes/w2_moondream_postfix_result_external_gate_prep.md).
+  **NO REAL RUNTIME EXECUTION** in this task; no model/GPU/download/gate,
+  InspecSafe, training, model selection or merge.
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>
