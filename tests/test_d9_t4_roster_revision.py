@@ -85,7 +85,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
     def test_07_resource_status_tracks_recorded_runtime_evidence(self):
         for m in self.primary[1:]:
             self.assertEqual(m['classification'], 'CANDIDATE')
-            expected = 'PASS_VALIDATED' if m['key'] == PRIMARY[1][0] else 'T4_FEASIBILITY_CANDIDATE'
+            expected = 'PASS_VALIDATED' if m['key'] in {PRIMARY[1][0], PRIMARY[3][0]} else 'T4_FEASIBILITY_CANDIDATE'
             self.assertEqual(m['resource_status'], expected)
             self.assertEqual(m['target_validation'], ['COLAB_T4_1X16GB_PRIMARY', 'KAGGLE_T4_FALLBACK_ALLOWED'])
 
@@ -96,7 +96,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             # is separately linked by the roster, as for the Qwen3 anchor.
             self.assertFalse(p['runtime_validated'])
             self.assertEqual(p['t4_status'], 'FEASIBILITY_CANDIDATE')
-            qualified = m['key'] == PRIMARY[1][0]
+            qualified = m['key'] in {PRIMARY[1][0], PRIMARY[3][0]}
             self.assertEqual(m['runtime_smoke_status'], 'PASS_VALIDATED' if qualified else 'PENDING')
             for _, value in walk([p] if qualified else [m, p]):
                 if isinstance(value, str):
@@ -271,7 +271,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertIn('MIT project + Qwen component', p['license_access']['repository_license'])
         self.assertEqual(p['spatial']['status'], 'NOT_YET_DOCUMENTARILY_QUALIFIED')
 
-    def test_27_moondream_release_api_and_grounding_not_gate_pass(self):
+    def test_27_moondream_release_api_and_historical_documentary_qualification(self):
         p = self.by_key[PRIMARY[3][0]]
         self.assertEqual(p['release_tag_resolution']['tag'], '2025-06-21')
         self.assertEqual(p['release_tag_resolution']['immutable_revision'], PRIMARY[3][2])
@@ -370,6 +370,41 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         if path.exists():
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
                              'cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb')
+
+    def test_current_overlay_links_preserve_historical_snapshots(self):
+        overlay = self.freeze['current_status_overlay']
+        self.assertEqual(load(ROOT / overlay['config']), self.roster)
+        self.assertTrue((ROOT / overlay['readiness_matrix']).is_file())
+        intern = self.primary[2]
+        self.assertEqual(intern['documentary_status'], 'COMPLETE')
+        self.assertEqual(intern['offline_runner_status'], 'PENDING')
+        self.assertEqual(intern['runtime_smoke_status'], 'PENDING')
+        self.assertEqual(intern['grounding'], 'NOT_YET_DOCUMENTARILY_QUALIFIED')
+
+    def test_moondream_current_pass_does_not_promote_production_adapter(self):
+        m = self.primary[3]
+        self.assertEqual(m['offline_runner_status'], 'COMPLETE')
+        self.assertEqual(m['external_gate_status'], 'PASS')
+        self.assertEqual(m['grounding'], 'PASS')
+        self.assertEqual(m['classification'], 'CANDIDATE')
+        self.assertEqual(m['production_adapter_status'], 'NOT_QUALIFIED')
+        self.assertEqual(m['production_adapter_grounding'], 'UNSUPPORTED')
+        self.assertEqual(m['production_adapter_classification'], 'INVALID')
+        # Inspect source only: never construct a runner/backend to verify status.
+        source = (ROOT / 'safeshift/runners/moondream2.py').read_text(encoding='utf-8')
+        adapter = source.split('class PendingMoondreamAdapter:', 1)[1].split('class NativeBackend:', 1)[0]
+        self.assertIn('parser_version = "NOT_QUALIFIED"', adapter)
+        self.assertIn('AdaptedOutput(ParseStatus.UNSUPPORTED', adapter)
+        self.assertIn('AdaptedOutput(ParseStatus.INVALID', adapter)
+        for field in ('runtime_evidence', 'external_gate_evidence'):
+            path, anchor = m[field].split('#', 1)
+            evidence = (ROOT / path).read_text(encoding='utf-8')
+            self.assertTrue(anchor)
+            self.assertIn('moondream-postfix-smoke-20260927T022150Z-1b8def87', evidence)
+            self.assertIn('moondream-external-gate-20260928T013533Z-d9a1c46b', evidence)
+        self.assertEqual(m['historical_official_smoke'], {
+            'run_id': 'kaggle-t4-moondream-smoke-20260926T070217Z-4c2d43',
+            'status': 'FAIL', 'attempt_consumed': True, 'superseded': False})
 
 
 if __name__ == '__main__':

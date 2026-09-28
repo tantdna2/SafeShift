@@ -192,7 +192,7 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
         for image in images:
             self.assertEqual(sha(ROOT / image['image_path']), image['sha256'])
 
-    def test_only_qwen3_grounding_fields_changed_in_roster(self):
+    def test_qwen3_grounding_result_preserved_after_later_reconciliation(self):
         before = json.loads(subprocess.check_output(
             ['git', 'show', BASE + ':configs/pre_freeze/local_models.d9.json'], cwd=ROOT))
         model = next(m for m in before['primary_models'] if m['key'] == 'qwen3_vl_8b_instruct')
@@ -200,7 +200,9 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
                      external_gate_status='GATE_FAIL',
                      external_gate_evidence='configs/pre_freeze/qwen3_external_gate_result.v1.json',
                      backup_substitution=False, artificial_zero_iou=False)
-        self.assertEqual(self.roster, before)
+        # Later per-model reconciliations may update other primaries; preserve
+        # this result's complete Qwen3 entry, not the historical whole roster.
+        self.assertEqual(self.model, model)
 
     def test_global_d9_pending_inspecsafe_unauthorized_and_freeze_pending(self):
         self.assertEqual(self.roster['synthetic_gate']['status'], 'PENDING')

@@ -88,6 +88,15 @@ Documentation synchronization does not complete any execution prerequisite.
 [W2.6-D9R1](notes/w2_d9_t4_roster_revision.md). The B0/B2/B3 milestones below
 remain historical evidence; Ovis, Molmo and Gemma are no longer current primaries.
 
+**Current D9R3 overlay (2026-09-28):** See the
+[freeze-readiness matrix #1–#8](notes/w2_d9_freeze_readiness_reconciliation.md).
+Qwen3/Qwen2.5/Moondream offline runners COMPLETE and runtime PASS_VALIDATED;
+InternVL3 documentary COMPLETE, runner/runtime PENDING. Qwen3/Qwen2.5 gates FAIL
+and grounding NOT_PARTICIPATING; Moondream external gate/grounding qualification
+PASS, but its production adapter remains NOT_QUALIFIED (grounding UNSUPPORTED,
+classification INVALID). InternVL3 eligibility/gate remains unresolved.
+Checklist #1 COMPLETE; #2–#8 PENDING. Historical milestones below are preserved.
+
 - [x] Synchronize the D9 decision ledger, checklist, implementation note and two
   configuration templates; preserve historical D8 evidence and SYNTHETIC V1 assets.
 - [x] **1. Model provenance:** COMPLETE (W2.6B0 documentary scope): exact D9 IDs,
@@ -556,3 +565,15 @@ milestone above; earlier PREP and smoke records retain their original scope.
 See [human review result and evidence limits](notes/w2_moondream_postfix_result_external_gate_prep.md#d9r2n--external-gate-final-human-review-record).
 Documentation only; **NO REAL RUNTIME EXECUTION**. No protocol/gate/model/runner/
 bridge/frozen-suite/config changes or binary artifacts.
+
+## W2.6-D9R3-FREEZE-READINESS-RECONCILIATION
+
+- [x] Reconcile current Moondream roster status with merged D9R2M/D9R2N evidence;
+  preserve official smoke FAIL / consumed / superseded=false and classification
+  CANDIDATE. Production adapter remains NOT_QUALIFIED and unchanged.
+- [x] Publish [readiness matrix #1–#8 and exact blockers](notes/w2_d9_freeze_readiness_reconciliation.md);
+  link current status from the unfrozen template; preserve documentary provenance.
+- [ ] Checklist #2–#8 and protocol freeze remain PENDING; InternVL3 stays in
+  the primary roster, no backup activation or final role assignment.
+
+Configuration/documentary reconciliation only. **NO REAL RUNTIME EXECUTION**.

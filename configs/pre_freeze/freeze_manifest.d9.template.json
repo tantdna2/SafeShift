@@ -7,6 +7,12 @@
   "model_provenance_config": "configs/pre_freeze/local_model_provenance.d9.json",
   "benchmark_firewall": "ACTIVE",
   "inspecsafe_inference_authorized": false,
+  "current_status_overlay": {
+    "task": "W2.6-D9R3-FREEZE-READINESS-RECONCILIATION",
+    "config": "configs/pre_freeze/local_models.d9.json",
+    "readiness_matrix": "notes/w2_d9_freeze_readiness_reconciliation.md",
+    "semantics": "Per-model resource/grounding placeholders below retain the D9R1 template milestone; use the linked roster for current runtime/gate qualification. They are not current gate results or assigned final roles. Frozen components and final roles remain PENDING; qualification does not freeze this template."
+  },
   "preserved_protocol": {
     "d1_d7_and_rq2_hierarchy_erratum_unchanged": true,
     "protocol_freeze_before_first_inspecsafe_inference": true,
