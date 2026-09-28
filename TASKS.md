@@ -636,7 +636,9 @@ backup activation or merge.
   semantics while allowing the pre-specified expansion candidate to enter the
   same qualification scope.
 - [ ] Owner access/terms confirmation: PENDING (`GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED`).
-- [ ] PaliGemma exact-source/loader/API audit: PENDING.
+- [ ] PaliGemma exact-source/loader/API verification: BLOCKED after D9R7
+  documentary audit; exact config/tokenizer/preprocessor HTTP 401 and unresolved
+  normalization-source conflict. See [audit note](notes/w2_paligemma_source_api_audit.md).
 - [ ] Offline runner preparation: PENDING.
 - [ ] Real single-T4 FP16/NONE smoke: PENDING / NOT_RUN.
 - [ ] Deterministic external classification-interface qualification: PENDING.
@@ -648,3 +650,14 @@ weights, GPU, inference, InspecSafe performance, protocol freeze or merge was
 performed in this task. Checklist #1/#2/#5 remain `COMPLETE`; #3/#4/#6/#7/#8
 remain `PENDING`, and protocol freeze remains blocked until the expansion
 candidate is resolved.
+
+## W2.6-D9R7-PALIGEMMA-SOURCE-API-AUDIT (2026-09-28)
+
+- [x] Record exact public card/metadata and versioned official API/family sources
+  in `configs/pre_freeze/paligemma_source_api_audit.v1.json`; no weights/runtime.
+- [x] Record `ACCESS_EVIDENCE_BLOCKED` and stop exact-file-dependent verification.
+  Preserve owner access status, four primaries, `BACKUP_1` and D9R6 precommit.
+- [x] Escalate the apparent 1023 training / 1024 decoding scope conflict for
+  Research Lead review; no divisor or canonical conversion selected.
+- [ ] Exact grammar, processor/tokenizer and no-remote-code verification remain
+  unresolved. Runner prep is not authorized next; qualification/gate remain pending.

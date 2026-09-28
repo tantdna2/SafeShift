@@ -1,0 +1,518 @@
+{
+  "schema_version": "1.0",
+  "record_kind": "PALIGEMMA_SOURCE_API_AUDIT",
+  "task_id": "W2.6-D9R7-PALIGEMMA-SOURCE-API-AUDIT",
+  "audit_date": "2026-09-28",
+  "base_sha": "d1ff06d506240df60a19cb094333c9c32e461c73",
+  "model_id": "google/paligemma-3b-mix-448",
+  "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+  "status": "ACCESS_EVIDENCE_BLOCKED",
+  "access_status": "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED",
+  "access_evidence": {
+    "status": "ACCESS_EVIDENCE_BLOCKED",
+    "owner_acceptance_status": "NOT_VERIFIED",
+    "owner_acceptance_asserted": false,
+    "authentication_used": false,
+    "terms_accepted_by_codex": false,
+    "public_card_and_metadata_readable": true,
+    "blocked_files": [
+      "config.json",
+      "preprocessor_config.json",
+      "tokenizer_config.json",
+      "special_tokens_map.json",
+      "tokenizer.json"
+    ],
+    "evidence": [
+      "exact_metadata",
+      "blocked_config.json",
+      "blocked_preprocessor_config.json",
+      "blocked_tokenizer_config.json",
+      "blocked_special_tokens_map.json",
+      "blocked_tokenizer.json"
+    ],
+    "dependent_work_stopped": true
+  },
+  "loader": {
+    "status": "ACCESS_EVIDENCE_BLOCKED",
+    "class": "PaliGemmaForConditionalGeneration",
+    "class_status": "EXACT_CHECKPOINT_VERIFIED_METADATA_ONLY",
+    "processor": "AutoProcessor / PaliGemmaProcessor",
+    "processor_status": "FAMILY_LEVEL_ONLY",
+    "trust_remote_code": false,
+    "trust_remote_code_status": "REQUIRED_SAFESHIFT_POLICY_EXACT_REQUIREMENT_NOT_VERIFIED",
+    "remote_code_required_by_exact_checkpoint": "NOT_VERIFIED",
+    "remote_code_if_required_action": "STOP",
+    "generate": {
+      "status": "FAMILY_LEVEL_ONLY",
+      "value": "Built-in GenerationMixin; card example uses generate, slices off input tokens and decodes generated suffix.",
+      "evidence": [
+        "hf_model",
+        "exact_card"
+      ]
+    },
+    "local_files_compatible_loading": {
+      "status": "LIBRARY_API_VERIFIED",
+      "model": "Local directory plus local_files_only=True",
+      "processor": "Local directory plus local_files_only=True",
+      "exact_checkpoint_loading": "NOT_VERIFIED",
+      "evidence": [
+        "hf_loading",
+        "hf_processor_loading"
+      ]
+    },
+    "evidence": [
+      "exact_metadata",
+      "exact_card",
+      "hf_model",
+      "hf_auto_processor",
+      "hf_processor",
+      "blocked_config.json",
+      "blocked_preprocessor_config.json",
+      "blocked_tokenizer_config.json"
+    ]
+  },
+  "image_preprocessing": {
+    "status": "ACCESS_EVIDENCE_BLOCKED",
+    "expected_image_size": {
+      "status": "EXACT_CHECKPOINT_VERIFIED",
+      "value": [
+        448,
+        448
+      ],
+      "meaning": "Fine-tuning input resolution documented by exact card, not inspection of processor settings.",
+      "evidence": [
+        "exact_card"
+      ]
+    },
+    "resize_crop_behavior": "NOT_VERIFIED",
+    "image_normalization": "NOT_VERIFIED",
+    "image_token_count": "NOT_VERIFIED",
+    "family_source_behavior": {
+      "status": "FAMILY_LEVEL_ONLY",
+      "value": "SigLIP slow processor resizes to configured height/width using bicubic, then rescales by 1/255 and normalizes (defaults mean/std 0.5 per channel); no crop stage in this preprocess. PaliGemmaProcessor repeats <image> by image_seq_length per image before BOS and text. Exact settings and sequence length remain blocked.",
+      "evidence": [
+        "hf_image_processor",
+        "hf_processor"
+      ]
+    },
+    "preprocessing_override_proposed": false,
+    "evidence": [
+      "blocked_preprocessor_config.json",
+      "blocked_config.json"
+    ]
+  },
+  "classification_route": {
+    "status": "FAMILY_LEVEL_ONLY",
+    "documented_prompt_form": "answer en {question}\n",
+    "applicability_scope": "PaliGemma mix family, including mix-448 in upstream README; exact pinned prompt behavior NOT_VERIFIED.",
+    "direct_use_without_additional_finetuning": "DOCUMENTED_FOR_MIX_FAMILY",
+    "newline": {
+      "status": "FAMILY_LEVEL_ONLY",
+      "value": "Task sequence ends with newline. Transformers v4.57.1 processor appends newline itself; caller text need not include it. Passing a trailing newline there adds another; exact processor contract remains blocked.",
+      "evidence": [
+        "google_prompts",
+        "hf_processor"
+      ]
+    },
+    "generated_output": {
+      "status": "FAMILY_LEVEL_ONLY",
+      "value": "Autoregressive token sequence decoded to text; extract generated suffix after input length. This does not establish classification labels or accuracy.",
+      "evidence": [
+        "exact_card",
+        "hf_model"
+      ]
+    },
+    "final_safeshift_prompt_designed": false,
+    "evidence": [
+      "google_prompts",
+      "google_bigvision",
+      "exact_card",
+      "hf_processor"
+    ]
+  },
+  "detection_route": {
+    "status": "FAMILY_LEVEL_ONLY",
+    "documented_prompt_form": "detect {object}\n",
+    "documented_multi_object_prompt_form": "detect {object} ; {object}\n",
+    "applicability_scope": "Official family task syntax; upstream mix-448 guidance supports structured detection. Exact pinned output contract NOT_VERIFIED.",
+    "evidence": [
+      "google_prompts",
+      "google_bigvision",
+      "exact_card"
+    ]
+  },
+  "native_coordinate_interface": {
+    "status": "PENDING_DOCUMENTARY_VERIFICATION",
+    "exact_checkpoint_status": "ACCESS_EVIDENCE_BLOCKED",
+    "literal_token_format": "NOT_VERIFIED",
+    "coordinate_order": "NOT_VERIFIED",
+    "integer_range": "NOT_VERIFIED",
+    "normalization_rule": "NOT_VERIFIED",
+    "multiple_detection_grammar": "NOT_VERIFIED",
+    "empty_output_behavior": "NOT_DOCUMENTED",
+    "family_level_findings": {
+      "literal_token_format": {
+        "status": "FAMILY_LEVEL_ONLY",
+        "value": "<loc%04d>: four zero-padded decimal digits, e.g. <loc0000>, <loc0123>, <loc1023>; not <loc123>.",
+        "evidence": [
+          "hf_processor",
+          "google_bigvision"
+        ]
+      },
+      "coordinate_order": {
+        "status": "FAMILY_LEVEL_ONLY",
+        "value": [
+          "y_min",
+          "x_min",
+          "y_max",
+          "x_max"
+        ],
+        "evidence": [
+          "google_decode",
+          "google_training_encoding"
+        ]
+      },
+      "integer_range": {
+        "status": "FAMILY_LEVEL_ONLY",
+        "value": {
+          "minimum": 0,
+          "maximum": 1023,
+          "inclusive": true,
+          "token_count": 1024
+        },
+        "evidence": [
+          "hf_processor",
+          "google_bigvision"
+        ]
+      },
+      "multiple_detection_grammar": {
+        "status": "FAMILY_LEVEL_ONLY",
+        "value": "Google tutorial regex consumes four adjacent location tokens, a space, then a label ending at ' ;' or end-of-string, iterating over matches. This associates each matched box with its following label; it is not a full-string validation contract.",
+        "evidence": [
+          "google_decode"
+        ]
+      },
+      "empty_output_behavior": {
+        "status": "NOT_DOCUMENTED",
+        "evidence": [
+          "exact_card",
+          "google_prompts",
+          "google_decode",
+          "google_bigvision"
+        ],
+        "limitation": "No no-detection output contract found in audited sources. A regex producing zero matches does not prove a valid empty model response."
+      }
+    },
+    "evidence": [
+      "blocked_tokenizer.json",
+      "blocked_tokenizer_config.json",
+      "hf_processor",
+      "google_decode",
+      "google_training_encoding",
+      "google_bigvision"
+    ],
+    "unresolved_conflicts": [
+      {
+        "id": "COORDINATE_NORMALIZATION_SCOPE_CONFLICT",
+        "status": "STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED",
+        "training_encoding": {
+          "operation": "round(bbox * 1023), then clip integer indices to [0,1023]",
+          "scope": "Upstream RefCOCO segmentation training",
+          "evidence": [
+            "google_training_encoding"
+          ]
+        },
+        "visualization_decoding": {
+          "operation": "float(location_integer) / 1024.0",
+          "scope": "Current Google PaliGemma tutorial using PaliGemma2/Keras; detection and segmentation helpers",
+          "evidence": [
+            "google_decode"
+          ]
+        },
+        "interpretation": "Apparent encoding/decoding scale mismatch across scopes; neither exact detection mapping nor an inverse rule is established. Token count 1024 alone does not select a divisor.",
+        "resolution": "NOT_RESOLVED",
+        "selected_divisor": null
+      }
+    ]
+  },
+  "canonical_conversion": {
+    "status": "BLOCKED_PENDING_DOCUMENTARY_VERIFICATION",
+    "deterministic_mapping": "NOT_VERIFIED",
+    "normalization_divisor": null,
+    "native_order": "NOT_VERIFIED",
+    "native_numerical_range": "NOT_VERIFIED",
+    "axis_swap": "NOT_PROPOSED_UNTIL_SECTION_7_VERIFIED",
+    "clamp_policy": "NO_CLAMP_PROPOSED",
+    "heuristic_used": false,
+    "malformed_output_policy": "PROPOSED_PARSER_FAIL_NO_REPAIR",
+    "point_to_box": false,
+    "fabricated_box": false,
+    "artificial_zero_iou": false,
+    "evidence": [
+      "google_decode",
+      "google_training_encoding"
+    ],
+    "limitation": "No canonical mapping proposed or implemented; training-time clipping is not authorization for output repair."
+  },
+  "tokenizer_metadata": {
+    "status": "ACCESS_EVIDENCE_BLOCKED",
+    "exact_location_tokens_present": "NOT_VERIFIED",
+    "exact_location_token_ids": "NOT_VERIFIED",
+    "exact_location_token_range": "NOT_VERIFIED",
+    "library_constructs_location_tokens": {
+      "status": "FAMILY_LEVEL_ONLY",
+      "value": "EXTRA_TOKENS constructs 1024 location strings and PaliGemmaProcessor adds them with tokenizer.add_tokens; this does not inspect saved checkpoint vocabulary/IDs or prove they are special tokens.",
+      "evidence": [
+        "hf_processor"
+      ]
+    },
+    "evidence": [
+      "blocked_tokenizer.json",
+      "blocked_tokenizer_config.json",
+      "blocked_special_tokens_map.json"
+    ]
+  },
+  "runtime_documentary": {
+    "status": "DOCUMENTED_NOT_RUNTIME_VALIDATED",
+    "parameter_count": 2924351216,
+    "parameter_count_scope": "Published safetensors metadata; card rounds to 3B",
+    "selected_weight_format": "safetensors",
+    "selected_tensor_dtype": "F32",
+    "published_weight_files": [
+      {
+        "path": "model-00001-of-00003.safetensors",
+        "size_bytes": 4956951424
+      },
+      {
+        "path": "model-00002-of-00003.safetensors",
+        "size_bytes": 4999820608
+      },
+      {
+        "path": "model-00003-of-00003.safetensors",
+        "size_bytes": 1740714288
+      }
+    ],
+    "published_safetensors_size_bytes": 11697486320,
+    "fp16_documentary_support": {
+      "status": "LIBRARY_API_VERIFIED",
+      "operation": "Explicit dtype=torch.float16 load; torch_dtype alias accepted but deprecated in v4.57.1.",
+      "selected_revision_unchanged": true,
+      "converted_revision_selected": false,
+      "limitation": "Card advertises float16 variants but these are separate revisions. Explicit load/cast of selected F32 revision is API-compatible only; T4 feasibility and exact model load untested.",
+      "evidence": [
+        "exact_card",
+        "hf_loading"
+      ]
+    },
+    "t4_runtime_pass": false,
+    "real_runtime_status": "PENDING_QUALIFICATION",
+    "weights_downloaded": false,
+    "weight_bytes_verified": false,
+    "evidence": [
+      "exact_metadata",
+      "exact_card",
+      "hf_loading"
+    ]
+  },
+  "governance": {
+    "paligemma_role": "BACKUP_1",
+    "primary_roster_count": 4,
+    "promotion": false,
+    "model_substitution": false,
+    "precommit_changed": false,
+    "runtime_status": "PENDING_QUALIFICATION",
+    "grounding_status": "PENDING_QUALIFICATION",
+    "external_gate_status": "PENDING_QUALIFICATION",
+    "protocol_freeze": "PENDING",
+    "inspecsafe_authorized": false,
+    "runner_prep_authorized_next": false,
+    "authority": "Existing D9R6 contract; this audit does not approve new semantics.",
+    "evidence": [
+      "configs/pre_freeze/paligemma_primary_expansion_precommit.v1.json",
+      "configs/pre_freeze/local_models.d9.json"
+    ]
+  },
+  "inspecsafe_used": false,
+  "real_model_execution": false,
+  "inspecsafe_execution": false,
+  "unresolved_items": [
+    "Owner terms acceptance evidence absent in reviewed repository context; do not infer acceptance from public metadata/card access.",
+    "Exact full config, processor settings and tokenizer content blocked by HTTP 401; no exact no-remote-code requirement verification.",
+    "Exact prompt applicability and coordinate grammar are not established.",
+    "Normalization conflict requires Research Lead review; no divisor, canonical conversion, clamp or parser implementation selected.",
+    "No documented empty/no-detection output behavior in audited sources.",
+    "No runtime, classification qualification, external gate, promotion or protocol freeze."
+  ],
+  "sources": {
+    "exact_card": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/README.md",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "L15; Model information / Inputs and outputs; How to Use L108-129; Use in Transformers L131-164",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 200,
+      "content_sha256": "b381b5c959d15998432343ed17156a893f05ae8147d995895605d6b9fc784452",
+      "limitations": "Exact card describes 448 training and mix use; executable examples explicitly name mix-224 and are family guidance only."
+    },
+    "exact_metadata": {
+      "url": "https://huggingface.co/api/models/google/paligemma-3b-mix-448/revision/ead2d9a35598cb89119af004f5d023b311d1c4a1?blobs=true",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "$.sha; $.gated; $.config.architectures; $.config.model_type; $.cardData.license; $.safetensors; $.siblings",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 200,
+      "content_sha256": "ef400c16d5b157a3e77de3427b52e6cd959eafa21047f89ddeb69fa00273311f",
+      "limitations": "Public metadata only; partial config is not the gated full config. Published sizes/dtypes/counts, not inspected weight bytes. HTTP response contains mutable repository counters."
+    },
+    "blocked_config.json": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/config.json",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "Unauthenticated GET: HTTP 401 restricted-model response",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 401,
+      "content_sha256": "12bdb2645416e0cf8ededc6dbb94414a36e0e45f3050c1d53f60f09b277ab74a",
+      "limitations": "ACCESS_EVIDENCE_BLOCKED; body is an access error, not file content. Dependent exact-file audit stopped; no authentication or alternate checkpoint."
+    },
+    "blocked_preprocessor_config.json": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/preprocessor_config.json",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "Unauthenticated GET: HTTP 401 restricted-model response",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 401,
+      "content_sha256": "12bdb2645416e0cf8ededc6dbb94414a36e0e45f3050c1d53f60f09b277ab74a",
+      "limitations": "ACCESS_EVIDENCE_BLOCKED; body is an access error, not file content. Dependent exact-file audit stopped; no authentication or alternate checkpoint."
+    },
+    "blocked_tokenizer_config.json": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/tokenizer_config.json",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "Unauthenticated GET: HTTP 401 restricted-model response",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 401,
+      "content_sha256": "12bdb2645416e0cf8ededc6dbb94414a36e0e45f3050c1d53f60f09b277ab74a",
+      "limitations": "ACCESS_EVIDENCE_BLOCKED; body is an access error, not file content. Dependent exact-file audit stopped; no authentication or alternate checkpoint."
+    },
+    "blocked_special_tokens_map.json": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/special_tokens_map.json",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "Unauthenticated GET: HTTP 401 restricted-model response",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 401,
+      "content_sha256": "12bdb2645416e0cf8ededc6dbb94414a36e0e45f3050c1d53f60f09b277ab74a",
+      "limitations": "ACCESS_EVIDENCE_BLOCKED; body is an access error, not file content. Dependent exact-file audit stopped; no authentication or alternate checkpoint."
+    },
+    "blocked_tokenizer.json": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/tokenizer.json",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "Unauthenticated GET: HTTP 401 restricted-model response",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 401,
+      "content_sha256": "12bdb2645416e0cf8ededc6dbb94414a36e0e45f3050c1d53f60f09b277ab74a",
+      "limitations": "ACCESS_EVIDENCE_BLOCKED; body is an access error, not file content. Dependent exact-file audit stopped; no authentication or alternate checkpoint."
+    },
+    "hf_processor": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/paligemma/processing_paligemma.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "EXTRA_TOKENS L40; build_string_from_input L98; PaliGemmaProcessor L117-145; __call__ L264-284",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "9c3ae88a139677cf315a234f368247a6e98ff8acc7853cb43307c27fb5518047",
+      "limitations": "Library implementation, not proof of pinned checkpoint tokenizer contents, selected processor, image sequence length or successful loading."
+    },
+    "hf_model": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/paligemma/modeling_paligemma.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "PaliGemmaForConditionalGeneration L388 inherits GenerationMixin",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "b5ad4656f15ab6461963aa3e37e37ba09c43f1a561038593c42f9ac24d7c0cd9",
+      "limitations": "Built-in class and generation API; not runtime validation."
+    },
+    "hf_auto_processor": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/auto/processing_auto.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "PROCESSOR_MAPPING_NAMES L115; from_pretrained processor/auto_map lookup L315-390",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "e97580de189cd7e5ea3378a96e01279939f305c68a0245a9160b80cb1a938961",
+      "limitations": "Built-in mapping exists; gated exact config/tokenizer/preprocessor cannot be checked for overrides."
+    },
+    "hf_loading": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/modeling_utils.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "PreTrainedModel.from_pretrained L4384; local directory L4443-4444; local_files_only L4472-4473; dtype L4508-4522; torch_dtype alias L4629,4669-4672",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "LIBRARY_API_ONLY",
+      "http_status": 200,
+      "content_sha256": "bf1c6b2a43cf7c36fb79f37c981424dd6ae78eb863fcaa5d2a37e76c9828611d",
+      "limitations": "API compatibility for local loading and explicit FP16; no guarantee of exact checkpoint compatibility, T4 memory or numerical behavior."
+    },
+    "hf_processor_loading": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/processing_utils.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "ProcessorMixin.from_pretrained L1336-1396, especially local_files_only forwarding L1376",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "LIBRARY_API_ONLY",
+      "http_status": 200,
+      "content_sha256": "6c29de5c3fc674cf21ba6377a39cbafb2ba3e4bc2d1202d4b944f8cf840e6f33",
+      "limitations": "Local-files-compatible API only; complete exact processor files unavailable."
+    },
+    "hf_image_processor": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/siglip/image_processing_siglip.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "SiglipImageProcessor defaults L53-107; preprocess L218-234",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "f686c098214b194a88fb970e665fd86cdc9e322d34d6b0356acc36e6a1f6b13e",
+      "limitations": "Slow SigLIP processor implementation defaults are not the gated checkpoint's effective settings or a choice of fast/slow implementation."
+    },
+    "google_prompts": {
+      "url": "https://ai.google.dev/gemma/docs/paligemma/prompt-system-instructions",
+      "revision_or_version": "Page last updated 2025-02-25 UTC",
+      "locator": "Prompt task syntax; Prompting with natural language; Batched prompt commands",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "f392b04953e4c7e54d3d5c3d568d3429b9d6ae52ff3a42f317b09851786783ab",
+      "limitations": "Unpinned family documentation; no immutable HF revision association."
+    },
+    "google_decode": {
+      "url": "https://ai.google.dev/gemma/docs/paligemma/inference-with-keras",
+      "revision_or_version": "Page last updated 2026-04-22 UTC",
+      "locator": "Load the model; Create utility methods / parse_bbox_and_labels; parse_segments; Use detect prompt",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "6e0f1ec2f76ea5e6deef124fa4137ae9501c64b81679c2a9f2a5b38f6834c1cf",
+      "limitations": "Current example loads PaliGemma2 Keras mix-3b-224. Supporting family evidence only; never substituted for selected HF model. Tutorial parser is not a strict SafeShift parser."
+    },
+    "google_bigvision": {
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/configs/proj/paligemma/README.md",
+      "revision_or_version": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "locator": "Tokenizer L95-104; Mixture checkpoint L137-159",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "c9b435f758ab3a134ee59a0f28160f3d7401f0a9fc49e96e39f221b80407f48e",
+      "limitations": "Explicit mix-448 family guidance, not a binding to the selected HF revision or its processor bytes."
+    },
+    "google_training_encoding": {
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/pp/proj/paligemma/segmentation.py",
+      "revision_or_version": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "locator": "get_refcoco_mask2str / _pp: location tokens L42, bbox axes L56-59, encoding L72-74",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "f1b8f482c1bf0636ec370ce91f1974c3c9e5f84321a980832acc2b43c914d2b1",
+      "limitations": "RefCOCO segmentation training encoding, not proof of mix-448 detection decoding; scope difference is unresolved, not reconciled by inference."
+    }
+  }
+}
