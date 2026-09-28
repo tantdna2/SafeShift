@@ -639,10 +639,12 @@ backup activation or merge.
   metadata access verified. Historical precommit/provenance access fields unchanged.
 - [x] PaliGemma documentary source/API audit: exact config/tokenizer/processor
   verified; Research Lead selected source-backed model-ID-level detection /1024.
-  Exact runtime/grounding remain pending; PR #55 independent audit/merge pending.
+  Exact runtime/grounding remain pending; PR #55 independent audit PASS and merged
+  at `97682b682f85ee0d9cfe646e5a69367c4d46afa6`.
   See [audit note](notes/w2_paligemma_source_api_audit.md).
-- [ ] Offline runner preparation: PENDING.
-- [ ] Real single-T4 FP16/NONE smoke: PENDING / NOT_RUN.
+- [x] Offline runner preparation: `PREPARED_NOT_RUNTIME_VALIDATED` in D9R8;
+  PR #56 remains Draft, independent audit/merge pending.
+- [ ] Real single-T4 FP16/NONE smoke: `PENDING_QUALIFICATION` / `NOT_RUN`.
 - [ ] Deterministic external classification-interface qualification: PENDING.
 - [ ] Frozen synthetic-v1 grounding gate: PENDING / NOT_RUN.
 - [ ] Separate Research Lead promotion decision and independent audit: PENDING.
@@ -669,9 +671,11 @@ candidate is resolved.
 - [x] Record the decision in DECISIONS before runtime/gate/InspecSafe; preserve
   exact runtime_verified=false, BACKUP_1, four primaries and unchanged D9R6
   precommit/roster/provenance. Runtime, grounding and external gate remain pending.
-- [ ] PR #55 independent audit PASS and merge: prerequisites for runner prep.
-  Runner prep is not executed in this PR. Exact generated grammar conformance
-  awaits runtime qualification; empty-output behavior remains NOT_DOCUMENTED.
+- [x] PR #55 independent audit PASS and merged at
+  `97682b682f85ee0d9cfe646e5a69367c4d46afa6`; runner-prep prerequisites complete.
+  Runner prep was not part of PR #55; D9R8 preparation is tracked below.
+  Exact generated grammar conformance awaits runtime qualification;
+  empty-output behavior remains NOT_DOCUMENTED.
 
 ## W2.6-D9R8-PALIGEMMA-RUNNER-SMOKE-PREP (2026-09-28)
 
@@ -685,8 +689,9 @@ candidate is resolved.
   Runner status `PREPARED_NOT_RUNTIME_VALIDATED`; exact runtime verified=false.
 - [ ] Real runtime `PENDING_QUALIFICATION` / `NOT_RUN`; grounding, classification
   interface and external gate remain `PENDING_QUALIFICATION`. No gate execution.
-- [ ] Research Lead review and separately authorized owner qualification remain.
+- [ ] PR #56 remains Draft; independent audit and merge pending.
+  Separately authorized owner qualification remains pending.
 
-Current overlay only: historical D9R6/D9R7 records unchanged. PaliGemma remains
-`BACKUP_1`, four primaries; no promotion. Protocol freeze `PENDING` / `BLOCKED`,
+Current tracker overlay only: historical D9R6/D9R7 evidence artifacts unchanged.
+PaliGemma remains `BACKUP_1`, four primaries; no promotion. Protocol freeze `PENDING` / `BLOCKED`,
 InspecSafe authorization=false. No real model/GPU/InspecSafe execution or merge.
