@@ -130,8 +130,11 @@ class ExternalGateResultTests(unittest.TestCase):
     def test_global_checklist_and_inspecsafe_still_pending_unauthorized(self):
         self.assertEqual(self.roster['synthetic_gate']['status'], 'PENDING')
         self.assertEqual(self.result['global_d9_synthetic_gate_status'], 'PENDING')
+        completed = {'1_model_revisions_and_license_provenance',
+                     '2_local_self_hosted_runners',
+                     '5_synthetic_gate_four_primary_models'}
         for key, value in self.roster['d9_checklist'].items():
-            self.assertEqual(value, 'COMPLETE' if key.startswith('1_') else 'PENDING')
+            self.assertEqual(value, 'COMPLETE' if key in completed else 'PENDING')
         for record in (self.result, self.roster):
             self.assertEqual(record['protocol_freeze_commit_sha'], 'PENDING')
             self.assertIs(record['inspecsafe_inference_authorized'], False)

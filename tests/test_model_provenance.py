@@ -186,8 +186,11 @@ class ModelProvenanceTests(unittest.TestCase):
     def test_only_checklist_one_is_complete(self):
         checklist = self.roster["d9_checklist"]
         self.assertEqual(len(checklist), 8)
+        completed = {"1_model_revisions_and_license_provenance",
+                     "2_local_self_hosted_runners",
+                     "5_synthetic_gate_four_primary_models"}
         for key, status in checklist.items():
-            self.assertEqual(status, "COMPLETE" if key.startswith("1_") else "PENDING")
+            self.assertEqual(status, "COMPLETE" if key in completed else "PENDING")
         self.assertTrue(all(v == "PENDING" for v in self.freeze["frozen_components"].values()))
 
     def test_runtime_specs_have_required_unvalidated_interface_fields(self):

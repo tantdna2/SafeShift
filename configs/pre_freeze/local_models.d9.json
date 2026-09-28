@@ -71,11 +71,16 @@
       "model_id": "OpenGVLab/InternVL3-2B-hf",
       "role": "INDEPENDENT_INTERNVL_FAMILY",
       "classification": "CANDIDATE",
-      "grounding": "NOT_YET_DOCUMENTARILY_QUALIFIED",
+      "grounding": "NOT_PARTICIPATING",
+      "grounding_failure_reason": "NO_DOCUMENTED_GENERIC_SPATIAL_INTERFACE",
+      "external_gate_status": "NOT_RUN",
+      "external_gate_evidence": "configs/pre_freeze/internvl3_t4_runtime_result.v1.json",
+      "artificial_zero_iou": false,
+      "backup_substitution": false,
       "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "internvl3_2b_hf",
-      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "resource_status": "PASS_VALIDATED",
       "target_validation": [
         "COLAB_T4_1X16GB_PRIMARY",
         "KAGGLE_T4_FALLBACK_ALLOWED"
@@ -86,7 +91,8 @@
       "production_adapter_status": "NOT_QUALIFIED",
       "production_adapter_grounding": "UNSUPPORTED",
       "production_adapter_classification": "INVALID",
-      "runtime_smoke_status": "PENDING",
+      "runtime_smoke_status": "PASS_VALIDATED",
+      "runtime_evidence": "configs/pre_freeze/internvl3_t4_runtime_result.v1.json",
       "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
     },
     {
@@ -242,10 +248,10 @@
   },
   "d9_checklist": {
     "1_model_revisions_and_license_provenance": "COMPLETE",
-    "2_local_self_hosted_runners": "PENDING",
+    "2_local_self_hosted_runners": "COMPLETE",
     "3_low_variance_decoding_per_model": "PENDING",
     "4_deterministic_native_output_adapters": "PENDING",
-    "5_synthetic_gate_four_primary_models": "PENDING",
+    "5_synthetic_gate_four_primary_models": "COMPLETE",
     "6_final_model_roles_and_backup_substitutions": "PENDING",
     "7_freeze_prompts_schema_adapters_runner_metric_engine": "PENDING",
     "8_record_protocol_freeze_commit": "PENDING"

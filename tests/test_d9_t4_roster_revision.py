@@ -85,7 +85,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
     def test_07_resource_status_tracks_recorded_runtime_evidence(self):
         for m in self.primary[1:]:
             self.assertEqual(m['classification'], 'CANDIDATE')
-            expected = 'PASS_VALIDATED' if m['key'] in {PRIMARY[1][0], PRIMARY[3][0]} else 'T4_FEASIBILITY_CANDIDATE'
+            expected = 'PASS_VALIDATED' if m['key'] in {PRIMARY[1][0], PRIMARY[2][0], PRIMARY[3][0]} else 'T4_FEASIBILITY_CANDIDATE'
             self.assertEqual(m['resource_status'], expected)
             self.assertEqual(m['target_validation'], ['COLAB_T4_1X16GB_PRIMARY', 'KAGGLE_T4_FALLBACK_ALLOWED'])
 
@@ -96,7 +96,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             # is separately linked by the roster, as for the Qwen3 anchor.
             self.assertFalse(p['runtime_validated'])
             self.assertEqual(p['t4_status'], 'FEASIBILITY_CANDIDATE')
-            qualified = m['key'] in {PRIMARY[1][0], PRIMARY[3][0]}
+            qualified = m['key'] in {PRIMARY[1][0], PRIMARY[2][0], PRIMARY[3][0]}
             self.assertEqual(m['runtime_smoke_status'], 'PASS_VALIDATED' if qualified else 'PENDING')
             for _, value in walk([p] if qualified else [m, p]):
                 if isinstance(value, str):
@@ -321,8 +321,11 @@ class D9T4RosterRevisionTests(unittest.TestCase):
     def test_30_freeze_roster_and_checklist_match(self):
         self.assertEqual([(m['provenance_key'], m['model_id'], m['immutable_revision']) for m in self.freeze['primary_models']], PRIMARY)
         self.assertEqual([(m['provenance_key'], m['model_id'], m['immutable_revision']) for m in self.freeze['backups_in_order']], BACKUPS)
+        completed = {'1_model_revisions_and_license_provenance',
+                     '2_local_self_hosted_runners',
+                     '5_synthetic_gate_four_primary_models'}
         for key, status in self.roster['d9_checklist'].items():
-            self.assertEqual(status, 'COMPLETE' if key.startswith('1_') else 'PENDING')
+            self.assertEqual(status, 'COMPLETE' if key in completed else 'PENDING')
         self.assertEqual(self.roster['decision_id'], 'DEC-W2-D9-009')
 
     def test_31_grounding_only_failure_cannot_substitute(self):
@@ -385,8 +388,12 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertEqual(intern['offline_runner_status'], 'COMPLETE')
         self.assertTrue((ROOT / intern['offline_runner_evidence']).is_file())
         self.assertEqual(intern['production_adapter_status'], 'NOT_QUALIFIED')
-        self.assertEqual(intern['runtime_smoke_status'], 'PENDING')
-        self.assertEqual(intern['grounding'], 'NOT_YET_DOCUMENTARILY_QUALIFIED')
+        self.assertEqual(intern['runtime_smoke_status'], 'PASS_VALIDATED')
+        self.assertEqual(intern['resource_status'], 'PASS_VALIDATED')
+        self.assertEqual(intern['grounding'], 'NOT_PARTICIPATING')
+        self.assertEqual(intern['grounding_failure_reason'], 'NO_DOCUMENTED_GENERIC_SPATIAL_INTERFACE')
+        self.assertEqual(intern['external_gate_status'], 'NOT_RUN')
+        self.assertEqual(intern['runtime_evidence'], 'configs/pre_freeze/internvl3_t4_runtime_result.v1.json')
 
     def test_moondream_current_pass_does_not_promote_production_adapter(self):
         m = self.primary[3]

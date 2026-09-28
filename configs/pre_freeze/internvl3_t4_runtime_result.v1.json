@@ -1,0 +1,127 @@
+{
+  "schema_version": "internvl3-t4-runtime-result-v1",
+  "record_kind": "RESEARCH_LEAD_VERIFIED_RUNTIME_RESULT",
+  "source": {
+    "authority": "Research Lead-supplied and independently inspected evidence",
+    "recording_basis": "Research Lead independently inspected the owner-run evidence archive; Codex did not inspect the archive",
+    "evidence_archive_name": "internvl3-t4-smoke-20260928-01-evidence.tar.gz",
+    "evidence_archive_sha256": "e4de47ec85cc5770f97e987f282aa11eb9ea36b3cfb1c0f7e5b64ceac681a74d",
+    "evidence_archive_committed": false,
+    "summary_sha256": "7edcd9219286bd84bde9a5453285e3e2f6cd9c7f839f2b6aa25e189f312c9edd"
+  },
+  "run_id": "internvl3-t4-smoke-20260928-01",
+  "execution_commit": "088a7ff7f4d2c9fb6b72accc6922d02317643bdf",
+  "plan_path": "configs/pre_freeze/internvl3_t4_runtime.v1.json",
+  "plan_sha256": "c2ad3137fbdba8809f2d86b75c6869955d51d462431905a7796cf109d1bf65b6",
+  "model_id": "OpenGVLab/InternVL3-2B-hf",
+  "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+  "documentary_status": "COMPLETE",
+  "offline_runner_status": "COMPLETE",
+  "status": "RUNTIME_INTERFACE_PASS",
+  "runtime_smoke_status": "PASS_VALIDATED",
+  "resource_status": "PASS_VALIDATED",
+  "validation_scope": "RUNTIME_INTERFACE_ONLY",
+  "not_validated_for": [
+    "CLASSIFICATION_CAPABILITY",
+    "GROUNDING_CAPABILITY",
+    "SYNTHETIC_CAPABILITY_GATE",
+    "INSPECSAFE_BENCHMARK_PERFORMANCE"
+  ],
+  "software": {
+    "python": "3.11.11",
+    "torch": "2.6.0+cu124",
+    "transformers": "4.52.4",
+    "torchvision": "0.21.0+cu124"
+  },
+  "hardware": {
+    "platform": "KAGGLE",
+    "visible_gpu_count": 1,
+    "gpu_name": "Tesla T4",
+    "compute_capability": [7, 5],
+    "total_vram_bytes": 15636037632,
+    "cuda_runtime": "12.4"
+  },
+  "runtime_condition": {
+    "precision": "FP16",
+    "quantization": "NONE",
+    "batch_size": 1,
+    "device": "cuda:0",
+    "cpu_offload": false,
+    "disk_offload": false,
+    "automatic_precision_fallback": false,
+    "automatic_quantization_fallback": false,
+    "model_substitution": false
+  },
+  "lifecycle": {
+    "model_load_count": 1,
+    "native_generate_calls": 2,
+    "state_audits": 8,
+    "state_audits_stable": true,
+    "native_errors": [],
+    "oom_observed": false
+  },
+  "memory": {
+    "unit": "bytes",
+    "peak_allocated_bytes": 4275527168,
+    "peak_reserved_bytes": 4582277120
+  },
+  "snapshot_verification": {
+    "local_bytes_verified": true,
+    "pinned_file_count": 14,
+    "exact_revision_verified": true,
+    "plan_sha256": "c2ad3137fbdba8809f2d86b75c6869955d51d462431905a7796cf109d1bf65b6",
+    "manifest_semantics": "Provision, verify and runtime snapshot manifests have identical substantive fields/file records; timestamp_utc differs by stage, so manifests are not byte-identical"
+  },
+  "raw_evidence": {
+    "summary_listed_artifacts_verified": true,
+    "summary_listed_artifact_count": 11,
+    "response_raw_files_persisted": true,
+    "response_raw_files_verified": true,
+    "metadata_parse_status_before_adapter": "NOT_ATTEMPTED",
+    "raw_before_parse_verified": true,
+    "native_decoded_outputs": {
+      "case_01": "The image shows a blue square on a white background.",
+      "case_02": "The image shows a green circle."
+    },
+    "output_interpretation": "Runtime sanity evidence only; not classification qualification or accuracy"
+  },
+  "observed_nonblocking_warnings": [
+    "deprecated video processor config filename",
+    "pad_token_id set to eos_token_id 151645"
+  ],
+  "grounding_eligibility": {
+    "grounding": "NOT_PARTICIPATING",
+    "grounding_failure_reason": "NO_DOCUMENTED_GENERIC_SPATIAL_INTERFACE",
+    "documentary_basis": "Exact source/card audit contains no documented generic native bounding-box API, coordinate grammar, frame, units or canonical box interface",
+    "point_to_box_conversion": false,
+    "prompt_trick": false,
+    "artificial_zero_iou": false,
+    "backup_substitution": false
+  },
+  "external_gate": {
+    "external_gate_status": "NOT_RUN",
+    "execution_status": "NOT_RUN",
+    "reason": "No qualifying native box interface; external gate not executed",
+    "synthetic_gate_cases_executed": 0
+  },
+  "classification_status": "CANDIDATE",
+  "production_adapter_status": "NOT_QUALIFIED",
+  "production_adapter_classification": "INVALID",
+  "production_adapter_grounding": "UNSUPPORTED",
+  "backup_substitution": false,
+  "artificial_zero_iou": false,
+  "synthetic_gate_used": false,
+  "inspecsafe_used": false,
+  "inspecsafe_inference_authorized": false,
+  "protocol_freeze_commit_sha": "PENDING",
+  "d9_checklist": {
+    "1_model_revisions_and_license_provenance": "COMPLETE",
+    "2_local_self_hosted_runners": "COMPLETE",
+    "3_low_variance_decoding_per_model": "PENDING",
+    "4_deterministic_native_output_adapters": "PENDING",
+    "5_synthetic_gate_four_primary_models": "COMPLETE",
+    "6_final_model_roles_and_backup_substitutions": "PENDING",
+    "7_freeze_prompts_schema_adapters_runner_metric_engine": "PENDING",
+    "8_record_protocol_freeze_commit": "PENDING"
+  }
+}
