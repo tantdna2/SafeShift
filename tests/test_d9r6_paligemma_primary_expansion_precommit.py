@@ -77,6 +77,13 @@ class D9R6PaliGemmaExpansionPrecommitTests(unittest.TestCase):
         self.assertEqual(contract["classification_interface"]["status"], "PENDING_QUALIFICATION")
         self.assertEqual(contract["grounding_interface"]["status"], "PENDING_QUALIFICATION")
         self.assertEqual(contract["frozen_external_gate"]["status"], "PENDING_QUALIFICATION")
+        grounding = contract["grounding_interface"]
+        self.assertEqual(grounding["native_output_grammar_status"], "PENDING_DOCUMENTARY_VERIFICATION")
+        self.assertEqual(grounding["candidate_native_output_grammar_to_verify"],
+                         "<loc y_min><loc x_min><loc y_max><loc x_max>")
+        self.assertTrue(grounding["deterministic_conversion_required"])
+        self.assertEqual(grounding["deterministic_conversion_status"], "PENDING_QUALIFICATION")
+        self.assertNotIn("native_output_grammar", grounding)
         statuses = []
 
         def collect(value):
@@ -91,6 +98,17 @@ class D9R6PaliGemmaExpansionPrecommitTests(unittest.TestCase):
 
         collect(self.record)
         self.assertNotIn("PASS", statuses)
+
+    def test_grounding_candidate_aligns_with_unqualified_provenance(self):
+        summary = self.record["selection_basis"]["summary"]
+        self.assertIn("object-detection", summary)
+        self.assertIn("PENDING_DOCUMENTARY_VERIFICATION", summary)
+        self.assertIn("not an established fact", summary)
+        spatial = next(m for m in self.provenance["models"] if m["key"] == MODEL_KEY)["spatial"]
+        self.assertEqual(spatial["d5_box_qualification"], "NOT_YET_QUALIFIED")
+        self.assertIn("object detection", spatial["documented_capability"].lower())
+        self.assertIn("native coordinate grammar", spatial["documented_capability"].lower())
+        self.assertIn("not established", spatial["documented_capability"].lower())
 
     def test_frozen_gate_manifest_and_scope_are_exact(self):
         self.assertEqual(self.record["qualification_contract"]["frozen_external_gate"]["manifest"], MANIFEST)

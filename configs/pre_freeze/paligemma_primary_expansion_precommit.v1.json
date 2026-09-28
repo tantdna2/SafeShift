@@ -23,7 +23,7 @@
     "inspecsafe_performance_used": false,
     "documentary_provenance_present": true,
     "documented_interfaces_not_qualified": true,
-    "summary": "A further independent VLM is needed with the same classification capability and native box grounding capability. No InspecSafe performance was used to select this candidate. PaliGemma has documentary provenance in this repository; its object-detection interface and native-coordinate behavior are documented, but qualification has not been completed."
+    "summary": "A further independent VLM is needed with the same classification capability and native box grounding capability. No InspecSafe performance was used to select this candidate. The exact pinned revision has documentary provenance in this repository and its exact card documents object-detection and segmentation capability. The exact native box grammar for the pinned 448 interface remains PENDING_DOCUMENTARY_VERIFICATION; deterministic D4 conversion is a required qualification, not an established fact."
   },
   "qualification_status": {
     "access": "GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED",
@@ -75,9 +75,12 @@
     },
     "grounding_interface": {
       "status": "PENDING_QUALIFICATION",
-      "native_output_grammar": "<loc y_min><loc x_min><loc y_max><loc x_max>",
-      "canonical_output": "[x_min, y_min, x_max, y_max] in [0,1]",
-      "conversion": "DETERMINISTIC_NATIVE_COORDINATE_MAPPING",
+      "native_output_grammar_status": "PENDING_DOCUMENTARY_VERIFICATION",
+      "candidate_native_output_grammar_to_verify": "<loc y_min><loc x_min><loc y_max><loc x_max>",
+      "canonical_output_required": "[x_min, y_min, x_max, y_max] in [0,1]",
+      "deterministic_conversion_required": true,
+      "deterministic_conversion_status": "PENDING_QUALIFICATION",
+      "source_audit_mismatch_action": "STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED",
       "point_to_box": "FORBIDDEN",
       "prompt_trick": "FORBIDDEN",
       "fabricated_box": "FORBIDDEN",

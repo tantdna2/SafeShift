@@ -1306,15 +1306,20 @@
 - **Qualification contract:** Owner Gemma gated-usage acceptance remains
   `GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED`; Codex does not assert acceptance.
   The exact revision, documented loader/preprocessor/API, no-remote-code
-  boundary, native classification route, native detection grammar and
-  deterministic conversion to D4 canonical boxes must be verified. The real
+  boundary and native classification route must be verified. The exact pinned
+  448 card documents object-detection/segmentation capability, but reviewed
+  sources have not established its exact native coordinate grammar. The
+  `<loc y_min><loc x_min><loc y_max><loc x_max>` form is only a candidate
+  grammar to verify during the source/API audit; if that audit establishes a
+  different grammar, work must STOP for Research Lead review. The exact grammar
+  and deterministic conversion to D4 canonical boxes must be proven before
+  runner/gate qualification. The real
   qualification condition is one process-visible NVIDIA T4 16 GB (compute
   capability 7.5), FP16, no quantization/offload/fallback/substitution, batch
   size 1 on `cuda:0`. Classification must first parse external handcrafted
-  inputs deterministically with raw output saved before parsing. Native
-  detection coordinates must map deterministically from
-  `<loc y_min><loc x_min><loc y_max><loc x_max>` to
-  `[x_min, y_min, x_max, y_max]` in `[0,1]`; point-to-box, prompt tricks,
+  inputs deterministically with raw output saved before parsing. The exact
+  source-established native detection grammar must then map deterministically
+  to `[x_min, y_min, x_max, y_max]` in `[0,1]`; point-to-box, prompt tricks,
   fabricated boxes and artificial zero IoU are prohibited.
 - **Frozen gate:** If the interfaces qualify, use the existing `synthetic-v1`
   suite and unchanged eight-case manifest
