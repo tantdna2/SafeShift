@@ -1246,6 +1246,26 @@
   only: no historical-smoke change, post-fix smoke rerun, runner/bridge change or
   attempt-ledger reset. Documentary preparation only; no real execution here.
 
+## D9R2N Moondream external gate final result (2026-09-28)
+
+- **Authority:** Research Lead/user's explicit
+  `W2.6-D9R2N-MOONDREAM-EXTERNAL-GATE-RESULT-RECORD` instruction and confirmed
+  human giant-box verdicts: all eight cases `NO_GIANT`.
+- **Evidence:** Existing run `moondream-external-gate-20260928T013533Z-d9a1c46b`,
+  execution commit `c801c899a1b63831175ea47d1d77d77f11f8e115`; original runtime
+  status `GATE_PENDING_REVIEW`, completed gate, 1 load / 0 query / 8 detect,
+  17/17 VALID audits, 24/24 ordered boundaries, systematic tracking true.
+- **Recorded conclusion:** External gate **PASS**; Moondream grounding
+  qualification **PASS** after human review. This updates only the D9R2M
+  gate/qualification pending milestone; original runtime artifacts are preserved.
+- **Historical evidence:** Post-fix runtime interface **PASS** remains as already
+  recorded. Official smoke remains **FAIL / consumed / superseded=false**;
+  no historical smoke result is changed or contradicted.
+- **Scope:** Documentary result only; **NO REAL RUNTIME EXECUTION**. No protocol,
+  gate, model, runner, bridge, frozen config/suite or model-role changes.
+  Overall D9 prerequisites and protocol freeze remain **PENDING**.
+  [Reported observations, eight human verdicts and evidence limits](notes/w2_moondream_postfix_result_external_gate_prep.md#d9r2n--external-gate-final-human-review-record).
+
 ## Template
 
 - **ID:** <DEC-...>

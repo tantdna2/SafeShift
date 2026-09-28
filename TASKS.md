@@ -535,3 +535,24 @@ Current documentary overlay on the historical D9R2L PREP milestone above.
 See [reported smoke result, gate contract and validation](notes/w2_moondream_postfix_result_external_gate_prep.md).
 No real model/GPU/download/gate execution, InspecSafe, training, model selection
 or merge in this task. One Draft PR contains result documentation and gate PREP.
+
+## W2.6-D9R2N-MOONDREAM-EXTERNAL-GATE-RESULT-RECORD
+
+Current documentary result updates D9R2M's historical gate/qualification pending
+milestone above; earlier PREP and smoke records retain their original scope.
+
+- [x] Record user-confirmed existing run
+  `moondream-external-gate-20260928T013533Z-d9a1c46b`, execution commit
+  `c801c899a1b63831175ea47d1d77d77f11f8e115`: completed gate, 1 load / 0 query /
+  8 detect, 17/17 VALID audits, 24/24 ordered boundaries, systematic tracking true.
+- [x] Record explicit human review **NO_GIANT** for A_1, A_2, B_1, B_2, C_1, C_2,
+  D_1, D_2; final external gate **PASS**, grounding qualification **PASS**.
+  Runtime artifact retains **GATE_PENDING_REVIEW**.
+- [x] Preserve previously recorded post-fix runtime interface **PASS** and
+  historical official smoke **FAIL / consumed / superseded=false**.
+- [ ] Overall D9 prerequisites and protocol freeze remain **PENDING**;
+  no automatic final-role promotion or InspecSafe execution authorization.
+
+See [human review result and evidence limits](notes/w2_moondream_postfix_result_external_gate_prep.md#d9r2n--external-gate-final-human-review-record).
+Documentation only; **NO REAL RUNTIME EXECUTION**. No protocol/gate/model/runner/
+bridge/frozen-suite/config changes or binary artifacts.

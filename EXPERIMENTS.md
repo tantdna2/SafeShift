@@ -111,6 +111,25 @@ riêng; không suy ra kết quả từ kế hoạch.
   **NO REAL RUNTIME EXECUTION** in this task; no model/GPU/download/gate,
   InspecSafe, training, model selection or merge.
 
+## W2.6-D9R2N-MOONDREAM-EXTERNAL-GATE-RESULT-RECORD — existing run, final human review
+
+- **Run ID / UTC date:** `moondream-external-gate-20260928T013533Z-d9a1c46b` / 2026-09-28.
+- **Execution commit / recording base:** `c801c899a1b63831175ea47d1d77d77f11f8e115`.
+- **Source:** Research Lead/user-confirmed runtime findings and human review;
+  no independent archive inspection, visual review or evaluator rerun here.
+- **Existing artifact:** `GATE_PENDING_REVIEW`, `completed_gate=true`,
+  `model_load_count=1`, `query_call_count=0`, `detect_call_count=8`;
+  17/17 state audits VALID, 24/24 image boundaries in order,
+  `systematic_tracking=true`, all eight cases completed.
+- **Human review / final result:** A_1, A_2, B_1, B_2, C_1, C_2, D_1, D_2 each
+  **NO_GIANT**. External gate **PASS**; grounding qualification **PASS**.
+  Original runtime artifact status remains unchanged.
+- **Preserved history:** Post-fix runtime interface **PASS** already recorded;
+  historical official smoke **FAIL / consumed / superseded=false** unchanged.
+- **Provenance and limits:** [Final review record](notes/w2_moondream_postfix_result_external_gate_prep.md#d9r2n--external-gate-final-human-review-record)
+  links the existing gate contract and artifact layout. No new runtime outputs,
+  dataset metrics or freeze claim. **NO REAL RUNTIME EXECUTION** in this task.
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>
