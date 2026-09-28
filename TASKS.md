@@ -635,8 +635,12 @@ backup activation or merge.
 - [x] Preserve the existing synthetic-v1 eight-case manifest, SHA-256 and gate
   semantics while allowing the pre-specified expansion candidate to enter the
   same qualification scope.
-- [ ] Owner access/terms confirmation: PENDING (`GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED`).
-- [ ] PaliGemma exact-source/loader/API audit: PENDING.
+- [x] Owner confirmed terms acceptance in D9R7 continuation; authenticated exact
+  metadata access verified. Historical precommit/provenance access fields unchanged.
+- [x] PaliGemma documentary source/API audit: exact config/tokenizer/processor
+  verified; Research Lead selected source-backed model-ID-level detection /1024.
+  Exact runtime/grounding remain pending; PR #55 independent audit/merge pending.
+  See [audit note](notes/w2_paligemma_source_api_audit.md).
 - [ ] Offline runner preparation: PENDING.
 - [ ] Real single-T4 FP16/NONE smoke: PENDING / NOT_RUN.
 - [ ] Deterministic external classification-interface qualification: PENDING.
@@ -648,3 +652,23 @@ weights, GPU, inference, InspecSafe performance, protocol freeze or merge was
 performed in this task. Checklist #1/#2/#5 remain `COMPLETE`; #3/#4/#6/#7/#8
 remain `PENDING`, and protocol freeze remains blocked until the expansion
 candidate is resolved.
+
+## W2.6-D9R7-PALIGEMMA-SOURCE-API-AUDIT (2026-09-28)
+
+- [x] Record exact public card/metadata and versioned official API/family sources
+  in `configs/pre_freeze/paligemma_source_api_audit.v1.json`; no weights/runtime.
+- [x] After owner-confirmed terms acceptance and credential configuration, read
+  all five exact metadata files and verify pinned Git blob/LFS hashes. Historical
+  401 evidence retained; no access blockers remain, no terms accepted by Codex.
+- [x] Verify native loader/processor, no remote-code requirement, exact 448
+  preprocessing and 1,024 ordinary location vocabulary tokens (IDs 256000..257023).
+- [x] Record Research Lead's narrow resolution: select PaliGemma 1 upstream
+  model-ID-level /1024 detection decoding and deterministic D4 axis permutation;
+  no clamp/repair. Maximum normalized coordinate is 1023/1024. RefCOCO *1023
+  remains segmentation-training evidence only, not a detection-decoding blocker.
+- [x] Record the decision in DECISIONS before runtime/gate/InspecSafe; preserve
+  exact runtime_verified=false, BACKUP_1, four primaries and unchanged D9R6
+  precommit/roster/provenance. Runtime, grounding and external gate remain pending.
+- [ ] PR #55 independent audit PASS and merge: prerequisites for runner prep.
+  Runner prep is not executed in this PR. Exact generated grammar conformance
+  awaits runtime qualification; empty-output behavior remains NOT_DOCUMENTED.
