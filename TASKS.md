@@ -672,3 +672,21 @@ candidate is resolved.
 - [ ] PR #55 independent audit PASS and merge: prerequisites for runner prep.
   Runner prep is not executed in this PR. Exact generated grammar conformance
   awaits runtime qualification; empty-output behavior remains NOT_DOCUMENTED.
+
+## W2.6-D9R8-PALIGEMMA-RUNNER-SMOKE-PREP (2026-09-28)
+
+- [x] Pin exact PaliGemma runtime plan, 14-file authoritative snapshot inventory,
+  separate explicit provisioner and offline full-byte verifier; no weights fetched.
+- [x] Prepare native FP16/NONE/batch-1/cuda:0 runner and one-visible-T4 smoke,
+  verified raw-before-adapter persistence, fail-closed lifecycle and pending adapters.
+- [x] Implement/test pure D9R7 /1024 D4 conversion with NO_CLAMP/no repair;
+  native model output conformance is not qualified by helper tests.
+- [x] Fake/static preparation checks: see [D9R8 note](notes/w2_paligemma_runner_smoke_prep.md).
+  Runner status `PREPARED_NOT_RUNTIME_VALIDATED`; exact runtime verified=false.
+- [ ] Real runtime `PENDING_QUALIFICATION` / `NOT_RUN`; grounding, classification
+  interface and external gate remain `PENDING_QUALIFICATION`. No gate execution.
+- [ ] Research Lead review and separately authorized owner qualification remain.
+
+Current overlay only: historical D9R6/D9R7 records unchanged. PaliGemma remains
+`BACKUP_1`, four primaries; no promotion. Protocol freeze `PENDING` / `BLOCKED`,
+InspecSafe authorization=false. No real model/GPU/InspecSafe execution or merge.
