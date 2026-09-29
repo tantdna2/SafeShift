@@ -240,6 +240,11 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                            'safeshift/runners/internvl3_snapshot.py',
                            'scripts/provision_internvl3_snapshot.py',
                            'scripts/w2_internvl3_t4_smoke.py'})
+        # D9R8 authorizes PaliGemma runner/snapshot/smoke PREP, no gate execution.
+        authorized.update({'safeshift/runners/paligemma.py',
+                           'safeshift/runners/paligemma_snapshot.py',
+                           'scripts/provision_paligemma_snapshot.py',
+                           'scripts/w2_paligemma_t4_smoke.py'})
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}
