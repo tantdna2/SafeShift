@@ -117,8 +117,7 @@ class HarnessTests(unittest.TestCase):
                 events.append("reread")
             return value
         def observe(raw):
-            self.assertEqual(events[-1], "reread")
-            self.assertGreaterEqual(events.count("fsync"), 2)
+            self.assertEqual(events[-3:], ["fsync", "fsync", "reread"])
             events.append("observe")
             return original_observe(raw)
         with patch.object(storage.os, "fsync", side_effect=fsync), patch.object(Path, "read_bytes", read), \
@@ -177,6 +176,29 @@ class HarnessTests(unittest.TestCase):
         raw_files = list((self.repo / q.ARTIFACTS).rglob("response.raw"))
         self.assertEqual(len(raw_files), 1)
         self.assertIn("generated_ids_full", json.loads(raw_files[0].read_bytes()))
+
+    def test_empty_decode_and_eos_are_observations_not_empty_detection(self):
+        def generate(**kwargs):
+            return fakes.Tensor([kwargs["input_ids"].tolist()[0] + [1]])
+        with patch.object(self.model, "generate", side_effect=generate), \
+                patch.object(self.processor, "decode", return_value=""):
+            report = self.run_harness()
+        self.assertEqual(report["status"], q.COMPLETE)
+        result = json.loads((self.repo / q.ARTIFACTS / q.RUN_ID / "grd_d.json").read_bytes())
+        self.assertEqual(result["observation"]["native_output"]["decoded_text"], "")
+        self.assertEqual(result["observation"]["native_output"]["continuation_ids"], [1])
+        self.assertIsNone(result["observation"]["parser_candidate"]["canonical_output"])
+
+    def test_zero_generated_tokens_preserve_partial_envelope_and_stop(self):
+        def generate(**kwargs):
+            return fakes.Tensor(kwargs["input_ids"].tolist())
+        with patch.object(self.model, "generate", side_effect=generate) as native:
+            report = self.run_harness()
+        self.assertEqual(report["status"], q.STOP)
+        self.assertEqual(native.call_count, 1)
+        path = next((self.repo / q.ARTIFACTS).rglob("response.raw"))
+        envelope = json.loads(path.read_bytes())
+        self.assertEqual(envelope["generated_ids_full"], [envelope["input_token_ids"]])
 
     def test_offline_barrier_fail_closed(self):
         report = self.run_harness(offline=False)

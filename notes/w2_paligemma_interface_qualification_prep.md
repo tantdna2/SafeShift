@@ -85,8 +85,10 @@ are unchanged. Fixture qualification is not the synthetic-v1 gate and has no sco
 ## Future Kaggle run
 
 Use the new D9R11 notebook only after separate Research Lead review/authorization.
-It pins a committed D9R10 harness snapshot descended from the exact base; notebook
-delivery may be a later commit. No dynamic branch/main execution is allowed.
+The [notebook](../notebooks/w2_paligemma_d9r11_interface_qualification_kaggle.ipynb)
+pins harness commit `ceb56d5174a387362e3ef6a5af3b6618123bc8a7`, descended from the
+exact base; notebook delivery is a later commit. Tests compare executed code/plan
+bytes against that snapshot. No dynamic branch/main execution is allowed.
 The notebook itself remains unexecuted in D9R10.
 
 Reuse D9R9 setup: anonymous public clone, dedicated pip --target uv==0.8.22 bootstrap,
@@ -113,3 +115,15 @@ offline/mask/plan guards, and unchanged documentary mapping. Notebook tests chec
 bootstrap pins, secret isolation, barrier, export allowlist and no promotion.
 Validation commands and final results are recorded in this task's PR.
 No real GPU/model/provision/runtime qualification is part of these checks.
+
+Local validation: **255/255 focused and related regression tests PASS** with
+Python 3.11.9 (fake backend only; not the future pinned runtime environment).
+All **30** pre-freeze JSON files pass `strict_json`; notebook JSON and all three
+code cells parse/compile, with execution_count=null and no outputs.
+Secret scan of the nine scoped changed files and `git diff --check`: PASS.
+The roster source allowlist test adds only the newly authorized D9R10 harness.
+
+```text
+python -m unittest tests.test_paligemma_interface_qualification tests.test_paligemma_d9r11_notebook tests.test_paligemma_runtime_result tests.test_paligemma_d9r9_notebook tests.test_paligemma_prep tests.test_local_runners tests.test_internvl3_prep tests.test_internvl3_runtime_result tests.test_d9r6_paligemma_primary_expansion_precommit tests.test_d9r7_paligemma_source_api_audit tests.test_d9_t4_roster_revision tests.test_model_provenance -q
+git diff --check
+```

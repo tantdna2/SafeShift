@@ -736,7 +736,9 @@ source/audit artifacts remain unchanged. D9R9 COMPLETE: PR #57 merged at
   from D9R9 color observations.
 - [x] Prepare one-load/sequential-call offline harness, exclusive verified raw
   persistence before observation, immutable plan and fail-closed evidence records.
-- [ ] Notebook delivery and static/fake validation: in progress in D9R10.
+- [x] Prepare unexecuted D9R11 Kaggle notebook pinned to harness commit
+  `ceb56d5174a387362e3ef6a5af3b6618123bc8a7`; static/fake tests cover offline
+  barrier, eight-call export, partial failure evidence and credential isolation.
 - [ ] D9R11 real interface runtime: NOT_RUN; separate Research Lead review required.
 
 See [D9R10 preparation contract](notes/w2_paligemma_interface_qualification_prep.md).
