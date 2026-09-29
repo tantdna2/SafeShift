@@ -1363,6 +1363,32 @@
   merge, and is not executed here. No promotion, protocol freeze or InspecSafe
   authorization; D9R6 precommit and historical roster/provenance remain unchanged.
 
+## D9R12 — Approved D9R11 evidence and offline adapter candidates (2026-09-29)
+
+- **Authority:** Research Lead-approved evidence and explicit D9R12 task instruction.
+  The Research Lead independently checked size and SHA-256 for 76/76 bundle
+  artifacts. Codex did not inspect raw bundle bytes; the
+  [result record](configs/pre_freeze/paligemma_interface_runtime_result.v1.json)
+  transcribes only supplied observations, provenance and interpretations.
+- **Interpretation:** Classification supplies `STABLE_YES_NO_EVIDENCE` only.
+  Production vocabulary/safety semantics remain unqualified; multi-label and
+  abstention untested. Grounding supports four loc tokens + label + EOS.
+  `grd_d` is syntactically parseable but a semantic hallucination / target-selectivity
+  failure; it must not become parser failure, empty detection or a corrected label.
+- **Authorized implementation scope:** Offline candidates for exact presence
+  `yes`/`no` and a single four-loc `red square<eos>` response, tied to the two
+  approved prompts. Presence maps explicitly to a separate candidate boolean,
+  never production safety levels. Grounding retains the native label and uses
+  the D9R7 y/x/y/x -> x/y/x/y `/1024.0` rule, with no clamp, rescale or repair.
+  No empty/multi-box grammar is inferred. Candidate success is syntax only.
+- **Status boundary:** D9R11 evidence collection COMPLETE; runtime smoke PASS,
+  exact runtime verified=true. Classification interface, grounding and external
+  gate remain `PENDING_QUALIFICATION`; `BACKUP_1`, four primaries, freeze BLOCKED,
+  InspecSafe authorized=false. Qualification/promotion requires a separate
+  Research Lead decision. Production adapter and historical plans stay unchanged.
+  Dataset, split, labels and metrics are unchanged. No GPU/model/provisioning,
+  synthetic-v1 gate or InspecSafe execution in D9R12.
+
 ## Template
 
 - **ID:** <DEC-...>

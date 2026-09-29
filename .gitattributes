@@ -5,3 +5,5 @@
 /configs/pre_freeze/qwen3_external_gate.v1.json text eol=lf
 # Byte-pinned D9R10 qualification plan, identical on Windows and Kaggle.
 /configs/pre_freeze/paligemma_interface_qualification.v1.json text eol=lf
+# Stable D9R12 result-record checksum across checkouts.
+/configs/pre_freeze/paligemma_interface_runtime_result.v1.json text eol=lf
