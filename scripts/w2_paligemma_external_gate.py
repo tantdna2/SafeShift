@@ -32,11 +32,11 @@ from scripts.w2_paligemma_interface_qualification import persist_verified
 
 BASE_SHA = "a3192ddefbc28fe2997190819744e8f4796a6d85"
 PLAN = "configs/pre_freeze/paligemma_external_gate.v1.json"
-PLAN_SHA256 = "5f1db82fa8d46ccfdf1ded268fea6beac6bf323e453539b4ce63fa7004ec3cc9"
+PLAN_SHA256 = "c3b5fb2a1df79f3476e3775fccefbe2f767edab453ba2a238742c4c5f89d4387"
 ARTIFACTS = "data/processed/external_gate/w2_paligemma"
 RUN_ID = "paligemma-d9r13-external-gate-01"
 CASE_IDS = tuple(f"{group}_{n}" for group in "ABCD" for n in (1, 2))
-PROMPT_ID = "paligemma-frozen-external-detect-v1"
+PROMPT_ID = "paligemma-frozen-external-detect-bare-v2"
 COMPLETE = "EVIDENCE_COLLECTION_COMPLETE"
 STOP = "STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED"
 
@@ -49,6 +49,8 @@ def gate_plan(repo=ROOT):
     plan = strict_json(raw)
     if (plan["base_sha"], plan["model_id"], plan["revision"]) != (BASE_SHA, MODEL_ID, REVISION):
         raise ValueError("EXACT_BASE_MODEL_REVISION_REQUIRED")
+    if plan["query_to_label"] != QUERY_LABELS:
+        raise ValueError("EXACT_FOUR_QUERY_LABEL_MAPPING_REQUIRED")
     return plan
 
 
@@ -88,9 +90,9 @@ def verify_suite(plan, repo=ROOT):
             if (image.format != "PNG" or image.size != (256, 256)
                     or getattr(image, "n_frames", 1) != 1):
                 raise ValueError("FROZEN_IMAGE_GEOMETRY_MISMATCH")
-        # Literal prefix only. E.g. 'detect Locate the green circle.'.
+        # Source-backed native form; preserve original query separately in metadata.
         request = Request(Task.GROUNDING, case.case_id, case.image_path, raw,
-                          PROMPT_ID, "detect " + case.target_query)
+                          PROMPT_ID, "detect " + QUERY_LABELS[case.target_query])
         metadata = {**asdict(case), "image_sha256": entry["sha256"],
                     "target_gt_bbox": list(case.target_gt_bbox),
                     "distractor_gt_bbox": list(case.distractor_gt_bbox),

@@ -27,9 +27,15 @@
   "model_loads": 1,
   "native_generate_calls": 8,
   "classification_calls": 0,
-  "native_prompt": "detect {case.target_query}",
-  "prompt_example": "detect Locate the red square.",
-  "query_transform": "PREFIX_ONLY_KEEP_MANIFEST_QUERY_VERBATIM",
+  "native_prompt": "detect {BARE_TARGET_LABEL}",
+  "prompt_example": "detect red square",
+  "query_transform": "EXACT_FOUR_QUERY_TO_BARE_LABEL_LOOKUP; manifest query unchanged",
+  "query_to_label": {
+    "Locate the red square.": "red square",
+    "Locate the green circle.": "green circle",
+    "Locate the yellow triangle.": "yellow triangle",
+    "Locate the cyan rectangle.": "cyan rectangle"
+  },
   "parser_labels": [
     "red square",
     "green circle",

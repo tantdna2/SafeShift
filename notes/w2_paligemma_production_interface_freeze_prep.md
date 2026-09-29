@@ -32,10 +32,20 @@ Harness: `scripts/w2_paligemma_external_gate.py`.
 Parser: `safeshift/runners/paligemma_external_probe.py`.
 Notebook: `notebooks/w2_paligemma_d9r13_external_gate_kaggle.ipynb`.
 
-Literal native prompt is `detect {case.target_query}`. Manifest queries are
+Native prompt is `detect {BARE_TARGET_LABEL}`. Manifest queries are
 `Locate the red square.`, `Locate the green circle.`,
 `Locate the yellow triangle.`, `Locate the cyan rectangle.`; e.g. the actual
-prompt is `detect Locate the red square.`. No noun extraction or prompt tuning.
+prompt is `detect red square`. A closed four-entry QUERY_LABELS lookup maps each
+exact manifest query to its bare label. No generic stripping or fuzzy extraction.
+The manifest query remains unchanged in the case and raw provenance.
+
+`prompts.py:probe_request` would append a JSON bbox instruction to the query;
+that canonical request is not used here. D9R13 creates the runner Request with
+the native prompt, and PaliGemmaRunner.prepare_input passes request.prompt
+unchanged as processor(text=...). model.generate consumes the resulting tensors.
+No instruction wrapper, punctuation or manual newline is added. The unchanged
+native processor owns image/BOS tokens and the terminal newline, as documented
+in paligemma_source_api_audit.v1.json detection_route/classification_route.newline.
 
 Parser candidate supports only those four exact returned labels and one
 `<locNNNN><locNNNN><locNNNN><locNNNN> LABEL<eos>` response.

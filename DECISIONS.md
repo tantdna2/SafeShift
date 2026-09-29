@@ -1463,8 +1463,8 @@
   frozen_external_gate images. Reuse load_cases and evaluate_gate unchanged;
   generator is provenance only. No new fixtures/policy/annotations or GT changes.
 - **Budget/interface:** Eight grounding calls, one model load, zero classification.
-  Literal native prompt detect {case.target_query}, preserving the manifest query
-  including "Locate the ….". Parser candidate accepts only red square, green circle,
+  Initial literal-prefix prompt construction was superseded by the prompt-flow
+  correction below. Parser candidate accepts only red square, green circle,
   yellow triangle and cyan rectangle with four loc tokens plus EOS; yxyx to xyxy
   divided by 1024. No clamp, repair, fabricated boxes, fuzzy or semantic mapping.
   Wrong returned label remains in raw/native diagnostics and fails closed.
@@ -1487,6 +1487,29 @@
   InspecSafe execution by Codex; no promotion or merge. BACKUP_1, four primaries,
   freeze BLOCKED, InspecSafe authorized=false. Details in the
   [current PREP note](notes/w2_paligemma_production_interface_freeze_prep.md).
+
+## D9R13 — Exact native prompt-flow correction (2026-09-29)
+
+- **Authority/scope:** Research Lead requests only prompt-flow verification/fix
+  on Draft PR #60. No gate, runtime, dataset, parser grammar or scoring expansion.
+- **Verified defect:** Frozen manifest target_query values are literal
+  "Locate the red square.", "Locate the green circle.", "Locate the yellow triangle.",
+  "Locate the cyan rectangle.". load_cases preserves them. The previous script
+  prepended detect directly, so the erroneous wording reached processor(text=...);
+  it was not merely display wording in the report.
+- **Correction:** Exact closed lookup from those four queries to bare labels,
+  then detect + one space + label. Final processor strings: "detect red square",
+  "detect green circle", "detect yellow triangle", "detect cyan rectangle".
+  Original manifest and query provenance remain unchanged. No punctuation,
+  canonical probe_request JSON wrapper or manual newline is added.
+- **Source/flow:** Existing paligemma_source_api_audit.v1.json documents
+  detection_route "detect {object}\n" and processor-owned newline. D9R13 runner
+  Request.prompt is forwarded unchanged to PaliGemmaProcessor; model.generate
+  receives its tensors. Native processor special-token/newline behavior stays
+  unchanged. Prompt ID advances to paligemma-frozen-external-detect-bare-v2.
+- **Validation/boundaries:** Pin updated plan/source and assert all eight exact
+  processor strings with a fake backend. Static/JSON/diff checks only; no actual
+  GPU/model/Kaggle/gate/InspecSafe execution, promotion or merge.
 
 ## Template
 

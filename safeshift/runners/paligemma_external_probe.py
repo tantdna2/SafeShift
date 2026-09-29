@@ -6,7 +6,8 @@ from safeshift.protocol.schema import ParseResult, ProbePrediction, strict_json
 from .paligemma import DECODING, loc_values_to_d4
 from .paligemma_snapshot import MODEL_ID, REVISION
 
-# Used only to check the returned label. Never rewrite the manifest query/prompt.
+# Closed manifest-query -> bare-label lookup for native prompting and label checks.
+# No free-form stripping, fuzzy matching or mutation of the frozen manifest.
 QUERY_LABELS = {
     "Locate the red square.": "red square",
     "Locate the green circle.": "green circle",

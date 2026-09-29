@@ -102,16 +102,22 @@ class PlanTests(unittest.TestCase):
                              (q.ROOT / path).read_bytes().replace(b"\r\n", b"\n"), path)
 
     def test_exact_frozen_inputs_and_budget(self):
+        from safeshift.protocol.prompts import probe_request
         p = q.gate_plan()
         cases, inputs = q.verify_suite(p)
         self.assertEqual((p["classification_calls"], p["native_generate_calls"], p["model_loads"]), (0, 8, 1))
         self.assertEqual(tuple(c.case_id for c in cases), q.CASE_IDS)
         self.assertEqual(tuple(p["parser_labels"]), LABELS)
+        self.assertEqual(p["query_to_label"], QUERY_LABELS)
         self.assertFalse(p["runtime_regeneration"])
         self.assertFalse(any(p["execution"].values()))
         for case, (request, metadata) in zip(cases, inputs):
             self.assertEqual(request.input_bytes, (q.ROOT / case.image_path).read_bytes())
-            self.assertEqual(request.prompt, "detect " + case.target_query)
+            self.assertEqual(request.prompt, "detect " + QUERY_LABELS[case.target_query])
+            self.assertEqual(metadata["target_query"], case.target_query)
+            canonical = probe_request(q.ROOT, case.image_path, case.target_query)
+            self.assertTrue(canonical.prompt.startswith(case.target_query + "\n"))
+            self.assertNotEqual(request.prompt, canonical.prompt)
             self.assertEqual(metadata["target_gt_bbox"], list(case.target_gt_bbox))
             self.assertEqual(metadata["distractor_gt_bbox"], list(case.distractor_gt_bbox))
 
@@ -221,7 +227,11 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual((result["model_load_count"], result["native_generate_calls"],
                           result["classification_calls"]), (1, 8, 0))
         self.assertEqual(result["paligemma_external_gate_status"], "FAIL")
-        self.assertEqual(self.processor.prompts, [r.prompt for r, _ in q.verify_suite(self.plan, self.repo)[1]])
+        self.assertEqual(self.processor.prompts, [
+            "detect red square", "detect red square",
+            "detect green circle", "detect green circle",
+            "detect yellow triangle", "detect yellow triangle",
+            "detect cyan rectangle", "detect cyan rectangle"])
         self.assertEqual(events.count("parse"), 8)
         self.assertEqual(len({id(i) for i in self.processor.prepared}), 8)
         self.assertEqual(len({c["raw"]["path"] for c in result["calls"]}), 8)
