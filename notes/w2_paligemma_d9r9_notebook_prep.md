@@ -1,5 +1,11 @@
 # D9R9 Kaggle orchestration notebook — pre-runtime tooling
 
+**Historical PRE-RUNTIME record.** Research Lead subsequently accepted the
+[D9R9 runtime result](w2_paligemma_single_t4_runtime_qualification.md). The runtime
+status and pending-execution statements below describe preparation at that time.
+The current notebook also corrects timing validation to retain idempotent load
+re-entries separately; it does not request a rerun.
+
 Task: `W2.6-D9R9-PALIGEMMA-SINGLE-T4-RUNTIME-QUALIFICATION`.
 Execution base: `180c0623149bbc7d64f5b659f6c044c39b1e1cd0`.
 Owner's revised instruction: deliver a self-contained notebook for Research Lead

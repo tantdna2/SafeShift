@@ -696,7 +696,7 @@ Current tracker overlay only: historical D9R6/D9R7 evidence artifacts unchanged.
 PaliGemma remains `BACKUP_1`, four primaries; no promotion. Protocol freeze `PENDING` / `BLOCKED`,
 InspecSafe authorization=false. No real model/GPU/InspecSafe execution or merge.
 
-## W2.6-D9R9 — Kaggle orchestration notebook PRE-RUNTIME (2026-09-29)
+## W2.6-D9R9 — Kaggle notebook and Research Lead-verified runtime qualification
 
 - [x] Prepare self-contained [Kaggle notebook](notebooks/w2_paligemma_d9r9_kaggle.ipynb)
   for owner execution after Research Lead review, pinned to execution base
@@ -711,10 +711,19 @@ InspecSafe authorization=false. No real model/GPU/InspecSafe execution or merge.
   weights or runtime. This is supplied evidence, not Codex runtime execution.
 - [x] Patch bootstrap to dedicated pip --target uv==0.8.22 with version check;
   use anonymous public clone. 97 static/fake/regression tests PASS; pins unchanged.
-- [ ] Research Lead patch review and owner execution in a fresh Kaggle session pending.
-- [ ] Runtime evidence review and qualification pending. Real runtime NOT_RUN;
-  exact runtime verified=false. No runtime result JSON has been fabricated.
+- [x] Research Lead reviewed the owner-run Kaggle result bundle and approved
+  REAL_RUNTIME_STATUS=RUNTIME_SMOKE_PASS; EXACT_RUNTIME_VERIFIED=true.
+  Record: [runtime result](configs/pre_freeze/paligemma_t4_runtime_result.v1.json)
+  and [qualification note](notes/w2_paligemma_single_t4_runtime_qualification.md).
+- [x] Record exact snapshot/software/single-T4/offline evidence, one model load,
+  two native calls, raw-before-adapter PASS, OBSERVED_ONLY outputs and metrics.
+- [x] Correct notebook timing validator: two idempotent load re-entries are not
+  reloads or runtime failure. Preserve all spans and the independent load count=1.
+  233 related static/fake tests PASS. No rerun, GPU/model or provision by Codex.
+- [ ] Grounding, classification interface and external gate qualification remain pending.
 
 PaliGemma remains BACKUP_1, primary roster count=4; grounding/classification
 interface/external gate PENDING_QUALIFICATION, protocol freeze BLOCKED,
-promotion NO and InspecSafe authorized=false. This overlay records tooling only.
+promotion NO and InspecSafe authorized=false. This result overlay supersedes the
+historical D9R8/PREP runtime-pending status only; immutable plan and historical
+source/audit artifacts remain unchanged. Draft PR #57 is not merged.

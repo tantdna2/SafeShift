@@ -356,8 +356,12 @@ class OrchestrationTests(unittest.TestCase):
         if corrupt:
             (root / ("1" * 64) / "response.raw").write_text("corruption")
         (ns["SETUP"] / "timings.json").write_text(json.dumps({
-            "measurements": [{"scope": s, "wall_seconds": 1} for s in
-                             ["runner_load_including_snapshot_and_transfer", "native_generate", "native_generate"]],
+            "measurements": [{"scope": s, "wall_seconds": seconds} for s, seconds in [
+                ("runner_load_including_snapshot_and_transfer", 55),
+                ("runner_load_including_snapshot_and_transfer", 0.001),
+                ("native_generate", 1),
+                ("runner_load_including_snapshot_and_transfer", 0.001),
+                ("native_generate", 2)]],
             "observer_errors": [], "unfinished_spans": 0, "harness_wall_seconds": 4}))
 
     def test_fake_runtime_export_success_checksum_failure_and_native_failure(self):
@@ -395,6 +399,51 @@ class OrchestrationTests(unittest.TestCase):
                 self.assertEqual(report["promotion"], "NO")
                 self.assertEqual(report["protocol_freeze"], "BLOCKED")
                 self.assertNotIn("exact_runtime_verified", report)
+                if not (corrupt or failed):
+                    self.assertEqual(report["model_load_count"], 1)
+                    self.assertEqual(report["call_generation_seconds"], [1, 2])
+                    self.assertEqual(report["load_time_seconds_including_snapshot_and_transfer"], 55)
+                    self.assertEqual(len(report["timing_analysis"]["idempotent_load_reentry_spans"]), 2)
+
+    def test_research_lead_timing_sequence_accepts_noop_load_reentries(self):
+        evidence = json.loads((ROOT / "configs/pre_freeze/paligemma_t4_runtime_result.v1.json").read_text())
+        summary = {"status": evidence["status"], **evidence["lifecycle"]}
+        timing = evidence["timings"]
+        result = self.ns["classify_timing"](summary, timing)
+        self.assertEqual(result["model_load_count"], 1)
+        self.assertEqual(result["load_seconds_including_snapshot_and_transfer"], 55.543600983)
+        self.assertEqual(result["call_generation_seconds"], [1.893213143, 0.571769282])
+        self.assertEqual([m["wall_seconds"] for m in result["idempotent_load_reentry_spans"]],
+                         [0.000652138, 0.000536080])
+        # No duration threshold: the independent runner count determines reloads.
+        changed = json.loads(json.dumps(timing))
+        changed["measurements"][1]["wall_seconds"] = 5
+        self.assertEqual(self.ns["classify_timing"](summary, changed)["model_load_count"], 1)
+        compact = {**timing, "measurements": [timing["measurements"][i] for i in (0, 2, 4)]}
+        self.assertEqual(self.ns["classify_timing"](summary, compact)["idempotent_load_reentry_spans"], [])
+
+    def test_timing_validator_still_rejects_reload_errors_and_missing_spans(self):
+        evidence = json.loads((ROOT / "configs/pre_freeze/paligemma_t4_runtime_result.v1.json").read_text())
+        summary = {"status": evidence["status"], **evidence["lifecycle"]}
+        timing = evidence["timings"]
+        bad_summaries = [{**summary, "model_load_count": 2}, {**summary, "native_generate_calls": 1},
+                         {**summary, "status": "RUNTIME_INTERFACE_FAILURE"}]
+        bad_timings = [{**timing, "observer_errors": ["RuntimeError"]}, {**timing, "unfinished_spans": 1},
+                       {**timing, "measurements": []}, {**timing, "measurements": timing["measurements"][1:]},
+                       {**timing, "measurements": timing["measurements"][:-1]},
+                       {**timing, "measurements": timing["measurements"] + [timing["measurements"][-1]]}]
+        # Dropping just the actual load is ambiguous with a later no-op; no timing
+        # heuristic can distinguish it. Test a missing initial load of any kind.
+        bad_timings[3] = {**timing, "measurements": timing["measurements"][2:]}
+        for seconds in (-1, float("nan"), float("inf"), True):
+            measurements = [{**timing["measurements"][0], "wall_seconds": seconds}, *timing["measurements"][1:]]
+            bad_timings.append({**timing, "measurements": measurements})
+        for candidate in bad_summaries:
+            with self.subTest(summary=candidate), self.assertRaises(RuntimeError):
+                self.ns["classify_timing"](candidate, timing)
+        for candidate in bad_timings:
+            with self.subTest(timing=candidate), self.assertRaises(RuntimeError):
+                self.ns["classify_timing"](summary, candidate)
 
     def test_timing_observer_only_records_target_spans_and_syncs(self):
         tree = ast.parse(sources()[2])
