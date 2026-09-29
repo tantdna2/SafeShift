@@ -1,289 +1,385 @@
-"""D9R13 contract locks: pure schemas/strings and base-file checks, no gate run."""
-
+"""D9R13 CPU/fake-only compatibility checks; no real model/GPU/gate execution."""
+from copy import deepcopy
+from dataclasses import asdict
 import hashlib
-import inspect
+from io import BytesIO
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import unittest
+from unittest.mock import patch
 
 from safeshift.protocol.prompts import classification_request, grounding_request
-from safeshift.protocol.schema import (
-    Classification, Evidence, Grounding, HAZARDS, SAFETY_LEVELS, parse_text, strict_json,
-)
+from safeshift.protocol.schema import SAFETY_LEVELS, parse_text
 from safeshift.runners.contracts import ParseStatus, Task
-from safeshift.runners.paligemma import PendingPaliGemmaAdapter, loc_values_to_d4
-from safeshift.runners.paligemma_interface_candidate import (
-    GROUNDING_PROMPT, PRESENCE_PROMPT, parse_grounding_candidate, parse_presence_answer_candidate,
-)
+from safeshift.runners.paligemma_compatibility import adapt_persisted, observation
+from safeshift.runners.paligemma_snapshot import json_bytes
+from scripts import w2_paligemma_canonical_compatibility as q
+from tests import test_paligemma_prep as fakes
 
-ROOT = Path(__file__).resolve().parents[1]
-BASE = "a3192ddefbc28fe2997190819744e8f4796a6d85"
-CONFIG = ROOT / "configs/pre_freeze"
-CANDIDATE = CONFIG / "paligemma_production_interface_candidate.v1.json"
-# Path is only validated by prompt builders; no image is opened or generated.
-IMAGE = "tests/fixtures/pre_freeze/contract-only.png"
+NOTEBOOK = q.ROOT / "notebooks/w2_paligemma_d9r13_canonical_compatibility_kaggle.ipynb"
 
 
-class ProductionInterfaceContractTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.c = strict_json(CANDIDATE.read_bytes())
+def native(text, ids=None, special=None):
+    return json_bytes({"schema_version": "paligemma-native-output-v1",
+        "model_id": q.MODEL_ID, "revision": q.REVISION, "decoding": q.DECODING,
+        "continuation_ids": [42, 1] if ids is None else ids,
+        "decoded_text": text, "decoded_with_special_tokens": text + "<eos>" if special is None else special})
 
-    def test_exact_provenance_and_transcription_limits(self):
-        c, p = self.c, self.c["provenance"]
-        self.assertEqual(c["schema_version"], "paligemma-production-interface-candidate-v1")
-        self.assertEqual(c["task_id"], "W2.6-D9R13-PALIGEMMA-PRODUCTION-INTERFACE-FREEZE-PREP")
-        self.assertEqual(c["base_sha"], BASE)
-        self.assertEqual(p["previous_merge_commit"], BASE)
-        self.assertEqual(p["previous_task"], "D9R12_COMPLETE_PR_59_MERGED")
-        self.assertEqual((c["model_id"], c["revision"]), (
-            "google/paligemma-3b-mix-448", "ead2d9a35598cb89119af004f5d023b311d1c4a1"))
-        expected_hashes = {
-            "runtime_result": "555701224f8b745391c65e75c5ff876bc039648fa1f4da02bc96403a3112e736",
-            "qualification_plan": "05e1f8f8f56af2abfd8f6fe8fb66a5f820faa3508506072adf5b850fdcdcc2fd",
-        }
-        for key, expected in expected_hashes.items():
-            self.assertEqual(p[key + "_sha256"], expected)
-            self.assertEqual(hashlib.sha256((ROOT / p[key]).read_bytes()).hexdigest(), expected)
-        result = strict_json((ROOT / p["runtime_result"]).read_bytes())
-        self.assertEqual(p["execution_commit"], "ceb56d5174a387362e3ef6a5af3b6618123bc8a7")
-        self.assertEqual(p["execution_commit"], result["observed_evidence"]["execution_commit"])
-        self.assertEqual(p["bundle_sha256"], result["source"]["bundle_sha256"])
-        self.assertEqual(p["evidence_authority"], "RESEARCH_LEAD_APPROVED_TRANSCRIPTION_NOT_NEW_RUNTIME")
-        self.assertFalse(p["bundle_bytes_inspected_by_codex"])
-        for source in p["canonical_sources"]:
-            self.assertTrue((ROOT / source.split("#")[0]).is_file())
 
-    def test_c1_exact_existing_template_and_policy_required(self):
-        c = self.c["classification"]
-        policy = "SYNTHETIC CONTRACT TEXT ONLY; not an approved safety policy."
-        request = classification_request(ROOT, IMAGE, policy)
-        self.assertEqual(c["prompt_template"].replace("{industry_safety_policy}", policy), request.prompt)
-        self.assertEqual(request.prompt_version, "p2-call1-draft-v1")
-        self.assertEqual(c["variable_fields"], ["industry_safety_policy"])
-        for missing in (None, "", "   "):
-            with self.subTest(missing=missing), self.assertRaises(ValueError):
-                classification_request(ROOT, IMAGE, missing)
-        self.assertEqual(list(inspect.signature(classification_request).parameters),
-                         ["repo", "image_path", "industry_safety_policy"])
-        self.assertEqual(c["policy_source"], "UNRESOLVED_EXACT_POLICY_TEXT_VERSION_AND_HASH")
-        self.assertEqual(c["native_prompt_wrapper"], "UNRESOLVED_NO_AUTOMATIC_ANSWER_EN_PREFIX")
+def loc(label="SMOKE", values=(0, 1, 1023, 1022)):
+    text = "".join(f"<loc{v:04d}>" for v in values) + " " + label + "<eos>"
+    return native(" " + label, [256000 + v for v in values] + [1], text)
 
-    def test_classification_is_four_class_single_label_not_binary_or_abstention(self):
-        c = self.c["classification"]
-        self.assertEqual(c["canonical_labels"], ["Level01", "Level02", "Level03", "Level04"])
-        self.assertEqual(tuple(c["canonical_labels"]), SAFETY_LEVELS)
-        self.assertTrue(c["multiclass"])
-        self.assertFalse(c["multilabel"])
-        self.assertFalse(c["binary_native_task"])
-        self.assertIsNone(c["abstention_label"])
-        for label in SAFETY_LEVELS:
-            result = parse_text(json.dumps({"safety_level": label}), "classification")
-            self.assertEqual(result.value, Classification(label))
-        for label in ("yes", "no", "safe", "unsafe", "Level1", "level01", "ABSTAIN", None,
-                      ["Level01", "Level02"]):
-            result = parse_text(json.dumps({"safety_level": label}), "classification")
-            self.assertFalse(result.success)
-            self.assertIsNone(result.value)
-        self.assertFalse(parse_text('{"safety_level":"Level01","hazards":[]}', "classification").success)
-        schema = strict_json((ROOT / "schemas/canonical.schema.json").read_bytes())
-        self.assertEqual(schema["$defs"]["classification"]["properties"]["safety_level"]["enum"],
-                         c["canonical_labels"])
 
-    def test_no_speculative_production_vocabulary_or_mapping(self):
-        c = self.c["classification"]
-        for key in ("qualified_production_prompt", "supported_production_native_grammar",
-                    "native_to_canonical_mapping"):
-            self.assertIsNone(c[key])
-        observed = c["observed_only"]
-        self.assertEqual(observed["prompt"], PRESENCE_PROMPT)
-        self.assertEqual(observed["grammar"], ["yes", "no"])
-        self.assertEqual(observed["mapping"], {"yes": True, "no": False})
-        self.assertIsNone(observed["canonical_safety_mapping"])
-        for value in ("yes", "no"):
-            self.assertNotIsInstance(parse_presence_answer_candidate(value, prompt=PRESENCE_PROMPT).value,
-                                     Classification)
-            self.assertEqual(parse_presence_answer_candidate(value, prompt=c["prompt_template"]).parse_status,
-                             ParseStatus.INVALID)
+def sources():
+    return ["".join(c["source"]) for c in json.loads(NOTEBOOK.read_text(encoding="utf-8"))["cells"]
+            if c["cell_type"] == "code"]
 
-    def test_b2_exact_prompt_vocabulary_and_no_cross_call_or_gt_input(self):
-        g = self.c["grounding"]
-        request = grounding_request(ROOT, IMAGE)
-        self.assertEqual(g["canonical_prompt_template"], request.prompt)
-        self.assertEqual(g["canonical_prompt_version"], request.prompt_version)
-        self.assertEqual(tuple(g["canonical_hazard_ids"]), HAZARDS)
-        self.assertEqual(len(HAZARDS), 12)
-        self.assertEqual(g["variable_fields"], [])
-        self.assertEqual(list(inspect.signature(grounding_request).parameters),
-                         ["repo", "image_path", "vocabulary"])
+
+class AdapterTests(unittest.TestCase):
+    def test_serialized_canonical_output_round_trips_without_null_label(self):
+        for raw, task in ((loc(), Task.GROUNDING),
+                          (native('{"hazards":[]}'), Task.GROUNDING),
+                          (native('{"safety_level":"Level01"}'), Task.CLASSIFICATION)):
+            result = observation(raw, task)
+            canonical = json.dumps(result["canonical_output"])
+            self.assertTrue(parse_text(canonical, task.value).success)
+            self.assertNotIn('"label": null', canonical)
+
+    def test_four_exact_levels_and_reject_repair(self):
+        for level in SAFETY_LEVELS:
+            value = adapt_persisted(native(json.dumps({"safety_level": level})), Task.CLASSIFICATION)
+            self.assertEqual(asdict(value.value), {"safety_level": level})
+        for text in ('yes', 'no', 'Level01', '{"safety_level":"level01"}',
+                     '{"safety_level":"Level01","hazards":[]}', '{"safety_level":1}',
+                     '{"safety_level":"Level01","safety_level":"Level02"}',
+                     '```json\n{"safety_level":"Level01"}\n```'):
+            self.assertIsNone(adapt_persisted(native(text), Task.CLASSIFICATION).value)
+
+    def test_two_d6_labels_native_axes_and_1024(self):
+        for label in ("SMOKE", "OPEN_FLAME"):
+            result = adapt_persisted(loc(label), Task.GROUNDING)
+            self.assertEqual(result.parse_status, ParseStatus.SUCCESS)
+            self.assertEqual(result.value.hazards[0].hazard_type, label)
+            self.assertEqual(result.value.hazards[0].evidence[0].bbox,
+                             (1/1024, 0, 1022/1024, 1023/1024))
+        for label in ("red square", "smoke", "Fire", "SMOKE ", "SMOKE extra"):
+            self.assertIsNone(adapt_persisted(loc(label), Task.GROUNDING).value)
+
+    def test_invalid_geometry_and_tokens_never_repaired(self):
+        for coords in ((1, 0, 0, 100), (0, 0, 1024, 1023), (0, 0, 0, 20)):
+            self.assertIsNone(adapt_persisted(loc(values=coords), Task.GROUNDING).value)
+        envelope = json.loads(loc())
+        envelope["continuation_ids"][0] += 1
+        self.assertIsNone(adapt_persisted(json_bytes(envelope), Task.GROUNDING).value)
+        for ids in ([42], [1, 42, 1], [True, 1], [42] * 33 + [1]):
+            self.assertIsNone(adapt_persisted(native('{"hazards":[]}', ids), Task.GROUNDING).value)
+
+    def test_json_bounds_precheck_prevents_canonical_clamp(self):
+        for box in ([-.1, 0, .8, .9], [0, 0, 1.1, .9], [False, 0, .8, .9],
+                    [0, 0, .8, float("nan")], [.8, 0, .2, .9]):
+            text = json.dumps({"hazards": [{"hazard_type": "SMOKE", "evidence": [{"bbox": box}]}]})
+            self.assertIsNone(adapt_persisted(native(text), Task.GROUNDING).value)
+        text = '{"hazards":[{"hazard_type":"SMOKE","evidence":[{"bbox":[0,0,1,1]}]}]}'
+        self.assertEqual(adapt_persisted(native(text), Task.GROUNDING).value.hazards[0].hazard_type, "SMOKE")
+
+    def test_negative_retains_hallucination_and_only_explicit_empty_is_empty(self):
+        self.assertEqual(adapt_persisted(native('{"hazards":[]}'), Task.GROUNDING).value.hazards, ())
+        self.assertEqual(adapt_persisted(loc(), Task.GROUNDING).value.hazards[0].hazard_type, "SMOKE")
+        for text in ("", "none", "no hazards", "[]"):
+            self.assertIsNone(adapt_persisted(native(text), Task.GROUNDING).value)
+        # Special-token deletion must not turn a spatial response into classification JSON.
+        self.assertIsNone(adapt_persisted(native('{"safety_level":"Level01"}',
+            [256000, 1], '{"safety_level":"Level01"}<loc0000><eos>'), Task.CLASSIFICATION).value)
+
+    def test_wrong_model_duplicate_or_incomplete_envelope(self):
+        for raw in (b'{}', b'[]', b'null', b'not json'):
+            self.assertIsNone(adapt_persisted(raw, Task.GROUNDING).value)
+        obj = json.loads(loc())
+        obj["revision"] = "main"
+        self.assertIsNone(adapt_persisted(json_bytes(obj), Task.GROUNDING).value)
+
+
+class PlanTests(unittest.TestCase):
+    def test_exact_budget_and_missing_inputs_are_honest(self):
+        p = q.qualification_plan()
+        self.assertEqual((p["classification_calls"], p["grounding_calls"],
+                          p["total_calls"], p["model_loads"]), (4, 3, 7, 1))
+        self.assertFalse(p["multiple_hazard_required"])
+        self.assertTrue(p["no_hazard_included"])
+        self.assertIsNone(p["industry_safety_policy"])
+        self.assertTrue(all(c["image_path"] is None for c in p["cases"]))
+        with self.assertRaisesRegex(ValueError, "APPROVED_PRODUCTION_POLICY"):
+            q.prepared_cases(p)
+        self.assertFalse(p["synthetic_gate_ready"])
+        self.assertFalse(any(p["execution"].values()))
+
+    def test_frozen_sources_and_gate_unchanged(self):
+        roots = ["safeshift", "schemas", "configs/pre_freeze",
+                 "tests/fixtures/pre_freeze/frozen_external_gate",
+                 "scripts/w2_paligemma_interface_qualification.py",
+                 "notebooks/w2_paligemma_d9r11_interface_qualification_kaggle.ipynb",
+                 "scripts/generate_external_gate_cases.py"]
+        paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", q.BASE_SHA,
+                                         "--", *roots], cwd=q.ROOT, text=True).splitlines()
+        for path in paths:
+            original = subprocess.check_output(["git", "show", f"{q.BASE_SHA}:{path}"], cwd=q.ROOT)
+            current = (q.ROOT / path).read_bytes()
+            if not path.endswith(".png"):
+                original, current = original.replace(b"\r\n", b"\n"), current.replace(b"\r\n", b"\n")
+            self.assertEqual(current, original, path)
+
+    def test_notebook_unexecuted_compiles_and_stops_before_provision(self):
+        nb = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+        for c in nb["cells"]:
+            if c["cell_type"] == "code":
+                self.assertIsNone(c["execution_count"])
+                self.assertEqual(c["outputs"], [])
+                compile("".join(c["source"]), "notebook", "exec")
+        setup = sources()[1]
+        self.assertLess(setup.index('"validate_inputs"'), setup.index('"SOFTWARE_INSTALL"'))
+        self.assertLess(setup.index('"validate_inputs"'), setup.index('"PROVISION"'))
+        self.assertIn('provision_env["HF_TOKEN"] = hf_token', setup)
+        code = "\n".join(sources())
+        self.assertNotIn("model.generate", code)
+        self.assertNotIn("from_pretrained", code)
+        self.assertIn(q.PLAN_SHA256, code)
+        self.assertIn('summary["native_generate_calls"] == 7', code)
+        self.assertIn('OWNER_ATTEST_INTERNET_OFF = False', code)
+
+
+class HarnessTests(unittest.TestCase):
+    def setUp(self):
+        fakes.RunnerTests.setUp(self)
+        for name in (q.PLAN, "scripts/w2_paligemma_canonical_compatibility.py",
+                     "scripts/w2_paligemma_interface_qualification.py",
+                     "safeshift/protocol/prompts.py", "safeshift/protocol/schema.py",
+                     "safeshift/runners/paligemma_compatibility.py"):
+            dest = self.repo / name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(q.ROOT / name, dest)
+        self.stack.enter_context(patch.dict(os.environ, CUDA_VISIBLE_DEVICES="0", CUDA_DEVICE_ORDER="PCI_BUS_ID",
+            HF_TOKEN="", HUGGING_FACE_HUB_TOKEN="", GH_TOKEN="", GITHUB_TOKEN=""))
+        self.stack.enter_context(patch.object(q, "checkout_gate"))
+        self.stack.enter_context(patch.object(q.subprocess, "run"))
+        self.stack.enter_context(patch.object(q.platform, "system", return_value="Linux"))
+        self.stack.enter_context(patch.object(q.platform, "machine", return_value="x86_64"))
+        self.stack.enter_context(patch.object(q, "software_versions", return_value=self.ctx.software_versions))
+        self.plan = deepcopy(q.qualification_plan())
+        # TEMPORARY TEST INPUTS ONLY. Not canonical runtime fixtures or research labels.
+        policy = b"CPU UNIT TEST MARKER; NOT A PRODUCTION POLICY"
+        (self.repo / "policy.txt").write_bytes(policy)
+        self.plan["industry_safety_policy"] = {"path": "policy.txt",
+            "sha256": hashlib.sha256(policy).hexdigest(), "source": "UNIT_TEST_ONLY"}
+        from PIL import Image
+        for i, case in enumerate(self.plan["cases"]):
+            stream = BytesIO()
+            Image.new("RGB", (4, 4), (i * 30, 10, 20)).save(stream, format="PNG")
+            raw = stream.getvalue()
+            case.update(image_path=f"case_{i}.png", image_sha256=hashlib.sha256(raw).hexdigest(),
+                        source="UNIT_TEST_ONLY", approval_reference="FAKE_TEST_ONLY")
+            (self.repo / case["image_path"]).write_bytes(raw)
+        self.stack.enter_context(patch.object(q, "qualification_plan", return_value=self.plan))
+
+    def run_harness(self):
+        return q.run_qualification(expected_commit="a" * 40, venue_internet_off=True, repo=self.repo,
+                                   runner_factory=lambda **_: self.runner, torch_module=self.torch)
+
+    def test_seven_calls_one_load_exact_builders_and_raw_before_parser(self):
+        events = []
+        original_fsync, original_read, original_observe = os.fsync, Path.read_bytes, q.observation
+        def sync(fd):
+            events.append("fsync")
+            return original_fsync(fd)
+        def read(path):
+            raw = original_read(path)
+            if path.name == "response.raw":
+                events.append("reread")
+            return raw
+        def observe(raw, task):
+            self.assertEqual(events[-3:], ["fsync", "fsync", "reread"])
+            events.append("parse")
+            return original_observe(raw, task)
+        with patch.object(os, "fsync", side_effect=sync), patch.object(Path, "read_bytes", read), \
+                patch.object(q, "observation", side_effect=observe):
+            result = self.run_harness()
+        self.assertEqual(result["status"], q.COMPLETE)
+        self.assertEqual((result["model_load_count"], result["native_generate_calls"]), (1, 7))
+        requests = q.prepared_cases(self.plan, self.repo)
+        self.assertEqual(self.processor.prompts, [r.prompt for r, _ in requests])
+        self.assertEqual(events.count("parse"), 7)
+        self.assertEqual(len({id(i) for i in self.processor.prepared}), 7)
+        self.assertEqual(len({c["raw"]["path"] for c in result["calls"]}), 7)
+        self.assertFalse(result["compatibility_review"]["CLASSIFICATION_COMPATIBLE"]["all_cases_map_fail_closed"])
+        with self.assertRaises(FileExistsError):
+            self.run_harness()
+        self.assertEqual(self.model.generate_count, 7)
+
+    def test_builders_get_no_expected_labels_or_previous_outputs(self):
+        requests = q.prepared_cases(self.plan, self.repo)
+        for i, (r, _) in enumerate(requests):
+            expected = (classification_request(self.repo, r.input_id, (self.repo / "policy.txt").read_text())
+                        if i < 4 else grounding_request(self.repo, r.input_id))
+            self.assertEqual(r.prompt, expected.prompt)
+        self.assertEqual(len({r.prompt for r, _ in requests[4:]}), 1)
+
+    def test_notebook_reviews_complete_fake_evidence_without_model_pass(self):
+        snapshot = {"local_bytes_verified": True, "revision": q.REVISION,
+                    "files": q.load_plan()["snapshot_files"]}
+        self.verifier.return_value = snapshot
+        report = self.run_harness()
+        self.assertEqual(report["status"], q.COMPLETE)
+        ns = {}
+        exec(compile(sources()[0], "definitions", "exec"), ns)
+        ns.update(REPO=self.repo, BASE="a" * 40, plan=q.load_plan())
+        for name in ("provision.json", "verify_online.json", "verify_offline.json"):
+            q.write_json(self.repo / ns["MANIFESTS"] / name, snapshot)
+        reviewed = ns["review_runtime"](0)
+        self.assertEqual(reviewed["status"], q.COMPLETE)
+        self.assertEqual(reviewed["classification_interface_status"], "PENDING_QUALIFICATION")
+        self.assertEqual(reviewed["grounding_status"], "PENDING_QUALIFICATION")
+        self.assertFalse(reviewed["compatibility_review"]["GROUNDING_COMPATIBLE"]["all_cases_map_fail_closed"])
+        path = self.repo / q.ARTIFACTS / q.RUN_ID / "summary.json"
+        path.write_bytes(path.read_bytes() + b" ")
+        with self.assertRaisesRegex(RuntimeError, "summary hash mismatch"):
+            ns["review_runtime"](0)
+
+    def test_missing_inputs_stop_before_backend_or_load(self):
+        self.plan["industry_safety_policy"] = None
+        with patch.object(q, "probe_hardware") as probe:
+            result = self.run_harness()
+        self.assertEqual(result["status"], q.STOP)
+        self.assertEqual(result["failure"]["stage"], "APPROVED_CANONICAL_INPUTS")
+        self.assertEqual(result["native_generate_calls"], 0)
+        self.assertEqual(result["model_load_count"], 0)
+        probe.assert_not_called()
+
+    def test_input_hash_or_firewall_failure(self):
+        self.plan["cases"][0]["image_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "HASH_MISMATCH"):
+            q.prepared_cases(self.plan, self.repo)
+        self.plan["cases"][0]["image_path"] = "data/raw/forbidden.png"
         with self.assertRaises(ValueError):
-            grounding_request(ROOT, IMAGE, ["red square"])
-        self.assertIsNone(g["production_native_prompt_template"])
-        self.assertIsNone(g["native_to_hazard_mapping"])
-        self.assertFalse(parse_text('{"hazards":[{"hazard_type":"red square","evidence":[]}]}',
-                                    "grounding").success)
+            q.prepared_cases(self.plan, self.repo)
 
-    def test_canonical_empty_unlocalized_and_multiple_are_distinct(self):
-        empty = parse_text('{"hazards":[]}', "grounding")
-        unlocalized = parse_text('{"hazards":[{"hazard_type":"SMOKE","evidence":[]}]}', "grounding")
-        self.assertEqual(empty.value, Grounding(()))
-        self.assertTrue(unlocalized.success)
-        self.assertNotEqual(empty.value, unlocalized.value)
-        obj = {"hazards": [
-            {"hazard_type": "SMOKE", "evidence": [
-                {"bbox": [0.1, 0.1, 0.2, 0.2], "label": "visible evidence"},
-                {"bbox": [0.3, 0.3, 0.4, 0.4]}]},
-            {"hazard_type": "OPEN_FLAME", "evidence": [{"bbox": [0.6, 0.6, 0.8, 0.8]}]},
-        ]}
-        result = parse_text(json.dumps(obj), "grounding")
-        self.assertTrue(result.success)
-        self.assertEqual(result.boxes_valid, 3)
-        self.assertEqual(len(result.value.hazards), 2)
-        self.assertEqual(result.value.hazards[0].evidence[0].label, "visible evidence")
-        for invalid_probe in ('{}', '{"bbox":[]}', '{"hazards":[]}', '{"bbox":null}'):
-            self.assertFalse(parse_text(invalid_probe, "external_probe").success)
+    def test_corrupt_reread_stops_no_parser_no_retry(self):
+        original = Path.read_bytes
+        def read(path):
+            raw = original(path)
+            return raw + b" " if path.name == "response.raw" else raw
+        with patch.object(Path, "read_bytes", read), patch.object(q, "observation") as observer:
+            result = self.run_harness()
+        self.assertEqual(result["status"], q.STOP)
+        observer.assert_not_called()
+        self.assertEqual(self.model.generate_count, 1)
 
-    def test_no_native_empty_or_multiple_grammar_invention(self):
-        g = self.c["grounding"]
-        self.assertEqual(g["no_detection"]["canonical_no_hazard"], {"hazards": []})
-        for key in ("native_grammar", "native_empty_mapping"):
-            self.assertIsNone(g["no_detection"][key])
-        self.assertFalse(g["no_detection"]["existing_evidence_safe_to_map_to_empty"])
-        self.assertEqual(g["no_detection"]["decision"],
-                         "B_ADDITIONAL_RUNTIME_QUALIFICATION_REQUIRED_UNDER_PRODUCTION_PROMPT")
-        self.assertTrue(g["multiple_boxes"]["canonical_production_required"])
-        self.assertFalse(g["multiple_boxes"]["native_support_enabled"])
-        self.assertIsNone(g["multiple_boxes"]["native_grammar"])
-        valid = "<loc0000><loc0000><loc0500><loc0500> red square<eos>"
-        for text in ("", "<eos>", "none", "[]", '{"hazards":[]}', valid + valid,
-                     valid[:-5] + "; " + valid):
-            parsed = parse_grounding_candidate(text, prompt=GROUNDING_PROMPT)
-            self.assertEqual(parsed.parse_status, ParseStatus.INVALID)
-            self.assertIsNone(parsed.value)
+    def test_fsync_failure_stops_before_parser(self):
+        from safeshift.runners import storage
+        original = storage._write_new
+        def write(path, raw):
+            if path.name == "response.raw":
+                with patch.object(storage.os, "fsync", side_effect=OSError("FAKE")):
+                    return original(path, raw)
+            return original(path, raw)
+        with patch.object(storage, "_write_new", side_effect=write), patch.object(q, "observation") as parser:
+            result = self.run_harness()
+        self.assertEqual(result["status"], q.STOP)
+        parser.assert_not_called()
+        self.assertEqual(self.model.generate_count, 1)
 
-    def test_exact_gate_requirements_and_closed_label_proposal(self):
-        gate = self.c["external_gate"]
-        manifest = strict_json((ROOT / gate["manifest"]).read_bytes())
-        self.assertEqual(hashlib.sha256((ROOT / gate["manifest"]).read_bytes()).hexdigest(),
-                         "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379")
-        self.assertEqual(gate["manifest_sha256"],
-                         "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379")
-        self.assertEqual(gate["case_ids"], [c["case_id"] for c in manifest["cases"]])
-        self.assertEqual(gate["exact_query_to_label_proposal"], {
-            "Locate the red square.": "red square", "Locate the green circle.": "green circle",
-            "Locate the yellow triangle.": "yellow triangle", "Locate the cyan rectangle.": "cyan rectangle"})
-        self.assertEqual(set(gate["exact_query_to_label_proposal"]),
-                         {c["target_query"] for c in manifest["cases"]})
-        self.assertEqual(gate["box_count"], 1)
-        self.assertEqual(gate["target_absent_cases"], 0)
-        self.assertFalse(gate["multiple_boxes_required"])
-        self.assertFalse(gate["classification_scored"])
-        self.assertFalse(gate["query_mapping_enabled"])
-        self.assertIsNone(gate["no_detection_success_representation"])
-        self.assertEqual(gate["iou_and_area"], "DIAGNOSTIC_ONLY")
-        self.assertIsNone(gate["iou_threshold"])
-        self.assertIsNone(gate["area_threshold"])
-        self.assertEqual(gate["pass_requirements"], ["valid schema/geometry", "predicted center inside target bbox",
-            "predicted bbox excludes distractor center", "systematic reciprocal-swap tracking", "not full image",
-            "explicit human NO_GIANT for every case"])
+    def test_partial_failure_preserves_ids(self):
+        self.processor.decode_error = ValueError("FAKE")
+        with patch.object(q, "observation") as parser:
+            result = self.run_harness()
+        self.assertEqual(result["status"], q.STOP)
+        parser.assert_not_called()
+        raw = next((self.repo / q.ARTIFACTS).rglob("response.raw"))
+        self.assertIn("generated_ids_full", json.loads(raw.read_bytes()))
+        self.assertEqual(self.model.generate_count, 1)
 
-    def test_observed_grammar_not_expanded_to_proposed_labels_or_fuzzy_text(self):
-        g = self.c["grounding"]
-        self.assertEqual(g["supported_native_grammar"]["labels"], ["red square"])
-        self.assertFalse(g["arbitrary_label_support_enabled"])
-        template = "<loc0000><loc0000><loc0500><loc0500> {}<eos>"
-        for label in ("green circle", "yellow triangle", "cyan rectangle", "Red square", "red rectangle"):
-            result = parse_grounding_candidate(template.format(label), prompt=GROUNDING_PROMPT)
-            self.assertEqual(result.parse_status, ParseStatus.INVALID)
-        for answer in ("Yes", " yes", "no.", "safe", "unsafe", "Level01"):
-            self.assertEqual(parse_presence_answer_candidate(answer, prompt=PRESENCE_PROMPT).parse_status,
-                             ParseStatus.INVALID)
 
-    def test_d4_no_clamp_rescale_or_semantic_repair(self):
-        self.assertEqual(loc_values_to_d4([0, 1, 1023, 1022]), [1/1024, 0, 1022/1024, 1023/1024])
-        for values in ([0, 0, 1024, 1023], [5, 0, 1, 10], [0, 0, 0, 1], [False, 0, 2, 3]):
-            with self.subTest(values=values), self.assertRaises(ValueError):
-                loc_values_to_d4(values)
-        # No expected-target/image/GT argument can silently erase this hallucination.
-        self.assertEqual(list(inspect.signature(parse_grounding_candidate).parameters),
-                         ["decoded_with_special_tokens", "prompt"])
-        result = parse_grounding_candidate(
-            "<loc0359><loc0366><loc0662><loc0659> red square<eos>", prompt=GROUNDING_PROMPT)
-        self.assertEqual(result.parse_status, ParseStatus.SUCCESS)
-        self.assertEqual(result.value, Evidence((366/1024, 359/1024, 659/1024, 662/1024), "red square"))
-        for key in ("parser_ground_truth_input", "drop_hallucinated_prediction", "fuzzy_parser", "semantic_repair",
-                    "clamp", "rescale_1023_to_1", "heuristic_repair", "fabricated_box", "point_to_box",
-                    "artificial_zero_iou", "production_adapter_enabled"):
-            self.assertIs(self.c["adapter_design"][key], False)
+class NotebookTests(unittest.TestCase):
+    def setUp(self):
+        from tempfile import TemporaryDirectory
+        self.tmp = TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.ns = {}
+        exec(compile(sources()[0], "definitions", "exec"), self.ns)
+        self.ns.update(WORKING=self.root, REPO=self.root / "repo",
+                       WORK=self.root / "work", SETUP=self.root / "setup",
+                       BUNDLE=self.root / "bundle", ZIP=self.root / "bundle.zip",
+                       ONLINE_DONE=True)
+        self.ns["REPO"].mkdir()
+        self.ns["SETUP"].mkdir()
+        self.ns["write_new"](self.ns["SETUP"] / "online_complete.json", {"complete": True})
 
-    def test_unresolved_features_and_conditional_minimal_cases(self):
-        c = self.c
-        self.assertEqual(c["classification"]["unresolved_features"],
-                         ["C1_POLICY_PIN", "C1_NATIVE_PROMPT_AND_FOUR_LEVEL_OUTPUT_MAPPING"])
-        self.assertEqual(c["grounding"]["unresolved_features"], ["B2_NATIVE_PROMPT_AND_HAZARD_ASSOCIATION",
-            "EXACT_LABEL_GRAMMAR_BEYOND_RED_SQUARE", "NATIVE_NO_HAZARD_REPRESENTATION",
-            "NATIVE_MULTIPLE_HAZARDS_AND_EVIDENCE"])
-        self.assertEqual(c["external_gate"]["unresolved_features"],
-                         ["EXACT_GATE_QUERY_RENDERING_REVIEW", "EXACT_LABEL_GRAMMAR_BEYOND_RED_SQUARE"])
-        for section in (c, c["classification"], c["grounding"]):
-            self.assertIs(section["additional_runtime_qualification_required"], True)
-        runtime = c["next_runtime_design"]
-        self.assertEqual(runtime["status"], "CONDITIONAL_MINIMUM_NOT_EXECUTABLE_OR_AUTHORIZED")
-        self.assertEqual(runtime["minimum_case_count"], 9)
-        self.assertEqual([case["id"] for case in runtime["cases"]], ["C_LEVEL01", "C_LEVEL02", "C_LEVEL03",
-            "C_LEVEL04", "G_GREEN_CIRCLE", "G_YELLOW_TRIANGLE", "G_CYAN_RECTANGLE", "G_B2_MULTIPLE", "G_B2_NONE"])
-        self.assertEqual([case["prompt"] for case in runtime["cases"] if "prompt" in case],
-                         ["detect green circle", "detect yellow triangle", "detect cyan rectangle"])
-        self.assertFalse(runtime["gate_cases_reused_for_qualification"])
-        self.assertFalse(runtime["native_detect_empty_case_needed_for_gate"])
-        self.assertTrue(runtime["raw_before_parser"])
+    def test_offline_barrier_and_no_retry_precede_runtime(self):
+        from unittest.mock import Mock
+        command = Mock()
+        self.ns["command"] = command
+        with self.assertRaisesRegex(RuntimeError, "turn venue Internet OFF"):
+            exec(compile(sources()[2], "offline", "exec"), self.ns)
+        command.assert_not_called()
+        self.ns["write_new"](self.ns["SETUP"] / "runtime_attempt.json", {"started": True})
+        with self.assertRaisesRegex(RuntimeError, "attempt already started"):
+            exec(compile(sources()[2].replace("OWNER_ATTEST_INTERNET_OFF = False",
+                                             "OWNER_ATTEST_INTERNET_OFF = True"), "offline", "exec"), self.ns)
+        command.assert_not_called()
 
-    def test_pending_status_and_no_execution_or_promotion(self):
-        c = self.c
-        self.assertEqual(c["status"], "PREP_CONTRACT_ONLY_NOT_QUALIFIED")
-        self.assertEqual(c["preserved_status"], {
-            "real_runtime_status": "RUNTIME_SMOKE_PASS", "exact_runtime_verified": True,
-            "classification_interface": "PENDING_QUALIFICATION", "grounding": "PENDING_QUALIFICATION",
-            "external_gate": "PENDING_QUALIFICATION", "paligemma_role": "BACKUP_1",
-            "primary_roster_count": 4, "protocol_freeze": "BLOCKED", "inspecsafe_authorized": False})
-        self.assertEqual(c["execution"], {"gpu": False, "kaggle": False, "model": False,
-                                        "provision": False, "synthetic_gate": False, "inspecsafe": False})
-        for key in ("synthetic_gate_ready", "promotion", "protocol_frozen", "gate_changed",
-                    "dataset_labels_metrics_scoring_changed"):
-            self.assertIs(c[key], False)
-        self.assertFalse(c["next_runtime_design"]["executed"])
-        self.assertFalse(c["external_gate"]["executed"])
-        adapter = PendingPaliGemmaAdapter()
-        for task, expected in ((Task.CLASSIFICATION, ParseStatus.INVALID),
-                               (Task.GROUNDING, ParseStatus.UNSUPPORTED)):
-            result = adapter.adapt(b"contract-only", task)
-            self.assertEqual(result.parse_status, expected)
-            self.assertIsNone(result.value)
+    def test_no_credential_in_offline_process(self):
+        with patch.dict(os.environ, HF_TOKEN="FAKE_TEST_SECRET", GH_TOKEN="FAKE_TEST_SECRET",
+                        GITHUB_TOKEN="FAKE_TEST_SECRET"):
+            env = self.ns["child_env"](offline=True)
+        for name in ("HF_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"):
+            self.assertNotIn(name, env)
+        self.assertEqual(env["HF_HUB_OFFLINE"], "1")
+        self.assertEqual(env["CUDA_VISIBLE_DEVICES"], "0")
 
-    def test_protected_authorities_runners_and_gate_assets_match_exact_base(self):
-        # Read-only comparisons. No gate evaluation, image decode, model construction,
-        # provisioning, or benchmark data access. Existing config/metrics cannot drift.
-        roots = ["safeshift", "schemas", "configs/pre_freeze", "tests/fixtures/pre_freeze/frozen_external_gate",
-                 "scripts/generate_external_gate_cases.py", "scripts/w2_qwen3_external_gate.py",
-                 "scripts/w2_qwen2_5_external_gate.py", "scripts/w2_moondream_external_gate.py"]
-        paths = subprocess.check_output(
-            ["git", "ls-tree", "-r", "--name-only", BASE, "--", *roots], cwd=ROOT, text=True).splitlines()
-        self.assertGreater(len(paths), 50)
-        for path in paths:
-            with self.subTest(path=path):
-                original = subprocess.check_output(["git", "show", f"{BASE}:{path}"], cwd=ROOT)
-                current = (ROOT / path).read_bytes()
-                if not path.endswith(".png"):
-                    original, current = original.replace(b"\r\n", b"\n"), current.replace(b"\r\n", b"\n")
-                self.assertEqual(current, original)
+    def test_failure_bundle_keeps_partial_raw_exact_and_excludes_weights(self):
+        from types import ModuleType
+        from unittest.mock import Mock
+        import sys
+        import zipfile
+        runtime = self.ns["REPO"] / self.ns["RUN_REL"]
+        raw_dir = runtime / ("a" * 64)
+        raw_dir.mkdir(parents=True)
+        raw = b'{"partial_native_ids":[256000,1]}'
+        (raw_dir / "response.raw").write_bytes(raw)
+        (runtime / "C_LEVEL01.input").write_bytes(b"FAKE_INPUT_BYTES")
+        (runtime / "model.safetensors").write_bytes(b"FAKE_EXCLUDED_WEIGHT")
+        display = ModuleType("IPython.display")
+        display.FileLink = lambda path: path
+        display.display = Mock()
+        with patch.dict(sys.modules, {"IPython.display": display}):
+            self.ns["build_bundle"]({"status": q.STOP})
+        with zipfile.ZipFile(self.ns["ZIP"]) as bundle:
+            prefix = "d9r13_result_bundle/"
+            self.assertEqual(bundle.read(prefix + "runtime/" + "a" * 64 + "/response.raw"), raw)
+            self.assertIn(prefix + "runtime/C_LEVEL01.input", bundle.namelist())
+            self.assertFalse(any("safetensors" in n for n in bundle.namelist()))
+            inventory = json.loads(bundle.read(prefix + "checksums.json"))
+            for path, ref in inventory.items():
+                content = bundle.read(prefix + path)
+                self.assertEqual(hashlib.sha256(content).hexdigest(), ref["sha256"])
+                self.assertEqual(len(content), ref["size_bytes"])
+        with self.assertRaisesRegex(RuntimeError, "bundle already exists"):
+            self.ns["build_bundle"]({"status": q.STOP})
 
-    def test_every_pre_freeze_json_strictly_parses(self):
-        paths = sorted(CONFIG.glob("*.json"))
-        self.assertIn(CANDIDATE, paths)
-        for path in paths:
-            with self.subTest(path=path.name):
-                self.assertIsInstance(strict_json(path.read_bytes()), dict)
+    def test_secret_export_refused_without_raw_rewrite(self):
+        raw_dir = self.ns["REPO"] / self.ns["RUN_REL"] / ("a" * 64)
+        raw_dir.mkdir(parents=True)
+        secret = "FAKE_MEMORY_ONLY_SECRET"
+        self.ns["SECRET_VALUES"].append(secret)
+        raw_path = raw_dir / "response.raw"
+        raw_path.write_bytes(secret.encode())
+        with self.assertRaisesRegex(RuntimeError, "secret-like content"):
+            self.ns["build_bundle"]({"status": q.STOP})
+        self.assertEqual(raw_path.read_bytes(), secret.encode())
+        self.assertFalse(self.ns["ZIP"].exists())
 
 
 if __name__ == "__main__":

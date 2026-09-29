@@ -7,3 +7,5 @@
 /configs/pre_freeze/paligemma_interface_qualification.v1.json text eol=lf
 # Stable D9R12 result-record checksum across checkouts.
 /configs/pre_freeze/paligemma_interface_runtime_result.v1.json text eol=lf
+# Byte-pinned canonical compatibility PREP, including explicit missing inputs.
+/configs/pre_freeze/paligemma_production_interface_candidate.v1.json text eol=lf

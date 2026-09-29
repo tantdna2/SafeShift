@@ -772,21 +772,25 @@ No promotion, real GPU/model/provisioning, synthetic-v1 gate or InspecSafe execu
 See [D9R12 evidence and offline contract](notes/w2_paligemma_interface_adapter_contract.md)
 and [machine-readable result](configs/pre_freeze/paligemma_interface_runtime_result.v1.json).
 
-## W2.6-D9R13-PALIGEMMA-PRODUCTION-INTERFACE-FREEZE-PREP
+## W2.6-D9R13-PALIGEMMA-CANONICAL-SAFESHIFT-COMPATIBILITY-RUNTIME-PREP
 
-- [x] PREP / implementation: audit actual C1 four-level classification, independent
-  B2 hazard/evidence output and separate single-box external probe contracts.
-- [x] Record a disabled [production-interface candidate](configs/pre_freeze/paligemma_production_interface_candidate.v1.json)
-  with exact canonical prompt requirements, evidence provenance and unresolved
-  native mappings. No yes/no-to-safety or object-to-hazard mapping is invented.
-- [x] Design nine conditional minimum runtime cases; policy/native B2 route and
-  future execution plan require separate review. No runtime or gate executed.
-- [x] Validate 281 static/fake tests, 32 strict pre-freeze JSON parses, protected
-  base contracts/assets, scoped secret-pattern scan and diff check: PASS.
-- [ ] Research Lead review and additional runtime qualification: PENDING.
-  SYNTHETIC_GATE_READY=false; classification interface, grounding and external
-  gate remain PENDING_QUALIFICATION.
+Research Lead correction supersedes the earlier nine-case discovery proposal in
+the same Draft PR #60. Canonical classification/grounding contracts are fixed.
 
-Base: `a3192ddefbc28fe2997190819744e8f4796a6d85`. BACKUP_1, four primaries,
-freeze BLOCKED, InspecSafe authorized=false; no promotion or protocol freeze.
-See [canonical audit, proposal limits and validation](notes/w2_paligemma_production_interface_freeze_prep.md).
+- [x] Prepare a fixed four-classification / three-grounding / one-load harness
+  using canonical request builders and unchanged D9R11 runner/runtime pins.
+- [x] Add a qualification-only fail-closed canonical adapter, preserving raw
+  before parsing, exact /1024 native mapping, no clamp/repair or yes/no mapping.
+- [x] Prepare unexecuted Kaggle notebook with provisioning-only token, offline
+  barrier, exclusive attempt, source pin and review bundle; no automatic PASS.
+- [ ] Pin actual approved production C1 policy and Level01–04 / SMOKE /
+  OPEN_FLAME / no-hazard fixtures. These inputs are absent from this checkout;
+  preflight STOP before provisioning/load. Coverage slots are not completed cases.
+- [ ] Research Lead review and real compatibility qualification: NOT_RUN.
+  No synthetic-v1 readiness or model qualification is claimed by this PREP.
+
+Base: `a3192ddefbc28fe2997190819744e8f4796a6d85`; patch starts at
+`89c452bd1a0bc57127cec4b36b378896baab237f`.
+BACKUP_1, four primaries, freeze BLOCKED, InspecSafe authorized=false.
+See [canonical compatibility preparation and exact input blocker](notes/w2_paligemma_production_interface_freeze_prep.md).
+No GPU/model/Kaggle/provisioning/gate/InspecSafe execution, promotion or merge.

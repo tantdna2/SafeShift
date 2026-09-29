@@ -1389,7 +1389,7 @@
   Dataset, split, labels and metrics are unchanged. No GPU/model/provisioning,
   synthetic-v1 gate or InspecSafe execution in D9R12.
 
-## D9R13 — Production interface requirements and unresolved native mappings (2026-09-29)
+## D9R13 — Historical initial proposal, superseded by Research Lead correction below (2026-09-29)
 
 - **Status/authority:** PREP proposal for Research Lead review under the explicit
   D9R13 task instruction; no new research policy, label, metric or freeze decision.
@@ -1419,6 +1419,40 @@
   PENDING_QUALIFICATION; BACKUP_1, four primaries, freeze BLOCKED, InspecSafe
   authorized=false. No GPU/model/provisioning/Kaggle/gate/InspecSafe execution,
   promotion, changed acceptance criteria or merge in D9R13.
+
+## D9R13 — Canonical SafeShift compatibility runtime correction (2026-09-29)
+
+- **Authority:** Research Lead's explicit correction in the same session and Draft
+  PR #60. Canonical C1 classification and A2/B2 grounding interfaces are already
+  decided; stop contract discovery. The preceding nine-case proposal is superseded.
+- **Scope:** Prepare exactly four Level01–04 classification calls, two positive
+  grounding calls with distinct existing D6 IDs (SMOKE and OPEN_FLAME), and one
+  no-hazard call. Seven calls / one load. No multiple-hazard case: the unchanged
+  synthetic-v1 gate does not require it. No gate execution.
+- **Implementation:** Reuse canonical builders verbatim and canonical output
+  types. Qualification-only parser accepts exact canonical JSON, or native loc
+  groups explicitly labelled with exact D6 IDs. The latter is a predeclared
+  acceptance candidate, not an observed model capability. Preserve D9R7 /1024
+  mapping, no clamp/repair/fuzzy mapping, no yes/no-to-Level or object-to-hazard
+  inference, and no rewriting negative-case hallucinations.
+- **Runtime boundary:** Preserve exact D9R11 model/revision, T4 FP16/NONE,
+  offline runtime, raw-before-parser, exclusive write/fsync/reread/SHA verification,
+  no retry and one load. Keep the fixed 32-token generation cap; truncation stays
+  invalid. Notebook reports evidence collection or STOP, never model PASS.
+- **Evidence gap, not a reopened contract:** This checkout has no approved C1
+  policy artifact or annotated C1/B2 scene fixtures. Existing canonical tests use
+  synthetic policy markers; frozen synthetic-v1 images are geometric probes.
+  Do not invent policy/annotations or use InspecSafe to fill these inputs.
+  The reviewed PREP records null input references and stops before provisioning
+  until the already approved artifacts can be pinned. See the
+  [specific source evidence](notes/w2_paligemma_production_interface_freeze_prep.md).
+- **Post-run decision:** Research Lead records CLASSIFICATION_COMPATIBLE and
+  GROUNDING_COMPATIBLE YES/NO. Either interface unable to map fail-closed means
+  no advancement to synthetic-v1; both compatible means the unchanged gate is
+  next, with separate execution authorization. No accuracy benchmark here.
+- **Preserved status:** Qualification PENDING, BACKUP_1, four primaries, freeze
+  BLOCKED, InspecSafe authorization=false. No runtime, GPU, model, Kaggle,
+  provisioning, synthetic gate, InspecSafe execution, promotion or merge.
 
 ## Template
 
