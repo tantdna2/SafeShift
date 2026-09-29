@@ -772,25 +772,26 @@ No promotion, real GPU/model/provisioning, synthetic-v1 gate or InspecSafe execu
 See [D9R12 evidence and offline contract](notes/w2_paligemma_interface_adapter_contract.md)
 and [machine-readable result](configs/pre_freeze/paligemma_interface_runtime_result.v1.json).
 
-## W2.6-D9R13-PALIGEMMA-CANONICAL-SAFESHIFT-COMPATIBILITY-RUNTIME-PREP
+## W2.6-D9R13-PALIGEMMA-FROZEN-EXTERNAL-GATE-PREP
 
-Research Lead correction supersedes the earlier nine-case discovery proposal in
-the same Draft PR #60. Canonical classification/grounding contracts are fixed.
+Research Lead decision supersedes both discovery and seven-case C1/B2 PREP in
+the same Draft PR #60. Use the exact eight frozen external cases used by Qwen/Moondream.
 
-- [x] Prepare a fixed four-classification / three-grounding / one-load harness
-  using canonical request builders and unchanged D9R11 runner/runtime pins.
-- [x] Add a qualification-only fail-closed canonical adapter, preserving raw
-  before parsing, exact /1024 native mapping, no clamp/repair or yes/no mapping.
+- [x] Prepare eight frozen grounding calls / zero classification calls / one load;
+  reuse load_cases and evaluate_gate, unchanged fixtures/GT/criteria and D9R11 runtime.
+- [x] Add closed four-label native loc parser; raw-before-parser and /1024;
+  wrong label/grammar fails closed without clamp, repair or semantic correction.
 - [x] Prepare unexecuted Kaggle notebook with provisioning-only token, offline
   barrier, exclusive attempt, source pin and review bundle; no automatic PASS.
-- [ ] Pin actual approved production C1 policy and Level01–04 / SMOKE /
-  OPEN_FLAME / no-hazard fixtures. These inputs are absent from this checkout;
-  preflight STOP before provisioning/load. Coverage slots are not completed cases.
-- [ ] Research Lead review and real compatibility qualification: NOT_RUN.
-  No synthetic-v1 readiness or model qualification is claimed by this PREP.
+- [x] Preserve D9R11 target-absent hallucination; no extra gate case.
+- [x] Prepare separate offline finalization with explicit human giant-box review;
+  automatic gate success remains PENDING_REVIEW until that review. No promotion.
+- [ ] Research Lead PREP review and actual frozen external gate: NOT_RUN.
+- [ ] Production classification: PENDING_QUALIFICATION; no C1 artifacts invented,
+  no classification calls, and missing C1 policy/cases do not block this gate.
 
-Base: `a3192ddefbc28fe2997190819744e8f4796a6d85`; patch starts at
-`89c452bd1a0bc57127cec4b36b378896baab237f`.
+Base: `a3192ddefbc28fe2997190819744e8f4796a6d85`; latest correction starts at
+`0f07f7132e1ce7f1973ad1639f5a20725b493feb`.
 BACKUP_1, four primaries, freeze BLOCKED, InspecSafe authorized=false.
-See [canonical compatibility preparation and exact input blocker](notes/w2_paligemma_production_interface_freeze_prep.md).
+See [frozen external gate preparation](notes/w2_paligemma_production_interface_freeze_prep.md).
 No GPU/model/Kaggle/provisioning/gate/InspecSafe execution, promotion or merge.

@@ -1,0 +1,101 @@
+{
+  "schema_version": "paligemma-frozen-external-gate-plan-v1",
+  "task_name": "W2.6-D9R13-PALIGEMMA-FROZEN-EXTERNAL-GATE-PREP",
+  "status": "PREPARED_NOT_RUN",
+  "base_sha": "a3192ddefbc28fe2997190819744e8f4796a6d85",
+  "model_id": "google/paligemma-3b-mix-448",
+  "revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+  "runtime_plan": "configs/pre_freeze/paligemma_t4_runtime.v1.json",
+  "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
+  "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+  "provenance": "configs/pre_freeze/external_gate_cases.v1.provenance.json",
+  "image_root": "tests/fixtures/pre_freeze/frozen_external_gate",
+  "generator": "scripts/generate_external_gate_cases.py",
+  "generator_sha256": "c5fc2140d1bd2ce9ef323884834911c1e3ef4234172cd3d37c0e6ba4341f4f6c",
+  "runtime_regeneration": false,
+  "case_ids": [
+    "A_1",
+    "A_2",
+    "B_1",
+    "B_2",
+    "C_1",
+    "C_2",
+    "D_1",
+    "D_2"
+  ],
+  "case_count": 8,
+  "model_loads": 1,
+  "native_generate_calls": 8,
+  "classification_calls": 0,
+  "native_prompt": "detect {case.target_query}",
+  "prompt_example": "detect Locate the red square.",
+  "query_transform": "PREFIX_ONLY_KEEP_MANIFEST_QUERY_VERBATIM",
+  "parser_labels": [
+    "red square",
+    "green circle",
+    "yellow triangle",
+    "cyan rectangle"
+  ],
+  "parser_grammar": "<locNNNN><locNNNN><locNNNN><locNNNN> LABEL<eos>",
+  "label_mismatch": "SCHEMA_ERROR; retain raw/native label and diagnostic box; no canonical prediction or correction",
+  "native_order": [
+    "y_min",
+    "x_min",
+    "y_max",
+    "x_max"
+  ],
+  "canonical_mapping": "[x_min/1024.0,y_min/1024.0,x_max/1024.0,y_max/1024.0]",
+  "evaluator": "safeshift.protocol.gate.evaluate_gate",
+  "gate_criteria": "UNCHANGED_FROM_QWEN_MOONDREAM; canonical single ProbePrediction, target-center inclusion, distractor-center exclusion, reciprocal position tracking, no full image, human giant-box review. IoU/area diagnostic only; no new thresholds.",
+  "human_review": "Automatic failure => FAIL. Otherwise PENDING_REVIEW until explicit NO_GIANT/GIANT with reviewer and rationale for all eight cases; separate offline finalization writes PASS/FAIL without rewriting runtime evidence.",
+  "runtime": {
+    "hardware": "ONE_PROCESS_VISIBLE_T4",
+    "precision": "FP16",
+    "quantization": "NONE",
+    "model_loads": 1,
+    "offline": true,
+    "raw_before_parser": true,
+    "exclusive_write": true,
+    "fsync": true,
+    "reread": true,
+    "sha256_verify": true,
+    "automatic_retry": false,
+    "repair": false,
+    "HF_TOKEN": "PROVISIONING_ONLY",
+    "decoding": "UNCHANGED_D9R11_MAX_NEW_TOKENS_32_GREEDY",
+    "output_cap_policy": "Record EOS/cap in evidence; no retry or budget increase. Incomplete output has no canonical value."
+  },
+  "negative_evidence": {
+    "path": "configs/pre_freeze/paligemma_interface_runtime_result.v1.json",
+    "sha256": "555701224f8b745391c65e75c5ff876bc039648fa1f4da02bc96403a3112e736",
+    "case_id": "grd_d",
+    "finding": "D9R11 target-absent case hallucinated a parseable red-square detection. Preserved unchanged; Research Lead must consider it in final model decision. No extra negative case in frozen gate."
+  },
+  "preserved_status": {
+    "real_runtime_status": "RUNTIME_SMOKE_PASS",
+    "exact_runtime_verified": true,
+    "classification_interface": "PENDING_QUALIFICATION",
+    "grounding": "PENDING_QUALIFICATION",
+    "external_gate": "PENDING_QUALIFICATION",
+    "paligemma_role": "BACKUP_1",
+    "primary_roster_count": 4,
+    "protocol_freeze": "BLOCKED",
+    "inspecsafe_authorized": false
+  },
+  "interpretation": {
+    "scope": "FROZEN_EXTERNAL_OBJECT_LOCALIZATION_GATE_ONLY",
+    "classification_qualification": false,
+    "inspecsafe": false,
+    "promotion": false,
+    "protocol_freeze": false
+  },
+  "production_classification": "PENDING_QUALIFICATION; missing C1 policy/cases does not block this external gate",
+  "execution": {
+    "gpu": false,
+    "model": false,
+    "kaggle": false,
+    "inspecsafe": false,
+    "gate": false
+  },
+  "provenance_sha256": "0b16be7408784c35bc3dc1a541f008b8086c4fa250957082a236d71ed3fe2e96"
+}

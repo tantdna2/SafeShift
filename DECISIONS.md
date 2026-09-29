@@ -1400,7 +1400,7 @@
   case; it neither scores classification nor requires target-absent/multiple-box
   successes. Exact industry policy text remains unpinned.
 - **Proposal:** Preserve canonical prompt requirements in the disabled
-  [machine-readable candidate](configs/pre_freeze/paligemma_production_interface_candidate.v1.json).
+  [historical machine-readable candidate](https://github.com/tantdna2/SafeShift/blob/0f07f7132e1ce7f1973ad1639f5a20725b493feb/configs/pre_freeze/paligemma_production_interface_candidate.v1.json).
   C1 native prompt/level mapping and B2 native prompt/hazard mapping are UNRESOLVED.
   A closed four-query `detect {target_label}` table is proposed only for future
   external-probe qualification; only red square currently has runtime grammar
@@ -1412,7 +1412,7 @@
   Preserve D9R7 /1024 D4, no repair/clamp, and the unchanged gate criteria.
 - **Next step conclusion:** SYNTHETIC_GATE_READY=false and
   ADDITIONAL_RUNTIME_QUALIFICATION_REQUIRED=true. Nine conditional minimum cases
-  are designed in the [audit note](notes/w2_paligemma_production_interface_freeze_prep.md);
+  were proposed in the historical audit note (superseded below);
   unresolved policy/native semantics must be resolved before a runnable plan.
   This is not authorization to execute or proof that nine calls qualify B2.
 - **Boundaries:** Classification interface, grounding and external gate remain
@@ -1420,7 +1420,7 @@
   authorized=false. No GPU/model/provisioning/Kaggle/gate/InspecSafe execution,
   promotion, changed acceptance criteria or merge in D9R13.
 
-## D9R13 — Canonical SafeShift compatibility runtime correction (2026-09-29)
+## D9R13 — Historical seven-case correction, superseded by frozen external gate decision below (2026-09-29)
 
 - **Authority:** Research Lead's explicit correction in the same session and Draft
   PR #60. Canonical C1 classification and A2/B2 grounding interfaces are already
@@ -1445,7 +1445,7 @@
   Do not invent policy/annotations or use InspecSafe to fill these inputs.
   The reviewed PREP records null input references and stops before provisioning
   until the already approved artifacts can be pinned. See the
-  [specific source evidence](notes/w2_paligemma_production_interface_freeze_prep.md).
+  [historical source evidence](https://github.com/tantdna2/SafeShift/blob/0f07f7132e1ce7f1973ad1639f5a20725b493feb/notes/w2_paligemma_production_interface_freeze_prep.md).
 - **Post-run decision:** Research Lead records CLASSIFICATION_COMPATIBLE and
   GROUNDING_COMPATIBLE YES/NO. Either interface unable to map fail-closed means
   no advancement to synthetic-v1; both compatible means the unchanged gate is
@@ -1453,6 +1453,40 @@
 - **Preserved status:** Qualification PENDING, BACKUP_1, four primaries, freeze
   BLOCKED, InspecSafe authorization=false. No runtime, GPU, model, Kaggle,
   provisioning, synthetic gate, InspecSafe execution, promotion or merge.
+
+## D9R13 — Frozen external gate PREP decision (2026-09-29)
+
+- **Authority:** Research Lead explicitly stops the C1/B2 seven-case qualification
+  and requests the same frozen external object-localization gate as Qwen/Moondream
+  in the same Draft PR #60. Task: W2.6-D9R13-PALIGEMMA-FROZEN-EXTERNAL-GATE-PREP.
+- **Inputs:** Exact external_gate_cases.v1.json, its provenance and eight committed
+  frozen_external_gate images. Reuse load_cases and evaluate_gate unchanged;
+  generator is provenance only. No new fixtures/policy/annotations or GT changes.
+- **Budget/interface:** Eight grounding calls, one model load, zero classification.
+  Literal native prompt detect {case.target_query}, preserving the manifest query
+  including "Locate the ….". Parser candidate accepts only red square, green circle,
+  yellow triangle and cyan rectangle with four loc tokens plus EOS; yxyx to xyxy
+  divided by 1024. No clamp, repair, fabricated boxes, fuzzy or semantic mapping.
+  Wrong returned label remains in raw/native diagnostics and fails closed.
+- **Runtime:** Preserve D9R11 exact checkpoint/revision, single visible T4,
+  FP16/NONE, 32-token greedy generation, offline/token-free execution after
+  provisioning-only HF_TOKEN, raw-before-parser, exclusive writes/fsync/reread/SHA,
+  no retry. Codex prepares code/notebook/tests only.
+- **Scoring/review:** Shared evaluator/acceptance criteria stay unchanged. Automatic
+  failure => FAIL; otherwise PENDING_REVIEW until explicit human giant-box reviews.
+  Separate offline finalization reparses preserved raw and produces PASS/FAIL with
+  no inference. Evidence collection never promotes PaliGemma.
+- **Evidence limits:** D9R11 grd_d target-absent red-square hallucination remains
+  unchanged and must inform the final Research Lead model decision. No extra
+  negative case is added to the shared gate. Other labels are candidates to observe.
+- **Supersession:** Missing production C1 policy/Level01–04 scenes does not block
+  this gate; previous-model external gates did not qualify production C1 either.
+  Classification stays PENDING_QUALIFICATION. Prior discovery/seven-case PREP is
+  historical and removed from the active execution path.
+- **Boundaries:** PREPARED_NOT_RUN; no GPU/model/Kaggle/provisioning/actual gate/
+  InspecSafe execution by Codex; no promotion or merge. BACKUP_1, four primaries,
+  freeze BLOCKED, InspecSafe authorized=false. Details in the
+  [current PREP note](notes/w2_paligemma_production_interface_freeze_prep.md).
 
 ## Template
 

@@ -1,149 +1,118 @@
-# D9R13 — PaliGemma canonical SafeShift compatibility runtime PREP
+# W2.6-D9R13-PALIGEMMA-FROZEN-EXTERNAL-GATE-PREP
 
-Draft PR #60, same branch/session; not merged. Research Lead correction replaces
-the earlier nine-case production-interface discovery proposal. The canonical C1,
-A2/B2 and D4 contracts are already decided. This patch prepares one direct
-compatibility evidence collection, not an accuracy benchmark or contract redesign.
+Latest Research Lead decision supersedes D9R13's discovery and seven-case C1/B2
+proposals in the same Draft PR #60. PREP only; no runtime or merge by Codex.
+Production classification remains PENDING_QUALIFICATION and does not block this
+external object-localization gate.
 
-## Concrete preparation and remaining input blocker
+## Authority and previous-model path
 
-The harness, qualification adapter and Kaggle notebook are implemented. Budget:
-**4 classification + 3 grounding = 7 calls, one model load**. Actual runtime
-fixtures/policy are **not ready in this checkout**. The checked-in plan has explicit
-null references, so input validation stops before provisioning/model loading.
+Reuse the existing eight cases A_1, A_2, B_1, B_2, C_1, C_2, D_1, D_2:
+- Manifest: `configs/pre_freeze/external_gate_cases.v1.json`.
+- Provenance: `configs/pre_freeze/external_gate_cases.v1.provenance.json`.
+- Images: `tests/fixtures/pre_freeze/frozen_external_gate/`.
+- Loader/scorer: `safeshift/protocol/gate.py:load_cases/evaluate_gate`.
+- Provenance generator only: `scripts/generate_external_gate_cases.py`.
+  No runtime fixture regeneration.
+- Previous-model execution: `scripts/w2_moondream_external_gate.py`,
+  `scripts/w2_qwen2_5_external_gate.py`, `scripts/w2_qwen3_external_gate.py`
+  load the frozen suite, preserve native response before adaptation, then use
+  the same evaluator. Their gate is an external single-object probe, not
+  production C1 or B2 qualification.
 
-Repository evidence, not a claim that the Research Lead has not approved a policy:
+Use manifest image_path, target_query, target_gt_bbox and distractor_gt_bbox
+unchanged. No new GT, metrics, thresholds, acceptance criteria, C1 policy,
+Level01–04 scenes, B2 hazards or target-absent case. The paired positions are
+required for systematic target tracking, so all eight cases are retained.
 
-- `classification_request` requires caller-supplied industry policy. Tracked
-  callers are unit tests; they pass `SYNTHETIC_POLICY_MARKER`, `synthetic policy`
-  or an explicitly nonproduction marker.
-- `notes/pre_freeze_implementation.md` under Implemented contracts records that
-  exact industry policy text still needs a pin. There is no tracked policy file.
-- `git ls-files tests/fixtures` lists dummy predictions, geometric external-probe
-  cases and a red-rectangle smoke fixture. There are no scene images annotated
-  Level01–04 or approved hazard/no-hazard C1/B2 runtime fixtures.
-- `configs/pre_freeze/external_gate_cases.v1.json` contains eight geometric
-  single-target probes, not safety-policy classification cases. Its SHA-256 stays
-  `fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379`.
+## Candidate and runtime
 
-Needed to complete runnable preparation: paths/source/version/checksums for the
-already approved production C1 policy and four approved level images, plus two
-distinct approved hazard images and one no-hazard image. The positive slots are
-SMOKE and OPEN_FLAME (existing D6 IDs). These are requested coverage slots, not
-fabricated annotations or claims that images exist. Do not populate them with
-test-only marker policies, shape images, embedded answer cards or InspecSafe.
+Plan: `configs/pre_freeze/paligemma_external_gate.v1.json`.
+Harness: `scripts/w2_paligemma_external_gate.py`.
+Parser: `safeshift/runners/paligemma_external_probe.py`.
+Notebook: `notebooks/w2_paligemma_d9r13_external_gate_kaggle.ipynb`.
 
-After those artifacts are supplied, pin their relative paths/checksums/approval
-references in the plan and update the plan hash/source pin in a reviewed patch.
-No mutable external input, runtime prompt choice or ad hoc local file replacement
-is accepted. No change to dataset definitions, split, labels or metrics is made.
+Literal native prompt is `detect {case.target_query}`. Manifest queries are
+`Locate the red square.`, `Locate the green circle.`,
+`Locate the yellow triangle.`, `Locate the cyan rectangle.`; e.g. the actual
+prompt is `detect Locate the red square.`. No noun extraction or prompt tuning.
 
-## Canonical paths and minimal case set
+Parser candidate supports only those four exact returned labels and one
+`<locNNNN><locNNNN><locNNNN><locNNNN> LABEL<eos>` response.
+D9R7 source-backed loc-token grammar/mapping and D9R11 red-square evidence remain
+the basis; green circle/yellow triangle/cyan rectangle are candidates to observe,
+not claimed runtime successes. Require EOS/token boundary and loc-ID/text
+agreement. Wrong label preserves native text, label and diagnostic box, but has
+no canonical prediction and fails the gate. No arbitrary labels or multiple boxes.
 
-Classification: `safeshift/protocol/prompts.py:classification_request` →
-`safeshift/runners/contracts.py:Request` → unchanged native PaliGemma runner →
-verified raw storage → qualification adapter →
-`safeshift/protocol/schema.py:parse_text` / `Classification`.
+Native yxyx maps to canonical probe xyxy:
+`[x_min/1024.0, y_min/1024.0, x_max/1024.0, y_max/1024.0]`.
+No /1023, clamp, repair, fabricated box, point-to-box or semantic correction.
+This candidate is not a production hazards/evidence adapter.
 
-Grounding: `safeshift/protocol/prompts.py:grounding_request` → the same native/raw
-path → qualification adapter → canonical `Grounding/Hazard/Evidence`.
-All three grounding calls receive exactly the same complete twelve-ID prompt.
-No `detect red square`, target hint, predicted class, expected annotation or
-previous call output is passed to the model.
+Reuse the unchanged audited runner, snapshot/provisioner, storage and D9R11
+persist_verified helper. Checkpoint `google/paligemma-3b-mix-448`, revision
+`ead2d9a35598cb89119af004f5d023b311d1c4a1`; single visible T4, FP16,
+quantization NONE, one model load, eight native calls, zero classification calls.
+Keep 32-token greedy decoding. Incomplete/malformed output fails closed with no
+retry or generation-budget increase. The audited runner's legacy
+HANDCRAFTED_RUNTIME_SMOKE source-kind tag stays unchanged; every input separately
+records actual frozen synthetic provenance and original manifest path/hash.
 
-| Call | Coverage slot (input still required) |
-| --- | --- |
-| C_LEVEL01 | Canonical Level01 under the supplied production policy |
-| C_LEVEL02 | Canonical Level02 under the same policy |
-| C_LEVEL03 | Canonical Level03 under the same policy |
-| C_LEVEL04 | Canonical Level04 under the same policy |
-| G_SMOKE | One positive SMOKE hazard |
-| G_OPEN_FLAME | One positive OPEN_FLAME hazard |
-| G_NONE | No listed hazard |
+Preflight hashes the plan, manifest, provenance, generator source, images and
+D9R11 negative record. Raw native bytes are exclusively written, flushed/fsynced,
+reread and SHA/size verified before parsing. Parser failures finish the eight
+independent fixed calls; runtime/storage failures stop immediately, retaining
+partial evidence. Fixed run directory refuses retries/overwrites.
 
-Seven is minimal for four levels, two distinct hazard labels and one negative.
-No multiple-hazard runtime case: the frozen gate consumes one `ProbePrediction`
-per target case and does not require multiple hazards. No sixth/seventh gate
-shape-label exploration or repeated position/size matrix is added.
+Notebook pins an exact execution-source commit (BASE), provisions with HF_TOKEN
+only in the provisioning child environment, then requires manual Internet OFF.
+Runtime has no tokens, offline environment flags and socket denial. No model
+load during provisioning. Run All stops at the manual barrier by default.
 
-## Fail-closed adapter and runtime
+## Scoring, human review and bundle
 
-`safeshift/runners/paligemma_compatibility.py` is qualification-only; the production
-`PendingPaliGemmaAdapter` remains unchanged.
+Use unchanged evaluate_gate: valid schema, predicted center inside target,
+distractor center excluded, target-position tracking, no full-image prediction,
+and explicit qualitative giant-box review. IoU and area are diagnostics only.
 
-- Classification accepts exact canonical JSON with a single `safety_level`.
-  Bare levels, yes/no, case changes, fuzzy labels and extra fields fail closed.
-- Grounding accepts exact canonical hazards/evidence JSON, with a strict bounds
-  check before the generic canonical validator so its D8 clamp cannot run on
-  out-of-range PaliGemma coordinates. No correction of box geometry.
-- Alternatively, complete native four-loc groups must carry exact D6 hazard IDs
-  in the output itself. Fixed grammar is four adjacent loc tokens, one ASCII
-  space, the ID, optional further groups separated by ` ; `, and final EOS.
-  Token IDs and loc strings must agree. This is a predeclared acceptance candidate,
-  **not** a statement that PaliGemma has emitted this grammar. No native prompt
-  override or new task schema is introduced.
-- Native order `[y_min,x_min,y_max,x_max]` maps through the existing D9R7 helper
-  to `[x_min/1024.0,y_min/1024.0,x_max/1024.0,y_max/1024.0]`.
-  No /1023, clamp, repair, GT label inference, box fabrication or box selection.
-- Explicit canonical `{"hazards":[]}` is accepted. Empty/EOS-only/free text stays
-  INVALID. A parseable hallucination on G_NONE is retained unchanged.
-- The existing 32-token greedy D9R11 cap remains fixed. Missing EOS/truncation is
-  invalid; no retry, prompt adjustment or token-budget increase. This cap can
-  limit canonical JSON grounding and must be visible during Lead review.
+Automatic failure yields FAIL; otherwise runtime yields PENDING_REVIEW, not an
+invented automatic PASS. Notebook completion is EVIDENCE_COLLECTION_COMPLETE or
+STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED. The original scorer requires human
+NO_GIANT/GIANT plus reviewer/rationale for each case before final PASS/FAIL.
 
-`scripts/w2_paligemma_canonical_compatibility.py` reuses the audited runner,
-VerifiedRawStore and D9R11 persist_verified helper. Exact checkpoint:
-`google/paligemma-3b-mix-448`,
-revision `ead2d9a35598cb89119af004f5d023b311d1c4a1`.
-One process-visible T4, FP16, quantization NONE, no offload/fallback, exact pinned
-software/snapshot, offline socket denial, one model load, seven independent calls.
-The runner's existing HANDCRAFTED_RUNTIME_SMOKE source-kind is retained solely for
-the permitted external/synthetic inputs; every case carries actual provenance.
+Bundle includes frozen authority and D9R11 finding, eight input images, raw bytes
+and SHA/size references, native text, parser errors/status, predicted box and both
+GT boxes per case, gate metrics/tracking, snapshot and source evidence, timing,
+memory, review template and checksums. Raw is never sanitized/rewritten; export
+refuses secret-like raw content. No weights/tokens are included.
 
-Raw bytes are exclusively written, flushed/fsynced, reread and SHA/size verified
-before JSON deserialization or adapter invocation. Native IDs, decoded fields,
-prompt/version/hash, sample/call/run IDs, model/revision, generation config,
-software, source commit and input provenance are kept. Runtime/storage failures
-stop and retain partial evidence. Invalid outputs are recorded as INVALID/null;
-the remaining fixed independent calls continue without retry or repair.
+Follow notebook instructions to fill a separate human-review JSON. Then run
+`scripts/w2_paligemma_external_gate.py --expected-commit <BASE> --review-file <relative-review-json>`
+on the exact clean source checkout and restored runtime evidence. This is offline
+CPU-only revalidation/reparsing/scoring, with zero new model calls. It writes
+exclusive final_gate_review.json plus SHA sidecar, retaining the original runtime
+report. Submit those two files with the original bundle. PASS does not promote
+PaliGemma or qualify production classification.
 
-## Notebook and Research Lead decision
+## D9R11 negative finding and boundaries
 
-`notebooks/w2_paligemma_d9r13_canonical_compatibility_kaggle.ipynb` reuses D9R11's
-isolated environment, anonymous checkout, provisioning-only HF_TOKEN, full
-snapshot manifests, manual Internet-OFF barrier, fixed attempt and bounded bundle.
-It validates approved inputs before installation/provisioning. Notebook execution
-source is `ea8d60bd89463015ebcd427ac931c2d48ad4042e`, embedded as BASE,
-not a mutable branch. This pin includes the explicit missing-input STOP.
+`configs/pre_freeze/paligemma_interface_runtime_result.v1.json`, case grd_d:
+the target-absent image elicited a parseable red-square detection. Preserve this
+negative finding unchanged; Research Lead must consider it in the final model
+decision regardless of gate PASS. Do not reinterpret it as successful abstention
+or add a PaliGemma-only negative case to the shared frozen gate.
 
-Bundle: plan, input/policy provenance, exact image bytes, all seven raw outputs
-and metadata, canonical outputs or INVALID/null, snapshots, timing/memory/state
-audits, hash inventory and separate classification/grounding review rows.
-Expected annotations are documentary coverage only; there is no accuracy score.
+Classification PENDING_QUALIFICATION; grounding/external qualification awaits
+actual run and Research Lead review; BACKUP_1; four primaries; freeze BLOCKED;
+InspecSafe authorized=false. Missing production C1 policy/qualified scenes does
+not block this gate and has not been filled with invented artifacts.
 
-Only terminal statuses:
-`EVIDENCE_COLLECTION_COMPLETE` or
-`STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED`.
-Successful syntax does not auto-PASS the model. Research Lead records
-CLASSIFICATION_COMPATIBLE and GROUNDING_COMPATIBLE as YES/NO after reviewing the
-raw/canonical evidence, including negative-case hallucinations. If either cannot
-map fail-closed, PaliGemma does not advance to synthetic-v1. If both are compatible,
-the next step is the unchanged synthetic-v1 gate, not automatic gate execution.
+## Verification
 
-## Validation and boundaries
-
-CPU/static/fake validation: 215 tests (23 D9R13 adapter/harness/notebook checks
-plus 192 existing PaliGemma/pre-freeze regressions) PASS. The 33 JSON parses
-(32 pre-freeze configurations and the new notebook), scoped nine-file
-case-sensitive secret-pattern scan, protected source/gate comparison and diff
-check PASS. Exact commands and the source-pin check are recorded in the PR.
-Input-only check:
-`python scripts/w2_paligemma_canonical_compatibility.py --validate-inputs`
-returns STOP / APPROVED_PRODUCTION_POLICY_ARTIFACT_REQUIRED, as expected for the
-actual missing inputs. This command does not import a model backend, access GPU,
-provision weights, execute a gate or read InspecSafe.
-
-Runtime, Kaggle, model, GPU, synthetic-v1 and InspecSafe were not executed.
-The notebook is unexecuted. Classification/grounding qualification remains
-PENDING; BACKUP_1, four primaries, protocol freeze BLOCKED, no promotion or merge.
-The unrelated untracked census manifest is preserved untouched.
+Only CPU/static/fake tests and read-only frozen-input verification run by Codex.
+Tests exercise all four labels, axes/bounds, closed grammar, label mismatch,
+raw-before-parser, failed fsync/hash reread, partial generation failure, fixed
+budget/no retry, unchanged frozen sources/scorer, explicit human reviews,
+notebook offline barrier, secret refusal and bundle integrity.
+No GPU, model, Kaggle, provisioning, actual gate or InspecSafe execution.
