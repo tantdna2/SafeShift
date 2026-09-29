@@ -76,7 +76,7 @@ independent fixed calls; runtime/storage failures stop immediately, retaining
 partial evidence. Fixed run directory refuses retries/overwrites.
 
 Notebook pins execution-source commit (BASE)
-`23243484b5874394c7db96604e1580fe6f38d974`. It provisions with HF_TOKEN
+`bcc7b7be62891c887e9509dd39688d686a1b6020`. It provisions with HF_TOKEN
 only in the provisioning child environment, then requires manual Internet OFF.
 Runtime has no tokens, offline environment flags and socket denial. No model
 load during provisioning. Run All stops at the manual barrier by default.
@@ -125,6 +125,8 @@ Only CPU/static/fake tests and read-only frozen-input verification run by Codex.
 Validation: 253 existing related regression tests plus 27 D9R13 tests pass;
 33 pre-freeze JSON/notebook files parse strictly; scoped secret scan and diff
 checks pass. Execution-source tests match the runtime files to the pinned commit.
+Prompt-flow correction: rerun the 27 D9R13 tests, strict parse of the plan,
+frozen manifest/provenance and notebook (4 files), plus git diff --check.
 Tests exercise all four labels, axes/bounds, closed grammar, label mismatch,
 raw-before-parser, failed fsync/hash reread, partial generation failure, fixed
 budget/no retry, unchanged frozen sources/scorer, explicit human reviews,

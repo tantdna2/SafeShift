@@ -82,7 +82,7 @@ class PlanTests(unittest.TestCase):
         pin = next(ast.literal_eval(n.value) for n in tree.body
                    if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "BASE"
                                                        for t in n.targets))
-        self.assertEqual(pin, "23243484b5874394c7db96604e1580fe6f38d974")
+        self.assertEqual(pin, "bcc7b7be62891c887e9509dd39688d686a1b6020")
         subprocess.run(["git", "merge-base", "--is-ancestor", q.BASE_SHA, pin],
                        cwd=q.ROOT, check=True, capture_output=True)
         paths = (q.PLAN, "scripts/w2_paligemma_external_gate.py",
