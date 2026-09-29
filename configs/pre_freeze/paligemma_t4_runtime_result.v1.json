@@ -1,0 +1,199 @@
+{
+  "schema_version": "paligemma-t4-runtime-result-v1",
+  "record_kind": "RESEARCH_LEAD_VERIFIED_RUNTIME_RESULT",
+  "source": {
+    "authority": "Research Lead decision after direct review of the owner-run Kaggle result bundle",
+    "recording_basis": "Research Lead directly inspected the bundle; Codex did not inspect the bundle or raw artifact bytes and records the supplied evidence and decision without rerunning",
+    "evidence_archive_sha256": "093b03cae9e654a26268fd2f7d474f3b9de40c2b6fa98d98c5f15d0bb586ba74",
+    "evidence_archive_committed": false,
+    "raw_artifacts_committed": false,
+    "transcription_scope": "Only supplied evidence fields are transcribed; unspecified run ID, raw paths and full generated IDs are not inferred"
+  },
+  "execution_commit": "180c0623149bbc7d64f5b659f6c044c39b1e1cd0",
+  "plan_path": "configs/pre_freeze/paligemma_t4_runtime.v1.json",
+  "plan_sha256": "4138071ff3fcbcf2cb16d456c01a2b3dbc42a628b0faa0d04dd6a635803b0ab7",
+  "model_id": "google/paligemma-3b-mix-448",
+  "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+  "status": "RUNTIME_INTERFACE_PASS",
+  "real_runtime_status": "RUNTIME_SMOKE_PASS",
+  "exact_runtime_verified": true,
+  "validation_scope": "HANDCRAFTED_RUNTIME_SMOKE_ONLY",
+  "snapshot_verification": {
+    "status": "PASS",
+    "pinned_file_count": 14,
+    "online_verified_file_count": 14,
+    "offline_verified_file_count": 14,
+    "local_bytes_verified": true,
+    "exact_revision_verified": true,
+    "verification_basis": "Research Lead accepted the online and offline D9R8 exact-snapshot verification evidence"
+  },
+  "software_status": "EXACT_PLAN_MATCH",
+  "software_recording_basis": "Research Lead supplied the principal versions and confirmed all remaining plan pins matched",
+  "software": {
+    "python": "3.11.11",
+    "torch": "2.6.0+cu124",
+    "transformers": "4.57.1",
+    "tokenizers": "0.22.1",
+    "numpy": "1.26.4",
+    "pillow": "11.2.1",
+    "huggingface-hub": "0.35.3",
+    "hf-xet": "1.1.10",
+    "safetensors": "0.5.3",
+    "filelock": "3.18.0",
+    "fsspec": "2025.3.2",
+    "jinja2": "3.1.6",
+    "markupsafe": "3.0.2",
+    "mpmath": "1.3.0",
+    "networkx": "3.4.2",
+    "sympy": "1.13.1",
+    "typing-extensions": "4.13.2",
+    "packaging": "25.0",
+    "pyyaml": "6.0.2",
+    "regex": "2024.11.6",
+    "requests": "2.32.3",
+    "charset-normalizer": "3.4.2",
+    "idna": "3.10",
+    "urllib3": "1.26.20",
+    "certifi": "2025.4.26",
+    "tqdm": "4.67.1",
+    "nvidia-cuda-nvrtc-cu12": "12.4.127",
+    "nvidia-cuda-runtime-cu12": "12.4.127",
+    "nvidia-cuda-cupti-cu12": "12.4.127",
+    "nvidia-cudnn-cu12": "9.1.0.70",
+    "nvidia-cublas-cu12": "12.4.5.8",
+    "nvidia-cufft-cu12": "11.2.1.3",
+    "nvidia-curand-cu12": "10.3.5.147",
+    "nvidia-cusolver-cu12": "11.6.1.9",
+    "nvidia-cusparse-cu12": "12.3.1.170",
+    "nvidia-cusparselt-cu12": "0.6.2",
+    "nvidia-nccl-cu12": "2.21.5",
+    "nvidia-nvtx-cu12": "12.4.127",
+    "nvidia-nvjitlink-cu12": "12.4.127",
+    "triton": "3.2.0",
+    "torchvision": "0.21.0+cu124"
+  },
+  "hardware": {
+    "platform": "KAGGLE",
+    "gpu_name": "Tesla T4",
+    "visible_gpu_count": 1,
+    "compute_capability": [7, 5],
+    "total_vram_bytes": 15636037632,
+    "device": "cuda:0",
+    "cuda_runtime": "12.4"
+  },
+  "runtime_condition": {
+    "precision": "FP16",
+    "quantization": "NONE",
+    "batch_size": 1,
+    "device": "cuda:0",
+    "cpu_offload": false,
+    "disk_offload": false,
+    "model_substitution": false,
+    "revision_fallback": false
+  },
+  "offline": {
+    "owner_internet_off_attested": true,
+    "offline_env_status": "PASS",
+    "variables": {
+      "HF_HUB_OFFLINE": "1",
+      "TRANSFORMERS_OFFLINE": "1",
+      "HF_HUB_DISABLE_TELEMETRY": "1",
+      "HF_HUB_ENABLE_HF_TRANSFER": "0",
+      "HF_HUB_DISABLE_XET": "1"
+    },
+    "network_policy": "D9R8_VENUE_OFF_PLUS_OFFLINE_ENV_PLUS_SOCKET_DENIAL"
+  },
+  "lifecycle": {
+    "model_load_count": 1,
+    "native_generate_calls": 2,
+    "runner_state": "GENERATED",
+    "model_load_count_authority": "Independent D9R8 runtime summary, not profiler load-span count"
+  },
+  "raw_evidence": {
+    "raw_before_adapter_status": "PASS",
+    "metadata_parse_status_before_adapter": "NOT_ATTEMPTED",
+    "classification_adapter_interpretation": "EXPECTED_PENDING",
+    "calls": [
+      {
+        "call_id": "case_01",
+        "decoded_text": "blue",
+        "decoded_with_special_tokens": "blue<eos>",
+        "continuation_ids": [8796, 1],
+        "adapter_parse_status": "INVALID",
+        "metadata_parse_status_before_adapter": "NOT_ATTEMPTED",
+        "raw_sha256": "d40f43c73e9dc2139cee0f32f6db0db8cc012062ef96ffad07cefe90b5706bcc",
+        "observation_status": "OBSERVED_ONLY",
+        "loc_tokens_observed": false
+      },
+      {
+        "call_id": "case_02",
+        "decoded_text": "green",
+        "decoded_with_special_tokens": "green<eos>",
+        "continuation_ids": [9740, 1],
+        "adapter_parse_status": "INVALID",
+        "metadata_parse_status_before_adapter": "NOT_ATTEMPTED",
+        "raw_sha256": "86629348e4c3b4fbe8513d20afebb9f49b3ef46fe7b7dc55a0a3322708bd80d5",
+        "observation_status": "OBSERVED_ONLY",
+        "loc_tokens_observed": false
+      }
+    ]
+  },
+  "memory": {
+    "unit": "bytes",
+    "after_load_allocated_bytes": 5860761600,
+    "peak_allocated_bytes": 5997785600,
+    "peak_reserved_bytes": 6161432576
+  },
+  "timings": {
+    "unit": "seconds",
+    "harness_wall_seconds": 72.795738743,
+    "load_seconds_including_snapshot_and_transfer": 55.543600983,
+    "call_generation_seconds": {
+      "case_01": 1.893213143,
+      "case_02": 0.571769282
+    },
+    "observer_errors": [],
+    "unfinished_spans": 0,
+    "measurements": [
+      {"scope": "runner_load_including_snapshot_and_transfer", "wall_seconds": 55.543600983},
+      {"scope": "runner_load_including_snapshot_and_transfer", "wall_seconds": 0.000652138},
+      {"scope": "native_generate", "wall_seconds": 1.893213143},
+      {"scope": "runner_load_including_snapshot_and_transfer", "wall_seconds": 0.000536080},
+      {"scope": "native_generate", "wall_seconds": 0.571769282}
+    ],
+    "interpretation": "Instrumented wall times; initial load includes snapshot verification and device transfer, not pure checkpoint deserialization or an optimization benchmark"
+  },
+  "timing_observer_finding": {
+    "classification": "NOTEBOOK_INSTRUMENTATION_BUG_NOT_RUNTIME_FAILURE",
+    "research_lead_decision": "Accept runtime PASS; the two additional load spans are idempotent/no-op re-entry observations, not model reloads",
+    "actual_model_load_count": 1,
+    "load_span_count": 3,
+    "idempotent_load_reentry_seconds": [0.000652138, 0.000536080],
+    "previous_validator": "Incorrectly required exact load, generate, generate sequence",
+    "corrected_validator": "Require successful independent one-load/two-call summary, no observer errors or unfinished spans, initial load span and exactly two native generation spans; retain subsequent idempotent load spans separately",
+    "scientific_contract_changed": false,
+    "rerun_performed": false
+  },
+  "native_output_interpretation": {
+    "status": "OBSERVED_ONLY",
+    "classification_grammar_frozen": false,
+    "grounding_qualified": false,
+    "multiple_box_separators": "NOT_TESTED_BY_COLOR_SMOKE",
+    "no_detection_behavior": "NOT_TESTED_OR_FROZEN"
+  },
+  "grounding": "PENDING_QUALIFICATION",
+  "classification_interface": "PENDING_QUALIFICATION",
+  "external_gate": "PENDING_QUALIFICATION",
+  "production_adapter_classification": "INVALID",
+  "production_adapter_grounding": "UNSUPPORTED",
+  "grounding_executed": false,
+  "paligemma_role": "BACKUP_1",
+  "primary_roster_count": 4,
+  "promotion": false,
+  "protocol_freeze": "PENDING",
+  "protocol_freeze_blocked": true,
+  "inspecsafe_inference_authorized": false,
+  "synthetic_gate_executed": false,
+  "inspecsafe_executed": false,
+  "codex_execution": {"gpu": false, "model": false, "provision": false}
+}
