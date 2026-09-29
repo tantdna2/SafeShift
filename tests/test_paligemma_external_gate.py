@@ -76,6 +76,31 @@ class ParserTests(unittest.TestCase):
 
 
 class PlanTests(unittest.TestCase):
+    def test_exact_notebook_source_pin(self):
+        import ast
+        tree = ast.parse(sources()[0])
+        pin = next(ast.literal_eval(n.value) for n in tree.body
+                   if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "BASE"
+                                                       for t in n.targets))
+        self.assertEqual(pin, "23243484b5874394c7db96604e1580fe6f38d974")
+        subprocess.run(["git", "merge-base", "--is-ancestor", q.BASE_SHA, pin],
+                       cwd=q.ROOT, check=True, capture_output=True)
+        paths = (q.PLAN, "scripts/w2_paligemma_external_gate.py",
+                 "safeshift/runners/paligemma_external_probe.py",
+                 "scripts/w2_paligemma_interface_qualification.py",
+                 "scripts/w2_paligemma_t4_smoke.py", "scripts/provision_paligemma_snapshot.py",
+                 "safeshift/runners/paligemma.py", "safeshift/runners/paligemma_snapshot.py",
+                 "safeshift/runners/storage.py", "safeshift/runners/contracts.py",
+                 "safeshift/protocol/gate.py", "safeshift/protocol/schema.py",
+                 "safeshift/protocol/firewall.py", "requirements-paligemma-t4.txt",
+                 q.gate_plan()["runtime_plan"], q.gate_plan()["manifest"],
+                 q.gate_plan()["provenance"], q.gate_plan()["generator"],
+                 q.gate_plan()["negative_evidence"]["path"])
+        for path in paths:
+            committed = subprocess.check_output(["git", "show", pin + ":" + path], cwd=q.ROOT)
+            self.assertEqual(committed.replace(b"\r\n", b"\n"),
+                             (q.ROOT / path).read_bytes().replace(b"\r\n", b"\n"), path)
+
     def test_exact_frozen_inputs_and_budget(self):
         p = q.gate_plan()
         cases, inputs = q.verify_suite(p)

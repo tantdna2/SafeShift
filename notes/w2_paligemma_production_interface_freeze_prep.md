@@ -65,7 +65,8 @@ reread and SHA/size verified before parsing. Parser failures finish the eight
 independent fixed calls; runtime/storage failures stop immediately, retaining
 partial evidence. Fixed run directory refuses retries/overwrites.
 
-Notebook pins an exact execution-source commit (BASE), provisions with HF_TOKEN
+Notebook pins execution-source commit (BASE)
+`23243484b5874394c7db96604e1580fe6f38d974`. It provisions with HF_TOKEN
 only in the provisioning child environment, then requires manual Internet OFF.
 Runtime has no tokens, offline environment flags and socket denial. No model
 load during provisioning. Run All stops at the manual barrier by default.
@@ -111,6 +112,9 @@ not block this gate and has not been filled with invented artifacts.
 ## Verification
 
 Only CPU/static/fake tests and read-only frozen-input verification run by Codex.
+Validation: 253 existing related regression tests plus 27 D9R13 tests pass;
+33 pre-freeze JSON/notebook files parse strictly; scoped secret scan and diff
+checks pass. Execution-source tests match the runtime files to the pinned commit.
 Tests exercise all four labels, axes/bounds, closed grammar, label mismatch,
 raw-before-parser, failed fsync/hash reread, partial generation failure, fixed
 budget/no retry, unchanged frozen sources/scorer, explicit human reviews,
