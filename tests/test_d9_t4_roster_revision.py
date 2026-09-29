@@ -245,6 +245,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                            'safeshift/runners/paligemma_snapshot.py',
                            'scripts/provision_paligemma_snapshot.py',
                            'scripts/w2_paligemma_t4_smoke.py'})
+        # D9R10 authorizes only the separate interface observation PREP harness.
+        authorized.add('scripts/w2_paligemma_interface_qualification.py')
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}

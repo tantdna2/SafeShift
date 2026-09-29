@@ -726,4 +726,22 @@ PaliGemma remains BACKUP_1, primary roster count=4; grounding/classification
 interface/external gate PENDING_QUALIFICATION, protocol freeze BLOCKED,
 promotion NO and InspecSafe authorized=false. This result overlay supersedes the
 historical D9R8/PREP runtime-pending status only; immutable plan and historical
-source/audit artifacts remain unchanged. Draft PR #57 is not merged.
+source/audit artifacts remain unchanged. D9R9 COMPLETE: PR #57 merged at
+`93a8f32ad8c7d10a28cb3e4b62232cd3697bd0e1`.
+
+## W2.6-D9R10-PALIGEMMA-INTERFACE-QUALIFICATION-PREP
+
+- [x] PREP / implementation: predeclare separate four-classification/four-grounding
+  observation matrix and deterministic geometric fixtures; no grammar inferred
+  from D9R9 color observations.
+- [x] Prepare one-load/sequential-call offline harness, exclusive verified raw
+  persistence before observation, immutable plan and fail-closed evidence records.
+- [x] Prepare unexecuted D9R11 Kaggle notebook pinned to harness commit
+  `ceb56d5174a387362e3ef6a5af3b6618123bc8a7`; static/fake tests cover offline
+  barrier, eight-call export, partial failure evidence and credential isolation.
+- [ ] D9R11 real interface runtime: NOT_RUN; separate Research Lead review required.
+
+See [D9R10 preparation contract](notes/w2_paligemma_interface_qualification_prep.md).
+Runtime smoke remains PASS/exact verified=true; classification, grounding and
+external gate PENDING_QUALIFICATION; BACKUP_1, four primaries, freeze BLOCKED and
+InspecSafe authorization=false. No model/GPU/provisioning/gate/InspecSafe execution.

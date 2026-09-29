@@ -3,3 +3,5 @@
 /configs/pre_freeze/external_gate_cases.v1.json text eol=lf
 /configs/pre_freeze/external_gate_cases.v1.provenance.json text eol=lf
 /configs/pre_freeze/qwen3_external_gate.v1.json text eol=lf
+# Byte-pinned D9R10 qualification plan, identical on Windows and Kaggle.
+/configs/pre_freeze/paligemma_interface_qualification.v1.json text eol=lf

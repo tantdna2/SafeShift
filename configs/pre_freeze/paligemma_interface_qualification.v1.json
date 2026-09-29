@@ -1,0 +1,273 @@
+{
+  "schema_version": "paligemma-interface-qualification-v1",
+  "task_id": "W2.6-D9R10-PALIGEMMA-INTERFACE-QUALIFICATION-PREP",
+  "status": "PREPARED_NOT_RUN",
+  "base_sha": "93a8f32ad8c7d10a28cb3e4b62232cd3697bd0e1",
+  "model_id": "google/paligemma-3b-mix-448",
+  "revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+  "runtime_plan": "configs/pre_freeze/paligemma_t4_runtime.v1.json",
+  "runtime_plan_canonical_sha256": "4138071ff3fcbcf2cb16d456c01a2b3dbc42a628b0faa0d04dd6a635803b0ab7",
+  "runtime_result": "configs/pre_freeze/paligemma_t4_runtime_result.v1.json",
+  "preserved_status": {
+    "real_runtime_status": "RUNTIME_SMOKE_PASS",
+    "exact_runtime_verified": true,
+    "classification_interface": "PENDING_QUALIFICATION",
+    "grounding": "PENDING_QUALIFICATION",
+    "external_gate": "PENDING_QUALIFICATION",
+    "paligemma_role": "BACKUP_1",
+    "primary_roster_count": 4,
+    "protocol_freeze": "BLOCKED",
+    "inspecsafe_authorized": false
+  },
+  "scope": "HANDCRAFTED_INTERFACE_OBSERVATION_ONLY_NOT_ACCURACY_BENCHMARK",
+  "runtime": {
+    "python": "3.11.11",
+    "uv": "0.8.22",
+    "software": "EXACT_RUNTIME_PLAN_SOFTWARE",
+    "snapshot_files": 14,
+    "platform": "Kaggle_Linux_x86_64",
+    "cuda_device_order": "PCI_BUS_ID",
+    "cuda_visible_devices": "0",
+    "visible_gpu_count": 1,
+    "gpu": "T4",
+    "precision": "FP16",
+    "quantization": "NONE",
+    "device": "cuda:0",
+    "batch_size": 1,
+    "model_loads": 1,
+    "total_calls": 8,
+    "classification_calls": 4,
+    "grounding_calls": 4,
+    "execution": "SEQUENTIAL_SAME_PROCESS",
+    "decoding": "UNCHANGED_RUNTIME_PLAN_SMOKE_DECODING_MAX_NEW_TOKENS_32",
+    "automatic_retry": false,
+    "adaptive_prompt_tuning": false,
+    "offline": "OWNER_INTERNET_OFF_ATTESTATION_PLUS_OFFLINE_ENV_PLUS_SOCKET_DENIAL"
+  },
+  "fixtures": {
+    "generator": "pillow-geometric-interface-v1",
+    "randomness": "NONE",
+    "size": [
+      448,
+      448
+    ],
+    "mode": "RGB",
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "geometry_convention": "XYXY_HALF_OPEN_PIXEL_EXTENTS; Pillow receives x_max-1,y_max-1",
+    "geometry_use": "FIXTURE_DESCRIPTION_ONLY_NEVER_MODEL_ANSWER",
+    "items": [
+      {
+        "fixture_id": "red_left",
+        "shape": "rectangle",
+        "fill": [
+          255,
+          0,
+          0
+        ],
+        "bbox_xyxy": [
+          48,
+          80,
+          176,
+          208
+        ],
+        "semantic_description": "one red square"
+      },
+      {
+        "fixture_id": "red_right",
+        "shape": "rectangle",
+        "fill": [
+          255,
+          0,
+          0
+        ],
+        "bbox_xyxy": [
+          256,
+          80,
+          384,
+          208
+        ],
+        "semantic_description": "one red square translated right"
+      },
+      {
+        "fixture_id": "red_small",
+        "shape": "rectangle",
+        "fill": [
+          255,
+          0,
+          0
+        ],
+        "bbox_xyxy": [
+          80,
+          112,
+          144,
+          176
+        ],
+        "semantic_description": "one smaller red square with same center as red_left"
+      },
+      {
+        "fixture_id": "blue_circle",
+        "shape": "ellipse",
+        "fill": [
+          0,
+          0,
+          255
+        ],
+        "bbox_xyxy": [
+          160,
+          160,
+          288,
+          288
+        ],
+        "semantic_description": "one blue circle; red square absent"
+      }
+    ]
+  },
+  "prompts": {
+    "classification_presence_v1": {
+      "text": "answer en Is there a red square in the image?",
+      "purpose": "CLASS_PRESENCE_OBSERVATION_NOT_PRODUCTION_VOCABULARY"
+    },
+    "grounding_detection_v1": {
+      "text": "detect red square",
+      "purpose": "NATIVE_LOCATION_TOKEN_OBSERVATION"
+    }
+  },
+  "cases": [
+    {
+      "case_id": "cls_a",
+      "task_type": "classification",
+      "category": "A_SINGLE_OBVIOUS_CLASS",
+      "fixture_id": "red_left",
+      "prompt_id": "classification_presence_v1"
+    },
+    {
+      "case_id": "cls_b",
+      "task_type": "classification",
+      "category": "B_SAME_CLASS_DIFFERENT_INSTANCE",
+      "fixture_id": "red_small",
+      "prompt_id": "classification_presence_v1"
+    },
+    {
+      "case_id": "cls_c",
+      "task_type": "classification",
+      "category": "C_CLASS_ABSENT",
+      "fixture_id": "blue_circle",
+      "prompt_id": "classification_presence_v1"
+    },
+    {
+      "case_id": "cls_d",
+      "task_type": "classification",
+      "category": "D_INDEPENDENT_SECOND_CALL",
+      "fixture_id": "red_left",
+      "prompt_id": "classification_presence_v1",
+      "repeat_of": "cls_a"
+    },
+    {
+      "case_id": "grd_a",
+      "task_type": "grounding",
+      "category": "A_SINGLE_OBVIOUS_OBJECT",
+      "fixture_id": "red_left",
+      "prompt_id": "grounding_detection_v1"
+    },
+    {
+      "case_id": "grd_b",
+      "task_type": "grounding",
+      "category": "B_DIFFERENT_POSITION",
+      "fixture_id": "red_right",
+      "prompt_id": "grounding_detection_v1"
+    },
+    {
+      "case_id": "grd_c",
+      "task_type": "grounding",
+      "category": "C_DIFFERENT_SIZE",
+      "fixture_id": "red_small",
+      "prompt_id": "grounding_detection_v1"
+    },
+    {
+      "case_id": "grd_d",
+      "task_type": "grounding",
+      "category": "D_NO_TARGET_OBSERVATION",
+      "fixture_id": "blue_circle",
+      "prompt_id": "grounding_detection_v1"
+    }
+  ],
+  "raw_contract": {
+    "order": [
+      "native_generate",
+      "exclusive_raw_persistence",
+      "flush_fsync",
+      "reread",
+      "size_sha256_verification",
+      "observation_only"
+    ],
+    "normalization": false,
+    "required": [
+      "exact_prompt",
+      "generated_ids_full",
+      "continuation_ids",
+      "decoded_text",
+      "decoded_with_special_tokens",
+      "raw_sha256",
+      "ordered_loc_tokens",
+      "timing"
+    ],
+    "partial_generation_failure": "PERSIST_AVAILABLE_NATIVE_ENVELOPE_THEN_STOP",
+    "parser": "NOT_IMPLEMENTED_NOT_YET_QUALIFIED"
+  },
+  "documentary_mapping": {
+    "status": "CANDIDATE_NOT_YET_QUALIFIED",
+    "source": "configs/pre_freeze/paligemma_source_api_audit.v1.json",
+    "helper": "safeshift/runners/paligemma.py#loc_values_to_d4",
+    "native_order": [
+      "y_min",
+      "x_min",
+      "y_max",
+      "x_max"
+    ],
+    "integer_range": [
+      0,
+      1023
+    ],
+    "d4": "[x_min/1024.0,y_min/1024.0,x_max/1024.0,y_max/1024.0]",
+    "clamp": false,
+    "rescale_1023_to_1": false,
+    "heuristic_repair": false,
+    "malformed": "PARSER_FAIL_NO_REPAIR",
+    "runtime_parser_enabled": false
+  },
+  "interpretation": {
+    "allowed_completion_statuses": [
+      "EVIDENCE_COLLECTION_COMPLETE",
+      "STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED"
+    ],
+    "authority": "RESEARCH_LEAD_REVIEW_ONLY_NO_AUTOMATIC_QUALIFICATION",
+    "d9r9_color_outputs": "OBSERVED_ONLY_NOT_GRAMMAR_EVIDENCE",
+    "classification_grammar": "UNQUALIFIED",
+    "label_vocabulary": "UNQUALIFIED",
+    "whitespace_case_policy": "UNQUALIFIED",
+    "multiple_label_behavior": "UNTESTED",
+    "abstention_behavior": "UNTESTED",
+    "no_detection_policy": "OBSERVE_VERBATIM_NO_CANONICAL_GRAMMAR_NO_EMPTY_LIST_COERCION",
+    "malformed_output": "PRESERVE_VERBATIM_NO_REPAIR",
+    "token_cap": "RECORD_LENGTH_AND_EOS; NO_LONGER_RETRY_ON_TRUNCATION",
+    "point_to_box": false,
+    "fabricated_boxes": false,
+    "artificial_zero_iou": false,
+    "benchmark_score": false,
+    "synthetic_v1": false,
+    "inspecsafe": false,
+    "promotion": false,
+    "protocol_freeze": false
+  },
+  "bundle": {
+    "filename": "d9r11_result_bundle.zip",
+    "max_bytes": 33554432,
+    "weights": false,
+    "cache": false,
+    "secrets": false
+  }
+}
