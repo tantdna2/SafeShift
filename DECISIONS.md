@@ -1389,6 +1389,128 @@
   Dataset, split, labels and metrics are unchanged. No GPU/model/provisioning,
   synthetic-v1 gate or InspecSafe execution in D9R12.
 
+## D9R13 — Historical initial proposal, superseded by Research Lead correction below (2026-09-29)
+
+- **Status/authority:** PREP proposal for Research Lead review under the explicit
+  D9R13 task instruction; no new research policy, label, metric or freeze decision.
+  Base `a3192ddefbc28fe2997190819744e8f4796a6d85`; D9R12 PR #59 merged.
+- **Repository findings:** C1 Call 1 is policy-aware four-level single-label
+  classification. A2/B2 Call 2 independently returns closed hazard IDs and all
+  evidence boxes. The synthetic-v1 external probe instead consumes one box per
+  case; it neither scores classification nor requires target-absent/multiple-box
+  successes. Exact industry policy text remains unpinned.
+- **Proposal:** Preserve canonical prompt requirements in the disabled
+  [historical machine-readable candidate](https://github.com/tantdna2/SafeShift/blob/0f07f7132e1ce7f1973ad1639f5a20725b493feb/configs/pre_freeze/paligemma_production_interface_candidate.v1.json).
+  C1 native prompt/level mapping and B2 native prompt/hazard mapping are UNRESOLVED.
+  A closed four-query `detect {target_label}` table is proposed only for future
+  external-probe qualification; only red square currently has runtime grammar
+  evidence. No production runner/parser is activated or expanded.
+- **Empty/multiple output:** Choose additional production-prompt observation;
+  canonical hazards=[] exists but native empty grammar does not. Production
+  hazard/evidence multiplicity requires qualification; repeated loc groups are
+  not assumed. Parseable grd_d hallucination remains intact for evaluation.
+  Preserve D9R7 /1024 D4, no repair/clamp, and the unchanged gate criteria.
+- **Next step conclusion:** SYNTHETIC_GATE_READY=false and
+  ADDITIONAL_RUNTIME_QUALIFICATION_REQUIRED=true. Nine conditional minimum cases
+  were proposed in the historical audit note (superseded below);
+  unresolved policy/native semantics must be resolved before a runnable plan.
+  This is not authorization to execute or proof that nine calls qualify B2.
+- **Boundaries:** Classification interface, grounding and external gate remain
+  PENDING_QUALIFICATION; BACKUP_1, four primaries, freeze BLOCKED, InspecSafe
+  authorized=false. No GPU/model/provisioning/Kaggle/gate/InspecSafe execution,
+  promotion, changed acceptance criteria or merge in D9R13.
+
+## D9R13 — Historical seven-case correction, superseded by frozen external gate decision below (2026-09-29)
+
+- **Authority:** Research Lead's explicit correction in the same session and Draft
+  PR #60. Canonical C1 classification and A2/B2 grounding interfaces are already
+  decided; stop contract discovery. The preceding nine-case proposal is superseded.
+- **Scope:** Prepare exactly four Level01–04 classification calls, two positive
+  grounding calls with distinct existing D6 IDs (SMOKE and OPEN_FLAME), and one
+  no-hazard call. Seven calls / one load. No multiple-hazard case: the unchanged
+  synthetic-v1 gate does not require it. No gate execution.
+- **Implementation:** Reuse canonical builders verbatim and canonical output
+  types. Qualification-only parser accepts exact canonical JSON, or native loc
+  groups explicitly labelled with exact D6 IDs. The latter is a predeclared
+  acceptance candidate, not an observed model capability. Preserve D9R7 /1024
+  mapping, no clamp/repair/fuzzy mapping, no yes/no-to-Level or object-to-hazard
+  inference, and no rewriting negative-case hallucinations.
+- **Runtime boundary:** Preserve exact D9R11 model/revision, T4 FP16/NONE,
+  offline runtime, raw-before-parser, exclusive write/fsync/reread/SHA verification,
+  no retry and one load. Keep the fixed 32-token generation cap; truncation stays
+  invalid. Notebook reports evidence collection or STOP, never model PASS.
+- **Evidence gap, not a reopened contract:** This checkout has no approved C1
+  policy artifact or annotated C1/B2 scene fixtures. Existing canonical tests use
+  synthetic policy markers; frozen synthetic-v1 images are geometric probes.
+  Do not invent policy/annotations or use InspecSafe to fill these inputs.
+  The reviewed PREP records null input references and stops before provisioning
+  until the already approved artifacts can be pinned. See the
+  [historical source evidence](https://github.com/tantdna2/SafeShift/blob/0f07f7132e1ce7f1973ad1639f5a20725b493feb/notes/w2_paligemma_production_interface_freeze_prep.md).
+- **Post-run decision:** Research Lead records CLASSIFICATION_COMPATIBLE and
+  GROUNDING_COMPATIBLE YES/NO. Either interface unable to map fail-closed means
+  no advancement to synthetic-v1; both compatible means the unchanged gate is
+  next, with separate execution authorization. No accuracy benchmark here.
+- **Preserved status:** Qualification PENDING, BACKUP_1, four primaries, freeze
+  BLOCKED, InspecSafe authorization=false. No runtime, GPU, model, Kaggle,
+  provisioning, synthetic gate, InspecSafe execution, promotion or merge.
+
+## D9R13 — Frozen external gate PREP decision (2026-09-29)
+
+- **Authority:** Research Lead explicitly stops the C1/B2 seven-case qualification
+  and requests the same frozen external object-localization gate as Qwen/Moondream
+  in the same Draft PR #60. Task: W2.6-D9R13-PALIGEMMA-FROZEN-EXTERNAL-GATE-PREP.
+- **Inputs:** Exact external_gate_cases.v1.json, its provenance and eight committed
+  frozen_external_gate images. Reuse load_cases and evaluate_gate unchanged;
+  generator is provenance only. No new fixtures/policy/annotations or GT changes.
+- **Budget/interface:** Eight grounding calls, one model load, zero classification.
+  Initial literal-prefix prompt construction was superseded by the prompt-flow
+  correction below. Parser candidate accepts only red square, green circle,
+  yellow triangle and cyan rectangle with four loc tokens plus EOS; yxyx to xyxy
+  divided by 1024. No clamp, repair, fabricated boxes, fuzzy or semantic mapping.
+  Wrong returned label remains in raw/native diagnostics and fails closed.
+- **Runtime:** Preserve D9R11 exact checkpoint/revision, single visible T4,
+  FP16/NONE, 32-token greedy generation, offline/token-free execution after
+  provisioning-only HF_TOKEN, raw-before-parser, exclusive writes/fsync/reread/SHA,
+  no retry. Codex prepares code/notebook/tests only.
+- **Scoring/review:** Shared evaluator/acceptance criteria stay unchanged. Automatic
+  failure => FAIL; otherwise PENDING_REVIEW until explicit human giant-box reviews.
+  Separate offline finalization reparses preserved raw and produces PASS/FAIL with
+  no inference. Evidence collection never promotes PaliGemma.
+- **Evidence limits:** D9R11 grd_d target-absent red-square hallucination remains
+  unchanged and must inform the final Research Lead model decision. No extra
+  negative case is added to the shared gate. Other labels are candidates to observe.
+- **Supersession:** Missing production C1 policy/Level01–04 scenes does not block
+  this gate; previous-model external gates did not qualify production C1 either.
+  Classification stays PENDING_QUALIFICATION. Prior discovery/seven-case PREP is
+  historical and removed from the active execution path.
+- **Boundaries:** PREPARED_NOT_RUN; no GPU/model/Kaggle/provisioning/actual gate/
+  InspecSafe execution by Codex; no promotion or merge. BACKUP_1, four primaries,
+  freeze BLOCKED, InspecSafe authorized=false. Details in the
+  [current PREP note](notes/w2_paligemma_production_interface_freeze_prep.md).
+
+## D9R13 — Exact native prompt-flow correction (2026-09-29)
+
+- **Authority/scope:** Research Lead requests only prompt-flow verification/fix
+  on Draft PR #60. No gate, runtime, dataset, parser grammar or scoring expansion.
+- **Verified defect:** Frozen manifest target_query values are literal
+  "Locate the red square.", "Locate the green circle.", "Locate the yellow triangle.",
+  "Locate the cyan rectangle.". load_cases preserves them. The previous script
+  prepended detect directly, so the erroneous wording reached processor(text=...);
+  it was not merely display wording in the report.
+- **Correction:** Exact closed lookup from those four queries to bare labels,
+  then detect + one space + label. Final processor strings: "detect red square",
+  "detect green circle", "detect yellow triangle", "detect cyan rectangle".
+  Original manifest and query provenance remain unchanged. No punctuation,
+  canonical probe_request JSON wrapper or manual newline is added.
+- **Source/flow:** Existing paligemma_source_api_audit.v1.json documents
+  detection_route "detect {object}\n" and processor-owned newline. D9R13 runner
+  Request.prompt is forwarded unchanged to PaliGemmaProcessor; model.generate
+  receives its tensors. Native processor special-token/newline behavior stays
+  unchanged. Prompt ID advances to paligemma-frozen-external-detect-bare-v2.
+- **Validation/boundaries:** Pin updated plan/source and assert all eight exact
+  processor strings with a fake backend. Static/JSON/diff checks only; no actual
+  GPU/model/Kaggle/gate/InspecSafe execution, promotion or merge.
+
 ## Template
 
 - **ID:** <DEC-...>

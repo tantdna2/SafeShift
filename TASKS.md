@@ -750,6 +750,10 @@ InspecSafe authorization=false. No model/GPU/provisioning/gate/InspecSafe execut
 
 ## W2.6-D9R12-PALIGEMMA-INTERFACE-EVIDENCE-RECORD-AND-ADAPTER-CONTRACT
 
+D9R12 **COMPLETE**: PR #59 merged at
+`a3192ddefbc28fe2997190819744e8f4796a6d85`. Production qualification remains
+pending; D9R13 is a separate PREP task below.
+
 - [x] Record Research Lead-approved D9R11 evidence: exact bundle/commit/plan,
   environment, one load/eight calls, raw-before-parser PASS and all eight exact
   outputs/IDs/raw hashes. Research Lead checked 76/76 artifact sizes and hashes;
@@ -767,3 +771,27 @@ verified=true; BACKUP_1, four primaries, freeze BLOCKED, InspecSafe authorized=f
 No promotion, real GPU/model/provisioning, synthetic-v1 gate or InspecSafe execution.
 See [D9R12 evidence and offline contract](notes/w2_paligemma_interface_adapter_contract.md)
 and [machine-readable result](configs/pre_freeze/paligemma_interface_runtime_result.v1.json).
+
+## W2.6-D9R13-PALIGEMMA-FROZEN-EXTERNAL-GATE-PREP
+
+Research Lead decision supersedes both discovery and seven-case C1/B2 PREP in
+the same Draft PR #60. Use the exact eight frozen external cases used by Qwen/Moondream.
+
+- [x] Prepare eight frozen grounding calls / zero classification calls / one load;
+  reuse load_cases and evaluate_gate, unchanged fixtures/GT/criteria and D9R11 runtime.
+- [x] Add closed four-label native loc parser; raw-before-parser and /1024;
+  wrong label/grammar fails closed without clamp, repair or semantic correction.
+- [x] Prepare unexecuted Kaggle notebook with provisioning-only token, offline
+  barrier, exclusive attempt, source pin and review bundle; no automatic PASS.
+- [x] Preserve D9R11 target-absent hallucination; no extra gate case.
+- [x] Prepare separate offline finalization with explicit human giant-box review;
+  automatic gate success remains PENDING_REVIEW until that review. No promotion.
+- [ ] Research Lead PREP review and actual frozen external gate: NOT_RUN.
+- [ ] Production classification: PENDING_QUALIFICATION; no C1 artifacts invented,
+  no classification calls, and missing C1 policy/cases do not block this gate.
+
+Base: `a3192ddefbc28fe2997190819744e8f4796a6d85`; latest correction starts at
+`0f07f7132e1ce7f1973ad1639f5a20725b493feb`.
+BACKUP_1, four primaries, freeze BLOCKED, InspecSafe authorized=false.
+See [frozen external gate preparation](notes/w2_paligemma_production_interface_freeze_prep.md).
+No GPU/model/Kaggle/provisioning/gate/InspecSafe execution, promotion or merge.
