@@ -695,3 +695,21 @@ candidate is resolved.
 Current tracker overlay only: historical D9R6/D9R7 evidence artifacts unchanged.
 PaliGemma remains `BACKUP_1`, four primaries; no promotion. Protocol freeze `PENDING` / `BLOCKED`,
 InspecSafe authorization=false. No real model/GPU/InspecSafe execution or merge.
+
+## W2.6-D9R9 — Kaggle orchestration notebook PRE-RUNTIME (2026-09-29)
+
+- [x] Prepare self-contained [Kaggle notebook](notebooks/w2_paligemma_d9r9_kaggle.ipynb)
+  for owner execution after Research Lead review, pinned to execution base
+  `180c0623149bbc7d64f5b659f6c044c39b1e1cd0` and unchanged D9R8 model/revision.
+- [x] Automate fresh checkout, isolated pinned environment, single-T4 process
+  checks, explicit provision/full verification, one manual Internet-OFF barrier,
+  unchanged smoke harness, bounded evidence bundle and failure stops without retry.
+- [x] Static/fake validation: 94 focused/regression tests PASS; no real download,
+  GPU, model, synthetic gate or InspecSafe execution. See [prep record](notes/w2_paligemma_d9r9_notebook_prep.md).
+- [ ] Research Lead notebook review and owner Kaggle execution pending.
+- [ ] Runtime evidence review and qualification pending. Real runtime NOT_RUN;
+  exact runtime verified=false. No runtime result JSON has been fabricated.
+
+PaliGemma remains BACKUP_1, primary roster count=4; grounding/classification
+interface/external gate PENDING_QUALIFICATION, protocol freeze BLOCKED,
+promotion NO and InspecSafe authorized=false. This overlay records tooling only.
