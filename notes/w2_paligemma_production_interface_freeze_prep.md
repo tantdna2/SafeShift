@@ -113,7 +113,8 @@ the remaining fixed independent calls continue without retry or repair.
 isolated environment, anonymous checkout, provisioning-only HF_TOKEN, full
 snapshot manifests, manual Internet-OFF barrier, fixed attempt and bounded bundle.
 It validates approved inputs before installation/provisioning. Notebook execution
-source is an exact commit embedded as BASE, not a mutable branch.
+source is `ea8d60bd89463015ebcd427ac931c2d48ad4042e`, embedded as BASE,
+not a mutable branch. This pin includes the explicit missing-input STOP.
 
 Bundle: plan, input/policy provenance, exact image bytes, all seven raw outputs
 and metadata, canonical outputs or INVALID/null, snapshots, timing/memory/state
@@ -131,7 +132,7 @@ the next step is the unchanged synthetic-v1 gate, not automatic gate execution.
 
 ## Validation and boundaries
 
-CPU/static/fake validation: 214 tests (22 D9R13 adapter/harness/notebook checks
+CPU/static/fake validation: 215 tests (23 D9R13 adapter/harness/notebook checks
 plus 192 existing PaliGemma/pre-freeze regressions) PASS. The 33 JSON parses
 (32 pre-freeze configurations and the new notebook), scoped nine-file
 case-sensitive secret-pattern scan, protected source/gate comparison and diff

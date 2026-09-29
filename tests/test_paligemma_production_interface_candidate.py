@@ -104,6 +104,25 @@ class AdapterTests(unittest.TestCase):
 
 
 class PlanTests(unittest.TestCase):
+    def test_exact_notebook_execution_source_pin(self):
+        import ast
+        tree = ast.parse(sources()[0])
+        pin = next(ast.literal_eval(n.value) for n in tree.body
+                   if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "BASE"
+                                                       for t in n.targets))
+        self.assertEqual(pin, "ea8d60bd89463015ebcd427ac931c2d48ad4042e")
+        subprocess.run(["git", "merge-base", "--is-ancestor", q.BASE_SHA, pin],
+                       cwd=q.ROOT, check=True, capture_output=True)
+        for path in (q.PLAN, "scripts/w2_paligemma_canonical_compatibility.py",
+                     "scripts/w2_paligemma_interface_qualification.py",
+                     "safeshift/runners/paligemma_compatibility.py",
+                     "safeshift/protocol/prompts.py", "safeshift/protocol/schema.py",
+                     "safeshift/runners/paligemma.py", "safeshift/runners/paligemma_snapshot.py",
+                     "safeshift/runners/storage.py", "requirements-paligemma-t4.txt"):
+            committed = subprocess.check_output(["git", "show", pin + ":" + path], cwd=q.ROOT)
+            self.assertEqual(committed.replace(b"\r\n", b"\n"),
+                             (q.ROOT / path).read_bytes().replace(b"\r\n", b"\n"), path)
+
     def test_exact_budget_and_missing_inputs_are_honest(self):
         p = q.qualification_plan()
         self.assertEqual((p["classification_calls"], p["grounding_calls"],
