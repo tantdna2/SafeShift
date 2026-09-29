@@ -14,17 +14,18 @@ authoring task. The owner's historical untracked manifest remains untouched in
 the main checkout; work uses a separate clone under ignored `data/processed/`.
 
 The online cell checks Kaggle Linux x86_64 and physical T4 hardware, masks all
-children to GPU 0, clones a fresh dedicated checkout, installs `uv==0.8.22` in a
-bootstrap venv, obtains managed CPython 3.11.11, and creates an isolated runtime
+children to GPU 0, clones a fresh dedicated checkout, installs only `uv==0.8.22`
+using notebook pip `--target` in a fresh dedicated bootstrap directory, verifies
+`uv --version`, obtains managed CPython 3.11.11, and creates an isolated runtime
 venv. It installs the unchanged `requirements-paligemma-t4.txt`, records installed
 distributions and pip freeze, requires pip check and exact plan versions, and
 probes one process-visible T4 using the isolated Python. The kernel environment
 is not upgraded. Repository/software setup precedes the separate provision phase.
 
-HF_TOKEN is required from Kaggle Secrets. Private-repository authentication uses
-optional SAFESHIFT_GITHUB_TOKEN in a subprocess-only Git header; clone failure
-stops with the secret setup instruction and no authentication retry. Neither
-credential is placed in command arguments, URLs, Git config files or artifacts.
+HF_TOKEN is required from Kaggle Secrets. SafeShift is now public; clone uses
+anonymous HTTPS with no GitHub secret or authentication header. Clone failure
+stops without retry. HF_TOKEN is never placed in command arguments, URLs,
+Git config files or artifacts.
 Logs are sanitized before writing. Runtime environment uses an allowlist without
 inherited credentials or Python configuration. Bootstrap and runtime directories
 are fresh and never repaired or overwritten.
@@ -63,7 +64,7 @@ adapter remains INVALID, grounding adapter expected UNSUPPORTED and unexecuted,
 external gate pending, synthetic gate and InspecSafe NOT_RUN, BACKUP_1, four
 primaries, promotion NO and protocol freeze BLOCKED.
 
-Validation (static/fake only): 94 tests PASS across notebook orchestration (15),
+Validation after bootstrap patch (static/fake only): 97 tests PASS across notebook orchestration (18),
 D9R8 PaliGemma preparation (44), and D9 roster/governance regression (35).
 Notebook JSON and every code cell/embedded child script compile. Fake checks
 cover the online sequence, installation failure stopping before provision,
@@ -78,5 +79,23 @@ python -m unittest tests.test_paligemma_d9r9_notebook tests.test_paligemma_prep 
 git diff --check
 ```
 
-Actual Kaggle wheel availability, HF access and runtime behavior await owner
-execution after Research Lead review; a successful fake test is not their evidence.
+Research Lead reported an owner-run failure bundle: venue (two Tesla T4 GPUs,
+15360 MiB each, CC 7.5), clone and exact checkout passed. With notebook Python
+3.12.13, SOFTWARE_INSTALL stopped at bootstrap_venv because the child ensurepip
+command returned exit code 1. The supplied log does not establish why ensurepip
+failed. Runtime, weight provision, synthetic gate and InspecSafe were not executed.
+Codex records this supplied evidence without claiming independent bundle inspection.
+
+The tooling patch removes notebook-Python venv creation entirely. Notebook pip
+installs the pinned uv wheel with `--target`, `--no-deps`, `--only-binary=:all:`
+and `--ignore-installed`, leaving system packages unchanged. It invokes that
+directory's bin/uv and rejects any release other than 0.8.22 before proceeding.
+See [pip target installation](https://pip.pypa.io/en/stable/cli/pip_install/#cmdoption-t)
+and [uv 0.8.22 target binary layout](https://github.com/astral-sh/uv/blob/0.8.22/python/uv/_find_uv.py).
+New tests enforce the bootstrap/anonymous clone contracts, unchanged requirements
+and plan digests, and rejection of a wrong uv version before Python installation.
+
+The owner will use a fresh Kaggle session after review. The failed workspace and
+evidence must be retained; no cleanup or automatic retry was added. Actual patched
+installation, HF access and runtime remain unverified; fake tests are not runtime
+evidence. The runtime cell, scientific pins and D9R8 sources are unchanged.

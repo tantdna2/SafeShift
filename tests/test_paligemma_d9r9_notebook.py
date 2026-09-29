@@ -77,6 +77,58 @@ class NotebookContractTests(unittest.TestCase):
         self.assertNotIn('"exact_runtime_verified": true', content.lower())
         self.assertIn('secret(\\"HF_TOKEN\\")', content)
 
+    def test_bootstrap_uses_target_pip_and_checks_uv_before_managed_python(self):
+        code = sources()[1]
+        commands = {}
+        for node in ast.walk(ast.parse(code)):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "command":
+                commands[ast.literal_eval(node.args[1])] = node.args[0]
+        self.assertNotIn("bootstrap_venv", commands)
+        self.assertNotIn("ensurepip", "\n".join(sources()))
+        bootstrap = commands["bootstrap_uv"]
+        self.assertEqual(ast.unparse(bootstrap.elts[0]), "sys.executable")
+        literals = [n.value for n in bootstrap.elts if isinstance(n, ast.Constant)]
+        self.assertEqual(literals, ["-m", "pip", "--isolated", "install", "--no-cache-dir",
+                                   "--no-deps", "--only-binary=:all:", "--ignore-installed",
+                                   "--target", "uv==0.8.22"])
+        self.assertEqual(ast.unparse(bootstrap.elts[-2]), "bootstrap")
+        self.assertEqual(ast.unparse(commands["bootstrap_uv_version"]), "[uv, '--version']")
+        self.assertLess(code.index('"bootstrap_uv_version"'), code.index('"python_install"'))
+        self.assertLess(code.index('"STOP: bootstrap requires exactly uv 0.8.22"'), code.index('"python_install"'))
+        self.assertEqual(ast.unparse(commands["python_install"]),
+                         "[uv, '--no-config', 'python', 'install', '3.11.11']")
+        self.assertEqual(ast.unparse(commands["runtime_venv"]),
+                         "[uv, '--no-config', 'venv', '--managed-python', '--python', '3.11.11', '--seed', ENV]")
+        self.assertEqual(ast.unparse(commands["install_pins"].elts[0]), "PYTHON")
+        self.assertEqual(ast.unparse(commands["pip_check"].elts[0]), "PYTHON")
+
+    def test_public_clone_and_hf_only_secret(self):
+        code = "\n".join(sources())
+        self.assertNotIn("SAFESHIFT_GITHUB_TOKEN", NOTEBOOK.read_text(encoding="utf-8"))
+        self.assertNotIn("github_token", code)
+        self.assertNotIn("extraheader", code)
+        self.assertNotIn("import base64", code)
+        online = ast.parse(sources()[1])
+        clone = next(n for n in ast.walk(online) if isinstance(n, ast.Call)
+                     and isinstance(n.func, ast.Name) and n.func.id == "command"
+                     and ast.literal_eval(n.args[1]) == "clone")
+        self.assertEqual(ast.unparse(clone.args[0]),
+                         "['git', '-c', 'credential.helper=', 'clone', '--no-checkout', 'https://github.com/tantdna2/SafeShift.git', REPO]")
+        self.assertNotIn("env", [kw.arg for kw in clone.keywords])
+        secrets = [n for n in ast.walk(online) if isinstance(n, ast.Call)
+                   and isinstance(n.func, ast.Name) and n.func.id == "secret"]
+        self.assertEqual([ast.literal_eval(n.args[0]) for n in secrets], ["HF_TOKEN"])
+
+    def test_plan_digest_and_requirement_pins_unchanged(self):
+        plan = json.loads((ROOT / "configs/pre_freeze/paligemma_t4_runtime.v1.json").read_text())
+        canonical = json.dumps(plan, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode()
+        expected = "4138071ff3fcbcf2cb16d456c01a2b3dbc42a628b0faa0d04dd6a635803b0ab7"
+        self.assertEqual(hashlib.sha256(canonical).hexdigest(), expected)
+        self.assertIn(expected, sources()[0])
+        requirements = (ROOT / "requirements-paligemma-t4.txt").read_bytes().replace(b"\r\n", b"\n")
+        self.assertEqual(hashlib.sha256(requirements).hexdigest(),
+                         "13f11ef7aef6410f9574b67a12511c5926064b2c9d017996acde9d222e5c4c8b")
+
 
 class OrchestrationTests(unittest.TestCase):
     def setUp(self):
@@ -206,9 +258,9 @@ class OrchestrationTests(unittest.TestCase):
                 self.ns["clean_checkout"]()
 
     def test_online_fake_sequence_and_install_failure_no_provision(self):
-        # Run the real cell twice in independent test cases via subTest state reset.
-        for fail_install in (False, True):
-            with self.subTest(fail_install=fail_install), TemporaryDirectory() as directory:
+        # Run the real cell with isolated success/install-failure/version-failure cases.
+        for failure in (None, "install", "uv_version"):
+            with self.subTest(failure=failure), TemporaryDirectory() as directory:
                 work = Path(directory).resolve()
                 self.ns.update(WORKING=work, WORK=work / "work", SETUP=work / "work/evidence",
                                REPO=work / "work/repo", BUNDLE=work / "bundle", ZIP=work / "bundle.zip")
@@ -229,7 +281,13 @@ class OrchestrationTests(unittest.TestCase):
                             (ROOT / "configs/pre_freeze/paligemma_t4_runtime.v1.json").read_bytes())
                         (self.ns["REPO"] / "requirements-paligemma-t4.txt").write_bytes(
                             (ROOT / "requirements-paligemma-t4.txt").read_bytes())
-                    if label == "install_pins" and fail_install:
+                    if label == "bootstrap_uv":
+                        self.assertEqual(args[0], sys.executable)
+                        self.assertIn("--target", args)
+                        self.assertNotIn("venv", args)
+                    if label == "bootstrap_uv_version":
+                        return 0, "uv 0.8.220\n" if failure == "uv_version" else "uv 0.8.22 (test-build)\n"
+                    if label == "install_pins" and failure == "install":
                         raise RuntimeError("STOP_AND_RESEARCH_LEAD_REVIEW_REQUIRED: fake conflict")
                     if label == "process_probe":
                         return 0, '{"software":{},"hardware":{"visible_gpu_count":1}}'
@@ -245,11 +303,13 @@ class OrchestrationTests(unittest.TestCase):
 
                 self.ns["command"] = fake_command
                 with patch("platform.system", return_value="Linux"), patch("platform.machine", return_value="x86_64"):
-                    if fail_install:
-                        with self.assertRaisesRegex(RuntimeError, "fake conflict"):
+                    if failure:
+                        with self.assertRaisesRegex(RuntimeError, "fake conflict" if failure == "install" else "exactly uv 0.8.22"):
                             exec(sources()[1], self.ns)
                         self.assertNotIn("provision", labels)
                         self.assertFalse(self.ns["ONLINE_DONE"])
+                        if failure == "uv_version":
+                            self.assertNotIn("python_install", labels)
                     else:
                         exec(sources()[1], self.ns)
                         self.assertEqual(labels[-2:], ["provision", "verify_online"])

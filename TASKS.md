@@ -706,7 +706,12 @@ InspecSafe authorization=false. No real model/GPU/InspecSafe execution or merge.
   unchanged smoke harness, bounded evidence bundle and failure stops without retry.
 - [x] Static/fake validation: 94 focused/regression tests PASS; no real download,
   GPU, model, synthetic gate or InspecSafe execution. See [prep record](notes/w2_paligemma_d9r9_notebook_prep.md).
-- [ ] Research Lead notebook review and owner Kaggle execution pending.
+- [x] Research Lead reviewed an owner-run failure bundle: venue/clone/checkout
+  passed; notebook Python 3.12.13 failed at bootstrap venv's ensurepip, before
+  weights or runtime. This is supplied evidence, not Codex runtime execution.
+- [x] Patch bootstrap to dedicated pip --target uv==0.8.22 with version check;
+  use anonymous public clone. 97 static/fake/regression tests PASS; pins unchanged.
+- [ ] Research Lead patch review and owner execution in a fresh Kaggle session pending.
 - [ ] Runtime evidence review and qualification pending. Real runtime NOT_RUN;
   exact runtime verified=false. No runtime result JSON has been fabricated.
 
