@@ -750,6 +750,10 @@ InspecSafe authorization=false. No model/GPU/provisioning/gate/InspecSafe execut
 
 ## W2.6-D9R12-PALIGEMMA-INTERFACE-EVIDENCE-RECORD-AND-ADAPTER-CONTRACT
 
+D9R12 **COMPLETE**: PR #59 merged at
+`a3192ddefbc28fe2997190819744e8f4796a6d85`. Production qualification remains
+pending; D9R13 is a separate PREP task below.
+
 - [x] Record Research Lead-approved D9R11 evidence: exact bundle/commit/plan,
   environment, one load/eight calls, raw-before-parser PASS and all eight exact
   outputs/IDs/raw hashes. Research Lead checked 76/76 artifact sizes and hashes;
@@ -767,3 +771,22 @@ verified=true; BACKUP_1, four primaries, freeze BLOCKED, InspecSafe authorized=f
 No promotion, real GPU/model/provisioning, synthetic-v1 gate or InspecSafe execution.
 See [D9R12 evidence and offline contract](notes/w2_paligemma_interface_adapter_contract.md)
 and [machine-readable result](configs/pre_freeze/paligemma_interface_runtime_result.v1.json).
+
+## W2.6-D9R13-PALIGEMMA-PRODUCTION-INTERFACE-FREEZE-PREP
+
+- [x] PREP / implementation: audit actual C1 four-level classification, independent
+  B2 hazard/evidence output and separate single-box external probe contracts.
+- [x] Record a disabled [production-interface candidate](configs/pre_freeze/paligemma_production_interface_candidate.v1.json)
+  with exact canonical prompt requirements, evidence provenance and unresolved
+  native mappings. No yes/no-to-safety or object-to-hazard mapping is invented.
+- [x] Design nine conditional minimum runtime cases; policy/native B2 route and
+  future execution plan require separate review. No runtime or gate executed.
+- [x] Validate 281 static/fake tests, 32 strict pre-freeze JSON parses, protected
+  base contracts/assets, scoped secret-pattern scan and diff check: PASS.
+- [ ] Research Lead review and additional runtime qualification: PENDING.
+  SYNTHETIC_GATE_READY=false; classification interface, grounding and external
+  gate remain PENDING_QUALIFICATION.
+
+Base: `a3192ddefbc28fe2997190819744e8f4796a6d85`. BACKUP_1, four primaries,
+freeze BLOCKED, InspecSafe authorized=false; no promotion or protocol freeze.
+See [canonical audit, proposal limits and validation](notes/w2_paligemma_production_interface_freeze_prep.md).

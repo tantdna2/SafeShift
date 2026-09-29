@@ -1389,6 +1389,37 @@
   Dataset, split, labels and metrics are unchanged. No GPU/model/provisioning,
   synthetic-v1 gate or InspecSafe execution in D9R12.
 
+## D9R13 — Production interface requirements and unresolved native mappings (2026-09-29)
+
+- **Status/authority:** PREP proposal for Research Lead review under the explicit
+  D9R13 task instruction; no new research policy, label, metric or freeze decision.
+  Base `a3192ddefbc28fe2997190819744e8f4796a6d85`; D9R12 PR #59 merged.
+- **Repository findings:** C1 Call 1 is policy-aware four-level single-label
+  classification. A2/B2 Call 2 independently returns closed hazard IDs and all
+  evidence boxes. The synthetic-v1 external probe instead consumes one box per
+  case; it neither scores classification nor requires target-absent/multiple-box
+  successes. Exact industry policy text remains unpinned.
+- **Proposal:** Preserve canonical prompt requirements in the disabled
+  [machine-readable candidate](configs/pre_freeze/paligemma_production_interface_candidate.v1.json).
+  C1 native prompt/level mapping and B2 native prompt/hazard mapping are UNRESOLVED.
+  A closed four-query `detect {target_label}` table is proposed only for future
+  external-probe qualification; only red square currently has runtime grammar
+  evidence. No production runner/parser is activated or expanded.
+- **Empty/multiple output:** Choose additional production-prompt observation;
+  canonical hazards=[] exists but native empty grammar does not. Production
+  hazard/evidence multiplicity requires qualification; repeated loc groups are
+  not assumed. Parseable grd_d hallucination remains intact for evaluation.
+  Preserve D9R7 /1024 D4, no repair/clamp, and the unchanged gate criteria.
+- **Next step conclusion:** SYNTHETIC_GATE_READY=false and
+  ADDITIONAL_RUNTIME_QUALIFICATION_REQUIRED=true. Nine conditional minimum cases
+  are designed in the [audit note](notes/w2_paligemma_production_interface_freeze_prep.md);
+  unresolved policy/native semantics must be resolved before a runnable plan.
+  This is not authorization to execute or proof that nine calls qualify B2.
+- **Boundaries:** Classification interface, grounding and external gate remain
+  PENDING_QUALIFICATION; BACKUP_1, four primaries, freeze BLOCKED, InspecSafe
+  authorized=false. No GPU/model/provisioning/Kaggle/gate/InspecSafe execution,
+  promotion, changed acceptance criteria or merge in D9R13.
+
 ## Template
 
 - **ID:** <DEC-...>
