@@ -739,9 +739,31 @@ source/audit artifacts remain unchanged. D9R9 COMPLETE: PR #57 merged at
 - [x] Prepare unexecuted D9R11 Kaggle notebook pinned to harness commit
   `ceb56d5174a387362e3ef6a5af3b6618123bc8a7`; static/fake tests cover offline
   barrier, eight-call export, partial failure evidence and credential isolation.
-- [ ] D9R11 real interface runtime: NOT_RUN; separate Research Lead review required.
+- [x] D9R11 evidence collection COMPLETE per Research Lead-reviewed bundle;
+  approved observations are recorded in D9R12 below. Interface qualification
+  remains pending; this completion does not qualify production semantics.
 
 See [D9R10 preparation contract](notes/w2_paligemma_interface_qualification_prep.md).
 Runtime smoke remains PASS/exact verified=true; classification, grounding and
 external gate PENDING_QUALIFICATION; BACKUP_1, four primaries, freeze BLOCKED and
 InspecSafe authorization=false. No model/GPU/provisioning/gate/InspecSafe execution.
+
+## W2.6-D9R12-PALIGEMMA-INTERFACE-EVIDENCE-RECORD-AND-ADAPTER-CONTRACT
+
+- [x] Record Research Lead-approved D9R11 evidence: exact bundle/commit/plan,
+  environment, one load/eight calls, raw-before-parser PASS and all eight exact
+  outputs/IDs/raw hashes. Research Lead checked 76/76 artifact sizes and hashes;
+  Codex did not inspect raw bundle bytes.
+- [x] Implement offline presence-answer and single red-square grounding parser
+  candidates; keep production adapters pending. Preserve negative `grd_d` as a
+  parseable prediction with separately recorded semantic hallucination.
+- [x] Validate 267 static/fake tests, 31 strict pre-freeze JSON parses,
+  scoped secret-pattern scan and diff check: PASS. No real runtime execution.
+- [ ] Classification interface, grounding and external gate:
+  **PENDING_QUALIFICATION**; separate Research Lead decision required.
+
+Base: `da7a3b8098eb40edba8858791d01d30b564bcc78`. Runtime smoke PASS / exact
+verified=true; BACKUP_1, four primaries, freeze BLOCKED, InspecSafe authorized=false.
+No promotion, real GPU/model/provisioning, synthetic-v1 gate or InspecSafe execution.
+See [D9R12 evidence and offline contract](notes/w2_paligemma_interface_adapter_contract.md)
+and [machine-readable result](configs/pre_freeze/paligemma_interface_runtime_result.v1.json).

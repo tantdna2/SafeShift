@@ -247,6 +247,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                            'scripts/w2_paligemma_t4_smoke.py'})
         # D9R10 authorizes only the separate interface observation PREP harness.
         authorized.add('scripts/w2_paligemma_interface_qualification.py')
+        # D9R12 authorizes offline string parser candidates, not production activation.
+        authorized.add('safeshift/runners/paligemma_interface_candidate.py')
         for directory in self.fixture['source_roots']:
             expected = {p for p in self.fixture['protected_file_sha256'] if p.startswith(directory + '/') and p.endswith('.py')}
             expected |= {p for p in authorized if p.startswith(directory + '/')}
