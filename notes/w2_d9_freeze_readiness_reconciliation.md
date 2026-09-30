@@ -1,41 +1,93 @@
-# D9R3 — freeze-readiness reconciliation
+# D9R15 — freeze-readiness reconciliation
 
-Task: `W2.6-D9R3-FREEZE-READINESS-RECONCILIATION`, 2026-09-28.
-Base main: `a92f9d65e1210b4b276ff04620560d172fcc2225`.
+Task: `W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING`, 2026-09-30.
+Base main: `9948570820b5ed8a774b8e226b80e24055e705cf`.
 
-Current overlay on D9R1–D9R2N; historical milestone text, provenance snapshots,
+Current overlay through D9R15; historical milestone text, provenance snapshots,
 runtime plans and original result artifacts keep their recorded meanings.
 The current machine-readable per-model status is
 [local_models.d9.json](../configs/pre_freeze/local_models.d9.json).
-The freeze-template `current_status_overlay` points there; its older per-model
-candidate/pending fields remain template milestones, not current runtime/gate
-verdicts. Provenance remains the B0/D9R1 documentary snapshot: its historical
+The freeze-template `current_status_overlay` points there; its five entries now
+separate current primary RQ3 and exploratory participation from pending final
+production classification roles and frozen components. Provenance remains the B0/D9R1 documentary snapshot: its historical
 runtime/runner/spatial fields are not later execution results (as enforced by
 the existing D9 roster tests). Its bytes are protected by the historical Qwen3
-gate plan and remain unchanged. No new status enum or policy is introduced.
+gate plan and remain unchanged. D9R15 adds a reporting policy only; no executable
+metric/gate/parser/runner/schema/prompt change.
 
 ## Readiness matrix
 
 | # | Prerequisite | Current readiness | Evidence and exact remaining blocker |
 |---|---|---|---|
-| 1 | Model provenance | COMPLETE | Documentary IDs, immutable pins, license/access metadata for four primaries and two ordered backups are complete in [provenance](../configs/pre_freeze/local_model_provenance.d9.json). This is not use clearance or implementation freeze. |
-| 2 | Runners | COMPLETE | Qwen3, Qwen2.5, Moondream and InternVL3 offline runners are COMPLETE; all four recorded runtime smoke statuses are PASS_VALIDATED. Qwen3 retains its T4×2 anchor exception; Qwen2.5, Moondream and InternVL3 have single-T4 evidence. Production adapters are separately blocked under #4. |
+| 1 | Model provenance | COMPLETE | Five primaries and one unactivated backup retain exact documentary pins from [provenance](../configs/pre_freeze/local_model_provenance.d9.json). Historical provenance membership is not rewritten. This is not use clearance or implementation freeze. |
+| 2 | Runners | COMPLETE | All five offline runners COMPLETE, runtime PASS_VALIDATED. Qwen3 retains its T4×2 anchor exception; Qwen2.5, Moondream, InternVL3 and PaliGemma have single-T4 evidence. PaliGemma exact runtime verified=true from D9R9. Production adapters remain separate under #4. |
 | 3 | Decoding | PENDING | Every primary still has `decoding_policy_id`, `precision_or_quantization` and `preprocessing_id` PENDING in the freeze template; `research_precision_decoding_prompts_frozen=false`. Final per-task low-variance decoding, output limits, supported sampling/thinking controls, seed/determinism policy and exact preprocessing/precision/software condition have not been approved and frozen. Smoke/gate settings are bounded qualification conditions, not the final research configuration. |
-| 4 | Adapters/parsers | PENDING | Moondream production `PendingMoondreamAdapter` remains `parser_version=NOT_QUALIFIED`, grounding UNSUPPORTED and classification INVALID. Its gate-only conversion has passed the external gate; it is not wired into or qualified as the production adapter. Classification qualification/parser mapping remains outstanding; all four models remain classification CANDIDATE. InternVL3's canonical spatial interface remains unqualified. Qwen grounding nonparticipation requires no rescue or fabricated boxes. |
-| 5 | External gate / interface eligibility | COMPLETE | Qwen3 FAIL → grounding NOT_PARTICIPATING; Qwen2.5 FAIL → grounding NOT_PARTICIPATING; Moondream PASS → grounding qualification PASS for the frozen external native-detect interface; InternVL3 has no qualifying native box interface → grounding NOT_PARTICIPATING and gate NOT_RUN (ineligible, zero cases). D9 eligibility is resolved for every primary, and gate execution remains limited to qualifying box interfaces. |
-| 6 | Final roles | PENDING | Classification remains CANDIDATE for all primaries; final classification/grounding roles need approved qualification evidence and #4/#5 resolution. No automatic Moondream role promotion. No backup activated; PaliGemma then SmolVLM2 remain ordered backups. Grounding-only failure does not trigger substitution. |
-| 7 | Implementation freeze | PENDING | Freeze exact prompts/task policy, canonical schema, adapters/parsers, runners, preprocessing, precision/quantization, decoding, software environment and full unchanged D5 engine after outstanding qualification. All `frozen_components` remain PENDING; existing code/schema is not a completed implementation freeze. |
+| 4 | Adapters/parsers | PENDING | All five remain classification CANDIDATE. PaliGemma classification interface PENDING_QUALIFICATION; its and Moondream's production adapters remain NOT_QUALIFIED, classification INVALID / grounding UNSUPPORTED. External gate evidence and roster membership do not qualify production adapters. No parser rescue is authorized. |
+| 5 | External gate / interface eligibility | COMPLETE | Qwen3 GATE_FAIL (5/8 valid), Qwen2.5 GATE_FAIL and PaliGemma FAIL / grounding qualification FAIL (6/8 SUCCESS) → primary NOT_PARTICIPATING. InternVL3 has no qualifying native generic box interface → NOT_PARTICIPATING / gate NOT_RUN. Moondream PASS → gate eligibility only. All five eligibility decisions resolved, not all gates passed. |
+| 6 | Final roles | PENDING | Five-model membership is approved by D9R15; final production classification/adapters remain unqualified. Primary RQ3 is gate-aware. Exploratory includes only Moondream, Qwen3, PaliGemma in separate tables. SmolVLM2 is the sole BACKUP_1, unactivated. |
+| 7 | Implementation freeze | PENDING | Freeze exact prompts/task policy, schema, adapters/parsers, runners, preprocessing, precision/quantization, decoding, software and unchanged D5 engine after qualification. Exploratory reporting needs separate implementation and approval/freeze before InspecSafe. All `frozen_components` remain PENDING. |
 | 8 | Protocol freeze | PENDING | #3, #4, #6 and #7 remain unresolved and no approved freeze commit exists. `protocol_freeze_commit_sha=PENDING`; `inspecsafe_inference_authorized=false` in all three D9 configs. |
 
-The current four-primary runtime/interface qualification resolution remains
-recorded above; checklist #2 and #5 `COMPLETE` reflect that existing four-primary
-resolution, not PaliGemma. It does not add a fifth primary or authorize InspecSafe. The
-PaliGemma primary-expansion precommit is a separate
-`PENDING_QUALIFICATION` status for candidate `paligemma_3b_mix_448`; PaliGemma
-remains `BACKUP_1` until qualification and a separate promotion decision.
-Checklist #6, #7 and #8 continue to be `PENDING`. Protocol freeze is blocked
-until this pre-specified expansion candidate is resolved as promoted or
-`DO_NOT_PROMOTE`.
+D9R15 resolves the D9R6 sole-candidate expansion as roster design, before freeze
+and InspecSafe, without performance-based selection. PaliGemma is PRIMARY_5;
+this supersedes the old all-contracts-pass membership requirement only. D9R14
+PALIGEMMA_PROMOTION=NO remains historical, and its gate/grounding FAIL is current.
+The runtime, interface and gate result bytes are unchanged; D9R11 target-absent
+hallucination remains a finding. Classification and production adapter qualification
+are still pending; runtime PASS does not qualify them.
+
+The [exploratory policy](../configs/pre_freeze/local_models.d9.json) includes
+exactly Moondream, Qwen3 and PaliGemma, excluding Qwen2.5 and InternVL3. It cannot
+override gates, qualify/promote a model, change the roster after InspecSafe or
+tune prompt/parser/threshold. It is not rescue, lowered gate or primary RQ3
+participation. Separate tables and a separate implementation/freeze are required.
+D5 is unchanged: primary nonparticipants get no synthetic zero; the external
+gate has no artificial zero IoU. Future exploratory formulas may reuse D5 only
+with the existing D5 end-to-end failure policy and pre-InspecSafe freeze.
+
+Global gate status now reads RESOLVED_CAPABILITY_AWARE (five eligibility
+decisions), not all PASS or production ready. Checklist #5's machine key is
+renamed to `5_synthetic_gate_primary_models`. Roster membership is resolved;
+#3/#4/#6/#7/#8 and protocol freeze remain PENDING, authorization=false.
+
+## D9R15 validation
+
+Windows / Python 3.11.9, existing `.venv`; static/fake tests only. No dependency
+installation, GPU/model/gate rerun or InspecSafe inference. The optional existing
+local census is only checksum-checked by existing tests, never used as model input
+or committed. Test output logs remain local outside Git.
+
+Focused core: **152/152 PASS**, including **10 new D9R15 tests**. Extended focused
+run adding `tests.test_d9_t4_roster_revision`: **187 tests, 186 PASS / 1 existing
+failure** (`test_23_only_explicitly_authorized_post_d9r1_runner_source`, historical
+allowlist missing `paligemma_external_probe.py`). This failure is not hidden or fixed
+by expanding this task's scope.
+
+```text
+.venv/Scripts/python.exe -m unittest tests.test_d9r15_five_model_roster_exploratory_grounding tests.test_d9r6_paligemma_primary_expansion_precommit tests.test_d9r7_paligemma_source_api_audit tests.test_model_provenance tests.test_qwen3_external_gate_result tests.test_qwen2_5_external_gate_result tests.test_paligemma_external_gate_result tests.test_paligemma_external_gate tests.test_paligemma_runtime_result tests.test_paligemma_interface_candidate tests.test_internvl3_runtime_result tests.test_moondream_prep_audit -q
+.venv/Scripts/python.exe -m unittest discover -s tests -q
+git diff --check
+```
+
+Full suite before configuration/test edits at exact BASE
+`9948570820b5ed8a774b8e226b80e24055e705cf`: **1219 tests, 4 failures / 24 errors**.
+Full suite after D9R15: **1229 tests, the same 4 failures / 24 errors**.
+All 28 failing/error test identities match; **no new regression, no full PASS**.
+The other three failures are the historical Moondream roster hash and Ovis/Qwen
+smoke checklist assertions requiring PENDING instead of COMPLETE. The 24 errors
+are notebook fresh-kernel guards after torch is imported by full-suite discovery.
+This comparison ran both full suites in the same environment, not a substituted
+roster-only control. D9R6/D9R7/D9R14 historical assertions now explicitly read the
+pre-D9R15 Git snapshot; dedicated D9R15 tests protect live state and evidence.
+
+Both changed JSON files pass `safeshift.protocol.schema.strict_json`;
+`git diff --check` passes. Protected execution/config roots differ from BASE
+only in the roster and unfrozen template. Metrics, gate, parsers, runners,
+prompts, schemas, frozen fixtures, historical precommit/provenance and result
+records are unchanged. D9R14 result file byte SHA-256 before/after is
+`15aa6943f30115a8c7630132c72512b5372462ef6d3f96b3270f39760dc79fb4`.
+
+## Historical reconciliation narrative (D9R3–D9R5)
 
 The D9R3 and D9R4 status prose below is preserved historical milestone text;
 the matrix above and the linked D9R5 result are the current overlay.
@@ -100,7 +152,7 @@ for InternVL3 runtime and interface eligibility only. It preserves the D9R3/D9R4
 historical milestone wording and does not freeze decoding, adapters, roles,
 implementation or protocol.
 
-## Validation
+## Historical D9R3 validation
 
 **88/88 tests PASS** on Windows / Python 3.11.9, including existing D9 roster,
 provenance, Qwen gate-result and Moondream audit regressions. Static checks

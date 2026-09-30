@@ -6,6 +6,54 @@
 **Protocol freeze:** `PENDING`
 **InspecSafe inference under this revision:** `NOT RUN`
 
+## Current D9R15 roster and grounding policy (2026-09-30)
+
+Authority: [D9R15 decision](../DECISIONS.md#d9r15--five-model-seminar-roster-and-exploratory-grounding-2026-09-30).
+The current [roster](../configs/pre_freeze/local_models.d9.json) contains exactly
+five classification evaluation candidates. None is production-classification
+qualified by roster membership.
+
+| Model ID | External gate | Primary RQ3 grounding | Exploratory grounding |
+|---|---|---|---|
+| Qwen/Qwen3-VL-8B-Instruct | GATE_FAIL (5/8 canonical valid boxes) | NOT_PARTICIPATING / SPATIAL_GATE_FAILURE | INCLUDED |
+| Qwen/Qwen2.5-VL-3B-Instruct | GATE_FAIL | NOT_PARTICIPATING | EXCLUDED |
+| OpenGVLab/InternVL3-2B-hf | NOT_RUN; no qualifying native generic box interface | NOT_PARTICIPATING | EXCLUDED |
+| vikhyatk/moondream2 | PASS | Gate eligible; production adapter NOT_QUALIFIED | INCLUDED |
+| google/paligemma-3b-mix-448 | FAIL; grounding qualification FAIL (6/8 SUCCESS) | NOT_PARTICIPATING | INCLUDED |
+
+PaliGemma is PRIMARY_5 / INDEPENDENT_GOOGLE_PALIGEMMA_CONTRAST, the sole
+candidate precommitted in D9R6. This is pre-freeze roster expansion, not backup
+substitution; no InspecSafe performance was used. SmolVLM2 is now the sole ordered
+BACKUP_1 and remains unactivated. Historical provenance/precommit/result snapshots
+retain their original membership fields. D9R14 PALIGEMMA_PROMOTION=NO is preserved
+under its old qualification contract; D9R15 supersedes only that roster-design
+restriction, without changing any gate verdict or qualification.
+
+PaliGemma runtime is PASS_VALIDATED, exact_runtime_verified=true on one Tesla T4,
+from the [merged runtime evidence](../configs/pre_freeze/paligemma_t4_runtime_result.v1.json).
+Classification interface remains PENDING_QUALIFICATION, production adapter
+NOT_QUALIFIED. Its A_2/C_2 multiple-detection SCHEMA_ERROR and D9R11 target-absent
+hallucination remain findings; no repair or rerun.
+
+Exploratory is a separate SECONDARY_EXPLORATORY reporting/analysis policy, not
+primary RQ3 participation, gate PASS, qualification PASS, model rescue or a
+lowered gate. Report it in separate tables. Never use its results to override
+qualification, promote models, change the roster after InspecSafe or tune
+prompts/parsers/thresholds. D5 definitions and implementation remain unchanged;
+primary nonparticipants receive no synthetic zero, and external gate failures
+receive no artificial zero IoU. Future exploratory use of D5 formulas requires
+separate implementation and freeze before InspecSafe, following existing D5
+end-to-end failure policy. This task does not implement that analysis.
+
+Current checklist: #1/#2/#5 COMPLETE for all five; #3/#4/#6/#7/#8 PENDING.
+Roster membership is settled; final production qualification is not. See the
+[current readiness matrix](w2_d9_freeze_readiness_reconciliation.md).
+Protocol freeze PENDING; InspecSafe inference unauthorized.
+
+Sections 1–10 below record the original D9 decision and its historical checklist;
+their four-model roster, backups and pending execution statements are superseded
+by D9R1–D9R15 only within the scopes recorded in DECISIONS.
+
 ## 1. Decision scope
 
 D9 revises only the **P2 model roster and execution backend** selected in D8. It does not alter the scientific framing, dataset, split, labels, hazard taxonomy, metrics, bootstrap procedure, or the benchmark firewall.
@@ -131,7 +179,7 @@ a point-only model remains a classification candidate and `NOT PARTICIPATING` in
 current grounding. Any point-only schema, gate or metric extension requires a separate
 approved decision; D9 does not introduce one. No D5 definition changes here.
 
-## 7. Active D9 pre-freeze checklist
+## 7. Historical original D9 pre-freeze checklist
 
 1. Freeze exact model IDs **and immutable revisions**, access/license evidence, and weight provenance for the four primary candidates and two backups.
 2. Implement local/self-hosted runners with explicit preprocessing, precision/quantization, device, software-version, and raw-output provenance.

@@ -27,7 +27,10 @@ class PaliGemmaExternalGateResultTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.result = load(RESULT)
-        cls.roster = load(ROSTER)
+        # The merged D9R14 resolution remains historical, including promotion NO.
+        # D9R15's live roster design is asserted separately without altering it.
+        cls.roster = strict_json(subprocess.check_output([
+            "git", "show", "9948570820b5ed8a774b8e226b80e24055e705cf:" + ROSTER], cwd=ROOT))
 
     def test_exact_identity_and_research_lead_audit(self):
         r = self.result
@@ -161,7 +164,10 @@ class PaliGemmaExternalGateResultTests(unittest.TestCase):
         changed = subprocess.check_output(
             ["git", "diff", "--name-only", BASE, "--", *protected], cwd=ROOT,
             text=True).splitlines()
-        self.assertLessEqual(set(changed), {ROSTER, RESULT})
+        # Only current roster/template policy may change after D9R14.
+        # D9R15 tests additionally pin RESULT and all evidence against its BASE.
+        self.assertLessEqual(set(changed), {ROSTER, RESULT,
+                                          "configs/pre_freeze/freeze_manifest.d9.template.json"})
 
 
 if __name__ == "__main__":

@@ -78,7 +78,35 @@ This supersession does not change P1 upstream reproduction or its access require
 
 ## W2 — Active D9 pre-freeze checklist (2026-09-20)
 
-Authority: [DEC-W2-D9-009](DECISIONS.md#dec-w2-d9-009--p2-open-weight-self-hosted-model-roster)
+Current authority: [D9R15](DECISIONS.md#d9r15--five-model-seminar-roster-and-exploratory-grounding-2026-09-30)
+and the [readiness matrix](notes/w2_d9_freeze_readiness_reconciliation.md).
+
+- [x] **1. Model provenance:** Five primaries and one remaining backup retain
+  documentary identity/revision evidence; historical provenance stays unchanged.
+- [x] **2. Runners:** All five runners COMPLETE/runtime PASS_VALIDATED; PaliGemma
+  exact model/revision and single-T4 runtime verified by merged D9R9 evidence.
+- [ ] **3. Decoding:** Final research conditions for all five await freeze.
+- [ ] **4. Adapters/parsers:** Production classification qualification pending;
+  all five CANDIDATE. PaliGemma classification interface PENDING_QUALIFICATION.
+  PaliGemma/Moondream production adapters NOT_QUALIFIED.
+- [x] **5. External gate / eligibility:** Five decisions resolved, not all PASS.
+  Qwen3/Qwen2.5 GATE_FAIL, PaliGemma gate FAIL / grounding qualification FAIL,
+  InternVL3 no qualifying native generic box interface / NOT_RUN. These four
+  remain primary RQ3 NOT_PARTICIPATING; Moondream PASS gives gate eligibility only.
+- [ ] **6. Final production roles:** Five-model membership is approved; production
+  qualification remains pending. Exploratory includes only Moondream, Qwen3 and
+  PaliGemma, separately from primary RQ3. SmolVLM2 BACKUP_1 is unactivated.
+- [ ] **7. Implementation freeze:** Existing prompts/schema/adapters/runners/D5
+  engine and separate exploratory reporting implementation/freeze remain pending.
+- [ ] **8. Protocol freeze:** protocol_freeze_commit_sha=PENDING;
+  inspecsafe_inference_authorized=false. NO_INSPECSAFE_INFERENCE.
+
+### Historical D9–D9R4 checklist milestones
+
+The entries below preserve earlier milestone statements; the active checklist
+above and machine-readable D9R15 roster supersede their current-state wording.
+
+Historical authority: [DEC-W2-D9-009](DECISIONS.md#dec-w2-d9-009--p2-open-weight-self-hosted-model-roster)
 and the [D9 brief](notes/w2_open_weight_self_hosted_model_roster_decision_brief.md).
 This is the **active P2 checklist**, mirrored in
 `configs/pre_freeze/local_models.d9.json` and `configs/pre_freeze/freeze_manifest.d9.template.json`.
@@ -626,12 +654,13 @@ backup activation or merge.
 
 ## W2.6-D9R6-PALIGEMMA-PRIMARY-EXPANSION-PRECOMMIT (2026-09-28)
 
-**Current PaliGemma result overlay (D9R14):** External gate **FAIL**, grounding
+**Historical PaliGemma result overlay (D9R14):** External gate **FAIL**, grounding
 qualification **FAIL**, rerun **NO**, human giant-box review required **NO**,
 promotion **NO**; classification interface **PENDING_QUALIFICATION**.
 BACKUP_1 / four primaries remain unchanged. Earlier D9R6–D9R13 pending entries
 below are historical milestones, superseded only for the recorded results.
 See [audited result](notes/w2_paligemma_external_gate_result.md).
+Current roster membership is superseded by D9R15 below; result verdicts remain unchanged.
 
 - [x] Record the Research Lead's sole pre-specified PaliGemma primary-expansion
   candidate, exact immutable revision and separate precommit qualification
@@ -824,3 +853,24 @@ Current result: [note](notes/w2_paligemma_external_gate_result.md) and
 BACKUP_1, four primaries, existing role/exploratory policy, blocked freeze and
 InspecSafe authorization=false unchanged. No model/GPU/gate rerun, InspecSafe,
 token-budget increase, giant-box review or merge in this recording task.
+
+## W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING
+
+- [x] Record Research Lead's pre-freeze roster-design decision and limited
+  supersession of D9R6/D9R14 membership policy, preserving all result records.
+- [x] Set five primary classification candidates; PaliGemma PRIMARY_5 with
+  runtime PASS_VALIDATED/exact verified=true, classification interface pending,
+  gate/grounding FAIL; remove active backup duplication. SmolVLM2 unactivated.
+- [x] Separate gate-aware primary RQ3 participation from exploratory policy;
+  include exactly Moondream, Qwen3 and PaliGemma, with no qualification override,
+  model rescue, gate lowering or post-InspecSafe selection/tuning.
+- [x] Validate focused core 152/152 PASS; extended focused 187 tests with one
+  BASE failure. Full suite 1229 tests, same 4 failures / 24 errors as exact BASE
+  (1219 tests); no new regression. Changed JSON 2/2, diff/protected-file checks PASS.
+  See [D9R15 validation](notes/w2_d9_freeze_readiness_reconciliation.md#d9r15-validation).
+- [ ] Commit and open Draft PR to main after validation; independent review pending.
+- [ ] Production qualification, exploratory reporting implementation/freeze and
+  protocol freeze remain PENDING. InspecSafe authorization=false.
+
+Base: `9948570820b5ed8a774b8e226b80e24055e705cf`.
+NO_INSPECSAFE_INFERENCE; NO_MODEL_RERUN; no GPU/gate execution or merge.

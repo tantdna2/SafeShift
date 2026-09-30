@@ -128,11 +128,11 @@ class ExternalGateResultTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256((ROOT / image['image_path']).read_bytes()).hexdigest(), image['sha256'])
 
     def test_global_checklist_and_inspecsafe_still_pending_unauthorized(self):
-        self.assertEqual(self.roster['synthetic_gate']['status'], 'PENDING')
+        self.assertEqual(self.roster['synthetic_gate']['status'], 'RESOLVED_CAPABILITY_AWARE')
         self.assertEqual(self.result['global_d9_synthetic_gate_status'], 'PENDING')
         completed = {'1_model_revisions_and_license_provenance',
                      '2_local_self_hosted_runners',
-                     '5_synthetic_gate_four_primary_models'}
+                     '5_synthetic_gate_primary_models'}
         for key, value in self.roster['d9_checklist'].items():
             self.assertEqual(value, 'COMPLETE' if key in completed else 'PENDING')
         for record in (self.result, self.roster):

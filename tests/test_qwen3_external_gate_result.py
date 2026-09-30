@@ -200,16 +200,17 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
                      external_gate_status='GATE_FAIL',
                      external_gate_evidence='configs/pre_freeze/qwen3_external_gate_result.v1.json',
                      backup_substitution=False, artificial_zero_iou=False)
-        # Later per-model reconciliations may update other primaries; preserve
-        # this result's complete Qwen3 entry, not the historical whole roster.
+        # D9R15 adds independent reporting participation without changing results.
+        model.update(primary_grounding_participation='NOT_PARTICIPATING',
+                     exploratory_grounding_participation='INCLUDED')
         self.assertEqual(self.model, model)
 
     def test_global_d9_pending_inspecsafe_unauthorized_and_freeze_pending(self):
-        self.assertEqual(self.roster['synthetic_gate']['status'], 'PENDING')
+        self.assertEqual(self.roster['synthetic_gate']['status'], 'RESOLVED_CAPABILITY_AWARE')
         self.assertEqual(self.result['global_d9_synthetic_gate_status'], 'PENDING')
         completed = {'1_model_revisions_and_license_provenance',
                      '2_local_self_hosted_runners',
-                     '5_synthetic_gate_four_primary_models'}
+                     '5_synthetic_gate_primary_models'}
         for key, value in self.roster['d9_checklist'].items():
             self.assertEqual(value, 'COMPLETE' if key in completed else 'PENDING')
         for record in (self.result, self.roster):
