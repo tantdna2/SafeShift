@@ -296,7 +296,7 @@
     "interface_contract": "EXISTING_BOX_GATE_UNCHANGED",
     "eligibility_review_scope": "CURRENT_FIVE_PRIMARY_CANDIDATES_AND_ANY_ACTIVATED_BACKUP",
     "execution_scope": "QUALIFYING_BOX_INTERFACES; POINT_ONLY_IS_NOT_PARTICIPATING",
-    "qualitative_giant_box_review_procedure": "PENDING_BEFORE_GATE_EXECUTION",
+    "qualitative_giant_box_review_procedure": "RESOLVED_PER_MODEL_SEE_MODEL_EVIDENCE",
     "status": "RESOLVED_CAPABILITY_AWARE",
     "resolution_scope": "FIVE_PRIMARY_INTERFACE_ELIGIBILITY; NOT_ALL_GATE_PASS; NOT_PRODUCTION_QUALIFICATION"
   },

@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import shutil
 import socket
+import subprocess
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -28,7 +29,9 @@ COMMIT = '90f36354e16eb66192692b526912e79c2981cce3'
 class ExternalGatePrepTests(unittest.TestCase):
     def setUp(self):
         smoke_tests.SmokeTests.setUp(self)  # Fake runtime plus network/native-import guards.
-        self.gate_plan, self.plan = gate.load_gate_plan(ROOT)
+        # Replay the historical gate contract in a temporary repository. Only
+        # documentary provenance's current membership overlay changed in D9R15.
+        self.gate_plan = json.loads((ROOT / gate.PLAN).read_bytes())
         paths = [gate.PLAN, gate.MANIFEST, gate.PROVENANCE, gate.smoke.PLAN,
                  *self.gate_plan['protected_source_sha256_lf']]
         paths += [f'tests/fixtures/pre_freeze/frozen_external_gate/{c}.png' for c in gate.CASE_IDS]
@@ -36,6 +39,10 @@ class ExternalGatePrepTests(unittest.TestCase):
             target = self.repo / path
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / path, target)
+        provenance = 'configs/pre_freeze/local_model_provenance.d9.json'
+        (self.repo / provenance).write_bytes(subprocess.check_output(
+            ['git', 'show', '9948570820b5ed8a774b8e226b80e24055e705cf:' + provenance], cwd=ROOT))
+        self.gate_plan, self.plan = gate.load_gate_plan(self.repo)
         self.cases = gate.load_cases(self.repo, gate.MANIFEST)
         self.texts = {c.case_id: json.dumps({'bbox': c.target_gt_bbox}) for c in self.cases}
         pins = self.gate_plan['software']
@@ -110,6 +117,12 @@ class ExternalGatePrepTests(unittest.TestCase):
         self.factory.assert_called_once()
         self.runtime.model_factory.from_pretrained.assert_called_once()
         self.assertEqual(result['not_attempted_case_ids'], [])
+
+    def test_historical_verifier_still_rejects_current_provenance_overlay(self):
+        provenance = 'configs/pre_freeze/local_model_provenance.d9.json'
+        shutil.copyfile(ROOT / provenance, self.repo / provenance)
+        with self.assertRaisesRegex(ValueError, 'PROTECTED_SOURCE_CHANGED'):
+            gate.load_gate_plan(self.repo)
 
     def test_seven_cases_fail_before_load(self):
         plan = self.alter_manifest(lambda m: m['cases'].pop())

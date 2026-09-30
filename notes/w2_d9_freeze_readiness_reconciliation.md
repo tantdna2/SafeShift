@@ -3,23 +3,27 @@
 Task: `W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING`, 2026-09-30.
 Base main: `9948570820b5ed8a774b8e226b80e24055e705cf`.
 
-Current overlay through D9R15; historical milestone text, provenance snapshots,
+Current overlay through D9R15; historical milestone text, model/source evidence,
 runtime plans and original result artifacts keep their recorded meanings.
 The current machine-readable per-model status is
 [local_models.d9.json](../configs/pre_freeze/local_models.d9.json).
 The freeze-template `current_status_overlay` points there; its five entries now
 separate current primary RQ3 and exploratory participation from pending final
-production classification roles and frozen components. Provenance remains the B0/D9R1 documentary snapshot: its historical
-runtime/runner/spatial fields are not later execution results (as enforced by
-the existing D9 roster tests). Its bytes are protected by the historical Qwen3
-gate plan and remain unchanged. D9R15 adds a reporting policy only; no executable
+production classification roles and frozen components. All model/source documentary
+provenance records retain historical runtime/license/runner/spatial facts; only
+the current `roster_revision` overlay is reconciled to D9R15 active membership.
+The historical Qwen3 gate plan still pins the old provenance bytes; historical
+gate tests use that snapshot, while live membership tests compare the current
+active key lists with the live roster. The frozen verifier is unchanged and
+still rejects the revised provenance file; no gate rerun is authorized.
+D9R15 adds a reporting policy only; no executable
 metric/gate/parser/runner/schema/prompt change.
 
 ## Readiness matrix
 
 | # | Prerequisite | Current readiness | Evidence and exact remaining blocker |
 |---|---|---|---|
-| 1 | Model provenance | COMPLETE | Five primaries and one unactivated backup retain exact documentary pins from [provenance](../configs/pre_freeze/local_model_provenance.d9.json). Historical provenance membership is not rewritten. This is not use clearance or implementation freeze. |
+| 1 | Model provenance | COMPLETE | Five primaries and one unactivated backup match current active key lists in [provenance](../configs/pre_freeze/local_model_provenance.d9.json). Historical model/source documentary records, including roster_group/order, remain unchanged. This is not use clearance or implementation freeze. |
 | 2 | Runners | COMPLETE | All five offline runners COMPLETE, runtime PASS_VALIDATED. Qwen3 retains its T4×2 anchor exception; Qwen2.5, Moondream, InternVL3 and PaliGemma have single-T4 evidence. PaliGemma exact runtime verified=true from D9R9. Production adapters remain separate under #4. |
 | 3 | Decoding | PENDING | Every primary still has `decoding_policy_id`, `precision_or_quantization` and `preprocessing_id` PENDING in the freeze template; `research_precision_decoding_prompts_frozen=false`. Final per-task low-variance decoding, output limits, supported sampling/thinking controls, seed/determinism policy and exact preprocessing/precision/software condition have not been approved and frozen. Smoke/gate settings are bounded qualification conditions, not the final research configuration. |
 | 4 | Adapters/parsers | PENDING | All five remain classification CANDIDATE. PaliGemma classification interface PENDING_QUALIFICATION; its and Moondream's production adapters remain NOT_QUALIFIED, classification INVALID / grounding UNSUPPORTED. External gate evidence and roster membership do not qualify production adapters. No parser rescue is authorized. |
@@ -50,7 +54,53 @@ decisions), not all PASS or production ready. Checklist #5's machine key is
 renamed to `5_synthetic_gate_primary_models`. Roster membership is resolved;
 #3/#4/#6/#7/#8 and protocol freeze remain PENDING, authorization=false.
 
+Current giant-box procedure is RESOLVED_PER_MODEL_SEE_MODEL_EVIDENCE in both
+roster and template. Moondream's eight human NO_GIANT reviews support its PASS.
+Qwen3/Qwen2.5/PaliGemma automatic FAIL records retain
+NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE; InternVL3 gate NOT_RUN reflects
+interface ineligibility. This reconciliation invents no review and changes no gate.
+
 ## D9R15 validation
+
+Consistency follow-up from audited head
+`98d8c642f3722d426779539c423504e50defa09a`, same branch and Draft PR #62:
+
+- Current provenance active lists now match the LIVE roster (five primaries,
+  SmolVLM2-only backup). Tests verify exact D9R15 metadata and unchanged retired
+  keys, every model/source record and all other provenance fields; documentary
+  content before roster_revision is also compared byte-for-byte with LF normalization.
+- Both current giant-review procedure fields are RESOLVED_PER_MODEL_SEE_MODEL_EVIDENCE.
+  Tests preserve existing Moondream NO_GIANT reviews, automatic-failure review
+  exemptions and InternVL3 gate NOT_RUN. No review was invented or rerun.
+- D9R15 tests: **12/12 PASS**. Focused regression below: **215 tests, 214 PASS,
+  one existing D9R1 allowlist failure**. Historical Qwen3 gate tests use the old
+  pinned provenance in their temporary fake repository; a new test confirms the
+  unmodified verifier still rejects the current overlay. Moondream's historical
+  provenance hash assertion likewise uses the pinned snapshot; its pre-existing
+  live-roster hash failure remains visible in the full suite.
+- Full suite: **1232 tests, 4 failures / 24 errors**, same 28 failing/error test
+  identities as the exact BASE full run (1219 tests) earlier in this session.
+  No new regression; no full-suite PASS. Initial combined focused discovery also
+  reproduced notebook fresh-kernel errors when importing the CPU torch test;
+  final focused run keeps that module in the full suite only.
+- Strict JSON **3/3 PASS**; diff check PASS. Only the three current config overlays
+  differ under protected execution/config roots. Historical model/source evidence,
+  gate results, plans, metrics, gate/parser/runner code, prompts, schemas and frozen
+  fixtures remain unchanged. D9R14 byte SHA-256 remains
+  `15aa6943f30115a8c7630132c72512b5372462ef6d3f96b3270f39760dc79fb4`.
+
+Windows / Python 3.11.9, existing `.venv`, static/fake checks only:
+
+```text
+.venv/Scripts/python.exe -m unittest tests.test_d9r15_five_model_roster_exploratory_grounding tests.test_d9_t4_roster_revision tests.test_model_provenance tests.test_qwen3_external_gate_result tests.test_qwen3_external_gate tests.test_qwen2_5_external_gate_result tests.test_paligemma_external_gate_result tests.test_paligemma_external_gate tests.test_d9r6_paligemma_primary_expansion_precommit tests.test_d9r7_paligemma_source_api_audit
+.venv/Scripts/python.exe -m unittest discover -s tests
+git diff --check
+```
+
+No model/GPU/gate/InspecSafe execution. Protocol freeze PENDING; independent
+audit pending; same Draft PR #62, NOT MERGED.
+
+## D9R15 initial validation (before consistency follow-up)
 
 Windows / Python 3.11.9, existing `.venv`; static/fake tests only. No dependency
 installation, GPU/model/gate rerun or InspecSafe inference. The optional existing
@@ -82,9 +132,11 @@ pre-D9R15 Git snapshot; dedicated D9R15 tests protect live state and evidence.
 
 Both changed JSON files pass `safeshift.protocol.schema.strict_json`;
 `git diff --check` passes. Protected execution/config roots differ from BASE
-only in the roster and unfrozen template. Metrics, gate, parsers, runners,
-prompts, schemas, frozen fixtures, historical precommit/provenance and result
-records are unchanged. D9R14 result file byte SHA-256 before/after is
+only in the roster and unfrozen template at the initial head. The later consistency
+follow-up also reconciles the current provenance roster_revision overlay; all
+historical model/source evidence remains unchanged. Metrics, gate, parsers, runners,
+prompts, schemas, frozen fixtures, historical precommit and result records are
+unchanged. D9R14 result file byte SHA-256 before/after is
 `15aa6943f30115a8c7630132c72512b5372462ef6d3f96b3270f39760dc79fb4`.
 Staged-file review: 16 small text files, no secret-pattern matches, weights,
 archives or raw bundles; untracked census excluded. Implementation commit

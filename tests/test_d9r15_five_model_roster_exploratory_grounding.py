@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = "9948570820b5ed8a774b8e226b80e24055e705cf"
 ROSTER = "configs/pre_freeze/local_models.d9.json"
 FREEZE = "configs/pre_freeze/freeze_manifest.d9.template.json"
+PROVENANCE = "configs/pre_freeze/local_model_provenance.d9.json"
 IDS = [
     "Qwen/Qwen3-VL-8B-Instruct",
     "Qwen/Qwen2.5-VL-3B-Instruct",
@@ -171,6 +172,47 @@ class D9R15RosterTests(unittest.TestCase):
         self.assertTrue(all(v == "PENDING" for v in self.freeze["frozen_components"].values()))
         self.assertEqual(self.roster["d9_checklist"]["6_final_model_roles_and_backup_substitutions"], "PENDING")
 
+    def test_live_provenance_membership_and_only_authorized_overlay_changes(self):
+        current = load(PROVENANCE)
+        before = strict_json(baseline(PROVENANCE))
+        revision = current["roster_revision"]
+        expected = before["roster_revision"].copy()
+        expected.update(
+            roster_revision="D9R15_FIVE_MODEL_ROSTER_AND_EXPLORATORY_GROUNDING",
+            roster_revision_reason="PRE_FREEZE_ROSTER_EXPANSION_D9R6_SOLE_PRIMARY_5_CANDIDATE",
+            task="W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING",
+            base_main_sha=BASE,
+            active_primary_keys=[m["key"] for m in self.roster["primary_models"]],
+            active_backup_keys=[m["key"] for m in self.roster["backups_in_order"]],
+            historical_record_semantics=(
+                "All model/source documentary records, including their historical roster_group/order, "
+                "runtime/license facts and unresolved items, remain historical evidence. Current D9R15 "
+                "membership is exclusively these current active key lists and local_models.d9.json, "
+                "which must agree. Historical documentary runtime wording is not the later smoke status."),
+        )
+        self.assertEqual(revision, expected)  # Also protects retired_keys and all other overlay fields.
+        before["roster_revision"] = expected
+        self.assertEqual(current, before)  # All model/source and top-level documentary facts preserved.
+        marker = b'  "roster_revision": {'
+        self.assertEqual((ROOT / PROVENANCE).read_bytes().replace(b"\r\n", b"\n").rsplit(marker, 1)[0],
+                         baseline(PROVENANCE).replace(b"\r\n", b"\n").rsplit(marker, 1)[0])
+
+    def test_giant_review_resolved_per_model_without_new_review(self):
+        for config, field in ((self.roster, "synthetic_gate"), (self.freeze, "synthetic_external_gate")):
+            self.assertEqual(config[field]["status"], "RESOLVED_CAPABILITY_AWARE")
+            self.assertEqual(config[field]["qualitative_giant_box_review_procedure"],
+                             "RESOLVED_PER_MODEL_SEE_MODEL_EVIDENCE")
+        for model_id in (IDS[0], IDS[1], IDS[4]):
+            result = load(self.models[model_id]["external_gate_evidence"])
+            self.assertEqual(result["giant_box_review_status"], "NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE")
+            self.assertEqual(result["giant_box_reviews"], [])
+        self.assertEqual(self.models[IDS[2]]["external_gate_status"], "NOT_RUN")
+        moon = self.models[IDS[3]]
+        self.assertEqual(moon["external_gate_status"], "PASS")
+        note = (ROOT / moon["external_gate_evidence"].split("#", 1)[0]).read_text(encoding="utf-8")
+        for case in ("A_1", "A_2", "B_1", "B_2", "C_1", "C_2", "D_1", "D_2"):
+            self.assertIn(f"| `{case}` | `NO_GIANT` |", note)
+
     def test_execution_code_fixtures_and_all_historical_evidence_unchanged(self):
         # A strict allowlist across all execution/config roots protects D5, gate,
         # parsers, runners, schemas, prompts, frozen fixtures and earlier records.
@@ -181,7 +223,7 @@ class D9R15RosterTests(unittest.TestCase):
                      "notes/w2_metrics_statistics_decision_brief.md"]
         changed = subprocess.check_output(
             ["git", "diff", "--name-only", BASE, "--", *protected], cwd=ROOT, text=True).splitlines()
-        self.assertLessEqual(set(changed), {ROSTER, FREEZE})
+        self.assertLessEqual(set(changed), {ROSTER, FREEZE, PROVENANCE})
         # Compare the D9R14 Git content hash independently, including when staged.
         path = "configs/pre_freeze/paligemma_external_gate_result.v1.json"
         current = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")

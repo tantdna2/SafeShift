@@ -76,8 +76,10 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             self.assertEqual(p['model_id'], m['model_id'])
             self.assertEqual(p['immutable_revision'], m['immutable_revision'])
         revision = self.provenance['roster_revision']
-        self.assertEqual(revision['active_primary_keys'], [m[0] for m in PRIMARY])
-        self.assertEqual(revision['active_backup_keys'], [m[0] for m in BACKUPS])
+        self.assertEqual(revision['active_primary_keys'], [m['key'] for m in self.primary])
+        self.assertEqual(revision['active_backup_keys'], [m['key'] for m in self.backups])
+        self.assertEqual(revision['roster_revision'], self.roster['roster_revision'])
+        self.assertEqual(revision['roster_revision'], 'D9R15_FIVE_MODEL_ROSTER_AND_EXPLORATORY_GROUNDING')
 
     def test_06_no_duplicate_ids_or_keys(self):
         for records in (self.active, self.provenance['models']):
@@ -156,7 +158,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             self.assertIs(c['inspecsafe_performance_used'], False)
             self.assertTrue(c['roster_revision_before_protocol_freeze'])
             self.assertTrue(c['roster_revision_before_inspecsafe'])
-            expected = REASON if c is self.provenance['roster_revision'] else 'PRE_FREEZE_ROSTER_EXPANSION_D9R6_SOLE_PRIMARY_5_CANDIDATE'
+            expected = 'PRE_FREEZE_ROSTER_EXPANSION_D9R6_SOLE_PRIMARY_5_CANDIDATE'
             self.assertEqual(c['roster_revision_reason'], expected)
         for key, value in walk([self.roster, self.provenance, self.freeze]):
             if key in {'inspecsafe_performance_used', 'inspecsafe_used', 'replacement_selection_used_inspecsafe_results'}:

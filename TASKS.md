@@ -82,7 +82,8 @@ Current authority: [D9R15](DECISIONS.md#d9r15--five-model-seminar-roster-and-exp
 and the [readiness matrix](notes/w2_d9_freeze_readiness_reconciliation.md).
 
 - [x] **1. Model provenance:** Five primaries and one remaining backup retain
-  documentary identity/revision evidence; historical provenance stays unchanged.
+  documentary identity/revision evidence; historical model/source evidence stays
+  unchanged and current provenance active key lists match the D9R15 live roster.
 - [x] **2. Runners:** All five runners COMPLETE/runtime PASS_VALIDATED; PaliGemma
   exact model/revision and single-T4 runtime verified by merged D9R9 evidence.
 - [ ] **3. Decoding:** Final research conditions for all five await freeze.
@@ -870,6 +871,14 @@ token-budget increase, giant-box review or merge in this recording task.
   See [D9R15 validation](notes/w2_d9_freeze_readiness_reconciliation.md#d9r15-validation).
 - [x] Commit implementation (`c3594f6`) and open [Draft PR #62](https://github.com/tantdna2/SafeShift/pull/62)
   to main after validation. Independent review pending; NOT MERGED.
+- [x] Reconcile current provenance roster_revision to D9R15; retain historical
+  model/source evidence and retired keys. Test active lists against LIVE roster.
+- [x] Resolve current giant-box procedure field per model evidence; preserve
+  Moondream NO_GIANT review and failed/ineligible-model review applicability.
+- [x] Follow-up validation: D9R15 12/12 PASS; focused 215 tests, one existing
+  D9R1 allowlist failure. Full suite 1232 tests, same 4 failures / 24 errors and
+  same 28 failing/error identities as BASE; no new regression. Strict JSON 3/3
+  and diff check PASS. Historical documentary evidence and result bytes preserved.
 - [ ] Production qualification, exploratory reporting implementation/freeze and
   protocol freeze remain PENDING. InspecSafe authorization=false.
 

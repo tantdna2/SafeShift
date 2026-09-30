@@ -24,8 +24,11 @@ qualified by roster membership.
 PaliGemma is PRIMARY_5 / INDEPENDENT_GOOGLE_PALIGEMMA_CONTRAST, the sole
 candidate precommitted in D9R6. This is pre-freeze roster expansion, not backup
 substitution; no InspecSafe performance was used. SmolVLM2 is now the sole ordered
-BACKUP_1 and remains unactivated. Historical provenance/precommit/result snapshots
-retain their original membership fields. D9R14 PALIGEMMA_PROMOTION=NO is preserved
+BACKUP_1 and remains unactivated. Historical model/source documentary records and
+precommit/result snapshots retain their original facts. Current provenance
+roster_revision active key lists are reconciled with D9R15 live membership.
+Giant-box review requirements are resolved per model evidence, with no new review.
+D9R14 PALIGEMMA_PROMOTION=NO is preserved
 under its old qualification contract; D9R15 supersedes only that roster-design
 restriction, without changing any gate verdict or qualification.
 

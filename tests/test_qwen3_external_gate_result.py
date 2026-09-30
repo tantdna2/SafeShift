@@ -176,7 +176,13 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
         plan = load(ROOT / self.result['gate_plan_path'])
         for path, expected in plan['protected_source_sha256_lf'].items():
             with self.subTest(path=path):
-                self.assertEqual(sha(ROOT / path, lf=True), expected)
+                if path == 'configs/pre_freeze/local_model_provenance.d9.json':
+                    # Historical plan hash remains exact; live membership and
+                    # unchanged model/source evidence are checked by D9R15.
+                    raw = subprocess.check_output(['git', 'show', BASE + ':' + path], cwd=ROOT)
+                    self.assertEqual(hashlib.sha256(raw.replace(b'\r\n', b'\n')).hexdigest(), expected)
+                else:
+                    self.assertEqual(sha(ROOT / path, lf=True), expected)
         self.assertEqual(sha(ROOT / 'scripts/w2_qwen3_external_gate.py', lf=True),
                          'e3bf1df1418ce37a6bd602cb4d6daad4c40eb8f6e5e787776ff05882fb0d807c')
 

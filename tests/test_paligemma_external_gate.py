@@ -130,9 +130,10 @@ class PlanTests(unittest.TestCase):
         paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", q.BASE_SHA,
                                          "--", *roots], cwd=q.ROOT, text=True).splitlines()
         for path in paths:
-            # D9R15 updates the live roster and unfrozen template only; dedicated
-            # tests pin all evidence and execution contracts against D9R15 BASE.
+            # D9R15 changes current roster overlays; dedicated D9R15 tests also
+            # compare all documentary provenance content outside its overlay.
             if path in {"configs/pre_freeze/local_models.d9.json",
+                        "configs/pre_freeze/local_model_provenance.d9.json",
                         "configs/pre_freeze/freeze_manifest.d9.template.json"}:
                 continue
             original = subprocess.check_output(["git", "show", f"{q.BASE_SHA}:{path}"], cwd=q.ROOT)

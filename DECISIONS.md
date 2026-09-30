@@ -1591,7 +1591,13 @@
   does not qualify production classification or its adapter. PaliGemma
   classification_interface_status remains PENDING_QUALIFICATION, production
   adapter NOT_QUALIFIED, and [D9R14 grounding FAIL](configs/pre_freeze/paligemma_external_gate_result.v1.json)
-  is preserved. Historical runtime plans, provenance and result files stay intact.
+  is preserved. Historical runtime plans and result files stay intact; all
+  model/source documentary provenance evidence is unchanged. The current
+  provenance `roster_revision` overlay is reconciled to D9R15 (five active
+  primaries, SmolVLM2-only backup), without rewriting historical per-model facts.
+  Giant-box procedure status is RESOLVED_PER_MODEL_SEE_MODEL_EVIDENCE: Moondream
+  has eight NO_GIANT reviews; Qwen3/Qwen2.5/PaliGemma require none after automatic
+  failure; InternVL3 is interface-ineligible / gate NOT_RUN. No new review.
 - **Remaining blockers:** Roster membership is resolved; classification/adapters,
   final production roles, research decoding, D5 implementation and separate
   exploratory reporting implementation/freeze remain pending. Checklist #1/#2/#5

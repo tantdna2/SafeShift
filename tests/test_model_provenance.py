@@ -66,6 +66,10 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertEqual([m["order"] for m in self.models], [1, 2, 3, 4, 1, 2])
 
     def test_roster_consistency_across_all_three_configs(self):
+        revision = self.spec["roster_revision"]
+        self.assertEqual(revision["active_primary_keys"], [m["key"] for m in self.roster["primary_models"]])
+        self.assertEqual(revision["active_backup_keys"], [m["key"] for m in self.roster["backups_in_order"]])
+        self.assertEqual(revision["roster_revision"], self.roster["roster_revision"])
         self.assertEqual([m["model_id"] for m in self.roster["primary_models"]],
                          [m["model_id"] for m in self.freeze["primary_models"]])
         self.assertEqual([m["model_id"] for m in self.roster["backups_in_order"]], self.freeze["backup_order"])

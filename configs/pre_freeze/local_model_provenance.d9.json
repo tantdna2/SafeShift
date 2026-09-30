@@ -2173,23 +2173,23 @@
     }
   ],
   "roster_revision": {
-    "roster_revision": "D9R1_T4_RESOURCE_FEASIBILITY",
-    "roster_revision_reason": "PRE_FREEZE_RESOURCE_CONSTRAINT",
+    "roster_revision": "D9R15_FIVE_MODEL_ROSTER_AND_EXPLORATORY_GROUNDING",
+    "roster_revision_reason": "PRE_FREEZE_ROSTER_EXPANSION_D9R6_SOLE_PRIMARY_5_CANDIDATE",
     "roster_revision_before_protocol_freeze": true,
     "roster_revision_before_inspecsafe": true,
     "inspecsafe_performance_used": false,
     "paid_gpu_required_by_policy": false,
     "free_gpu_target": "COLAB_T4_OR_KAGGLE_T4_CLASS",
-    "task": "W2.6-D9R1",
-    "base_main_sha": "36b934b37ff064bb097860f0a0aef43897938a64",
+    "task": "W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING",
+    "base_main_sha": "9948570820b5ed8a774b8e226b80e24055e705cf",
     "active_primary_keys": [
       "qwen3_vl_8b_instruct",
       "qwen2_5_vl_3b_instruct",
       "internvl3_2b_hf",
-      "moondream2_2025_06_21"
+      "moondream2_2025_06_21",
+      "paligemma_3b_mix_448"
     ],
     "active_backup_keys": [
-      "paligemma_3b_mix_448",
       "smolvlm2_2_2b_instruct"
     ],
     "retired_keys": [
@@ -2199,7 +2199,7 @@
       "paligemma2_10b_mix_448",
       "minicpm_v_4_6"
     ],
-    "historical_record_semantics": "Original six W2.6B0 model records, their roster_group/order, sources and unresolved items are preserved as historical evidence. Current membership is exclusively the active key lists and local_models.d9.json. Historical documentary runtime wording is not the later smoke status.",
+    "historical_record_semantics": "All model/source documentary records, including their historical roster_group/order, runtime/license facts and unresolved items, remain historical evidence. Current D9R15 membership is exclusively these current active key lists and local_models.d9.json, which must agree. Historical documentary runtime wording is not the later smoke status.",
     "retired_records_config": "configs/pre_freeze/local_models.d9.json",
     "qwen3_runtime_evidence": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json",
     "ovis_historical_runtime_evidence": "configs/pre_freeze/ovis_gpu_smoke_result.v1.json"

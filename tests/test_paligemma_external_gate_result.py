@@ -164,9 +164,10 @@ class PaliGemmaExternalGateResultTests(unittest.TestCase):
         changed = subprocess.check_output(
             ["git", "diff", "--name-only", BASE, "--", *protected], cwd=ROOT,
             text=True).splitlines()
-        # Only current roster/template policy may change after D9R14.
-        # D9R15 tests additionally pin RESULT and all evidence against its BASE.
+        # D9R15 tests pin RESULT and documentary provenance outside its current
+        # membership overlay; no historical result or execution contract changes.
         self.assertLessEqual(set(changed), {ROSTER, RESULT,
+                                          "configs/pre_freeze/local_model_provenance.d9.json",
                                           "configs/pre_freeze/freeze_manifest.d9.template.json"})
 
 
