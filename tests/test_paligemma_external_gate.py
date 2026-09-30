@@ -130,6 +130,11 @@ class PlanTests(unittest.TestCase):
         paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", q.BASE_SHA,
                                          "--", *roots], cwd=q.ROOT, text=True).splitlines()
         for path in paths:
+            # D9R14 adds result-only fields to the live roster. Its dedicated
+            # result test checks the entire roster against the exact base plus
+            # those fields; keep every frozen execution contract pinned here.
+            if path == "configs/pre_freeze/local_models.d9.json":
+                continue
             original = subprocess.check_output(["git", "show", f"{q.BASE_SHA}:{path}"], cwd=q.ROOT)
             current = (q.ROOT / path).read_bytes()
             if not path.endswith(".png"):
