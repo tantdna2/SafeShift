@@ -1,0 +1,122 @@
+{
+  "schema_version": "paligemma-external-gate-result-v1",
+  "record_kind": "RESEARCH_LEAD_AUDITED_REAL_GATE_RESULT",
+  "task_name": "W2.6-D9R14-PALIGEMMA-EXTERNAL-GATE-RESULT-RECORD",
+  "recording_base_sha": "0b5d5b77106920738569d3b80b982ed231f3b645",
+  "source": {
+    "authority": "Research Lead / Project Owner D9R14 instruction",
+    "bundle_inspected_and_rehashed_by": "RESEARCH_LEAD",
+    "recording_basis": "Transcribed supplied audit findings; recording agent did not independently inspect or rehash the bundle",
+    "bundle_and_raw_bytes_committed": false,
+    "checksums_file": "checksums.json",
+    "artifact_count": 87,
+    "sha256_and_size_matches": 87
+  },
+  "bundle_name": "d9r13_result_bundle.zip",
+  "bundle_sha256": "68271facab4e9b272eb4cf5b19e0a5e0c5767e5b008bdfe09ae0ae43c8332ecd",
+  "execution_commit": "bcc7b7be62891c887e9509dd39688d686a1b6020",
+  "gate_plan_path": "configs/pre_freeze/paligemma_external_gate.v1.json",
+  "gate_plan_sha256": "c3b5fb2a1df79f3476e3775fccefbe2f767edab453ba2a238742c4c5f89d4387",
+  "manifest_path": "configs/pre_freeze/external_gate_cases.v1.json",
+  "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
+  "provenance_path": "configs/pre_freeze/external_gate_cases.v1.provenance.json",
+  "provenance_sha256": "0b16be7408784c35bc3dc1a541f008b8086c4fa250957082a236d71ed3fe2e96",
+  "suite_version": "synthetic-v1",
+  "model_id": "google/paligemma-3b-mix-448",
+  "model_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+  "runtime": {
+    "accelerator": "Tesla T4",
+    "accelerator_count": 1,
+    "model_load_count": 1,
+    "native_generate_calls": 8,
+    "classification_calls": 0,
+    "internet": "OFF",
+    "raw_before_parser": "VERIFIED"
+  },
+  "execution_status": "COMPLETED",
+  "status": "GATE_FAIL",
+  "automatic_gate_status": "FAIL",
+  "systematic_tracking": false,
+  "gate_errors": [
+    "predictions do not track systematic target positions"
+  ],
+  "cases": [
+    {"case_id": "A_1", "parse_status": "SUCCESS"},
+    {
+      "case_id": "A_2",
+      "parse_status": "SCHEMA_ERROR",
+      "parser_outcome": "PARSER_FAIL_NO_REPAIR",
+      "native_output": "<loc0386><loc0639><loc0639><loc0895> red square ; <loc0384><loc0134><loc0634><loc0390> red square<eos>",
+      "detection_count": 2,
+      "parsed_bbox": null,
+      "failure_kind": "MODEL_OUTPUT_SCHEMA_FAILURE_NOT_RUNTIME_ERROR"
+    },
+    {"case_id": "B_1", "parse_status": "SUCCESS"},
+    {"case_id": "B_2", "parse_status": "SUCCESS"},
+    {"case_id": "C_1", "parse_status": "SUCCESS"},
+    {
+      "case_id": "C_2",
+      "parse_status": "SCHEMA_ERROR",
+      "parser_outcome": "PARSER_FAIL_NO_REPAIR",
+      "native_output": "<loc0634><loc0641><loc0895><loc0895> yellow triangle ; <loc0124><loc0128><loc0382><loc0384> yellow triangle<eos>",
+      "detection_count": 2,
+      "parsed_bbox": null,
+      "failure_kind": "MODEL_OUTPUT_SCHEMA_FAILURE_NOT_RUNTIME_ERROR"
+    },
+    {"case_id": "D_1", "parse_status": "SUCCESS"},
+    {"case_id": "D_2", "parse_status": "SUCCESS"}
+  ],
+  "strict_success_count": 6,
+  "canonical_parsed_bbox_count": 6,
+  "schema_error_count": 2,
+  "success_iou_diagnostic_range": {
+    "minimum_approx": 0.921,
+    "maximum_approx": 0.977,
+    "scope": "SIX_SUCCESS_CASES_ONLY"
+  },
+  "evidence_limits": "Run ID, execution date, per-case raw hashes, successful native strings, exact successful bboxes and individual IoUs were not supplied; not reconstructed or invented.",
+  "parser_boundary": {
+    "native_order": ["y_min", "x_min", "y_max", "x_max"],
+    "native_coordinate_range": [0, 1023],
+    "canonical_mapping": "[x_min/1024.0,y_min/1024.0,x_max/1024.0,y_max/1024.0]",
+    "clamp": false,
+    "repair": false,
+    "select_first_box": false,
+    "drop_extra_detections": false
+  },
+  "iou_usage": "DIAGNOSTIC_ONLY",
+  "iou_threshold": null,
+  "artificial_zero_iou": false,
+  "paligemma_external_gate_status": "FAIL",
+  "grounding_qualification": "FAIL",
+  "rerun_required": "NO",
+  "human_giant_box_review_required_for_decision": "NO",
+  "giant_box_review_status": "NOT_REQUIRED_AFTER_AUTOMATIC_GATE_FAILURE",
+  "giant_box_reviews": [],
+  "paligemma_promotion": "NO",
+  "classification_interface_status": "PENDING_QUALIFICATION",
+  "paligemma_role": "BACKUP_1",
+  "primary_roster_count": 4,
+  "exploratory_grounding_participation": false,
+  "negative_evidence": {
+    "path": "configs/pre_freeze/paligemma_interface_runtime_result.v1.json",
+    "sha256": "555701224f8b745391c65e75c5ff876bc039648fa1f4da02bc96403a3112e736",
+    "case_id": "grd_d",
+    "finding": "D9R11 target-absent case hallucinated a parseable red-square detection. Preserved unchanged; not successful abstention or parser failure. No extra case added to the frozen gate."
+  },
+  "approved_interpretation": "PaliGemma failed the frozen SafeShift qualifying external box-interface gate under the pre-specified prompt, decoding and parser. Six cases produced canonical successes; two actual two-detection outputs violated the single-box schema. This does not establish a general inability to localize.",
+  "protocol_freeze_commit_sha": "PENDING",
+  "protocol_freeze_blocked": true,
+  "inspecsafe_inference_authorized": false,
+  "inspecsafe_status": "NOT_RUN",
+  "recording_task_execution": {
+    "model_rerun": false,
+    "gpu": false,
+    "gate_rerun": false,
+    "inspecsafe": false,
+    "human_giant_box_review": false,
+    "output_repair": false,
+    "token_budget_increase": false,
+    "protocol_change": false
+  }
+}

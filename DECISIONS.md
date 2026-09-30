@@ -1511,6 +1511,35 @@
   processor strings with a fake backend. Static/JSON/diff checks only; no actual
   GPU/model/Kaggle/gate/InspecSafe execution, promotion or merge.
 
+## D9R14 — PaliGemma external gate result resolution (2026-09-30)
+
+- **Authority/scope:** Research Lead's explicit
+  W2.6-D9R14-PALIGEMMA-EXTERNAL-GATE-RESULT-RECORD instruction. Result resolution
+  only; no new protocol, metric, role, roster or exploratory grounding policy.
+- **Evidence:** Research Lead independently verified 87/87 artifact SHA-256 and
+  sizes in `d9r13_result_bundle.zip`, bundle SHA-256
+  `68271facab4e9b272eb4cf5b19e0a5e0c5767e5b008bdfe09ae0ae43c8332ecd`, execution
+  `bcc7b7be62891c887e9509dd39688d686a1b6020`. Codex transcribes supplied findings;
+  no independent raw-bundle audit or rerun. Exact authority and observations:
+  [result record](configs/pre_freeze/paligemma_external_gate_result.v1.json).
+- **Resolution:** PALIGEMMA_EXTERNAL_GATE_STATUS=FAIL; GROUNDING_QUALIFICATION=FAIL;
+  RERUN_REQUIRED=NO; HUMAN_GIANT_BOX_REVIEW_REQUIRED_FOR_DECISION=NO;
+  PALIGEMMA_PROMOTION=NO; CLASSIFICATION_INTERFACE_STATUS=PENDING_QUALIFICATION.
+  Automatic gate FAIL with systematic_tracking=false; A_1/B_1/B_2/C_1/D_1/D_2
+  SUCCESS and A_2/C_2 SCHEMA_ERROR / PARSER_FAIL_NO_REPAIR. Both invalid outputs
+  contain two real detections; no first-box selection, discarded second box,
+  grammar/parser repair or reclassification as runtime error.
+- **Preserved finding:** D9R11 grd_d target-absent parseable red-square detection
+  remains semantic hallucination/target-selectivity failure, not abstention or
+  parser failure. Native yxyx -> canonical xyxy /1024, no /1023/clamp/repair;
+  IoU is diagnostic only, with no artificial zeros or threshold changes.
+- **Status boundary:** Supersedes historical PaliGemma external-gate/grounding
+  pending milestones only. BACKUP_1, four primaries and existing policies stay
+  unchanged. No exploratory participation or 4-to-5 expansion here; those require
+  a separate PR after this record merges. Classification remains pending,
+  protocol freeze blocked, InspecSafe unauthorized. No real model/GPU/gate rerun,
+  giant-box review, output repair, budget increase or merge in this task.
+
 ## Template
 
 - **ID:** <DEC-...>

@@ -130,6 +130,33 @@ riêng; không suy ra kết quả từ kế hoạch.
   links the existing gate contract and artifact layout. No new runtime outputs,
   dataset metrics or freeze claim. **NO REAL RUNTIME EXECUTION** in this task.
 
+## W2.6-D9R14-PALIGEMMA-EXTERNAL-GATE-RESULT-RECORD — existing audited run
+
+- **Source:** Research Lead inspected `d9r13_result_bundle.zip` and independently
+  verified SHA-256 and size for 87/87 artifacts in `checksums.json`. This entry
+  transcribes supplied findings; Codex did not inspect/rehash the raw bundle.
+- **Bundle SHA-256:** `68271facab4e9b272eb4cf5b19e0a5e0c5767e5b008bdfe09ae0ae43c8332ecd`.
+- **Execution commit:** `bcc7b7be62891c887e9509dd39688d686a1b6020`;
+  recording base `0b5d5b77106920738569d3b80b982ed231f3b645`.
+  Run ID and execution date were not supplied.
+- **Condition:** `google/paligemma-3b-mix-448` at
+  `ead2d9a35598cb89119af004f5d023b311d1c4a1`; one Tesla T4, one model load,
+  eight native generations, zero classification calls, Internet OFF,
+  raw-before-parser VERIFIED. Frozen synthetic-v1 inputs and
+  `configs/pre_freeze/paligemma_external_gate.v1.json` unchanged.
+- **Result:** A_1/B_1/B_2/C_1/D_1/D_2 SUCCESS; A_2/C_2 SCHEMA_ERROR /
+  PARSER_FAIL_NO_REPAIR from actual two-detection outputs, not runtime errors.
+  External gate FAIL, systematic_tracking=false, grounding qualification FAIL.
+  Successful-case IoU approximately 0.921–0.977 is diagnostic only.
+- **Resolution:** No rerun or human giant-box review required; promotion NO;
+  classification interface PENDING_QUALIFICATION. D9R11 target-absent parseable
+  red-square hallucination preserved. BACKUP_1 and four primaries unchanged.
+- **Evidence:** [Result note](notes/w2_paligemma_external_gate_result.md) and
+  [machine-readable record](configs/pre_freeze/paligemma_external_gate_result.v1.json)
+  contain exact supplied hashes, outputs and decision. No raw bundle bytes in Git.
+  No model/GPU/gate rerun, InspecSafe, repair, budget increase, human review,
+  protocol/metric/policy change, exploratory participation or merge in this task.
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>

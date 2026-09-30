@@ -626,6 +626,13 @@ backup activation or merge.
 
 ## W2.6-D9R6-PALIGEMMA-PRIMARY-EXPANSION-PRECOMMIT (2026-09-28)
 
+**Current PaliGemma result overlay (D9R14):** External gate **FAIL**, grounding
+qualification **FAIL**, rerun **NO**, human giant-box review required **NO**,
+promotion **NO**; classification interface **PENDING_QUALIFICATION**.
+BACKUP_1 / four primaries remain unchanged. Earlier D9R6–D9R13 pending entries
+below are historical milestones, superseded only for the recorded results.
+See [audited result](notes/w2_paligemma_external_gate_result.md).
+
 - [x] Record the Research Lead's sole pre-specified PaliGemma primary-expansion
   candidate, exact immutable revision and separate precommit qualification
   contract before protocol freeze and before any InspecSafe inference.
@@ -786,7 +793,8 @@ the same Draft PR #60. Use the exact eight frozen external cases used by Qwen/Mo
 - [x] Preserve D9R11 target-absent hallucination; no extra gate case.
 - [x] Prepare separate offline finalization with explicit human giant-box review;
   automatic gate success remains PENDING_REVIEW until that review. No promotion.
-- [ ] Research Lead PREP review and actual frozen external gate: NOT_RUN.
+- [x] Actual frozen external gate completed and Research Lead reviewed: **FAIL**;
+  six SUCCESS / two SCHEMA_ERROR, recorded in D9R14 below.
 - [ ] Production classification: PENDING_QUALIFICATION; no C1 artifacts invented,
   no classification calls, and missing C1 policy/cases do not block this gate.
 
@@ -795,3 +803,24 @@ Base: `a3192ddefbc28fe2997190819744e8f4796a6d85`; latest correction starts at
 BACKUP_1, four primaries, freeze BLOCKED, InspecSafe authorized=false.
 See [frozen external gate preparation](notes/w2_paligemma_production_interface_freeze_prep.md).
 No GPU/model/Kaggle/provisioning/gate/InspecSafe execution, promotion or merge.
+
+## W2.6-D9R14-PALIGEMMA-EXTERNAL-GATE-RESULT-RECORD
+
+- [x] Transcribe Research Lead-verified bundle identity, 87/87 artifact SHA/size
+  matches, execution commit, frozen authority and one-T4/eight-call runtime.
+- [x] Record A_1/B_1/B_2/C_1/D_1/D_2 SUCCESS and A_2/C_2 SCHEMA_ERROR /
+  PARSER_FAIL_NO_REPAIR; preserve both exact two-detection native outputs.
+- [x] External gate **FAIL**, systematic_tracking=false; grounding qualification
+  **FAIL**. Rerun **NO**; human giant-box review required for decision **NO**;
+  promotion **NO**. No artificial zero IoU or output repair.
+- [x] Preserve D9R11 target-absent parseable red-square hallucination.
+- [x] Run 104 focused tests (PASS), strict JSON 2/2, scoped secret/text checks
+  and diff check (PASS). Full suite: 1219 tests, 4 failures / 24 errors; the same
+  issues reproduce in the read-only BASE-roster control. See result-note limits.
+- [ ] Classification interface remains **PENDING_QUALIFICATION**.
+
+Current result: [note](notes/w2_paligemma_external_gate_result.md) and
+[machine-readable record](configs/pre_freeze/paligemma_external_gate_result.v1.json).
+BACKUP_1, four primaries, existing role/exploratory policy, blocked freeze and
+InspecSafe authorization=false unchanged. No model/GPU/gate rerun, InspecSafe,
+token-budget increase, giant-box review or merge in this recording task.
