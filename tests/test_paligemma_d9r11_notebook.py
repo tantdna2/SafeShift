@@ -34,6 +34,11 @@ class StaticTests(unittest.TestCase):
                          "safeshift/runners/storage.py", "requirements-paligemma-t4.txt"):
             committed = subprocess.check_output(["git", "show", EXECUTION + ":" + relative], cwd=q.ROOT)
             local = (q.ROOT / relative).read_bytes()
+            if relative == "safeshift/runners/paligemma.py":
+                # D9R16 adds a source kind only; test the original notebook's
+                # runner at the merged pre-D9R16 snapshot, not a future runner.
+                local = subprocess.check_output(["git", "show",
+                    "ecab4cfa6fd844fbada232975ed4494ea719a90b:" + relative], cwd=q.ROOT)
             self.assertEqual(committed.replace(b"\r\n", b"\n"), local.replace(b"\r\n", b"\n"))
         self.assertIn("/" + q.PLAN + " text eol=lf", (q.ROOT / ".gitattributes").read_text())
 

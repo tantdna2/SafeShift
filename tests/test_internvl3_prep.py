@@ -545,7 +545,7 @@ class SnapshotAndStaticTests(unittest.TestCase):
         for source in (runner, harness):
             for forbidden in ("data/raw", "InspecSafe-V1", "dataset_manifest", "snapshot_download(", "--image-path"):
                 self.assertNotIn(forbidden, source)
-        self.assertIn('source_kind != "HANDCRAFTED_RUNTIME_SMOKE"', runner)
+        self.assertIn('source_kind not in {"HANDCRAFTED_RUNTIME_SMOKE", "EXTERNAL_CLASSIFICATION_QUALIFICATION"}', runner)
 
 
 if __name__ == "__main__":

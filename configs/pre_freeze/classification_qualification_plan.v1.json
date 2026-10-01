@@ -1,0 +1,105 @@
+{
+  "task": "W2.6-D9R16-FIVE-MODEL-CLASSIFICATION-QUALIFICATION-PREP",
+  "suite": "external-classification-qualification-v1",
+  "manifest": "configs/pre_freeze/classification_qualification_cases.v1.json",
+  "source_kind": "EXTERNAL_CLASSIFICATION_QUALIFICATION",
+  "status": "PREPARED_PENDING_REVIEW",
+  "classification_results": "NOT_RUN",
+  "execution_authorized_in_prep": false,
+  "execution_requires": "PREP_PR_MERGED_AND_SEPARATE_RESEARCH_LEAD_AUTHORIZATION",
+  "base_sha": "ecab4cfa6fd844fbada232975ed4494ea719a90b",
+  "policy_definition": "safeshift/qualification/classification.py#POLICY",
+  "prompt_definitions": "safeshift/qualification/classification.py#prompt_for",
+  "parser_definition": "safeshift/qualification/classification.py#CandidateAdapter",
+  "execution_pin": "RESEARCH_LEAD_APPROVED_EXACT_COMMIT_AND_CLEAN_CHECKOUT_REQUIRED",
+  "models": {
+    "qwen3": {
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "runtime_plan": "configs/pre_freeze/qwen_kaggle_smoke.v1.json",
+      "software_evidence": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json#software_versions",
+      "hardware": "VALIDATED_T4X2_ANCHOR",
+      "candidate_adapter": "EXISTING_STRICT_QWEN3_CLASSIFICATION_PATH",
+      "output_contract": "STRICT_SINGLE_FIELD_CLASSIFICATION_JSON",
+      "classification_status": "CANDIDATE"
+    },
+    "qwen2_5": {
+      "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+      "runtime_plan": "configs/pre_freeze/qwen2_5_t4_runtime.v1.json",
+      "hardware": "SINGLE_T4",
+      "candidate_adapter": "EXISTING_STRICT_QWEN2_5_CLASSIFICATION_PATH",
+      "output_contract": "STRICT_SINGLE_FIELD_CLASSIFICATION_JSON",
+      "classification_status": "CANDIDATE"
+    },
+    "internvl3": {
+      "model_id": "OpenGVLab/InternVL3-2B-hf",
+      "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+      "runtime_plan": "configs/pre_freeze/internvl3_t4_runtime.v1.json",
+      "hardware": "SINGLE_T4",
+      "candidate_adapter": "NATIVE_ENVELOPE_THEN_STRICT_CLASSIFICATION_JSON",
+      "output_contract": "STRICT_SINGLE_FIELD_CLASSIFICATION_JSON",
+      "classification_status": "CANDIDATE"
+    },
+    "moondream": {
+      "model_id": "vikhyatk/moondream2",
+      "revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "runtime_plan": "configs/pre_freeze/moondream_t4_runtime.v1.json",
+      "hardware": "SINGLE_T4_EXISTING_PRECISION_BRIDGE",
+      "candidate_adapter": "EXACT_NATIVE_QUERY_ANSWER_THEN_STRICT_CLASSIFICATION_JSON",
+      "output_contract": "STRICT_SINGLE_FIELD_CLASSIFICATION_JSON",
+      "classification_status": "CANDIDATE"
+    },
+    "paligemma": {
+      "model_id": "google/paligemma-3b-mix-448",
+      "revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "runtime_plan": "configs/pre_freeze/paligemma_t4_runtime.v1.json",
+      "hardware": "SINGLE_T4_FP16",
+      "candidate_adapter": "EXACT_NATIVE_ENVELOPE_THEN_EXACT_LEVEL_STRING",
+      "output_contract": "EXACTLY_ONE_OF_Level01_Level02_Level03_Level04",
+      "classification_status": "PENDING_QUALIFICATION",
+      "native_wrapper": "answer en; native processor image+text; no chat template",
+      "source": "https://ai.google.dev/gemma/docs/paligemma/prompt-system-instructions",
+      "source_scope": "Native answer en question prefix only; artificial-policy compliance is untested"
+    }
+  },
+  "per_model": {
+    "model_loads": 1,
+    "classification_calls": 8,
+    "grounding_calls": 0,
+    "precision": "FP16",
+    "quantization": "NONE",
+    "batch_size": 1,
+    "decoding_and_output_budget": "EXACT_EXISTING_RUNTIME_PLAN_UNCHANGED",
+    "raw_order": ["PERSIST_NATIVE_BYTES", "VERIFY_CHECKSUM", "VERIFY_METADATA", "CANDIDATE_PARSE", "RESULT"],
+    "retry_count": 0,
+    "repair_count": 0,
+    "prompt_parser_policy_changes_within_run": false
+  },
+  "pass_requires": ["8_COMPLETED_CALLS", "8_VERIFIED_RAW_OUTPUTS_BEFORE_PARSE", "8_PARSE_SUCCESS",
+    "8_EXACT_EXPECTED_LEVELS", "ALL_FOUR_LEVELS_COVERED", "NO_RETRY_REPAIR_OR_BUDGET_CHANGE"],
+  "failure_policy": {
+    "infrastructure_or_runtime": "INCONCLUSIVE; never a capability FAIL without valid model evidence",
+    "interface_or_format": "FAIL/PENDING_REVIEW",
+    "semantic_classification": "FAIL/PENDING_REVIEW",
+    "prior_valid_model_failure_then_runtime_failure": "FAIL; retain both causes",
+    "model_role_after_any_run": "PENDING_RESEARCH_LEAD_REVIEW",
+    "automatic_model_removal": false,
+    "automatic_backup_activation": false,
+    "automatic_production_promotion": false
+  },
+  "rerun_policy": {
+    "automatic_rerun": false,
+    "research_lead_separate_decision_required": true,
+    "infrastructure_rerun": "Record reason; unchanged prompt/parser/policy",
+    "new_interface_adapter": "Separate prospective task/PR before rerun; no output-specific rescue",
+    "inspecsafe_adapter_design": false
+  },
+  "NOT_INSPECSAFE": true,
+  "NOT_ACCURACY_BENCHMARK": true,
+  "ranking_models": false,
+  "no_model_removal": true,
+  "production_classification_qualified": false,
+  "protocol_freeze": "PENDING",
+  "inspecsafe_inference_authorized": false
+}

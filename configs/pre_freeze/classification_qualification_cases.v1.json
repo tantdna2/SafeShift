@@ -1,0 +1,69 @@
+{
+  "suite": "external-classification-qualification-v1",
+  "version": 1,
+  "source_kind": "EXTERNAL_CLASSIFICATION_QUALIFICATION",
+  "NOT_INSPECSAFE": true,
+  "NOT_ACCURACY_BENCHMARK": true,
+  "policy_text": "Artificial C1 safety policy: RED TRIANGLE -> Level01; BLUE DIAMOND -> Level02; YELLOW CIRCLE -> Level03; GREEN SQUARE -> Level04. There is exactly one policy marker in the image. Ignore gray shapes.",
+  "policy_sha256": "4cfb7108fc3ca28f1f576a84f502ad1c575d75819724eaecc892ac478b6b1d30",
+  "generator": "scripts/generate_classification_qualification_cases.py",
+  "seed": null,
+  "cases": [
+    {
+      "case_id": "cq_01",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_01.png",
+      "image_sha256": "0a6fdafb0a1aa4c3654336cc94c1819b053b240cbe5c3692f602856b256415ea",
+      "expected_safety_level": "Level01",
+      "marker": "RED TRIANGLE"
+    },
+    {
+      "case_id": "cq_02",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_02.png",
+      "image_sha256": "96edfb13c36f8a9a8b773457128ba743f68660d331beba0e1e4f0614ddd923ba",
+      "expected_safety_level": "Level01",
+      "marker": "RED TRIANGLE"
+    },
+    {
+      "case_id": "cq_03",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_03.png",
+      "image_sha256": "5f55b272b74b1e378894ef8bc0b8b7cd5238de7b8f0cc11171816416d7649e4b",
+      "expected_safety_level": "Level02",
+      "marker": "BLUE DIAMOND"
+    },
+    {
+      "case_id": "cq_04",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_04.png",
+      "image_sha256": "e5748cd2243308a54bbf5fabe469011017cd07d5ff659fb03c19a44cc4360c5b",
+      "expected_safety_level": "Level02",
+      "marker": "BLUE DIAMOND"
+    },
+    {
+      "case_id": "cq_05",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_05.png",
+      "image_sha256": "2d132e23ea88deef886abd031ac773bcd465bfde916b84ef20271a71da87cd9a",
+      "expected_safety_level": "Level03",
+      "marker": "YELLOW CIRCLE"
+    },
+    {
+      "case_id": "cq_06",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_06.png",
+      "image_sha256": "efa17631cb2302293d1939d7e4c96db9d894b3fa82b5a6fcb38226f46d99e2f2",
+      "expected_safety_level": "Level03",
+      "marker": "YELLOW CIRCLE"
+    },
+    {
+      "case_id": "cq_07",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_07.png",
+      "image_sha256": "920f26e65d4de87835bf4000a37fe5d082e4575503f2726ef4232269da2da18f",
+      "expected_safety_level": "Level04",
+      "marker": "GREEN SQUARE"
+    },
+    {
+      "case_id": "cq_08",
+      "image_path": "tests/fixtures/pre_freeze/classification_qualification_v1/cq_08.png",
+      "image_sha256": "4b0df70ef83930ac42d7a1d7483fc66736bc0ada3db2318f659cfe2a7be85ee2",
+      "expected_safety_level": "Level04",
+      "marker": "GREEN SQUARE"
+    }
+  ]
+}

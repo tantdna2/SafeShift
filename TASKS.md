@@ -1,3 +1,20 @@
+## W2.6-D9R16-FIVE-MODEL-CLASSIFICATION-QUALIFICATION-PREP (2026-10-01)
+
+- [x] Prepare independent eight-case RGB synthetic classification suite, manifest,
+  policy/hash, deterministic generator and shared candidate parser/harness.
+- [x] Separate run verdict from research role; preserve five-model roster,
+  production pending adapters, grounding gate/history, D5 and unauthorized InspecSafe.
+- [x] Prepare source-backed PaliGemma native question wrapper and exact four-level
+  string parser; no reuse of yes/no presence mapping and no output rescue.
+- [x] Fake/static tests cover strict parsing, runtime/incomplete runs, raw persistence,
+  no retry/grounding/promotion and unchanged protected state. Validation details:
+  [D9R16 PREP note](notes/w2_d9r16_classification_qualification_prep.md).
+- [ ] Separate Research Lead audit/merge and subsequent authorized real qualification.
+  CLASSIFICATION_RESULTS=NOT_RUN; production classification remains unqualified.
+- [ ] Final classification participation decision and protocol freeze remain PENDING.
+
+REAL_MODEL_EXECUTION=NO; NO_MODEL_REMOVAL; INSPECSAFE=NOT_RUN; KHÔNG MERGE.
+
 # W1 — Dataset Audit
 
 Mục tiêu: khảo sát, kiểm tra và hiểu InspecSafe-V1 trước bất kỳ thí nghiệm VLM nào. Các checkbox chưa đánh dấu là việc cần làm, không phải kết quả đã có.

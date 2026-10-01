@@ -15,6 +15,15 @@ from scripts import w2_paligemma_external_gate as q
 from tests import test_paligemma_prep as fakes
 
 NOTEBOOK = q.ROOT / "notebooks/w2_paligemma_d9r13_external_gate_kaggle.ipynb"
+PRE_D9R16 = "ecab4cfa6fd844fbada232975ed4494ea719a90b"
+
+
+def historical_bytes(path):
+    # The historical gate/notebook did not execute D9R16's source-kind extension.
+    # Live runner bytes are protected by D9R16 exact-replacement tests.
+    if path in ("safeshift/runners/paligemma.py", "safeshift/runners/internvl3.py"):
+        return subprocess.check_output(["git", "show", PRE_D9R16 + ":" + path], cwd=q.ROOT)
+    return (q.ROOT / path).read_bytes()
 
 
 def native(label="red square", values=(0, 1, 1023, 1022), text=None):
@@ -99,7 +108,7 @@ class PlanTests(unittest.TestCase):
         for path in paths:
             committed = subprocess.check_output(["git", "show", pin + ":" + path], cwd=q.ROOT)
             self.assertEqual(committed.replace(b"\r\n", b"\n"),
-                             (q.ROOT / path).read_bytes().replace(b"\r\n", b"\n"), path)
+                             historical_bytes(path).replace(b"\r\n", b"\n"), path)
 
     def test_exact_frozen_inputs_and_budget(self):
         from safeshift.protocol.prompts import probe_request
@@ -137,7 +146,7 @@ class PlanTests(unittest.TestCase):
                         "configs/pre_freeze/freeze_manifest.d9.template.json"}:
                 continue
             original = subprocess.check_output(["git", "show", f"{q.BASE_SHA}:{path}"], cwd=q.ROOT)
-            current = (q.ROOT / path).read_bytes()
+            current = historical_bytes(path)
             if not path.endswith(".png"):
                 original, current = original.replace(b"\r\n", b"\n"), current.replace(b"\r\n", b"\n")
             self.assertEqual(current, original, path)
