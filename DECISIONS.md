@@ -1605,6 +1605,31 @@
   `protocol_freeze_commit_sha=PENDING`, `inspecsafe_inference_authorized=false`.
   NO_INSPECSAFE_INFERENCE; NO_MODEL_RERUN; no GPU/model/gate execution or merge.
 
+## D9R16 — external classification qualification PREP (2026-10-01)
+
+- Authority: Research Lead/user task W2.6-D9R16; PREP only, before runtime.
+- Predeclare eight external geometric cases and artificial C1 policy: red triangle
+  Level01, blue diamond Level02, yellow circle Level03, green square Level04.
+  This is interface/classification qualification, not an accuracy benchmark or ranking.
+  No InspecSafe image, label, hazard or distribution informs this suite.
+- Candidate parsing is separate from production adapters. Qwen strict JSON paths
+  may be reused; InternVL3/Moondream strict native envelopes and JSON; PaliGemma
+  native single-turn answer with exact Level01..04 strings. No yes/no mapping,
+  rescue, retry, prompt/parser change or output-budget increase within a run.
+- Run FAIL never removes a model, changes classification roster membership,
+  activates a backup or assigns NOT_PARTICIPATING. All verdicts require separate
+  Research Lead review; final classification participation is a separate decision.
+  Infrastructure/runtime failure is INCONCLUSIVE, not a capability FAIL. A valid
+  semantic/format failure remains FAIL even if a later infrastructure failure occurs.
+- No automatic rerun. Infrastructure rerun needs a recorded separate decision
+  with unchanged prompt/parser/policy. A new supported interface/adapter needs a
+  separate prospective task/PR, never an output-specific rescue in the same run.
+- Five-model roster, grounding history/gate, D5 and dataset definitions unchanged.
+  CLASSIFICATION_RESULTS=NOT_RUN; production classification remains unqualified;
+  protocol freeze PENDING and InspecSafe unauthorized. No model removal or merge.
+- Plan and runbook: `configs/pre_freeze/classification_qualification_plan.v1.json`,
+  `notes/w2_d9r16_classification_qualification_prep.md`.
+
 ## Template
 
 - **ID:** <DEC-...>

@@ -175,7 +175,7 @@ class PaliGemmaRunner(LocalRunner):
             raise ValueError("FP16_NONE_BATCH1_NO_OFFLOAD_NO_FALLBACK_CONTRACT")
         if context.software_versions != load_plan(self.repo)["software"]:
             raise ValueError("EXACT_SOFTWARE_PINS_REQUIRED")
-        if context.source_kind != "HANDCRAFTED_RUNTIME_SMOKE":
+        if context.source_kind not in {"HANDCRAFTED_RUNTIME_SMOKE", "EXTERNAL_CLASSIFICATION_QUALIFICATION"}:
             raise ValueError("PREP_ONLY_SYNTHETIC_RUNTIME_INPUT")
         key = json_bytes({"preprocessing": context.preprocessing, "decoding": context.decoding,
                           "software": context.software_versions, "run_id": context.run_id,

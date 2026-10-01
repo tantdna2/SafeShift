@@ -9,3 +9,7 @@
 /configs/pre_freeze/paligemma_interface_runtime_result.v1.json text eol=lf
 # Byte-pinned D9R13 frozen external gate plan.
 /configs/pre_freeze/paligemma_external_gate.v1.json text eol=lf
+# Stable classification qualification provenance, separate from synthetic-v1.
+/configs/pre_freeze/classification_qualification_cases.v1.json text eol=lf
+/configs/pre_freeze/classification_qualification_plan.v1.json text eol=lf
+/scripts/generate_classification_qualification_cases.py text eol=lf

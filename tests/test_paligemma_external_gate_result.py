@@ -162,10 +162,10 @@ class PaliGemmaExternalGateResultTests(unittest.TestCase):
         protected = ["safeshift", "scripts", "notebooks", "prompts", "schemas",
                      "tests/fixtures", "configs/pre_freeze"]
         changed = subprocess.check_output(
-            ["git", "diff", "--name-only", BASE, "--", *protected], cwd=ROOT,
+            ["git", "diff", "--name-only", BASE, "ecab4cfa6fd844fbada232975ed4494ea719a90b", "--", *protected], cwd=ROOT,
             text=True).splitlines()
-        # D9R15 tests pin RESULT and documentary provenance outside its current
-        # membership overlay; no historical result or execution contract changes.
+        # Historical D9R14/D9R15 scope. D9R16 separately checks live protected
+        # roots and its exact two authorized runner source-kind replacements.
         self.assertLessEqual(set(changed), {ROSTER, RESULT,
                                           "configs/pre_freeze/local_model_provenance.d9.json",
                                           "configs/pre_freeze/freeze_manifest.d9.template.json"})

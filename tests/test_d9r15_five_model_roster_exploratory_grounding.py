@@ -10,6 +10,7 @@ from safeshift.protocol.schema import strict_json
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "9948570820b5ed8a774b8e226b80e24055e705cf"
+D9R15_MERGED = "ecab4cfa6fd844fbada232975ed4494ea719a90b"
 ROSTER = "configs/pre_freeze/local_models.d9.json"
 FREEZE = "configs/pre_freeze/freeze_manifest.d9.template.json"
 PROVENANCE = "configs/pre_freeze/local_model_provenance.d9.json"
@@ -214,15 +215,15 @@ class D9R15RosterTests(unittest.TestCase):
             self.assertIn(f"| `{case}` | `NO_GIANT` |", note)
 
     def test_execution_code_fixtures_and_all_historical_evidence_unchanged(self):
-        # A strict allowlist across all execution/config roots protects D5, gate,
-        # parsers, runners, schemas, prompts, frozen fixtures and earlier records.
+        # Historical D9R15 scope at its merged commit. D9R16 separately checks
+        # live protected bytes and its only two authorized runner whitelist edits.
         protected = ["safeshift", "scripts", "notebooks", "prompts", "schemas",
                      "tests/fixtures", "configs", "notes/w2_qwen3_external_gate_result.md",
                      "notes/w2_paligemma_external_gate_result.md",
                      "notes/w2_paligemma_single_t4_runtime_qualification.md",
                      "notes/w2_metrics_statistics_decision_brief.md"]
         changed = subprocess.check_output(
-            ["git", "diff", "--name-only", BASE, "--", *protected], cwd=ROOT, text=True).splitlines()
+            ["git", "diff", "--name-only", BASE, D9R15_MERGED, "--", *protected], cwd=ROOT, text=True).splitlines()
         self.assertLessEqual(set(changed), {ROSTER, FREEZE, PROVENANCE})
         # Compare the D9R14 Git content hash independently, including when staged.
         path = "configs/pre_freeze/paligemma_external_gate_result.v1.json"
