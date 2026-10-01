@@ -66,6 +66,10 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertEqual([m["order"] for m in self.models], [1, 2, 3, 4, 1, 2])
 
     def test_roster_consistency_across_all_three_configs(self):
+        revision = self.spec["roster_revision"]
+        self.assertEqual(revision["active_primary_keys"], [m["key"] for m in self.roster["primary_models"]])
+        self.assertEqual(revision["active_backup_keys"], [m["key"] for m in self.roster["backups_in_order"]])
+        self.assertEqual(revision["roster_revision"], self.roster["roster_revision"])
         self.assertEqual([m["model_id"] for m in self.roster["primary_models"]],
                          [m["model_id"] for m in self.freeze["primary_models"]])
         self.assertEqual([m["model_id"] for m in self.roster["backups_in_order"]], self.freeze["backup_order"])
@@ -188,7 +192,7 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertEqual(len(checklist), 8)
         completed = {"1_model_revisions_and_license_provenance",
                      "2_local_self_hosted_runners",
-                     "5_synthetic_gate_four_primary_models"}
+                     "5_synthetic_gate_primary_models"}
         for key, status in checklist.items():
             self.assertEqual(status, "COMPLETE" if key in completed else "PENDING")
         self.assertTrue(all(v == "PENDING" for v in self.freeze["frozen_components"].values()))
@@ -278,7 +282,7 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertEqual(self.spec["final_roles_status"], "PENDING")
         self.assertTrue(all(m["classification"] == "CANDIDATE" for m in self.roster["primary_models"]))
         self.assertTrue(all(m["classification_role"] == "PENDING_FINAL_GATE" for m in self.freeze["primary_models"]))
-        self.assertEqual([m["replacement_status"] for m in self.roster["backups_in_order"]], ["BACKUP_1_ONLY", "BACKUP_2_ONLY"])
+        self.assertEqual([m["replacement_status"] for m in self.roster["backups_in_order"]], ["BACKUP_1_ONLY"])
         for config in (self.roster, self.freeze):
             self.assertIs(config["point_only_policy"]["fabricate_boxes_from_points"], False)
             self.assertIs(config["point_only_policy"]["approved_d5_native_point_only_track"], False)
@@ -287,9 +291,9 @@ class ModelProvenanceTests(unittest.TestCase):
         self.assertIs(policy["assign_artificial_zero_iou"], False)
 
     def test_global_gate_pending_and_manifest_hash_unchanged(self):
-        # Qwen2.5 has a recorded failure; other D9 models remain pending.
-        self.assertEqual(self.roster["synthetic_gate"]["status"], "PENDING")
-        self.assertEqual(self.freeze["synthetic_external_gate"]["status"], "PENDING_D9_MODEL_EXECUTION")
+        # D9R15 resolves all five eligibility decisions, not all gates as PASS.
+        self.assertEqual(self.roster["synthetic_gate"]["status"], "RESOLVED_CAPABILITY_AWARE")
+        self.assertEqual(self.freeze["synthetic_external_gate"]["status"], "RESOLVED_CAPABILITY_AWARE")
         for gate in (self.roster["synthetic_gate"], self.freeze["synthetic_external_gate"]):
             self.assertEqual(gate["manifest_sha256"], "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379")
 

@@ -1,6 +1,7 @@
 """Static evidence and stop-condition guards; no model/network imports."""
 
 import unittest
+import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -27,7 +28,10 @@ class PaliGemmaSourceAuditTests(unittest.TestCase):
     def setUpClass(cls):
         cls.audit = load("paligemma_source_api_audit.v1.json")
         cls.precommit = load("paligemma_primary_expansion_precommit.v1.json")
-        cls.roster = load("local_models.d9.json")
+        # Preserve historical audit membership; D9R15 tests cover the live roster.
+        cls.roster = strict_json(subprocess.check_output([
+            "git", "show", "9948570820b5ed8a774b8e226b80e24055e705cf:"
+            "configs/pre_freeze/local_models.d9.json"], cwd=ROOT))
         cls.provenance = next(
             m for m in load("local_model_provenance.d9.json")["models"]
             if m["key"] == "paligemma_3b_mix_448"

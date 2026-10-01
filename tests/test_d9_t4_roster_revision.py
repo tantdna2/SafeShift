@@ -19,6 +19,8 @@ BACKUPS = [
     ('paligemma_3b_mix_448', 'google/paligemma-3b-mix-448', 'ead2d9a35598cb89119af004f5d023b311d1c4a1'),
     ('smolvlm2_2_2b_instruct', 'HuggingFaceTB/SmolVLM2-2.2B-Instruct', '482adb537c021c86670beed01cd58990d01e72e4'),
 ]
+CURRENT_PRIMARY = PRIMARY + BACKUPS[:1]  # D9R15 expansion; documentary lists stay historical.
+CURRENT_BACKUPS = BACKUPS[1:]
 
 
 def load(path):
@@ -52,8 +54,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         cls.by_key = {m['key']: m for m in cls.provenance['models']}
         cls.retired = cls.roster['retired_primary_models']
 
-    def test_01_primary_exactly_four(self):
-        self.assertEqual(len(self.primary), 4)
+    def test_01_primary_exactly_five(self):
+        self.assertEqual(len(self.primary), 5)
 
     def test_02_anchor_identity_revision_role_unchanged(self):
         m = self.primary[0]
@@ -62,7 +64,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertEqual(m['resource_role'], 'KAGGLE_T4X2_VALIDATED_ANCHOR')
 
     def test_03_new_primary_identities_and_pins_exact(self):
-        self.assertEqual([(m['key'], m['model_id'], m['immutable_revision']) for m in self.primary], PRIMARY)
+        self.assertEqual([(m['key'], m['model_id'], m['immutable_revision']) for m in self.primary], CURRENT_PRIMARY)
 
     def test_04_all_active_revisions_full_hex(self):
         for m in self.active:
@@ -76,6 +78,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         revision = self.provenance['roster_revision']
         self.assertEqual(revision['active_primary_keys'], [m['key'] for m in self.primary])
         self.assertEqual(revision['active_backup_keys'], [m['key'] for m in self.backups])
+        self.assertEqual(revision['roster_revision'], self.roster['roster_revision'])
+        self.assertEqual(revision['roster_revision'], 'D9R15_FIVE_MODEL_ROSTER_AND_EXPLORATORY_GROUNDING')
 
     def test_06_no_duplicate_ids_or_keys(self):
         for records in (self.active, self.provenance['models']):
@@ -85,7 +89,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
     def test_07_resource_status_tracks_recorded_runtime_evidence(self):
         for m in self.primary[1:]:
             self.assertEqual(m['classification'], 'CANDIDATE')
-            expected = 'PASS_VALIDATED' if m['key'] in {PRIMARY[1][0], PRIMARY[2][0], PRIMARY[3][0]} else 'T4_FEASIBILITY_CANDIDATE'
+            expected = 'PASS_VALIDATED'
             self.assertEqual(m['resource_status'], expected)
             self.assertEqual(m['target_validation'], ['COLAB_T4_1X16GB_PRIMARY', 'KAGGLE_T4_FALLBACK_ALLOWED'])
 
@@ -96,7 +100,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             # is separately linked by the roster, as for the Qwen3 anchor.
             self.assertFalse(p['runtime_validated'])
             self.assertEqual(p['t4_status'], 'FEASIBILITY_CANDIDATE')
-            qualified = m['key'] in {PRIMARY[1][0], PRIMARY[2][0], PRIMARY[3][0]}
+            qualified = m['key'] in {item[0] for item in CURRENT_PRIMARY[1:]}
             self.assertEqual(m['runtime_smoke_status'], 'PASS_VALIDATED' if qualified else 'PENDING')
             for _, value in walk([p] if qualified else [m, p]):
                 if isinstance(value, str):
@@ -140,8 +144,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             ('openbmb/MiniCPM-V-4.6', '36f34a661a4bd35d0dc2294cb044d2584646c7d3')])
 
     def test_14_new_backups_exact_order(self):
-        self.assertEqual([(m['key'], m['model_id'], m['immutable_revision']) for m in self.backups], BACKUPS)
-        self.assertEqual([m['replacement_status'] for m in self.backups], ['BACKUP_1_ONLY', 'BACKUP_2_ONLY'])
+        self.assertEqual([(m['key'], m['model_id'], m['immutable_revision']) for m in self.backups], CURRENT_BACKUPS)
+        self.assertEqual([m['replacement_status'] for m in self.backups], ['BACKUP_1_ONLY'])
 
     def test_15_backup_pins_and_candidate_status(self):
         for m in self.backups:
@@ -154,7 +158,8 @@ class D9T4RosterRevisionTests(unittest.TestCase):
             self.assertIs(c['inspecsafe_performance_used'], False)
             self.assertTrue(c['roster_revision_before_protocol_freeze'])
             self.assertTrue(c['roster_revision_before_inspecsafe'])
-            self.assertEqual(c['roster_revision_reason'], REASON)
+            expected = 'PRE_FREEZE_ROSTER_EXPANSION_D9R6_SOLE_PRIMARY_5_CANDIDATE'
+            self.assertEqual(c['roster_revision_reason'], expected)
         for key, value in walk([self.roster, self.provenance, self.freeze]):
             if key in {'inspecsafe_performance_used', 'inspecsafe_used', 'replacement_selection_used_inspecsafe_results'}:
                 self.assertIs(value, False)
@@ -295,7 +300,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertEqual(p['spatial']['d5_box_qualification'], 'NOT_YET_QUALIFIED')
 
     def test_28_backup_license_access_and_metadata(self):
-        pali, smol = [self.by_key[m['key']] for m in self.backups]
+        pali, smol = [self.by_key[m[0]] for m in BACKUPS]
         self.assertEqual(pali['license_access']['repository_license'], 'gemma')
         self.assertEqual(pali['license_access']['access_status'], 'GATED_USAGE_TERMS_ACCEPTANCE_REQUIRED')
         self.assertEqual(pali['license_access']['owner_acceptance_status'], 'NOT_VERIFIED')
@@ -328,11 +333,11 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                 self.assertRegex(w['lfs_sha256'], r'\A[0-9a-f]{64}\Z')
 
     def test_30_freeze_roster_and_checklist_match(self):
-        self.assertEqual([(m['provenance_key'], m['model_id'], m['immutable_revision']) for m in self.freeze['primary_models']], PRIMARY)
-        self.assertEqual([(m['provenance_key'], m['model_id'], m['immutable_revision']) for m in self.freeze['backups_in_order']], BACKUPS)
+        self.assertEqual([(m['provenance_key'], m['model_id'], m['immutable_revision']) for m in self.freeze['primary_models']], CURRENT_PRIMARY)
+        self.assertEqual([(m['provenance_key'], m['model_id'], m['immutable_revision']) for m in self.freeze['backups_in_order']], CURRENT_BACKUPS)
         completed = {'1_model_revisions_and_license_provenance',
                      '2_local_self_hosted_runners',
-                     '5_synthetic_gate_four_primary_models'}
+                     '5_synthetic_gate_primary_models'}
         for key, status in self.roster['d9_checklist'].items():
             self.assertEqual(status, 'COMPLETE' if key in completed else 'PENDING')
         self.assertEqual(self.roster['decision_id'], 'DEC-W2-D9-009')

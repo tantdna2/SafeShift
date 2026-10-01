@@ -8,16 +8,20 @@
   "benchmark_firewall": "ACTIVE",
   "inspecsafe_inference_authorized": false,
   "current_status_overlay": {
-    "task": "W2.6-D9R6-PALIGEMMA-PRIMARY-EXPANSION-PRECOMMIT",
+    "task": "W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING",
     "config": "configs/pre_freeze/local_models.d9.json",
     "readiness_matrix": "notes/w2_d9_freeze_readiness_reconciliation.md",
-    "semantics": "Per-model resource/grounding placeholders below retain the D9R1 template milestone; use the linked roster for current runtime/gate qualification. They are not current gate results or assigned final roles. Frozen components and final roles remain PENDING; qualification does not freeze this template."
+    "semantics": "Five-model roster and primary/exploratory participation reflect D9R15. Linked roster is current runtime/gate authority. Classification roles and frozen components remain PENDING; roster membership and gate eligibility do not qualify production adapters."
   },
   "primary_expansion_precommit": {
-    "status": "PENDING_QUALIFICATION",
+    "status": "ROSTER_EXPANSION_APPROVED_D9R15",
     "candidate_key": "paligemma_3b_mix_448",
     "record_path": "configs/pre_freeze/paligemma_primary_expansion_precommit.v1.json",
-    "resolved_for_freeze": false,
+    "resolved_for_freeze": true,
+    "resolution_scope": "ROSTER_MEMBERSHIP_ONLY; PRODUCTION_QUALIFICATION_AND_PROTOCOL_FREEZE_PENDING",
+    "resolution_decision": "D9R15",
+    "historical_promotion_contract_superseded_for_roster_membership_only": true,
+    "qualification_promotion": false,
     "resolution_required_before_protocol_freeze": true,
     "automatic_promotion": false
   },
@@ -46,6 +50,14 @@
     "grounding_vocabulary": "B2_CLOSED_12_HAZARDS"
   },
   "model_roster_config": "configs/pre_freeze/local_models.d9.json",
+  "exploratory_grounding_track": {
+    "policy_ref": "configs/pre_freeze/local_models.d9.json#exploratory_grounding_track",
+    "analysis_level": "SECONDARY_EXPLORATORY",
+    "status": "POLICY_APPROVED_IMPLEMENTATION_AND_FREEZE_PENDING",
+    "report_separately_from_primary_rq3": true,
+    "override_gate_or_qualification": false,
+    "execution_authorized": false
+  },
   "primary_models": [
     {
       "model_id": "Qwen/Qwen3-VL-8B-Instruct",
@@ -53,7 +65,9 @@
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "qwen3_vl_8b_instruct",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "PENDING_SYNTHETIC_GATE",
+      "grounding_role": "NOT_PARTICIPATING",
+      "primary_grounding_participation": "NOT_PARTICIPATING",
+      "exploratory_grounding_participation": "INCLUDED",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING",
@@ -66,9 +80,11 @@
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "qwen2_5_vl_3b_instruct",
       "role": "RESOURCE_EFFICIENT_QWEN_CONTRAST",
-      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "resource_status": "PASS_VALIDATED",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "DOCUMENTED_BOX_AND_POINT_PENDING_SYNTHETIC_GATE",
+      "grounding_role": "NOT_PARTICIPATING",
+      "primary_grounding_participation": "NOT_PARTICIPATING",
+      "exploratory_grounding_participation": "EXCLUDED",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING"
@@ -79,9 +95,11 @@
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "internvl3_2b_hf",
       "role": "INDEPENDENT_INTERNVL_FAMILY",
-      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "resource_status": "PASS_VALIDATED",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "NOT_YET_DOCUMENTARILY_QUALIFIED",
+      "grounding_role": "NOT_PARTICIPATING",
+      "primary_grounding_participation": "NOT_PARTICIPATING",
+      "exploratory_grounding_participation": "EXCLUDED",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING"
@@ -92,16 +110,39 @@
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "moondream2_2025_06_21",
       "role": "INDEPENDENT_SMALL_VLM_WITH_NATIVE_SPATIAL_APIS",
-      "resource_status": "T4_FEASIBILITY_CANDIDATE",
+      "resource_status": "PASS_VALIDATED",
       "classification_role": "PENDING_FINAL_GATE",
-      "grounding_role": "DOCUMENTED_NATIVE_DETECT_AND_POINT_PENDING_SYNTHETIC_GATE",
+      "grounding_role": "GATE_ELIGIBLE_PRODUCTION_ADAPTER_PENDING",
+      "primary_grounding_participation": "GATE_ELIGIBLE_PRODUCTION_ADAPTER_PENDING",
+      "exploratory_grounding_participation": "INCLUDED",
+      "decoding_policy_id": "PENDING",
+      "precision_or_quantization": "PENDING",
+      "preprocessing_id": "PENDING"
+    },
+    {
+      "model_id": "google/paligemma-3b-mix-448",
+      "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "revision_status": "VERIFIED_DOCUMENTARY",
+      "provenance_key": "paligemma_3b_mix_448",
+      "role": "PRIMARY_5",
+      "research_role": "INDEPENDENT_GOOGLE_PALIGEMMA_CONTRAST",
+      "resource_status": "PASS_VALIDATED",
+      "classification_role": "PENDING_FINAL_GATE",
+      "classification_interface_status": "PENDING_QUALIFICATION",
+      "grounding_role": "NOT_PARTICIPATING",
+      "primary_grounding_participation": "NOT_PARTICIPATING",
+      "exploratory_grounding_participation": "INCLUDED",
+      "external_gate_status": "FAIL",
+      "grounding_qualification": "FAIL",
+      "runtime_smoke_status": "PASS_VALIDATED",
+      "exact_runtime_verified": true,
+      "production_adapter_status": "NOT_QUALIFIED",
       "decoding_policy_id": "PENDING",
       "precision_or_quantization": "PENDING",
       "preprocessing_id": "PENDING"
     }
   ],
   "backup_order": [
-    "google/paligemma-3b-mix-448",
     "HuggingFaceTB/SmolVLM2-2.2B-Instruct"
   ],
   "synthetic_external_gate": {
@@ -109,10 +150,11 @@
     "manifest": "configs/pre_freeze/external_gate_cases.v1.json",
     "manifest_sha256": "fcd6ca6205e769626fb7db702474a485796e57415601b39025bcc112b0e8a379",
     "interface_contract": "EXISTING_BOX_GATE_UNCHANGED",
-    "eligibility_review_scope": "CURRENT_FOUR_PRIMARY_CANDIDATES_PLUS_PRESPECIFIED_PRIMARY_EXPANSION_CANDIDATE_AND_ANY_ACTIVATED_BACKUP",
+    "eligibility_review_scope": "CURRENT_FIVE_PRIMARY_CANDIDATES_AND_ANY_ACTIVATED_BACKUP",
     "execution_scope": "QUALIFYING_BOX_INTERFACES; POINT_ONLY_IS_NOT_PARTICIPATING",
-    "qualitative_giant_box_review_procedure": "PENDING_BEFORE_GATE_EXECUTION",
-    "status": "PENDING_D9_MODEL_EXECUTION"
+    "qualitative_giant_box_review_procedure": "RESOLVED_PER_MODEL_SEE_MODEL_EVIDENCE",
+    "status": "RESOLVED_CAPABILITY_AWARE",
+    "resolution_scope": "FIVE_PRIMARY_INTERFACE_ELIGIBILITY; NOT_ALL_GATE_PASS; NOT_PRODUCTION_QUALIFICATION"
   },
   "point_only_policy": {
     "preserve_native_points_in_raw_output": true,
@@ -142,8 +184,8 @@
     "commercial_live_route_verification": "SUPERSEDED_FOR_P2_BY_D9",
     "historical_artifacts_preserved": true
   },
-  "roster_revision": "D9R1_T4_RESOURCE_FEASIBILITY",
-  "roster_revision_reason": "PRE_FREEZE_RESOURCE_CONSTRAINT",
+  "roster_revision": "D9R15_FIVE_MODEL_ROSTER_AND_EXPLORATORY_GROUNDING",
+  "roster_revision_reason": "PRE_FREEZE_ROSTER_EXPANSION_D9R6_SOLE_PRIMARY_5_CANDIDATE",
   "roster_revision_before_protocol_freeze": true,
   "roster_revision_before_inspecsafe": true,
   "inspecsafe_performance_used": false,
@@ -175,19 +217,12 @@
   },
   "backups_in_order": [
     {
-      "model_id": "google/paligemma-3b-mix-448",
-      "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
-      "provenance_key": "paligemma_3b_mix_448",
-      "revision_status": "VERIFIED_DOCUMENTARY",
-      "replacement_status": "BACKUP_1_ONLY",
-      "resource_status": "T4_FEASIBILITY_CANDIDATE"
-    },
-    {
       "model_id": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
       "immutable_revision": "482adb537c021c86670beed01cd58990d01e72e4",
       "provenance_key": "smolvlm2_2_2b_instruct",
       "revision_status": "VERIFIED_DOCUMENTARY",
-      "replacement_status": "BACKUP_2_ONLY",
+      "replacement_status": "BACKUP_1_ONLY",
+      "activated": false,
       "resource_status": "T4_FEASIBILITY_CANDIDATE"
     }
   ],

@@ -1540,6 +1540,71 @@
   protocol freeze blocked, InspecSafe unauthorized. No real model/GPU/gate rerun,
   giant-box review, output repair, budget increase or merge in this task.
 
+## D9R15 — Five-model Seminar roster and exploratory grounding (2026-09-30)
+
+- **Authority and timing:** Research Lead's explicit
+  `W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING` instruction;
+  approved roster design before protocol freeze and before any InspecSafe
+  inference, based on main `9948570820b5ed8a774b8e226b80e24055e705cf`.
+  No InspecSafe performance is used. This is roster expansion, not backup
+  substitution: D9R6 already precommitted PaliGemma as the sole PRIMARY_5 candidate.
+- **Roster:** Qwen/Qwen3-VL-8B-Instruct, Qwen/Qwen2.5-VL-3B-Instruct,
+  OpenGVLab/InternVL3-2B-hf, vikhyatk/moondream2 and
+  google/paligemma-3b-mix-448. All five are classification evaluation candidates;
+  membership does not qualify production classification. PaliGemma becomes
+  PRIMARY_5 / INDEPENDENT_GOOGLE_PALIGEMMA_CONTRAST and leaves active backups.
+  SmolVLM2 is the sole remaining BACKUP_1, unactivated and not a primary.
+- **Limited supersession:** For roster membership only, this new design decision
+  supersedes D9R6's requirement that every qualification contract pass before
+  primary expansion, and D9R14's four-primary/BACKUP_1/no-exploratory policy.
+  D9R14 `PALIGEMMA_PROMOTION=NO` remains the correct historical result-resolution
+  under the old contract; its result bytes and all earlier records are unchanged.
+  This is not a retrospective YES, gate rescue or qualification promotion.
+- **Primary RQ3:** Capability-aware gate qualification remains binding.
+  Moondream's external PASS gives gate eligibility only; production adapter stays
+  NOT_QUALIFIED. Qwen3 (GATE_FAIL, 5/8 canonical valid boxes), Qwen2.5 (GATE_FAIL),
+  PaliGemma (FAIL / grounding qualification FAIL, 6/8 SUCCESS) and InternVL3
+  (no qualifying native generic box interface, gate NOT_RUN) remain
+  NOT_PARTICIPATING. Qwen3's reason remains SPATIAL_GATE_FAILURE.
+  PaliGemma A_2/C_2 remain multiple-detection SCHEMA_ERROR, without repair/rerun.
+  D9R11's target-absent hallucinated parseable detection remains a negative finding.
+- **Exploratory grounding:** A separate SECONDARY_EXPLORATORY reporting/analysis
+  policy includes exactly Moondream, Qwen3 and PaliGemma; Qwen2.5 and InternVL3
+  are EXCLUDED. Inclusion is not gate PASS, grounding qualification PASS,
+  primary RQ3 participation, model rescue or a lowered gate. Tables must be
+  separate from primary RQ3. Results cannot override qualification, promote a
+  model, change the roster after InspecSafe, or tune prompts/parsers/thresholds.
+  No gate threshold, prompt, schema, parser or runner changes and no gate rerun.
+- **D5 boundary:** Existing D5 definitions and `safeshift/protocol/metrics.py`
+  are unchanged. Primary NOT_PARTICIPATING models receive no synthetic zero
+  result. External synthetic-gate failures receive no artificial zero IoU.
+  Future exploratory analysis may reuse D5 grounding formulas only through a
+  separately implemented and approved pre-InspecSafe freeze, following the
+  existing D5 end-to-end policy including failure denominators. It must never
+  silently insert exploratory models into primary D5 RQ3 tables. D9R15 supplies
+  policy only, not metric implementation or execution authorization.
+- **Current runtime reconciliation:** The merged
+  [D9R9 runtime result](configs/pre_freeze/paligemma_t4_runtime_result.v1.json)
+  establishes RUNTIME_SMOKE_PASS, exact_runtime_verified=true, exact revision and
+  one Tesla T4; roster runtime/resource become PASS_VALIDATED and runner COMPLETE.
+  [D9R11 evidence](configs/pre_freeze/paligemma_interface_runtime_result.v1.json)
+  does not qualify production classification or its adapter. PaliGemma
+  classification_interface_status remains PENDING_QUALIFICATION, production
+  adapter NOT_QUALIFIED, and [D9R14 grounding FAIL](configs/pre_freeze/paligemma_external_gate_result.v1.json)
+  is preserved. Historical runtime plans and result files stay intact; all
+  model/source documentary provenance evidence is unchanged. The current
+  provenance `roster_revision` overlay is reconciled to D9R15 (five active
+  primaries, SmolVLM2-only backup), without rewriting historical per-model facts.
+  Giant-box procedure status is RESOLVED_PER_MODEL_SEE_MODEL_EVIDENCE: Moondream
+  has eight NO_GIANT reviews; Qwen3/Qwen2.5/PaliGemma require none after automatic
+  failure; InternVL3 is interface-ineligible / gate NOT_RUN. No new review.
+- **Remaining blockers:** Roster membership is resolved; classification/adapters,
+  final production roles, research decoding, D5 implementation and separate
+  exploratory reporting implementation/freeze remain pending. Checklist #1/#2/#5
+  are COMPLETE for five models; #3/#4/#6/#7/#8 remain PENDING.
+  `protocol_freeze_commit_sha=PENDING`, `inspecsafe_inference_authorized=false`.
+  NO_INSPECSAFE_INFERENCE; NO_MODEL_RERUN; no GPU/model/gate execution or merge.
+
 ## Template
 
 - **ID:** <DEC-...>

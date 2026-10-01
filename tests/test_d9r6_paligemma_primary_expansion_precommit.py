@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -30,8 +31,12 @@ class D9R6PaliGemmaExpansionPrecommitTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.record = load(RECORD_PATH)
-        cls.roster = load(CONFIG / "local_models.d9.json")
-        cls.freeze = load(CONFIG / "freeze_manifest.d9.template.json")
+        # Historical precommit membership/contract, before D9R15 supersession.
+        # Live five-model policy is checked by the dedicated D9R15 tests.
+        base = "9948570820b5ed8a774b8e226b80e24055e705cf"
+        cls.roster, cls.freeze = [strict_json(subprocess.check_output(
+            ["git", "show", base + ":configs/pre_freeze/" + name], cwd=ROOT))
+            for name in ("local_models.d9.json", "freeze_manifest.d9.template.json")]
         cls.provenance = load(CONFIG / "local_model_provenance.d9.json")
 
     def test_exact_candidate_identity_and_revision(self):

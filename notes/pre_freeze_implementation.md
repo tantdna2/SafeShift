@@ -356,7 +356,23 @@ D5 and canonical schema are unchanged. Census remains untracked and untouched
 NO_MODEL_WEIGHTS_DOWNLOADED. NO_REAL_MODEL_INFERENCE. SYNTHETIC_GATE_NOT_RUN.
 NO_INSPECSAFE_INFERENCE. No grounding, final roles, backup activation or merge.
 
-## D9 transition and active P2 checklist (2026-09-20)
+## D9R15 current roster overlay (2026-09-30)
+
+The current [roster](../configs/pre_freeze/local_models.d9.json) has five
+classification candidates: Qwen3, Qwen2.5, InternVL3, Moondream and PaliGemma.
+PaliGemma is PRIMARY_5, runtime PASS_VALIDATED/exact verified; classification
+interface PENDING_QUALIFICATION, primary grounding NOT_PARTICIPATING / gate FAIL /
+grounding qualification FAIL. Moondream is gate eligible, production adapter
+NOT_QUALIFIED; other primary RQ3 models remain NOT_PARTICIPATING.
+Separate exploratory policy includes only Moondream, Qwen3 and PaliGemma;
+it neither overrides gates nor implements D5 analysis. Separate reporting
+implementation/freeze before InspecSafe remains required. SmolVLM2 is unactivated
+BACKUP_1. See [current readiness](w2_d9_freeze_readiness_reconciliation.md):
+#1/#2/#5 COMPLETE; #3/#4/#6/#7/#8 PENDING. Protocol freeze PENDING,
+InspecSafe authorization=false. Historical execution and result sections below
+retain their milestone scope; no runtime/code changes are made by D9R15.
+
+## Historical D9 transition and P2 checklist (2026-09-20)
 
 [DEC-W2-D9-009](../DECISIONS.md#dec-w2-d9-009--p2-open-weight-self-hosted-model-roster)
 supersedes **only D8's P2 commercial-hosted-provider roster/backend assumptions**.
