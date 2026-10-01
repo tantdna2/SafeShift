@@ -1,0 +1,196 @@
+{
+  "schema_version": "qwen2-5-classification-qualification-result-v1",
+  "task": "W2.6-D9R17A-QWEN2_5-CLASSIFICATION-QUALIFICATION-RESULT",
+  "record_kind": "RESEARCH_LEAD_VERIFIED_REAL_CLASSIFICATION_QUALIFICATION_RESULT",
+  "recording_date": "2026-10-01",
+  "recording_base_sha": "7154c6187de7d8ecc5ad4ac5d0aafb68d2d7c1ab",
+  "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+  "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+  "execution_commit": "7154c6187de7d8ecc5ad4ac5d0aafb68d2d7c1ab",
+  "run_id": "d9r17a-qwen2_5-classification",
+  "execution_authorization": "DEC-W2-D9R17A-QWEN2_5-CLASSIFICATION-QUALIFICATION-EXEC-001",
+  "source": {
+    "authority": "RESEARCH_LEAD",
+    "recording_basis": "Research Lead directly inspected the bundle, JSON records, raw envelopes, raw SHA-256/size and metadata before assigning this recording task. Codex transcribes the supplied findings and did not independently inspect or rehash the bundle.",
+    "bundle_sha256": "aa30fd9b19ead3889595394eb8499699233bfceb483446e05b342b15149d72e1",
+    "bundle_and_raw_bytes_committed": false,
+    "independent_bundle_inspection_by_codex": false
+  },
+  "suite": "external-classification-qualification-v1",
+  "source_kind": "EXTERNAL_CLASSIFICATION_QUALIFICATION",
+  "prospective_contract": {
+    "manifest_path": "configs/pre_freeze/classification_qualification_cases.v1.json",
+    "manifest_sha256": "3b7c3ebdec0736580bbad27f782496e318372cda6c3a4f322c4cc19ca5749e92",
+    "plan_path": "configs/pre_freeze/classification_qualification_plan.v1.json",
+    "plan_sha256": "c2e8990227e7378368b986352d88fe6c9975769cdeccda346e3070d321d77160",
+    "hash_basis": "REPOSITORY_BYTES_AT_RECORDING_BASE",
+    "prep_classification_results": "NOT_RUN",
+    "required_exact_expected_count": 8,
+    "prompt_and_parser": "safeshift/qualification/classification.py",
+    "runtime_plan": "configs/pre_freeze/qwen2_5_t4_runtime.v1.json",
+    "historical_prep_artifacts_unchanged": true
+  },
+  "run_status": "FAIL",
+  "causes": ["SEMANTIC_CLASSIFICATION_FAILURE"],
+  "runtime_failure": null,
+  "review_status": "PENDING_REVIEW",
+  "model_role_after_run": "PENDING_RESEARCH_LEAD_REVIEW",
+  "classification_participation_decision": "PENDING",
+  "roster_membership_changed": false,
+  "production_adapter_promoted": false,
+  "automatic_rerun": false,
+  "summary": {
+    "total_cases": 8,
+    "format_parser_status": "SUCCESS",
+    "parse_success_count": 8,
+    "exact_expected_count": 3,
+    "semantic_expected_match_scope": "DESCRIPTIVE_QUALIFICATION_EVIDENCE_ONLY",
+    "observed_canonical_counts": {"Level01": 7, "Level02": 0, "Level03": 1, "Level04": 0}
+  },
+  "cases": [
+    {
+      "case_id": "cq_01",
+      "expected_safety_level": "Level01",
+      "observed_canonical": "Level01",
+      "decoded_for_parser": "{\"safety_level\":\"Level01\"}",
+      "parse_status": "SUCCESS",
+      "correct": true,
+      "raw_sha256": "e532d76fa9108286b11484b9f307245cc8507e7cd4797b57d71b8e82a57880cd",
+      "raw_size_bytes": 7418
+    },
+    {
+      "case_id": "cq_02",
+      "expected_safety_level": "Level01",
+      "observed_canonical": "Level01",
+      "decoded_for_parser": "{\"safety_level\":\"Level01\"}",
+      "parse_status": "SUCCESS",
+      "correct": true,
+      "raw_sha256": "e532d76fa9108286b11484b9f307245cc8507e7cd4797b57d71b8e82a57880cd",
+      "raw_size_bytes": 7418
+    },
+    {
+      "case_id": "cq_03",
+      "expected_safety_level": "Level02",
+      "observed_canonical": "Level01",
+      "decoded_for_parser": "{\"safety_level\":\"Level01\"}",
+      "parse_status": "SUCCESS",
+      "correct": false,
+      "raw_sha256": "e532d76fa9108286b11484b9f307245cc8507e7cd4797b57d71b8e82a57880cd",
+      "raw_size_bytes": 7418
+    },
+    {
+      "case_id": "cq_04",
+      "expected_safety_level": "Level02",
+      "observed_canonical": "Level01",
+      "decoded_for_parser": "{\"safety_level\":\"Level01\"}",
+      "parse_status": "SUCCESS",
+      "correct": false,
+      "raw_sha256": "e532d76fa9108286b11484b9f307245cc8507e7cd4797b57d71b8e82a57880cd",
+      "raw_size_bytes": 7418
+    },
+    {
+      "case_id": "cq_05",
+      "expected_safety_level": "Level03",
+      "observed_canonical": "Level03",
+      "decoded_for_parser": "{\"safety_level\":\"Level03\"}",
+      "parse_status": "SUCCESS",
+      "correct": true,
+      "raw_sha256": "e9d745289442445578867edaf046f305de870b1409c07e49e4ab67945168fcb9",
+      "raw_size_bytes": 7418
+    },
+    {
+      "case_id": "cq_06",
+      "expected_safety_level": "Level03",
+      "observed_canonical": "Level01",
+      "decoded_for_parser": "{\"safety_level\":\"Level01\"}",
+      "parse_status": "SUCCESS",
+      "correct": false,
+      "raw_sha256": "e532d76fa9108286b11484b9f307245cc8507e7cd4797b57d71b8e82a57880cd",
+      "raw_size_bytes": 7418
+    },
+    {
+      "case_id": "cq_07",
+      "expected_safety_level": "Level04",
+      "observed_canonical": "Level01",
+      "decoded_for_parser": "{\"safety_level\":\"Level01\"}",
+      "parse_status": "SUCCESS",
+      "correct": false,
+      "raw_sha256": "e532d76fa9108286b11484b9f307245cc8507e7cd4797b57d71b8e82a57880cd",
+      "raw_size_bytes": 7418
+    },
+    {
+      "case_id": "cq_08",
+      "expected_safety_level": "Level04",
+      "observed_canonical": "Level01",
+      "decoded_for_parser": "{\"safety_level\":\"Level01\"}",
+      "parse_status": "SUCCESS",
+      "correct": false,
+      "raw_sha256": "e532d76fa9108286b11484b9f307245cc8507e7cd4797b57d71b8e82a57880cd",
+      "raw_size_bytes": 7418
+    }
+  ],
+  "raw_evidence": {
+    "verification_authority": "RESEARCH_LEAD",
+    "scope": "ALL_EIGHT_RAW_OUTPUTS",
+    "persisted_before_parser": true,
+    "sha256_matches_result_records": true,
+    "size_matches_result_records": true,
+    "metadata_parse_status_before_parser": "NOT_ATTEMPTED",
+    "metadata_source_kind": "EXTERNAL_CLASSIFICATION_QUALIFICATION",
+    "parser_repair": false,
+    "markdown_stripping": false,
+    "retry_count": 0,
+    "alternate_prompt": false
+  },
+  "runtime_evidence": {
+    "verification_authority": "RESEARCH_LEAD",
+    "model_loads": 1,
+    "classification_calls": 8,
+    "grounding_calls": 0,
+    "hardware": {
+      "gpu_name": "Tesla T4",
+      "visible_gpu_count": 1,
+      "used_device": "cuda:0",
+      "compute_capability": [7, 5],
+      "total_vram_bytes": 15636037632,
+      "torch_cuda_version": "12.4"
+    },
+    "precision": "FP16",
+    "quantization": "NONE",
+    "software_versions": {
+      "python": "3.11.11",
+      "torch": "2.6.0+cu124",
+      "torchvision": "0.21.0+cu124",
+      "transformers": "4.51.3",
+      "qwen-vl-utils": "0.0.8",
+      "accelerate": "1.6.0",
+      "pillow": "11.2.1",
+      "huggingface-hub": "0.30.2",
+      "tokenizers": "0.21.1",
+      "safetensors": "0.5.3"
+    },
+    "snapshot": {
+      "local_bytes_verified": true,
+      "scope": "RESEARCH_LEAD_VERIFIED_EXECUTION_EVIDENCE_NOT_A_NEW_CODEX_SNAPSHOT_CHECK",
+      "total_bytes": 7520918095,
+      "weight_shards": [
+        {"path": "model-00001-of-00002.safetensors", "sha256": "41a8895c164b4d32bae6b302f4603fcbc1797f32dafa45c7e9bcda23c6755df8"},
+        {"path": "model-00002-of-00002.safetensors", "sha256": "365531ff8752420e89dee707b79d021fb2d6e25abafe486f080555a4fe6972e4"}
+      ]
+    },
+    "offline_evidence": {
+      "venue_internet_off": "ATTESTED_BY_EXECUTION_ATTEMPT",
+      "existing_runtime_offline_environment_enforced": true,
+      "existing_network_denial_guards_enforced": true,
+      "scope": "EXECUTION_ATTESTATION_AND_EXISTING_RUNTIME_GUARDS_ONLY"
+    }
+  },
+  "NOT_INSPECSAFE": true,
+  "NOT_ACCURACY_BENCHMARK": true,
+  "ranking_models": false,
+  "real_model_rerun": false,
+  "model_execution_by_recording_agent": false,
+  "inspecsafe_status": "NOT_RUN",
+  "inspecsafe_inference_authorized": false,
+  "protocol_freeze": "PENDING"
+}
