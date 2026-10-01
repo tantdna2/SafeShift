@@ -1644,3 +1644,35 @@
 - **Người chấp thuận và thời điểm:** <điền khi được chấp thuận>
 - **Task/thí nghiệm liên quan:** <relative path hoặc ID>
 - **Thay thế quyết định:** <ID nếu có>
+
+## D9R17A — Qwen2.5 classification qualification result (2026-10-01)
+
+- Authority: Research Lead's recording task
+  `W2.6-D9R17A-QWEN2_5-CLASSIFICATION-QUALIFICATION-RESULT`; execution authorization
+  `DEC-W2-D9R17A-QWEN2_5-CLASSIFICATION-QUALIFICATION-EXEC-001`, supplied by the Lead.
+  Model `Qwen/Qwen2.5-VL-3B-Instruct`, revision
+  `66285546d2b821cf421d4f5eb2576359d3770cd3`, execution/recording base
+  `7154c6187de7d8ecc5ad4ac5d0aafb68d2d7c1ab`, run `d9r17a-qwen2_5-classification`.
+- Research Lead directly inspected bundle, records, raw envelopes, raw SHA/size
+  and metadata. Bundle SHA-256:
+  `aa30fd9b19ead3889595394eb8499699233bfceb483446e05b342b15149d72e1`.
+  Codex transcribes supplied evidence; no independent bundle inspection/rehash.
+  Bundle/raw bytes are not committed. See [result artifact](configs/pre_freeze/qwen2_5_classification_qualification_result.v1.json)
+  and [evidence limits](notes/w2_qwen2_5_classification_qualification_result.md).
+- RUN_STATUS=FAIL; causes=[SEMANTIC_CLASSIFICATION_FAILURE]; runtime failure=NONE.
+  Parser SUCCESS 8/8; exact_expected_count=3 of total_cases=8 (descriptive only).
+  The prospective PASS rule requires 8/8 exact expected. Seven canonical Level01,
+  one Level03; no benchmark accuracy, ranking or causal/model-bias inference.
+- REVIEW_STATUS=PENDING_REVIEW; MODEL_ROLE_AFTER_RUN=PENDING_RESEARCH_LEAD_REVIEW;
+  CLASSIFICATION_PARTICIPATION_DECISION=PENDING. FAIL does not remove Qwen2.5 or
+  assign classification NOT_PARTICIPATING. Roster membership unchanged,
+  Qwen2.5 classification CANDIDATE; no production promotion or automatic rerun.
+- All eight raws persisted before parser, matching SHA/size, pre-parser metadata
+  NOT_ATTEMPTED / EXTERNAL_CLASSIFICATION_QUALIFICATION per Lead verification.
+  One load/eight classification/zero grounding calls; no repair, stripping,
+  retry or alternate prompt. Runtime pins and bounded offline attestations are
+  retained in the result; this task performs no model execution.
+- D9R16 prospective manifest/plan remain byte-unchanged, including historical
+  classification_results=NOT_RUN. No roster, backup, production adapter, prompt,
+  parser, fixture, PASS rule, D5, grounding history or D9R15 exploratory changes.
+  InspecSafe NOT_RUN / unauthorized; protocol freeze PENDING; no rerun or merge.

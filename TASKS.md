@@ -901,3 +901,24 @@ token-budget increase, giant-box review or merge in this recording task.
 
 Base: `9948570820b5ed8a774b8e226b80e24055e705cf`.
 NO_INSPECSAFE_INFERENCE; NO_MODEL_RERUN; no GPU/gate execution or merge.
+
+## W2.6-D9R17A-QWEN2_5-CLASSIFICATION-QUALIFICATION-RESULT (2026-10-01)
+
+- [x] Record Research Lead-verified completed real qualification in a separate
+  [result artifact](configs/pre_freeze/qwen2_5_classification_qualification_result.v1.json)
+  and [note](notes/w2_qwen2_5_classification_qualification_result.md); no independent
+  Codex bundle inspection/rehash and no bundle/raw bytes committed.
+- [x] Record RUN_STATUS=FAIL / SEMANTIC_CLASSIFICATION_FAILURE, runtime failure=NONE,
+  parser SUCCESS 8/8 and exact_expected_count=3 of 8, descriptive only.
+- [x] Preserve D9R16 manifest/plan bytes and historical classification_results=NOT_RUN;
+  five-model roster, Qwen2.5 CANDIDATE, production adapters, D5 and grounding intact.
+- [x] Focused 64/64 PASS. Full suite: result branch 1,276 tests vs exact BASE
+  1,263 tests; both 4 failures / 24 errors, same 28 identities, no new regression.
+  Existing failures are retained; validation commands/limits are in the note.
+- [ ] Independent result review: PENDING_REVIEW; model role
+  PENDING_RESEARCH_LEAD_REVIEW; classification participation decision PENDING.
+
+Base/execution: `7154c6187de7d8ecc5ad4ac5d0aafb68d2d7c1ab`.
+No roster removal, backup activation or production promotion. AUTOMATIC_RERUN=false;
+REAL_MODEL_RERUN=NO; INSPECSAFE=NOT_RUN / unauthorized; PROTOCOL_FREEZE=PENDING.
+Recording only; no model/GPU execution or merge.
