@@ -1676,3 +1676,34 @@
   classification_results=NOT_RUN. No roster, backup, production adapter, prompt,
   parser, fixture, PASS rule, D5, grounding history or D9R15 exploratory changes.
   InspecSafe NOT_RUN / unauthorized; protocol freeze PENDING; no rerun or merge.
+
+## D9R17B–E — four classification qualification results (2026-10-01)
+
+- Authority: Research Lead task
+  `W2.6-D9R17B-E-FOUR-MODEL-CLASSIFICATION-QUALIFICATION-RESULTS`.
+  Recording BASE and execution commit for all four runs:
+  `3ad16f48da4f9ef5910dedede9a4ba950f268b7a`. Exact per-run authorization,
+  model/revision, bundle SHA256/size, raw SHA256/size, runtime and case findings:
+  [combined result](configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json)
+  and [evidence note](notes/w2_d9r17b_e_classification_qualification_results.md).
+- Research Lead / ChatGPT directly inspected and rehashed the four uploaded ZIP
+  bundles and checked raw/metadata/result/runtime evidence against the execution
+  commit. Codex transcribes supplied findings; no independent bundle inspection
+  or rehash by Codex. Bundles/raw files/weights are not committed.
+- InternVL3: FAIL / SEMANTIC_CLASSIFICATION_FAILURE, parse SUCCESS 8/8, exact
+  expected 6/8. Moondream: FAIL / SEMANTIC_CLASSIFICATION_FAILURE, parse SUCCESS
+  8/8, exact expected 2/8. PaliGemma: FAIL / INTERFACE_OR_FORMAT_FAILURE, parse
+  SUCCESS 0/8, INVALID 8/8, canonical exact expected 0/8. Qwen3: PASS / causes=[],
+  parse SUCCESS 8/8, exact expected 8/8. Runtime failure=null for all four.
+  Counts are descriptive qualification evidence only, not accuracy or ranking.
+- PaliGemma lowercase/marker-name outputs remain INVALID with canonical null;
+  no normalization, alias mapping, reinterpretation or semantic PASS claim.
+- All four: MODEL_ROLE_AFTER_RUN=PENDING_RESEARCH_LEAD_REVIEW,
+  REVIEW_STATUS=PENDING_REVIEW; CLASSIFICATION_PARTICIPATION_DECISION=PENDING.
+  No roster change/removal, SmolVLM2 activation, production promotion, automatic
+  rerun, real rerun or prompt/parser repair. PASS grants no automatic authority;
+  FAIL assigns no classification NOT_PARTICIPATING role.
+- Protected plan/cases/roster/freeze bytes and historical D9R16 NOT_RUN / false
+  execution authorization remain unchanged; D5, grounding history and exploratory
+  policy unchanged. PROTOCOL_FREEZE=PENDING; INSPECSAFE=NOT_RUN / unauthorized.
+  Documentary recording only; no model execution or merge.
