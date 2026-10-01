@@ -1,0 +1,719 @@
+{
+  "schema_version": "d9r17b-e-classification-qualification-results-v1",
+  "task": "W2.6-D9R17B-E-FOUR-MODEL-CLASSIFICATION-QUALIFICATION-RESULTS",
+  "record_kind": "RESEARCH_LEAD_VERIFIED_REAL_CLASSIFICATION_QUALIFICATION_RESULT",
+  "recording_date": "2026-10-01",
+  "recording_base_sha": "3ad16f48da4f9ef5910dedede9a4ba950f268b7a",
+  "execution_commit": "3ad16f48da4f9ef5910dedede9a4ba950f268b7a",
+  "source": {
+    "authority": "RESEARCH_LEAD",
+    "recording_basis": "Research Lead / ChatGPT directly inspected all four uploaded ZIP bundles, recomputed SHA256, read raw/metadata/result/runtime evidence and compared it with the exact GitHub execution commit. Codex transcribes the supplied findings and did not independently inspect or rehash the bundles.",
+    "independent_bundle_inspection_by_codex": false,
+    "independent_bundle_rehash_by_codex": false,
+    "bundle_and_raw_bytes_committed": false
+  },
+  "suite": "external-classification-qualification-v1",
+  "source_kind": "EXTERNAL_CLASSIFICATION_QUALIFICATION",
+  "prospective_contract": {
+    "manifest_path": "configs/pre_freeze/classification_qualification_cases.v1.json",
+    "manifest_sha256": "3b7c3ebdec0736580bbad27f782496e318372cda6c3a4f322c4cc19ca5749e92",
+    "plan_path": "configs/pre_freeze/classification_qualification_plan.v1.json",
+    "plan_sha256": "c2e8990227e7378368b986352d88fe6c9975769cdeccda346e3070d321d77160",
+    "hash_basis": "REPOSITORY_BYTES_AT_RECORDING_BASE",
+    "prep_classification_results": "NOT_RUN",
+    "execution_authorized_in_prep": false,
+    "required_exact_expected_count": 8,
+    "historical_prep_artifacts_unchanged": true
+  },
+  "raw_evidence": {
+    "verification_authority": "RESEARCH_LEAD",
+    "scope": "ALL_32_CALLS_IN_FOUR_RUNS",
+    "call_count": 32,
+    "computed_raw_sha256_matches_result": true,
+    "computed_raw_size_matches_result": true,
+    "metadata_raw_sha256_matches_actual_raw": true,
+    "metadata_raw_size_matches_actual_raw": true,
+    "metadata_parse_status_before_parser": "NOT_ATTEMPTED",
+    "metadata_source_kind": "EXTERNAL_CLASSIFICATION_QUALIFICATION",
+    "NOT_INSPECSAFE": true,
+    "NOT_ACCURACY_BENCHMARK": true,
+    "per_case_image_sha256_matches_prospective_manifest": true,
+    "top_level_result_equals_calls_qualification_result": true,
+    "top_level_result_path": "result.json",
+    "inner_result_path": "calls/qualification_result.json",
+    "artifact_path_basis": "RELATIVE_TO_EACH_EXECUTION_ATTEMPT_DIRECTORY"
+  },
+  "recording_boundaries": {
+    "model_execution_by_recording_agent": false,
+    "ranking_models": false,
+    "NOT_INSPECSAFE": true,
+    "NOT_ACCURACY_BENCHMARK": true,
+    "protocol_freeze": "PENDING",
+    "inspecsafe_status": "NOT_RUN",
+    "inspecsafe_inference_authorized": false,
+    "roster_membership_changed": false,
+    "model_removed": false,
+    "backup_activated": false,
+    "production_adapter_promoted": false,
+    "automatic_rerun": false,
+    "real_model_rerun": false,
+    "prompt_parser_runner_runtime_protocol_changed": false
+  },
+  "attempt_contract": {
+    "basis": "UNCHANGED_PROSPECTIVE_PLAN_NO_RETRY_OR_REPAIR",
+    "retry_count": 0,
+    "repair_count": 0,
+    "alternate_prompt": false,
+    "prompt_parser_policy_changes_within_run": false,
+    "output_budget_changed": false,
+    "output_reinterpretation": false,
+    "lowercase_alias_or_marker_mapping": false
+  },
+  "protected_files": [
+    {
+      "path": "configs/pre_freeze/classification_qualification_plan.v1.json",
+      "base_sha256": "c2e8990227e7378368b986352d88fe6c9975769cdeccda346e3070d321d77160",
+      "byte_unchanged_from_base": true
+    },
+    {
+      "path": "configs/pre_freeze/classification_qualification_cases.v1.json",
+      "base_sha256": "3b7c3ebdec0736580bbad27f782496e318372cda6c3a4f322c4cc19ca5749e92",
+      "byte_unchanged_from_base": true
+    },
+    {
+      "path": "configs/pre_freeze/local_models.d9.json",
+      "base_sha256": "02c0e3f6b4c70f7d13b4b588e1db6c8b2e6dca4267170cf28d702ba8ce1f04fa",
+      "byte_unchanged_from_base": true
+    },
+    {
+      "path": "configs/pre_freeze/freeze_manifest.d9.template.json",
+      "base_sha256": "4e8aaffae6955e80b1142a23e86274dd6fc2d9c3d888c7b70f6a7a91c91d6d3d",
+      "byte_unchanged_from_base": true
+    }
+  ],
+  "runs": {
+    "internvl3": {
+      "model_id": "OpenGVLab/InternVL3-2B-hf",
+      "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+      "execution_commit": "3ad16f48da4f9ef5910dedede9a4ba950f268b7a",
+      "execution_authorization": "DEC-W2-D9R17B-INTERNVL3-CLASSIFICATION-QUALIFICATION-EXEC-001",
+      "run_id": "d9r17b-internvl3-classification",
+      "completed_at": "2026-10-01T07:34:15.526059+00:00",
+      "bundle_sha256": "d8a0c3463f716866a04c38daf40aafccf100e1d99eba9c2f966f6c4ddd5caa3f",
+      "bundle_size_bytes": 59204,
+      "attempt_manifest_sha256": "3b7c3ebdec0736580bbad27f782496e318372cda6c3a4f322c4cc19ca5749e92",
+      "attempt_plan_sha256": "c2e8990227e7378368b986352d88fe6c9975769cdeccda346e3070d321d77160",
+      "prompt_sha256": "1b6da67a979a7c5bd53af35ce9a65516761da4008a2bb6519438dbd05c687348",
+      "run_status": "FAIL",
+      "causes": [
+        "SEMANTIC_CLASSIFICATION_FAILURE"
+      ],
+      "runtime_failure": null,
+      "review_status": "PENDING_REVIEW",
+      "model_role_after_run": "PENDING_RESEARCH_LEAD_REVIEW",
+      "classification_participation_decision": "PENDING",
+      "roster_membership_changed": false,
+      "model_removed": false,
+      "backup_activated": false,
+      "production_adapter_promoted": false,
+      "automatic_rerun": false,
+      "real_model_rerun": false,
+      "summary": {
+        "total_cases": 8,
+        "parse_success_count": 8,
+        "parse_invalid_count": 0,
+        "exact_expected_count": 6,
+        "semantic_expected_match_scope": "DESCRIPTIVE_QUALIFICATION_EVIDENCE_ONLY"
+      },
+      "cases": [
+        {
+          "case_id": "cq_01",
+          "expected_safety_level": "Level01",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "546146a8b00d730f45bc8b7964b57ea8c0786228742642d78c406642ccfa2a4b",
+          "raw_size_bytes": 5480,
+          "image_sha256": "0a6fdafb0a1aa4c3654336cc94c1819b053b240cbe5c3692f602856b256415ea"
+        },
+        {
+          "case_id": "cq_02",
+          "expected_safety_level": "Level01",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "5a0d9f2cef98aa0bb2b6c0e1fc62cac7bb8a50fc49a967a11c95260e6beb824d",
+          "raw_size_bytes": 5480,
+          "image_sha256": "96edfb13c36f8a9a8b773457128ba743f68660d331beba0e1e4f0614ddd923ba"
+        },
+        {
+          "case_id": "cq_03",
+          "expected_safety_level": "Level02",
+          "observed_canonical": "Level02",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "fa70b0aed293ce53b001c9fbde9345c3f1b43898649998600fb37edb6b691cf3",
+          "raw_size_bytes": 5480,
+          "image_sha256": "5f55b272b74b1e378894ef8bc0b8b7cd5238de7b8f0cc11171816416d7649e4b"
+        },
+        {
+          "case_id": "cq_04",
+          "expected_safety_level": "Level02",
+          "observed_canonical": "Level02",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "36731e00bf65bb23d21bbc124b0666421d1d5b919c6f552aa6ca00cd8da1fbf2",
+          "raw_size_bytes": 5480,
+          "image_sha256": "e5748cd2243308a54bbf5fabe469011017cd07d5ff659fb03c19a44cc4360c5b"
+        },
+        {
+          "case_id": "cq_05",
+          "expected_safety_level": "Level03",
+          "observed_canonical": "Level03",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "17a65e8e15c0631e5bba1216ed53ce9222b5803326abf1e8219f44156faf84ef",
+          "raw_size_bytes": 5480,
+          "image_sha256": "2d132e23ea88deef886abd031ac773bcd465bfde916b84ef20271a71da87cd9a"
+        },
+        {
+          "case_id": "cq_06",
+          "expected_safety_level": "Level03",
+          "observed_canonical": "Level03",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "f37be4d6f6db4bd5c530ef0ee7a6422f9aef50e5ca0f693ef15aeeeccc855759",
+          "raw_size_bytes": 5480,
+          "image_sha256": "efa17631cb2302293d1939d7e4c96db9d894b3fa82b5a6fcb38226f46d99e2f2"
+        },
+        {
+          "case_id": "cq_07",
+          "expected_safety_level": "Level04",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "f0fe7c14c9c30a43f5b1b38206119663b4797f311e65040f7a9111e2ad5d4e29",
+          "raw_size_bytes": 5480,
+          "image_sha256": "920f26e65d4de87835bf4000a37fe5d082e4575503f2726ef4232269da2da18f"
+        },
+        {
+          "case_id": "cq_08",
+          "expected_safety_level": "Level04",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "57b1b831fca141f2c6e9a3f38d8b82db7f066faecd03c070f69c60720926e57c",
+          "raw_size_bytes": 5480,
+          "image_sha256": "4b0df70ef83930ac42d7a1d7483fc66736bc0ada3db2318f659cfe2a7be85ee2"
+        }
+      ],
+      "runtime_evidence": {
+        "verification_authority": "RESEARCH_LEAD",
+        "model_loads": 1,
+        "classification_calls": 8,
+        "grounding_calls": 0,
+        "hardware": {
+          "visible_gpu_count": 1,
+          "gpus": [
+            {
+              "name": "Tesla T4",
+              "compute_capability": [
+                7,
+                5
+              ],
+              "total_vram_bytes": 15636037632
+            }
+          ]
+        },
+        "precision": "FP16",
+        "quantization": "NONE",
+        "runtime_failure": null,
+        "cuda_version": "12.4",
+        "snapshot": {
+          "local_bytes_verified": true,
+          "file_count": 14
+        },
+        "state_audit_record_count": 25
+      }
+    },
+    "moondream": {
+      "model_id": "vikhyatk/moondream2",
+      "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "execution_commit": "3ad16f48da4f9ef5910dedede9a4ba950f268b7a",
+      "execution_authorization": "DEC-W2-D9R17C-MOONDREAM-CLASSIFICATION-QUALIFICATION-EXEC-001",
+      "run_id": "d9r17c-moondream-classification",
+      "completed_at": "2026-10-01T07:42:44.055714+00:00",
+      "bundle_sha256": "3486de253fb5775d864b54b376ed9f464547b1f796a0551c525580d70366b93c",
+      "bundle_size_bytes": 92830,
+      "attempt_manifest_sha256": "3b7c3ebdec0736580bbad27f782496e318372cda6c3a4f322c4cc19ca5749e92",
+      "attempt_plan_sha256": "c2e8990227e7378368b986352d88fe6c9975769cdeccda346e3070d321d77160",
+      "prompt_sha256": "1b6da67a979a7c5bd53af35ce9a65516761da4008a2bb6519438dbd05c687348",
+      "run_status": "FAIL",
+      "causes": [
+        "SEMANTIC_CLASSIFICATION_FAILURE"
+      ],
+      "runtime_failure": null,
+      "review_status": "PENDING_REVIEW",
+      "model_role_after_run": "PENDING_RESEARCH_LEAD_REVIEW",
+      "classification_participation_decision": "PENDING",
+      "roster_membership_changed": false,
+      "model_removed": false,
+      "backup_activated": false,
+      "production_adapter_promoted": false,
+      "automatic_rerun": false,
+      "real_model_rerun": false,
+      "summary": {
+        "total_cases": 8,
+        "parse_success_count": 8,
+        "parse_invalid_count": 0,
+        "exact_expected_count": 2,
+        "semantic_expected_match_scope": "DESCRIPTIVE_QUALIFICATION_EVIDENCE_ONLY"
+      },
+      "cases": [
+        {
+          "case_id": "cq_01",
+          "expected_safety_level": "Level01",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "0a6fdafb0a1aa4c3654336cc94c1819b053b240cbe5c3692f602856b256415ea",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        },
+        {
+          "case_id": "cq_02",
+          "expected_safety_level": "Level01",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "96edfb13c36f8a9a8b773457128ba743f68660d331beba0e1e4f0614ddd923ba",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        },
+        {
+          "case_id": "cq_03",
+          "expected_safety_level": "Level02",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "5f55b272b74b1e378894ef8bc0b8b7cd5238de7b8f0cc11171816416d7649e4b",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        },
+        {
+          "case_id": "cq_04",
+          "expected_safety_level": "Level02",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "e5748cd2243308a54bbf5fabe469011017cd07d5ff659fb03c19a44cc4360c5b",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        },
+        {
+          "case_id": "cq_05",
+          "expected_safety_level": "Level03",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "2d132e23ea88deef886abd031ac773bcd465bfde916b84ef20271a71da87cd9a",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        },
+        {
+          "case_id": "cq_06",
+          "expected_safety_level": "Level03",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "efa17631cb2302293d1939d7e4c96db9d894b3fa82b5a6fcb38226f46d99e2f2",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        },
+        {
+          "case_id": "cq_07",
+          "expected_safety_level": "Level04",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "920f26e65d4de87835bf4000a37fe5d082e4575503f2726ef4232269da2da18f",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        },
+        {
+          "case_id": "cq_08",
+          "expected_safety_level": "Level04",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": false,
+          "raw_sha256": "2188ec33a40247a13667fde9af15bde49ae640aacf310053964d9a903286e72f",
+          "raw_size_bytes": 136,
+          "image_sha256": "4b0df70ef83930ac42d7a1d7483fc66736bc0ada3db2318f659cfe2a7be85ee2",
+          "native_answer": "{\n  \"safety_level\": \"Level01\"\n}"
+        }
+      ],
+      "tokenizer_revision": "35192e10a54e36eabe0a7cc57a2c1aab371cafc5",
+      "runtime_evidence": {
+        "verification_authority": "RESEARCH_LEAD",
+        "model_loads": 1,
+        "classification_calls": 8,
+        "grounding_calls": 0,
+        "hardware": {
+          "visible_gpu_count": 1,
+          "gpus": [
+            {
+              "name": "Tesla T4",
+              "compute_capability": [
+                7,
+                5
+              ],
+              "total_vram_bytes": 15636037632
+            }
+          ]
+        },
+        "precision": "FP16",
+        "quantization": "NONE",
+        "runtime_failure": null,
+        "query_call_count": 8,
+        "detect_call_count": 0,
+        "snapshot": {
+          "exact_model_snapshot_verified": true,
+          "exact_tokenizer_snapshot_verified": true,
+          "provision_online_offline_manifests_matched": true
+        },
+        "state_audits": {
+          "record_count": 17,
+          "valid_count": 17,
+          "status": "VALID"
+        },
+        "image_boundary_count": 24
+      }
+    },
+    "paligemma": {
+      "model_id": "google/paligemma-3b-mix-448",
+      "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "execution_commit": "3ad16f48da4f9ef5910dedede9a4ba950f268b7a",
+      "execution_authorization": "DEC-W2-D9R17D-PALIGEMMA-CLASSIFICATION-QUALIFICATION-EXEC-001",
+      "run_id": "d9r17d-paligemma-classification",
+      "completed_at": "2026-10-01T08:51:54.551970+00:00",
+      "bundle_sha256": "ffb68b11f6a62bd716a81af634ed8fdb412c641d2e4ce08aaf8f224d89092d4c",
+      "bundle_size_bytes": 59123,
+      "attempt_manifest_sha256": "3b7c3ebdec0736580bbad27f782496e318372cda6c3a4f322c4cc19ca5749e92",
+      "attempt_plan_sha256": "c2e8990227e7378368b986352d88fe6c9975769cdeccda346e3070d321d77160",
+      "prompt_sha256": "035ce849df10ef3b14982a8c9106ade8ef8e6889f1bbb7921c7dff08e98dc840",
+      "run_status": "FAIL",
+      "causes": [
+        "INTERFACE_OR_FORMAT_FAILURE"
+      ],
+      "runtime_failure": null,
+      "review_status": "PENDING_REVIEW",
+      "model_role_after_run": "PENDING_RESEARCH_LEAD_REVIEW",
+      "classification_participation_decision": "PENDING",
+      "roster_membership_changed": false,
+      "model_removed": false,
+      "backup_activated": false,
+      "production_adapter_promoted": false,
+      "automatic_rerun": false,
+      "real_model_rerun": false,
+      "summary": {
+        "total_cases": 8,
+        "parse_success_count": 0,
+        "parse_invalid_count": 8,
+        "exact_expected_count": 0,
+        "semantic_expected_match_scope": "DESCRIPTIVE_QUALIFICATION_EVIDENCE_ONLY"
+      },
+      "cases": [
+        {
+          "case_id": "cq_01",
+          "expected_safety_level": "Level01",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "a9a72bf4450cff50dec5c23786a745487e4a5df6f9e0e4816bbe021ba2ef45b6",
+          "raw_size_bytes": 16382,
+          "image_sha256": "0a6fdafb0a1aa4c3654336cc94c1819b053b240cbe5c3692f602856b256415ea",
+          "native_decoded_text": "level01"
+        },
+        {
+          "case_id": "cq_02",
+          "expected_safety_level": "Level01",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "82f330c2a496c1ba574bcaa763e71b56d9f35ace4a8df84fdcacbe9dc08b47a1",
+          "raw_size_bytes": 16382,
+          "image_sha256": "96edfb13c36f8a9a8b773457128ba743f68660d331beba0e1e4f0614ddd923ba",
+          "native_decoded_text": "level01"
+        },
+        {
+          "case_id": "cq_03",
+          "expected_safety_level": "Level02",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "24f86b494cea04ef518e647b1afc3b3ea4fbb8b565ebdb6c6b11e6b5dc6b9c1b",
+          "raw_size_bytes": 16376,
+          "image_sha256": "5f55b272b74b1e378894ef8bc0b8b7cd5238de7b8f0cc11171816416d7649e4b",
+          "native_decoded_text": "blue diamond"
+        },
+        {
+          "case_id": "cq_04",
+          "expected_safety_level": "Level02",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "eaa159d4aab50b7c4d54dba494b5d784e6bcd4ae09ac7f941bfe982fc210e138",
+          "raw_size_bytes": 16376,
+          "image_sha256": "e5748cd2243308a54bbf5fabe469011017cd07d5ff659fb03c19a44cc4360c5b",
+          "native_decoded_text": "blue diamond"
+        },
+        {
+          "case_id": "cq_05",
+          "expected_safety_level": "Level03",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "c4fb1d3abfec74b4016dd997be1d01c4f2e3840ead6fb1436e4c03c2c9e7fbac",
+          "raw_size_bytes": 16380,
+          "image_sha256": "2d132e23ea88deef886abd031ac773bcd465bfde916b84ef20271a71da87cd9a",
+          "native_decoded_text": "yellow circle"
+        },
+        {
+          "case_id": "cq_06",
+          "expected_safety_level": "Level03",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "205192dc6fd3f52a6527b825be6acab7f6b8b26f0e77be8b741a304eec64943a",
+          "raw_size_bytes": 16380,
+          "image_sha256": "efa17631cb2302293d1939d7e4c96db9d894b3fa82b5a6fcb38226f46d99e2f2",
+          "native_decoded_text": "yellow circle"
+        },
+        {
+          "case_id": "cq_07",
+          "expected_safety_level": "Level04",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "934541b578d2db70be554756ebaac7ed64dbdbd73c86a7df8075cabf64c12b97",
+          "raw_size_bytes": 16374,
+          "image_sha256": "920f26e65d4de87835bf4000a37fe5d082e4575503f2726ef4232269da2da18f",
+          "native_decoded_text": "green square"
+        },
+        {
+          "case_id": "cq_08",
+          "expected_safety_level": "Level04",
+          "observed_canonical": null,
+          "parse_status": "INVALID",
+          "correct": false,
+          "raw_sha256": "32bbe2735b8583628c26b89643d2f9c085595e6c85b61949622cdf5ef3417be1",
+          "raw_size_bytes": 16374,
+          "image_sha256": "4b0df70ef83930ac42d7a1d7483fc66736bc0ada3db2318f659cfe2a7be85ee2",
+          "native_decoded_text": "green square"
+        }
+      ],
+      "runtime_evidence": {
+        "verification_authority": "RESEARCH_LEAD",
+        "model_loads": 1,
+        "classification_calls": 8,
+        "grounding_calls": 0,
+        "hardware": {
+          "visible_gpu_count": 1,
+          "gpus": [
+            {
+              "name": "Tesla T4",
+              "compute_capability": [
+                7,
+                5
+              ],
+              "total_vram_bytes": 15636037632
+            }
+          ]
+        },
+        "precision": "FP16",
+        "quantization": "NONE",
+        "runtime_failure": null,
+        "cuda_version": "12.4",
+        "snapshot": {
+          "local_bytes_verified": true,
+          "file_count": 14
+        },
+        "state_audit_record_count": 25
+      }
+    },
+    "qwen3": {
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "execution_commit": "3ad16f48da4f9ef5910dedede9a4ba950f268b7a",
+      "execution_authorization": "DEC-W2-D9R17E-QWEN3-CLASSIFICATION-QUALIFICATION-EXEC-001",
+      "run_id": "d9r17e-qwen3-classification",
+      "completed_at": "2026-10-01T09:04:14.041838+00:00",
+      "bundle_sha256": "ff1a49b8dc7ca43ca0b401e42ca1485f24651e9da639deb0029ae2bbf6205a69",
+      "bundle_size_bytes": 51152,
+      "attempt_manifest_sha256": "3b7c3ebdec0736580bbad27f782496e318372cda6c3a4f322c4cc19ca5749e92",
+      "attempt_plan_sha256": "c2e8990227e7378368b986352d88fe6c9975769cdeccda346e3070d321d77160",
+      "prompt_sha256": "1b6da67a979a7c5bd53af35ce9a65516761da4008a2bb6519438dbd05c687348",
+      "run_status": "PASS",
+      "causes": [],
+      "runtime_failure": null,
+      "review_status": "PENDING_REVIEW",
+      "model_role_after_run": "PENDING_RESEARCH_LEAD_REVIEW",
+      "classification_participation_decision": "PENDING",
+      "roster_membership_changed": false,
+      "model_removed": false,
+      "backup_activated": false,
+      "production_adapter_promoted": false,
+      "automatic_rerun": false,
+      "real_model_rerun": false,
+      "summary": {
+        "total_cases": 8,
+        "parse_success_count": 8,
+        "parse_invalid_count": 0,
+        "exact_expected_count": 8,
+        "semantic_expected_match_scope": "DESCRIPTIVE_QUALIFICATION_EVIDENCE_ONLY"
+      },
+      "cases": [
+        {
+          "case_id": "cq_01",
+          "expected_safety_level": "Level01",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "a46a68ebfbffe408f9f945a594c82ac40f50ae7ee5b94b2d7a0f6abf22801586",
+          "raw_size_bytes": 4759,
+          "image_sha256": "0a6fdafb0a1aa4c3654336cc94c1819b053b240cbe5c3692f602856b256415ea"
+        },
+        {
+          "case_id": "cq_02",
+          "expected_safety_level": "Level01",
+          "observed_canonical": "Level01",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "a46a68ebfbffe408f9f945a594c82ac40f50ae7ee5b94b2d7a0f6abf22801586",
+          "raw_size_bytes": 4759,
+          "image_sha256": "96edfb13c36f8a9a8b773457128ba743f68660d331beba0e1e4f0614ddd923ba"
+        },
+        {
+          "case_id": "cq_03",
+          "expected_safety_level": "Level02",
+          "observed_canonical": "Level02",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "455c1da7f3fa9bc0323798c2f8e1aef3aa83dde043d1eeb757ba32ec0a0eb7b3",
+          "raw_size_bytes": 4759,
+          "image_sha256": "5f55b272b74b1e378894ef8bc0b8b7cd5238de7b8f0cc11171816416d7649e4b"
+        },
+        {
+          "case_id": "cq_04",
+          "expected_safety_level": "Level02",
+          "observed_canonical": "Level02",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "455c1da7f3fa9bc0323798c2f8e1aef3aa83dde043d1eeb757ba32ec0a0eb7b3",
+          "raw_size_bytes": 4759,
+          "image_sha256": "e5748cd2243308a54bbf5fabe469011017cd07d5ff659fb03c19a44cc4360c5b"
+        },
+        {
+          "case_id": "cq_05",
+          "expected_safety_level": "Level03",
+          "observed_canonical": "Level03",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "b528cb7e6bc038b5b3eef94bfe78cd83612375c3c939cb9525d0fc33c26af65a",
+          "raw_size_bytes": 4759,
+          "image_sha256": "2d132e23ea88deef886abd031ac773bcd465bfde916b84ef20271a71da87cd9a"
+        },
+        {
+          "case_id": "cq_06",
+          "expected_safety_level": "Level03",
+          "observed_canonical": "Level03",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "b528cb7e6bc038b5b3eef94bfe78cd83612375c3c939cb9525d0fc33c26af65a",
+          "raw_size_bytes": 4759,
+          "image_sha256": "efa17631cb2302293d1939d7e4c96db9d894b3fa82b5a6fcb38226f46d99e2f2"
+        },
+        {
+          "case_id": "cq_07",
+          "expected_safety_level": "Level04",
+          "observed_canonical": "Level04",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "c4fc526e6035270f63b68ff415a1f53f905f7f654ad42a25aff544db81d2ab79",
+          "raw_size_bytes": 4759,
+          "image_sha256": "920f26e65d4de87835bf4000a37fe5d082e4575503f2726ef4232269da2da18f"
+        },
+        {
+          "case_id": "cq_08",
+          "expected_safety_level": "Level04",
+          "observed_canonical": "Level04",
+          "parse_status": "SUCCESS",
+          "correct": true,
+          "raw_sha256": "c4fc526e6035270f63b68ff415a1f53f905f7f654ad42a25aff544db81d2ab79",
+          "raw_size_bytes": 4759,
+          "image_sha256": "4b0df70ef83930ac42d7a1d7483fc66736bc0ada3db2318f659cfe2a7be85ee2"
+        }
+      ],
+      "runtime_evidence": {
+        "verification_authority": "RESEARCH_LEAD",
+        "model_loads": 1,
+        "classification_calls": 8,
+        "grounding_calls": 0,
+        "hardware": {
+          "visible_gpu_count": 2,
+          "gpus": [
+            {
+              "name": "Tesla T4",
+              "compute_capability": [
+                7,
+                5
+              ],
+              "total_vram_bytes": 15636037632
+            },
+            {
+              "name": "Tesla T4",
+              "compute_capability": [
+                7,
+                5
+              ],
+              "total_vram_bytes": 15636037632
+            }
+          ]
+        },
+        "precision": "FP16",
+        "quantization": "NONE",
+        "runtime_failure": null,
+        "cuda_version": "12.8",
+        "software_versions": {
+          "python": "3.12.13",
+          "torch": "2.10.0+cu128",
+          "transformers": "4.57.1",
+          "accelerate": "1.11.0",
+          "huggingface_hub": "0.36.0",
+          "safetensors": "0.6.2",
+          "pillow": "11.3.0",
+          "zlib": "1.2.11"
+        },
+        "snapshot": {
+          "weight_shard_count": 4,
+          "verified_weight_shard_count": 4
+        },
+        "device_map": {
+          "gpu_indices_used": [
+            0,
+            1
+          ],
+          "cpu_placement_observed": false,
+          "disk_placement_observed": false
+        }
+      }
+    }
+  }
+}

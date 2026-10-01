@@ -922,3 +922,27 @@ Base/execution: `7154c6187de7d8ecc5ad4ac5d0aafb68d2d7c1ab`.
 No roster removal, backup activation or production promotion. AUTOMATIC_RERUN=false;
 REAL_MODEL_RERUN=NO; INSPECSAFE=NOT_RUN / unauthorized; PROTOCOL_FREEZE=PENDING.
 Recording only; no model/GPU execution or merge.
+
+## W2.6-D9R17B-E-FOUR-MODEL-CLASSIFICATION-QUALIFICATION-RESULTS (2026-10-01)
+
+- [x] Transcribe four Research Lead-verified bundles into one
+  [result artifact](configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json)
+  and [note](notes/w2_d9r17b_e_classification_qualification_results.md), with exact
+  execution identities, 32 per-case raw SHA256/sizes and supplied runtime evidence.
+  Codex did not independently inspect/rehash bundles; no bundle/raw/weight commit.
+- [x] Record InternVL3 FAIL / semantic / parse 8/8 / exact 6/8; Moondream FAIL /
+  semantic / parse 8/8 / exact 2/8; PaliGemma FAIL / format / parse 0/8 / exact 0/8;
+  Qwen3 PASS / parse 8/8 / exact 8/8. Descriptive only; runtime failure=null each.
+- [x] Focused documentary tests 23/23 and expanded focused 67/67 PASS; protected plan/cases/roster/freeze
+  byte checks and historical D9R16 NOT_RUN / unauthorized PREP checks PASS.
+- [x] Same-environment full suite: BASE 1,276 tests / result branch 1,299 tests;
+  both 4 failures / 24 errors, identical 28 failure/error identities, no new
+  regression. Prior result guard allows only the exact new artifact path;
+  unrelated historical failures remain. Commands and limits are in the note.
+- [ ] Independent Research Lead review PENDING_REVIEW; all four model roles
+  PENDING_RESEARCH_LEAD_REVIEW and classification participation decisions PENDING.
+
+BASE/execution: `3ad16f48da4f9ef5910dedede9a4ba950f268b7a`.
+No roster change/removal, backup activation, production promotion, model execution,
+retry/repair or rerun. INSPECSAFE=NOT_RUN / unauthorized; PROTOCOL_FREEZE=PENDING.
+No prompt/parser/runner/runtime/D5/grounding/exploratory-policy change or merge.
