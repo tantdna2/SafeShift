@@ -1,4 +1,7 @@
 {
+  "final_participation_decision": "configs/pre_freeze/d9r18_final_participation_decision.v1.json",
+  "classification_state_semantics": "classification_participation is the final D9R18 participation decision; classification_qualification_verdict preserves the D9R17 verdict separately. Legacy classification=CANDIDATE, classification_role=PENDING_FINAL_GATE and classification_interface_status=PENDING_QUALIFICATION retain pre-D9R18 meanings only; they are not current participation or qualification results. Production adapter fields remain current and unqualified. Roster membership != classification participation.",
+  "final_roles_remaining_blocker": "Role decisions complete; existing production adapter qualification dependency remains under checklist #4, not an undecided model role. Checklist definitions and frozen components unchanged.",
   "status": "D9_PRE_FREEZE_SELF_HOSTED",
   "decision_id": "DEC-W2-D9-009",
   "protocol_freeze_commit_sha": "PENDING",
@@ -58,6 +61,9 @@
     {
       "key": "qwen3_vl_8b_instruct",
       "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "PASS",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/qwen3",
       "role": "ANCHOR_REPRODUCTION_BRIDGE",
       "primary_grounding_participation": "NOT_PARTICIPATING",
       "exploratory_grounding_participation": "INCLUDED",
@@ -81,6 +87,9 @@
     {
       "key": "qwen2_5_vl_3b_instruct",
       "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/qwen2_5_classification_qualification_result.v1.json",
       "role": "RESOURCE_EFFICIENT_QWEN_CONTRAST",
       "primary_grounding_participation": "NOT_PARTICIPATING",
       "exploratory_grounding_participation": "EXCLUDED",
@@ -110,6 +119,9 @@
     {
       "key": "internvl3_2b_hf",
       "model_id": "OpenGVLab/InternVL3-2B-hf",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/internvl3",
       "role": "INDEPENDENT_INTERNVL_FAMILY",
       "primary_grounding_participation": "NOT_PARTICIPATING",
       "exploratory_grounding_participation": "EXCLUDED",
@@ -141,6 +153,9 @@
     {
       "key": "moondream2_2025_06_21",
       "model_id": "vikhyatk/moondream2",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/moondream",
       "role": "INDEPENDENT_SMALL_VLM_WITH_NATIVE_SPATIAL_APIS",
       "primary_grounding_participation": "GATE_ELIGIBLE_PRODUCTION_ADAPTER_PENDING",
       "exploratory_grounding_participation": "INCLUDED",
@@ -176,6 +191,9 @@
     {
       "key": "paligemma_3b_mix_448",
       "model_id": "google/paligemma-3b-mix-448",
+      "classification_participation": "NOT_PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/paligemma",
       "role": "PRIMARY_5",
       "research_role": "INDEPENDENT_GOOGLE_PALIGEMMA_CONTRAST",
       "historical_role": "BACKUP_1",
@@ -320,7 +338,7 @@
     "3_low_variance_decoding_per_model": "PENDING",
     "4_deterministic_native_output_adapters": "PENDING",
     "5_synthetic_gate_primary_models": "COMPLETE",
-    "6_final_model_roles_and_backup_substitutions": "PENDING",
+    "6_final_model_roles_and_backup_substitutions": "ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING",
     "7_freeze_prompts_schema_adapters_runner_metric_engine": "PENDING",
     "8_record_protocol_freeze_commit": "PENDING"
   },

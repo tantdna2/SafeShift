@@ -1707,3 +1707,34 @@
   execution authorization remain unchanged; D5, grounding history and exploratory
   policy unchanged. PROTOCOL_FREEZE=PENDING; INSPECSAFE=NOT_RUN / unauthorized.
   Documentary recording only; no model execution or merge.
+
+## W2.6-D9R18-FINAL-PARTICIPATION-AND-ROLES (2026-10-02)
+
+Research Lead decision at exact BASE `93e1004de311588e94356e19edf53220de13e194`.
+Current overlay resolves historical D9R17 PENDING_REVIEW / pending role and
+participation decisions only; all qualification result and D9R16 plan/case bytes
+remain unchanged. See [decision](configs/pre_freeze/d9r18_final_participation_decision.v1.json)
+and [scope/validation note](notes/w2_d9r18_final_participation_decision.md).
+
+- Four classification participants: Qwen3, Qwen2.5, InternVL3, Moondream.
+- PaliGemma classification NOT_PARTICIPATING: objective interface/format blocker,
+  0/8 parse SUCCESS, 8/8 INVALID, canonical null. No output reinterpretation,
+  lowercase normalization or marker-to-level mapping.
+- Qualification remains Qwen3 PASS; Qwen2.5/InternVL3/Moondream semantic FAIL;
+  PaliGemma interface/format FAIL. Valid canonical output permits participation;
+  synthetic semantic FAIL must not be used as benchmark ranking or performance
+  filter before InspecSafe. No qualification promotion or PASS-rule change.
+- Five-model primary research roster unchanged, including PaliGemma PRIMARY_5.
+  ROSTER MEMBERSHIP != CLASSIFICATION PARTICIPATION. SmolVLM2 not activated:
+  four participants suffice, seminar does not require exactly five, and no new
+  runtime/qualification workload is needed before freeze. Not backup failure or
+  model replacement; historical replacement policy unchanged.
+- Grounding roles/history unchanged; Moondream remains gate-eligible with
+  production adapter NOT_QUALIFIED. Exploratory includes Qwen3/Moondream/PaliGemma
+  and excludes Qwen2.5/InternVL3; no exploratory qualification override.
+- Checklist #1/#2/#5 COMPLETE; #3/#4/#7/#8 PENDING;
+  #6 ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING. Decisions complete;
+  remaining production adapter qualification belongs to #4, not undecided roles.
+- No model/GPU execution or rerun, no prompt/parser repair, no backup activation,
+  no D5 implementation. InspecSafe NOT_RUN / unauthorized; protocol freeze PENDING.
+  Historical legacy candidate fields retained with explicit current field semantics.

@@ -11,6 +11,7 @@ from safeshift.qualification.classification import evaluate
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "3ad16f48da4f9ef5910dedede9a4ba950f268b7a"
+D9R17_MERGED = "93e1004de311588e94356e19edf53220de13e194"
 RESULT = "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json"
 MANIFEST = "configs/pre_freeze/classification_qualification_cases.v1.json"
 PLAN = "configs/pre_freeze/classification_qualification_plan.v1.json"
@@ -293,7 +294,10 @@ class FourModelClassificationResultsTests(unittest.TestCase):
         for entry in protected:
             with self.subTest(path=entry["path"]):
                 before = base_bytes(entry["path"])
-                self.assertEqual((ROOT / entry["path"]).read_bytes(), before)
+                # D9R18 changes current overlays only; immutable plan/cases remain live.
+                current = (subprocess.check_output(["git", "show", f"{D9R17_MERGED}:{entry['path']}"], cwd=ROOT)
+                           if entry["path"] in (ROSTER, FREEZE) else (ROOT / entry["path"]).read_bytes())
+                self.assertEqual(current, before)
                 self.assertEqual(entry["base_sha256"], hashlib.sha256(before).hexdigest())
                 self.assertIs(entry["byte_unchanged_from_base"], True)
 
@@ -331,11 +335,13 @@ class FourModelClassificationResultsTests(unittest.TestCase):
         allowed = [RESULT, "notes/w2_d9r17b_e_classification_qualification_results.md",
                    "tests/test_d9r17b_e_classification_qualification_results.py",
                    "tests/test_qwen2_5_classification_qualification_result.py", "DECISIONS.md", "TASKS.md"]
-        diff = subprocess.check_output(["git", "diff", "--no-ext-diff", "--name-only", BASE, "--", ".",
+        diff = subprocess.check_output(["git", "diff", "--no-ext-diff", "--name-only", BASE, D9R17_MERGED, "--", ".",
                                         *[f":(exclude){p}" for p in allowed]], cwd=ROOT, text=True)
         self.assertEqual(diff, "", diff)
         for path in ("DECISIONS.md", "TASKS.md"):
-            self.assertTrue((ROOT / path).read_bytes().startswith(base_bytes(path)), path)
+            # Compare exact checkout bytes; Git stores LF but Windows checks out CRLF.
+            before = subprocess.check_output(["git", "cat-file", "--filters", f"{BASE}:{path}"], cwd=ROOT)
+            self.assertTrue((ROOT / path).read_bytes().startswith(before), path)
 
     def test_prior_result_guard_only_allows_the_new_documentary_artifact(self):
         path = "tests/test_qwen2_5_classification_qualification_result.py"
@@ -344,7 +350,9 @@ class FourModelClassificationResultsTests(unittest.TestCase):
         new = (b'*roots, f":(exclude){RESULT}",\n'
                b'             ":(exclude)configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json"],')
         self.assertEqual(before.count(old), 1)
-        self.assertEqual((ROOT / path).read_bytes(), before.replace(old, new))
+        # Verify the historical D9R17 patch, not subsequent authorized test maintenance.
+        historical = subprocess.check_output(["git", "show", f"{D9R17_MERGED}:{path}"], cwd=ROOT)
+        self.assertEqual(historical, before.replace(old, new))
 
 
 if __name__ == "__main__":

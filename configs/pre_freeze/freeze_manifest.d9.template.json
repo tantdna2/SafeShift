@@ -1,4 +1,6 @@
 {
+  "final_participation_decision": "configs/pre_freeze/d9r18_final_participation_decision.v1.json",
+  "classification_state_semantics": "classification_participation is the final D9R18 participation decision; classification_qualification_verdict preserves the D9R17 verdict separately. Legacy classification=CANDIDATE, classification_role=PENDING_FINAL_GATE and classification_interface_status=PENDING_QUALIFICATION retain pre-D9R18 meanings only; they are not current participation or qualification results. Production adapter fields remain current and unqualified. Roster membership != classification participation.",
   "protocol_version": "D9-PRE-FREEZE",
   "decision_id": "DEC-W2-D9-009",
   "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
@@ -8,10 +10,10 @@
   "benchmark_firewall": "ACTIVE",
   "inspecsafe_inference_authorized": false,
   "current_status_overlay": {
-    "task": "W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING",
+    "task": "W2.6-D9R18-FINAL-PARTICIPATION-AND-ROLES",
     "config": "configs/pre_freeze/local_models.d9.json",
     "readiness_matrix": "notes/w2_d9_freeze_readiness_reconciliation.md",
-    "semantics": "Five-model roster and primary/exploratory participation reflect D9R15. Linked roster is current runtime/gate authority. Classification roles and frozen components remain PENDING; roster membership and gate eligibility do not qualify production adapters."
+    "semantics": "D9R18 final classification participation: four participants; PaliGemma excluded for interface/format failure, five-member roster unchanged. Grounding/exploratory roles unchanged. Role decision complete; production adapter qualification (#4), implementation and protocol freeze pending."
   },
   "primary_expansion_precommit": {
     "status": "ROSTER_EXPANSION_APPROVED_D9R15",
@@ -61,6 +63,9 @@
   "primary_models": [
     {
       "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "PASS",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/qwen3",
       "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "qwen3_vl_8b_instruct",
@@ -76,6 +81,9 @@
     },
     {
       "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/qwen2_5_classification_qualification_result.v1.json",
       "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "qwen2_5_vl_3b_instruct",
@@ -91,6 +99,9 @@
     },
     {
       "model_id": "OpenGVLab/InternVL3-2B-hf",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/internvl3",
       "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "internvl3_2b_hf",
@@ -106,6 +117,9 @@
     },
     {
       "model_id": "vikhyatk/moondream2",
+      "classification_participation": "PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/moondream",
       "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "moondream2_2025_06_21",
@@ -121,6 +135,9 @@
     },
     {
       "model_id": "google/paligemma-3b-mix-448",
+      "classification_participation": "NOT_PARTICIPATING",
+      "classification_qualification_verdict": "FAIL",
+      "qualification_result_reference": "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/paligemma",
       "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "paligemma_3b_mix_448",

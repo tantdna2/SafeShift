@@ -171,7 +171,9 @@ class D9R15RosterTests(unittest.TestCase):
             self.assertIs(link["automatic_promotion"], False)
             self.assertIs(link["historical_promotion_contract_superseded_for_roster_membership_only"], True)
         self.assertTrue(all(v == "PENDING" for v in self.freeze["frozen_components"].values()))
-        self.assertEqual(self.roster["d9_checklist"]["6_final_model_roles_and_backup_substitutions"], "PENDING")
+        # D9R15 role dependency before the D9R18 participation decision.
+        historical = strict_json(subprocess.check_output(["git", "show", f"{D9R15_MERGED}:{ROSTER}"], cwd=ROOT))
+        self.assertEqual(historical["d9_checklist"]["6_final_model_roles_and_backup_substitutions"], "PENDING")
 
     def test_live_provenance_membership_and_only_authorized_overlay_changes(self):
         current = load(PROVENANCE)
