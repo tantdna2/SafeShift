@@ -410,7 +410,11 @@ class ProtectedStateTests(unittest.TestCase):
             if path in ("safeshift/runners/internvl3.py", "safeshift/runners/paligemma.py"):
                 continue  # Exact two whitelist replacements tested independently below.
             old = subprocess.check_output(["git", "show", f"{BASE}:{path}"], cwd=cq.ROOT)
-            self.assertEqual((cq.ROOT / path).read_bytes().replace(b"\r\n", b"\n"), old.replace(b"\r\n", b"\n"), path)
+            # D9R18 authorizes only current roster/template overlays, guarded by its exact-delta test.
+            current = (subprocess.check_output(["git", "show", "93e1004de311588e94356e19edf53220de13e194:" + path], cwd=cq.ROOT)
+                       if path in ("configs/pre_freeze/local_models.d9.json", "configs/pre_freeze/freeze_manifest.d9.template.json")
+                       else (cq.ROOT / path).read_bytes())
+            self.assertEqual(current.replace(b"\r\n", b"\n"), old.replace(b"\r\n", b"\n"), path)
         roster = json.loads((cq.ROOT / "configs/pre_freeze/local_models.d9.json").read_text())
         self.assertEqual({m["model_id"] for m in roster["primary_models"]}, {v[0] for v in cq.MODELS.values()})
         self.assertTrue(all(m["classification"] == "CANDIDATE" for m in roster["primary_models"]))

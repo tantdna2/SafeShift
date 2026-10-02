@@ -194,7 +194,10 @@ class ModelProvenanceTests(unittest.TestCase):
                      "2_local_self_hosted_runners",
                      "5_synthetic_gate_primary_models"}
         for key, status in checklist.items():
-            self.assertEqual(status, "COMPLETE" if key in completed else "PENDING")
+            expected = ("ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING"
+                        if key == "6_final_model_roles_and_backup_substitutions"
+                        else "COMPLETE" if key in completed else "PENDING")
+            self.assertEqual(status, expected)
         self.assertTrue(all(v == "PENDING" for v in self.freeze["frozen_components"].values()))
 
     def test_runtime_specs_have_required_unvalidated_interface_fields(self):

@@ -3,13 +3,13 @@
 Task: `W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING`, 2026-09-30.
 Base main: `9948570820b5ed8a774b8e226b80e24055e705cf`.
 
-Current overlay through D9R15; historical milestone text, model/source evidence,
+Current overlay through D9R18 (membership and exploratory policy remain D9R15); historical milestone text, model/source evidence,
 runtime plans and original result artifacts keep their recorded meanings.
 The current machine-readable per-model status is
 [local_models.d9.json](../configs/pre_freeze/local_models.d9.json).
 The freeze-template `current_status_overlay` points there; its five entries now
-separate current primary RQ3 and exploratory participation from pending final
-production classification roles and frozen components. All model/source documentary
+separate current primary RQ3 and exploratory participation from final D9R18
+classification participation and pending production adapters/frozen components. All model/source documentary
 provenance records retain historical runtime/license/runner/spatial facts; only
 the current `roster_revision` overlay is reconciled to D9R15 active membership.
 The historical Qwen3 gate plan still pins the old provenance bytes; historical
@@ -26,11 +26,21 @@ metric/gate/parser/runner/schema/prompt change.
 | 1 | Model provenance | COMPLETE | Five primaries and one unactivated backup match current active key lists in [provenance](../configs/pre_freeze/local_model_provenance.d9.json). Historical model/source documentary records, including roster_group/order, remain unchanged. This is not use clearance or implementation freeze. |
 | 2 | Runners | COMPLETE | All five offline runners COMPLETE, runtime PASS_VALIDATED. Qwen3 retains its T4×2 anchor exception; Qwen2.5, Moondream, InternVL3 and PaliGemma have single-T4 evidence. PaliGemma exact runtime verified=true from D9R9. Production adapters remain separate under #4. |
 | 3 | Decoding | PENDING | Every primary still has `decoding_policy_id`, `precision_or_quantization` and `preprocessing_id` PENDING in the freeze template; `research_precision_decoding_prompts_frozen=false`. Final per-task low-variance decoding, output limits, supported sampling/thinking controls, seed/determinism policy and exact preprocessing/precision/software condition have not been approved and frozen. Smoke/gate settings are bounded qualification conditions, not the final research configuration. |
-| 4 | Adapters/parsers | PENDING | All five remain classification CANDIDATE. PaliGemma classification interface PENDING_QUALIFICATION; its and Moondream's production adapters remain NOT_QUALIFIED, classification INVALID / grounding UNSUPPORTED. External gate evidence and roster membership do not qualify production adapters. No parser rescue is authorized. |
+| 4 | Adapters/parsers | PENDING | D9R18 participation is decided separately from production adapter qualification. D9R17 qualification verdicts remain unchanged, including PaliGemma interface/format FAIL. Existing production adapters remain unqualified; Moondream and PaliGemma retain NOT_QUALIFIED, classification INVALID / grounding UNSUPPORTED. No parser rescue or qualification override. |
 | 5 | External gate / interface eligibility | COMPLETE | Qwen3 GATE_FAIL (5/8 valid), Qwen2.5 GATE_FAIL and PaliGemma FAIL / grounding qualification FAIL (6/8 SUCCESS) → primary NOT_PARTICIPATING. InternVL3 has no qualifying native generic box interface → NOT_PARTICIPATING / gate NOT_RUN. Moondream PASS → gate eligibility only. All five eligibility decisions resolved, not all gates passed. |
-| 6 | Final roles | PENDING | Five-model membership is approved by D9R15; final production classification/adapters remain unqualified. Primary RQ3 is gate-aware. Exploratory includes only Moondream, Qwen3, PaliGemma in separate tables. SmolVLM2 is the sole BACKUP_1, unactivated. |
+| 6 | Final roles | ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING | D9R18 final classification: Qwen3, Qwen2.5, InternVL3, Moondream PARTICIPATING; PaliGemma NOT_PARTICIPATING for interface/format failure. Five-member roster unchanged; SmolVLM2 unactivated. Primary/exploratory grounding unchanged. Role decisions complete; remaining production adapter qualification dependency belongs to #4. |
 | 7 | Implementation freeze | PENDING | Freeze exact prompts/task policy, schema, adapters/parsers, runners, preprocessing, precision/quantization, decoding, software and unchanged D5 engine after qualification. Exploratory reporting needs separate implementation and approval/freeze before InspecSafe. All `frozen_components` remain PENDING. |
-| 8 | Protocol freeze | PENDING | #3, #4, #6 and #7 remain unresolved and no approved freeze commit exists. `protocol_freeze_commit_sha=PENDING`; `inspecsafe_inference_authorized=false` in all three D9 configs. |
+| 8 | Protocol freeze | PENDING | #3, #4 and #7 remain unresolved; #6 retains the production adapter qualification dependency under #4. No approved freeze commit exists. protocol_freeze_commit_sha=PENDING; inspecsafe_inference_authorized=false. |
+
+Current decision: [D9R18 participation](w2_d9r18_final_participation_decision.md).
+Legacy CANDIDATE / PENDING_FINAL_GATE / PENDING_QUALIFICATION fields retain
+pre-D9R18 meanings only; explicit classification_participation and qualification
+verdict/reference fields are current. Frozen components remain PENDING.
+
+## Historical D9R15 reconciliation
+
+The narrative below records D9R15; the D9R18 matrix above supersedes its pending
+classification-role wording without changing grounding history or adapter status.
 
 D9R15 resolves the D9R6 sole-candidate expansion as roster design, before freeze
 and InspecSafe, without performance-based selection. PaliGemma is PRIMARY_5;

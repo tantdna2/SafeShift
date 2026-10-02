@@ -191,7 +191,8 @@ class Qwen25ClassificationResultTests(unittest.TestCase):
                  "notes/w2_paligemma_external_gate_result.md", "notes/w2_metrics_statistics_decision_brief.md",
                  "notes/w2_d9_freeze_readiness_reconciliation.md"]
         diff = subprocess.check_output(
-            ["git", "diff", "--no-ext-diff", "--name-only", BASE, "--", *roots, f":(exclude){RESULT}",
+            # Historical D9R17 recording scope; D9R18 tests protect the exact live delta.
+            ["git", "diff", "--no-ext-diff", "--name-only", BASE, "93e1004de311588e94356e19edf53220de13e194", "--", *roots, f":(exclude){RESULT}",
              ":(exclude)configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json"],
             cwd=ROOT, text=True)
         self.assertEqual(diff, "", diff)

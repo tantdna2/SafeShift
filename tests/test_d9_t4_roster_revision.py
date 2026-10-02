@@ -339,7 +339,10 @@ class D9T4RosterRevisionTests(unittest.TestCase):
                      '2_local_self_hosted_runners',
                      '5_synthetic_gate_primary_models'}
         for key, status in self.roster['d9_checklist'].items():
-            self.assertEqual(status, 'COMPLETE' if key in completed else 'PENDING')
+            expected = ('ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING'
+                        if key == '6_final_model_roles_and_backup_substitutions'
+                        else 'COMPLETE' if key in completed else 'PENDING')
+            self.assertEqual(status, expected)
         self.assertEqual(self.roster['decision_id'], 'DEC-W2-D9-009')
 
     def test_31_grounding_only_failure_cannot_substitute(self):

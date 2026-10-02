@@ -134,7 +134,10 @@ class ExternalGateResultTests(unittest.TestCase):
                      '2_local_self_hosted_runners',
                      '5_synthetic_gate_primary_models'}
         for key, value in self.roster['d9_checklist'].items():
-            self.assertEqual(value, 'COMPLETE' if key in completed else 'PENDING')
+            expected = ('ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING'
+                        if key == '6_final_model_roles_and_backup_substitutions'
+                        else 'COMPLETE' if key in completed else 'PENDING')
+            self.assertEqual(value, expected)
         for record in (self.result, self.roster):
             self.assertEqual(record['protocol_freeze_commit_sha'], 'PENDING')
             self.assertIs(record['inspecsafe_inference_authorized'], False)

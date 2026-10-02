@@ -209,6 +209,10 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
         # D9R15 adds independent reporting participation without changing results.
         model.update(primary_grounding_participation='NOT_PARTICIPATING',
                      exploratory_grounding_participation='INCLUDED')
+        # D9R18 classification decision leaves every grounding field unchanged.
+        model.update(classification_participation='PARTICIPATING',
+                     classification_qualification_verdict='PASS',
+                     qualification_result_reference='configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/qwen3')
         self.assertEqual(self.model, model)
 
     def test_global_d9_pending_inspecsafe_unauthorized_and_freeze_pending(self):
@@ -218,7 +222,10 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
                      '2_local_self_hosted_runners',
                      '5_synthetic_gate_primary_models'}
         for key, value in self.roster['d9_checklist'].items():
-            self.assertEqual(value, 'COMPLETE' if key in completed else 'PENDING')
+            expected = ('ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING'
+                        if key == '6_final_model_roles_and_backup_substitutions'
+                        else 'COMPLETE' if key in completed else 'PENDING')
+            self.assertEqual(value, expected)
         for record in (self.result, self.roster):
             self.assertEqual(record['protocol_freeze_commit_sha'], 'PENDING')
             self.assertIs(record['inspecsafe_inference_authorized'], False)
