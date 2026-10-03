@@ -10,6 +10,7 @@ from safeshift.protocol.schema import strict_json
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "93e1004de311588e94356e19edf53220de13e194"
+D9R18_MERGED = "5538064e6ea015f8c15475d488064cae95461cd0"
 ART = "configs/pre_freeze/d9r18_final_participation_decision.v1.json"
 ROSTER = "configs/pre_freeze/local_models.d9.json"
 FREEZE = "configs/pre_freeze/freeze_manifest.d9.template.json"
@@ -34,6 +35,11 @@ ALLOWED = {ART, ROSTER, FREEZE, NOTE, MATRIX, "DECISIONS.md", "TASKS.md",
 
 def load(path):
     return strict_json((ROOT / path).read_bytes())
+
+
+def milestone(path):
+    """D9R18-only implementation assertions; D9R19 guards the live delta separately."""
+    return strict_json(subprocess.check_output(["git", "show", f"{D9R18_MERGED}:{path}"], cwd=ROOT))
 
 
 @lru_cache(None)
@@ -122,15 +128,15 @@ class FinalParticipationTests(unittest.TestCase):
         self.assertIs(self.decision["backup_decision"]["activated"], False)
         self.assertIn("NO_ACTIVATION_IN_D9R18_ONLY", self.decision["backup_decision"]["scope"])
 
-    def test_primary_grounding_and_production_adapters_unchanged(self):
+    def test_d9r18_primary_grounding_and_production_adapters_unchanged(self):
         expected = ["NOT_PARTICIPATING"] * 3 + ["GATE_ELIGIBLE_PRODUCTION_ADAPTER_PENDING", "NOT_PARTICIPATING"]
         self.assertEqual([m["primary_grounding_participation"] for m in self.models], expected)
         for path in (ROSTER, FREEZE):
-            for old, new in zip(strict_json(base_bytes(path))["primary_models"], load(path)["primary_models"]):
+            for old, new in zip(strict_json(base_bytes(path))["primary_models"], milestone(path)["primary_models"]):
                 for field in old:
                     if "grounding" in field or "gate" in field or field.startswith("production_adapter"):
                         self.assertEqual(new[field], old[field], (path, field))
-        moon = load(ROSTER)["primary_models"][3]
+        moon = milestone(ROSTER)["primary_models"][3]
         self.assertEqual(moon["external_gate_status"], "PASS")
         self.assertEqual(moon["production_adapter_status"], "NOT_QUALIFIED")
 
@@ -159,11 +165,10 @@ class FinalParticipationTests(unittest.TestCase):
         for path in paths:
             self.assertEqual((ROOT / path).read_bytes(), base_bytes(path), path)
 
-    def test_only_explicit_decision_documentation_and_test_files_change(self):
-        changed = subprocess.check_output(["git", "diff", "--name-only", BASE], cwd=ROOT, text=True).splitlines()
+    def test_d9r18_only_explicit_decision_documentation_and_test_files_change(self):
+        changed = subprocess.check_output(["git", "diff", "--name-only", BASE, D9R18_MERGED], cwd=ROOT, text=True).splitlines()
         self.assertLessEqual(set(changed), ALLOWED)
-        # Covers staged/unstaged changes to all execution code, prompts, parsers,
-        # runners, metrics, notebooks, schemas, dataset and historical evidence.
+        # Covers the exact D9R18 milestone; D9R19 is authorized to implement code.
         self.assertFalse(any(p.startswith(("safeshift/", "scripts/", "prompts/", "schemas/", "notebooks/", "data/")) for p in changed))
 
     def test_freeze_and_inspecsafe_remain_pending_unauthorized(self):
@@ -198,7 +203,7 @@ class FinalParticipationTests(unittest.TestCase):
         self.assertIn("#4", self.decision["final_roles_remaining_blocker"])
         self.assertIn(ROLE_STATE, (ROOT / MATRIX).read_text(encoding="utf-8"))
 
-    def test_live_overlays_have_only_exact_authorized_semantic_delta(self):
+    def test_d9r18_overlays_have_only_exact_authorized_semantic_delta(self):
         for path in (ROSTER, FREEZE):
             expected = copy.deepcopy(strict_json(base_bytes(path)))
             expected["final_participation_decision"] = ART
@@ -214,7 +219,7 @@ class FinalParticipationTests(unittest.TestCase):
                 expected["current_status_overlay"]["task"] = self.decision["task"]
                 expected["current_status_overlay"]["semantics"] = (
                     "D9R18 final classification participation: four participants; PaliGemma excluded for interface/format failure, five-member roster unchanged. Grounding/exploratory roles unchanged. Role decision complete; production adapter qualification (#4), implementation and protocol freeze pending.")
-            self.assertEqual(load(path), expected, path)
+            self.assertEqual(milestone(path), expected, path)
 
 
 if __name__ == "__main__":

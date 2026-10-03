@@ -1,6 +1,6 @@
 {
   "final_participation_decision": "configs/pre_freeze/d9r18_final_participation_decision.v1.json",
-  "classification_state_semantics": "classification_participation is the final D9R18 participation decision; classification_qualification_verdict preserves the D9R17 verdict separately. Legacy classification=CANDIDATE, classification_role=PENDING_FINAL_GATE and classification_interface_status=PENDING_QUALIFICATION retain pre-D9R18 meanings only; they are not current participation or qualification results. Production adapter fields remain current and unqualified. Roster membership != classification participation.",
+  "classification_state_semantics": "classification_participation is the final D9R18 participation decision; classification_qualification_verdict preserves the D9R17 verdict separately. Legacy classification=CANDIDATE, classification_role=PENDING_FINAL_GATE and classification_interface_status=PENDING_QUALIFICATION retain pre-D9R18 meanings only; they are not current participation or qualification results. Production adapter fields remain current and unqualified. Roster membership != classification participation. D9R19 production_implementation_overlay and per-model production_adapter_classification supersede only earlier pending production classification status; grounding dependencies remain blocked.",
   "protocol_version": "D9-PRE-FREEZE",
   "decision_id": "DEC-W2-D9-009",
   "supersession_scope": "ONLY_D8_P2_COMMERCIAL_HOSTED_PROVIDER_ROSTER_AND_BACKEND",
@@ -10,10 +10,10 @@
   "benchmark_firewall": "ACTIVE",
   "inspecsafe_inference_authorized": false,
   "current_status_overlay": {
-    "task": "W2.6-D9R18-FINAL-PARTICIPATION-AND-ROLES",
+    "task": "W2.6-D9R19-PRODUCTION-IMPLEMENTATION-ADAPTERS-DECODING-D5-REPORTING",
     "config": "configs/pre_freeze/local_models.d9.json",
     "readiness_matrix": "notes/w2_d9_freeze_readiness_reconciliation.md",
-    "semantics": "D9R18 final classification participation: four participants; PaliGemma excluded for interface/format failure, five-member roster unchanged. Grounding/exploratory roles unchanged. Role decision complete; production adapter qualification (#4), implementation and protocol freeze pending."
+    "semantics": "D9R19 classification adapters/policies and D5/reporting implemented; grounding execution contracts blocked; no role/gate promotion, freeze or inference authorization."
   },
   "primary_expansion_precommit": {
     "status": "ROSTER_EXPANSION_APPROVED_D9R15",
@@ -73,11 +73,15 @@
       "grounding_role": "NOT_PARTICIPATING",
       "primary_grounding_participation": "NOT_PARTICIPATING",
       "exploratory_grounding_participation": "INCLUDED",
-      "decoding_policy_id": "PENDING",
-      "precision_or_quantization": "PENDING",
-      "preprocessing_id": "PENDING",
+      "decoding_policy_id": "qwen3-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "qwen3-native-preprocessing-d9r19-v1",
       "role": "ANCHOR_REPRODUCTION_BRIDGE",
-      "resource_role": "KAGGLE_T4X2_VALIDATED_ANCHOR"
+      "resource_role": "KAGGLE_T4X2_VALIDATED_ANCHOR",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
+      "classification_adapter_version": "qwen3-vl-adapter-v1",
+      "classification_parser_version": "safeshift-qwen3-vl-raw-v1/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
@@ -93,9 +97,13 @@
       "grounding_role": "NOT_PARTICIPATING",
       "primary_grounding_participation": "NOT_PARTICIPATING",
       "exploratory_grounding_participation": "EXCLUDED",
-      "decoding_policy_id": "PENDING",
-      "precision_or_quantization": "PENDING",
-      "preprocessing_id": "PENDING"
+      "decoding_policy_id": "qwen2_5-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "qwen2_5-native-preprocessing-d9r19-v1",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
+      "classification_adapter_version": "qwen2-5-vl-adapter-v2",
+      "classification_parser_version": "safeshift-qwen2-5-vl-raw-v2/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "model_id": "OpenGVLab/InternVL3-2B-hf",
@@ -111,9 +119,13 @@
       "grounding_role": "NOT_PARTICIPATING",
       "primary_grounding_participation": "NOT_PARTICIPATING",
       "exploratory_grounding_participation": "EXCLUDED",
-      "decoding_policy_id": "PENDING",
-      "precision_or_quantization": "PENDING",
-      "preprocessing_id": "PENDING"
+      "decoding_policy_id": "internvl3-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "internvl3-native-preprocessing-d9r19-v1",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
+      "classification_adapter_version": "internvl3-classification-d9r19-v1",
+      "classification_parser_version": "internvl3-native-output-v1/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "model_id": "vikhyatk/moondream2",
@@ -129,9 +141,13 @@
       "grounding_role": "GATE_ELIGIBLE_PRODUCTION_ADAPTER_PENDING",
       "primary_grounding_participation": "GATE_ELIGIBLE_PRODUCTION_ADAPTER_PENDING",
       "exploratory_grounding_participation": "INCLUDED",
-      "decoding_policy_id": "PENDING",
-      "precision_or_quantization": "PENDING",
-      "preprocessing_id": "PENDING"
+      "decoding_policy_id": "moondream-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "moondream-native-preprocessing-d9r19-v1",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
+      "classification_adapter_version": "moondream-classification-d9r19-v1",
+      "classification_parser_version": "moondream-native-lossless-v1/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "model_id": "google/paligemma-3b-mix-448",
@@ -243,5 +259,18 @@
       "resource_status": "T4_FEASIBILITY_CANDIDATE"
     }
   ],
-  "historical_d9_roster_config": "configs/pre_freeze/local_models.d9.json#retired_primary_models"
+  "historical_d9_roster_config": "configs/pre_freeze/local_models.d9.json#retired_primary_models",
+  "production_implementation_overlay": {
+    "task": "W2.6-D9R19-PRODUCTION-IMPLEMENTATION-ADAPTERS-DECODING-D5-REPORTING",
+    "policy": "configs/pre_freeze/production_execution_policy.d9r19.v1.json",
+    "note": "notes/w2_d9r19_production_implementation.md",
+    "classification_adapters": "IMPLEMENTED_FOUR_PARTICIPANTS_SYNTHETIC_VALIDATED",
+    "primary_moondream_grounding": "MOONDREAM_CALL2_ORCHESTRATION_BLOCKER",
+    "exploratory_grounding_execution": "EXPLORATORY_BENCHMARK_EXECUTION_CONTRACT_BLOCKER",
+    "d5_engine": "d5-engine-d9r19-v1",
+    "reporting": "d5-report-d9r19-v1",
+    "metric_policy_blocker": "CLASSIFICATION_PARSE_FAILURE_POLICY_BLOCKER",
+    "freeze": "PENDING",
+    "inspecsafe_inference_authorized": false
+  }
 }

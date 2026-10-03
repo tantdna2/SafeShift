@@ -1,3 +1,13 @@
+> Current implementation overlay: **D9R19**, 2026-10-02. See
+> [implementation and exact blockers](w2_d9r19_production_implementation.md).
+> Four classification adapters/policies and D5/reporting are implemented with
+> synthetic tests. Moondream Call-2 and exploratory benchmark execution remain
+> blocked; failed Call-1 metric policy needs Research Lead resolution.
+> #1/#2/#5 COMPLETE; #3/#4 PENDING;
+> #6 ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING; #7/#8 PENDING.
+> All frozen components PENDING; InspecSafe unauthorized. The D9R18/D9R15
+> milestone text below is retained as history, not current implementation status.
+
 # D9R15 — freeze-readiness reconciliation
 
 Task: `W2.6-D9R15-FIVE-MODEL-ROSTER-AND-EXPLORATORY-GROUNDING`, 2026-09-30.
