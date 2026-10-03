@@ -6,8 +6,10 @@ test_d9_t4_roster_revision, without inheriting another model's interface assumpt
 """
 
 from datetime import datetime
+import json
 from pathlib import Path
 import re
+import subprocess
 import unittest
 from urllib.parse import urlparse
 
@@ -261,7 +263,11 @@ class ModelProvenanceTests(unittest.TestCase):
                 "temperature", "do_sample", "top_p", "top_k", "max_new_tokens", "repetition_penalty",
             })
             self.assertIn("runtime", decoding["seed_controls"])
-        for model in self.freeze["primary_models"]:
+        # Inventory assertions remain historical; D9R19 selects a separate
+        # prospective policy guarded by test_d9r19_overlay.
+        historical = json.loads(subprocess.check_output(["git", "show",
+            "5538064e6ea015f8c15475d488064cae95461cd0:configs/pre_freeze/freeze_manifest.d9.template.json"], cwd=ROOT))
+        for model in historical["primary_models"]:
             self.assertEqual(model["decoding_policy_id"], "PENDING")
 
     def test_preprocessing_remains_official_and_not_runtime_validated(self):
@@ -270,7 +276,9 @@ class ModelProvenanceTests(unittest.TestCase):
         for model in self.models:
             self.assertLessEqual(required, model["preprocessing"].keys())
             self.assertEqual(model["preprocessing"]["status"], "DOCUMENTED_NOT_RUNTIME_VALIDATED")
-        for model in self.freeze["primary_models"]:
+        historical = json.loads(subprocess.check_output(["git", "show",
+            "5538064e6ea015f8c15475d488064cae95461cd0:configs/pre_freeze/freeze_manifest.d9.template.json"], cwd=ROOT))
+        for model in historical["primary_models"]:
             self.assertEqual(model["preprocessing_id"], "PENDING")
 
     def test_precision_inventory_is_not_an_execution_selection(self):

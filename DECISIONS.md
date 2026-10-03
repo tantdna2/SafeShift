@@ -1738,3 +1738,36 @@ and [scope/validation note](notes/w2_d9r18_final_participation_decision.md).
 - No model/GPU execution or rerun, no prompt/parser repair, no backup activation,
   no D5 implementation. InspecSafe NOT_RUN / unauthorized; protocol freeze PENDING.
   Historical legacy candidate fields retained with explicit current field semantics.
+
+
+## W2.6-D9R19 production implementation (2026-10-02)
+
+Authority: Research Lead task W2.6-D9R19, exact fetched BASE
+`5538064e6ea015f8c15475d488064cae95461cd0`. Implementation only, no
+new dataset/split/label/metric decision. Current evidence and blockers:
+[implementation note](notes/w2_d9r19_production_implementation.md).
+
+Four classification adapters and prospective classification execution policies
+implemented; D5 metric/statistics/reporting code added with handcrafted fixtures.
+Existing Qwen adapters, strict schema/prompts and all qualification/gate/runtime
+history remain unchanged. PaliGemma classification NOT_PARTICIPATING;
+SmolVLM2 unactivated. Semantic FAILs and all participation decisions unchanged.
+
+MOONDREAM_CALL2_ORCHESTRATION_BLOCKER: A2/B2 closed-12 response vs native
+single-object detect; no authority for a 12-call loop. Exploratory benchmark
+execution contracts also blocked; separate reporting implemented without gate
+promotion. CLASSIFICATION_PARSE_FAILURE_POLICY_BLOCKER: D5 does not assign a
+canonical class to failed Call-1 parsing; affected metrics return explicit NA.
+No metric definition was changed to resolve these blockers.
+
+Checklist #1/#2/#5 COMPLETE; #3/#4 PENDING;
+#6 ROLE_DECISION_COMPLETE_ADAPTER_QUALIFICATION_PENDING; #7/#8 PENDING.
+All frozen components remain PENDING. InspecSafe NOT_RUN / unauthorized;
+NO_INSPECSAFE_INFERENCE; model/GPU execution NO; protocol freeze PENDING;
+MERGE NO. D9R18 historical pending-review/merge wording is preserved and
+superseded only for current implementation status at this merged BASE.
+
+D9R19 validation (2026-10-03): 44 new tests and 437 expanded focused tests PASS;
+BASE 1316 vs HEAD 1360 full-suite tests, both 4 failures / 24 errors with the
+same 28 identities. No new regression; no full-suite PASS. Strict JSON 3/3 and
+diff check PASS. Exact blockers remain in the linked implementation note.

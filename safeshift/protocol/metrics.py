@@ -1,17 +1,17 @@
-"""D5 consumer contracts only; metric computation remains pending freeze.
+"""D5 consumer contracts and deterministic engine entry point (not frozen).
 
 RQ2 uses image-level Call 1 predictions and authoritative atom membership, never
 Call 2 claims. RQ3-A/B remain separate; unsupported atoms are explicit exclusions.
-Future implementations must preserve D5 Mode A / Mode B, original-polygon
-pointing/PLC, E2E failure denominators, and NOT PARTICIPATING semantics.
+The D9R19 engine preserves D5 Mode A / Mode B, original-polygon pointing/PLC,
+E2E failure denominators, and NOT PARTICIPATING semantics.
 """
 
 from dataclasses import dataclass
 from typing import Mapping, Protocol
 
-from .schema import BBox, Classification, Grounding, HAZARDS, ParseResult, SAFETY_LEVELS
+from .schema import BBox, Classification, Grounding, Hazard, HAZARDS, ParseResult, SAFETY_LEVELS
 
-METRIC_ENGINE_VERSION = "d5-interface-v1-NOT_IMPLEMENTED"
+METRIC_ENGINE_VERSION = "d5-engine-d9r19-v1"
 
 
 class AtomMembershipLookup(Protocol):
@@ -90,16 +90,27 @@ class SpatialInput:
     direct_atoms: tuple[GroundTruthAtom, ...]
     weak_proxy_atoms: tuple[GroundTruthAtom, ...]
     unsupported_atoms: tuple[GroundTruthAtom, ...]
+    classification_correct: bool | None = None
+    diagnostic_hazards: tuple[Hazard, ...] = ()
 
     def __post_init__(self):
-        if self.participation not in ("PARTICIPATING", "NOT PARTICIPATING"):
+        if self.classification_correct is not None and type(self.classification_correct) is not bool:
+            raise ValueError("explicit classification correctness required for CGI")
+        if self.participation not in ("PARTICIPATING", "NOT PARTICIPATING", "NOT_PARTICIPATING"):
             raise ValueError("unknown grounding participation")
-        if self.participation == "NOT PARTICIPATING" and self.prediction is not None:
+        if self.participation != "PARTICIPATING" and self.prediction is not None:
             raise ValueError("nonparticipants must not receive fabricated grounding results")
         if self.participation == "PARTICIPATING" and self.prediction is None:
             raise ValueError("participants require an explicit parse/missing-response status")
         if self.prediction and self.prediction.success and not isinstance(self.prediction.value, Grounding):
             raise ValueError("spatial prediction must be a grounding result")
+        if self.diagnostic_hazards:
+            if self.prediction is None or self.prediction.success:
+                raise ValueError("diagnostic hazards only supplement a failed response")
+            if any(h.hazard_type not in HAZARDS for h in self.diagnostic_hazards):
+                raise ValueError("explicit canonical hazard identity required for diagnostics")
+            if sum(len(h.evidence) for h in self.diagnostic_hazards) != self.prediction.boxes_valid:
+                raise ValueError("diagnostic box count must match parser evidence")
         atom_ids = [atom.atom_id for atom in self.direct_atoms + self.weak_proxy_atoms + self.unsupported_atoms]
         if len(atom_ids) != len(set(atom_ids)):
             raise ValueError("GT atom IDs must be unique across support tracks")
@@ -110,7 +121,7 @@ class SpatialInput:
 
 
 class MetricEngine(Protocol):
-    """Interface, not a ready/frozen metric implementation.
+    """Consumer interface, implemented by D5MetricEngine; not frozen.
 
     Consume the complete prediction list including unmatched claims. Never filter
     by GT membership before calculating predicted-box denominators. Preserve
@@ -126,3 +137,8 @@ class MetricEngine(Protocol):
     def direct_grounding(self, samples: tuple[SpatialInput, ...]) -> Mapping: ...
 
     def weak_proxy(self, samples: tuple[SpatialInput, ...]) -> Mapping: ...
+
+
+def production_engine():
+    from .d5_engine import D5MetricEngine
+    return D5MetricEngine()

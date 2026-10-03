@@ -554,7 +554,11 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(manifest["parser_version"], PARSER_VERSION)
         self.assertEqual(manifest["prompt_versions"], PROMPT_VERSIONS)
         self.assertEqual(set(manifest["adapter_versions"].values()), {ADAPTER_VERSION})
-        self.assertEqual(manifest["metric_engine_version"], METRIC_ENGINE_VERSION)
+        # This is the retired D8 hosted template, not the D9 current overlay.
+        self.assertEqual(manifest["metric_engine_version"], "d5-interface-v1-NOT_IMPLEMENTED")
+        current = json.loads((REPO / "configs/pre_freeze/freeze_manifest.d9.template.json").read_text())
+        self.assertEqual(current["production_implementation_overlay"]["d5_engine"], METRIC_ENGINE_VERSION)
+        self.assertEqual(current["frozen_components"]["full_d5_metric_engine"], "PENDING")
         self.assertEqual(manifest["external_gate_artifacts"], {"openai": "NOT RUN", "anthropic": "NOT RUN"})
 
     def test_json_schema_closed_vocabulary_matches_parser(self):

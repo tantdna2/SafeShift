@@ -213,7 +213,14 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
         model.update(classification_participation='PARTICIPATING',
                      classification_qualification_verdict='PASS',
                      qualification_result_reference='configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/qwen3')
-        self.assertEqual(self.model, model)
+        # D9R19 adds classification implementation metadata only. Compare the
+        # complete D9R18 model here; live exact delta is in test_d9r19_overlay.
+        historical = json.loads(subprocess.check_output(['git', 'show',
+            '5538064e6ea015f8c15475d488064cae95461cd0:configs/pre_freeze/local_models.d9.json'], cwd=ROOT))
+        self.assertEqual(historical['primary_models'][0], model)
+        for key in ('grounding', 'grounding_failure_reason', 'external_gate_status',
+                    'external_gate_evidence', 'primary_grounding_participation', 'artificial_zero_iou'):
+            self.assertEqual(self.model[key], model[key])
 
     def test_global_d9_pending_inspecsafe_unauthorized_and_freeze_pending(self):
         self.assertEqual(self.roster['synthetic_gate']['status'], 'RESOLVED_CAPABILITY_AWARE')

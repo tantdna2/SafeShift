@@ -4,6 +4,7 @@ from datetime import datetime
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -168,7 +169,11 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         for c in (self.roster, self.provenance, self.freeze):
             self.assertEqual(c['protocol_freeze_commit_sha'], 'PENDING')
         self.assertTrue(all(v == 'PENDING' for v in self.freeze['frozen_components'].values()))
-        for m in self.freeze['primary_models']:
+        # D9R1's pending technical selections are historical after D9R19.
+        # Current exact classification policies are guarded by test_d9r19_overlay.
+        historical = json.loads(subprocess.check_output(['git', 'show',
+            '5538064e6ea015f8c15475d488064cae95461cd0:configs/pre_freeze/freeze_manifest.d9.template.json'], cwd=ROOT))
+        for m in historical['primary_models']:
             for field in ('decoding_policy_id', 'precision_or_quantization', 'preprocessing_id'):
                 self.assertEqual(m[field], 'PENDING')
 
@@ -184,6 +189,11 @@ class D9T4RosterRevisionTests(unittest.TestCase):
 
     def assertProtected(self, path):
         content = (ROOT / path).read_bytes()
+        if path == 'safeshift/protocol/metrics.py':
+            # D9R19 implements this interface; preserve the D9R1 hash assertion
+            # against the last merged interface-only milestone.
+            content = subprocess.check_output(['git', 'show',
+                '5538064e6ea015f8c15475d488064cae95461cd0:' + path], cwd=ROOT)
         # Compare Git blob content across Windows autocrlf and LF checkouts.
         # Binary images are never normalized; census has its own raw-byte check.
         if Path(path).suffix in {'.py', '.json', '.md', '.txt'} or Path(path).name == '.gitkeep':
@@ -404,7 +414,7 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertEqual(intern['documentary_status'], 'COMPLETE')
         self.assertEqual(intern['offline_runner_status'], 'COMPLETE')
         self.assertTrue((ROOT / intern['offline_runner_evidence']).is_file())
-        self.assertEqual(intern['production_adapter_status'], 'NOT_QUALIFIED')
+        self.assertEqual(intern['production_adapter_status'], 'CLASSIFICATION_IMPLEMENTED_GROUNDING_NOT_QUALIFIED')
         self.assertEqual(intern['runtime_smoke_status'], 'PASS_VALIDATED')
         self.assertEqual(intern['resource_status'], 'PASS_VALIDATED')
         self.assertEqual(intern['grounding'], 'NOT_PARTICIPATING')
@@ -418,9 +428,9 @@ class D9T4RosterRevisionTests(unittest.TestCase):
         self.assertEqual(m['external_gate_status'], 'PASS')
         self.assertEqual(m['grounding'], 'PASS')
         self.assertEqual(m['classification'], 'CANDIDATE')
-        self.assertEqual(m['production_adapter_status'], 'NOT_QUALIFIED')
+        self.assertEqual(m['production_adapter_status'], 'CLASSIFICATION_IMPLEMENTED_GROUNDING_NOT_QUALIFIED')
         self.assertEqual(m['production_adapter_grounding'], 'UNSUPPORTED')
-        self.assertEqual(m['production_adapter_classification'], 'INVALID')
+        self.assertEqual(m['production_adapter_classification'], 'IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED')
         # Inspect source only: never construct a runner/backend to verify status.
         source = (ROOT / 'safeshift/runners/moondream2.py').read_text(encoding='utf-8')
         adapter = source.split('class PendingMoondreamAdapter:', 1)[1].split('class NativeBackend:', 1)[0]

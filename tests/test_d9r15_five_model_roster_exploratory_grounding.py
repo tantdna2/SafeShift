@@ -79,7 +79,10 @@ class D9R15RosterTests(unittest.TestCase):
         self.assertEqual(self.models[IDS[4]]["grounding_qualification"], "FAIL")
         moon = self.models[IDS[3]]
         self.assertEqual(moon["grounding"], "PASS")
-        self.assertEqual(moon["production_adapter_status"], "NOT_QUALIFIED")
+        # D9R19 implements classification only; the PASS gate still cannot
+        # authorize/promote a production Call-2 grounding adapter.
+        self.assertEqual(moon["production_adapter_grounding"], "UNSUPPORTED")
+        self.assertEqual(moon["production_adapter_status"], "CLASSIFICATION_IMPLEMENTED_GROUNDING_NOT_QUALIFIED")
         self.assertEqual(moon["historical_official_smoke"],
                          strict_json(baseline(ROSTER))["primary_models"][3]["historical_official_smoke"])
 

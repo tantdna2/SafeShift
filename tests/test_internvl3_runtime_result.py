@@ -97,8 +97,10 @@ class InternVL3RuntimeResultTests(unittest.TestCase):
         self.assertEqual(m["classification"], "CANDIDATE")
         self.assertEqual(r["production_adapter_status"], "NOT_QUALIFIED")
         self.assertEqual(r["production_adapter_classification"], "INVALID")
-        self.assertEqual(m["production_adapter_status"], "NOT_QUALIFIED")
-        self.assertEqual(m["production_adapter_classification"], "INVALID")
+        # Preserve the runtime result's NOT_QUALIFIED/INVALID above; the current
+        # D9R19 classification adapter is separately implemented, not gate rescue.
+        self.assertEqual(m["production_adapter_status"], "CLASSIFICATION_IMPLEMENTED_GROUNDING_NOT_QUALIFIED")
+        self.assertEqual(m["production_adapter_classification"], "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED")
         self.assertEqual(r["d9_checklist"]["2_local_self_hosted_runners"], "COMPLETE")
         self.assertEqual(r["d9_checklist"]["5_synthetic_gate_four_primary_models"], "COMPLETE")
         for key in ("3_low_variance_decoding_per_model", "4_deterministic_native_output_adapters",

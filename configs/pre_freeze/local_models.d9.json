@@ -1,6 +1,6 @@
 {
   "final_participation_decision": "configs/pre_freeze/d9r18_final_participation_decision.v1.json",
-  "classification_state_semantics": "classification_participation is the final D9R18 participation decision; classification_qualification_verdict preserves the D9R17 verdict separately. Legacy classification=CANDIDATE, classification_role=PENDING_FINAL_GATE and classification_interface_status=PENDING_QUALIFICATION retain pre-D9R18 meanings only; they are not current participation or qualification results. Production adapter fields remain current and unqualified. Roster membership != classification participation.",
+  "classification_state_semantics": "classification_participation is the final D9R18 participation decision; classification_qualification_verdict preserves the D9R17 verdict separately. Legacy classification=CANDIDATE, classification_role=PENDING_FINAL_GATE and classification_interface_status=PENDING_QUALIFICATION retain pre-D9R18 meanings only; they are not current participation or qualification results. Production adapter fields remain current and unqualified. Roster membership != classification participation. D9R19 production_implementation_overlay and per-model production_adapter_classification supersede only earlier pending production classification status; grounding dependencies remain blocked.",
   "final_roles_remaining_blocker": "Role decisions complete; existing production adapter qualification dependency remains under checklist #4, not an undecided model role. Checklist definitions and frozen components unchanged.",
   "status": "D9_PRE_FREEZE_SELF_HOSTED",
   "decision_id": "DEC-W2-D9-009",
@@ -27,7 +27,10 @@
       "qwen3_vl_8b_instruct",
       "paligemma_3b_mix_448"
     ],
-    "excluded_model_keys": ["qwen2_5_vl_3b_instruct", "internvl3_2b_hf"],
+    "excluded_model_keys": [
+      "qwen2_5_vl_3b_instruct",
+      "internvl3_2b_hf"
+    ],
     "report_separately_from_primary_rq3": true,
     "override_gate_or_qualification": false,
     "implies_primary_rq3_participation": false,
@@ -82,7 +85,14 @@
       "documentary_status": "COMPLETE",
       "offline_runner_status": "COMPLETE",
       "runtime_smoke_status": "PASS_VALIDATED",
-      "runtime_evidence": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json"
+      "runtime_evidence": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json",
+      "decoding_policy_id": "qwen3-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "qwen3-native-preprocessing-d9r19-v1",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
+      "classification_adapter_version": "qwen3-vl-adapter-v1",
+      "classification_parser_version": "safeshift-qwen3-vl-raw-v1/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "key": "qwen2_5_vl_3b_instruct",
@@ -114,7 +124,14 @@
       "offline_runner_status": "COMPLETE",
       "runtime_smoke_status": "PASS_VALIDATED",
       "runtime_evidence": "configs/pre_freeze/qwen2_5_t4_smoke_result.v1.json",
-      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
+      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE",
+      "decoding_policy_id": "qwen2_5-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "qwen2_5-native-preprocessing-d9r19-v1",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
+      "classification_adapter_version": "qwen2-5-vl-adapter-v2",
+      "classification_parser_version": "safeshift-qwen2-5-vl-raw-v2/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "key": "internvl3_2b_hf",
@@ -143,12 +160,18 @@
       "documentary_status": "COMPLETE",
       "offline_runner_status": "COMPLETE",
       "offline_runner_evidence": "notes/w2_internvl3_runner_smoke_prep.md",
-      "production_adapter_status": "NOT_QUALIFIED",
+      "production_adapter_status": "CLASSIFICATION_IMPLEMENTED_GROUNDING_NOT_QUALIFIED",
       "production_adapter_grounding": "UNSUPPORTED",
-      "production_adapter_classification": "INVALID",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
       "runtime_smoke_status": "PASS_VALIDATED",
       "runtime_evidence": "configs/pre_freeze/internvl3_t4_runtime_result.v1.json",
-      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
+      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE",
+      "decoding_policy_id": "internvl3-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "internvl3-native-preprocessing-d9r19-v1",
+      "classification_adapter_version": "internvl3-classification-d9r19-v1",
+      "classification_parser_version": "internvl3-native-output-v1/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "key": "moondream2_2025_06_21",
@@ -164,9 +187,9 @@
       "grounding_qualification_scope": "Frozen synthetic-v1 external native-detect gate only; not production adapter qualification or final role assignment.",
       "external_gate_status": "PASS",
       "external_gate_evidence": "notes/w2_moondream_postfix_result_external_gate_prep.md#d9r2n--external-gate-final-human-review-record",
-      "production_adapter_status": "NOT_QUALIFIED",
+      "production_adapter_status": "CLASSIFICATION_IMPLEMENTED_GROUNDING_NOT_QUALIFIED",
       "production_adapter_grounding": "UNSUPPORTED",
-      "production_adapter_classification": "INVALID",
+      "production_adapter_classification": "IMPLEMENTED_STRICT_SYNTHETIC_VALIDATED",
       "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
       "revision_status": "VERIFIED_DOCUMENTARY",
       "provenance_key": "moondream2_2025_06_21",
@@ -186,7 +209,13 @@
         "attempt_consumed": true,
         "superseded": false
       },
-      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE"
+      "license_access_review": "VERIFIED_DOCUMENTARY_NOT_USE_CLEARANCE",
+      "decoding_policy_id": "moondream-classification-d9r19-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "preprocessing_id": "moondream-native-preprocessing-d9r19-v1",
+      "classification_adapter_version": "moondream-classification-d9r19-v1",
+      "classification_parser_version": "moondream-native-lossless-v1/strict-json-v1",
+      "execution_policy_scope": "CLASSIFICATION_ONLY; GROUNDING_BLOCKED"
     },
     {
       "key": "paligemma_3b_mix_448",
@@ -486,5 +515,18 @@
       "historical_offline_runner_status": "NOT_COMPLETED",
       "historical_runtime_smoke_status": "NOT_RUN"
     }
-  ]
+  ],
+  "production_implementation_overlay": {
+    "task": "W2.6-D9R19-PRODUCTION-IMPLEMENTATION-ADAPTERS-DECODING-D5-REPORTING",
+    "policy": "configs/pre_freeze/production_execution_policy.d9r19.v1.json",
+    "note": "notes/w2_d9r19_production_implementation.md",
+    "classification_adapters": "IMPLEMENTED_FOUR_PARTICIPANTS_SYNTHETIC_VALIDATED",
+    "primary_moondream_grounding": "MOONDREAM_CALL2_ORCHESTRATION_BLOCKER",
+    "exploratory_grounding_execution": "EXPLORATORY_BENCHMARK_EXECUTION_CONTRACT_BLOCKER",
+    "d5_engine": "d5-engine-d9r19-v1",
+    "reporting": "d5-report-d9r19-v1",
+    "metric_policy_blocker": "CLASSIFICATION_PARSE_FAILURE_POLICY_BLOCKER",
+    "freeze": "PENDING",
+    "inspecsafe_inference_authorized": false
+  }
 }

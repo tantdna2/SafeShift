@@ -147,6 +147,10 @@ class PlanTests(unittest.TestCase):
                 continue
             original = subprocess.check_output(["git", "show", f"{q.BASE_SHA}:{path}"], cwd=q.ROOT)
             current = historical_bytes(path)
+            if path == "safeshift/protocol/metrics.py":
+                # D9R19 implements the consumer; no historical gate byte changes.
+                current = subprocess.check_output(["git", "show",
+                    "5538064e6ea015f8c15475d488064cae95461cd0:" + path], cwd=q.ROOT)
             if not path.endswith(".png"):
                 original, current = original.replace(b"\r\n", b"\n"), current.replace(b"\r\n", b"\n")
             self.assertEqual(current, original, path)
