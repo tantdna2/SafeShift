@@ -13,3 +13,9 @@
 /configs/pre_freeze/classification_qualification_cases.v1.json text eol=lf
 /configs/pre_freeze/classification_qualification_plan.v1.json text eol=lf
 /scripts/generate_classification_qualification_cases.py text eol=lf
+# Prospective v2 source/contract locks; historical entries above are unchanged.
+/configs/pre_freeze/external_grounding_interface_cases.v2.json text eol=lf
+/configs/pre_freeze/grounding_interface_*.v2.json text eol=lf
+/safeshift/protocol/grounding_interface_candidate.py text eol=lf
+/safeshift/protocol/grounding_interface_geometry.py text eol=lf
+/scripts/prepare_grounding_interface_v2.py text eol=lf

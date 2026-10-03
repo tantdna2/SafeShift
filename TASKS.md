@@ -985,3 +985,38 @@ and [scope/validation note](notes/w2_d9r18_final_participation_decision.md).
   Windows representation failures resolved in related historical assertions.
   Full suite is not PASS. See linked D9R18 note for commands and limits.
 - [ ] Independent Draft PR review and merge remain pending; no merge in this task.
+
+## W2.6-D9R19G1-QWEN3-PALIGEMMA-GROUNDING-INTERFACE-QUALIFICATION-PREP (2026-10-03)
+
+Exact fetched BASE `5538064e6ea015f8c15475d488064cae95461cd0`; new branch/worktree,
+separate from D9R19 / PR #67. Research objective: determine whether Qwen3 and
+PaliGemma can support source-backed production-compatible grounding interfaces
+before protocol freeze, without promising PASS or changing historical verdicts.
+
+- [x] Pin official Qwen3 cookbook and PaliGemma 1 detection source/checksums;
+  record evidence scope, coordinate convention and preprocessing relation.
+- [x] Implement isolated strict one/multiple detection parser candidates with
+  deterministic D4 conversion; no historical parser/result changes or repair.
+- [x] Prepare `external-grounding-interface-v2`: ten synthetic cases, fixed
+  prompts, image hashes, deterministic generator and predeclared PASS rules.
+- [x] Declare raw-before-parser audit contract; create no model result records.
+- [x] 33 new unit tests PASS; 283 selected regression tests PASS (316 combined).
+  Unfiltered 284-test regression run has one D9R18 task-specific change-allowlist
+  failure; it passes at BASE but cannot admit this newly authorized task scope.
+  Historical test is unchanged. Strict JSON 4/4 and diff check PASS;
+  61 protected historical files byte-identical. See validation note.
+- [ ] QWEN3_ABSENCE_SEMANTICS_BLOCKER: authoritative all-absent serialization
+  unresolved; empty JSON array is not accepted as successful zero.
+- [ ] PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER: empty/no-match decoder behavior does
+  not establish native zero-detection semantics.
+- [ ] Independent source/contract review, future versioned absence resolution,
+  runtime integration/environment lock and separate execution authorization.
+- [ ] Future qualification and any separate Research Lead promotion decision.
+
+Qwen3 historical GATE_FAIL (5/8; 2 coordinate + 1 schema error); PaliGemma FAIL
+(6/8; 2 schema errors); both primary grounding roles NOT_PARTICIPATING.
+PR #67 remains OPEN/DRAFT and unchanged. EXECUTION_STATUS=NOT_RUN;
+MODEL_GPU_EXECUTION=NO; QUALIFICATION_EXECUTION=NOT_RUN; INSPECSAFE=NOT_RUN;
+PROTOCOL_FREEZE=PENDING; MERGE=NO. No full InspecSafe/fixed-hazard executor.
+Contract, source pins, evidence limits and commands:
+[D9R19G1 PREP note](notes/w2_d9r19g1_grounding_interface_prep.md).

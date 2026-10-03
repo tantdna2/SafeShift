@@ -1,0 +1,146 @@
+{
+  "schema_version": "grounding-interface-source-audit-v2",
+  "accessed_date": "2026-10-03",
+  "sources": [
+    {
+      "id": "qwen_cookbook",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/cookbooks/2d_grounding.ipynb",
+      "sha256": "24a39b56467c16aea1062e40157c00800e8f53266714e8270ca3238064fd9898",
+      "bytes": 8691442,
+      "accessed_date": "2026-10-03",
+      "locator": "zero-based cells 0 (scale), 4 plot_bounding_boxes (executable xyxy /1000), 8-10 (every-instance prompt and negative categories), 8 stored output (array/bbox_2d/label), 12 (format customization)",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY"
+    },
+    {
+      "id": "qwen_readme",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/README.md",
+      "sha256": "fc21106258c51e0b91a652eef12f5925becb146ea8b8c79a4251ac2e89a2f1ac",
+      "bytes": 52828,
+      "accessed_date": "2026-10-03",
+      "locator": "Cookbooks table / Precise Object Grounding Across Formats; family documentation, not exact 8B execution",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY"
+    },
+    {
+      "id": "pali_app",
+      "url": "https://huggingface.co/spaces/big-vision/paligemma-hf/raw/d914d4446a6ff8c5b3110411abca69887f035c41/app.py",
+      "sha256": "84b8130dd964e1b03858dc208a80a32c78dba202ac599662020902e231c5f42c",
+      "bytes": 10390,
+      "accessed_date": "2026-10-03",
+      "locator": "_SEGMENT_DETECT_RE and extract_objs; model_id and detect bee example; tokenizer skip_special_tokens decode",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY"
+    },
+    {
+      "id": "pali_parse",
+      "url": "https://huggingface.co/spaces/big-vision/paligemma/raw/b19d492be08ec5e8aad190a522db919d4444f529/paligemma_parse.py",
+      "sha256": "6a0b2281892e91a7df49781ea6590d9c0a44c926e1198576742f7a1348e8ee11",
+      "bytes": 5892,
+      "accessed_date": "2026-10-03",
+      "locator": "_SEGMENT_DETECT_RE and extract_objs; loop over four loc tokens + following labels; EXAMPLE_STRING separators",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY"
+    }
+  ],
+  "inherited_merged_evidence": {
+    "hf_processor": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/paligemma/processing_paligemma.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "EXTRA_TOKENS L40; build_string_from_input L98; PaliGemmaProcessor L117-145; __call__ L264-284",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "9c3ae88a139677cf315a234f368247a6e98ff8acc7853cb43307c27fb5518047",
+      "limitations": "Library implementation, paired with separately verified exact metadata; not proof of successful loading."
+    },
+    "hf_image_processor": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/siglip/image_processing_siglip.py",
+      "revision_or_version": "v4.57.1",
+      "locator": "SiglipImageProcessor defaults L53-107; preprocess L218-234",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "FAMILY_LEVEL_ONLY",
+      "http_status": 200,
+      "content_sha256": "f686c098214b194a88fb970e665fd86cdc9e322d34d6b0356acc36e6a1f6b13e",
+      "limitations": "Slow SigLIP processor implementation defaults are paired with exact settings; fast/slow equivalence has not been runtime-tested."
+    },
+    "exact_preprocessor_config.json": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/preprocessor_config.json",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "$.processor_class; $.image_processor_type; $.size; $.image_seq_length; $.do_resize; $.resample; $.do_rescale; $.rescale_factor; $.do_normalize; $.image_mean; $.image_std; absence of auto_map",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 200,
+      "content_sha256": "5fc342baea95529a5eb9746a0232fb88941d759812d7b616c382f2f87ba6123f",
+      "size_bytes": 700,
+      "revision_provenance": {
+        "method": "git_blob_sha1",
+        "expected_from": "exact_metadata",
+        "hash": "9f8dbd7ed03f06434785e4b660c164105fd00ca1",
+        "matches": true,
+        "repo_commit_header": "ead2d9a35598cb89119af004f5d023b311d1c4a1"
+      },
+      "limitations": "Static JSON inspection; matching pinned Git blob and revision header do not constitute runtime validation."
+    },
+    "exact_tokenizer.json": {
+      "url": "https://huggingface.co/google/paligemma-3b-mix-448/resolve/ead2d9a35598cb89119af004f5d023b311d1c4a1/tokenizer.json",
+      "revision_or_version": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "locator": "$.model.type; $.model.vocab[<loc0000>..<loc1023>]; $.added_tokens",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "EXACT_CHECKPOINT",
+      "http_status": 200,
+      "content_sha256": "ef6773c135b77b834de1d13c75a4c98ab7a3684ffd602d1831e1f1bf5467c563",
+      "size_bytes": 17549604,
+      "revision_provenance": {
+        "method": "lfs_sha256",
+        "expected_from": "exact_metadata",
+        "hash": "ef6773c135b77b834de1d13c75a4c98ab7a3684ffd602d1831e1f1bf5467c563",
+        "matches": true,
+        "repo_commit_header": null
+      },
+      "limitations": "Static JSON inspection only; not model execution. Tokenizer LFS SHA-256 binds downloaded bytes to pinned API metadata even though redirected response lacks X-Repo-Commit."
+    },
+    "paligemma1_hf_detection": {
+      "url": "https://huggingface.co/spaces/big-vision/paligemma-hf/raw/d914d4446a6ff8c5b3110411abca69887f035c41/app.py",
+      "revision_or_version": "d914d4446a6ff8c5b3110411abca69887f035c41",
+      "locator": "model_id/load L17-21; detect example L137; _SEGMENT_DETECT_RE L168-173; extract_objs L280-321",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "PALIGEMMA1_OFFICIAL_DETECTION",
+      "http_status": 200,
+      "content_sha256": "84b8130dd964e1b03858dc208a80a32c78dba202ac599662020902e231c5f42c",
+      "limitations": "Exact pinned model card How to Use links this Space. App names the correct mix-448 model but does not pin its model revision. Demo decoder only, not bbox training encoder or a strict parser specification; source was read, never imported/executed."
+    },
+    "paligemma1_bv_detection": {
+      "url": "https://huggingface.co/spaces/big-vision/paligemma/raw/b19d492be08ec5e8aad190a522db919d4444f529/paligemma_parse.py",
+      "revision_or_version": "b19d492be08ec5e8aad190a522db919d4444f529",
+      "locator": "_SEGMENT_DETECT_RE L17-22; extract_objs L132-175",
+      "accessed_date": "2026-09-28",
+      "applicability_scope": "PALIGEMMA1_OFFICIAL_DETECTION",
+      "http_status": 200,
+      "content_sha256": "6a0b2281892e91a7df49781ea6590d9c0a44c926e1198576742f7a1348e8ee11",
+      "limitations": "Google PaliGemma demo redirects to big-vision/paligemma; separate JAX family source, not selected HF checkpoint. Detection branch has no segmentation tokens. Does not establish training encoding or empty-output semantics."
+    }
+  },
+  "qwen3": {
+    "scope": "Official Qwen3-VL family cookbook, with example API model qwen3-vl-235b-a22b-instruct; candidate for pinned local 8B, NOT exact-checkpoint conformance evidence.",
+    "prompt": "Single-category substitution into cells 8-10 every-instance family. Same template on positive, absent and multiple cases; no GT or expected count in prompt.",
+    "native_structure": "JSON array; each object has bbox_2d and label; one and multiple supported. Candidate deliberately rejects singleton object, fences, extras, prose and repaired/truncated JSON.",
+    "coordinate_order": "Executable cell 4 indexes x at 0/2 and y at 1/3. Its y-first docstring conflicts with code; cell 12 x1,y1,x2,y2 format agrees with code. Use xyxy, explicitly do not follow stale docstring.",
+    "scale": "Cell 0 specifies relative 0..1000; cell 4 divides by 1000 and multiplies current displayed image width/height. No resized_w computation. D4 is componentwise /1000 with no rounding, reordering or clipping.",
+    "preprocessing_relation": "Normalized fractions of the complete image axes, independent of resized image dimensions in the cookbook; no crop/tile/letterbox remapping authorized. Local official processor only; exact pinned model conformance remains to be qualified.",
+    "label": "Exact category string; no aliases or model-created descriptions substituted.",
+    "absence": "QWEN3_ABSENCE_SEMANTICS_BLOCKER",
+    "absence_evidence_limit": "Cells 8-10 say negative categories are skipped, but do not specify serialization when every requested category is absent. No all-absent sample/contract found in inspected cookbook/README. [] is BLOCKED, not successful zero.",
+    "upstream_permissiveness_not_adopted": "Plotting helpers strip fences, use literal_eval, repair truncation, wrap singleton objects and reorder reversed axes. These are visualization conveniences, not candidate grammar."
+  },
+  "paligemma": {
+    "scope": "Official PaliGemma 1 model-ID-level decoder, supported by merged D9R7 accepted normalization and separately pinned tokenizer/processor metadata. No new exact-revision execution claim.",
+    "prompt": "detect {label} passed to processor; native task suffix ends with one LF supplied by build_string_from_input. No double newline.",
+    "native_structure": "Detection-only strict subset: four adjacent ASCII locNNNN tokens, one space, exact label; repeated with semicolon-space or space-semicolon-space. No prefix/suffix prose, trailing separator, segmentation tokens or unmatched text.",
+    "multiple_evidence": "extract_objs iterates and appends every four-token detection. Multiple support is sourced independently of any historical failed response.",
+    "coordinates": "Native yxyx integer loc0000..loc1023; D4 xyxy = [x_min,y_min,x_max,y_max]/1024. Max is 1023/1024, never rescaled to 1. No clipping or pixel-rounding.",
+    "preprocessing_relation": "Pinned slow SigLIP whole-image resize to 448x448, no crop; demo scales normalized axes to original width/height. No 448 divisor or inverse aspect-ratio correction.",
+    "label": "Exact query label; disable upstream unique_labels renaming and reject mismatches.",
+    "absence": "PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER",
+    "absence_evidence_limit": "extract_objs returns no boxes on empty/no-match text but this is permissive parser behavior, not a documented valid target-absent model response. No strict empty/EOS-only semantics in inspected sources or merged audit.",
+    "upstream_permissiveness_not_adopted": "No unmatched text, optional anonymous labels, segmentation, unique-label renaming or no-match-to-empty success."
+  },
+  "search_limits": "Narrow official source/cookbook and merged source audit inspection; additional official-domain absence searches yielded no stronger normative serialization. Not a proof that no such documentation exists anywhere.",
+  "historical_output_policy": "No historical native failed output supplied to these candidates or used to derive grammar. Historical result summary fields and byte identities checked only for protection."
+}

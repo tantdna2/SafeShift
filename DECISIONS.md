@@ -1738,3 +1738,35 @@ and [scope/validation note](notes/w2_d9r18_final_participation_decision.md).
 - No model/GPU execution or rerun, no prompt/parser repair, no backup activation,
   no D5 implementation. InspecSafe NOT_RUN / unauthorized; protocol freeze PENDING.
   Historical legacy candidate fields retained with explicit current field semantics.
+
+## D9R19G1 — Prospective grounding-interface qualification PREP (2026-10-03)
+
+Authority: Research Lead's explicit W2.6-D9R19G1 request, exact main BASE
+`5538064e6ea015f8c15475d488064cae95461cd0`, separate from D9R19 / Draft PR #67.
+Research objective: determine whether Qwen3 and PaliGemma can support a
+source-backed, production-compatible grounding interface before protocol freeze.
+No PASS is promised. This authorizes new candidate interfaces and a new external
+synthetic suite only; it changes no dataset, split, hazard label or D5 metric.
+
+Before implementation: use the pinned official Qwen3 2D cookbook's xyxy /1000
+mapping and PaliGemma 1 official detection decoder's yxyx /1024 mapping.
+Multiple detections derive from those native interfaces, never historical failed
+outputs. Strict supported subsets preserve all detections without rescue.
+Neither inspected source defines a strict all-targets-absent serialization:
+QWEN3_ABSENCE_SEMANTICS_BLOCKER and PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER remain.
+Empty JSON/no-match/EOS-only must not silently become a successful empty result.
+The mandatory absent case cannot be waived; source resolution, versioned contract
+and independent approval are required before any future qualification execution.
+
+Predeclare ten external synthetic cases, fixed prompts and PASS rules, no retry,
+repair, alternate prompt, in-run token-budget/parser change or arbitrary IoU
+threshold. Fixed hazard fan-out compatibility is a future contract, not an
+InspecSafe executor or a new hazard-query mapping in this PREP.
+
+Historical Qwen3 GATE_FAIL (5/8; 2 coordinate errors, 1 schema error) and PaliGemma
+FAIL (6/8; 2 schema errors) retain their original meaning and bytes. Both primary
+grounding roles remain NOT_PARTICIPATING; D9R15/D9R18 and all old gate assets are
+unchanged. Future PASS would require a separate Research Lead promotion decision.
+EXECUTION_STATUS=NOT_RUN; MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN;
+PROTOCOL_FREEZE=PENDING; MERGE=NO. Source pins, evidence limits, contracts and
+validation: [PREP note](notes/w2_d9r19g1_grounding_interface_prep.md).
