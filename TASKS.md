@@ -1020,3 +1020,39 @@ MODEL_GPU_EXECUTION=NO; QUALIFICATION_EXECUTION=NOT_RUN; INSPECSAFE=NOT_RUN;
 PROTOCOL_FREEZE=PENDING; MERGE=NO. No full InspecSafe/fixed-hazard executor.
 Contract, source pins, evidence limits and commands:
 [D9R19G1 PREP note](notes/w2_d9r19g1_grounding_interface_prep.md).
+
+
+## D9R19G1 closure record (2026-10-04; append-only)
+
+G1 merged as PR #68.
+merge commit: `dd83c6231e5758cdb85ba84e293d4b462e38a696`.
+Historical G1 `MERGE=NO` statements describe their original PREP state and are
+preserved; this appended record supplies the subsequent closure only.
+
+## W2.6-D9R19G2-QWEN3-PALIGEMMA-ABSENCE-SEMANTICS-RESOLUTION (2026-10-04)
+
+Authority: explicit Research Lead task; fetched origin/main equals required
+BASE `dd83c6231e5758cdb85ba84e293d4b462e38a696`. Source audit only.
+
+Both QWEN3_ABSENCE_SEMANTICS_BLOCKER and PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER
+remain BLOCKED. Qwen's official evaluator conflates parse errors with empty
+predictions; its COCO serialization does not establish the native all-absent
+answer. PaliGemma's generic EOS/suffix pipeline does not establish that zero
+matching objects produce an empty detect target. RefCOCO target construction
+is for selected-object segmentation. No semantics inferred from historical
+SafeShift outputs or permissive parser no-match behavior.
+
+No new contract version: retain v2 candidate/source/plan/lock byte-unchanged.
+No new qualification result or production promotion. QUALIFICATION=NOT_RUN;
+QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false;
+MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN; PR67 unchanged; MERGE=NO.
+
+Evidence, exact source pins, limits and validation:
+[G2 audit note](notes/w2_d9r19g2_grounding_absence_semantics.md) and
+[source manifest](configs/pre_freeze/grounding_absence_semantics_audit.v1.json).
+
+- [x] Complete bounded official-source audit and preserve both absence blockers.
+- [x] Validate 43 focused + 267 relevant regression tests (310 PASS), 29 source
+  hashes, protected G1/v2 history, append-only logs and git diff --check.
+- [ ] Authoritative absence resolution for each model remains pending.
+- [ ] Independent G2 review; runtime integration and separate execution authority.

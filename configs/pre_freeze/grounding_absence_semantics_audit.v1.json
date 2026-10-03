@@ -1,0 +1,478 @@
+{
+  "schema_version": "grounding-absence-semantics-audit-v1",
+  "task": "W2.6-D9R19G2-QWEN3-PALIGEMMA-ABSENCE-SEMANTICS-RESOLUTION",
+  "base_sha": "dd83c6231e5758cdb85ba84e293d4b462e38a696",
+  "accessed_date": "2026-10-04",
+  "scope": "SOURCE_AUDIT_AND_OFFLINE_FAIL_CLOSED_TESTS_ONLY",
+  "EXECUTION_STATUS": "NOT_RUN",
+  "qualification": "NOT_RUN",
+  "qualification_verdict": null,
+  "execution_authorized": false,
+  "promotion": false,
+  "MODEL_GPU_EXECUTION": "NO",
+  "INSPECSAFE": "NOT_RUN",
+  "new_contract_version": null,
+  "retained_contract": {
+    "version": "grounding-interface-candidate-v2.0",
+    "plan": "configs/pre_freeze/grounding_interface_qualification_plan.v2.json",
+    "lock": "configs/pre_freeze/grounding_interface_lock.v2.json"
+  },
+  "decisions": {
+    "qwen3": {
+      "status": "BLOCKED",
+      "blocker": "QWEN3_ABSENCE_SEMANTICS_BLOCKER",
+      "exact_native_zero_output": null,
+      "candidate_not_accepted": "[]",
+      "missing_evidence": "Official construction or explicit native serialization for ALL requested categories absent; permissive evaluator and COCO output serialization are insufficient.",
+      "source_ids": [
+        "qwen_cookbook",
+        "qwen_eval_input",
+        "qwen_eval_parser",
+        "qwen_eval_serialization",
+        "qwen_finetune_preprocess",
+        "qwen_bbox_preprocess",
+        "qwen_report"
+      ]
+    },
+    "paligemma": {
+      "status": "BLOCKED",
+      "blocker": "PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER",
+      "exact_native_zero_output": null,
+      "candidate_not_accepted": "EMPTY_DECODED_STRING_OR_EOS_ONLY",
+      "missing_evidence": "Official detect target construction mapping zero matching objects to empty suffix/EOS-only for PaliGemma 1; generic suffix EOS tokenization and no-match demo extraction are insufficient.",
+      "source_ids": [
+        "pali_train_eval_suffix",
+        "pali_tokenize_ops",
+        "pali_refcoco_config",
+        "pali_refcoco_target",
+        "pali_tokenizer_contract",
+        "pali_decode",
+        "pali_app",
+        "pali_parse",
+        "pali_report",
+        "pali_prompt_docs"
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "qwen_readme",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/README.md",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "README.md",
+      "sha256": "fc21106258c51e0b91a652eef12f5925becb146ea8b8c79a4251ac2e89a2f1ac",
+      "bytes": 52828,
+      "locator": "Cookbooks and evaluation sections",
+      "finding": "Family overview; no all-absent serialization found.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_cookbook",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/cookbooks/2d_grounding.ipynb",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "cookbooks/2d_grounding.ipynb",
+      "sha256": "24a39b56467c16aea1062e40157c00800e8f53266714e8270ca3238064fd9898",
+      "bytes": 8691442,
+      "locator": "Zero-based cells 4, 8-10, 12",
+      "finding": "Negative-category omission and positive array examples; no all-absent target construction.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_eval_readme",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/ODinW-13/README.md",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "evaluation/ODinW-13/README.md",
+      "sha256": "0a5ad70d2cbb62da660c922f19499fafa62d923e68c981081c1839fa78c89765",
+      "bytes": 10421,
+      "locator": "Output Format L160-181; Troubleshooting L302-310",
+      "finding": "Nonempty gen example and empty evaluation troubleshooting; not a native absence rule.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_eval_input",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/ODinW-13/dataset_utils.py",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "evaluation/ODinW-13/dataset_utils.py",
+      "sha256": "a1e7b3d7526c8432fdf5c603c78e9b6ff09ea6f83d3b846d63c26e33912cd8cd",
+      "bytes": 7030,
+      "locator": "build questions L149-156",
+      "finding": "All category names form the prompt; no zero-object answer is constructed.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_eval_serialization",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/ODinW-13/eval_utils.py",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "evaluation/ODinW-13/eval_utils.py",
+      "sha256": "7819fd36947e2f9e1b61b6363685f517d8a4c9a81a67a9c7dc9b64d978ee2a7a",
+      "bytes": 4356,
+      "locator": "results2json L32-63; evaluate L103-110",
+      "finding": "Serializes evaluator COCO predictions, not native assistant targets; empty aggregate cannot establish native syntax.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_eval_parser",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/ODinW-13/run_odinw.py",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "evaluation/ODinW-13/run_odinw.py",
+      "sha256": "32345c039d7252e3b98b4dc8b0dd4c038c62c61e8ba28c33268ec5ebaaca70f1",
+      "bytes": 14952,
+      "locator": "run_evaluation L215-236, L249-282",
+      "finding": "literal_eval loop accepts an empty iterable; errors also become empty boxes/labels. This conflates parse failure with no detections.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_finetune_readme",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/qwen-vl-finetune/README.md",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "qwen-vl-finetune/README.md",
+      "sha256": "cba2c1d8286c348f1d63511d7b82fbecff5ec41c1a6093f7d9398d7cf15e9c41",
+      "bytes": 11516,
+      "locator": "Data Preparation and annotation format",
+      "finding": "User-supplied conversation examples, not native absent-target construction.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_finetune_preprocess",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/qwen-vl-finetune/qwenvl/data/data_processor.py",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "qwen-vl-finetune/qwenvl/data/data_processor.py",
+      "sha256": "2c5ca288731fa74cd33d5082de2b4fe2e5c869603d221351fdd3ad4753701265",
+      "bytes": 25611,
+      "locator": "_build_messages L140-199; preprocess_qwen_visual L202-244",
+      "finding": "Assistant turn.value passes through to chat template and supervision; no category-to-empty-target mapping.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_bbox_preprocess",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/qwen-vl-finetune/tools/process_bbox.ipynb",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "path": "qwen-vl-finetune/tools/process_bbox.ipynb",
+      "sha256": "7c320edcdd39f95fd6da236c27ee0b2b4f6a97f0bcb3f8e8c501793a1eddcf08",
+      "bytes": 429105,
+      "locator": "Zero-based cells 0-5",
+      "finding": "Positive bbox example and Qwen2/Qwen2.5 coordinate conversion; not Qwen3 all-absent serialization.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_readme",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/configs/proj/paligemma/README.md",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/configs/proj/paligemma/README.md",
+      "sha256": "c9b435f758ab3a134ee59a0f28160f3d7401f0a9fc49e96e39f221b80407f48e",
+      "bytes": 16871,
+      "locator": "Pretrained checkpoints and Mix models, L119-148",
+      "finding": "Documents detection support and structured detect prompts for mix; no zero-detection target.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_train_eval_suffix",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/configs/proj/paligemma/transfers/common.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/configs/proj/paligemma/transfers/common.py",
+      "sha256": "1c0c8e1747f62b25b0cffd31eafe50fbd6bceac17c35d73f1548135fc2390d8e",
+      "bytes": 2848,
+      "locator": "combine_and_keep_train L29-42; combine_and_keep_eval L45-65",
+      "finding": "Training appends EOS to supplied suffix. Evaluation defaults missing input suffix to empty, without EOS, to begin generation; not an absent target.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_refcoco_config",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/configs/proj/paligemma/transfers/refcoco_seg.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/configs/proj/paligemma/transfers/refcoco_seg.py",
+      "sha256": "b4bda9a2a8c49b17718046aae94b60e285f57594bad4d381f7752122472cf09c",
+      "bytes": 7208,
+      "locator": "training pp L57-68; evaluation pp L75-82",
+      "finding": "Selects one annotated mask/bbox/reference and invokes refcoco_mask2str; segmentation task, not zero-detection detect target.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_tokenize_ops",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/pp/proj/paligemma/ops.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/pp/proj/paligemma/ops.py",
+      "sha256": "536a724904ca6af2970e46258a3f8262569ab9c5bda1a24610b53a1f67cb76c3",
+      "bytes": 5330,
+      "locator": "get_tokenize L89-126; get_strjoin L143-148",
+      "finding": "Generic string tokenization/EOS and reduce_join; no detection list constructor or absent-category mapping.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_refcoco_target",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/pp/proj/paligemma/segmentation.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/pp/proj/paligemma/segmentation.py",
+      "sha256": "f1b8f482c1bf0636ec370ce91f1974c3c9e5f84321a980832acc2b43c914d2b1",
+      "bytes": 4782,
+      "locator": "get_refcoco_mask2str L37-81",
+      "finding": "Requires one bbox of shape [4]; suffix combines location and mask strings. No empty detection branch.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_tokenizer_contract",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/pp/tokenizer.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/pp/tokenizer.py",
+      "sha256": "7bb61e4deacb98c8b6e6a62009043049315fa10b8a6c200ff1a5378aedd9cc8e",
+      "bytes": 3204,
+      "locator": "Tokenizer interface to_int/to_str L29-57",
+      "finding": "EOS append/removal documented generally; task-independent, cannot establish absent detection semantics.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_segmentation_eval",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/evaluators/proj/paligemma/transfers/segmentation.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/evaluators/proj/paligemma/transfers/segmentation.py",
+      "sha256": "b083281c035ce082d60fa60c06545cc602ba259cdd3fd7519445a2d8338dd895",
+      "bytes": 8961,
+      "locator": "Evaluator.run L66-104",
+      "finding": "Validates four location plus sixteen mask tokens for segmentation; not detection-list target construction.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_decode",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/trainers/proj/paligemma/predict_fns.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/trainers/proj/paligemma/predict_fns.py",
+      "sha256": "fccc9d79b90673c7c8d744f792b36db987a0218d0de34ce9a7b4f6f587879b1a",
+      "bytes": 17696,
+      "locator": "_decode L126-152; _decode_early_stop L215-220",
+      "finding": "Decoding stops on EOS or length limit. Does not identify when an absent label should generate EOS.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_unrelated_detection_reward",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/configs/proj/reward_tune/detection_reward.py",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/configs/proj/reward_tune/detection_reward.py",
+      "sha256": "bed5b1bea3cf661a78c5d8329039bbecd3d3d158c3b6769849ba400bcf5f3bf1",
+      "bytes": 8503,
+      "locator": "Module docstring L15-22; seq2box L94-110",
+      "finding": "Different 2023 task-reward token representation with class/confidence; not PaliGemma detect training contract.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_finetune_notebook",
+      "url": "https://raw.githubusercontent.com/google-research/big_vision/0127fb6b337ee2a27bf4e54dea79cff176527356/big_vision/configs/proj/paligemma/finetune_paligemma.ipynb",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "path": "big_vision/configs/proj/paligemma/finetune_paligemma.ipynb",
+      "sha256": "09c520f20dc81c529ef932725e3b897ded77256f24b6513654be345b726ffd57",
+      "bytes": 461601,
+      "locator": "Opening markdown; cell containing preprocess_tokens/postprocess_tokens",
+      "finding": "PaliGemma 2 caption tutorial. Truthy suffix branch and generic EOS removal do not construct PaliGemma 1 absent detect targets.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_tree",
+      "url": "https://api.github.com/repos/QwenLM/Qwen3-VL/git/trees/96588727e44c78b25ba03ea03b8e12f7e64fd0da?recursive=1",
+      "revision": "96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+      "sha256": "3a4ef8ed036536d06be32fed705c42f96edcc261f6d1119e605eb9a02e460f5e",
+      "bytes": 45486,
+      "locator": "$.tree; $.truncated=false",
+      "finding": "Complete recursive path inventory at pinned revision; examined ODinW-13 and fine-tuning source paths.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_tree",
+      "url": "https://api.github.com/repos/google-research/big_vision/git/trees/0127fb6b337ee2a27bf4e54dea79cff176527356?recursive=1",
+      "revision": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "sha256": "8bac6f276e51ea617b8eb84c1a16bb512d46667104059fc98220cbc1ad01df60",
+      "bytes": 107541,
+      "locator": "$.tree; $.truncated=false",
+      "finding": "Complete recursive path inventory; inspected PaliGemma pp, transfer configs, evaluators, tokenizer and decoder. No applicable detect target constructor located.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "qwen_report",
+      "url": "https://arxiv.org/html/2511.21631v1",
+      "revision": "arXiv:2511.21631v1",
+      "sha256": "d50d81a0032c30ca97ee5d7e790ee2454c00b56ea97819c81d178de8abd2b498",
+      "bytes": 613610,
+      "locator": "Sections 3.2.4 and 5.5",
+      "finding": "Describes annotation construction, coordinates and evaluation; no all-absent output string.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_report",
+      "url": "https://arxiv.org/html/2407.07726v2",
+      "revision": "arXiv:2407.07726v2",
+      "sha256": "cdf8d19722bc74f0886d45ed99e90652aa4e34a462429e95fe09a80cd8090268",
+      "bytes": 721070,
+      "locator": "Sections 3.1, 3.2.5; Appendix B.22",
+      "finding": "General prefix/suffix/EOS layout, detection task mixture and RefCOCO segmentation; no zero-detection target rule.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_prompt_docs",
+      "url": "https://ai.google.dev/gemma/docs/paligemma/prompt-system-instructions",
+      "revision": null,
+      "sha256": "86d2746c0a8788678d06797749e4b640b1cde74d88f720c4697349a8ffa3c2b0",
+      "bytes": 141970,
+      "locator": "Prompt task syntax / detect {object} ; {object}",
+      "finding": "Official prompt syntax and task meaning; no absent-object serialization. Mutable page, accessed snapshot only.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_model_card",
+      "url": "https://ai.google.dev/gemma/docs/paligemma/model-card",
+      "revision": null,
+      "sha256": "cd6a45f0d2a3b745a3be99e249cf6bbbb70189557e7b80743dc2611627be9cc2",
+      "bytes": 159894,
+      "locator": "Inputs and outputs; Pre-train datasets",
+      "finding": "Output types and pretraining mixture; no zero-detection serialization. Mutable page, accessed snapshot only.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_app",
+      "url": "https://huggingface.co/spaces/big-vision/paligemma-hf/raw/d914d4446a6ff8c5b3110411abca69887f035c41/app.py",
+      "revision": "d914d4446a6ff8c5b3110411abca69887f035c41",
+      "sha256": "84b8130dd964e1b03858dc208a80a32c78dba202ac599662020902e231c5f42c",
+      "bytes": 10390,
+      "locator": "_SEGMENT_DETECT_RE L168-173; extract_objs L280-321",
+      "finding": "Permissive display parser; empty/no-match yields no objects, not proof of a valid model target.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_parse",
+      "url": "https://huggingface.co/spaces/big-vision/paligemma/raw/b19d492be08ec5e8aad190a522db919d4444f529/paligemma_parse.py",
+      "revision": "b19d492be08ec5e8aad190a522db919d4444f529",
+      "sha256": "6a0b2281892e91a7df49781ea6590d9c0a44c926e1198576742f7a1348e8ee11",
+      "bytes": 5892,
+      "locator": "_SEGMENT_DETECT_RE; extract_objs L132 onward",
+      "finding": "Same no-match limitation; generic object extraction does not label empty continuation as a training target.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_issue106",
+      "url": "https://api.github.com/repos/google-research/big_vision/issues/106/comments",
+      "revision": null,
+      "sha256": "ec9091b82d6dfc4021b02627adde12887aff378ec9f30d7a3690fd510e8d6399",
+      "bytes": 15086,
+      "locator": "Comment author akolesnikoff (CONTRIBUTOR)",
+      "finding": "Refers to generic fine-tuning/inference colab; no absence semantics. Discussion is a search lead only.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    },
+    {
+      "id": "pali_issue113",
+      "url": "https://api.github.com/repos/google-research/big_vision/issues/113/comments",
+      "revision": null,
+      "sha256": "c8641ef55f44ddce4d219a1ea8c52dee74078e048226ffe5f504f18598c67f8e",
+      "bytes": 2001,
+      "locator": "Comment author Laz4rz (NONE)",
+      "finding": "Third-party detection notebook suggestion; not authoritative for original checkpoint semantics and not adopted.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "sufficient_for_absence_resolution": false
+    }
+  ],
+  "search_limits": "Bounded audit of pinned repository trees and listed source/documents, plus official-repository issue searches. Not proof that no authoritative source exists elsewhere. No model or historical SafeShift output used to choose a rule.",
+  "issue_searches": [
+    {
+      "repo": "google-research/big_vision",
+      "query": "detection",
+      "issue_numbers": [
+        106,
+        113
+      ]
+    },
+    {
+      "repo": "google-research/big_vision",
+      "query": "empty",
+      "issue_numbers": [
+        136,
+        88,
+        2
+      ]
+    },
+    {
+      "repo": "QwenLM/Qwen3-VL",
+      "query": "absent",
+      "issue_numbers": []
+    },
+    {
+      "repo": "QwenLM/Qwen3-VL",
+      "query": "no object",
+      "issue_numbers": []
+    }
+  ],
+  "historical_v2_sha256": {
+    "configs/pre_freeze/grounding_interface_qualification_plan.v2.json": "b7f398a4a3d525604d6cc9ebe04aaf2b0fdca942256defeef6ce991bb3145df0",
+    "configs/pre_freeze/external_grounding_interface_cases.v2.json": "292fb931079d78c233a64250864fb2df1f4f8f6dc7bddc7332274a269ca82ed5",
+    "configs/pre_freeze/grounding_interface_sources.v2.json": "8b5cbe189af8ee6ea3230751fcb93a7508f457b6273976625b5dbe730bcbee72",
+    "safeshift/protocol/grounding_interface_candidate.py": "ca5d074f9dc869c9df3e0371fe252b2be303506dd3ffc34616c0fb46979b31b1",
+    "safeshift/protocol/grounding_interface_geometry.py": "880cd75341103b3a12541e0e4ec265c67ce11afaa24a36147bccb59b3ffa98e0",
+    "scripts/prepare_grounding_interface_v2.py": "a3b763fe2686ccf5acd6f23b67d5e258ba929d6c7971987863f24f06fd979864",
+    "configs/pre_freeze/grounding_interface_lock.v2.json": "02d8c1432ef3e47bbaa4511bdb2017f8dd5493857f0797ae7fd59edd495e5657",
+    "notes/w2_d9r19g1_grounding_interface_prep.md": "be3748b246cb5c31d197cc61d16785ed57ec1fa67e38b02c6ca38a357e4986ba",
+    "tests/test_grounding_interface_v2.py": "1b911188a5c16de577cc652e379265253b5c1c99c27a66e3fda7d028ead3951a"
+  },
+  "g1_closure": {
+    "pr": 68,
+    "merge_commit": "dd83c6231e5758cdb85ba84e293d4b462e38a696",
+    "historical_merge_no_preserved": true
+  },
+  "pr67_observed": {
+    "state": "OPEN",
+    "isDraft": true,
+    "head": "e85300ab3ec122f819a2685613332578f7e203d8"
+  },
+  "historical_hash_representation": "SHA256 of BASE Git blob bytes (LF); retained v2 lock additionally checks exact working-tree bytes for versioned contract artifacts."
+}
