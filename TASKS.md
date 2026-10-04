@@ -1167,3 +1167,28 @@ Full revision/checksum identity and results: [G5 result overlay](notes/w2_d9r19g
 This task changes documentation only: no parser, prompt, runner, scientific
 contract tests or model code changes; no model/InspecSafe execution and no G6.
 Historical results are preserved without repair or reinterpretation.
+## W2.6-D9R19G6-PALIGEMMA-EXECUTION-IDENTITY-RELOCK (2026-10-04)
+
+- [x] Prepare versioned G6 runtime lock v3, execution plan v2 and inert
+  authorization template v2 from exact BASE
+  `069d780b6590a32a19cbe6e341ffa19cedbcd712`.
+- [x] Bind G6 exclusively to PaliGemma
+  (`google/paligemma-3b-mix-448`, revision
+  `ead2d9a35598cb89119af004f5d023b311d1c4a1`, Kaggle T4 x1, transformers
+  4.57.1, FP16, NONE, greedy max_new_tokens=512) and predeclared run ID
+  `g6-paligemma-v3-001`.
+- [x] Preserve synthetic v3 parser/geometry/prompt/cases/expected geometry,
+  thresholds, no-retry/no-repair and raw-before-parse; retain Qwen3 G5 FAIL
+  and NOT_PARTICIPATING history without rerun or authority.
+- [x] Prepare observation-before-load contract for exact HEAD/main, model and
+  revision, software, T4 x1, snapshot hashes/sizes, code/contract hashes and
+  generation config. Keep Draft PR open through observation, audit,
+  authorization, execution and human review; merge invalidates authority.
+- [x] Focused G6 governance tests, relevant frozen-contract regressions and
+  `git diff --check` pass; full suite not run.
+- [ ] Environment observation, independent audit, Research Lead authorization,
+  qualification execution and human review remain future work.
+
+G6 is PREP only: `PALI_EXECUTION_AUTHORIZED=NO`; `MODEL_GPU_EXECUTION=NO`;
+`INSPECSAFE=NOT_RUN`; `PROMOTION=NO`; `MERGE=NO`. PR #67 is unchanged.
+See [G6 relock note](notes/w2_d9r19g6_execution_identity_relock.md).

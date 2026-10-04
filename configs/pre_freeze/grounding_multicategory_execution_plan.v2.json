@@ -1,0 +1,83 @@
+{
+  "schema_version": "grounding-v3-execution-plan-v2",
+  "task": "W2.6-D9R19G6-PALIGEMMA-EXECUTION-IDENTITY-RELOCK",
+  "execution_base": "069d780b6590a32a19cbe6e341ffa19cedbcd712",
+  "head_sha": null,
+  "head_policy": "Read the exact G6 Draft PR HEAD from Git after push and independent audit; authorization must match that SHA exactly. Never substitute a branch name for a SHA.",
+  "main_policy": "Fetch origin/main before observation and execution; STOP if it differs from execution_base. HEAD must be a strict descendant of execution_base and the checkout must be clean.",
+  "draft_pr_policy": "KEEP OPEN/DRAFT through environment observation, independent audit, Research Lead authorization, qualification execution and human review. Merge invalidates this authority. No automatic merge.",
+  "authorized_models": ["paligemma"],
+  "run_ids": {
+    "paligemma": "g6-paligemma-v3-001"
+  },
+  "run_id_policy": "Predeclared before outputs and fixed for this model. Never change in response to output. No retry or repair.",
+  "runtime_lock": "configs/pre_freeze/grounding_multicategory_runtime_lock.v3.json",
+  "historical_runtime_lock": "configs/pre_freeze/grounding_multicategory_runtime_lock.v2.json",
+  "historical_execution_plan": "configs/pre_freeze/grounding_multicategory_execution_plan.v1.json",
+  "scientific_plan": "configs/pre_freeze/grounding_interface_qualification_plan.v3.json",
+  "environment_contract": "configs/pre_freeze/grounding_multicategory_environment.v1.json",
+  "environment_contract_overlay": "Keep the v1 environment contract and synthetic v3 plan byte-unchanged. G6 observation records the v3 runtime lock hashes; model identity, processor behavior, software pin, FP16/NONE decoding and raw-before-parse remain unchanged.",
+  "observation": {
+    "paligemma_hardware": "KAGGLE_T4_X1",
+    "output_root": "data/processed/grounding_v3_g6_review",
+    "model_load": false,
+    "generate": false,
+    "execution_authorized": false,
+    "QUALIFICATION_EXECUTION": "NOT_RUN",
+    "required_fields": [
+      "exact_head",
+      "exact_main",
+      "model_id",
+      "revision",
+      "software_versions",
+      "hardware",
+      "snapshot_files_sha256_and_sizes",
+      "code_and_contract_hashes",
+      "generation_config"
+    ],
+    "runbook": "notes/w2_d9r19g6_execution_identity_relock.md"
+  },
+  "authorization_template": "configs/pre_freeze/grounding_multicategory_authorization.template.v2.json",
+  "authorization_required_fields": [
+    "execution_authorized",
+    "model_key",
+    "run_id",
+    "head_sha",
+    "main_sha",
+    "environment_sha256",
+    "runtime_lock_sha256",
+    "internet_off_attested",
+    "research_lead",
+    "independent_auditor",
+    "review_reference"
+  ],
+  "authorization_policy": "Separate external attestation after independent audit; Research Lead and independent auditor must be distinct. Any HEAD/main/environment/runtime-lock change invalidates approval. The tracked template is inert and is never an authorization artifact.",
+  "environment_status": "UNVERIFIED_EXTERNAL_VENUE_LOCK_PENDING",
+  "QUALIFICATION_EXECUTION": "NOT_RUN",
+  "execution_authorized": false,
+  "MODEL_GPU_EXECUTION": "NO",
+  "INSPECSAFE": "NOT_RUN",
+  "runtime_execution": {
+    "paligemma": "BLOCKED"
+  },
+  "qwen3_protection": {
+    "QWEN3_G5_QUALIFICATION": "FAIL",
+    "QWEN3_PRIMARY_GROUNDING_ROLE": "NOT_PARTICIPATING",
+    "RERUN": "NO",
+    "PROMOTION": "NO",
+    "authority_scope": "G6_DOES_NOT_AUTHORIZE_QWEN3"
+  },
+  "paligemma_identity": {
+    "model": "google/paligemma-3b-mix-448",
+    "revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+    "hardware_target": "KAGGLE_T4_X1",
+    "transformers": "4.57.1",
+    "precision": "FP16",
+    "quantization": "NONE",
+    "max_new_tokens": 512,
+    "decoding": "GREEDY"
+  },
+  "scientific_contract": "Synthetic v3 current contract; parser grammar, images/cases, expected geometry, gate thresholds/rules, no-retry/no-repair and raw-before-parse are unchanged.",
+  "promotion": false,
+  "merge": false
+}

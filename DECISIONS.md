@@ -1965,3 +1965,33 @@ keep-Draft-open instructions, as historical records. This overlay records the
 subsequent result and PR #72 closure only; it grants no new execution authority.
 No parser/prompt/runner/scientific contract test/model code changes, model run,
 InspecSafe run, G6 creation or merge are part of this task.
+## D9R19G6 — PaliGemma execution identity relock (2026-10-04)
+
+- **Authority/scope:** Research Lead task
+  `W2.6-D9R19G6-PALIGEMMA-EXECUTION-IDENTITY-RELOCK`, PREP only, at exact BASE
+  `069d780b6590a32a19cbe6e341ffa19cedbcd712` after G5/G5R merges. This record
+  does not authorize a model, GPU, InspecSafe or promotion run.
+- **Decision:** Add versioned `grounding_multicategory_runtime_lock.v3.json`,
+  `grounding_multicategory_execution_plan.v2.json` and inert authorization
+  template v2. Keep runtime lock v2, execution plan v1, scientific v3 files,
+  parser, geometry, prompt and historical evidence byte-unchanged.
+- **Execution identity:** G6 serves only PaliGemma at the existing pinned
+  model/revision, Kaggle T4 x1, transformers 4.57.1, FP16, no quantization,
+  greedy `max_new_tokens=512`, and predeclared `g6-paligemma-v3-001`. This
+  follows the repository's `g<generation>-<model>-v3-001` convention; no name
+  substitution was needed.
+- **Authority lifecycle:** The Draft PR stays OPEN/DRAFT through environment
+  observation, independent audit, Research Lead authorization, qualification
+  execution and human review. Merge changes `origin/main` and invalidates any
+  authority; no merge is performed here. Observation must precede model load
+  and record exact HEAD/main, model/revision, software, T4 x1, snapshot
+  hashes/sizes, code/contract hashes and generation config.
+- **Protected history:** G6 does not issue Qwen3 authority. Preserve
+  `QWEN3_G5_QUALIFICATION=FAIL`,
+  `QWEN3_PRIMARY_GROUNDING_ROLE=NOT_PARTICIPATING`, `RERUN=NO` and
+  `PROMOTION=NO`; no Qwen3 rerun, parser/geometry/prompt rescue or PR #67
+  change.
+- **Reproducibility boundary:** The tracked authorization template remains
+  `execution_authorized=false` with null identity/observation hashes. Raw
+  outputs, snapshots and InspecSafe remain uncreated and uncommitted. The
+  scientific synthetic v3 contract, including raw-before-parse, is unchanged.
