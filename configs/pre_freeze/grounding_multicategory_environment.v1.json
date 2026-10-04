@@ -1,0 +1,47 @@
+{
+  "schema_version": "grounding-v3-environment-prep-v1",
+  "status": "UNVERIFIED_EXTERNAL_VENUE_LOCK_PENDING",
+  "observed": false,
+  "execution_authorized": false,
+  "QUALIFICATION_EXECUTION": "NOT_RUN",
+  "runtime_ready": false,
+  "hash_representation": "Code/contracts: Git-normalized LF SHA256; snapshots/raw: exact bytes; approved environment: runner encode() SHA256",
+  "code_and_contract_hashes": "configs/pre_freeze/grounding_multicategory_runtime_lock.v1.json:sha256",
+  "generation_config": {"do_sample": false, "num_beams": 1, "num_return_sequences": 1, "max_new_tokens": 512},
+  "operational_controls": {"use_cache": false, "return_dict_in_generate": false, "output_scores": false, "output_logits": false, "output_attentions": false, "output_hidden_states": false, "paligemma_logits_to_keep": 1, "attention": "sdpa", "precision": "FP16", "quantization": "NONE"},
+  "models": {
+    "qwen3": {
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "model_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "processor_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "tokenizer_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "processor_tokenizer_sha256": null,
+      "prospective_hardware_target": "KAGGLE_T4_X2",
+      "gpu_model": "Tesla T4",
+      "gpu_count": 2,
+      "compute_capability": [7, 5],
+      "historical_software_evidence": {"python": "3.12.13", "torch": "2.10.0+cu128", "cuda": "12.8", "transformers": "4.57.1", "tokenizers": null, "Pillow": "11.3.0", "accelerate": "1.11.0", "huggingface-hub": "0.36.0", "safetensors": "0.6.2"},
+      "evidence": "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json",
+      "limitation": "Historical smoke only. Tokenizers version not reported in this evidence; exact v3 environment, processor/tokenizer hashes and 512-token runtime remain unverified. External inventory/review required."
+    },
+    "paligemma": {
+      "model_id": "google/paligemma-3b-mix-448",
+      "model_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "processor_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "tokenizer_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "processor_tokenizer_sha256": null,
+      "prospective_hardware_target": "KAGGLE_T4_X1",
+      "gpu_model": "Tesla T4",
+      "gpu_count": 1,
+      "compute_capability": [7, 5],
+      "historical_software_evidence": {"python": "3.11.11", "torch": "2.6.0+cu124", "cuda": "12.4", "transformers": "4.57.1", "tokenizers": "0.22.1", "Pillow": "11.2.1"},
+      "evidence": "configs/pre_freeze/paligemma_t4_runtime_result.v1.json",
+      "snapshot_inventory": "configs/pre_freeze/paligemma_t4_runtime.v1.json:snapshot_files",
+      "limitation": "Exact historical runtime smoke evidence is not v3 verification. Rehash approved snapshot and capture exact external environment before execution review."
+    }
+  },
+  "external_observation_required_fields": ["python", "torch", "cuda", "transformers", "tokenizers", "Pillow", "GPU model", "compute capability", "model/processor/tokenizer revision", "snapshot_files SHA256/size", "runner SHA256", "parser SHA256", "plan/manifest/source/lock hashes", "generation_config", "git_commit"],
+  "authorization_required_fields": ["execution_authorized", "model_key", "run_id", "head_sha", "main_sha", "environment_sha256", "runtime_lock_sha256", "internet_off_attested", "research_lead", "independent_auditor", "review_reference"],
+  "authorization_policy": "Only Research Lead plus independent audit after PR review may issue a separate exact-run authorization. This PREP document never authorizes execution.",
+  "PRODUCTION_TOKEN_BUDGET": "PENDING"
+}
