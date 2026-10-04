@@ -182,3 +182,61 @@ QWEN3_PRIMARY_GROUNDING_ROLE=NOT_PARTICIPATING;
 PALIGEMMA_PRIMARY_GROUNDING_ROLE=NOT_PARTICIPATING;
 QWEN3_ABSENCE_SEMANTICS_BLOCKER=UNRESOLVED;
 PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER=UNRESOLVED; PROMOTION=NO; MERGE=NO.
+
+## Qwen3 G5 result/closure overlay (2026-10-04)
+
+Task: `W2.6-D9R19G5R-QWEN3-QUALIFICATION-RESULT-RECORD`.
+Append-only record subsequent to the PREP above. [PR #72](https://github.com/tantdna2/SafeShift/pull/72)
+is MERGED at `465ec738b6a395801df06e2ef179e2bf51f8b509`, verified through
+GitHub and fetched origin/main. This is the documentary task BASE; it does not
+replace the historical execution BASE, HEAD or authorization identity.
+All PREP statements and future commands above remain historical and unchanged.
+
+Source: Research Lead's supplied audited execution facts in the G5R task request.
+The execution/audit results and hashes below are recorded from that source;
+this task did not rerun qualification or independently inspect/hash the ZIP.
+
+| Execution identity | Recorded value |
+| --- | --- |
+| model | `Qwen/Qwen3-VL-8B-Instruct` |
+| revision | `0c351dd01ed87e9c1b53cbc748cba10e6187ff3b` |
+| run_id | `g5-qwen3-v3-001` |
+| environment_sha256 | `31b2f9461924e8ed469c2cc93ab5e1070168512519ac39c7773e01ba9beebc11` |
+| runtime_lock_sha256 | `4ed0bbe80b492eae0c402fd94cb5b050b163bc5cb464813366eeba6cc6342d0b` |
+| artifact ZIP SHA256 | `00e9ae05d7fb3d9e369a1127a309b9aec8cb4723ab2239fd2b76683ba79761b5` |
+
+| Audited execution fact | Recorded result |
+| --- | --- |
+| QUALIFICATION_EXECUTION | EXECUTED |
+| model_loads | 1 |
+| native_calls | 12 |
+| failure | `null` |
+| termination_reason | 12/12 EOS |
+| raw-before-parse | verified |
+| artifact integrity | PASS |
+| parse_status under frozen v3 parser | 12/12 INVALID |
+| tracking_result | `false` |
+| final_verdict | FAIL |
+| independent audit | PASS |
+| QWEN3_G5_QUALIFICATION | FAIL |
+| RERUN | NO |
+| INSPECSAFE | NOT_RUN |
+| QWEN3_PRIMARY_GROUNDING_ROLE | NOT_PARTICIPATING |
+| PROMOTION | NO |
+
+All 12 native outputs were Markdown-fenced JSON, which the frozen v3
+strict_json parser rejects. E_red_green also emitted the out-of-query label
+"blue square". These observations do not authorize output repair or historical
+result reinterpretation. Independent audit PASS does not change qualification
+FAIL; Qwen3 primary grounding remains NOT_PARTICIPATING, with no promotion.
+
+This task records the completed run and PR #72 closure only. No new execution,
+InspecSafe run, parser/prompt/runner/scientific contract test/model code change,
+G6 or merge. No PaliGemma result is inferred.
+
+Documentary validation: `git diff --check` PASS; exact BASE and three-file
+change scope PASS; Git-normalized pre-existing content preserved as an unchanged
+prefix in all three files; appended local links/anchor and every supplied
+identity/result value checked PASS. No historical lines removed or replaced.
+Model/scientific tests and full suite were not run: only Markdown was appended,
+with no code or scientific contract changes. No model or InspecSafe execution.
