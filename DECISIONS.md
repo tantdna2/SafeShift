@@ -1852,3 +1852,48 @@ execution authorization remain separate future work. PR #67 unchanged.
 QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false; MODEL_GPU_EXECUTION=NO;
 INSPECSAFE=NOT_RUN; PROMOTION=NO; MERGE=NO.
 Evidence and validation: [G3 PREP note](notes/w2_d9r19g3_positive_multicategory_grounding_prep.md).
+
+## D9R19G3 closure record (2026-10-04; append-only)
+
+G3 merged as PR #70.
+merge commit: `685021ef974cc3feef968d7e920e7720ce6349f2`.
+Historical G3 `MERGE=NO` remains unchanged; this records subsequent closure only.
+
+## W2.6-D9R19G4-MULTICATEGORY-RUNTIME-INTEGRATION-QUALIFICATION-EXECUTION-PREP (2026-10-04)
+
+Authority: explicit Research Lead G4 PREP task at fetched required BASE
+`685021ef974cc3feef968d7e920e7720ce6349f2`. Implement a separate synthetic-v3
+runtime, without modifying any G3 prompt/parser/plan/manifest/lock or historical
+runner/gate/result. This is implementation of G3, not a dataset/split/label/metric
+revision and not authority to run models or promote participation.
+
+Prospective hardware targets follow recorded evidence: Qwen3 Kaggle T4 x2,
+PaliGemma Kaggle T4 x1, FP16/NONE. These are historical smoke-supported targets,
+not verified v3 environments. Environment lock remains UNVERIFIED; Qwen3's
+historical smoke record omits tokenizers version and G4 does not invent it.
+External exact-snapshot inventory, live software/hardware verification and
+Research Lead plus independent audit are required before model load.
+
+Synthetic generation remains greedy max_new_tokens=512, one load and one native
+call per case, same four-label prompt for all 12 cases. Explicit SDPA and
+stateless use_cache=false/output-observation controls are prospective runtime
+implementation settings, not response-driven revisions. No retry, repair, EOS
+stripping, whitespace changes or budget increase. Production all-12 token budget
+is separate/PENDING. Raw bytes and preparse metadata must be durably stored,
+reread and hash/size verified before the unchanged parser sees continuation text.
+
+Offline integration readiness may be READY_FOR_EXTERNAL_EXECUTION_REVIEW;
+runtime-ready remains false while the actual environment is unverified. A future
+authorization must independently bind model/run, exact HEAD/main, environment
+and runtime lock hashes. This PREP cannot issue it. All automated checks passing
+only yields PENDING_REVIEW until every detection has a human NO_GIANT decision,
+reviewer and rationale. PASS never promotes a model automatically.
+
+QWEN3_ABSENCE_SEMANTICS_BLOCKER=UNRESOLVED;
+PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER=UNRESOLVED. Historical Qwen3 GATE_FAIL and
+PaliGemma FAIL remain intact; both primary grounding roles NOT_PARTICIPATING.
+982 production scope and InspecSafe are NOT_RUN; PR #67 unchanged.
+QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false; MODEL_GPU_EXECUTION=NO;
+INSPECSAFE=NOT_RUN; PROMOTION=NO; MERGE=NO.
+Implementation, exact future commands and evidence limits:
+[G4 PREP note](notes/w2_d9r19g4_multicategory_runtime_prep.md).

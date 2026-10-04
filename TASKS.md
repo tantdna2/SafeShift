@@ -1081,3 +1081,31 @@ primary grounding NOT_PARTICIPATING. D5 unchanged, RQ3-A/RQ3-B separate.
 QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false;
 MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN; PROMOTION=NO; MERGE=NO.
 Details: [G3 PREP note](notes/w2_d9r19g3_positive_multicategory_grounding_prep.md).
+
+## D9R19G3 closure record (2026-10-04; append-only)
+
+G3 merged as PR #70.
+merge commit: `685021ef974cc3feef968d7e920e7720ce6349f2`.
+Historical G3 `MERGE=NO` remains intact; subsequent closure only.
+
+## W2.6-D9R19G4-MULTICATEGORY-RUNTIME-INTEGRATION-QUALIFICATION-EXECUTION-PREP (2026-10-04)
+
+- [x] Prepare separate pinned Qwen3/PaliGemma runtime v3 and CLI, 12 positive
+  synthetic calls/model, identical four-label query, greedy max_new_tokens=512.
+- [x] Implement durable raw/preparse persistence, reread hash/size verification,
+  continuation-prefix/EOS checks, no parser on storage/token-boundary failure.
+- [x] Implement mandatory hash/identity/path/authority/environment preflight,
+  result schema/writer and all-detection human NO_GIANT review gate.
+- [x] Prepare prospective environment inventory contract and future commands;
+  hardware targets supported by historical evidence, no v3 runtime-ready claim.
+- [x] Offline validation: 103 focused (26 new) and 267 relevant regression tests
+  PASS; full suite not run. See G4 note for final checks and limitations.
+- [ ] External venue environment/snapshot verification and independent PR review.
+- [ ] Separate Research Lead plus independent-auditor execution authorization.
+- [ ] Real qualification and subsequent human review; no execution in G4.
+
+QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false; MODEL_GPU_EXECUTION=NO;
+INSPECSAFE=NOT_RUN; both primary grounding roles NOT_PARTICIPATING; both absence
+blockers UNRESOLVED; PR #67 unchanged; PROMOTION=NO; MERGE=NO.
+Runtime readiness BLOCKED on unverified environment/authority; offline integration
+readiness and validation: [G4 PREP note](notes/w2_d9r19g4_multicategory_runtime_prep.md).

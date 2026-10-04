@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Synthetic multicategory v3 runtime result; human finalization is a separate artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "RUN_ID", "MODEL_ID", "REVISION", "ENVIRONMENT", "QUALIFICATION_EXECUTION", "calls", "model_loads", "native_calls", "failure", "tracking_result", "NO_GIANT_review_status", "artifact_audit_complete", "final_verdict"],
+  "properties": {
+    "schema_version": {"const": "grounding-v3-result-v1"},
+    "RUN_ID": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,95}$"},
+    "MODEL_ID": {"enum": ["Qwen/Qwen3-VL-8B-Instruct", "google/paligemma-3b-mix-448"]},
+    "REVISION": {"enum": ["0c351dd01ed87e9c1b53cbc748cba10e6187ff3b", "ead2d9a35598cb89119af004f5d023b311d1c4a1"]},
+    "ENVIRONMENT": {"type": "object"},
+    "QUALIFICATION_EXECUTION": {"enum": ["NOT_RUN", "EXECUTED"]},
+    "model_loads": {"type": "integer", "minimum": 0, "maximum": 1},
+    "native_calls": {"type": "integer", "minimum": 0, "maximum": 12},
+    "failure": {"type": ["object", "null"]},
+    "tracking_result": {"type": ["boolean", "null"]},
+    "NO_GIANT_review_status": {"enum": ["NOT_RUN", "PENDING_HUMAN_REVIEW"]},
+    "artifact_audit_complete": {"type": "boolean"},
+    "final_verdict": {"enum": ["BLOCKED", "FAIL", "PENDING_REVIEW", "PASS"]},
+    "calls": {
+      "type": "array", "maxItems": 12,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["case_id", "raw_hashes", "parse_status", "canonical_detections", "geometry_observations", "termination_reason", "raw_token_count"],
+        "properties": {
+          "case_id": {"type": "string"},
+          "raw_hashes": {"type": "object", "required": ["raw.json", "preparse.json"]},
+          "parse_status": {"enum": ["SUCCESS", "INVALID", "POSITIVE_GUARANTEE_MISS"]},
+          "canonical_detections": {"type": ["array", "null"], "items": {"type": "object", "required": ["bbox", "label"], "additionalProperties": false, "properties": {"bbox": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}}, "label": {"enum": ["red square", "green circle", "yellow triangle", "cyan rectangle"]}}}},
+          "geometry_observations": {"type": "object", "required": ["geometry_ok", "parse_status", "detections", "target_assignment", "expected_counts", "predicted_counts"]},
+          "termination_reason": {"const": "EOS"},
+          "raw_token_count": {"type": "integer", "minimum": 1, "maximum": 512}
+        }
+      }
+    }
+  },
+  "$comment": "The runtime writer rejects PASS unconditionally. Separate immutable human_review.final.json binds the runtime result SHA256 and every detection review. verdict() enforces all 12 calls, geometry, tracking, durable artifact audit and per-detection NO_GIANT before PASS."
+}
