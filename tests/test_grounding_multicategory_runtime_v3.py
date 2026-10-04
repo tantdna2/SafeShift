@@ -79,7 +79,7 @@ class ContractTests(unittest.TestCase):
                "observed": True, "git_commit": "a" * 40, "code_and_contract_hashes": lock["sha256"],
                "generation_config": r.DECODING}
         env["software_versions"]["transformers"] = "4.57.1"
-        authority = {"execution_authorized": True, "model_key": "qwen3", "run_id": "approved-test",
+        authority = {"execution_authorized": True, "model_key": "qwen3", "run_id": r.RUN_IDS["qwen3"],
                      "head_sha": "a" * 40, "main_sha": r.BASE, "environment_sha256": r.sha(r.encode(env)),
                      "runtime_lock_sha256": r.text_hash(ROOT / r.RUNTIME_LOCK), "internet_off_attested": True,
                      "research_lead": "Lead", "independent_auditor": "Auditor", "review_reference": "TEST_ONLY"}
@@ -90,16 +90,16 @@ class ContractTests(unittest.TestCase):
                 return ""
             return r.BASE
         with patch.object(r, "git", side_effect=git):
-            result = r.preflight(ROOT, "qwen3", "approved-test", env, authority, images=False)
+            result = r.preflight(ROOT, "qwen3", r.RUN_IDS["qwen3"], env, authority, images=False)
             self.assertEqual(result["status"], "PREFLIGHT_PASS")
             for key in authority:
                 bad = {**authority, key: None}
                 with self.subTest(field=key), self.assertRaises(ValueError):
-                    r.preflight(ROOT, "qwen3", "approved-test", env, bad, images=False)
+                    r.preflight(ROOT, "qwen3", r.RUN_IDS["qwen3"], env, bad, images=False)
             for key in ("processor_revision", "tokenizer_revision", "cuda", "hardware", "snapshot_files"):
                 bad_env = {**env, key: {} if key == "snapshot_files" else [] if key == "hardware" else None}
                 with self.subTest(field=key), self.assertRaises(ValueError):
-                    r.preflight(ROOT, "qwen3", "approved-test", bad_env, authority, images=False)
+                    r.preflight(ROOT, "qwen3", r.RUN_IDS["qwen3"], bad_env, authority, images=False)
 
     def test_frozen_identities_and_hashes(self):
         plan, manifest, lock = r.frozen(ROOT)
