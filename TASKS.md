@@ -1139,3 +1139,31 @@ INSPECSAFE=NOT_RUN; QWEN3_RUNTIME_EXECUTION=BLOCKED;
 PALIGEMMA_RUNTIME_EXECUTION=BLOCKED; both primary grounding roles
 NOT_PARTICIPATING; both absence blockers UNRESOLVED; PR #67 unchanged;
 PROMOTION=NO; MERGE=NO.
+
+## W2.6-D9R19G5R-QWEN3-QUALIFICATION-RESULT-RECORD (2026-10-04; append-only)
+
+Result/closure overlay after G5 PREP. [PR #72](https://github.com/tantdna2/SafeShift/pull/72)
+merged at `465ec738b6a395801df06e2ef179e2bf51f8b509`, the exact BASE of this
+separate documentary task. Historical PREP lines, checkboxes, NOT_RUN/BLOCKED
+and keep-Draft-open instructions above retain their original historical scope.
+
+Source: Research Lead's supplied audited execution facts for
+`Qwen/Qwen3-VL-8B-Instruct`, run `g5-qwen3-v3-001`; this task records them and
+does not repeat execution or independently re-audit the artifact ZIP.
+Full revision/checksum identity and results: [G5 result overlay](notes/w2_d9r19g5_execution_identity_relock.md#qwen3-g5-resultclosure-overlay-2026-10-04).
+
+- [x] Record PR #72 closure and completed Qwen3 qualification execution:
+  QUALIFICATION_EXECUTION=EXECUTED; model_loads=1; native_calls=12; failure=null;
+  12/12 termination_reason=EOS; raw-before-parse verified; artifact integrity PASS.
+- [x] Record 12/12 parse_status=INVALID under frozen v3 strict_json parser:
+  all 12 native outputs were Markdown-fenced JSON, rejected by that parser.
+  E_red_green also emitted the out-of-query label "blue square".
+- [x] Record tracking_result=false; final_verdict=FAIL; independent audit PASS;
+  QWEN3_G5_QUALIFICATION=FAIL; RERUN=NO; INSPECSAFE=NOT_RUN.
+- [x] Retain Qwen3 primary grounding NOT_PARTICIPATING; PROMOTION=NO.
+- [ ] Independent review and merge of this documentary Draft PR remain pending;
+  no merge in this task.
+
+This task changes documentation only: no parser, prompt, runner, scientific
+contract tests or model code changes; no model/InspecSafe execution and no G6.
+Historical results are preserved without repair or reinterpretation.

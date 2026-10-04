@@ -1933,3 +1933,35 @@ INSPECSAFE=NOT_RUN; both runtime executions BLOCKED; both primary grounding
 roles NOT_PARTICIPATING; both absence blockers UNRESOLVED. PR #67 untouched.
 PROMOTION=NO; MERGE=NO. Future observation commands and verification limits:
 [G5 relock note](notes/w2_d9r19g5_execution_identity_relock.md).
+
+## W2.6-D9R19G5R-QWEN3-QUALIFICATION-RESULT-RECORD (2026-10-04; append-only)
+
+Authority/source: explicit Research Lead request and supplied audited execution
+facts for `g5-qwen3-v3-001`. This result/closure overlay records the outcome
+subsequent to G5 PREP; it does not rewrite PREP or historical qualification.
+[PR #72](https://github.com/tantdna2/SafeShift/pull/72) is MERGED at
+`465ec738b6a395801df06e2ef179e2bf51f8b509`, independently checked through GitHub
+and fetched origin/main; that commit is this documentary task's exact BASE,
+not a replacement for the historical execution BASE or authorization identity.
+
+Qwen3 execution was completed: QUALIFICATION_EXECUTION=EXECUTED; model_loads=1;
+native_calls=12; failure=null; 12/12 termination_reason=EOS. Raw-before-parse
+was verified and artifact integrity PASS. Under the frozen v3 strict_json
+parser, 12/12 parse_status=INVALID: all 12 native outputs were Markdown-fenced
+JSON, which that parser rejects. E_red_green also emitted the out-of-query
+label "blue square". Record tracking_result=false and final_verdict=FAIL.
+Independent audit PASS records the audit outcome; QWEN3_G5_QUALIFICATION=FAIL
+remains the qualification outcome, with no reinterpretation or promotion.
+
+RERUN=NO; INSPECSAFE=NOT_RUN;
+QWEN3_PRIMARY_GROUNDING_ROLE=NOT_PARTICIPATING; PROMOTION=NO.
+The supplied model revision and environment/runtime/artifact hashes are recorded
+in the [G5 result overlay](notes/w2_d9r19g5_execution_identity_relock.md#qwen3-g5-resultclosure-overlay-2026-10-04).
+Execution/audit facts are supplied evidence, not a new artifact audit performed
+by this documentation task. No PaliGemma result is inferred from the Qwen3 run.
+
+Preserve all old PREP text, including NOT_RUN/BLOCKED, MERGE=NO and prospective
+keep-Draft-open instructions, as historical records. This overlay records the
+subsequent result and PR #72 closure only; it grants no new execution authority.
+No parser/prompt/runner/scientific contract test/model code changes, model run,
+InspecSafe run, G6 creation or merge are part of this task.
