@@ -29,6 +29,7 @@ def main(argv=None):
     try:
         load = lambda path: runtime.read_json(external_path(ROOT, path)) if path else None
         if args.inspect_environment:
+            runtime.require(args.run_id == runtime.RUN_IDS[args.model], "PREDECLARED_RUN_ID_REQUIRED")
             runtime.require(args.snapshot and args.output and args.output.startswith("data/processed/"), "SNAPSHOT_AND_OUTPUT_REQUIRED")
             value = runtime.inspect_environment(ROOT, args.model, args.snapshot)
             target = external_path(ROOT, args.output)

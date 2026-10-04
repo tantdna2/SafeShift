@@ -22,12 +22,13 @@ from safeshift.protocol.grounding_multicategory_candidate import (
 )
 from safeshift.protocol.grounding_multicategory_geometry import observe, systematic_tracking
 
-BASE = "685021ef974cc3feef968d7e920e7720ce6349f2"
+BASE = "b3bf4dc770c1b87a9e353a75aab759f67641c2c2"
 ROOT = Path(__file__).resolve().parents[2]
 PLAN = "configs/pre_freeze/grounding_interface_qualification_plan.v3.json"
 MANIFEST = "configs/pre_freeze/external_grounding_interface_cases.v3.json"
 LOCK = "configs/pre_freeze/grounding_interface_lock.v3.json"
-RUNTIME_LOCK = "configs/pre_freeze/grounding_multicategory_runtime_lock.v1.json"
+RUNTIME_LOCK = "configs/pre_freeze/grounding_multicategory_runtime_lock.v2.json"
+EXECUTION_PLAN = "configs/pre_freeze/grounding_multicategory_execution_plan.v1.json"
 ENV_TEMPLATE = "configs/pre_freeze/grounding_multicategory_environment.v1.json"
 RUNNER = "safeshift/runners/grounding_multicategory_v3.py"
 PARSER = "safeshift/protocol/grounding_multicategory_candidate.py"
@@ -38,6 +39,7 @@ MODELS = {
 }
 DECODING = dict(do_sample=False, num_beams=1, num_return_sequences=1, max_new_tokens=512)
 PARSERS = {"qwen3": parse_qwen3_multicategory, "paligemma": parse_paligemma_multicategory}
+RUN_IDS = {"qwen3": "g5-qwen3-v3-001", "paligemma": "g5-paligemma-v3-001"}
 
 
 def require(condition, reason):
@@ -70,6 +72,9 @@ def frozen(repo=ROOT):
     lock = read_json(repo / RUNTIME_LOCK)
     for name, expected in lock["sha256"].items():
         require(text_hash(external_path(repo, name)) == expected, "FROZEN_HASH: " + name)
+    execution = read_json(repo / EXECUTION_PLAN)
+    require(lock["base_sha"] == execution["execution_base"] == BASE
+            and execution["run_ids"] == RUN_IDS, "EXECUTION_PLAN_IDENTITY")
     old = read_json(repo / LOCK)
     for name, expected in old["sha256"].items():
         require(text_hash(external_path(repo, name)) == expected, "G3_HASH: " + name)
@@ -153,10 +158,20 @@ def inventory_snapshot(repo, model_key, snapshot_name):
     return files
 
 
+def execution_identity(repo):
+    """G5 must remain an unmerged, clean descendant of the fixed execution BASE."""
+    head = git(repo, "rev-parse", "HEAD")
+    require(git(repo, "rev-parse", "origin/main") == BASE, "MAIN_IDENTITY_CHANGED_RESEARCH_LEAD_REQUIRED")
+    require(head != BASE and git(repo, "merge-base", BASE, head) == BASE, "HEAD_NOT_DESCENDED_FROM_BASE")
+    return head
+
+
 def inspect_environment(repo, model_key, snapshot_name):
     """Future operator inventory only. Never called by --dry-run or G4 tests."""
-    import torch
     plan, _, lock = frozen(repo)
+    head = execution_identity(repo)
+    require(not git(repo, "status", "--porcelain", "--untracked-files=all"), "CLEAN_EXECUTION_CHECKOUT_REQUIRED")
+    import torch
     versions = {name: importlib.metadata.version(name) for name in
                 ("torch", "transformers", "tokenizers", "Pillow", "accelerate", "huggingface-hub", "safetensors")}
     versions["python"] = platform.python_version()
@@ -172,7 +187,8 @@ def inspect_environment(repo, model_key, snapshot_name):
             "software_versions": versions, "cuda": torch.version.cuda, "hardware": hardware,
             "snapshot": snapshot_name, "snapshot_files": inventory_snapshot(repo, model_key, snapshot_name),
             "code_and_contract_hashes": lock["sha256"], "generation_config": plan["models"][model_key]["decoding"],
-            "git_commit": git(repo, "rev-parse", "HEAD"), "observed": True,
+            "git_commit": head, "main_sha": BASE, "run_id": RUN_IDS[model_key], "observed": True,
+            "runtime_lock_sha256": text_hash(repo / RUNTIME_LOCK),
             "execution_authorized": False, "QUALIFICATION_EXECUTION": "NOT_RUN"}
 
 
@@ -180,9 +196,7 @@ def preflight(repo, model_key, run_id, environment=None, authority=None, *, imag
     """Static preflight checks authority without touching torch/GPU/model/cache."""
     plan, manifest, lock = frozen(repo)
     output = run_path(repo, run_id)
-    head = git(repo, "rev-parse", "HEAD")
-    require(git(repo, "rev-parse", "origin/main") == BASE, "MAIN_IDENTITY_CHANGED_RESEARCH_LEAD_REQUIRED")
-    require(git(repo, "merge-base", BASE, head) == BASE, "HEAD_NOT_DESCENDED_FROM_BASE")
+    head = execution_identity(repo)
     if images:
         for case in manifest["cases"]:
             raw = external_path(repo, case["image_path"]).read_bytes()
@@ -191,6 +205,7 @@ def preflight(repo, model_key, run_id, environment=None, authority=None, *, imag
     if environment is None or authority is None:
         blockers.append("EXTERNAL_ENVIRONMENT_AND_EXECUTION_APPROVAL_REQUIRED")
     else:
+        require(run_id == RUN_IDS[model_key], "PREDECLARED_RUN_ID_REQUIRED")
         validate_environment(environment, model_key)
         require(authority.get("execution_authorized") is True, "EXECUTION_NOT_AUTHORIZED")
         require(authority.get("model_key") == model_key and authority.get("run_id") == run_id, "AUTHORITY_SCOPE")
@@ -200,7 +215,8 @@ def preflight(repo, model_key, run_id, environment=None, authority=None, *, imag
         require(authority.get("internet_off_attested") is True, "VENUE_OFFLINE_ATTESTATION")
         for field in ("research_lead", "independent_auditor", "review_reference"):
             require(type(authority.get(field)) is str and bool(authority[field].strip()), "EXTERNAL_REVIEW_REQUIRED")
-        require(authority["research_lead"] != authority["independent_auditor"], "INDEPENDENT_REVIEW_REQUIRED")
+        require(authority["research_lead"].strip().casefold() != authority["independent_auditor"].strip().casefold(),
+                "INDEPENDENT_REVIEW_REQUIRED")
         require(environment.get("observed") is True and environment.get("git_commit") == head, "ENVIRONMENT_UNVERIFIED")
         require(environment.get("model_key") == model_key and environment.get("model_id") == MODELS[model_key][0]
                 and environment.get("revision") == MODELS[model_key][1], "ENVIRONMENT_MODEL")
