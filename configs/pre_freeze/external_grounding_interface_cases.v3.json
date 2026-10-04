@@ -1,0 +1,561 @@
+{
+  "schema_version": "external-grounding-multicategory-v3",
+  "source_kind": "synthetic",
+  "statement": "NO_INSPECSAFE_CONTENT_USED",
+  "canvas": [
+    256,
+    256,
+    "RGB"
+  ],
+  "randomness": "NONE",
+  "query_labels": [
+    "red square",
+    "green circle",
+    "yellow triangle",
+    "cyan rectangle"
+  ],
+  "cases": [
+    {
+      "case_id": "A_1",
+      "kind": "position_swap",
+      "swap_group": "A",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 1,
+        "green circle": 0,
+        "yellow triangle": 0,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "red square",
+          "bbox": [
+            0.125,
+            0.375,
+            0.375,
+            0.625
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.625,
+          0.375,
+          0.875,
+          0.625
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/A_1.png",
+      "image_sha256": "dfefe1c732e529115802c4ee55c4aab94bc40f0c0fc36319ff8cb4b734ca70fc",
+      "image_size_bytes": 585
+    },
+    {
+      "case_id": "A_2",
+      "kind": "position_swap",
+      "swap_group": "A",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 1,
+        "green circle": 0,
+        "yellow triangle": 0,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "red square",
+          "bbox": [
+            0.625,
+            0.375,
+            0.875,
+            0.625
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.125,
+          0.375,
+          0.375,
+          0.625
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/A_2.png",
+      "image_sha256": "9ed5abecd7ae3a9484acad11d936d5c7aab6454c43a393941d167b468f848c54",
+      "image_size_bytes": 586
+    },
+    {
+      "case_id": "B_1",
+      "kind": "position_swap",
+      "swap_group": "B",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 0,
+        "green circle": 1,
+        "yellow triangle": 0,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "green circle",
+          "bbox": [
+            0.375,
+            0.125,
+            0.625,
+            0.375
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.375,
+          0.625,
+          0.625,
+          0.875
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/B_1.png",
+      "image_sha256": "10c8f42dade5a70cbe916a878e06ec249f9f185745afee88e061f5c0b1476070",
+      "image_size_bytes": 892
+    },
+    {
+      "case_id": "B_2",
+      "kind": "position_swap",
+      "swap_group": "B",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 0,
+        "green circle": 1,
+        "yellow triangle": 0,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "green circle",
+          "bbox": [
+            0.375,
+            0.625,
+            0.625,
+            0.875
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.375,
+          0.125,
+          0.625,
+          0.375
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/B_2.png",
+      "image_sha256": "ed8babe0eace73f5cf286b34b07f1330586bfa4e2f5e4ba254fc666cfd39a0a7",
+      "image_size_bytes": 892
+    },
+    {
+      "case_id": "C_1",
+      "kind": "position_swap",
+      "swap_group": "C",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 0,
+        "green circle": 0,
+        "yellow triangle": 1,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "yellow triangle",
+          "bbox": [
+            0.125,
+            0.125,
+            0.375,
+            0.375
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.625,
+          0.625,
+          0.875,
+          0.875
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/C_1.png",
+      "image_sha256": "9914c200f80361f14957b58cb75e2f6f943ebde05ab8fcaf93d608ab101d0ab2",
+      "image_size_bytes": 804
+    },
+    {
+      "case_id": "C_2",
+      "kind": "position_swap",
+      "swap_group": "C",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 0,
+        "green circle": 0,
+        "yellow triangle": 1,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "yellow triangle",
+          "bbox": [
+            0.625,
+            0.625,
+            0.875,
+            0.875
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.125,
+          0.125,
+          0.375,
+          0.375
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/C_2.png",
+      "image_sha256": "a83debd32c9de6ed910f7aa59625b80276cd8f57958e8073dc52d75202acc7ca",
+      "image_size_bytes": 804
+    },
+    {
+      "case_id": "D_1",
+      "kind": "position_swap",
+      "swap_group": "D",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 0,
+        "green circle": 0,
+        "yellow triangle": 0,
+        "cyan rectangle": 1
+      },
+      "targets": [
+        {
+          "label": "cyan rectangle",
+          "bbox": [
+            0.5625,
+            0.15625,
+            0.875,
+            0.34375
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.125,
+          0.65625,
+          0.4375,
+          0.84375
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/D_1.png",
+      "image_sha256": "745b96b2c141c76884f91916813d89a375dabe0df9d022422234d099681bff3f",
+      "image_size_bytes": 605
+    },
+    {
+      "case_id": "D_2",
+      "kind": "position_swap",
+      "swap_group": "D",
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 0,
+        "green circle": 0,
+        "yellow triangle": 0,
+        "cyan rectangle": 1
+      },
+      "targets": [
+        {
+          "label": "cyan rectangle",
+          "bbox": [
+            0.125,
+            0.65625,
+            0.4375,
+            0.84375
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.5625,
+          0.15625,
+          0.875,
+          0.34375
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/D_2.png",
+      "image_sha256": "8c70516f3eaba128c8ece8fafa53758bd2840a184421487176d6661803af3ebd",
+      "image_size_bytes": 605
+    },
+    {
+      "case_id": "E_red_green",
+      "kind": "two_categories",
+      "swap_group": null,
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 1,
+        "green circle": 1,
+        "yellow triangle": 0,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "red square",
+          "bbox": [
+            0.09375,
+            0.125,
+            0.3125,
+            0.34375
+          ]
+        },
+        {
+          "label": "green circle",
+          "bbox": [
+            0.6875,
+            0.65625,
+            0.90625,
+            0.875
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.390625,
+          0.390625,
+          0.609375,
+          0.609375
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/E_red_green.png",
+      "image_sha256": "e77a892c7e87ee488f350eeb1697030588a369b412f6dbf1eb3d589a4794bb69",
+      "image_size_bytes": 806
+    },
+    {
+      "case_id": "F_two_red",
+      "kind": "multiple_instance",
+      "swap_group": null,
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 2,
+        "green circle": 0,
+        "yellow triangle": 0,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "red square",
+          "bbox": [
+            0.09375,
+            0.125,
+            0.3125,
+            0.34375
+          ]
+        },
+        {
+          "label": "red square",
+          "bbox": [
+            0.6875,
+            0.65625,
+            0.90625,
+            0.875
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.390625,
+          0.390625,
+          0.609375,
+          0.609375
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/F_two_red.png",
+      "image_sha256": "6394fff110a413e067564a5a9340d7db4a8ded32e89020921a360f4c7e1c5f82",
+      "image_size_bytes": 759
+    },
+    {
+      "case_id": "G_multi",
+      "kind": "multiple_categories_multiple_instances",
+      "swap_group": null,
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 2,
+        "green circle": 2,
+        "yellow triangle": 1,
+        "cyan rectangle": 0
+      },
+      "targets": [
+        {
+          "label": "red square",
+          "bbox": [
+            0.0625,
+            0.0625,
+            0.25,
+            0.25
+          ]
+        },
+        {
+          "label": "red square",
+          "bbox": [
+            0.75,
+            0.75,
+            0.9375,
+            0.9375
+          ]
+        },
+        {
+          "label": "green circle",
+          "bbox": [
+            0.75,
+            0.0625,
+            0.9375,
+            0.25
+          ]
+        },
+        {
+          "label": "green circle",
+          "bbox": [
+            0.0625,
+            0.75,
+            0.25,
+            0.9375
+          ]
+        },
+        {
+          "label": "yellow triangle",
+          "bbox": [
+            0.40625,
+            0.40625,
+            0.59375,
+            0.59375
+          ]
+        }
+      ],
+      "distractor_boxes": [],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/G_multi.png",
+      "image_sha256": "bb6162e737d4bf1f62a70140f2690ad59906f679d07b686d2159ff46505a067d",
+      "image_size_bytes": 1027
+    },
+    {
+      "case_id": "H_all_four",
+      "kind": "all_queried_categories",
+      "swap_group": null,
+      "query_labels": [
+        "red square",
+        "green circle",
+        "yellow triangle",
+        "cyan rectangle"
+      ],
+      "expected_counts": {
+        "red square": 1,
+        "green circle": 1,
+        "yellow triangle": 1,
+        "cyan rectangle": 1
+      },
+      "targets": [
+        {
+          "label": "red square",
+          "bbox": [
+            0.0625,
+            0.0625,
+            0.25,
+            0.25
+          ]
+        },
+        {
+          "label": "green circle",
+          "bbox": [
+            0.75,
+            0.0625,
+            0.9375,
+            0.25
+          ]
+        },
+        {
+          "label": "yellow triangle",
+          "bbox": [
+            0.0625,
+            0.75,
+            0.25,
+            0.9375
+          ]
+        },
+        {
+          "label": "cyan rectangle",
+          "bbox": [
+            0.6875,
+            0.75,
+            0.9375,
+            0.875
+          ]
+        }
+      ],
+      "distractor_boxes": [
+        [
+          0.40625,
+          0.40625,
+          0.59375,
+          0.59375
+        ]
+      ],
+      "image_path": "data/processed/external_grounding_multicategory_v3/images/H_all_four.png",
+      "image_sha256": "985e3b8f78e08013e64b3d05e7d042e4bea5252fbf8580cfe9c407c8bce513a3",
+      "image_size_bytes": 962
+    }
+  ]
+}

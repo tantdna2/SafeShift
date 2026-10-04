@@ -1,0 +1,112 @@
+{
+  "schema_version": "grounding-multicategory-source-audit-v1",
+  "base_sha": "775e5eee4cade340e0156f97f2af50f7c98e1551",
+  "accessed_date": "2026-10-04",
+  "sources": [
+    {
+      "id": "qwen_odinw_input",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/ODinW-13/dataset_utils.py",
+      "sha256": "a1e7b3d7526c8432fdf5c603c78e9b6ff09ea6f83d3b846d63c26e33912cd8cd",
+      "bytes": 7030,
+      "locator": "L121,153-156: classes from dataset vocabulary, comma-space join, one category-list prompt per image.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "mutable": false
+    },
+    {
+      "id": "qwen_odinw_readme",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/ODinW-13/README.md",
+      "sha256": "0a5ad70d2cbb62da660c922f19499fafa62d923e68c981081c1839fa78c89765",
+      "bytes": 10421,
+      "locator": "L176: detection array with bbox_2d and label; L343: category-list prompt.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "mutable": false
+    },
+    {
+      "id": "qwen_odinw_runner",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/ODinW-13/run_odinw.py",
+      "sha256": "32345c039d7252e3b98b4dc8b0dd4c038c62c61e8ba28c33268ec5ebaaca70f1",
+      "bytes": 14952,
+      "locator": "L206-255: loops detections, xyxy /1000. Lowercasing, invalid-box skipping, exception-to-empty and repair NOT adopted.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "mutable": false
+    },
+    {
+      "id": "qwen_cookbook",
+      "url": "https://raw.githubusercontent.com/QwenLM/Qwen3-VL/96588727e44c78b25ba03ea03b8e12f7e64fd0da/cookbooks/2d_grounding.ipynb",
+      "sha256": "24a39b56467c16aea1062e40157c00800e8f53266714e8270ca3238064fd9898",
+      "bytes": 8691442,
+      "locator": "Zero-based cells 0,4,8-10,12: normalized 0..1000, xyxy code, multicategory and negative-category omission. Stale y-first docstring rejected; no upstream repair adopted.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "mutable": false
+    },
+    {
+      "id": "pali_prompt_docs",
+      "url": "https://ai.google.dev/gemma/docs/paligemma/prompt-system-instructions",
+      "sha256": "ec775881189968513d17b6624a52f4b5d28254b287d930114e15272c854f9b56",
+      "bytes": 141966,
+      "locator": "Prompt task syntax: detect list separated by semicolons; object may be an expression. Mutable accessed snapshot, not immutable release.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "mutable": true
+    },
+    {
+      "id": "pali_app",
+      "url": "https://huggingface.co/spaces/big-vision/paligemma-hf/raw/d914d4446a6ff8c5b3110411abca69887f035c41/app.py",
+      "sha256": "84b8130dd964e1b03858dc208a80a32c78dba202ac599662020902e231c5f42c",
+      "bytes": 10390,
+      "locator": "L168-173,280-321: repeated detection extraction, four loc tokens, yxyx /1024; correct mix-448 model ID, no revision pin in demo.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "mutable": false
+    },
+    {
+      "id": "pali_parse",
+      "url": "https://huggingface.co/spaces/big-vision/paligemma/raw/b19d492be08ec5e8aad190a522db919d4444f529/paligemma_parse.py",
+      "sha256": "6a0b2281892e91a7df49781ea6590d9c0a44c926e1198576742f7a1348e8ee11",
+      "bytes": 5892,
+      "locator": "L17-22,132-175: native repeated objects, loc order and /1024. No unique-label renaming, segmentation or unmatched-text salvage adopted.",
+      "accessed_date": "2026-10-04",
+      "execution": "NOT_EXECUTED_SOURCE_TEXT_ONLY",
+      "mutable": false
+    }
+  ],
+  "qwen3": {
+    "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+    "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+    "family_pin": "QwenLM/Qwen3-VL@96588727e44c78b25ba03ea03b8e12f7e64fd0da",
+    "source_backed": true,
+    "input_construction": "obj_names = \", \".join(classes)",
+    "prompt": "Locate every instance that belongs to the following categories: '{obj_names}'. Report bbox coordinates in JSON format.",
+    "limit": "Official FAMILY-level multicategory interface, not exact 8B revision conformance or execution evidence. No all-absent serialization claim."
+  },
+  "paligemma": {
+    "model_id": "google/paligemma-3b-mix-448",
+    "revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+    "source_backed": true,
+    "official_task_syntax": "detect {object} ; {object}\n",
+    "meaning": "Locate listed objects and return their boxes; objects may be referring expressions.",
+    "newline_owner": "PaliGemmaProcessor_build_string_from_input",
+    "processor_pin": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/paligemma/processing_paligemma.py",
+    "processor_sha256": "9c3ae88a139677cf315a234f368247a6e98ff8acc7853cb43307c27fb5518047",
+    "inherited_evidence": "configs/pre_freeze/grounding_interface_sources.v2.json: inherited_merged_evidence (processor, exact tokenizer and preprocessor checksums)",
+    "limit": "Google FAMILY syntax plus audited PaliGemma 1/model-ID decoder. Exact selected revision output conformance remains NOT_RUN. Empty decoder match is not native valid absence.",
+    "snapshot": {
+      "url": "https://ai.google.dev/gemma/docs/paligemma/prompt-system-instructions",
+      "sha256": "ec775881189968513d17b6624a52f4b5d28254b287d930114e15272c854f9b56",
+      "bytes": 141966,
+      "accessed_date": "2026-10-04",
+      "immutable_url_available": false,
+      "hash_scope": "Raw HTTP response bytes observed in G3; page content is mutable and may differ from G2 snapshot."
+    }
+  },
+  "strict_subset": "Both parsers require exact closed queried labels and preserve every detection in native order. Reject whole response on one malformed/unknown detection; no aliases, fuzzy labels, scale guessing, clamping, first/best box, dropped extras, repair or salvage.",
+  "absence_blockers": {
+    "QWEN3_ABSENCE_SEMANTICS_BLOCKER": "UNRESOLVED",
+    "PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER": "UNRESOLVED"
+  },
+  "source_reproduction": "Fetch each URL as bytes, compare SHA256 and length, then inspect locator; never execute downloaded sources. Mutable page hash identifies only the accessed snapshot; no claim that future downloads are identical."
+}

@@ -1,0 +1,375 @@
+{
+  "schema_version": "grounding-interface-qualification-prep-v3",
+  "task": "W2.6-D9R19G3-POSITIVE-GUARANTEED-MULTICATEGORY-GROUNDING-PREP",
+  "base_sha": "775e5eee4cade340e0156f97f2af50f7c98e1551",
+  "suite_version": "external-grounding-multicategory-v3",
+  "manifest": "configs/pre_freeze/external_grounding_interface_cases.v3.json",
+  "sources": "configs/pre_freeze/grounding_multicategory_sources.v1.json",
+  "parser_version": "grounding-multicategory-candidate-v3.0",
+  "QUALIFICATION_EXECUTION": "NOT_RUN",
+  "MODEL_GPU_EXECUTION": "NO",
+  "INSPECSAFE": "NOT_RUN",
+  "qualification_verdict": null,
+  "execution_authorized": false,
+  "execution_readiness": "PREP_ONLY_RUNTIME_INTEGRATION_AND_AUTHORIZATION_PENDING",
+  "promotion": false,
+  "merge": false,
+  "protocol_freeze": "PENDING",
+  "scope": {
+    "name": "POSITIVE_GUARANTEED_EVALUABLE_POOL",
+    "direct": 721,
+    "weak_proxy": 608,
+    "overlap": 347,
+    "unique_samples": 982,
+    "identity": "721 + 608 - 347 = 982",
+    "sample_class": "Anomaly",
+    "definition": "At least one DIRECT_OBJECT_SUPPORT or WEAK_PROXY_SUPPORT hazard atom per image, by approved D6 pool membership.",
+    "unsupported_only_excluded": 18,
+    "normal_images_included": false,
+    "full_5013_included": false,
+    "evidence": [
+      "DECISIONS.md#dec-w2-d6-006--hazard-taxonomy-and-grounding-support-census",
+      "notes/w2_grounding_census_decision_brief.md"
+    ],
+    "verification": "Approved D6/census documentary verification; no new census or dataset execution.",
+    "dataset_fingerprint": "7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5",
+    "census_recorded_sha256": "cd17c210878bf8b6dc10fcbb036fd1f61ad850bc1f2264cd10deab0aa0f9cdbb",
+    "limit": "Guarantees supported atoms under the operational taxonomy, not full hazard rationale truth or model success."
+  },
+  "absence": {
+    "QWEN3_ABSENCE_SEMANTICS_BLOCKER": "UNRESOLVED",
+    "PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER": "UNRESOLVED",
+    "ALL_TARGET_ABSENT_SEMANTICS": "NOT_APPLICABLE_TO_POSITIVE_GUARANTEED_PRIMARY_SCOPE",
+    "ALL_TARGET_ABSENT_REQUIRED_FOR_V3": false,
+    "empty_response_status": "POSITIVE_GUARANTEE_MISS",
+    "empty_response_success": false,
+    "future_d5": "Grounding failure / zero matched evidence for an executed eligible positive sample; no rescue. No production D5 executor implemented here; NOT_PARTICIPATING models are not scored as failures.",
+    "mandatory_again_if_expanded_to": [
+      "Normal images",
+      "full 5,013 images",
+      "18 unsupported-only samples",
+      "Object Hallucination Rate across the dataset"
+    ]
+  },
+  "fixed_hazard_query_map": [
+    {
+      "hazard_id": "NO_GLOVES",
+      "query": "person without gloves"
+    },
+    {
+      "hazard_id": "NO_HELMET",
+      "query": "person without helmet"
+    },
+    {
+      "hazard_id": "NO_MASK",
+      "query": "person without mask"
+    },
+    {
+      "hazard_id": "USE_MOBILE_PHONE",
+      "query": "person using mobile phone"
+    },
+    {
+      "hazard_id": "LIQUID_ON_GROUND",
+      "query": "liquid on ground"
+    },
+    {
+      "hazard_id": "SMOKING",
+      "query": "person smoking"
+    },
+    {
+      "hazard_id": "OPEN_FLAME",
+      "query": "open flame"
+    },
+    {
+      "hazard_id": "FOREIGN_OBJECT",
+      "query": "foreign object"
+    },
+    {
+      "hazard_id": "SMOKE",
+      "query": "smoke"
+    },
+    {
+      "hazard_id": "NONMOTORIZED_VEHICLE",
+      "query": "non-motorized vehicle"
+    },
+    {
+      "hazard_id": "DOOR_OPEN",
+      "query": "open door"
+    },
+    {
+      "hazard_id": "PERSON_FALLEN",
+      "query": "fallen person"
+    }
+  ],
+  "production_compatibility": {
+    "status": "FUTURE_CANDIDATE_NOT_EXECUTOR",
+    "logical_call2_per_image": 1,
+    "native_calls_per_image": 1,
+    "query_policy": "Same complete ordered 12-label set for all 982 images; independent of per-image GT and Call 1.",
+    "qwen3": "one image -> fixed all-12 prompt -> JSON detections -> exact label-to-hazard binding -> D4 xyxy /1000",
+    "paligemma": "one image -> detect obj1 ; ... ; obj12 -> loc detections -> exact label-to-hazard binding -> D4 yxyx /1024",
+    "moondream": "UNCHANGED; native single-object detect may need backend fan-out; G3 provides no authority or implementation for it.",
+    "scoring": "D5 UNCHANGED; separate RQ3-A Direct and RQ3-B Weak Proxy; unsupported spatial atoms excluded. All 12 are still queried, including DOOR_OPEN. No full-dataset Object Hallucination Rate."
+  },
+  "case_ids": [
+    "A_1",
+    "A_2",
+    "B_1",
+    "B_2",
+    "C_1",
+    "C_2",
+    "D_1",
+    "D_2",
+    "E_red_green",
+    "F_two_red",
+    "G_multi",
+    "H_all_four"
+  ],
+  "query_labels": [
+    "red square",
+    "green circle",
+    "yellow triangle",
+    "cyan rectangle"
+  ],
+  "required_calls_per_model": 12,
+  "required_model_loads_per_run": 1,
+  "models": {
+    "qwen3": {
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "interface_status": "SOURCE_BACKED_MULTICATEGORY_CANDIDATE_NOT_QUALIFIED",
+      "absence_semantics": "UNRESOLVED_OUTSIDE_POSITIVE_GUARANTEED_SCOPE",
+      "prompt_id": "qwen3-native-multicategory-v3.0",
+      "prompt_template": "Locate every instance that belongs to the following categories: '{obj_names}'. Report bbox coordinates in JSON format.",
+      "system_prompt": "NO_OVERRIDE_PINNED_PROCESSOR_CHAT_TEMPLATE",
+      "parser_input_field": "decoded_for_parser",
+      "native_order": "xyxy",
+      "native_coordinate_range": [
+        0,
+        1000
+      ],
+      "canonical_divisor": 1000,
+      "precision": "FP16",
+      "quantization": "NONE",
+      "decoding": {
+        "do_sample": false,
+        "num_beams": 1,
+        "num_return_sequences": 1,
+        "max_new_tokens": 512
+      },
+      "preprocessing": {
+        "mode": "official_processor",
+        "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+        "input_mode": "RGB",
+        "external_crop_resize": false
+      },
+      "primary_grounding_role": "NOT_PARTICIPATING"
+    },
+    "paligemma": {
+      "model_id": "google/paligemma-3b-mix-448",
+      "immutable_revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+      "interface_status": "SOURCE_BACKED_MULTICATEGORY_CANDIDATE_NOT_QUALIFIED",
+      "absence_semantics": "UNRESOLVED_OUTSIDE_POSITIVE_GUARANTEED_SCOPE",
+      "prompt_id": "paligemma-native-multiobject-v3.0",
+      "prompt_template": "detect {object_1} ; ... ; {object_N}",
+      "native_task_suffix": "detect {object_1} ; ... ; {object_N}\n",
+      "newline_owner": "PaliGemmaProcessor_build_string_from_input",
+      "system_prompt": null,
+      "parser_input_field": "decoded_text",
+      "native_order": "yxyx",
+      "native_coordinate_range": [
+        0,
+        1023
+      ],
+      "canonical_divisor": 1024,
+      "precision": "FP16",
+      "quantization": "NONE",
+      "decoding": {
+        "do_sample": false,
+        "num_beams": 1,
+        "num_return_sequences": 1,
+        "max_new_tokens": 512
+      },
+      "preprocessing": {
+        "mode": "native_siglip_slow",
+        "revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+        "input_mode": "RGB",
+        "size": [
+          448,
+          448
+        ],
+        "resample": "BICUBIC",
+        "rescale_factor": "1/255",
+        "mean": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "std": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "crop": false
+      },
+      "primary_grounding_role": "NOT_PARTICIPATING"
+    }
+  },
+  "decode_contract": {
+    "continuation_only": true,
+    "skip_special_tokens": true,
+    "clean_up_tokenization_spaces": false,
+    "preserve_full_ids_and_special_decode": true
+  },
+  "seed": null,
+  "randomness": "GREEDY_NO_SAMPLING; no claim of cross-device bitwise determinism",
+  "pass_rule_version": "grounding-multicategory-v3-pass-v1",
+  "PASS_RULE_PREDECLARED": true,
+  "pass_requires_all": [
+    "All 12 positive cases have >=1 expected queried target and the identical ordered full four-label query set; one native prompt/call per case.",
+    "One pinned model load; every required call completes with EOS, no missing/duplicate/extra calls or truncation.",
+    "Raw envelope and preparse provenance persisted exclusively, fsynced, reread and SHA256/size verified BEFORE parsing; final artifact audit complete.",
+    "No runtime, storage, provenance, token-boundary or identity error.",
+    "Same pinned prompt/parser/config throughout the run; every response SUCCESS with exact native queried labels; unknown labels or one malformed detection invalidate the whole response.",
+    "Exactly the expected predicted count for EACH queried label, including ZERO for queried-but-absent labels.",
+    "Every expected instance has one same-label prediction whose center is inside its GT box (boundary included); every prediction uniquely assigned; one-to-one within each label.",
+    "Every prediction excludes every unqueried distractor center; an unqueried distractor must not be detected as a queried category.",
+    "All four reciprocal pairs A/B/C/D pass geometry and prediction-center displacement has the same strict sign as target displacement on each moved axis.",
+    "F_two_red and G_multi preserve every instance and label; no dropped or deduplicated detection.",
+    "No exact full-image box; explicit human NO_GIANT review of ALL detections with reviewer and rationale per case.",
+    "Entire empty response on any case is POSITIVE_GUARANTEE_MISS and FAIL, never valid absence.",
+    "All pre-execution hashes and controls match; no retry/repair/alternate prompt/parser modification/GT-selected query."
+  ],
+  "verdict_contract": {
+    "NOT_RUN": "Current PREP; no result exists.",
+    "BLOCKED": "Runtime integration or execution authority missing; no execution.",
+    "FAIL": "Any mandatory check fails; no partial PASS.",
+    "PENDING_REVIEW": "All automated checks pass but human NO_GIANT reviews incomplete.",
+    "PASS": "All checks and human reviews pass; still requires separate Research Lead promotion decision."
+  },
+  "fixed_controls": {
+    "retry": false,
+    "repair": false,
+    "alternate_prompt": false,
+    "increase_token_budget_in_run": false,
+    "change_parser_between_cases": false,
+    "coordinate_guessing": false,
+    "clamp": false,
+    "label_alias": false,
+    "select_best_box": false,
+    "point_to_box": false,
+    "gt_selected_query": false,
+    "iou_usage": "DIAGNOSTIC_ONLY",
+    "iou_threshold": null,
+    "giant_area_threshold": null,
+    "drop_extra_box": false,
+    "fuzzy_label": false,
+    "unmatched_text_salvage": false,
+    "select_first": false
+  },
+  "raw_audit_contract": {
+    "artifact_root": "data/processed/external_grounding_multicategory_v3/runs/{run_id}",
+    "exclusive_run_directory": true,
+    "raw_immutable": true,
+    "order": [
+      "generate_native_once",
+      "persist_raw_bytes_and_preparse_metadata_exclusively",
+      "flush_fsync_close",
+      "reread_verify_raw_and_metadata",
+      "parse_verified_persisted_continuation",
+      "write_separate_parse_record",
+      "geometry_observations",
+      "verify_all_artifact_hashes"
+    ],
+    "required_fields": [
+      "model_id",
+      "immutable_revision",
+      "run_id",
+      "call_id",
+      "case_id",
+      "sample_id",
+      "prompt_id",
+      "prompt_version",
+      "prompt_text",
+      "prompt_sha256",
+      "input_image_sha256",
+      "raw_path",
+      "raw_sha256",
+      "raw_size_bytes",
+      "timestamp_utc",
+      "preprocessing",
+      "original_image_size",
+      "processed_image_size",
+      "precision",
+      "quantization",
+      "decoding",
+      "effective_generation_config",
+      "input_token_ids",
+      "continuation_ids",
+      "generated_ids_full",
+      "decoded_with_special_tokens",
+      "parser_input_field",
+      "parser_version",
+      "parser_sha256",
+      "parse_status",
+      "canonical_detections",
+      "geometry_observations",
+      "git_commit",
+      "command",
+      "software_versions",
+      "hardware",
+      "seed",
+      "manifest_sha256",
+      "plan_sha256",
+      "source_audit_sha256",
+      "query_labels",
+      "logical_call_id",
+      "raw_token_count",
+      "termination_reason",
+      "lock_sha256"
+    ],
+    "preparse_status": "NOT_ATTEMPTED",
+    "preparse_canonical_detections": null,
+    "failure_canonical_detections": null,
+    "raw_failure": "Stop; never invoke parser. Preserve any available partial native output and record failure; never fabricate unavailable bytes.",
+    "no_placeholder_result_records": true
+  },
+  "future_runtime_contract": {
+    "implementation": "NOT_IMPLEMENTED_IN_PREP",
+    "requires_separate_execution_authorization": true,
+    "environment_lock": "Before execution record exact Python, torch/CUDA, transformers, tokenizers, Pillow, model/processor snapshot hashes, hardware and native adapter source hashes; approve independently before loading.",
+    "historical_runners": "UNCHANGED; neither historical runner may consume this plan. New runtime integration must verify full query prompt, continuation boundary, EOS and durable raw-before-parse.",
+    "budget_basis": "Prospectively fixed 512-token synthetic ceiling per model for up to five detections, before model outputs. No in-run increase. Production all-12 context/token budget requires separate pre-execution freeze and qualification; synthetic PASS is not production execution authority.",
+    "production_execution_authorized": false
+  },
+  "synthetic_generation": {
+    "command": "python scripts/prepare_grounding_multicategory_v3.py",
+    "python": "3.11.9",
+    "pillow": "11.3.0",
+    "zlib": "1.3.1",
+    "seed": null,
+    "source_assets": "NONE",
+    "image_storage": "IGNORED_DATA_PROCESSED",
+    "coordinate_convention": "pixel-edge xyxy / 256",
+    "regeneration": "Byte-exact within pinned generator environment; CLI verifies checked-in manifest and never overwrites mismatching images."
+  },
+  "historical_protection": {
+    "qwen3_external_gate": "GATE_FAIL",
+    "qwen3_success": "5/8",
+    "qwen3_coordinate_errors": 2,
+    "qwen3_schema_errors": 1,
+    "paligemma_external_gate": "FAIL",
+    "paligemma_success": "6/8",
+    "paligemma_schema_errors": 2,
+    "primary_grounding_roles": "NOT_PARTICIPATING",
+    "pr67_state": "OPEN",
+    "pr67_draft": true,
+    "pr67_head": "e85300ab3ec122f819a2685613332578f7e203d8",
+    "pr67_branch": "w2.6-d9r19-production-implementation-d5"
+  },
+  "g2_closure": {
+    "pr": 69,
+    "merge_commit": "775e5eee4cade340e0156f97f2af50f7c98e1551",
+    "historical_merge_no_preserved": true
+  }
+}
