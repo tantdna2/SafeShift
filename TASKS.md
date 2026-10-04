@@ -1056,3 +1056,28 @@ Evidence, exact source pins, limits and validation:
   hashes, protected G1/v2 history, append-only logs and git diff --check.
 - [ ] Authoritative absence resolution for each model remains pending.
 - [ ] Independent G2 review; runtime integration and separate execution authority.
+
+## D9R19G2 closure record (2026-10-04; append-only)
+
+G2 merged as PR #69.
+merge commit: `775e5eee4cade340e0156f97f2af50f7c98e1551`.
+Historical G2 `MERGE=NO` remains intact; this is a subsequent closure record.
+
+## W2.6-D9R19G3-POSITIVE-GUARANTEED-MULTICATEGORY-GROUNDING-PREP (2026-10-04)
+
+- [x] Verify official multicategory/multi-object sources and pin URL/hash/date.
+- [x] Prepare isolated v3 exact-label parsers, full ordered 12-hazard query map,
+  synthetic positive suite and predeclared all-or-nothing PASS criteria.
+- [x] Document D6 positive union 721 + 608 - 347 = 982; exclude Unsupported-Only
+  18 and Normal. Keep both absence blockers UNRESOLVED, empty response a failure.
+- [x] 77 focused tests and 267 relevant regression tests PASS (344 total);
+  protected history and append-only checks PASS. Full suite not run.
+- [ ] Independent Draft PR review (see note).
+- [ ] Separate runtime integration/environment lock and execution authorization.
+- [ ] Future qualification; separate Research Lead promotion decision if PASS.
+
+V2/G2 history and PR #67 unchanged. Qwen3/PaliGemma historical gates FAIL;
+primary grounding NOT_PARTICIPATING. D5 unchanged, RQ3-A/RQ3-B separate.
+QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false;
+MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN; PROMOTION=NO; MERGE=NO.
+Details: [G3 PREP note](notes/w2_d9r19g3_positive_multicategory_grounding_prep.md).

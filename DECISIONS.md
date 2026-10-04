@@ -1800,3 +1800,55 @@ MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN; PR67 unchanged; MERGE=NO.
 Evidence, exact source pins, limits and validation:
 [G2 audit note](notes/w2_d9r19g2_grounding_absence_semantics.md) and
 [source manifest](configs/pre_freeze/grounding_absence_semantics_audit.v1.json).
+
+## D9R19G2 closure record (2026-10-04; append-only)
+
+G2 merged as PR #69.
+merge commit: `775e5eee4cade340e0156f97f2af50f7c98e1551`.
+Historical G2 `MERGE=NO` is preserved as the original PREP state; this record
+adds subsequent closure only. Its audit and all G1/v2 artifacts remain unchanged.
+
+## W2.6-D9R19G3-POSITIVE-GUARANTEED-MULTICATEGORY-GROUNDING-PREP (2026-10-04)
+
+Authority: explicit Research Lead G3 task, exact fetched BASE
+`775e5eee4cade340e0156f97f2af50f7c98e1551`. Prospective interface PREP only.
+The requested restricted v3 scope is distinct from the unresolved general v2
+absence contract; it does not waive v2's mandatory all-absent case or rewrite G2.
+
+D6/census establishes Direct 721, Weak Proxy 608, overlap 347: their union is
+982 unique Anomaly samples, each with >=1 supported hazard atom. Unsupported-Only
+18 and Normal images are excluded. This is the operational support guarantee,
+not proof of full hazard rationale or guaranteed model success.
+
+Qwen3/PaliGemma v3 proposes one logical Call 2 and one native call per image,
+always the same full 12-query set in canonical HAZARDS order, independent of
+per-image GT and Call 1. The exact model-independent query map is predeclared
+in the v3 plan and candidate, from the canonical taxonomy and this task, before
+InspecSafe inference; no output-driven synonyms, aliases or later benchmark tuning.
+Moondream and its possible backend fan-out are unchanged.
+
+QWEN3_ABSENCE_SEMANTICS_BLOCKER=UNRESOLVED.
+PALIGEMMA_ABSENCE_SEMANTICS_BLOCKER=UNRESOLVED.
+ALL_TARGET_ABSENT_SEMANTICS=NOT_APPLICABLE_TO_POSITIVE_GUARANTEED_PRIMARY_SCOPE.
+Entire empty output is POSITIVE_GUARANTEE_MISS, a failed response, never valid
+zero-detection semantics or blocker resolution. Future eligible D5 end-to-end
+execution must count such misses as grounding failure / zero matched evidence
+without rescue. No D5 executor or scoring change is implemented here.
+Normal/full-5,013/Unsupported-Only/full-dataset Object Hallucination Rate expansion
+would require new authority and mandatory resolution of the absence blockers.
+
+Predeclare 12 positive synthetic cases with the same four-category query on
+every image, per-label exact counts (including zero), one-to-one instance
+matching, reciprocal tracking, raw-before-parser, all-detection human NO_GIANT
+review and no retry/repair/partial PASS. IoU remains diagnostic only.
+Primary scoring remains separate RQ3-A Direct / RQ3-B Weak Proxy; unsupported
+spatial atoms remain excluded under D5. Querying all 12 does not make DOOR_OPEN
+or other unsupported atoms scorable. No full-dataset hallucination metric.
+
+Historical Qwen3 gate FAIL (GATE_FAIL) and PaliGemma gate FAIL stand; both primary
+grounding roles remain NOT_PARTICIPATING. Future v3 PASS still requires a separate
+Research Lead promotion decision. Runtime integration/environment freeze and
+execution authorization remain separate future work. PR #67 unchanged.
+QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false; MODEL_GPU_EXECUTION=NO;
+INSPECSAFE=NOT_RUN; PROMOTION=NO; MERGE=NO.
+Evidence and validation: [G3 PREP note](notes/w2_d9r19g3_positive_multicategory_grounding_prep.md).
