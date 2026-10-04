@@ -1123,7 +1123,9 @@ Historical G4 MERGE=NO and unverified/unauthorized PREP state remain unchanged.
   template; preserve G4 v1 locks/environment and G3 scientific contract.
 - [x] Prepare future observation commands for Qwen3 T4 x2 and PaliGemma T4 x1,
   with fixed run IDs g5-qwen3-v3-001 and g5-paligemma-v3-001; commands NOT RUN.
-- [ ] Finish offline validation and push exact execution candidate Draft PR.
+- [x] Offline validation: 113 focused + 267 relevant regression tests PASS;
+  history/append-only checks and diff check PASS. Full suite not run.
+  Exact pushed candidate and Draft PR delivery are recorded in the final handoff.
 - [ ] Future environment observation, independent audit and Research Lead authority.
 - [ ] Future qualification execution and human NO_GIANT review.
 

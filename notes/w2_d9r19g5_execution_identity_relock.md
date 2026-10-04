@@ -151,9 +151,26 @@ tests cover the firewall, 512 budget, 12 cases/query/parser, raw-before-parse,
 failure stops and human NO_GIANT / no automatic PASS. Fake authority objects
 exist only inside tests and are not real authorization artifacts.
 
-Validation results will be recorded after running the focused checks.
-Full suite is not claimed. No environment observation, qualification, model,
-GPU, InspecSafe, promotion or merge is authorized in this task.
+Local environment: Python 3.11.9, Pillow 11.3.0. Validation commands:
+
+```text
+python -m unittest tests.test_grounding_execution_relock_g5 tests.test_grounding_multicategory_runtime_v3 tests.test_grounding_multicategory_v3 tests.test_grounding_interface_v2 tests.test_grounding_absence_semantics_audit -q
+python -m unittest tests.test_qwen3_external_gate tests.test_qwen3_external_gate_result tests.test_paligemma_external_gate tests.test_paligemma_external_gate_result tests.test_paligemma_interface_candidate tests.test_external_gate_cases tests.test_d9r7_paligemma_source_api_audit tests.test_d9r15_five_model_roster_exploratory_grounding tests.test_qwen_runner tests.test_paligemma_prep -q
+git diff b3bf4dc770c1b87a9e353a75aab759f67641c2c2 --check
+```
+
+113 focused tests (10 new G5 tests) and 267 relevant regression tests PASS:
+380 total. Historical byte/AST comparisons, G3 transitive locks, append-only
+logs and diff check PASS. On the actual G5 descendant checkout, both models'
+static preflight with images=False accepted Git identity and returned BLOCKED
+for missing environment/authority; neither torch nor transformers was imported.
+This diagnostic omits image-file checks; existing synthetic tests validate the
+frozen manifest/bytes. It is not a full execution preflight PASS or qualification.
+
+Full suite was not run: scoped governance changes were checked with the focused
+and relevant regression suites above. No full-suite PASS claim. No actual
+environment observation, qualification, model/GPU/InspecSafe execution occurred.
+Future steps remain unapproved; no promotion or merge.
 
 PR #67 read-only baseline: OPEN/DRAFT,
 `e85300ab3ec122f819a2685613332578f7e203d8`.
