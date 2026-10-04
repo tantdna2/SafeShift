@@ -14,6 +14,8 @@
     "configs/pre_freeze/grounding_multicategory_execution_plan.v1.json": "d77fcfe5e5e6c47c7b01d9fe1a9ea2f50e24b39b413c6acdc848fea943befee3",
     "configs/pre_freeze/grounding_multicategory_authorization.template.v1.json": "4c80d7e569cb77546a1e1c26c6deb7b8e1c774aab9796df9c53a42b2fc3e4b3a",
     "safeshift/runners/grounding_multicategory_v3_g6.py": "2c662f2e036cf7ed954e177e603347c8637519035bfbf03fea855aaffba6446e",
+    "safeshift/runners/grounding_multicategory_v3.py": "bcde90c2d7484a24cd4ef17667d98425d3e5360d565752cb35bad88b2bdea246",
+    "safeshift/protocol/firewall.py": "d0b0ec22a685fad6245269521e11dbeda2705a7abd2b88292a36310f6c63304d",
     "scripts/run_grounding_multicategory_v3_g6.py": "e360a50717f145113b3e7fcae0939646548da3c9d79063a1c8cf2c7c82bd5dad",
     "configs/pre_freeze/grounding_interface_qualification_plan.v3.json": "6bfaa490dfab0afc55ce3bcd7b50bf5120ac7fcb583b5abea856184e133de8cd",
     "configs/pre_freeze/external_grounding_interface_cases.v3.json": "59bc719ed47cc94bd49f866c0330bb4671614cfb63042a9c750db3a0c0851e13",
@@ -68,5 +70,5 @@
     "PROMOTION": "NO"
   },
   "INSPECSAFE": "NOT_RUN",
-  "sha256_note": "Hashes cover the G6 plan/template/wrapper/CLI and the frozen scientific/runtime contracts; this lock itself is excluded to avoid a circular hash."
+  "sha256_note": "Hashes cover the G6 plan/template/wrapper/CLI, delegated core runner, its path firewall dependency and the frozen scientific/runtime contracts; this lock itself is excluded to avoid a circular hash."
 }

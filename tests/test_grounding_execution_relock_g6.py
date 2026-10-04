@@ -116,6 +116,20 @@ class G6RelockTests(unittest.TestCase):
             expected = subprocess.check_output(["git", "show", f"{BASE}:{name}"], cwd=ROOT)
             self.assertEqual(actual, expected, name)
 
+    def test_delegated_core_runner_and_firewall_are_locked_without_drift(self):
+        core = "safeshift/runners/grounding_multicategory_v3.py"
+        firewall = "safeshift/protocol/firewall.py"
+        historical = r.read_json(ROOT / "configs/pre_freeze/grounding_multicategory_runtime_lock.v2.json")
+        for name in (core, firewall):
+            with self.subTest(name=name):
+                self.assertIn(name, self.lock["sha256"])
+                current = r.text_hash(ROOT / name)
+                self.assertEqual(current, self.lock["sha256"][name])
+                if name == core:
+                    self.assertEqual(self.lock["sha256"][name],
+                                     "bcde90c2d7484a24cd4ef17667d98425d3e5360d565752cb35bad88b2bdea246")
+                    self.assertEqual(self.lock["sha256"][name], historical["sha256"][name])
+
 
 if __name__ == "__main__":
     unittest.main()
