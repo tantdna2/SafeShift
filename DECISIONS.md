@@ -1897,3 +1897,39 @@ QUALIFICATION_EXECUTION=NOT_RUN; execution_authorized=false; MODEL_GPU_EXECUTION
 INSPECSAFE=NOT_RUN; PROMOTION=NO; MERGE=NO.
 Implementation, exact future commands and evidence limits:
 [G4 PREP note](notes/w2_d9r19g4_multicategory_runtime_prep.md).
+
+## D9R19G4 closure record (2026-10-04; append-only)
+
+G4 merged as PR #71.
+merge commit: `b3bf4dc770c1b87a9e353a75aab759f67641c2c2`.
+Verified read-only through GitHub and fetched origin/main. Historical G4
+MERGE=NO, old BASE, unauthorized/NOT_RUN and unverified environment stay intact.
+
+## W2.6-D9R19G5-MULTICATEGORY-EXECUTION-IDENTITY-RELOCK (2026-10-04)
+
+Authority: explicit Research Lead G5 RELOCK/PREP task at exact execution BASE
+`b3bf4dc770c1b87a9e353a75aab759f67641c2c2`. G4's old main-bound guard is now
+invalid. Add versioned runtime lock v2 and execution plan v1; do not rewrite
+G4 lock/environment v1. Change only live execution governance, preserving
+G3/G4 scientific contracts and historical Git blobs/evidence. No dataset,
+split, label, metric, parser, geometry, query or token-budget decision changed.
+
+Future execution requires origin/main equal execution BASE, a clean strict
+descendant HEAD, and external authority binding the exact independently audited
+pushed G5 PR HEAD, model/run ID, environment hash and v2 runtime lock hash.
+No HEAD is hard-coded before commit. Prospective IDs are fixed before outputs:
+qwen3=`g5-qwen3-v3-001`; paligemma=`g5-paligemma-v3-001`. Distinct Research Lead
+and independent auditor plus review reference and Internet-OFF attestation
+are required. The committed authorization template remains false/unissued.
+
+The Draft PR MUST REMAIN OPEN throughout environment observation, independent
+environment audit, Research Lead authorization, qualification execution and
+human review. Merge changes main and invalidates authority; no automatic merge.
+Any changed HEAD/main/environment/lock requires new review, not silent relock.
+
+ENVIRONMENT_STATUS=UNVERIFIED_EXTERNAL_VENUE_LOCK_PENDING;
+QUALIFICATION_EXECUTION=NOT_RUN; EXECUTION_AUTHORIZED=NO; MODEL_GPU_EXECUTION=NO;
+INSPECSAFE=NOT_RUN; both runtime executions BLOCKED; both primary grounding
+roles NOT_PARTICIPATING; both absence blockers UNRESOLVED. PR #67 untouched.
+PROMOTION=NO; MERGE=NO. Future observation commands and verification limits:
+[G5 relock note](notes/w2_d9r19g5_execution_identity_relock.md).

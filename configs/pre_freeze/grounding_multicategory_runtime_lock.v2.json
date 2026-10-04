@@ -1,0 +1,63 @@
+{
+  "schema_version": "grounding-v3-runtime-lock-v2",
+  "base_sha": "b3bf4dc770c1b87a9e353a75aab759f67641c2c2",
+  "QUALIFICATION_EXECUTION": "NOT_RUN",
+  "execution_authorized": false,
+  "readiness": "READY_FOR_EXTERNAL_EXECUTION_REVIEW",
+  "runtime_ready": false,
+  "environment_status": "UNVERIFIED_EXTERNAL_VENUE_LOCK_PENDING",
+  "hash_representation": "SHA256 of UTF-8 files with Git-normalized LF; raw/snapshot bytes never normalized",
+  "sha256": {
+    "configs/pre_freeze/grounding_interface_lock.v3.json": "35a94a844e933dba860408533e7b21c8d4f3587efb088d24001faa7e17fb88f0",
+    "configs/pre_freeze/grounding_interface_qualification_plan.v3.json": "6bfaa490dfab0afc55ce3bcd7b50bf5120ac7fcb583b5abea856184e133de8cd",
+    "configs/pre_freeze/external_grounding_interface_cases.v3.json": "59bc719ed47cc94bd49f866c0330bb4671614cfb63042a9c750db3a0c0851e13",
+    "configs/pre_freeze/grounding_multicategory_sources.v1.json": "aa590bd0ad04691ae894572d2c3fb2dcded80d916b88fad8818c8621918947cc",
+    "safeshift/protocol/grounding_multicategory_candidate.py": "955c6f52de5eff98fe639b8fa76330b063ef9df8e642e7ad8a7e5dfb0b0a376a",
+    "safeshift/runners/grounding_multicategory_v3.py": "bcde90c2d7484a24cd4ef17667d98425d3e5360d565752cb35bad88b2bdea246",
+    "scripts/run_grounding_multicategory_v3.py": "acf023ff13a583baad0aa7bf9c5eca917b4c882e94cef58d9d72d95c53d63265",
+    "schemas/grounding_multicategory_result.v1.schema.json": "ad484ac6ef3f71ad485e37a67f039aa62c1ca24f92605d23368f139018fb72bf",
+    "configs/pre_freeze/grounding_multicategory_environment.v1.json": "9a1f32a9e3606412b43c257c0113b0fd65a11ab4fde22d265fc99a72be73270d",
+    "safeshift/runners/paligemma_snapshot.py": "5c950a98637aeba9c6d6a36f65ab4053773c153ec19a84e5f6876f1acd172768",
+    "safeshift/runners/storage.py": "11f396657e69850c9cf52444f473c61f0e3b2b368e61469f86b8e79af4391e5b",
+    "scripts/provision_qwen3vl_snapshot.py": "9bd99868b24438373c049d068d73aec3b9470c5f9b6202a28a750e793f2f392f",
+    "configs/pre_freeze/local_model_provenance.d9.json": "2624b41e72337fd876d7619b0e7d9a01e9f1c0140ba96a0dc966ae649c09baa8",
+    "configs/pre_freeze/paligemma_t4_runtime.v1.json": "a762e03c61eea3f8b681c520b228d1d04390a73a0de4ae6b85ef294a9d6bff31",
+    "configs/pre_freeze/grounding_multicategory_runtime_lock.v1.json": "b2d9f55f26d66228d66c9c4275adf410155b0c22a7ca1d78eb0a3f851230f692",
+    "configs/pre_freeze/grounding_multicategory_execution_plan.v1.json": "d77fcfe5e5e6c47c7b01d9fe1a9ea2f50e24b39b413c6acdc848fea943befee3",
+    "configs/pre_freeze/grounding_multicategory_authorization.template.v1.json": "4c80d7e569cb77546a1e1c26c6deb7b8e1c774aab9796df9c53a42b2fc3e4b3a",
+    "safeshift/protocol/grounding_multicategory_geometry.py": "9f3ab90975dae2d8fbf6a28baf62b2372616bff6d62697f552f1bb8ca71c8665"
+  },
+  "pr67_documentary_lock": {
+    "number": 67,
+    "state": "OPEN",
+    "isDraft": true,
+    "headRefOid": "e85300ab3ec122f819a2685613332578f7e203d8",
+    "headRefName": "w2.6-d9r19-production-implementation-d5",
+    "verified_read_only_on": "2026-10-04"
+  },
+  "historical_roles": {
+    "qwen3": "NOT_PARTICIPATING",
+    "paligemma": "NOT_PARTICIPATING"
+  },
+  "historical_gates": {
+    "qwen3": "GATE_FAIL",
+    "paligemma": "FAIL"
+  },
+  "absence_blockers": {
+    "qwen3": "UNRESOLVED",
+    "paligemma": "UNRESOLVED"
+  },
+  "INSPECSAFE": "NOT_RUN",
+  "PRODUCTION_TOKEN_BUDGET": "PENDING",
+  "promotion": false,
+  "merge": false,
+  "historical_g4": {
+    "commit": "b3bf4dc770c1b87a9e353a75aab759f67641c2c2",
+    "sha256": {
+      "safeshift/runners/grounding_multicategory_v3.py": "d90a652d8864585b80bb9b4b17997a8fdc1655f5c62b7f030f60d03276569f16",
+      "scripts/run_grounding_multicategory_v3.py": "eb361bfb28140c995ac5954128c7627132a5ae490291725bdabd6a1f8b11b26d",
+      "schemas/grounding_multicategory_result.v1.schema.json": "ad484ac6ef3f71ad485e37a67f039aa62c1ca24f92605d23368f139018fb72bf"
+    }
+  },
+  "execution_plan": "configs/pre_freeze/grounding_multicategory_execution_plan.v1.json"
+}

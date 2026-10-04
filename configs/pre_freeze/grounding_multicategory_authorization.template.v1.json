@@ -1,0 +1,13 @@
+{
+  "execution_authorized": false,
+  "model_key": null,
+  "run_id": null,
+  "head_sha": null,
+  "main_sha": "b3bf4dc770c1b87a9e353a75aab759f67641c2c2",
+  "environment_sha256": null,
+  "runtime_lock_sha256": null,
+  "internet_off_attested": false,
+  "research_lead": null,
+  "independent_auditor": null,
+  "review_reference": null
+}

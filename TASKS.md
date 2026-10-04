@@ -1109,3 +1109,31 @@ INSPECSAFE=NOT_RUN; both primary grounding roles NOT_PARTICIPATING; both absence
 blockers UNRESOLVED; PR #67 unchanged; PROMOTION=NO; MERGE=NO.
 Runtime readiness BLOCKED on unverified environment/authority; offline integration
 readiness and validation: [G4 PREP note](notes/w2_d9r19g4_multicategory_runtime_prep.md).
+
+## D9R19G4 closure record (2026-10-04; append-only)
+
+G4 merged as PR #71.
+merge commit: `b3bf4dc770c1b87a9e353a75aab759f67641c2c2`.
+Historical G4 MERGE=NO and unverified/unauthorized PREP state remain unchanged.
+
+## W2.6-D9R19G5-MULTICATEGORY-EXECUTION-IDENTITY-RELOCK (2026-10-04)
+
+- [x] Verify fetched main at exact G4 merge; prepare separate G5 branch/worktree.
+- [x] Prepare v2 runtime lock, execution identity/plan and false authorization
+  template; preserve G4 v1 locks/environment and G3 scientific contract.
+- [x] Prepare future observation commands for Qwen3 T4 x2 and PaliGemma T4 x1,
+  with fixed run IDs g5-qwen3-v3-001 and g5-paligemma-v3-001; commands NOT RUN.
+- [ ] Finish offline validation and push exact execution candidate Draft PR.
+- [ ] Future environment observation, independent audit and Research Lead authority.
+- [ ] Future qualification execution and human NO_GIANT review.
+
+G5 Draft PR MUST REMAIN OPEN during every future step above; merging changes
+main and invalidates authority. Never auto-merge. Execution BASE is
+`b3bf4dc770c1b87a9e353a75aab759f67641c2c2`; authority must bind exact pushed
+G5 HEAD from Git. See [G5 relock note](notes/w2_d9r19g5_execution_identity_relock.md).
+ENVIRONMENT_STATUS=UNVERIFIED_EXTERNAL_VENUE_LOCK_PENDING;
+QUALIFICATION_EXECUTION=NOT_RUN; EXECUTION_AUTHORIZED=NO; MODEL_GPU_EXECUTION=NO;
+INSPECSAFE=NOT_RUN; QWEN3_RUNTIME_EXECUTION=BLOCKED;
+PALIGEMMA_RUNTIME_EXECUTION=BLOCKED; both primary grounding roles
+NOT_PARTICIPATING; both absence blockers UNRESOLVED; PR #67 unchanged;
+PROMOTION=NO; MERGE=NO.
