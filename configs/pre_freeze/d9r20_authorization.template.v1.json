@@ -1,0 +1,16 @@
+{
+  "execution_authorized": false,
+  "prep_merged": false,
+  "base": "668aae839bbde91b67686d143259e07c8a89608c",
+  "head": null,
+  "main": null,
+  "model": null,
+  "model_id": null,
+  "revision": null,
+  "run_id": null,
+  "observation_sha256": null,
+  "research_lead": null,
+  "review_reference": null,
+  "owner_license_accepted": false,
+  "scope": "RESOURCE_SMOKE_AND_SINGLE_TARGET_SYNTHETIC_ONLY"
+}

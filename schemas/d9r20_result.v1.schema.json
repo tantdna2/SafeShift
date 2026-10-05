@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "D9R20 owner observation result, never automatic qualification",
+  "type": "object",
+  "required": ["schema", "model", "model_id", "revision", "run_id", "observation", "resource", "generation", "seed", "load_result", "calls", "failure", "model_load_attempts", "INSPECSAFE", "PROTOCOL_FREEZE", "participation", "final_verdict", "automatic_pass", "peak_memory", "capability_observations"],
+  "properties": {
+    "schema": {"const": "d9r20-result-v1"},
+    "model": {"enum": ["ovis", "plamo", "kosmos"]},
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "INSPECSAFE": {"const": "NOT_RUN"},
+    "PROTOCOL_FREEZE": {"const": "PENDING"},
+    "participation": {"const": "PENDING_RESEARCH_LEAD_DECISION"},
+    "final_verdict": {"const": "PENDING_REVIEW"},
+    "automatic_pass": {"const": false},
+    "model_load_attempts": {"const": 1},
+    "failure": {"type": ["object", "null"]},
+    "calls": {"type": "array", "maxItems": 22, "items": {
+      "type": "object", "required": ["call_id", "sample_id", "task", "prompt", "prompt_sha256", "image_sha256", "raw", "parse_status", "canonical"],
+      "properties": {"parse_status": {"enum": ["NOT_ATTEMPTED", "SUCCESS", "INVALID"]}}
+    }}
+  }
+}
