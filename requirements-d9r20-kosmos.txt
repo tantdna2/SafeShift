@@ -1,0 +1,7 @@
+# Separate future owner environment; SafeShift-selected HF implementation pins.
+torch==2.8.0
+transformers==4.57.1
+Pillow==11.3.0
+numpy==1.26.4
+huggingface-hub==0.36.2
+tokenizers==0.22.1

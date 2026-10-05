@@ -1229,3 +1229,40 @@ including its `NOT_RUN`, `BLOCKED` and `MERGE=NO` lines.
 No parser, prompt, geometry or gate change was made; no model rerun or new
 candidate model task was started. PR #67 remains unchanged. PR #74 remains
 OPEN/DRAFT and is not merged.
+
+## W2.6-D9R20-RQ3-THREE-CANDIDATE-PREP (2026-10-05; append-only)
+
+Authority: explicit Research Lead PREP request; fetched origin/main exactly
+`668aae839bbde91b67686d143259e07c8a89608c`. Worktree/branch isolated from the
+owner's untracked census. No main migration, historical rewrite or model run.
+
+- [x] Verify three exact HF revisions, official small source texts/checksums,
+  license/access, documentary weight metadata and native coordinate contracts.
+- [x] Record prospective A interface/capability versus B synthetic-semantic
+  separation; retain Qwen3 G5 and PaliGemma G6 FAIL without reinterpretation.
+- [x] Prepare strict model-specific parsers and shared raw/provenance/lifecycle
+  with isolated loaders/environments, fixed run IDs and no fallback/offload.
+- [x] Prepare reuse of eight D9R16 classification cases and independent fixed
+  single-target synthetic capability/diagnostic calls, no production fan-out.
+- [x] Prepare three ordered owner runbooks, inert authorization and bounded
+  artifact bundle workflow. No automatic PASS or participation decisions.
+- [ ] Independent PREP review and merge; no merge performed by this task.
+- [ ] Owner license acceptance for PLaMo; verified external environments,
+  exact post-merge identity review and separate execution authorization.
+- [ ] Real single-T4 FP16 resource smoke and synthetic qualification; human
+  matched-box NO_GIANT/capability review and separate participation decision.
+- [ ] CALL2_ORCHESTRATION_BLOCKER for all three remains unresolved; no RQ3_READY.
+
+Ovis and Kosmos PREP verdict SOURCE_READY_CALL2_BLOCKED; PLaMo ACCESS_BLOCKED,
+with its resource and Call2 risks also retained. FP16/T4 is not runtime verified
+for any candidate. Source audit, candidate table, validation and commands:
+[D9R20 PREP note](notes/w2_d9r20_three_candidate_prep.md).
+MODEL_GPU_EXECUTION=NO; WEIGHTS_DOWNLOADED=NO; INSPECSAFE=NOT_RUN;
+PROTOCOL_FREEZE=PENDING; HISTORICAL_G5_G6=UNCHANGED; PROMOTION=NO; MERGE=NO.
+
+D9R20 offline validation: 50 focused + 229 selected regression tests PASS
+(279 distinct); all 41 downloaded source-text/API checksums checked. Two
+unfiltered historical regression failures reproduced at exact BASE and retained:
+old Ovis checklist state and G4 old-main identity. Append-only/history checks and
+git diff --check PASS. Full suite and model/GPU execution not run. Exact commands
+and exclusions are in the linked PREP note; no historical test was edited.

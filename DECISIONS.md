@@ -2031,3 +2031,48 @@ InspecSafe run, G6 creation or merge are part of this task.
   rerun; no new candidate model task; PR #67 unchanged. All earlier PREP
   lines remain historical and are not rewritten. PR #74 remains OPEN/DRAFT;
   no merge occurred.
+
+## D9R20 — prospective three-candidate capability/performance separation (2026-10-05)
+
+Authority: Project Owner / Research Lead's explicit PREP instruction at verified
+BASE `668aae839bbde91b67686d143259e07c8a89608c`. Scope is future evaluation of
+ATH-MaaS/Ovis2.5-2B, pfnet/plamo-2.1-2b-vl and microsoft/kosmos-2-patch14-224 at
+the exact revisions in `configs/pre_freeze/d9r20_candidates.v1.json` only.
+
+Separate A (interface/capability eligibility) from B (synthetic semantic
+performance). A requires immutable identity, raw-before-parse, source-backed
+deterministic D4 conversion, a clear native output contract, target adherence,
+target-dependent tracking and human NO_GIANT review of matched target boxes.
+Production eligibility additionally requires a compatible single logical Call2
+for the closed 12 hazards, independent of Call1/GT, at the same checkpoint.
+No coordinate guessing, repair, retry, fuzzy labels, discarded extra boxes or
+select-first. B retains all excess/missing detections, missed instances, false
+positives and localization diagnostics; these do not automatically negate valid
+A evidence. Future D5 benchmarking measures/penalizes these errors unchanged.
+Classification reuses D9R16's full policy and eight fixtures, preserving D9R18's
+distinction between canonical interface validity and semantic mistakes.
+
+The audit supports bounded native single-target parser candidates for all three;
+it does not establish a production-compatible all-12 label mapping in one call.
+All three retain CALL2_ORCHESTRATION_BLOCKER; no 12-call fan-out is authorized.
+Prepare one-load, 8-classification + 14-single-target synthetic owner runs only,
+with explicit target/position-change sanity observations and separate diagnostics.
+No automatic PASS, roster mutation or participation promotion, even after runtime.
+
+Prospective resource condition is T4 16GB x1, FP16, NONE, batch one, no CPU/disk
+offload and no fallback. Ovis's existing native SDPA branch is preselected by an
+environment without flash-attn; this does not establish FP16/T4 compatibility.
+PLaMo requires owner license acceptance, despite observed HF gated=false; no
+acceptance is performed here. Each model has its own environment/snapshot/run ID.
+Runtime failures are resource/runtime evidence, not grounding semantic failures.
+Exact post-merge HEAD/main and observed environment/snapshot must be separately
+authorized before execution. The committed authorization template is inert.
+
+This is prospective only. Qwen3 G5 FAIL, PaliGemma G6 FAIL, Moondream history,
+D9R18 results, PR #67 code/history, all old parsers/prompts/raw contracts and
+historical statements remain unchanged; no rerun or historical reinterpretation.
+No dataset/split/label/metric change. PREP does not add RQ3 participants.
+Source facts, limitations, verdict table and owner workflow:
+[D9R20 PREP note](notes/w2_d9r20_three_candidate_prep.md).
+MODEL_GPU_EXECUTION=NO; WEIGHTS_DOWNLOADED=NO; INSPECSAFE=NOT_RUN;
+PROTOCOL_FREEZE=PENDING; PROMOTION=NO; MERGE=NO.

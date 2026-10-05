@@ -1,0 +1,9 @@
+# Separate future owner environment; official pins except explicit support pins.
+torch==2.4.0
+transformers==4.51.3
+numpy==1.25.0
+Pillow==10.3.0
+moviepy==1.0.3
+huggingface-hub==0.36.2
+tokenizers==0.21.4
+# flash-attn MUST be absent: native audited SDPA branch, predeclared before load.

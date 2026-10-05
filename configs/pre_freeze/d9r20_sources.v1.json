@@ -1,0 +1,742 @@
+{
+  "schema": "d9r20-official-source-audit-v1",
+  "weights_downloaded": false,
+  "models": {
+    "ovis": {
+      "model_id": "ATH-MaaS/Ovis2.5-2B",
+      "revision": "393c932b2a03e28eb9aaa503e3c4ab3ad384d958",
+      "gated": false,
+      "license": "apache-2.0",
+      "api": {
+        "url": "https://huggingface.co/api/models/ATH-MaaS/Ovis2.5-2B/revision/393c932b2a03e28eb9aaa503e3c4ab3ad384d958?blobs=true",
+        "access_date": "2026-10-05",
+        "sha256": "e850a1ab141204035d387fdb99779ac9bbb79c2592f03f1d76716e71b954c3cb",
+        "size_bytes": 7369,
+        "local_audit_cache": ".cache/d9r20_sources/ovis/api.json"
+      },
+      "files": [
+        {
+          "rfilename": ".gitattributes",
+          "blobId": "52373fe24473b1aa44333d318f578ae6bf04b49b",
+          "size": 1570
+        },
+        {
+          "rfilename": "LICENSE",
+          "blobId": "522e362a614385ed1d4d5fb9763eca960784b6c4",
+          "size": 548
+        },
+        {
+          "rfilename": "NOTICE",
+          "blobId": "c75e4d61437703cd5567ac0b3e84a6f2cf4b4c84",
+          "size": 422
+        },
+        {
+          "rfilename": "README.md",
+          "blobId": "7aa26ad0487b06eb75fa94e19c8fb1407c24924d",
+          "size": 14604
+        },
+        {
+          "rfilename": "added_tokens.json",
+          "blobId": "b54f9135e44c1e81047e8d05cb027af8bc039eed",
+          "size": 707
+        },
+        {
+          "rfilename": "chat_template.json",
+          "blobId": "622708c37df0b4cec4bfb72bd282a45d6e990228",
+          "size": 1692
+        },
+        {
+          "rfilename": "config.json",
+          "blobId": "3a02d6f873a24ba1a410453738b84aebebb3b422",
+          "size": 2002
+        },
+        {
+          "rfilename": "configuration_ovis2_5.py",
+          "blobId": "0a90e12def7a1ae18e663bda3741eb197c44d2e0",
+          "size": 3936
+        },
+        {
+          "rfilename": "generation_config.json",
+          "blobId": "d44b45bfc98fbdf410b07eda1b654fc9bce96b47",
+          "size": 277
+        },
+        {
+          "rfilename": "merges.txt",
+          "blobId": "31349551d90c7606f325fe0f11bbb8bd5fa0d7c7",
+          "size": 1671853
+        },
+        {
+          "rfilename": "model-00001-of-00002.safetensors",
+          "blobId": "8d023b330073614bc4fed7f207f3f6a6416d185b",
+          "size": 4872524976,
+          "lfs": {
+            "sha256": "4bd7cec79fedabcd8149c62934fdffff7d840de111e8a17335d346bcbeba0c12",
+            "size": 4872524976,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "model-00002-of-00002.safetensors",
+          "blobId": "65a0919ba46a09e3eb6125f1ca9f8b41a6d3a0d9",
+          "size": 268435576,
+          "lfs": {
+            "sha256": "0bb2d37fcbf03254938b72d4bf88da9f84c8c0307b4f7d6ee79aa0a3c2f7732d",
+            "size": 268435576,
+            "pointerSize": 134
+          }
+        },
+        {
+          "rfilename": "model.safetensors.index.json",
+          "blobId": "0c14295984d0e5f0812e6a7c4175803821e6bc06",
+          "size": 77003
+        },
+        {
+          "rfilename": "modeling_ovis2_5.py",
+          "blobId": "97284cbfe225fb36ca5e49529e01d56474be2384",
+          "size": 44348
+        },
+        {
+          "rfilename": "preprocessor_config.json",
+          "blobId": "64b9bf1b69656ce79e8c6b34fd066d37b4edb534",
+          "size": 394
+        },
+        {
+          "rfilename": "special_tokens_map.json",
+          "blobId": "ac23c0aaa2434523c494330aeb79c58395378103",
+          "size": 613
+        },
+        {
+          "rfilename": "tokenizer.json",
+          "blobId": "cd71f61a15a522601badb3dc960d800d9cb3766c",
+          "size": 11422654,
+          "lfs": {
+            "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+            "size": 11422654,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "tokenizer_config.json",
+          "blobId": "dde2dcb5a0b35b5f5de513353663c368d0f07355",
+          "size": 7250
+        },
+        {
+          "rfilename": "vocab.json",
+          "blobId": "4783fe10ac3adce15ac8f358ef5462739852c569",
+          "size": 2776833
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/LICENSE",
+          "access_date": "2026-10-05",
+          "sha256": "89d5fe4d86445afd34248a35e65fa01821b92f49072e570aaf74adb07ebca510",
+          "size_bytes": 548,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/LICENSE",
+          "locator": "LICENSE"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/NOTICE",
+          "access_date": "2026-10-05",
+          "sha256": "c56e4e3994e34eadaa2bc83e9bab9168dac960400ae1209a0ef91bf2d2cc09ed",
+          "size_bytes": 422,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/NOTICE",
+          "locator": "NOTICE"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/README.md",
+          "access_date": "2026-10-05",
+          "sha256": "3173e38cf5da58c8233c5f4419da55cbe97e41a7c6e2e20e704f0cbb0044b1c0",
+          "size_bytes": 14604,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/README.md",
+          "locator": "README.md"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/config.json",
+          "access_date": "2026-10-05",
+          "sha256": "dfa83f6cc4e9a2bc434676d7310472746ce5e51926b6b312866e5a203e81efd6",
+          "size_bytes": 2002,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/config.json",
+          "locator": "config.json"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/configuration_ovis2_5.py",
+          "access_date": "2026-10-05",
+          "sha256": "04dd4870b6a5e0347651582d53e4d13e2ef18f516e4113259578408c790e0b72",
+          "size_bytes": 3936,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/configuration_ovis2_5.py",
+          "locator": "configuration_ovis2_5.py"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/generation_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "f12d4b54c91ffda6a118067044ef4beffae0a500c20a25b5542ea676b0bcfffa",
+          "size_bytes": 277,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/generation_config.json",
+          "locator": "generation_config.json"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/modeling_ovis2_5.py",
+          "access_date": "2026-10-05",
+          "sha256": "51b23951898b6a7fd40012d2c9f94e53c6a3c865b7957feae3e075372ab41c48",
+          "size_bytes": 44348,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/modeling_ovis2_5.py",
+          "locator": "modeling_ovis2_5.py"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/preprocessor_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "63ff380d3e424f93e6fbca5cc8e74eeed882e96fd6be2b7728aed308f3ad1513",
+          "size_bytes": 394,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/preprocessor_config.json",
+          "locator": "preprocessor_config.json"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/special_tokens_map.json",
+          "access_date": "2026-10-05",
+          "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+          "size_bytes": 613,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/special_tokens_map.json",
+          "locator": "special_tokens_map.json"
+        },
+        {
+          "url": "https://huggingface.co/ATH-MaaS/Ovis2.5-2B/resolve/393c932b2a03e28eb9aaa503e3c4ab3ad384d958/tokenizer_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "9ce21924c3ca87d997bb1740b4f1291392be6dae4084e7ba1044f792d1278835",
+          "size_bytes": 7250,
+          "local_audit_cache": ".cache/d9r20_sources/ovis/tokenizer_config.json",
+          "locator": "tokenizer_config.json"
+        }
+      ]
+    },
+    "plamo": {
+      "model_id": "pfnet/plamo-2.1-2b-vl",
+      "revision": "3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027",
+      "gated": false,
+      "license": "other",
+      "api": {
+        "url": "https://huggingface.co/api/models/pfnet/plamo-2.1-2b-vl/revision/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027?blobs=true",
+        "access_date": "2026-10-05",
+        "sha256": "92dd71a2fc7d09d1f77786310ce9577523ec73c5ecfc29615c116d174979e90a",
+        "size_bytes": 13067,
+        "local_audit_cache": ".cache/d9r20_sources/plamo/api.json"
+      },
+      "files": [
+        {
+          "rfilename": ".gitattributes",
+          "blobId": "faa9e0360c46edc781952016d0e97d5436681c07",
+          "size": 1752
+        },
+        {
+          "rfilename": "README.md",
+          "blobId": "94b78d9eba17e5afc5bd29be006d440558184f67",
+          "size": 18032
+        },
+        {
+          "rfilename": "added_tokens.json",
+          "blobId": "dec363f4353982342bd38b058ff90e4b3bb975e3",
+          "size": 478
+        },
+        {
+          "rfilename": "assets/bicycle_result_2b.png",
+          "blobId": "005a42bf16229578300e8894ea02f48f29145c55",
+          "size": 430895,
+          "lfs": {
+            "sha256": "1fb4c0f2591d08c4473302abcbdea8b8ab5c159212b560f37fd6bd6657cbbe85",
+            "size": 430895,
+            "pointerSize": 131
+          }
+        },
+        {
+          "rfilename": "assets/crane_result_2b.png",
+          "blobId": "0dc853d06585040b7269f90713843ec4146e058a",
+          "size": 406052,
+          "lfs": {
+            "sha256": "e6bf639adee0a43ce22fe6585a8db1ff59244a0a040f348492b3916d775b056c",
+            "size": 406052,
+            "pointerSize": 131
+          }
+        },
+        {
+          "rfilename": "assets/fruit.png",
+          "blobId": "f9d640e360c78f2194b701cb92c27fcc4e15cd61",
+          "size": 597537,
+          "lfs": {
+            "sha256": "ddb96d2770420c29c887563f0cac3f598fdbc4aa636fa10340c2f5a2592aec07",
+            "size": 597537,
+            "pointerSize": 131
+          }
+        },
+        {
+          "rfilename": "config.json",
+          "blobId": "a5daeee9a7c5481cc2eb0bc60eee5e600e571923",
+          "size": 1952
+        },
+        {
+          "rfilename": "generation_config.json",
+          "blobId": "06ceb70b41fc0b4159f97b093fa203a9d5f1025a",
+          "size": 154
+        },
+        {
+          "rfilename": "model-00001-of-00003.safetensors",
+          "blobId": "9864ba8900d3a108dc2bce8aaf4d76898db76a12",
+          "size": 4991611128,
+          "lfs": {
+            "sha256": "2adb658ad351089d033ca39d4006a74fce72157a1b9ae140b8ed4b02b80d64af",
+            "size": 4991611128,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "model-00002-of-00003.safetensors",
+          "blobId": "2810c29fd14c8a016a0e4d4210c07fc8f3302a43",
+          "size": 4850731456,
+          "lfs": {
+            "sha256": "11e6da4547aa8df871f359d84c4bd4248c8981bcafe01d61cbda7aac35ff5b41",
+            "size": 4850731456,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "model-00003-of-00003.safetensors",
+          "blobId": "3ccd83b6b5db9cf1c2368c3a86f159adc99e0daa",
+          "size": 1675978608,
+          "lfs": {
+            "sha256": "65e586c82eea6efbed3ceac9059bd937ba206a6c54a196de7d3d056a54675f31",
+            "size": 1675978608,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "model.safetensors.index.json",
+          "blobId": "3a7f8d979000853f06f15214248b87c4a0f48aed",
+          "size": 88691
+        },
+        {
+          "rfilename": "modeling_plamo2.py",
+          "blobId": "45b9d6d0103fd3c77edca43f6d6bfecde284ac6e",
+          "size": 67412
+        },
+        {
+          "rfilename": "modeling_plamo2_vl.py",
+          "blobId": "f629477e861ff636c753a17564018308ba540268",
+          "size": 14302
+        },
+        {
+          "rfilename": "preprocessor_config.json",
+          "blobId": "fb638065e15e473621c42cb60efa50db5419bb77",
+          "size": 620
+        },
+        {
+          "rfilename": "processing_plamo2_vl.py",
+          "blobId": "859b0fa88025f612e5b68aa81349fd542f15e855",
+          "size": 11259
+        },
+        {
+          "rfilename": "special_tokens_map.json",
+          "blobId": "d503d131708fa5a83acc7d36fe013d5acc96a09d",
+          "size": 1003
+        },
+        {
+          "rfilename": "tokenization_plamo.py",
+          "blobId": "2084cf9050f8207de26214c7b501ae4bbd0f8579",
+          "size": 16889
+        },
+        {
+          "rfilename": "tokenizer.jsonl",
+          "blobId": "96edd523c3a56458737b34942febf32cd63a86f1",
+          "size": 10573745,
+          "lfs": {
+            "sha256": "3af94303d6c676e875e13165abf4e4a9d42c663ef247a8985cdeedb223cc0681",
+            "size": 10573745,
+            "pointerSize": 133
+          }
+        },
+        {
+          "rfilename": "tokenizer_config.json",
+          "blobId": "2ff5856a78f332c8e74dfd3aa81f8a7fec50e531",
+          "size": 4615
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/README.md",
+          "access_date": "2026-10-05",
+          "sha256": "5bbb2cc4a5cf2877e140cbd70e49e01068bde1b889608fcb3575619af3a5032d",
+          "size_bytes": 18032,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/README.md",
+          "locator": "README.md"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/config.json",
+          "access_date": "2026-10-05",
+          "sha256": "bc3588770298032e8c8e406ebff4698bb7be7055dd96390034faf2fd9b4c487a",
+          "size_bytes": 1952,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/config.json",
+          "locator": "config.json"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/generation_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "b0e6b7732f6ab85036de63485431ccda3c777dd7bdca4475e03093b7c48e4c0c",
+          "size_bytes": 154,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/generation_config.json",
+          "locator": "generation_config.json"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/modeling_plamo2.py",
+          "access_date": "2026-10-05",
+          "sha256": "f9b27f3f12f66148f4b4357ccf2d4c691a5215d8c601805414596dead1172e00",
+          "size_bytes": 67412,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/modeling_plamo2.py",
+          "locator": "modeling_plamo2.py"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/modeling_plamo2_vl.py",
+          "access_date": "2026-10-05",
+          "sha256": "29fdb7376920d7777bf6b4521218eec3a6de5e29326ed31b8f474624c95f0aee",
+          "size_bytes": 14302,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/modeling_plamo2_vl.py",
+          "locator": "modeling_plamo2_vl.py"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/preprocessor_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "69c67eaccf532532cd989a62b15d9e82e420b151e82a996d4765dd3224975656",
+          "size_bytes": 620,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/preprocessor_config.json",
+          "locator": "preprocessor_config.json"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/processing_plamo2_vl.py",
+          "access_date": "2026-10-05",
+          "sha256": "652d93799f88519629049d1fe47dadd47b083975ccede6d8b82f652416f580d7",
+          "size_bytes": 11259,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/processing_plamo2_vl.py",
+          "locator": "processing_plamo2_vl.py"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/special_tokens_map.json",
+          "access_date": "2026-10-05",
+          "sha256": "9460f975f1a37bbb3ca126e1b071128a77b635038906c6facd6a4f7fbce697f2",
+          "size_bytes": 1003,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/special_tokens_map.json",
+          "locator": "special_tokens_map.json"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/tokenization_plamo.py",
+          "access_date": "2026-10-05",
+          "sha256": "ebddaf4cd8c4f7cde47d9e94a227a1cec7eccfbf303a70f520a3fda7c060abef",
+          "size_bytes": 16889,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/tokenization_plamo.py",
+          "locator": "tokenization_plamo.py"
+        },
+        {
+          "url": "https://huggingface.co/pfnet/plamo-2.1-2b-vl/resolve/3d32366444f1ab36e5df4bf7a4c0c0bbe2a56027/tokenizer_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "38d3a7689f7f4c9bc628dd4e42e3b3875790bf360dcb4b015c0431e3133533a2",
+          "size_bytes": 4615,
+          "local_audit_cache": ".cache/d9r20_sources/plamo/tokenizer_config.json",
+          "locator": "tokenizer_config.json"
+        }
+      ]
+    },
+    "kosmos": {
+      "model_id": "microsoft/kosmos-2-patch14-224",
+      "revision": "1f66d913fde5307936383dc9460b12ccb82f2133",
+      "gated": false,
+      "license": "mit",
+      "api": {
+        "url": "https://huggingface.co/api/models/microsoft/kosmos-2-patch14-224/revision/1f66d913fde5307936383dc9460b12ccb82f2133?blobs=true",
+        "access_date": "2026-10-05",
+        "sha256": "7be71e531c0cbaacbd37e6de420c647465642aba70026a13ce44d3635ffa68dc",
+        "size_bytes": 5067,
+        "local_audit_cache": ".cache/d9r20_sources/kosmos/api.json"
+      },
+      "files": [
+        {
+          "rfilename": ".gitattributes",
+          "blobId": "1c0c7e1c453fd60e7b1fd0b11f862dfd055db247",
+          "size": 1567
+        },
+        {
+          "rfilename": "README.md",
+          "blobId": "cc926108a4bbf06a45452f7d90e900b1a739d593",
+          "size": 15778
+        },
+        {
+          "rfilename": "added_tokens.json",
+          "blobId": "277cf9f3dcaa89d61935ad74be9cc1733db41199",
+          "size": 32001
+        },
+        {
+          "rfilename": "annotated_snowman.jpg",
+          "blobId": "2c2e31bb35c9d994a63700d690174022d29ce17a",
+          "size": 123955
+        },
+        {
+          "rfilename": "config.json",
+          "blobId": "add00fce3e386fa0294f2a73d447e8aa11e26184",
+          "size": 4452
+        },
+        {
+          "rfilename": "generation_config.json",
+          "blobId": "87b23d327391234799a03dad5ab88faffaf9a8da",
+          "size": 137
+        },
+        {
+          "rfilename": "model.safetensors",
+          "blobId": "c236f5aef5e40b7402913a5e3b009f7e2cbabef0",
+          "size": 6658052808,
+          "lfs": {
+            "sha256": "051bf4b62a25429f4d542d11ec0c07a4ac1aac91003d3bf301133c6913008cbf",
+            "size": 6658052808,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "preprocessor_config.json",
+          "blobId": "1384102025a8eca8951125c49e92fa049ff35da5",
+          "size": 534
+        },
+        {
+          "rfilename": "pytorch_model.bin",
+          "blobId": "551f047f8e17624d56a382ce3e500bd4be89bb11",
+          "size": 6658242717,
+          "lfs": {
+            "sha256": "47e771fe58dd4de2d814655e67ec034b3637b09114869415f071486c4a1c2ec0",
+            "size": 6658242717,
+            "pointerSize": 135
+          }
+        },
+        {
+          "rfilename": "sentencepiece.bpe.model",
+          "blobId": "e65ae496ce3e43dd75e534fdc9da1e91a2ff44df",
+          "size": 1363614,
+          "lfs": {
+            "sha256": "3a60b4d1d1d8f70c8b2569c94540d4d9b7c694fd32e7a428ad0dcffaafaa3beb",
+            "size": 1363614,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "snowman.jpg",
+          "blobId": "f6aac13d005187fe2066342535ee9b23c19ea509",
+          "size": 103645
+        },
+        {
+          "rfilename": "snowman.png",
+          "blobId": "ca0b4ad5c2a05bbeb4c6aee3ee4dbbd96fcfc606",
+          "size": 1357598,
+          "lfs": {
+            "sha256": "b97825997df04bd823207fd145331ffc3c3b62ec4e3a3adaac83c93debe87bdf",
+            "size": 1357598,
+            "pointerSize": 132
+          }
+        },
+        {
+          "rfilename": "special_tokens_map.json",
+          "blobId": "4e682704687adf86cd992830e4dfd2a741eaee9b",
+          "size": 1064
+        },
+        {
+          "rfilename": "tokenizer.json",
+          "blobId": "0cc79f6fdeabad20cff94f8e2d69895849189e8a",
+          "size": 4698210
+        },
+        {
+          "rfilename": "tokenizer_config.json",
+          "blobId": "2476b2f9830be3dd535bba7872fbfa908359afe8",
+          "size": 190658
+        },
+        {
+          "rfilename": "two_dogs.jpg",
+          "blobId": "a9421c79105deacce3b88230f15c062ea0e2ec96",
+          "size": 80024
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://huggingface.co/microsoft/kosmos-2-patch14-224/resolve/1f66d913fde5307936383dc9460b12ccb82f2133/README.md",
+          "access_date": "2026-10-05",
+          "sha256": "95da93c61d7410d645e05b98893e2e961e74a311b5f4cef7182be15748597413",
+          "size_bytes": 15778,
+          "local_audit_cache": ".cache/d9r20_sources/kosmos/README.md",
+          "locator": "README.md"
+        },
+        {
+          "url": "https://huggingface.co/microsoft/kosmos-2-patch14-224/resolve/1f66d913fde5307936383dc9460b12ccb82f2133/config.json",
+          "access_date": "2026-10-05",
+          "sha256": "131c5e1eb60cb445f04efc39e61d027cc49636be72ae8cd1d3946bf272232c52",
+          "size_bytes": 4452,
+          "local_audit_cache": ".cache/d9r20_sources/kosmos/config.json",
+          "locator": "config.json"
+        },
+        {
+          "url": "https://huggingface.co/microsoft/kosmos-2-patch14-224/resolve/1f66d913fde5307936383dc9460b12ccb82f2133/generation_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "63c089d4157f49e33d15f8bbed5442922198f9a618be68af064f934d8e916fc5",
+          "size_bytes": 137,
+          "local_audit_cache": ".cache/d9r20_sources/kosmos/generation_config.json",
+          "locator": "generation_config.json"
+        },
+        {
+          "url": "https://huggingface.co/microsoft/kosmos-2-patch14-224/resolve/1f66d913fde5307936383dc9460b12ccb82f2133/preprocessor_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "6ab68e439b4b5aee971db5477eb57431579c0b740a9bb0d10038efb704fd8eb3",
+          "size_bytes": 534,
+          "local_audit_cache": ".cache/d9r20_sources/kosmos/preprocessor_config.json",
+          "locator": "preprocessor_config.json"
+        },
+        {
+          "url": "https://huggingface.co/microsoft/kosmos-2-patch14-224/resolve/1f66d913fde5307936383dc9460b12ccb82f2133/special_tokens_map.json",
+          "access_date": "2026-10-05",
+          "sha256": "276d9449066f1fa93b3542c17129a52470b4b46e5d807ebc100e93985487e4ca",
+          "size_bytes": 1064,
+          "local_audit_cache": ".cache/d9r20_sources/kosmos/special_tokens_map.json",
+          "locator": "special_tokens_map.json"
+        },
+        {
+          "url": "https://huggingface.co/microsoft/kosmos-2-patch14-224/resolve/1f66d913fde5307936383dc9460b12ccb82f2133/tokenizer_config.json",
+          "access_date": "2026-10-05",
+          "sha256": "fb8c7370fcd02e4a26fb26a2bbf937ec6f3ac17ab3ee6f975a15a0b50af11a60",
+          "size_bytes": 190658,
+          "local_audit_cache": ".cache/d9r20_sources/kosmos/tokenizer_config.json",
+          "locator": "tokenizer_config.json"
+        }
+      ]
+    }
+  },
+  "official_implementations": [
+    {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/8cb5963cc22174954e7dca2c0a3320b7dc2f4edc/src/transformers/models/kosmos2/processing_kosmos2.py",
+      "access_date": "2026-10-05",
+      "sha256": "43934f9a45d170896dbf29335004b0a1b59cef13906db68c879fe13c3e3c58f4",
+      "size_bytes": 30907,
+      "local_audit_cache": ".cache/d9r20_sources/transformers/src/transformers/models/kosmos2/processing_kosmos2.py",
+      "repository": "huggingface/transformers",
+      "revision": "8cb5963cc22174954e7dca2c0a3320b7dc2f4edc",
+      "locator": "src/transformers/models/kosmos2/processing_kosmos2.py",
+      "ref_at_access": "8cb5963cc22174954e7dca2c0a3320b7dc2f4edc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/8cb5963cc22174954e7dca2c0a3320b7dc2f4edc/src/transformers/models/kosmos2/modeling_kosmos2.py",
+      "access_date": "2026-10-05",
+      "sha256": "5f31ef7ade9c9e50701b160ab12cdfe8b01857783fc2d79d4823383ca9d9d70a",
+      "size_bytes": 82065,
+      "local_audit_cache": ".cache/d9r20_sources/transformers/src/transformers/models/kosmos2/modeling_kosmos2.py",
+      "repository": "huggingface/transformers",
+      "revision": "8cb5963cc22174954e7dca2c0a3320b7dc2f4edc",
+      "locator": "src/transformers/models/kosmos2/modeling_kosmos2.py",
+      "ref_at_access": "8cb5963cc22174954e7dca2c0a3320b7dc2f4edc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/8cb5963cc22174954e7dca2c0a3320b7dc2f4edc/docs/source/en/model_doc/kosmos-2.md",
+      "access_date": "2026-10-05",
+      "sha256": "d7cc3e7a80631e58c285217069f202fd538e26eb8d67bd9ddee220c1dc6cbcd8",
+      "size_bytes": 5603,
+      "local_audit_cache": ".cache/d9r20_sources/transformers/docs/source/en/model_doc/kosmos-2.md",
+      "repository": "huggingface/transformers",
+      "revision": "8cb5963cc22174954e7dca2c0a3320b7dc2f4edc",
+      "locator": "docs/source/en/model_doc/kosmos-2.md",
+      "ref_at_access": "8cb5963cc22174954e7dca2c0a3320b7dc2f4edc"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/microsoft/unilm/31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd/kosmos-2/README.md",
+      "access_date": "2026-10-05",
+      "sha256": "83126a27ec22b3a18968775f55fc39a4ee9086291f15eebe9659a4b57be0793c",
+      "size_bytes": 11764,
+      "local_audit_cache": ".cache/d9r20_sources/unilm/kosmos-2/README.md",
+      "repository": "microsoft/unilm",
+      "revision": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd",
+      "locator": "kosmos-2/README.md",
+      "ref_at_access": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/microsoft/unilm/31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd/kosmos-2/demo/gradio_app.py",
+      "access_date": "2026-10-05",
+      "sha256": "6a60f045d4f9c675f2f0c37373b4dc94c336cdca0001ae4277c73f87c2d7d338",
+      "size_bytes": 25515,
+      "local_audit_cache": ".cache/d9r20_sources/unilm/kosmos-2/demo/gradio_app.py",
+      "repository": "microsoft/unilm",
+      "revision": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd",
+      "locator": "kosmos-2/demo/gradio_app.py",
+      "ref_at_access": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/microsoft/unilm/31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd/LICENSE",
+      "access_date": "2026-10-05",
+      "sha256": "904dc4d8749877f1dba1cda48200d2462dccbeb7c134d5e4ef6fa75e0198c8fe",
+      "size_bytes": 1104,
+      "local_audit_cache": ".cache/d9r20_sources/unilm/LICENSE",
+      "repository": "microsoft/unilm",
+      "revision": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd",
+      "locator": "LICENSE",
+      "ref_at_access": "31c5b904ca1bf2afb4c234a6675c683a4e5fc7cd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/state-spaces/mamba/f1493ff6e9335160eb134eb67e59f8e4d9adefd6/README.md",
+      "access_date": "2026-10-05",
+      "sha256": "b78313ce770b5094626119bb56dc4ea4487a3009c3c72703ad7ac9e5de43fede",
+      "size_bytes": 11490,
+      "local_audit_cache": ".cache/d9r20_sources/mamba/README.md",
+      "repository": "state-spaces/mamba",
+      "revision": "f1493ff6e9335160eb134eb67e59f8e4d9adefd6",
+      "locator": "README.md",
+      "ref_at_access": "f1493ff6e9335160eb134eb67e59f8e4d9adefd6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/state-spaces/mamba/f1493ff6e9335160eb134eb67e59f8e4d9adefd6/setup.py",
+      "access_date": "2026-10-05",
+      "sha256": "16c38973827c4c4bcf6c5d2dd20f6df89546b44333cf307c35ea8afb3ca03103",
+      "size_bytes": 14858,
+      "local_audit_cache": ".cache/d9r20_sources/mamba/setup.py",
+      "repository": "state-spaces/mamba",
+      "revision": "f1493ff6e9335160eb134eb67e59f8e4d9adefd6",
+      "locator": "setup.py",
+      "ref_at_access": "f1493ff6e9335160eb134eb67e59f8e4d9adefd6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dao-AILab/causal-conv1d/da6dbaa9fd5a919967f14d3fd031da1288ad5025/README.md",
+      "access_date": "2026-10-05",
+      "sha256": "432ec5c523acb16e4ce3a3494e9fd7240a502c2f32bfb1a46f9f30b4e38196ff",
+      "size_bytes": 1086,
+      "local_audit_cache": ".cache/d9r20_sources/causal-conv1d/README.md",
+      "repository": "Dao-AILab/causal-conv1d",
+      "revision": "da6dbaa9fd5a919967f14d3fd031da1288ad5025",
+      "locator": "README.md",
+      "ref_at_access": "da6dbaa9fd5a919967f14d3fd031da1288ad5025"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dao-AILab/causal-conv1d/da6dbaa9fd5a919967f14d3fd031da1288ad5025/setup.py",
+      "access_date": "2026-10-05",
+      "sha256": "db17d35cc9f45a3db56bde68cb0d914d27d6435d53f60398620ec9e8e904018a",
+      "size_bytes": 14172,
+      "local_audit_cache": ".cache/d9r20_sources/causal-conv1d/setup.py",
+      "repository": "Dao-AILab/causal-conv1d",
+      "revision": "da6dbaa9fd5a919967f14d3fd031da1288ad5025",
+      "locator": "setup.py",
+      "ref_at_access": "da6dbaa9fd5a919967f14d3fd031da1288ad5025"
+    }
+  ],
+  "official_author_comments": [
+    {
+      "url": "https://api.github.com/repos/microsoft/unilm/issues/comments/1628617454",
+      "access_date": "2026-10-05",
+      "sha256": "36c15c8f3fd7da6df1a9524b45f754a6f546fa367d2f21347e8e88ee19bd3296",
+      "size_bytes": 2159,
+      "local_audit_cache": ".cache/d9r20_sources/unilm/comment-1628617454.json",
+      "locator": "https://github.com/microsoft/unilm/issues/1186#issuecomment-1628617454",
+      "limitation": "Author statement; mutable comment pinned by access date and downloaded JSON SHA256"
+    },
+    {
+      "url": "https://api.github.com/repos/microsoft/unilm/issues/comments/1632078662",
+      "access_date": "2026-10-05",
+      "sha256": "28e0cb3fc337d12a74e2549fabdf0aaade7dc6e0e689bb34d7725d111522208d",
+      "size_bytes": 2168,
+      "local_audit_cache": ".cache/d9r20_sources/unilm/comment-1632078662.json",
+      "locator": "https://github.com/microsoft/unilm/issues/1186#issuecomment-1632078662",
+      "limitation": "Author statement; mutable comment pinned by access date and downloaded JSON SHA256"
+    }
+  ]
+}
