@@ -2076,3 +2076,33 @@ Source facts, limitations, verdict table and owner workflow:
 [D9R20 PREP note](notes/w2_d9r20_three_candidate_prep.md).
 MODEL_GPU_EXECUTION=NO; WEIGHTS_DOWNLOADED=NO; INSPECSAFE=NOT_RUN;
 PROTOCOL_FREEZE=PENDING; PROMOTION=NO; MERGE=NO.
+
+## D9R20 PREP closure record (2026-10-05; append-only)
+
+Closure of the existing D9R20 PREP task, not a new scientific decision or task.
+[PR #75](https://github.com/tantdna2/SafeShift/pull/75) is MERGED at
+`2026-10-05T08:57:14Z`; GitHub PR identity, fetched origin/main and ordered Git
+merge parents were independently checked against the requested identities:
+
+- Merge commit: `7976e5c60817319481c564ca1a68f24aec270da8`.
+- Parent 1 / old main: `668aae839bbde91b67686d143259e07c8a89608c`.
+- Parent 2 / PR HEAD: `b86a3af6754ae238c08f9b5e727df7750fdebd61`.
+- New main = merge commit `7976e5c60817319481c564ca1a68f24aec270da8`.
+- D9R20 PREP implementation/review/merge: COMPLETE.
+
+Earlier PREP statements, including `MERGE=NO`, "no merge performed by this task"
+and old checkboxes, retain their historical scope and are not rewritten.
+This subsequent closure does not change the scientific contract, eligibility
+criteria, parser/output contracts, resource conditions or candidate verdicts.
+
+Ovis2.5-2B, PLaMo 2.1-2B-VL and Kosmos-2 are still NOT_RUNTIME_QUALIFIED.
+CALL2_ORCHESTRATION_BLOCKER remains for all three (Ovis/PLaMo/Kosmos).
+participation=PENDING_RESEARCH_LEAD_DECISION; PROTOCOL_FREEZE=PENDING;
+INSPECSAFE=NOT_RUN; MODEL_GPU_EXECUTION=NO. Historical Qwen3 G5 FAIL and
+PaliGemma G6 FAIL remain unchanged; no reruns or promotion.
+
+Owner runtime is a separate post-closure step and requires a separate environment
+observation and separate authorization for the exact execution identity. Neither
+the PREP merge nor this closure grants that authority. This record changes only
+the two append-only logs: no code/config/parser/runtime/test changes, no weights
+download, no model/GPU execution and no InspecSafe run.
