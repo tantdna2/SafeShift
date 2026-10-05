@@ -570,14 +570,12 @@ class Provisioning(unittest.TestCase):
             r.check_authority('ovis', CONFIG['models']['ovis'], observed, {}, {}, '')
 
     def test_fixed_synthetic_inputs_and_classification_independence(self):
-        from scripts.prepare_grounding_multicategory_v3 import build
-        _, images = build()
         real_read = Path.read_bytes
         opened = []
         def synthetic_read(path):
             relative = path.relative_to(ROOT).as_posix()
             opened.append(relative)
-            return images[relative] if relative in images else real_read(path)
+            return real_read(path)
         for key in PINS:
             with patch.object(Path, 'read_bytes', synthetic_read):
                 cases = r.prepared_cases(ROOT, key)

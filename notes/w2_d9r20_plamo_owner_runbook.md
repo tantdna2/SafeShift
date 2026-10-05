@@ -26,9 +26,10 @@ do not prove complete Mamba2/Triton compatibility on T4. About 11.5 GB of reposi
 weights does not prove loaded VRAM fits 16 GB. No quantization/offload rescue.
 Keep native ja01 template/dynamic tiling, batch one; include tokenizer.jsonl.
 
-Turn venue Internet off, prepare verified synthetic inputs, then observe:
+Turn venue Internet off, verify committed v4 fixtures, then observe:
 
 ```sh
+.cache/d9r20_envs/plamo/bin/python scripts/verify_grounding_multicategory_v4.py
 .cache/d9r20_envs/plamo/bin/python scripts/run_d9r20_candidate.py observe --model plamo --observation data/processed/d9r20/plamo-observation.json
 ```
 

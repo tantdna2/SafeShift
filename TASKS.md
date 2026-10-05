@@ -1293,3 +1293,58 @@ observation and separate authorization binding the exact execution identity.
 The PREP merge and this record grant no runtime authority. No code, config,
 parser, runtime, test or scientific contract changed; no weights downloaded,
 model/GPU execution or InspecSafe run occurred in this closure.
+
+## W2.6-D9R21-CANONICAL-SYNTHETIC-FIXTURE-PORTABILITY (2026-10-05; append-only)
+
+Prospective PREP fix authorized by Research Lead at verified fetched BASE
+`4520597a654d25f73ff1b425aa94ad27326c026f`. Owner-reported Kaggle CPython 3.11.9 /
+zlib 1.2.13 cannot reproduce v3 encoded PNG hashes from zlib 1.3.1; this is a
+portability blocker, not a model failure. D9R20 models have not run and protocol
+freeze is PENDING. See the D9R21 decision appended to DECISIONS.md.
+
+- [x] Add committed v4 manifest and 12 small synthetic PNGs. A-D are exact copies
+  of historical frozen_external_gate bytes; E/F/G/H were drawn once using v3
+  geometry/colors/drawing semantics in Python 3.11.9 / Pillow 11.3.0 / zlib 1.3.1.
+- [x] Keep scientific pixels, case order, query semantics/counts/targets/distractors
+  unchanged, verified against unchanged v3 build() after RGB decoding.
+- [x] Move only D9R20 to committed v4 fixtures with exact SHA/size validation,
+  restricted paths and existing symlink/alias rejection, without regeneration.
+- [x] Replace owner renderer setup with read-only v4 verification; preserve all
+  model environment pins, Internet-OFF-before-observe/run and Call2 blockers.
+- [x] Offline selected tests: 228 PASS, 0 FAIL, 2 SKIP (optional downloaded source
+  caches absent). Verifier PASS for 12 inputs; git diff --check PASS.
+- [x] Preserve historical v3 code/manifests/plans/locks/results and old verdicts;
+  logs remain append-only. No hash relaxation, fallback or mismatch warning.
+- [ ] Independent review of the Draft PR; no merge in this task.
+- [ ] Future venue observation, separate execution authorization and owner runs.
+
+Validation commands (repository root; no real model/network/InspecSafe access):
+
+```text
+python scripts/verify_grounding_multicategory_v4.py
+python -m unittest tests.test_grounding_multicategory_v4 tests.test_d9r20_candidates tests.test_grounding_multicategory_v3 -q
+python -m unittest tests.test_grounding_interface_v2 tests.test_grounding_absence_semantics_audit tests.test_external_gate_cases tests.test_grounding_execution_relock_g5 tests.test_grounding_execution_relock_g6 -q
+python -m unittest tests.test_grounding_multicategory_runtime_v3 tests.test_classification_qualification -q
+git diff --check
+```
+
+The first two unittest groups ran 102 (100 PASS, 2 SKIP) and 72 (all PASS).
+The unfiltered last group ran 57: 56 PASS, 1 pre-existing ERROR in
+`ContractTests.test_dry_preflight_blocks_without_authority`, which demands G4's
+old origin/main and raises `MAIN_IDENTITY_CHANGED_RESEARCH_LEAD_REQUIRED`.
+Reproduced that exact error from a Git archive of BASE (same live origin/main),
+without editing historical tests or runtime. Selected G4 rerun excluding only
+that stale identity test passed 25/25. The classification group contributes
+31 PASS; selected distinct total = 228 PASS + 2 SKIP. No full-suite PASS claim.
+
+The new tests cover verifier read-only behavior, same-size tamper, wrong size,
+missing/corrupt image, wrong canvas/mode, exact path/outside/traversal rejection,
+real directory alias rejection, A-D byte identity, semantic/pixel equivalence,
+all three candidates' unchanged 22-call order/prompts and rejection of caller
+image overrides/v3 fallback. Synthetic/fake tests do not create model evidence.
+
+v4 committed fixtures remove the owner renderer/zlib reproduction dependency;
+Pillow remains for decoding in each unchanged model-specific environment.
+execution_authorized=false; participation=PENDING_RESEARCH_LEAD_DECISION;
+protocol_freeze=PENDING; MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN;
+HISTORICAL_V3=UNCHANGED; HISTORICAL_G5_G6=UNCHANGED; MERGE=NO.
