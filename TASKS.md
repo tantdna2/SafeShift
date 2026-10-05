@@ -1348,3 +1348,42 @@ Pillow remains for decoding in each unchanged model-specific environment.
 execution_authorized=false; participation=PENDING_RESEARCH_LEAD_DECISION;
 protocol_freeze=PENDING; MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN;
 HISTORICAL_V3=UNCHANGED; HISTORICAL_G5_G6=UNCHANGED; MERGE=NO.
+
+## W2.6-D9R21-CANONICAL-SYNTHETIC-FIXTURE-PORTABILITY-CLOSURE (2026-10-05; append-only)
+
+Source: Research Lead's supplied audit and direct GitHub merge verification.
+This documentary closure also checked GitHub PR identity and fetched origin/main
+against the exact merge commit and ordered Git parents below.
+[PR #77](https://github.com/tantdna2/SafeShift/pull/77) is MERGED at
+`2026-10-05T13:14:08Z`; the merged implementation changed 24 files.
+
+- Merge commit: `6ff60808f68d7b6f6477489827ab79e173bcee07`.
+- Parent 1 / pre-merge main: `4520597a654d25f73ff1b425aa94ad27326c026f`.
+- Parent 2 / PR HEAD: `55a7cb9ac4aa5055ebaf5a6fb3def529386da1d5`.
+- New main = merge commit = this closure's exact BASE:
+  `6ff60808f68d7b6f6477489827ab79e173bcee07`.
+
+- [x] D9R21 portability fix implementation/review/merge: COMPLETE.
+- [x] Record the Research Lead-verified new-main state: D9R20 grounding manifest
+  `configs/pre_freeze/external_grounding_interface_cases.v4.json`;
+  V4_FIXTURES_PRESENT=YES; HISTORICAL_V3_UNCHANGED=YES; G5_G6_UNCHANGED=YES.
+- [ ] Future owner environment observation, exact execution identity review and
+  separate execution authorization remain separate future work.
+- [ ] Future owner model execution and subsequent human review/participation
+  decision remain separate future work; none is authorized by this closure.
+
+Historical D9R21 PREP statements, including `MERGE=NO`, "no merge in this task"
+and all old checkboxes, remain unchanged as records of their original time.
+Only this new closure records the subsequent completed implementation/review/merge.
+
+Ovis2.5-2B, PLaMo 2.1-2B-VL and Kosmos-2 remain NOT_RUNTIME_QUALIFIED.
+CALL2_ORCHESTRATION_BLOCKER remains for all three; execution_authorized=false;
+participation=PENDING_RESEARCH_LEAD_DECISION; protocol_freeze=PENDING;
+MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN. Historical v3 and G5/G6, including
+Qwen3 G5 FAIL and PaliGemma G6 FAIL, are unchanged; no rerun or promotion.
+Neither the PR #77 merge nor this closure grants runtime authority.
+
+Closure scope is append-only TASKS.md and DECISIONS.md. No code, config, test
+or fixture PNG changes. Validation: git diff --check and exact-base append-only /
+two-file scope checks; model tests are not run because no code changes.
+The separate closure PR is delivered as DRAFT; MERGE=NO for this closure task.
