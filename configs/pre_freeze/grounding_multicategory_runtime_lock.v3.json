@@ -1,0 +1,74 @@
+{
+  "schema_version": "grounding-v3-runtime-lock-v3",
+  "base_sha": "069d780b6590a32a19cbe6e341ffa19cedbcd712",
+  "QUALIFICATION_EXECUTION": "NOT_RUN",
+  "execution_authorized": false,
+  "readiness": "READY_FOR_EXTERNAL_EXECUTION_REVIEW",
+  "runtime_ready": false,
+  "environment_status": "UNVERIFIED_EXTERNAL_VENUE_LOCK_PENDING",
+  "hash_representation": "SHA256 of UTF-8 files with Git-normalized LF; raw/snapshot bytes never normalized",
+  "sha256": {
+    "configs/pre_freeze/grounding_multicategory_execution_plan.v2.json": "9575731f920b1fb8df2ad9dbbba8ead874617f452e9acff42b44f1b2e0d19990",
+    "configs/pre_freeze/grounding_multicategory_authorization.template.v2.json": "1f5cef1f475a69d043a311c2590ea6db3273f859f452aa778f68a2f3ffb04f57",
+    "configs/pre_freeze/grounding_multicategory_runtime_lock.v2.json": "4ed0bbe80b492eae0c402fd94cb5b050b163bc5cb464813366eeba6cc6342d0b",
+    "configs/pre_freeze/grounding_multicategory_execution_plan.v1.json": "d77fcfe5e5e6c47c7b01d9fe1a9ea2f50e24b39b413c6acdc848fea943befee3",
+    "configs/pre_freeze/grounding_multicategory_authorization.template.v1.json": "4c80d7e569cb77546a1e1c26c6deb7b8e1c774aab9796df9c53a42b2fc3e4b3a",
+    "safeshift/runners/grounding_multicategory_v3_g6.py": "2c662f2e036cf7ed954e177e603347c8637519035bfbf03fea855aaffba6446e",
+    "safeshift/runners/grounding_multicategory_v3.py": "bcde90c2d7484a24cd4ef17667d98425d3e5360d565752cb35bad88b2bdea246",
+    "safeshift/protocol/firewall.py": "d0b0ec22a685fad6245269521e11dbeda2705a7abd2b88292a36310f6c63304d",
+    "scripts/run_grounding_multicategory_v3_g6.py": "e360a50717f145113b3e7fcae0939646548da3c9d79063a1c8cf2c7c82bd5dad",
+    "configs/pre_freeze/grounding_interface_qualification_plan.v3.json": "6bfaa490dfab0afc55ce3bcd7b50bf5120ac7fcb583b5abea856184e133de8cd",
+    "configs/pre_freeze/external_grounding_interface_cases.v3.json": "59bc719ed47cc94bd49f866c0330bb4671614cfb63042a9c750db3a0c0851e13",
+    "configs/pre_freeze/grounding_multicategory_sources.v1.json": "aa590bd0ad04691ae894572d2c3fb2dcded80d916b88fad8818c8621918947cc",
+    "safeshift/protocol/grounding_multicategory_candidate.py": "955c6f52de5eff98fe639b8fa76330b063ef9df8e642e7ad8a7e5dfb0b0a376a",
+    "safeshift/protocol/grounding_multicategory_geometry.py": "9f3ab90975dae2d8fbf6a28baf62b2372616bff6d62697f552f1bb8ca71c8665",
+    "schemas/grounding_multicategory_result.v1.schema.json": "ad484ac6ef3f71ad485e37a67f039aa62c1ca24f92605d23368f139018fb72bf",
+    "configs/pre_freeze/grounding_multicategory_environment.v1.json": "9a1f32a9e3606412b43c257c0113b0fd65a11ab4fde22d265fc99a72be73270d",
+    "safeshift/runners/paligemma_snapshot.py": "5c950a98637aeba9c6d6a36f65ab4053773c153ec19a84e5f6876f1acd172768",
+    "safeshift/runners/storage.py": "11f396657e69850c9cf52444f473c61f0e3b2b368e61469f86b8e79af4391e5b",
+    "configs/pre_freeze/local_model_provenance.d9.json": "2624b41e72337fd876d7619b0e7d9a01e9f1c0140ba96a0dc966ae649c09baa8",
+    "configs/pre_freeze/paligemma_t4_runtime.v1.json": "a762e03c61eea3f8b681c520b228d1d04390a73a0de4ae6b85ef294a9d6bff31"
+  },
+  "g6_scope": {
+    "authorized_models": ["paligemma"],
+    "run_ids": {"paligemma": "g6-paligemma-v3-001"},
+    "model": "google/paligemma-3b-mix-448",
+    "revision": "ead2d9a35598cb89119af004f5d023b311d1c4a1",
+    "hardware_target": "KAGGLE_T4_X1",
+    "transformers": "4.57.1",
+    "precision": "FP16",
+    "quantization": "NONE",
+    "max_new_tokens": 512,
+    "decoding": "GREEDY",
+    "qwen3_authority": "NOT_REISSUED"
+  },
+  "historical_g5_lock": "configs/pre_freeze/grounding_multicategory_runtime_lock.v2.json",
+  "historical_g5_execution_plan": "configs/pre_freeze/grounding_multicategory_execution_plan.v1.json",
+  "scientific_contract": {
+    "plan": "configs/pre_freeze/grounding_interface_qualification_plan.v3.json",
+    "manifest": "configs/pre_freeze/external_grounding_interface_cases.v3.json",
+    "parser": "safeshift/protocol/grounding_multicategory_candidate.py",
+    "geometry": "safeshift/protocol/grounding_multicategory_geometry.py",
+    "raw_before_parse": true,
+    "no_retry": true,
+    "no_repair": true
+  },
+  "observation_contract": {
+    "model_load": false,
+    "generate": false,
+    "required": ["exact_head", "exact_main", "model_revision", "software_versions", "T4_x1", "snapshot_hashes_sizes", "code_contract_hashes", "generation_config"]
+  },
+  "pr_policy": {
+    "draft_through_review": true,
+    "merge": false,
+    "promotion": false
+  },
+  "qwen3_history": {
+    "QWEN3_G5_QUALIFICATION": "FAIL",
+    "QWEN3_PRIMARY_GROUNDING_ROLE": "NOT_PARTICIPATING",
+    "RERUN": "NO",
+    "PROMOTION": "NO"
+  },
+  "INSPECSAFE": "NOT_RUN",
+  "sha256_note": "Hashes cover the G6 plan/template/wrapper/CLI, delegated core runner, its path firewall dependency and the frozen scientific/runtime contracts; this lock itself is excluded to avoid a circular hash."
+}
