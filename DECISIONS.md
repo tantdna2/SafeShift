@@ -2147,3 +2147,43 @@ checks the committed bytes; `python -m unittest tests.test_grounding_multicatego
 reproduces the pixel-equivalence audit using unchanged v3 build() in memory.
 Recover canonical fixtures from their Git commit, never from venue regeneration.
 Validation details and baseline-only regression limitation are appended in TASKS.
+
+## W2.6-D9R21-CANONICAL-SYNTHETIC-FIXTURE-PORTABILITY-CLOSURE (2026-10-05; append-only)
+
+Authority/source: Research Lead's explicit closure request after D9R21 audit,
+direct GitHub verification and successful merge of
+[PR #77](https://github.com/tantdna2/SafeShift/pull/77). PR_STATE=MERGED;
+MERGED_AT=`2026-10-05T13:14:08Z`; CHANGED_FILES=24 for that merged implementation.
+This documentary task also verified the GitHub PR identity, fetched origin/main
+and ordered Git merge parents against the supplied evidence:
+
+- MERGE_COMMIT_SHA: `6ff60808f68d7b6f6477489827ab79e173bcee07`.
+- PARENT_SHA_1 / PRE_MERGE_MAIN: `4520597a654d25f73ff1b425aa94ad27326c026f`.
+- PARENT_SHA_2 / PR_HEAD: `55a7cb9ac4aa5055ebaf5a6fb3def529386da1d5`.
+- NEW_MAIN_SHA = MERGE_COMMIT_SHA = this closure's exact BASE:
+  `6ff60808f68d7b6f6477489827ab79e173bcee07`.
+- D9R21 portability fix implementation/review/merge: COMPLETE.
+
+This closes the existing portability fix only. Historical D9R21 PREP statements,
+including `MERGE=NO`, "no merge in this task" and old checkboxes, retain their
+original historical scope and remain unchanged; none is rewritten by this record.
+
+Research Lead-verified state on new main: D9R20 grounding manifest is
+`configs/pre_freeze/external_grounding_interface_cases.v4.json`;
+V4_FIXTURES_PRESENT=YES; HISTORICAL_V3_UNCHANGED=YES; G5_G6_UNCHANGED=YES.
+Historical v3 code/manifests/plans/locks/results and Qwen3 G5 FAIL / PaliGemma G6
+FAIL remain unchanged, without reinterpretation, rerun or promotion.
+
+The merge is not runtime authorization. Ovis2.5-2B, PLaMo 2.1-2B-VL and Kosmos-2
+remain NOT_RUNTIME_QUALIFIED; CALL2_ORCHESTRATION_BLOCKER remains for all three.
+execution_authorized=false; participation=PENDING_RESEARCH_LEAD_DECISION;
+protocol_freeze=PENDING; MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN.
+Future owner observation and model execution are separate work requiring separate
+environment observation, exact execution identity review and explicit execution
+authorization. Neither PR #77 nor this closure supplies that authority.
+
+This closure appends only TASKS.md and DECISIONS.md; it changes no code, config,
+test, fixture PNG, dataset/split/label/metric or scientific contract. Validation
+is git diff --check and exact-base append-only / two-file scope checks. Model
+tests are not run because no code changes; no model/GPU or InspecSafe execution.
+The separate closure PR remains DRAFT; MERGE=NO for this closure task.
