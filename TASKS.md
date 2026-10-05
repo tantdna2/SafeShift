@@ -1266,3 +1266,30 @@ unfiltered historical regression failures reproduced at exact BASE and retained:
 old Ovis checklist state and G4 old-main identity. Append-only/history checks and
 git diff --check PASS. Full suite and model/GPU execution not run. Exact commands
 and exclusions are in the linked PREP note; no historical test was edited.
+
+## D9R20 PREP closure record (2026-10-05; append-only)
+
+[PR #75](https://github.com/tantdna2/SafeShift/pull/75) is MERGED at
+`2026-10-05T08:57:14Z`. GitHub PR identity and fetched origin/main were verified
+against the exact Git merge parents before this documentary closure:
+
+- Merge commit / new main: `7976e5c60817319481c564ca1a68f24aec270da8`.
+- Parent 1 / old main: `668aae839bbde91b67686d143259e07c8a89608c`.
+- Parent 2 / PR HEAD: `b86a3af6754ae238c08f9b5e727df7750fdebd61`.
+- D9R20 PREP implementation/review/merge: COMPLETE.
+
+This closes the existing PREP task only; it is not a new scientific task or
+runtime result. Historical PREP text, including `MERGE=NO`, "no merge performed
+by this task" and the old checkboxes, remains unchanged as its original state.
+
+Ovis2.5-2B, PLaMo 2.1-2B-VL and Kosmos-2 remain NOT_RUNTIME_QUALIFIED.
+CALL2_ORCHESTRATION_BLOCKER remains for Ovis/PLaMo/Kosmos;
+participation=PENDING_RESEARCH_LEAD_DECISION; PROTOCOL_FREEZE=PENDING;
+INSPECSAFE=NOT_RUN; MODEL_GPU_EXECUTION=NO. Qwen3 G5 FAIL and PaliGemma G6 FAIL
+remain unchanged; no reruns or promotion.
+
+Owner runtime is a separate step after closure, requiring its own environment
+observation and separate authorization binding the exact execution identity.
+The PREP merge and this record grant no runtime authority. No code, config,
+parser, runtime, test or scientific contract changed; no weights downloaded,
+model/GPU execution or InspecSafe run occurred in this closure.
