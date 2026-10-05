@@ -1,0 +1,80 @@
+{
+  "schema_version": "d9r24-metric-contract-v1",
+  "task": "W2.6-D9R24-DISAGREEMENT-RELIABILITY-METRICS",
+  "base_sha": "6e205a53a9ceeebbc258d3ad0be6a7ddb865501e",
+  "status": "IMPLEMENTED_OFFLINE_SYNTHETIC_ONLY",
+  "classification_models": ["qwen3", "qwen2_5", "internvl3", "moondream"],
+  "classification_only": true,
+  "rq1": {
+    "primary": ["balanced_accuracy", "macro_f1"],
+    "descriptive": ["raw_accuracy"],
+    "safety_critical": [
+      "anomaly_fnr_parse_conditional",
+      "anomaly_fpr_parse_conditional",
+      "anomaly_non_detection_rate_failure_aware",
+      "level01_recall_parse_conditional",
+      "level01_fnr_parse_conditional",
+      "level01_protection_failure_failure_aware",
+      "critical_downgrade_diagnostics"
+    ],
+    "domain": "folder_domain",
+    "robot_platform_claim": "CO_VARIATION_ONLY_NO_CAUSAL_CLAIM",
+    "mismatch_sensitivity": "D3_36_CASE_DUAL_REPORT_UNCHANGED",
+    "domain_macro_policy": "DESCRIPTIVE_SUPPORTED_GT_CLASSES_WITH_K_D",
+    "balanced_accuracy_spread": "K4_DOMAINS_ONLY_SECONDARY_DIAGNOSTIC",
+    "anomaly_recall_spread": "DOMAINS_WITH_ANOMALY_SUPPORT_ONLY",
+    "metallurgy_anomaly_policy": "SPARSE_SUPPORT_DESCRIPTIVE_ONLY"
+  },
+  "rq2": {
+    "primary_strata": "12_HAZARD_ATOMS",
+    "secondary_strata": "7_GROUPS_A_G_SECONDARY_EXPLORATORY",
+    "prediction_unit": "IMAGE",
+    "multi_hazard_counts_additive": false,
+    "hazard_membership_stage": "AFTER_INFERENCE_EVALUATION_ONLY"
+  },
+  "rq3": {
+    "input": "FOUR_EXISTING_CLASSIFICATION_PREDICTIONS_ONLY",
+    "joint_cohort": "JOINT_VALID_4",
+    "joint_denominator_for_primary_tables": true,
+    "metric_families": [
+      "joint_parse_availability",
+      "unanimous_agreement",
+      "pairwise_cohens_kappa",
+      "vote_entropy",
+      "ordinal_disagreement",
+      "shared_blind_spots",
+      "error_complementarity",
+      "disagreement_error_association",
+      "risk_coverage_analysis"
+    ],
+    "derived_views": ["vote_pattern_classes"],
+    "ordinal_mapping": {"Level01": 1, "Level02": 2, "Level03": 3, "Level04": 4},
+    "vote_entropy": "NEGATIVE_SUM_P_LN_P_DIV_LN_4_RANGE_0_1",
+    "ordinal_disagreement": "MEAN_SIX_PAIRWISE_ABS_DIFF_DIV_3_RANGE_0_1",
+    "invalid_policy": "INVALID_OUTSIDE_JOINT_AND_ABSTAIN",
+    "tie_policy": "TIE_2_2_ABSTAIN",
+    "ranking": "ORDINAL_ASC_ENTROPY_ASC_SAMPLE_ID_LEXICAL",
+    "threshold_selection": "NONE",
+    "risk_coverage_axes": ["eligible_relative_coverage", "overall_coverage"],
+    "critical_risk_denominator": "ACCEPTED_ANOMALY_PREFIX_N"
+  },
+  "bootstrap": {
+    "method": "DOMAIN_STRATIFIED_POINT_CLUSTER_PERCENTILE",
+    "replicates": 2000,
+    "convergence_replicates": 5000,
+    "seed": 42,
+    "confidence_interval": "PERCENTILE_95",
+    "normal_cluster": "point_id",
+    "anomaly_cluster": "SAMPLE_LEVEL_WITH_DEPENDENCE_LIMITATION_NO_SOURCE_FAMILY",
+    "normal_missing_point_id": "HARD_FAIL",
+    "anomaly_point_id": "IGNORED_UNTIL_VALIDATED_DEPENDENCE_PROTOCOL",
+    "paired_comparisons": "SHARED_DRAWS"
+  },
+  "primary_grounding": "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE",
+  "active_grounding_dependency": false,
+  "inspecsafe_inference_authorized": false,
+  "model_gpu_execution": false,
+  "protocol_freeze": "PENDING",
+  "implementation_freeze": "PENDING",
+  "next_required_tasks": ["production_benchmark_harness", "end_to_end_rehearsal", "implementation_freeze", "protocol_freeze"]
+}

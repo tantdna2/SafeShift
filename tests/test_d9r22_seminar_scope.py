@@ -23,7 +23,20 @@ METRICS = ["joint_parse_availability", "unanimous_agreement", "pairwise_cohens_k
            "error_complementarity", "disagreement_error_association", "risk_coverage_analysis"]
 ALLOWED = {SCOPE, NOTE, MATRIX, "README.md", "ROADMAP.md", "DECISIONS.md",
            "TASKS.md", "tests/test_d9r22_seminar_scope.py",
-           "tests/test_d9r20_candidates.py"}
+           "tests/test_d9r20_candidates.py",
+           "configs/pre_freeze/production_classification_policy.d9r23.v1.json",
+           "prompts/p2_classification_c1_v1.txt", "prompts/.gitattributes",
+           "safeshift/protocol/classification_policy.py",
+           "safeshift/protocol/classification_failure_policy.py",
+           "safeshift/runners/production_classification.py",
+           "notes/w2_d9r23_classification_production_contract.md",
+           "tests/test_d9r23_classification_contract.py",
+           "configs/pre_freeze/d9r24_metric_contract.v1.json",
+           "notes/w2_d9r24_disagreement_reliability_metrics.md",
+           "safeshift/protocol/d9r24_metrics.py",
+           "safeshift/protocol/metrics.py",
+           "safeshift/protocol/reporting.py",
+           "tests/test_d9r24_metrics.py"}
 PENDING = ["exact_classification_production_contract",
            "production_classification_adapters_parsers",
            "exact_decoding_preprocessing_precision_freeze",
@@ -266,7 +279,8 @@ class SeminarScopeTests(unittest.TestCase):
         staged = set(git("diff", "--cached", "--name-only").decode().splitlines())
         self.assertLessEqual(changed | staged, ALLOWED)
         for path in changed | staged | ALLOWED:
-            self.assertIn(Path(path).suffix, {".md", ".json", ".py"})
+            self.assertTrue(Path(path).suffix in {".md", ".json", ".py", ".txt"}
+                            or path.endswith(".gitattributes"))
             self.assertFalse(path.startswith(("data/", "runs/", "outputs/", "weights/")))
             self.assertLess((ROOT / path).stat().st_size, 350_000)
         # Untracked user files are deliberately outside staged/commit authority.

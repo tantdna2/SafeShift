@@ -28,7 +28,14 @@ ALLOWED = {"DECISIONS.md", "TASKS.md", policy.POLICY_PATH, policy.PROMPT_PATH,
            "safeshift/protocol/classification_failure_policy.py",
            "safeshift/runners/production_classification.py",
            "notes/w2_d9r23_classification_production_contract.md",
-           "tests/test_d9r23_classification_contract.py"}
+           "tests/test_d9r23_classification_contract.py",
+           "configs/pre_freeze/d9r24_metric_contract.v1.json",
+           "notes/w2_d9r24_disagreement_reliability_metrics.md",
+           "safeshift/protocol/d9r24_metrics.py",
+           "safeshift/protocol/metrics.py",
+           "safeshift/protocol/reporting.py",
+           "tests/test_d9r24_metrics.py",
+           "tests/test_d9r22_seminar_scope.py"}
 
 
 def git(*args):
