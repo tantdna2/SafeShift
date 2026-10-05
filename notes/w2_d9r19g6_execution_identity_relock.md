@@ -88,3 +88,50 @@ INSPECSAFE=NOT_RUN
 PROMOTION=NO
 MERGE=NO
 ```
+
+## G6 qualification result and closure overlay (2026-10-05)
+
+This append-only section records the supplied independently audited result. The
+PREP text above, including its historical `NOT_RUN`, `BLOCKED` and `MERGE=NO`
+states, remains unchanged.
+
+Execution identity:
+
+- model: `google/paligemma-3b-mix-448`
+- revision: `ead2d9a35598cb89119af004f5d023b311d1c4a1`
+- run ID: `g6-paligemma-v3-001`
+- execution HEAD: `b8a8a40c1d632c4609302daffee52543fe13b39d`
+- execution MAIN/BASE: `069d780b6590a32a19cbe6e341ffa19cedbcd712`
+- environment SHA-256: `5eedbff47f5a4288f785bba8cb1dfe205c5403411295780b06af8bf09c2a909b`
+- runtime lock SHA-256: `237143b33405bc0d03e3c911cf042e9874a089a48cc95d7691883c83e79ce0ad`
+
+Execution recorded `QUALIFICATION_EXECUTION=EXECUTED`, one model load, 12
+native calls, `failure=null`, 12/12 EOS, complete artifact audit,
+raw-before-parse verification and parser SUCCESS for all 12 calls. Geometry
+passed 1/12 and failed 11/12; only `H_all_four` had `geometry_ok=true`.
+`tracking_result=false`, `final_verdict=FAIL`, and the independent artifact
+audit was PASS.
+
+The failure was frequent extra detection for queried labels with
+`expected_count=0`: `A_1` emitted an extra green circle and cyan rectangle;
+`E_red_green` an extra cyan rectangle; `F_two_red` an extra green circle,
+yellow triangle and cyan rectangle; and `G_multi` an extra cyan rectangle.
+`H_all_four` matched exact counts and passed geometry. Because parsing
+succeeded 12/12, this is not a parser failure. Extra boxes were not dropped and
+outputs were not reinterpreted.
+
+Governance closure:
+
+```text
+PALIGEMMA_G6_QUALIFICATION=FAIL
+PALIGEMMA_PRIMARY_GROUNDING_ROLE=NOT_PARTICIPATING
+RERUN=NO
+HUMAN_NO_GIANT_REVIEW_REQUIRED_FOR_DECISION=NO
+PROMOTION=NO
+INSPECSAFE=NOT_RUN
+```
+
+The automated geometry/tracking gate failed, so human review cannot rescue the
+decision. No parser, prompt, geometry or gate change was made; no model rerun
+or new candidate model task was started; PR #67 is unchanged. PR #74 remains
+OPEN/DRAFT and is not merged.

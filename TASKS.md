@@ -1192,3 +1192,40 @@ Historical results are preserved without repair or reinterpretation.
 G6 is PREP only: `PALI_EXECUTION_AUTHORIZED=NO`; `MODEL_GPU_EXECUTION=NO`;
 `INSPECSAFE=NOT_RUN`; `PROMOTION=NO`; `MERGE=NO`. PR #67 is unchanged.
 See [G6 relock note](notes/w2_d9r19g6_execution_identity_relock.md).
+
+## W2.6-D9R19G6-PALIGEMMA-QUALIFICATION-RESULT-CLOSURE (2026-10-05; append-only)
+
+Result/closure overlay for the G6 execution identity. This section records the
+subsequent audited execution and does not rewrite the historical PREP status,
+including its `NOT_RUN`, `BLOCKED` and `MERGE=NO` lines.
+
+- [x] Record execution identity: model
+  `google/paligemma-3b-mix-448`, revision
+  `ead2d9a35598cb89119af004f5d023b311d1c4a1`, run
+  `g6-paligemma-v3-001`, execution HEAD
+  `b8a8a40c1d632c4609302daffee52543fe13b39d`, and MAIN/BASE
+  `069d780b6590a32a19cbe6e341ffa19cedbcd712`.
+- [x] Record environment hash
+  `5eedbff47f5a4288f785bba8cb1dfe205c5403411295780b06af8bf09c2a909b` and
+  runtime lock hash
+  `237143b33405bc0d03e3c911cf042e9874a089a48cc95d7691883c83e79ce0ad`.
+- [x] Record `QUALIFICATION_EXECUTION=EXECUTED`: one model load, 12 native
+  calls, `failure=null`, 12/12 EOS, artifact audit complete, raw-before-parse
+  verified, and 12/12 parser successes.
+- [x] Record geometry PASS 1/12 and FAIL 11/12; only `H_all_four` had
+  `geometry_ok=true`. `tracking_result=false` and `final_verdict=FAIL`.
+- [x] Record independent artifact audit PASS. The failure is semantic/spatial
+  over-detection for labels with expected count zero, not parser failure:
+  `A_1` had extra green circle/cyan rectangle, `E_red_green` extra cyan
+  rectangle, `F_two_red` extra green circle/yellow triangle/cyan rectangle,
+  and `G_multi` extra cyan rectangle. `H_all_four` matched exact counts and
+  passed geometry. Extra boxes were not dropped or reinterpreted.
+- [x] Close governance outcome as
+  `PALIGEMMA_G6_QUALIFICATION=FAIL`,
+  `PALIGEMMA_PRIMARY_GROUNDING_ROLE=NOT_PARTICIPATING`, `RERUN=NO`,
+  `HUMAN_NO_GIANT_REVIEW_REQUIRED_FOR_DECISION=NO`, `PROMOTION=NO`, and
+  `INSPECSAFE=NOT_RUN`.
+
+No parser, prompt, geometry or gate change was made; no model rerun or new
+candidate model task was started. PR #67 remains unchanged. PR #74 remains
+OPEN/DRAFT and is not merged.

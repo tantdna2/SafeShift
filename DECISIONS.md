@@ -1995,3 +1995,39 @@ InspecSafe run, G6 creation or merge are part of this task.
   `execution_authorized=false` with null identity/observation hashes. Raw
   outputs, snapshots and InspecSafe remain uncreated and uncommitted. The
   scientific synthetic v3 contract, including raw-before-parse, is unchanged.
+
+## D9R19G6-R — PaliGemma G6 qualification result and closure (2026-10-05; append-only)
+
+- **Authority/source:** Append-only result overlay for
+  `W2.6-D9R19G6-PALIGEMMA-EXECUTION-IDENTITY-RELOCK` in PR #74. The recorded
+  execution identity is model `google/paligemma-3b-mix-448`, revision
+  `ead2d9a35598cb89119af004f5d023b311d1c4a1`, run
+  `g6-paligemma-v3-001`, HEAD
+  `b8a8a40c1d632c4609302daffee52543fe13b39d`, MAIN/BASE
+  `069d780b6590a32a19cbe6e341ffa19cedbcd712`.
+- **Environment binding:** `environment_sha256=`
+  `5eedbff47f5a4288f785bba8cb1dfe205c5403411295780b06af8bf09c2a909b`;
+  `runtime_lock_sha256=`
+  `237143b33405bc0d03e3c911cf042e9874a089a48cc95d7691883c83e79ce0ad`.
+- **Execution evidence:** `QUALIFICATION_EXECUTION=EXECUTED`, one model load,
+  12 native calls, `failure=null`, 12/12 EOS, complete artifact audit,
+  verified raw-before-parse, and parser SUCCESS for all 12 calls.
+- **Qualification result:** Geometry passed 1/12 and failed 11/12; only
+  `H_all_four` had `geometry_ok=true`. `tracking_result=false` and
+  `final_verdict=FAIL`. The independent artifact audit was PASS.
+- **Failure interpretation:** The model frequently emitted extra detections for
+  queried labels whose expected count was zero: `A_1` extra green circle and
+  cyan rectangle; `E_red_green` extra cyan rectangle; `F_two_red` extra green
+  circle, yellow triangle and cyan rectangle; `G_multi` extra cyan rectangle.
+  `H_all_four` matched exact counts and passed geometry. All parser statuses
+  were SUCCESS, so this is not a parser failure. No extra box was dropped and
+  no output was reinterpreted.
+- **Decision:** Set `PALIGEMMA_G6_QUALIFICATION=FAIL` and
+  `PALIGEMMA_PRIMARY_GROUNDING_ROLE=NOT_PARTICIPATING`; `RERUN=NO`,
+  `HUMAN_NO_GIANT_REVIEW_REQUIRED_FOR_DECISION=NO` because the automated
+  geometry/tracking gate failed and human review cannot rescue the result,
+  `PROMOTION=NO`, and `INSPECSAFE=NOT_RUN`.
+- **Scope boundary:** No parser, prompt, geometry or gate change; no model
+  rerun; no new candidate model task; PR #67 unchanged. All earlier PREP
+  lines remain historical and are not rewritten. PR #74 remains OPEN/DRAFT;
+  no merge occurred.
