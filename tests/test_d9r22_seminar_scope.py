@@ -1,9 +1,11 @@
 """Offline D9R22 scope/governance checks against the exact authorized BASE."""
 
+import ast
 from functools import lru_cache
 from pathlib import Path
 import subprocess
 import unittest
+from unittest.mock import patch
 
 from safeshift.protocol.schema import strict_json
 
@@ -20,7 +22,8 @@ METRICS = ["joint_parse_availability", "unanimous_agreement", "pairwise_cohens_k
            "vote_entropy", "ordinal_disagreement", "shared_blind_spots",
            "error_complementarity", "disagreement_error_association", "risk_coverage_analysis"]
 ALLOWED = {SCOPE, NOTE, MATRIX, "README.md", "ROADMAP.md", "DECISIONS.md",
-           "TASKS.md", "tests/test_d9r22_seminar_scope.py"}
+           "TASKS.md", "tests/test_d9r22_seminar_scope.py",
+           "tests/test_d9r20_candidates.py"}
 PENDING = ["exact_classification_production_contract",
            "production_classification_adapters_parsers",
            "exact_decoding_preprocessing_precision_freeze",
@@ -115,6 +118,58 @@ class SeminarScopeTests(unittest.TestCase):
                  ("d9r20" in p.lower() or "d9r21" in p.lower() or
                   p.startswith("tests/fixtures/"))]
         self.assert_preserved(paths)
+
+    def test_d9r20_correction_changes_only_historical_guard(self):
+        path = "tests/test_d9r20_candidates.py"
+        before = ast.parse(git("show", f"{BASE}:{path}"))
+        after = ast.parse((ROOT / path).read_bytes())
+        pins = {"D9R20_BASE": "668aae839bbde91b67686d143259e07c8a89608c",
+                "D9R20_IMPLEMENTATION_HEAD": "b86a3af6754ae238c08f9b5e727df7750fdebd61",
+                "D9R20_MERGE_COMMIT": "7976e5c60817319481c564ca1a68f24aec270da8"}
+        added = [node for node in after.body if isinstance(node, ast.Assign)
+                 and isinstance(node.targets[0], ast.Name) and node.targets[0].id in pins]
+        self.assertEqual({node.targets[0].id: ast.literal_eval(node.value) for node in added}, pins)
+        after.body = [node for node in after.body if node not in added]
+        for tree in (before, after):
+            contract = next(node for node in tree.body if isinstance(node, ast.ClassDef)
+                            and node.name == "Contracts")
+            guard = next(node for node in contract.body if isinstance(node, ast.FunctionDef)
+                         and node.name == "test_historical_files_and_append_only_logs")
+            contract.body.remove(guard)
+        self.assertEqual(ast.dump(before), ast.dump(after))
+
+    def test_d9r20_historical_guard_enforces_pinned_range_and_rejects_tamper(self):
+        from tests import test_d9r20_candidates as historical
+
+        base, merge, implementation = (historical.D9R20_BASE, historical.D9R20_MERGE_COMMIT,
+                                       historical.D9R20_IMPLEMENTATION_HEAD)
+        # Only these historical reads are allowed; implicit HEAD/worktree fails.
+        outputs = {
+            ("git", "rev-list", "--parents", "-n", "1", merge): f"{merge} {base} {implementation}\n",
+            ("git", "ls-tree", "-r", "--name-only", base): "README.md\nDECISIONS.md\nTASKS.md\n",
+            ("git", "diff", "--name-only", base, merge): "DECISIONS.md\nTASKS.md\nnew.txt\n",
+        }
+        for path in ("DECISIONS.md", "TASKS.md"):
+            outputs[("git", "show", f"{base}:{path}")] = b"original\r\n"
+            outputs[("git", "show", f"{merge}:{path}")] = b"original\nappended\n"
+        mutations = [None,
+                     (("git", "diff", "--name-only", base, merge), "README.md\n"),
+                     (("git", "rev-list", "--parents", "-n", "1", merge), f"{merge} {implementation} {base}\n")]
+        mutations += [(("git", "show", f"{merge}:{path}"), b"rewritten\n")
+                      for path in ("DECISIONS.md", "TASKS.md")]
+        for mutation in mutations:
+            responses = dict(outputs)
+            if mutation:
+                responses[mutation[0]] = mutation[1]
+            with self.subTest(mutation=mutation), patch.object(
+                    historical.subprocess, "check_output",
+                    side_effect=lambda command, **kwargs: responses[tuple(command)]):
+                guard = historical.Contracts().test_historical_files_and_append_only_logs
+                if mutation:
+                    with self.assertRaises(AssertionError):
+                        guard()
+                else:
+                    guard()
 
     def test_g5_g6_and_external_result_history_byte_unchanged(self):
         paths = [p for p in self.paths if p not in ALLOWED and

@@ -76,19 +76,52 @@ commit above, while HEAD is the final D9R22 implementation recorded by Git/PR.
 
 | Check | Exact BASE | D9R22 HEAD |
 |---|---|---|
-| New focused scope tests | Not present | 15/15 PASS |
-| Relevant regression plus scope tests | 116 tests: 114 PASS, 2 SKIP | 131 tests: 128 PASS, 1 FAIL, 2 SKIP |
-| Full discovery | 1504 tests: 5 failures, 25 errors, 2 skips | 1519 tests: 6 failures, 25 errors, 2 skips |
+| Focused D9R20 historical guard | PASS | PASS |
+| New focused scope tests | Not present | 17/17 PASS |
+| Relevant regression plus scope tests | 116 tests: 114 PASS, 2 SKIP | 133 tests: 131 PASS, 2 SKIP |
+| Full discovery | 1504 tests: 5 failures, 25 errors, 2 skips | 1521 tests: 5 failures, 25 errors, 2 skips |
 | Diff / staged diff checks | N/A | PASS |
 
-Full suite is **NOT PASS**. All 30 BASE failure/error identities persist.
-The single additional identity in both extended regression and full discovery is
-`test_d9r20_candidates.Contracts.test_historical_files_and_append_only_logs`:
-its historical change allowlist forbids README.md and ROADMAP.md changes, which
-are explicitly required by D9R22's current title/scope redesign. BASE passes
-that test; HEAD fails it. This is a new scope-guard conflict, not a pre-existing
-BASE failure or a runtime/gate failure. No historical test/lock/fixture was
-edited to make the suite green. Review must account for this disclosed conflict.
+`NEW_FAILURE_IDENTITIES_VS_BASE=0`. The full suites were rerun in the same
+environment after correction: BASE 109.488s, HEAD 118.805s. All 30 BASE
+failure/error identities below persist with no additions or removals. Full
+suite remains **NOT PASS** because of those pre-existing failures/errors;
+the D9R20 guard regression is resolved, not accepted as a new failure.
+Focused guard + scope: 18/18 PASS. Two new scope tests account for the increase
+from 1519 to 1521 total tests compared with the original PR #79 HEAD.
+
+### Authorized historical guard scope correction
+
+Task `W2.6-D9R22-REGRESSION-GUARD-SCOPE-CORRECTION` continues PR #79 from
+`1e869440acfdfca132ab118ed589b8e6eb51edc9`, with origin/main still equal to the
+exact D9R22 BASE above. This is a narrow Research Lead-authorized test correction,
+not a new research decision. The earlier validation record in TASKS.md describes
+the original HEAD; the corrected validation here supersedes that test status.
+
+The original D9R20 guard used `git diff --name-only r.BASE` and live log bytes,
+so future README/ROADMAP edits were incorrectly treated as D9R20 changes. The
+guard is prospectively corrected to pin the historical D9R20 BASE→MERGE range:
+
+```text
+D9R20_BASE=668aae839bbde91b67686d143259e07c8a89608c
+D9R20_IMPLEMENTATION_HEAD=b86a3af6754ae238c08f9b5e727df7750fdebd61
+D9R20_MERGE_COMMIT=7976e5c60817319481c564ca1a68f24aec270da8
+```
+
+It verifies both ordered merge parents, compares only that explicit range and
+reads both versions of DECISIONS/TASKS from Git. The historical invariant stays
+enforced: D9R20 changed no pre-existing files except append-only DECISIONS/TASKS.
+No skip, xfail, deleted guard, widened historical file allowlist or live-HEAD
+exception for README/ROADMAP is used. Current D9R22 title/scope remains intact.
+
+D9R22 still checks the live PR-A scope against exact BASE `a227e183...`; its
+allowlist adds only the specifically authorized D9R20 test file. Two new tests
+restrict that file's executable changes to the guard and three historical pins,
+and exercise rejection of prohibited historical file edits, swapped merge
+parents and rewritten logs. D9R20/D9R21 configs/fixtures/results, G5/G6 and
+all research/runtime artifacts remain unchanged. Correction changes only the
+two test files and this note; TASKS.md and DECISIONS.md are untouched.
+
 The two skips are optional downloaded source-cache audits with caches absent.
 
 BASE/HEAD shared failure/error identities (unittest discovery names):
@@ -136,15 +169,17 @@ from its detached checkout; no machine path is committed):
 
 ```text
 .venv/Scripts/python.exe -m unittest tests.test_d9r22_seminar_scope -q
+.venv/Scripts/python.exe -m unittest tests.test_d9r20_candidates.Contracts.test_historical_files_and_append_only_logs tests.test_d9r22_seminar_scope -q
 .venv/Scripts/python.exe -m unittest tests.test_d9r22_seminar_scope tests.test_classification_qualification tests.test_grounding_multicategory_v4 tests.test_d9r20_candidates tests.test_grounding_execution_relock_g5 tests.test_grounding_execution_relock_g6 -q
 .venv/Scripts/python.exe -m unittest discover -s tests -q
 git diff --check
 git diff --cached --check
 ```
 
-BASE regression omits only the new D9R22 module, absent at BASE. Final logs:
-`data/processed/d9r22/base-full.log`, `head-final.log`, `base-focused.log`,
-`focused-final.log`; initial development logs are not final validation evidence.
+BASE regression omits only the new D9R22 module, absent at BASE. Correction logs
+under `data/processed/d9r22/`: `correction-base-full.log`,
+`correction-head-full.log`, `correction-regression.log`. Earlier development and
+pre-correction logs are not current validation evidence.
 Untracked user `.worktrees/` and the local census remain uncommitted; no data,
 weights or raw model output is staged. No task B, protocol freeze, Antigravity
 or merge. Draft PR delivery identifies the exact commit; it grants no execution.
