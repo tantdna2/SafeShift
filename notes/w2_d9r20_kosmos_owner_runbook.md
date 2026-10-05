@@ -21,9 +21,10 @@ pins, not a claim that Microsoft published this full environment. Do not alter
 native image processing or save/reload JPEG as the illustrative README does;
 qualification uses fixed hashed RGB PNG bytes and square images only.
 
-Turn venue Internet off, prepare synthetic inputs, then observe:
+Turn venue Internet off, verify committed v4 fixtures, then observe:
 
 ```sh
+.cache/d9r20_envs/kosmos/bin/python scripts/verify_grounding_multicategory_v4.py
 .cache/d9r20_envs/kosmos/bin/python scripts/run_d9r20_candidate.py observe --model kosmos --observation data/processed/d9r20/kosmos-observation.json
 ```
 

@@ -7,7 +7,7 @@ single T4 16GB, FP16, NONE, batch one, no model offload/fallback. A kernel/load/
 failure is a resource/runtime NO-GO, never a grounding semantic FAIL. Stop rather
 than changing hardware, precision, parser, prompt, budget or checkpoint.
 
-## 1. Pin post-merge code and prepare synthetic inputs
+## 1. Pin post-merge code and verify committed synthetic inputs
 
 Use a clean checkout of the exact post-merge main commit approved for observation.
 Fetch `origin/main`; record `git rev-parse HEAD`, `git rev-parse origin/main` and
@@ -16,19 +16,25 @@ must match the later signed-off authorization; PREP BASE must be an ancestor.
 Do not fill HEAD with the PREP BASE or invent a future merge SHA now.
 Changing main/HEAD/environment/snapshot requires fresh review, not auto-relock.
 
-The classification eight PNG fixtures are already in Git. Generate the existing
-twelve synthetic grounding images with the unchanged renderer:
+The eight classification and twelve v4 grounding PNG fixtures are already in
+Git. Verify the committed grounding manifest and fixtures read-only:
 
 ```sh
-python scripts/prepare_grounding_multicategory_v3.py
+python scripts/verify_grounding_multicategory_v4.py
 ```
 
-Renderer provenance is Python 3.11.9 / Pillow 11.3.0 / zlib 1.3.1 (existing v3
-contract). It verifies byte-identical manifest hashes and refuses mismatches;
-use a small separate rendering environment if needed, then use the model-specific
-environment. This does not impose a common model environment. Never regenerate
-or replace the manifest to accommodate a rendering mismatch. No dataset path or
-image override is accepted by the owner runtime. All inputs are 256x256 synthetic.
+D9R21 prospectively moves only D9R20 to `external-grounding-multicategory-v4`.
+Its canonical PNGs live under
+`tests/fixtures/pre_freeze/frozen_grounding_multicategory_v4/`. Verification checks
+exact paths, existence, SHA256, byte sizes and decoded 256x256 RGB PNGs; any
+mismatch is a hard failure. Never regenerate or replace bytes/manifest to pass.
+Use the model-specific environment below (Pillow is used only to decode these
+inputs); no separate renderer environment or encoder/zlib version is required.
+No dataset path or image override is accepted by the owner runtime. Historical
+v3 remains immutable; case geometry, RGB pixels and the 22-call sequence are
+unchanged. This PREP portability fix grants no execution authority:
+execution_authorized=false; participation=PENDING_RESEARCH_LEAD_DECISION;
+protocol_freeze=PENDING; INSPECSAFE=NOT_RUN; MODEL_GPU_EXECUTION=NO.
 
 ## 2. Provision one model in its independent environment
 

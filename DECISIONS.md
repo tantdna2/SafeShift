@@ -2106,3 +2106,44 @@ observation and separate authorization for the exact execution identity. Neither
 the PREP merge nor this closure grants that authority. This record changes only
 the two append-only logs: no code/config/parser/runtime/test changes, no weights
 download, no model/GPU execution and no InspecSafe run.
+
+## W2.6-D9R21-CANONICAL-SYNTHETIC-FIXTURE-PORTABILITY (2026-10-05; append-only)
+
+Authority: Research Lead's explicit prospective revision request at verified
+BASE `4520597a654d25f73ff1b425aa94ad27326c026f`. The owner reports Kaggle managed
+CPython 3.11.9 / zlib 1.2.13 cannot reproduce the byte-identical v3 PNG contract
+(renderer provenance Python 3.11.9 / Pillow 11.3.0 / zlib 1.3.1), producing
+`FROZEN_V3_MANIFEST_OR_RENDERER_MISMATCH`. This is a PREP portability blocker,
+not a model failure; no new Kaggle execution is claimed here. D9R20 models have
+not run and protocol freeze remains PENDING.
+
+Decision: introduce `external-grounding-multicategory-v4` and commit all twelve
+small synthetic PNG fixtures under
+`tests/fixtures/pre_freeze/frozen_grounding_multicategory_v4/`. Copy A_1..D_2
+exactly from historical `frozen_external_gate`; draw only E/F/G/H once from v3
+integer geometry, RGB colors and unchanged `draw_object` semantics, white
+256x256 RGB canvas, PNG optimize=False/compress_level=9, randomness NONE.
+The implementation environment is Python 3.11.9 / Pillow 11.3.0 / zlib 1.3.1;
+the source geometry and helper are those at BASE above. Record actual SHA256
+and byte size in the new v4 manifest. Committed bytes are the canonical input;
+future owner venues verify them read-only and never render/regenerate them.
+
+Only D9R20 switches to v4. Scientific pixel content, canvas, case order/geometry,
+query labels/counts/targets/distractors and the fixed 8+14 call sequence stay
+unchanged. No prompt/model/revision/precision/generation change, hash relaxation,
+fallback, warning downgrade or caller image override. Existing path confinement
+and symlink/alias rejection remain mandatory. Model environments retain their
+pins; the separate renderer/zlib reproduction dependency is removed from the
+owner workflow (Pillow still decodes images). Pixel equivalence is tested against
+unchanged v3 build(), without requiring regenerated encoded PNG equality.
+
+Historical v3 manifests/plans/scripts/locks/results and G5/G6 verdicts remain
+immutable. No dataset/split/label/metric change. CALL2_ORCHESTRATION_BLOCKER remains;
+execution_authorized=false; participation=PENDING_RESEARCH_LEAD_DECISION;
+protocol_freeze=PENDING; MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN; MERGE=NO.
+
+D9R21 verification/recovery: `python scripts/verify_grounding_multicategory_v4.py`
+checks the committed bytes; `python -m unittest tests.test_grounding_multicategory_v4 -q`
+reproduces the pixel-equivalence audit using unchanged v3 build() in memory.
+Recover canonical fixtures from their Git commit, never from venue regeneration.
+Validation details and baseline-only regression limitation are appended in TASKS.

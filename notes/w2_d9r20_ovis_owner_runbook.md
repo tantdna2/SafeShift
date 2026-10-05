@@ -20,10 +20,11 @@ BF16 and flash-attn; this explicitly documented deviation is unvalidated. Do not
 change dtype or attention path after a failure. Source max_pixels is 1344*1792,
 min_pixels 448*448; thinking/budget false, greedy 512 tokens, seed 0.
 
-Turn venue Internet off; generate verified synthetic inputs using the shared
+Turn venue Internet off; verify committed v4 fixtures using the shared
 workflow. Observe without loading:
 
 ```sh
+.cache/d9r20_envs/ovis/bin/python scripts/verify_grounding_multicategory_v4.py
 .cache/d9r20_envs/ovis/bin/python scripts/run_d9r20_candidate.py observe --model ovis --observation data/processed/d9r20/ovis-observation.json
 ```
 

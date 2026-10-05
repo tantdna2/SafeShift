@@ -23,6 +23,8 @@ CONFIG = "configs/pre_freeze/d9r20_candidates.v1.json"
 SOURCES = "configs/pre_freeze/d9r20_sources.v1.json"
 OUTPUT = "data/processed/d9r20"
 BASE = "668aae839bbde91b67686d143259e07c8a89608c"
+GROUNDING_MANIFEST = "configs/pre_freeze/external_grounding_interface_cases.v4.json"
+GROUNDING_FIXTURES = "tests/fixtures/pre_freeze/frozen_grounding_multicategory_v4"
 
 
 def digest(raw):
@@ -194,7 +196,11 @@ def prepared_cases(repo, key):
     for case, raw in load_suite(repo):
         prompt = JSON_PROMPT if key != "kosmos" else "Question: " + JSON_PROMPT + " Answer:"
         cases.append({**case, "call_id": case["case_id"], "task": "classification", "prompt": prompt, "raw_image": raw})
-    manifest = read(repo, config["grounding"]["manifest"])
+    if config["grounding"]["manifest"] != GROUNDING_MANIFEST:
+        raise ValueError("COMMITTED_V4_MANIFEST_REQUIRED")
+    manifest = strict_json(relative(repo, GROUNDING_MANIFEST).read_bytes())
+    if manifest["schema_version"] != "external-grounding-multicategory-v4":
+        raise ValueError("COMMITTED_V4_MANIFEST_REQUIRED")
     if manifest["source_kind"] != "synthetic" or manifest["statement"] != "NO_INSPECSAFE_CONTENT_USED":
         raise ValueError("SYNTHETIC_ONLY")
     # Always the same target, even on target-absent cases. Added queries are fixed
@@ -203,10 +209,14 @@ def prepared_cases(repo, key):
     last = next(c for c in manifest["cases"] if c["case_id"] == "H_all_four")
     specs += [(last, "green circle", "g_H_green"), (last, "cyan rectangle", "g_H_cyan")]
     for case, target, call_id in specs:
-        path = relative(repo, case["image_path"], "data/processed/external_grounding_multicategory_v3/images")
+        path = relative(repo, case["image_path"], GROUNDING_FIXTURES)
+        if case["image_path"] != f"{GROUNDING_FIXTURES}/{case['case_id']}.png":
+            raise ValueError("SYNTHETIC_IMAGE_PATH")
         raw = path.read_bytes()
         if digest(raw) != case["image_sha256"]:
             raise ValueError("SYNTHETIC_IMAGE_HASH")
+        if len(raw) != case["image_size_bytes"]:
+            raise ValueError("SYNTHETIC_IMAGE_SIZE")
         cases.append({**case, "target": target, "call_id": call_id, "task": "grounding",
                       "prompt": candidate["grounding_prompt"].format(target=target), "raw_image": raw})
     return cases
