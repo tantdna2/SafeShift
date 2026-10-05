@@ -1,0 +1,401 @@
+{
+  "schema_version": "production-classification-d9r23-v1",
+  "task": "W2.6-D9R23-CLASSIFICATION-PRODUCTION-CONTRACT",
+  "base_sha": "b28e4665904ecd0ab5057a1bc92e263a81c3e8c7",
+  "status": "IMPLEMENTED_FREEZE_CANDIDATE",
+  "scope_reference": "configs/pre_freeze/d9r22_seminar_scope.v1.json",
+  "source_pr67": {
+    "head": "e85300ab3ec122f819a2685613332578f7e203d8",
+    "branch": "w2.6-d9r19-production-implementation-d5",
+    "mode": "SOURCE_ONLY",
+    "modified": false
+  },
+  "classification_only": true,
+  "active_grounding_dependency": false,
+  "implementation_freeze": "PENDING",
+  "protocol_freeze": "PENDING",
+  "inspecsafe_inference_authorized": false,
+  "semantic_scores_used_for_selection": false,
+  "prompt": {
+    "version": "p2-classification-c1-v1",
+    "path": "prompts/p2_classification_c1_v1.txt",
+    "sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "encoding": "UTF-8_LF",
+    "industry_table_version": "upstream-industry-rule-table-section-11.1-v1",
+    "source": "notes/w2_model_prompt_interface_decision_brief.md#111-trích-xuất-cấu-trúc-nguyên-bản",
+    "canonical_vocabulary_only": true,
+    "ground_truth_policy_changed": false
+  },
+  "parse_failure_policy": "classification-invalid-d9r23-v1",
+  "readiness": {
+    "exact_c1_policy": "IMPLEMENTED_FREEZE_CANDIDATE",
+    "execution_conditions": "IMPLEMENTED_FREEZE_CANDIDATE",
+    "production_classification_adapters_parsers": "IMPLEMENTED_TESTED_WITH_FAKE_OR_EXISTING_SYNTHETIC_ONLY",
+    "production_benchmark_harness": "PENDING",
+    "full_metric_implementation": "PENDING",
+    "end_to_end_rehearsal": "PENDING"
+  },
+  "classification": {
+    "qwen3": {
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "immutable_revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "decoding_policy_id": "qwen3-classification-d9r23-v1",
+      "preprocessing_id": "qwen3-native-preprocessing-d9r23-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "precision": "FP16",
+      "quantization": "NONE",
+      "decoding": {
+        "do_sample": false,
+        "max_new_tokens": 32
+      },
+      "preprocessing": {
+        "mode": "official_processor"
+      },
+      "device": {
+        "placement": "auto"
+      },
+      "software_versions": {
+        "python": "3.12.13",
+        "torch": "2.10.0+cu128",
+        "transformers": "4.57.1",
+        "accelerate": "1.11.0",
+        "huggingface_hub": "0.36.0",
+        "safetensors": "0.6.2",
+        "pillow": "11.3.0",
+        "zlib": "1.2.11"
+      },
+      "seed": null,
+      "seed_semantics": "NO_SEED_SENT; GREEDY_NO_SAMPLING; NO_CROSS_HARDWARE_BITWISE_DETERMINISM_CLAIM",
+      "sampling": "DISABLED",
+      "thinking_controls": {
+        "thinking_parameters_sent": false
+      },
+      "max_output_tokens": 32,
+      "batch_size": 1,
+      "prompt_version": "p2-classification-c1-v1",
+      "prompt_source": "prompts/p2_classification_c1_v1.txt",
+      "task_policy": "C1_INDUSTRY_SAFETY_POLICY_REQUIRED_NO_IMPLICIT_POLICY",
+      "adapter_version": "qwen3-classification-adapter-d9r23-v1",
+      "parser_version": "d9r23-native-strict-classification-v1",
+      "runtime_requirements": "VALIDATED_T4X2_CUDA12.8",
+      "evidence": [
+        "configs/pre_freeze/qwen_kaggle_smoke.v1.json",
+        "safeshift/qualification/runtime.py#condition",
+        "configs/pre_freeze/qwen_kaggle_smoke_result.v1.json"
+      ],
+      "selection_reason": "Retain the exact merged runtime/qualification condition prospectively; no semantic-score selection.",
+      "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+      "raw_before_parse_required": true,
+      "semantic_scores_used_for_selection": false,
+      "hardware_contract": {
+        "os": "Linux",
+        "architecture": "x86_64",
+        "gpu": "NVIDIA_T4",
+        "visible_gpu_count": 2,
+        "compute_capability": [
+          7,
+          5
+        ],
+        "cuda_runtime": "12.8",
+        "cpu_offload": false,
+        "disk_offload": false,
+        "automatic_fallback": false
+      }
+    },
+    "qwen2_5": {
+      "model_id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "immutable_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+      "decoding_policy_id": "qwen2_5-classification-d9r23-v1",
+      "preprocessing_id": "qwen2_5-native-preprocessing-d9r23-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "precision": "FP16",
+      "quantization": "NONE",
+      "decoding": {
+        "do_sample": false,
+        "max_new_tokens": 32
+      },
+      "preprocessing": {
+        "mode": "official_processor_capped",
+        "min_pixels": 200704,
+        "max_pixels": 1003520
+      },
+      "device": {
+        "placement": "cuda:0"
+      },
+      "software_versions": {
+        "python": "3.11.11",
+        "torch": "2.6.0+cu124",
+        "torchvision": "0.21.0+cu124",
+        "transformers": "4.51.3",
+        "qwen-vl-utils": "0.0.8",
+        "accelerate": "1.6.0",
+        "pillow": "11.2.1",
+        "huggingface-hub": "0.30.2",
+        "tokenizers": "0.21.1",
+        "safetensors": "0.5.3"
+      },
+      "seed": null,
+      "seed_semantics": "NO_SEED_SENT; GREEDY_NO_SAMPLING; NO_CROSS_HARDWARE_BITWISE_DETERMINISM_CLAIM",
+      "sampling": "DISABLED",
+      "thinking_controls": {
+        "thinking_parameters_sent": false
+      },
+      "max_output_tokens": 32,
+      "batch_size": 1,
+      "prompt_version": "p2-classification-c1-v1",
+      "prompt_source": "prompts/p2_classification_c1_v1.txt",
+      "task_policy": "C1_INDUSTRY_SAFETY_POLICY_REQUIRED_NO_IMPLICIT_POLICY",
+      "adapter_version": "qwen2_5-classification-adapter-d9r23-v1",
+      "parser_version": "d9r23-native-strict-classification-v1",
+      "runtime_requirements": "SINGLE_T4_CUDA12.4_NO_OFFLOAD_NO_FALLBACK",
+      "evidence": [
+        "configs/pre_freeze/qwen2_5_t4_runtime.v1.json",
+        "safeshift/qualification/runtime.py#condition",
+        "configs/pre_freeze/qwen2_5_classification_qualification_result.v1.json"
+      ],
+      "selection_reason": "Retain the exact merged runtime/qualification condition prospectively; no semantic-score selection.",
+      "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+      "raw_before_parse_required": true,
+      "semantic_scores_used_for_selection": false,
+      "hardware_contract": {
+        "os": "Linux",
+        "architecture": "x86_64",
+        "gpu": "NVIDIA_T4",
+        "visible_gpu_count": 1,
+        "compute_capability": [
+          7,
+          5
+        ],
+        "cuda_runtime": "12.4",
+        "cpu_offload": false,
+        "disk_offload": false,
+        "automatic_fallback": false
+      }
+    },
+    "internvl3": {
+      "model_id": "OpenGVLab/InternVL3-2B-hf",
+      "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+      "decoding_policy_id": "internvl3-classification-d9r23-v1",
+      "preprocessing_id": "internvl3-native-preprocessing-d9r23-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "precision": "FP16",
+      "quantization": "NONE",
+      "decoding": {
+        "do_sample": false,
+        "max_new_tokens": 32,
+        "num_beams": 1,
+        "num_return_sequences": 1,
+        "use_cache": true,
+        "cache_implementation": "dynamic",
+        "return_dict_in_generate": false,
+        "output_scores": false,
+        "output_logits": false,
+        "output_attentions": false,
+        "output_hidden_states": false
+      },
+      "preprocessing": {
+        "mode": "official_dynamic_tiles",
+        "size": {
+          "height": 448,
+          "width": 448
+        },
+        "crop_to_patches": true,
+        "min_patches": 1,
+        "max_patches": 12,
+        "image_seq_length": 256,
+        "max_input_tokens": 4096
+      },
+      "device": {
+        "placement": "cuda:0"
+      },
+      "software_versions": {
+        "python": "3.11.11",
+        "torch": "2.6.0+cu124",
+        "transformers": "4.52.4",
+        "tokenizers": "0.21.2",
+        "numpy": "1.26.4",
+        "pillow": "11.2.1",
+        "huggingface-hub": "0.30.2",
+        "safetensors": "0.5.3",
+        "filelock": "3.18.0",
+        "fsspec": "2025.3.2",
+        "jinja2": "3.1.6",
+        "markupsafe": "3.0.2",
+        "mpmath": "1.3.0",
+        "networkx": "3.4.2",
+        "sympy": "1.13.1",
+        "typing-extensions": "4.13.2",
+        "packaging": "25.0",
+        "pyyaml": "6.0.2",
+        "regex": "2024.11.6",
+        "requests": "2.32.3",
+        "charset-normalizer": "3.4.2",
+        "idna": "3.10",
+        "urllib3": "1.26.20",
+        "certifi": "2025.4.26",
+        "tqdm": "4.67.1",
+        "nvidia-cuda-nvrtc-cu12": "12.4.127",
+        "nvidia-cuda-runtime-cu12": "12.4.127",
+        "nvidia-cuda-cupti-cu12": "12.4.127",
+        "nvidia-cudnn-cu12": "9.1.0.70",
+        "nvidia-cublas-cu12": "12.4.5.8",
+        "nvidia-cufft-cu12": "11.2.1.3",
+        "nvidia-curand-cu12": "10.3.5.147",
+        "nvidia-cusolver-cu12": "11.6.1.9",
+        "nvidia-cusparse-cu12": "12.3.1.170",
+        "nvidia-cusparselt-cu12": "0.6.2",
+        "nvidia-nccl-cu12": "2.21.5",
+        "nvidia-nvtx-cu12": "12.4.127",
+        "nvidia-nvjitlink-cu12": "12.4.127",
+        "triton": "3.2.0",
+        "torchvision": "0.21.0+cu124"
+      },
+      "seed": null,
+      "seed_semantics": "NO_SEED_SENT; GREEDY_NO_SAMPLING; NO_CROSS_HARDWARE_BITWISE_DETERMINISM_CLAIM",
+      "sampling": "DISABLED",
+      "thinking_controls": {
+        "thinking_parameters_sent": false
+      },
+      "max_output_tokens": 32,
+      "batch_size": 1,
+      "prompt_version": "p2-classification-c1-v1",
+      "prompt_source": "prompts/p2_classification_c1_v1.txt",
+      "task_policy": "C1_INDUSTRY_SAFETY_POLICY_REQUIRED_NO_IMPLICIT_POLICY",
+      "adapter_version": "internvl3-classification-adapter-d9r23-v1",
+      "parser_version": "d9r23-native-strict-classification-v1",
+      "runtime_requirements": "SINGLE_T4_CUDA12.4_NO_OFFLOAD_NO_FALLBACK",
+      "evidence": [
+        "configs/pre_freeze/internvl3_t4_runtime.v1.json",
+        "safeshift/qualification/runtime.py#condition",
+        "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/internvl3"
+      ],
+      "selection_reason": "Retain the exact merged runtime/qualification condition prospectively; no semantic-score selection.",
+      "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+      "raw_before_parse_required": true,
+      "semantic_scores_used_for_selection": false,
+      "hardware_contract": {
+        "os": "Linux",
+        "architecture": "x86_64",
+        "gpu": "NVIDIA_T4",
+        "visible_gpu_count": 1,
+        "compute_capability": [
+          7,
+          5
+        ],
+        "cuda_runtime": "12.4",
+        "cpu_offload": false,
+        "disk_offload": false,
+        "automatic_fallback": false
+      }
+    },
+    "moondream": {
+      "model_id": "vikhyatk/moondream2",
+      "immutable_revision": "9a7d4024050840e001defacec2b00727e89149e6",
+      "decoding_policy_id": "moondream-classification-d9r23-v1",
+      "preprocessing_id": "moondream-native-preprocessing-d9r23-v1",
+      "precision_or_quantization": "FP16/NONE",
+      "precision": "FP16",
+      "quantization": "NONE",
+      "decoding": {
+        "query": {
+          "temperature": 0,
+          "top_p": 1,
+          "max_tokens": 32,
+          "variant": null
+        }
+      },
+      "preprocessing": {
+        "resize_backend": "PILLOW_ONLY",
+        "bridge_version": "moondream-post-normalization-fp16-v1"
+      },
+      "device": {
+        "placement": "cuda:0"
+      },
+      "software_versions": {
+        "python": "3.11.11",
+        "torch": "2.6.0+cu124",
+        "transformers": "4.52.4",
+        "tokenizers": "0.21.2",
+        "numpy": "1.26.4",
+        "pillow": "11.2.1",
+        "huggingface-hub": "0.30.2",
+        "safetensors": "0.5.3",
+        "filelock": "3.18.0",
+        "fsspec": "2025.3.2",
+        "jinja2": "3.1.6",
+        "markupsafe": "3.0.2",
+        "mpmath": "1.3.0",
+        "networkx": "3.4.2",
+        "sympy": "1.13.1",
+        "typing-extensions": "4.13.2",
+        "packaging": "25.0",
+        "pyyaml": "6.0.2",
+        "regex": "2024.11.6",
+        "requests": "2.32.3",
+        "charset-normalizer": "3.4.2",
+        "idna": "3.10",
+        "urllib3": "1.26.20",
+        "certifi": "2025.4.26",
+        "tqdm": "4.67.1",
+        "nvidia-cuda-nvrtc-cu12": "12.4.127",
+        "nvidia-cuda-runtime-cu12": "12.4.127",
+        "nvidia-cuda-cupti-cu12": "12.4.127",
+        "nvidia-cudnn-cu12": "9.1.0.70",
+        "nvidia-cublas-cu12": "12.4.5.8",
+        "nvidia-cufft-cu12": "11.2.1.3",
+        "nvidia-curand-cu12": "10.3.5.147",
+        "nvidia-cusolver-cu12": "11.6.1.9",
+        "nvidia-cusparse-cu12": "12.3.1.170",
+        "nvidia-cusparselt-cu12": "0.6.2",
+        "nvidia-nccl-cu12": "2.21.5",
+        "nvidia-nvtx-cu12": "12.4.127",
+        "nvidia-nvjitlink-cu12": "12.4.127",
+        "triton": "3.2.0"
+      },
+      "seed": null,
+      "seed_semantics": "NO_SEED_SENT; GREEDY_NO_SAMPLING; NO_CROSS_HARDWARE_BITWISE_DETERMINISM_CLAIM",
+      "sampling": "DISABLED",
+      "thinking_controls": {
+        "stream": false,
+        "reasoning": false,
+        "reasoning_semantics": "PINNED_NATIVE_DEFAULT_FALSE",
+        "spatial_refs": null
+      },
+      "max_output_tokens": 32,
+      "batch_size": 1,
+      "prompt_version": "p2-classification-c1-v1",
+      "prompt_source": "prompts/p2_classification_c1_v1.txt",
+      "task_policy": "C1_INDUSTRY_SAFETY_POLICY_REQUIRED_NO_IMPLICIT_POLICY",
+      "adapter_version": "moondream-classification-adapter-d9r23-v1",
+      "parser_version": "d9r23-native-strict-classification-v1",
+      "runtime_requirements": "SINGLE_T4_CUDA12.4_NO_OFFLOAD_NO_FALLBACK",
+      "evidence": [
+        "configs/pre_freeze/moondream_t4_runtime.v1.json",
+        "safeshift/qualification/runtime.py#condition",
+        "configs/pre_freeze/d9r17b_e_classification_qualification_results.v1.json#/runs/moondream",
+        "notes/w2_moondream_runner_prep.md (native API table, query reasoning=False/stream=False)"
+      ],
+      "selection_reason": "Retain the exact merged runtime/qualification condition prospectively; no semantic-score selection.",
+      "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+      "raw_before_parse_required": true,
+      "semantic_scores_used_for_selection": false,
+      "hardware_contract": {
+        "os": "Linux",
+        "architecture": "x86_64",
+        "gpu": "NVIDIA_T4",
+        "visible_gpu_count": 1,
+        "compute_capability": [
+          7,
+          5
+        ],
+        "cuda_runtime": "12.4",
+        "cpu_offload": false,
+        "disk_offload": false,
+        "automatic_fallback": false
+      },
+      "native_api": "query",
+      "tokenizer_repo": "moondream/starmie-v1",
+      "tokenizer_revision": "35192e10a54e36eabe0a7cc57a2c1aab371cafc5"
+    }
+  }
+}

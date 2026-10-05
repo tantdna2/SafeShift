@@ -2266,3 +2266,67 @@ production benchmark harness, end-to-end rehearsal, implementation freeze and
 protocol freeze remain PENDING. `inspecsafe_inference_authorized=false`;
 MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN; PROTOCOL_FREEZE=PENDING; MERGE=NO.
 Stop after Draft PR A; no task B until a separate prompt.
+
+## D9R23 — Classification production contract and invalid-output policy (2026-10-05)
+
+Authority: Research Lead task W2.6-D9R23-CLASSIFICATION-PRODUCTION-CONTRACT.
+Stacked BASE is PR #79 HEAD `b28e4665904ecd0ab5057a1bc92e263a81c3e8c7`.
+This prospective decision precedes implementation; it is not protocol freeze.
+RQ1/RQ2/RQ3 scope, dataset/split/labels, 12 atoms and seven groups are unchanged.
+
+Adopt `p2-classification-c1-v1`: reproduce the four level definitions and exact
+five-industry rule table from the recorded upstream prompt in
+`notes/w2_model_prompt_interface_decision_brief.md`, section 11.1. Preserve
+multi-industry relevance and no-risk semantics. P2 requests only strict JSON
+with safety_level Level01/Level02/Level03/Level04. Level one/two/three map to
+Level01/02/03; no abnormalities observed maps to Level04. This is canonical
+output vocabulary, not a change to ground-truth policy. The upstream P1
+description/Unrecognizable response format remains historical/P1 only; P2 adds
+no fifth canonical class. Unparseable outputs are INVALID without forced class.
+No D6 atom list, localization instruction, GT or sample metadata is supplied.
+All four models receive identical semantic prompt text; only native formatting
+may differ. Prompt UTF-8 bytes and SHA-256 are versioned in the D9R23 policy.
+
+Retain the exact merged runtime/qualification conditions of Qwen3, Qwen2.5,
+InternVL3 and Moondream; choose no settings from semantic scores. PR #67 at
+`e85300ab3ec122f819a2685613332578f7e203d8` is source-only: selectively reuse
+classification registry/strict native validation and evidence-backed conditions,
+not its grounding architecture, metric engine or old current-status overlays.
+Moondream uses query only; detect settings are not a production dependency.
+Its reasoning=false native default and stream=false are retained. Its pinned
+precision bridge remains required. No runner is invoked or requalified here.
+
+Resolve classification parse-failure accounting prospectively, superseding any
+prior D5/implementation reading that silently drops INVALID or fabricates a
+canonical decision. This is an explicit approved failure-policy clarification:
+
+- Four-class Balanced Accuracy/Macro-F1: INVALID never becomes Level04 or any
+  class. It contributes FN to its true class, with no FP to an invented class.
+  Existing D5 absent-class/undefined-metric conventions remain in force.
+- Binary anomaly: canonical FNR/FPR require canonical decisions; report them
+  as parse-conditional whenever relevant INVALID outputs exist. Denominators
+  are valid GT-anomaly and valid GT-normal counts respectively, never silently
+  labeled full-cohort. Separately, failure-aware anomaly non-detection uses all
+  GT-anomaly samples: predicted Level04 OR INVALID counts as failure to produce
+  an anomaly decision. This metric is not called FNR.
+- Level01: canonical recall/FNR use canonical decisions with GT Level01.
+  Separately report failure-aware Level01 protection failure over all GT Level01:
+  any canonical non-Level01 OR INVALID is failure. Never call it canonical FNR.
+- Always expose total N, valid canonical N, invalid N, parse success/invalid
+  output rates, class/stratum denominators, parse-conditional metrics and
+  failure-aware metrics separately. Empty denominators are undefined, not zero.
+
+Adapters accept only durably stored native envelopes, retain strict JSON and
+canonical values, never repair/lowercase/substring-map. Raw bytes and provenance
+(sample/run/call IDs, prompt/version/hash, model/revision, settings/software,
+Git commit and artifact location) are persisted and verified before parsing.
+Storage failure blocks parsing. PaliGemma raises CLASSIFICATION_NOT_PARTICIPATING.
+
+Current C1 and conditions: IMPLEMENTED / FREEZE_CANDIDATE. Production adapters:
+IMPLEMENTED / TESTED_WITH_FAKE_OR_EXISTING_SYNTHETIC_ONLY after passing tests;
+not runtime-qualified on InspecSafe. Production harness, full metric engine and
+end-to-end rehearsal remain future tasks. Implementation/protocol freeze PENDING;
+inspecsafe_inference_authorized=false. No model/GPU execution, InspecSafe,
+merge, PR #67 mutation or task C. Current artifacts and validation:
+`configs/pre_freeze/production_classification_policy.d9r23.v1.json` and
+`notes/w2_d9r23_classification_production_contract.md`.

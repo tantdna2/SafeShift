@@ -1440,3 +1440,36 @@ Draft PR review is separate. Stop after PR A; wait for prompt B.
   BASE 116 tests, 114 PASS / 2 SKIP. Same scope-guard conflict; details in note.
 - [x] Preserve the pinned old readiness note byte-for-byte; use a separate
   D9R22 readiness note. Diff checks PASS; no dataset/weights/raw outputs staged.
+
+## W2.6-D9R23-CLASSIFICATION-PRODUCTION-CONTRACT (2026-10-05; CURRENT, append-only)
+
+Stacked on exact PR A HEAD `b28e4665904ecd0ab5057a1bc92e263a81c3e8c7`;
+Draft PR B targets `w2.6-d9r22-seminar-rq3-disagreement-redesign`, not main.
+D9R22 scientific scope/config and all historical runtime/qualification artifacts
+remain unchanged. Current implementation/readiness authority:
+[D9R23 note](notes/w2_d9r23_classification_production_contract.md) and
+[policy](configs/pre_freeze/production_classification_policy.d9r23.v1.json).
+
+- [x] Inspect PR #67 source-only; selectively reuse classification registry,
+  native validation and runtime-backed conditions, without grounding architecture.
+- [x] Implement versioned exact C1 industry table prompt/hash and canonical
+  output vocabulary; no GT, metadata or D6 atom-list injection.
+- [x] Implement four-model conditions as FREEZE_CANDIDATE and strict adapters
+  behind verified raw-before-parse storage. PaliGemma remains nonparticipating.
+- [x] Record prospective INVALID accounting decision and executable examples;
+  no fabricated Level04, explicit parse-conditional/failure-aware denominators.
+- [ ] Complete full RQ1/RQ2/RQ3 metric engine and production benchmark harness.
+- [ ] End-to-end rehearsal; new C1 prompt runtime behavior remains untested.
+- [ ] Implementation freeze and protocol freeze.
+
+MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN;
+inspecsafe_inference_authorized=false; PROTOCOL_FREEZE=PENDING; MERGE=NO.
+Stop after Draft PR B; wait for prompt C.
+
+### D9R23 validation record (append-only)
+
+- [x] Focused D9R23 plus relevant existing tests: 255/255 PASS.
+- [x] Exact A_HEAD BASE full suite: 1521 tests, 5 failures / 25 errors / 2 skips.
+- [x] D9R23 HEAD full suite: 1540 tests, 5 failures / 25 errors / 2 skips;
+  all 30 BASE failure/error identities persist, `NEW_FAILURE_IDENTITIES_VS_BASE=0`.
+- [x] Diff and staged diff checks PASS; no model/GPU/InspecSafe execution.
