@@ -1548,3 +1548,25 @@ Grounding remains deferred. Stop after Draft PR D; do not start D9R26.
   NEW_FAILURE_IDENTITIES_VS_BASE=0; full suite is NOT PASS. Exact identities and
   environment/newline controls are recorded in the D9R25 implementation note.
 - [x] Diff and staged diff checks PASS; no dataset/weights/raw outputs staged.
+
+### D9R25 backend-binding correction (2026-10-06; append-only)
+
+- [x] Remove caller backend injection from public production_run.
+- [x] Version the internal four-model registry; fail closed pending native bridges.
+- [x] Keep internal/scripted test injection and generated-image-only rehearsal.
+- [x] Separate Git source repo from temporary artifact storage; no provenance fallback.
+- [ ] D9R26 exact source-backed bridges reusing native runners and static/fake
+  integration tests (separate task; not begun; no model execution in Codex).
+
+P2_PRODUCTION_HARNESS=IMPLEMENTED_OFFLINE_SYNTHETIC_ONLY;
+PRODUCTION_BACKEND_BINDING=FAIL_CLOSED_PENDING_D9R26_SOURCE_BACKED_BRIDGES;
+CALLER_BACKEND_INJECTION=FORBIDDEN; INSPECSAFE=NOT_RUN;
+inspecsafe_inference_authorized=false; MODEL_GPU_EXECUTION=NO;
+PROTOCOL_FREEZE=PENDING; IMPLEMENTATION_FREEZE=PENDING; MERGE=NO.
+
+- [x] Correction focused tests 45/45 PASS; regression set 224/224 PASS.
+- [x] Same-environment exact BASE/HEAD full discovery: 1533/1578 tests;
+  both 4 failures, 2 errors, 2 skips, identical six failure/error identities.
+  NEW_FAILURE_IDENTITIES_VS_BASE=0; full suite NOT PASS. No dependency changes.
+- [x] Diff checks PASS; correction preserves active scientific contracts and
+  original raw/firewall/shard/retry implementation semantics.

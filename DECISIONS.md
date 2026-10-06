@@ -2436,3 +2436,23 @@ or permission to run InspecSafe. No model/GPU/dataset inference, protocol freeze
 merge or Antigravity. D9R22/23/24 active contracts and all historical results stay
 unchanged. Grounding remains deferred; both freezes PENDING; InspecSafe authority
 false. D9R26 rehearsal/runbooks/freeze candidate is the next separate task.
+
+### D9R25 production backend binding correction (2026-10-06; append-only)
+
+Research Lead correction for existing Draft PR #82, original HEAD
+`2aa5a0a731a1c84b48be503184dfdf21690bed1c`, unchanged PR C base
+`ac8825e7d0e21e437fda044cadc3aa8b4fc8f508`.
+Public production_run now forbids caller backend/factory/callback injection.
+The versioned internal four-model registry fails closed with
+PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN, after auth/dataset/shard/attempt checks.
+D9R26 must bind exact source-backed bridges to existing validated native runners,
+without duplicating model inference implementations, with static/fake integration
+tests and no model execution in Codex. Pending integration is not runtime failure.
+
+Synthetic rehearsal retains exact ScriptedBackend-only injection and generated
+images. Its repo parameter is the explicit Git source/config repository; a
+separate artifact_repo provides temporary storage without changing Git identity.
+No silent ROOT/cwd fallback. Both freezes remain PENDING, InspecSafe authority
+false, no model/GPU/InspecSafe execution, no merge or D9R26 work. Dataset, prompt,
+metrics, scope, grounding deferral and immutable attempt/raw/firewall semantics
+are preserved.

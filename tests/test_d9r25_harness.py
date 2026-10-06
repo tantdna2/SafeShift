@@ -6,6 +6,7 @@ import hashlib
 import inspect
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import socket
@@ -49,20 +50,21 @@ class HarnessTests(unittest.TestCase):
             if model == "internvl3":
                 outputs = [data.json_bytes({**json.loads(x), "run_id": run_id, "call_id": "call1"}) for x in outputs]
         backend = h.ScriptedBackend(outputs)
-        path = h.rehearse(model=model, run_id=run_id, sample_ids=ids, backend=backend, repo=self.repo, **kwargs)
+        path = h.rehearse(model=model, run_id=run_id, sample_ids=ids, backend=backend,
+                          repo=ROOT, artifact_repo=self.repo, **kwargs)
         return path, backend
 
     def read(self, path):
         return json.loads(path.read_bytes())
 
     def test_current_production_guard_precedes_all_reads_and_load(self):
-        factory = Mock()
-        with patch.object(h, "verify_dataset", side_effect=AssertionError("NO_DATASET_READ")) as verify:
+        with patch.object(h, "resolve_production_backend") as resolver, \
+                patch.object(h, "verify_dataset", side_effect=AssertionError("NO_DATASET_READ")) as verify:
             with self.assertRaisesRegex(PermissionError, h.BLOCK):
                 h.production_run(model="moondream", run_id="denied", dataset_root="InspecSafe-V1",
-                                 manifest_path="missing", provenance_path="missing", backend_factory=factory, repo=self.repo)
+                                 manifest_path="missing", provenance_path="missing", repo=self.repo)
             verify.assert_not_called()
-        factory.assert_not_called()
+        resolver.assert_not_called()
 
     def test_no_force_environment_or_caller_authority_bypass(self):
         with patch.dict("os.environ", {"SAFESHIFT_FORCE": "1", "INSPECSAFE_AUTHORIZED": "true"}):
@@ -72,6 +74,95 @@ class HarnessTests(unittest.TestCase):
         self.assertFalse({"force", "unsafe", "ignore_freeze", "skip_authorization", "authority"} & set(params))
         with self.assertRaises(TypeError):
             h.authorize_production(self.repo, force=True)
+
+    def test_public_production_has_no_backend_injection(self):
+        params = inspect.signature(h.production_run).parameters
+        self.assertEqual(set(params), {"model", "run_id", "dataset_root", "manifest_path",
+                         "provenance_path", "shard_count", "shard_index", "repo", "rerun_of"})
+        for name in ("backend_factory", "backend", "factory", "runner_factory", "model_factory", "generate_callback"):
+            with self.subTest(name=name), self.assertRaises(TypeError):
+                h.production_run(model="moondream", run_id="denied", dataset_root="missing",
+                                 manifest_path="missing", provenance_path="missing", **{name: Mock()})
+
+    def test_exact_internal_registry_and_pending_resolver(self):
+        c = h.contract()
+        self.assertEqual(tuple(h._PRODUCTION_BACKENDS), h.MODELS)
+        self.assertEqual(dict(h._PRODUCTION_BACKENDS), c["production_backend_registry"])
+        self.assertEqual(h.PRODUCTION_BACKEND_REGISTRY_VERSION, c["production_backend_registry_version"])
+        self.assertEqual(c["caller_backend_injection"], "FORBIDDEN")
+        self.assertEqual(c["production_backend_binding"], "FAIL_CLOSED_PENDING_D9R26_SOURCE_BACKED_BRIDGES")
+        for model in h.MODELS:
+            with self.subTest(model=model), self.assertRaisesRegex(PermissionError, "PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN"):
+                h.resolve_production_backend(model)
+        for model in ("paligemma", "ovis", "kosmos", "plamo", "smolvlm2"):
+            with self.subTest(model=model), self.assertRaisesRegex(ValueError, "CLASSIFICATION_NOT_PARTICIPATING"):
+                h.resolve_production_backend(model)
+        with self.assertRaises(TypeError):
+            h._PRODUCTION_BACKENDS["moondream"] = Mock()
+
+    def test_production_auth_dataset_shard_attempt_before_internal_resolution(self):
+        rows = [{"sample_id": "a", "image_locator": "generated.png", "image_sha256": data.sha(h.synthetic_image())}]
+        calls = []
+        original = h.resolve_production_backend
+        def resolve(model):
+            calls.append("resolve")
+            return original(model)
+        with patch.object(h, "authorize_production", side_effect=lambda repo: (calls.append("auth") or (BASE, {}))), \
+                patch.object(h, "verify_dataset", side_effect=lambda *args: (calls.append("dataset") or (rows, "hash"))), \
+                patch.object(h, "resolve_production_backend", side_effect=resolve) as resolver:
+            args = dict(model="moondream", run_id="pending", repo=self.repo, dataset_root="unused",
+                        manifest_path="unused", provenance_path="unused")
+            with self.assertRaisesRegex(ValueError, "INVALID_SHARD"):
+                h.production_run(**args, shard_count=0)
+            resolver.assert_not_called()
+            calls.clear()
+            with self.assertRaisesRegex(PermissionError, "PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN"):
+                h.production_run(**args)
+            self.assertEqual(calls, ["auth", "dataset", "resolve"])
+            self.assertFalse(h._run_path(self.repo, "moondream", "pending").exists())
+            h._run_path(self.repo, "moondream", "existing").mkdir(parents=True)
+            resolver.reset_mock()
+            with self.assertRaisesRegex(FileExistsError, "EXISTING_RUN"):
+                h.production_run(**{**args, "run_id": "existing"})
+            resolver.assert_not_called()
+
+    def test_rehearsal_source_commit_independent_of_artifact_root_and_cwd(self):
+        # Real temporary Git source A, separate from this checkout and outputs.
+        # It holds the declared code/config source, not merely an output folder.
+        source_file = self.repo / "safeshift/runners/p2_harness.py"
+        source_file.parent.mkdir(parents=True)
+        shutil.copyfile(ROOT / "safeshift/runners/p2_harness.py", source_file)
+        def git(*args):
+            return subprocess.check_output(["git", *args], cwd=self.repo, stderr=subprocess.DEVNULL)
+        git("init")
+        git("add", ".")
+        git("-c", "user.name=Synthetic Test", "-c", "user.email=synthetic@example.invalid",
+            "-c", "commit.gpgsign=false", "commit", "-m", "synthetic source A")
+        commit_a = git("rev-parse", "HEAD").decode().strip()
+        self.assertNotEqual(commit_a, h._git(ROOT, "rev-parse", "HEAD").decode().strip())
+        with TemporaryDirectory() as out_a, TemporaryDirectory() as out_b:
+            old_cwd = Path.cwd()
+            try:
+                os.chdir(out_b)
+                for directory in (out_a, out_b):
+                    root = h.rehearse(model="moondream", run_id="same", sample_ids=("s",),
+                                      backend=h.ScriptedBackend([native("moondream", '{"safety_level":"Level01"}')]),
+                                      repo=self.repo, artifact_repo=Path(directory))
+                    self.assertEqual(self.read(root / "run_manifest.json")["git_commit"], commit_a)
+                    meta = self.read(next((root / "calls").glob("*/metadata.json")))
+                    self.assertEqual(meta["git_commit"], commit_a)
+                    self.assertEqual(meta["source_kind"], "SYNTHETIC")
+            finally:
+                os.chdir(old_cwd)
+
+    def test_rehearsal_default_source_and_non_git_source_rejection(self):
+        root = h.rehearse(model="moondream", run_id="default-source", sample_ids=("s",),
+                          backend=h.ScriptedBackend([b"invalid"]), artifact_repo=self.repo)
+        self.assertEqual(self.read(root / "run_manifest.json")["git_commit"],
+                         h._git(ROOT, "rev-parse", "HEAD").decode().strip())
+        with self.assertRaises(subprocess.CalledProcessError):
+            h.rehearse(model="moondream", run_id="not-source", sample_ids=("s",),
+                       backend=h.ScriptedBackend([]), repo=self.repo)
 
     def test_forged_uncommitted_freeze_cannot_authorize(self):
         c = h.contract(self.repo)
@@ -447,21 +538,21 @@ class DatasetTests(unittest.TestCase):
 
     def test_wrong_fingerprint_before_backend_factory(self):
         self.write([], fingerprint="wrong")
-        factory = Mock()
-        with patch.object(h, "authorize_production", return_value=(BASE, {})):
+        with patch.object(h, "resolve_production_backend") as resolver, \
+                patch.object(h, "authorize_production", return_value=(BASE, {})):
             with self.assertRaisesRegex(ValueError, "FINGERPRINT"):
                 h.production_run(model="moondream", run_id="r", dataset_root=self.root,
-                                 manifest_path=self.manifest, provenance_path=self.provenance, backend_factory=factory)
-        factory.assert_not_called()
+                                 manifest_path=self.manifest, provenance_path=self.provenance)
+        resolver.assert_not_called()
 
     def test_wrong_count_before_backend_factory(self):
         self.write([])
-        factory = Mock()
-        with patch.object(h, "authorize_production", return_value=(BASE, {})):
+        with patch.object(h, "resolve_production_backend") as resolver, \
+                patch.object(h, "authorize_production", return_value=(BASE, {})):
             with self.assertRaisesRegex(ValueError, "COUNT"):
                 h.production_run(model="moondream", run_id="r", dataset_root=self.root,
-                                 manifest_path=self.manifest, provenance_path=self.provenance, backend_factory=factory)
-        factory.assert_not_called()
+                                 manifest_path=self.manifest, provenance_path=self.provenance)
+        resolver.assert_not_called()
 
     def test_duplicate_and_schema_rejected(self):
         self.write([dict.fromkeys(FIELDS, "same")] * 5013)

@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 import struct
 import zlib
+from types import MappingProxyType
 
 from safeshift.data.p2_execution import (
     execution_records, json_bytes, safe_path, sha, shard, verify_dataset,
@@ -30,6 +31,21 @@ from .storage import FileRawStore
 CONTRACT_PATH = "configs/pre_freeze/d9r25_harness_contract.v1.json"
 BLOCK = "NO_INSPECSAFE_INFERENCE_BEFORE_PROTOCOL_FREEZE"
 ADAPTER = "d9r25-durable-d9r23-native-adapter-v1"
+PRODUCTION_BACKEND_REGISTRY_VERSION = "d9r25-production-backend-binding-v1"
+_PRODUCTION_BACKENDS = MappingProxyType({
+    model: "PENDING_D9R26_SOURCE_BACKED_BRIDGE" for model in MODELS
+})
+
+
+def resolve_production_backend(model_key):
+    """Internal fixed binding, never a caller-selectable implementation.
+
+    D9R26 must bind validated native runners here with source-backed tests.
+    Pending integration is not a runtime qualification failure.
+    """
+    if model_key not in _PRODUCTION_BACKENDS:
+        raise ValueError("CLASSIFICATION_NOT_PARTICIPATING")
+    raise PermissionError("PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN")
 
 
 def contract(repo=ROOT):
@@ -110,7 +126,7 @@ def authorize_production(repo=ROOT):
 
 
 def production_run(*, model, run_id, dataset_root, manifest_path, provenance_path,
-                   backend_factory, shard_count=1, shard_index=0, repo=ROOT,
+                   shard_count=1, shard_index=0, repo=ROOT,
                    rerun_of=None):
     """Guard precedes dataset reads, factory construction and backend load."""
     entry = _model(model, repo)
@@ -123,7 +139,7 @@ def production_run(*, model, run_id, dataset_root, manifest_path, provenance_pat
         return raw
     return _execute(repo=repo, model=model, entry=entry, run_id=run_id, rows=rows,
                     source_hash=manifest_hash, dataset_fingerprint=contract(repo)["dataset_fingerprint"],
-                    source="INSPECSAFE", image_reader=image, backend_factory=backend_factory,
+                    source="INSPECSAFE", image_reader=image,
                     shard_count=shard_count, shard_index=shard_index, commit=commit,
                     rerun_of=rerun_of, rerun_authorizations=authority.get("reruns", []))
 
@@ -214,11 +230,12 @@ def _rerun(repo, model, run_id, reference, authorizations):
 
 
 def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerprint,
-             source, image_reader, backend_factory, shard_count, shard_index, commit,
-             rerun_of=None, rerun_authorizations=()):
+             source, image_reader, shard_count, shard_index, commit, backend_factory=None,
+             rerun_of=None, rerun_authorizations=(), artifact_repo=None):
     selected, shard_meta = shard(rows, shard_count, shard_index, source_hash)
-    _rerun(repo, model, run_id, rerun_of, rerun_authorizations)
-    root = _run_path(repo, model, run_id)
+    storage_repo = repo if artifact_repo is None else artifact_repo
+    _rerun(storage_repo, model, run_id, rerun_of, rerun_authorizations)
+    root = _run_path(storage_repo, model, run_id)
     if root.exists():
         raise FileExistsError("EXISTING_RUN_RESUME_FORBIDDEN")
     # A new name must not silently conceal a repeat scientific attempt.
@@ -232,6 +249,9 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
                               for row in selected)
             if overlapping and (rerun_of is None or rerun_of["run_id"] != prior["run_id"]):
                 raise PermissionError("PREVIOUS_ATTEMPT_REQUIRES_EXPLICIT_AUTHORIZED_RERUN")
+    # Resolution follows auth/dataset/shard/attempt checks and precedes all load.
+    # Only this private executor retains test injection; production exposes none.
+    bound_backend = resolve_production_backend(model) if backend_factory is None else None
     root.mkdir(parents=True, exist_ok=False)  # includes failed/interrupted runs: no resume
     hashes = identities(repo)
     identity = {"protocol_id": "P2", "identity_sha256": hashes,
@@ -248,7 +268,7 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
     statuses = {r["sample_id"]: "NOT_ATTEMPTED" for r in selected}
     state, failure = "COMPLETED", None
     try:
-        backend = backend_factory()
+        backend = bound_backend if backend_factory is None else backend_factory()
         backend.load(deepcopy(entry))
         observation = backend.observe()
         # Exact allowed fields prevent accidentally persisting tokens/env dumps.
@@ -362,11 +382,20 @@ def synthetic_image():
             + chunk(b"IDAT", zlib.compress(b"\x00\xff\xff\xff")) + chunk(b"IEND", b""))
 
 
-def rehearse(*, model, run_id, sample_ids, backend, repo=ROOT, shard_count=1, shard_index=0, rerun_of=None):
-    """Separate synthetic capability; cannot open a caller's dataset/image root."""
+def rehearse(*, model, run_id, sample_ids, backend, repo=ROOT, artifact_repo=None,
+             shard_count=1, shard_index=0, rerun_of=None):
+    """repo is the Git source/config root; artifact_repo is storage only.
+
+    Neither argument supplies input images. A temporary output directory must
+    not be passed as the Git source. No fallback to this module's ROOT or cwd.
+    """
     if type(backend) is not ScriptedBackend:
         raise TypeError("BUILTIN_SCRIPTED_BACKEND_REQUIRED")
     entry = _model(model, repo)
+    source_root = Path(repo).resolve()
+    if Path(_git(source_root, "rev-parse", "--show-toplevel").decode().strip()).resolve() != source_root:
+        raise ValueError("EXPLICIT_GIT_SOURCE_ROOT_REQUIRED")
+    commit = _git(source_root, "rev-parse", "HEAD").decode().strip()
     image = synthetic_image()
     rows = execution_records({"sample_id": sid, "image_locator": "generated.png", "image_sha256": sha(image)}
                              for sid in sample_ids)
@@ -374,4 +403,4 @@ def rehearse(*, model, run_id, sample_ids, backend, repo=ROOT, shard_count=1, sh
                     source_hash=sha(json_bytes(rows)), dataset_fingerprint="SYNTHETIC_NOT_INSPECSAFE",
                     source="SYNTHETIC", image_reader=lambda row: image,
                     backend_factory=lambda: backend, shard_count=shard_count, shard_index=shard_index,
-                    commit=_git(ROOT, "rev-parse", "HEAD").decode().strip(), rerun_of=rerun_of)
+                    commit=commit, rerun_of=rerun_of, artifact_repo=artifact_repo)

@@ -22,6 +22,22 @@
   "freeze_manifest_path": "configs/frozen/p2_execution_authority.v1.json",
   "raw_before_parse": "ATOMIC_EXCLUSIVE_PUBLICATION_FSYNC_HASH_SIZE_REREAD_VERIFIED",
   "backend_payload_fields": ["image_bytes", "prompt"],
+  "production_backend_binding": "FAIL_CLOSED_PENDING_D9R26_SOURCE_BACKED_BRIDGES",
+  "caller_backend_injection": "FORBIDDEN",
+  "production_backend_registry_version": "d9r25-production-backend-binding-v1",
+  "production_backend_registry": {
+    "qwen3": "PENDING_D9R26_SOURCE_BACKED_BRIDGE",
+    "qwen2_5": "PENDING_D9R26_SOURCE_BACKED_BRIDGE",
+    "internvl3": "PENDING_D9R26_SOURCE_BACKED_BRIDGE",
+    "moondream": "PENDING_D9R26_SOURCE_BACKED_BRIDGE"
+  },
+  "rehearsal_provenance": "REPO_IS_GIT_SOURCE_ARTIFACT_REPO_IS_STORAGE_ONLY_NO_SOURCE_FALLBACK",
+  "d9r26_binding_requirements": [
+    "BIND_EXACT_FOUR_SOURCE_BACKED_BRIDGES_TO_EXISTING_VALIDATED_NATIVE_RUNNERS",
+    "NO_DUPLICATED_MODEL_INFERENCE_IMPLEMENTATION",
+    "SOURCE_BACKED_STATIC_AND_FAKE_INTEGRATION_TESTS",
+    "NO_MODEL_EXECUTION_IN_CODEX"
+  ],
   "shard_algorithm_version": "sample-id-lexical-modulo-v1",
   "semantic_retry": false,
   "automatic_retry": false,

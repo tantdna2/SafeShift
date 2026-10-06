@@ -59,18 +59,39 @@ Backend `load` receives D9R23 execution conditions, not sample/evaluation data.
 
 ## Backend and synthetic boundary
 
-The injected backend interface is `load(condition)`, `observe()` and
+The public `production_run` accepts operational inputs only. It has no backend,
+factory or generation callback parameter. The internal versioned registry
+`d9r25-production-backend-binding-v1` binds exactly `qwen3`, `qwen2_5`, `internvl3`
+and `moondream` to `PENDING_D9R26_SOURCE_BACKED_BRIDGE`. Current internal resolution
+fails with `PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN`, after authorization, dataset,
+shard and prior-attempt checks, before any backend load or run reservation.
+Fake dependency injection is confined to the private executor/tests.
+
+The future bound-backend interface is `load(condition)`, `observe()` and
 `generate(image_bytes=..., prompt=...)`. Its observation must match the exact
 D9R23 software/hardware contract; unknown observation fields are rejected.
 Generation returns the complete losslessly serialized native envelope as bytes
 or UTF-8 text. Native runner integration and actual environment observations
 remain unexecuted; no model library is imported or downloaded by the harness.
+Self-reported observation metadata alone is not scientific model binding.
+D9R26 must reuse the existing validated native runners for the exact four
+source-backed bridges, without duplicating model inference/loader code, and add
+static/fake integration tests. No model execution in Codex is authorized. This
+pending integration is not a runtime qualification failure.
 
 `rehearse` is a separate entrypoint: images are generated 1x1 PNGs and the backend
 must be the built-in `ScriptedBackend`. It accepts neither image paths/dataset
 roots nor arbitrary backend callbacks. Scripted outputs can be native bytes,
 text or `GenerationFailure` with optional partial bytes. Observations are
 explicitly SIMULATED. It cannot become a real-image execution bypass.
+
+For rehearsal, `repo` names the actual Git source/config root; its own HEAD is
+recorded in run and call metadata. It must be a Git repository root. There is no
+fallback to this module's ROOT or to the current working directory. Optional
+`artifact_repo` names a separate storage root, under which the usual relative
+`data/processed/benchmark/p2/...` layout is used. Temporary output directories
+are never passed off as source repositories. Tests cover an independent Git
+source commit A and two temporary storage roots from another working directory.
 
 ## Artifacts and scientific attempts
 
@@ -142,6 +163,8 @@ is the deterministic programmatic entrypoint; no execution CLI is introduced.
 `MODEL_GPU_EXECUTION=NO`; `INSPECSAFE=NOT_RUN`;
 `inspecsafe_inference_authorized=false`; `PROTOCOL_FREEZE=PENDING`;
 `IMPLEMENTATION_FREEZE=PENDING`. Grounding remains deferred.
+`PRODUCTION_BACKEND_BINDING=FAIL_CLOSED_PENDING_D9R26_SOURCE_BACKED_BRIDGES`;
+caller backend injection is FORBIDDEN.
 Next separately authorized task: D9R26 rehearsal/runbooks/freeze candidate.
 No D9R26 work is performed here.
 
@@ -180,3 +203,26 @@ Historical/environment errors:
 
 Only D9R22/D9R23 scope-test allowlists were extended for the explicit D9R25
 files; no active scientific contract or unrelated failing test was rewritten.
+
+## Backend-binding correction (2026-10-06)
+
+Research Lead identified a production integrity gap in the original PR #82
+head `2aa5a0a731a1c84b48be503184dfdf21690bed1c`: callers could supply a fake
+backend after freeze. This correction removes that public choice and adds the
+internal pending registry described above. It also corrects rehearsal source
+provenance rather than borrowing ROOT's SHA for a different repo. The preceding
+validation record describes the original implementation; correction-specific
+same-environment BASE/HEAD evidence follows separately.
+
+Correction validation: focused **45/45 PASS**; the same regression command
+listed above **224/224 PASS**. `python -m unittest discover -v` was rerun on
+exact BASE `ac8825e7d0e21e437fda044cadc3aa8b4fc8f508` and corrected HEAD using
+the same Python/dependency state and matching per-file checkout newlines.
+`BASE_TOTAL=1533`; `HEAD_TOTAL=1578`;
+`BASE_FAILURE_ERROR_IDENTITIES=6`; `HEAD_FAILURE_ERROR_IDENTITIES=6`;
+`NEW_FAILURE_IDENTITIES_VS_BASE=0`; removed identities=0.
+Both runs have 4 failures, 2 errors, 2 skips: exactly the four historical failures
+and two historical/environment errors enumerated above. Full suite is NOT PASS.
+No inference/runtime dependency was installed, loaded or executed. Counts are
+specific to this environment (torch absent), not an assertion about older runs.
+`git diff --check` and `git diff --cached --check` pass.
