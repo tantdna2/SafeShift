@@ -1387,3 +1387,56 @@ Closure scope is append-only TASKS.md and DECISIONS.md. No code, config, test
 or fixture PNG changes. Validation: git diff --check and exact-base append-only /
 two-file scope checks; model tests are not run because no code changes.
 The separate closure PR is delivered as DRAFT; MERGE=NO for this closure task.
+
+## W2.6-D9R22-SEMINAR-RQ3-DISAGREEMENT-REDESIGN (2026-10-05; CURRENT, append-only)
+
+Prospective Research Lead redesign at verified remote main / BASE
+`a227e18330b49fb8f848934da164a776bc9f6a50`; local main is not the base.
+This is the current Seminar scope/readiness overlay; earlier checklists and
+grounding blockers retain historical meanings. Authority and validation:
+[D9R22 scope](configs/pre_freeze/d9r22_seminar_scope.v1.json),
+[decision](DECISIONS.md#d9r22--prospective-seminar-rq3-disagreement-redesign-2026-10-05),
+[readiness](notes/w2_d9r22_seminar_readiness.md)
+and [note](notes/w2_d9r22_seminar_scope_redesign.md).
+
+- [x] Record prospective title and RQ3 redesign; RQ1/RQ2 semantics unchanged.
+- [x] Add versioned current scope with nine predeclared RQ3 metric families;
+  reuse classification predictions only, no extra inference or implementation.
+- [x] Preserve four D9R18 classification participants; PaliGemma remains
+  NOT_PARTICIPATING, SmolVLM2 inactive, no fifth ensemble model.
+- [x] Defer primary/exploratory grounding to future thesis extension;
+  historical FAIL/PASS, artifacts and decisions are preserved.
+- [x] Current evidence readiness: model provenance, runtime runners,
+  classification participation and external gate history COMPLETE.
+- [ ] Exact classification production contract.
+- [ ] Production classification adapters/parsers.
+- [ ] Exact decoding/preprocessing/precision freeze.
+- [ ] RQ1/RQ2/RQ3-new metric implementation, including exact RQ3 contract.
+- [ ] Production benchmark harness.
+- [ ] End-to-end rehearsal.
+- [ ] Implementation freeze.
+- [ ] Protocol freeze.
+
+`PRIMARY_SEMINAR_GROUNDING=DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE`;
+CALL2_ORCHESTRATION_BLOCKER, MOONDREAM_CALL2_ORCHESTRATION_BLOCKER and
+exploratory grounding blockers = NOT_ACTIVE_SEMINAR_FREEZE_BLOCKER.
+Deferral is not a scientific FAIL or qualification promotion.
+inspecsafe_inference_authorized=false; MODEL_GPU_EXECUTION=NO;
+INSPECSAFE=NOT_RUN; PROTOCOL_FREEZE=PENDING; MERGE=NO.
+Draft PR review is separate. Stop after PR A; wait for prompt B.
+
+### D9R22 validation record (append-only)
+
+- [x] New scope checks 15/15 PASS; strict JSON, participant/RQ invariants,
+  protected history, exact append-only prefixes and commit allowlist verified.
+- [x] Same-environment exact-BASE comparison: BASE full suite 1504 tests,
+  5 failures / 25 errors / 2 skips; HEAD 1519 tests,
+  6 failures / 25 errors / 2 skips. Full suite NOT PASS.
+- [x] Disclose the one new failure identity:
+  `test_d9r20_candidates.Contracts.test_historical_files_and_append_only_logs`
+  rejects the explicitly requested README/ROADMAP changes. All 30 BASE failure/
+  error identities persist; no unrelated historical tests were edited.
+- [x] Extended regression: HEAD 131 tests, 128 PASS / 1 FAIL / 2 SKIP;
+  BASE 116 tests, 114 PASS / 2 SKIP. Same scope-guard conflict; details in note.
+- [x] Preserve the pinned old readiness note byte-for-byte; use a separate
+  D9R22 readiness note. Diff checks PASS; no dataset/weights/raw outputs staged.

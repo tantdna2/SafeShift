@@ -2187,3 +2187,82 @@ test, fixture PNG, dataset/split/label/metric or scientific contract. Validation
 is git diff --check and exact-base append-only / two-file scope checks. Model
 tests are not run because no code changes; no model/GPU or InspecSafe execution.
 The separate closure PR remains DRAFT; MERGE=NO for this closure task.
+
+## D9R22 — Prospective Seminar RQ3 disagreement redesign (2026-10-05)
+
+Authority: Research Lead task `W2.6-D9R22-SEMINAR-RQ3-DISAGREEMENT-REDESIGN`
+and its Git correction in this session. Verified remote main / BASE:
+`a227e18330b49fb8f848934da164a776bc9f6a50`. APPROVED_PROSPECTIVE_SCOPE;
+this decision precedes implementation of its current scope overlay.
+
+Current title: SafeShift: Benchmarking Cross-Domain Robustness and Disagreement-Aware Reliability in Vision-Language Models for Industrial Safety Assessment
+
+RQ1 remains zero-shot cross-domain classification robustness across five
+industrial domains and co-variation with robot platform; no causal claim.
+RQ2 remains safety-critical error concentration by Level01–Level04, with the
+unchanged 12 Hazard Atoms as PRIMARY strata and seven A–G groups as SECONDARY
+EXPLORATORY summaries. Image-level predictions, overlapping/non-additive atom
+counts, D2 evaluation pools/split provenance, D3 domain/mismatch policy and
+D5 classification/error/statistical definitions remain unchanged. No dataset,
+split, label, taxonomy or grouping changes are authorized.
+
+RQ3 now means **Cross-Model Decision Consistency and Disagreement-Aware
+Reliability under Domain Shift** (Độ nhất quán quyết định giữa các mô hình và
+độ tin cậy dựa trên bất đồng dưới dịch chuyển miền):
+
+“Khi các frozen VLM (mô hình thị giác-ngôn ngữ đóng băng trọng số) đánh giá cùng một ảnh an toàn công nghiệp, mức độ bất đồng giữa các mô hình thay đổi như thế nào theo domain (miền) và hazard stratum (tầng nguy cơ), và liệu bất đồng đó có cung cấp một reliability signal (tín hiệu độ tin cậy) để nhận diện các trường hợp dễ sai hoặc có nguy cơ safety-critical error (lỗi nghiêm trọng về an toàn) hay không?”
+
+Reuse only classification predictions to be generated for RQ1/RQ2; this does
+not imply existing InspecSafe predictions. No additional model inference for
+RQ3, textual confidence, training/fine-tuning, benchmark/semantic-score model
+selection, InspecSafe threshold tuning, or fifth ensemble model. Reliability
+is a research question, not a finding or calibrated probability; unanimous
+models can share blind spots.
+
+Predeclare nine metric families only: joint parse availability; unanimous
+agreement; pairwise Cohen's kappa; vote entropy; ordinal disagreement; shared
+blind spots; error complementarity; disagreement/error association; risk–coverage
+analysis. Exact denominators, missing/invalid-output handling, ordinal conventions,
+ties, uncertainty and coverage policy need a subsequent approved contract before
+implementation/freeze. No threshold is chosen from InspecSafe outputs and no
+metric is implemented here.
+
+The four classification/RQ3 participants remain `Qwen/Qwen3-VL-8B-Instruct`,
+`Qwen/Qwen2.5-VL-3B-Instruct`, `OpenGVLab/InternVL3-2B-hf`, and
+`vikhyatk/moondream2` under D9R18. PaliGemma classification remains
+NOT_PARTICIPATING, with no promotion; SmolVLM2 remains inactive. Historical
+five-member roster membership is distinct from classification participation.
+
+`PRIMARY_SEMINAR_GROUNDING=DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE`.
+This prospectively supersedes the old Seminar RQ3-A/RQ3-B/CGI scope and the
+D8 A2 Call 2 prerequisite for the current classification-only Seminar. Both
+primary and exploratory grounding move to a future thesis extension. Grounding
+is no longer a prerequisite for Seminar freeze or a blocker to RQ1/RQ2/new-RQ3;
+deferral is not a scientific FAIL. No extension execution is authorized.
+`CALL2_ORCHESTRATION_BLOCKER`, `MOONDREAM_CALL2_ORCHESTRATION_BLOCKER`, and
+exploratory grounding blockers are `NOT_ACTIVE_SEMINAR_FREEZE_BLOCKER`.
+This changes applicability, never historical outcome or qualification.
+
+D4, D5 grounding metrics, D6/D7/D8, G5/G6, D9R19G*, D9R20/D9R21, fixtures,
+parsers, runners, source audits and every historical FAIL/PASS remain intact.
+The old RQ3 is explicitly historical, never erased or relabeled as PASS.
+D6 taxonomy remains active for RQ2. Raw outputs must still be saved before
+parsing, linked to sample ID, prompt, model/revision, generation configuration
+and run ID for any future run.
+
+Current authority: [D9R22 scope](configs/pre_freeze/d9r22_seminar_scope.v1.json)
+and [readiness](notes/w2_d9r22_seminar_readiness.md).
+This overlay takes precedence for Seminar scope/readiness over historical
+briefs, earlier log checklists, `local_models.d9.json` grounding/exploratory
+fields and `freeze_manifest.d9.template.json` A2/grounding dependencies;
+those files retain their prior meanings and are not executable D9R22 contracts.
+D9R18 still governs participation and immutable model identities.
+
+Provenance, runtime runners, classification participation and external gate
+history are COMPLETE as recorded evidence, not production readiness or all-gate
+PASS. Exact classification production contract, production adapters/parsers,
+exact decoding/preprocessing/precision freeze, RQ1/RQ2/new-RQ3 metrics,
+production benchmark harness, end-to-end rehearsal, implementation freeze and
+protocol freeze remain PENDING. `inspecsafe_inference_authorized=false`;
+MODEL_GPU_EXECUTION=NO; INSPECSAFE=NOT_RUN; PROTOCOL_FREEZE=PENDING; MERGE=NO.
+Stop after Draft PR A; no task B until a separate prompt.

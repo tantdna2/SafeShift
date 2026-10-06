@@ -17,6 +17,9 @@ from safeshift.qualification.d9r20.backends import NativeBackend
 from safeshift.qualification.classification import JSON_PROMPT, load_suite
 
 ROOT = Path(__file__).resolve().parents[1]
+D9R20_BASE = "668aae839bbde91b67686d143259e07c8a89608c"
+D9R20_IMPLEMENTATION_HEAD = "b86a3af6754ae238c08f9b5e727df7750fdebd61"
+D9R20_MERGE_COMMIT = "7976e5c60817319481c564ca1a68f24aec270da8"
 CONFIG = r.read(ROOT, r.CONFIG)
 PINS = {
     "ovis": ("ATH-MaaS/Ovis2.5-2B", "393c932b2a03e28eb9aaa503e3c4ab3ad384d958"),
@@ -89,13 +92,21 @@ class Contracts(unittest.TestCase):
         self.assertEqual(CONFIG["classification"]["policy"], "D9R16_UNCHANGED")
 
     def test_historical_files_and_append_only_logs(self):
-        paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", r.BASE], cwd=ROOT, text=True).splitlines()
-        changed = set(subprocess.check_output(["git", "diff", "--name-only", r.BASE], cwd=ROOT, text=True).splitlines())
+        # Protect the completed D9R20 changeset, not subsequent live worktrees.
+        self.assertEqual(r.BASE, D9R20_BASE)
+        parents = subprocess.check_output(
+            ["git", "rev-list", "--parents", "-n", "1", D9R20_MERGE_COMMIT],
+            cwd=ROOT, text=True).split()
+        self.assertEqual(parents, [D9R20_MERGE_COMMIT, D9R20_BASE, D9R20_IMPLEMENTATION_HEAD])
+        paths = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", D9R20_BASE], cwd=ROOT, text=True).splitlines()
+        changed = set(subprocess.check_output(
+            ["git", "diff", "--name-only", D9R20_BASE, D9R20_MERGE_COMMIT],
+            cwd=ROOT, text=True).splitlines())
         self.assertFalse((changed & set(paths)) - {"DECISIONS.md", "TASKS.md"})
         for path in ("DECISIONS.md", "TASKS.md"):
-            base = subprocess.check_output(["git", "show", f"{r.BASE}:{path}"], cwd=ROOT)
-            current = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
-            self.assertTrue(current.startswith(base.replace(b"\r\n", b"\n")))
+            base = subprocess.check_output(["git", "show", f"{D9R20_BASE}:{path}"], cwd=ROOT)
+            merged = subprocess.check_output(["git", "show", f"{D9R20_MERGE_COMMIT}:{path}"], cwd=ROOT)
+            self.assertTrue(merged.replace(b"\r\n", b"\n").startswith(base.replace(b"\r\n", b"\n")))
 
     def test_lazy_model_imports(self):
         code = """import builtins
