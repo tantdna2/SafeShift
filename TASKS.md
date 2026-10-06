@@ -1515,3 +1515,36 @@ offline implementation note is
 - [x] Expose explicit RQ2 stratum fields and add known-value synthetic tests.
 
 No model/GPU/InspecSafe execution, protocol freeze, merge, or new task occurred.
+
+## W2.6-D9R25-INSPECSAFE-PRODUCTION-EXECUTION-HARNESS (2026-10-06; CURRENT, append-only)
+
+Stacked on exact PR C HEAD `ac8825e7d0e21e437fda044cadc3aa8b4fc8f508`;
+Draft PR D targets `w2.6-d9r24-disagreement-reliability-metrics`.
+
+- [x] Implement freeze-gated P2 entrypoint; current authority blocks before reads/load.
+- [x] Verify 5013-image contract, original manifest/fingerprint, paths and image hashes.
+- [x] Separate label-free inference payload/records from explicit evaluation join.
+- [x] Four-model D9R23 registry, exact C1 and runtime-condition identities.
+- [x] Atomic/exclusive raw storage with verified reread before strict native parsing.
+- [x] Immutable attempts, no retry/repair, failure accounting, no same-run resume.
+- [x] Deterministic shards, completed-shard exports and four-model cohort alignment.
+- [x] Offline generated-data/scripted-backend tests; no actual dataset/model execution.
+- [ ] D9R26 end-to-end rehearsal/runbooks/freeze candidate (separate authorization).
+- [ ] Implementation freeze.
+- [ ] Protocol freeze.
+
+P2_PRODUCTION_HARNESS=IMPLEMENTED_OFFLINE_SYNTHETIC_ONLY;
+RAW_BEFORE_PARSE=ENFORCED; NO_GT_LEAKAGE=ENFORCED_BY_CONTRACT_AND_TESTS;
+DETERMINISTIC_SHARDING=IMPLEMENTED; MODEL_GPU_EXECUTION=NO;
+INSPECSAFE=NOT_RUN; inspecsafe_inference_authorized=false;
+PROTOCOL_FREEZE=PENDING; IMPLEMENTATION_FREEZE=PENDING; MERGE=NO.
+Grounding remains deferred. Stop after Draft PR D; do not start D9R26.
+
+### D9R25 validation record (append-only)
+
+- [x] Focused D9R25: 40/40 PASS; relevant regression set: 219/219 PASS.
+- [x] Exact C_HEAD BASE full suite: 1533 tests, 4 failures / 2 errors / 2 skips.
+- [x] D9R25 full suite: 1573 tests, same 4 failure / 2 error identities / 2 skips.
+  NEW_FAILURE_IDENTITIES_VS_BASE=0; full suite is NOT PASS. Exact identities and
+  environment/newline controls are recorded in the D9R25 implementation note.
+- [x] Diff and staged diff checks PASS; no dataset/weights/raw outputs staged.
