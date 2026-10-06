@@ -36,7 +36,11 @@ ALLOWED = {SCOPE, NOTE, MATRIX, "README.md", "ROADMAP.md", "DECISIONS.md",
            "safeshift/protocol/d9r24_metrics.py",
            "safeshift/protocol/metrics.py",
            "safeshift/protocol/reporting.py",
-           "tests/test_d9r24_metrics.py"}
+           "tests/test_d9r24_metrics.py",
+           "configs/pre_freeze/d9r25_harness_contract.v1.json",
+           "safeshift/data/p2_execution.py", "safeshift/runners/p2_harness.py",
+           "safeshift/protocol/p2_evaluation.py", "tests/test_d9r25_harness.py",
+           "notes/w2_d9r25_production_harness.md"}
 PENDING = ["exact_classification_production_contract",
            "production_classification_adapters_parsers",
            "exact_decoding_preprocessing_precision_freeze",

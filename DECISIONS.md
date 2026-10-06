@@ -2398,3 +2398,61 @@ Anomalies are sampled at sample level with a declared dependence limitation,
 regardless of arbitrary point-like metadata. No source-family or inferred event
 cluster is accepted. These changes preserve D9R22/D9R23 scope, the four-model
 roster, grounding deferral, `INSPECSAFE=NOT_RUN`, and `PROTOCOL_FREEZE=PENDING`.
+
+## D9R25 — P2 production harness (2026-10-06; prospective, append-only)
+
+Authority: Research Lead task W2.6-D9R25-INSPECSAFE-PRODUCTION-EXECUTION-HARNESS.
+Stacked on exact PR C HEAD `ac8825e7d0e21e437fda044cadc3aa8b4fc8f508`.
+Contract: `configs/pre_freeze/d9r25_harness_contract.v1.json`; implementation
+details and limits: `notes/w2_d9r25_production_harness.md`.
+
+P2 retains 5013 original samples, image prediction units, original sample IDs,
+splits, folder domains, point IDs and labels. Preflight verifies the original W1
+CSV and triplet fingerprint before backend load. Physical root portability
+preserves the original logical fingerprint namespace; it does not redefine the
+dataset. P1 replication is not implemented by this task.
+
+Inference receives only image bytes and exact D9R23 C1 prompt. Execution records
+are label-free, extra fields are rejected, and evaluation metadata is joined only
+after complete four-model artifact alignment. Shards use lexical sample-ID index
+modulo shard count, never labels or results. Raw native bytes must be exclusively
+and atomically published, fsynced and hash/size verified by reread before parsing.
+Run/call artifacts are immutable. INVALID remains null, not a safety level.
+
+No automatic/semantic retries or repairs. Failed generation preserves received
+partial raw but does not fabricate absent raw or parse partial output; remaining
+samples are NOT_ATTEMPTED. Resume under an existing run ID is rejected. Future
+reruns require a new ID, exact prior manifest reference and explicit Research
+Lead authorization. Runtime FAILED is distinct from parsed INVALID.
+
+Current production entrypoint hard-blocks before dataset reads or backend load.
+Future authorization requires committed FROZEN authority, an ancestor freeze
+commit, pinned scope/policy/prompt/metric hashes and exact dataset identity/count.
+No local flag/env/object can override the current PENDING contract. Synthetic
+entrypoint permits generated images and a built-in scripted backend only.
+
+Harness status is IMPLEMENTED_OFFLINE_SYNTHETIC_ONLY, not runtime qualification
+or permission to run InspecSafe. No model/GPU/dataset inference, protocol freeze,
+merge or Antigravity. D9R22/23/24 active contracts and all historical results stay
+unchanged. Grounding remains deferred; both freezes PENDING; InspecSafe authority
+false. D9R26 rehearsal/runbooks/freeze candidate is the next separate task.
+
+### D9R25 production backend binding correction (2026-10-06; append-only)
+
+Research Lead correction for existing Draft PR #82, original HEAD
+`2aa5a0a731a1c84b48be503184dfdf21690bed1c`, unchanged PR C base
+`ac8825e7d0e21e437fda044cadc3aa8b4fc8f508`.
+Public production_run now forbids caller backend/factory/callback injection.
+The versioned internal four-model registry fails closed with
+PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN, after auth/dataset/shard/attempt checks.
+D9R26 must bind exact source-backed bridges to existing validated native runners,
+without duplicating model inference implementations, with static/fake integration
+tests and no model execution in Codex. Pending integration is not runtime failure.
+
+Synthetic rehearsal retains exact ScriptedBackend-only injection and generated
+images. Its repo parameter is the explicit Git source/config repository; a
+separate artifact_repo provides temporary storage without changing Git identity.
+No silent ROOT/cwd fallback. Both freezes remain PENDING, InspecSafe authority
+false, no model/GPU/InspecSafe execution, no merge or D9R26 work. Dataset, prompt,
+metrics, scope, grounding deferral and immutable attempt/raw/firewall semantics
+are preserved.
