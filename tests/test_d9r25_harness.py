@@ -183,20 +183,38 @@ class HarnessTests(unittest.TestCase):
         c = h.contract(self.repo)
         c.update(protocol_freeze="FROZEN", inspecsafe_inference_authorized=True)
         freeze = {"protocol_freeze_commit_sha": "a" * 40, "status": "FROZEN",
+                  "schema_version": "p2-execution-authority-v1",
+                  "implementation_base_sha": h.IMPLEMENTATION_BASE_SHA,
+                  "expected_pre_merge_main_sha": h.IMPLEMENTATION_BASE_SHA,
+                  "freeze_candidate_path": c["freeze_candidate_path"],
+                  "freeze_candidate_sha256": c["freeze_candidate_sha256"], "reruns": [],
                   "inspecsafe_inference_authorized": True, "authority": "RESEARCH_LEAD",
                   "identity_sha256": c["identity_sha256"], "dataset_fingerprint": data.FINGERPRINT,
                   "sample_count": 5013, "protocol_id": "P2"}
         calls = []
         def git(repo, *args):
             calls.append(args)
-            if args[0] == "rev-parse":
+            if args == ("rev-parse", "HEAD"):
                 return b"b" * 40
-            if args[0] in ("status", "merge-base", "diff"):
+            if args == ("rev-list", "--parents", "-n", "1", "b" * 40):
+                return ("b" * 40 + " " + h.IMPLEMENTATION_BASE_SHA + " " + "d" * 40).encode()
+            if args == ("rev-list", "--parents", "-n", "1", "d" * 40):
+                return ("d" * 40 + " " + "a" * 40).encode()
+            if args == ("rev-parse", "a" * 40 + "^"):
+                return h.IMPLEMENTATION_BASE_SHA.encode()
+            if args[0] == "rev-parse" and args[1].endswith("^{tree}"):
+                return b"e" * 40
+            if args[0] == "diff":
+                return (c["freeze_manifest_path"] + "\n").encode()
+            if args[0] in ("status", "merge-base"):
                 return b""
-            if args == ("show", "b" * 40 + ":" + c["freeze_manifest_path"]):
+            if args in (("show", "b" * 40 + ":" + c["freeze_manifest_path"]),
+                        ("show", "d" * 40 + ":" + c["freeze_manifest_path"])):
                 return data.json_bytes(freeze)
+            if args == ("show", "a" * 40 + ":" + c["freeze_candidate_path"]):
+                return (ROOT / c["freeze_candidate_path"]).read_bytes().replace(b"\r\n", b"\n")
             if args[0] == "show" and args[1].startswith("a" * 40 + ":"):
-                return (self.repo / args[1][41:]).read_bytes()
+                return (self.repo / args[1][41:]).read_bytes().replace(b"\r\n", b"\n")
             raise AssertionError(args)
         with patch.object(h, "contract", return_value=c), patch.object(h, "_git", side_effect=git):
             self.assertEqual(h.authorize_production(self.repo)[0], "b" * 40)
@@ -502,9 +520,14 @@ assert synthetic_image().startswith(b'\\x89PNG')
         c = h.contract()
         self.assertEqual(c["sample_count"], 5013)
         self.assertEqual(c["dataset_fingerprint"], data.FINGERPRINT)
-        self.assertEqual(c["protocol_freeze"], "PENDING")
-        self.assertEqual(c["implementation_freeze"], "PENDING")
-        self.assertFalse(c["inspecsafe_inference_authorized"])
+        historical = json.loads(subprocess.check_output(
+            ["git", "show", "e7628d68f87cf53b5343ea912b7e332064c285af:" + h.CONTRACT_PATH], cwd=ROOT))
+        self.assertEqual(historical["protocol_freeze"], "PENDING")
+        self.assertFalse(historical["inspecsafe_inference_authorized"])
+        self.assertEqual(c["protocol_freeze"], "FROZEN")
+        self.assertEqual(c["implementation_freeze"], "FROZEN")
+        self.assertTrue(c["inspecsafe_inference_authorized"])
+        self.assertEqual(c["authorization_activation"], "FINAL_REVIEWED_MAIN_MERGE_COMMIT_ONLY")
         self.assertEqual(c["primary_grounding"], "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE")
         protected = [*c["identity_sha256"], "safeshift/runners/production_classification.py",
                      "safeshift/protocol/classification_policy.py", "safeshift/protocol/classification_failure_policy.py",

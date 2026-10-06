@@ -2489,3 +2489,52 @@ audit+merge. No audit or merge is performed by this task. Grounding remains
 DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE; protocol_freeze_commit_sha=PENDING,
 PROTOCOL_FREEZE=PENDING, IMPLEMENTATION_FREEZE=PENDING,
 INSPECSAFE_AUTHORIZED=false, INSPECSAFE=NOT_RUN, MODEL_GPU_EXECUTION=NO.
+
+### D9R27 final protocol freeze and merge-gated authority (2026-10-06; append-only)
+
+Research Lead task W2.6-D9R27 freezes P2 from exact audited implementation base
+`e7628d68f87cf53b5343ea912b7e332064c285af`. A→E were independently audited,
+merged sequentially and GitHub-verified by Research Lead / ChatGPT before this
+task. The reviewed D9R26 candidate remains byte-for-byte history and its exact
+SHA-256 is pinned in the final D9R25 contract.
+
+F1 is the immutable final freeze commit and contains all executable/governance
+changes. F2 is its direct child and contains only the execution authority
+file. The Draft PR branch has no effective execution authority: the authority
+becomes active only after independent audit, Research Lead / ChatGPT review,
+Standard Merge Commit, and final verification of that merge commit. The Git
+merge gate rejects one-parent PR heads, wrong parents, tree drift, executable
+changes after F1, dirty tracked checkouts, identity/hash drift, and wrong
+dataset/count or candidate pins.
+
+No model/GPU/InspecSafe execution, real dataset access, network, Antigravity or
+merge occurs in D9R27. Grounding remains deferred; P1 remains separate and not
+implemented. After final merge, Research Lead / ChatGPT must verify the merge
+commit before owner execution.
+
+### D9R27 authority-gate correction (2026-10-06; append-only)
+
+The reviewed correction keeps PR #84 and rebuilds its two-commit architecture
+from the exact base. The final authorizer now validates
+`schema_version=p2-execution-authority-v1` and requires parent two to have one
+and only one parent, exactly F1. An intermediate or multi-parent authority
+commit is rejected with an explicit direct-child error. The committed D9R27
+tests construct and verify real temporary Git repositories and synthetic
+two-parent merge commits.
+
+No scientific contract, roster, candidate bytes, dataset, grounding history,
+model, GPU, network, InspecSafe execution or merge is changed or run.
+
+### D9R27 correction verification completion (2026-10-06; append-only)
+
+The committed suite now tests distinct Git rejection reasons with real
+temporary histories and guarded fresh-process static preflight, including
+no dataset/model/GPU/network access. Historical candidate tests verify the
+exact audited BASE source, preserving the reviewed candidate bytes and its
+original builder. D9R25 test expectations follow the final merge contract;
+D9R22/23 allowlists admit only the three requested D9R27 artifacts. Scientific
+contracts, bridge mappings and native inference remain unchanged. Offline
+Git structure cannot attest external review: independent audit and Research
+Lead / ChatGPT GitHub review and post-merge verification remain required.
+Requested Git/GitHub PR maintenance is the only network operation; no runtime
+execution or real dataset access is authorized by this correction.
