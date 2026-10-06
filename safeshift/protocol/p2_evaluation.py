@@ -7,6 +7,7 @@ from safeshift.data.manifest import DOMAINS, SPLITS
 from safeshift.data.p2_execution import FINGERPRINT, MANIFEST_SHA, json_bytes, safe_path, sha
 from safeshift.runners.p2_harness import ADAPTER, identities, registry, verified_raw
 from safeshift.runners.production_classification import PARSER_VERSION
+from safeshift.runners.p2_bridge import call_identity
 from .classification_policy import MODELS, ROOT
 from .d9r24_metrics import DisagreementSample
 from .schema import HAZARDS, SAFETY_LEVELS, strict_json
@@ -42,6 +43,8 @@ def export_predictions(run_root, *, repo=ROOT):
         if sha(safe_path(root, name).read_bytes()) != digest:
             raise ValueError("ARTIFACT_INTEGRITY_FAILURE")
     run = read("run_manifest.json")
+    if run["version"] not in ("d9r25-run-v1", "d9r26-run-v1"):
+        raise ValueError("RUN_VERSION_REQUIRED")
     shard = read("shard_manifest.json")
     if run["protocol_identity"]["identity_sha256"] != identities(repo):
         raise ValueError("PROTOCOL_IDENTITY_MISMATCH")
@@ -59,7 +62,9 @@ def export_predictions(run_root, *, repo=ROOT):
         row = prediction(read(directory + "/parsed.json"))
         meta = read(directory + "/metadata.json")
         if (row["sample_id"] != sid or row["model_key"] != run["model_key"]
-                or row["run_id"] != run["run_id"] or row["call_id"] != "call1"
+                or row["run_id"] != run["run_id"]
+                or row["call_id"] != (call_identity(sid) if run["version"] == "d9r26-run-v1" else "call1")
+                or row["call_id"] != meta["call_id"]
                 or row["parse_status"] != status["samples"][sid]
                 or row["parse_status"] != meta["parse_status"]
                 or row["raw_artifact"] != directory + "/response.raw"

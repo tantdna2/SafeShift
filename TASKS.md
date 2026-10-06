@@ -1570,3 +1570,50 @@ PROTOCOL_FREEZE=PENDING; IMPLEMENTATION_FREEZE=PENDING; MERGE=NO.
   NEW_FAILURE_IDENTITIES_VS_BASE=0; full suite NOT PASS. No dependency changes.
 - [x] Diff checks PASS; correction preserves active scientific contracts and
   original raw/firewall/shard/retry implementation semantics.
+
+### D9R26 preflight/runbooks/bridges/freeze candidate (2026-10-06; append-only)
+
+- [x] Stack on exact PR #82 HEAD a3a5fdcc0a17b920f2c15942247b6fd61d25aa2d.
+- [x] Bind the exact four existing native runners through a versioned internal
+  bridge; preserve production no-injection boundary and freeze-first guard.
+- [x] Separate image/C1 scientific payload from operational RunContext; pin
+  exact D9R23 condition, deterministic call identity and native model revisions.
+- [x] Add four owner runbooks and a thin metadata preflight/production CLI.
+- [x] Rehearse ScriptedBackend and fake native runner paths end to end through
+  durable raw, parser, export, alignment, explicit GT join and RQ1/RQ2/RQ3 report.
+- [x] Create a hash-verified FREEZE_CANDIDATE_NOT_FROZEN manifest only.
+- [ ] ChatGPT GitHub verification and independent audit (not performed here).
+- [ ] Merge A->E and final post-merge freeze/authorization PR, outside this task.
+- [ ] Final protocol SHA and Research Lead InspecSafe authority, still pending.
+
+Runtime observation NOT_EXECUTED_IN_CODEX; no model/download/GPU/InspecSafe
+execution. A-E remain unmerged. Final SHA is unknown until audit+merge.
+PROTOCOL_FREEZE=PENDING; IMPLEMENTATION_FREEZE=PENDING;
+protocol_freeze_commit_sha=PENDING; INSPECSAFE_AUTHORIZED=false;
+INSPECSAFE=NOT_RUN; READY_TO_RUN_INSPECSAFE=false; MERGE=NO.
+
+### D9R26 validation record (append-only)
+
+- [x] Focused D9R26 bridge/candidate tests: 16/16 PASS, including both full
+  scripted and fake-native rehearsal paths with identical deterministic reports.
+- [x] D9R22-25 + relevant native runner/manifest/firewall/storage/qualification
+  regressions: 464/464 PASS. No dependency install/change during comparison.
+- [x] Same-environment `python -m unittest discover -v` at exact D BASE:
+  1578 tests, 4 failures / 2 errors / 2 skips; E implementation: 1594 tests,
+  same 4 failures / 2 errors / 2 skips. NEW_FAILURE_IDENTITIES_VS_BASE=0.
+  Full suite is NOT PASS; matching counts alone were not used as evidence.
+- [x] Exact six matching failure/error identities (BASE and HEAD):
+  - tests.test_d9_t4_roster_revision.D9T4RosterRevisionTests.test_23_only_explicitly_authorized_post_d9r1_runner_source
+  - tests.test_d9r18_final_participation_decision.FinalParticipationTests.test_only_explicit_decision_documentation_and_test_files_change
+  - tests.test_ovis_gpu_smoke_result.OvisSmokeResultTests.test_research_claims_grounding_and_checklist_remain_pending
+  - tests.test_qwen_kaggle_smoke_result.SmokeResultTests.test_claims_grounding_and_checklist_boundaries
+  - tests.test_grounding_multicategory_runtime_v3.ContractTests.test_dry_preflight_blocks_without_authority
+  - unittest.loader._FailedTest.tests.test_moondream_precision
+  These are existing historical scope/checklist expectations, the historical
+  origin/main identity guard, and absent optional torch, respectively.
+- [x] `git diff --check` and `git diff --cached --check` PASS. Candidate hashes
+  agree with Git repository LF bytes; original checkout newline treatment is
+  matched for BASE/HEAD. Only scoped code/config/docs/synthetic tests staged.
+- [x] Metadata preflight reports PROTOCOL_FREEZE_REQUIRED with no dataset/model
+  access. READY_FOR_INDEPENDENT_AUDIT_BEFORE_FREEZE=true;
+  READY_TO_RUN_INSPECSAFE=false. No audit/merge/freeze/authorization performed.

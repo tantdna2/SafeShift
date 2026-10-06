@@ -48,7 +48,8 @@ class HarnessTests(unittest.TestCase):
         if outputs is None:
             outputs = [native(model, '{"safety_level":"Level01"}') for _ in ids]
             if model == "internvl3":
-                outputs = [data.json_bytes({**json.loads(x), "run_id": run_id, "call_id": "call1"}) for x in outputs]
+                outputs = [data.json_bytes({**json.loads(x), "run_id": run_id, "call_id": h.call_identity(sid)})
+                           for sid, x in zip(sorted(ids), outputs)]
         backend = h.ScriptedBackend(outputs)
         path = h.rehearse(model=model, run_id=run_id, sample_ids=ids, backend=backend,
                           repo=ROOT, artifact_repo=self.repo, **kwargs)
@@ -84,16 +85,16 @@ class HarnessTests(unittest.TestCase):
                 h.production_run(model="moondream", run_id="denied", dataset_root="missing",
                                  manifest_path="missing", provenance_path="missing", **{name: Mock()})
 
-    def test_exact_internal_registry_and_pending_resolver(self):
+    def test_exact_internal_registry_and_source_bound_resolver(self):
         c = h.contract()
         self.assertEqual(tuple(h._PRODUCTION_BACKENDS), h.MODELS)
-        self.assertEqual(dict(h._PRODUCTION_BACKENDS), c["production_backend_registry"])
+        self.assertEqual({k: list(v) for k, v in h._PRODUCTION_BACKENDS.items()}, c["production_backend_registry"])
         self.assertEqual(h.PRODUCTION_BACKEND_REGISTRY_VERSION, c["production_backend_registry_version"])
         self.assertEqual(c["caller_backend_injection"], "FORBIDDEN")
-        self.assertEqual(c["production_backend_binding"], "FAIL_CLOSED_PENDING_D9R26_SOURCE_BACKED_BRIDGES")
+        self.assertEqual(c["production_backend_binding"], "IMPLEMENTED_SOURCE_BACKED_FREEZE_CANDIDATE")
         for model in h.MODELS:
-            with self.subTest(model=model), self.assertRaisesRegex(PermissionError, "PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN"):
-                h.resolve_production_backend(model)
+            with self.subTest(model=model):
+                self.assertEqual(h.resolve_production_backend(model).model, model)
         for model in ("paligemma", "ovis", "kosmos", "plamo", "smolvlm2"):
             with self.subTest(model=model), self.assertRaisesRegex(ValueError, "CLASSIFICATION_NOT_PARTICIPATING"):
                 h.resolve_production_backend(model)
@@ -103,10 +104,9 @@ class HarnessTests(unittest.TestCase):
     def test_production_auth_dataset_shard_attempt_before_internal_resolution(self):
         rows = [{"sample_id": "a", "image_locator": "generated.png", "image_sha256": data.sha(h.synthetic_image())}]
         calls = []
-        original = h.resolve_production_backend
-        def resolve(model):
+        def resolve(model, *, repo):
             calls.append("resolve")
-            return original(model)
+            raise PermissionError("TEST_RESOLUTION_BOUNDARY")
         with patch.object(h, "authorize_production", side_effect=lambda repo: (calls.append("auth") or (BASE, {}))), \
                 patch.object(h, "verify_dataset", side_effect=lambda *args: (calls.append("dataset") or (rows, "hash"))), \
                 patch.object(h, "resolve_production_backend", side_effect=resolve) as resolver:
@@ -116,7 +116,7 @@ class HarnessTests(unittest.TestCase):
                 h.production_run(**args, shard_count=0)
             resolver.assert_not_called()
             calls.clear()
-            with self.assertRaisesRegex(PermissionError, "PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN"):
+            with self.assertRaisesRegex(PermissionError, "TEST_RESOLUTION_BOUNDARY"):
                 h.production_run(**args)
             self.assertEqual(calls, ["auth", "dataset", "resolve"])
             self.assertFalse(h._run_path(self.repo, "moondream", "pending").exists())

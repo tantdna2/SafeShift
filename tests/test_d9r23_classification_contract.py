@@ -39,7 +39,24 @@ ALLOWED = {"DECISIONS.md", "TASKS.md", policy.POLICY_PATH, policy.PROMPT_PATH,
            "configs/pre_freeze/d9r25_harness_contract.v1.json",
            "safeshift/data/p2_execution.py", "safeshift/runners/p2_harness.py",
            "safeshift/protocol/p2_evaluation.py", "tests/test_d9r25_harness.py",
-           "notes/w2_d9r25_production_harness.md"}
+           "notes/w2_d9r25_production_harness.md",
+           "configs/pre_freeze/protocol_freeze_candidate.d9r26.v1.json",
+           "safeshift/protocol/freeze_candidate.py",
+           "safeshift/runners/p2_bridge.py",
+           "safeshift/runners/p2_preflight.py",
+           "safeshift/runners/p2_owner.py",
+           "safeshift/runners/internvl3.py",
+           "safeshift/runners/moondream2.py",
+           "notes/w2_d9r26_freeze_candidate.md",
+           "notes/w2_d9r26_qwen3_p2_runbook.md",
+           "notes/w2_d9r26_qwen2_5_p2_runbook.md",
+           "notes/w2_d9r26_internvl3_p2_runbook.md",
+           "notes/w2_d9r26_moondream_p2_runbook.md",
+           "tests/test_d9r26_bridges.py",
+           "tests/test_d9r26_candidate.py",
+           "tests/test_classification_qualification.py", "tests/test_moondream_external_gate.py",
+           "tests/test_moondream_runner_smoke.py", "tests/test_paligemma_external_gate.py",
+           }
 
 
 def git(*args):

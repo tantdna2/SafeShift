@@ -174,7 +174,10 @@ class InternVL3Runner(LocalRunner):
             raise ValueError("FP16_NONE_BATCH1_NO_OFFLOAD_NO_FALLBACK_CONTRACT")
         if context.software_versions != load_plan(self.repo)["software"]:
             raise ValueError("EXACT_SOFTWARE_PINS_REQUIRED")
-        if context.source_kind not in {"HANDCRAFTED_RUNTIME_SMOKE", "EXTERNAL_CLASSIFICATION_QUALIFICATION"}:
+        if context.source_kind == "INSPECSAFE":
+            from .p2_bridge import require_production_context
+            require_production_context("internvl3", context, self.repo)
+        elif context.source_kind not in {"HANDCRAFTED_RUNTIME_SMOKE", "EXTERNAL_CLASSIFICATION_QUALIFICATION"}:
             raise ValueError("PREP_ONLY_SYNTHETIC_RUNTIME_INPUT")
         key = json_bytes({"preprocessing": context.preprocessing, "decoding": context.decoding,
                           "software": context.software_versions, "run_id": context.run_id,
@@ -318,6 +321,8 @@ class InternVL3Runner(LocalRunner):
     def prepare_input(self, request, context):
         from PIL import Image
         key = self._condition(context)
+        if context.source_kind == "INSPECSAFE" and request.task != Task.CLASSIFICATION:
+            raise ValueError("PRODUCTION_CLASSIFICATION_ONLY")
         if self.state not in {"LOADED", "GENERATED"} or context.call_id in self.calls:
             raise ValueError("INDEPENDENT_CALL_LIFECYCLE_REQUIRED")
         self._stable("before_prepare")

@@ -22,15 +22,19 @@
   "freeze_manifest_path": "configs/frozen/p2_execution_authority.v1.json",
   "raw_before_parse": "ATOMIC_EXCLUSIVE_PUBLICATION_FSYNC_HASH_SIZE_REREAD_VERIFIED",
   "backend_payload_fields": ["image_bytes", "prompt"],
-  "production_backend_binding": "FAIL_CLOSED_PENDING_D9R26_SOURCE_BACKED_BRIDGES",
+  "production_backend_binding": "IMPLEMENTED_SOURCE_BACKED_FREEZE_CANDIDATE",
   "caller_backend_injection": "FORBIDDEN",
-  "production_backend_registry_version": "d9r25-production-backend-binding-v1",
+  "production_backend_registry_version": "d9r26-native-runner-registry-v1",
   "production_backend_registry": {
-    "qwen3": "PENDING_D9R26_SOURCE_BACKED_BRIDGE",
-    "qwen2_5": "PENDING_D9R26_SOURCE_BACKED_BRIDGE",
-    "internvl3": "PENDING_D9R26_SOURCE_BACKED_BRIDGE",
-    "moondream": "PENDING_D9R26_SOURCE_BACKED_BRIDGE"
+    "qwen3": ["safeshift.runners.qwen3_vl", "Qwen3VLRunner", "qwen3-vl-runner-v2"],
+    "qwen2_5": ["safeshift.runners.qwen2_5_vl", "Qwen2_5VLRunner", "qwen2-5-vl-runner-v2"],
+    "internvl3": ["safeshift.runners.internvl3", "InternVL3Runner", "internvl3-runner-v1"],
+    "moondream": ["safeshift.runners.moondream2", "Moondream2Runner", "moondream2-offline-v1"]
   },
+  "model_payload_fields": ["image_bytes", "prompt"],
+  "bridge_operational_context_fields": ["run_id", "call_id", "sample_id", "image_sha256", "git_commit", "model_key", "source_kind", "d9r23_execution_condition"],
+  "call_identity_version": "call1-sample-sha256-v1",
+  "runtime_observation": "NOT_EXECUTED_IN_CODEX",
   "rehearsal_provenance": "REPO_IS_GIT_SOURCE_ARTIFACT_REPO_IS_STORAGE_ONLY_NO_SOURCE_FALLBACK",
   "d9r26_binding_requirements": [
     "BIND_EXACT_FOUR_SOURCE_BACKED_BRIDGES_TO_EXISTING_VALIDATED_NATIVE_RUNNERS",
