@@ -22,6 +22,7 @@ from safeshift.runners.paligemma import PendingPaliGemmaAdapter
 from scripts.generate_classification_qualification_cases import generate, fixture
 
 BASE = "ecab4cfa6fd844fbada232975ed4494ea719a90b"
+PRE_D9R26 = "a3a5fdcc0a17b920f2c15942247b6fd61d25aa2d"
 
 
 def envelope(model, text, call_id="cq_01"):
@@ -414,6 +415,9 @@ class ProtectedStateTests(unittest.TestCase):
             current = (subprocess.check_output(["git", "show", "93e1004de311588e94356e19edf53220de13e194:" + path], cwd=cq.ROOT)
                        if path in ("configs/pre_freeze/local_models.d9.json", "configs/pre_freeze/freeze_manifest.d9.template.json")
                        else (cq.ROOT / path).read_bytes())
+            if path == "safeshift/runners/moondream2.py":
+                # D9R26 authorizes a production-only guard; historical bytes remain pinned.
+                current = subprocess.check_output(["git", "show", PRE_D9R26 + ":" + path], cwd=cq.ROOT)
             self.assertEqual(current.replace(b"\r\n", b"\n"), old.replace(b"\r\n", b"\n"), path)
         roster = json.loads((cq.ROOT / "configs/pre_freeze/local_models.d9.json").read_text())
         self.assertEqual({m["model_id"] for m in roster["primary_models"]}, {v[0] for v in cq.MODELS.values()})
@@ -426,6 +430,9 @@ class ProtectedStateTests(unittest.TestCase):
         for path in ("safeshift/runners/internvl3.py", "safeshift/runners/paligemma.py"):
             before = subprocess.check_output(["git", "show", f"{BASE}:{path}"], cwd=cq.ROOT).decode()
             after = (cq.ROOT / path).read_text()
+            if path == "safeshift/runners/internvl3.py":
+                # D9R26 guard/lifecycle preservation is tested in test_d9r26_candidate.
+                after = subprocess.check_output(["git", "show", PRE_D9R26 + ":" + path], cwd=cq.ROOT).decode()
             self.assertEqual(after, before.replace('context.source_kind != "HANDCRAFTED_RUNTIME_SMOKE"',
                 'context.source_kind not in {"HANDCRAFTED_RUNTIME_SMOKE", "EXTERNAL_CLASSIFICATION_QUALIFICATION"}'))
 
@@ -437,7 +444,8 @@ class ProtectedStateTests(unittest.TestCase):
                 for source in (cq.SOURCE_KIND, "HANDCRAFTED_RUNTIME_SMOKE"):
                     cls()._condition(replace(context(key), source_kind=source))
                 for source in ("INSPECSAFE", "data/raw", "EXTERNAL_GATE", ""):
-                    with self.assertRaises(ValueError):
+                    expected = PermissionError if key == "internvl3" and source == "INSPECSAFE" else ValueError
+                    with self.assertRaises(expected):
                         cls()._condition(replace(context(key), source_kind=source))
 
     def test_plan_prep_only_no_model_removal(self):

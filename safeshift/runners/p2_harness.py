@@ -1,6 +1,8 @@
 """Freeze-gated P2 orchestration; current release authorizes synthetic only.
 
-Backends implement load(condition), observe(), generate(image_bytes=, prompt=).
+Production bridges receive separate typed operational identities with load and
+generate. Scripted rehearsal implements load(condition), observe(), and
+generate(image_bytes=, prompt=).
 They return the complete native serialized envelope (bytes or UTF-8 text), not
 a guessed canonical class. No backend/model library is imported here.
 """
@@ -14,7 +16,6 @@ import subprocess
 import tempfile
 import struct
 import zlib
-from types import MappingProxyType
 
 from safeshift.data.p2_execution import (
     execution_records, json_bytes, safe_path, sha, shard, verify_dataset,
@@ -27,25 +28,23 @@ from safeshift.qualification.classification import CandidateAdapter
 from .contracts import AdaptedOutput, GenerationFailure, ParseStatus, Task
 from .production_classification import PARSER_VERSION
 from .storage import FileRawStore
+from .p2_bridge import (REGISTRY as _PRODUCTION_BACKENDS, REGISTRY_VERSION, VERSION as BRIDGE_VERSION,
+                        ProductionRunnerBridge, RunIdentity, CallIdentity, call_identity)
 
 CONTRACT_PATH = "configs/pre_freeze/d9r25_harness_contract.v1.json"
 BLOCK = "NO_INSPECSAFE_INFERENCE_BEFORE_PROTOCOL_FREEZE"
 ADAPTER = "d9r25-durable-d9r23-native-adapter-v1"
-PRODUCTION_BACKEND_REGISTRY_VERSION = "d9r25-production-backend-binding-v1"
-_PRODUCTION_BACKENDS = MappingProxyType({
-    model: "PENDING_D9R26_SOURCE_BACKED_BRIDGE" for model in MODELS
-})
+PRODUCTION_BACKEND_REGISTRY_VERSION = REGISTRY_VERSION
 
 
-def resolve_production_backend(model_key):
+def resolve_production_backend(model_key, *, repo=ROOT):
     """Internal fixed binding, never a caller-selectable implementation.
 
-    D9R26 must bind validated native runners here with source-backed tests.
-    Pending integration is not a runtime qualification failure.
+    Construction imports lightweight native runner definitions only, no model.
     """
     if model_key not in _PRODUCTION_BACKENDS:
         raise ValueError("CLASSIFICATION_NOT_PARTICIPATING")
-    raise PermissionError("PRODUCTION_BACKEND_BRIDGE_NOT_FROZEN")
+    return ProductionRunnerBridge(model_key, repo=repo)
 
 
 def contract(repo=ROOT):
@@ -251,13 +250,16 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
                 raise PermissionError("PREVIOUS_ATTEMPT_REQUIRES_EXPLICIT_AUTHORIZED_RERUN")
     # Resolution follows auth/dataset/shard/attempt checks and precedes all load.
     # Only this private executor retains test injection; production exposes none.
-    bound_backend = resolve_production_backend(model) if backend_factory is None else None
+    bound_backend = resolve_production_backend(model, repo=repo) if backend_factory is None else None
     root.mkdir(parents=True, exist_ok=False)  # includes failed/interrupted runs: no resume
     hashes = identities(repo)
     identity = {"protocol_id": "P2", "identity_sha256": hashes,
                 "dataset_fingerprint": dataset_fingerprint, "source_manifest_sha256": source_hash,
                 "source_kind": source}
-    manifest = {"version": "d9r25-run-v1", "run_id": run_id, "model_key": model,
+    manifest = {"version": "d9r26-run-v1", "run_id": run_id, "model_key": model,
+                "call_identity_version": "call1-sample-sha256-v1",
+                "bridge_version": BRIDGE_VERSION, "backend_registry_version": REGISTRY_VERSION,
+                "native_runner_binding": list(_PRODUCTION_BACKENDS[model]),
                 "protocol_identity": identity, "model_condition": entry,
                 "git_commit": commit, "rerun_of": rerun_of, "started_at": _now(),
                 "resume": "FORBIDDEN", "shard_manifest_sha256": shard_meta["shard_manifest_sha256"]}
@@ -269,7 +271,10 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
     state, failure = "COMPLETED", None
     try:
         backend = bound_backend if backend_factory is None else backend_factory()
-        backend.load(deepcopy(entry))
+        if isinstance(backend, ProductionRunnerBridge):
+            backend.load(deepcopy(entry), operational=RunIdentity(run_id, commit, source))
+        else:
+            backend.load(deepcopy(entry))  # private executor/scripted tests only
         observation = backend.observe()
         # Exact allowed fields prevent accidentally persisting tokens/env dumps.
         if (set(observation) != {"software_versions", "hardware"}
@@ -281,7 +286,7 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
         prompt = render_prompt(model, repo=repo)
         for row in selected:
             sid = row["sample_id"]
-            call_id = "call1"
+            call_id = call_identity(sid)
             directory = root / "calls" / sha(sid.encode())
             directory.mkdir(exist_ok=False)
             started = _now()
@@ -294,7 +299,11 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
                 if type(image_bytes) is not bytes or sha(image_bytes) != row["image_sha256"]:
                     raise ValueError("IMAGE_HASH_MISMATCH")
                 stage = "GENERATION"
-                native = backend.generate(image_bytes=image_bytes, prompt=prompt)
+                if isinstance(backend, ProductionRunnerBridge):
+                    native = backend.generate(image_bytes=image_bytes, prompt=prompt,
+                                              operational=CallIdentity(sid, call_id, row["image_sha256"]))
+                else:
+                    native = backend.generate(image_bytes=image_bytes, prompt=prompt)
                 stage = "RAW_PERSISTENCE"
                 receipt = persist_native(directory, native)
                 stage = "PARSER"
@@ -312,6 +321,7 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
             status = parsed.parse_status.value if parsed else "FAILED"
             metadata = {"run_id": run_id, "sample_id": sid, "call_id": call_id,
                         "protocol_id": "P2", "model_key": model, "git_commit": commit,
+                        "bridge_version": BRIDGE_VERSION, "native_runner_binding": list(_PRODUCTION_BACKENDS[model]),
                         "source_kind": source,
                         "hardware_observation_kind": "SIMULATED" if source == "SYNTHETIC" else "BACKEND_OBSERVED",
                         "model_id": entry["model_id"], "immutable_revision": entry["immutable_revision"],
@@ -342,6 +352,12 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
     except (Exception, KeyboardInterrupt) as exc:
         state = "INTERRUPTED" if isinstance(exc, KeyboardInterrupt) else "FAILED"
         failure = {"stage": "RUN_OR_PERSISTENCE", "cause": "STAGE_FAILURE"}
+    finally:
+        if "backend" in locals() and isinstance(backend, ProductionRunnerBridge):
+            try:
+                backend.close()
+            except Exception:
+                state, failure = "FAILED", {"stage": "CLOSE", "cause": "STAGE_FAILURE"}
     # Final immutable index binds exports to this completed shard's exact bytes.
     artifacts = {p.relative_to(root).as_posix(): sha(p.read_bytes())
                  for p in sorted(root.rglob("*.json"))}

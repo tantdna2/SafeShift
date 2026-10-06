@@ -127,7 +127,9 @@ class PlanTests(unittest.TestCase):
                      "safeshift/runners/moondream_snapshot.py", "scripts/w2_moondream_t4_smoke.py",
                      "scripts/provision_moondream_snapshot.py"):
             source = (ROOT / path).read_text(encoding="utf-8").lower()
-            self.assertNotIn("inspecsafe", source)
+            # D9R26 permits this exact authorization discriminator, not dataset access.
+            self.assertNotIn("inspecsafe", source.replace('context.source_kind == "inspecsafe"', ""))
+            self.assertNotIn("safeshift.data", source)
             self.assertNotIn("point_to_box", source)
             self.assertNotIn(".clamp(", source)
         p = runner.load_plan()

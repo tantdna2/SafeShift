@@ -7,6 +7,7 @@ import json
 import os
 import platform
 import struct
+from pathlib import Path
 
 from .contracts import (AdaptedOutput, GenerationFailure, LocalRunner, ModelIdentity,
                         ParseStatus, SpatialKind, Task)
@@ -26,11 +27,11 @@ _load_claimed = False
 PLAN_SHA256 = "387fcf1bd9abb7cb0d265ebbebabfb25f24e2518eece825b67e425e6f6d2c1a8"
 
 
-def load_plan():
-    plan = json.loads((ROOT / PLAN_PATH).read_text(encoding="utf-8"))
+def load_plan(repo=ROOT):
+    plan = json.loads((Path(repo) / PLAN_PATH).read_text(encoding="utf-8"))
     if hashlib.sha256(json_bytes(plan)).hexdigest() != PLAN_SHA256:
         raise ValueError("FROZEN_RUNTIME_PLAN_CHANGED")
-    bridge = json.loads((ROOT / "configs/pre_freeze/moondream_precision_bridge.v1.json").read_text(encoding="utf-8"))
+    bridge = json.loads((Path(repo) / "configs/pre_freeze/moondream_precision_bridge.v1.json").read_text(encoding="utf-8"))
     if hashlib.sha256(json_bytes(bridge)).hexdigest() != "5388108ce07061528218c02cf7e0788c1f0de4d80c25bd22074d3228b1846641":
         raise ValueError("PROTECTED_BRIDGE_PLAN_CHANGED")
     if (plan["model_id"] != MODEL_ID or plan["model_revision"] != REVISION
@@ -192,7 +193,8 @@ class Moondream2Runner(LocalRunner):
     identity = IDENTITY
     version = "moondream2-offline-v1"
 
-    def __init__(self, model_snapshot, tokenizer_snapshot, *, backend_factory=NativeBackend):
+    def __init__(self, model_snapshot, tokenizer_snapshot, *, backend_factory=NativeBackend, repo=ROOT):
+        self.repo = repo
         self.model_snapshot, self.tokenizer_snapshot = model_snapshot, tokenizer_snapshot
         self.backend_factory = backend_factory
         self.backend = self.model = self.binding = None
@@ -211,12 +213,17 @@ class Moondream2Runner(LocalRunner):
     def _condition(self, context):
         if not self.valid or self.pid != os.getpid() or self.identity != IDENTITY:
             raise ValueError("RUNNER_INVALID_OR_IDENTITY_MISMATCH")
+        decoding = DECODING
+        if context.source_kind == "INSPECSAFE":
+            from .p2_bridge import require_production_context
+            require_production_context("moondream", context, self.repo)
+            decoding = {"query": DECODING["query"]}
         if (context.precision != "FP16" or context.quantization != "NONE"
                 or context.device != {"placement": "cuda:0"}
-                or context.preprocessing != PREPROCESSING or context.decoding != DECODING
+                or context.preprocessing != PREPROCESSING or context.decoding != decoding
                 or context.seed is not None):
             raise ValueError("EXACT_RUNTIME_CONDITION_REQUIRED_NO_FALLBACK")
-        plan = load_plan()
+        plan = load_plan(self.repo)
         if context.software_versions != plan["software"]:
             raise ValueError("EXACT_SOFTWARE_REQUIRED")
         key = json_bytes({"precision": context.precision, "quantization": context.quantization,
@@ -268,6 +275,8 @@ class Moondream2Runner(LocalRunner):
     def prepare_input(self, request, context):
         with exclusive_owner():
             self._condition(context)
+            if context.source_kind == "INSPECSAFE" and request.task != Task.CLASSIFICATION:
+                raise ValueError("PRODUCTION_CLASSIFICATION_ONLY")
             if self.model is None or request.task not in (Task.CLASSIFICATION, Task.GROUNDING):
                 raise ValueError("LOADED_MODEL_AND_NATIVE_TASK_REQUIRED")
             # Request accepts immutable bytes, never upstream EncodedImage/history.

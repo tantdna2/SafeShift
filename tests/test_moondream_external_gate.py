@@ -7,6 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -95,13 +96,19 @@ class GateTests(unittest.TestCase):
         self.stack = ExitStack()
         self.addCleanup(self.stack.close)
         self.repo = Path(self.stack.enter_context(tempfile.TemporaryDirectory())).resolve()
-        plan, self.runtime = gate.load_gate_plan(ROOT)
+        plan = json.loads((ROOT / gate.PLAN).read_bytes())
         paths = [gate.PLAN, gate.MANIFEST, gate.PROVENANCE, *plan["protected_source_sha256_lf"]]
         paths += [f"tests/fixtures/pre_freeze/frozen_external_gate/{c}.png" for c in gate.CASE_IDS]
         for path in paths:
             dest = self.repo / path
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / path, dest)
+            if path == "safeshift/runners/moondream2.py":
+                # Preserve the historical gate's exact source hash, without repinning
+                # its execution authority to D9R26's production-only guard extension.
+                dest.write_bytes(subprocess.check_output(["git", "show",
+                    "a3a5fdcc0a17b920f2c15942247b6fd61d25aa2d:" + path], cwd=ROOT))
+        _, self.runtime = gate.load_gate_plan(self.repo)
         self.cases, _ = gate.verify_suite(self.repo)
         self.values = {c.case_id: native(c.target_gt_bbox) for c in self.cases}
         self.cache = self.repo / gate.CACHE_DIR

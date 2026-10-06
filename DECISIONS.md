@@ -2456,3 +2456,36 @@ No silent ROOT/cwd fallback. Both freezes remain PENDING, InspecSafe authority
 false, no model/GPU/InspecSafe execution, no merge or D9R26 work. Dataset, prompt,
 metrics, scope, grounding deferral and immutable attempt/raw/firewall semantics
 are preserved.
+
+### D9R26 source-backed bridges and freeze candidate (2026-10-06; append-only)
+
+Research Lead authorizes implementation stacked on exact PR D #82 HEAD
+`a3a5fdcc0a17b920f2c15942247b6fd61d25aa2d`. Internal mappings are qwen3 ->
+Qwen3VLRunner, qwen2_5 -> Qwen2_5VLRunner, internvl3 -> InternVL3Runner,
+moondream -> Moondream2Runner in their existing source modules. Thin bridges
+reuse native lifecycle; no model inference implementation is duplicated.
+The only native lifecycle policy extensions are authorized INSPECSAFE
+classification context for InternVL3 and query-only production decoding for
+Moondream; historical generation logic/results remain unchanged.
+
+Model payload is only verified image bytes and exact C1. Operational identities
+and D9R23 execution condition enter RunContext separately, never the prompt.
+D9R26 run-v1 uses unique deterministic sample-hash call IDs, preserving InternVL3
+envelope identity; export retains historical D9R25 call1 compatibility.
+Raw-before-parse, no-GT firewall, immutable attempts/shards and no-retry policy
+remain enforced. The public production boundary offers no backend injection.
+
+Four runbooks and a thin CLI avoid duplicated notebooks/inference logic. Static
+preflight and synthetic/fake end-to-end rehearsal exercise the implementation
+without model/GPU/download/InspecSafe execution. Runtime observations are NOT
+rerun. This is IMPLEMENTED_SOURCE_BACKED_FREEZE_CANDIDATE, not new runtime
+qualification. Candidate hashes pin Git LF repository text bytes; CRLF checkout
+normalization is explicit. Dataset fingerprint/count, metrics, RQs, C1 and roster
+are unchanged; PaliGemma remains excluded and P1 is separate.
+
+A-E remain unmerged. Independent review/audit and a final post-merge
+freeze/authorization PR are still required. The final SHA cannot be known before
+audit+merge. No audit or merge is performed by this task. Grounding remains
+DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE; protocol_freeze_commit_sha=PENDING,
+PROTOCOL_FREEZE=PENDING, IMPLEMENTATION_FREEZE=PENDING,
+INSPECSAFE_AUTHORIZED=false, INSPECSAFE=NOT_RUN, MODEL_GPU_EXECUTION=NO.

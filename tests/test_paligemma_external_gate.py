@@ -19,6 +19,10 @@ PRE_D9R16 = "ecab4cfa6fd844fbada232975ed4494ea719a90b"
 
 
 def historical_bytes(path):
+    if path == "safeshift/runners/moondream2.py":
+        # D9R26 production-only guard is outside this historical gate's identity.
+        return subprocess.check_output(["git", "show",
+            "a3a5fdcc0a17b920f2c15942247b6fd61d25aa2d:" + path], cwd=q.ROOT)
     # The historical gate/notebook did not execute D9R16's source-kind extension.
     # Live runner bytes are protected by D9R16 exact-replacement tests.
     if path in ("safeshift/runners/paligemma.py", "safeshift/runners/internvl3.py"):
