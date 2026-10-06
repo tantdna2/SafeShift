@@ -1617,3 +1617,27 @@ INSPECSAFE=NOT_RUN; READY_TO_RUN_INSPECSAFE=false; MERGE=NO.
 - [x] Metadata preflight reports PROTOCOL_FREEZE_REQUIRED with no dataset/model
   access. READY_FOR_INDEPENDENT_AUDIT_BEFORE_FREEZE=true;
   READY_TO_RUN_INSPECSAFE=false. No audit/merge/freeze/authorization performed.
+
+### D9R26 freeze-candidate state reconciliation (append-only)
+
+- [x] Verified remote PR #83 HEAD e1e9c82169a1bf1f1bca32b92ca2d3b577165ebe.
+- [x] Preserve D9R22 bytes/scientific RQs; deep-copy the current candidate view
+  and overlay only RQ3 metric contract/status from validated D9R24 metadata.
+- [x] Reject wrong/missing schema, status, roster, metric families, grounding or
+  pending-freeze state. No metric formulas or bridge/native logic changed.
+- [x] D9R25 next_task=INDEPENDENT_AUDIT_BEFORE_FREEZE; existing production
+  binding remains IMPLEMENTED_SOURCE_BACKED_FREEZE_CANDIDATE.
+- [x] Regenerate candidate through its builder, including exact updated hashes;
+  no self-hash, historical state rewriting or production-validation claim.
+- [x] Focused candidate/bridge tests: 19/19 PASS; D9R22-25 regressions: 97/97 PASS.
+- [x] Reran exact PR E BASE a3a5fdcc0a17b920f2c15942247b6fd61d25aa2d and
+  corrected HEAD with `python -m unittest discover -v` in the same Python 3.11.9
+  environment, unchanged dependencies and matched checkout newline handling:
+  1578 vs 1597 tests, both 4 failures / 2 errors / 2 skips. All six identities
+  match the D9R26 validation record above; NEW_FAILURE_IDENTITIES_VS_BASE=0.
+  Full suite remains NOT PASS. Working/staged diff checks PASS.
+
+FREEZE_CANDIDATE_NOT_FROZEN; PROTOCOL_FREEZE=PENDING;
+protocol_freeze_commit_sha=PENDING; IMPLEMENTATION_FREEZE=PENDING;
+INSPECSAFE_AUTHORIZED=false; INSPECSAFE=NOT_RUN; MODEL_GPU_EXECUTION=NO;
+READY_TO_RUN_INSPECSAFE=false; no audit, Antigravity, new PR or merge.

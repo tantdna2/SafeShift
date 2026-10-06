@@ -71,7 +71,7 @@
   "identity_sha256": {
     "configs/pre_freeze/d9r22_seminar_scope.v1.json": "5eaf32e87288c900d4021bd774a613c8147d8140976092e45a7fde23245b4aeb",
     "configs/pre_freeze/d9r24_metric_contract.v1.json": "a04366aba1335d2878233bc90b43ec389ececa29377af9d8a26d99b29235c8d0",
-    "configs/pre_freeze/d9r25_harness_contract.v1.json": "55826f08f009c715f2fb0c239c4c259f6b11533d2c788ebdb4584501e86f9119",
+    "configs/pre_freeze/d9r25_harness_contract.v1.json": "91048cd646d49c66a264a6df1c1aaff613cc19da1134d6a04fa502b3f0165a01",
     "configs/pre_freeze/internvl3_t4_runtime.v1.json": "85af239819a1903a1d1d8ce229c7039119aca147ff935b1cab4e78458599f80e",
     "configs/pre_freeze/local_model_provenance.d9.json": "2624b41e72337fd876d7619b0e7d9a01e9f1c0140ba96a0dc966ae649c09baa8",
     "configs/pre_freeze/moondream_precision_bridge.v1.json": "4a2120d54b21ebba700dbee19a1ac3bbf589de03c18907e9cc36380e85da72e7",
@@ -95,7 +95,7 @@
     "safeshift/protocol/classification_failure_policy.py": "325cefb818038083b969193e2d680c499bc4b92b753cae9eb299f20eeec81fa6",
     "safeshift/protocol/classification_policy.py": "699e7abdd9d95383e9df8fc019781ff045d64de189424a896c8e0af1e988343e",
     "safeshift/protocol/d9r24_metrics.py": "c01b00e973d1e0d72f589d26c2442f7c632b5b8860051b453d361645daca4086",
-    "safeshift/protocol/freeze_candidate.py": "9a5c3284cbcb68256774a241aff45f8ddc08e4a811905bdd49aec4a187924bd9",
+    "safeshift/protocol/freeze_candidate.py": "3ff3e85d70dd0d99a7c33c984608e38f65c8f8f61d06e7a043c94a6581118eda",
     "safeshift/protocol/metrics.py": "d79999de3b8a8e9ebdcdd52129b1dc5c4c24956e7100292a66cb0dd7bcc1012f",
     "safeshift/protocol/p2_evaluation.py": "a3332747cb16d3233125ebe26bda1109e7be7190fbfce69ee0f6d9a8502a9e71",
     "safeshift/protocol/reporting.py": "64c6a4456972cae827db440cfc4e1ea20e0917b705f37b233636ca33d75003c5",
@@ -547,7 +547,7 @@
           "HAZARD_STRATUM"
         ],
         "ensemble_as_fifth_model": false,
-        "metric_contract": "PREDECLARED_FAMILIES_ONLY_EXACT_CONTRACT_PENDING",
+        "metric_contract": "configs/pre_freeze/d9r24_metric_contract.v1.json",
         "metric_families": [
           "joint_parse_availability",
           "unanimous_agreement",
@@ -559,7 +559,7 @@
           "disagreement_error_association",
           "risk_coverage_analysis"
         ],
-        "metric_implementation": "PENDING",
+        "metric_implementation": "IMPLEMENTED_OFFLINE_SYNTHETIC_ONLY",
         "name": "Cross-Model Decision Consistency and Disagreement-Aware Reliability under Domain Shift",
         "prediction_source": "REUSE_RQ1_RQ2_CLASSIFICATION_PREDICTIONS_ONLY",
         "question": "Khi c\u00e1c frozen VLM (m\u00f4 h\u00ecnh th\u1ecb gi\u00e1c-ng\u00f4n ng\u1eef \u0111\u00f3ng b\u0103ng tr\u1ecdng s\u1ed1) \u0111\u00e1nh gi\u00e1 c\u00f9ng m\u1ed9t \u1ea3nh an to\u00e0n c\u00f4ng nghi\u1ec7p, m\u1ee9c \u0111\u1ed9 b\u1ea5t \u0111\u1ed3ng gi\u1eefa c\u00e1c m\u00f4 h\u00ecnh thay \u0111\u1ed5i nh\u01b0 th\u1ebf n\u00e0o theo domain (mi\u1ec1n) v\u00e0 hazard stratum (t\u1ea7ng nguy c\u01a1), v\u00e0 li\u1ec7u b\u1ea5t \u0111\u1ed3ng \u0111\u00f3 c\u00f3 cung c\u1ea5p m\u1ed9t reliability signal (t\u00edn hi\u1ec7u \u0111\u1ed9 tin c\u1eady) \u0111\u1ec3 nh\u1eadn di\u1ec7n c\u00e1c tr\u01b0\u1eddng h\u1ee3p d\u1ec5 sai ho\u1eb7c c\u00f3 nguy c\u01a1 safety-critical error (l\u1ed7i nghi\u00eam tr\u1ecdng v\u1ec1 an to\u00e0n) hay kh\u00f4ng?",

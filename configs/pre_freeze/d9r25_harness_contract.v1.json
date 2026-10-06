@@ -53,5 +53,5 @@
   "inspecsafe_inference_authorized": false,
   "protocol_freeze": "PENDING",
   "implementation_freeze": "PENDING",
-  "next_task": "D9R26_REHEARSAL_RUNBOOKS_FREEZE_CANDIDATE"
+  "next_task": "INDEPENDENT_AUDIT_BEFORE_FREEZE"
 }

@@ -5,18 +5,20 @@ All pinned artifacts are UTF-8 text. Git blob equality is tested separately.
 The candidate does not hash itself; the reviewed commit binds its own bytes.
 """
 
+from copy import deepcopy
 import json
 from pathlib import Path
 
 from safeshift.data.p2_execution import FINGERPRINT, MANIFEST_SHA, sha
-from .classification_policy import ROOT, load_policy
+from .classification_policy import ROOT, MODELS, load_policy
 
 PATH = "configs/pre_freeze/protocol_freeze_candidate.d9r26.v1.json"
 BASE = "a3a5fdcc0a17b920f2c15942247b6fd61d25aa2d"
+METRIC_CONTRACT = "configs/pre_freeze/d9r24_metric_contract.v1.json"
 PINNED = (
     "configs/pre_freeze/d9r22_seminar_scope.v1.json",
     "configs/pre_freeze/production_classification_policy.d9r23.v1.json",
-    "configs/pre_freeze/d9r24_metric_contract.v1.json",
+    METRIC_CONTRACT,
     "configs/pre_freeze/d9r25_harness_contract.v1.json",
     "prompts/p2_classification_c1_v1.txt", "prompts/.gitattributes",
     "safeshift/__init__.py", "safeshift/runners/__init__.py",
@@ -57,11 +59,33 @@ PINNED = (
 )
 
 
+def _current_rqs(scope, metrics):
+    """Keep D9R22 science; reconcile only current implementation state."""
+    required = {
+        "schema_version": "d9r24-metric-contract-v1",
+        "status": "IMPLEMENTED_OFFLINE_SYNTHETIC_ONLY",
+        "classification_models": list(MODELS),
+        "primary_grounding": "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE",
+        "protocol_freeze": "PENDING",
+    }
+    if not isinstance(metrics, dict) or any(metrics.get(k) != v for k, v in required.items()):
+        raise ValueError("D9R24_CANDIDATE_CONTRACT_MISMATCH")
+    rq3 = metrics.get("rq3")
+    if (not isinstance(rq3, dict)
+            or rq3.get("metric_families") != scope["active_rqs"]["RQ3"]["metric_families"]):
+        raise ValueError("D9R24_RQ3_METRIC_FAMILIES_MISMATCH")
+    current = deepcopy(scope["active_rqs"])
+    current["RQ3"].update(metric_contract=METRIC_CONTRACT, metric_implementation=metrics["status"])
+    return current
+
+
 def build_candidate(repo=ROOT):
     from safeshift.runners.p2_bridge import REGISTRY, REGISTRY_VERSION, VERSION
     from safeshift.runners.p2_harness import contract
     root = Path(repo)
     scope = json.loads((root / PINNED[0]).read_bytes())
+    metrics = json.loads((root / METRIC_CONTRACT).read_bytes())
+    current_rqs = _current_rqs(scope, metrics)
     c = contract(root)
     return {
         "schema_version": "protocol-freeze-candidate-d9r26-v1",
@@ -70,7 +94,7 @@ def build_candidate(repo=ROOT):
         "implementation_freeze": "PENDING", "inspecsafe_inference_authorized": False,
         "hash_semantics": "SHA256_GIT_REPOSITORY_UTF8_BYTES_CHECKOUT_CRLF_TO_LF_ONLY",
         "identity_sha256": {name: sha((root / name).read_bytes().replace(b"\r\n", b"\n")) for name in sorted(PINNED)},
-        "research": {"title": scope["title"], "active_rqs": scope["active_rqs"]},
+        "research": {"title": scope["title"], "active_rqs": current_rqs},
         "models": load_policy(root)["classification"],
         "execution": {
             "bridge_version": VERSION, "registry_version": REGISTRY_VERSION,
@@ -85,7 +109,7 @@ def build_candidate(repo=ROOT):
             "caller_backend_injection": "FORBIDDEN",
             "runtime_observation": "NOT_EXECUTED_IN_CODEX",
         },
-        "metrics": {"contract": "configs/pre_freeze/d9r24_metric_contract.v1.json",
+        "metrics": {"contract": METRIC_CONTRACT,
                     "engine": "safeshift/protocol/d9r24_metrics.py", "reporting": "safeshift/protocol/reporting.py",
                     "bootstrap": "UNCHANGED_B2000_SEED42_DOMAIN_STRATIFIED_NORMAL_POINT_ANOMALY_SAMPLE_LIMITATION"},
         "dataset": {"name": "InspecSafe-V1", "protocol": "P2", "sample_count": 5013,
