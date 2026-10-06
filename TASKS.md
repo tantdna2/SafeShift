@@ -1473,3 +1473,45 @@ Stop after Draft PR B; wait for prompt C.
 - [x] D9R23 HEAD full suite: 1540 tests, 5 failures / 25 errors / 2 skips;
   all 30 BASE failure/error identities persist, `NEW_FAILURE_IDENTITIES_VS_BASE=0`.
 - [x] Diff and staged diff checks PASS; no model/GPU/InspecSafe execution.
+
+## W2.6-D9R24-DISAGREEMENT-RELIABILITY-METRICS (2026-10-05; CURRENT, append-only)
+
+Stacked on exact PR B HEAD `6e205a53a9ceeebbc258d3ad0be6a7ddb865501e` with Draft
+PR C targeting `w2.6-d9r23-classification-production-contract`. The prospective
+metric contract is `configs/pre_freeze/d9r24_metric_contract.v1.json` and the
+offline implementation note is
+`notes/w2_d9r24_disagreement_reliability_metrics.md`.
+
+- [x] Implement D5-compatible RQ1 classification, safety-critical,
+  folder_domain and support diagnostics with explicit parse/failure-aware rates.
+- [x] Implement image-level RQ2 metrics for 12 primary Hazard Atoms and seven
+  secondary A-G summaries with non-additive multi-hazard semantics.
+- [x] Implement RQ3 for exactly four models using JOINT_VALID_4, availability,
+  unanimous agreement, pairwise kappa, vote entropy, ordinal disagreement,
+  vote patterns, shared blind spots, error complementarity, disagreement/error
+  association and deterministic risk-coverage.
+- [x] Implement deterministic domain-stratified point-cluster percentile
+  bootstrap (`B=2000`, seed 42) with shared paired draws and NA support policy.
+- [x] Add deterministic JSON reporting and synthetic tests; no raw images,
+  responses, weights or dataset artifacts are committed.
+- [ ] Production benchmark harness and end-to-end rehearsal.
+- [ ] Implementation freeze.
+- [ ] Protocol freeze.
+
+`PRIMARY_SEMINAR_GROUNDING=DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE`;
+`inspecsafe_inference_authorized=false`; `MODEL_GPU_EXECUTION=NO`;
+`INSPECSAFE=NOT_RUN`; `PROTOCOL_FREEZE=PENDING`; `MERGE=NO`.
+
+### D9R24 methodology correction record (2026-10-06; append-only)
+
+- [x] Correct degenerate kappa to undefined with an explicit status/reason.
+- [x] Correct unanimous anomaly blind-spot denominator to joint anomaly support.
+- [x] Correct safety-critical risk-coverage denominator and report eligible and
+  overall coverage axes with explicitly named eligible-cohort AURC.
+- [x] Restore D5 support-aware domain macro metrics, K=4 BA spread,
+  anomaly-recall spread, and the explicit metallurgy sparse-support policy.
+- [x] Enforce Normal point_id bootstrap metadata and anomaly sample-level
+  resampling with a declared dependence limitation.
+- [x] Expose explicit RQ2 stratum fields and add known-value synthetic tests.
+
+No model/GPU/InspecSafe execution, protocol freeze, merge, or new task occurred.

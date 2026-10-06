@@ -2330,3 +2330,71 @@ inspecsafe_inference_authorized=false. No model/GPU execution, InspecSafe,
 merge, PR #67 mutation or task C. Current artifacts and validation:
 `configs/pre_freeze/production_classification_policy.d9r23.v1.json` and
 `notes/w2_d9r23_classification_production_contract.md`.
+
+## D9R24 - Prospective disagreement-aware reliability metric contract (2026-10-05)
+
+Authority: Research Lead task `W2.6-D9R24-DISAGREEMENT-RELIABILITY-METRICS`,
+stacked on exact PR B HEAD `6e205a53a9ceeebbc258d3ad0be6a7ddb865501e`.
+This is a prospective offline metric implementation; it does not change the
+dataset, split, labels, RQ1/RQ2 semantics, four-model participation, or protocol
+freeze state. The machine-readable contract is
+`configs/pre_freeze/d9r24_metric_contract.v1.json` and the implementation note
+is `notes/w2_d9r24_disagreement_reliability_metrics.md`.
+
+RQ1 retains D5 balanced accuracy, Macro-F1, raw accuracy, parse-conditional
+anomaly/normal and Level01 measures, D9R23 failure-aware rates, critical
+downgrade diagnostics, folder_domain class recalls, pooled-to-domain gaps,
+observed worst domains, spread and support warnings. RQ2 remains image-level
+with 12 Hazard Atoms as primary overlapping strata and seven A-G groups as
+secondary exploratory summaries; atom membership is evaluation-only and rows
+are non-additive.
+
+RQ3 uses only existing classification predictions from `qwen3`, `qwen2_5`,
+`internvl3` and `moondream`. Primary tables use `JOINT_VALID_4`; total cohort,
+per-model invalid counts and joint availability are always reported. Invalid is
+not a safety level. The contract fixes unanimous agreement, six pairwise Cohen
+kappas on the shared joint denominator, normalized vote entropy, normalized
+six-pair ordinal disagreement, deterministic vote-pattern classes, shared blind
+spots, ordered-pair error complementarity, disagreement/error association and
+selective risk-coverage. Invalid outputs and 2-2 ties abstain; unique plurality
+or majority labels are ranked by ordinal disagreement, then entropy, then
+lexical sample ID. Ground truth is never used for ranking or threshold choice.
+
+Uncertainty uses domain-stratified point-cluster percentile bootstrap (`B=2000`,
+seed `42`, 95% CI, shared draws for paired comparisons). Missing support is
+`NA`, not an imputed zero. The report is deterministic JSON with no raw images
+or raw model responses. Grounding stays
+`DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE`; no grounding execution dependency is
+reactivated. `MODEL_GPU_EXECUTION=NO`, `INSPECSAFE=NOT_RUN`,
+`inspecsafe_inference_authorized=false`, `PROTOCOL_FREEZE=PENDING`, and
+implementation freeze remains PENDING.
+
+### D9R24 methodology correction (2026-10-06; append-only)
+
+Research Lead correction for the same PR #81. Degenerate Cohen's kappa with
+expected agreement exactly one is now explicitly undefined (`None`) with a
+degenerate-marginals status; it is never promoted to 1.0. The unanimous
+normal-on-anomaly blind-spot denominator is the joint anomaly count, while
+general unanimous-wrong and Level01 blind-spot denominators remain explicit in
+their fields.
+
+Selective risk-coverage now reports both eligible-relative and overall coverage.
+Exact and ordinal prefix risks use accepted-prefix N; safety-critical
+anomaly-to-Level04 risk uses accepted anomaly N and is undefined before any
+accepted anomaly. AURC is named `aurc_eligible_cohort` and integrates the
+eligible-relative axis. Ranking remains prediction-only:
+ordinal disagreement, vote entropy, then lexical sample ID.
+
+RQ1 domain macro metrics are descriptive over supported ground-truth classes
+with explicit `K_d`, supported classes and comparability warnings. The
+secondary balanced-accuracy spread uses only K=4 domains; anomaly recall spread
+uses domains with anomaly support. Metallurgy anomaly statistics carry the
+explicit `SPARSE_SUPPORT_DESCRIPTIVE_ONLY` methodology flag, without an
+invented support threshold. RQ2 strata expose their own parse/failure-aware
+fields and denominators.
+
+Bootstrap now requires explicit Normal `point_id` and hard-fails when absent.
+Anomalies are sampled at sample level with a declared dependence limitation,
+regardless of arbitrary point-like metadata. No source-family or inferred event
+cluster is accepted. These changes preserve D9R22/D9R23 scope, the four-model
+roster, grounding deferral, `INSPECSAFE=NOT_RUN`, and `PROTOCOL_FREEZE=PENDING`.
