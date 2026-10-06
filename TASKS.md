@@ -1641,3 +1641,53 @@ FREEZE_CANDIDATE_NOT_FROZEN; PROTOCOL_FREEZE=PENDING;
 protocol_freeze_commit_sha=PENDING; IMPLEMENTATION_FREEZE=PENDING;
 INSPECSAFE_AUTHORIZED=false; INSPECSAFE=NOT_RUN; MODEL_GPU_EXECUTION=NO;
 READY_TO_RUN_INSPECSAFE=false; no audit, Antigravity, new PR or merge.
+
+### W2.6-D9R27-FINAL-PROTOCOL-FREEZE-AND-MERGE-GATED-AUTHORITY (2026-10-06)
+
+- [x] Confirm exact post-A→E audited main base
+  `e7628d68f87cf53b5343ea912b7e332064c285af`.
+- [x] Freeze the final D9R25 contract and preserve the reviewed D9R26
+  candidate byte-for-byte with its exact SHA-256 pin.
+- [x] Implement fail-closed Git verification requiring the final reviewed
+  two-parent Standard Merge Commit; Draft PR F2 remains pre-merge blocked.
+- [x] Add focused D9R27 tests for authority pins, ancestry, merge parents/tree,
+  post-F1 allowlist, dirty tracked state, static preflight and no-runtime
+  behavior.
+- [ ] Research Lead / ChatGPT GitHub review and independent audit.
+- [ ] Standard merge into main and final Research Lead / ChatGPT verification.
+- [ ] Owner preflight and later InspecSafe P2 execution, only after that
+  verification.
+
+D9R27 performs no model/GPU/InspecSafe execution, real dataset read, network,
+Antigravity call or merge. `PROTOCOL_FREEZE=FROZEN` and the authority declaration
+are static contract state; effective authority is false until the reviewed
+merge commit exists.
+
+### W2.6-D9R27-FINAL-AUTHORITY-GATE-CORRECTION (2026-10-06)
+
+- [x] Verify PR #84 remote HEAD remains the expected old F2.
+- [x] Enforce exact authority schema and F2 direct-child Git structure.
+- [x] Expand D9R27 tests with real temporary Git repositories and synthetic
+  valid/wrong-parent/wrong-tree/intermediate/multi-parent/dirty histories.
+- [x] Rebuild NEW_F1 directly on the exact audited base and NEW_F2 as its sole
+  authority-file child.
+- [ ] Research Lead / ChatGPT review, independent audit, standard merge and
+  final post-merge verification.
+
+No model/GPU/InspecSafe execution, dataset read, network, Antigravity call or
+merge occurs in this correction.
+
+### D9R27 correction verification completion (2026-10-06; append-only)
+
+- [x] Distinct real-Git tree, executable-drift, parent and missing/untracked
+  authority checks; individual authority mutations; exact preservation checks.
+- [x] Guarded fresh-process preflight and owner CLI: no dataset/model/GPU/network
+  access or P2 artifact creation on either Draft or synthetic final merge.
+- [x] D9R22-D9R27 regression: 128 tests PASS before final two-commit rebuild.
+- [ ] Independent audit, Research Lead / ChatGPT review, standard merge and
+  final post-merge verification remain external gates; no merge in this task.
+
+Git/GitHub maintenance only updates the existing Draft PR #84. Full-suite
+comparison uses exact BASE and final HEAD with matched LF checkout handling;
+final hashes and results are reported in the PR handoff. The Draft PR remains
+ineffective execution authority. No Antigravity, model/GPU or InspecSafe run.

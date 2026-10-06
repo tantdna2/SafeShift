@@ -35,6 +35,7 @@ CONTRACT_PATH = "configs/pre_freeze/d9r25_harness_contract.v1.json"
 BLOCK = "NO_INSPECSAFE_INFERENCE_BEFORE_PROTOCOL_FREEZE"
 ADAPTER = "d9r25-durable-d9r23-native-adapter-v1"
 PRODUCTION_BACKEND_REGISTRY_VERSION = REGISTRY_VERSION
+IMPLEMENTATION_BASE_SHA = "e7628d68f87cf53b5343ea912b7e332064c285af"
 
 
 def resolve_production_backend(model_key, *, repo=ROOT):
@@ -84,44 +85,80 @@ def _git(repo, *args):
 
 
 def authorize_production(repo=ROOT):
-    """No caller-supplied authority/flag/environment override.
+    """Authorize only the reviewed two-parent Standard Merge Commit.
 
-    Future activation requires a reviewed committed release changing this
-    contract, plus a committed freeze authority in the executing commit's
-    ancestry. Historical D9R22/23/24 artifacts remain hash-pinned.
+    The authority file is deliberately insufficient on a one-parent Draft PR
+    branch.  Effective authority exists only when Git proves that HEAD is the
+    final reviewed merge, with the audited main commit as parent one and the
+    F2 authority commit as parent two.
     """
     c = contract(repo)
-    if c["protocol_freeze"] != "FROZEN" or c["inspecsafe_inference_authorized"] is not True:
+    if (c["protocol_freeze"] != "FROZEN" or c["implementation_freeze"] != "FROZEN"
+            or c["inspecsafe_inference_authorized"] is not True
+            or c.get("implementation_base_sha") != IMPLEMENTATION_BASE_SHA
+            or c.get("freeze_candidate_path") != "configs/pre_freeze/protocol_freeze_candidate.d9r26.v1.json"
+            or c.get("protocol_freeze_commit_sha_source") != c["freeze_manifest_path"]):
         raise PermissionError(BLOCK)
     path = c["freeze_manifest_path"]
     try:
         head = _git(repo, "rev-parse", "HEAD").decode().strip()
+        parents = _git(repo, "rev-list", "--parents", "-n", "1", head).decode().split()
+        if len(parents) != 3 or parents[0] != head:
+            raise ValueError("FINAL_MERGE_REQUIRED")
+        parent1, parent2 = parents[1:]
+        expected_main = c["implementation_base_sha"]
         freeze = strict_json(_git(repo, "show", f"{head}:{path}"))
         commit = freeze["protocol_freeze_commit_sha"]
-        if (not re.fullmatch(r"[0-9a-f]{40}", commit) or freeze["status"] != "FROZEN"
-                or freeze["inspecsafe_inference_authorized"] is not True
-                or freeze["authority"] != "RESEARCH_LEAD"):
+        if (freeze.get("schema_version") != "p2-execution-authority-v1"
+                or not re.fullmatch(r"[0-9a-f]{40}", commit)
+                or freeze.get("status") != "FROZEN"
+                or freeze.get("authority") != "RESEARCH_LEAD"
+                or freeze.get("protocol_id") != "P2"
+                or freeze.get("inspecsafe_inference_authorized") is not True
+                or freeze.get("implementation_base_sha") != expected_main
+                or freeze.get("expected_pre_merge_main_sha") != expected_main
+                or freeze.get("freeze_candidate_path") != c["freeze_candidate_path"]
+                or freeze.get("freeze_candidate_sha256") != c["freeze_candidate_sha256"]
+                or freeze.get("reruns") != []):
             raise ValueError("FREEZE_AUTHORITY_REQUIRED")
+        if parent1 != expected_main:
+            raise ValueError("FINAL_MERGE_PARENT_1_REQUIRED")
+        if _git(repo, "show", f"{parent2}:{path}") != _git(repo, "show", f"{head}:{path}"):
+            raise ValueError("FINAL_MERGE_AUTHORITY_PARENT_REQUIRED")
+        parent2_parents = _git(repo, "rev-list", "--parents", "-n", "1", parent2).decode().split()
+        if parent2_parents != [parent2, commit]:
+            raise ValueError("FINAL_MERGE_PARENT_2_MUST_BE_DIRECT_F2_CHILD_OF_FREEZE")
+        _git(repo, "merge-base", "--is-ancestor", commit, parent2)
         _git(repo, "merge-base", "--is-ancestor", commit, head)
+        if _git(repo, "rev-parse", f"{commit}^").decode().strip() != expected_main:
+            raise ValueError("FREEZE_COMMIT_PARENT_REQUIRED")
         changed = _git(repo, "diff", "--name-only", commit, head).decode().splitlines()
-        if set(changed) - {path}:
+        if changed != [path]:
             raise ValueError("EXECUTABLE_CHANGED_AFTER_FREEZE")
+        if (_git(repo, "rev-parse", f"{head}^{{tree}}")
+                != _git(repo, "rev-parse", f"{parent2}^{{tree}}")):
+            raise ValueError("FINAL_MERGE_TREE_MISMATCH")
         # Avoid a self-referencing SHA: freeze commit pins release artifacts;
         # a later authority commit records that freeze commit's identity.
         if _git(repo, "status", "--porcelain", "--untracked-files=no"):
             raise ValueError("DIRTY_EXECUTION_COMMIT")
         hashes = identities(repo)
-        if freeze["identity_sha256"] != hashes:
+        if freeze.get("identity_sha256") != hashes:
             raise ValueError("FREEZE_HASH_MISMATCH")
         for name, digest in hashes.items():
             if sha(_git(repo, "show", f"{commit}:{name}")) != digest:
                 raise ValueError("FREEZE_COMMIT_ARTIFACT_MISMATCH")
+        candidate_bytes = _git(repo, "show", f"{commit}:{c['freeze_candidate_path']}")
+        if sha(candidate_bytes) != c["freeze_candidate_sha256"]:
+            raise ValueError("FREEZE_CANDIDATE_HASH_MISMATCH")
         if (freeze["dataset_fingerprint"] != c["dataset_fingerprint"]
-                or freeze["sample_count"] != 5013 or freeze["protocol_id"] != "P2"):
+                or freeze["sample_count"] != c["sample_count"]
+                or freeze["dataset_fingerprint"] != "7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5"
+                or freeze["sample_count"] != 5013):
             raise ValueError("FREEZE_DATASET_MISMATCH")
         return head, freeze
     except (KeyError, ValueError, OSError, subprocess.CalledProcessError) as exc:
-        raise PermissionError(BLOCK) from exc
+        raise PermissionError(f"{BLOCK}:{exc}") from exc
 
 
 def production_run(*, model, run_id, dataset_root, manifest_path, provenance_path,

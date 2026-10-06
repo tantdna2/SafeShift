@@ -59,13 +59,37 @@ def runtime_observation(model, repo=ROOT):
 
 def static_preflight(repo=ROOT):
     from safeshift.protocol.freeze_candidate import verify_candidate
-    from .p2_harness import identities, contract
+    from .p2_harness import _git, authorize_production, identities, contract
     from .p2_bridge import REGISTRY, VERSION
     identities(repo)
-    verify_candidate(repo)
     c = contract(repo)
-    return {"status": "PROTOCOL_FREEZE_REQUIRED", "bridge_version": VERSION,
+    if c["protocol_freeze"] != "FROZEN":
+        verify_candidate(repo)
+        return {"status": "PROTOCOL_FREEZE_REQUIRED", "bridge_version": VERSION,
+                "models": list(REGISTRY), "protocol_freeze": c["protocol_freeze"],
+                "inspecsafe_inference_authorized": c["inspecsafe_inference_authorized"],
+                "static_authority_declared": False, "effective_authorization": False,
+                "runtime_observation": "NOT_EXECUTED", "dataset_read": False,
+                "model_load": False, "ready_to_run_inspecsafe": False}
+    candidate_path = c["freeze_candidate_path"]
+    candidate = _git(repo, "show", f"HEAD:{candidate_path}")
+    from safeshift.data.p2_execution import sha
+    if sha(candidate) != c["freeze_candidate_sha256"]:
+        raise ValueError("FREEZE_CANDIDATE_HASH_MISMATCH")
+    try:
+        head, authority = authorize_production(repo)
+    except PermissionError:
+        return {"status": "FINAL_MERGE_REQUIRED", "bridge_version": VERSION,
+                "models": list(REGISTRY), "protocol_freeze": c["protocol_freeze"],
+                "inspecsafe_inference_authorized": c["inspecsafe_inference_authorized"],
+                "authority_status": "FROZEN", "static_authority_declared": True,
+                "effective_authorization": False, "runtime_observation": "NOT_EXECUTED",
+                "dataset_read": False, "model_load": False,
+                "ready_to_run_inspecsafe": False}
+    return {"status": "AUTHORIZED_FOR_OWNER_RUNTIME_PREFLIGHT", "bridge_version": VERSION,
             "models": list(REGISTRY), "protocol_freeze": c["protocol_freeze"],
             "inspecsafe_inference_authorized": c["inspecsafe_inference_authorized"],
-            "runtime_observation": "NOT_EXECUTED_IN_CODEX", "dataset_read": False,
-            "model_load": False, "ready_to_run_inspecsafe": False}
+            "authority_status": authority["status"], "static_authority_declared": True,
+            "effective_authorization": True, "effective_authorization_head": head,
+            "runtime_observation": "NOT_EXECUTED", "dataset_read": False,
+            "model_load": False, "ready_to_run_inspecsafe": True}

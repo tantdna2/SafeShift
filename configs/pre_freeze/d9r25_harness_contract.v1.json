@@ -2,7 +2,7 @@
   "schema_version": "d9r25-p2-harness-v1",
   "task": "W2.6-D9R25-INSPECSAFE-PRODUCTION-EXECUTION-HARNESS",
   "base_sha": "ac8825e7d0e21e437fda044cadc3aa8b4fc8f508",
-  "status": "IMPLEMENTED_OFFLINE_SYNTHETIC_ONLY",
+  "status": "FROZEN",
   "protocol_id": "P2",
   "dataset": "InspecSafe-V1",
   "sample_count": 5013,
@@ -20,6 +20,10 @@
   "models_from": "configs/pre_freeze/production_classification_policy.d9r23.v1.json#/classification",
   "authorization": "COMMITTED_FREEZE_MANIFEST_AT_ANCESTOR_COMMIT_AND_EXPLICIT_RESEARCH_LEAD_AUTHORITY",
   "freeze_manifest_path": "configs/frozen/p2_execution_authority.v1.json",
+  "implementation_base_sha": "e7628d68f87cf53b5343ea912b7e332064c285af",
+  "freeze_candidate_path": "configs/pre_freeze/protocol_freeze_candidate.d9r26.v1.json",
+  "freeze_candidate_sha256": "0901bab9b0dbd648b263071d5fdbd677120880eb91a2a5d4724c064905ab2ec2",
+  "protocol_freeze_commit_sha_source": "configs/frozen/p2_execution_authority.v1.json",
   "raw_before_parse": "ATOMIC_EXCLUSIVE_PUBLICATION_FSYNC_HASH_SIZE_REREAD_VERIFIED",
   "backend_payload_fields": ["image_bytes", "prompt"],
   "production_backend_binding": "IMPLEMENTED_SOURCE_BACKED_FREEZE_CANDIDATE",
@@ -34,7 +38,7 @@
   "model_payload_fields": ["image_bytes", "prompt"],
   "bridge_operational_context_fields": ["run_id", "call_id", "sample_id", "image_sha256", "git_commit", "model_key", "source_kind", "d9r23_execution_condition"],
   "call_identity_version": "call1-sample-sha256-v1",
-  "runtime_observation": "NOT_EXECUTED_IN_CODEX",
+  "runtime_observation": "NOT_EXECUTED",
   "rehearsal_provenance": "REPO_IS_GIT_SOURCE_ARTIFACT_REPO_IS_STORAGE_ONLY_NO_SOURCE_FALLBACK",
   "d9r26_binding_requirements": [
     "BIND_EXACT_FOUR_SOURCE_BACKED_BRIDGES_TO_EXISTING_VALIDATED_NATIVE_RUNNERS",
@@ -50,8 +54,9 @@
   "synthetic_entrypoint": "GENERATED_IMAGES_AND_BUILTIN_SCRIPTED_BACKEND_ONLY",
   "p1_implemented": false,
   "primary_grounding": "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE",
-  "inspecsafe_inference_authorized": false,
-  "protocol_freeze": "PENDING",
-  "implementation_freeze": "PENDING",
-  "next_task": "INDEPENDENT_AUDIT_BEFORE_FREEZE"
+  "inspecsafe_inference_authorized": true,
+  "protocol_freeze": "FROZEN",
+  "implementation_freeze": "FROZEN",
+  "authorization_activation": "FINAL_REVIEWED_MAIN_MERGE_COMMIT_ONLY",
+  "next_task": "OWNER_PREFLIGHT_THEN_INSPECSAFE_P2_EXECUTION"
 }

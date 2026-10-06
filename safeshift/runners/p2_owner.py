@@ -24,8 +24,13 @@ def main(argv=None):
     args = vars(parser.parse_args(argv))
     action = args.pop("action")
     if action == "preflight":
-        print(json.dumps(static_preflight(**args), sort_keys=True, indent=2))
-        return 2  # candidate validation succeeded; production authority absent
+        try:
+            result = static_preflight(**args)
+        except (PermissionError, ValueError) as exc:
+            print("FINAL_MERGE_REQUIRED: " + str(exc))
+            return 2
+        print(json.dumps(result, sort_keys=True, indent=2))
+        return 0 if result.get("effective_authorization") else 2
     try:
         result = production_run(**args)
     except PermissionError as exc:

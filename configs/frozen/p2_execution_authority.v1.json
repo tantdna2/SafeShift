@@ -1,0 +1,25 @@
+{
+  "schema_version": "p2-execution-authority-v1",
+  "status": "FROZEN",
+  "authority": "RESEARCH_LEAD",
+  "protocol_id": "P2",
+  "protocol_freeze_commit_sha": "2f8d09b2f34a866195eb09588902d30ce5c17d32",
+  "implementation_base_sha": "e7628d68f87cf53b5343ea912b7e332064c285af",
+  "expected_pre_merge_main_sha": "e7628d68f87cf53b5343ea912b7e332064c285af",
+  "freeze_candidate_path": "configs/pre_freeze/protocol_freeze_candidate.d9r26.v1.json",
+  "freeze_candidate_sha256": "0901bab9b0dbd648b263071d5fdbd677120880eb91a2a5d4724c064905ab2ec2",
+  "identity_sha256": {
+    "configs/pre_freeze/d9r22_seminar_scope.v1.json": "5eaf32e87288c900d4021bd774a613c8147d8140976092e45a7fde23245b4aeb",
+    "configs/pre_freeze/production_classification_policy.d9r23.v1.json": "a0aeba174be9ae85f0cf3264ffcbbd97039f3088319084f9cd7f7caf852796ab",
+    "prompts/p2_classification_c1_v1.txt": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "configs/pre_freeze/d9r24_metric_contract.v1.json": "a04366aba1335d2878233bc90b43ec389ececa29377af9d8a26d99b29235c8d0"
+  },
+  "dataset_fingerprint": "7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5",
+  "sample_count": 5013,
+  "inspecsafe_inference_authorized": true,
+  "reruns": [],
+  "primary_grounding": "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE",
+  "production_backend_binding": "IMPLEMENTED_SOURCE_BACKED_FREEZE_CANDIDATE",
+  "p1_separate": true,
+  "p1_implemented": false
+}
