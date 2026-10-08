@@ -16,6 +16,7 @@ from safeshift.runners import p2_preflight as preflight
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "e7628d68f87cf53b5343ea912b7e332064c285af"
+REVIEWED_MERGE = "031958a5ce668057f763973a722a3506d73f39f0"
 CANDIDATE = "configs/pre_freeze/protocol_freeze_candidate.d9r26.v1.json"
 AUTHORITY = "configs/frozen/p2_execution_authority.v1.json"
 CANDIDATE_SHA = "0901bab9b0dbd648b263071d5fdbd677120880eb91a2a5d4724c064905ab2ec2"
@@ -32,8 +33,8 @@ def git_bytes(repo, *args):
 class D9R27FinalFreezeTests(unittest.TestCase):
     def setUp(self):
         self.f1 = json.loads((ROOT / AUTHORITY).read_bytes())["protocol_freeze_commit_sha"]
-        parents = git(ROOT, "rev-list", "--parents", "-n", "1", "HEAD").split()
-        self.f2 = parents[2] if len(parents) == 3 else parents[0]
+        # Historical F2 belongs to the reviewed release, even on later branches.
+        self.f2 = git(ROOT, "rev-parse", REVIEWED_MERGE + "^2")
 
     def _clone(self):
         directory = tempfile.TemporaryDirectory()
@@ -132,13 +133,17 @@ class D9R27FinalFreezeTests(unittest.TestCase):
             "configs/pre_freeze/production_classification_policy.d9r23.v1.json",
             "configs/pre_freeze/d9r24_metric_contract.v1.json",
             "prompts/p2_classification_c1_v1.txt",
-            "safeshift/runners/p2_bridge.py",
             "safeshift/data/p2_execution.py",
             "safeshift/protocol/p2_evaluation.py",
             "safeshift/protocol/d9r24_metrics.py",
             "safeshift/protocol/reporting.py",
         ):
             self.assertEqual(git_bytes(ROOT, "show", f"HEAD:{path}"), git_bytes(ROOT, "show", f"{BASE}:{path}"), path)
+        # Qwen3 runtime amendments may change the active bridge; frozen source
+        # remains pinned to its original merge and cannot become rerun authority.
+        path = "safeshift/runners/p2_bridge.py"
+        self.assertEqual(git_bytes(ROOT, "show", f"{REVIEWED_MERGE}:{path}"),
+                         git_bytes(ROOT, "show", f"{BASE}:{path}"))
         contract = harness.contract()
         self.assertEqual(tuple(harness._PRODUCTION_BACKENDS), ("qwen3", "qwen2_5", "internvl3", "moondream"))
         self.assertEqual(contract["primary_grounding"], "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE")

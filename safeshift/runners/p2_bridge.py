@@ -62,7 +62,7 @@ def require_production_context(model, context, repo=ROOT):
     """Native guard extension: actual INSPECSAFE stays INSPECSAFE, never relabelled."""
     from .p2_harness import authorize_production
     head, _ = authorize_production(repo)
-    entry = load_policy(repo)["classification"][model]
+    entry = load_policy(repo, qwen3_runtime=model == "qwen3")["classification"][model]
     if (context.source_kind != "INSPECSAFE" or context.git_commit_sha != head
             or context.roles != Roles(Participation.PARTICIPATING, Participation.NOT_PARTICIPATING)):
         raise PermissionError("AUTHORIZED_CLASSIFICATION_CONTEXT_REQUIRED")
@@ -124,15 +124,9 @@ def _verify_qwen_snapshot(model, repo):
 
 def _loaded_state(runner, model):
     if model == "qwen3":
-        from scripts.w2_qwen_kaggle_smoke import inspect_device_map
+        from .qwen3_placement import require_loaded_state
         native = runner._resources[1]
-        mapping, _ = inspect_device_map(native.hf_device_map)
-        if "cpu" in mapping.values() or "disk" in mapping.values():
-            raise ValueError("D9R23_OFFLOAD_FORBIDDEN")
-        if (str(native.dtype) != "torch.float16" or getattr(native, "is_quantized", False)
-                or getattr(native.config, "quantization_config", None) is not None
-                or getattr(native.config, "_attn_implementation", None) == "flash_attention_2"):
-            raise ValueError("D9R23_NATIVE_MODEL_STATE_MISMATCH")
+        require_loaded_state(native)
     elif model == "qwen2_5":
         from scripts.w2_qwen2_5_t4_smoke import placement_gate
         placement_gate(runner._resources[1], runner._resources[0], runner._backend.torch)
@@ -149,7 +143,7 @@ class ProductionRunnerBridge:
         if model not in REGISTRY:
             raise ValueError("CLASSIFICATION_NOT_PARTICIPATING")
         self.model, self.repo = model, Path(repo)
-        self.entry = deepcopy(load_policy(repo)["classification"][model])
+        self.entry = deepcopy(load_policy(repo, qwen3_runtime=model == "qwen3")["classification"][model])
         # Class metadata is safe to import; heavyweight imports remain lazy.
         cls = _runner_class(model)
         _check_identity(cls, model, self.entry)

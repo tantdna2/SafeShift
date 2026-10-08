@@ -176,9 +176,10 @@ class Qwen3ExternalGateResultTests(unittest.TestCase):
         plan = load(ROOT / self.result['gate_plan_path'])
         for path, expected in plan['protected_source_sha256_lf'].items():
             with self.subTest(path=path):
-                if path == 'configs/pre_freeze/local_model_provenance.d9.json':
+                if path in ('configs/pre_freeze/local_model_provenance.d9.json',
+                            'safeshift/runners/qwen3_vl.py'):
                     # Historical plan hash remains exact; live membership and
-                    # unchanged model/source evidence are checked by D9R15.
+                    # source pins do not authorize the new P2 placement path.
                     raw = subprocess.check_output(['git', 'show', BASE + ':' + path], cwd=ROOT)
                     self.assertEqual(hashlib.sha256(raw.replace(b'\r\n', b'\n')).hexdigest(), expected)
                 else:

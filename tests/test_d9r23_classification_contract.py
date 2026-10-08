@@ -59,6 +59,14 @@ ALLOWED = {"DECISIONS.md", "TASKS.md", policy.POLICY_PATH, policy.PROMPT_PATH,
            "tests/test_d9r27_final_freeze.py",
            "tests/test_classification_qualification.py", "tests/test_moondream_external_gate.py",
            "tests/test_moondream_runner_smoke.py", "tests/test_paligemma_external_gate.py",
+           # Explicitly scoped Qwen3 runtime placement amendment.
+           'configs/pre_freeze/qwen3_runtime_placement_amendment.v1.json',
+           'safeshift/runners/qwen3_placement.py',
+           'safeshift/runners/qwen3_vl.py',
+           'tests/test_qwen3_runtime_placement.py',
+           'tests/test_qwen3_external_gate.py',
+           'tests/test_qwen3_external_gate_result.py',
+           'tests/test_d9r22_seminar_scope.py',
            }
 
 

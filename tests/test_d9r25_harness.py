@@ -1,6 +1,7 @@
 """Only generated temporary data and scripted native envelopes; no real inference."""
 
 from copy import deepcopy
+import ast
 import csv
 import hashlib
 import inspect
@@ -20,6 +21,7 @@ from safeshift.data import p2_execution as data
 from safeshift.data.manifest import FIELDS
 from safeshift.protocol import p2_evaluation as evaluation
 from safeshift.protocol.d9r24_metrics import rq3_metrics
+from safeshift.protocol.classification_policy import QWEN3_AMENDMENT_PATH
 from safeshift.runners import p2_harness as h
 from safeshift.runners.contracts import GenerationFailure
 from tests.test_d9r23_classification_contract import native
@@ -36,7 +38,7 @@ class HarnessTests(unittest.TestCase):
         self.socket = patch.object(socket.socket, "connect", side_effect=AssertionError("NO_NETWORK"))
         self.socket.start()
         self.addCleanup(self.socket.stop)
-        for name in (h.CONTRACT_PATH, *h.contract()["identity_sha256"]):
+        for name in (h.CONTRACT_PATH, *h.contract()["identity_sha256"], QWEN3_AMENDMENT_PATH):
             target = self.repo / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, target)
@@ -530,11 +532,21 @@ assert synthetic_image().startswith(b'\\x89PNG')
         self.assertEqual(c["authorization_activation"], "FINAL_REVIEWED_MAIN_MERGE_COMMIT_ONLY")
         self.assertEqual(c["primary_grounding"], "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE")
         protected = [*c["identity_sha256"], "safeshift/runners/production_classification.py",
-                     "safeshift/protocol/classification_policy.py", "safeshift/protocol/classification_failure_policy.py",
+                     "safeshift/protocol/classification_failure_policy.py",
                      "safeshift/protocol/d9r24_metrics.py", "safeshift/protocol/reporting.py"]
         for name in protected:
             before = subprocess.check_output(["git", "show", f"{BASE}:{name}"], cwd=ROOT)
             self.assertEqual((ROOT / name).read_bytes().replace(b"\r\n", b"\n"), before)
+        # The prospective runtime loader is extended; semantic policy functions
+        # and the default historical policy view remain exactly preserved.
+        path = "safeshift/protocol/classification_policy.py"
+        before = subprocess.check_output(["git", "show", f"{BASE}:{path}"], cwd=ROOT)
+        def functions(raw):
+            return {node.name: ast.dump(node) for node in ast.parse(raw).body if isinstance(node, ast.FunctionDef)}
+        old, current = functions(before), functions((ROOT / path).read_bytes())
+        for name in ("same_json", "render_prompt", "validate_context"):
+            self.assertEqual(old[name], current[name], name)
+        self.assertEqual(h.load_policy(), json.loads((ROOT / h.POLICY_PATH).read_bytes()))
         for name in ("DECISIONS.md", "TASKS.md"):
             before = subprocess.check_output(["git", "show", f"{BASE}:{name}"], cwd=ROOT)
             self.assertTrue((ROOT / name).read_bytes().replace(b"\r\n", b"\n").startswith(before))

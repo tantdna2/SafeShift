@@ -1,0 +1,115 @@
+{
+  "schema_version": "qwen3-runtime-placement-amendment-v1",
+  "status": "PENDING_RESEARCH_LEAD_SUPERSEDING_AUTHORITY",
+  "base_sha": "031958a5ce668057f763973a722a3506d73f39f0",
+  "runtime_id": "qwen3-t4x2-embedding-cpu-v1",
+  "model_key": "qwen3",
+  "supersedes_policy_path": "configs/pre_freeze/production_classification_policy.d9r23.v1.json",
+  "supersedes_policy_sha256": "a0aeba174be9ae85f0cf3264ffcbbd97039f3088319084f9cd7f7caf852796ab",
+  "frozen_authority_preserved": "configs/frozen/p2_execution_authority.v1.json",
+  "reason": "Qwen3 production CUDA OOM; runtime placement amendment only.",
+  "failed_production_run_id": "qwen3-p2-shard0-first",
+  "reuse_failed_run_id": false,
+  "semantic_protocol_changed": false,
+  "inspecsafe_inference_authorized": false,
+  "rerun_authorized": false,
+  "runtime_patch": {
+    "device": {
+      "placement": "explicit",
+      "device_map": {
+        "model.visual": 1,
+        "model.language_model.embed_tokens": "cpu",
+        "model.language_model.layers.0": 0,
+        "model.language_model.layers.1": 0,
+        "model.language_model.layers.2": 0,
+        "model.language_model.layers.3": 0,
+        "model.language_model.layers.4": 0,
+        "model.language_model.layers.5": 0,
+        "model.language_model.layers.6": 0,
+        "model.language_model.layers.7": 0,
+        "model.language_model.layers.8": 0,
+        "model.language_model.layers.9": 0,
+        "model.language_model.layers.10": 0,
+        "model.language_model.layers.11": 0,
+        "model.language_model.layers.12": 0,
+        "model.language_model.layers.13": 0,
+        "model.language_model.layers.14": 0,
+        "model.language_model.layers.15": 0,
+        "model.language_model.layers.16": 0,
+        "model.language_model.layers.17": 0,
+        "model.language_model.layers.18": 0,
+        "model.language_model.layers.19": 0,
+        "model.language_model.layers.20": 0,
+        "model.language_model.layers.21": 1,
+        "model.language_model.layers.22": 1,
+        "model.language_model.layers.23": 1,
+        "model.language_model.layers.24": 1,
+        "model.language_model.layers.25": 1,
+        "model.language_model.layers.26": 1,
+        "model.language_model.layers.27": 1,
+        "model.language_model.layers.28": 1,
+        "model.language_model.layers.29": 1,
+        "model.language_model.layers.30": 1,
+        "model.language_model.layers.31": 1,
+        "model.language_model.layers.32": 1,
+        "model.language_model.layers.33": 1,
+        "model.language_model.layers.34": 1,
+        "model.language_model.layers.35": 1,
+        "model.language_model.norm": 1,
+        "model.language_model.rotary_emb": 1,
+        "lm_head": 1
+      }
+    },
+    "hardware_contract": {
+      "os": "Linux",
+      "architecture": "x86_64",
+      "gpu": "NVIDIA_T4",
+      "visible_gpu_count": 2,
+      "compute_capability": [
+        7,
+        5
+      ],
+      "cuda_runtime": "12.8",
+      "cpu_offload": true,
+      "disk_offload": false,
+      "automatic_fallback": false,
+      "cpu_offload_modules": [
+        "model.language_model.embed_tokens"
+      ],
+      "allocator_env": {
+        "PYTORCH_ALLOC_CONF": "expandable_segments:True"
+      }
+    },
+    "runtime_requirements": "qwen3-t4x2-embedding-cpu-v1"
+  },
+  "attention": "DEFAULT_SDPA_NO_LOADER_OVERRIDE",
+  "diagnostic_evidence": {
+    "source": "Research Lead task statement, 2026-10-08; owner-reported Kaggle T4 x2 diagnostics; not independently rerun in Codex.",
+    "pure_gpu_attempts": [
+      {
+        "visual_and_embedding": "GPU1",
+        "language_layer_split": "22/14",
+        "input_tokens": 4581,
+        "result": "CUDA_OOM_GPU0"
+      },
+      {
+        "visual_and_embedding": "GPU1",
+        "language_layer_split": "21/15",
+        "input_tokens": 4581,
+        "result": "CUDA_OOM_GPU1"
+      }
+    ],
+    "winning_generations": [
+      {
+        "input_tokens": 4581,
+        "result": "PASS"
+      },
+      {
+        "input_tokens": 4149,
+        "result": "PASS"
+      }
+    ],
+    "semantic_score_selection": false
+  },
+  "blocker": "Existing D9R27 authority accepts only the old reviewed merge tree and reruns=[]. A separate reviewed, hash-pinned superseding authority and explicit Research Lead rerun authorization with a new run ID and exact prior manifest hash are required. This amendment grants neither."
+}

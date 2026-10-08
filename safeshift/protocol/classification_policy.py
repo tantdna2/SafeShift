@@ -5,12 +5,14 @@ Selective redesign of PR #67 execution_policy; grounding is not a dependency.
 
 import hashlib
 import json
+from copy import deepcopy
 from pathlib import Path
 
 from .schema import strict_json
 
 ROOT = Path(__file__).resolve().parents[2]
 POLICY_PATH = "configs/pre_freeze/production_classification_policy.d9r23.v1.json"
+QWEN3_AMENDMENT_PATH = "configs/pre_freeze/qwen3_runtime_placement_amendment.v1.json"
 PROMPT_PATH = "prompts/p2_classification_c1_v1.txt"
 PROMPT_VERSION = "p2-classification-c1-v1"
 PROMPT_SHA256 = "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3"
@@ -24,7 +26,7 @@ def same_json(left, right):
         right, sort_keys=True, allow_nan=False)
 
 
-def load_policy(repo=ROOT):
+def load_policy(repo=ROOT, *, qwen3_runtime=False):
     policy = strict_json((Path(repo) / POLICY_PATH).read_bytes())
     if (policy["schema_version"] != "production-classification-d9r23-v1"
             or tuple(policy["classification"]) != MODELS
@@ -43,6 +45,31 @@ def load_policy(repo=ROOT):
                 or entry["raw_before_parse_required"] is not True
                 or entry["semantic_scores_used_for_selection"] is not False):
             raise ValueError("D9R23_MODEL_CONTRACT_MISMATCH")
+    if qwen3_runtime:
+        from safeshift.runners.qwen3_placement import (
+            ALLOCATOR_NAME, ALLOCATOR_VALUE, EMBEDDING, RUNTIME_ID, device_contract,
+        )
+        amendment = strict_json((Path(repo) / QWEN3_AMENDMENT_PATH).read_bytes())
+        hardware = deepcopy(policy["classification"]["qwen3"]["hardware_contract"])
+        hardware.update(cpu_offload=True, cpu_offload_modules=[EMBEDDING],
+                        allocator_env={ALLOCATOR_NAME: ALLOCATOR_VALUE})
+        patch = {"device": device_contract(), "hardware_contract": hardware,
+                 "runtime_requirements": RUNTIME_ID}
+        original_hash = hashlib.sha256((Path(repo) / POLICY_PATH).read_bytes()
+                                       .replace(b"\r\n", b"\n")).hexdigest()
+        if (amendment.get("schema_version") != "qwen3-runtime-placement-amendment-v1"
+                or amendment.get("status") != "PENDING_RESEARCH_LEAD_SUPERSEDING_AUTHORITY"
+                or amendment.get("base_sha") != "031958a5ce668057f763973a722a3506d73f39f0"
+                or amendment.get("supersedes_policy_path") != POLICY_PATH
+                or amendment.get("supersedes_policy_sha256") != original_hash
+                or amendment.get("runtime_id") != RUNTIME_ID
+                or amendment.get("model_key") != "qwen3"
+                or amendment.get("semantic_protocol_changed") is not False
+                or amendment.get("inspecsafe_inference_authorized") is not False
+                or amendment.get("rerun_authorized") is not False
+                or not same_json(amendment.get("runtime_patch"), patch)):
+            raise ValueError("QWEN3_RUNTIME_AMENDMENT_MISMATCH")
+        policy["classification"]["qwen3"].update(deepcopy(patch))
     return policy
 
 
