@@ -1,4 +1,4 @@
-"""Freeze-gated P2 orchestration; current release authorizes synthetic only.
+"""Freeze-gated P2 orchestration; production requires reviewed merge authority.
 
 Production bridges receive separate typed operational identities with load and
 generate. Scripted rehearsal implements load(condition), observe(), and
@@ -92,6 +92,9 @@ def authorize_production(repo=ROOT):
     final reviewed merge, with the audited main commit as parent one and the
     F2 authority commit as parent two.
     """
+    from .qwen3_authority import AUTHORITY_PATH, authorize
+    if (Path(repo) / AUTHORITY_PATH).exists():
+        return authorize(repo)
     c = contract(repo)
     if (c["protocol_freeze"] != "FROZEN" or c["implementation_freeze"] != "FROZEN"
             or c["inspecsafe_inference_authorized"] is not True
@@ -167,6 +170,10 @@ def production_run(*, model, run_id, dataset_root, manifest_path, provenance_pat
     """Guard precedes dataset reads, factory construction and backend load."""
     entry = _model(model, repo)
     commit, authority = authorize_production(repo)
+    from .qwen3_authority import SCHEMA, bind_run, verify_lineage
+    if authority.get("schema_version") == SCHEMA:
+        rerun_of = bind_run(authority, model, run_id, shard_count, shard_index, rerun_of)
+        verify_lineage(repo, authority, model, run_id, rerun_of)
     rows, manifest_hash = verify_dataset(dataset_root, manifest_path, provenance_path)
     def image(row):
         raw = safe_path(dataset_root, row["image_locator"]).read_bytes()

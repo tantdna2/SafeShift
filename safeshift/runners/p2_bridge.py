@@ -61,7 +61,11 @@ def context_for(model, entry, run, call=None):
 def require_production_context(model, context, repo=ROOT):
     """Native guard extension: actual INSPECSAFE stays INSPECSAFE, never relabelled."""
     from .p2_harness import authorize_production
-    head, _ = authorize_production(repo)
+    head, authority = authorize_production(repo)
+    from .qwen3_authority import SCHEMA, authorized_run, verify_lineage
+    if authority.get("schema_version") == SCHEMA:
+        run = authorized_run(authority, model, context.run_id)
+        verify_lineage(repo, authority, model, context.run_id, run["rerun_of"])
     entry = load_policy(repo, qwen3_runtime=model == "qwen3")["classification"][model]
     if (context.source_kind != "INSPECSAFE" or context.git_commit_sha != head
             or context.roles != Roles(Participation.PARTICIPATING, Participation.NOT_PARTICIPATING)):
