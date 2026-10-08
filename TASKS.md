@@ -1718,3 +1718,34 @@ Draft PR creation is the final handoff action; its URL is reported externally.
 `RERUN_AUTHORIZED=NO`; `reruns=[]` unchanged; no old run ID reuse, model/GPU or
 dataset execution, Antigravity call or merge. Existing D9R27 merge/tree authority
 cannot authorize the amended runtime; this remains a production blocker.
+
+### Qwen3 superseding P2 execution authority v2 (append-only)
+
+- [x] Prepare isolated branch from exact PR #85 merged BASE
+  `92ef9179f23ca7c58ffb425512d239b12b26f832`.
+- [x] Preserve historical authority v1, runtime amendment, D9R25/D9R26,
+  prompt, metrics and dataset contract bytes; add Qwen3-only v2 support.
+- [x] Freeze the exact four-shard plan: shard0 `qwen3-p2-shard0-rerun1` binds
+  `qwen3-p2-shard0-first` / manifest SHA-256
+  `d4dd6ee9790dcc3c99c73e9404b52f71268fc7285ead41797dcf828261cd1500`;
+  shards1-3 use `qwen3-p2-shard{1,2,3}-first`. Full shard0 includes the two
+  previous successes; no Qwen2.5, InternVL3 or Moondream rerun permission.
+- [x] Derive lineage from authority without a new caller-selectable CLI flag;
+  check local prior manifest before dataset access and retain hidden-rerun checks.
+- [x] Add local synthetic Git tests, pin/plan/lineage/model negative cases and
+  fresh-process no-dataset/model/GPU/network preflight guards.
+- [x] Initial scoped regressions: 83 tests PASS; initial new authority suite:
+  16 PASS plus actual F2 structure check deferred until F2 exists. Subsequent
+  final validation/commit SHAs are recorded in the Draft PR handoff.
+- [x] Document exact owner restore/hash/offline/T4 x2/allocator/four-run steps.
+- [ ] Independent audit and Research Lead / ChatGPT review.
+- [ ] Standard Merge Commit into main and post-merge Git verification.
+- [ ] Future owner execution after effective authority and prior-artifact check.
+
+F1 contains all executable/config/test/runbook changes. F2 may add only
+`configs/frozen/p2_execution_authority.v2.json` as F1's direct child. The Draft
+has no effective production/rerun authority. No model, GPU, real dataset,
+production, Antigravity call or merge occurs in this task. Existing Qwen2.5
+completed results remain outside this new Qwen3 plan. Raw failed production
+manifest bytes were not supplied/read; supplied failure evidence and SHA are
+documented in the Qwen3 runbook with the synthetic-test limitation.

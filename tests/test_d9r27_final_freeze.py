@@ -158,7 +158,9 @@ class D9R27FinalFreezeTests(unittest.TestCase):
             return {n.name: ast.dump(n) for n in ast.parse(raw).body if isinstance(n, ast.FunctionDef)}
         old = functions(git_bytes(ROOT, "show", f"{BASE}:safeshift/runners/p2_harness.py"))
         current = functions((ROOT / "safeshift/runners/p2_harness.py").read_bytes())
-        for name in ("production_run", "atomic_new", "verified_raw", "persist_native", "parse_stored", "_execute", "_rerun"):
+        # Superseding Qwen3 authority extends only the production guard;
+        # scientific execution/raw parsing and historical v1 remain unchanged.
+        for name in ("atomic_new", "verified_raw", "persist_native", "parse_stored", "_execute", "_rerun"):
             self.assertEqual(current[name], old[name], name)
 
     def test_schema_and_authority_fields(self):

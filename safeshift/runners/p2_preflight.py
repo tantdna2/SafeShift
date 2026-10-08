@@ -94,7 +94,9 @@ def static_preflight(repo=ROOT):
                 "dataset_read": False, "model_load": False,
                 "ready_to_run_inspecsafe": False}
     return {"status": "AUTHORIZED_FOR_OWNER_RUNTIME_PREFLIGHT", "bridge_version": VERSION,
-            "models": list(REGISTRY), "protocol_freeze": c["protocol_freeze"],
+            "models": [authority["model_key"]] if "model_key" in authority else list(REGISTRY),
+            "authorized_runs": authority.get("authorized_runs", []),
+            "protocol_freeze": c["protocol_freeze"],
             "inspecsafe_inference_authorized": c["inspecsafe_inference_authorized"],
             "authority_status": authority["status"], "static_authority_declared": True,
             "effective_authorization": True, "effective_authorization_head": head,
