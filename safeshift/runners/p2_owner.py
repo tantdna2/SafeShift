@@ -32,9 +32,15 @@ def main(argv=None):
         print(json.dumps(result, sort_keys=True, indent=2))
         return 0 if result.get("effective_authorization") else 2
     try:
+        if args["model"] == "qwen3":
+            from .qwen3_placement import configure_allocator
+            configure_allocator()
         result = production_run(**args)
     except PermissionError as exc:
         print("PROTOCOL_FREEZE_REQUIRED: " + str(exc))
+        return 2
+    except ValueError as exc:
+        print("P2_RUNTIME_PREFLIGHT_FAILED: " + str(exc))
         return 2
     print(result)
     return 0

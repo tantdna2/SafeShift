@@ -1691,3 +1691,30 @@ Git/GitHub maintenance only updates the existing Draft PR #84. Full-suite
 comparison uses exact BASE and final HEAD with matched LF checkout handling;
 final hashes and results are reported in the PR handoff. The Draft PR remains
 ineffective execution authority. No Antigravity, model/GPU or InspecSafe run.
+
+### Qwen3 T4 x2 runtime placement amendment (2026-10-08; append-only)
+
+- [x] Create isolated branch from exact BASE
+  `031958a5ce668057f763973a722a3506d73f39f0`.
+- [x] Version the winning explicit map and embedding-only CPU permission in a
+  pending runtime amendment; preserve old frozen policy/candidate/authority.
+- [x] Enforce exact native `hf_device_map`, FP16/NONE, default SDPA and allocator;
+  configure the Qwen3 owner process before torch import, reject late setup.
+- [x] Add fake/synthetic tests for the exact winner and required rejection cases.
+- [x] Record owner-reported production OOM and 4581/4149-token diagnostic PASS
+  with source and unchanged semantic/data/metric contracts in the runbook.
+- [x] Focused placement/runner/contract/harness/bridge/candidate regression:
+  182 tests PASS (Python 3.11.9; Git LF checkout handling).
+- [x] Historical authority: 12 tests PASS, including real temporary Git
+  histories and fresh-process no-dataset/model/GPU/network guards.
+- [x] Native/historical model regressions: 275 test identities PASS; the
+  historical Qwen3 source-hash assertion was adapted to its frozen commit and
+  revalidated with all 13 result tests plus 2 scope tests PASS.
+- [x] Working/staged diff checks PASS; no dataset, weights or raw output staged.
+- [ ] Separate Research Lead review and superseding execution/rerun authority.
+
+Draft PR creation is the final handoff action; its URL is reported externally.
+
+`RERUN_AUTHORIZED=NO`; `reruns=[]` unchanged; no old run ID reuse, model/GPU or
+dataset execution, Antigravity call or merge. Existing D9R27 merge/tree authority
+cannot authorize the amended runtime; this remains a production blocker.

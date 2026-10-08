@@ -39,6 +39,11 @@ class ExternalGatePrepTests(unittest.TestCase):
             target = self.repo / path
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / path, target)
+        # The frozen gate is historical. Replay its pinned runner source while
+        # the active runner adds the separately versioned P2 placement path.
+        source = 'safeshift/runners/qwen3_vl.py'
+        (self.repo / source).write_bytes(subprocess.check_output(
+            ['git', 'show', '031958a5ce668057f763973a722a3506d73f39f0:' + source], cwd=ROOT))
         provenance = 'configs/pre_freeze/local_model_provenance.d9.json'
         (self.repo / provenance).write_bytes(subprocess.check_output(
             ['git', 'show', '9948570820b5ed8a774b8e226b80e24055e705cf:' + provenance], cwd=ROOT))

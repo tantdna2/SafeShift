@@ -70,7 +70,7 @@ def identities(repo=ROOT):
 
 def registry(repo=ROOT):
     identities(repo)
-    return deepcopy(load_policy(repo)["classification"])
+    return deepcopy(load_policy(repo, qwen3_runtime=True)["classification"])
 
 
 def _model(model, repo):

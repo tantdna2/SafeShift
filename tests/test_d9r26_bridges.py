@@ -57,7 +57,7 @@ class FakeNative:
 @contextmanager
 def fake_lifecycle(model, outputs):
     fake = FakeNative(model, outputs)
-    entry = load_policy()["classification"][model]
+    entry = load_policy(qwen3_runtime=model == "qwen3")["classification"][model]
     observation = {"software_versions": entry["software_versions"], "hardware": entry["hardware_contract"]}
     with ExitStack() as stack:
         stack.enter_context(patch.object(b, "require_production_context"))
@@ -71,7 +71,7 @@ def fake_lifecycle(model, outputs):
 
 class BridgeTests(unittest.TestCase):
     def test_real_lightweight_construction_uses_exact_native_classes_without_load(self):
-        for model, entry in load_policy()["classification"].items():
+        for model, entry in load_policy(qwen3_runtime=True)["classification"].items():
             with self.subTest(model=model):
                 observation = {"software_versions": deepcopy(entry["software_versions"])}
                 runner = b._construct(model, ROOT, entry, observation)
@@ -94,10 +94,13 @@ class BridgeTests(unittest.TestCase):
 
     def test_runtime_observation_reuses_native_probes_with_fake_torch(self):
         from safeshift.runners.internvl3_snapshot import OFFLINE_ENV
-        for model, entry in load_policy()["classification"].items():
+        for model, entry in load_policy(qwen3_runtime=True)["classification"].items():
             torch = SimpleNamespace(version=SimpleNamespace(cuda=entry["hardware_contract"]["cuda_runtime"]))
             with ExitStack() as stack:
                 stack.enter_context(patch.dict("os.environ", OFFLINE_ENV))
+                if model == "qwen3":
+                    from safeshift.runners.qwen3_placement import ALLOCATOR_NAME, ALLOCATOR_VALUE
+                    stack.enter_context(patch.dict("os.environ", {ALLOCATOR_NAME: ALLOCATOR_VALUE}))
                 stack.enter_context(patch.dict(sys.modules, {"torch": torch}))
                 stack.enter_context(patch.object(pre, "software_observation", return_value=entry["software_versions"]))
                 stack.enter_context(patch.object(pre.platform, "system", return_value="Linux"))

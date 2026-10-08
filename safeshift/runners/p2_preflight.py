@@ -1,6 +1,7 @@
 """Metadata/static preflight and lazy, measured production environment observation."""
 
 import importlib.metadata
+import os
 import platform
 import zlib
 
@@ -17,7 +18,10 @@ def software_observation(entry):
 def runtime_observation(model, repo=ROOT):
     """Called only after production authority; never invoked by static preflight."""
     require_offline_env()
-    entry = load_policy(repo)["classification"][model]
+    entry = load_policy(repo, qwen3_runtime=model == "qwen3")["classification"][model]
+    if model == "qwen3":
+        from .qwen3_placement import ALLOCATOR_NAME, EMBEDDING, require_allocator
+        require_allocator()  # Before torch import and every CUDA probe.
     software = software_observation(entry)
     if software != entry["software_versions"]:
         raise ValueError("EXACT_SOFTWARE_PINS_REQUIRED")
@@ -50,6 +54,9 @@ def runtime_observation(model, repo=ROOT):
     hardware = {"os": platform.system(), "architecture": platform.machine(), "gpu": "NVIDIA_T4",
                 "visible_gpu_count": count, "compute_capability": cc, "cuda_runtime": torch.version.cuda,
                 "cpu_offload": False, "disk_offload": False, "automatic_fallback": False}
+    if model == "qwen3":
+        hardware.update(cpu_offload=True, cpu_offload_modules=[EMBEDDING],
+                        allocator_env={ALLOCATOR_NAME: os.environ[ALLOCATOR_NAME]})
     # Offload/precision flags are also enforced by native loaded-state checks;
     # no observation is returned by the bridge until those checks succeed.
     if hardware != entry["hardware_contract"]:

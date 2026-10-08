@@ -19,6 +19,7 @@ from .contracts import (
     AdaptedOutput, GenerationFailure, LocalRunner, ModelIdentity, ParseStatus,
     Request, RunContext, SpatialKind, Task,
 )
+from .qwen3_placement import require_context, require_loaded_state
 
 MODEL_ID = "Qwen/Qwen3-VL-8B-Instruct"
 REVISION = "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"
@@ -172,6 +173,8 @@ class Qwen3VLRunner(LocalRunner):
 
     def initialize(self, context: RunContext):
         key = self._check_condition(context)
+        if context.source_kind == "INSPECSAFE" or context.device.get("placement") == "explicit":
+            require_context(context)  # Before any backend/torch import.
         if self._backend is not None:
             return
         backend = self._backend_factory()
@@ -191,7 +194,11 @@ class Qwen3VLRunner(LocalRunner):
         if context.precision not in DTYPES or context.quantization != "NONE":
             raise ValueError("explicit FP32/BF16/FP16 and quantization NONE required")
         placement = context.device.get("placement")
-        if (not isinstance(placement, str)
+        explicit = placement == "explicit" or context.source_kind == "INSPECSAFE"
+        if explicit:
+            require_context(context)
+            placement = deepcopy(context.device["device_map"])
+        elif (not isinstance(placement, str)
                 or not re.fullmatch(r"cpu|cuda:\d+|auto", placement)):
             raise ValueError("explicit device placement required: cpu, cuda:N or auto")
         if context.preprocessing not in ({}, {"mode": "official_processor"}):
@@ -205,6 +212,8 @@ class Qwen3VLRunner(LocalRunner):
                 device_map=placement,
             )
             model.eval()
+            if explicit:
+                require_loaded_state(model)
             # Native Qwen keeps per-image RoPE deltas on its inner model.
             if not hasattr(model.model, "rope_deltas"):
                 raise ValueError("unrecognized native Qwen state layout")

@@ -2538,3 +2538,31 @@ Git structure cannot attest external review: independent audit and Research
 Lead / ChatGPT GitHub review and post-merge verification remain required.
 Requested Git/GitHub PR maintenance is the only network operation; no runtime
 execution or real dataset access is authorized by this correction.
+
+### Qwen3 T4 x2 runtime placement amendment (2026-10-08; append-only)
+
+The Research Lead task reports production CUDA OOM for
+`qwen3-p2-shard0-first`, followed by passing owner diagnostics at 4581 input
+tokens and a 4149-token control. The approved implementation scope is exact
+runtime placement: embedding on CPU; language layers 0..20 on GPU0; visual,
+layers 21..35, norm, rotary embedding and lm_head on GPU1. Require
+`PYTORCH_ALLOC_CONF=expandable_segments:True` before torch/CUDA initialization.
+No other CPU module, disk placement, automatic fallback, quantization or
+precision change is permitted. Default SDPA and all semantic/data/metric
+contracts are preserved. Evidence is owner-reported in the task statement;
+Codex performs only synthetic/fake tests and does not rerun these diagnostics.
+
+Version this change as `qwen3-t4x2-embedding-cpu-v1` in
+`configs/pre_freeze/qwen3_runtime_placement_amendment.v1.json`. Preserve the
+original D9R23 policy, D9R26 candidate, D9R25 frozen contract and
+`configs/frozen/p2_execution_authority.v1.json` byte-for-byte. Historical policy
+reads remain unchanged; the P2 registry/bridge/runtime preflight explicitly
+select the prospective runtime view. This is implementation approval, not
+production/rerun authorization.
+
+The existing authorizer proves only the original reviewed merge tree and
+requires `reruns=[]`; it has no clean superseding-authority path. Do not relax
+those invariants in this task. A separately reviewed, hash-pinned superseding
+authority and explicit Research Lead rerun authorization, new run ID and exact
+previous manifest hash remain blockers. Never reuse `qwen3-p2-shard0-first`.
+`RERUN_AUTHORIZED=NO`; no model/GPU/dataset execution, Antigravity or merge.
