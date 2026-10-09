@@ -2566,3 +2566,31 @@ those invariants in this task. A separately reviewed, hash-pinned superseding
 authority and explicit Research Lead rerun authorization, new run ID and exact
 previous manifest hash remain blockers. Never reuse `qwen3-p2-shard0-first`.
 `RERUN_AUTHORIZED=NO`; no model/GPU/dataset execution, Antigravity or merge.
+
+### InternVL3-only superseding P2 authority v3 (2026-10-09; append-only)
+
+The current Research Lead task authorizes preparation of a Draft PR from exact
+BASE `e46e98ed0c53f6c189f4069cc5f2f5d7d4295e5e`, not production execution.
+v3 supersedes the byte-preserved Qwen3 authority v2 by exact path and SHA-256.
+Only `OpenGVLab/InternVL3-2B-hf` at
+`cb57a075cb75a2e6d1b668b128d48bb00ae321d2` may become effective after review,
+Standard Merge Commit and final Git verification. Its exact existing single-T4,
+Python 3.11.11, FP16/NONE, SDPA runtime and all software/preprocessing/decoding
+pins are retained. Hash-pin existing source and qualification evidence; 8/8
+parse success and 6/8 semantic exact are descriptive, not grounds for tuning.
+
+Freeze exactly `internvl3-p2-shard{0,1,2,3}-first`, four shards with
+1254/1253/1253/1253 samples, all first attempts, `rerun_of=null`, `reruns=[]`.
+Qwen3 is paused after the new production failure reported in this task; v3
+authorizes no Qwen3 production/rerun. Preserve historical v1/v2, Qwen3 plan and
+runtime amendment. Do not rerun completed Qwen2.5; Moondream remains unauthorized.
+Dataset, split, labels, prompt, parser, metrics, semantics and sharding are unchanged.
+No additional failed-run evidence is fabricated or read.
+
+F1 is BASE's direct child; F2 adds only the v3 authority as F1's sole-parent
+child. Pin F2's canonical commit encoding in F1 to verify exact merge parent2
+without embedding a self-referencing commit SHA. Final merge must have
+parent1=BASE, parent2=exact F2, tree=exact F2 tree and a clean tracked checkout.
+Draft F2 has no effective authority; offline Git does not attest external
+review completion. Codex performs static/synthetic checks only, no real dataset,
+model/GPU, snapshot provisioning, production, Antigravity or merge.

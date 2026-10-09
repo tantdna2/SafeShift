@@ -196,6 +196,8 @@ class HarnessTests(unittest.TestCase):
         calls = []
         def git(repo, *args):
             calls.append(args)
+            if args == ("ls-tree", "--name-only", "HEAD", "--", "configs/frozen/p2_execution_authority.v3.json"):
+                return b""  # This fixture models the historical v1 release.
             if args == ("rev-parse", "HEAD"):
                 return b"b" * 40
             if args == ("rev-list", "--parents", "-n", "1", "b" * 40):

@@ -1749,3 +1749,28 @@ production, Antigravity call or merge occurs in this task. Existing Qwen2.5
 completed results remain outside this new Qwen3 plan. Raw failed production
 manifest bytes were not supplied/read; supplied failure evidence and SHA are
 documented in the Qwen3 runbook with the synthetic-test limitation.
+
+### InternVL3 P2 superseding authority v3 (2026-10-09; append-only)
+
+- [x] Create isolated branch from exact audited BASE
+  `e46e98ed0c53f6c189f4069cc5f2f5d7d4295e5e`.
+- [x] Add InternVL3-only v3 support, exact four first-attempt run plan and owner
+  runbook; preserve historical v1/v2/Qwen3 and all scientific/runtime bytes.
+- [x] Bind exact run ID/shard/null rerun before dataset/backend; native guard
+  also rejects unauthorized IDs. Missing tracked v3 cannot fall back to v2.
+- [x] Add local synthetic Git tests for Draft, valid/wrong merge structure,
+  exact F2, protected pins, model/run/shard/rerun rejection and static preflight
+  without dataset/model/GPU/network operations.
+- [x] D9R22-26 and InternVL3 focused regressions: 150 tests PASS (Python 3.11.9).
+  Two historical D9R22/23 scope-allowlist tests independently FAIL on exact BASE;
+  they remain unchanged and were excluded from that focused passing set.
+- [ ] Separate independent audit and Research Lead / ChatGPT review.
+- [ ] Final Standard Merge Commit and post-merge production commit verification.
+- [ ] Future Kaggle owner runtime/snapshot checks and the four first attempts,
+  only after effective authority; no execution in Codex.
+
+F1/F2 SHAs and final authority-test results are recorded in the Draft PR handoff
+because F2 is created only after F1. No full repository suite requested/run.
+Draft authority remains ineffective. `reruns=[]`; Qwen3 paused/unavailable under
+v3; Qwen2.5 not rerun; Moondream not authorized. No model, GPU, real dataset,
+production, provisioning, Antigravity call or merge occurs in this task.
