@@ -96,6 +96,8 @@ def static_preflight(repo=ROOT):
     return {"status": "AUTHORIZED_FOR_OWNER_RUNTIME_PREFLIGHT", "bridge_version": VERSION,
             "models": [authority["model_key"]] if "model_key" in authority else list(REGISTRY),
             "authorized_runs": authority.get("authorized_runs", []),
+            "protocol_version": authority["protocol_id"],
+            "parser_version": authority.get("parser_version"),
             "protocol_freeze": c["protocol_freeze"],
             "inspecsafe_inference_authorized": c["inspecsafe_inference_authorized"],
             "authority_status": authority["status"], "static_authority_declared": True,
