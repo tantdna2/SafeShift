@@ -39,6 +39,9 @@ class Qwen3ExecutionAuthorityTests(unittest.TestCase):
         git(ROOT, "clone", "--shared", "-c", "core.autocrlf=false", str(ROOT), str(cls.repo))
         git(cls.repo, "config", "user.name", "Synthetic authority test")
         git(cls.repo, "config", "user.email", "synthetic@example.invalid")
+        # Remove later tracked authorities before rebuilding the historical
+        # index; otherwise a v3 checkout can leave its authority untracked.
+        cls.checkout(a.BASE)
         cls.f1_tree = cls.edit_tree(a.BASE, {p: (ROOT / p).read_bytes() for p in F1_FILES})
         cls.f1 = git(cls.repo, "commit-tree", cls.f1_tree, "-p", a.BASE, "-m", "synthetic F1")
         cls.authority = a.expected_authority(cls.f1, cls.f1_tree)
@@ -374,7 +377,8 @@ assert not (repo / 'data/processed/benchmark/p2').exists()
             self.skipTest("F2 declaration is created only after F1 is committed")
         doc = json.loads(path.read_bytes())
         f1 = doc["implementation_freeze_commit_sha"]
-        f2 = git(ROOT, "rev-parse", "HEAD")
+        # Historical v2 F2 is parent2 of its reviewed merge, not a later HEAD.
+        f2 = git(ROOT, "rev-parse", "e46e98ed0c53f6c189f4069cc5f2f5d7d4295e5e^2")
         self.assertEqual(git(ROOT, "rev-list", "--parents", "-n", "1", f1).split(), [f1, a.BASE])
         self.assertEqual(git(ROOT, "rev-list", "--parents", "-n", "1", f2).split(), [f2, f1])
         self.assertEqual(git(ROOT, "diff", "--name-status", f1, f2), "A\t" + a.AUTHORITY_PATH)

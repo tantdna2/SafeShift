@@ -1,0 +1,53 @@
+{
+  "schema_version": "internvl3-p2-execution-plan-v1",
+  "protocol_id": "P2",
+  "model_key": "internvl3",
+  "base_sha": "e46e98ed0c53f6c189f4069cc5f2f5d7d4295e5e",
+  "model_id": "OpenGVLab/InternVL3-2B-hf",
+  "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+  "runner": "safeshift.runners.internvl3.InternVL3Runner",
+  "runner_version": "internvl3-runner-v1",
+  "runtime_plan_path": "configs/pre_freeze/internvl3_t4_runtime.v1.json",
+  "runtime_plan_sha256": "85af239819a1903a1d1d8ce229c7039119aca147ff935b1cab4e78458599f80e",
+  "dataset_fingerprint": "7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5",
+  "sample_count": 5013,
+  "source_manifest_sha256": "3025edb985d947cbcfe3e397b37aed505e2305b32ece46663d46115c28568577",
+  "shard_algorithm_version": "sample-id-lexical-modulo-v1",
+  "shard_count": 4,
+  "attempt_kind": "FIRST_ATTEMPT",
+  "reruns": [],
+  "runs": [
+    {
+      "run_id": "internvl3-p2-shard0-first",
+      "model_key": "internvl3",
+      "shard_count": 4,
+      "shard_index": 0,
+      "sample_count": 1254,
+      "rerun_of": null
+    },
+    {
+      "run_id": "internvl3-p2-shard1-first",
+      "model_key": "internvl3",
+      "shard_count": 4,
+      "shard_index": 1,
+      "sample_count": 1253,
+      "rerun_of": null
+    },
+    {
+      "run_id": "internvl3-p2-shard2-first",
+      "model_key": "internvl3",
+      "shard_count": 4,
+      "shard_index": 2,
+      "sample_count": 1253,
+      "rerun_of": null
+    },
+    {
+      "run_id": "internvl3-p2-shard3-first",
+      "model_key": "internvl3",
+      "shard_count": 4,
+      "shard_index": 3,
+      "sample_count": 1253,
+      "rerun_of": null
+    }
+  ]
+}
