@@ -92,7 +92,16 @@ def authorize_production(repo=ROOT):
     final reviewed merge, with the audited main commit as parent one and the
     F2 authority commit as parent two.
     """
-    from . import internvl3_authority
+    from . import internvl3_authority, p21_authority
+    # Dispatch on the implementation marker, never on v4 file presence. Missing
+    # or deleted v4 on P2.1 source cannot reactivate historical authorities.
+    try:
+        p21_source = ((Path(repo) / p21_authority.SOURCE_MARKER).exists()
+                      or _git(repo, "ls-tree", "--name-only", "HEAD", "--", p21_authority.SOURCE_MARKER))
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise PermissionError(f"{BLOCK}:{exc}") from exc
+    if p21_source:
+        return p21_authority.authorize(repo)
     # A missing tracked v3 must never fall back to historical Qwen3 authority.
     try:
         v3_present = ((Path(repo) / internvl3_authority.AUTHORITY_PATH).exists()
@@ -178,9 +187,17 @@ def production_run(*, model, run_id, dataset_root, manifest_path, provenance_pat
                    rerun_of=None):
     """Guard precedes dataset reads, factory construction and backend load."""
     commit, authority = authorize_production(repo)
-    from . import internvl3_authority
+    from . import internvl3_authority, p21_authority
     from .qwen3_authority import SCHEMA, bind_run, verify_lineage
-    if authority.get("schema_version") == internvl3_authority.SCHEMA:
+    plan_run = None
+    if authority.get("schema_version") == p21_authority.SCHEMA:
+        rerun_of = p21_authority.bind_run(
+            authority, model, run_id, shard_count, shard_index, rerun_of)
+        p21_authority.require_new_run(repo, model, run_id)
+        p21_authority.verify_lineage(repo, authority, model, run_id, rerun_of)
+        p21_authority.verify_progression(repo, authority, model, run_id)
+        plan_run = p21_authority.authorized_run(authority, model, run_id)
+    elif authority.get("schema_version") == internvl3_authority.SCHEMA:
         rerun_of = internvl3_authority.bind_run(
             authority, model, run_id, shard_count, shard_index, rerun_of)
         internvl3_authority.require_new_run(repo, model, run_id)
@@ -198,7 +215,8 @@ def production_run(*, model, run_id, dataset_root, manifest_path, provenance_pat
                     source_hash=manifest_hash, dataset_fingerprint=contract(repo)["dataset_fingerprint"],
                     source="INSPECSAFE", image_reader=image,
                     shard_count=shard_count, shard_index=shard_index, commit=commit,
-                    rerun_of=rerun_of, rerun_authorizations=authority.get("reruns", []))
+                    rerun_of=rerun_of, rerun_authorizations=authority.get("reruns", []),
+                    protocol_version=authority.get("protocol_id", "P2"), execution_plan_run=plan_run)
 
 
 def atomic_new(path, content):
@@ -242,12 +260,14 @@ def persist_native(directory, native):
     return receipt
 
 
-def parse_stored(directory, receipt, model, entry, run_id, call_id):
+def parse_stored(directory, receipt, model, entry, run_id, call_id, *, protocol_version="P2"):
     """D9R23 strict native parsing rules over a verified durable receipt.
 
     Unlike the historical offline adapter, authorization is owned by the run
     entrypoint. No offline source is relabelled as production or vice versa.
     """
+    from .production_classification import parser_identity
+    parser_identity(protocol_version)  # reject unsupported versions before parsing
     raw = verified_raw(directory, receipt)
     try:
         obj = strict_json(raw)
@@ -256,7 +276,12 @@ def parse_stored(directory, receipt, model, entry, run_id, call_id):
                     or len(obj["continuation_ids"]) > entry["max_output_tokens"]
                     or not same_json(obj["runtime"]["software_versions"], entry["software_versions"])):
                 raise ValueError("NATIVE_CONDITION_MISMATCH")
-        parsed = CandidateAdapter(model, run_id=run_id, call_id=call_id).adapt(raw, Task.CLASSIFICATION)
+        if protocol_version == "P2.1":
+            from .p21_classification import P21NativeAdapter
+            adapter = P21NativeAdapter(model, run_id=run_id, call_id=call_id)
+        else:
+            adapter = CandidateAdapter(model, run_id=run_id, call_id=call_id)
+        parsed = adapter.adapt(raw, Task.CLASSIFICATION)
         parsed.validate(Task.CLASSIFICATION)
         return parsed
     except (ValueError, TypeError, KeyError, IndexError, AttributeError, UnicodeError, RecursionError):
@@ -288,7 +313,10 @@ def _rerun(repo, model, run_id, reference, authorizations):
 
 def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerprint,
              source, image_reader, shard_count, shard_index, commit, backend_factory=None,
-             rerun_of=None, rerun_authorizations=(), artifact_repo=None):
+             rerun_of=None, rerun_authorizations=(), artifact_repo=None, protocol_version="P2",
+             execution_plan_run=None):
+    from .production_classification import parser_identity
+    parser_version = parser_identity(protocol_version)
     selected, shard_meta = shard(rows, shard_count, shard_index, source_hash)
     storage_repo = repo if artifact_repo is None else artifact_repo
     _rerun(storage_repo, model, run_id, rerun_of, rerun_authorizations)
@@ -311,16 +339,24 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
     bound_backend = resolve_production_backend(model, repo=repo) if backend_factory is None else None
     root.mkdir(parents=True, exist_ok=False)  # includes failed/interrupted runs: no resume
     hashes = identities(repo)
-    identity = {"protocol_id": "P2", "identity_sha256": hashes,
+    identity = {"protocol_id": protocol_version, "identity_sha256": hashes,
                 "dataset_fingerprint": dataset_fingerprint, "source_manifest_sha256": source_hash,
                 "source_kind": source}
-    manifest = {"version": "d9r26-run-v1", "run_id": run_id, "model_key": model,
+    if protocol_version == "P2.1":
+        from . import p21_authority
+        identity.update(parser_version=parser_version,
+                        protocol_amendment_sha256=p21_authority.AMENDMENT_SHA256)
+    manifest = {"version": "p21-run-v1" if protocol_version == "P2.1" else "d9r26-run-v1",
+                "run_id": run_id, "model_key": model,
                 "call_identity_version": "call1-sample-sha256-v1",
                 "bridge_version": BRIDGE_VERSION, "backend_registry_version": REGISTRY_VERSION,
                 "native_runner_binding": list(_PRODUCTION_BACKENDS[model]),
                 "protocol_identity": identity, "model_condition": entry,
                 "git_commit": commit, "rerun_of": rerun_of, "started_at": _now(),
                 "resume": "FORBIDDEN", "shard_manifest_sha256": shard_meta["shard_manifest_sha256"]}
+    if protocol_version == "P2.1" and execution_plan_run is not None:
+        manifest.update(attempt_kind=execution_plan_run["attempt_kind"],
+                        lineage=deepcopy(execution_plan_run["lineage"]))
     atomic_new(root / "run_manifest.json", json_bytes(manifest))
     atomic_new(root / "shard_manifest.json", json_bytes(shard_meta))
     atomic_new(root / "execution_manifest.json", json_bytes(list(selected)))
@@ -365,7 +401,11 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
                 stage = "RAW_PERSISTENCE"
                 receipt = persist_native(directory, native)
                 stage = "PARSER"
-                parsed = parse_stored(directory, receipt, model, entry, run_id, call_id)
+                if protocol_version == "P2":
+                    parsed = parse_stored(directory, receipt, model, entry, run_id, call_id)
+                else:
+                    parsed = parse_stored(directory, receipt, model, entry, run_id, call_id,
+                                          protocol_version=protocol_version)
                 stage = "COMPLETED"
             except GenerationFailure as exc:
                 cause = "GENERATION_FAILURE"
@@ -378,7 +418,7 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
                 cause = "INTERRUPTED" if isinstance(exc, KeyboardInterrupt) else "STAGE_FAILURE"
             status = parsed.parse_status.value if parsed else "FAILED"
             metadata = {"run_id": run_id, "sample_id": sid, "call_id": call_id,
-                        "protocol_id": "P2", "model_key": model, "git_commit": commit,
+                        "protocol_id": protocol_version, "model_key": model, "git_commit": commit,
                         "bridge_version": BRIDGE_VERSION, "native_runner_binding": list(_PRODUCTION_BACKENDS[model]),
                         "source_kind": source,
                         "hardware_observation_kind": "SIMULATED" if source == "SYNTHETIC" else "BACKEND_OBSERVED",
@@ -386,7 +426,7 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
                         "prompt_version": entry["prompt_version"], "prompt_sha256": PROMPT_SHA256,
                         "production_policy_identity": hashes[POLICY_PATH],
                         "image_sha256": row["image_sha256"], "adapter_version": ADAPTER,
-                        "d9r23_adapter_version": entry["adapter_version"], "parser_version": PARSER_VERSION,
+                        "d9r23_adapter_version": entry["adapter_version"], "parser_version": parser_version,
                         "decoding": entry["decoding"], "preprocessing_id": entry["preprocessing_id"],
                         "preprocessing": entry["preprocessing"], "precision": entry["precision"],
                         "quantization": entry["quantization"], "software_versions": observation["software_versions"],
@@ -394,13 +434,18 @@ def _execute(*, repo, model, entry, run_id, rows, source_hash, dataset_fingerpri
                         "shard_identity": shard_meta["shard_manifest_sha256"],
                         "started_at": started, "ended_at": _now(), "termination_stage": stage,
                         "failure_cause": cause, "raw_response": receipt, "parse_status": status}
-            atomic_new(directory / "metadata.json", json_bytes(metadata))
             export = {"sample_id": sid, "model_key": model, "run_id": run_id, "call_id": call_id,
                       "parse_status": status, "safety_level": parsed.value.safety_level if parsed and parsed.value else None,
                       "raw_artifact": f"calls/{directory.name}/response.raw" if receipt else None,
                       "raw_sha256": receipt["sha256"] if receipt else None,
                       "raw_size_bytes": receipt["size_bytes"] if receipt else None,
-                      "adapter_version": ADAPTER, "parser_version": PARSER_VERSION}
+                      "adapter_version": ADAPTER, "parser_version": parser_version}
+            if protocol_version == "P2.1":
+                wrapper = bool(parsed and parsed.native_evidence
+                               and parsed.native_evidence.get("format_wrapper_detected", False))
+                metadata.update(raw_output=receipt, format_wrapper_detected=wrapper)
+                export.update(protocol_version=protocol_version, format_wrapper_detected=wrapper)
+            atomic_new(directory / "metadata.json", json_bytes(metadata))
             atomic_new(directory / "parsed.json", json_bytes(export))
             statuses[sid] = status
             if cause:
@@ -457,7 +502,7 @@ def synthetic_image():
 
 
 def rehearse(*, model, run_id, sample_ids, backend, repo=ROOT, artifact_repo=None,
-             shard_count=1, shard_index=0, rerun_of=None):
+             shard_count=1, shard_index=0, rerun_of=None, protocol_version="P2"):
     """repo is the Git source/config root; artifact_repo is storage only.
 
     Neither argument supplies input images. A temporary output directory must
@@ -477,4 +522,5 @@ def rehearse(*, model, run_id, sample_ids, backend, repo=ROOT, artifact_repo=Non
                     source_hash=sha(json_bytes(rows)), dataset_fingerprint="SYNTHETIC_NOT_INSPECSAFE",
                     source="SYNTHETIC", image_reader=lambda row: image,
                     backend_factory=lambda: backend, shard_count=shard_count, shard_index=shard_index,
-                    commit=commit, rerun_of=rerun_of, artifact_repo=artifact_repo)
+                    commit=commit, rerun_of=rerun_of, artifact_repo=artifact_repo,
+                    protocol_version=protocol_version)

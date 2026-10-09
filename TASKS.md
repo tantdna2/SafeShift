@@ -1774,3 +1774,33 @@ because F2 is created only after F1. No full repository suite requested/run.
 Draft authority remains ineffective. `reruns=[]`; Qwen3 paused/unavailable under
 v3; Qwen2.5 not rerun; Moondream not authorized. No model, GPU, real dataset,
 production, provisioning, Antigravity call or merge occurs in this task.
+
+### InternVL3 P2.1 format amendment, v4 and Kaggle preparation (2026-10-09; append-only)
+
+- [x] Prepare only on exact BASE `f0b5ea775b3c5bbe5e8618ba1372e59b8b8e150f`.
+- [x] Add a new common strict P2.1 parser and raw/hash/reread integration;
+  preserve historical P2 parser/results and all frozen scientific/runtime bytes.
+- [x] Record benchmark-conditioned adaptation explicitly in a new append-only
+  protocol amendment and incident note; no data-independent-fix claim.
+- [x] Prepare only the exact four-run InternVL3 P2.1 plan, shard0 cross-protocol
+  lineage with actual previous manifest/status hashes, shard1–3 first attempts.
+- [x] Prepare v4 support with exact BASE→F1→F2 Standard Merge gate and no fallback
+  to historical authority if v4 is absent or altered.
+- [x] Prepare complete owner source-prep and offline one-shot shard0 notebooks,
+  existing FIX v2 output reuse, exact release/history/data/runtime verification,
+  failure/all-INVALID packaging and stop-before-shards1–3 behavior.
+- [ ] Independent audit PASS and ChatGPT comparison against real GitHub code.
+- [ ] Standard Merge and ChatGPT exact merge/parents/tree/main verification.
+- [ ] Owner post-merge source preparation, actual Kaggle runtime/snapshot/data
+  preflight and authorized future shard0. Physical prep outputs not read here.
+
+Synthetic tests and exact F1/F2/Draft PR handoff evidence are recorded in the PR;
+no model/GPU/InspecSafe or production execution is performed in Codex. The Draft
+has no effective authority and is not merged. Stop for independent audit.
+
+P2.1 owner preparation validation: 17 synthetic tests PASS, including source
+archive roundtrip with full local Git history, shared-object rejection, both
+notebook code compilation/Internet-OFF T4 metadata, bootstrap failure packaging,
+actual historical-byte hash/copy preservation, runtime metadata reuse and
+ambiguous site-tree rejection, and one-shot child success/100%-INVALID/FAILED
+packaging. No real Kaggle prep output, dataset, model or GPU was read.

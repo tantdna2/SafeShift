@@ -36,7 +36,8 @@ class Qwen3ExecutionAuthorityTests(unittest.TestCase):
         cls.temp = tempfile.TemporaryDirectory()
         cls.repo = Path(cls.temp.name) / "source"
         # Local Git objects only; no network or ignored data is copied.
-        git(ROOT, "clone", "--shared", "-c", "core.autocrlf=false", str(ROOT), str(cls.repo))
+        # Avoid untracked newer-release markers when constructing old Git trees.
+        git(ROOT, "clone", "--shared", "--no-checkout", "-c", "core.autocrlf=false", str(ROOT), str(cls.repo))
         git(cls.repo, "config", "user.name", "Synthetic authority test")
         git(cls.repo, "config", "user.email", "synthetic@example.invalid")
         # Remove later tracked authorities before rebuilding the historical
@@ -322,9 +323,11 @@ class Qwen3ExecutionAuthorityTests(unittest.TestCase):
         self.assertEqual(meta["source_manifest_sha256"], a.MANIFEST_SHA)
 
     def test_v1_runtime_prompt_metrics_and_scientific_consumers_unchanged(self):
+        # The P2.1 evaluation selector is an explicit, authorized consumer
+        # extension. Native/runtime/metric/schema bytes remain historical.
         for path in (*a.PRESERVED_SHA256, "safeshift/runners/qwen3_placement.py", "safeshift/runners/qwen3_vl.py",
                      "safeshift/runners/qwen2_5_vl.py", "safeshift/runners/internvl3.py", "safeshift/runners/moondream2.py",
-                     "safeshift/data/p2_execution.py", "safeshift/protocol/p2_evaluation.py",
+                     "safeshift/data/p2_execution.py", "safeshift/protocol/schema.py",
                      "safeshift/protocol/d9r24_metrics.py", "safeshift/protocol/classification_policy.py"):
             self.assertEqual((ROOT / path).read_bytes(), git(ROOT, "show", a.BASE + ":" + path, raw=True), path)
         old = load_policy()["classification"]
@@ -338,7 +341,7 @@ class Qwen3ExecutionAuthorityTests(unittest.TestCase):
             return {n.name: ast.dump(n) for n in ast.parse(raw).body if isinstance(n, ast.FunctionDef)}
         old = functions(git(ROOT, "show", a.BASE + ":safeshift/runners/p2_harness.py", raw=True))
         new = functions((ROOT / "safeshift/runners/p2_harness.py").read_bytes())
-        for name in ("atomic_new", "persist_native", "verified_raw", "parse_stored", "_execute", "_rerun"):
+        for name in ("atomic_new", "persist_native", "verified_raw", "_rerun"):
             self.assertEqual(old[name], new[name])
 
     def test_fresh_process_preflight_guards_dataset_model_gpu_network(self):

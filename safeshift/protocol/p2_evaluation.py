@@ -16,11 +16,26 @@ PREDICTION_FIELDS = {"sample_id", "model_key", "run_id", "call_id", "parse_statu
                      "raw_artifact", "raw_sha256", "raw_size_bytes", "adapter_version", "parser_version"}
 
 
-def prediction(row):
-    if set(row) != PREDICTION_FIELDS:
+def _protocol(protocol_version):
+    if protocol_version == "P2":
+        return PARSER_VERSION
+    if protocol_version == "P2.1":
+        from .p21_schema import PARSER_VERSION as version
+        return version
+    raise ValueError("EXPLICIT_SUPPORTED_PROTOCOL_REQUIRED")
+
+
+def prediction(row, *, protocol_version="P2"):
+    parser_version = _protocol(protocol_version)
+    extra = {"protocol_version", "format_wrapper_detected"} if protocol_version == "P2.1" else set()
+    if set(row) != PREDICTION_FIELDS | extra:
         raise ValueError("LABEL_FREE_PREDICTION_SCHEMA_REQUIRED")
-    if row["model_key"] not in MODELS or row["adapter_version"] != ADAPTER or row["parser_version"] != PARSER_VERSION:
+    if (row["model_key"] not in MODELS or row["adapter_version"] != ADAPTER
+            or row["parser_version"] != parser_version):
         raise ValueError("PREDICTION_IDENTITY_MISMATCH")
+    if protocol_version == "P2.1" and (row["protocol_version"] != protocol_version
+                                       or type(row["format_wrapper_detected"]) is not bool):
+        raise ValueError("P21_PREDICTION_IDENTITY_REQUIRED")
     if row["parse_status"] == "SUCCESS":
         if row["safety_level"] not in SAFETY_LEVELS:
             raise ValueError("SUCCESS_REQUIRES_CANONICAL_LEVEL")
@@ -30,8 +45,9 @@ def prediction(row):
     return row
 
 
-def export_predictions(run_root, *, repo=ROOT):
+def export_predictions(run_root, *, repo=ROOT, protocol_version="P2"):
     """Read only completed artifacts, never image pixels/GT or raw output to a table."""
+    _protocol(protocol_version)
     root = Path(run_root).absolute()
     # All artifact paths are validated against their run root before opening.
     def read(name):
@@ -43,8 +59,10 @@ def export_predictions(run_root, *, repo=ROOT):
         if sha(safe_path(root, name).read_bytes()) != digest:
             raise ValueError("ARTIFACT_INTEGRITY_FAILURE")
     run = read("run_manifest.json")
-    if run["version"] not in ("d9r25-run-v1", "d9r26-run-v1"):
+    allowed = ("p21-run-v1",) if protocol_version == "P2.1" else ("d9r25-run-v1", "d9r26-run-v1")
+    if run["version"] not in allowed or run["protocol_identity"]["protocol_id"] != protocol_version:
         raise ValueError("RUN_VERSION_REQUIRED")
+    _validate_protocol_identity(run["protocol_identity"], protocol_version, repo)
     shard = read("shard_manifest.json")
     if run["protocol_identity"]["identity_sha256"] != identities(repo):
         raise ValueError("PROTOCOL_IDENTITY_MISMATCH")
@@ -59,11 +77,11 @@ def export_predictions(run_root, *, repo=ROOT):
     rows = []
     for sid in expected:
         directory = "calls/" + sha(sid.encode())
-        row = prediction(read(directory + "/parsed.json"))
+        row = prediction(read(directory + "/parsed.json"), protocol_version=protocol_version)
         meta = read(directory + "/metadata.json")
         if (row["sample_id"] != sid or row["model_key"] != run["model_key"]
                 or row["run_id"] != run["run_id"]
-                or row["call_id"] != (call_identity(sid) if run["version"] == "d9r26-run-v1" else "call1")
+                or row["call_id"] != ("call1" if run["version"] == "d9r25-run-v1" else call_identity(sid))
                 or row["call_id"] != meta["call_id"]
                 or row["parse_status"] != status["samples"][sid]
                 or row["parse_status"] != meta["parse_status"]
@@ -71,6 +89,12 @@ def export_predictions(run_root, *, repo=ROOT):
                 or row["raw_sha256"] != meta["raw_response"]["sha256"]
                 or row["raw_size_bytes"] != meta["raw_response"]["size_bytes"]):
             raise ValueError("CALL_IDENTITY_MISMATCH")
+        if protocol_version == "P2.1" and (meta["protocol_id"] != protocol_version
+                or meta["parser_version"] != _protocol(protocol_version)
+                or meta["raw_output"] != meta["raw_response"]
+                or type(meta["format_wrapper_detected"]) is not bool
+                or row["format_wrapper_detected"] != meta["format_wrapper_detected"]):
+            raise ValueError("P21_CALL_IDENTITY_MISMATCH")
         safe_path(root, row["raw_artifact"])
         verified_raw(root / directory, meta["raw_response"])
         rows.append(row)
@@ -80,11 +104,26 @@ def export_predictions(run_root, *, repo=ROOT):
             "shard": shard, "rows": sorted(rows, key=lambda r: r["sample_id"])}
 
 
-def align_four_models(exports):
+def _validate_protocol_identity(identity, protocol_version, repo=ROOT):
+    expected = {"protocol_id", "identity_sha256", "dataset_fingerprint", "source_manifest_sha256", "source_kind"}
+    if protocol_version == "P2.1":
+        from safeshift.runners import p21_authority
+        expected |= {"parser_version", "protocol_amendment_sha256"}
+        if (identity.get("parser_version") != _protocol(protocol_version)
+                or identity.get("protocol_amendment_sha256") != p21_authority.AMENDMENT_SHA256):
+            raise ValueError("P21_PROTOCOL_IDENTITY_MISMATCH")
+    if (set(identity) != expected or identity["protocol_id"] != protocol_version
+            or identity["identity_sha256"] != identities(repo)
+            or identity["source_kind"] not in ("SYNTHETIC", "INSPECSAFE")):
+        raise ValueError("PROTOCOL_IDENTITY_MISMATCH")
+
+
+def align_four_models(exports, *, protocol_version="P2"):
     """Require all shards of all four models, exactly one call per image/model.
 
     No GT accepted; deterministic alignment precedes the evaluation join.
     """
+    _protocol(protocol_version)
     grouped = {model: {} for model in MODELS}
     identities_seen, cohort, shards = None, None, {model: set() for model in MODELS}
     for table in exports:
@@ -95,11 +134,7 @@ def align_four_models(exports):
         if model not in MODELS or table["status"] != "COMPLETED" or table["version"] != "d9r25-parsed-export-v1":
             raise ValueError("FOUR_COMPLETED_MODELS_REQUIRED")
         identity = table["protocol_identity"]
-        if (set(identity) != {"protocol_id", "identity_sha256", "dataset_fingerprint",
-                              "source_manifest_sha256", "source_kind"}
-                or identity["identity_sha256"] != identities()
-                or identity["source_kind"] not in ("SYNTHETIC", "INSPECSAFE")):
-            raise ValueError("PROTOCOL_IDENTITY_MISMATCH")
+        _validate_protocol_identity(identity, protocol_version)
         if identity["source_kind"] == "INSPECSAFE":
             if identity["dataset_fingerprint"] != FINGERPRINT or identity["source_manifest_sha256"] != MANIFEST_SHA:
                 raise ValueError("P2_DATASET_IDENTITY_MISMATCH")
@@ -107,7 +142,7 @@ def align_four_models(exports):
             raise ValueError("SYNTHETIC_COHORT_REQUIRED")
         if identities_seen is None:
             identities_seen = identity
-        if identity != identities_seen or identity["protocol_id"] != "P2":
+        if identity != identities_seen:
             raise ValueError("PROTOCOL_IDENTITY_MISMATCH")
         current = table["shard"]
         shard_body = {k: v for k, v in current.items() if k != "shard_manifest_sha256"}
@@ -136,7 +171,7 @@ def align_four_models(exports):
         if current["ordered_sample_ids"] != expected or [r["sample_id"] for r in table["rows"]] != expected:
             raise ValueError("SHARD_ALIGNMENT_MISMATCH")
         for row in table["rows"]:
-            prediction(row)
+            prediction(row, protocol_version=protocol_version)
             sid = row["sample_id"]
             if row["model_key"] != model or row["run_id"] != table["run_id"] or sid in grouped[model]:
                 raise ValueError("DUPLICATE_OR_MISALIGNED_MODEL_PREDICTION")
@@ -157,8 +192,8 @@ class EvaluationJoin:
     metadata: tuple  # original split/domain/point/GT/memberships retained at evaluation only
 
 
-def join_evaluation(exports, evaluation_records):
-    aligned = align_four_models(exports)  # must complete before consulting any GT
+def join_evaluation(exports, evaluation_records, *, protocol_version="P2"):
+    aligned = align_four_models(exports, protocol_version=protocol_version)  # before consulting any GT
     rows = tuple(dict(row) for row in evaluation_records)
     fields = {"sample_id", "true_safety_level", "folder_domain", "split", "point_id", "hazard_memberships"}
     for row in rows:

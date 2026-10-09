@@ -62,9 +62,13 @@ def require_production_context(model, context, repo=ROOT):
     """Native guard extension: actual INSPECSAFE stays INSPECSAFE, never relabelled."""
     from .p2_harness import authorize_production
     head, authority = authorize_production(repo)
-    from . import internvl3_authority
+    from . import internvl3_authority, p21_authority
     from .qwen3_authority import SCHEMA, authorized_run, verify_lineage
-    if authority.get("schema_version") == internvl3_authority.SCHEMA:
+    if authority.get("schema_version") == p21_authority.SCHEMA:
+        run = p21_authority.authorized_run(authority, model, context.run_id)
+        p21_authority.verify_lineage(repo, authority, model, context.run_id, run["rerun_of"])
+        p21_authority.verify_progression(repo, authority, model, context.run_id)
+    elif authority.get("schema_version") == internvl3_authority.SCHEMA:
         internvl3_authority.authorized_run(authority, model, context.run_id)
     elif authority.get("schema_version") == SCHEMA:
         run = authorized_run(authority, model, context.run_id)

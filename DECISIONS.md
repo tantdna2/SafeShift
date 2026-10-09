@@ -2594,3 +2594,40 @@ parent1=BASE, parent2=exact F2, tree=exact F2 tree and a clean tracked checkout.
 Draft F2 has no effective authority; offline Git does not attest external
 review completion. Codex performs static/synthetic checks only, no real dataset,
 model/GPU, snapshot provisioning, production, Antigravity or merge.
+
+### P2.1 format amendment and InternVL3 authority v4 (2026-10-09; append-only)
+
+The Research Lead explicitly requests a single Draft PR on exact BASE
+`f0b5ea775b3c5bbe5e8618ba1372e59b8b8e150f`, with parser, protocol amendment,
+four-run plan, complete two-commit merge-gated authority and Kaggle preparation.
+This is preparation approval, not production/merge permission. Historical
+`internvl3-p2-shard0-first` reportedly completed 1254 samples with 0 SUCCESS,
+1254 INVALID and 0 FAILED; fenced JSON was observed. P2 strict rejection was
+correct. The historical raw/manifests were not supplied to or opened by Codex.
+
+P2.1 accepts only bare strict JSON or one complete Markdown JSON fence, under
+the same rule for every model. The new parser is
+`p21-strict-classification-v1`. The proposal follows observation of InspecSafe
+outputs, so disclose benchmark adaptation risk; do not present it as a fully
+data-independent technical fix. Preserve historical parser/result bytes;
+INVALID remains missing canonical output. C1, dataset/GT/splits/labels,
+weights/revision, preprocessing, decoding, FP16/NONE, placement and research
+metrics are unchanged. Formal comparisons require same-version full P2.1
+results. Old Qwen2.5 P2 does not become P2.1 automatically. No Qwen3/Moondream
+or additional run rights are granted.
+
+Only `internvl3-p21-shard0-rerun1` (1254 samples, exact cross-protocol P2 manifest
+and status lineage) and `internvl3-p21-shard{1,2,3}-first` (1253 samples each,
+P2.1 first attempts) may become effective. Authority v4 supersedes byte-preserved
+v3 by exact SHA-256, with no fallback. F1=BASE's direct child; F2=sole-parent
+child of F1 adding only v4. Final Standard Merge requires parent1=BASE,
+parent2=exact canonical F2 and exact F2 tree. Draft execution is blocked.
+
+Owner source prep obtains the confirmed post-merge exact main SHA online;
+offline one-Run-All shard0 reuses existing FIX v2 model/runtime outputs and
+actual hash-verified historical manifest/status, never reconstructs them. It
+packages failure and zero-yield artifacts, prints complete accounting and stops
+before shards1–3 on zero canonical yield or generation/runtime failure. External
+audit, ChatGPT code/audit and Git verification, Standard Merge, effective v4 and
+owner Kaggle preflight remain required. See the frozen protocol amendment,
+`notes/w2_p21_protocol_amendment.md` and the P2.1 Kaggle runbook.

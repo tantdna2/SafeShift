@@ -36,7 +36,9 @@ class InternVL3ExecutionAuthorityTests(unittest.TestCase):
         cls.temp = tempfile.TemporaryDirectory()
         cls.repo = Path(cls.temp.name) / "source"
         # Only local tracked Git objects; no ignored dataset/snapshot copied.
-        git(ROOT, "clone", "--shared", "-c", "core.autocrlf=false", str(ROOT), str(cls.repo))
+        # Build the historical tree before populating a working checkout.
+        # read-tree otherwise leaves newer tracked files as untracked leftovers.
+        git(ROOT, "clone", "--shared", "--no-checkout", "-c", "core.autocrlf=false", str(ROOT), str(cls.repo))
         git(cls.repo, "config", "user.name", "Synthetic authority test")
         git(cls.repo, "config", "user.email", "synthetic@example.invalid")
         cls.f1_tree = cls.edit_tree(a.BASE, {p: (ROOT / p).read_bytes() for p in F1_FILES})
@@ -331,12 +333,13 @@ class InternVL3ExecutionAuthorityTests(unittest.TestCase):
             self.assertEqual(list(selected), rows[i::4])
 
     def test_historical_authorities_runtime_scientific_and_runner_bytes_unchanged(self):
+        # P2.1 explicitly extends preflight/evaluation/production consumers;
+        # historical parser, model, runtime and scientific bytes stay frozen.
         paths = (*a.PRESERVED_SHA256, "safeshift/runners/qwen3_authority.py",
                  "safeshift/runners/qwen3_placement.py", "safeshift/runners/qwen3_vl.py",
-                 "safeshift/runners/p2_owner.py", "safeshift/runners/p2_preflight.py",
-                 "safeshift/data/p2_execution.py", "safeshift/protocol/p2_evaluation.py",
+                 "safeshift/runners/p2_owner.py", "safeshift/data/p2_execution.py",
                  "safeshift/protocol/d9r24_metrics.py", "safeshift/protocol/classification_policy.py",
-                 "safeshift/runners/production_classification.py", "safeshift/qualification/classification.py")
+                 "safeshift/qualification/classification.py", "safeshift/protocol/schema.py")
         for path in paths:
             raw = git(ROOT, "show", a.BASE + ":" + path, raw=True)
             self.assertEqual((ROOT / path).read_bytes(), raw, path)
@@ -352,7 +355,9 @@ class InternVL3ExecutionAuthorityTests(unittest.TestCase):
             return {n.name: ast.dump(n) for n in ast.parse(raw).body if isinstance(n, ast.FunctionDef)}
         old = functions(git(ROOT, "show", a.BASE + ":safeshift/runners/p2_harness.py", raw=True))
         new = functions((ROOT / "safeshift/runners/p2_harness.py").read_bytes())
-        for name in ("atomic_new", "persist_native", "verified_raw", "parse_stored", "_execute", "_rerun"):
+        # Versioned parse/execution dispatch is tested functionally for both
+        # P2 and P2.1. Durable storage and bounded historical rerun stay exact.
+        for name in ("atomic_new", "persist_native", "verified_raw", "_rerun"):
             self.assertEqual(old[name], new[name], name)
 
     def test_fresh_process_static_preflight_no_dataset_model_gpu_network(self):
@@ -405,7 +410,9 @@ assert not (repo / 'data/processed/benchmark/p2').exists()
             self.skipTest("F2 authority is added only after F1 is committed")
         doc = json.loads(path.read_bytes())
         f1 = doc["implementation_freeze_commit_sha"]
-        f2 = git(ROOT, "rev-parse", "HEAD")
+        # v3 is historical after P2.1. Audit its exact original F2, rather
+        # than assuming the active checkout still ends at the v3 Draft.
+        f2 = git(ROOT, "rev-parse", "f0b5ea775b3c5bbe5e8618ba1372e59b8b8e150f^2")
         self.assertEqual(git(ROOT, "rev-list", "--parents", "-n", "1", f1).split(), [f1, a.BASE])
         self.assertEqual(git(ROOT, "rev-list", "--parents", "-n", "1", f2).split(), [f2, f1])
         self.assertEqual(git(ROOT, "diff", "--name-status", f1, f2), "A\t" + a.AUTHORITY_PATH)

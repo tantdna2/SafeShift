@@ -196,6 +196,8 @@ class HarnessTests(unittest.TestCase):
         calls = []
         def git(repo, *args):
             calls.append(args)
+            if args == ("ls-tree", "--name-only", "HEAD", "--", "safeshift/runners/p21_authority.py"):
+                return b""  # Historical v1 fixture predates P2.1 source support.
             if args == ("ls-tree", "--name-only", "HEAD", "--", "configs/frozen/p2_execution_authority.v3.json"):
                 return b""  # This fixture models the historical v1 release.
             if args == ("rev-parse", "HEAD"):
@@ -533,7 +535,10 @@ assert synthetic_image().startswith(b'\\x89PNG')
         self.assertTrue(c["inspecsafe_inference_authorized"])
         self.assertEqual(c["authorization_activation"], "FINAL_REVIEWED_MAIN_MERGE_COMMIT_ONLY")
         self.assertEqual(c["primary_grounding"], "DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE")
-        protected = [*c["identity_sha256"], "safeshift/runners/production_classification.py",
+        # P2.1 extends the consumer with an explicit selector; historical P2
+        # parser implementations and all default-P2 functional tests remain.
+        protected = [*c["identity_sha256"], "safeshift/protocol/schema.py",
+                     "safeshift/qualification/classification.py",
                      "safeshift/protocol/classification_failure_policy.py",
                      "safeshift/protocol/d9r24_metrics.py", "safeshift/protocol/reporting.py"]
         for name in protected:

@@ -1,0 +1,78 @@
+{
+  "schema_version": "internvl3-p21-execution-plan-v1",
+  "protocol_id": "P2.1",
+  "parser_version": "p21-strict-classification-v1",
+  "model_key": "internvl3",
+  "base_sha": "f0b5ea775b3c5bbe5e8618ba1372e59b8b8e150f",
+  "model_id": "OpenGVLab/InternVL3-2B-hf",
+  "immutable_revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+  "runner": "safeshift.runners.internvl3.InternVL3Runner",
+  "runner_version": "internvl3-runner-v1",
+  "runtime_plan_path": "configs/pre_freeze/internvl3_t4_runtime.v1.json",
+  "runtime_plan_sha256": "85af239819a1903a1d1d8ce229c7039119aca147ff935b1cab4e78458599f80e",
+  "dataset_fingerprint": "7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5",
+  "sample_count": 5013,
+  "source_manifest_sha256": "3025edb985d947cbcfe3e397b37aed505e2305b32ece46663d46115c28568577",
+  "shard_algorithm_version": "sample-id-lexical-modulo-v1",
+  "shard_count": 4,
+  "rerun_scope": "ENTIRE_SHARD_WITH_NEW_RUN_ID_AND_UNCHANGED_GENERATION_CONDITIONS",
+  "stop_before_shards_1_3_if_shard0": [
+    "ZERO_CANONICAL_YIELD",
+    "GENERATION_FAILURE",
+    "FAILED",
+    "INTERRUPTED"
+  ],
+  "runs": [
+    {
+      "run_id": "internvl3-p21-shard0-rerun1",
+      "model_key": "internvl3",
+      "protocol_id": "P2.1",
+      "attempt_kind": "CROSS_PROTOCOL_RERUN",
+      "shard_count": 4,
+      "shard_index": 0,
+      "sample_count": 1254,
+      "rerun_of": {
+        "run_id": "internvl3-p2-shard0-first",
+        "run_manifest_sha256": "1c245cacc4bca2230dabc7469824426deb0d5e1345ce9de9618778b6a4221d1c"
+      },
+      "lineage": {
+        "previous_protocol_id": "P2",
+        "previous_git_commit": "f0b5ea775b3c5bbe5e8618ba1372e59b8b8e150f",
+        "previous_run_status_sha256": "1a5a5c88af34341672b5db1c01f99bd782fb0a588a99a19acb4e7a0fe6237a1b"
+      }
+    },
+    {
+      "run_id": "internvl3-p21-shard1-first",
+      "model_key": "internvl3",
+      "protocol_id": "P2.1",
+      "attempt_kind": "FIRST_ATTEMPT",
+      "shard_count": 4,
+      "shard_index": 1,
+      "sample_count": 1253,
+      "rerun_of": null,
+      "lineage": null
+    },
+    {
+      "run_id": "internvl3-p21-shard2-first",
+      "model_key": "internvl3",
+      "protocol_id": "P2.1",
+      "attempt_kind": "FIRST_ATTEMPT",
+      "shard_count": 4,
+      "shard_index": 2,
+      "sample_count": 1253,
+      "rerun_of": null,
+      "lineage": null
+    },
+    {
+      "run_id": "internvl3-p21-shard3-first",
+      "model_key": "internvl3",
+      "protocol_id": "P2.1",
+      "attempt_kind": "FIRST_ATTEMPT",
+      "shard_count": 4,
+      "shard_index": 3,
+      "sample_count": 1253,
+      "rerun_of": null,
+      "lineage": null
+    }
+  ]
+}
