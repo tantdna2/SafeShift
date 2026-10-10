@@ -1,0 +1,22 @@
+{
+  "protocol": "LS1",
+  "version": "ls1-v1",
+  "research_execution_status": "PENDING_RESEARCH_LEAD_APPROVAL",
+  "production_authority": false,
+  "rq3_included": false,
+  "parser_version": "p21-strict-classification-v1",
+  "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+  "label_order": ["Level01", "Level02", "Level03", "Level04"],
+  "scoring": "raw logits at proven single-token branch in valid generated response",
+  "probability_scope": "conditional on four label tokens; full-vocabulary mass reported separately",
+  "calibration": "subtract mean reference log-softmax with fixed coefficient 1",
+  "references": {"size": [448, 448], "mode": "RGB", "gray": 128, "black": 0, "white": 255},
+  "reference_context": "same C1 and exact generated assistant prefix as sample; cache by prefix token IDs",
+  "level01_guard_default": false,
+  "invalid_policy": "never rescue; four-class FN; binary parse-conditional plus failure-aware non-detection",
+  "train_default": "LOCKED",
+  "test_default": "LOCKED",
+  "seed": null,
+  "no_labels_for_calibration": true,
+  "no_test_threshold_tuning": true
+}

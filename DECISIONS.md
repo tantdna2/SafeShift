@@ -2631,3 +2631,39 @@ before shards1–3 on zero canonical yield or generation/runtime failure. Extern
 audit, ChatGPT code/audit and Git verification, Standard Merge, effective v4 and
 owner Kaggle preflight remain required. See the frozen protocol amendment,
 `notes/w2_p21_protocol_amendment.md` and the P2.1 Kaggle runbook.
+
+### DEC-LS1-001 — Independent label scoring study proposal (2026-10-10; PENDING)
+
+Research Lead requests a standalone LS1 implementation, CPU tests, offline
+Kaggle notebooks for the existing Qwen2.5/InternVL3 revisions, and one Draft PR.
+This authorizes preparation only; Codex must not run InspecSafe or a GPU, merge,
+or declare the study complete. BASE main is
+`1722f82d5ced5624e5182a3311c7e0e24fca9458`. The reported 2.72% Qwen test accuracy
+and rare Level04 behavior are user-supplied motivation, not independently
+verified historical artifacts in this task.
+
+Status: **PENDING Research Lead approval of the exploratory execution study**.
+The proposed method scores raw logits at a tokenizer-proven single-token label
+branch in a valid C1 response. It compares uncalibrated four-label softmax to a
+fixed coefficient-one correction using the mean log-softmax of three uniform
+RGB 448x448 references (gray 128, black 0, white 255), scored under the exact
+same generated assistant prefix. No InspecSafe labels fit parameters and no
+test thresholds are selected. A Level01-preservation ablation is disabled by
+default and requires explicit run-bound approval; it protects only an
+uncalibrated LS1 Level01 decision and cannot guarantee hazard protection.
+
+These are proposed LS1-specific experimental semantics, not changes to frozen
+P2/P2.1 or D5. Their implementation can be reviewed and technically checked on
+synthetic fixtures while train/test remain locked. A separate trusted Research
+Lead receipt must bind split, model/revision, source SHA, method/prompt hashes,
+original manifest/fingerprint, run ID and guard option before any real-data read.
+P2/P2.1 authority is unchanged and grants no LS1 right. Approving a Draft PR or
+passing CPU tests does not imply approval of this pending research proposal.
+
+C1, dataset/GT/splits/labels, production runners/parsers/evaluator, authority and
+historical results retain their exact bytes. LS1 uses the existing P2.1 parser
+only for its own response validity gate; it never rescues INVALID or rewrites
+history. LS1 is not P3 and does not enter current RQ3. Four-class INVALID
+accounting reuses the existing evaluator; additional score-conditional AUROC
+and downgrade reporting are exploratory LS1 outputs. No improvement is claimed.
+Method limits, approval schema and reproducibility: `notes/ls1_runbook.md`.
