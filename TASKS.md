@@ -1804,3 +1804,48 @@ notebook code compilation/Internet-OFF T4 metadata, bootstrap failure packaging,
 actual historical-byte hash/copy preservation, runtime metadata reuse and
 ambiguous site-tree rejection, and one-shot child success/100%-INVALID/FAILED
 packaging. No real Kaggle prep output, dataset, model or GPU was read.
+
+### LS1 independent label scoring implementation (2026-10-10; Draft review)
+
+- [x] Read current contracts/runners, C1, tokenizer/runtime pins, P2/P2.1 and
+  evaluator; verify exact main BASE `1722f82d5ced5624e5182a3311c7e0e24fca9458`.
+- [x] Implement separate T1/scorer, stable probability calculation, raw versus
+  processed selection audit, fixed label-free references/calibration and
+  explicit optional Level01 guard limits. Production files remain unchanged.
+- [x] Implement immutable raw-before-parse artifacts, CPU recomputation,
+  transparent INVALID/metric denominators and Level04 downgrade diagnostics.
+- [x] Prepare two offline Kaggle T4 notebooks, existing prep reuse and
+  source/runtime/snapshot checksum checks; train/test are locked independently.
+- [x] Add CPU unit/integration tests and usage/validation notes. Actual results
+  and limitations are recorded in `notes/ls1_validation.md`.
+- [ ] T1 Qwen2.5 **BLOCKED**: complete pinned tokenizer snapshot and matching
+  library installation not available locally; no tokenizer download.
+- [ ] T1 InternVL3 **BLOCKED** for the same missing external prerequisites.
+- [ ] ChatGPT Draft review and independent Antigravity audit.
+- [ ] Owner offline synthetic T4 qualification with real supplied prep outputs.
+- [ ] Research Lead resolution of PENDING DEC-LS1-001 and exact split/run rights
+  before any InspecSafe train/test experiment. Test remains locked by default.
+
+LS1 is outside current RQ3; P2/P2.1 and all historical results are preserved.
+No Codex GPU/model/InspecSafe execution, merge or improvement claim. This is a
+Draft handoff, not completion of the research study.
+
+### PR #90 LS1 authorization audit blocker correction (2026-10-10)
+
+The earlier receipt/default-lock wording is superseded by this correction.
+DEC-LS1-001 remains PENDING; both train and test are unconditionally LOCKED,
+including with a self-created, fully populated approval and matching SHA-256.
+No receipt or environment setting can open them in this implementation.
+
+- [x] Remove receipt authorization and receipt input resolution; preserve
+  model/mode/run-ID/source-SHA/guard validation and synthetic technical mode.
+- [x] Lock direct dataset-helper calls and notebook split execution before reads.
+- [x] CPU LS1 suite: 68 run, 66 PASS, 2 SKIP/BLOCKED; no failures/errors.
+- [x] Same targeted regression on fix and main BASE: each 238 run, 237 PASS,
+  the same one historical D9R23 allowlist failure, no errors or new problem cases.
+- [x] Update notebooks and LS1 documentation to remove receipt unlock claims.
+- [ ] ChatGPT re-review and independent Antigravity re-audit of the pushed fix.
+
+Regression and protected-file evidence: `notes/ls1_validation.md`. No GPU,
+InspecSafe execution, new authorization, protocol change, merge or completion
+claim. Keep PR #90 OPEN/DRAFT for review.
