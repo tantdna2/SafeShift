@@ -18,8 +18,8 @@ from tests.test_ls1 import FakeScorer, fake_t1
 
 ROOT = Path(__file__).resolve().parents[1]
 NAMES = [name for name, _ in core.REFERENCE_SPEC]
-# Synthetic "blank image looks safe" references: Level03/Level04 likely, hazards very unlikely.
-SAFE_LOOKING_REFS = {"gray": [-12.0, -9.0, 0.0, -2.4], "black": [-11.0, -8.5, 0.0, -2.6],
+# Arbitrary synthetic references favouring Level03; no model or image-safety interpretation.
+L03_DOMINANT_REFS = {"gray": [-12.0, -9.0, 0.0, -2.4], "black": [-11.0, -8.5, 0.0, -2.6],
                      "white": [-13.0, -9.5, 0.0, -2.2]}
 
 
@@ -42,31 +42,73 @@ class CharacterisationTests(unittest.TestCase):
             seen.add(diagnostics.explain_decision(sample, refs)["level04_reachable"])
         self.assertEqual(seen, {True, False})
 
-    def test_safe_looking_references_turn_hazard_free_scene_into_level01(self):
-        # Sample is slightly less "blank-safe" than the references, as any real scene is.
+    def test_synthetic_level03_changes_to_level01(self):
+        # This specified score pattern says nothing about real-scene safety.
         sample = [-9.0, -7.0, 0.0, -2.6]
-        result = core.calibrate(sample, SAFE_LOOKING_REFS)
+        result = core.calibrate(sample, L03_DOMINANT_REFS)
         self.assertEqual(result["uncalibrated"]["prediction"], "Level03")
         self.assertEqual(result["calibrated"]["prediction"], "Level01")
-        explanation = diagnostics.explain_decision(sample, SAFE_LOOKING_REFS)
+        explanation = diagnostics.explain_decision(sample, L03_DOMINANT_REFS)
         self.assertFalse(explanation["level04_reachable"])
         self.assertEqual(explanation["binding_competitor"], "Level01")
         self.assertEqual(explanation["severity_change"], 2)
-        # Level04 needs log-odds over Level01 above the blank references' ~9.6.
+        # Level04-vs-Level01 log-odds must exceed these synthetic references' ~9.6.
         self.assertGreater(explanation["level04_required_log_odds"]["Level01"], 9)
 
-    def test_level04_only_when_more_hazard_free_than_blank_references(self):
-        bias = diagnostics.reference_bias(SAFE_LOOKING_REFS)["bias"]
+    def test_level04_on_either_side_of_required_score_margin(self):
+        bias = diagnostics.reference_bias(L03_DOMINANT_REFS)["bias"]
         required = [bias[3] - bias[i] for i in range(3)]
         just_above = [0.0, 0.0, 0.0, 0.0]
         just_above[3] = max(required) + 1e-6
         just_below = [0.0, 0.0, 0.0, max(required) - 1e-6]
-        self.assertEqual(core.calibrate(just_above, SAFE_LOOKING_REFS)["calibrated"]["prediction"], "Level04")
-        self.assertNotEqual(core.calibrate(just_below, SAFE_LOOKING_REFS)["calibrated"]["prediction"], "Level04")
+        self.assertEqual(core.calibrate(just_above, L03_DOMINANT_REFS)["calibrated"]["prediction"], "Level04")
+        self.assertNotEqual(core.calibrate(just_below, L03_DOMINANT_REFS)["calibrated"]["prediction"], "Level04")
+
+    def test_level04_can_remain_or_become_selected_after_calibration(self):
+        cases = (
+            # Even references favouring Level04 do not prevent calibrated Level04.
+            ([0.0, 0.0, 0.0, 4.0], [0.0, 0.0, 0.0, 5.0], "Level04"),
+            # With Level03-dominant references, a sample can move Level03 -> Level04.
+            ([0.0, 1.5, 2.0, 1.0], [-1.0, 0.5, 2.0, 1.5], "Level03"),
+        )
+        for ref_logits, sample, before in cases:
+            with self.subTest(before=before):
+                refs = {name: ref_logits for name in NAMES}
+                result = core.calibrate(sample, refs)
+                self.assertEqual(result["uncalibrated"]["prediction"], before)
+                self.assertEqual(result["calibrated"]["prediction"], "Level04")
+                explanation = diagnostics.explain_decision(sample, refs)
+                self.assertTrue(explanation["level04_reachable"])
+                self.assertTrue(all(value < 0 for value in explanation["level04_deficit"].values()))
+
+    def test_level04_exact_tie_loses_but_positive_margin_wins(self):
+        refs = {name: [0.0, 1.5, 2.0, 1.0] for name in NAMES}
+        bias = diagnostics.reference_bias(refs)["bias"]
+        for delta, expected in ((-0.25, "Level01"), (0.0, "Level01"), (0.25, "Level04")):
+            with self.subTest(delta=delta):
+                sample = [bias[0], bias[1], bias[2], bias[3] + delta]
+                result = core.calibrate(sample, refs)
+                self.assertEqual(result["calibrated"]["prediction"], expected)
+                self.assertEqual(diagnostics.explain_decision(sample, refs)["level04_reachable"],
+                                 expected == "Level04")
+
+    def test_reference_bias_has_different_effects_on_level04_competitors(self):
+        # Independent synthetic values with the reported ordering, not fitted model logits.
+        refs = {name: [0.0, 1.5, 2.0, 1.0] for name in NAMES}
+        bias = core.calibrate([0.0] * 4, refs)["reference_log_bias"]
+        boosts = [-value for value in bias]
+        self.assertEqual(sorted(core.LEVELS, key=lambda label: boosts[core.LEVELS.index(label)],
+                                reverse=True), ["Level01", "Level04", "Level02", "Level03"])
+        sample = [-1.0, 0.5, 2.0, 1.5]
+        result = core.calibrate(sample, refs)
+        before, after = (result[mode]["log_probabilities"] for mode in ("uncalibrated", "calibrated"))
+        # Correction lowers L04-vs-L01 odds, but raises L04-vs-L02 and L04-vs-L03 odds.
+        for i, change in enumerate((-1.0, 0.5, 1.0)):
+            self.assertAlmostEqual((after[3] - after[i]) - (before[3] - before[i]), change)
 
     def test_sample_equal_to_reference_mean_ties_and_tie_policy_picks_level01(self):
-        bias = diagnostics.reference_bias(SAFE_LOOKING_REFS)["bias"]
-        result = core.calibrate(bias, SAFE_LOOKING_REFS)
+        bias = diagnostics.reference_bias(L03_DOMINANT_REFS)["bias"]
+        result = core.calibrate(bias, L03_DOMINANT_REFS)
         probabilities = result["calibrated"]["probabilities"]
         self.assertTrue(all(math.isclose(p, .25, abs_tol=1e-12) for p in probabilities))
         self.assertEqual(result["calibrated"]["prediction"], "Level01")

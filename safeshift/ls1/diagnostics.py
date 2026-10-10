@@ -3,11 +3,13 @@
 Explains recorded decisions only. It never changes a prediction, fits a
 parameter, reads ground truth or opens dataset images.
 
-For calibrated logits ``z - b`` (``b`` = mean reference log-softmax), Level04
+For unguarded calibrated logits ``z - b`` (``b`` = mean reference log-softmax), Level04
 wins exactly when ``z[3] - z[i] > b[3] - b[i]`` for every other class ``i``
 (strict, because ties go to the earlier canonical class). ``b[3] - b[i]`` is
-the Level04 log-odds that the uniform references already receive, so a sample
-is calibrated to Level04 only if it looks *more* hazard-free than a blank image.
+the mean reference Level04-vs-class-i log-odds at the same forced prefix.
+This score identity does not establish how safe an image looks to the model.
+For any finite bias, logits ``z = b + [0, 0, 0, delta]`` with ``delta > 0``
+select Level04 after calibration; its frequency on unseen scenes is unmeasured.
 """
 
 import argparse
@@ -113,7 +115,7 @@ def diagnose_run(root):
             row.update(reference_key=key, generated_label=result["score"]["generated_label"], **explanation)
             sanity_rows.append((result["sample_id"], explanation["uncalibrated"], explanation["calibrated"]))
         samples.append(row)
-    # Only technical drawings are hazard-free by construction; real images never are.
+    # Apply this post-hoc rule only to the known hazard-free technical drawings.
     synthetic = cohort["source_kind"] == "SYNTHETIC"
     return {"protocol": "LS1", "kind": "LS1_CALIBRATION_DIAGNOSTICS_LABEL_FREE",
             "audit": audit, "source_kind": cohort["source_kind"], "references": references,

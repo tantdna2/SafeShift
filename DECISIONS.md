@@ -2696,15 +2696,30 @@ exploration (accuracy 2/10 to 3/10, Level04 0/4 in both arms, all four presumed
 normals escalated to Level01/Level02) are user-supplied; their sealed artifacts
 were not inspected here and the exploratory GT is not authority-verified.
 
-Finding: no code or mathematical defect was found in the reviewed LS1 scope. The
-failure follows from the method. Uniform references are hazard-free inputs, not
-label-neutral ones. Calibrated Level04 requires `z4 - zi > b4 - bi` for every
-other class, so no real scene that looks less safe than a blank image can be
-Level04. Hazard classes receive the largest boost, and exact ties resolve to
-Level01. References also use a 256-token single-tile context, unlike historical
-InspecSafe inputs. Status: **NO_DEMONSTRATED_BENEFIT**, with a false-Level01
-safety regression signal. A label-free hazard-free sanity check (declared post hoc)
-FAILS on the reported technical pattern.
+Finding: no code or mathematical defect was found in the reviewed LS1 scope;
+this does not prove a universal method failure. The unguarded calibrated argmax
+is Level04 exactly when `z4 - zi > b4 - bi` for every other class. For any finite
+bias, `z = b + [0, 0, 0, delta]`, `delta > 0`, selects Level04. The reported
+technical yellow-lines case also selected calibrated Level04. The score identity
+does not establish that real scenes look less safe than blank references or that
+the exploratory 0/4 Level04 outcome was inevitable.
+
+The [ChatGPT review](https://github.com/tantdna2/SafeShift/pull/91#issuecomment-6103428447)
+reports reference log bias `[-2.7034712, -1.2868045, -0.7555545, -1.7347212]`
+in Level01–Level04 order; the underlying raw artifact was not independently
+audited here. Level03 has the highest mean reference log-probability.
+Subtracting this vector boosts logits in order Level01, Level04, Level02,
+Level03. Level04-vs-Level01 log-odds decrease by 0.9687500, while Level04-vs-Level02
+and Level04-vs-Level03 increase by 0.4479167 and 0.9791667. Sample margins still
+determine the winner. This is not a uniform boost of hazard labels.
+
+Interpreting uniform images as a model-recognized safe prior, or attributing the
+observed errors to the reported reference/input-context mismatch, remains an
+unverified hypothesis. Exact calibrated score ties select Level01; this does
+not establish that real images produce ties. **NO_DEMONSTRATED_BENEFIT** applies
+only to the limited reported evidence, with a false-Level01 safety regression
+signal. The label-free hazard-free sanity check, declared post hoc, FAILS on
+the reported technical pattern (3 alarms, 3 escalations).
 
 Proposed, not effective until the Research Lead decides:
 1. Suspend ls1-v1 calibrated predictions as a decision rule. Keep uncalibrated
