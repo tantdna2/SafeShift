@@ -14,8 +14,10 @@
   "reference_context": "same C1 and exact generated assistant prefix as sample; cache by prefix token IDs",
   "level01_guard_default": false,
   "invalid_policy": "never rescue; four-class FN; binary parse-conditional plus failure-aware non-detection",
-  "train_default": "LOCKED",
-  "test_default": "LOCKED",
+  "train_execution": "LOCKED",
+  "test_execution": "LOCKED",
+  "split_execution_lock": "LS1_SPLIT_EXECUTION_LOCKED_PENDING_DEC_LS1_001",
+  "split_unlock_via_receipt": false,
   "seed": null,
   "no_labels_for_calibration": true,
   "no_test_threshold_tuning": true

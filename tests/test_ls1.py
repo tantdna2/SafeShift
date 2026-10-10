@@ -18,6 +18,7 @@ from safeshift.ls1 import core, artifacts, tokenizer, runtime, experiment, evalu
 from safeshift.ls1.audit import audit_run
 
 ROOT = Path(__file__).resolve().parents[1]
+SPLIT_LOCK_MESSAGE = "LS1_SPLIT_EXECUTION_LOCKED_PENDING_DEC_LS1_001"
 
 
 class CharTokenizer:
@@ -380,13 +381,25 @@ class IntegrationTests(unittest.TestCase):
         return experiment.run(self.repo, self.settings, scorer_factory=factory, tokenizer_check=fake_t1)
 
     def test_end_to_end_and_cpu_recomputation(self):
-        root = self.run_fake()
+        # Technical mode ignores research receipt/data settings and uses only drawings.
+        self.settings.update(approval_path="DO_NOT_READ", approval_sha256="a"*64,
+                             dataset_root="DO_NOT_READ", manifest_path="DO_NOT_READ")
+        with patch.object(experiment, "dataset_samples", side_effect=AssertionError("DATA_READ")) as dataset:
+            root = self.run_fake()
+        dataset.assert_not_called()
         self.assertEqual(FakeScorer.calls, 7)  # 4 samples + three refs shared for identical prefix
         self.assertEqual(audit_run(root)["status"], "PASS")
         results = json.loads((root / "results.json").read_text())
         self.assertEqual(len(results), 4)
         self.assertEqual(results[0]["score"]["generated_label"], "Level03")
         self.assertFalse((root / "evaluation.json").exists())
+        cohort = json.loads((root / "cohort.json").read_text())
+        self.assertEqual(cohort["source_kind"], "SYNTHETIC")
+        self.assertTrue(all(row["sample_id"].startswith("ls1-synthetic-") for row in cohort["rows"]))
+        manifest = json.loads((root / "run_manifest.json").read_text())
+        self.assertFalse(manifest["protect_level01"])
+        self.assertNotIn("approval", manifest)
+        self.assertNotIn("approval_sha256", manifest)
 
     def test_no_retry_or_overwrite(self):
         self.run_fake()
@@ -394,12 +407,48 @@ class IntegrationTests(unittest.TestCase):
             self.run_fake()
 
     def test_train_and_test_gate_before_reads(self):
+        for model in tokenizer.MODELS:
+            for mode in ("train", "test"):
+                for guard in (False, True):
+                    self.settings.update(model_key=model, mode=mode, protect_level01=guard)
+                    with self.subTest(model=model, mode=mode, guard=guard), \
+                         patch.object(experiment, "dataset_samples", side_effect=AssertionError("DATA_READ")) as dataset, \
+                         patch.object(Path, "read_bytes", side_effect=AssertionError("FILE_READ")) as read, \
+                         patch.object(experiment, "digest", side_effect=AssertionError("CHECKSUM_READ")) as digest, \
+                         patch.object(tokenizer, "t1", side_effect=AssertionError("TOKENIZER_LOAD")) as check, \
+                         patch.object(runtime, "NativeScorer", side_effect=AssertionError("MODEL_LOAD")) as model_load:
+                        with self.assertRaises(PermissionError) as error:
+                            experiment.run(self.repo, self.settings, tokenizer_check=check)
+                        self.assertEqual(error.exception.args, (SPLIT_LOCK_MESSAGE,))
+                        for operation in (dataset, read, digest, check, model_load):
+                            operation.assert_not_called()
+                    self.assertFalse((self.repo / "data").exists())
+
+    def test_direct_dataset_helper_is_locked_without_reads(self):
         for mode in ("train", "test"):
-            self.settings["mode"] = mode
-            with patch.object(experiment, "dataset_samples", side_effect=AssertionError("DATA_READ")), \
-                 patch.object(experiment, "t1", side_effect=AssertionError("TOKENIZER_READ")), self.assertRaises(PermissionError):
-                experiment.run(self.repo, self.settings)
-            self.assertFalse((self.repo / "data").exists())
+            with self.subTest(mode=mode), \
+                 patch("safeshift.data.p2_execution.verify_dataset", side_effect=AssertionError("DATA_READ")) as verify, \
+                 patch.object(Path, "read_bytes", side_effect=AssertionError("FILE_READ")) as read:
+                with self.assertRaises(PermissionError) as error:
+                    experiment.dataset_samples({"mode": mode})
+                self.assertEqual(error.exception.args, (SPLIT_LOCK_MESSAGE,))
+                verify.assert_not_called()
+                read.assert_not_called()
+
+    def test_authorization_validation_is_preserved(self):
+        for field, value, message in (
+            ("model_key", "unknown", "SUPPORTED_LS1_MODE_REQUIRED"),
+            ("mode", "unknown", "SUPPORTED_LS1_MODE_REQUIRED"),
+            ("run_id", "../unsafe", "SAFE_UNIQUE_RUN_ID_REQUIRED"),
+            ("source_commit", "latest", "EXACT_SOURCE_COMMIT_REQUIRED"),
+            ("protect_level01", "true", "BOOLEAN_GUARD_REQUIRED"),
+            ("protect_level01", True, "TECHNICAL_MODE_USES_DEFAULT_NO_GUARD"),
+        ):
+            settings = {**self.settings, field: value}
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError) as error:
+                experiment.authorize(settings, self.repo)
+            self.assertEqual(error.exception.args, (message,))
+        self.assertIsNone(experiment.authorize(self.settings, self.repo))
 
     def test_t1_blocked_leaves_sealed_failure_no_model(self):
         with self.assertRaises(RuntimeError):
@@ -460,29 +509,38 @@ class IntegrationTests(unittest.TestCase):
             self.run_fake()
         artifacts.verify_run(self.repo / "data/processed/ls1/runs/unit-test")
 
-    def test_approval_binding(self):
-        self.settings["mode"] = "train"
-        expected = {"schema": "ls1-research-lead-approval-v1", "status": "APPROVED",
-            "approved_by": "Research Lead", "protocol": "LS1", "run_id": "unit-test", "mode": "train",
-            "source_commit": "a"*40, "model_key": "qwen2_5", "model_revision": tokenizer.MODELS["qwen2_5"][1],
-            "prompt_sha256": experiment.PROMPT_SHA256, "method_sha256": experiment.method_hash(self.repo),
-            "source_manifest_sha256": experiment.MANIFEST_SHA, "dataset_fingerprint": experiment.FINGERPRINT,
-            "protect_level01": False, "decision_reference": "SYNTHETIC_TEST_RECEIPT_NOT_REAL_PERMISSION"}
+    def test_self_created_matching_approval_cannot_unlock_either_split(self):
         path = self.repo / "approval.json"
-        self.settings.update(approval_path=str(path))
-        for field in expected:
-            bad = deepcopy(expected)
-            bad[field] = "" if field == "decision_reference" else "wrong"
-            path.write_bytes(artifacts.json_bytes(bad))
-            self.settings["approval_sha256"] = artifacts.digest(path)
-            with self.subTest(field=field), self.assertRaises(PermissionError):
-                experiment.authorize(self.settings, self.repo)
-        path.write_bytes(artifacts.json_bytes(expected))
-        self.settings["approval_sha256"] = artifacts.digest(path)
-        self.assertEqual(experiment.authorize(self.settings, self.repo), expected)
-        self.settings["mode"] = "test"
-        with self.assertRaises(PermissionError):
-            experiment.authorize(self.settings, self.repo)
+        for model in tokenizer.MODELS:
+            for mode in ("train", "test"):
+                for guard in (False, True):
+                    self.settings.update(model_key=model, mode=mode, protect_level01=guard,
+                                         approval_path=str(path))
+                    receipt = {"schema": "ls1-research-lead-approval-v1", "status": "APPROVED",
+                        "approved_by": "Research Lead", "protocol": "LS1", "run_id": self.settings["run_id"],
+                        "mode": mode, "source_commit": self.settings["source_commit"], "model_key": model,
+                        "model_revision": tokenizer.MODELS[model][1], "prompt_sha256": experiment.PROMPT_SHA256,
+                        "method_sha256": experiment.method_hash(self.repo),
+                        "source_manifest_sha256": experiment.MANIFEST_SHA, "dataset_fingerprint": experiment.FINGERPRINT,
+                        "protect_level01": guard, "decision_reference": "SYNTHETIC_SELF_CREATED_NOT_AUTHORITY"}
+                    raw = artifacts.json_bytes(receipt)
+                    path.write_bytes(raw)
+                    self.settings["approval_sha256"] = artifacts.digest(path)
+                    self.assertEqual(self.settings["approval_sha256"], hashlib.sha256(raw).hexdigest())
+                    with self.subTest(model=model, mode=mode, guard=guard), \
+                         patch.object(Path, "read_bytes", side_effect=AssertionError("APPROVAL_OR_DATA_READ")) as read, \
+                         patch.object(experiment, "digest", side_effect=AssertionError("APPROVAL_SHA_READ")) as digest, \
+                         patch.object(experiment, "dataset_samples", side_effect=AssertionError("DATA_READ")) as dataset, \
+                         patch.object(tokenizer, "t1", side_effect=AssertionError("TOKENIZER_LOAD")) as check, \
+                         patch.object(runtime, "NativeScorer", side_effect=AssertionError("MODEL_LOAD")) as model_load:
+                        for action in (lambda: experiment.authorize(self.settings, self.repo),
+                                       lambda: experiment.run(self.repo, self.settings, tokenizer_check=check)):
+                            with self.assertRaises(PermissionError) as error:
+                                action()
+                            self.assertEqual(error.exception.args, (SPLIT_LOCK_MESSAGE,))
+                        for operation in (read, digest, dataset, check, model_load):
+                            operation.assert_not_called()
+                    self.assertFalse((self.repo / "data").exists())
 
 
 class KaggleTests(unittest.TestCase):
@@ -552,7 +610,9 @@ class KaggleTests(unittest.TestCase):
                     compile(source, str(path), "exec")
             source = "\n".join("".join(c["source"]) for c in nb["cells"])
             self.assertIn('"mode": "technical"', source)
-            self.assertIn('"approval_sha256": ""', source)
+            self.assertIn(SPLIT_LOCK_MESSAGE, source)
+            self.assertNotIn('"approval_sha256"', source)
+            self.assertNotIn('"approval_input"', source)
             self.assertNotIn("pip install", source)
 
     def test_paths_and_ambiguity(self):
@@ -564,8 +624,48 @@ class KaggleTests(unittest.TestCase):
                 kaggle.select_input(d, "", ("runtime",))
 
     def test_internet_confirmation_gate(self):
-        with tempfile.TemporaryDirectory() as d, self.assertRaises(PermissionError):
-            kaggle.launch(d, d, {})
+        settings = {"model_key": "qwen2_5", "mode": "technical", "run_id": "internet-check",
+                    "source_commit": "a"*40}
+        with tempfile.TemporaryDirectory() as d, self.assertRaisesRegex(PermissionError, "^CONFIRM_KAGGLE_INTERNET_OFF$"):
+            kaggle.launch(d, d, settings)
+
+    def test_split_lock_before_approval_dataset_model_or_runtime_access(self):
+        for model in tokenizer.MODELS:
+            for mode in ("train", "test"):
+                for internet in (False, True):
+                    settings = {"model_key": model, "mode": mode, "run_id": "locked-launch",
+                                "source_commit": "a"*40, "internet_off_confirmed": internet,
+                                "approval_input": "DO_NOT_READ", "approval_path": "DO_NOT_READ",
+                                "approval_sha256": "a"*64, "protect_level01": True,
+                                "dataset_root": "DO_NOT_READ"}
+                    with self.subTest(model=model, mode=mode, internet=internet), \
+                         patch.object(kaggle, "attached_path", side_effect=AssertionError("ATTACHMENT_READ")) as attached, \
+                         patch.object(kaggle, "select_input", side_effect=AssertionError("INPUT_READ")) as select, \
+                         patch.object(kaggle, "verify_runtime_input", side_effect=AssertionError("RUNTIME_READ")) as verify, \
+                         patch.object(kaggle, "restore_model", side_effect=AssertionError("MODEL_LOAD")) as restore, \
+                         patch.object(kaggle, "runtime_interpreter", side_effect=AssertionError("RUNTIME_LOAD")) as interpreter, \
+                         patch.object(kaggle.subprocess, "run", side_effect=AssertionError("CHILD_EXECUTION")) as child, \
+                         patch.object(Path, "read_bytes", side_effect=AssertionError("FILE_READ")) as read, \
+                         patch.object(Path, "mkdir", side_effect=AssertionError("ARTIFACT_WRITE")) as mkdir:
+                        with self.assertRaises(PermissionError) as error:
+                            kaggle.launch(ROOT, ROOT, settings)
+                        self.assertEqual(error.exception.args, (SPLIT_LOCK_MESSAGE,))
+                        for operation in (attached, select, verify, restore, interpreter, child, read, mkdir):
+                            operation.assert_not_called()
+
+    def test_notebook_split_lock_before_source_or_resource_reads(self):
+        for model in tokenizer.MODELS:
+            nb = json.loads((ROOT / "notebooks" / ("ls1_" + model + "_kaggle.ipynb")).read_text(encoding="utf-8"))
+            source = "".join(next(c for c in nb["cells"] if c["id"] == "ls1-run")["source"])
+            for mode in ("train", "test"):
+                with self.subTest(model=model, mode=mode), \
+                     patch("builtins.__import__", side_effect=AssertionError("IMPORT_BEFORE_LOCK")) as imports, \
+                     patch.object(Path, "read_bytes", side_effect=AssertionError("READ_BEFORE_LOCK")) as read:
+                    with self.assertRaises(PermissionError) as error:
+                        exec(compile(source, "synthetic-notebook-cell", "exec"), {"SETTINGS": {"mode": mode}})
+                    self.assertEqual(error.exception.args, (SPLIT_LOCK_MESSAGE,))
+                    imports.assert_not_called()
+                    read.assert_not_called()
 
     def test_missing_model_no_provision(self):
         with tempfile.TemporaryDirectory() as d, self.assertRaises(ValueError):

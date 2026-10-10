@@ -2667,3 +2667,21 @@ history. LS1 is not P3 and does not enter current RQ3. Four-class INVALID
 accounting reuses the existing evaluator; additional score-conditional AUROC
 and downgrade reporting are exploratory LS1 outputs. No improvement is claimed.
 Method limits, approval schema and reproducibility: `notes/ls1_runbook.md`.
+
+### DEC-LS1-001 audit correction — split execution lock (2026-10-10)
+
+PR #90 audit found that HEAD `6696c53b2ba4f73b14f5f7ca92267db0253145a8`
+accepted an operator-created approval JSON and its matching SHA-256. That did
+not establish Research Lead authorization. The user explicitly requested this
+blocker correction; DEC-LS1-001 remains **PENDING** and no research rights change.
+
+This entry supersedes the operational receipt instructions above. Train/test
+are unconditionally **LOCKED** and cannot be opened by any receipt or checksum.
+Both raise `LS1_SPLIT_EXECUTION_LOCKED_PENDING_DEC_LS1_001` before approval,
+dataset, tokenizer, model or runtime access. Direct dataset-helper calls are
+also locked; technical mode uses synthetic images only, needs no approval and
+rejects the Level01 guard. The former receipt-based authorization is removed.
+A future execution decision requires separate review and a later implementation
+change; this correction creates no approval mechanism. P2/P2.1 authority and
+all frozen research decisions/results are unchanged. Current usage:
+`notes/ls1_runbook.md`.

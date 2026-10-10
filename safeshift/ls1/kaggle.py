@@ -198,13 +198,11 @@ def verify_runtime_input(source, inventory_path, trusted_sha256):
 
 def launch(repo, inputs, settings):
     """Authorize before touching data/model/runtime. Launch once, package finally."""
-    repo, inputs = Path(repo).absolute(), Path(inputs)
-    if settings.get("internet_off_confirmed") is not True:
-        raise PermissionError("CONFIRM_KAGGLE_INTERNET_OFF")
     selected = dict(settings)
-    if selected.get("approval_input"):
-        selected["approval_path"] = str(attached_path(inputs, selected["approval_input"]))
     authorize(selected, repo)
+    if selected.get("internet_off_confirmed") is not True:
+        raise PermissionError("CONFIRM_KAGGLE_INTERNET_OFF")
+    repo, inputs = Path(repo).absolute(), Path(inputs)
     run_root = repo / "data/processed/ls1/runs" / selected["run_id"]
     if run_root.exists():
         raise FileExistsError("RUN_EXISTS_NO_RETRY_OR_OVERWRITE")
@@ -232,9 +230,6 @@ def launch(repo, inputs, settings):
         selected["runtime_input_receipt"] = {"input_inventory": runtime_inventory,
             "inventory_sha256": selected["runtime_inventory_sha256"],
             "runtime_input": os.path.relpath(runtime_input, inputs).replace("\\", "/")}
-        if selected["mode"] != "technical":
-            for key in ("dataset_root", "manifest_path", "provenance_path"):
-                selected[key] = str(attached_path(inputs, selected[key]))
         settings_path = output / "launch_settings.json"
         # Local launch settings may contain temporary absolute paths; never export
         # them as research provenance or include them in the result archive.

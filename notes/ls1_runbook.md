@@ -69,13 +69,15 @@ images, not representative normal industrial scenes; their bias correction can
 increase misses. No improvement, causal diagnosis or safety guarantee follows
 from the formula. Argmax ties use the first class in canonical order.
 
-The optional Level01 guard is **off by default**. If explicitly approved for a
-run, it retains only an **uncalibrated LS1** Level01 decision when calibration
+The optional Level01 guard is **disabled in technical mode**. The pure CPU
+calibration helper tests its proposed behavior: it retains only an
+**uncalibrated LS1** Level01 decision when calibration
 would change it. It does not protect an actual Level01 hazard originally scored
 Level02/03/04, and does not refer to GT or the free-generated label. It can retain
 false alarms. Its prediction can differ from calibrated argmax; both are saved.
-Probabilities/AUROC stay unchanged. The approval binds this option, and tests
-exercise both preservation and the missed-hazard limitation.
+Probabilities/AUROC stay unchanged. Tests exercise both preservation and the
+missed-hazard limitation. Train/test execution remains locked with either guard
+value; this PR grants no permission to run that ablation.
 
 Native generation semantics were checked against the primary HF sources:
 [4.51.3 generation](https://github.com/huggingface/transformers/blob/v4.51.3/src/transformers/generation/utils.py),
@@ -179,43 +181,26 @@ Preserve failed evidence and obtain any new attempt rights externally.
 
 This task authorizes implementation and synthetic/CPU validation only. The new
 LS1 execution decision is **PENDING** in DECISIONS.md. P2/P2.1 authority grants no
-LS1 permission. Train/test operate only with a separately supplied Research Lead
-approval receipt and its trusted SHA-256, after the pending LS1 study is approved.
-Changing `mode`, `status`, a boolean or a run ID is not an authorization workflow.
-The receipt is an owner-verified administrative artifact, not a digital signature.
+LS1 permission. **Train and test are unconditionally LOCKED in this revision.**
+After the unchanged model/mode/run-ID/source-SHA/guard type checks, both modes
+raise exactly:
 
-Research Lead must supply this exact schema (placeholders are deliberately not
-executable permission). `decision_reference` identifies the later approved
-research decision; every other value is bound exactly by the gate:
-
-```json
-{
-  "schema": "ls1-research-lead-approval-v1",
-  "status": "PENDING",
-  "approved_by": "Research Lead",
-  "protocol": "LS1",
-  "run_id": "EXACT_APPROVED_RUN_ID",
-  "mode": "train",
-  "source_commit": "EXACT_REVIEWED_40_HEX_SHA",
-  "model_key": "qwen2_5",
-  "model_revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
-  "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
-  "method_sha256": "SHA256_OF_configs/experiments/ls1.v1.json",
-  "source_manifest_sha256": "3025edb985d947cbcfe3e397b37aed505e2305b32ece46663d46115c28568577",
-  "dataset_fingerprint": "7966858d4903f0f7e53e4dda66ef22427cdb400fb33c8ae23b45231b5f03f9f5",
-  "protect_level01": false,
-  "decision_reference": "LATER_APPROVED_DECISION_REFERENCE"
-}
+```text
+PermissionError("LS1_SPLIT_EXECUTION_LOCKED_PENDING_DEC_LS1_001")
 ```
 
-Train approval cannot authorize test, another model, revision, guard, source
-SHA, method or attempt. Both are locked by default. Once expressly approved,
-attach the original InspecSafe dataset and exact W1 CSV/provenance. Enter their
-input-relative paths, receipt path/hash and approved run ID in the same SETTINGS
-cell. Existing full-dataset byte fingerprint validation runs before model load;
-the original train cohort remains 3,763 images and test 1,250. No new split,
-sampling, tuning or label mapping is introduced. The model receives a label-free
-image projection; GT enters only the post-scoring evaluator.
+The rejection occurs before reading approval JSON, dataset, tokenizer, model or
+runtime, and before reserving an attempt or creating outputs. A self-created
+receipt with all former fields and a matching SHA-256 is still rejected without
+being read. The receipt parser and launcher receipt path resolution were removed;
+the dataset helper also rejects direct calls. Notebook execution cells reject
+train/test before even reading the source package. No environment variable,
+receipt, configuration option or alternative launch path opens the lock.
+
+Technical mode requires no approval, uses only the four generated drawings and
+three fixed references, and rejects an enabled Level01 guard. A future Research
+Lead decision must be addressed in a separately reviewed change; this PR creates
+no new approval mechanism and does not change DEC-LS1-001's PENDING status.
 
 ## Artifacts, recomputation and metrics
 
@@ -243,7 +228,7 @@ forgery of all files; retain the independently recorded package checksum.
 python -m safeshift.ls1.audit --run data/processed/ls1/runs/EXACT_RUN_ID
 ```
 
-Authorized train/test runs report uncalibrated and calibrated Balanced Accuracy,
+The CPU-tested evaluator supports uncalibrated and calibrated Balanced Accuracy,
 Macro-F1, descriptive Accuracy, full-cohort Level01 and Level04 Recall,
 parse-conditional FPR/FNR, failure-aware anomaly non-detection, Level01 protection
 failure, four-class-plus-INVALID confusion matrices, binary anomaly AUROC and
@@ -255,7 +240,8 @@ supports/rates are null, never zero; fixed four-class macro scores require all
 four GT classes. INVALID adds FN to its true class, never an invented FP.
 AUROC excludes missing scores explicitly and is score-conditional; no AUROC is
 claimed for the full cohort when INVALID exists. Optional guarding affects
-predicted labels, not calibrated AUROC scores.
+predicted labels, not calibrated AUROC scores. These are prepared reporting
+semantics; current locked train/test paths produce no dataset metrics.
 
 Reports separately enumerate Level01/02/03→Level04 changes, sample IDs, actual
 anomaly misses and true Level01 misses, and generated-label→Level04 changes.
@@ -266,6 +252,8 @@ No retrospective threshold choice or label-conditioned calibration is allowed.
 
 Before GPU work: ChatGPT review, independent Antigravity audit, real snapshot
 and runtime input checksums, model-specific T1 PASS, correct Kaggle offline/T4
-preflight and a fresh approved technical attempt. Before InspecSafe work:
-separate Research Lead decision and split/run-bound approval. These are missing
-external conditions, not completed milestones. This Draft PR is not merged.
+preflight and a fresh approved technical attempt. InspecSafe execution remains
+unavailable in this revision even if a receipt is supplied. A separate Research
+Lead decision and reviewed implementation change are required before any future
+split execution. These are missing external conditions, not completed milestones.
+This Draft PR is not merged.

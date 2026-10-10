@@ -1,10 +1,8 @@
 """LS1 orchestration with persisted raw-before-parse and explicit split gates."""
 
 import argparse
-import csv
 from datetime import datetime, timezone
 import hashlib
-import io
 import re
 from pathlib import Path
 
@@ -17,6 +15,7 @@ from .core import REFERENCE_SPEC, reference_images, locate_decision, score_decis
 from .tokenizer import MODELS, t1
 
 METHOD_PATH = "configs/experiments/ls1.v1.json"
+SPLIT_EXECUTION_LOCK = "LS1_SPLIT_EXECUTION_LOCKED_PENDING_DEC_LS1_001"
 
 
 def method_hash(repo):
@@ -26,8 +25,7 @@ def method_hash(repo):
 def authorize(settings, repo):
     """Must run before tokenizer/runtime imports, dataset reads or artifacts.
 
-    This owner-supplied approval receipt is explicitly trusted by SHA-256;
-    it is not a signature and never derives rights from P2/P2.1 authority.
+    Train/test have no receipt-based authorization while DEC-LS1-001 is pending.
     """
     if settings["model_key"] not in MODELS or settings["mode"] not in ("technical", "train", "test"):
         raise ValueError("SUPPORTED_LS1_MODE_REQUIRED")
@@ -41,26 +39,7 @@ def authorize(settings, repo):
         if settings.get("protect_level01", False):
             raise ValueError("TECHNICAL_MODE_USES_DEFAULT_NO_GUARD")
         return None
-    approval = settings.get("approval_path")
-    checksum = settings.get("approval_sha256")
-    if not approval or not checksum:
-        raise PermissionError("LS1_" + settings["mode"].upper() + "_LOCKED_RESEARCH_LEAD_APPROVAL_REQUIRED")
-    if digest(approval) != checksum:
-        raise PermissionError("APPROVAL_CHECKSUM_MISMATCH")
-    value = strict_json(Path(approval).read_bytes())
-    expected = {"schema": "ls1-research-lead-approval-v1", "status": "APPROVED",
-        "approved_by": "Research Lead", "protocol": "LS1", "run_id": settings["run_id"],
-        "mode": settings["mode"], "source_commit": settings["source_commit"],
-        "model_key": settings["model_key"], "model_revision": MODELS[settings["model_key"]][1],
-        "prompt_sha256": PROMPT_SHA256, "method_sha256": method_hash(repo),
-        "source_manifest_sha256": MANIFEST_SHA, "dataset_fingerprint": FINGERPRINT,
-        "protect_level01": settings.get("protect_level01", False)}
-    if (set(value) != set(expected) | {"decision_reference"}
-            or any(type(value[k]) is not type(v) or value[k] != v for k, v in expected.items())):
-        raise PermissionError("EXACT_LS1_SPLIT_RUN_APPROVAL_REQUIRED")
-    if not value["decision_reference"] or not isinstance(value["decision_reference"], str):
-        raise PermissionError("EXPLICIT_APPROVED_DECISION_REFERENCE_REQUIRED")
-    return value
+    raise PermissionError(SPLIT_EXECUTION_LOCK)
 
 
 def synthetic_samples():
@@ -87,18 +66,8 @@ def synthetic_samples():
 
 
 def dataset_samples(settings):
-    """Only called after LS1 approval. Full official fingerprint, unchanged split."""
-    from safeshift.data.p2_execution import verify_dataset
-    records, checksum = verify_dataset(settings["dataset_root"], settings["manifest_path"], settings["provenance_path"])
-    raw = Path(settings["manifest_path"]).read_bytes()
-    rows = list(csv.DictReader(io.StringIO(raw.decode("utf-8"))))
-    selected = {row["sample_id"] for row in rows if row["split"] == settings["mode"]}
-    expected_n = {"train": 3763, "test": 1250}[settings["mode"]]
-    if len(selected) != expected_n or checksum != MANIFEST_SHA:
-        raise ValueError("OFFICIAL_SPLIT_COHORT_MISMATCH")
-    # GT remains outside the model execution records, even after permission.
-    gt = {row["sample_id"]: row["safety_level"] for row in rows if row["sample_id"] in selected}
-    return [row for row in records if row["sample_id"] in selected], gt
+    """Direct calls cannot bypass the pending-study split execution lock."""
+    raise PermissionError(SPLIT_EXECUTION_LOCK)
 
 
 def open_sample(row, dataset_root=None):
@@ -150,7 +119,7 @@ def reference_scores(scorer, prefix, token_ids, root, context):
 
 def run(repo, settings, *, scorer_factory=None, tokenizer_check=t1):
     repo = Path(repo).absolute()
-    approval = authorize(settings, repo)
+    authorize(settings, repo)
     root = safe_path(repo, "data/processed/ls1/runs/" + settings["run_id"])
     root.mkdir(parents=True, exist_ok=False)  # refusal persists even for failed attempts
     results, images, scorer = [], [], None
@@ -167,8 +136,7 @@ def run(repo, settings, *, scorer_factory=None, tokenizer_check=t1):
         if hashlib.sha256(prompt).hexdigest() != PROMPT_SHA256:
             raise ValueError("OFFICIAL_C1_CHANGED")
         write_json(root / "run_manifest.json", {**context, "method": strict_json((repo / METHOD_PATH).read_bytes()),
-                   "prompt": prompt.decode(), "approval": approval,
-                   "approval_sha256": settings.get("approval_sha256"),
+                   "prompt": prompt.decode(),
                    "protect_level01": settings.get("protect_level01", False)})
         evidence, tokenizer = tokenizer_check(settings["model_key"], settings.get("snapshot"), repo=repo)
         write_json(root / "t1.json", evidence)

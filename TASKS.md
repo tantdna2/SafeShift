@@ -1829,3 +1829,23 @@ packaging. No real Kaggle prep output, dataset, model or GPU was read.
 LS1 is outside current RQ3; P2/P2.1 and all historical results are preserved.
 No Codex GPU/model/InspecSafe execution, merge or improvement claim. This is a
 Draft handoff, not completion of the research study.
+
+### PR #90 LS1 authorization audit blocker correction (2026-10-10)
+
+The earlier receipt/default-lock wording is superseded by this correction.
+DEC-LS1-001 remains PENDING; both train and test are unconditionally LOCKED,
+including with a self-created, fully populated approval and matching SHA-256.
+No receipt or environment setting can open them in this implementation.
+
+- [x] Remove receipt authorization and receipt input resolution; preserve
+  model/mode/run-ID/source-SHA/guard validation and synthetic technical mode.
+- [x] Lock direct dataset-helper calls and notebook split execution before reads.
+- [x] CPU LS1 suite: 68 run, 66 PASS, 2 SKIP/BLOCKED; no failures/errors.
+- [x] Same targeted regression on fix and main BASE: each 238 run, 237 PASS,
+  the same one historical D9R23 allowlist failure, no errors or new problem cases.
+- [x] Update notebooks and LS1 documentation to remove receipt unlock claims.
+- [ ] ChatGPT re-review and independent Antigravity re-audit of the pushed fix.
+
+Regression and protected-file evidence: `notes/ls1_validation.md`. No GPU,
+InspecSafe execution, new authorization, protocol change, merge or completion
+claim. Keep PR #90 OPEN/DRAFT for review.
