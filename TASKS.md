@@ -1849,3 +1849,25 @@ No receipt or environment setting can open them in this implementation.
 Regression and protected-file evidence: `notes/ls1_validation.md`. No GPU,
 InspecSafe execution, new authorization, protocol change, merge or completion
 claim. Keep PR #90 OPEN/DRAFT for review.
+
+### LS1 ls1-v1 calibration failure analysis (2026-10-11; Draft review)
+
+- [x] Verify remote main `281b697346fdc3f70ccdfe351a4d6b65b7753177`, open PRs
+  and the LS1 sources/tests; record the reported technical and exploratory outcomes.
+- [x] Review parser gating, token alignment, raw versus processed logits, the
+  decision step, forced-prefix references, the prefix cache, four-label
+  probability and the reference log-bias. No code or math defect was found.
+- [x] Add label-free CPU diagnostics (`safeshift/ls1/diagnostics.py`): Level04
+  margin identity, reference bias, hazard-free sanity and sealed-run diagnosis
+  after the existing audit.
+- [x] Add additive LS1 safety reporting: normal alarms, Level01 misses, paired
+  transitions and exploratory Wilson intervals.
+- [x] Add CPU tests (`tests/test_ls1_diagnostics.py`); existing LS1 tests unchanged.
+- [ ] Owner CPU run of `python -m safeshift.ls1.diagnostics` on the sealed
+  `ls1-internvl3-technical-first` run to obtain the actual reference bias.
+- [ ] Research Lead decision on DEC-LS1-002 proposals and on any prospective
+  train-dev/holdout study. No split is opened by this task.
+- [ ] ChatGPT GitHub review, Antigravity audit and ChatGPT audit reconciliation.
+
+Status: NO_DEMONSTRATED_BENEFIT for ls1-v1 calibration. No accuracy claim, GPU,
+InspecSafe execution, new authorization or merge.

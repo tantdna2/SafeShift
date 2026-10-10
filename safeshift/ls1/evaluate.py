@@ -29,6 +29,32 @@ def auc(labels, scores):
     return (rank_sum - positive * (positive + 1) / 2) / (positive * negative)
 
 
+def wilson(successes, n, z=1.959963984540054):
+    """Two-sided 95% Wilson score interval; None for an empty denominator."""
+    if type(successes) is not int or type(n) is not int or not 0 <= successes <= n:
+        raise ValueError("WILSON_COUNTS_REQUIRED")
+    if not n:
+        return None
+    p = successes / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return {"successes": successes, "n": n, "low": max(0.0, centre - half), "high": min(1.0, centre + half)}
+
+
+def safety_counts(metrics):
+    """Explicit false-alarm and Level01-miss counts from the D9R24 confusion matrix."""
+    confusion = metrics["confusion_matrix"]
+    return {"normal_alarms": {"Level04_to_" + p: confusion["Level04"][p] for p in ("Level01", "Level02", "Level03")},
+            "normal_n": metrics["support"]["Level04"],
+            "level01_misses": {"Level01_to_" + p: confusion["Level01"][p]
+                               for p in ("Level02", "Level03", "Level04", "INVALID")},
+            "level01_n": metrics["support"]["Level01"],
+            "per_class_recall_wilson95": {level: wilson(metrics["per_class"][level]["true_positive"],
+                                                        metrics["support"][level]) for level in LEVELS},
+            "uncertainty_scope": ("Exploratory per-class Wilson intervals over images; not the D9R24 "
+                                  "domain-stratified point-cluster bootstrap and not cluster-adjusted.")}
+
+
 def anomaly_log_odds(log_probabilities):
     # Strictly monotone in 1-p(Level04), without subtraction/exp saturation.
     maximum = max(log_probabilities[:3])
@@ -83,7 +109,17 @@ def report(results, ground_truth):
                    "anomaly_vs_normal": auc([t != "Level04" for t in truths], [anomaly_log_odds(p) for p in logs]),
                    "ovr_score": "log conditional class probability, avoiding exp underflow",
                    "anomaly_score": "log odds of 1-p(Level04), avoiding saturation; no tuned threshold"})
+        metrics["safety_counts"] = safety_counts(metrics)
         output["modes"][mode] = metrics
+    paired = {before: {after: 0 for after in LEVELS} for before in LEVELS}
+    escalated_normals = []
+    for row in eligible:
+        before, after = (row["modes"][name]["prediction"] for name in ("uncalibrated", "calibrated"))
+        paired[before][after] += 1
+        if ground_truth[row["sample_id"]] == "Level04" and LEVELS.index(after) < LEVELS.index(before):
+            escalated_normals.append(row["sample_id"])
+    output["paired_transitions_uncalibrated_to_calibrated"] = paired
+    output["true_normal_severity_escalations"] = escalated_normals
     transitions = {level: {"n": 0, "true_anomaly_n": 0, "true_level01_n": 0, "sample_ids": []}
                    for level in LEVELS[:3]}
     for row in eligible:

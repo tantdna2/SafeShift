@@ -2685,3 +2685,38 @@ A future execution decision requires separate review and a later implementation
 change; this correction creates no approval mechanism. P2/P2.1 authority and
 all frozen research decisions/results are unchanged. Current usage:
 `notes/ls1_runbook.md`.
+
+### DEC-LS1-002 — ls1-v1 calibration failure analysis (2026-10-11; PROPOSED, PENDING)
+
+Claude Code analysed the Research Lead's reported LS1 outcomes on BASE
+`281b697346fdc3f70ccdfe351a4d6b65b7753177`. No GPU, weights, Kaggle session or
+InspecSafe image was used. The technical run (4 synthetic drawings: raw 4x Level03,
+calibrated 3x Level01 + 1x Level04) and the unauthorized 10-image train
+exploration (accuracy 2/10 to 3/10, Level04 0/4 in both arms, all four presumed
+normals escalated to Level01/Level02) are user-supplied; their sealed artifacts
+were not inspected here and the exploratory GT is not authority-verified.
+
+Finding: no code or mathematical defect was found in the reviewed LS1 scope. The
+failure follows from the method. Uniform references are hazard-free inputs, not
+label-neutral ones. Calibrated Level04 requires `z4 - zi > b4 - bi` for every
+other class, so no real scene that looks less safe than a blank image can be
+Level04. Hazard classes receive the largest boost, and exact ties resolve to
+Level01. References also use a 256-token single-tile context, unlike historical
+InspecSafe inputs. Status: **NO_DEMONSTRATED_BENEFIT**, with a false-Level01
+safety regression signal. A label-free hazard-free sanity check (declared post hoc)
+FAILS on the reported technical pattern.
+
+Proposed, not effective until the Research Lead decides:
+1. Suspend ls1-v1 calibrated predictions as a decision rule. Keep uncalibrated
+   scoring only as a discrimination and greedy-reproduction measurement.
+2. Any successor is a separately versioned candidate (at most two, see
+   `notes/ls1_calibration_failure_analysis.md`), predeclared before execution.
+3. Use a prospective cluster-level train-dev/train-holdout split that excludes
+   the 10 observed IDs and their clusters, with a frozen salt and endpoints. The
+   official test stays untouched.
+
+This entry changes no prompt, data, split, label, metric, frozen P2/P2.1
+contract, model revision, runtime, historical result or execution authority.
+DEC-LS1-001 remains PENDING, and train/test remain locked with
+`LS1_SPLIT_EXECUTION_LOCKED_PENDING_DEC_LS1_001`. The standalone exploratory
+script is not part of any authorized path.
