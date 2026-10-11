@@ -1892,3 +1892,17 @@ InspecSafe execution, new authorization or merge.
 Commands, evidence checks and unrun full-suite limitation:
 `notes/ls1_calibration_failure_analysis.md`. DEC-LS1-001/002 stay PENDING;
 train/test stay LOCKED. Keep PR #91 OPEN/DRAFT and stop for external review.
+
+### TASK 2 — PA3 research protocol proposal (2026-10-11; PROPOSED / PENDING)
+
+- [ ] Review [PA3 proposal](notes/pa3_research_protocol_proposal.md): uncalibrated
+  Qwen2.5 discrimination, score-conditional AUROC, INVALID/coverage, sparse
+  Level03, controls, grouped TRAIN holdout and prior-exposure limitations.
+- [ ] Research Lead resolution of DEC-LS1-001/002 and PA3 scope, cohort,
+  uncertainty and decision rules; any later TRAIN threshold/calibration learning
+  needs an explicit D9R22 exception and a separately reviewed implementation.
+- [ ] ChatGPT direct GitHub review of the Draft PR; no merge or experiment here.
+
+Proposal only, not COMPLETE or execution authority. RQ3 and frozen contracts
+are unchanged; LS1 TRAIN/TEST remain LOCKED. No real-data read, GPU, calibration
+implementation or performance-improvement claim in this task.
