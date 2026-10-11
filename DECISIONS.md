@@ -2735,3 +2735,35 @@ contract, model revision, runtime, historical result or execution authority.
 DEC-LS1-001 remains PENDING, and train/test remain locked with
 `LS1_SPLIT_EXECUTION_LOCKED_PENDING_DEC_LS1_001`. The standalone exploratory
 script is not part of any authorized path.
+
+### DEC-PA3-001 — Task 3B synthetic-only preparation approval
+
+Date: 2026-10-11 (Asia/Bangkok). Authority: the Research Lead's explicit
+TASK 3B instruction in this session. **APPROVED_PREPARATION_ONLY**.
+Verified GitHub main BASE: `a7146bbb2c44eb26160f26716af23a8b70260dee`.
+The stale local main ref is not the implementation base.
+
+Approval covers technical preparation of a separate Qwen2.5 PA3 raw-only
+implementation and CPU tests using entirely synthetic fixtures. The future
+target is `Qwen/Qwen2.5-VL-3B-Instruct`, revision
+`66285546d2b821cf421d4f5eb2576359d3770cd3`; no model is executed here.
+The prepared score is `logsumexp(z1,z2,z3)-z4` from raw Level01–Level04 logits,
+with the existing LS1/P2.1 validity and token-alignment rules. No references,
+calibration, temperature scaling, threshold selection or Level01 guard in PA3.
+
+This grants no access to real metadata/images, InspecSafe TRAIN/TEST, real
+inference, tokenizer/model snapshots or GPU execution. TRAIN/TEST remain
+LOCKED, including direct helpers; no receipt, checksum or environment setting
+can create authority. DEC-LS1-001/002 remain PENDING and are neither approved
+nor amended by this entry. LS1-v1 behavior and its locks remain unchanged.
+
+RQ3, frozen contracts, C1, P2/P2.1, dataset/splits/labels/metrics and historical
+results are unchanged. Synthetic AUROC is software-test evidence only, not
+evidence of PA3 discrimination, Qwen T1 PASS or runtime PASS. Statistical
+proposals including grouped bootstrap and real-data allocation remain pending.
+
+Future technical GPU qualification, metadata/image access, TRAIN-dev and
+TRAIN-holdout each require a separate Research Lead decision and implementation
+review. A Draft PR, CPU PASS or successful checksum audit grants none of these
+rights. Task 3B stops at Draft PR for ChatGPT GitHub review, before any separately
+commissioned Antigravity audit; no merge. See `notes/pa3_synthetic_runbook.md`.
