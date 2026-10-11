@@ -1906,3 +1906,15 @@ train/test stay LOCKED. Keep PR #91 OPEN/DRAFT and stop for external review.
 Proposal only, not COMPLETE or execution authority. RQ3 and frozen contracts
 are unchanged; LS1 TRAIN/TEST remain LOCKED. No real-data read, GPU, calibration
 implementation or performance-improvement claim in this task.
+
+### TASK 3A — PA3 execution decision dossier (2026-10-11; PENDING)
+
+- [ ] Research Lead review of [PA3 decision dossier](notes/pa3_execution_decision_dossier.md):
+  evidence/blockers, raw-only preparation, metadata/exposure/grouping rights,
+  protocol freeze decisions and separate TRAIN-dev/holdout execution approvals.
+- [ ] ChatGPT direct GitHub review of this Draft PR; no merge in this task.
+
+Verified main BASE `1790c63a22ee2a641b4b2c82bd100cde5f0b1c9a`; PRs #90/#91/#92
+are merged (earlier DRAFT entries are historical). Recommendation only:
+CONDITIONAL GO for synthetic code preparation, NO-GO for current TRAIN execution;
+TEST stays locked. No real-data read, GPU, code/decision/lock change or new authority.
