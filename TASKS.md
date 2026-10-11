@@ -1918,3 +1918,20 @@ Verified main BASE `1790c63a22ee2a641b4b2c82bd100cde5f0b1c9a`; PRs #90/#91/#92
 are merged (earlier DRAFT entries are historical). Recommendation only:
 CONDITIONAL GO for synthetic code preparation, NO-GO for current TRAIN execution;
 TEST stays locked. No real-data read, GPU, code/decision/lock change or new authority.
+
+### TASK 3B — PA3 raw-only synthetic preparation (2026-10-11)
+
+Status: **implementation/review PENDING**; code candidate prepared for review,
+not COMPLETE. Research Lead approval: **APPROVED_PREPARATION_ONLY**, recorded
+in DEC-PA3-001. BASE `a7146bbb2c44eb26160f26716af23a8b70260dee`.
+
+- [ ] Review separate `safeshift/pa3/` CPU mock runner, raw artifacts,
+  recomputation audit and score-conditional synthetic evaluator.
+- [ ] Review synthetic tests, execution-boundary evidence, validation results
+  and remaining limitations in `notes/pa3_synthetic_runbook.md`.
+- [ ] ChatGPT direct GitHub review of the Draft PR; subsequent independent
+  Antigravity audit requires a separate request. No merge in this task.
+
+TRAIN/TEST remain LOCKED; no real metadata/image/snapshot read or GPU/model
+execution. No PA3 reference/calibration calls, new execution authority, RQ3 or
+frozen-contract change, real protocol freeze or discrimination/T1/runtime claim.
