@@ -1849,3 +1849,46 @@ No receipt or environment setting can open them in this implementation.
 Regression and protected-file evidence: `notes/ls1_validation.md`. No GPU,
 InspecSafe execution, new authorization, protocol change, merge or completion
 claim. Keep PR #90 OPEN/DRAFT for review.
+
+### LS1 ls1-v1 calibration failure analysis (2026-10-11; Draft review)
+
+- [x] Verify remote main `281b697346fdc3f70ccdfe351a4d6b65b7753177`, open PRs
+  and the LS1 sources/tests; record the reported technical and exploratory outcomes.
+- [x] Review parser gating, token alignment, raw versus processed logits, the
+  decision step, forced-prefix references, the prefix cache, four-label
+  probability and the reference log-bias. No code or math defect was found.
+- [x] Add label-free CPU diagnostics (`safeshift/ls1/diagnostics.py`): Level04
+  margin identity, reference bias, hazard-free sanity and sealed-run diagnosis
+  after the existing audit.
+- [x] Add additive LS1 safety reporting: normal alarms, Level01 misses, paired
+  transitions and exploratory Wilson intervals.
+- [x] Add CPU tests (`tests/test_ls1_diagnostics.py`); existing LS1 tests unchanged.
+- [ ] Owner CPU run of `python -m safeshift.ls1.diagnostics` on the sealed
+  `ls1-internvl3-technical-first` run to independently verify the reported
+  reference bias and obtain per-reference logits/predictions.
+- [ ] Research Lead decision on DEC-LS1-002 proposals and on any prospective
+  train-dev/holdout study. No split is opened by this task.
+- [ ] ChatGPT GitHub review, Antigravity audit and ChatGPT audit reconciliation.
+
+Status: NO_DEMONSTRATED_BENEFIT on the limited reported ls1-v1 calibration
+evidence; no universal failure or Level04-unreachability conclusion. No accuracy claim, GPU,
+InspecSafe execution, new authorization or merge.
+
+### PR #91 ChatGPT review corrections (2026-10-11; Draft re-review pending)
+
+- [x] Correct scientific claims in the note, DEC-LS1-002 and diagnostics text:
+  separate score identities from hypotheses; Level04 remains reachable.
+- [x] Attribute the reported bias to the GitHub review, disclose the unaudited
+  raw artifact, and explain the four labels' distinct relative corrections.
+- [x] Preserve the exploratory 10-image metric table, provisional GT, evidence
+  limits and post-hoc sanity rule; no tuning or successor implementation.
+- [x] CPU diagnostics: 19/19 PASS. Original LS1: 66 PASS / 2 SKIP on both revisions.
+- [x] Focused comparison: BASE 306 run / 1 FAIL / 2 SKIP; corrected branch 325
+  run / same 1 FAIL / 2 SKIP, no errors or new failing identities. Regression
+  is not green; the historical D9R23 allowlist test remains unchanged.
+- [ ] Independent ChatGPT GitHub re-review, then Antigravity audit only after
+  that review; no audit or merge performed by this correction task.
+
+Commands, evidence checks and unrun full-suite limitation:
+`notes/ls1_calibration_failure_analysis.md`. DEC-LS1-001/002 stay PENDING;
+train/test stay LOCKED. Keep PR #91 OPEN/DRAFT and stop for external review.
