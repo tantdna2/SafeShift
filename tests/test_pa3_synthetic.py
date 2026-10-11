@@ -3,6 +3,9 @@
 from copy import deepcopy
 import math
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -189,6 +192,96 @@ class SyntheticTests(unittest.TestCase):
         self.rewrite_and_reseal(s, "manifest", header)
         with self.assertRaisesRegex(PermissionError, "IDENTITY"):
             audit.audit_run(self.repo, s)
+
+    def test_source_manifest_tamper_rejected_even_resealed(self):
+        self.run_cases("normal")
+        s = settings("normal")
+        original = artifacts.read(self.repo, s, "manifest")
+        name = "safeshift/pa3/scoring.py"
+        for fault in ("hash", "size", "size_type", "missing_file", "extra_file", "missing_field", "null"):
+            with self.subTest(fault=fault):
+                header = deepcopy(original)
+                sources = header["source_files"]
+                if fault == "hash":
+                    sources[name]["sha256"] = "0" * 64
+                elif fault == "size":
+                    sources[name]["size_bytes"] += 1
+                elif fault == "size_type":
+                    sources[name]["size_bytes"] = float(sources[name]["size_bytes"])
+                elif fault == "missing_file":
+                    del sources[name]
+                elif fault == "extra_file":
+                    sources["safeshift/pa3/unexpected.py"] = dict(sources[name])
+                elif fault == "missing_field":
+                    del header["source_files"]
+                else:
+                    header["source_files"] = None
+                self.rewrite_and_reseal(s, "manifest", header)
+                self.assertTrue(artifacts.verify(self.repo, s))
+                with self.assertRaisesRegex(ValueError, "PA3_SOURCE_PROVENANCE_MISMATCH"):
+                    audit.audit_run(self.repo, s)
+
+    def test_matching_source_passes_without_git_head_authority(self):
+        s = {**settings("normal"), "source_commit": "0" * 40}
+        runner.run(self.repo, s)
+        header = artifacts.read(self.repo, s, "manifest")
+        self.assertEqual(header["source_files"], runner.source_provenance())
+        self.assertEqual(audit.audit_run(self.repo, s)["integrity"], "PASS")
+
+    def test_actual_source_drift_in_isolated_copy_is_rejected(self):
+        # Copy Python source only. No edits to the working checkout, no mocks
+        # of the provenance function, and no dataset/model/config copies.
+        source = Path(__file__).resolve().parents[1] / "safeshift"
+        def ignore(directory, names):
+            return [n for n in names if n == "__pycache__"
+                    or ((Path(directory) / n).is_file() and not n.endswith(".py"))]
+        shutil.copytree(source, self.repo / "safeshift", ignore=ignore)
+        code = r'''
+from pathlib import Path
+from safeshift.pa3 import artifacts, audit, runner
+repo = Path.cwd()
+assert Path(runner.__file__).resolve().is_relative_to(repo)
+s = dict(mode="synthetic", run_id="pa3-synthetic-source-drift", source_commit="0"*40, cases=["normal"])
+runner.run(repo, s)
+assert audit.audit_run(repo, s)["integrity"] == "PASS"
+target = repo / "safeshift/pa3/scoring.py"
+original = target.read_bytes()
+changed = original.replace(b"Raw-only", b"raw-only", 1)
+assert changed != original and len(changed) == len(original)
+extra = repo / "safeshift/pa3/unexpected.py"
+required = repo / "safeshift/ls1/core.py"
+required_bytes = required.read_bytes()
+for fault in ("same_size_edit", "size_edit", "missing_pa3", "extra_pa3", "missing_required"):
+    try:
+        if fault == "same_size_edit":
+            target.write_bytes(changed)
+        elif fault == "size_edit":
+            target.write_bytes(original + b"\n# isolated provenance test\n")
+        elif fault == "missing_pa3":
+            target.unlink()
+        elif fault == "extra_pa3":
+            extra.write_bytes(b"# isolated provenance test\n")
+        else:
+            required.unlink()
+        assert artifacts.verify(repo, s)  # artifact hashes/seal still match
+        try:
+            audit.audit_run(repo, s)
+        except ValueError as exc:
+            expected = "UNREADABLE" if fault == "missing_required" else "MISMATCH"
+            assert str(exc).startswith("PA3_SOURCE_PROVENANCE_" + expected), str(exc)
+        else:
+            raise AssertionError("SOURCE_DRIFT_ACCEPTED: " + fault)
+    finally:
+        target.write_bytes(original)
+        required.write_bytes(required_bytes)
+        if extra.exists():
+            extra.unlink()
+assert audit.audit_run(repo, s)["integrity"] == "PASS"
+print("SOURCE_DRIFT_REJECTED_MATCHING_SOURCE_PASS")
+'''
+        result = subprocess.run([sys.executable, "-c", code], cwd=self.repo, text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("SOURCE_DRIFT_REJECTED_MATCHING_SOURCE_PASS", result.stdout)
 
     def test_unsealed_journal_after_raw_is_partial(self):
         s = settings("anomaly", "normal")

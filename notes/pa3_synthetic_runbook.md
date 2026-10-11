@@ -63,6 +63,15 @@ deletion of an entire unsealed tail cannot be proven absent from local hashes.
 Storage/process failures can prevent a final seal; preserve the directory for
 investigation and do not reuse its ID. No automatic recovery or retry is provided.
 
+Audit must run with the exact source bytes that created the results. Before
+recomputation it compares `manifest.source_files` against `source_provenance()`
+from the installed source tree: exact file set, SHA-256 and byte sizes. Missing,
+extra or changed entries fail with `PA3_SOURCE_PROVENANCE_MISMATCH`; unreadable
+required source fails with `PA3_SOURCE_PROVENANCE_UNREADABLE`, even if artifact
+checksums/seal are consistent. Preserve the original source version for audit;
+do not rewrite a manifest to make old results pass under different code.
+The declared `source_commit` need not equal Git HEAD and grants no execution rights.
+
 Reports use exact unique IDs and the built-in GT join. They include planned,
 attempted, persisted (raw/error receipts), parsed (schema-valid even if later
 alignment fails), scored, statuses, score-conditional AUROC, eligible IDs/pairs,
@@ -84,7 +93,7 @@ python -m unittest tests.test_ls1 tests.test_ls1_diagnostics tests.test_p21_clas
 git diff --check
 ```
 
-Validation on Windows / Python 3.11.9, unchanged dependencies:
+Initial Task 3B validation on Windows / Python 3.11.9, unchanged dependencies:
 
 - PA3: **44/44 PASS**, including all 26 built-in cases under fresh-process
   forbidden-operation tripwires, actual KeyboardInterrupt after raw persistence,
@@ -103,6 +112,20 @@ Validation on Windows / Python 3.11.9, unchanged dependencies:
   its fixture metrics are not research outcomes.
 - Protected LS1/frozen/protocol/runner Git bytes, exact append-only original
   prefixes of DECISIONS/TASKS, data-output ignore rule and `git diff --check`: PASS.
+
+PR #94 provenance correction, based on `4a16ab50583a689acab19329abffa450d4fe4cb0`:
+the new negative tests reproduced the old bypass before the fix. After the fix,
+the PA3 command above passes **47/47**, including resealed manifest hash/size/
+membership tampering, real same-size/size-changing edits and missing/extra files
+in a temporary Python-source copy, plus matching-source PASS with a declared
+commit unrelated to Git HEAD. No source in the working checkout is mutated by
+these tests. The same regression command reports **149 run: 146 PASS, 1 FAIL,
+2 SKIP**, retaining the D9R23 failure and both T1 skips identified above.
+`git diff --check` PASS; only audit, synthetic tests and this runbook change.
+Old smoke evidence above remains historical; its source bytes differ from this
+revision and it must not be relabeled as passing the corrected source audit.
+ChatGPT GitHub review and Antigravity re-audit of this fix are required before
+any merge; the PR stays DRAFT and execution rights remain unchanged.
 
 Full repository discovery,
 real T1/runtime, GPU, model inference, real data and historical result archives

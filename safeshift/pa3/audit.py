@@ -3,6 +3,7 @@
 from . import artifacts
 from .evaluate import report
 from .policy import authorize, identity
+from .runner import source_provenance
 from .scoring import check_raw, pending, score_raw
 from .synthetic import ground_truth, specimen
 
@@ -14,6 +15,14 @@ def audit_run(repo, settings):
     if (manifest["identity"] != identity(settings)
             or manifest["cohort"] != [specimen(settings, n) for n in settings["cases"]]):
         raise PermissionError("SYNTHETIC_MANIFEST_IDENTITY_MISMATCH")
+    try:
+        current_sources = source_provenance()
+    except OSError as exc:
+        raise ValueError("PA3_SOURCE_PROVENANCE_UNREADABLE: required source file unavailable") from exc
+    # Compare exact file membership, hashes, sizes and JSON types. The caller's
+    # source_commit remains provenance only; it is not checked against Git HEAD.
+    if artifacts.json_bytes(manifest.get("source_files")) != artifacts.json_bytes(current_sources):
+        raise ValueError("PA3_SOURCE_PROVENANCE_MISMATCH: source file set, SHA-256 or size differs")
     rows, stopped = [], False
     for i, name in enumerate(settings["cases"]):
         attempted, persisted, calculated = [artifacts.exists(repo, settings, f"{i:03d}.{kind}")
