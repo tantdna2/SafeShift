@@ -238,6 +238,11 @@ class RuntimeSequenceTests(unittest.TestCase):
                 python = output / "build/managed/cpython-3.11.11-fixture/bin/python3.11"
                 python.parent.mkdir(parents=True)
                 python.write_bytes(b"fixture interpreter")
+                try:  # Real alias where the host allows it: link maps must survive restore.
+                    (python.parent / "python3").symlink_to("python3.11")
+                    self.links = True
+                except OSError:
+                    self.links = False
                 (python.parent.parent / "lib/python3.11").mkdir(parents=True)
                 (python.parent.parent / "lib/python3.11/EXTERNALLY-MANAGED").write_text("[externally-managed]")
             elif "--target" in command:
@@ -306,6 +311,8 @@ class RuntimeSequenceTests(unittest.TestCase):
         self.assertEqual(roundtrip, {"relocated": False, "build": False, "roundtrip": True, "consumer": False})
         self.assertEqual(consumed, {"relocated": False, "build": False, "roundtrip": False, "consumer": True})
         self.assertTrue(probes[2][0][0].startswith(str(consumer)))
+        self.assertEqual(Path(probes[2][0][-1]), (repo / prep.CONSUMER_RUNTIME).resolve())
+        self.assertEqual(receipt["symlinks"], {"python/bin/python3": "python/bin/python3.11"} if self.links else {})
         workflow = children[-1]
         self.assertEqual(workflow[0][-1], "import safeshift.pa3.native.workflow")
         self.assertTrue(workflow[1]["PYTHONPATH"].startswith(str(repo) + os.pathsep + str(consumer)))
@@ -517,7 +524,7 @@ class RealLinuxRuntimeTests(unittest.TestCase):
         env = {**os.environ, "CUDA_VISIBLE_DEVICES": "", "PYTHONNOUSERSITE": "1"}
         env.pop("PYTHONPATH", None); env.pop("PYTHONHOME", None)
         run = lambda c, e: subprocess.run(c, env=e, check=True)
-        selected, _, links = prep.probe_runtime(ROOT, archive, consumer, env, run)
+        selected, _, links = prep.probe_runtime(ROOT, archive, ROOT / prep.CONSUMER_RUNTIME, env, run)
         self.assertEqual(links, receipt["symlinks"])
         self.assertEqual(selected["software_versions"], receipt["software"])
         prep.probe_offline_child(ROOT, selected, env, run)

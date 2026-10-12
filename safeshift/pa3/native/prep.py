@@ -26,8 +26,10 @@ RUNTIME_MODULES = ("torch", "torchvision", "transformers", "qwen_vl_utils", "acc
                    "PIL", "huggingface_hub", "tokenizers", "safetensors")
 # The OFFLINE inventory must live outside the archive's directory (ls1 rule).
 ARCHIVE = "runtime-archive/pa3_runtime.tar.gz"
-# Fixed restore location of the unchanged ls1.kaggle.runtime_interpreter.
+# Fixed restore location of the unchanged ls1.kaggle.runtime_interpreter; it
+# extracts the archive's top-level "runtime/" under part-0.
 CONSUMER_ROOT = "data/processed/ls1/runtime"
+CONSUMER_RUNTIME = CONSUMER_ROOT + "/part-0/runtime"
 
 
 def git(repo, *args):
@@ -127,7 +129,7 @@ def probe_runtime(repo, source, root, env, run):
     """Select with the unchanged OFFLINE selector, then prove every origin is inside root.
 
     source is a runtime directory or, for the OFFLINE consumer path, the archive
-    that runtime_interpreter itself restores under CONSUMER_ROOT (= root).
+    that runtime_interpreter itself restores to CONSUMER_RUNTIME (= root).
     """
     selected = runtime_interpreter(repo, source, "qwen2_5")
     root = Path(root).resolve()
@@ -258,7 +260,7 @@ def runtime(repo, output):
         inventory = output / "pa3_runtime_inventory.json"
         inventory_sha = inventory_runtime(archive, inventory)
         verify_runtime_input(archive, inventory, inventory_sha)
-        consumed, _, consumed_links = probe_runtime(repo, archive, consumer, env, run)
+        consumed, _, consumed_links = probe_runtime(repo, archive, repo / CONSUMER_RUNTIME, env, run)
         require_same(selected, links, consumed, consumed_links)
         probe_offline_child(repo, consumed, env, run)
         checks["4_offline_runtime_interpreter_from_archive"] = "PASS"
