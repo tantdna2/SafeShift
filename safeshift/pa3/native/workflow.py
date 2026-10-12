@@ -33,12 +33,15 @@ def infer(journal, samples, scorer, tokenizer, open_image):
 
 def execute(repo, settings, snapshot, inputs=None):
     """No run ID reuse, retries, fallback or implicit grant from prep receipts."""
+    if settings["mode"] == "pilot-train":
+        from .pilot_workflow import execute_pilot
+        return execute_pilot(repo, settings, snapshot, inputs)
     journal = Journal(run_path(repo, settings["run_id"]), create=True)
     stage, terminal = "AUTHORITY", False
     images = []
     try:
-        access.require(settings["mode"], settings)  # precedes source/runtime/data access
-        access.require("technical", settings)
+        access.require(settings["mode"], settings, repo)  # precedes source/runtime/data access
+        access.require("technical", settings, repo)
         stage = "A_SOURCE"
         source = preflight.source(repo, settings["source_commit"])
         journal.write("source", source)
@@ -86,11 +89,22 @@ def execute(repo, settings, snapshot, inputs=None):
             raise ValueError("QUALIFICATION_REQUIRES_AT_LEAST_ONE_AUDITED_SCORE")
         journal.write("qualification", qualified)
         if settings["mode"] == "technical":
+            journal.write("feasibility", {
+                "scope": "EXPLORATORY_FEASIBILITY_NOT_SEMINAR_CONFIRMATION",
+                "processed": sum(r["persisted"] for r in qualified["results"]),
+                "t1": t1["status"], "model": scorer.evidence(),
+                "four_sample_score_audit": "PASS" if len(qualified["results"]) == 4 and all(
+                    r["status"] == "SUCCESS" for r in qualified["results"]) else "FAIL",
+                "status_counts": {s: sum(r["status"] == s for r in qualified["results"])
+                                  for s in ("SUCCESS", "INVALID", "TECHNICAL_ERROR")},
+                "results": qualified["results"], "auroc": None,
+                "auroc_reason": "SYNTHETIC_DRAWINGS_HAVE_NO_SEMANTIC_GROUND_TRUTH"})
+        if settings["mode"] == "technical":
             journal.write("finish", {"status": "TECHNICAL_QUALIFICATION_COMPLETE_NO_DATA_RIGHTS"})
             terminal = True
         else:
             stage = "E_COHORT"
-            access.require(settings["mode"], settings)
+            access.require(settings["mode"], settings, repo)
             samples = cohort.load_plan(repo, settings, inputs)
             journal.write("model", scorer.evidence())
             journal.write("manifest", {"schema": "pa3-qwen-run-v1", "source": source,

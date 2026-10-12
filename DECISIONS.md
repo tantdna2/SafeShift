@@ -2797,3 +2797,77 @@ GitHub review, then the separately requested audit/merge process.
 
 Operational readiness and blockers: `notes/pa3_qwen_runbook.md`; CPU evidence
 and historical D9R23 regression disclosure: `notes/pa3_qwen_validation.md`.
+
+
+### DEC-PA3-003 - Task 5 technical feasibility release (2026-10-12; append-only)
+
+Authority: Research Lead's explicit TASK 5 instruction. APPROVED_PREPARATION;
+execution is conditional on ChatGPT GitHub review, independent Antigravity audit,
+reconciliation and a verified standard merge of the reviewed source. This Draft
+creates no effective execution rights. BASE 747171e011e35bc8995338402a80ba7ea70d8ff7.
+
+Prepare exactly one `pa3-qwen-technical-first` run of
+Qwen/Qwen2.5-VL-3B-Instruct at 66285546d2b821cf421d4f5eb2576359d3770cd3,
+one visible T4, FP16, SDPA, unchanged C1 and PA3 raw-only scoring; precisely the
+four images produced by synthetic_samples(). Native generate must verify exact
+pixels, IDs/order and one-use tickets. No real image, metadata, TRAIN or TEST
+permission follows from this technical scope. No retry, model/revision/precision
+fallback, references, calibration, threshold fitting or RQ4 implementation.
+
+A committed authority-only F2 binds its implementation parent F1 and base;
+only the exact standard merge topology/tree can become effective. No SETTINGS,
+environment flag, matching checksum or self-created receipt grants rights.
+Hashes attest integrity, not human approval or external authenticity. Local
+journals/tickets cannot prevent deletion/fresh-session replay: Lead must retain
+artifacts and a persistent attempt ledger enforcing the global one-run budget.
+
+Model Prep and Runtime Prep are separate explicit ONLINE CPU owner operations,
+never inference. The final inference notebook remains Internet OFF, with no pip,
+model download or automatic fallback. Actual inputs, relocation/import success,
+T1 and T4 feasibility have not been demonstrated by this code preparation.
+The gate and CPU doubles are implementation evidence only.
+
+### DEC-PA3-004 - Conditional small TRAIN exploratory pilot (2026-10-12; append-only)
+
+Prepare a distinct `pilot-train` path and prospective manifest rule. Current
+release records `pilot: null`; real pilot execution remains LOCKED. Activation
+requires actual technical T1 PASS, a completed sealed four-image run with all
+four SUCCESS raw-score extractions and CPU recomputation PASS, plus Research
+Lead approval of the exact manifest, provenance and exposure/dependency closure.
+The all-four requirement is a conservative feasibility gate, not a hypothesis
+acceptance threshold. Task 4's historical completion semantics are unchanged.
+
+Proposed fixed seed: pa3-task5-pilot-2026-10-12-v1. Target/cap 40 TRAIN images:
+4 Normal + 4 Anomaly per original domain coal_conveyor, metallurgy, oil_chemical,
+power, tunnel. Rank eligible IDs by SHA-256(seed + "|" + sample ID), ID tie-break;
+fixed domain order as above, Normal before Anomaly; one image per dependency
+group. Groups use Task 4 exact-byte hashes, Normal point IDs and transitive
+reviewed sequence/scene/source-family/near-duplicate links. Exclude groups with
+observed/unknown exposure, unresolved relationships or non-verified TEST links.
+GT/provenance comes from custodian-reviewed original annotations, not model
+outputs or an invented dataset schema. No TEST scan/read to construct the plan.
+If any stratum lacks four eligible groups, report shortages and stop with no
+selected sample list; do not redistribute, relax rules or change seed/target.
+
+This rule is a proposal for Lead manifest approval, not a new dataset definition,
+official split, label mapping or frozen metric. The exact manifest records all
+selected IDs and the complete known related group closure. Reserve that closure
+as observed before reading pilot images, and copy it into the persistent ledger;
+none may later be represented as independent evaluation. Unknown metadata limits
+must be disclosed; graph construction does not prove independence.
+
+A later reviewed authority release must bind literal approved manifest and
+technical-seal hashes, technical source commit/bundle hash, Lead approval
+reference, model/method/runtime scope, `pa3-qwen-pilot-train-first`, max_runs=1,
+max_images=40. This PR does not manufacture those currently missing values.
+The prepared runner audits the prior technical journal against its own retained
+source, checks manifest membership/hash before every image read, performs one
+pass, seals raw before GT join and reports score-conditional exploratory AUROC
+with valid class counts, coverage/statuses and small-sample/dependence warnings.
+No threshold, calibration, holdout, TEST, independent-evaluation or confirmatory
+Seminar claim is authorized. No retrospective selection by model score.
+
+D9R22/D9R24, Seminar title, RQ1-RQ4, old RQ3, LS1 decisions/locks, historical
+results, frozen contracts and all research rights outside this conditional
+pilot remain unchanged. No GPU/model/data execution, merge or second PR is
+performed by Task 5. Operational steps/blockers: notes/pa3_task5_kaggle_runbook.md.

@@ -165,6 +165,9 @@ def backend(model=None):
     native = SimpleNamespace(process_vision_info=lambda messages: ([messages[0]["content"][0]["image"]], None),
                              model_factory=SimpleNamespace(from_pretrained=loader))
     with ExitStack() as stack:
+        stack.enter_context(patch.object(preflight, "source", return_value={"source_commit": preflight.BASE_SHA, "files": {}}))
+        stack.enter_context(patch.object(access, "model_ticket"))
+        stack.enter_context(patch.object(access, "image_ticket"))  # synthetic backend; tested separately
         stack.enter_context(patch.object(access, "require"))  # CPU fixture only; production has no injected grant
         stack.enter_context(patch.object(runtime, "versions", return_value=token_module.plan("qwen2_5", ROOT)["software"]))
         stack.enter_context(patch.object(runtime, "verify_snapshot", return_value={"fixture": "CPU_ONLY"}))
@@ -682,8 +685,8 @@ print('CPU_AUDIT_IMPORT_PASS')
              patch.object(kaggle, "verify_runtime_input", side_effect=ValueError("HASH")), \
              patch.object(kaggle, "runtime_interpreter", side_effect=AssertionError("EXECUTED")), \
              patch.object(kaggle, "restore_model", side_effect=AssertionError("MODEL_READ")):
-            inputs = Path(tmp)/"inputs"; inputs.mkdir(); (inputs/"runtime").mkdir(); (inputs/"inventory.json").write_text("{}")
-            s = {**SETTINGS, "runtime_input": "runtime", "runtime_inventory_input": "inventory.json", "runtime_inventory_sha256": "a"*64}
+            inputs = Path(tmp)/"inputs"; inputs.mkdir(); (inputs/"runtime.tar").write_bytes(b"fixture"); (inputs/"inventory.json").write_text("{}")
+            s = {**SETTINGS, "runtime_input": "runtime.tar", "runtime_inventory_input": "inventory.json", "runtime_inventory_sha256": "a"*64}
             with self.assertRaisesRegex(ValueError, "HASH"): kaggle.launch(tmp, inputs, s)
             self.assertTrue(Journal(run_path(tmp, s["run_id"]).parent/(s["run_id"]+"-launch")).verify())
 

@@ -3,6 +3,8 @@
 import argparse
 import os
 import subprocess
+import shutil
+import tarfile
 from pathlib import Path
 
 from safeshift.ls1.artifacts import digest, write_json
@@ -28,22 +30,41 @@ def bundle_source(repo, output):
     return release
 
 
+def capacity(repo, runtime_archive):
+    model_bytes = sum(r["size_bytes"] for r in preflight.plan("qwen2_5", repo)["snapshot_files"])
+    with tarfile.open(runtime_archive, "r:*") as stream:
+        runtime_bytes = sum(m.size for m in stream if m.isfile())
+    free = shutil.disk_usage(repo).free
+    required = model_bytes + runtime_bytes + 2**30
+    proof = {"model_expanded_bytes": model_bytes, "runtime_expanded_bytes": runtime_bytes,
+             "journal_reserve_bytes": 2**30, "free_bytes": free, "required_bytes": required}
+    if free < required:
+        raise OSError("OFFLINE_RESTORE_DISK_SHORTAGE:" + str(proof))
+    return proof
+
+
 def launch(repo, inputs, settings):
     # Failure evidence is the only permitted write before authorization.
     root = run_path(repo, settings["run_id"])
     journal = Journal(root.parent / (root.name + "-launch"), create=True)
     stage = "AUTHORITY"
     try:
-        access.require(settings["mode"], settings)
-        access.require("technical", settings)
+        access.require(settings["mode"], settings, repo)
+        if settings["mode"] != "pilot-train":
+            access.require("technical", settings, repo)
         stage = "A_SOURCE"
         journal.write("source", preflight.source(repo, settings["source_commit"]))
         stage = "B_PREP_INTEGRITY"
         runtime_input = attached_path(inputs, settings["runtime_input"])
+        if not runtime_input.is_file() or not runtime_input.name.endswith((".tar", ".tar.gz", ".tgz")):
+            raise ValueError("EXPLICIT_RUNTIME_ARCHIVE_REQUIRED_NO_DIRECTORY_SCAN")
         inventory = attached_path(inputs, settings["runtime_inventory_input"])
         proof = verify_runtime_input(runtime_input, inventory, settings["runtime_inventory_sha256"])
         journal.write("runtime_input", proof)
+        journal.write("capacity", capacity(repo, runtime_input))
         model_input = attached_path(inputs, settings["model_input"])
+        if not model_input.is_file() or not model_input.name.endswith((".tar", ".tar.gz", ".tgz")):
+            raise ValueError("EXPLICIT_MODEL_ARCHIVE_REQUIRED_NO_DIRECTORY_SCAN")
         snapshot = restore_model(repo, model_input, "qwen2_5")
         site = attached_path(inputs, settings["runtime_site_packages"]) if settings.get("runtime_site_packages") else None
         if site and not site.resolve().is_relative_to(runtime_input.resolve()):

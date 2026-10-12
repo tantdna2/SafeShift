@@ -8,14 +8,20 @@ from copy import deepcopy
 from datetime import datetime, timezone
 
 from safeshift.ls1.runtime import NativeScorer, summarize_tensor
-from . import access
+from . import access, preflight
 
 
 class QwenRawScorer(NativeScorer):
     def __init__(self, snapshot, tokenizer, candidate_ids, *, repo, settings):
-        access.require(settings["mode"], settings)
+        access.require(settings["mode"], settings, repo)
+        preflight.source(repo, settings["source_commit"])
+        if settings["mode"] == "pilot-train":
+            from . import pilot
+            pilot.verify_prior(repo, settings, settings["pilot_inputs_root"], tokenizer)
+        access.model_ticket(repo, settings)
         super().__init__("qwen2_5", snapshot, tokenizer, candidate_ids, repo=repo)
         self.settings = deepcopy(settings)
+        self.authority_repo = repo
         # The processor must use exactly the T1 tokenizer behavior as well.
         from safeshift.ls1.tokenizer import probe
         if probe(self.processor.tokenizer) != probe(tokenizer):
@@ -28,7 +34,7 @@ class QwenRawScorer(NativeScorer):
                 "quantization": "NONE", "prompt": self.prompt}
 
     def generate(self, image, journal, prefix):
-        access.require(self.settings["mode"], self.settings)
+        access.image_ticket(self.authority_repo, self.settings, image, journal, prefix)
         if self.failed:
             raise RuntimeError("FAILED_SCORER_NO_RETRY")
         try:
