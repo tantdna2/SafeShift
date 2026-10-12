@@ -1958,3 +1958,25 @@ Preparation candidate, not completion of the PA3 study or execution authority.
 Keep the existing synthetic/LS1/P2/P2.1/RQ3/frozen state unchanged. No model,
 GPU, dataset read, dependency/weight download or merge in Codex. Runbook:
 `notes/pa3_qwen_runbook.md`.
+
+
+### TASK 5 - PA3 Kaggle feasibility preparation (2026-10-12; Draft)
+
+- [x] Prepare narrow technical authority candidate for exact four synthetic images,
+  audited source/standard merge, fixed Qwen revision/C1/FP16/SDPA/T4 and one run.
+- [x] Prepare separately gated pilot manifest/runner, fixed selection/shortage rule,
+  original-label provenance and observed dependency closure; current grant null.
+- [x] Add separate ONLINE CPU Model/Runtime Prep notebook/tools and exact offline
+  owner steps, artifact collection, CPU audit and failure handling.
+- [x] CPU synthetic/negative tests and relevant BASE regression comparison;
+  final commands/counts/limitations in notes/pa3_task5_validation.md.
+- [ ] ChatGPT GitHub review, separate Antigravity audit and reconciliation.
+- [ ] Research Lead merge decision and exact post-merge source verification.
+- [ ] Actual owner Model/Runtime Prep inputs and checks; actual technical T4/T1.
+- [ ] Lead approval of actual pilot manifest/technical evidence and a separately
+  audited authority release before any pilot image read or inference.
+
+No real dataset/snapshot read, model download/load, GPU, T1 PASS, experiment,
+Antigravity execution or merge in Codex. One Draft PR only; technical and pilot
+Run All remain BLOCKED pending their actual prerequisites. Scientific protocols,
+LS1 locks, TRAIN-holdout and TEST remain unchanged. No confirmatory result claim.
