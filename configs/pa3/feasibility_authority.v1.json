@@ -1,0 +1,18 @@
+{
+  "base": "747171e011e35bc8995338402a80ba7ea70d8ff7",
+  "implementation": "2202eed2448d98141d25d8b7aad3ce38f0151f5d",
+  "technical": {
+    "run_id": "pa3-qwen-technical-first",
+    "mode": "technical",
+    "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+    "revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+    "precision": "FP16",
+    "attention": "sdpa",
+    "gpu": "T4",
+    "prompt": "C1",
+    "method": "PA3",
+    "max_runs": 1,
+    "max_images": 4
+  },
+  "pilot": null
+}
