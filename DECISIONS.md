@@ -2768,7 +2768,7 @@ review. A Draft PR, CPU PASS or successful checksum audit grants none of these
 rights. Task 3B stops at Draft PR for ChatGPT GitHub review, before any separately
 commissioned Antigravity audit; no merge. See `notes/pa3_synthetic_runbook.md`.
 
-### DEC-PA3-001 — TASK 4 consolidated native preparation (2026-10-12; append-only)
+### DEC-PA3-002 — TASK 4 consolidated native preparation (2026-10-12; append-only)
 
 Authority: the Research Lead's explicit TASK 4 request in this session.
 Verified remote main BASE `540078902370c88aede1d6c30be73f29fce6722e`.
