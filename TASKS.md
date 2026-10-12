@@ -1935,3 +1935,26 @@ in DEC-PA3-001. BASE `a7146bbb2c44eb26160f26716af23a8b70260dee`.
 TRAIN/TEST remain LOCKED; no real metadata/image/snapshot read or GPU/model
 execution. No PA3 reference/calibration calls, new execution authority, RQ3 or
 frozen-contract change, real protocol freeze or discrimination/T1/runtime claim.
+
+### TASK 4 — Consolidated PA3 native Qwen preparation (2026-10-12)
+
+- [x] Verify remote main BASE `540078902370c88aede1d6c30be73f29fce6722e` and
+  prepare an isolated worktree without touching unrelated local work.
+- [x] Add separate native raw-only Qwen backend, one Kaggle Run All workflow,
+  source/runtime/snapshot/T1 checks and per-sample raw-before-parse journals.
+- [x] Add CPU integrity/recomputation audit, descriptive PA3 evaluation and
+  proposed metadata/exposure/group allocation/bootstrap tools with closed rights.
+- [x] Exercise synthetic CPU API doubles, failure/interrupt packages, cohort
+  faults and direct access denials; compare relevant regression on exact BASE.
+  Actual counts/limitations: `notes/pa3_qwen_validation.md`.
+- [ ] ChatGPT direct GitHub review of the one consolidated Draft PR.
+- [ ] Separately requested Antigravity audit, reconciliation and merge.
+- [ ] Research Lead decisions and audited authority implementation for technical
+  GPU, metadata/images, cohort/statistics and exact TRAIN-dev/holdout runs.
+- [ ] Owner actual Qwen T1/runtime/qualification, then specifically authorized
+  TRAIN execution. TEST remains locked. No real T1/runtime PASS is claimed.
+
+Preparation candidate, not completion of the PA3 study or execution authority.
+Keep the existing synthetic/LS1/P2/P2.1/RQ3/frozen state unchanged. No model,
+GPU, dataset read, dependency/weight download or merge in Codex. Runbook:
+`notes/pa3_qwen_runbook.md`.

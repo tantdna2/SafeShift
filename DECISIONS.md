@@ -2767,3 +2767,33 @@ TRAIN-holdout each require a separate Research Lead decision and implementation
 review. A Draft PR, CPU PASS or successful checksum audit grants none of these
 rights. Task 3B stops at Draft PR for ChatGPT GitHub review, before any separately
 commissioned Antigravity audit; no merge. See `notes/pa3_synthetic_runbook.md`.
+
+### DEC-PA3-002 — TASK 4 consolidated native preparation (2026-10-12; append-only)
+
+Authority: the Research Lead's explicit TASK 4 request in this session.
+Verified remote main BASE `540078902370c88aede1d6c30be73f29fce6722e`.
+This expands **preparation only** to the native Qwen raw-only path, a single
+offline Kaggle workflow, preflight/journals/CPU audit/evaluation and synthetic
+CPU tests, in one Draft PR. It does not approve an experiment or run a model.
+
+The model/revision, FP16/SDPA/official processor, frozen C1, decoding/parser and
+raw `logsumexp(z1,z2,z3)-z4` direction remain unchanged. No references,
+calibration, threshold fitting, training, P2/P2.1/RQ3 or frozen-contract change.
+Task 3B's mock-only implementation and LS1 behavior/locks are preserved.
+
+Metadata interchange, exposure/dependency grouping, allocation and bootstrap
+code are candidate implementations tested on synthetic records, not claims
+about actual dataset metadata, independent holdout certification, or approval
+of grouping/statistical rules. Explicit proposed parameters are required; no
+statistical quality threshold or confirmatory decision rule is frozen here.
+
+Technical GPU, metadata/images, exact TRAIN-dev/holdout and confirmatory
+statistics remain unconditionally denied by the new PA3 access boundary until
+separate decisions and an audited authority implementation exist. TEST stays
+locked. No checksum, receipt, environment flag or source bundle grants rights.
+DEC-LS1-001/002 remain PENDING. No real-data/snapshot access, download, GPU,
+Antigravity or merge is performed by this task. Draft handoff is for ChatGPT
+GitHub review, then the separately requested audit/merge process.
+
+Operational readiness and blockers: `notes/pa3_qwen_runbook.md`; CPU evidence
+and historical D9R23 regression disclosure: `notes/pa3_qwen_validation.md`.
