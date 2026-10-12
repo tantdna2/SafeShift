@@ -1980,3 +1980,25 @@ No real dataset/snapshot read, model download/load, GPU, T1 PASS, experiment,
 Antigravity execution or merge in Codex. One Draft PR only; technical and pilot
 Run All remain BLOCKED pending their actual prerequisites. Scientific protocols,
 LS1 locks, TRAIN-holdout and TEST remain unchanged. No confirmatory result claim.
+
+### TASK 6 — PA3 Runtime Prep repair (2026-10-12; Draft review)
+
+- [x] Record the Research Lead's actual Kaggle PEP 668 failure and replace
+  ensurepip with a separate `uv pip --target` installation, preserving every pin.
+- [x] Fix latent BASE defect: runtime inventory was written beside the archive
+  (`WRITE_RUNTIME_INVENTORY_OUTSIDE_PREP_INPUT`); archive now in `runtime-archive/`.
+- [x] Prep deletes built trees, checks strict restore, then the unchanged OFFLINE
+  path (`verify_runtime_input` + `runtime_interpreter(archive)` + child import).
+- [x] Separate ONLINE prep bundle/receipt; prep source must descend from and not
+  change OFFLINE execution inputs of `13ea2fba67f36883518db8a2add1b249c951e48e`.
+  Authority, scorer, tokenizer, model revision, gates unchanged.
+- [x] CPU tests (Windows + Linux) and opt-in real Linux (WSL) regression:
+  real Linux full build, archive, strict restore and unchanged OFFLINE
+  `runtime_interpreter` path 2/2 PASS on `3a40b46` (WSL, not Kaggle).
+  Evidence and limits in `notes/pa3_task6_runtime_prep.md`.
+- [ ] ChatGPT GitHub review, then separately requested Antigravity audit.
+- [ ] Owner Kaggle CPU Runtime Prep with the reviewed prep commit and audited
+  bundle hash; Kaggle evidence does not exist yet. No Qwen/T1/GPU PASS claimed.
+
+Stop at one Draft PR, no merge. No InspecSafe, model weights, scorer/score,
+tokenizer contract, LS1, dataset authority or RQ changes.

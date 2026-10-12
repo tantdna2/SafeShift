@@ -5,6 +5,14 @@ This document supersedes Task 4's operational instructions for this narrow task.
 No GPU, model download/load, actual tokenizer, or real InspecSafe input was used
 in Codex. All reported CPU tests use synthetic fixtures/API doubles.
 
+> Task 6 operational correction (2026-10-12): the Research Lead's actual CPU
+> Runtime Prep failed at managed Python `ensurepip` (PEP 668). Follow the
+> [Task 6 runtime/source instructions](pa3_task6_runtime_prep.md) for ONLINE
+> preparation. OFFLINE source stays exactly
+> `13ea2fba67f36883518db8a2add1b249c951e48e` with its retained original bundle
+> and checksum. A Task 6 commit or merge has no inherited technical authority.
+> The readiness/audit statements below describe Task 5's original handoff.
+
 ## Current readiness and exact scope
 
 **Run All is BLOCKED today.** This PR supplies code and notebooks, not the actual
@@ -78,46 +86,24 @@ Kaggle Dataset** named, for example, `pa3-reviewed-source`. Keep the bundle hash
 independently from `bundle_sha256` in the release receipt. Do not upload the
 working repo/data/cache. The bundle contains committed history, not raw data.
 
-## 2. Runtime Prep â€” one fresh CPU notebook, Internet ON
+## 2. Runtime Prep — Task 6 replacement instructions
 
-Create a Kaggle notebook by importing
-`notebooks/pa3_inputs_prep_kaggle.ipynb`. Set accelerator **None**, Internet **ON**.
-Add Input â†’ your private `pa3-reviewed-source` Dataset. In the only SETTINGS
-cell fill:
-
-```python
-KIND = "runtime"
-SOURCE_COMMIT = "<verified M>"
-SOURCE_BUNDLE_INPUT = "pa3-reviewed-source/pa3_source.bundle"
-SOURCE_BUNDLE_SHA256 = "<independently verified bundle_sha256>"
-```
-
-Use the exact path shown by Kaggle's Input browser, relative to its input root;
-the example slug is not auto-discovered. **Run All once.** This explicitly
-installs uv 0.6.14, downloads managed Python 3.11.11, installs exact package pins,
-runs `pip check`, moves the interpreter tree, checks exact versions and imports
-the Qwen class without loading weights or invoking CUDA. It then creates a
-portable archive, restores it to a new location, repeats version/import checks
-and hashes it. Contained Python aliases remain relative symlinks. Failed Prep is not runtime PASS.
-
-Output directory printed by notebook:
-`data/processed/pa3-prep-runtime/data/processed/pa3-runtime-prep/`.
-Download `pa3_runtime.tar.gz`, `pa3_runtime_inventory.json`, `runtime_prep.json`,
-`resolved-requirements.txt`, `constraints.txt`, `commands.json`, plus notebook
-logs. Upload those six files to private Dataset `pa3-runtime-input`.
-Do not upload the temporary `build`, `relocated` or `archive-roundtrip` directories. Preserve the
-inventory SHA from `runtime_prep.json` independently.
-
-Runtime Prep is deliberately separate from inference. Its implementation uses
-[uv managed standalone Python](https://docs.astral.sh/uv/guides/install-python/)
-and the [official PyTorch 2.6.0 CUDA 12.4 wheel index](https://pytorch.org/get-started/previous-versions/).
-These sources document the preparation mechanism, not evidence our build ran.
+The old single-source notebook instructions and ensurepip-based build failed
+on Kaggle. Use the [complete Task 6 steps](pa3_task6_runtime_prep.md#exact-owner-steps-after-reviewaudit):
+a separately reviewed `pa3_prep_source.bundle`, exact PREP_SOURCE_COMMIT and
+independently audited PREP_SOURCE_BUNDLE_SHA256; accelerator None, Internet ON.
+The new build installs libraries in a separate target, preserves all ten pins,
+checks dependency consistency, moves the full standalone Python and library
+payload, validates imports/versions/links and repeats checks after extraction.
+Retain the seven documented output files and notebook logs; a failed or skipped
+real run is not PASS. Leave the original OFFLINE source bundle unchanged.
 
 ## 3. Model Prep â€” another fresh CPU notebook, Internet ON
 
 Import the same Prep notebook into a **new** Kaggle notebook. Accelerator None,
-Internet ON; attach the reviewed source Dataset. Fill the same three source
-fields and set `KIND = "model"`. **Run All once.** It installs only the pinned
+Internet ON; attach the separate Task 6 prep-source Dataset. Fill the
+PREP_SOURCE_COMMIT / PREP_SOURCE_BUNDLE_INPUT / PREP_SOURCE_BUNDLE_SHA256
+fields described in Task 6 and set `KIND = "model"`. **Run All once.** It installs only the pinned
 Hub downloader in the Prep host, requests the exact revision and allowlisted
 files, validates existing authoritative size/hash pins, and writes regular
 bytes to an archive whose top directory is the exact revision. No tokenizer
@@ -137,7 +123,8 @@ with trusted inventory. This launcher rejects directory discovery/scans.
 
 Import `notebooks/pa3_qwen2_5_kaggle.ipynb` into a **fresh** notebook. Set GPU T4;
 if Kaggle offers a pair, the child exposes device 0 only and checks exactly one
-visible T4. Set Internet **OFF**. Add Input â†’ the three private Datasets above.
+visible T4. Set Internet **OFF**. Add Input: the retained original OFFLINE source, model and runtime Datasets.
+Do not attach the ONLINE prep-source Dataset.
 Do not attach InspecSafe or a pilot manifest to the technical notebook.
 
 In the SETTINGS cell fill only these fields:
@@ -154,8 +141,15 @@ In the SETTINGS cell fill only these fields:
 "runtime_inventory_sha256": "<independently verified inventory hash>",
 ```
 
+These example paths assume `/kaggle/input/<dataset>/...`. Kaggle may instead
+mount Datasets at `/kaggle/input/datasets/<owner>/<dataset>/...`; copy the path
+the Input panel actually shows and drop only the leading `/kaggle/input/`
+(e.g. `datasets/<owner>/pa3-runtime-input/pa3_runtime.tar.gz`). Upload the
+Task 6 runtime archive and inventory flat, at the Dataset's top level.
+
 Leave all other fields empty, including runtime_site_packages/dataset/cohort/
-pilot fields. An extracted runtime carries its own site-packages. Record the
+pilot fields. The unchanged selector discovers the extracted package directory and
+the launcher sets its PYTHONPATH; do not supply a manual package path. Record the
 attempt in the Lead's persistent run ledger **before Run All** (one technical
 run; four images; no retry). Click **Run All once**. No pip, model download,
 precision/revision fallback or automatic retry occurs in this notebook.
