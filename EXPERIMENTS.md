@@ -190,3 +190,25 @@ riêng; không suy ra kết quả từ kế hoạch.
 - **Lỗi, mẫu thất bại và sai khác với protocol:** <ghi đầy đủ, không âm thầm bỏ mẫu>
 - **Phân tích và giới hạn:** <phân biệt quan sát với diễn giải>
 - **Bước tiếp theo:** <nội dung>
+
+
+## PA3-SEMINAR-DIRECTION-90 — reconciliation (2026-10-13; append-only)
+
+- **Source:** user's task reports GO_PA3 and Kaggle restart; archive not
+  independently audited in this task. No exact execution time or metric supplied.
+- **Run ID:** pa3-qwen-seminar-direction-90; same diagnostic, not a new run.
+- **Repo state:** origin/main `3a52b549d623bdb4b8b6753abe3adf116bbc6100`, PR #98
+  merged; configs/pa3/seminar_direction_authority.v1.json grant non-null,
+  max_runs=1, retry=false, TRAIN only, test_access=false. Earlier grant-null/
+  planned/not-executed entry is the PREP snapshot, superseded for release status.
+- **Evidence status:** USER_REPORTED_GO_PA3 / ARCHIVE_NOT_INDEPENDENTLY_AUDITED.
+  Committed PA3_SEMINAR_DIRECTION_VERDICT.md remains the NOT_EXECUTED placeholder;
+  no performance values or CPU integrity/recomputation PASS recorded here.
+- **Missing provenance:** actual execution source/runtime/model inventories,
+  raw journal/seals, launch/exposure/telemetry/tickets, reports and attempt ledger.
+  Recover existing retained artifacts into data/processed/; record paths/hashes
+  and CPU audit before replacing the placeholder in a later evidence PR.
+- **Limits:** exploratory 90 TRAIN, prior P2 exposure and unresolved dependencies;
+  no independent holdout, CI, TEST or confirmatory claim; no rerun after restart.
+- **Decision:** DEC-PA3-006 adopts PA3 direction by user instruction, not by a
+  certified diagnostic result. No model/GPU/TEST execution in this docs task.
