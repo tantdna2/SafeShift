@@ -2871,3 +2871,47 @@ D9R22/D9R24, Seminar title, RQ1-RQ4, old RQ3, LS1 decisions/locks, historical
 results, frozen contracts and all research rights outside this conditional
 pilot remain unchanged. No GPU/model/data execution, merge or second PR is
 performed by Task 5. Operational steps/blockers: notes/pa3_task5_kaggle_runbook.md.
+
+### DEC-PA3-005 - Seminar-direction exploratory decision diagnostic (2026-10-13; PROPOSED, execution PENDING)
+
+Authority: the Research Lead's explicit one-shot PA3 seminar-direction task in
+this session, which fixed the purpose, cohort quotas, ground-truth mapping,
+required metrics and GO/NO-GO criteria. Verified GitHub main BASE
+`28ab17b094da91006a785d0b694c4d035db96902`. **APPROVED_PREPARATION_ONLY**;
+execution needs ChatGPT GitHub review, independent Antigravity audit, Research
+Lead approval of the exact manifests and a reviewed authority-only release
+(F2) merged by standard merge commit. This Draft grants no execution rights.
+
+Scope: exactly one `pa3-qwen-seminar-direction-90` run, mode
+`seminar-diagnostic`, Qwen/Qwen2.5-VL-3B-Instruct @
+`66285546d2b821cf421d4f5eb2576359d3770cd3`, one T4, FP16, SDPA, C1, batch 1,
+PA3 `logsumexp(z1,z2,z3)-z4` from raw logits; 90 TRAIN images, no TEST, no
+retry/fallback/second pass under any run ID. Separate authority file
+`configs/pa3/seminar_direction_authority.v1.json` (grant null). Task 5
+technical authority, the completed technical run and `pilot: null` are unchanged;
+the old pilot-train grant and its selection policy are not used.
+
+Cohort rule (proposal for Lead approval, not a dataset/split/label change):
+seed `pa3-seminar-direction-2026-10-13-v1`; 10 Normal + 10 Anomaly for
+coal_conveyor, oil_chemical, power, tunnel (primary) and 5 + 5 metallurgy
+(descriptive only); original folder labels (Level04 = Normal; Level01-03 =
+Anomaly) and folder domain; Level03 floor min(2, eligible); one image per
+mandatory group (exact bytes, Normal point, same point folder); the 7 W1
+exact TRAIN-TEST duplicates excluded; unresolved near-duplicate/source-family
+links, aggregate P2 exposure and domain conflicts recorded, not excluded.
+Locked manifests: cohort `83959e27c04d1cf7f90fcbef501a87fdf970c32d542b61fbecb4b75f26b38da3`,
+inference `d59af02b5fe53807ee60a373aef620fae75887bceb9aced6156a82d72461ebce`.
+All 90 enter the diagnostic exposure history before the first image decode and
+may never be represented as independent or holdout evaluation.
+
+Decision rule frozen in `safeshift/pa3/native/seminar_verdict.py` before any
+inference: GO_PA3 only if (C1) >=95% Normal and >=95% Anomaly of the primary
+group are scored, (C2) macro-domain PA3 AUROC >= 0.75, (C3) macro PA3 minus
+macro generated-binary-label AUROC >= 0.15 on the same eligible IDs, (C4) PA3 >
+label AUROC in >=3/4 primary domains, (C5) no technical/recomputation failure;
+otherwise KEEP_CURRENT_DIRECTION with a distinct reason. No threshold fitting,
+score reversal, learning, prompt change or confidence interval (dependency
+groups rest on unresolved links). GO_PA3 means exploratory evidence worth a
+Seminar refocus, not scientific confirmation. RQ1-RQ3, README, D9R22/D9R24,
+LS1 decisions/locks and frozen contracts are unchanged pending a real verdict.
+Runbook: notes/pa3_seminar_direction_runbook.md.

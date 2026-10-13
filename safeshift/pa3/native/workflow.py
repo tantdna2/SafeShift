@@ -36,6 +36,9 @@ def execute(repo, settings, snapshot, inputs=None):
     if settings["mode"] == "pilot-train":
         from .pilot_workflow import execute_pilot
         return execute_pilot(repo, settings, snapshot, inputs)
+    if settings["mode"] == access.DIAGNOSTIC["mode"]:
+        from .seminar_workflow import execute_diagnostic
+        return execute_diagnostic(repo, settings, snapshot, inputs)
     journal = Journal(run_path(repo, settings["run_id"]), create=True)
     stage, terminal = "AUTHORITY", False
     images = []
