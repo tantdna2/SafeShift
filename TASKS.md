@@ -1,3 +1,35 @@
+# CURRENT — PA3 Seminar / baseline 15/10/2026 (2026-10-13)
+
+Direction approved in [DEC-PA3-006](DECISIONS.md#dec-pa3-006--seminar-pa3-direction-and-baseline-priority-2026-10-13).
+[README](README.md) is the entrypoint; [document index](notes/documentation_index.md)
+classifies historical snapshots below. Old CURRENT/Draft/LOCKED statements are
+dated records, not today's aggregate authority/readiness.
+
+- [x] Verify origin/main = HEAD = `3a52b549d623bdb4b8b6753abe3adf116bbc6100`;
+  inspect working tree and isolate edits from user untracked files.
+- [x] Update title, proposed RQs, metric priorities and conditional four-model plan;
+  prepare [Form Review Baseline guide](notes/pa3_baseline_review_2026-10-15.md).
+- [x] Reconcile Task 7 PREP with main: PR #98 merged; diagnostic grant non-null,
+  one run / no retry / TRAIN only. This proves release state, not performance PASS.
+- [x] Record user-reported GO_PA3 + Kaggle restart as unverified; retain placeholder
+  verdict and historical logs. Navigation cleanup only; no file deletion/move.
+- [ ] Recover retained 90-image archive, source/runtime/model evidence and attempt
+  ledger; independently CPU audit/recompute. Missing archive blocks verified metrics.
+- [ ] Enter audited numbers with report links, denominators and limitations in
+  Form Review Baseline **15/10/2026**, or N/A + blocker if evidence remains unavailable.
+- [ ] Qualify equivalent PA3 raw extraction for InternVL3-2B; assess Qwen3 resource
+  barrier and Moondream2 equivalence before participation/replacement proposals.
+- [ ] Review secondary metric definitions/calculations not present in export;
+  separately approve any PA3 classification threshold before measuring those metrics.
+- [ ] Review the single documentation Draft PR; no merge in this task.
+
+No GPU/TEST/retry or new execution rights. Tests/checks and inherited authority-test
+conflicts are reported in [validation](notes/pa3_seminar_redirect_validation.md).
+Earlier preparation/review checkboxes are preserved; merge does not imply every
+historical audit step or real execution has been independently verified here.
+
+---
+
 ## W2.6-D9R16-FIVE-MODEL-CLASSIFICATION-QUALIFICATION-PREP (2026-10-01)
 
 - [x] Prepare independent eight-case RGB synthetic classification suite, manifest,

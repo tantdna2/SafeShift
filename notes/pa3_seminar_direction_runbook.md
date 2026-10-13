@@ -1,12 +1,28 @@
 # PA3 Seminar Direction — một lượt chẩn đoán GPU duy nhất (90 ảnh TRAIN)
 
+## Đối chiếu CURRENT — 13/10/2026
+
+Main đã xác minh `3a52b549d623bdb4b8b6753abe3adf116bbc6100` (PR #98 merged):
+[authority](../configs/pa3/seminar_direction_authority.v1.json) có grant **non-null**,
+max_runs=1, retry=false, TRAIN only, test_access=false. Mô tả grant-null/NOT_EXECUTED
+bên dưới là snapshot PREP; không phải trạng thái release mới nhất.
+Người dùng báo **GO_PA3**, phiên Kaggle đã restart, nhưng chưa có archive được
+kiểm toán độc lập. Verdict commit vẫn là placeholder PREP; không có số liệu thật
+được xác minh ở đây. Quyết định hướng mới: [DEC-PA3-006](../DECISIONS.md#dec-pa3-006--seminar-pa3-direction-and-baseline-priority-2026-10-13).
+
+**Ưu tiên thu hồi artifact đã lưu và CPU audit theo mục 6; không thực hiện lại
+Run All ở mục 4.** Grant không chứng minh attempt còn trống; không retry sau restart.
+Quyền gắn với source/topology đã duyệt, không chuyển sang HEAD tài liệu này.
+Mục 3–4 giữ làm truy vết release/chạy gốc; đề xuất chạy mới cần quyết định riêng.
+
+
 Ngày: 2026-10-13 (Asia/Bangkok). BASE đã xác minh trên GitHub:
 `28ab17b094da91006a785d0b694c4d035db96902`. Phạm vi: **exploratory decision
 diagnostic** để Research Lead quyết định có chuyển trọng tâm Seminar sang PA3
 (raw-logit anomaly discrimination) hay không. Không phải pilot, holdout,
 clean/independent evaluation hay confirmatory benchmark.
 
-**Trạng thái hiện tại: LOCKED.** `configs/pa3/seminar_direction_authority.v1.json`
+**Trạng thái tại PREP (lịch sử): LOCKED.** `configs/pa3/seminar_direction_authority.v1.json`
 có `"grant": null`; mọi đọc manifest/ảnh và model load đều bị từ chối
 (`PA3_DIAGNOSTIC_GRANT_PENDING_RESEARCH_LEAD`). Draft PR, SETTINGS, checksum hay
 receipt không cấp quyền. Không có lượt GPU nào đã chạy; verdict hiện tại là

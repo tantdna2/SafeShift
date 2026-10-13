@@ -2915,3 +2915,51 @@ groups rest on unresolved links). GO_PA3 means exploratory evidence worth a
 Seminar refocus, not scientific confirmation. RQ1-RQ3, README, D9R22/D9R24,
 LS1 decisions/locks and frozen contracts are unchanged pending a real verdict.
 Runbook: notes/pa3_seminar_direction_runbook.md.
+
+
+### DEC-PA3-006 — Seminar PA3 direction and baseline priority (2026-10-13)
+
+Status: **APPROVED_DIRECTION_AND_DOCUMENTATION** by the Research Lead's explicit
+task request. Verified origin/main and local HEAD before edits:
+`3a52b549d623bdb4b8b6753abe3adf116bbc6100` (PR #98 merge); tracked tree clean,
+unrelated user untracked files preserved. Work uses an isolated docs worktree.
+
+Current Seminar title: **SafeShift: Raw-Logit Analysis of Decision Collapse in
+Vision-Language Models for Multi-Domain Industrial Safety**. Study the gap between
+poor generated safety-level decisions and potentially useful raw discrimination.
+Proposed RQs: label collapse; PA3 vs generated-label discrimination; domain/model
+differences. This supersedes D9R22 as the current Seminar narrative, including
+DEC-PA3-005's requirement to wait for a real verdict before changing direction.
+It does not certify the diagnostic or amend frozen operational contracts/configs.
+
+Keep four planned models: Qwen2.5-VL-3B-Instruct first for the **15/10/2026 baseline**;
+InternVL3-2B next subject to valid equivalent raw extraction; Qwen3-VL-8B retained
+with resource barriers; Moondream2 conditional on protocol equivalence, otherwise
+a separate replacement proposal. Prior classification/runtime qualifications do
+not establish PA3 participation. Multi-model PA3 qualification remains pending.
+
+Approve reporting priority: PA3 AUROC, generated-binary-label AUROC, their delta
+on identical SUCCESS IDs, valid-score coverage, domain AUROC. Preserve current
+score/mapping, ties=0.5, score-conditional endpoints and 90-image diagnostic's
+four-primary-domain macro / descriptive metallurgy. Secondary generated-label
+metrics: four-level accuracy, balanced accuracy, Level01 recall, false-alarm rate,
+confusion matrix with explicit denominators/statuses. Unimplemented or unreviewed
+secondary calculations stay N/A; no metric code or frozen definition is changed.
+PA3 classification metrics require separately approved thresholds before use.
+
+Evidence boundary: the user reports GO_PA3 for 90 TRAIN images and a restarted
+Kaggle session. No independently audited diagnostic archive is available for this
+task; no numerical performance or PASS is certified. The committed NOT_EXECUTED
+verdict remains byte-identical as a PREP placeholder. Exposure/dependency/sparse
+Level03/domain limitations remain; no independent/confirmatory/TEST claim follows.
+
+Reconciliation: main's seminar_direction_authority.v1.json contains a non-null
+grant, max_runs=1, retry=false, TRAIN-only, test_access=false. A grant is neither
+an execution record nor evidence of an unused attempt. Preserve its exact source
+and merge topology; this docs branch is not a new executable release. No rerun,
+GPU, TEST access, weight/prompt/dataset/split change or inference change authorized.
+
+Cleanup is navigation/status only: CURRENT/HISTORICAL/DEPRECATED roles in
+notes/documentation_index.md. No files deleted or bulk moved; preserve research
+evidence, authorities, baseline code and original data. Form guide and readiness
+are separate from experimental verification. Deliver one Draft PR to main; no merge.
