@@ -1,7 +1,13 @@
 {
   "base": "28ab17b094da91006a785d0b694c4d035db96902",
-  "grant": null,
-  "implementation": null,
+  "grant": {
+    "approval": "DEC-PA3-005: Research Lead approval 2026-10-13 (SEMINAR session) for one-shot 90-image TRAIN PA3 diagnostic under disclosed unverified dependency constraints",
+    "cohort_manifest_sha256": "83959e27c04d1cf7f90fcbef501a87fdf970c32d542b61fbecb4b75f26b38da3",
+    "inference_manifest_sha256": "d59af02b5fe53807ee60a373aef620fae75887bceb9aced6156a82d72461ebce",
+    "technical_seal_sha256": "ad12f293eb45708ae1d475ed2723700c4da44122ec2997f9a1bc0dfb4e5b4c50",
+    "technical_source_bundle_sha256": "aeeed686af8807ccaea217a501e809628ff4dc506378423720d96525ddf1d450"
+  },
+  "implementation": "f04500dd98fb8e1a8cd43f3eff1a5d2adaa718eb",
   "scope": {
     "attention": "sdpa",
     "batch_size": 1,
