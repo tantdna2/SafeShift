@@ -5,6 +5,7 @@ import os
 import subprocess
 import shutil
 import tarfile
+import tempfile
 from pathlib import Path
 
 from safeshift.ls1.artifacts import digest, write_json
@@ -50,7 +51,7 @@ def launch(repo, inputs, settings):
     stage = "AUTHORITY"
     try:
         access.require(settings["mode"], settings, repo)
-        if settings["mode"] not in ("pilot-train", access.DIAGNOSTIC["mode"]):
+        if settings["mode"] not in ("pilot-train", access.DIAGNOSTIC["mode"], "full-train"):
             access.require("technical", settings, repo)
         stage = "A_SOURCE"
         journal.write("source", preflight.source(repo, settings["source_commit"]))
@@ -65,11 +66,22 @@ def launch(repo, inputs, settings):
         model_input = attached_path(inputs, settings["model_input"])
         if not model_input.is_file() or not model_input.name.endswith((".tar", ".tar.gz", ".tgz")):
             raise ValueError("EXPLICIT_MODEL_ARCHIVE_REQUIRED_NO_DIRECTORY_SCAN")
-        snapshot = restore_model(repo, model_input, "qwen2_5")
+        restore_repo = repo
+        if settings["mode"] == "full-train":
+            # Keep incrementally fsynced raw journals in working/Output. Expanded
+            # weights/runtime belong in ephemeral storage, not the saved Version.
+            restore_repo = Path(tempfile.mkdtemp(prefix="pa3-full-train-runtime-"))
+            pinned_plan = "configs/pre_freeze/qwen2_5_t4_runtime.v1.json"
+            target = restore_repo / pinned_plan
+            target.parent.mkdir(parents=True)
+            shutil.copyfile(Path(repo) / pinned_plan, target)
+            if shutil.disk_usage(restore_repo).free < journal.read("capacity")["required_bytes"]:
+                raise OSError("TEMP_RESTORE_DISK_SHORTAGE")
+        snapshot = restore_model(restore_repo, model_input, "qwen2_5")
         site = attached_path(inputs, settings["runtime_site_packages"]) if settings.get("runtime_site_packages") else None
         if site and not site.resolve().is_relative_to(runtime_input.resolve()):
             raise ValueError("SITE_OUTSIDE_HASH_VERIFIED_RUNTIME")
-        runtime = runtime_interpreter(repo, runtime_input, "qwen2_5", site)
+        runtime = runtime_interpreter(restore_repo, runtime_input, "qwen2_5", site)
         journal.write("runtime", {"software_versions": runtime["software_versions"],
                                   "inventory_sha256": settings["runtime_inventory_sha256"]})
         journal.write("settings", settings)  # all paths relative to the documented attachment/root

@@ -2020,3 +2020,13 @@ tokenizer contract, LS1, dataset authority or RQ changes.
 
 No GPU, model load, TEST read or merge in this task. Seminar direction unchanged
 until a real verdict exists. Runbook: notes/pa3_seminar_direction_runbook.md.
+
+## Urgent PA3 full TRAIN preparation - 2026-10-13
+
+- [x] Independent branch from main; PR #99 scope checked; original local work preserved.
+- [x] CPU-verify all 3,763 TRAIN triplets; GT-free manifests and disjoint 941/941/941/940 execution shards.
+- [x] Prepare gated one-pass Kaggle Save & Run All, persistent raw/audit/CSV/JSON, CPU shard merge and synthetic tests.
+- [ ] GitHub review, independent audit, Lead DEC-PA3-007 execution approval and authority-only release/standard merge.
+- [ ] Owner supplies audited Inputs and records four exact attempts; actual GPU runs and Seminar metrics remain NOT_RUN.
+
+Handoff/evidence: `notes/pa3_full_train_kaggle_runbook.md`. New grant null; no TEST or merge.

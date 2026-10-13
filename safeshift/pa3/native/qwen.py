@@ -15,7 +15,10 @@ class QwenRawScorer(NativeScorer):
     def __init__(self, snapshot, tokenizer, candidate_ids, *, repo, settings):
         access.require(settings["mode"], settings, repo)
         preflight.source(repo, settings["source_commit"])
-        if settings["mode"] == "pilot-train":
+        if settings["mode"] == "full-train":
+            from . import train
+            train.verify_prior(repo, settings, settings["train_inputs_root"], tokenizer)
+        elif settings["mode"] == "pilot-train":
             from . import pilot
             pilot.verify_prior(repo, settings, settings["pilot_inputs_root"], tokenizer)
         elif settings["mode"] == access.DIAGNOSTIC["mode"]:

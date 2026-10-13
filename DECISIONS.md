@@ -1,5 +1,29 @@
 # Decision log
 
+## DEC-PA3-007 - Full TRAIN Kaggle preparation (2026-10-13; execution PENDING)
+
+Authority: the Research Lead's urgent full-TRAIN preparation request in this session.
+APPROVED_PREPARATION_ONLY: CPU TRAIN inventory/hash/label verification, four fixed
+execution shards and one Draft PR. GPU authority is not granted by this task.
+BASE `3a52b549d623bdb4b8b6753abe3adf116bbc6100`; PR #99 is a separate docs-only Draft.
+
+Retain every original TRAIN ID: 3,763, with no new dataset split or exclusions.
+Fixed SHA-256 order/round-robin shards: 941/941/941/940; one immutable run ID and
+one attempt per shard. Original folder GT/domain; Level04 Normal, Level01-Level03 Anomaly.
+Inference uses only images; GT metadata joins after raw seal. Preserve Qwen revision,
+C1, FP16, SDPA, T4, raw capture and `logsumexp(z1,z2,z3)-z4`. No PA3 threshold.
+AUROC/delta use the same SUCCESS IDs; generated-label four-class and binary metrics
+reuse existing definitions and publish denominators/coverage. TRAIN is descriptive,
+previously exposed and dependent; no independent holdout or confirmatory claim.
+
+Execution remains PENDING Lead decision, GitHub review, independent audit and
+separate authority-only F2 plus verified standard merge M. The new TRAIN grant is
+null; never borrow the 90-image grant. F2 must bind the exact full/shard manifest
+hashes, actual runtime inventory and CPU-audited technical evidence, and all four
+bounded shard IDs. External attempt ledger is mandatory across fresh Kaggle sessions.
+No retry/replacement, TEST, GPU/model execution, new model, merge or Seminar numbers
+in this preparation. Operational handoff: `notes/pa3_full_train_kaggle_runbook.md`.
+
 ## DEC-W2-D1-001 — Research Framing and Protocol Hierarchy
 
 - **ID:** DEC-W2-D1-001
