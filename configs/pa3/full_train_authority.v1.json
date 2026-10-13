@@ -1,0 +1,28 @@
+{
+  "base": "3a52b549d623bdb4b8b6753abe3adf116bbc6100",
+  "grant": null,
+  "implementation": null,
+  "scope": {
+    "attention": "sdpa",
+    "batch_size": 1,
+    "gpu": "T4",
+    "max_images": 3763,
+    "max_runs_per_shard": 1,
+    "method": "PA3",
+    "mode": "full-train",
+    "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+    "precision": "FP16",
+    "prompt": "C1",
+    "retry": false,
+    "revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+    "shard_sizes": [
+      941,
+      941,
+      941,
+      940
+    ],
+    "split": "TRAIN",
+    "technical_source_commit": "13ea2fba67f36883518db8a2add1b249c951e48e",
+    "test_access": false
+  }
+}

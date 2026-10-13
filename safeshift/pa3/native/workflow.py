@@ -33,6 +33,9 @@ def infer(journal, samples, scorer, tokenizer, open_image):
 
 def execute(repo, settings, snapshot, inputs=None):
     """No run ID reuse, retries, fallback or implicit grant from prep receipts."""
+    if settings["mode"] == "full-train":
+        from .train_workflow import execute_train
+        return execute_train(repo, settings, snapshot, inputs)
     if settings["mode"] == "pilot-train":
         from .pilot_workflow import execute_pilot
         return execute_pilot(repo, settings, snapshot, inputs)

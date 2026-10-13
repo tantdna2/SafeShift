@@ -123,6 +123,9 @@ def diagnostic_authority(repo, source_commit):
 
 def require(operation, settings=None, repo=None):
     settings = settings or {}
+    if operation == "full-train":
+        from . import train
+        return train.require(settings, repo or ROOT)
     if operation == DIAGNOSTIC["mode"]:
         if settings.get("mode") != DIAGNOSTIC["mode"] or settings.get("run_id") != DIAGNOSTIC["run_id"]:
             raise PermissionError("PA3_DIAGNOSTIC_EXACT_MODE_RUN_REQUIRED")
@@ -189,6 +192,9 @@ def model_ticket(repo, settings):
 def image_ticket(repo, settings, image, journal, prefix):
     """Exclusive persisted generation tickets; fresh-session replay needs owner ledger."""
     require(settings["mode"], settings, repo)
+    if settings["mode"] == "full-train":
+        from . import train
+        return train.image_ticket(repo, settings, image, journal, prefix)
     if settings["mode"] == DIAGNOSTIC["mode"]:
         from . import seminar
         # Same exact-membership, pixel and one-use ticket rule as the pilot path.
