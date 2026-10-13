@@ -18,6 +18,9 @@ class QwenRawScorer(NativeScorer):
         if settings["mode"] == "pilot-train":
             from . import pilot
             pilot.verify_prior(repo, settings, settings["pilot_inputs_root"], tokenizer)
+        elif settings["mode"] == access.DIAGNOSTIC["mode"]:
+            from . import seminar
+            seminar.verify_prior(repo, settings, settings["diagnostic_inputs_root"], tokenizer)
         access.model_ticket(repo, settings)
         super().__init__("qwen2_5", snapshot, tokenizer, candidate_ids, repo=repo)
         self.settings = deepcopy(settings)

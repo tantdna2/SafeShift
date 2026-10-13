@@ -1,0 +1,460 @@
+{
+  "locator_root": "InspecSafe-V1 TRAIN root containing DATA_PATH/train/Annotations",
+  "order_rule": "ascending SHA-256(seed + '|order|' + sample_id), so a partial run is not domain-ordered",
+  "run_id": "pa3-qwen-seminar-direction-90",
+  "samples": [
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-001037/coal_conveyor-Level04-SuspendedRail-001037-001.jpg",
+      "image_sha256": "2b1cd50818790d9b9e94ef83fb7fed76b1f40cfd0006c107b157bf750a2ec42f",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-001037-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002206/tunnel-Level04-SuspendedRail-002206-001.jpg",
+      "image_sha256": "f582bc9ac7a1b62406be623f4dfd2eaef3b42809881d9c052d19cbb8b64fdc3d",
+      "sample_id": "tunnel-Level04-SuspendedRail-002206-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001601/oil_chemical-Level04-Wheeled-001601-002.jpg",
+      "image_sha256": "182d230c892309307c0d4837b84a3d3a2ff1397b4a1657dccf2e6419200f6ee6",
+      "sample_id": "oil_chemical-Level04-Wheeled-001601-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level03-SuspendedRail-003234/tunnel-Level03-SuspendedRail-003234-001.jpg",
+      "image_sha256": "5655b985e5d0fb2b302acf9fe3a75206df4a2ce57482f147adce5ba0d41f6dde",
+      "sample_id": "tunnel-Level03-SuspendedRail-003234-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/metallurgy-Level04-Wheeled-001284/metallurgy-Level04-Wheeled-001284-002.jpg",
+      "image_sha256": "6cdd8a9e8918cd81f8ae33592b75a5aaf4d0316acaab561cf7016819cfdc6797",
+      "sample_id": "metallurgy-Level04-Wheeled-001284-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level02-SuspendedRail-002628/coal_conveyor-Level02-SuspendedRail-002628-001.jpg",
+      "image_sha256": "941a1c68ab87583cb4eefb6ff86bb48a98dd935c40f841ecdaab2ae933e801df",
+      "sample_id": "coal_conveyor-Level02-SuspendedRail-002628-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002130/tunnel-Level04-SuspendedRail-002130-004.jpg",
+      "image_sha256": "bf838bc650b46a09a30d9cde51aeab48f5ee0130e682289fd91a68c2eb33b007",
+      "sample_id": "tunnel-Level04-SuspendedRail-002130-004"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002809/oil_chemical-Level01-Wheeled-002809-001.jpg",
+      "image_sha256": "a382d2d2e19b066bae08ed55f492ef82ce4ec0e6cf76d455faf6ea2a3d1c23eb",
+      "sample_id": "oil_chemical-Level01-Wheeled-002809-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001711/power-Level04-Wheeled-001711-001.jpg",
+      "image_sha256": "95cdd358795602a6ebf44cd8f5ef9182ecd909c216ea9ab806a156fe6fee216e",
+      "sample_id": "power-Level04-Wheeled-001711-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level02-SuspendedRail-002603/coal_conveyor-Level02-SuspendedRail-002603-001.jpg",
+      "image_sha256": "c155f13f121f359396748376006d2d8933ee6a3730e04b00032097c5a4a54fb0",
+      "sample_id": "coal_conveyor-Level02-SuspendedRail-002603-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002053/tunnel-Level04-SuspendedRail-002053-001.jpg",
+      "image_sha256": "f06043bac234afd587a70be3245b422691d6ac8678e769a51e44814a868b495e",
+      "sample_id": "tunnel-Level04-SuspendedRail-002053-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level01-SuspendedRail-002591/coal_conveyor-Level01-SuspendedRail-002591-001.jpg",
+      "image_sha256": "925d81a8bb31de18f72980d300aa33ca0109b84582783804c43a9469383b1954",
+      "sample_id": "coal_conveyor-Level01-SuspendedRail-002591-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001664/oil_chemical-Level04-Wheeled-001664-001.jpg",
+      "image_sha256": "ca7570554176c85fae83fa3711c54c1fbd1e1fd7d8022cd8156e6c3619786860",
+      "sample_id": "oil_chemical-Level04-Wheeled-001664-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002830/oil_chemical-Level01-Wheeled-002830-001.jpg",
+      "image_sha256": "fa2a475f15e45e4dd06e52f48ee3925bca461c662aebc3204750cfaa691bf6f6",
+      "sample_id": "oil_chemical-Level01-Wheeled-002830-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002797/oil_chemical-Level01-Wheeled-002797-001.jpg",
+      "image_sha256": "77cc5ca5baa305759f8e8739af3243efd9ea66a9eca6046d9fb2770e92e9ca13",
+      "sample_id": "oil_chemical-Level01-Wheeled-002797-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-000846/coal_conveyor-Level04-SuspendedRail-000846-001.jpg",
+      "image_sha256": "b8f9128b3e55050e45a2498b366dd74c07ed63604e70bc1d9722c39f7cb11a52",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-000846-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level02-SuspendedRail-003162/tunnel-Level02-SuspendedRail-003162-001.jpg",
+      "image_sha256": "09b525fa799e76cab425a6cba16911e71b79b26dd3e3219cce028058d2e1994e",
+      "sample_id": "tunnel-Level02-SuspendedRail-003162-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level02-SuspendedRail-003020/power-Level02-SuspendedRail-003020-001.jpg",
+      "image_sha256": "5ee7285d1233cddd3d91f087fb614d87d43ae40b9347fff3fa31707a749b20d7",
+      "sample_id": "power-Level02-SuspendedRail-003020-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level02-SuspendedRail-003018/power-Level02-SuspendedRail-003018-001.jpg",
+      "image_sha256": "3815839c194fee59b933b0f41650fb25aa4a94f40d88e382c9541f751a4e07f8",
+      "sample_id": "power-Level02-SuspendedRail-003018-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/metallurgy-Level01-SuspendedRail-002659/metallurgy-Level01-SuspendedRail-002659-001.jpg",
+      "image_sha256": "2ab8f263a57e9719be1f1d941fba8f81337057dd56f53705daca53271008cbe6",
+      "sample_id": "metallurgy-Level01-SuspendedRail-002659-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001596/oil_chemical-Level04-Wheeled-001596-001.jpg",
+      "image_sha256": "47dae5171a1560a5d3c8cc40900c4eede4ca20b220b62e7e8d1b4c9e40a87a79",
+      "sample_id": "oil_chemical-Level04-Wheeled-001596-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/metallurgy-Level01-SuspendedRail-002662/metallurgy-Level01-SuspendedRail-002662-001.jpg",
+      "image_sha256": "9b68a7ba68a860e2ad4ee807a6223f24750a1f0626c43ed1b98bcd0690c0d286",
+      "sample_id": "metallurgy-Level01-SuspendedRail-002662-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002155/tunnel-Level04-SuspendedRail-002155-002.jpg",
+      "image_sha256": "9469e112dc16e92c0618ba90fd4fc2a69c34a09ae9888277fe3e7a20592f9424",
+      "sample_id": "tunnel-Level04-SuspendedRail-002155-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-SuspendedRail-001464/oil_chemical-Level04-SuspendedRail-001464-001.jpg",
+      "image_sha256": "9b8671853b16064a529094150019a9fbad6cc3c3a670d7bbf16c0461acfb9326",
+      "sample_id": "oil_chemical-Level04-SuspendedRail-001464-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002850/oil_chemical-Level01-Wheeled-002850-001.jpg",
+      "image_sha256": "43b96c078d39441750018f6f2291f712ae2a6cac0ae6d5b756719fe6fd7b2aa5",
+      "sample_id": "oil_chemical-Level01-Wheeled-002850-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001512/oil_chemical-Level04-Wheeled-001512-002.jpg",
+      "image_sha256": "a3b635c73f6b7bd44a3f584241ca4bae3958b02b3d462f7a82c7edbf6916750c",
+      "sample_id": "oil_chemical-Level04-Wheeled-001512-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level01-SuspendedRail-002555/coal_conveyor-Level01-SuspendedRail-002555-001.jpg",
+      "image_sha256": "48aa0672b2a747f137bd30842c62bdd46ffff4291524748c038df6a1aef7f585",
+      "sample_id": "coal_conveyor-Level01-SuspendedRail-002555-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-001177/coal_conveyor-Level04-SuspendedRail-001177-001.jpg",
+      "image_sha256": "25b18a5585df9608c4178be2307c04fb9736b33daa62fe2978aa88c73f5f0abf",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-001177-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001731/power-Level04-Wheeled-001731-002.jpg",
+      "image_sha256": "d6d1b0a7f50441b13bcc05296ff1c6cb509c92a0daf57cf40903393382f7e547",
+      "sample_id": "power-Level04-Wheeled-001731-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level02-SuspendedRail-003029/power-Level02-SuspendedRail-003029-001.jpg",
+      "image_sha256": "33d8dbbc568884cc7fd9275ac83d1a2119633d63d1e46a41ddb287a3274b9bc2",
+      "sample_id": "power-Level02-SuspendedRail-003029-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level01-SuspendedRail-002534/coal_conveyor-Level01-SuspendedRail-002534-001.jpg",
+      "image_sha256": "229fc37cbc008049585ce65d003e7eabb7afb6bb728c88df6fcd108f7d703561",
+      "sample_id": "coal_conveyor-Level01-SuspendedRail-002534-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001853/power-Level04-Wheeled-001853-002.jpg",
+      "image_sha256": "cc84e00ebf3c4acbd9f2bcfe6a2e4e991b9878f38f6823becaea7b46e494d086",
+      "sample_id": "power-Level04-Wheeled-001853-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001852/power-Level04-Wheeled-001852-002.jpg",
+      "image_sha256": "80e03e060b031f048b0ac111235ee8da62c5799d695dffd632f8350538e248dd",
+      "sample_id": "power-Level04-Wheeled-001852-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level02-SuspendedRail-003022/power-Level02-SuspendedRail-003022-001.jpg",
+      "image_sha256": "0473a2df8a867320deade4949504e590aa94a88abca6bde6d01be1d71b211610",
+      "sample_id": "power-Level02-SuspendedRail-003022-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level02-SuspendedRail-002635/coal_conveyor-Level02-SuspendedRail-002635-001.jpg",
+      "image_sha256": "752bbed173b103dcbae6616dec64c6e02e9dc0ac386c11b45ede6d99b90bd383",
+      "sample_id": "coal_conveyor-Level02-SuspendedRail-002635-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001964/power-Level04-Wheeled-001964-002.jpg",
+      "image_sha256": "cd214f4e9cb047d979fb4a345ce14492e2cf68a1efa07505fe482c823ae11384",
+      "sample_id": "power-Level04-Wheeled-001964-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002668/oil_chemical-Level01-Wheeled-002668-001.jpg",
+      "image_sha256": "787da222942967fbe8e436c2ac2b8abdf5df391d1b318001ba0f41791a146c6d",
+      "sample_id": "oil_chemical-Level01-Wheeled-002668-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level02-SuspendedRail-003208/tunnel-Level02-SuspendedRail-003208-001.jpg",
+      "image_sha256": "5fbcbd2435d8abf62077f4317f4ae9e76cecc57e7811167ddfbb5ef09b88bd2b",
+      "sample_id": "tunnel-Level02-SuspendedRail-003208-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level02-SuspendedRail-002999/power-Level02-SuspendedRail-002999-001.jpg",
+      "image_sha256": "c1aa8538e8f0d69b8801b994c54100dd421fc69aba453384abdd8f1f58cd69d3",
+      "sample_id": "power-Level02-SuspendedRail-002999-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002099/tunnel-Level04-SuspendedRail-002099-002.jpg",
+      "image_sha256": "ba9e5548cca416ab7818299f4cd8fd156636f846134f5608614fad0526f6c4cf",
+      "sample_id": "tunnel-Level04-SuspendedRail-002099-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/metallurgy-Level01-SuspendedRail-002661/metallurgy-Level01-SuspendedRail-002661-001.jpg",
+      "image_sha256": "019a94edfd942963efbb3dbb5ba8f7c4c0b5224a40ce077db1b9a4ca239ae5ba",
+      "sample_id": "metallurgy-Level01-SuspendedRail-002661-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level01-SuspendedRail-003073/tunnel-Level01-SuspendedRail-003073-001.jpg",
+      "image_sha256": "999a13adcf2bebe3c4899c212cfb16bfb25812b8405c9df9fca61813ff0263b6",
+      "sample_id": "tunnel-Level01-SuspendedRail-003073-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/metallurgy-Level03-SuspendedRail-002666/metallurgy-Level03-SuspendedRail-002666-001.jpg",
+      "image_sha256": "561371ea4fef7b7bcd1345d1158eb625be9798970f42690a134a60adde285075",
+      "sample_id": "metallurgy-Level03-SuspendedRail-002666-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level02-Wheeled-002913/oil_chemical-Level02-Wheeled-002913-001.jpg",
+      "image_sha256": "c32dc29ba387296c6d585823c06cdb3ae7a9421cd261f65b720e8286c2c8903a",
+      "sample_id": "oil_chemical-Level02-Wheeled-002913-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level01-SuspendedRail-002966/power-Level01-SuspendedRail-002966-001.jpg",
+      "image_sha256": "4f50c47ae23bf77cbfc55f26aa546120bf77df1c581d2d79febfa56c8dd64aa9",
+      "sample_id": "power-Level01-SuspendedRail-002966-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-000934/coal_conveyor-Level04-SuspendedRail-000934-001.jpg",
+      "image_sha256": "1da17b386bb15f3d3f25e83d7a06c00a705c7d2c04657f996b90147a9c6496b4",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-000934-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001641/oil_chemical-Level04-Wheeled-001641-002.jpg",
+      "image_sha256": "e3071ac72174e844e2dbac3d40641cc7ba8242ec6d3625f7a1d195e30b5fd8fa",
+      "sample_id": "oil_chemical-Level04-Wheeled-001641-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level02-SuspendedRail-003146/tunnel-Level02-SuspendedRail-003146-001.jpg",
+      "image_sha256": "f974977af7ba4c5a158670c9ba521be4a784a3fdaa6f994e984fd96c7b4fd169",
+      "sample_id": "tunnel-Level02-SuspendedRail-003146-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-SuspendedRail-001476/oil_chemical-Level04-SuspendedRail-001476-001.jpg",
+      "image_sha256": "2f7f6aef20ad27f6f3afd97a2786fdad331ed8b8770e00fd2330c91275f870d5",
+      "sample_id": "oil_chemical-Level04-SuspendedRail-001476-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001539/oil_chemical-Level04-Wheeled-001539-002.jpg",
+      "image_sha256": "558caf411cf91a1f03f4205c0116fc8761b993c08d01470e9e906a1d206038d9",
+      "sample_id": "oil_chemical-Level04-Wheeled-001539-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/metallurgy-Level01-SuspendedRail-002658/metallurgy-Level01-SuspendedRail-002658-001.jpg",
+      "image_sha256": "07403812d78f2095e7f9082c1d305c3bd2f19c465aa7b3552560f76b3330f969",
+      "sample_id": "metallurgy-Level01-SuspendedRail-002658-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level03-SuspendedRail-002657/coal_conveyor-Level03-SuspendedRail-002657-001.jpg",
+      "image_sha256": "0e4b6e3fa863a73f11e22f8ca0b3086ce498a32d0fb9d50c3dfc3de21cfa770b",
+      "sample_id": "coal_conveyor-Level03-SuspendedRail-002657-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002003/tunnel-Level04-SuspendedRail-002003-001.jpg",
+      "image_sha256": "081d4ee7e520f4d44e51961caf6596594d2084f11f9c7d80c9ff4ba53978aa33",
+      "sample_id": "tunnel-Level04-SuspendedRail-002003-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level01-SuspendedRail-002974/power-Level01-SuspendedRail-002974-001.jpg",
+      "image_sha256": "0a85eb72dc93ac9082f32ce231c28976946e4005abf46e648ff2537b052f5621",
+      "sample_id": "power-Level01-SuspendedRail-002974-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002149/tunnel-Level04-SuspendedRail-002149-004.jpg",
+      "image_sha256": "577577debebd94e6857432ce781285b05391f2f2d454836f70a771fced4f04c0",
+      "sample_id": "tunnel-Level04-SuspendedRail-002149-004"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level01-SuspendedRail-003125/tunnel-Level01-SuspendedRail-003125-001.jpg",
+      "image_sha256": "c3196a3b0590a5d0ef2657b4ed628d7812136ee06eab0927252ec33a078ab71d",
+      "sample_id": "tunnel-Level01-SuspendedRail-003125-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-000657/coal_conveyor-Level04-SuspendedRail-000657-001.jpg",
+      "image_sha256": "9e75a291aa2ab38632fac74d4e6984db710b6f3b892d922dd7557ac3885d32e0",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-000657-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001865/power-Level04-Wheeled-001865-002.jpg",
+      "image_sha256": "c8e258ba87edbdcc08a4393a2efcbcff352e3fef4a34a995a1a221285e121f0e",
+      "sample_id": "power-Level04-Wheeled-001865-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/metallurgy-Level04-Wheeled-001376/metallurgy-Level04-Wheeled-001376-001.jpg",
+      "image_sha256": "4b1993c788dd87629ab10efb105944afd7a826e829523bec1065270ff841e53c",
+      "sample_id": "metallurgy-Level04-Wheeled-001376-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002782/oil_chemical-Level01-Wheeled-002782-001.jpg",
+      "image_sha256": "48d546ccab8f6a624a998392b5dca4968b7433b3044ff82fb8395a2d0b069168",
+      "sample_id": "oil_chemical-Level01-Wheeled-002782-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level01-SuspendedRail-003108/tunnel-Level01-SuspendedRail-003108-001.jpg",
+      "image_sha256": "cb782370fc47368661a2f81d440058c87844f5573e21cba8ff57daedf6261c6c",
+      "sample_id": "tunnel-Level01-SuspendedRail-003108-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002115/tunnel-Level04-SuspendedRail-002115-003.jpg",
+      "image_sha256": "9a9aabe26d44375d6baf6d0b10e4348e9bf6e3865792660c8e2431e790e39244",
+      "sample_id": "tunnel-Level04-SuspendedRail-002115-003"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002691/oil_chemical-Level01-Wheeled-002691-001.jpg",
+      "image_sha256": "1ddd51e74d70c3567bd49e8ff68ca669756050ab8a820ed5de2a22e5657632ac",
+      "sample_id": "oil_chemical-Level01-Wheeled-002691-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level01-SuspendedRail-002556/coal_conveyor-Level01-SuspendedRail-002556-001.jpg",
+      "image_sha256": "c32ecd45b9bdd7fc0271207b10a2273fab9769824cad5514f9b14f718dd95b13",
+      "sample_id": "coal_conveyor-Level01-SuspendedRail-002556-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-000637/coal_conveyor-Level04-SuspendedRail-000637-001.jpg",
+      "image_sha256": "268ce99f8bcff722d9704925178450fc8f8c7272a6a03ec46613cc8abe1197a3",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-000637-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001926/power-Level04-Wheeled-001926-001.jpg",
+      "image_sha256": "e9578e0555fff393131cdea910d3a8aca8b8853f578fb93e8ba9f2b93a7af791",
+      "sample_id": "power-Level04-Wheeled-001926-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/metallurgy-Level04-Wheeled-001351/metallurgy-Level04-Wheeled-001351-001.jpg",
+      "image_sha256": "74ab92474018c06da1c6c5b7743de9aae97ef2c0611049ebddc7b5a5b6cf9bf9",
+      "sample_id": "metallurgy-Level04-Wheeled-001351-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level03-SuspendedRail-003230/tunnel-Level03-SuspendedRail-003230-001.jpg",
+      "image_sha256": "89bf3fb10ca6f445578ac8e813b669d4aa00093275665020a599dfffa12347fe",
+      "sample_id": "tunnel-Level03-SuspendedRail-003230-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/metallurgy-Level04-Wheeled-001407/metallurgy-Level04-Wheeled-001407-001.jpg",
+      "image_sha256": "134bed7ad2ae4467df7e2780455ed1d28855b615aa4f984e135480d0ebc6550e",
+      "sample_id": "metallurgy-Level04-Wheeled-001407-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level02-SuspendedRail-003157/tunnel-Level02-SuspendedRail-003157-001.jpg",
+      "image_sha256": "a9010a8f63084c93dd778c4d01b0aa618f651096189267ce856040aac247e091",
+      "sample_id": "tunnel-Level02-SuspendedRail-003157-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-001078/coal_conveyor-Level04-SuspendedRail-001078-001.jpg",
+      "image_sha256": "74f972332de6aeaccfc46efb2d5e1202a846d05dfd2e03a53bdd14801e7efc96",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-001078-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001683/oil_chemical-Level04-Wheeled-001683-001.jpg",
+      "image_sha256": "014c23887cf84f87b2dd58b2feb3efb9bc7d64fac393e5ea04f409c6f85eb2c2",
+      "sample_id": "oil_chemical-Level04-Wheeled-001683-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-000745/coal_conveyor-Level04-SuspendedRail-000745-001.jpg",
+      "image_sha256": "f2ea670714e78d53ea95dc4e93f60016eab9f917edf3deff9fb4d0a55e4becf7",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-000745-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level02-Wheeled-002939/oil_chemical-Level02-Wheeled-002939-001.jpg",
+      "image_sha256": "497ed6c10555caca5d1fd6e5b73fdae3f56102417b832ceeb2e57a52b526edf0",
+      "sample_id": "oil_chemical-Level02-Wheeled-002939-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-000737/coal_conveyor-Level04-SuspendedRail-000737-001.jpg",
+      "image_sha256": "6fb97999d39e2b9eaf15f47db95005fccf8eef69950bf7ecc0f1dc27b53de04e",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-000737-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level02-SuspendedRail-003008/power-Level02-SuspendedRail-003008-001.jpg",
+      "image_sha256": "e4e90c5745749cc34cf60c9e56a4b41eb2c76fbfd5ad59e0cc07bf3951caca59",
+      "sample_id": "power-Level02-SuspendedRail-003008-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level01-SuspendedRail-002559/coal_conveyor-Level01-SuspendedRail-002559-001.jpg",
+      "image_sha256": "7c9ced18f3a43e46a49662e61985f8fd2650f1d6a39db79dc48555180702b4ea",
+      "sample_id": "coal_conveyor-Level01-SuspendedRail-002559-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001950/power-Level04-Wheeled-001950-001.jpg",
+      "image_sha256": "e92023925a1eab5344e58fa3fca71f930ba5ebf4910c0c34f369da6de51779ed",
+      "sample_id": "power-Level04-Wheeled-001950-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level01-SuspendedRail-002973/power-Level01-SuspendedRail-002973-001.jpg",
+      "image_sha256": "f2872a582db052e489c73db756c925f32dbf52d9e8dccc786b900bb345a8bb4c",
+      "sample_id": "power-Level01-SuspendedRail-002973-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/metallurgy-Level04-Wheeled-001340/metallurgy-Level04-Wheeled-001340-001.jpg",
+      "image_sha256": "b9991183258b80b71d77f4f941025bce149464c699691287c511d49b37e6a63a",
+      "sample_id": "metallurgy-Level04-Wheeled-001340-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/coal_conveyor-Level01-SuspendedRail-002572/coal_conveyor-Level01-SuspendedRail-002572-001.jpg",
+      "image_sha256": "dd8a2d7fe5a024f148f69c0c92b04cd19b4433cd4ec5f5692834ee2d7d2aa3af",
+      "sample_id": "coal_conveyor-Level01-SuspendedRail-002572-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002194/tunnel-Level04-SuspendedRail-002194-003.jpg",
+      "image_sha256": "15481dac2543a581fb29955824f4c369b1018c35c3d56baaec27f111f00f45af",
+      "sample_id": "tunnel-Level04-SuspendedRail-002194-003"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001987/power-Level04-Wheeled-001987-002.jpg",
+      "image_sha256": "0eda25a3044232157973d1d41f6df1a6993367d178840f15b630cc83ee9485bc",
+      "sample_id": "power-Level04-Wheeled-001987-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001975/power-Level04-Wheeled-001975-001.jpg",
+      "image_sha256": "38248e96bb0b8feedcb1145982228df347c946d23a20f108643153314c3bc552",
+      "sample_id": "power-Level04-Wheeled-001975-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/coal_conveyor-Level04-SuspendedRail-000721/coal_conveyor-Level04-SuspendedRail-000721-001.jpg",
+      "image_sha256": "b29a537c726f8886f64b461c8d503849589b8075082e62dae4143564434dfb7d",
+      "sample_id": "coal_conveyor-Level04-SuspendedRail-000721-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/tunnel-Level02-SuspendedRail-003151/tunnel-Level02-SuspendedRail-003151-001.jpg",
+      "image_sha256": "c9d1920750bf0ba11f4e36498c414045730b37753fec3095b3dda6f143f573d7",
+      "sample_id": "tunnel-Level02-SuspendedRail-003151-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/oil_chemical-Level01-Wheeled-002785/oil_chemical-Level01-Wheeled-002785-001.jpg",
+      "image_sha256": "3000d873633cc15dcd98b3c3a45967b45f33b0f31ce66d0fd38048d651e775bb",
+      "sample_id": "oil_chemical-Level01-Wheeled-002785-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/oil_chemical-Level04-Wheeled-001653/oil_chemical-Level04-Wheeled-001653-002.jpg",
+      "image_sha256": "27f4f36f8e65c8e6d09f30f882ad19734544055d63c3dd0afc6cd822a803229f",
+      "sample_id": "oil_chemical-Level04-Wheeled-001653-002"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Anomaly_data/power-Level01-SuspendedRail-002979/power-Level01-SuspendedRail-002979-001.jpg",
+      "image_sha256": "193a14b5d6f2f3060d33b8a12d5a81115d7ac9d2caa14ed84d9fcaa00781e789",
+      "sample_id": "power-Level01-SuspendedRail-002979-001"
+    },
+    {
+      "image_locator": "DATA_PATH/train/Annotations/Normal_data/tunnel-Level04-SuspendedRail-002071/tunnel-Level04-SuspendedRail-002071-001.jpg",
+      "image_sha256": "6f2d1126344859c469c04e6d3d2fc02cc5a1140df2ac9c4177fa1b329a17015e",
+      "sample_id": "tunnel-Level04-SuspendedRail-002071-001"
+    }
+  ],
+  "schema": "pa3-seminar-direction-inference-v1",
+  "seed": "pa3-seminar-direction-2026-10-13-v1",
+  "split": "TRAIN"
+}

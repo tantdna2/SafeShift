@@ -2002,3 +2002,21 @@ LS1 locks, TRAIN-holdout and TEST remain unchanged. No confirmatory result claim
 
 Stop at one Draft PR, no merge. No InspecSafe, model weights, scorer/score,
 tokenizer contract, LS1, dataset authority or RQ changes.
+
+### TASK 7 — PA3 seminar-direction one-shot diagnostic preparation (2026-10-13; Draft)
+
+- [x] Verify GitHub main BASE `28ab17b094da91006a785d0b694c4d035db96902`; isolated worktree.
+- [x] CPU TRAIN-only cohort builder; exact 90 (45/45) manifest + GT-free inference
+  manifest + receipt; 90/90 path/SHA-256/metadata checks; 7 exact-TEST IDs excluded;
+  relations/exposure recorded. DEC-PA3-005.
+- [x] Separate `seminar-diagnostic` authority (grant null), gated manifest/image
+  access, one-pass workflow with checksum preflight, exposure seal, telemetry,
+  post-seal GT join; reuse scorer, raw capture, CPU audit and analysis.
+- [x] Predeclared metrics A-L, GO/NO-GO rule and verdict renderer; NOT_EXECUTED
+  verdict committed; one Kaggle notebook; focused CPU tests.
+- [ ] ChatGPT GitHub review; separately requested Antigravity audit.
+- [ ] Research Lead approval of manifests/scope; authority-only F2 + standard merge.
+- [ ] Owner single Kaggle Run All; CPU re-verification; real verdict in a separate PR.
+
+No GPU, model load, TEST read or merge in this task. Seminar direction unchanged
+until a real verdict exists. Runbook: notes/pa3_seminar_direction_runbook.md.

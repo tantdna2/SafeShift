@@ -157,6 +157,18 @@ riêng; không suy ra kết quả từ kế hoạch.
   No model/GPU/gate rerun, InspecSafe, repair, budget increase, human review,
   protocol/metric/policy change, exploratory participation or merge in this task.
 
+## PA3-SEMINAR-DIRECTION-90 — planned, not executed
+
+- **Run ID và ngày:** pa3-qwen-seminar-direction-90; chưa chạy (chuẩn bị 2026-10-13)
+- **Trạng thái:** planned — LOCKED (`configs/pa3/seminar_direction_authority.v1.json` grant null)
+- **Câu hỏi hoặc mục đích:** quyết định GO_PA3 / KEEP_CURRENT_DIRECTION cho hướng Seminar (exploratory)
+- **Protocol / decision liên quan:** DEC-PA3-005; notes/pa3_seminar_direction_runbook.md
+- **Manifest / sample IDs:** data/manifests/pa3_seminar_direction_cohort.v1.json (`83959e27…8da3`), data/manifests/pa3_seminar_direction_inference.v1.json (`d59af02b…1ebce`)
+- **Model và revision:** Qwen/Qwen2.5-VL-3B-Instruct @ 66285546d2b821cf421d4f5eb2576359d3770cd3; T4, FP16, SDPA, C1, batch 1
+- **Seed:** pa3-seminar-direction-2026-10-13-v1 (chọn mẫu; sinh greedy)
+- **Raw model outputs:** sẽ ở data/processed/pa3_qwen/pa3-qwen-seminar-direction-90* (không commit)
+- **Kết quả thực đo:** chưa có. Verdict hiện tại: KEEP_CURRENT_DIRECTION / NOT_EXECUTED
+
 ## Template
 
 - **Run ID và ngày:** <ID; YYYY-MM-DD>

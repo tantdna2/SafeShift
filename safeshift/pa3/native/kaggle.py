@@ -50,7 +50,7 @@ def launch(repo, inputs, settings):
     stage = "AUTHORITY"
     try:
         access.require(settings["mode"], settings, repo)
-        if settings["mode"] != "pilot-train":
+        if settings["mode"] not in ("pilot-train", access.DIAGNOSTIC["mode"]):
             access.require("technical", settings, repo)
         stage = "A_SOURCE"
         journal.write("source", preflight.source(repo, settings["source_commit"]))
