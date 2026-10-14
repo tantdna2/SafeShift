@@ -1,0 +1,43 @@
+{
+  "base": "486b4af7ad1f402395b60b0c36ebfd80a74cf4de",
+  "grant": null,
+  "implementation": null,
+  "scope": {
+    "attention": "sdpa",
+    "batch_size": 1,
+    "decision": "DEC-PA3-009",
+    "gpu": "T4",
+    "max_new_tokens": 1,
+    "max_prefills": 4,
+    "max_runs": 1,
+    "mode": "nan-localization",
+    "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+    "not_attempted_access": false,
+    "pa3_scores": false,
+    "passes": [
+      "baseline",
+      "candidate_merger_clamp"
+    ],
+    "precision": "FP16",
+    "production_clamp": false,
+    "prompt": "C1",
+    "purpose": "FP16_NONFINITE_LOCALIZATION_DIAGNOSTIC_NO_PA3_SCORE",
+    "retry": false,
+    "revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+    "run_id": "pa3-qwen-nan-probe-dec009",
+    "samples": [
+      {
+        "image_locator": "DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001764/power-Level04-Wheeled-001764-002.jpg",
+        "image_sha256": "c11429a2c00fde564fe7e909c3f8d24f1a6cec6775087d52c0cc4c476bd4cb65",
+        "sample_id": "power-Level04-Wheeled-001764-002"
+      },
+      {
+        "image_locator": "DATA_PATH/train/Annotations/Normal_data/metallurgy-Level04-Wheeled-001232/metallurgy-Level04-Wheeled-001232-001.jpg",
+        "image_sha256": "a142dc0d75c9d57466b8295400501f4865dc1c6a4598e98463593684bf04a726",
+        "sample_id": "metallurgy-Level04-Wheeled-001232-001"
+      }
+    ],
+    "split": "TRAIN",
+    "test_access": false
+  }
+}

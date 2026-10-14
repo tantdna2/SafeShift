@@ -24,6 +24,33 @@ bounded shard IDs. External attempt ledger is mandatory across fresh Kaggle sess
 No retry/replacement, TEST, GPU/model execution, new model, merge or Seminar numbers
 in this preparation. Operational handoff: `notes/pa3_full_train_kaggle_runbook.md`.
 
+## DEC-PA3-009 - Qwen FP16 NaN localization diagnostic (2026-10-14; PROPOSED)
+
+DEC-PA3-009 status: PROPOSED_NOT_APPROVED
+
+Authority: user's urgent NaN root-cause request. CPU analysis and Draft PR only.
+BASE `486b4af7ad1f402395b60b0c36ebfd80a74cf4de`; independent of PR #101/DEC-PA3-008.
+ROOT_CAUSE=SUSPECTED: FP16 overflow in the Qwen2.5-VL-3B final ViT residual,
+converted to NaN by the merger RMSNorm (vLLM #13968 mechanism). Not confirmed for
+Shard 0: the archive holds no activations. No SafeShift API misuse found.
+
+Proposed, not granted: one fresh Kaggle T4 session, exact Qwen/C1/revision/FP16/
+SDPA/processor, `safeshift.pa3.native.nan_probe` prefill only on image 85
+`power-Level04-Wheeled-001764-002` and same-shape control
+`metallurgy-Level04-Wheeled-001232-001`; baseline plus candidate merger clamp,
+four prefills, one attempt. Diagnostic only: no PA3 score/label, no change to
+Shard 0 status/denominator, no NOT_ATTEMPTED or TEST image.
+
+This text grants nothing. Execution authority is only
+`configs/pa3/nan_probe_authority.v1.json` (grant null here). Release follows the
+audited PA3 rule B -> one reviewed F1 -> authority-only F2 -> standard merge M, with
+grant `{approval, decision, runtime_inventory_sha256}` and the code-pinned scope.
+Parent and child processes verify it before journal, model or image access.
+
+Adopting any clamp is a separate later decision: it alters model numerics for
+overflowing images only, needs per-sample flags and sensitivity reporting.
+Evidence and decision table: `notes/pa3_qwen_fp16_nan_root_cause.md`.
+
 ## DEC-W2-D1-001 — Research Framing and Protocol Hierarchy
 
 - **ID:** DEC-W2-D1-001

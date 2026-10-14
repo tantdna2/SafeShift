@@ -2030,3 +2030,28 @@ until a real verdict exists. Runbook: notes/pa3_seminar_direction_runbook.md.
 - [ ] Owner supplies audited Inputs and records four exact attempts; actual GPU runs and Seminar metrics remain NOT_RUN.
 
 Handoff/evidence: `notes/pa3_full_train_kaggle_runbook.md`. New grant null; no TEST or merge.
+
+## Urgent PA3 Qwen FP16 NaN root cause - 2026-10-14 (Draft; DEC-PA3-009 PROPOSED)
+
+- [x] Compare SafeShift native Qwen call with pinned Transformers 4.51.3 source; no API misuse found.
+- [x] Archive: all 151,936 logits NaN from step 0 (prefill); same-shape control succeeded; input pixels finite.
+- [x] Exclude decode-step, capture, logits-processor, KV-cache/RoPE-state and shape/kernel hypotheses with evidence.
+- [x] Passive FP16 non-finite probe and candidate merger clamp; pinned upstream CPU tests reproduce the
+  archived signature and fail-before/pass-after, bitwise identity without overflow, no NaN masking.
+- [ ] Lead decision on DEC-PA3-009 four-prefill GPU localization (images 85 and same-shape control).
+- [ ] ROOT_CAUSE remains SUSPECTED until that probe; any clamp adoption needs its own decision.
+
+Evidence: `notes/pa3_qwen_fp16_nan_root_cause.md`. No GPU, model, rerun, TEST, PA3 scoring change or merge.
+
+### PR #102 audit blockers (2026-10-14)
+
+- [x] Blocker 1: DECISIONS.md text no longer grants. Own authority file (grant null), audited
+  B -> F1 -> authority-only F2 -> merge M rule, source/clean-tree/byte proof, two pinned image
+  triplets, four-prefill budget; checked in parent and child before journal/model/image access.
+- [x] Blocker 2: append-only durable journal (staged temp, fsync, atomic no-overwrite link,
+  SHA-256 receipts); start recorded before each prefill, result right after; CPU `--recover`
+  classifies incomplete passes, packages and never retries.
+- [x] CPU tests for denial, self-grant, source/dirty, image/SHA swap, budget, hard stop after
+  1/2/3 prefills, receipts/no-overwrite; FP16 reproduction tests still PASS.
+- [ ] Time/VRAM/CUDA-sync on T4 remain ESTIMATED/UNKNOWN until an authorized run measures them.
+- [ ] Release (F1 squash, F2, M) and DEC-PA3-009 approval remain Research Lead actions.
