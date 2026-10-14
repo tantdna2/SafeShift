@@ -1,7 +1,40 @@
 {
   "base": "486b4af7ad1f402395b60b0c36ebfd80a74cf4de",
-  "grant": null,
-  "implementation": null,
+  "grant": {
+    "approval": "DEC-PA3-010: Research Lead approved F2 on 2026-10-14 for PA3-R2 on exactly 3,763 TRAIN images, GPU T4, FP16, SDPA, max_new_tokens=32, across four disjoint shards (941/941/941/940), at most one run per shard, no retry, no TEST, no overwrite or pooling with historical results; Antigravity PASS_FOR_RELEASE for PR #103 confirmed by Research Lead",
+    "decision": "DEC-PA3-010",
+    "full_manifest_sha256": "e842c9e08f7fa28f72fa8536bc35fd7b5e2ad751481cb812c73e9f201f95afcf",
+    "runtime_inventory_sha256": "b90f60d131750ab5f17c1764b04ef9ebce2b8e225ceaed577dec5c38b0d0ad7d",
+    "shards": [
+      {
+        "inference_manifest_sha256": "d82896517b926b7dc87ed4cae26044d7a651dbd50f18634757841eec295ac628",
+        "max_images": 941,
+        "run_id": "pa3-qwen-r2-train-shard-0",
+        "shard_id": 0
+      },
+      {
+        "inference_manifest_sha256": "e7d06be1530e354fc969e92496cc352b6d895eb7a3aaeef216e7911e28517600",
+        "max_images": 941,
+        "run_id": "pa3-qwen-r2-train-shard-1",
+        "shard_id": 1
+      },
+      {
+        "inference_manifest_sha256": "edb8df0416916e07be20efb38d762badab4f544680e9d03d156833023c71de59",
+        "max_images": 941,
+        "run_id": "pa3-qwen-r2-train-shard-2",
+        "shard_id": 2
+      },
+      {
+        "inference_manifest_sha256": "6f29ada83fbb82b3abd2796ae57d9d78bd47555ed65942d8cb619c6cdeeb9d40",
+        "max_images": 940,
+        "run_id": "pa3-qwen-r2-train-shard-3",
+        "shard_id": 3
+      }
+    ],
+    "technical_seal_sha256": "ad12f293eb45708ae1d475ed2723700c4da44122ec2997f9a1bc0dfb4e5b4c50",
+    "technical_source_bundle_sha256": "aeeed686af8807ccaea217a501e809628ff4dc506378423720d96525ddf1d450"
+  },
+  "implementation": "4f694198f478f7762b0fb151d9500a6e93cb947e",
   "scope": {
     "attention": "sdpa",
     "batch_size": 1,
