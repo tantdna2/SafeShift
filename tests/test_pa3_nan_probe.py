@@ -9,13 +9,11 @@ that the archived Shard 0 failure had this cause; that needs the approved GPU pr
 import importlib.metadata
 import importlib.util
 from pathlib import Path
-import tempfile
 import unittest
-from unittest.mock import patch
 
 from safeshift.pa3.native import nan_probe
 
-SAMPLE = "s|DATA_PATH/train/Annotations/Normal_data/x/x-001.jpg|" + "a" * 64
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def pinned_upstream():
@@ -24,71 +22,37 @@ def pinned_upstream():
     return importlib.metadata.version("transformers") == "4.51.3"
 
 
-class GateTests(unittest.TestCase):
-    def repo(self, text):
-        root = Path(tempfile.mkdtemp())
-        (root / "DECISIONS.md").write_text(text, encoding="utf-8")
-        return root
+class LocalizationTests(unittest.TestCase):
+    """Hooks cannot see every op; anything not FP32-proven is UNRESOLVED, never guessed."""
 
-    def test_proposed_or_missing_decision_blocks_before_any_access(self):
-        for text in ("", "DEC-PA3-009 status: PROPOSED_NOT_APPROVED\n",
-                     "x DEC-PA3-009 status: APPROVED_FOR_NAN_LOCALIZATION\n"):
-            repo = self.repo(text)
-            with patch.object(nan_probe, "launch") as launch, patch.object(nan_probe, "run") as run, \
-                    self.assertRaises(PermissionError):
-                nan_probe.main(["--repo", str(repo), "--decision", "DEC-PA3-009", "--sample", SAMPLE,
-                                "--output", str(repo / "out.json"), "--launch"])
-            launch.assert_not_called()
-            run.assert_not_called()
+    FINITE = {"nan": 0, "positive_inf": 0, "negative_inf": 0}
+    NAN = {"nan": 151936, "positive_inf": 0, "negative_inf": 0}
 
-    def test_approved_line_dispatches_once_and_never_overwrites(self):
-        repo = self.repo("DEC-PA3-009 status: APPROVED_FOR_NAN_LOCALIZATION\n")
-        argv = ["--repo", str(repo), "--decision", "DEC-PA3-009", "--sample", SAMPLE,
-                "--output", str(repo / "out.json"), "--launch"]
-        with patch.object(nan_probe, "launch", return_value=0) as launch:
-            nan_probe.main(argv)
-        launch.assert_called_once()
-        (repo / "out.json").write_text("{}", encoding="utf-8")
-        with patch.object(nan_probe, "launch") as launch, self.assertRaises(FileExistsError):
-            nan_probe.main(argv)
-        launch.assert_not_called()
+    def test_verdicts(self):
+        over = {"exceeds_fp16_max": True}
+        cases = [(None, self.FINITE, "NO_NONFINITE"), (None, self.NAN, "UNRESOLVED"),
+                 ({"kind": "INSIDE_MODULE"}, self.NAN, "UNRESOLVED"),
+                 ({"kind": "LEAF_MODULE"}, self.NAN, "UNRESOLVED"),
+                 ({"kind": "UNHOOKED_OPERATION_BEFORE_INPUT"}, self.NAN, "UNRESOLVED"),
+                 ({"kind": "LINEAR", "recompute": None}, self.NAN, "UNRESOLVED"),
+                 ({"kind": "MLP_RESIDUAL_ADD", "recompute": None}, self.NAN, "UNRESOLVED"),
+                 ({"kind": "MLP_RESIDUAL_ADD", "recompute": {"exceeds_fp16_max": False}}, self.NAN, "UNRESOLVED"),
+                 ({"kind": "MLP_RESIDUAL_ADD", "recompute": over}, self.NAN, "FP16_OVERFLOW_LOCALIZED"),
+                 ({"kind": "ATTENTION_RESIDUAL_ADD", "recompute": over}, self.NAN, "FP16_OVERFLOW_LOCALIZED"),
+                 ({"kind": "LINEAR", "recompute": over}, self.NAN, "FP16_OVERFLOW_LOCALIZED")]
+        for origin, logits, expected in cases:
+            with self.subTest(origin=origin, logits=logits):
+                self.assertEqual(nan_probe.localization(origin, logits), expected)
 
-    def test_launch_verifies_runtime_before_restore_and_runs_one_offline_child(self):
-        repo = self.repo("DEC-PA3-009 status: APPROVED_FOR_NAN_LOCALIZATION\n")
-        plan = repo / nan_probe.PLAN
-        plan.parent.mkdir(parents=True)
-        plan.write_text("{}", encoding="utf-8")
-        calls = []
-        record = lambda name, value=None: (lambda *a, **k: calls.append(name) or value)
-        args = nan_probe.argparse.Namespace(
-            repo=repo, inputs="in", runtime_input="rt.tar", runtime_inventory_input="inv.json",
-            runtime_inventory_sha256="b" * 64, runtime_site_packages=None, model_input="m.tar",
-            dataset_input="train", decision="DEC-PA3-009", sample=[SAMPLE, SAMPLE], candidate_clamp=True,
-            output=repo / "out.json")
-        with patch("safeshift.ls1.kaggle.attached_path", side_effect=lambda root, rel: Path(root) / rel), \
-                patch("safeshift.ls1.kaggle.verify_runtime_input", record("verify")), \
-                patch("safeshift.ls1.kaggle.restore_model", record("restore", Path("snap"))), \
-                patch("safeshift.ls1.kaggle.runtime_interpreter",
-                      record("runtime", {"python": "py", "site_packages": None})), \
-                patch.object(nan_probe.subprocess, "run",
-                             return_value=nan_probe.subprocess.CompletedProcess([], 0)) as run:
-            self.assertEqual(nan_probe.launch(args), 0)
-        self.assertEqual(calls, ["verify", "restore", "runtime"])
-        run.assert_called_once()
-        command, env = run.call_args.args[0], run.call_args.kwargs["env"]
-        self.assertEqual(command[:4], ["py", "-s", "-m", "safeshift.pa3.native.nan_probe"])
-        self.assertEqual(command.count("--sample"), 2)
-        self.assertIn("--candidate-clamp", command)
-        self.assertNotIn("--launch", command)
-        self.assertEqual((env["HF_HUB_OFFLINE"], env["CUDA_VISIBLE_DEVICES"]), ("1", "0"))
-        self.assertTrue(run.call_args.kwargs["check"])
-
-    def test_only_explicit_train_triplets(self):
-        self.assertEqual(nan_probe.parse_samples([SAMPLE])[0]["sample_id"], "s")
-        for bad in ("s|DATA_PATH/test/x.jpg|" + "a" * 64, "s|DATA_PATH/train/x.jpg|abc",
-                    "s|/abs/DATA_PATH/train/x.jpg|" + "a" * 64, "s|DATA_PATH/train/x.jpg"):
-            with self.assertRaises(ValueError):
-                nan_probe.parse_samples([bad])
+    def test_candidate_clamp_never_reaches_pa3_production(self):
+        native = ROOT / "safeshift/pa3/native"
+        for path in sorted(native.glob("*.py")):
+            if path.name in ("nan_probe.py", "nan_probe_run.py"):
+                continue
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8")
+                for token in ("nan_probe", "cast_overflow_fp16", "install_merger_clamp", "register_forward"):
+                    self.assertNotIn(token, text)
 
 
 @unittest.skipUnless(pinned_upstream(), "requires torch and pinned transformers==4.51.3 (CPU)")
@@ -151,6 +115,8 @@ class UpstreamQwenTests(unittest.TestCase):
         self.assertEqual((origin["kind"], origin["block"]), ("MLP_RESIDUAL_ADD", "visual.blocks.3"))
         self.assertTrue(origin["recompute"]["exceeds_fp16_max"])
         self.assertEqual(origin["recompute"]["fp32_absmax"], 80000.0)
+        self.assertEqual(nan_probe.localization(origin, nan_probe.stats(logits, self.torch)),
+                         "FP16_OVERFLOW_LOCALIZED")
         first_nan = next(e for e in probe.events if e["output"] and e["output"]["nan"])
         self.assertEqual(first_nan["module"], "visual.merger.ln_q")  # RMSNorm: inf * rsqrt(inf) = NaN
         clamped, _ = self.generate(self.model(edit=self.last_mlp_residual), clamp=True)

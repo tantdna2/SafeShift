@@ -39,8 +39,13 @@ SDPA/processor, `safeshift.pa3.native.nan_probe` prefill only on image 85
 `power-Level04-Wheeled-001764-002` and same-shape control
 `metallurgy-Level04-Wheeled-001232-001`; baseline plus candidate merger clamp,
 four prefills, one attempt. Diagnostic only: no PA3 score/label, no change to
-Shard 0 status/denominator, no NOT_ATTEMPTED or TEST image. The tool runs only if
-this line reads `DEC-PA3-009 status: APPROVED_FOR_NAN_LOCALIZATION`.
+Shard 0 status/denominator, no NOT_ATTEMPTED or TEST image.
+
+This text grants nothing. Execution authority is only
+`configs/pa3/nan_probe_authority.v1.json` (grant null here). Release follows the
+audited PA3 rule B -> one reviewed F1 -> authority-only F2 -> standard merge M, with
+grant `{approval, decision, runtime_inventory_sha256}` and the code-pinned scope.
+Parent and child processes verify it before journal, model or image access.
 
 Adopting any clamp is a separate later decision: it alters model numerics for
 overflowing images only, needs per-sample flags and sensitivity reporting.

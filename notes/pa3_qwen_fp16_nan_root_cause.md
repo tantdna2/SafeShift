@@ -95,7 +95,7 @@ Transformers 4.51.3/torch 2.6.0 CPU, FP16, SDPA, chạy `generate` thật:
   **151.936/151.936 logits bước 0 NaN, argmax 0** — đúng chữ ký archive. NaN đầu tiên
   tại `visual.merger.ln_q`. Cùng trọng số ở FP32: hữu hạn.
 - Ứng viên clamp trước merger: logits hữu hạn (FAIL trước → PASS sau).
-- Không tràn: clamp **bitwise identical**; probe là thụ động (bitwise như không hook).
+- Không tràn: clamp **bitwise identical**; probe thụ động trên CPU (GPU: UNKNOWN, mục 6.4).
 - Tràn ở khối ViT sớm (block 0): clamp **không** che, vẫn NaN toàn bộ (fail-closed).
 - Probe phân biệt `MLP_RESIDUAL_ADD`, `ATTENTION_RESIDUAL_ADD`, `LINEAR`.
 
@@ -103,48 +103,143 @@ Giới hạn: chứng minh cơ chế và công cụ, **không** chứng minh ả
 
 ## 6. Diagnostic GPU tối thiểu (đề xuất DEC-PA3-009, CHƯA phê duyệt)
 
-`python -m safeshift.pa3.native.nan_probe` — chỉ chẩn đoán, `pa3_scores=null`.
-Nạp model qua đúng `NativeScorer` (kiểm tra runtime/snapshot/processor như PA3),
-`generate(max_new_tokens=1)` để tái tạo đúng prefill; forward hooks chỉ quan sát
-(không sửa tensor), ghi mọi module theo thứ tự thực thi: số NaN/±Inf, |max| hữu hạn;
-phân loại vị trí xuất hiện Inf/NaN đầu tiên; tính lại vị trí đó bằng FP32 từ chính
-toán hạng FP16 để chứng minh có/không vượt 65504. Tùy chọn `--candidate-clamp` chạy
-thêm một lượt với clamp trước merger và so sánh bitwise logits bước 0.
+### 6.1 Công cụ
 
-Phạm vi đề xuất (cần Lead phê duyệt dùng lại ảnh đã thử; không tạo điểm PA3, không
-đổi trạng thái/mẫu số của Shard 0):
+`python -m safeshift.pa3.native.nan_probe_run` (điều phối) + `nan_probe` (đo đạc).
+Chỉ chẩn đoán: mỗi kết quả có `pa3_score: null`. Model nạp qua đúng `NativeScorer`
+(kiểm tra runtime/snapshot/processor như PA3), `generate(max_new_tokens=1)` để tái
+tạo đúng prefill. Forward hook chỉ quan sát, không sửa tensor. Chúng ghi từng module
+theo thứ tự thực thi: số NaN/±Inf và |max| hữu hạn. Vị trí Inf/NaN đầu tiên được
+phân loại và, nếu có toán hạng, tính lại bằng FP32 từ chính toán hạng FP16. Mỗi lượt
+còn lưu raw logits bước 0 dạng byte nguyên vẹn (base64 + SHA-256), cùng bản tóm tắt
+`summarize_tensor`, để đối chiếu với bản ghi Shard 0 trong archive.
+
+Phạm vi bị khóa trong code (`nan_probe_run.SCOPE`) và trong file authority. Không có
+tham số CLI nào để chọn ảnh:
 
 1. `power-Level04-Wheeled-001764-002` (ảnh 85) — ca lỗi.
 2. `metallurgy-Level04-Wheeled-001232-001` (ảnh 84, cùng shape) — đối chứng.
 
-Tổng 4 lượt prefill (2 ảnh × {baseline, candidate}) trong 1 phiên Kaggle T4, model
-nạp mới; ước tính < 10 phút gồm nạp model. Không dùng ảnh NOT_ATTEMPTED, không TEST.
+Kế hoạch cố định 4 lượt theo thứ tự: ảnh 85 baseline → ảnh 85 candidate → ảnh 84
+baseline → ảnh 84 candidate. Một run ID, không retry, không ảnh NOT_ATTEMPTED, không
+TEST. Việc dùng lại hai ảnh đã thử cần Lead phê duyệt. Lượt chạy không đổi trạng
+thái hay mẫu số của Shard 0.
+
+### 6.2 Authority (thay cho dòng văn bản trong DECISIONS.md)
+
+Tái dùng đúng quy tắc PA3 đã kiểm toán (`access.authority`/`diagnostic_authority`),
+với file riêng `configs/pa3/nan_probe_authority.v1.json`. Draft này có `grant: null`
+và `implementation: null`, nên bị từ chối trước mọi truy cập Git, runtime, model
+hay ảnh. Để mở quyền, cần:
+
+- B = `main` đã kiểm toán, là hậu duệ của `486b4af…`.
+- F1 = **một** commit triển khai đã review, cha là B (squash PR này lên B).
+- F2 = commit **chỉ** sửa file authority, cha là F1; ghi `base=B`, `implementation=F1`
+  và grant `{approval, decision: "DEC-PA3-009", runtime_inventory_sha256}`.
+- M = merge chuẩn hai cha `[B, F2]`; `--source-commit` phải bằng HEAD bằng M.
+
+Kiểm tra thêm: `scope` phải khớp đúng `SCOPE` trong code; tree của M phải bằng tree
+của F2; byte của file authority phải bằng blob ở F2; ba file authority cũ không đổi
+so với `486b4af`; working tree sạch; `preflight.source` kiểm byte đã commit và chặn
+file untracked che import; `runtime_inventory_sha256` khớp grant. SHA của F1 chỉ được
+ghi trong F2, sau khi F1 đã tồn tại, nên không có phụ thuộc vòng tròn.
+`DECISIONS.md` không còn vai trò cấp quyền: sửa nó, sửa file authority local, hay
+commit grant thường đều bị từ chối (có test).
+
+Kiểm tra quyền được chạy ở cả tiến trình cha (`--launch`) và tiến trình con, trước
+khi tạo journal, nạp model hay đọc ảnh. Ảnh chỉ được mở nếu khớp nguyên triplet đã
+ghim, và SHA-256 file được kiểm trước khi decode.
+
+Rủi ro còn lại (giống mọi authority PA3 hiện có): topology Git chứng minh tính toàn
+vẹn, **không** phải chữ ký. Người có quyền ghi vẫn dựng được B→F1→F2→M. Lead phải tự
+xác minh M trên `main` đã kiểm toán. Ngân sách 4 lượt được kiểm trên đĩa trong một
+phiên; giữa các phiên Kaggle mới vẫn cần sổ ghi lượt chạy bên ngoài.
+
+### 6.3 Journal bền vững và thu hồi khi Kaggle dừng bất thường
+
+Journal: `data/processed/pa3_qwen/pa3-qwen-nan-probe-dec009/` (repo trong
+`/kaggle/working` nên nằm trong Output).
+
+- `DurableJournal`: ghi tệp tạm trong `<run>-staging/` (tạo độc quyền), fsync, rồi
+  `os.link` nguyên tử vào đúng tên (thất bại nếu đã tồn tại, không ghi đè), xóa tệp
+  tạm, fsync thư mục (POSIX). Payload ghi trước, receipt SHA-256 ghi sau: payload
+  thiếu receipt là ghi dở, phát hiện được (`TORN_WRITE`). Tệp tạm cũ không bao giờ
+  được dùng lại.
+- Thứ tự: `authority` → `t1` → `model-load.attempt` (trước khi nạp) → `model` →
+  với mỗi lượt i: `prefill-i.attempt` (trước prefill) → `prefill-i.result` (ngay sau)
+  → `comparison` → `finish`. Lỗi được ghi vào `failure`; seal và package nằm trong
+  `finally`.
+- `--recover` (chỉ CPU, không cần quyền, không model/dữ liệu) phân loại từng lượt:
+  `COMPLETE`, `INCOMPLETE_STARTED_NO_RESULT`, `INCOMPLETE_STARTED_INVALID_RESULT`,
+  `CORRUPT_ATTEMPT_RECORD`, `NOT_STARTED`. Nó cũng báo tệp tạm sót lại, không sửa và
+  không retry, rồi đóng gói `<run>.tar.gz` kèm `.sha256.json` và ghi
+  `<run>-recovery.json`. Không ghi đè: chạy lại thì giữ nguyên bản cũ. Tiến trình cha
+  tự gọi `recover` sau khi con kết thúc, kể cả khi con crash. Nếu toàn bộ VM bị
+  giết, chạy `python -m safeshift.pa3.native.nan_probe_run --recover` trên các tệp
+  đã tải từ Output.
+- Run ID đã tồn tại → từ chối (không retry).
+
+UNKNOWN: Kaggle có lưu `/kaggle/working` khi phiên bị hủy do timeout hay lỗi host
+hay không chưa được kiểm chứng trong repo này. Mỗi tệp đã fsync riêng, nên phần đã
+ghi xong không phụ thuộc vào bước đóng gói cuối.
+
+### 6.4 Tài nguyên — chưa đo, không tuyên bố PASS
+
+- **Thời gian: ESTIMATED, chưa đo.** Gồm nạp model (cùng đường với Shard 0) và 4
+  prefill 1782 token. Mỗi tensor được hook tạo khoảng 4 lần đồng bộ host
+  (`int()`/`float()`), khoảng 1.000 module, hai tensor mỗi module. Chi phí đồng bộ
+  thực tế trên T4: UNKNOWN. Con số "< 10 phút" trước đây là ước lượng, không phải
+  số đo.
+- **VRAM: ESTIMATED, chưa đo.** Thống kê theo chunk 2^24 phần tử (khoảng ≤ 80 MiB tạm
+  mỗi chunk FP16). Tính lại Linear bằng FP32 bị giới hạn 2^26 phần tử đầu ra
+  (256 MiB), vượt thì `recompute=null` → `UNRESOLVED`. Tính lại residual ViT khoảng
+  25 MiB. Headroom thật trên T4 cùng 7,5 GB trọng số: UNKNOWN. Nếu OOM, lỗi được
+  ghi vào journal, không retry.
+- **Đồng bộ CUDA:** lỗi CUDA bất đồng bộ có thể bị báo trễ ở module sau. Các `int()`
+  sau mỗi module làm báo lỗi sớm hơn nhưng không đảm bảo tuyệt đối.
+- **Tính thụ động của hook:** CPU cho thấy kết quả bitwise như khi không có hook.
+  Trên GPU, hook không sửa tensor, nhưng việc chọn thuật toán cuBLAS phụ thuộc bộ
+  nhớ còn trống: UNKNOWN. So sánh baseline/candidate trong cùng một phiên (đều có
+  hook) là so sánh cùng điều kiện. Việc khớp với logits Shard 0 được kiểm bằng
+  `step0_archive_comparable` so với bản ghi archive, không giả định.
+
+### 6.5 Giới hạn của forward hook
+
+Hook chỉ thấy ranh giới module. Các phép cộng residual được suy ra bằng tái dựng
+từ đầu vào khối và đầu ra các module con. SDPA, RoPE, `masked_scatter`, softmax và
+mọi phép toán nằm ngoài module không được quan sát trực tiếp. `localization` chỉ
+nhận giá trị `FP16_OVERFLOW_LOCALIZED` khi vị trí là residual hoặc `Linear` **và**
+phép tính lại FP32 thật sự vượt 65504. Mọi trường hợp khác — `INSIDE_MODULE`,
+`LEAF_MODULE`, `UNHOOKED_OPERATION_BEFORE_INPUT`, `recompute=null`, NaN không do
+tràn, hoặc logits NaN mà không module nào thấy — đều là **`UNRESOLVED`**, không được
+kết luận nguyên nhân.
 
 Bảng quyết định:
 
 | Kết quả probe ảnh 85 | Ý nghĩa | Bước tiếp |
 | --- | --- | --- |
-| `MLP_RESIDUAL_ADD` tại `visual.blocks.31`, FP32 > 65504; candidate hữu hạn; đối chứng bitwise bằng nhau | **CONFIRMED**: đúng lỗi vLLM #13968 | Lead quyết định áp dụng clamp (mục 7) |
-| Tràn ở khối ViT sớm hơn / `ATTENTION_RESIDUAL_ADD` / `LINEAR` trong ViT | CONFIRMED tràn FP16, khác vị trí | Clamp trước merger không đủ (test block 0); cần đề xuất vị trí khác |
-| Tràn trong decoder LLM | CONFIRMED tràn FP16 ở LLM | Đề xuất riêng cho decoder |
-| `origin=null`, logits hữu hạn trên model nạp mới | Không tái hiện | Ủng hộ phụ thuộc trạng thái/phần cứng; cần diagnostic chuỗi riêng |
-| `INSIDE_MODULE` / `UNHOOKED_OPERATION_BEFORE_INPUT` | Phép toán không có module (SDPA, RoPE…) | Probe hẹp hơn quanh vị trí đó |
+| `FP16_OVERFLOW_LOCALIZED`, `MLP_RESIDUAL_ADD` tại `visual.blocks.31`; candidate hữu hạn; đối chứng bitwise bằng nhau | **CONFIRMED**: đúng lỗi vLLM #13968 | Lead quyết định áp dụng clamp (mục 7) |
+| `FP16_OVERFLOW_LOCALIZED` ở khối ViT sớm hơn, residual attention hoặc `Linear` trong ViT | CONFIRMED tràn FP16, khác vị trí | Clamp trước merger không đủ (test block 0); cần đề xuất vị trí khác |
+| `FP16_OVERFLOW_LOCALIZED` trong decoder LLM | CONFIRMED tràn FP16 ở LLM | Đề xuất riêng cho decoder |
+| `NO_NONFINITE` trên model nạp mới | Không tái hiện | Ủng hộ phụ thuộc trạng thái/phần cứng; cần diagnostic chuỗi riêng |
+| `UNRESOLVED` | Không định vị được phép toán đầu tiên | Không kết luận nguyên nhân; thiết kế probe hẹp hơn quanh vị trí đó |
 
-Lệnh Kaggle (Inputs giống full-TRAIN: runtime archive + inventory, model archive,
-TRAIN dataset; repo checkout tại commit được duyệt; Internet OFF, GPU T4):
+### 6.6 Lệnh Kaggle (chỉ hợp lệ sau khi đã release authority; Draft này bị từ chối)
+
+Inputs giống full-TRAIN (runtime archive + inventory, model archive, TRAIN dataset).
+Repo checkout tại M trong `/kaggle/working`. Internet OFF, GPU T4.
 
 ```console
-python -m safeshift.pa3.native.nan_probe --launch --inputs /kaggle/input \
-  --runtime-input <rel> --runtime-inventory-input <rel> --runtime-inventory-sha256 <sha> \
-  --model-input <rel> --dataset-input <rel TRAIN root chứa DATA_PATH/> --decision DEC-PA3-009 \
-  --sample "power-Level04-Wheeled-001764-002|DATA_PATH/train/Annotations/Normal_data/power-Level04-Wheeled-001764/power-Level04-Wheeled-001764-002.jpg|c11429a2c00fde564fe7e909c3f8d24f1a6cec6775087d52c0cc4c476bd4cb65" \
-  --sample "metallurgy-Level04-Wheeled-001232-001|DATA_PATH/train/Annotations/Normal_data/metallurgy-Level04-Wheeled-001232/metallurgy-Level04-Wheeled-001232-001.jpg|a142dc0d75c9d57466b8295400501f4865dc1c6a4598e98463593684bf04a726" \
-  --candidate-clamp --output /kaggle/working/pa3_nan_probe_dec009.json
+python -m safeshift.pa3.native.nan_probe_run --launch --source-commit <M> \
+  --inputs /kaggle/input --runtime-input <rel> --runtime-inventory-input <rel> \
+  --runtime-inventory-sha256 <sha trong grant> --model-input <rel> \
+  --dataset-input <rel TRAIN root chứa DATA_PATH/>
+# Sau đó, kể cả khi ô trên lỗi, thu hồi trên CPU (an toàn khi chạy lặp):
+python -m safeshift.pa3.native.nan_probe_run --recover
 ```
 
-Gate: lệnh từ chối chạy (trước khi chạm runtime/model/ảnh) trừ khi `DECISIONS.md`
-tại commit đang checkout có đúng dòng `DEC-PA3-009 status: APPROVED_FOR_NAN_LOCALIZATION`.
-Commit này chỉ ghi `PROPOSED_NOT_APPROVED`. Output không ghi đè, một lần chạy, không retry.
+Tải từ Output: `pa3-qwen-nan-probe-dec009.tar.gz` + `.sha256.json`, thư mục journal
+và `pa3-qwen-nan-probe-dec009-recovery.json`.
 
 ## 7. Bản sửa ứng viên và tác động phương pháp
 
@@ -169,18 +264,32 @@ nhân này: tràn là hàm của (trọng số, ảnh), nên khởi động lạ
 ## 8. Kiểm thử đã chạy
 
 Windows, CPU. Venv riêng: Python 3.11.9, `torch==2.6.0+cpu`, `transformers==4.51.3`
-(cùng phiên bản đã khóa, bản CPU). Python hệ thống: không torch.
+(cùng phiên bản đã khóa, bản CPU). Python hệ thống: không torch. Hồi quy chạy trên
+worktree LF sạch (HEAD của PR cộng các thay đổi), vì working tree chính của máy này
+có file CRLF làm `test_protected_source_bytes_equal_exact_base` FAIL giả.
 
-- Venv: `python -m unittest tests.test_pa3_nan_probe -v` → **9/9 PASS**
-  (4 gate/launch + 5 upstream-model).
-- Python hệ thống, worktree LF sạch tại BASE + 2 file mới:
-  `tests.test_pa3_boundaries tests.test_pa3_native tests.test_pa3_full_train tests.test_pa3_nan_probe`
-  → **76 run, OK, 5 SKIP** (5 test upstream cần torch).
-- Cùng worktree: `tests.test_pa3_synthetic tests.test_pa3_feasibility tests.test_pa3_runtime_prep
-  tests.test_pa3_seminar_direction` → 112 run, 1 FAIL, 4 SKIP. FAIL duy nhất
-  `test_committed_grant_is_null_and_prior_authority_untouched` tái hiện trên BASE
-  nguyên trạng (không có file mới) — lỗi kế thừa, cũng được PR #101 báo.
-- Lưu ý môi trường: working tree chính của máy này có file CRLF trong khi blob BASE
-  là LF, khiến `test_protected_source_bytes_equal_exact_base` FAIL giả ở đó; vì vậy
-  hồi quy được chạy trên worktree LF sạch.
-- Chưa chạy: GPU/model thật, toàn bộ test suite repo, `launch` trên Linux/Kaggle thật.
+Vòng sửa blocker kiểm toán (2026-10-14):
+
+- Venv: `python -m unittest tests.test_pa3_nan_probe tests.test_pa3_nan_probe_run -v`
+  → **22/22 PASS**. Gồm: 5 test upstream FP16 (tái hiện tràn, clamp FAIL trước → PASS
+  sau, bitwise identity, block sớm vẫn NaN, phân biệt vị trí); phán quyết
+  `UNRESOLVED`; clamp không có trong PA3 production; authority (đối chứng dương B→F1→F2→M,
+  Draft từ chối trước Git/model/journal/ảnh ở cả cha và con, DECISIONS.md / sửa local /
+  commit thường không tự cấp quyền, sai SHA / tree bẩn / sai binding / sửa byte /
+  thiếu source proof, F2 sửa code, thêm/thay/tráo SHA ảnh, ngân sách 5, sai schema grant);
+  ảnh ngoài scope và byte bị tráo bị chặn trước decode; journal (receipt, không ghi đè,
+  tệp tạm cũ, checksum); ngân sách 4 lượt và thứ tự; **dừng cứng (`os._exit`) sau
+  lượt 1, 2, 3** → lượt đã xong `COMPLETE`, lượt đang chạy
+  `INCOMPLETE_STARTED_NO_RESULT`, phần còn lại `NOT_STARTED`, byte không đổi, package
+  + SHA-256, recover lặp lại không ghi đè, không thể chạy lại; ghi dở (torn) được báo,
+  không sửa; launch kiểm runtime trước khi restore, một child, gọi recover, không retry.
+- Python hệ thống: `tests.test_pa3_boundaries tests.test_pa3_native tests.test_pa3_full_train
+  tests.test_pa3_nan_probe tests.test_pa3_nan_probe_run` → **89 run, OK, 5 SKIP**
+  (5 test cần torch).
+- `tests.test_pa3_synthetic tests.test_pa3_feasibility tests.test_pa3_runtime_prep
+  tests.test_pa3_seminar_direction` → 112 run, 1 FAIL, 4 SKIP. FAIL duy nhất là
+  `test_committed_grant_is_null_and_prior_authority_untouched`, đã tái hiện trên BASE
+  nguyên trạng — lỗi kế thừa, giống vòng trước và PR #101.
+- `compileall` và `git diff --check`: PASS.
+- Chưa chạy: GPU/model thật, `launch`/`recover` trên Linux/Kaggle thật, toàn bộ test
+  suite repo. Thời gian, VRAM và chi phí đồng bộ CUDA: ESTIMATED/UNKNOWN (mục 6.4).

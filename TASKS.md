@@ -2042,3 +2042,16 @@ Handoff/evidence: `notes/pa3_full_train_kaggle_runbook.md`. New grant null; no T
 - [ ] ROOT_CAUSE remains SUSPECTED until that probe; any clamp adoption needs its own decision.
 
 Evidence: `notes/pa3_qwen_fp16_nan_root_cause.md`. No GPU, model, rerun, TEST, PA3 scoring change or merge.
+
+### PR #102 audit blockers (2026-10-14)
+
+- [x] Blocker 1: DECISIONS.md text no longer grants. Own authority file (grant null), audited
+  B -> F1 -> authority-only F2 -> merge M rule, source/clean-tree/byte proof, two pinned image
+  triplets, four-prefill budget; checked in parent and child before journal/model/image access.
+- [x] Blocker 2: append-only durable journal (staged temp, fsync, atomic no-overwrite link,
+  SHA-256 receipts); start recorded before each prefill, result right after; CPU `--recover`
+  classifies incomplete passes, packages and never retries.
+- [x] CPU tests for denial, self-grant, source/dirty, image/SHA swap, budget, hard stop after
+  1/2/3 prefills, receipts/no-overwrite; FP16 reproduction tests still PASS.
+- [ ] Time/VRAM/CUDA-sync on T4 remain ESTIMATED/UNKNOWN until an authorized run measures them.
+- [ ] Release (F1 squash, F2, M) and DEC-PA3-009 approval remain Research Lead actions.

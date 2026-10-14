@@ -1,34 +1,29 @@
 """Diagnostic-only localization of the first FP16 Inf/NaN in native Qwen2.5-VL.
 
 Forward hooks observe and never modify tensors. The first module output holding
-+/-Inf/NaN is classified and its operation recomputed in FP32 from the exact FP16
-operands, which separates FP16 overflow from other causes. No PA3 label/score,
-retry or recovery. ``cast_overflow_fp16`` is a Research Lead review CANDIDATE
-(vLLM 78648758794e2268a3af04b1eeab2347d961d88a semantics); PA3 execution never
-installs it. Any GPU run needs an APPROVED decision line in DECISIONS.md.
++/-Inf/NaN is classified and, where its operands are available, recomputed in FP32
+from the exact FP16 operands. Hooks see module boundaries only: functional ops
+inside a module (SDPA, RoPE, masked_scatter) and anything outside hooked modules
+cannot be pinpointed and are reported ``UNRESOLVED``, never guessed. No PA3
+label/score. ``cast_overflow_fp16`` is a Research Lead review CANDIDATE (vLLM
+78648758794e2268a3af04b1eeab2347d961d88a semantics); PA3 execution never installs
+it. Authority, durable journal and CLI: ``nan_probe_run``.
 """
 
-import argparse
+import base64
 from copy import deepcopy
-from datetime import datetime, timezone
 from functools import partial
-import json
-import os
-from pathlib import Path
-import re
-import shutil
-import subprocess
-import tempfile
+import hashlib
 
 FP16_MAX = 65504.0
 CHUNK = 1 << 24
-RECOMPUTE_LIMIT = 1 << 28
+# FP32 Linear recompute output cap: 2**26 elements = 256 MiB (ESTIMATED T4 headroom, unmeasured).
+RECOMPUTE_LIMIT = 1 << 26
 # Residual adds are inline Python inside these blocks, so no hook sees them alone.
 RESIDUAL_BLOCKS = {"Qwen2_5_VLVisionBlock": ("attn", "norm2", "mlp"),
                    "Qwen2_5_VLDecoderLayer": ("self_attn", "post_attention_layernorm", "mlp")}
+LOCALIZED_KINDS = ("MLP_RESIDUAL_ADD", "ATTENTION_RESIDUAL_ADD", "LINEAR")
 PRIMARY_KWARGS = ("hidden_states", "inputs_embeds", "hidden_state", "x")
-APPROVAL = re.compile(r"^(DEC-PA3-[A-Z0-9-]+) status: APPROVED_FOR_NAN_LOCALIZATION$", re.M)
-PLAN = "configs/pre_freeze/qwen2_5_t4_runtime.v1.json"
 
 
 def _floating(value, torch):
@@ -40,6 +35,7 @@ def _floating(value, torch):
 
 
 def stats(tensor, torch):
+    """Each int()/float() is a host sync on CUDA, so errors surface at this module."""
     if tensor is None:
         return None
     counts, absmax = [0, 0, 0], 0.0
@@ -63,6 +59,16 @@ def _overflow(total):
     total = total.abs()
     return {"fp32_absmax": float(total.amax()), "exceeds_fp16_max": bool((total > FP16_MAX).any()),
             "elements_over_fp16_max": int((total > FP16_MAX).sum())}
+
+
+def localization(origin, logits_summary):
+    """FP16_OVERFLOW_LOCALIZED only with an FP32-recomputed overflow at a named op."""
+    if origin is None:
+        return "NO_NONFINITE" if not nonfinite(logits_summary) else "UNRESOLVED"
+    recompute = origin.get("recompute")
+    if origin.get("kind") in LOCALIZED_KINDS and recompute and recompute["exceeds_fp16_max"]:
+        return "FP16_OVERFLOW_LOCALIZED"
+    return "UNRESOLVED"
 
 
 class NonfiniteProbe:
@@ -177,24 +183,16 @@ def bitwise_equal(a, b, torch):
             and bool(torch.equal(a.view(views[a.dtype]), b.view(views[b.dtype]))))
 
 
-def require_approval(repo, decision):
-    approved = set(APPROVAL.findall((Path(repo) / "DECISIONS.md").read_text(encoding="utf-8")))
-    if decision not in approved:
-        raise PermissionError("NAN_LOCALIZATION_REQUIRES_APPROVED_DECISION")
-
-
-def parse_samples(values):
-    rows = []
-    for value in values:
-        parts = value.split("|")
-        if len(parts) != 3 or not parts[1].startswith("DATA_PATH/train/") or len(parts[2]) != 64:
-            raise ValueError("EXPLICIT_TRAIN_SAMPLE_TRIPLET_REQUIRED")
-        rows.append(dict(zip(("sample_id", "image_locator", "image_sha256"), parts)))
-    return rows
+def encode_raw(tensor):
+    """Exact raw bytes (little-endian, as stored) of a CPU tensor for durable JSON."""
+    data = tensor.detach().cpu().contiguous().numpy().tobytes()
+    return {"dtype": str(tensor.dtype).replace("torch.", ""), "shape": list(tensor.shape),
+            "sha256": hashlib.sha256(data).hexdigest(), "base64": base64.b64encode(data).decode()}
 
 
 def probe_sample(scorer, image, *, clamp):
     """Exact native prefill via generate (one new token); diagnostics, never a PA3 score."""
+    from safeshift.ls1.runtime import summarize_tensor
     torch, model = scorer.torch, scorer.model
     scorer.validator()
     model.rope_deltas = None
@@ -208,95 +206,15 @@ def probe_sample(scorer, image, *, clamp):
     finally:
         if handle is not None:
             handle.remove()
-    scorer.validator()
     logits = output.logits[0].detach()
+    scorer.validator()
+    summary = stats(logits, torch)
+    argmax = int(logits[0].argmax())
+    report = probe.report()
     return {"candidate_merger_clamp": clamp, "pixel_values": stats(inputs["pixel_values"], torch),
             "input_shapes": {k: list(v.shape) for k, v in inputs.items()},
-            "image_grid_thw": inputs["image_grid_thw"].tolist(),
-            "step0_raw_logits": stats(logits, torch), "step0_argmax_id": int(logits[0].argmax()),
-            **probe.report()}, logits.cpu()
-
-
-def run(args):
-    from safeshift.ls1.experiment import open_sample
-    from safeshift.ls1.runtime import NativeScorer
-    from . import preflight
-    rows = parse_samples(args.sample)
-    t1, tokenizer = preflight.tokenizer_check(args.repo, args.snapshot)
-    if t1["status"] != "PASS":
-        raise ValueError("T1_" + t1["status"])
-    scorer = NativeScorer("qwen2_5", args.snapshot, tokenizer, t1["candidate_token_ids"], repo=args.repo)
-    torch = scorer.torch
-    report = {"schema": "pa3-qwen-nan-probe-v1", "decision": args.decision, "pa3_scores": None,
-              "timestamp_utc": datetime.now(timezone.utc).isoformat(), "hardware": scorer.hardware,
-              "software": scorer.software, "snapshot": scorer.snapshot_receipt, "samples": []}
-    for row in rows:
-        entry = {**row, "passes": []}
-        report["samples"].append(entry)
-        with open_sample(row, args.dataset_root) as image:
-            baseline, logits = probe_sample(scorer, image, clamp=False)
-            entry["passes"].append(baseline)
-            if args.candidate_clamp:
-                candidate, clamped = probe_sample(scorer, image, clamp=True)
-                candidate["step0_bitwise_equal_to_baseline"] = bitwise_equal(logits, clamped, torch)
-                entry["passes"].append(candidate)
-    with args.output.open("x", encoding="utf-8") as stream:
-        json.dump(report, stream, indent=1, sort_keys=True, allow_nan=False)
-    return report
-
-
-def launch(args):
-    """Kaggle parent: reuse audited runtime/model restore, then one offline child."""
-    from safeshift.ls1.kaggle import attached_path, verify_runtime_input, runtime_interpreter, restore_model
-    from safeshift.runners.internvl3_snapshot import OFFLINE_ENV
-    runtime_input = attached_path(args.inputs, args.runtime_input)
-    verify_runtime_input(runtime_input, attached_path(args.inputs, args.runtime_inventory_input),
-                         args.runtime_inventory_sha256)
-    restore_repo = Path(tempfile.mkdtemp(prefix="pa3-nan-probe-runtime-"))
-    (restore_repo / PLAN).parent.mkdir(parents=True)
-    shutil.copyfile(args.repo / PLAN, restore_repo / PLAN)
-    snapshot = restore_model(restore_repo, attached_path(args.inputs, args.model_input), "qwen2_5")
-    site = attached_path(args.inputs, args.runtime_site_packages) if args.runtime_site_packages else None
-    if site and not site.resolve().is_relative_to(runtime_input.resolve()):
-        raise ValueError("SITE_OUTSIDE_HASH_VERIFIED_RUNTIME")
-    runtime = runtime_interpreter(restore_repo, runtime_input, "qwen2_5", site)
-    env = {**os.environ, **OFFLINE_ENV, "CUDA_VISIBLE_DEVICES": "0", "PYTHONPATH": str(args.repo),
-           "PYTHONNOUSERSITE": "1"}
-    if runtime["site_packages"]:
-        env["PYTHONPATH"] += os.pathsep + runtime["site_packages"]
-    env.pop("PYTHONHOME", None)
-    command = [runtime["python"], "-s", "-m", "safeshift.pa3.native.nan_probe", "--repo", str(args.repo),
-               "--snapshot", str(snapshot), "--decision", args.decision, "--output", str(args.output),
-               "--dataset-root", str(attached_path(args.inputs, args.dataset_input))]
-    command += [x for s in args.sample for x in ("--sample", s)]
-    command += ["--candidate-clamp"] if args.candidate_clamp else []
-    return subprocess.run(command, cwd=args.repo, env=env, check=True).returncode  # one attempt, no retry
-
-
-def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[3])
-    parser.add_argument("--decision", required=True)
-    parser.add_argument("--sample", action="append", required=True, metavar="ID|LOCATOR|SHA256")
-    parser.add_argument("--candidate-clamp", action="store_true")
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--launch", action="store_true", help="Kaggle parent mode")
-    parser.add_argument("--snapshot", type=Path)
-    parser.add_argument("--dataset-root", type=Path, help="TRAIN root containing DATA_PATH/")
-    for name in ("inputs", "runtime-input", "runtime-inventory-input", "runtime-inventory-sha256",
-                 "runtime-site-packages", "model-input", "dataset-input"):
-        parser.add_argument("--" + name)
-    args = parser.parse_args(argv)
-    require_approval(args.repo, args.decision)  # before runtime, model or image access
-    parse_samples(args.sample)
-    if args.output.exists():
-        raise FileExistsError("NAN_PROBE_OUTPUT_EXISTS_NO_OVERWRITE")
-    if args.launch:
-        return launch(args)
-    if not (args.snapshot and args.dataset_root):
-        parser.error("--snapshot and --dataset-root are required in child mode")
-    return run(args)
-
-
-if __name__ == "__main__":
-    main()
+            "image_grid_thw": inputs["image_grid_thw"].tolist(), "step0_raw_logits": summary,
+            "step0_argmax_id": argmax,
+            # Same reduction as archived Shard 0 step records, for reproduction fidelity checks.
+            "step0_archive_comparable": summarize_tensor(logits, scorer.candidate_ids, argmax, torch),
+            "localization": localization(report["origin"], summary), **report}, encode_raw(logits)
