@@ -2939,3 +2939,31 @@ groups rest on unresolved links). GO_PA3 means exploratory evidence worth a
 Seminar refocus, not scientific confirmation. RQ1-RQ3, README, D9R22/D9R24,
 LS1 decisions/locks and frozen contracts are unchanged pending a real verdict.
 Runbook: notes/pa3_seminar_direction_runbook.md.
+
+### DEC-PA3-010 — PA3-R2 pre-merger clamp and full TRAIN rerun (2026-10-14)
+
+Authority: Research Lead's explicit task following the reported four-pass Tesla T4
+diagnosis (PR #102 candidate). **APPROVED_PREPARATION_ONLY; technical/execution
+grant PENDING**. Lead selected all 3,763 TRAIN images as a new PA3-R2 experiment,
+not continuation or repair of original Shard 0. This entry is not an execution grant.
+
+Integrate the GPU-tested FP16 clamp immediately before Qwen visual merger: return
+finite tensors unchanged; otherwise clamp to ±(FP16 max - 1000), preserving NaNs.
+Keep revision, FP16, SDPA, C1, tokenizer, 32-token cap, data, split/labels and PA3
+formula unchanged. Record per-image clamp activation/overflow/NaN counts and outcome;
+retain raw evidence and fail on nonfinite output. No metric or dataset change.
+
+Evidence supplied by Lead: failing TRAIN image has 151,936/151,936 first-step NaNs,
+block 31/merger input has one -Inf, RMSNorm produces NaN; clamp removes output
+NaN/Inf and activates. Same-shape control is bitwise identical on/off. Four passes
+completed, 14/14 receipts checked by ChatGPT (reported, not reverified here).
+Exact producing operation inside block 31 remains UNRESOLVED. Real 32-token T4
+generation and full TRAIN results remain NOT_RUN for PA3-R2.
+
+Own authority `configs/pa3/r2_authority.v1.json` has null grant/implementation.
+Own manifest `data/manifests/pa3_r2_full_train.v1.json` pins the existing cohort
+and new run IDs `pa3-qwen-r2-train-shard-0` through `-3`, sizes 941/941/941/940.
+Old grants/results remain historical; mixed-experiment pooling is forbidden.
+No GPU, TEST, self-grant, merge or Antigravity audit in this task. Stop at Draft PR
+for ChatGPT GitHub review, then separately requested audit/Lead release.
+Evidence, grant schema, release and minimal owner steps: `notes/pa3_r2_runbook.md`.

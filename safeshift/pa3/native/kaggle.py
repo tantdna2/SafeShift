@@ -51,7 +51,7 @@ def launch(repo, inputs, settings):
     stage = "AUTHORITY"
     try:
         access.require(settings["mode"], settings, repo)
-        if settings["mode"] not in ("pilot-train", access.DIAGNOSTIC["mode"], "full-train"):
+        if settings["mode"] not in ("pilot-train", access.DIAGNOSTIC["mode"], "full-train", "full-train-r2"):
             access.require("technical", settings, repo)
         stage = "A_SOURCE"
         journal.write("source", preflight.source(repo, settings["source_commit"]))
@@ -67,7 +67,7 @@ def launch(repo, inputs, settings):
         if not model_input.is_file() or not model_input.name.endswith((".tar", ".tar.gz", ".tgz")):
             raise ValueError("EXPLICIT_MODEL_ARCHIVE_REQUIRED_NO_DIRECTORY_SCAN")
         restore_repo = repo
-        if settings["mode"] == "full-train":
+        if settings["mode"] in ("full-train", "full-train-r2"):
             # Keep incrementally fsynced raw journals in working/Output. Expanded
             # weights/runtime belong in ephemeral storage, not the saved Version.
             restore_repo = Path(tempfile.mkdtemp(prefix="pa3-full-train-runtime-"))
