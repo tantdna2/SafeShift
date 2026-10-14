@@ -1,5 +1,22 @@
 # Decision log
 
+## DEC-PA3-008 - Shard 0 NaN diagnosis / guarded continuation preparation (2026-10-14)
+
+Authority: user's urgent CPU diagnosis and separate Draft PR request.
+PREPARATION_ONLY; no new experiment approval. Source M/BASE:
+`486b4af7ad1f402395b60b0c36ebfd80a74cf4de`.
+Archive confirms 84 SUCCESS, one RAW_NAN_OR_INF, 856 NOT_ATTEMPTED; root cause and
+cross-image model safety remain unproven. Preserve PA3 method, precision, raw
+checks, incomplete status, original IDs and all existing authority bytes.
+
+Prepare/test continuation only on exact finite state identity plus cache-clearance
+evidence; unknown/changed/opaque state remains terminal. Native qualification is
+BLOCKED, not inferred from CPU doubles. Shard 0 cannot be retried. Any new run for
+exactly the 856 unattempted IDs requires a separate Lead-approved scope, run ID,
+source-bound authority and any necessary technical qualification; none granted.
+Evidence, implementation limits and proposed approval scope:
+`notes/pa3_shard0_nan_diagnosis.md`. No merge or TEST access.
+
 ## DEC-PA3-007 - Full TRAIN Kaggle preparation (2026-10-13; execution PENDING)
 
 Authority: the Research Lead's urgent full-TRAIN preparation request in this session.
