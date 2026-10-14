@@ -2030,3 +2030,30 @@ until a real verdict exists. Runbook: notes/pa3_seminar_direction_runbook.md.
 - [ ] Owner supplies audited Inputs and records four exact attempts; actual GPU runs and Seminar metrics remain NOT_RUN.
 
 Handoff/evidence: `notes/pa3_full_train_kaggle_runbook.md`. New grant null; no TEST or merge.
+
+## PA3-R2 — adopt verified merger clamp and prepare full rerun (2026-10-14; Draft)
+
+- [x] Read repo guidance/PA3 path/PR #102; isolated branch from main BASE
+  `486b4af7ad1f402395b60b0c36ebfd80a74cf4de`; original local work retained.
+- [x] Official Qwen runner scoped pre-merger FP16 clamp; finite identity, NaN
+  preservation, raw-before-rejection and per-image overflow evidence; DEC-PA3-010.
+- [x] New content-addressed R2 manifest for the exact original 3,763 TRAIN IDs;
+  four distinct run IDs, null authority, no old-result pooling or grant reuse.
+- [x] Durable per-image journal/recovery and CPU audit/CSV clamp columns; Input
+  auto-discovery and post-approval release generator for four filled Kaggle notebooks.
+- [x] CPU tests: 17 distinct R2 tests passed (including tiny random Qwen FP16/SDPA
+  32 steps, bitwise finite identity, earlier NaN rejection, real synthetic Git
+  topology, four-shard audit, hard exits/torn tails, discovery/release).
+  Existing native/full-TRAIN/boundaries suite: 67/67 PASS.
+  Broader pinned CPU run: 195 tests, 190 PASS / 4 SKIP / 1 inherited FAIL;
+  added release-notebook test and final two workflow rechecks also PASS.
+- [ ] ChatGPT GitHub review of the separate Draft PR; then separately requested
+  Antigravity audit. No audit delegation or merge in this task.
+- [ ] Research Lead technical/execution grant and audited F1/F2/M release.
+- [ ] Real Qwen 32-token T4 validation and 3,763-image PA3-R2 outcomes; wall time,
+  VRAM and host-kill Output retention remain unverified.
+
+Reported GPU diagnostic evidence is attributed to the Lead, not independently
+reverified here. No GPU, pretrained model, raw TRAIN or TEST access, or self-grant.
+Runbook: `notes/pa3_r2_runbook.md`. Existing seminar grant-null test also fails on
+exact BASE because that historical 90-image grant is already populated; unchanged.

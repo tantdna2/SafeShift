@@ -9,7 +9,14 @@ from .seminar_workflow import Telemetry, _close
 
 
 def execute_train(repo, settings, snapshot, inputs):
-    journal = Journal(run_path(repo, settings["run_id"]), create=True)
+    from . import train
+    journal_type = Journal
+    if settings["mode"] == "full-train-r2":
+        from . import r2 as train
+        from .durable import DurableJournal
+        journal_type = DurableJournal
+    access.require(train.MODE, settings, repo)
+    journal = journal_type(run_path(repo, settings["run_id"]), create=True)
     sibling = lambda suffix: journal.root.parent / (journal.root.name + "-" + suffix)
     stage, tokenizer, telemetry, failure = "TRAIN_AUTHORITY", None, None, None
     try:

@@ -95,12 +95,17 @@ def validate_full(value, shards):
     return {r["sample_id"]: {k: r[k] for k in ("level", "domain", "group")} for r in samples}
 
 
-def authority(repo, source_commit):
+def authority(repo, source_commit, *, protocol=None):
     """Exact BASE -> implementation F1 -> authority-only F2 -> standard merge M.
 
     Topology attests source integrity, not human approval. Lead must independently
     review/approve F2 and maintain the global one-attempt ledger across Kaggle versions.
     """
+    if protocol is None:
+        import sys
+        protocol = sys.modules[__name__]
+    AUTHORITY, BASE, SCOPE = protocol.AUTHORITY, protocol.BASE, protocol.SCOPE
+    run_id, SIZES = protocol.run_id, protocol.SIZES
     repo = Path(repo)
     value = strict_json((repo / AUTHORITY).read_bytes())
     if set(value) != {"base", "implementation", "scope", "grant"} or value["scope"] != SCOPE:
@@ -110,7 +115,7 @@ def authority(repo, source_commit):
         raise PermissionError("TRAIN_GRANT_PENDING_RESEARCH_LEAD_AND_AUDIT")
     if (type(grant) is not dict or set(grant) != {*HASHES, "approval", "decision", "shards"}
             or any(type(grant[k]) is not str or not re.fullmatch(r"[0-9a-f]{64}", grant[k]) for k in HASHES)
-            or grant["decision"] != "DEC-PA3-007" or not isinstance(grant["approval"], str) or not grant["approval"].strip()
+            or grant["decision"] != getattr(protocol, "DECISION", "DEC-PA3-007") or not isinstance(grant["approval"], str) or not grant["approval"].strip()
             or type(grant["shards"]) is not list or len(grant["shards"]) != 4):
         raise PermissionError("TRAIN_GRANT_SCHEMA")
     for i, entry in enumerate(grant["shards"]):
@@ -134,7 +139,10 @@ def authority(repo, source_commit):
                 or (repo / AUTHORITY).read_bytes() != preflight.git_blob(repo, f2, AUTHORITY)
                 or preflight.git(repo, "status", "--porcelain", "--untracked-files=no")):
             raise PermissionError("TRAIN_SOURCE_TREE_CHANGED")
-        for path in (access.AUTHORITY, access.DIAGNOSTIC_AUTHORITY):
+        prior = (access.AUTHORITY, access.DIAGNOSTIC_AUTHORITY)
+        if protocol.MODE != MODE:
+            prior += ("configs/pa3/full_train_authority.v1.json",)
+        for path in prior:
             if preflight.git_blob(repo, head, path) != preflight.git_blob(repo, value["base"], path):
                 raise PermissionError("TRAIN_PRIOR_AUTHORITY_CHANGED")
     except PermissionError:
@@ -144,16 +152,19 @@ def authority(repo, source_commit):
     return value
 
 
-def require(settings, repo):
+def require(settings, repo, *, protocol=None):
+    if protocol is None:
+        import sys
+        protocol = sys.modules[__name__]
     shard = settings.get("shard_id")
-    if settings.get("mode") != MODE or settings.get("run_id") != run_id(shard):
+    if settings.get("mode") != protocol.MODE or settings.get("run_id") != protocol.run_id(shard):
         raise PermissionError("TRAIN_EXACT_MODE_AND_RUN_REQUIRED")
     allowed = {"mode", "run_id", "shard_id", "source_commit", "source_bundle_input", "source_bundle_sha256",
                "model_input", "runtime_input", "runtime_inventory_input", "runtime_site_packages", "dataset_input",
                "inference_manifest_sha256", "technical_run_input", "technical_source_bundle_input", "train_inputs_root", *HASHES}
     if set(settings) - allowed:
         raise PermissionError("TRAIN_SETTINGS_OUTSIDE_SCOPE")
-    value = authority(repo, settings.get("source_commit"))
+    value = protocol.authority(repo, settings.get("source_commit"))
     for key in HASHES:
         if settings.get(key) != value["grant"][key]:
             raise PermissionError("TRAIN_APPROVAL_BINDING:" + key)
@@ -194,8 +205,8 @@ def open_image(repo, settings, row, inputs):
     return open_sample(row, seminar.dataset_root(settings, inputs))
 
 
-def verify_prior(repo, settings, inputs, tokenizer):
-    require(settings, repo)
+def verify_prior(repo, settings, inputs, tokenizer, *, require_gate=None):
+    (require_gate or require)(settings, repo)
     # Reuse the audited four-image CPU recheck with the same pinned technical source.
     from . import pilot
     import subprocess

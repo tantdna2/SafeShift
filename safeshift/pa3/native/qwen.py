@@ -6,6 +6,7 @@ and native IDs are durably saved before decode, validation or semantic parsing.
 
 from copy import deepcopy
 from datetime import datetime, timezone
+from contextlib import nullcontext
 
 from safeshift.ls1.runtime import NativeScorer, summarize_tensor
 from . import access, preflight
@@ -15,7 +16,10 @@ class QwenRawScorer(NativeScorer):
     def __init__(self, snapshot, tokenizer, candidate_ids, *, repo, settings):
         access.require(settings["mode"], settings, repo)
         preflight.source(repo, settings["source_commit"])
-        if settings["mode"] == "full-train":
+        if settings["mode"] == "full-train-r2":
+            from . import r2
+            r2.verify_prior(repo, settings, settings["train_inputs_root"], tokenizer)
+        elif settings["mode"] == "full-train":
             from . import train
             train.verify_prior(repo, settings, settings["train_inputs_root"], tokenizer)
         elif settings["mode"] == "pilot-train":
@@ -34,7 +38,9 @@ class QwenRawScorer(NativeScorer):
             raise ValueError("PROCESSOR_TOKENIZER_T1_MISMATCH")
 
     def evidence(self):
-        return {"hardware": self.hardware, "software": self.software, "snapshot": self.snapshot_receipt,
+        from .merger_clamp import POLICY
+        return {"visual_merger_clamp": POLICY if self.settings["mode"] == "full-train-r2" else None,
+                "hardware": self.hardware, "software": self.software, "snapshot": self.snapshot_receipt,
                 "generation_config": self.config.to_dict(), "processor_class": type(self.processor).__name__,
                 "model_class": type(self.model).__name__, "precision": "FP16", "attention": "sdpa",
                 "quantization": "NONE", "prompt": self.prompt}
@@ -54,7 +60,11 @@ class QwenRawScorer(NativeScorer):
             kwargs = {**self.condition["decoding"], "max_new_tokens": 32,
                       "do_sample": False, "num_beams": 1, "num_return_sequences": 1,
                       "return_dict_in_generate": True, "output_logits": True, "output_scores": True}
-            with self.torch.inference_mode():
+            from .merger_clamp import MergerClamp
+            clamp = (MergerClamp(self.model, self.torch, lambda i, event:
+                        journal.write(prefix + f".clamp-{i:02d}", event))
+                     if self.settings["mode"] == "full-train-r2" else nullcontext())
+            with clamp, self.torch.inference_mode():
                 output = self.model.generate(**inputs, generation_config=config, **kwargs)
             native = journal.write(prefix + ".native", {
                 "sequences": output.sequences.tolist(), "input_ids": inputs["input_ids"][0].tolist(),
@@ -81,6 +91,13 @@ class QwenRawScorer(NativeScorer):
                 "decoded_text": text, "candidate_token_ids": list(self.candidate_ids), "steps": steps,
                 "generation_config": native["generation_config"], "generation_kwargs": kwargs,
                 "forced_assistant_prefix_ids": [], "timestamp_utc": native["timestamp_utc"]})
+            if self.settings["mode"] == "full-train-r2":
+                if clamp.calls != 1:
+                    raise ValueError("R2_EXACT_ONE_VISUAL_PREFILL_REQUIRED")
+                # Persist raw before rejecting; never replace NaN logits or scores.
+                if any(s["raw"]["nonfinite"][k] for s in steps
+                       for k in ("nan", "positive_inf", "negative_inf")):
+                    raise ValueError("R2_NONFINITE_RAW_LOGITS")
             self.validator()  # failures still retain the complete raw evidence
             return raw
         except BaseException:

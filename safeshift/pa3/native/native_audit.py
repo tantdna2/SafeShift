@@ -34,6 +34,11 @@ def audit(root, repo, tokenizer):
     if evidence["status"] != "PASS" or any(evidence[k] != v for k, v in observed.items()):
         raise ValueError("T1_EVIDENCE_MISMATCH")
     model = journal.read("model")
+    r2 = header.get("mode") == "full-train-r2"
+    if r2:
+        from .merger_clamp import POLICY
+        if model.get("visual_merger_clamp") != POLICY:
+            raise ValueError("R2_CLAMP_POLICY_MISSING")
     runtime = journal.read("runtime")
     if (model["software"] != preflight.plan("qwen2_5", repo)["software"]
             or model["snapshot"] != runtime["snapshot"] or model["software"] != runtime["software"]
@@ -56,6 +61,8 @@ def audit(root, repo, tokenizer):
         prefix = f"sample-{i:06d}"
         allowed.update(prefix + "." + k for k in ("attempt", "native", "raw", "result", "error"))
         allowed.update(prefix + f".step-{s:02d}" for s in range(32))
+        if r2:
+            allowed.add(prefix + ".clamp-00")
         attempted = journal.exists(prefix + ".attempt")
         persisted = journal.exists(prefix + ".raw")
         calculated = journal.exists(prefix + ".result")
@@ -101,6 +108,21 @@ def audit(root, repo, tokenizer):
                 raise ValueError("ERROR_SEQUENCE_MISMATCH")
             row.update(status=error["status"], errors=[error["exception_type"]])
         stopped = not calculated or row["status"] == "TECHNICAL_ERROR"
+        if r2:
+            event = journal.read(prefix + ".clamp-00") if journal.exists(prefix + ".clamp-00") else None
+            if event is not None:
+                counts = event["input_nonfinite"]
+                if (not attempted or event["policy"] != POLICY or type(event["triggered"]) is not bool
+                        or any(type(v) is not int or v < 0 for v in counts.values())
+                        or set(counts) != {"nan", "positive_inf", "negative_inf"}
+                        or event["overflow_count"] != counts["positive_inf"] + counts["negative_inf"]
+                        or event["triggered"] != bool(sum(counts.values()))):
+                    raise ValueError("R2_CLAMP_EVIDENCE_INVALID")
+            if persisted and event is None:
+                raise ValueError("R2_RAW_WITHOUT_CLAMP_EVIDENCE")
+            if row["status"] == "SUCCESS" and (event is None or event["input_nonfinite"]["nan"]):
+                raise ValueError("R2_SUCCESS_WITHOUT_VALID_CLAMP_EVIDENCE")
+            row["merger_clamp"] = event  # null means unobserved, never 'did not trigger'
         results.append(row)
     if set(journal.inventory()) - allowed:
         raise ValueError("UNKNOWN_RUN_RECORD")

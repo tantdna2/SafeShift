@@ -123,6 +123,9 @@ def diagnostic_authority(repo, source_commit):
 
 def require(operation, settings=None, repo=None):
     settings = settings or {}
+    if operation == "full-train-r2":
+        from . import r2
+        return r2.require(settings, repo or ROOT)
     if operation == "full-train":
         from . import train
         return train.require(settings, repo or ROOT)
@@ -192,6 +195,9 @@ def model_ticket(repo, settings):
 def image_ticket(repo, settings, image, journal, prefix):
     """Exclusive persisted generation tickets; fresh-session replay needs owner ledger."""
     require(settings["mode"], settings, repo)
+    if settings["mode"] == "full-train-r2":
+        from . import r2
+        return r2.image_ticket(repo, settings, image, journal, prefix)
     if settings["mode"] == "full-train":
         from . import train
         return train.image_ticket(repo, settings, image, journal, prefix)

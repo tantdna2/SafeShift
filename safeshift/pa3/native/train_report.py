@@ -59,16 +59,23 @@ def checked_run(root, repo, tokenizer, full_hash=None):
     if not journal.verify():
         raise ValueError("SEALED_TRAIN_RUN_REQUIRED")
     header = journal.read("manifest")
+    from . import train
+    if header.get("mode") == "full-train-r2":
+        from . import r2 as train
     shard = header.get("shard_id")
     if (header.get("mode") != train.MODE or header.get("run_id") != train.run_id(shard)
             or header.get("full_manifest_sha256") != (full_hash or header.get("full_manifest_sha256"))):
         raise ValueError("EXACT_TRAIN_RUN_BINDING")
-    payload = (Path(repo) / train.inference_path(shard)).read_bytes()
     import hashlib
+    if header.get("mode") == "full-train-r2":
+        payload = json_bytes(train.inference_payload(repo, train.manifest(repo, header["full_manifest_sha256"]), shard))
+    else:
+        payload = (Path(repo) / train.inference_path(shard)).read_bytes()
     if hashlib.sha256(payload).hexdigest() != header["inference_manifest_sha256"]:
         raise ValueError("TRAIN_HEADER_INFERENCE_CHECKSUM")
     from safeshift.protocol.schema import strict_json
-    expected = train.validate_inference(strict_json(payload), shard)
+    expected = (strict_json(payload)["samples"] if header.get("mode") == "full-train-r2"
+                else train.validate_inference(strict_json(payload), shard))
     if header["samples"] != expected:
         raise ValueError("TRAIN_HEADER_MEMBERSHIP_MISMATCH")
     # Also validate the complete four-way universe before evaluating one shard.
@@ -84,6 +91,9 @@ def checked_run(root, repo, tokenizer, full_hash=None):
             raise ValueError("PRE_MODEL_FAILURE_PROOF_REQUIRED")
         checked = {"integrity": "PRE_MODEL_FAILURE_NO_SAMPLE_CALLS", "sealed": True, "completed": False,
                    "results": [pending(r["sample_id"]) for r in expected]}
+        if header.get("mode") == "full-train-r2":
+            for row in checked["results"]:
+                row["merger_clamp"] = None
     return header, checked, {r["sample_id"]: metadata[r["sample_id"]] for r in expected}
 
 
@@ -103,6 +113,9 @@ def export(output, rows, metadata, evaluation, evidence):
     # Recomputable endpoint inputs plus decision-step raw label logits.
     fields = ["sample_id", "domain", "true_level", "status", "attempted", "persisted", "parsed",
               "generated_label", "true_binary_label", "generated_binary_label", "pa3_score", "z1", "z2", "z3", "z4", "errors"]
+    has_clamp = any("merger_clamp" in row for row in rows)
+    if has_clamp:
+        fields += ["clamp_triggered", "overflow_count", "merger_nan_count"]
     samples = []
     for row in rows:
         raw = row["details"]["raw_label_logits"] if row["details"] else [None] * 4
@@ -112,6 +125,11 @@ def export(output, rows, metadata, evaluation, evidence):
             "true_binary_label": train.seminar.binary(metadata[row["sample_id"]]["level"]),
             "generated_binary_label": train.seminar.binary(row["generated_label"]) if row["generated_label"] else None,
             "pa3_score": row["score"], **dict(zip(("z1", "z2", "z3", "z4"), raw)), "errors": "|".join(row["errors"])})
+        if has_clamp:
+            event = row.get("merger_clamp")
+            samples[-1].update(clamp_triggered=event["triggered"] if event else None,
+                              overflow_count=event["overflow_count"] if event else None,
+                              merger_nan_count=event["input_nonfinite"]["nan"] if event else None)
     write_new(output / "samples.csv", csv_bytes(fields, samples))
     totals, confusion = [], []
     for scope, result in [("ALL", evaluation["overall"]), *evaluation["by_domain"].items()]:
@@ -142,9 +160,13 @@ def merge(repo, roots, tokenizer, output):
     if len(roots) != 4:
         raise ValueError("EXACT_FOUR_SHARD_PACKAGES_REQUIRED")
     rows, seen, evidence = [], set(), []
-    full_hash = None
+    full_hash, mode = None, None
     for root in roots:
         root = Path(root)
+        current_mode = Journal(root).read("manifest").get("mode")
+        if mode is not None and mode != current_mode:
+            raise ValueError("MIXED_PA3_EXPERIMENTS_FORBIDDEN")
+        mode = current_mode
         header, checked, shard_metadata = checked_run(root, repo, tokenizer, full_hash)
         if header["shard_id"] in seen:
             raise ValueError("DUPLICATE_TRAIN_SHARD")
@@ -168,6 +190,9 @@ def merge(repo, roots, tokenizer, output):
                 raise ValueError("TRAIN_EXPORT_RECOMPUTATION_MISMATCH")
         evidence.append({"run_id": header["run_id"], "shard_id": header["shard_id"],
                          "seal": Journal(root).read("seal"), "audit": checked})
+    from . import train
+    if mode == "full-train-r2":
+        from . import r2 as train
     metadata = train.load_full(repo, full_hash)
     if seen != {0, 1, 2, 3} or {r["sample_id"] for r in rows} != set(metadata) or len(rows) != train.COUNT:
         raise ValueError("DISJOINT_COMPLETE_TRAIN_RESULT_UNIVERSE_REQUIRED")
