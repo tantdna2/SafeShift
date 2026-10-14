@@ -53,13 +53,21 @@ def execute_train(repo, settings, snapshot, inputs):
         scorer = QwenRawScorer(snapshot, tokenizer, t1["candidate_token_ids"], repo=repo,
                                settings={**settings, "train_inputs_root": str(Path(inputs).absolute())})
         journal.write("model", scorer.evidence())
+        from .state_guard import StateGuard
+        stage = "E_MODEL_STATE_BASELINE"
+        guard = StateGuard(scorer, journal)
         stage = "F_ONE_PASS"
         telemetry = Journal(sibling("telemetry"), create=True)
         infer(journal, samples, Telemetry(scorer, telemetry), tokenizer,
-              lambda row: train.open_image(repo, settings, row, inputs))
+              lambda row: train.open_image(repo, settings, row, inputs), state_guard=guard)
+        if any(journal.read(f"sample-{i:06d}.result")["status"] == "TECHNICAL_ERROR"
+               for i in range(len(samples))):
+            # Exhausting the manifest is not a successful/complete baseline.
+            raise ValueError("TRAIN_EXHAUSTED_WITH_TECHNICAL_ERRORS")
         journal.write("finish", {"status": "FINISHED", "planned": len(samples)})
     except BaseException as exc:
-        journal.write("failure", {"stage": stage, "exception_type": type(exc).__name__, "retry_permitted": False})
+        journal.write("failure", {"stage": stage, "exception_type": type(exc).__name__,
+                                  "reason": str(exc), "retry_permitted": False})
         failure = exc
     finally:
         try:

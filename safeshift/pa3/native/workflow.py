@@ -11,7 +11,7 @@ from .journal import Journal, run_path
 from .native_score import score
 
 
-def infer(journal, samples, scorer, tokenizer, open_image):
+def infer(journal, samples, scorer, tokenizer, open_image, *, state_guard=None):
     """Internal orchestration; tests supply API-compatible CPU model doubles."""
     for i, sample in enumerate(samples):
         prefix = f"sample-{i:06d}"
@@ -28,6 +28,9 @@ def infer(journal, samples, scorer, tokenizer, open_image):
                           "status": "INTERRUPTED" if isinstance(exc, KeyboardInterrupt) else "TECHNICAL_ERROR"})
             raise
         if result["status"] == "TECHNICAL_ERROR":
+            if (state_guard is not None and result["errors"] == ["RAW_NAN_OR_INF"]
+                    and state_guard.after_nonfinite(sample, prefix)):
+                continue  # one attempt per ID; never repair/reclassify the failed sample
             raise ValueError("RAW_SCORING_TECHNICAL_FAILURE")
 
 

@@ -11,6 +11,7 @@ from . import preflight
 from ..artifacts import json_bytes
 from .journal import Journal
 from .native_score import pending, score
+from .state_guard import permits
 
 
 def audit(root, repo, tokenizer):
@@ -52,6 +53,11 @@ def audit(root, repo, tokenizer):
                            "output_logits": True, "output_scores": True}
     results, stopped = [], False
     allowed = {"manifest", "source", "runtime", "t1", "model", "finish", "failure", "qualification", "seal"}
+    baseline = None
+    if header.get("mode") == "full-train":
+        allowed.add("state-baseline")
+        if journal.exists("state-baseline"):
+            baseline = journal.read("state-baseline")
     for i, sample in enumerate(samples):
         prefix = f"sample-{i:06d}"
         allowed.update(prefix + "." + k for k in ("attempt", "native", "raw", "result", "error"))
@@ -101,11 +107,21 @@ def audit(root, repo, tokenizer):
                 raise ValueError("ERROR_SEQUENCE_MISMATCH")
             row.update(status=error["status"], errors=[error["exception_type"]])
         stopped = not calculated or row["status"] == "TECHNICAL_ERROR"
+        if journal.exists(prefix + ".state"):
+            if (baseline is None or not calculated or row["errors"] != ["RAW_NAN_OR_INF"]
+                    or journal.exists(prefix + ".error")):
+                raise ValueError("UNEXPECTED_STATE_EVIDENCE")
+            allowed.add(prefix + ".state")
+            proof = journal.read(prefix + ".state")
+            if proof.get("sample_id") != sample["sample_id"]:
+                raise ValueError("STATE_SAMPLE_MISMATCH")
+            stopped = not permits(baseline, proof, sample["sample_id"])
         results.append(row)
     if set(journal.inventory()) - allowed:
         raise ValueError("UNKNOWN_RUN_RECORD")
     finish, failure = journal.exists("finish"), journal.exists("failure")
-    if finish and (failure or stopped or journal.read("finish") != {"planned": len(samples), "status": "FINISHED"}):
+    if finish and (failure or stopped or any(r["status"] == "TECHNICAL_ERROR" for r in results)
+                   or journal.read("finish") != {"planned": len(samples), "status": "FINISHED"}):
         raise ValueError("FINISH_STATE_MISMATCH")
     if sealed and not (finish or failure):
         raise ValueError("TERMINAL_RECORD_MISSING")

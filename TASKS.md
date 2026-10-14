@@ -2030,3 +2030,21 @@ until a real verdict exists. Runbook: notes/pa3_seminar_direction_runbook.md.
 - [ ] Owner supplies audited Inputs and records four exact attempts; actual GPU runs and Seminar metrics remain NOT_RUN.
 
 Handoff/evidence: `notes/pa3_full_train_kaggle_runbook.md`. New grant null; no TEST or merge.
+
+## Urgent PA3 Shard 0 NaN diagnosis - 2026-10-14 (Draft preparation)
+
+- [x] Inspect source M and supplied audit; independently verify original archive
+  checksums/seals, failure trace and SUCCESS-only CSV AUROCs on CPU.
+- [x] Identify unconditional shard stop and missing numerical state proof;
+  distinguish verified orchestration cause from unresolved NaN root cause.
+- [x] Prepare guarded sample isolation and independent proof-aware CPU audit,
+  retaining raw failures, null scores and incomplete-run semantics.
+- [x] CPU fault injection and focused regressions: 65 distinct tests PASS;
+  original archive integrity/AUROC checks PASS. Broader results in the note.
+- [ ] External review and native state inventory/qualification; real continuation
+  remains BLOCKED, including opaque native callables/hooks.
+- [ ] Lead decision on a separately authorized 856-ID unattempted-only run; no
+  retry of the 85 attempted IDs, new authority or GPU run in this task.
+
+Evidence, CPU validation and blockers: `notes/pa3_shard0_nan_diagnosis.md`.
+DEC-PA3-008 is preparation only. One Draft PR; no merge.
