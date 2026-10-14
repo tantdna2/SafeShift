@@ -2030,3 +2030,15 @@ until a real verdict exists. Runbook: notes/pa3_seminar_direction_runbook.md.
 - [ ] Owner supplies audited Inputs and records four exact attempts; actual GPU runs and Seminar metrics remain NOT_RUN.
 
 Handoff/evidence: `notes/pa3_full_train_kaggle_runbook.md`. New grant null; no TEST or merge.
+
+## Urgent PA3 Qwen FP16 NaN root cause - 2026-10-14 (Draft; DEC-PA3-009 PROPOSED)
+
+- [x] Compare SafeShift native Qwen call with pinned Transformers 4.51.3 source; no API misuse found.
+- [x] Archive: all 151,936 logits NaN from step 0 (prefill); same-shape control succeeded; input pixels finite.
+- [x] Exclude decode-step, capture, logits-processor, KV-cache/RoPE-state and shape/kernel hypotheses with evidence.
+- [x] Passive FP16 non-finite probe and candidate merger clamp; pinned upstream CPU tests reproduce the
+  archived signature and fail-before/pass-after, bitwise identity without overflow, no NaN masking.
+- [ ] Lead decision on DEC-PA3-009 four-prefill GPU localization (images 85 and same-shape control).
+- [ ] ROOT_CAUSE remains SUSPECTED until that probe; any clamp adoption needs its own decision.
+
+Evidence: `notes/pa3_qwen_fp16_nan_root_cause.md`. No GPU, model, rerun, TEST, PA3 scoring change or merge.
