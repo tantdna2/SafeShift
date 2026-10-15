@@ -2057,3 +2057,34 @@ Reported GPU diagnostic evidence is attributed to the Lead, not independently
 reverified here. No GPU, pretrained model, raw TRAIN or TEST access, or self-grant.
 Runbook: `notes/pa3_r2_runbook.md`. Existing seminar grant-null test also fails on
 exact BASE because that historical 90-image grant is already populated; unchanged.
+
+## Active — PA3-R2 CPU audit and four-model Seminar requirement (2026-10-15)
+
+- [x] Record the Research Lead's durable [four-model Seminar requirement](notes/pa3_four_model_seminar_scope.md):
+  Qwen2.5-VL-3B-Instruct is the baseline; Qwen3-VL-8B-Instruct,
+  InternVL3-2B-hf and Moondream2 must also be evaluated. No implicit PA3 support,
+  model removal/substitution or official Seminar pivot.
+- [x] Locate all four final R2 Output packages in the user-supplied Downloads
+  directory; hash and unpack into a new ignored derived directory, preserving
+  original bytes and excluding the earlier failed Shard 0 Output.
+- [x] Verify all four journal seals/source/membership, exact disjoint 3,763-ID
+  universe, attempt/raw/result triples and raw trace schema; verify bootstrap,
+  24 nested packages, 20 sibling journal seals and four export checksum inventories.
+  Stored 3,763 SUCCESS statuses are not independently recomputed scores.
+- [x] Search local tokenizer candidates/archives and check pinned hashes; no
+  matching tokenizer found. Record six required files and exact dependency pins.
+- [x] Invoke the existing official four-shard CPU reporter: **BLOCKED** at
+  `CPU_TOKENIZER_T1_REQUIRED`; independent pooled AUROC remains NOT COMPUTED.
+- [x] Run 25 targeted CPU synthetic audit/merge/durability tests: 25 PASS.
+- [ ] Supply pinned tokenizer/dependencies, pass real T1 and complete independent
+  per-image raw recomputation and pooled AUROC for all 3,763 TRAIN IDs.
+- [ ] Verify raw-logit/equivalent support of all four models, review a fair common
+  evaluation and generalization design, then obtain a new Lead decision before
+  any official Seminar direction/protocol change or new execution.
+- [ ] ChatGPT direct GitHub review of the separate Draft PR; no merge and no
+  Antigravity handoff in this task.
+
+Evidence, integrity-check scope, missing Shard 1 outer receipt, exact resume
+commands and limitations: [CPU audit handoff](notes/pa3_r2_cpu_audit_20261015.md).
+The reported 3,763/3,763 SUCCESS and preliminary 0.8267 are not a CPU PASS or
+evidence of generalization. Historical decisions/results/authority stay unchanged.
