@@ -44,10 +44,11 @@ chưa có kết quả tương ứng được xác minh.
 nguy cơ và nhãn bình thường**.
 
 $$
-\mathrm{HNLO}
-= \operatorname{logsumexp}(z_{\mathrm{Level01}}, z_{\mathrm{Level02}},
-z_{\mathrm{Level03}}) - z_{\mathrm{Level04}}.
+\mathrm{HNLO} = \ln\left(e^{z_{01}} + e^{z_{02}} + e^{z_{03}}\right) - z_{04}
 $$
+
+Trong đó, $z_{01}$, $z_{02}$, $z_{03}$ và $z_{04}$ là các raw logits tương ứng
+với các nhãn Level01–Level04.
 
 Điểm cao hơn biểu thị xu hướng nguy cơ cao hơn. HNLO là tên mô tả của phép tính
 đã có, không phải thuật toán mới. Tên này không làm thay đổi công thức, nhãn,

@@ -54,10 +54,11 @@ giữa các nhãn nguy cơ và nhãn bình thường** — là tên trình bày 
 tính điểm đã tồn tại trong repository:
 
 $$
-\mathrm{HNLO}
-= \operatorname{logsumexp}(z_{\mathrm{Level01}}, z_{\mathrm{Level02}},
-z_{\mathrm{Level03}}) - z_{\mathrm{Level04}}.
+\mathrm{HNLO} = \ln\left(e^{z_{01}} + e^{z_{02}} + e^{z_{03}}\right) - z_{04}
 $$
+
+Trong đó, $z_{01}$, $z_{02}$, $z_{03}$ và $z_{04}$ là các raw logits tương ứng
+với các nhãn Level01–Level04.
 
 Điểm cao hơn biểu thị xu hướng nguy cơ cao hơn. HNLO là điểm xếp hạng liên tục
 chưa hiệu chỉnh; nó không phải xác suất, nhãn dự đoán hoặc accuracy. Baseline
