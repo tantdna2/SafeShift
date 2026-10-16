@@ -64,9 +64,8 @@ chưa hiệu chỉnh; nó không phải xác suất, nhãn dự đoán hoặc ac
 hiện chưa chọn ngưỡng HNLO, vì vậy chỉ báo cáo AUROC và coverage cho điểm này.
 
 HNLO không thay đổi công thức, chiều điểm, nhãn, tokenizer, runtime, metric hay
-kết quả trước đây. Các hồ sơ và định danh kỹ thuật lịch sử vẫn dùng tên `PA3`,
-bao gồm đường dẫn `safeshift/pa3/`; chúng được giữ nguyên để bảo toàn khả năng
-truy vết và tái lập.
+kết quả trước đây. Các định danh và hồ sơ kỹ thuật lịch sử được giữ nguyên để
+đảm bảo khả năng truy vết và tái lập kết quả.
 
 ## Baseline Qwen2.5 đã kiểm toán
 
