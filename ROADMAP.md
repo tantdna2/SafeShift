@@ -4,35 +4,38 @@
 
 **Dataset:** InspecSafe-V1.
 
-Đây là kế hoạch cho [DEC-PA3-011 PROPOSED](DECISIONS.md#dec-pa3-011--proposed-seminar-internal-hazard-score-direction-2026-10-16),
-không phải quyết định đã duyệt hoặc báo cáo kết quả bốn mô hình. RQ1 kiểm tra giá
-trị phân biệt của điểm nội tại so với đầu ra sinh ra trên cùng ID; RQ2 kiểm tra
-human-presence/domain/provenance confounding; RQ3 mô tả FNR/FPR và giới hạn chuyển
-miền sau một quy tắc ngưỡng được phê duyệt trước. RQ3 không đưa ra bảo đảm an toàn.
+Đây là thứ tự triển khai Seminar được Research Lead lựa chọn để xem xét theo
+[DEC-PA3-011 PROPOSED](DECISIONS.md#dec-pa3-011--proposed-seminar-internal-hazard-score-direction-2026-10-16),
+không phải protocol đã phê duyệt hoặc quyền thực thi. Hazard–Normal Label Log-Odds
+Score (HNLO) là tên dùng trong phần trình bày nghiên cứu cho phép tính được hồ sơ
+kỹ thuật lịch sử gọi là PA3. Bốn mô hình bắt buộc là Qwen2.5-VL-3B-Instruct,
+Qwen3-VL-8B-Instruct, InternVL3-2B-hf và Moondream2.
 
-Qwen2.5 là baseline đã kiểm toán trên TRAIN đã phơi nhiễm. Qwen3, InternVL3 và
-Moondream2 vẫn bắt buộc nhưng khả năng cung cấp raw logits hoặc đại lượng tương
-đương cho điểm nội tại chưa được xác minh. Hazard–Normal Label Log-Odds Score
-(HNLO) là tên mô tả khoa học của phép tính được hồ sơ kỹ thuật lịch sử gọi là
-PA3; đây không phải thuật toán mới và không được áp dụng ngầm cho mô hình khác.
-D9R22 và mọi kết quả lịch sử được giữ nguyên.
-
-| Tuần | Giai đoạn | Công việc và đầu ra dự kiến |
-| --- | --- | --- |
-| Hoàn tất | Dataset/code provenance và Qwen baseline | Giữ nguyên audit W1 và lịch sử; CPU Linux tính lại 3.763/3.763 Qwen TRAIN raw outputs, ghi hạn chế exposure và thiếu receipt Shard 1. |
-| Gate A | Phê duyệt hướng và protocol | Review DEC-PA3-011, định nghĩa common cohort/coverage/mẫu số, baseline sinh ra, covariates, dependence groups, threshold rule và điều kiện N/A. Không cấp authority bằng tài liệu. |
-| Gate B | Qualification đủ bốn mô hình | Với từng mô hình, khóa revision/interface/preprocessing/precision; xác minh raw logits hoặc chứng minh đại lượng tương đương để tính HNLO. Nếu không hỗ trợ, ghi blocker và trình phương án dự phòng để Lead duyệt. |
-| Gate C | Thực thi được ủy quyền | Chạy raw-before-parse trên cùng phạm vi được duyệt; lưu run ID/config/version. GPU, labels/annotations, threshold fitting và TEST có authority riêng. |
-| Phân tích | RQ1–RQ3 | RQ1 so sánh HNLO với generated-label baselines trên cùng valid IDs; RQ2 phân tầng/điều chỉnh confounders đã duyệt; RQ3 báo FNR/FPR theo miền, coverage và giới hạn chuyển giao. |
-| Handoff | Seminar và form giảng viên | Điền form từ số liệu đã audit; dùng N/A cho Paper/Official hoặc mô hình chưa có bằng chứng tương thích; không đặt target hiệu năng hậu nghiệm. |
+| # | Trạng thái | Giai đoạn | Điều kiện và đầu ra |
+| ---: | --- | --- | --- |
+| 1 | **COMPLETE** | Baseline Qwen2.5 | Đã kiểm toán 3.763/3.763 ảnh TRAIN; HNLO AUROC = 0,8266558463706973; CPU audit PASS. Đây là bằng chứng mô tả trên TRAIN đã phơi nhiễm, không phải kết quả khái quát hóa. |
+| 2 | **NEXT** | Capability audit (kiểm tra khả năng kỹ thuật) | Chỉ đọc tài liệu, mã nguồn và kiểm tra CPU cho Qwen3-VL-8B-Instruct, InternVL3-2B-hf và Moondream2: xác minh revision, logits, token mapping, khả năng tính HNLO tương đương, trở ngại GPU và phương án dự phòng cần trình duyệt. Chưa chạy inference mới và không truy cập dữ liệu bị khóa. |
+| 3 | **PENDING** | Phê duyệt hướng và giao thức RQ1–RQ3 | Research Lead phê duyệt chính thức DEC-PA3-011 và chốt đối chứng công bằng, dữ liệu chung, coverage, nguồn nhãn, xử lý yếu tố gây nhiễu, quy tắc chọn ngưỡng cùng phương án dự phòng cho mô hình không hỗ trợ HNLO. Quyền thực thi được xem xét riêng. |
+| 4 | **PENDING** | GPU validation kỹ thuật tối thiểu | Thực hiện thử nghiệm GPU kỹ thuật nhỏ nhất cho từng mô hình, chỉ sau khi có quyền cụ thể và hoàn tất kiểm toán các thay đổi liên quan. |
+| 5 | **PENDING** | Thí nghiệm bốn mô hình | Thực hiện thí nghiệm trên cả bốn mô hình trong phạm vi dữ liệu đã được phê duyệt; lưu raw output, cấu hình, log, kết quả và bằng chứng kiểm toán độc lập. |
+| 6 | **PENDING** | Phân tích RQ1–RQ3 | RQ1: giá trị phân biệt và đối chứng công bằng. RQ2: dấu hiệu gây nhiễu. RQ3: tỷ lệ bỏ sót, báo động giả và giới hạn chuyển miền. Báo cáo mẫu số, coverage, dữ liệu phụ thuộc và kết quả không xác định. |
+| 7 | **PENDING** | Tổng hợp Seminar | Tổng hợp bảng kết quả, biểu đồ, phân tích lỗi, báo cáo và slide Seminar; từ bằng chứng đã kiểm toán, đề xuất hướng phát triển khóa luận. |
 
 ## Điều kiện chuyển giai đoạn
 
-- Gate A → B: DEC-PA3-011 và protocol so sánh được Lead phê duyệt; không thay dataset/split/label/công thức HNLO (PA3 trong hồ sơ kỹ thuật) ngầm.
-- Gate B → C: đủ hồ sơ bốn mô hình, kể cả blocker/N/A; authority binds exact model, revision, cohort, artifacts và số lần chạy.
-- Gate C → phân tích: raw output và coverage/status được kiểm toán; mọi GT join xảy ra theo scope đã duyệt.
-- Phân tích → handoff: báo đủ mẫu số, valid-ID intersection, dependence/confounding và domain limitations; không suy TRAIN thành generalization.
+- Giai đoạn 2 → 3: hoàn tất hồ sơ capability của ba mô hình còn lại, nêu rõ
+  blocker GPU và mọi phương án fallback; không coi CPU/source audit là GPU PASS.
+- Giai đoạn 3 → 4: DEC-PA3-011 và giao thức so sánh được Research Lead phê duyệt;
+  mỗi GPU validation vẫn cần authority riêng gắn với model, revision và phạm vi.
+- Giai đoạn 4 → 5: từng mô hình có kết quả validation được kiểm toán hoặc phương
+  án fallback/N/A được phê duyệt; phạm vi dữ liệu và quyền chạy đã được chốt.
+- Giai đoạn 5 → 6: raw output và provenance của đủ bốn mô hình được lưu trước khi
+  parse/tổng hợp; coverage, lỗi và trạng thái kiểm toán được đối soát.
+- Giai đoạn 6 → 7: kết quả RQ1–RQ3 báo cáo đủ mẫu số, phụ thuộc, yếu tố gây nhiễu,
+  giới hạn chuyển miền và trường hợp không xác định; không suy TRAIN thành
+  generalization.
 
-Trước khi DEC-PA3-011 được phê duyệt, [D9R22 JSON](configs/pre_freeze/d9r22_seminar_scope.v1.json)
-vẫn là scope hiệu lực; roadmap này không sửa config đó. Bốn mô hình bắt buộc giữ
-nguyên. Protocol freeze=PENDING; tài liệu/PR/merge không tự cấp quyền inference.
+DEC-PA3-011 vẫn **PROPOSED**. Trước khi được phê duyệt, [D9R22 JSON](configs/pre_freeze/d9r22_seminar_scope.v1.json)
+vẫn là phạm vi có hiệu lực. Roadmap này không cấp quyền inference, GPU, TEST,
+annotation, lựa chọn ngưỡng hay protocol freeze; các giai đoạn **PENDING** chưa
+được xem là hoàn tất.
