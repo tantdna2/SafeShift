@@ -2967,3 +2967,67 @@ Old grants/results remain historical; mixed-experiment pooling is forbidden.
 No GPU, TEST, self-grant, merge or Antigravity audit in this task. Stop at Draft PR
 for ChatGPT GitHub review, then separately requested audit/Lead release.
 Evidence, grant schema, release and minimal owner steps: `notes/pa3_r2_runbook.md`.
+
+### DEC-PA3-011 — Proposed Seminar internal hazard score direction (2026-10-16)
+
+Status: **PROPOSED — pending final Research Lead approval through PR review**.
+Authority: the Research Lead's explicit instruction to prepare, in one Draft PR,
+the selected Seminar direction and audited baseline dossier. This entry is not a
+protocol freeze, execution authority or retrospective rewrite of D9R22.
+
+Proposed title: **SafeShift: Evaluating the Validity and Cross-Domain Reliability
+of Internal Hazard Scores in Vision-Language Models.**
+
+Proposed research questions:
+
+1. **RQ1 — Validity of the internal signal.** Does an internal hazard score
+   discriminate hazards better than generated-output extraction baselines when
+   compared on the same data and eligible IDs?
+2. **RQ2 — Hazard signal or confounding cue.** How much discrimination remains
+   after controlling for human presence, industrial domain and data provenance?
+3. **RQ3 — Reliability under domain shift.** For safety decisions derived from
+   internal scores, how do hazard miss and false-alarm rates vary across domains,
+   and what limits the score's transferability?
+
+RQ3 is empirical evaluation, not a statistical safety guarantee. Advanced risk
+control is reserved for a future thesis direction. Expected contributions are a
+fair internal-score/generated-output comparison protocol, confounder/validity
+analysis, and an assessment of cross-domain reliability limits. PA3 is an
+internal-score construction under evaluation and is **not** claimed as a new
+algorithm.
+
+The final Seminar must evaluate all four models: Qwen2.5-VL-3B-Instruct as the
+baseline, plus Qwen3-VL-8B-Instruct, InternVL3-2B-hf and Moondream2. Qwen2.5 PA3-R2
+is currently the only compatible result independently recomputed from raw output:
+3,763/3,763 InspecSafe-V1 TRAIN SUCCESS; T1 28/28 PASS; pooled PA3 AUROC
+0.8266558463706973; generated-binary-label AUROC 0.5; generated four-class
+accuracy 130/3763 (3.454690%); generated binary accuracy 749/3763 (19.904332%).
+This is previously exposed descriptive TRAIN evidence, not generalization. The
+missing Shard 1 outer receipt and Windows 1-ULP exact-recomputation failure remain
+disclosed; the unchanged official audit passed on CPU Linux. Evidence:
+`notes/pa3_r2_cpu_completion_20261015.md`.
+
+No compatible PA3 result is verified for the other three models. Each model must
+receive an interface/revision/token/preprocessing audit. Raw logits may be used
+only when their decision semantics are verified; an alternative model-native
+quantity must have a documented mathematical relationship to the intended score.
+Generated-label baselines remain distinct. Any fallback metric or N/A treatment
+requires explicit Lead approval; no model may be silently removed or substituted.
+
+The minimum proposed experiment plan uses one approved cohort and labels for all
+methods, reports full-cohort coverage plus same-ID valid intersections, and keeps
+failure/INVALID denominators visible. RQ1 compares internal-score AUROC with
+generated binary-label AUROC and generated four/binary accuracy. RQ2 predeclares
+human-presence, folder-domain and provenance controls; human presence requires a
+separately approved annotation-derived definition, while source-family remains a
+heuristic rather than ground truth. RQ3 requires a prospectively approved threshold
+selection cohort and reports FNR/FPR per domain, coverage and dependence-aware
+limitations. Point/group and source-sequence dependence, cross-split duplicates,
+domain/platform confounding and metallurgy support must remain explicit.
+
+Until this proposal receives final approval, D9R22 remains the effective Seminar
+scope and its tracked config stays unchanged. Approval must be recorded without
+editing historical decisions. Every new metric implementation, annotation/label
+read, threshold choice, GPU inference and TEST access requires its own reviewed
+decision and authority binding. This Draft PR grants none; no production code,
+PA3 formula, dataset, split, label or historical result is changed.
