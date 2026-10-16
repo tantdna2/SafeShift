@@ -36,7 +36,7 @@ trước softmax và trước logits processor:
 `logsumexp(z_Level01,z_Level02,z_Level03) - z_Level04`. Phải chứng minh toàn bộ
 response hợp lệ chỉ rẽ nhánh tại đúng một token với bốn token ID khác nhau. Xác
 suất textual, processed scores hoặc likelihood của bốn chuỗi nhiều token không tự
-động tương đương. Đây là cùng ràng buộc mà [scorer Qwen2.5 đã audit](../safeshift/pa3/native/native_score.py#L18-L50)
+động tương đương. Đây là cùng ràng buộc mà [scorer Qwen2.5 đã audit](../safeshift/pa3/native/native_score.py#L18-L48)
 và [T1/branch proof](../safeshift/ls1/core.py#L36-L76) đang áp dụng.
 
 ## Bảng so sánh
@@ -44,7 +44,7 @@ và [T1/branch proof](../safeshift/ls1/core.py#L36-L76) đang áp dụng.
 | Mô hình | Revision và giao diện thực tế | Raw logits đúng bước quyết định | Mapping Level01–04 | HNLO tương đương | Kaggle T4 / blocker chính |
 | --- | --- | --- | --- | --- | --- |
 | Qwen3-VL-8B-Instruct | **VERIFIED** `Qwen/Qwen3-VL-8B-Instruct@0c351dd01ed87e9c1b53cbc748cba10e6187ff3b`; `Qwen3VLForConditionalGeneration` + `AutoProcessor.apply_chat_template` + `model.generate` ([runner](../safeshift/runners/qwen3_vl.py#L126-L294)). | **NOT VERIFIED.** Runner gọi `generate()` nhưng không yêu cầu/serialize `output.logits`; envelope chỉ có IDs và text ([capture hiện tại](../safeshift/runners/qwen3_vl.py#L278-L344)). `return_dict_in_generate/output_logits/output_scores` là đường đề xuất, chưa chạy cho revision này. | `Level01→?`, `Level02→?`, `Level03→?`, `Level04→?` — **NOT VERIFIED**. Không được mượn IDs `16–19` của Qwen2.5. | **PLAUSIBLE, NOT VERIFIED** nếu T1 chứng minh nhánh một token và raw/processed alignment trên response C1 thực. | Runtime classification đã có bằng chứng **2×T4**; production từng OOM với pure-GPU placement. Runtime hiện dùng CPU cho riêng embedding, 21/15 lớp trên GPU0/GPU1, visual + head trên GPU1 ([runbook](w2_d9r26_qwen3_p2_runbook.md#exact-source-and-condition), [amendment](../configs/pre_freeze/qwen3_runtime_placement_amendment.v1.json)). Logit capture và memory overhead chưa được đo. |
-| InternVL3-2B-hf | **VERIFIED** `OpenGVLab/InternVL3-2B-hf@cb57a075cb75a2e6d1b668b128d48bb00ae321d2`; `InternVLForConditionalGeneration`, processor dynamic tiles 448 px, rồi `model.generate` ([runner](../safeshift/runners/internvl3.py#L321-L388)). | **PLAUSIBLE.** Scorer LS1 riêng đã implement `return_dict_in_generate=True`, `output_logits=True`, `output_scores=True` và giữ hai loại điểm riêng ([code](../safeshift/ls1/runtime.py#L69-L186)); production runner vẫn đặt cả hai `false`. Chưa có raw artifact GPU được audit cho HNLO. | `Level01→?`, `Level02→?`, `Level03→?`, `Level04→?` — **NOT VERIFIED**. T1 hỗ trợ model này nhưng committed validation ghi **BLOCKED/SKIP**, không phải PASS ([T1](../safeshift/ls1/tokenizer.py#L11-L99), [validation](ls1_validation.md#cpu-validation-and-t1)). | **PLAUSIBLE, NOT VERIFIED.** Về toán học là cùng HNLO nếu T1/trace PASS. Về ngữ nghĩa còn phải khóa parser/wrapper: InternVL từng sinh Markdown-fenced JSON, khiến P2 cũ INVALID và dẫn tới P2.1 thích nghi theo benchmark. | **VERIFIED runtime-interface-only** trên 1×T4, FP16, peak allocated khoảng 4.28 GB ở smoke; không OOM ([result](../configs/pre_freeze/internvl3_t4_runtime_result.v1.json)). Dynamic tiling 1–13 ảnh 448×448 và `output_logits=True` chưa được GPU-qualified cùng nhau. |
+| InternVL3-2B-hf | **VERIFIED** `OpenGVLab/InternVL3-2B-hf@cb57a075cb75a2e6d1b668b128d48bb00ae321d2`; `InternVLForConditionalGeneration`, processor dynamic tiles 448 px, rồi `model.generate` ([runner](../safeshift/runners/internvl3.py#L321-L388)). | **PLAUSIBLE.** Scorer LS1 riêng đã implement `return_dict_in_generate=True`, `output_logits=True`, `output_scores=True` và giữ hai loại điểm riêng ([code](../safeshift/ls1/runtime.py#L69-L186)); production runner vẫn đặt cả hai `false`. Chưa có raw artifact GPU được audit cho HNLO. | `Level01→?`, `Level02→?`, `Level03→?`, `Level04→?` — **NOT VERIFIED**. T1 hỗ trợ model này nhưng committed validation ghi **BLOCKED/SKIP**, không phải PASS ([T1](../safeshift/ls1/tokenizer.py#L11-L99), [validation](ls1_validation.md#readiness-and-unresolved-evidence)). | **PLAUSIBLE, NOT VERIFIED.** Về toán học là cùng HNLO nếu T1/trace PASS. Về ngữ nghĩa còn phải khóa parser/wrapper: InternVL từng sinh Markdown-fenced JSON, khiến P2 cũ INVALID và dẫn tới P2.1 thích nghi theo benchmark. | **VERIFIED runtime-interface-only** trên 1×T4, FP16, peak allocated khoảng 4.28 GB ở smoke; không OOM ([result](../configs/pre_freeze/internvl3_t4_runtime_result.v1.json)). Dynamic tiling 1–13 ảnh 448×448 và `output_logits=True` chưa được GPU-qualified cùng nhau. |
 | Moondream2 | **VERIFIED** `vikhyatk/moondream2@9a7d4024050840e001defacec2b00727e89149e6`, tokenizer `moondream/starmie-v1@35192e10a54e36eabe0a7cc57a2c1aab371cafc5`; remote `HfMoondream`, native `query(image, question, reasoning=False, stream=False, settings)` ([audit](w2_moondream_runner_prep.md#native-interfaces-and-candidate-mapping), [runner](../safeshift/runners/moondream2.py#L170-L305)). | **BLOCKED qua public/native return:** runner chỉ serialize `{"answer": ...}`. Exact pinned source có `lm_head` logits trước argmax trong `_prefill_prompt`/`_decode_one_tok`, nhưng `_generate_answer` chỉ yield text ([pinned source](https://huggingface.co/vikhyatk/moondream2/blob/9a7d4024050840e001defacec2b00727e89149e6/moondream.py#L280-L321), [answer loop](https://huggingface.co/vikhyatk/moondream2/blob/9a7d4024050840e001defacec2b00727e89149e6/moondream.py#L436-L539)). Một forward hook chỉ đọc/clone output của `text.lm_head` là **PLAUSIBLE**, chưa implement/validate. | `Level01→?`, `Level02→?`, `Level03→?`, `Level04→?` — **NOT VERIFIED**. Tokenizer revision/hash đã pin, nhưng chưa có branch proof bằng `tokenizers==0.21.2`. | **BLOCKED hiện tại; instrument path PLAUSIBLE.** Chỉ được gọi HNLO sau khi chứng minh hook lấy logits trước phép gán `answer_id=-inf`, không đổi native answer/state, và T1 chứng minh nhánh một token. | Post-fix smoke **runtime interface PASS** trên 1×T4, FP16 bridge, peak allocated khoảng 4.44 GB ([record](w2_moondream_postfix_result_external_gate_prep.md#post-fix-smoke-research-lead-archive-audit)). Blocker cũ BF16 vision đã được bridge xử lý cho smoke; blocker HNLO mới là private-logit access, mapping và raw trace, không phải OOM đã quan sát. |
 
 ## Bằng chứng và giới hạn theo mô hình
@@ -77,12 +77,14 @@ có kết quả kỹ thuật InternVL do Lead báo cáo, nhưng underlying raw a
 
 ### Moondream2
 
-**VERIFIED:** hai local source captures `moondream.py` và `text.py` trong ignored
-audit cache được rehash ở task này và khớp SHA-256 đã commit trong
+**Kiểm tra cục bộ do Codex báo cáo:** các bản nguồn `moondream.py`, `text.py` và
+`tokenizer.json` trong ignored audit cache đã được đối chiếu SHA-256 với metadata
+đã commit trong
 [`moondream_prep_audit.v1.json`](../configs/pre_freeze/moondream_prep_audit.v1.json):
-`52e8d035…62e59` và `9ec56dd5…ce352`. Tokenizer JSON cũng khớp pin
-`0512fdca…99e9c`. Đây là source/tokenizer integrity, không phải token mapping hay
-model execution.
+`52e8d035…62e59`, `9ec56dd5…ce352` và `0512fdca…99e9c`. Các file cache không nằm
+trong Git, nên bên kiểm toán độc lập chưa thể tự tính lại hash từ Git tree. Do đó,
+bằng chứng độc lập hiện có chỉ xác nhận tính nhất quán của tài liệu và metadata;
+không phải xác minh độc lập file nguồn, bằng chứng HNLO hay thực thi mô hình.
 
 **Còn thiếu:** T1 branch proof; hook/trace schema; xác nhận hook clone logits trước
 in-place special-token masking; raw-before-parse persistence; CPU recomputation;
