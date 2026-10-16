@@ -2076,15 +2076,56 @@ exact BASE because that historical 90-image grant is already populated; unchange
 - [x] Invoke the existing official four-shard CPU reporter: **BLOCKED** at
   `CPU_TOKENIZER_T1_REQUIRED`; independent pooled AUROC remains NOT COMPUTED.
 - [x] Run 25 targeted CPU synthetic audit/merge/durability tests: 25 PASS.
-- [ ] Supply pinned tokenizer/dependencies, pass real T1 and complete independent
-  per-image raw recomputation and pooled AUROC for all 3,763 TRAIN IDs.
+- [x] Supply exactly six pinned tokenizer files and isolated CPU dependencies;
+  T1 28/28 PASS. Complete the unchanged official reporter on CPU Linux:
+  3,763/3,763 independently recomputed SUCCESS, exact four-shard disjoint universe,
+  all saved per-shard metric comparisons and final export seal verified.
+  Pooled AUROC=0.8266558463706973; generated binary-label AUROC=0.5;
+  generated four-level accuracy=130/3763 (3.454690%). Evidence and baseline form:
+  [CPU completion](notes/pa3_r2_cpu_completion_20261015.md).
+  Windows strict audit failed on a 1-ULP intermediate probability; its logs remain.
 - [ ] Verify raw-logit/equivalent support of all four models, review a fair common
   evaluation and generalization design, then obtain a new Lead decision before
   any official Seminar direction/protocol change or new execution.
-- [ ] ChatGPT direct GitHub review of the separate Draft PR; no merge and no
-  Antigravity handoff in this task.
+- [x] Verify main contains merged PR #104 at
+  `5c8cb704522897a75a2a42604a1492714ee8610c` before the CPU completion task.
+  No new PR, merge or Antigravity handoff in this completion task.
+- [x] Research Lead selected the internal-score Seminar direction for proposal
+  after reviewing the audit inputs; final approval remains pending in the separate
+  documentation task below.
 
 Evidence, integrity-check scope, missing Shard 1 outer receipt, exact resume
 commands and limitations: [CPU audit handoff](notes/pa3_r2_cpu_audit_20261015.md).
-The reported 3,763/3,763 SUCCESS and preliminary 0.8267 are not a CPU PASS or
-evidence of generalization. Historical decisions/results/authority stay unchanged.
+The original integrity-only 3,763 SUCCESS and preliminary 0.8267 were not a CPU
+PASS. The subsequent Linux full recomputation now supplies that PASS, within its
+descriptive previously exposed TRAIN scope. It is not evidence of generalization.
+Shard 1's outer download receipt remains missing; all four Seminar models remain
+mandatory. At CPU-audit completion, no README/RQ/decision/pivot PR or
+execution-authority change was made. The subsequent documentation task below
+records the selected direction as PROPOSED. Historical results stay unchanged.
+
+## Active — proposed internal-score Seminar dossier (2026-10-16)
+
+- [x] Record DEC-PA3-011 as PROPOSED without rewriting D9R22; update README and
+  roadmap around the selected title, RQ1–RQ3 and expected contributions.
+- [x] Preserve the mandatory Qwen2.5/Qwen3/InternVL3/Moondream2 roster and state
+  method support honestly: only Qwen2.5 PA3-R2 has a compatible audited result.
+- [x] Complete the Qwen2.5 CPU evidence note and small aggregate JSON; reconcile
+  historical Windows BLOCKED with subsequent Linux PASS, retain Shard 1 receipt
+  limitation and exposed-TRAIN/generalization boundary.
+- [x] Prepare [Baseline Result form content](notes/seminar_baseline_review_2026.md)
+  with six requested sections, four audited metric rows, N/A fields and evidence.
+- [x] Predeclare the minimum RQ1–RQ3 plan: same-ID comparisons, coverage/failures,
+  approved confounder controls, per-domain FNR/FPR, dependence limitations and
+  four-model capability gates. No numeric performance target is invented.
+- [ ] Research Lead final approval of DEC-PA3-011 and the comparison protocol.
+- [ ] Audit Qwen3/InternVL3/Moondream2 raw-logit or proven-equivalent support;
+  submit any fallback metric/N/A treatment for explicit approval.
+- [ ] Obtain separate decisions/authority for new metric code, annotation/label
+  access, threshold selection, exact GPU runs and any TEST evaluation.
+- [ ] Execute and audit the approved common-cohort four-model study; only then
+  update the instructor form and Seminar result claims.
+
+This Draft prepares documentation only. D9R22 remains effective pending approval;
+protocol freeze and new execution remain PENDING. No production/config/data/split/
+label/formula/history change, no inference, no TEST read and no self-granted authority.

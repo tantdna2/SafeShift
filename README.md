@@ -1,42 +1,47 @@
 # SafeShift
 
-**SafeShift: Benchmarking Cross-Domain Robustness and Disagreement-Aware Reliability in Vision-Language Models for Industrial Safety Assessment**
+**SafeShift: Evaluating the Validity and Cross-Domain Reliability of Internal Hazard Scores in Vision-Language Models**
 
-Repository nghiên cứu Seminar trên **InspecSafe-V1**, theo quyết định prospective
-[D9R22](DECISIONS.md#d9r22--prospective-seminar-rq3-disagreement-redesign-2026-10-05).
-Phạm vi chính hiện tại là classification-only trên frozen VLM:
+Đây là định hướng Seminar được Research Lead chọn để chuẩn bị chốt trên
+**InspecSafe-V1**. [DEC-PA3-011](DECISIONS.md#dec-pa3-011--proposed-seminar-internal-hazard-score-direction-2026-10-16)
+đang ở trạng thái **PROPOSED** và chờ quy trình review/approval của PR; lịch sử
+[D9R22](DECISIONS.md#d9r22--prospective-seminar-rq3-disagreement-redesign-2026-10-05)
+không bị viết lại và vẫn là phạm vi hiệu lực cho đến khi đề xuất mới được duyệt.
 
-- RQ1 không đổi: zero-shot classification robustness giữa 5 miền công nghiệp và
-  đồng biến thiên với robot platform; không phát biểu nhân quả.
-- RQ2 không đổi: safety-critical error concentration theo Level01–Level04;
-  12 Hazard Atoms là primary strata, 7 nhóm A–G là secondary exploratory summaries.
-- RQ3 mới: Cross-Model Decision Consistency and Disagreement-Aware Reliability
-  under Domain Shift; chỉ tái sử dụng classification predictions của RQ1/RQ2,
-  không thêm model call, textual confidence, training hay ensemble model thứ năm.
+- **RQ1 — Giá trị của tín hiệu nội tại:** điểm nguy cơ nội tại có phân biệt nguy
+  cơ tốt hơn các mốc khai thác đầu ra sinh ra trên cùng dữ liệu và cùng tập ID hợp lệ?
+- **RQ2 — Tín hiệu nguy cơ hay dấu hiệu gây nhiễu:** khả năng phân biệt còn duy
+  trì đến đâu sau khi kiểm soát sự hiện diện của con người, miền công nghiệp và
+  nguồn gốc dữ liệu?
+- **RQ3 — Độ tin cậy khi chuyển miền:** tỷ lệ bỏ sót nguy cơ và báo động giả của
+  quyết định dựa trên điểm nội tại thay đổi thế nào giữa các miền, và giới hạn
+  chuyển giao là gì?
 
-Bốn classification participants giữ nguyên theo D9R18: Qwen3-VL-8B-Instruct,
-Qwen2.5-VL-3B-Instruct, InternVL3-2B-hf và moondream2. PaliGemma vẫn
-NOT_PARTICIPATING; SmolVLM2 không được kích hoạt.
-`PRIMARY_SEMINAR_GROUNDING=DEFERRED_OUT_OF_PRIMARY_SEMINAR_SCOPE`:
-grounding được giữ làm future thesis extension, không phải scientific FAIL,
-không còn là Seminar freeze blocker; mọi historical FAIL/PASS được bảo toàn.
+RQ3 là đánh giá thực nghiệm, không phải bảo đảm thống kê về an toàn. Kiểm soát
+rủi ro nâng cao được dành cho hướng phát triển khóa luận. PA3 là một điểm nội tại
+cần kiểm định, không được mô tả là thuật toán mới. Đóng góp dự kiến là giao thức
+so sánh công bằng, phân tích gây nhiễu/tính hợp lệ và đánh giá giới hạn chuyển miền.
 
-Current authority: [scope JSON](configs/pre_freeze/d9r22_seminar_scope.v1.json),
-[readiness](notes/w2_d9r22_seminar_readiness.md)
-và [redesign/validation note](notes/w2_d9r22_seminar_scope_redesign.md).
-Chúng thay thế phạm vi RQ3/grounding và readiness cũ cho Seminar hiện tại;
-các briefs D1–D9 và config D9 cũ vẫn là hồ sơ lịch sử, không phải production
-contract D9R22. `inspecsafe_inference_authorized=false`; protocol freeze=PENDING.
+Seminar cuối cùng bắt buộc đủ bốn mô hình: **Qwen2.5-VL-3B-Instruct** (baseline),
+**Qwen3-VL-8B-Instruct**, **InternVL3-2B-hf** và **Moondream2**. Chỉ Qwen2.5 hiện
+có PA3-R2 được [kiểm toán CPU Linux](notes/pa3_r2_cpu_completion_20261015.md):
+3.763/3.763 TRAIN SUCCESS, AUROC PA3 0,8266558463706973. Ba mô hình còn lại chưa
+có kết quả PA3 tương thích đã xác minh và không được tự gán công thức/token mapping
+của Qwen. [Hồ sơ baseline](notes/seminar_baseline_review_2026.md) phân biệt rõ
+kết quả đã đo, N/A và các bước cần phê duyệt.
 
-**Week 1 là Dataset Audit**: hiểu cấu trúc, nhãn, chất lượng, split và khả năng hỗ trợ đánh giá cross-domain/evidence grounding của dataset trước khi chạy VLM. Repository hiện có công cụ audit và hạ tầng pre-freeze offline theo D8. **D8 đã duyệt chưa đồng nghĩa protocol freeze**; chưa chạy inference VLM trên InspecSafe.
+Không có quyền thực thi mới từ tài liệu này. Mọi phép đo mới, truy cập nhãn hoặc
+annotation, lựa chọn ngưỡng, GPU inference và TEST cần quyết định cùng authority
+riêng. Protocol freeze vẫn PENDING; raw output phải được lưu trước parse/tổng hợp.
 
 ## Bắt đầu
 
 1. Đọc [AGENTS.md](AGENTS.md), [ROADMAP.md](ROADMAP.md) và [TASKS.md](TASKS.md).
 2. Đặt bản InspecSafe-V1 được phép sử dụng trên máy local theo [data/README.md](data/README.md). Dataset không được commit vào Git.
-3. Thực hiện checklist W1; ghi phát hiện thực tế trong `notes/`, quyết định trong [DECISIONS.md](DECISIONS.md), và các lần chạy sau này trong [EXPERIMENTS.md](EXPERIMENTS.md).
+3. Theo dõi trạng thái trong [TASKS.md](TASKS.md); ghi phát hiện trong `notes/`, quyết định trong [DECISIONS.md](DECISIONS.md), và các lần chạy được duyệt trong [EXPERIMENTS.md](EXPERIMENTS.md).
 
-Mọi đường dẫn được tính từ repository root. Dependency và lệnh chạy audit sẽ được bổ sung khi triển khai code; hiện chưa cần cài môi trường ML.
+Mọi đường dẫn được tính từ repository root. Dữ liệu, tokenizer, model weights và
+raw model outputs giữ local; tài liệu chỉ version-control các tổng hợp nhỏ đã kiểm tra.
 
 Hạ tầng pre-freeze, lệnh kiểm thử offline và trạng thái 8 prerequisite được ghi tại
 [notes/pre_freeze_implementation.md](notes/pre_freeze_implementation.md).

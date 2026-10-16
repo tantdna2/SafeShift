@@ -16,8 +16,12 @@ Kết quả Seminar cuối cùng phải đánh giá **đủ cả bốn mô hình
 
 Qwen2.5 chỉ là mốc so sánh ban đầu, không đại diện cho toàn bộ nghiên cứu và
 không đủ để hoàn tất Seminar. Lead báo cáo 3.763/3.763 ảnh TRAIN thành công,
-AUROC PA3 sơ bộ 0.8267. Đây là số liệu được cung cấp, không phải kết luận kiểm
-toán CPU. Trạng thái kiểm toán hiện tại: [BLOCKED](pa3_r2_cpu_audit_20261015.md).
+AUROC PA3 sơ bộ 0.8267. Đây là số liệu được cung cấp ở thời điểm ghi nhận yêu cầu.
+Kiểm toán tiếp theo đã [PASS trên CPU Linux](pa3_r2_cpu_completion_20261015.md):
+3.763/3.763 SUCCESS được tính lại từ raw output, AUROC gộp độc lập
+**0.8266558463706973**. AUROC nhãn Qwen nhị phân là **0.5**; không đồng nhất
+khả năng xếp hạng điểm PA3 với chất lượng nhãn sinh ra. Handoff
+[BLOCKED trước đó](pa3_r2_cpu_audit_20261015.md) được giữ làm lịch sử.
 Kết quả TRAIN đã phơi nhiễm không chứng minh khả năng khái quát hóa.
 
 ## Điều kiện so sánh cần được xem xét và phê duyệt
@@ -47,14 +51,15 @@ Kết quả TRAIN đã phơi nhiễm không chứng minh khả năng khái quát
 
 ## Ranh giới quyết định
 
-PA3 vẫn là hướng **đang được xem xét**, chưa chính thức thay thế Seminar hiện
-hành. Chỉ quyết định mới của Research Lead, ghi vào `DECISIONS.md` trước khi
-áp dụng, mới có thể phê duyệt chuyển hướng hoặc thay đổi protocol/metric/split.
+Research Lead đã chọn hướng internal hazard score để **chuẩn bị chốt**; hướng này
+được ghi tại `DEC-PA3-011` với trạng thái **PROPOSED**. Nó chưa thay thế phạm vi
+D9R22 cho đến khi hoàn tất review/approval của PR. Phê duyệt cuối phải được ghi
+append-only; mọi thay đổi protocol/metric/split và authority thực thi vẫn tách riêng.
 
 Ghi chú này không cấp quyền GPU, gọi mô hình, inference mới, mở TEST hoặc thay
-đổi quyết định đã phê duyệt. README, RQ chính thức, công thức PA3, dữ liệu,
-nhãn và kết quả lịch sử được giữ nguyên. Bàn giao qua Draft PR để ChatGPT
-kiểm tra trực tiếp trên GitHub; không merge hoặc tự chuyển sang Antigravity.
+đổi công thức PA3, dữ liệu, nhãn hay kết quả lịch sử. README/RQ được cập nhật như
+nội dung **đề xuất**, không phải protocol đã freeze. Bàn giao qua Draft PR để
+ChatGPT kiểm tra trực tiếp trên GitHub; không merge hoặc tự chuyển sang Antigravity.
 
 Đối chiếu: [runbook PA3-R2](pa3_r2_runbook.md),
 [quyết định lịch sử](../DECISIONS.md), [công việc đang hoạt động](../TASKS.md).

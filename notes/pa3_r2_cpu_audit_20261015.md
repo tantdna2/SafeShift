@@ -1,5 +1,12 @@
 # PA3-R2 Qwen2.5: CPU audit handoff, 2026-10-15
 
+**Update after PR #104:** the subsequent [CPU Linux completion audit](pa3_r2_cpu_completion_20261015.md)
+is **PASS**, with 3,763/3,763 independently recomputed SUCCESS rows and pooled
+AUROC **0.8266558463706973**. The original BLOCKED handoff below is retained as
+history. It does not describe the current audit status. Windows' later exact-float
+failure, its Linux resolution, evidence hashes and baseline limitations are in
+the completion note. Seminar direction and the four-model requirement are unchanged.
+
 **Official CPU score audit: BLOCKED. Independent pooled AUROC: NOT COMPUTED.**
 The existing `train_report` was invoked with all four R2 journals and exited 1
 at `CPU_TOKENIZER_T1_REQUIRED`. The independent tokenizer preflight returned
