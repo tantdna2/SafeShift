@@ -112,7 +112,7 @@ tuyên bố bảo đảm an toàn nằm ngoài Seminar, dành cho hướng khóa
 ## 6. Evidence để điền form sau khi PR được duyệt
 
 - **GitHub repository:** <https://github.com/tantdna2/SafeShift>
-- **Draft PR:** `[CẦN ĐIỀN SAU KHI TẠO PR]`
+- **Draft PR:** <https://github.com/tantdna2/SafeShift/pull/105>
 - **Quyết định đề xuất:** [DEC-PA3-011](../DECISIONS.md#dec-pa3-011--proposed-seminar-internal-hazard-score-direction-2026-10-16)
 - **CPU audit hoàn thành và lệnh tái lập:** [completion report](pa3_r2_cpu_completion_20261015.md)
 - **Tổng hợp nhỏ đã review:** [aggregate JSON](pa3_r2_cpu_completion_20261015.summary.json)
