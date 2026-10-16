@@ -10,8 +10,9 @@ TRAIN recomputation verdict, not generalization or a Seminar pivot decision.
 Task BASE is `5c8cb704522897a75a2a42604a1492714ee8610c`, main's PR #104 merge.
 The scorer and audit execute from a clean detached checkout of the original
 execution source, `c1527713ca7175b3d71248d51f1715693795e6e8`.
-No production code, runtime, authority, dataset, labels, metrics, README, RQ or
-research direction is changed. No new inference, GPU, weights or TEST access.
+Within the CPU-audit phase completed before PR #105 was prepared, no production
+code, runtime, authority, dataset, labels, metrics, README, RQ or research direction
+was changed. That audit phase performed no new inference, GPU, weights or TEST access.
 
 ## Inputs and tokenizer
 
@@ -126,12 +127,16 @@ scores, and sealed merge failures. An initial import-only attempt in the minimal
 tokenizer environment lacked optional Pillow; its error log is retained, and
 the suite was run on the host rather than changing the audit environment.
 Expected synthetic failure-package messages are not failures of the real audit.
-No full repository suite or GPU/model tests were run: no production code changed,
-and T1 plus the real full official audit are the task's direct verification.
-Documentation checks passed: `git diff --check`, local Markdown link targets,
-code-fence balance/whitespace, JSON agreement with the official report, and no
-sample IDs or absolute paths in the small versioned evidence summary. Protected
-production/config/manifest/prompt/notebook and README/ROADMAP/DECISIONS diffs are empty.
+No full repository suite or GPU/model tests were run during the audit-only phase:
+no production code changed in that phase, and T1 plus the real full official audit
+are its direct verification. Audit-only documentation checks passed:
+`git diff --check`, local Markdown link targets, code-fence balance/whitespace,
+JSON agreement with the official report, and no sample IDs or absolute paths in
+the small versioned evidence summary. At that checkpoint, production
+code/config/manifest/prompt/notebook
+and README/ROADMAP/DECISIONS diffs were empty. PR #105 subsequently changes
+README/ROADMAP/DECISIONS to prepare the Seminar proposal; production code, config,
+manifest, prompt and notebook files remain unchanged in the PR.
 
 ## Reproduce the official commands
 
