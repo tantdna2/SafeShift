@@ -1,0 +1,66 @@
+{
+  "schema": "hnlo-one-click-authority-v1",
+  "base_sha": "6143717b1647df1ed1b2d5b0a0f23e9b03f4a9e5",
+  "scope": {
+    "models": {
+      "internvl3": {
+        "id": "OpenGVLab/InternVL3-2B-hf",
+        "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+        "python": "3.11.11",
+        "cuda_visible_devices": "0",
+        "cuda": "12.4"
+      },
+      "qwen3": {
+        "id": "Qwen/Qwen3-VL-8B-Instruct",
+        "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+        "python": "3.12.13",
+        "cuda_visible_devices": "0,1",
+        "cuda": "12.8"
+      }
+    },
+    "order": [
+      "internvl3",
+      "qwen3"
+    ],
+    "source_kind": "SYNTHETIC",
+    "sample_id": "hnlo-gray-rgb-448-v1",
+    "input_sha256": "8b72867e34f2922658905f73f977f47fea102b06b879337eb9a1cb967bdd6e5a",
+    "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "batch_size": 1,
+    "max_new_tokens": 32,
+    "load_limit_per_model": 1,
+    "generate_limit_per_model": 1,
+    "precision": "FP16",
+    "quantization": "NONE",
+    "decoding": "GREEDY",
+    "forced_prefix": false,
+    "calibration": false,
+    "retry": false,
+    "dataset_access": false,
+    "test_access": false,
+    "labels_or_gt_access": false,
+    "network_boundary": "LINUX_SECCOMP_INET_DENY_PLUS_PYTHON_GUARD",
+    "hnlo_formula": "safeshift.ls1.evaluate.anomaly_log_odds(log_softmax(four_raw_logits))",
+    "numerical_tolerance": {
+      "absolute": 1e-06,
+      "relative": 1e-06
+    },
+    "research_verified": false
+  },
+  "grant": {
+    "approved_by": "Nguyen Anh Tan",
+    "role": "Research Lead",
+    "approved_utc": "2026-10-17T14:51:30Z",
+    "decision_url": "https://github.com/tantdna2/SafeShift/pull/112#issuecomment-6235330352",
+    "independent_audit_url": "https://github.com/tantdna2/SafeShift/pull/112#issuecomment-6235198479",
+    "implementation_commit": "f7b4201f0ac6b68ada6bd7a2dc90d1cf2b035fcf",
+    "source_payload_sha256": "295bd149cee5856f637fd1f1b19b6d27a22add3c306a503d67a1280527933a21",
+    "attempt_id": "hnlo-synthetic-probe-20261017-01",
+    "provisioning_approved": true,
+    "gpu_probe_approved": true,
+    "technical_probe_exception_approved": true,
+    "raw_provenance_criteria_approved": true,
+    "numerical_tolerance_approved": true,
+    "artifact_retention_approved": true
+  }
+}
