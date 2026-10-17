@@ -2163,3 +2163,23 @@ change, decision change or self-granted authority occurred.
 T1 PASS from PR #110 remains a tokenizer precondition; recheck runtime tokenizer
 before any real probe. No production, formula, baseline, protocol, data, decision,
 roadmap or authority change; no weights, GPU, model execution, TEST or merge.
+
+## HNLO two-model Kaggle one-click PREP (2026-10-17; Draft)
+
+- [x] Reuse merged PR #111 capture without changing production runners, C1,
+  parser, HNLO formula, baseline or research decisions.
+- [x] Prepare one actual Run All notebook, launcher, exact independent Python/
+  torch environments, pinned official checkpoint provisioning and offline workers.
+- [x] Prepare null-grant two-model/single-synthetic-image/one-call authority;
+  immutable source payload and F1/F2/standard-merge verification, failure-preserving
+  export, native invocation counts and CPU replay from saved full vectors.
+- [x] Targeted CPU simulations/capture/T1: 68 tests OK (four skip events);
+  related regressions: 222 tests OK (two real-tokenizer skips). Notebook JSON/AST,
+  py_compile and diff checks; final one-click recheck and evidence in the runbook.
+- [ ] ChatGPT direct GitHub review of the one Draft PR, then separately requested
+  Antigravity audit and Lead research exception/probe/provisioning approvals.
+- [ ] Authority-only release child and verified merge; actual Kaggle one-click
+  provisioning/probe/retention validation. GPU and HNLO research verification NOT RUN.
+
+Runbook: `notes/hnlo_one_click_runbook_20261017.md`. DEC-PA3-011 stays PROPOSED,
+D9R22 stays EFFECTIVE. No grant, model execution, dataset/TEST/labels/GT or merge.
