@@ -2147,3 +2147,17 @@ label/formula/history change, no inference, no TEST read and no self-granted aut
 T1 PASS is a tokenizer precondition, not HNLO verification. No weights, model
 inference, GPU, InspecSafe/TEST/annotation/ground-truth access, production runner
 change, decision change or self-granted authority occurred.
+
+## HNLO raw-logit capture PREP — three models (2026-10-17; Draft)
+
+- [x] Independent Qwen3, InternVL3 and pending-approval Moondream head-hook capture;
+  durable raw/processed tensors before decode; checksums, IDs/EOS and CPU replay.
+- [x] Fake CPU success/failure tests; related existing CPU regressions and source
+  file checks. Evidence/limits: `notes/hnlo_raw_logit_capture_prep_20261017.md`.
+- [ ] GitHub review, separately requested independent audit and Lead merge review.
+- [ ] Research/protocol, hook strategy and exact GPU probe authority/tolerance approval.
+- [ ] Real raw-logit/response/state/VRAM validation: NOT RUN; HNLO NOT VERIFIED.
+
+T1 PASS from PR #110 remains a tokenizer precondition; recheck runtime tokenizer
+before any real probe. No production, formula, baseline, protocol, data, decision,
+roadmap or authority change; no weights, GPU, model execution, TEST or merge.
