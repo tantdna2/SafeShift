@@ -24,7 +24,36 @@ def empty(model):
             "HNLO_RESEARCH_VERIFIED": False, "load_calls": 0, "generate_calls": 0, "common_fatal": False}
 
 
-def environment(model, repo, torch=None):
+def cuda_observation(torch, model):
+    """Evaluate every admission condition independently, including on failure."""
+    import warnings
+    result = {"expected_count": len(MODELS[model]["cuda_visible_devices"].split(",")),
+              "expected_build": MODELS[model]["cuda"],
+              "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+              "errors": {}, "warnings": []}
+    checks = {"is_available": torch.cuda.is_available, "device_count": torch.cuda.device_count,
+              "torch_version_cuda": lambda: torch.version.cuda}
+    for key, check in checks.items():
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                result[key] = check()
+            except Exception as error:
+                result[key] = None
+                result["errors"][key] = {"type": type(error).__name__, "message": str(error)}
+            result["warnings"].extend(str(item.message) for item in caught)
+    result["failure_reasons"] = []
+    for key, expected, reason in (("is_available", True, "CUDA_UNAVAILABLE"),
+                                  ("device_count", result["expected_count"], "VISIBLE_GPU_COUNT_MISMATCH"),
+                                  ("torch_version_cuda", result["expected_build"], "CUDA_BUILD_MISMATCH")):
+        if key in result["errors"]:
+            result["failure_reasons"].append(key.upper() + "_ERROR")
+        elif result[key] != expected:
+            result["failure_reasons"].append(reason)
+    return result
+
+
+def environment(model, repo, torch=None, *, evidence=None):
     from safeshift.protocol.classification_policy import load_policy
     import zlib
     expected = load_policy(repo, qwen3_runtime=True)["classification"][model]["software_versions"]
@@ -42,9 +71,11 @@ def environment(model, repo, torch=None):
     if torch is None:
         import torch
     count = len(MODELS[model]["cuda_visible_devices"].split(","))
-    if (not torch.cuda.is_available() or torch.cuda.device_count() != count
-            or torch.version.cuda != MODELS[model]["cuda"]):
-        raise ValueError("EXACT_CUDA_BUILD_AND_VISIBLE_GPU_COUNT_REQUIRED")
+    observed = cuda_observation(torch, model)
+    if evidence is not None:
+        write(Path(evidence) / "cuda-admission.json", observed)
+    if observed["failure_reasons"]:
+        raise ValueError("EXACT_CUDA_BUILD_AND_VISIBLE_GPU_COUNT_REQUIRED:" + json.dumps(observed, sort_keys=True))
     devices = []
     for i in range(count):
         prop = torch.cuda.get_device_properties(i)
@@ -58,7 +89,7 @@ def environment(model, repo, torch=None):
         devices.append({"index": i, "name": prop.name, "compute_capability": [prop.major, prop.minor],
                         "total_bytes": total, "free_bytes": free})
     return {"expected": expected, "actual": actual, "visible_devices": os.environ["CUDA_VISIBLE_DEVICES"],
-            "cuda": torch.version.cuda, "devices": devices, "executable_name": Path(sys.executable).name,
+            "cuda": torch.version.cuda, "cuda_admission": observed, "devices": devices, "executable_name": Path(sys.executable).name,
             "python_compiler": platform.python_compiler(), "zlib_compile_version": zlib.ZLIB_VERSION,
             "zlib_runtime_version": zlib.ZLIB_RUNTIME_VERSION,
             "all_distributions": sorted(({"name": d.metadata["Name"], "version": d.version}
@@ -204,7 +235,8 @@ def replay(repo, run_id, tokenizer):
     return result
 
 
-def probe(model, repo, evidence, source, grant, cache, state, *, capture_root):
+def probe(model, repo, evidence, source, grant, cache, state, *, capture_root,
+          source_lock="configs/diagnostics/hnlo_one_click_source.v1.json"):
     from safeshift.diagnostics.hnlo_capture import Capture, ordered_t1_ids
     from safeshift.diagnostics.hnlo_hf import InternVL3Diagnostic, Qwen3Diagnostic, installed_qwen_sources
     from safeshift.ls1.tokenizer import TOKENIZER_FILES, probe as t1_probe
@@ -223,7 +255,7 @@ def probe(model, repo, evidence, source, grant, cache, state, *, capture_root):
     run_id = "hnlo-" + grant["attempt_id"] + "-" + model
     state["run_id"] = run_id
     policy = load_policy(repo, qwen3_runtime=True)["classification"][model]
-    sources = [{"path": r["path"], "sha256": r["sha256"]} for r in json.loads((repo / "configs/diagnostics/hnlo_one_click_source.v1.json").read_bytes())["files"]]
+    sources = [{"path": r["path"], "sha256": r["sha256"]} for r in json.loads((repo / source_lock).read_bytes())["files"]]
     if model == "qwen3":
         sources.extend(installed_qwen_sources())
     else:
@@ -321,7 +353,7 @@ def main():
                 state.update(replay(args.capture_root, "hnlo-" + grant["attempt_id"] + "-" + args.model, tokenizer))
                 state["result"] = "TECHNICAL_VALID" if state["TECHNICAL_HNLO_VALID"] else "N/A"
             else:
-                state["runtime"] = environment(args.model, repo)
+                state["runtime"] = environment(args.model, repo, evidence=args.evidence)
                 state["environment"] = "EXACT_MATCH"
                 import torch
                 for i in range(torch.cuda.device_count()):
@@ -346,6 +378,8 @@ def main():
             state["memory_after"] = memory(torch)
         except BaseException as error:
             state["memory_collection_error"] = type(error).__name__
+        if (args.evidence / "cuda-admission.json").exists():
+            state["cuda_admission"] = json.loads((args.evidence / "cuda-admission.json").read_bytes())
         state["elapsed_seconds"] = time.monotonic() - started
         write(args.evidence / "result.json", state)
     return 0 if state["result"] not in ("FAILED", "BLOCKED") else 2
