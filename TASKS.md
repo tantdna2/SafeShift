@@ -2183,3 +2183,39 @@ roadmap or authority change; no weights, GPU, model execution, TEST or merge.
 
 Runbook: `notes/hnlo_one_click_runbook_20261017.md`. DEC-PA3-011 stays PROPOSED,
 D9R22 stays EFFECTIVE. No grant, model execution, dataset/TEST/labels/GT or merge.
+
+## InternVL3 CUDA recovery PREP (2026-10-17; Draft, DEC-PA3-012 PROPOSED)
+
+- [x] Verify main BASE cb6ae2041e71c74fa1b4943e5986158f5e1b6d83 and merged PR #112;
+  isolated worktree, preserve historical notebook/authority/source lock.
+- [x] Trace pinned torch CUDA admission and distinguish availability/count/build;
+  record every value, warning, exception and failure reason independently.
+- [x] Prepare separately gated AF_UNIX IPC candidate and independent InternVL3-only
+  one-click recovery; grant null, new attempt/source/merge proof, reuse pinned
+  provisioning, one-call capture, CPU replay and failure-preserving export.
+- [x] Complete Linux CPU network/authority/source/failure regressions: 92 tests OK
+  (1 Windows junction skip); related 222 OK (2 real-tokenizer skips). Windows
+  final recovery/one-click 50 OK (8 Linux skips), related 222 OK (2 skips).
+  Commands, notebook/source-lock checks and limits are in the recovery note.
+- [ ] ChatGPT direct GitHub review; separately requested Antigravity audit.
+- [ ] Lead approval of DEC-PA3-012 security scope/local-peer relay risk, separate
+  technical probe exception/approvals, new authority-only release and verified merge.
+- [ ] Owner one approved Kaggle InternVL3 recovery; CUDA causality and GPU remain
+  NOT RUN in Codex. Qwen3 is excluded; no InspecSafe/TRAIN/TEST/labels/GT access.
+
+Runbook/evidence/remaining blockers: `notes/internvl3_cuda_recovery_20261017.md`.
+No security approval, GPU execution, merge or independent audit is performed here.
+
+### PR #113 local-relay monitoring revision (2026-10-18; Draft)
+
+- [x] Add minimal Python connection metadata and unprivileged native live-socket /
+  peer fd-inode observations with explicit PARTIAL/UNOBSERVABLE coverage.
+- [x] Preserve seccomp restrictions; add fatal violation/risk response, sticky
+  stop, sanitized durable logs and existing failure export without retry.
+- [x] Linux CPU monitoring/recovery/one-click/capture/T1: 107 OK, 1 skip; related
+  LS1/native PA3/Qwen/InternVL3 regressions: 222 OK, 2 opt-in tokenizer skips.
+- [ ] New ChatGPT review and separately requested audit of the amended F1/payload.
+- [ ] Research Lead residual-risk/boundary decision, separate source-bound grant,
+  authority-only F2 and verified merge. Kaggle observation/CUDA remain NOT RUN.
+
+No new grant, model download, GPU run, Qwen3 rerun, data access or security PASS.

@@ -261,8 +261,14 @@ class ContractTests(unittest.TestCase):
         normalized = code.replace('PAYLOAD_SHA256 = "' + assigned + '"', 'PAYLOAD_SHA256 = "' + "0" * 64 + '"')
         expected = (ROOT / "safeshift/diagnostics/one_click/bootstrap.py").read_text(encoding="utf-8")
         self.assertEqual(normalized, expected + "\n# The single Run All entrypoint.\nresult = bootstrap()\n")
+        # A released notebook binds its historical F1 bytes, not future code.
+        grant = json.loads((ROOT / AUTHORITY).read_bytes()).get("grant")
+        historical = None
+        if grant:
+            archive = subprocess.check_output(["git", "-C", str(ROOT), "archive", grant["implementation_commit"]])
+            historical = self.enterContext(tarfile.open(fileobj=io.BytesIO(archive)))
         for row in lock["files"]:
-            content = (ROOT / row["path"]).read_bytes()
+            content = historical.extractfile(row["path"]).read() if historical else (ROOT / row["path"]).read_bytes()
             if row["path"] == NOTEBOOK:
                 content = boot.notebook_bytes(content)
             self.assertEqual(hashlib.sha256(content).hexdigest(), row["sha256"], row["path"])
@@ -285,8 +291,8 @@ class ContractTests(unittest.TestCase):
             self.assertNotIn("torch==2.10.0+cu128", installs[0])
             self.assertTrue(any(Path(env.get("ZLIB_CFLAGS", "")[2:]).as_posix().endswith("qwen/zlib/include") for c, env in commands))
 
-    def test_tracked_grant_is_null_and_exact_scope(self):
-        self.assertEqual(json.loads((ROOT / AUTHORITY).read_bytes()), template())
+    def test_tracked_authority_contract_preserved_after_release(self):
+        self.assertEqual({**json.loads((ROOT / AUTHORITY).read_bytes()), "grant": None}, template())
         self.assertEqual(list(scope()["models"]), list(ORDER))
         self.assertFalse(scope()["dataset_access"])
         self.assertFalse(scope()["research_verified"])
