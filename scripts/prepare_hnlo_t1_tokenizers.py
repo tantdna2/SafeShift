@@ -46,9 +46,11 @@ USER_AGENT = "SafeShift-HNLO-T1-tokenizer-only/1.0"
 def resolve_output_root(value, *, root=ROOT):
     """Resolve symlinks and confine all preparation output to data/processed."""
     repository_root = Path(root).resolve()
-    processed_root = (repository_root / "data" / "processed").resolve()
-    if not processed_root.is_relative_to(repository_root):
-        raise ValueError("DATA_PROCESSED_DIRECTORY_ESCAPES_REPOSITORY")
+    processed_root = repository_root / "data" / "processed"
+    # Resolve the candidate against the fixed base, never redefine the trusted
+    # base using a symlink/junction target (including redirects within ROOT).
+    if processed_root.resolve() != processed_root:
+        raise ValueError("DATA_PROCESSED_DIRECTORY_REDIRECTION_FORBIDDEN")
     requested = Path(value)
     output = (requested if requested.is_absolute() else repository_root / requested).resolve()
     if not output.is_relative_to(processed_root):

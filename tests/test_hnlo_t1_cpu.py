@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -34,6 +35,50 @@ class NativeTokenizer:
 
 
 class HnloT1CpuTests(unittest.TestCase):
+    def assert_preparation_directory_redirects_rejected(self, create_link):
+        for component in ("data", "processed", "child"):
+            with self.subTest(component=component), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory).resolve()
+                notes = root / "notes"
+                notes.mkdir()
+                processed = root / "data" / "processed"
+                if component == "data":
+                    link = root / "data"
+                elif component == "processed":
+                    processed.parent.mkdir()
+                    link = processed
+                else:
+                    processed.mkdir(parents=True)
+                    link = processed / "redirect"
+                try:
+                    create_link(notes, link)
+                except (OSError, NotImplementedError) as exc:
+                    self.skipTest(f"Directory link creation unavailable: {exc}")
+                requested = (
+                    Path("data/processed/redirect/t1-run") if component == "child"
+                    else Path("data/processed/t1-run")
+                )
+                error = (
+                    "OUTPUT_MUST_BE_INSIDE_DATA_PROCESSED" if component == "child"
+                    else "DATA_PROCESSED_DIRECTORY_REDIRECTION_FORBIDDEN"
+                )
+                with self.assertRaisesRegex(ValueError, error):
+                    prep.resolve_output_root(requested, root=root)
+                self.assertEqual(list(notes.iterdir()), [])
+
+    def test_preparation_rejects_symlink_directory_redirection(self):
+        self.assert_preparation_directory_redirects_rejected(
+            lambda target, link: link.symlink_to(target, target_is_directory=True),
+        )
+
+    @unittest.skipUnless(os.name == "nt", "Windows directory junction regression")
+    def test_preparation_rejects_junction_directory_redirection(self):
+        import _winapi
+
+        self.assert_preparation_directory_redirects_rejected(
+            lambda target, link: _winapi.CreateJunction(str(target), str(link)),
+        )
+
     def test_preparation_output_is_confined_to_data_processed(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
