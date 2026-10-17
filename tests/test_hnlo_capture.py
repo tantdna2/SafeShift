@@ -8,6 +8,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import socket
 import tempfile
 from types import SimpleNamespace
@@ -20,6 +21,7 @@ from safeshift.diagnostics.hnlo_hf import (
 )
 from safeshift.diagnostics.hnlo_moondream import HeadObserver, MoondreamDiagnostic, reconcile, verified_binding
 from safeshift.ls1 import core, runtime
+from safeshift.ls1.tokenizer import probe
 from safeshift.runners import qwen3_placement as placement
 from safeshift.runners.qwen3_vl import Qwen3VLRunner, MODEL_ID, REVISION
 from tests.test_ls1 import CharTokenizer, TEXT
@@ -27,6 +29,22 @@ from tests.test_qwen_runner import Runtime, context, request
 
 TOK = CharTokenizer()
 CANDIDATES = core.candidates(TOK, TEXT)["token_ids"]
+
+
+class LabelTokenizer:
+    """Synthetic labels with Moondream's non-monotonic IDs; no real tokenizer."""
+
+    def __init__(self, ids=(3639, 5476, 5772, 5509)):
+        self.mapping = dict(zip(core.LEVELS, ids))
+        self.inverse = {value: label for label, value in self.mapping.items()}
+
+    def encode(self, text, add_special_tokens=False):
+        return [token for part in re.split(r"(Level0[1-4])", text)
+                for token in ([self.mapping[part]] if part in self.mapping else map(ord, part))]
+
+    def decode(self, ids, skip_special_tokens=False, clean_up_tokenization_spaces=False):
+        return "".join(self.inverse.get(token, chr(token)) for token in ids
+                       if not skip_special_tokens or token not in (0, 999))
 
 
 class Tensor:
@@ -100,6 +118,70 @@ class CPUFixture(unittest.TestCase):
 
 
 class CaptureTests(CPUFixture):
+    def test_runtime_t1_preserves_label_order_and_all_28_checks(self):
+        tokenizer, cap = LabelTokenizer(), self.capture()
+        expected = [3639, 5476, 5772, 5509]
+        self.assertEqual(cap.runtime_t1(tokenizer), expected)
+        saved = cap.journal.read("runtime-t1")
+        self.assertEqual(saved, probe(tokenizer))
+        self.assertEqual(saved["candidate_token_ids"], sorted(expected))
+        self.assertEqual(len(saved["checks"]), 28)
+        for label in core.LEVELS:
+            self.assertEqual(sum(row["generated_label"] == label for row in saved["checks"]), 7)
+        for row in saved["checks"]:
+            self.assertEqual(row["token_ids"], expected)
+
+    def test_runtime_t1_checks_mapping_consistency_in_every_case(self):
+        evidence = probe(LabelTokenizer())
+        for index in range(28):
+            with self.subTest(index=index):
+                doc = metadata()
+                doc["run_id"] = f"hnlo-mapping-case-{index}"
+                cap = Capture(self.repo, doc)
+                changed = deepcopy(evidence)
+                ids = changed["checks"][index]["token_ids"]
+                ids[2], ids[3] = ids[3], ids[2]
+                with patch("safeshift.diagnostics.hnlo_capture.probe", return_value=changed):
+                    with self.assertRaisesRegex(ValueError, "T1_.*MAPPING"):
+                        cap.runtime_t1(LabelTokenizer())
+
+    def test_runtime_t1_rejects_incomplete_labels_duplicate_ids_and_cases(self):
+        for case in ("missing_case", "missing_label", "duplicate_ids", "duplicate_case"):
+            with self.subTest(case=case):
+                evidence = probe(LabelTokenizer())
+                if case == "missing_case":
+                    evidence["checks"].pop()
+                elif case == "missing_label":
+                    for row in evidence["checks"]:
+                        if row["generated_label"] == "Level04":
+                            row["generated_label"] = "Level03"
+                elif case == "duplicate_ids":
+                    for row in evidence["checks"]:
+                        row["token_ids"][3] = row["token_ids"][2]
+                else:
+                    evidence["checks"][-4:] = deepcopy(evidence["checks"][:4])
+                doc = metadata()
+                doc["run_id"] = "hnlo-malformed-" + case
+                cap = Capture(self.repo, doc)
+                with patch("safeshift.diagnostics.hnlo_capture.probe", return_value=evidence):
+                    with self.assertRaises(ValueError):
+                        cap.runtime_t1(LabelTokenizer())
+
+    def test_runtime_t1_rejects_swapped_label_mapping_in_reference(self):
+        cap = self.capture()
+        with self.assertRaisesRegex(ValueError, "RUNTIME_TOKENIZER_T1_MISMATCH"):
+            cap.runtime_t1(LabelTokenizer(), LabelTokenizer((3639, 5476, 5509, 5772)))
+
+    def test_runtime_t1_keeps_qwen3_and_internvl3_order(self):
+        for model in ("qwen3", "internvl3"):
+            with self.subTest(model=model):
+                doc = metadata(model)
+                doc["run_id"] = "hnlo-monotonic-" + model
+                cap = Capture(self.repo, doc)
+                tokenizer = LabelTokenizer((16, 17, 18, 19))
+                self.assertEqual(cap.runtime_t1(tokenizer, tokenizer), [16, 17, 18, 19])
+                self.assertEqual(len(cap.journal.read("runtime-t1")["checks"]), 28)
+
     def test_raw_processed_different_and_cpu_replay(self):
         cap = self.capture()
         self.persist(cap)
@@ -444,7 +526,7 @@ class MoonTests(CPUFixture):
                 head([0.0] * 1000)
         self.assertFalse(head._forward_hooks)
 
-    def native_runner(self, *, fail=False, drift=False):
+    def native_runner(self, *, fail=False, drift=False, tokenizer=TOK):
         from safeshift.runners.contracts import Task
         from safeshift.runners.moondream_snapshot import MODEL_ID as MOON_ID, REVISION as MOON_REV
         doc = metadata()
@@ -454,17 +536,21 @@ class MoonTests(CPUFixture):
         events, queries = [], []
         class NativeTokenizer:
             def encode(self, text, **kwargs):
-                return SimpleNamespace(ids=TOK.encode(text))
+                return SimpleNamespace(ids=tokenizer.encode(text))
             def decode(self, ids, skip_special_tokens=True):
-                return TOK.decode([i for i in ids if i != 0 or not skip_special_tokens])
+                return tokenizer.decode([i for i in ids if i != 0 or not skip_special_tokens])
+        decision = core.candidates(tokenizer, TEXT)
         def query(image, prompt, **kwargs):
             queries.append(kwargs)
-            for i, token in enumerate(TOK.encode(TEXT) + [0]):
+            for i, token in enumerate(tokenizer.encode(TEXT) + [0]):
                 events.append({"phase": "prefill" if i == 0 else "decode", "position": 100 + i})
                 if i == 0:
                     events[-1]["input_ids"] = [11, 22, 33]
-                values = [-10.0] * 1000
+                values = [-10.0] * max(1000, max(decision["token_ids"]) + 1)
                 values[token] = 10.0
+                if i == decision["step"]:
+                    for token_id, value in zip(decision["token_ids"], (1.0, 2.0, 10.0, 4.0)):
+                        values[token_id] = value
                 tensor = head(values)
                 self.assertTrue(cap.journal.exists(f"raw-{i:03d}"))
                 if i:
@@ -504,6 +590,39 @@ class MoonTests(CPUFixture):
         self.assertEqual(cap.journal.read("state-before"), cap.journal.read("state-after"))
         with self.assertRaisesRegex(RuntimeError, "NO_RETRY"):
             diagnostic.generate(prepared, SimpleNamespace(source_kind="SYNTHETIC"), cap)
+
+    def test_moon_non_monotonic_mapping_reconciles_and_reviews_in_label_order(self):
+        tokenizer = LabelTokenizer()
+        runner, cap, _, queries, prepared = self.native_runner(tokenizer=tokenizer)
+        trace = MoondreamDiagnostic(runner).generate(prepared, SimpleNamespace(source_kind="SYNTHETIC"), cap)
+        result = review_trace(cap, tokenizer)
+        self.assertEqual(result["alignment"], "PASS", result)
+        self.assertEqual(trace["candidate_token_ids"], [3639, 5476, 5772, 5509])
+        self.assertEqual(result["decision"]["token_ids"], [3639, 5476, 5772, 5509])
+        self.assertEqual(result["raw_label_logits"], [1.0, 2.0, 10.0, 4.0])
+        self.assertEqual(result["processed_label_scores"], [1.0, 2.0, 10.0, 4.0])
+        expected = {"3639": 1.0, "5476": 2.0, "5772": 10.0, "5509": 4.0}
+        for kind in ("raw", "processed"):
+            self.assertEqual(trace["steps"][result["decision"]["step"]][kind]["candidate_values"], expected)
+        self.assertEqual(len(cap.journal.read("runtime-t1")["checks"]), 28)
+        self.assertEqual(trace["token_id_status"], "INFERRED_MATCHES_NATIVE_ANSWER_AND_ENCODING")
+        self.assertEqual(len(queries), 1)
+        self.assertEqual(result["hnlo"], "N/A")
+        self.assertFalse(result["hnlo_verified"])
+
+    def test_moon_review_rejects_swapped_candidate_order_with_same_id_set(self):
+        tokenizer = LabelTokenizer()
+        runner, cap, _, _, prepared = self.native_runner(tokenizer=tokenizer)
+        swapped = [3639, 5476, 5509, 5772]
+        # Inject the old ordering bug after T1. Reconcile must keep the IDs as
+        # supplied; the unchanged strict review must reject the wrong label order.
+        with patch.object(cap, "runtime_t1", return_value=swapped):
+            trace = MoondreamDiagnostic(runner).generate(prepared, SimpleNamespace(source_kind="SYNTHETIC"), cap)
+        self.assertEqual(trace["candidate_token_ids"], swapped)
+        result = review_trace(cap, tokenizer)
+        self.assertEqual(result["alignment"], "FAIL")
+        self.assertEqual(result["reason"], "RUNTIME_CANDIDATE_IDS_CHANGED")
+        self.assertEqual(result["hnlo"], "N/A")
 
     def test_moon_query_exception_retains_raw_and_audits_state(self):
         runner, cap, head, _, prepared = self.native_runner(fail=True)

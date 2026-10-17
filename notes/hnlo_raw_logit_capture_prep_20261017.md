@@ -165,3 +165,46 @@ equal. This rule is not adopted/implemented by this PR; it must be approved befo
 a real comparison. No new HNLO or substitute metric is implemented here.
 
 Stop at one Draft PR. No merge, Antigravity invocation or model execution.
+
+## PR #111 follow-up — canonical token-ID order (2026-10-17)
+
+Reviewed HEAD: `a8631e4d08f6b03360dc43743f91e3ef998aee7e`.
+The original `runtime_t1` returned `probe.candidate_token_ids`, a sorted union
+intended as an inventory. It accidentally treated that inventory as a canonical
+Level01–Level04 mapping. For the supplied Moondream IDs this swapped the last two
+entries: `[3639, 5476, 5509, 5772]` instead of `[3639, 5476, 5772, 5509]`.
+The original character-tokenizer fixtures had ascending IDs and missed this bug.
+
+The diagnostic now derives the ordered IDs from the existing T1 `checks`.
+It requires exactly 28 checks, a consistent four-distinct-ID mapping in every
+check, response/decision alignment, and seven distinct contexts each covering
+all four canonical labels once. The sorted inventory is checked for consistency
+but never supplies label order. The existing T1 implementation/evidence format,
+strict ordered comparison in `review_trace`, raw/processed dictionaries keyed by
+actual token ID, canonical label order and HNLO formula remain unchanged.
+
+Changed in this follow-up: `safeshift/diagnostics/hnlo_capture.py`,
+`tests/test_hnlo_capture.py`, this note and the current task entry in `TASKS.md`.
+Seven new CPU regressions use synthetic tokenizers/modules only: exact supplied
+non-monotonic IDs and unchanged 28 checks; corrupt each of the 28 mappings in
+turn; missing labels/cases, duplicate IDs/cases; swapped reference mapping;
+unchanged Qwen3/InternVL3 order; Moondream native-call/reconcile/review success;
+and rejection of a deliberately swapped trace order containing the same ID set.
+Raw and processed values are asserted against their actual token-ID keys and
+their expected canonical label order. This fake does not claim to reproduce
+Starmie's segmentation or verify HNLO on a real model.
+
+The two new order/success tests first reproduced the original failure on the
+reviewed HEAD. After the fix, final CPU validation completed with no FAIL/ERROR:
+
+- `python -m unittest tests.test_hnlo_capture tests.test_hnlo_t1_cpu -v`:
+  42 tests, including all 35 capture tests PASS; 3 existing Windows symlink
+  subcases SKIP because link-creation privilege is unavailable.
+- `python -m unittest tests.test_ls1 tests.test_pa3_native tests.test_qwen_runner tests.test_qwen3_runtime_placement tests.test_moondream_binding -v`:
+  196 tests, 194 PASS / 2 opt-in real-tokenizer SKIP.
+- `python -m py_compile safeshift/diagnostics/hnlo_capture.py tests/test_hnlo_capture.py`:
+  PASS; `git diff --check`: PASS.
+
+No tokenizer/weights download, real inference, GPU or dataset read. Production,
+merged T1 code, decisions and protocols are untouched. HNLO remains N/A / NOT
+VERIFIED. Follow-up stops at the same Draft PR #111, without merge or Antigravity.

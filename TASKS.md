@@ -2154,6 +2154,8 @@ change, decision change or self-granted authority occurred.
   durable raw/processed tensors before decode; checksums, IDs/EOS and CPU replay.
 - [x] Fake CPU success/failure tests; related existing CPU regressions and source
   file checks. Evidence/limits: `notes/hnlo_raw_logit_capture_prep_20261017.md`.
+- [x] Fix PR #111 token-ID ordering using all 28 T1 mappings; seven added CPU
+  regressions cover non-monotonic Moondream IDs and swapped-mapping rejection.
 - [ ] GitHub review, separately requested independent audit and Lead merge review.
 - [ ] Research/protocol, hook strategy and exact GPU probe authority/tolerance approval.
 - [ ] Real raw-logit/response/state/VRAM validation: NOT RUN; HNLO NOT VERIFIED.

@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 from types import SimpleNamespace
 
-from safeshift.ls1.core import locate_decision, score_decision
+from safeshift.ls1.core import LEVELS, locate_decision, score_decision
 from safeshift.ls1.runtime import capture_output, summarize_vector
 from safeshift.ls1.tokenizer import probe
 from safeshift.pa3.artifacts import json_bytes
@@ -20,6 +20,43 @@ from safeshift.pa3.native.journal import Journal, safe_relative
 
 def digest(value):
     return hashlib.sha256(json_bytes(value)).hexdigest()
+
+
+def ordered_t1_ids(evidence):
+    """Recover canonical label order from all 28 existing T1 branch proofs.
+
+    probe.candidate_token_ids is a sorted inventory, not a label-to-ID mapping.
+    Each check.token_ids follows LEVELS; require the same mapping in all cases.
+    """
+    checks = evidence["checks"]
+    if len(checks) != 7 * len(LEVELS):
+        raise ValueError("T1_EXACT_28_CASES_REQUIRED")
+    ordered, variants = None, {}
+    for check in checks:
+        ids = check["token_ids"]
+        if (len(ids) != len(LEVELS) or len(set(ids)) != len(LEVELS)
+                or any(type(token) is not int or token < 0 for token in ids)):
+            raise ValueError("T1_FOUR_DISTINCT_MAPPING_IDS_REQUIRED")
+        if ordered is None:
+            ordered = list(ids)
+        if ids != ordered:
+            raise ValueError("T1_INCONSISTENT_LABEL_TOKEN_MAPPING")
+        label = check["generated_label"]
+        if label not in LEVELS:
+            raise ValueError("T1_CANONICAL_LABEL_REQUIRED")
+        prefix, suffix = check["prefix_ids"], check["suffix_ids"]
+        if (check["step"] != len(prefix)
+                or check["response_ids"] != prefix + [ids[LEVELS.index(label)]] + suffix):
+            raise ValueError("T1_RESPONSE_LABEL_MAPPING_MISMATCH")
+        labels = variants.setdefault((tuple(prefix), tuple(suffix)), set())
+        if label in labels:
+            raise ValueError("T1_DUPLICATE_LABEL_CASE")
+        labels.add(label)
+    if len(variants) != 7 or any(labels != set(LEVELS) for labels in variants.values()):
+        raise ValueError("T1_ALL_FOUR_LABELS_PER_VARIANT_REQUIRED")
+    if evidence["candidate_token_ids"] != sorted(ordered):
+        raise ValueError("T1_CANDIDATE_INVENTORY_MAPPING_MISMATCH")
+    return ordered
 
 
 class Capture:
@@ -84,9 +121,10 @@ class Capture:
     def runtime_t1(self, tokenizer, comparison_tokenizer=None):
         actual = probe(tokenizer)
         self.write("runtime-t1", actual)
+        ordered = ordered_t1_ids(actual)
         if comparison_tokenizer is not None and actual != probe(comparison_tokenizer):
             raise ValueError("RUNTIME_TOKENIZER_T1_MISMATCH")
-        return actual["candidate_token_ids"]
+        return ordered
 
 
 def tensor_evidence(tensor):
