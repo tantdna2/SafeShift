@@ -43,6 +43,19 @@ MAX_TOKENIZER_FILE_BYTES = 128 * 1024 * 1024
 USER_AGENT = "SafeShift-HNLO-T1-tokenizer-only/1.0"
 
 
+def resolve_output_root(value, *, root=ROOT):
+    """Resolve symlinks and confine all preparation output to data/processed."""
+    repository_root = Path(root).resolve()
+    processed_root = (repository_root / "data" / "processed").resolve()
+    if not processed_root.is_relative_to(repository_root):
+        raise ValueError("DATA_PROCESSED_DIRECTORY_ESCAPES_REPOSITORY")
+    requested = Path(value)
+    output = (requested if requested.is_absolute() else repository_root / requested).resolve()
+    if not output.is_relative_to(processed_root):
+        raise ValueError("OUTPUT_MUST_BE_INSIDE_DATA_PROCESSED")
+    return output
+
+
 def sha256_file(path):
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
@@ -198,13 +211,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-root", type=Path, required=True)
     args = parser.parse_args()
-    output = args.output_root
-    if output.is_absolute():
-        try:
-            output = output.resolve().relative_to(ROOT.resolve())
-        except ValueError as exc:
-            raise ValueError("OUTPUT_MUST_BE_REPOSITORY_RELATIVE") from exc
-    output = ROOT / output
+    output = resolve_output_root(args.output_root)
     manifest_path = output / "resource_manifest.json"
     if manifest_path.exists():
         raise FileExistsError("RESOURCE_MANIFEST_ALREADY_EXISTS")

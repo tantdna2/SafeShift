@@ -34,6 +34,22 @@ class NativeTokenizer:
 
 
 class HnloT1CpuTests(unittest.TestCase):
+    def test_preparation_output_is_confined_to_data_processed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            processed = root / "data" / "processed"
+            processed.mkdir(parents=True)
+            expected = processed / "t1-run"
+            self.assertEqual(
+                prep.resolve_output_root("data/processed/t1-run", root=root),
+                expected.resolve(),
+            )
+            self.assertFalse(expected.exists())
+            with self.assertRaisesRegex(ValueError, "OUTPUT_MUST_BE_INSIDE_DATA_PROCESSED"):
+                prep.resolve_output_root("data/processed/../../escape", root=root)
+            with self.assertRaisesRegex(ValueError, "OUTPUT_MUST_BE_INSIDE_DATA_PROCESSED"):
+                prep.resolve_output_root(root.parent / "absolute-escape", root=root)
+
     def test_starmie_adapter_preserves_exact_text(self):
         adapter = StarmieAdapter(NativeTokenizer())
         text = '\t```json\n{"safety_level" : "Level04"}\n```\n'

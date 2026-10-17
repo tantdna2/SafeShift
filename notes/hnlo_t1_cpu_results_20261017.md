@@ -78,6 +78,11 @@ JSON run results are intentionally outside Git tracking under:
 
 Final result receipts in that ignored directory:
 
+The three 28/28 PASS statuses reported here come from Codex's local runs. GitHub
+contains this report, the reviewed manifest, and receipt sizes/hashes, but not
+the three original result JSON files or tokenizer bytes; a Git checkout alone
+therefore cannot recompute the hashes of those ignored artifacts.
+
 | Result | Bytes | SHA-256 |
 |---|---:|---|
 | `results/qwen3_t1_final.json` | 13354 | `4e95baea5347a245d9e067bb2893d1610876dbc8164066f15c00e9df342e20e3` |
