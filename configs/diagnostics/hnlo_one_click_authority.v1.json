@@ -47,5 +47,20 @@
     },
     "research_verified": false
   },
-  "grant": null
+  "grant": {
+    "approved_by": "Nguyen Anh Tan",
+    "role": "Research Lead",
+    "approved_utc": "2026-10-17T14:51:30Z",
+    "decision_url": "https://github.com/tantdna2/SafeShift/pull/112#issuecomment-6235330352",
+    "independent_audit_url": "https://github.com/tantdna2/SafeShift/pull/112#issuecomment-6235198479",
+    "implementation_commit": "f7b4201f0ac6b68ada6bd7a2dc90d1cf2b035fcf",
+    "source_payload_sha256": "295bd149cee5856f637fd1f1b19b6d27a22add3c306a503d67a1280527933a21",
+    "attempt_id": "hnlo-synthetic-probe-20261017-01",
+    "provisioning_approved": true,
+    "gpu_probe_approved": true,
+    "technical_probe_exception_approved": true,
+    "raw_provenance_criteria_approved": true,
+    "numerical_tolerance_approved": true,
+    "artifact_retention_approved": true
+  }
 }
