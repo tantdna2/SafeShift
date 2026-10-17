@@ -2129,3 +2129,21 @@ records the selected direction as PROPOSED. Historical results stay unchanged.
 This Draft prepares documentation only. D9R22 remains effective pending approval;
 protocol freeze and new execution remain PENDING. No production/config/data/split/
 label/formula/history change, no inference, no TEST read and no self-granted authority.
+
+## HNLO T1 CPU for the three additional Seminar models (2026-10-17; Draft)
+
+- [x] Pin and verify tokenizer-only resources for Qwen3-VL-8B-Instruct,
+  InternVL3-2B-hf and Moondream2/Starmie at their immutable revisions.
+- [x] Reuse the existing InternVL3 checker; add minimal offline CPU support for
+  Qwen3 `AutoTokenizer` and native Starmie `Tokenizer.from_file`.
+- [x] Run the current parser/alignment contract for four labels times seven
+  response variants: 28/28 PASS independently for all three tokenizers.
+- [x] Record per-file size/hash/source, exact runtime versions, per-variant
+  decision positions and token IDs in a small reviewable report and manifest.
+- [ ] GitHub review of the Draft PR. No merge or Antigravity handoff in this task.
+- [ ] Separately verify durable raw-logit capture and obtain the still-required
+  research decision and execution authority before any GPU work.
+
+T1 PASS is a tokenizer precondition, not HNLO verification. No weights, model
+inference, GPU, InspecSafe/TEST/annotation/ground-truth access, production runner
+change, decision change or self-granted authority occurred.
