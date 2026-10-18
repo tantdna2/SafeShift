@@ -29,5 +29,21 @@
     "unguarded_cuda": false,
     "security_boundary_expansion": false
   },
-  "grant": null
+  "grant": {
+    "approved_by": "Nguyen Anh Tan",
+    "role": "Research Lead",
+    "approved_utc": "2026-10-18T05:18:19Z",
+    "decision_url": "https://github.com/tantdna2/SafeShift/pull/114#issuecomment-6246027462",
+    "independent_audit_url": "https://github.com/tantdna2/SafeShift/pull/114#issuecomment-6246041943",
+    "implementation_commit": "089cabbc724ff2fad7bae7b61c8641eac9f1c7cc",
+    "source_payload_sha256": "04feb199e683edb63639fdf6c15c0bc3218cd370e579d12701583385e62491fa",
+    "attempt_id": "internvl3-cuda-diag-20261018-01",
+    "metadata_collection_approved": true,
+    "loader_probe_approved": true,
+    "driver_initialization_approved": true,
+    "runtime_count_approved": true,
+    "provisioning_approved": true,
+    "artifact_retention_approved": true,
+    "unchanged_security_boundary_approved": true
+  }
 }
