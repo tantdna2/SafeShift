@@ -41,5 +41,21 @@
     "recovery_of_pr": 112,
     "security_scope": "LOCAL_AF_UNIX_CONNECT_ONLY;NO_FD_RECEIPT;NO_INET;LOCAL_PROXY_RISK_REQUIRES_APPROVAL"
   },
-  "grant": null
+  "grant": {
+    "approved_by": "Nguyen Anh Tan",
+    "role": "Research Lead",
+    "approved_utc": "2026-10-18T02:54:18Z",
+    "decision_url": "https://github.com/tantdna2/SafeShift/pull/113#issuecomment-6244927306",
+    "independent_audit_url": "https://github.com/tantdna2/SafeShift/pull/113#issuecomment-6244947587",
+    "implementation_commit": "4504f9b5d6f4efa06d37b75f21fd44ea8163a202",
+    "source_payload_sha256": "7d14e4567454af682000f88e006137471a18f517074fe5700cec12a843de9285",
+    "attempt_id": "internvl3-recovery-20261018-01",
+    "security_boundary_change_approved": true,
+    "provisioning_approved": true,
+    "gpu_probe_approved": true,
+    "technical_probe_exception_approved": true,
+    "raw_provenance_criteria_approved": true,
+    "numerical_tolerance_approved": true,
+    "artifact_retention_approved": true
+  }
 }
