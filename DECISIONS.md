@@ -3097,3 +3097,40 @@ This PREP is not permission to run on Kaggle. Direct GitHub review, a separately
 requested independent audit, exact Lead approvals, a new unique attempt,
 authority-only F2 and verified standard merge remain required. PR #113's used
 grant is not reused. Any boundary expansion must stop for a separate Lead decision.
+
+## DEC-PA3-014 — PROPOSED guarded NVIDIA driver loading policy (2026-10-18)
+
+Status: **PREPARATION ONLY / NOT APPROVED / NO EXECUTION AUTHORITY**. The explicit
+task authorizes investigation, CPU implementation/tests and one new Draft PR from
+main `f0613c9c38df6283f9725ed94e713091279261ec`. It does not approve execution or
+reuse the PR #112–#114 grants. Evidence, alternatives and security assessment:
+[driver loading PREP](notes/internvl3_driver_loading_20261018.md).
+
+The original PR #114 Kaggle package and all 67/67 members were independently
+verified. Both driver SONAME loads fail although host and worker stat the same
+driver ELF files. Sanitized workers lack host LD_LIBRARY_PATH; linker cache lacks
+both driver entries. Search-path loss is very strongly supported; cuInit never
+ran, and Runtime code 35 does not establish successful initialization after repair.
+DIAGNOSTICS_COMPLETED is observation completion, not CUDA PASS.
+
+Propose only fixed, root-managed `/usr/local/nvidia/lib64` driver objects at the
+observed 580.178.04 version and sizes, verified symlink/realpath/owner/mode/ELF/
+SONAME/dependencies, loaded from opened descriptors **after** unchanged seccomp,
+Python guard and monitor. Do not restore LD_LIBRARY_PATH/LD_PRELOAD, modify global
+loader search, change pinned wheel Runtime 12.4/software/model/visibility, or alter
+Qwen3/historical releases. Whole-directory startup search would permit native
+substitution before guards; this narrower policy avoids that new startup surface.
+
+This remains a **loading/environment policy change requiring separate Research
+Lead approval**. Root-managed image trust is not vendor-signature authentication;
+privileged host/root writes, native constructors/internal dependency loads and
+existing local-peer relay/partial monitoring risks remain. No security PASS is
+claimed. New source-bound authority has grant null and requires a fresh attempt,
+new review/audit references, `driver_loading_policy_change_approved=true` and all
+diagnostic/provisioning/retention/boundary approvals. A separately reviewed F1 ->
+authority-only F2 -> exact standard merge is required before Owner execution.
+
+The independent notebook can check cuInit and the locked Runtime device count
+before downloading weights: it never provisions a model. A successful future
+diagnostic does not grant model/HNLO execution. No GPU/model/data execution,
+self-grant, Antigravity invocation or merge occurs in this task. Stop at Draft PR.
