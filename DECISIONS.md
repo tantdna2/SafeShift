@@ -3031,3 +3031,49 @@ editing historical decisions. Every new metric implementation, annotation/label
 read, threshold choice, GPU inference and TEST access requires its own reviewed
 decision and authority binding. This Draft PR grants none; no production code,
 PA3 formula, dataset, split, label or historical result is changed.
+
+## DEC-PA3-012 — PROPOSED InternVL3 synthetic CUDA recovery boundary (2026-10-17)
+
+Status: **PROPOSED / NOT APPROVED / NO EXECUTION AUTHORITY**. This appends a
+candidate for review and preserves DEC-PA3-011, D9R22 and PR #112 authority/history.
+Evidence, primary sources and exact conditions:
+[InternVL3 recovery PREP](notes/internvl3_cuda_recovery_20261017.md).
+
+Linux CPU establishes that both PR #112 network guards block AF_UNIX connect;
+it does not establish that this caused the reported Kaggle CUDA admission failure.
+The proposal retains pinned InternVL3 software/checkpoint/CUDA placement and
+records CUDA availability, visible count and build independently before failure.
+Recovery proposes AF_UNIX connect only in a fresh socket-free single-threaded
+child with irreversible TSYNC seccomp, AF_UNIX-only socket/socketpair, existing
+direct network denials and additional descriptor-import denial, plus a Python
+guard. Local peers may relay traffic: this expanded local IPC scope and residual
+risk require explicit Research Lead approval; no venue-wide Internet isolation
+or Kaggle CUDA/security PASS is claimed.
+
+Before any provisioning or GPU checks, a separately audited null-by-default
+recovery authority must receive a fresh source-bound grant, unique recovery
+attempt, new decision/audit URLs and all prior approval flags plus
+`security_boundary_change_approved=true`. Release also requires the reviewed
+F1 -> authority-only F2 -> exact standard merge sequence. Approval of PR #112
+does not approve this scope. If local-peer relay risk is unacceptable, do not
+grant; no guard disabling or speculative additional syscall relaxation.
+
+Scope is one fixed synthetic image, InternVL3 only, at most one model load and
+one generate, no retry/Qwen3/data/labels/GT access, unchanged raw capture and CPU
+replay. Research Lead has not approved this proposal in this task. Codex stops
+at one Draft PR; external review/audit, authority release and merge remain pending.
+
+### DEC-PA3-012 monitoring addendum (2026-10-18) — still NOT APPROVED
+
+[PR #113 review request](https://github.com/tantdna2/SafeShift/pull/113#issuecomment-6244457405)
+requests unprivileged local-relay observations, not execution/security approval.
+The revised F1 adds Python connection metadata, bounded procfs socket snapshots,
+SO_PEERCRED and peer fd-inode ownership checks without new seccomp allowances or
+CUDA changes. Native events and peer forwarding remain PARTIAL/UNOBSERVABLE;
+absence of observations cannot establish NO_LEAK or SECURITY_PASS. Observed
+worker violations stop; a peer connected IP channel also triggers a conservative
+risk stop, without claiming it forwarded worker data. Durable evidence is retained
+and no retry is authorized. Detailed coverage, tests and the Owner-controlled
+venue-isolation alternative are in the recovery note. Research Lead must still
+decide the AF_UNIX scope, incomplete observation and residual risk on the new
+F1/payload; previous F1 audits do not cover it. Grant remains null; no F2/merge/GPU.

@@ -56,6 +56,8 @@ def host_conditions(output):
 
 
 class Operations:
+    worker_module = "safeshift.diagnostics.one_click.worker"
+
     def __init__(self, repo, work, evidence, source_path, grant):
         self.repo, self.work, self.evidence = Path(repo), Path(work), Path(evidence)
         self.source_path, self.grant = Path(source_path), grant
@@ -95,11 +97,11 @@ class Operations:
     def worker(self, mode, model):
         evidence = self.evidence / model / mode
         env = child_environment(model, self.repo, self.cache(model), cpu=mode == "replay")
-        command = [str(self.pythons[model]), "-m", "safeshift.diagnostics.one_click.worker", "--mode", mode,
+        command = [str(self.pythons[model]), "-m", self.worker_module, "--mode", mode,
                    "--model", model, "--cache", self.cache(model), "--evidence", str(evidence),
                    "--source", str(self.source_path), "--capture-root", str(self.work)]
         with (self.evidence / model / (mode + ".log")).open("xb") as stream:
-            process = subprocess.run(command, cwd=self.repo, env=env, stdout=stream,
+            process = subprocess.run(command, cwd=self.repo, env=env, stdin=subprocess.DEVNULL, stdout=stream,
                                      stderr=subprocess.STDOUT, close_fds=True)
         if not (evidence / "result.json").is_file():
             raise RuntimeError("WORKER_TERMINATED_WITHOUT_FINAL_RECORD:" + str(process.returncode))
@@ -147,18 +149,20 @@ def fail(row, status, error):
                alignment="N/A", ALIGNMENT_VALID=False)
 
 
-def run(repo, work, output, source, *, operations_factory=Operations):
+def run(repo, work, output, source, *, operations_factory=Operations,
+        order=ORDER, authority_path=AUTHORITY, authorizer=authorize,
+        result_schema="hnlo-two-model-probe-v1"):
     repo, work, output = Path(repo), Path(work), Path(output)
     evidence = work / "evidence"
     evidence.mkdir()
-    rows = {model: empty(model) for model in ORDER}
-    result = {"schema": "hnlo-two-model-probe-v1", "source": source,
+    rows = {model: empty(model) for model in order}
+    result = {"schema": result_schema, "source": source,
               "HNLO_RESEARCH_VERIFIED": False, "models": [], "common_blocker": None}
     fatal = False
     ops = None
     try:
-        authority = json.loads((repo / AUTHORITY).read_bytes())
-        grant = authorize(authority, source)
+        authority = json.loads((repo / authority_path).read_bytes())
+        grant = authorizer(authority, source)
         # A second Run All cannot erase/reuse a partial or successful attempt.
         # Across brand-new Kaggle sessions, non-reuse also needs Lead/Owner
         # accounting; no offline local filesystem can attest global non-replay.
@@ -170,7 +174,7 @@ def run(repo, work, output, source, *, operations_factory=Operations):
         ops = operations_factory(repo, work, evidence, evidence / "source.json", grant)
         write(evidence / "host.json", ops.preflight())
         # Finish all online work before the first model inference.
-        for model in ORDER:
+        for model in order:
             if fatal:
                 break
             try:
@@ -182,7 +186,7 @@ def run(repo, work, output, source, *, operations_factory=Operations):
             fatal = bool(rows[model].get("common_fatal"))
         # No call to prepare occurs after this point. Probe/replay workers enforce
         # offline flags, irreversible kernel filter and reused Python guard.
-        for model in ORDER:
+        for model in order:
             if fatal:
                 if rows[model]["result"] in ("ENVIRONMENT_VALID", "NOT_ATTEMPTED"):
                     rows[model].update(result="BLOCKED", reason="COMMON_SAFETY_GATE_FAILED")
@@ -220,7 +224,7 @@ def run(repo, work, output, source, *, operations_factory=Operations):
             if row["result"] in ("NOT_ATTEMPTED", "ENVIRONMENT_VALID"):
                 row.update(result="BLOCKED", reason=str(error))
     finally:
-        result["models"] = [deepcopy(rows[k]) for k in ORDER]
+        result["models"] = [deepcopy(rows[k]) for k in order]
         result["result"] = "TECHNICAL_VALID" if all(r["TECHNICAL_HNLO_VALID"] and r["result"] == "TECHNICAL_VALID" for r in rows.values()) else "BLOCKED" if all(r["load_calls"] == 0 for r in rows.values()) else "PARTIAL_OR_NA"
         result["result_scope"] = "PROBE_AND_CPU_REPLAY_BEFORE_EXPORT"
         result["export_status"] = "SEE_SHA256_OR_EXPORT_FAILURE_RECEIPT"
