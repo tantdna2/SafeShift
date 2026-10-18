@@ -1,0 +1,33 @@
+{
+  "schema": "internvl3-cuda-diagnostic-authority-v1",
+  "base_sha": "67d401091adfde8a17d1fa9cd89af5574dfa529a",
+  "scope": {
+    "model": "internvl3",
+    "python": "3.11.11",
+    "torch": "2.6.0+cu124",
+    "transformers": "4.52.4",
+    "cuda": "12.4",
+    "cuda_visible_devices": "0",
+    "stages": [
+      "metadata",
+      "load_cuda",
+      "load_nvml",
+      "load_cudart",
+      "cuinit",
+      "runtime_count"
+    ],
+    "fresh_process_per_stage": true,
+    "network_boundary": "SECCOMP_UNIX_CONNECT_NO_INHERITED_SOCKETS_V1_PLUS_PYTHON_GUARD",
+    "host_observation": "STATIC_METADATA_ONLY",
+    "environment_policy": "UNCHANGED_ONE_CLICK_CHILD_ENVIRONMENT",
+    "weights_download": false,
+    "model_load": false,
+    "inference": false,
+    "dataset_access": false,
+    "labels_or_gt_access": false,
+    "retry": false,
+    "unguarded_cuda": false,
+    "security_boundary_expansion": false
+  },
+  "grant": null
+}

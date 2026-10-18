@@ -119,6 +119,35 @@ class MetadataTests(unittest.TestCase):
                 self.assertIsNotNone(monitor.finish()["stop_reason"])
 
 
+class CheckpointRaceTests(unittest.TestCase):
+    def checkpoint(self, first_error=None, duplicate_error=None):
+        temporary = self.enterContext(tempfile.TemporaryDirectory())
+        monitor = audit.Monitor(temporary)
+        with patch.object(Path, "iterdir", return_value=iter([Path("/proc/self/fd/99")])), patch.object(
+            audit.os, "fstat", side_effect=first_error or [SimpleNamespace(st_mode=0o140000)]), patch.object(
+            audit.os, "dup", side_effect=duplicate_error):
+            monitor.checkpoint("synthetic_cpu_race")
+        return events(temporary)[-1], monitor.finish()
+
+    def test_descriptor_closed_before_first_stat_is_recorded_as_race(self):
+        row, summary = self.checkpoint(first_error=OSError(errno.EBADF, "synthetic closed enumeration fd"))
+        self.assertEqual(row["closed_before_inspection"], 1)
+        self.assertEqual(row["errors"], [])
+        self.assertEqual(row["status"], "PARTIAL")
+        self.assertFalse(summary["no_leak_claim"])
+
+    def test_permission_failure_remains_unobservable(self):
+        row, _ = self.checkpoint(first_error=PermissionError(errno.EACCES, "secret"))
+        self.assertEqual(row["status"], "UNOBSERVABLE")
+        self.assertEqual(row["errors"], [{"error_type": "PermissionError", "errno": errno.EACCES}])
+        self.assertNotIn("secret", json.dumps(row))
+
+    def test_bad_descriptor_after_first_stat_is_not_suppressed(self):
+        row, _ = self.checkpoint(duplicate_error=OSError(errno.EBADF, "secret"))
+        self.assertEqual(row["status"], "UNOBSERVABLE")
+        self.assertEqual(row["errors"][0]["errno"], errno.EBADF)
+
+
 class WorkerExportTests(unittest.TestCase):
     def test_security_stop_is_fatal_retained_exported_and_never_retried(self):
         # Real recovery worker/monitor + parent exporter; only source/authority,

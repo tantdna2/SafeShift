@@ -234,6 +234,7 @@ class Monitor:
     def checkpoint(self, phase):
         self.require_running()
         examined = 0
+        closed_before_inspection = 0
         errors = []
         try:
             for index, entry in enumerate(Path("/proc/self/fd").iterdir()):
@@ -243,7 +244,17 @@ class Monitor:
                 duplicate = None
                 try:
                     fd = int(entry.name)
-                    if not stat.S_ISSOCK(os.fstat(fd).st_mode):
+                    try:
+                        mode = os.fstat(fd).st_mode
+                    except OSError as error:
+                        # procfs enumeration can include its own already-closed
+                        # directory fd. A target can also close before this stat.
+                        # Count this race; do not hide errors after inspection.
+                        if error.errno != errno.EBADF:
+                            raise
+                        closed_before_inspection += 1
+                        continue
+                    if not stat.S_ISSOCK(mode):
                         continue
                     duplicate = os.dup(fd)
                     sock = socket.socket(fileno=duplicate)
@@ -272,6 +283,7 @@ class Monitor:
         except OSError as error:
             errors.append(failure(error))
         self.event("checkpoint", source="PROC_SELF_FD", phase=phase, examined_sockets=examined,
+                   closed_before_inspection=closed_before_inspection,
                    status="UNOBSERVABLE" if errors and not examined else "PARTIAL", errors=errors)
         self.require_running()
 
