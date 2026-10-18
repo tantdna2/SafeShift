@@ -3077,3 +3077,23 @@ and no retry is authorized. Detailed coverage, tests and the Owner-controlled
 venue-isolation alternative are in the recovery note. Research Lead must still
 decide the AF_UNIX scope, incomplete observation and residual risk on the new
 F1/payload; previous F1 audits do not cover it. Grant remains null; no F2/merge/GPU.
+
+## DEC-PA3-013 — PROPOSED InternVL3 driver diagnostic execution (2026-10-18)
+
+Status: **PROPOSED / NO NEW EXECUTION GRANT**. The Owner authorized CPU repair
+and preparation of one separate diagnostic Draft PR after inspecting PR #113's
+real Kaggle evidence. CUDA root cause is still unknown; no dataset, label, metric,
+protocol or historical result changes are proposed.
+
+The first-fstat monitor EBADF race is repaired with CPU regression evidence.
+The diagnostic notebook preserves the exact environment and existing seccomp /
+Python network boundary. New null-by-default authority covers static metadata,
+loader-only checks and separately approved direct driver/runtime initialization
+in fresh children. No weights, inference, NVML-based CUDA admission, unguarded
+control, syscall relaxation or retry. Details, limits and release sequence:
+`notes/internvl3_cuda_diagnostic_20261018.md`.
+
+This PREP is not permission to run on Kaggle. Direct GitHub review, a separately
+requested independent audit, exact Lead approvals, a new unique attempt,
+authority-only F2 and verified standard merge remain required. PR #113's used
+grant is not reused. Any boundary expansion must stop for a separate Lead decision.

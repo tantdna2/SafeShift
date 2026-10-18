@@ -2219,3 +2219,21 @@ No security approval, GPU execution, merge or independent audit is performed her
   authority-only F2 and verified merge. Kaggle observation/CUDA remain NOT RUN.
 
 No new grant, model download, GPU run, Qwen3 rerun, data access or security PASS.
+
+## InternVL3 CUDA diagnostic PREP (2026-10-18; after PR #113)
+
+- [x] Verify/extract all three Kaggle artifacts and 25 evidence hashes; retain
+  historical results and separate observed facts from CUDA hypotheses.
+- [x] Reproduce the first-fstat EBADF observation defect with CPU doubles and
+  repair only that race; retain later errors and partial monitoring coverage.
+- [x] Prepare a separate one-click notebook, null diagnostic authority and source
+  lock, software-only provisioning and six fresh guarded diagnostic stages.
+- [x] Record completed CPU and relevant regression checks: Linux 140 cases
+  (1 platform skip), related 222 (2 tokenizer skips); final Windows diagnostic /
+  EBADF 33 (2 Linux skips). See the diagnostic note for scope and versions.
+- [ ] Direct GitHub review, separately requested independent audit and new Lead
+  source-bound authority-only release before any Owner Kaggle diagnostic.
+
+CUDA ROOT CAUSE UNKNOWN; no speculative environment/security/CUDA policy repair.
+No weights, model inference, Qwen3, data/labels/GT, grant, GPU, audit invocation or
+merge. Runbook: `notes/internvl3_cuda_diagnostic_20261018.md`. Stop at one Draft PR.

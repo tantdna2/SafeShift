@@ -79,7 +79,7 @@ class AdmissionTests(unittest.TestCase):
 
 class AuthorityFlowTests(unittest.TestCase):
     def test_default_null_exact_single_model_and_pins(self):
-        self.assertEqual(json.loads((ROOT / contract.AUTHORITY).read_bytes()), contract.template())
+        self.assertEqual({**json.loads((ROOT / contract.AUTHORITY).read_bytes()), "grant": None}, contract.template())
         self.assertEqual(contract.ORDER, ("internvl3",))
         self.assertEqual(list(contract.scope()["models"]), ["internvl3"])
         self.assertEqual(contract.scope()["models"]["internvl3"]["cuda_visible_devices"], "0")
@@ -253,8 +253,15 @@ class AuthorityFlowTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(boot.canonical(lock)).hexdigest(), digest)
         expected = (ROOT / "safeshift/diagnostics/internvl3_recovery/bootstrap.py").read_text(encoding="utf-8")
         self.assertEqual(code.replace(digest, "0" * 64), expected + "\n# The single Run All entrypoint.\nresult = bootstrap()\n")
+        grant = json.loads((ROOT / contract.AUTHORITY).read_bytes()).get("grant")
+        historical = None
+        if grant:
+            archive = subprocess.check_output(["git", "-C", str(ROOT), "archive", grant["implementation_commit"]])
+            historical = self.enterContext(tarfile.open(fileobj=io.BytesIO(archive)))
         for row in lock["files"]:
-            data = (ROOT / row["path"]).read_bytes()
+            # A released lock remains bound to historical F1, including its
+            # null authority and monitor, rather than subsequent source changes.
+            data = historical.extractfile(row["path"]).read() if historical else (ROOT / row["path"]).read_bytes()
             if row["path"] == contract.NOTEBOOK:
                 data = boot.notebook_bytes(data)
             self.assertEqual(hashlib.sha256(data).hexdigest(), row["sha256"], row["path"])
