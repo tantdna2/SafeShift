@@ -3249,3 +3249,46 @@ No research/dataset/split/label/metric, model, C1, eight hashes/ordinals, raw-su
 CPU replay, pins, security, GT/TEST, artifact or retry/resume policy changes.
 No Kaggle/checkpoint/GPU, grant, F2, Antigravity or merge here. Validation/limits:
 `notes/resource_pilot8_dataset_path_v3_20261019.md`.
+
+## DEC-PA3-018 — PROPOSED full TRAIN Qwen3/InternVL3 V4 PREP (2026-10-19)
+
+Owner explicitly requests a new F1/Draft from BASE
+`7dd96e083a8d409355062e6087624e306e4a5b2c` after PR #120. PR #117 remains
+OPEN/Draft HOLD; selectively reuse its implementation at
+`b2c381045f06b567a9cb89793dff6b4b0cacc097`, never merge/rebase/edit its branch.
+This is implementation preparation, not approval of execution or DEC-PA3-011;
+D9R22 remains EFFECTIVE. No dataset/split/label/metric change is proposed.
+
+Keep the exact 3,763 original Qwen2.5 TRAIN IDs, hashes, order and four
+941/941/941/940 shards, C1, native processors, revisions, greedy batch-1/max-32,
+T1, four raw label logits and HNLO formula. Use fresh independent model/shard
+run and attempt identities, grant=null, per-unit approvals and immutable
+BASE → F1 → authority-only F2 → standard merge. Old grants do not transfer.
+
+Owner reports both V3 pilots completed 8/8 with CPU HNLO replay PASS. These are
+the first eight original shard-0 ordinals for each model: already exposed, kept
+in the full cohort. Baseline outputs must come from new calls under the new
+release contract; do not substitute pilot outputs. Record every new staging read
+and native call. Re-exposure/overlap policy requires explicit Lead approval.
+The PREP itself reads no real TRAIN images or annotations and runs no model.
+
+Propose the PR #117/V3 sufficient raw-summary evidence contract, explicitly
+full_vocab_replay=false. Raw summaries precede decode and sample seal precedes
+parser; supervisor custody seal and a separate label permission precede CPU GT
+join. Only opaque ordinal/hash requests enter inference. INVALID, TECHNICAL_ERROR,
+INTERRUPTED and NOT_ATTEMPTED remain visible; no retry/resume, filtering or repair.
+
+After authority validation and exclusive attempt consumption, bounded PR #120
+discovery and all-shard metadata checks precede any byte reads. Budget checks,
+journaled hashing/copy verification of all images precede environment, CUDA and
+checkpoint. Preserve specific input failures and export partial evidence when
+the host/storage still permit it. Reserve output for raw journals, sidecars and
+archive; inadequate output/scratch/RAM/GPU admission blocks the whole attempt.
+
+Lead must separately approve the evidence/audit limit, selected units, TRAIN
+reads, re-exposure, labels after custody, provisioning/GPU, cost/time/storage,
+retention, cross-session ledger, interruption risk and the residual AF_UNIX
+PARTIAL/UNOBSERVABLE local-peer relay boundary before a future F2. No grant,
+F2, Kaggle, checkpoint, GPU, Antigravity or merge in this task. Pilot projections
+are illustrative, not a verified bound on full-shard feasibility.
+Runbook and actual CPU validation: `notes/hnlo_train_v4_20261019.md`.

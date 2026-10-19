@@ -2340,3 +2340,27 @@ merge. Stop at one new Draft PR. Runbook:
 
 No Kaggle/checkpoint/GPU, grant, F2, PR #117 edits, Antigravity or merge.
 Stop after one Draft PR. Runbook: `notes/resource_pilot8_dataset_path_v3_20261019.md`.
+
+## Full TRAIN Qwen3/InternVL3 V4 F1 PREP (2026-10-19; DEC-PA3-018 PROPOSED)
+
+- [x] Verify exact main BASE `7dd96e083a8d409355062e6087624e306e4a5b2c`;
+  isolate new branch/worktree and selectively reuse PR #117 without altering it.
+- [x] Prepare eight independent one-cell notebooks, fresh unit run/attempt IDs,
+  null authority, original 3,763-image manifest/order/shards and source lock.
+- [x] Add bounded real Kaggle path discovery, all-shard CPU metadata, explicit
+  failure evidence and complete hash/size-verified staging before provisioning.
+- [x] Preserve raw-summary/HNLO, seal-before-parser, worker label isolation,
+  authorized post-custody CPU evaluation and partial/failed artifact retention.
+- [x] Record eight pilot exposures per model, keep overlap in shard 0, require
+  fresh baseline calls and separate overlap/cost/time/storage/AF_UNIX approval.
+- [x] CPU validation: Linux V4 56/56 PASS; Windows focused 21/21 PASS and
+  overlap check 2/2 PASS; simulated 941/941 raw replays and archive verification.
+  Native regressions 251 PASS/6 SKIP; unfiltered release/pilot 214 PASS/10 SKIP/
+  7 FAIL (six BASE-reproduced, one append-only log/old-lock incompatibility).
+  Exact commands, CPU profile, source checks and limits are in the V4 runbook.
+- [ ] Direct GitHub review of the new Draft PR; independent audit only when
+  separately requested. Research Lead unit approvals, F2 and merge remain pending.
+- [ ] Kaggle baseline execution and actual TRAIN/checkpoint/GPU validation NOT RUN.
+
+No self-grant, F2, Kaggle/checkpoint/GPU, Antigravity or merge. PR #117 HOLD.
+Runbook: `notes/hnlo_train_v4_20261019.md`. Stop after one new Draft PR.
