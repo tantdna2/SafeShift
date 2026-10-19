@@ -1,0 +1,71 @@
+{
+  "schema": "internvl3-hnlo-probe-authority-v1",
+  "base_sha": "d599aa93f57e0c5cc349f090c666e908edd7475e",
+  "scope": {
+    "models": {
+      "internvl3": {
+        "id": "OpenGVLab/InternVL3-2B-hf",
+        "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+        "python": "3.11.11",
+        "cuda_visible_devices": "0",
+        "cuda": "12.4"
+      }
+    },
+    "order": [
+      "internvl3"
+    ],
+    "source_kind": "SYNTHETIC",
+    "sample_id": "hnlo-gray-rgb-448-v1",
+    "input_sha256": "8b72867e34f2922658905f73f977f47fea102b06b879337eb9a1cb967bdd6e5a",
+    "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "batch_size": 1,
+    "max_new_tokens": 32,
+    "load_limit_per_model": 1,
+    "generate_limit_per_model": 1,
+    "precision": "FP16",
+    "quantization": "NONE",
+    "decoding": "GREEDY",
+    "forced_prefix": false,
+    "calibration": false,
+    "retry": false,
+    "dataset_access": false,
+    "test_access": false,
+    "labels_or_gt_access": false,
+    "network_boundary": "SECCOMP_UNIX_CONNECT_NO_INHERITED_SOCKETS_V1_PLUS_PYTHON_GUARD",
+    "hnlo_formula": "safeshift.ls1.evaluate.anomaly_log_odds(log_softmax(four_raw_logits))",
+    "numerical_tolerance": {
+      "absolute": 0.000001,
+      "relative": 0.000001
+    },
+    "research_verified": false,
+    "environment_policy": "SANITIZED_ENV_POST_GUARD_FIXED_DRIVER_OBJECTS_V1",
+    "driver_directory": "/usr/local/nvidia/lib64",
+    "driver_version": "580.178.04",
+    "driver_load": "VERIFIED_FD_RTLD_LOCAL_NOW",
+    "cuda_before_checkpoint_provisioning": true,
+    "attempt_id": "internvl3-hnlo-probe-20261019-01",
+    "driver_handles": "STRONG_REFERENCES_UNTIL_WORKER_EXIT",
+    "full_vectors": "ALL_RAW_AND_PROCESSED_STEPS_NO_TRUNCATION",
+    "security_scope": "LOCAL_AF_UNIX_ONLY;PARTIAL_MONITOR;NO_SECURITY_PASS_OR_NO_LEAK"
+  },
+  "grant": {
+    "approved_by": "tantdna2",
+    "role": "Research Lead",
+    "approved_utc": "2026-10-19T03:14:58Z",
+    "decision_url": "https://github.com/tantdna2/SafeShift/pull/116#issuecomment-6258873350",
+    "independent_audit_url": "https://github.com/tantdna2/SafeShift/pull/116#issuecomment-6258835221",
+    "implementation_commit": "509d5ab594e5729403b92b268660377278d483e1",
+    "source_payload_sha256": "969f9554b9a3b17af02b1e151199169e0316f2dbcbec5233f8ac4a57c5c011d8",
+    "attempt_id": "internvl3-hnlo-probe-20261019-01",
+    "provisioning_approved": true,
+    "gpu_probe_approved": true,
+    "technical_probe_exception_approved": true,
+    "raw_provenance_criteria_approved": true,
+    "numerical_tolerance_approved": true,
+    "artifact_retention_approved": true,
+    "driver_loading_policy_change_approved": true,
+    "unchanged_security_boundary_approved": true,
+    "local_peer_relay_risk_accepted": true,
+    "model_load_and_generation_approved": true
+  }
+}

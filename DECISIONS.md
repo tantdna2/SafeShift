@@ -3134,3 +3134,48 @@ The independent notebook can check cuInit and the locked Runtime device count
 before downloading weights: it never provisions a model. A successful future
 diagnostic does not grant model/HNLO execution. No GPU/model/data execution,
 self-grant, Antigravity invocation or merge occurs in this task. Stop at Draft PR.
+
+## DEC-PA3-015 — PROPOSED InternVL3 post-driver technical HNLO probe (2026-10-19)
+
+Status: **PREPARATION ONLY / NO EXECUTION AUTHORITY**. The Owner requests CPU
+implementation/tests and a separate Draft PR from main
+`d599aa93f57e0c5cc349f090c666e908edd7475e`. No GPU or model execution is authorized.
+
+[PR #115's recorded Kaggle verification](https://github.com/tantdna2/SafeShift/pull/115#issuecomment-6258186856)
+reports 81/81 evidence files, loaded driver/Runtime, cuInit=0 and one visible
+device. Archive SHA-256 is
+`aca18fb3fd29d8cf2dca01b8679bdf79fcb84f4913b15cc85dc89826f9f44a06`;
+manifest SHA-256 is
+`a39a4c679a971ba3eff305084765ce7f163a93fe2e12b9ffa4d92c491e7b734f`.
+This task checked that durable GitHub record, not the original archive bytes.
+The diagnostic grant is consumed. Its model load/generate counts are 0/0 and
+it establishes no model/HNLO result or security/NO_LEAK claim.
+
+Propose one independently authorized InternVL3-2B-hf synthetic probe at revision
+`cb57a075cb75a2e6d1b668b128d48bb00ae321d2`, unchanged Python 3.11.11,
+torch 2.6.0+cu124, Transformers 4.52.4, FP16/no quantization, GPU 0, locked C1,
+PR #112 gray RGB 448x448 bytes, batch 1, greedy max 32 new tokens, at most one
+model load/generate, no retry/forced prefix/calibration. No dataset/labels/GT.
+
+Reuse PR #115's exact driver loader only after source/authority, TSYNC seccomp,
+Python guard/monitor and sanitized-environment checks. Retain driver handles
+until worker exit, audit CUDA/driver/Runtime mappings and require CUDA admission
+before checkpoint provisioning and again before model load. No loader environment
+restoration, network relaxation or fallback. Root-managed image/constructors,
+additional wheel-library loads and local AF_UNIX relay with PARTIAL/UNOBSERVABLE
+monitoring remain explicit residual risks requiring a new Lead decision.
+
+Use existing T1/alignment/raw capture/CPU HNLO formula. Save all raw and processed
+vectors before decode/parse; record actual processors/stopping/EOS; require all
+actual gates for TECHNICAL_HNLO_VALID. INVALID is preserved and reports N/A;
+HNLO_RESEARCH_VERIFIED always remains false. Full-vector resource admission may
+stop the probe, never truncate evidence to obtain PASS.
+
+New `configs/diagnostics/internvl3_hnlo_authority.v1.json` has `grant=null` and a
+new exact attempt ID. Research Lead must separately approve model provisioning,
+driver loading and model execution, source-bound technical exception, provenance,
+tolerance/retention and local-peer residual risk after review/audit. A single F1,
+authority-only F2 and exact standard merge are required before the unchanged
+notebook can execute. PR #112–#115 authorities are ineligible. DEC-PA3-011/D9R22,
+production, metrics, dataset and historical results remain unchanged. Details:
+[probe runbook](notes/internvl3_hnlo_gpu_probe_20261019.md).

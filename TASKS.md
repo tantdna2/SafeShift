@@ -2259,3 +2259,22 @@ merge. Runbook: `notes/internvl3_cuda_diagnostic_20261018.md`. Stop at one Draft
 
 No GPU, model download/load, dataset access, old grant execution, Antigravity or
 merge. Evidence and commands: `notes/internvl3_driver_loading_20261018.md`.
+
+## InternVL3 post-driver HNLO GPU probe PREP (2026-10-19; DEC-PA3-015 PROPOSED)
+
+- [x] Verify origin/main BASE `d599aa93f57e0c5cc349f090c666e908edd7475e`, preserve
+  original working tree, and inspect PR #115's durable Kaggle evidence record.
+- [x] Prepare independent null authority, source-locked single-cell notebook,
+  new attempt and F1/F2/standard-merge gate; reject PR #112–#115 grants.
+- [x] Reuse unchanged post-guard PR #115 driver loader with persistent handles,
+  mapping observations and CUDA gates before checkpoint/model loading.
+- [x] Reuse existing full raw/processed capture and HNLO CPU formula; strengthen
+  actual prerequisite/T1/stopping checks and full-vector resource admission.
+- [x] Complete focused CPU/source/native integration checks and 64-vector resource
+  profile; actual counts, commands, versions and limits recorded in the runbook.
+- [ ] Direct ChatGPT GitHub review; separate independent audit when requested.
+- [ ] Research Lead decision/risk/execution approval, new authority-only release,
+  verified merge and Owner's single Kaggle run. Model/HNLO GPU validation NOT RUN.
+
+No weights, GPU/inference, dataset/GT, self-grant, Antigravity or merge in PREP.
+Stop after one Draft PR. `notes/internvl3_hnlo_gpu_probe_20261019.md` records limits.
