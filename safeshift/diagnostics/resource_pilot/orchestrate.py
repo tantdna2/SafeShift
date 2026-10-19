@@ -14,16 +14,44 @@ from .contract import AUTHORITY, authorize, unit
 from .resources import Sampler, projection, timed, tree_bytes
 
 
+# Relative to each immediate Kaggle Dataset mount; never recursively discover.
+TRAIN_LAYOUTS = ("", "InspecSafe-V1", "InspecSafe-V1-Kaggle/train")
+
+
 def discover_train(inputs=Path("/kaggle/input")):
+    inputs = no_alias(inputs)
     candidates = []
     for mount in inputs.iterdir():
-        for relative in ("", "InspecSafe-V1"):
-            p = mount / relative
-            if (p / "DATA_PATH/train/Annotations").is_dir():
-                candidates.append(no_alias(p))
-    if len(set(candidates)) != 1:
+        for relative in TRAIN_LAYOUTS:
+            p = safe_path(inputs, mount.name + ("/" + relative if relative else ""))
+            annotations = safe_path(p, "DATA_PATH/train/Annotations")
+            if annotations.is_dir():
+                candidates.append(p)
+    if len(candidates) != 1:
         raise ValueError("EXACTLY_ONE_UNPACKED_APPROVED_TRAIN_MOUNT_REQUIRED")
     return candidates[0]
+
+
+def train_image(dataset, row):
+    locator = row["image_locator"]
+    if (not isinstance(locator, str) or not locator.startswith("DATA_PATH/train/Annotations/")
+            or not locator.endswith(".jpg")):
+        raise PermissionError("TRAIN_JPEG_ONLY")
+    source = safe_path(dataset, locator)
+    if not source.is_file():
+        raise ValueError("REQUIRED_TRAIN_JPEG_MISSING_OR_NOT_FILE")
+    if source.stat().st_nlink != 1:
+        raise ValueError("TRAIN_IMAGE_HARDLINK_ALIAS_FORBIDDEN")
+    return source
+
+
+def check_images(dataset, rows):
+    """Metadata only: all eight must exist before any image bytes are read."""
+    cohort.validate_opaque(cohort.opaque_rows(rows))
+    if len({r["image_locator"] for r in rows}) != 8:
+        raise ValueError("EIGHT_DISTINCT_TRAIN_JPEGS_REQUIRED")
+    for row in rows:
+        train_image(dataset, row)
 
 
 def stage_images(dataset, rows, dest, receipt_root):
@@ -35,10 +63,7 @@ def stage_images(dataset, rows, dest, receipt_root):
             start = time.monotonic()
             j.write(f"image-{i:06d}.read-start", {"ordinal": i, "exposure": "SUPERVISOR_IMAGE_READ_STARTED"})
             try:
-                locator = row["image_locator"]
-                if not locator.startswith("DATA_PATH/train/Annotations/") or not locator.endswith(".jpg"):
-                    raise PermissionError("TRAIN_JPEG_ONLY")
-                source = no_alias(safe_path(dataset, locator))
+                source = train_image(dataset, row)
                 actual = sha256(source)
                 j.write(f"image-{i:06d}.hash", {"expected": row["image_sha256"], "actual": actual})
                 if actual != row["image_sha256"]:
@@ -60,6 +85,8 @@ def stage_images(dataset, rows, dest, receipt_root):
 
 
 class Operations:
+    kaggle_inputs = Path("/kaggle/input")
+
     def __init__(self, repo, work, evidence, u):
         self.repo, self.work, self.evidence, self.u = repo, work, evidence, u
         self.cache = "data/processed/resource_pilot_cache/" + u["run_id"]
@@ -70,6 +97,13 @@ class Operations:
         if shutil.disk_usage(self.work).free < 2 * 2**30:
             raise OSError("OUTPUT_FREE_BELOW_2_GIB")
         return result
+
+    def check_inputs(self, rows):
+        inputs = self.kaggle_inputs
+        self.dataset = discover_train(inputs)
+        check_images(self.dataset, rows)
+        return {"dataset_root_relative_to_input": self.dataset.relative_to(inputs).as_posix(),
+                "count": 8, "image_bytes_read": False, "labels_or_gt_read": False}
 
     def gpu_memory(self):
         from .resources import gpu_memory
@@ -103,7 +137,7 @@ class Operations:
         return report
 
     def stage(self, rows):
-        stage_images(discover_train(), rows, self.inputs, self.evidence / "input-staging")
+        stage_images(self.dataset, rows, self.inputs, self.evidence / "input-staging")
 
     def audit(self):
         env = child_environment(self.u["model"], self.repo, self.cache, cpu=True)
@@ -173,13 +207,16 @@ def run(repo, work, output, source, model, *, operations_factory=Operations, sam
         write(evidence / "binding.json", {"unit": u, "source": source, "authority": authority, "samples": rows})
         write(evidence / "source.json", source)
         ops = operations_factory(repo, work, evidence, u)
+        write(evidence / "train-preflight.json", phase("train_preflight", lambda: ops.check_inputs(rows)))
         write(evidence / "host.json", phase("preflight", ops.preflight))
         sampler = sampler_factory({"scratch": repo.parent, "output": output}, observe_gpu=ops.gpu_memory)
         sampler.start()
+        # Hash/read/copy uses the existing exposure journal and consumed attempt.
+        # Fail before installing software or downloading any checkpoint.
+        phase("image_staging", lambda: ops.stage(rows))
         phase("environment_setup", ops.software)
         phase("guarded_cuda_admission", lambda: ops.worker("inspect"))
         phase("checkpoint_provision", ops.provision)
-        phase("image_staging", lambda: ops.stage(rows))
         phase("inference_worker", lambda: ops.worker("inference"))
         result["status"] = "RAW_RETURNED"
     except BaseException as e:
@@ -189,7 +226,7 @@ def run(repo, work, output, source, model, *, operations_factory=Operations, sam
     write(evidence / "supervisor.json", result)
     try:
         custody.seal(evidence)
-        if rows and ops:
+        if rows and ops and (evidence / "raw").exists():
             audit = timed(work / "cpu-audit-timing.json", ops.audit)
             result["status"] = audit["status"] if "error" not in result else "PARTIAL"
             result["cpu_replay"] = audit

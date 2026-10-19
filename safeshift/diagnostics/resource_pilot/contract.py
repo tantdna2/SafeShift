@@ -5,9 +5,9 @@ import re
 
 from ..one_click.contract import MODELS
 
-BASE_SHA = "1b2a2bdafdcc30c2144637829ab04396821f5e73"
-AUTHORITY = "configs/diagnostics/resource_pilot_authority.v1.json"
-LOCK = "configs/diagnostics/resource_pilot_source.v1.json"
+BASE_SHA = "a65a706d3110995537e500137a4e889a8ff66b07"
+AUTHORITY = "configs/diagnostics/resource_pilot_authority.v2.json"
+LOCK = "configs/diagnostics/resource_pilot_source.v2.json"
 EVIDENCE = "BASELINE_SUFFICIENT_RAW_SUMMARIES_V1_PROPOSED"
 FLAGS = ("train_image_read_approved", "provisioning_approved", "gpu_inference_approved",
          "descriptive_train_exception_approved", "evidence_contract_approved",
@@ -20,8 +20,8 @@ def unit(model):
     if model not in MODELS:
         raise ValueError("EXACT_PILOT_MODEL_REQUIRED")
     return {"model": model, **deepcopy(MODELS[model]), "shard": 0, "ordinals": list(range(8)),
-            "count": 8, "run_id": f"hnlo-pilot8-v1-{model}-s0-a1",
-            "attempt_id": f"resource-pilot8-{model}-20261019-a1",
+            "count": 8, "run_id": f"hnlo-pilot8-v2-{model}-s0-a1",
+            "attempt_id": f"resource-pilot8-v2-{model}-20261019-a1",
             "max_attempts": 1, "max_loads": 1, "max_generate_calls": 8}
 
 
@@ -60,7 +60,7 @@ def authorize(value, source, model):
         raise PermissionError("PILOT_SOURCE_BINDING_MISMATCH")
     for key in ("decision_url", "independent_audit_url"):
         match = re.fullmatch(r"https://github.com/tantdna2/SafeShift/pull/(\d+)#[-a-zA-Z0-9]+", str(g[key]))
-        if not match or int(match[1]) != source["pr_number"] or int(match[1]) <= 117:
+        if not match or int(match[1]) != source["pr_number"] or int(match[1]) <= 118:
             raise PermissionError("THIS_PILOT_PR_DECISION_AND_AUDIT_REQUIRED")
     if type(g["units"]) is not list or not 1 <= len(g["units"]) <= 2:
         raise PermissionError("EXPLICIT_MODEL_GRANTS_REQUIRED")

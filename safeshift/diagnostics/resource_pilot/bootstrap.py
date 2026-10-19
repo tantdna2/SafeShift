@@ -12,12 +12,12 @@ import traceback
 from urllib.request import Request as URLRequest, urlopen
 
 PAYLOAD_SHA256 = "0000000000000000000000000000000000000000000000000000000000000000"
-BASE_SHA = "1b2a2bdafdcc30c2144637829ab04396821f5e73"
+BASE_SHA = "a65a706d3110995537e500137a4e889a8ff66b07"
 REPO = "tantdna2/SafeShift"
-HEAD_BRANCH = "prep/hnlo-resource-pilot8-20261019"
-AUTHORITY_PATH = "configs/diagnostics/resource_pilot_authority.v1.json"
-LOCK_PATH = "configs/diagnostics/resource_pilot_source.v1.json"
-NOTEBOOK_PATHS = tuple(f"notebooks/SafeShift_HNLO_RESOURCE_PILOT8_{m}.ipynb" for m in ("qwen3", "internvl3"))
+HEAD_BRANCH = "prep/hnlo-pilot8-dataset-path-20261019"
+AUTHORITY_PATH = "configs/diagnostics/resource_pilot_authority.v2.json"
+LOCK_PATH = "configs/diagnostics/resource_pilot_source.v2.json"
+NOTEBOOK_PATHS = tuple(f"notebooks/SafeShift_HNLO_RESOURCE_PILOT8_{m}_DATASET_PATH_V2.ipynb" for m in ("qwen3", "internvl3"))
 
 
 def canonical(value):

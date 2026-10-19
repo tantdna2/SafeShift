@@ -3197,3 +3197,28 @@ stops on first failed sample with all eight accounted. Proposed exposure ledger
 separates staging/model calls; reuse/exclusion in future baseline needs a new Lead
 decision. DEC-PA3-011 and PR117 DEC-PA3-016 remain PROPOSED for execution; D9R22
 EFFECTIVE. No metric/cohort/protocol change. Runbook: notes/resource_pilot8_20261019.md.
+
+### DEC-PA3-017 Dataset-path V2 PREP addendum (2026-10-19)
+
+Owner requests one new Draft PR from main BASE
+`a65a706d3110995537e500137a4e889a8ff66b07` to read the existing original Kaggle
+Dataset at `<mount>/InspecSafe-V1-Kaggle/train/DATA_PATH/train/Annotations/`.
+Source confirms the original explicit layout list omits that structure; the
+reported Qwen3 failure/consumed attempt is Owner evidence, not a newly inspected
+Kaggle artifact or a runtime result of this task.
+
+Add only that explicit root alongside the two existing roots. Require exactly
+one safe root, no recursive discovery, no symlink/unsafe aliases; metadata-check
+all eight JPEG paths and use the existing hash/staging exposure journal before
+software/checkpoint provisioning. Authority validation and exclusive attempt
+consumption still precede Dataset inspection/read; preflight does not authorize
+a retry. Preserve the exact eight ordinals/hashes, C1/HNLO, models, GPU/security,
+raw-summary contract, no TEST/GT and no retry. No dataset/split/label/metric change.
+
+New V2 notebooks/source lock and `resource_pilot_authority.v2.json` have new
+per-model run/attempt IDs and `grant=null`. PR #118 grants do not transfer to
+either model, including unrun InternVL3 V1. Each selected V2 unit requires new
+source-bound audit/Lead approval and the unchanged F1/F2/standard-merge contract.
+V1 release artifacts, historical decisions/results and PR #117 are preserved.
+No Kaggle/checkpoint/GPU, self-grant, Antigravity, F2 or merge here. Details and
+actual CPU validation: `notes/resource_pilot8_dataset_path_v2_20261019.md`.
