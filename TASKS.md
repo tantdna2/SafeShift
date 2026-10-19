@@ -2278,3 +2278,33 @@ merge. Evidence and commands: `notes/internvl3_driver_loading_20261018.md`.
 
 No weights, GPU/inference, dataset/GT, self-grant, Antigravity or merge in PREP.
 Stop after one Draft PR. `notes/internvl3_hnlo_gpu_probe_20261019.md` records limits.
+
+## Two-model HNLO original full TRAIN PREP (2026-10-19; DEC-PA3-016 PROPOSED)
+
+- [x] Verify fetched main BASE `1b2a2bdafdcc30c2144637829ab04396821f5e73`,
+  isolate worktree and read the original Qwen2.5 runner/auditor/manifests plus
+  PR #112/#116 technical-result records without repeating consumed probes.
+- [x] Prepare null-by-default source-bound authority for eight independent
+  model/shard units; original 3,763 identities/hashes/order and 941/941/941/940
+  partitions; opaque ordinal/hash worker payloads and post-seal CPU GT join.
+- [x] Prepare explicit proposed baseline-sufficient raw-summary retention,
+  raw-before-decode/seal-before-parse, native call/processor/stop observations,
+  failure-preserving journals, pooled existing metrics and same-ID comparisons.
+- [x] Prepare eight fixed-unit Run All notebooks, pinned isolated runtimes,
+  guarded CUDA-before-checkpoint path, original InternVL3 driver loading and
+  source/authority-only-release verification. Historical releases stay unchanged.
+- [x] Complete CPU/source/failure/metric tests and resource arithmetic: 37 new
+  cases OK; 257 baseline/runner cases OK (6 skips); 95 selected capture/release
+  cases OK (9 skips). Unfiltered 97 has two disclosed historical guard failures,
+  with exact BASE comparison and original F1 integrity checks in the runbook.
+- [ ] Direct ChatGPT GitHub review of the one Draft PR; independent audit only
+  on a subsequent separate request.
+- [ ] Lead decision on DEC-PA3-016/evidence limit/TRAIN/selected units/GPU/CPU
+  labels/retention/security/resource risks; new authority-only release and merge.
+- [ ] Owner authorized executions and independent raw audits; actual TRAIN
+  throughput/resources, per-model baseline metrics and final study remain NOT RUN.
+
+DEC-PA3-011 PROPOSED; D9R22 EFFECTIVE; Moondream2 deferred, not removed. No
+checkpoint, TRAIN/TEST/annotation read, GPU/inference, self-grant, Kaggle,
+Antigravity or merge in PREP. Stop after Draft PR. Evidence/limits/commands:
+`notes/hnlo_full_train_prep_20261019.md`.

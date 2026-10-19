@@ -3179,3 +3179,60 @@ authority-only F2 and exact standard merge are required before the unchanged
 notebook can execute. PR #112–#115 authorities are ineligible. DEC-PA3-011/D9R22,
 production, metrics, dataset and historical results remain unchanged. Details:
 [probe runbook](notes/internvl3_hnlo_gpu_probe_20261019.md).
+
+## DEC-PA3-016 — PROPOSED Qwen3 / InternVL3 descriptive full TRAIN PREP (2026-10-19)
+
+Status: **PROPOSED / PREPARATION ONLY / NO EXECUTION AUTHORITY**. The Research
+Lead requested implementation of a reviewable PREP and one Draft PR. This entry
+does not approve DEC-PA3-011, replace effective D9R22 or rewrite earlier decisions.
+
+Propose two new HNLO baselines on exactly the original Qwen2.5 cohort: 3,763
+TRAIN IDs, image SHA-256s and order; original 941/941/941/940 shards. Reuse C1,
+Level01–03 Anomaly / Level04 Normal and the unchanged raw-decision-logit formula
+`logsumexp(z01,z02,z03)-z04`. No TEST, fine-tuning, threshold selection, filtering
+or retry. Moondream2 is deferred here and remains in the long-term Seminar roster.
+Qwen2.5 PA3-R2 and its pre-merger clamp remain historical; neither new model
+receives that clamp, and this difference must accompany comparison tables.
+
+The linked [Qwen3 technical record](https://github.com/tantdna2/SafeShift/pull/112#issuecomment-6259305190)
+and [InternVL3 technical record](https://github.com/tantdna2/SafeShift/pull/116#issuecomment-6259226428)
+were read directly. They record separate synthetic technical PASS, not TRAIN
+results or new authority. Prior PR #112/#115/#116 and PA3-R2 grants are ineligible.
+Use separately pinned processors/tokenizers/runtimes: Qwen3 two T4/CUDA 12.8 with
+audited explicit placement; InternVL3 T4 GPU 0/CUDA 12.4 with unchanged PR #115
+post-guard driver loading and retained handles under the PR #116 boundary.
+
+**Evidence proposal requiring a separate Lead decision:** retain the baseline's
+sufficient raw summaries at every generation step (four exact candidate logits,
+generated value, global argmax/logsumexp/nonfinite counts), independently for raw
+and processed output, native IDs/config/kwargs/layout, actual empty processors,
+native stopping/EOS, runtime T1 and complete source/identity provenance. Persist
+all raw summaries before decode, then seal before parse/score. This permits
+independent HNLO recomputation from four raw logits at the decision token and
+baseline-equivalent internal consistency audit; it does **not** permit independent
+full-vocabulary reduction replay. Do not claim the prior full-vector synthetic
+evidence standard. Reject/redesign before release if Lead requires full vectors.
+Storage arithmetic and explicit limits are in the runbook; no throughput/session
+completion claim is made. A resource pilot is separately proposed, never granted.
+
+Original IDs/paths encode GT, so inference receives only ordinal/hash and staged
+opaque image names. The supervisor holds original identity; CPU evaluation joins
+the unchanged folder GT only after raw custody sealing and explicit label approval.
+Keep INVALID/technical/interrupted/unattempted rows and all partial/torn evidence;
+no output repair or failed-image rerun. Reuse existing evaluators; pool image rows
+before AUROC and compare same-ID SUCCESS intersections alongside full-cohort
+coverage/per-domain tables. Results remain DESCRIPTIVE_FULL_TRAIN only.
+
+New authority `configs/diagnostics/hnlo_train_authority.v1.json` has `grant=null`.
+Each model/shard has a distinct run ID, one attempt, one model load and at most
+one generate per original image. A later Lead decision must explicitly approve
+selected units, TRAIN reads, provisioning/GPU, the descriptive exception,
+evidence/provenance/retention limits, post-seal label evaluation, known dependence,
+resource/interruption risks, security boundaries and AF_UNIX relay residual risk.
+Source changes or additional attempts require fresh review/authority. Local ledger
+checks supplement, not replace, Owner/Lead single-use accounting across fresh VMs.
+
+Separate direct GitHub review, a subsequently requested independent audit,
+source-bound authority-only release and Lead-controlled merge precede any Owner
+run. This task stops after the Draft PR: no data/weights/GPU, self-grant, Kaggle,
+merge or Antigravity. [Full PREP/evidence/resource runbook](notes/hnlo_full_train_prep_20261019.md).
