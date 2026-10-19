@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tarfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -61,7 +62,8 @@ class ContractTests(unittest.TestCase):
                 contract.authorize(value, source())
 
     def test_new_contract_has_no_model_or_data_permission_and_unchanged_boundary(self):
-        self.assertEqual(json.loads((ROOT / contract.AUTHORITY).read_bytes()), contract.template())
+        value = json.loads((ROOT / contract.AUTHORITY).read_bytes())
+        self.assertEqual({**value, "grant": None}, contract.template())
         self.assertFalse(any(contract.template()["scope"][key] for key in
             ("weights_download", "model_load", "inference", "dataset_access", "labels_or_gt_access", "retry", "unguarded_cuda", "security_boundary_expansion")))
 
@@ -326,8 +328,14 @@ class NotebookTests(unittest.TestCase):
         lock = json.loads((ROOT / contract.LOCK).read_bytes())
         self.assertEqual(hashlib.sha256(boot.canonical(lock)).hexdigest(), digest)
         self.assertEqual(code.replace(digest, "0" * 64), (ROOT / "safeshift/diagnostics/internvl3_cuda/bootstrap.py").read_text(encoding="utf-8") + "\n# The single Run All entrypoint.\nresult = bootstrap()\n")
+        grant = json.loads((ROOT / contract.AUTHORITY).read_bytes()).get("grant")
+        historical = None
+        if grant:
+            archive = subprocess.check_output(["git", "-C", str(ROOT), "archive", grant["implementation_commit"]])
+            historical = self.enterContext(tarfile.open(fileobj=io.BytesIO(archive)))
         for row in lock["files"]:
-            data = (ROOT / row["path"]).read_bytes()
+            # Released PR #114 pins its own F1, not this subsequent repair.
+            data = historical.extractfile(row["path"]).read() if historical else (ROOT / row["path"]).read_bytes()
             self.assertEqual(hashlib.sha256(boot.notebook_bytes(data) if row["path"] == contract.NOTEBOOK else data).hexdigest(), row["sha256"], row["path"])
         for path in ("safeshift/diagnostics/internvl3_recovery/network.py", "safeshift/diagnostics/one_click/orchestrate.py",
                      "configs/diagnostics/internvl3_recovery_source.v1.json", "configs/diagnostics/internvl3_recovery_authority.v1.json",

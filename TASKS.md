@@ -2237,3 +2237,25 @@ No new grant, model download, GPU run, Qwen3 rerun, data access or security PASS
 CUDA ROOT CAUSE UNKNOWN; no speculative environment/security/CUDA policy repair.
 No weights, model inference, Qwen3, data/labels/GT, grant, GPU, audit invocation or
 merge. Runbook: `notes/internvl3_cuda_diagnostic_20261018.md`. Stop at one Draft PR.
+
+## InternVL3 NVIDIA driver lookup repair PREP (2026-10-18; DEC-PA3-014 PROPOSED)
+
+- [x] New isolated branch from main BASE `f0613c9c38df6283f9725ed94e713091279261ec`;
+  verify original PR #114 archive, manifest, all 67 members and external result.
+- [x] Confirm SONAME loader failure and strong search-path-loss evidence; retain
+  code 35, uncalled cuInit and unresolved post-repair CUDA initialization limits.
+- [x] Implement fixed-object loading after existing guards, trust/symlink/ELF
+  validation and file-descriptor pinning; no startup loader environment change.
+- [x] Prepare independent software-only early CUDA notebook, null authority and
+  full source lock; preserve Qwen3 and PR #112–#114 executable/release bytes.
+- [x] Complete CPU native/security/source/release regressions: Linux 384 cases,
+  381 PASS/3 SKIP; Windows focused 52, 46 PASS/6 SKIP; related 222, 220 PASS/2 SKIP.
+  Final commands, fixture corrections, versions and limits are in the note.
+- [ ] Direct ChatGPT GitHub review of one new Draft PR, then separate audit if
+  requested. Research Lead policy/risk approval, new source-bound diagnostic grant,
+  authority-only release and verified merge remain pending.
+- [ ] Owner separately approved Kaggle driver/Runtime check before any weights;
+  post-repair CUDA functionality and model/HNLO validation remain NOT VERIFIED.
+
+No GPU, model download/load, dataset access, old grant execution, Antigravity or
+merge. Evidence and commands: `notes/internvl3_driver_loading_20261018.md`.
