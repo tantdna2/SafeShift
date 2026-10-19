@@ -86,5 +86,97 @@
     "max_worker_seconds": 3600,
     "exposure_policy": "RECORD_ALL_STAGING_AND_MODEL_ATTEMPTS_NO_BASELINE_DISPOSITION"
   },
-  "grant": null
+  "grant": {
+    "approved_by": "tantdna2",
+    "role": "Research Lead",
+    "approved_utc": "2026-10-19T10:01:00Z",
+    "decision_url": "https://github.com/tantdna2/SafeShift/pull/119#issuecomment-6264749333",
+    "independent_audit_url": "https://github.com/tantdna2/SafeShift/pull/119#issuecomment-6264319113",
+    "implementation_commit": "8b2b7aab6a7c3efc71ccd38f19a311f25c00f398",
+    "source_payload_sha256": "f4e2e13d92d1fb576027d037d041e2bd99656f429f7277d1fd4cbb198f1e393d",
+    "units": [
+      {
+        "unit": {
+          "model": "qwen3",
+          "id": "Qwen/Qwen3-VL-8B-Instruct",
+          "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+          "python": "3.12.13",
+          "cuda_visible_devices": "0,1",
+          "cuda": "12.8",
+          "shard": 0,
+          "ordinals": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "count": 8,
+          "run_id": "hnlo-pilot8-v2-qwen3-s0-a1",
+          "attempt_id": "resource-pilot8-v2-qwen3-20261019-a1",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 8
+        },
+        "approvals": {
+          "train_image_read_approved": true,
+          "provisioning_approved": true,
+          "gpu_inference_approved": true,
+          "descriptive_train_exception_approved": true,
+          "evidence_contract_approved": true,
+          "raw_provenance_approved": true,
+          "artifact_retention_approved": true,
+          "security_boundary_approved": true,
+          "local_peer_relay_risk_accepted": true,
+          "resource_and_interruption_risk_accepted": true,
+          "cross_session_attempt_ledger_approved": true,
+          "exposure_overlap_policy_approved": true
+        }
+      },
+      {
+        "unit": {
+          "model": "internvl3",
+          "id": "OpenGVLab/InternVL3-2B-hf",
+          "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+          "python": "3.11.11",
+          "cuda_visible_devices": "0",
+          "cuda": "12.4",
+          "shard": 0,
+          "ordinals": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "count": 8,
+          "run_id": "hnlo-pilot8-v2-internvl3-s0-a1",
+          "attempt_id": "resource-pilot8-v2-internvl3-20261019-a1",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 8
+        },
+        "approvals": {
+          "train_image_read_approved": true,
+          "provisioning_approved": true,
+          "gpu_inference_approved": true,
+          "descriptive_train_exception_approved": true,
+          "evidence_contract_approved": true,
+          "raw_provenance_approved": true,
+          "artifact_retention_approved": true,
+          "security_boundary_approved": true,
+          "local_peer_relay_risk_accepted": true,
+          "resource_and_interruption_risk_accepted": true,
+          "cross_session_attempt_ledger_approved": true,
+          "exposure_overlap_policy_approved": true
+        }
+      }
+    ]
+  }
 }
