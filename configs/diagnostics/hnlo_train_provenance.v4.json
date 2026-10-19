@@ -1,0 +1,67 @@
+{
+  "source_pr": "https://github.com/tantdna2/SafeShift/pull/117",
+  "source_commit": "b2c381045f06b567a9cb89793dff6b4b0cacc097",
+  "mode": "SELECTIVE_REUSE_NOT_MERGE",
+  "files": [
+    {
+      "path": "safeshift/diagnostics/hnlo_train/__init__.py",
+      "source_sha256": "3e6178e8680a3995059e3dfbaf04f5a7659f019e52457126ac1bbf82f94071c2"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/audit.py",
+      "source_sha256": "cd4b4a30af30e367c3c72aa28302e5638f23d86910161080839328ce3e90b935"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/backend.py",
+      "source_sha256": "908c360c64b8caedfd020cc0f72df89a3622abf02a882e5fd862a86cdf0883c7"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/bootstrap.py",
+      "source_sha256": "d47116fef4115f84137d4274c8d3419bdbd95a5ebf29752b3af8e213b263b2e4"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/capture.py",
+      "source_sha256": "b7741b90b8ae4b84060fcb23cf9ff2eb0a4fc70e823a65935cbe6b5775dc4a91"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/cohort.py",
+      "source_sha256": "f6e710b9d6328a8aca83d62bda025331b9699728a7c4dee484dccafaf7148529"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/contract.py",
+      "source_sha256": "3fe68484e72a0ef8e39b077c8fb49b0e5a140602b89b9623333ac73d6d902c04"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/engine.py",
+      "source_sha256": "75ba71238d080af76080483fe21151b7e38c6610ce661b7dcac30b3b4beef053"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/evaluate.py",
+      "source_sha256": "d8bebc0f94a09ff6b2b5abc05dbdff4d95fd399a0c07e508d17f156a5f681d80"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/orchestrate.py",
+      "source_sha256": "45de470260b229f49ea306740103c9fb490052401126aabf042797383b625647"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/tokenizer.py",
+      "source_sha256": "6a384df74382623e6300129a62bc5b0370b9f02e3d397c569d4527377c064b11"
+    },
+    {
+      "path": "safeshift/diagnostics/hnlo_train/worker.py",
+      "source_sha256": "5b7db5d25aa31f9f46ef6ec8eb66a9068b043708ff569b0e48e6e48c65348c64"
+    },
+    {
+      "path": "scripts/build_hnlo_train.py",
+      "source_sha256": "4e4c3e46ba1f45c7b1389360e9692a2fd76ba06d3e5b27bbc8ca47e0b8a6e043"
+    },
+    {
+      "path": "scripts/profile_hnlo_train.py",
+      "source_sha256": "40a870d439e799dd84a6286d7db3d08fec3e735e19812c8fafd95090a103a31b"
+    },
+    {
+      "path": "tests/test_hnlo_train.py",
+      "source_sha256": "1a2c01f7a73be784289536df7cbf871aa9ff404bba1861ebea89152aa1b15a32"
+    }
+  ]
+}
