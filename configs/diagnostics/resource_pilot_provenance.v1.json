@@ -1,0 +1,40 @@
+{
+  "schema": "resource-pilot-selective-provenance-v1",
+  "records": [
+    {
+      "upstream_commit": "b2c381045f06b567a9cb89793dff6b4b0cacc097",
+      "upstream_path": "safeshift/diagnostics/hnlo_train/capture.py",
+      "upstream_sha256": "b7741b90b8ae4b84060fcb23cf9ff2eb0a4fc70e823a65935cbe6b5775dc4a91",
+      "destination": "safeshift/diagnostics/resource_pilot/capture.py",
+      "changes": "Only allow the added complexity journal in replay; raw reductions, persistence order and HNLO scorer stay unchanged."
+    },
+    {
+      "upstream_commit": "b2c381045f06b567a9cb89793dff6b4b0cacc097",
+      "upstream_path": "safeshift/diagnostics/hnlo_train/backend.py",
+      "upstream_sha256": "908c360c64b8caedfd020cc0f72df89a3622abf02a882e5fd862a86cdf0883c7",
+      "destination": "safeshift/diagnostics/resource_pilot/backend.py",
+      "changes": "Bind Qwen pilot RunContext; add native patch/grid/token observations, native-call-start exposure receipt, native-load timing and successful CUDA synchronization. Native preprocessing/model/runtime/generation paths unchanged."
+    },
+    {
+      "upstream_commit": "b2c381045f06b567a9cb89793dff6b4b0cacc097",
+      "upstream_path": "safeshift/diagnostics/hnlo_train/bootstrap.py",
+      "upstream_sha256": "d47116fef4115f84137d4274c8d3419bdbd95a5ebf29752b3af8e213b263b2e4",
+      "destination": "safeshift/diagnostics/resource_pilot/bootstrap.py",
+      "changes": "Independent branch/config/notebook/scratch/module paths and model-only scope; add bootstrap timing and explicit full_vocab_replay=false/all-eight blocked accounting. Preserve F1/F2/standard-merge byte checks."
+    },
+    {
+      "upstream_commit": "b2c381045f06b567a9cb89793dff6b4b0cacc097",
+      "upstream_path": "safeshift/diagnostics/hnlo_train/worker.py",
+      "upstream_sha256": "5b7db5d25aa31f9f46ef6ec8eb66a9068b043708ff569b0e48e6e48c65348c64",
+      "destination": "safeshift/diagnostics/resource_pilot/worker.py",
+      "changes": "Independent pilot authority/source paths, model-only unit, pilot engine invocation with memory observations; retain guarded driver/runtime order and failure memory, explicit full_vocab_replay=false. No hnlo_train imports."
+    },
+    {
+      "upstream_commit": "b2c381045f06b567a9cb89793dff6b4b0cacc097",
+      "upstream_path": "safeshift/diagnostics/hnlo_train/tokenizer.py",
+      "upstream_sha256": "6a384df74382623e6300129a62bc5b0370b9f02e3d397c569d4527377c064b11",
+      "destination": "safeshift/diagnostics/resource_pilot/tokenizer.py",
+      "changes": "Byte-identical transfer; its relative contract import resolves the independent pilot MODELS re-export."
+    }
+  ]
+}

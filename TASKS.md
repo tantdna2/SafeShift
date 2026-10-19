@@ -2278,3 +2278,25 @@ merge. Evidence and commands: `notes/internvl3_driver_loading_20261018.md`.
 
 No weights, GPU/inference, dataset/GT, self-grant, Antigravity or merge in PREP.
 Stop after one Draft PR. `notes/internvl3_hnlo_gpu_probe_20261019.md` records limits.
+
+
+## Independent two-model eight-image resource pilot PREP (2026-10-19; DEC-PA3-017)
+
+- [x] Read repository instructions/roadmap/tasks, PR117 runbook and Lead decision;
+  isolate branch at exact BASE without changing PR117 F1.
+- [x] Prepare two fixed-model pilot notebooks, independent null authority and
+  selective byte/provenance-checked upstream reuse, no runtime Draft dependency.
+- [x] Preserve exact first eight shard-0 ordinals/hash/order, raw-summary custody,
+  GT-free workers/CPU replay, stop-on-error and all-eight exposure accounting.
+- [x] Prepare separate phase/image timings, VRAM/RAM/disk/journal/archive/export
+  observations and explicitly uncertain 941-image projections.
+- [x] Complete CPU validation: 37/37 pilot PASS; 257 regressions = 251 PASS +
+  6 SKIP; unfiltered historical 97 = 86 PASS + 9 SKIP + 2 accepted FAIL.
+  PR116 exact detached release/source proof and historical locks verified; see runbook.
+- [ ] Direct GitHub review; independent audit only on separate request.
+- [ ] Lead per-model read/provision/GPU/evidence/security/retention/exposure/ledger
+  approval, new authority-only F2 and verified standard merge; Owner future run.
+
+PR117 remains HOLD; no dataset image/annotation, checkpoint, GPU, self-grant,
+Kaggle, Antigravity or merge. No future baseline reuse/exclusion decision here.
+Runbook: notes/resource_pilot8_20261019.md. Stop after one independent Draft PR.

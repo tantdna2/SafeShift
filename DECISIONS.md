@@ -3179,3 +3179,21 @@ authority-only F2 and exact standard merge are required before the unchanged
 notebook can execute. PR #112–#115 authorities are ineligible. DEC-PA3-011/D9R22,
 production, metrics, dataset and historical results remain unchanged. Details:
 [probe runbook](notes/internvl3_hnlo_gpu_probe_20261019.md).
+
+
+## DEC-PA3-017 ? Independent eight-image resource pilot PREP (2026-10-19; PROPOSED execution)
+
+Research Lead directional source: https://github.com/tantdna2/SafeShift/pull/117#issuecomment-6261386722.
+Prepare a separate source-bound pilot from BASE 1b2a2bdafdcc30c2144637829ab04396821f5e73,
+first eight original shard-0 TRAIN ordinals for Qwen3 and InternVL3 each, exact
+IDs/order/image hashes, independent run IDs/attempts and grant=null. This records
+PREP and in-principle raw-summary acceptance only; full_vocab_replay=false.
+No execution grant or full-baseline exposure disposition is created.
+
+Conditionally accepted old PR116 null-grant/full-tree-test exceptions remain
+disclosed; no historical test/source lock/release changes. PR117 F1 remains HOLD
+and unchanged. Pilot has no GT/annotation or TEST access, no retry/resume, and
+stops on first failed sample with all eight accounted. Proposed exposure ledger
+separates staging/model calls; reuse/exclusion in future baseline needs a new Lead
+decision. DEC-PA3-011 and PR117 DEC-PA3-016 remain PROPOSED for execution; D9R22
+EFFECTIVE. No metric/cohort/protocol change. Runbook: notes/resource_pilot8_20261019.md.
