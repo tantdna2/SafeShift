@@ -2340,3 +2340,49 @@ merge. Stop at one new Draft PR. Runbook:
 
 No Kaggle/checkpoint/GPU, grant, F2, PR #117 edits, Antigravity or merge.
 Stop after one Draft PR. Runbook: `notes/resource_pilot8_dataset_path_v3_20261019.md`.
+
+## Full TRAIN Qwen3/InternVL3 V4 F1 PREP (2026-10-19; DEC-PA3-018 PROPOSED)
+
+- [x] Verify exact main BASE `7dd96e083a8d409355062e6087624e306e4a5b2c`;
+  isolate new branch/worktree and selectively reuse PR #117 without altering it.
+- [x] Prepare eight independent one-cell notebooks, fresh unit run/attempt IDs,
+  null authority, original 3,763-image manifest/order/shards and source lock.
+- [x] Add bounded real Kaggle path discovery, all-shard CPU metadata, explicit
+  failure evidence and complete hash/size-verified staging before provisioning.
+- [x] Preserve raw-summary/HNLO, seal-before-parser, worker label isolation,
+  authorized post-custody CPU evaluation and partial/failed artifact retention.
+- [x] Record eight pilot exposures per model, keep overlap in shard 0, require
+  fresh baseline calls and separate overlap/cost/time/storage/AF_UNIX approval.
+- [x] CPU validation: Linux V4 56/56 PASS; Windows focused 21/21 PASS and
+  overlap check 2/2 PASS; simulated 941/941 raw replays and archive verification.
+  Native regressions 251 PASS/6 SKIP; unfiltered release/pilot 214 PASS/10 SKIP/
+  7 FAIL (six BASE-reproduced, one append-only log/old-lock incompatibility).
+  Exact commands, CPU profile, source checks and limits are in the V4 runbook.
+- [ ] Direct GitHub review of the new Draft PR; independent audit only when
+  separately requested. Research Lead unit approvals, F2 and merge remain pending.
+- [ ] Kaggle baseline execution and actual TRAIN/checkpoint/GPU validation NOT RUN.
+
+No self-grant, F2, Kaggle/checkpoint/GPU, Antigravity or merge. PR #117 HOLD.
+Runbook: `notes/hnlo_train_v4_20261019.md`. Stop after one new Draft PR.
+
+## V4 sampled GPU monitoring replacement F1 PREP (2026-10-20)
+
+- [x] Read repo instructions, original F1 and the PR #121 audit disposition;
+  create a separate branch from the identical BASE and carry F1 without a commit.
+- [x] Supply the existing `nvidia-smi` GPU observer at a 10-second Sampler
+  interval; retain nonfatal errors, PARTIAL_SAMPLED and explicit sampled limits.
+  Preserve shared historical sampler, native-worker PyTorch results and scope.
+- [x] Add seven CPU tests: device maxima/query/timeout, command and parse errors,
+  partial coverage, interval/stop, research/raw replay invariance, replacement
+  branch discovery and null-grant-before-GPU ordering.
+- [x] Linux V4 64/64 PASS; native/baseline 251 PASS/6 SKIP. Historical group
+  214 PASS/10 SKIP/7 FAIL versus BASE 215 PASS/10 SKIP/6 FAIL. The seventh
+  historical V3 lock failure is separately reproduced on unchanged #121 F1.
+  Windows initial GPU group 6/6 PASS. Exact commands/limits are in the runbook.
+- [x] Regenerate the V4 source lock and all eight notebook payloads; retain
+  all original image/shard/run/attempt identities and `grant=null`.
+- [ ] Direct GitHub review of the replacement Draft PR and separately requested
+  independent audit. Unit grants, F2, release merge and execution remain pending.
+
+No Kaggle, checkpoint/model/GPU execution, grant, retry/resume, F2, Antigravity
+or merge. PR #117 and #121 remain unchanged on HOLD. Stop after one Draft PR.
