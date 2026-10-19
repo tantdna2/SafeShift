@@ -3222,3 +3222,30 @@ source-bound audit/Lead approval and the unchanged F1/F2/standard-merge contract
 V1 release artifacts, historical decisions/results and PR #117 are preserved.
 No Kaggle/checkpoint/GPU, self-grant, Antigravity, F2 or merge here. Details and
 actual CPU validation: `notes/resource_pilot8_dataset_path_v2_20261019.md`.
+
+### DEC-PA3-017 Dataset-path V3 discovery addendum (2026-10-19)
+
+Owner requests a new Draft PR from main BASE
+`6d345fe11426a3c01815439081dca0a8983dd33c` after PR #119. Supplied direct Kaggle
+checks found exactly one original TRAIN root under
+`/kaggle/input/datasets/nguynanhtn/inspecsafe-v1-kaggle/InspecSafe-V1-Kaggle/train`,
+with no root alias and 8/8 pilot images passing existence/nlink=1/alias metadata.
+Qwen3 V2 failed `train_preflight` before image bytes, provisioning or model load.
+These are Owner-provided observations, not a new Kaggle run by Codex.
+
+Retain the three explicit TRAIN layouts and add only the mount prefix
+`datasets/<owner>/<slug>` below Kaggle input. Enumerate exactly two additional
+levels with a 512-entry total budget; require exactly one safe root. Preserve
+path/alias/traversal/hardlink checks. Record specific root/missing-image/metadata/
+SHA reasons in existing evidence/results, retaining phase, relative locator,
+ordinal and hash details as applicable. Authority/attempt precedes preflight;
+all-image metadata and journaled staging precede provisioning/model load.
+
+Prepare independent V3 pilot notebooks, null authority and source lock, with new
+run/attempt IDs for both models. Qwen3 V2 consumed its attempt; unrun InternVL3 V2
+also cannot transfer its grant. Old releases/grants and PR #117 remain intact;
+V3 still requires separate source-bound audit/Lead grants and F1/F2/merge proof.
+No research/dataset/split/label/metric, model, C1, eight hashes/ordinals, raw-summary,
+CPU replay, pins, security, GT/TEST, artifact or retry/resume policy changes.
+No Kaggle/checkpoint/GPU, grant, F2, Antigravity or merge here. Validation/limits:
+`notes/resource_pilot8_dataset_path_v3_20261019.md`.
