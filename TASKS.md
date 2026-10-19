@@ -2300,3 +2300,23 @@ Stop after one Draft PR. `notes/internvl3_hnlo_gpu_probe_20261019.md` records li
 PR117 remains HOLD; no dataset image/annotation, checkpoint, GPU, self-grant,
 Kaggle, Antigravity or merge. No future baseline reuse/exclusion decision here.
 Runbook: notes/resource_pilot8_20261019.md. Stop after one independent Draft PR.
+
+## Original Kaggle Dataset path repair for pilot8 V2 (2026-10-19)
+
+- [x] Read instructions/roadmap/tasks and merged pilot/source/authority/tests;
+  create separate branch from exact main BASE `a65a706d3110995537e500137a4e889a8ff66b07`.
+- [x] Add explicit original `InspecSafe-V1-Kaggle/train` root, retain both prior
+  roots; require one safe root without recursion or unsafe aliases.
+- [x] Check all eight JPEG paths and hash/stage before software/checkpoint setup,
+  after new authority and attempt consumption; preserve exposure/no-retry rules.
+- [x] Prepare two new source-bound V2 One-Click notebooks, null authority and new
+  per-model identities; preserve V1 artifacts and all scientific/security scope.
+- [x] CPU validation: Linux pilot/path 54/54 PASS; Windows baseline regressions
+  251 PASS/6 SKIP; historical groups retain four BASE-reproduced failures. Exact
+  commands, counts, environments, skipped and unrun checks are in the new runbook.
+- [ ] Direct ChatGPT GitHub review and separately requested independent audit;
+  new explicit per-model Lead grants, authority-only F2 and verified release.
+
+No Kaggle, checkpoint download, GPU, self-grant, PR #117 edits, Antigravity or
+merge. Stop at one new Draft PR. Runbook:
+`notes/resource_pilot8_dataset_path_v2_20261019.md`.

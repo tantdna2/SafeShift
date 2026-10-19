@@ -203,6 +203,10 @@ class EngineTests(Case):
 class FakeOps(flow.Operations):
     failure = None
     calls = []
+    def check_inputs(self, rows):
+        self.calls.append("check_inputs")
+        if self.failure == "check_inputs": raise ValueError("MISSING_IMAGE")
+        return {"count": 8, "image_bytes_read": False}
     def gpu_memory(self): return {0: 456}
     def preflight(self):
         self.calls.append("preflight")
@@ -243,6 +247,7 @@ class FlowTests(Case):
         self.assertEqual(r["export"]["status"], "EXPORTED")
     def test_complete_cpu_simulation_export_and_projection(self):
         r = self.run_pilot()
+        self.assertEqual(FakeOps.calls, ["check_inputs", "preflight", "stage", "software", "inspect", "checkpoint", "inference"])
         self.assertEqual(r["status"], "COMPLETE")
         self.assertEqual(r["cpu_replay"]["cpu_hnlo_replay"], "PASS")
         self.assertEqual(r["projection"]["successful"], 8)
@@ -251,7 +256,7 @@ class FlowTests(Case):
         self.assertEqual(r["export"]["resources"]["sampled_device_peak_used_bytes"], {"0": 456})
         self.assertFalse(r["full_vocab_replay"])
     def test_failures_export_every_planned_ordinal(self):
-        for name in ("preflight", "software", "inspect", "checkpoint", "stage", "inference"):
+        for name in ("check_inputs", "preflight", "software", "inspect", "checkpoint", "stage", "inference"):
             with self.subTest(name=name):
                 # Separate synthetic session/repo per failure, no ledger removal.
                 original = self.root; self.root = original / name; self.root.mkdir()
