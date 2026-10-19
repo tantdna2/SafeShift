@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import time
 
@@ -14,21 +15,76 @@ from .contract import AUTHORITY, authorize, unit
 from .resources import Sampler, projection, timed, tree_bytes
 
 
-# Relative to each immediate Kaggle Dataset mount; never recursively discover.
+# Relative to a direct mount or datasets/<owner>/<slug>; never recurse.
 TRAIN_LAYOUTS = ("", "InspecSafe-V1", "InspecSafe-V1-Kaggle/train")
+MAX_DISCOVERY_ENTRIES = 512  # Total entries across input, owners and slugs.
+
+
+class TrainInputError(ValueError):
+    """Controlled, relative-path diagnostics safe to retain in pilot evidence."""
+    def __init__(self, reason, **details):
+        super().__init__(reason)
+        self.details = {"reason": reason, **details}
+
+
+def error_report(error, phase):
+    report = {"type": type(error).__name__, "errno": getattr(error, "errno", None), "phase": phase}
+    if isinstance(error, TrainInputError):
+        report.update(error.details)
+    return report
 
 
 def discover_train(inputs=Path("/kaggle/input")):
-    inputs = no_alias(inputs)
-    candidates = []
-    for mount in inputs.iterdir():
+    try:
+        inputs = no_alias(inputs)
+    except ValueError as error:
+        raise TrainInputError("UNSAFE_TRAIN_DISCOVERY_PATH", path_relative_to_input=".",
+                              safety_check=str(error)) from error
+    candidates, visited = [], 0
+
+    def checked(relative):
+        try:
+            return safe_path(inputs, relative)
+        except ValueError as error:
+            raise TrainInputError("UNSAFE_TRAIN_DISCOVERY_PATH", path_relative_to_input=relative,
+                                  safety_check=str(error)) from error
+
+    def directories(parent):
+        nonlocal visited
+        entries = []
+        for entry in parent.iterdir():
+            visited += 1
+            if visited > MAX_DISCOVERY_ENTRIES:
+                raise TrainInputError("TRAIN_DISCOVERY_ENTRY_LIMIT_EXCEEDED", limit=MAX_DISCOVERY_ENTRIES)
+            relative = entry.relative_to(inputs).as_posix()
+            # Check before is_dir: even a dangling symlink must fail closed.
+            if checked(relative).is_dir():
+                entries.append(entry)
+        return sorted(entries)
+
+    def inspect(mount):
         for relative in TRAIN_LAYOUTS:
-            p = safe_path(inputs, mount.name + ("/" + relative if relative else ""))
-            annotations = safe_path(p, "DATA_PATH/train/Annotations")
+            name = mount.relative_to(inputs).as_posix() + ("/" + relative if relative else "")
+            p = checked(name)
+            annotations = checked(name + "/DATA_PATH/train/Annotations")
             if annotations.is_dir():
                 candidates.append(p)
-    if len(candidates) != 1:
-        raise ValueError("EXACTLY_ONE_UNPACKED_APPROVED_TRAIN_MOUNT_REQUIRED")
+
+    try:
+        if inputs.is_dir():
+            for mount in directories(inputs):
+                inspect(mount)
+                if mount.name == "datasets":
+                    for owner in directories(mount):
+                        for slug in directories(owner):
+                            inspect(slug)
+    except OSError as error:
+        raise TrainInputError("TRAIN_DISCOVERY_METADATA_UNREADABLE", metadata_errno=error.errno) from error
+    roots = [p.relative_to(inputs).as_posix() for p in candidates]
+    if not candidates:
+        raise TrainInputError("TRAIN_ROOT_NOT_FOUND", roots_relative_to_input=[])
+    if len(candidates) > 1:
+        raise TrainInputError("MULTIPLE_TRAIN_ROOTS", roots_relative_to_input=roots)
     return candidates[0]
 
 
@@ -36,12 +92,27 @@ def train_image(dataset, row):
     locator = row["image_locator"]
     if (not isinstance(locator, str) or not locator.startswith("DATA_PATH/train/Annotations/")
             or not locator.endswith(".jpg")):
-        raise PermissionError("TRAIN_JPEG_ONLY")
-    source = safe_path(dataset, locator)
-    if not source.is_file():
-        raise ValueError("REQUIRED_TRAIN_JPEG_MISSING_OR_NOT_FILE")
-    if source.stat().st_nlink != 1:
-        raise ValueError("TRAIN_IMAGE_HARDLINK_ALIAS_FORBIDDEN")
+        raise TrainInputError("TRAIN_JPEG_ONLY", image_locator=locator)
+    try:
+        source = safe_path(dataset, locator)
+    except ValueError as error:
+        raise TrainInputError("UNSAFE_TRAIN_IMAGE_PATH", image_locator=locator,
+                              safety_check=str(error)) from error
+    except OSError as error:
+        raise TrainInputError("TRAIN_IMAGE_METADATA_UNREADABLE", image_locator=locator,
+                              metadata_errno=error.errno) from error
+    try:
+        metadata = source.stat()
+    except FileNotFoundError as error:
+        raise TrainInputError("TRAIN_IMAGE_MISSING", image_locator=locator) from error
+    except OSError as error:
+        raise TrainInputError("TRAIN_IMAGE_METADATA_UNREADABLE", image_locator=locator,
+                              metadata_errno=error.errno) from error
+    if not stat.S_ISREG(metadata.st_mode):
+        raise TrainInputError("TRAIN_IMAGE_NOT_REGULAR_FILE", image_locator=locator)
+    if metadata.st_nlink != 1:
+        raise TrainInputError("TRAIN_IMAGE_HARDLINK_ALIAS_FORBIDDEN", image_locator=locator,
+                              expected_nlink=1, actual_nlink=metadata.st_nlink)
     return source
 
 
@@ -50,8 +121,12 @@ def check_images(dataset, rows):
     cohort.validate_opaque(cohort.opaque_rows(rows))
     if len({r["image_locator"] for r in rows}) != 8:
         raise ValueError("EIGHT_DISTINCT_TRAIN_JPEGS_REQUIRED")
-    for row in rows:
-        train_image(dataset, row)
+    for i, row in enumerate(rows):
+        try:
+            train_image(dataset, row)
+        except TrainInputError as error:
+            error.details["ordinal"] = i
+            raise
 
 
 def stage_images(dataset, rows, dest, receipt_root):
@@ -67,18 +142,23 @@ def stage_images(dataset, rows, dest, receipt_root):
                 actual = sha256(source)
                 j.write(f"image-{i:06d}.hash", {"expected": row["image_sha256"], "actual": actual})
                 if actual != row["image_sha256"]:
-                    raise ValueError("TRAIN_IMAGE_HASH_MISMATCH_NO_SKIP")
+                    raise TrainInputError("TRAIN_IMAGE_HASH_MISMATCH_NO_SKIP", ordinal=i,
+                        image_locator=row["image_locator"], expected_sha256=row["image_sha256"], actual_sha256=actual)
                 target = dest / f"{i:06d}.image"
                 with source.open("rb") as reader, target.open("xb") as writer:
                     shutil.copyfileobj(reader, writer)
-                if sha256(target) != row["image_sha256"]:
-                    raise ValueError("STAGED_COPY_HASH_MISMATCH")
+                copied = sha256(target)
+                if copied != row["image_sha256"]:
+                    raise TrainInputError("STAGED_COPY_HASH_MISMATCH", ordinal=i,
+                        image_locator=row["image_locator"], expected_sha256=row["image_sha256"], actual_sha256=copied)
             finally:
                 j.write(f"image-{i:06d}.timing", {"seconds": time.monotonic() - start})
         write(dest / "request.json", cohort.opaque_rows(rows))
         j.write("finish", {"count": 8})
     except BaseException as e:
-        j.write("failure", {"ordinal": i, "type": type(e).__name__})
+        if isinstance(e, TrainInputError):
+            e.details["ordinal"] = i
+        j.write("failure", {"ordinal": i, "type": type(e).__name__, "error": error_report(e, "image_staging")})
         raise
     finally:
         j.seal()
@@ -189,8 +269,10 @@ def run(repo, work, output, source, model, *, operations_factory=Operations, sam
     result = {"schema": "resource-pilot8-result-v1", "unit": u, "status": "BLOCKED",
         "full_vocab_replay": False, "labels_or_gt_read": False, "retry": False,
         "HNLO_RESEARCH_VERIFIED": False, "network_coverage": "PARTIAL_RELAY_UNOBSERVABLE"}
-    phases = {}
+    phases, current_phase = {}, "authority"
     def phase(name, callback):
+        nonlocal current_phase
+        current_phase = name
         start = time.monotonic()
         try:
             return timed(evidence / (name + "-timing.json"), callback)
@@ -199,10 +281,12 @@ def run(repo, work, output, source, model, *, operations_factory=Operations, sam
     try:
         authority = json.loads((repo / AUTHORITY).read_bytes())
         authorize(authority, source, model)
+        current_phase = "attempt_consumption"
         ledger = no_alias(output / "data/processed/resource_pilot_attempts" / u["attempt_id"])
         ledger.mkdir(parents=True, exist_ok=False)
         write(ledger / "consumed.json", {"unit": u, "source": source})
         result["status"] = "FAILED"
+        current_phase = "manifest_binding"
         rows = cohort.planned(repo)
         write(evidence / "binding.json", {"unit": u, "source": source, "authority": authority, "samples": rows})
         write(evidence / "source.json", source)
@@ -220,7 +304,10 @@ def run(repo, work, output, source, model, *, operations_factory=Operations, sam
         phase("inference_worker", lambda: ops.worker("inference"))
         result["status"] = "RAW_RETURNED"
     except BaseException as e:
-        result["error"] = {"type": type(e).__name__, "errno": getattr(e, "errno", None)}
+        result["error"] = error_report(e, current_phase)
+        if current_phase == "train_preflight" and not (evidence / "train-preflight.json").exists():
+            write(evidence / "train-preflight.json", {"status": "FAILED", "error": result["error"],
+                  "image_bytes_read": False, "labels_or_gt_read": False})
     result["phases_seconds"] = phases
     result["samples"] = accounting(evidence, rows)
     write(evidence / "supervisor.json", result)

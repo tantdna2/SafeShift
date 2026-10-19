@@ -2320,3 +2320,23 @@ Runbook: notes/resource_pilot8_20261019.md. Stop after one independent Draft PR.
 No Kaggle, checkpoint download, GPU, self-grant, PR #117 edits, Antigravity or
 merge. Stop at one new Draft PR. Runbook:
 `notes/resource_pilot8_dataset_path_v2_20261019.md`.
+
+## Bounded Kaggle Dataset discovery for pilot8 V3 (2026-10-19)
+
+- [x] Read instructions/roadmap/tasks, package, V2 builder/source/authority and
+  tests; verify origin/main BASE `6d345fe11426a3c01815439081dca0a8983dd33c`.
+- [x] Isolate new branch/worktree; support only the explicit original layouts
+  at direct mounts and `datasets/<owner>/<slug>`, with depth/entry bounds.
+- [x] Preserve unique-root/path safety; retain specific root/image/metadata/hash
+  reasons and image identity in the existing failure evidence and export.
+- [x] Prepare separate V3 pilot Run All notebooks, source lock/null authority and
+  fresh model-specific attempts; preserve both V1/V2 releases and research scope.
+- [x] CPU pilot/path Linux 70/70 PASS; Windows path 24 PASS/9 symlink SKIP;
+  native/runner 251 PASS/6 SKIP. Capture/security 147 PASS/10 SKIP/4 historical
+  FAIL; all four independently reproduced on unchanged BASE. Commands, versions
+  and unrun checks recorded in the V3 runbook; no new failure waived.
+- [ ] Direct ChatGPT GitHub review of the new Draft PR; independent audit only
+  when separately requested. New per-model grants, F2 and release remain pending.
+
+No Kaggle/checkpoint/GPU, grant, F2, PR #117 edits, Antigravity or merge.
+Stop after one Draft PR. Runbook: `notes/resource_pilot8_dataset_path_v3_20261019.md`.

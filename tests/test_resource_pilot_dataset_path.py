@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tarfile
 import unittest
 from unittest.mock import patch
 
@@ -71,8 +72,73 @@ class DatasetPathTests(Case):
     def test_no_recursive_or_test_only_layout_is_accepted(self):
         self.dataset(layout="arbitrary/nesting/InspecSafe-V1-Kaggle/train")
         self.dataset("test-only", "DATA_PATH/test")
-        with self.assertRaisesRegex(ValueError, "EXACTLY_ONE"):
+        with self.assertRaisesRegex(flow.TrainInputError, "TRAIN_ROOT_NOT_FOUND"):
             flow.discover_train(self.inputs)
+
+    def test_owner_slug_prefix_accepts_only_the_three_declared_layouts(self):
+        for i, layout in enumerate(flow.TRAIN_LAYOUTS):
+            with self.subTest(layout=layout):
+                original = self.inputs
+                self.inputs = original / str(i); self.inputs.mkdir()
+                root = self.dataset("datasets/nguynanhtn/inspecsafe-v1-kaggle", layout)
+                with patch.object(Path, "rglob", side_effect=AssertionError("RECURSION_FORBIDDEN")):
+                    self.assertEqual(flow.discover_train(self.inputs), root)
+                flow.check_images(root, self.rows)
+                self.inputs = original
+
+    def test_owner_confirmed_tree_stages_eight_before_setup_in_both_notebooks(self):
+        self.dataset("datasets/nguynanhtn/inspecsafe-v1-kaggle")
+        for model in ("qwen3", "internvl3"):
+            result, out, events = self.run_flow(model, notebook=True)
+            self.assertNotIn("error", result)
+            self.assertEqual(events, ["software", "inspect", "checkpoint", "inference"])
+            preflight_path = next((out / "data/processed/resource_pilot").glob("*/evidence/train-preflight.json"))
+            preflight = json.loads(preflight_path.read_bytes())
+            self.assertEqual(preflight["dataset_root_relative_to_input"],
+                "datasets/nguynanhtn/inspecsafe-v1-kaggle/InspecSafe-V1-Kaggle/train")
+            staged = out.parent / ("repo-" + out.name) / "data/processed/resource_pilot_inputs" / contract.unit(model)["run_id"]
+            self.assertEqual([(staged / f"{i:06d}.image").read_bytes() for i in range(8)], self.jpeg)
+
+    def test_other_prefixes_or_deeper_owner_slug_subtrees_are_not_searched(self):
+        self.dataset("models/owner/slug")
+        self.dataset("datasets/owner/slug", "extra/InspecSafe-V1-Kaggle/train")
+        with patch.object(Path, "rglob", side_effect=AssertionError("RECURSION_FORBIDDEN")):
+            with self.assertRaisesRegex(flow.TrainInputError, "TRAIN_ROOT_NOT_FOUND"):
+                flow.discover_train(self.inputs)
+
+    def test_absent_input_directory_is_a_specific_root_not_found(self):
+        with self.assertRaises(flow.TrainInputError) as raised:
+            flow.discover_train(self.root / "absent-input")
+        self.assertEqual(raised.exception.details,
+                         {"reason": "TRAIN_ROOT_NOT_FOUND", "roots_relative_to_input": []})
+
+    def test_discovery_has_a_total_entry_budget(self):
+        root = self.dataset("datasets/owner/slug")  # input entry + owner + slug = three.
+        with patch.object(flow, "MAX_DISCOVERY_ENTRIES", 3):
+            self.assertEqual(flow.discover_train(self.inputs), root)
+        with patch.object(flow, "MAX_DISCOVERY_ENTRIES", 2):
+            result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "TRAIN_DISCOVERY_ENTRY_LIMIT_EXCEEDED")
+        self.assertEqual(result["error"]["limit"], 2)
+
+    def test_duplicate_roots_across_direct_owner_slug_mounts_fail_before_setup(self):
+        first = self.dataset("direct")
+        second = self.dataset("datasets/owner/slug")
+        result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "MULTIPLE_TRAIN_ROOTS")
+        self.assertEqual(set(result["error"]["roots_relative_to_input"]),
+                         {p.relative_to(self.inputs).as_posix() for p in (first, second)})
+
+    def test_two_owner_slug_mounts_fail_before_setup(self):
+        self.dataset("datasets/owner-a/slug")
+        self.dataset("datasets/owner-b/slug")
+        result, out, events = self.run_flow("internvl3")
+        self.assert_input_failure(result, out, events, "MULTIPLE_TRAIN_ROOTS")
+        self.assertEqual(len(result["error"]["roots_relative_to_input"]), 2)
+
+    def test_zero_roots_preserves_specific_reason_in_export_before_setup(self):
+        result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "TRAIN_ROOT_NOT_FOUND")
 
     def test_two_mounts_or_two_layouts_are_ambiguous(self):
         for second_mount, second_layout in (("copy", "InspecSafe-V1-Kaggle/train"),
@@ -80,7 +146,7 @@ class DatasetPathTests(Case):
             with self.subTest(second_mount=second_mount):
                 first = self.dataset()
                 second = self.dataset(second_mount, second_layout)
-                with self.assertRaisesRegex(ValueError, "EXACTLY_ONE"):
+                with self.assertRaisesRegex(flow.TrainInputError, "MULTIPLE_TRAIN_ROOTS"):
                     flow.discover_train(self.inputs)
                 # Remove only this known synthetic tree for the next subcase.
                 for row in self.rows:
@@ -110,7 +176,8 @@ class DatasetPathTests(Case):
         for directory in (False, True):
             if directory: p.mkdir()
             with patch.object(Path, "open", side_effect=AssertionError("BYTE_READ_FORBIDDEN")):
-                with self.assertRaisesRegex(ValueError, "MISSING_OR_NOT_FILE"):
+                reason = "NOT_REGULAR_FILE" if directory else "TRAIN_IMAGE_MISSING"
+                with self.assertRaisesRegex(flow.TrainInputError, reason):
                     flow.check_images(root, self.rows)
 
     def symlink(self, target, link, directory=False):
@@ -123,6 +190,27 @@ class DatasetPathTests(Case):
         root = self.dataset()
         self.symlink(root.parents[1], self.inputs / "alias", True)
         with self.assertRaises(ValueError): flow.discover_train(self.inputs)
+
+    def test_alias_at_each_nested_prefix_level_fails_before_setup(self):
+        for level in ("datasets", "datasets/owner", "datasets/owner/slug"):
+            with self.subTest(level=level):
+                original = self.inputs
+                self.inputs = original / level.replace("/", "-"); self.inputs.mkdir()
+                self.dataset("datasets/owner/slug")
+                node = self.inputs / level
+                moved = self.root / ("moved-" + level.replace("/", "-"))
+                node.rename(moved)
+                self.symlink(moved, node, True)
+                result, out, events = self.run_flow("qwen3", fault=level.replace("/", "-"))
+                self.assert_input_failure(result, out, events, "UNSAFE_TRAIN_DISCOVERY_PATH")
+                self.assertEqual(result["error"]["path_relative_to_input"], level)
+                self.inputs = original
+
+    def test_dangling_slug_symlink_is_not_ignored_beside_valid_root(self):
+        self.dataset("datasets/owner/slug")
+        self.symlink(self.root / "absent", self.inputs / "datasets/owner/alias", True)
+        result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "UNSAFE_TRAIN_DISCOVERY_PATH")
 
     def test_symlink_train_annotations_and_input_root_rejected(self):
         root = self.dataset()
@@ -210,13 +298,95 @@ class DatasetPathTests(Case):
             if fault == "null": discovery.assert_not_called()
         return result, out, events
 
+    def assert_input_failure(self, result, out, events, reason):
+        self.assertEqual(events, [])  # No software, checkpoint, CUDA or model worker.
+        self.assertEqual(result["status"], "FAILED")
+        self.assertEqual(result["error"]["reason"], reason)
+        self.assertEqual(result["error"]["phase"], "train_preflight")
+        self.assertEqual(list(result["phases_seconds"]), ["train_preflight"])
+        self.assertFalse(any(r["staging_read_started"] for r in result["samples"]))
+        self.assertEqual([r["status"] for r in result["samples"]], ["NOT_ATTEMPTED"] * 8)
+        evidence = out / "work/evidence"
+        self.assertEqual(json.loads((evidence / "train-preflight.json").read_bytes())["error"], result["error"])
+        self.assertFalse((evidence / "input-staging").exists())
+        flow.custody.verify(evidence)
+        self.assertEqual(result["export"]["status"], "EXPORTED")
+        with tarfile.open(next(out.glob("*.tar.gz"))) as archive:
+            for name in ("result.json", "raw-evidence/supervisor.json", "raw-evidence/train-preflight.json"):
+                saved = json.load(archive.extractfile("evidence/" + name))
+                self.assertEqual(saved["error"], result["error"])
+
+    def test_nested_missing_image_reports_ordinal_and_locator_before_any_read(self):
+        root = self.dataset("datasets/nguynanhtn/inspecsafe-v1-kaggle")
+        (root / self.rows[7]["image_locator"]).unlink()
+        result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "TRAIN_IMAGE_MISSING")
+        self.assertEqual(result["error"]["ordinal"], 7)
+        self.assertEqual(result["error"]["image_locator"], self.rows[7]["image_locator"])
+
+    def test_nested_invalid_metadata_reports_ordinal_and_locator_before_setup(self):
+        root = self.dataset("datasets/owner/slug")
+        image = root / self.rows[3]["image_locator"]; image.unlink(); image.mkdir()
+        result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "TRAIN_IMAGE_NOT_REGULAR_FILE")
+        self.assertEqual(result["error"]["ordinal"], 3)
+        self.assertEqual(result["error"]["image_locator"], self.rows[3]["image_locator"])
+
+    def test_nested_hardlink_metadata_retained_in_failure_export(self):
+        root = self.dataset("datasets/owner/slug")
+        os.link(root / self.rows[4]["image_locator"], self.root / "image-alias.jpg")
+        result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "TRAIN_IMAGE_HARDLINK_ALIAS_FORBIDDEN")
+        self.assertEqual((result["error"]["ordinal"], result["error"]["actual_nlink"]), (4, 2))
+
+    def test_unreadable_image_metadata_retains_errno_and_identity_before_setup(self):
+        self.dataset("datasets/owner/slug")
+        original_safe_path = flow.safe_path
+        def checked(root, locator):
+            if locator == self.rows[5]["image_locator"]:
+                raise PermissionError(13, "synthetic metadata denial")
+            return original_safe_path(root, locator)
+        with patch.object(flow, "safe_path", side_effect=checked):
+            result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "TRAIN_IMAGE_METADATA_UNREADABLE")
+        self.assertEqual(result["error"]["metadata_errno"], 13)
+        self.assertEqual(result["error"]["ordinal"], 5)
+        self.assertEqual(result["error"]["image_locator"], self.rows[5]["image_locator"])
+
+    def test_nested_image_alias_retained_in_failure_export(self):
+        root = self.dataset("datasets/owner/slug")
+        image = root / self.rows[2]["image_locator"]; image.unlink()
+        self.symlink(root / self.rows[0]["image_locator"], image)
+        result, out, events = self.run_flow("qwen3")
+        self.assert_input_failure(result, out, events, "UNSAFE_TRAIN_IMAGE_PATH")
+        self.assertEqual(result["error"]["ordinal"], 2)
+
+    def test_nested_hash_error_retained_in_result_journal_and_archive(self):
+        root = self.dataset("datasets/owner/slug")
+        (root / self.rows[2]["image_locator"]).write_bytes(self.jpeg[3])
+        result, out, events = self.run_flow("qwen3")
+        self.assertEqual(events, [])
+        self.assertEqual(result["error"], {"type": "TrainInputError", "errno": None,
+            "phase": "image_staging", "reason": "TRAIN_IMAGE_HASH_MISMATCH_NO_SKIP", "ordinal": 2,
+            "image_locator": self.rows[2]["image_locator"], "expected_sha256": self.rows[2]["image_sha256"],
+            "actual_sha256": self.rows[3]["image_sha256"]})
+        journal = Journal(out / "work/evidence/input-staging")
+        self.assertTrue(journal.verify())
+        self.assertEqual(journal.read("failure")["error"], result["error"])
+        self.assertTrue(result["samples"][2]["staging_read_started"])
+        self.assertFalse(result["samples"][3]["staging_read_started"])
+        self.assertEqual(result["export"]["status"], "EXPORTED")
+        with tarfile.open(next(out.glob("*.tar.gz"))) as archive:
+            saved = json.load(archive.extractfile("evidence/result.json"))
+            self.assertEqual(saved["error"], result["error"])
+
     def test_missing_image_stops_both_released_notebook_cells_before_provisioning(self):
         root = self.dataset()
         (root / self.rows[7]["image_locator"]).unlink()
         for model in ("qwen3", "internvl3"):
             result, out, events = self.run_flow(model, notebook=True)
             self.assertEqual(events, [])
-            self.assertEqual(result["error"]["type"], "ValueError")
+            self.assertEqual(result["error"]["type"], "TrainInputError")
             self.assertEqual(result["status"], "FAILED")
             self.assertEqual([r["status"] for r in result["samples"]], ["NOT_ATTEMPTED"] * 8)
             self.assertFalse(any(r["staging_read_started"] for r in result["samples"]))
@@ -257,38 +427,48 @@ class DatasetPathTests(Case):
         self.assertFalse((out / "data/processed/resource_pilot_attempts").exists())
 
 
-class V2ReleaseTests(unittest.TestCase):
-    def test_old_grant_and_pr118_urls_cannot_authorize_either_new_unit(self):
-        old = json.loads((ROOT / "configs/diagnostics/resource_pilot_authority.v1.json").read_bytes())
-        for model in ("qwen3", "internvl3"):
-            with self.assertRaises(PermissionError): contract.authorize(old, source(), model)
-            prior = next(u for u in old["scope"]["units"] if u["model"] == model)
-            current = contract.unit(model)
-            self.assertNotEqual(prior["run_id"], current["run_id"])
-            self.assertNotEqual(prior["attempt_id"], current["attempt_id"])
-            for key in ("decision_url", "independent_audit_url"):
-                grant = approved(model)
-                grant["grant"][key] = "https://github.com/tantdna2/SafeShift/pull/118#old"
-                with self.assertRaises(PermissionError):
-                    contract.authorize(grant, {**source(), "pr_number": 118}, model)
+class V3ReleaseTests(unittest.TestCase):
+    def test_old_grants_and_pr118_pr119_urls_cannot_authorize_either_new_unit(self):
+        for version, pr in ((1, 118), (2, 119)):
+            old = json.loads((ROOT / f"configs/diagnostics/resource_pilot_authority.v{version}.json").read_bytes())
+            for model in ("qwen3", "internvl3"):
+                with self.subTest(version=version, model=model):
+                    with self.assertRaises(PermissionError): contract.authorize(old, source(), model)
+                    prior = next(u for u in old["scope"]["units"] if u["model"] == model)
+                    current = contract.unit(model)
+                    self.assertNotEqual(prior["run_id"], current["run_id"])
+                    self.assertNotEqual(prior["attempt_id"], current["attempt_id"])
+                    grafted = approved(model)
+                    grafted["grant"]["units"][0]["unit"] = prior
+                    with self.assertRaises(PermissionError): contract.authorize(grafted, source(), model)
+                    for key in ("decision_url", "independent_audit_url"):
+                        grant = approved(model)
+                        grant["grant"][key] = f"https://github.com/tantdna2/SafeShift/pull/{pr}#old"
+                        with self.assertRaises(PermissionError):
+                            contract.authorize(grant, {**source(), "pr_number": pr}, model)
 
-    def test_v1_artifact_bytes_and_scientific_scope_are_unchanged(self):
+    def test_v1_v2_artifact_bytes_and_scientific_scope_are_unchanged(self):
         paths = ["configs/diagnostics/resource_pilot_authority.v1.json",
                  "configs/diagnostics/resource_pilot_source.v1.json",
                  "configs/diagnostics/resource_pilot_provenance.v1.json",
                  "notes/resource_pilot8_20261019.md",
-                 *[f"notebooks/SafeShift_HNLO_RESOURCE_PILOT8_{m}.ipynb" for m in ("qwen3", "internvl3")]]
+                 *[f"notebooks/SafeShift_HNLO_RESOURCE_PILOT8_{m}.ipynb" for m in ("qwen3", "internvl3")],
+                 "configs/diagnostics/resource_pilot_authority.v2.json",
+                 "configs/diagnostics/resource_pilot_source.v2.json",
+                 "notes/resource_pilot8_dataset_path_v2_20261019.md",
+                 *[f"notebooks/SafeShift_HNLO_RESOURCE_PILOT8_{m}_DATASET_PATH_V2.ipynb" for m in ("qwen3", "internvl3")]]
         for path in paths:
             before = subprocess.check_output(["git", "-C", str(ROOT), "show", contract.BASE_SHA + ":" + path])
             self.assertEqual(before, (ROOT / path).read_bytes(), path)
-        old = json.loads((ROOT / paths[0]).read_bytes())
         new = contract.template()
         self.assertIsNone(json.loads((ROOT / contract.AUTHORITY).read_bytes())["grant"])
-        self.assertEqual({k: v for k, v in old["scope"].items() if k != "units"},
-                         {k: v for k, v in new["scope"].items() if k != "units"})
-        for before, after in zip(old["scope"]["units"], new["scope"]["units"]):
-            self.assertEqual({k: v for k, v in before.items() if k not in ("run_id", "attempt_id")},
-                             {k: v for k, v in after.items() if k not in ("run_id", "attempt_id")})
+        for version in (1, 2):
+            old = json.loads((ROOT / f"configs/diagnostics/resource_pilot_authority.v{version}.json").read_bytes())
+            self.assertEqual({k: v for k, v in old["scope"].items() if k != "units"},
+                             {k: v for k, v in new["scope"].items() if k != "units"})
+            for before, after in zip(old["scope"]["units"], new["scope"]["units"]):
+                self.assertEqual({k: v for k, v in before.items() if k not in ("run_id", "attempt_id")},
+                                 {k: v for k, v in after.items() if k not in ("run_id", "attempt_id")})
 
 
 if __name__ == "__main__":
