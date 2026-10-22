@@ -2386,3 +2386,31 @@ Runbook: `notes/hnlo_train_v4_20261019.md`. Stop after one new Draft PR.
 
 No Kaggle, checkpoint/model/GPU execution, grant, retry/resume, F2, Antigravity
 or merge. PR #117 and #121 remain unchanged on HOLD. Stop after one Draft PR.
+
+## Qwen3 V4 Shard 2 OOM investigation (2026-10-22; Draft review)
+
+- [x] Fetch/verify current main and release at
+  `c9e2279296165d5a0e77fae03a465e216508b5d3`; isolate a new investigation branch
+  and worktree; preserve PR #122 and the original workspace.
+- [x] Read supplied handoff and relevant source; independently verify the rerun
+  archive, five external JSON receipts, 54,221 evidence files, 721 journal seals
+  and raw custody. First archive is handoff-reported, not locally reverified;
+  duplicated attempt identity is not a new execution permission or baseline.
+- [x] Document image/processor/generate/logits/cache/object lifetime, distinguish
+  transient peak, accumulation, fragmentation and placement hypotheses. Root
+  cause/failed device/allocation remain UNDETERMINED; no speculative runtime fix.
+- [x] Add CPU-only read-only artifact forensics, exact 224-row recovery mapping,
+  separate proposed identities/input lock/authority/audit contracts and bounded
+  future measurement design. Execution lock/permission remain incomplete/null.
+- [x] Focused CPU suite: 132 PASS, no skips; raw replay/HNLO, sample order,
+  unchanged input/config, seals, failure tail, placement and release bytes covered.
+  Exact commands, final verification and limitations:
+  [OOM investigation](notes/qwen3_s2_oom_20261022.md).
+- [ ] Direct ChatGPT GitHub inspection of branch/base/head/diff and Draft status.
+- [ ] Separately requested independent audit; later recovery implementation,
+  complete execution source lock and Lead recovery-specific authority/permission.
+- [ ] Any future 224-image execution and its separate CPU audit; no automatic
+  pooling with or replacement of the first V4 baseline.
+
+No GPU/Kaggle, model/data download, raw image/GT access, new attempt, grant, F2,
+Antigravity or merge. Stop at Draft PR. PR #122 history/results remain unchanged.
