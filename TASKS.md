@@ -2414,3 +2414,33 @@ or merge. PR #117 and #121 remain unchanged on HOLD. Stop after one Draft PR.
 
 No GPU/Kaggle, model/data download, raw image/GT access, new attempt, grant, F2,
 Antigravity or merge. Stop at Draft PR. PR #122 history/results remain unchanged.
+
+## Qwen3 S2 Recovery224 V1 implementation PREP (2026-10-22)
+
+- [x] Start at exact merged PR123 BASE
+  `7b8d6e77ff821ac02f0c4c23cc6c1ed6ed8b0c04`; preserve unrelated workspace files.
+- [x] Implement a separate Kaggle One-Click notebook, source/bootstrap/worker,
+  authority `grant=null` and fresh proposed run/attempt; no V4 grant reuse.
+- [x] Reconstruct all 224 original ordinals 717–940 and verify both PR123 locks;
+  unique-root confirmed Kaggle layout, all-image metadata/hash/copy checks before
+  GPU, independent worker projection and staged-byte rechecks before torch.
+- [x] Preserve V4 scientific/security/capture/scoring/authority/notebook bytes;
+  new bounded per-image/per-stage memory and redacted original-error diagnostics
+  live in separate sealed journals, with raw custody and CPU replay retained.
+- [x] Stop on technical error, including diagnostic failure after raw seal;
+  one native call/image, one load, no retry/resume. Archive and all five receipts;
+  repeated local attempt is blocked without overwriting prior evidence.
+- [x] CPU focused tests and full evaluator doubles PASS; exact commands, counts,
+  final 224-image simulation and source-lock checks are in
+  [the recovery runbook](notes/qwen3_s2_recovery224_20261022.md).
+- [ ] Direct ChatGPT GitHub review of this new Draft; separately requested audit,
+  explicit Lead recovery approval, cross-session reservation, authority-only F2,
+  verified standard release merge and later GPU run remain pending.
+- [ ] Mounted-byte verification of all 224 Kaggle images, GPU feasibility/OOM diagnosis and
+  separate result audit; no automatic baseline pooling or replacement.
+
+Root cause UNDETERMINED. Fresh-process success is a hypothesis, not a demonstrated
+OOM repair. Supplemental recovery cohort only; `baseline_pooling_allowed=false`.
+No GPU/Kaggle, checkpoint/data download, real image decode, GT parsing/evaluation,
+grant, F2, Antigravity or merge. Source-lock checks hash versioned manifest bytes
+without parsing labels. Stop at one new Draft PR.
