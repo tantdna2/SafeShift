@@ -18,6 +18,24 @@ from pathlib import Path
 
 LEVELS = ("Level01", "Level02", "Level03", "Level04")
 INPUTS = Path("notes/evidence/three_model_20261023")
+QWEN3_S2_FIRST_ARCHIVE_SHA256 = "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920"
+QWEN3_S2_DUPLICATE_RESULT_SHA256 = "6e72dd81401381de36678163a26d890e492961ad3edf8e43b8e4b0f388089708"
+
+
+def qwen3_s2_provenance(result_sha256, claimed_role="SECOND_DUPLICATE_S2_DIAGNOSTIC"):
+    """Identify the known duplicate by bytes, never by filename or equal counts.
+
+    No original S2 archive is supplied in this check. An unknown result digest
+    cannot establish original provenance either; that requires archive binding.
+    """
+    if result_sha256 != QWEN3_S2_DUPLICATE_RESULT_SHA256:
+        raise ValueError("S2_RESULT_ARCHIVE_PROVENANCE_REQUIRED")
+    if claimed_role != "SECOND_DUPLICATE_S2_DIAGNOSTIC":
+        raise ValueError("DUPLICATE_S2_RESULT_CANNOT_BE_ORIGINAL_V4")
+    return {"result_sha256": result_sha256, "role": claimed_role,
+            "usage": "CONSISTENCY_ONLY",
+            "original_s2_independently_verified": False,
+            "counts_toward_original_v4_member_validation": False}
 
 
 def close(actual, expected, name, tolerance=1e-12):
@@ -218,12 +236,15 @@ def verify_exports(directory, input_dir=INPUTS):
     """Optional check of locally supplied reports, not archive custody/authenticity.
 
     Expected layout is documented in the accompanying scientific report. The
-    missing original Qwen3 S2 archive is deliberately not replaced by its rerun.
+    Known duplicate S2 bytes are checked only for consistency with supplied
+    aggregates. They cannot confirm original S2 members, coverage or predictions.
     """
     from safeshift.ls1.evaluate import auc  # Existing, unchanged rank implementation.
 
     official = json.loads(Path("notes/pa3_r2_cpu_completion_20261015.summary.json").read_text(encoding="utf8"))
     summary = json.loads((input_dir / "SafeShift_three_model_comparison_20261023.json").read_text(encoding="utf8"))
+    s2_payload = (directory / "qwen3_shard2.json").read_bytes()
+    s2_provenance = qwen3_s2_provenance(hashlib.sha256(s2_payload).hexdigest())
     payload = (directory / "qwen25_samples.csv").read_bytes()
     if hashlib.sha256(payload).hexdigest() != official["report_artifacts"]["samples.csv"]["sha256"]:
         raise ValueError("OFFICIAL_SAMPLES_HASH_MISMATCH")
@@ -260,9 +281,12 @@ def verify_exports(directory, input_dir=INPUTS):
                   [float(r["pa3_score"]) for r in selected]), expected["auroc_pa3"], "InternVL saved-score AUROC")
         if export_matrix(selected) != expected["confusion"]:
             raise ValueError("INTERNVL_DOMAIN_CONFUSION_MISMATCH")
-    q3ids, q3matrices, status_counts = [], [], {}
+    # This union deliberately includes the DUPLICATE S2 for a diagnostic check.
+    # Matching the Lead's original-V4 aggregate is NOT proof of first-run S2.
+    q3ids, q3matrices, sidecar_checks, id_counts = [], [], {}, {}
     for name in [f"qwen3_shard{i}.json" for i in range(4)] + ["recovery.json"]:
-        result = json.loads((directory / name).read_text(encoding="utf8"))
+        payload = s2_payload if name == "qwen3_shard2.json" else (directory / name).read_bytes()
+        result = json.loads(payload)
         metrics = result["metrics"]["overall"]
         ids = metrics["auroc_pa3"]["eligible_ids"]
         if len(ids) != len(set(ids)):
@@ -272,26 +296,44 @@ def verify_exports(directory, input_dir=INPUTS):
         if any(row.get("INVALID", 0) for row in matrix.values()):
             raise ValueError("INVALID_IN_SCORE_VALID_CONFUSION")
         q3matrices.append({t: {p: matrix[t].get(p, 0) for p in LEVELS} for t in LEVELS})
-        status_counts[name] = result["coverage"]["status_counts"]
+        id_counts[name] = len(ids)
+        role = (s2_provenance["role"] if name == "qwen3_shard2.json"
+                else "RECOVERY_SIDECAR" if name == "recovery.json" else "NON_S2_V4_SIDECAR_AS_PROVIDED")
+        sidecar_checks[name] = {"role": role, "status_counts": result["coverage"]["status_counts"]}
         expected_support = {t: sum(truth[sid][0] == t for sid in ids) for t in LEVELS}
         if {t: sum(q3matrices[-1][t].values()) for t in LEVELS} != expected_support:
-            raise ValueError("QWEN3_ELIGIBLE_SUPPORT_MISMATCH")
+            raise ValueError("QWEN3_SIDECAR_CONSISTENCY_SUPPORT_MISMATCH")
     if len(q3ids) != len(set(q3ids)) or set(q3ids) != set(truth):
-        raise ValueError("EXACT_DISJOINT_QWEN3_UNIVERSE_REQUIRED")
+        raise ValueError("DISJOINT_DIAGNOSTIC_QWEN3_UNION_REQUIRED")
     for matrices, name in [(q3matrices[:4], "Qwen3 V4 success"),
                            (q3matrices[4:], "Qwen3 Recovery"),
                            (q3matrices, "Qwen3 combined")]:
         if sum_matrices(matrices) != summary["metrics"][name]["confusion"]:
-            raise ValueError("QWEN3_RESULT_CONFUSION_MISMATCH")
+            raise ValueError("QWEN3_DIAGNOSTIC_CONSISTENCY_CONFUSION_MISMATCH")
     return {"scope": "SAVED_REPORT_ROWS_AND_RESULT_SIDECARS_NOT_RAW_AUDIT",
             "same_id_label_domain_q25_internvl": len(truth),
-            "same_id_and_truth_support_qwen3": len(q3ids),
-            "qwen3_v4_success": len(q3ids) - sum(sum(r.values()) for r in q3matrices[-1].values()),
-            "qwen3_status_counts": status_counts,
+            "qwen3_original_v4": {
+                "scope": "SUPPLIED_PREVIOUSLY_REPORTED_NOT_NEWLY_MEMBER_CONFIRMED",
+                "success_n_reported": summary["metrics"]["Qwen3 V4 success"]["n"],
+                "combined_n_reported": summary["metrics"]["Qwen3 combined"]["n"],
+                "original_s2_independently_verified": False,
+                "complete_member_level_validation": False,
+                "first_s2_archive_expected_sha256": QWEN3_S2_FIRST_ARCHIVE_SHA256,
+                "first_s2_archive_supplied_in_this_check": False},
+            "qwen3_s2_diagnostic": s2_provenance,
+            "qwen3_available_sidecars_consistency": {
+                "scope": "NON_S2_SIDECARS_PLUS_DUPLICATE_S2_PLUS_RECOVERY_CONSISTENCY_ONLY",
+                "id_union_n": len(q3ids),
+                "non_s2_v4_sidecar_id_n": sum(id_counts[f"qwen3_shard{i}.json"] for i in (0, 1, 3)),
+                "duplicate_s2_id_n": id_counts["qwen3_shard2.json"],
+                "recovery_id_n": id_counts["recovery.json"],
+                "same_id_set_and_truth_support_vs_official_reports": True,
+                "confusions_match_supplied_aggregates": True,
+                "proves_original_s2_members": False,
+                "sidecars": sidecar_checks},
             "internvl_saved_score_auroc_recomputed": summary["metrics"]["InternVL3"]["auroc_pa3"],
             "qwen25_saved_score_auroc_recomputed": official["overall"]["auroc_pa3"]["value"],
             "qwen3_pooled_auroc_recomputed": False,
-            "qwen3_original_s2_archive_available": False,
             "internvl_report_member_sha256": members,
             "inputs_sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                               for p in sorted(directory.iterdir()) if p.is_file()}}

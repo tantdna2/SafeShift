@@ -16,18 +16,28 @@ RQ trong báo cáo theo [DEC-PA3-011, vẫn PROPOSED](../DECISIONS.md#dec-pa3-01
 - **InternVL3:** đọc duy nhất CSV báo cáo trong bốn tar của `InterVL3_Output.zip`;
   tái tính AUROC gộp/từng miền từ saved score và ma trận nhầm lẫn, khớp tổng hợp.
   Hai cách tính cho AUROC `0.8861824613751756` và `0.8861824613751758` khác khoảng `2.2e-16`, không phải khác biệt thực nghiệm.
-- **Qwen3:** đối chiếu bốn V4 result sidecar và Recovery224 result: 3.539 + 224 ID
-  không chồng lặp, bằng tập 3.763 ID của hai mô hình kia; support nhãn và phép cộng ma trận khớp.
-  Archive V4 shard 2 **gốc** không có trong vị trí được cung cấp; không dùng archive rerun cùng tên để thay thế.
+- **Qwen3 — sửa provenance theo [review PR #126](https://github.com/tantdna2/SafeShift/pull/126#issuecomment-6355755837):**
+  `qwen3_shard2.json` có SHA-256 `6e72dd81401381de36678163a26d890e492961ad3edf8e43b8e4b0f388089708`,
+  thuộc **lượt chạy lại Shard 2 trùng attempt**, không phải lượt V4 đầu tiên, như
+  [hồ sơ OOM](qwen3_s2_oom_20261022.md#source-and-evidence-boundary) đã ghi.
+  Ba sidecar V4 S0/S1/S3 + sidecar S2 **duplicate diagnostic** + Recovery224 tạo tổ hợp
+  3.763 ID không chồng lặp, support và confusion khớp tổng hợp, nhưng đây **chỉ là kiểm tra nhất quán**.
+  Không dùng kết quả đó xác nhận độc lập 717 ảnh S2 gốc hay toàn bộ 3.539 V4-success gốc.
+  Archive lượt đầu cần SHA-256 `2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920`;
+  chưa tìm thấy trong các vị trí bằng chứng đã kiểm tra. Archive local cùng basename được hash lại là
+  `508a2e122ee999da728e8d09c66f5157331e6fe1a40adaa82e2869a30c6e0147`, cũng là lượt chạy lại.
   Vì thiếu saved-score vector gốc đầy đủ, **chưa tái tính độc lập AUROC gộp Qwen3**.
-  Tuyên bố raw replay/integrity trong các tài liệu đầu vào vẫn thuộc nguồn cung cấp, không phải kiểm toán mới ở đây.
+  Mọi số Qwen3 gốc/ghép trong bảng vẫn **dẫn từ tổng hợp/hồ sơ được cung cấp**, không được nâng thành
+  member-level audit mới nhờ sidecar chạy lại. Tuyên bố raw replay/integrity vẫn thuộc nguồn cung cấp.
 
 [Receipt CPU và hash đầu vào](evidence/three_model_20261023/verification_20261023.json)
 ghi chính xác phạm vi. Không đọc mới ảnh/annotation, không chạy GPU, không sửa kết quả lịch sử.
 
 **Coverage phải tách cohort:** Qwen2.5 và InternVL3 có 3.763/3.763 saved SUCCESS.
-Qwen3 V4 gốc chỉ **3.539/3.763 (94,05%)**, còn 1 TECHNICAL_ERROR và 223 NOT_ATTEMPTED.
-Recovery224 có 224/224 SUCCESS, gồm 49 Anomaly/175 Normal, không trùng 3.539 SUCCESS trước đó.
+Theo tổng hợp/hồ sơ được cung cấp, Qwen3 V4 gốc chỉ **3.539/3.763 (94,05%)**, còn 1 TECHNICAL_ERROR
+và 223 NOT_ATTEMPTED; task này chưa xác nhận độc lập membership/coverage toàn lượt đầu.
+Recovery224 được báo cáo có 224/224 SUCCESS, gồm 49 Anomaly/175 Normal, không trùng 3.539 SUCCESS trước đó.
+Đối chiếu sidecar duplicate cho kết quả nhất quán nhưng không chứng minh lại tính không chồng lặp với S2 gốc.
 Bản ghép đủ 3.763 là **phân tích mô tả xuyên cohort**, không biến V4 thành một baseline chạy hoàn tất.
 V4-success AUROC được cung cấp là 0,952793; Recovery là 0,954519; bản ghép là 0,952935.
 Không lấy trung bình hai AUROC và không diễn giải sự gần nhau thành bằng chứng recovery không gây selection bias.
@@ -227,14 +237,20 @@ git diff --check
 ```
 
 Để kiểm tra export bổ sung, stage vào `data/processed/three_model_analysis_20261023/inputs/`:
-`qwen25_samples.csv` đúng receipt chính thức, `InterVL3_Output.zip`, bốn V4 result JSON đổi tên
-`qwen3_shard0.json`…`qwen3_shard3.json` và recovery result đổi tên `recovery.json`.
+`qwen25_samples.csv` đúng receipt chính thức, `InterVL3_Output.zip`, ba V4 result S0/S1/S3 đổi tên
+`qwen3_shard0.json`, `qwen3_shard1.json`, `qwen3_shard3.json`; **duplicate S2** có đúng hash `6e72dd…`
+giữ tên `qwen3_shard2.json`, recovery result đổi tên `recovery.json`.
+Script phân vai S2 bằng hash bytes, từ chối nhận duplicate làm original-V4 và từ chối digest chưa có provenance.
+Receipt tách `qwen3_original_v4` (supplied, member-level validation=false) khỏi
+`qwen3_available_sidecars_consistency` và `qwen3_s2_diagnostic`; tên file hay các count bằng nhau không xác nhận lượt đầu.
 Copy audit metadata cũ `data/manifests/duplicate_leakage_audit.json` sang
 `data/processed/three_model_analysis_20261023/duplicate_metadata_audit.json`; không tạo lại từ dataset.
 Thêm `--local-evidence data/processed/three_model_analysis_20261023/inputs --metadata-audit data/processed/three_model_analysis_20261023/duplicate_metadata_audit.json`
 và dùng output filename mới. Receipt versioned lưu hash các inputs và script; không chứa ID mẫu, raw outputs hay đường dẫn máy cá nhân.
 
-Kết quả: aggregate arithmetic PASS; saved-report checks PASS; **13/13 CPU tests PASS** (11 synthetic mới + 2 AUROC regression hiện có).
+Kết quả F1: 13/13 CPU tests PASS. Sau sửa provenance: aggregate arithmetic PASS;
+saved-report/duplicate-diagnostic consistency PASS; **16/16 CPU tests PASS**
+(14 synthetic, gồm ba kiểm thử provenance mới, + 2 AUROC regression hiện có).
 Lần thử đầu với `python -P` thiếu repository trên import path, chưa chạy test; lệnh module ở trên đã chạy thành công.
 Không chạy toàn repo suite, raw-logit auditor, inference/GPU hoặc TEST evaluation vì không đổi production/runtime/protocol.
 Kiểm tra whitespace, liên kết local, hash các bản sao đầu vào và phạm vi diff được thực hiện trước Draft PR.

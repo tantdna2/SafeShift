@@ -2452,8 +2452,9 @@ without parsing labels. Stop at one new Draft PR.
 - [x] Preserve the Lead-supplied three-file aggregate package; reconcile JSON/CSV,
   domain/support/confusion totals and V4-success + Recovery224 arithmetic.
 - [x] Recompute Qwen2.5/InternVL3 AUROC from saved report scores; check Qwen2.5
-  official CSV hashes, available Qwen3 result sidecars, exact cohort IDs and
-  original V4 failure coverage. No new raw-logit audit or Qwen3 pooled-AUROC claim.
+  official CSV hashes and available Qwen3 sidecars. Correction after F1 review:
+  S2 is the duplicate rerun, checked only for consistency; original V4 membership
+  and coverage remain supplied/previously reported, not independently confirmed.
 - [x] Report RQ1, severe errors, imbalance controls, observed metadata and limits
   of RQ2/RQ3; retain separate supplemental recovery status and Moondream2.
 - [x] CPU checks: 13/13 tests PASS; aggregate/export checks PASS. Evidence and
@@ -2466,3 +2467,19 @@ without parsing labels. Stop at one new Draft PR.
 
 Descriptive previously exposed TRAIN only. No GPU/inference, new dataset annotation
 read, TEST evaluation, threshold fitting, protocol/authority change or Antigravity.
+
+### PR #126 narrow S2 provenance correction (2026-10-23)
+
+- [x] Read ChatGPT review at comment 6355755837 against HEAD `2a7647db`;
+  identify result hash `6e72dd...` as SECOND/DUPLICATE S2 diagnostic.
+- [x] No first-S2 archive found in the checked evidence locations; local same-name
+  archive hashes to the known rerun `508a2e...`, not original `2dc356...`.
+- [x] Separate diagnostic consistency from original-V4 member validation in CPU
+  script, receipt and report; preserve every supplied model result/RQ/roster.
+- [x] 16/16 focused CPU tests PASS, including duplicate-as-original rejection,
+  limited-proof positive case and unknown-digest rejection; real export checks
+  retain original-S2/whole-V4 member validation=false.
+- [ ] ChatGPT direct re-review of the additional commit on the same Draft PR.
+
+No rewrite/rebase, GPU/TEST, Antigravity or merge. First-run 717/3,539-image proof
+is not supplied by agreement with the duplicate diagnostic sidecar.

@@ -2,65 +2,103 @@
   "date": "2026-10-23",
   "source_base_commit": "4774f02e84507811243cc587ba877f582614b051",
   "implementation_uncommitted_at_execution": true,
-  "analysis_script_sha256": "bacf61c0b56aed4905511bdb81fe1397ead2482da8f8401d6da51314b0ec0d92",
+  "analysis_script_sha256": "7a733e1ad5955b2b043de2ca38ad92d5ba8eb405fe6e7549a289cd563f25c688",
   "python": "3.11.9",
   "platform": "Windows-10-10.0.26200-SP0",
   "new_dependencies": [],
   "seed": null,
-  "command": "python -m scripts.analyze_three_model_summaries --local-evidence data/processed/three_model_analysis_20261023/inputs --metadata-audit data/processed/three_model_analysis_20261023/duplicate_metadata_audit.json --output data/processed/three_model_analysis_20261023/final_checks.json",
+  "command": "python -m scripts.analyze_three_model_summaries --local-evidence data/processed/three_model_analysis_20261023/inputs --metadata-audit data/processed/three_model_analysis_20261023/duplicate_metadata_audit.json --output data/processed/three_model_analysis_20261023/provenance_fix_checks.json",
   "source_zip_sha256": "1e6440c01d68e926a8c1f5abb8401e6718273bdd08ff8b7e16330d0d22baaf9c",
   "aggregate_checks": "PASS",
   "available_export_checks": {
     "scope": "SAVED_REPORT_ROWS_AND_RESULT_SIDECARS_NOT_RAW_AUDIT",
     "same_id_label_domain_q25_internvl": 3763,
-    "same_id_and_truth_support_qwen3": 3763,
-    "qwen3_v4_success": 3539,
-    "qwen3_status_counts": {
-      "qwen3_shard0.json": {
-        "INTERRUPTED": 0,
-        "INVALID": 0,
-        "NOT_ATTEMPTED": 0,
-        "SUCCESS": 941,
-        "TECHNICAL_ERROR": 0,
-        "UNPROCESSED": 0
-      },
-      "qwen3_shard1.json": {
-        "INTERRUPTED": 0,
-        "INVALID": 0,
-        "NOT_ATTEMPTED": 0,
-        "SUCCESS": 941,
-        "TECHNICAL_ERROR": 0,
-        "UNPROCESSED": 0
-      },
-      "qwen3_shard2.json": {
-        "INTERRUPTED": 0,
-        "INVALID": 0,
-        "NOT_ATTEMPTED": 223,
-        "SUCCESS": 717,
-        "TECHNICAL_ERROR": 1,
-        "UNPROCESSED": 0
-      },
-      "qwen3_shard3.json": {
-        "INTERRUPTED": 0,
-        "INVALID": 0,
-        "NOT_ATTEMPTED": 0,
-        "SUCCESS": 940,
-        "TECHNICAL_ERROR": 0,
-        "UNPROCESSED": 0
-      },
-      "recovery.json": {
-        "INTERRUPTED": 0,
-        "INVALID": 0,
-        "NOT_ATTEMPTED": 0,
-        "SUCCESS": 224,
-        "TECHNICAL_ERROR": 0,
-        "UNPROCESSED": 0
+    "qwen3_original_v4": {
+      "scope": "SUPPLIED_PREVIOUSLY_REPORTED_NOT_NEWLY_MEMBER_CONFIRMED",
+      "success_n_reported": 3539,
+      "combined_n_reported": 3763,
+      "original_s2_independently_verified": false,
+      "complete_member_level_validation": false,
+      "first_s2_archive_expected_sha256": "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920",
+      "first_s2_archive_supplied_in_this_check": false
+    },
+    "qwen3_s2_diagnostic": {
+      "result_sha256": "6e72dd81401381de36678163a26d890e492961ad3edf8e43b8e4b0f388089708",
+      "role": "SECOND_DUPLICATE_S2_DIAGNOSTIC",
+      "usage": "CONSISTENCY_ONLY",
+      "original_s2_independently_verified": false,
+      "counts_toward_original_v4_member_validation": false
+    },
+    "qwen3_available_sidecars_consistency": {
+      "scope": "NON_S2_SIDECARS_PLUS_DUPLICATE_S2_PLUS_RECOVERY_CONSISTENCY_ONLY",
+      "id_union_n": 3763,
+      "non_s2_v4_sidecar_id_n": 2822,
+      "duplicate_s2_id_n": 717,
+      "recovery_id_n": 224,
+      "same_id_set_and_truth_support_vs_official_reports": true,
+      "confusions_match_supplied_aggregates": true,
+      "proves_original_s2_members": false,
+      "sidecars": {
+        "qwen3_shard0.json": {
+          "role": "NON_S2_V4_SIDECAR_AS_PROVIDED",
+          "status_counts": {
+            "INTERRUPTED": 0,
+            "INVALID": 0,
+            "NOT_ATTEMPTED": 0,
+            "SUCCESS": 941,
+            "TECHNICAL_ERROR": 0,
+            "UNPROCESSED": 0
+          }
+        },
+        "qwen3_shard1.json": {
+          "role": "NON_S2_V4_SIDECAR_AS_PROVIDED",
+          "status_counts": {
+            "INTERRUPTED": 0,
+            "INVALID": 0,
+            "NOT_ATTEMPTED": 0,
+            "SUCCESS": 941,
+            "TECHNICAL_ERROR": 0,
+            "UNPROCESSED": 0
+          }
+        },
+        "qwen3_shard2.json": {
+          "role": "SECOND_DUPLICATE_S2_DIAGNOSTIC",
+          "status_counts": {
+            "INTERRUPTED": 0,
+            "INVALID": 0,
+            "NOT_ATTEMPTED": 223,
+            "SUCCESS": 717,
+            "TECHNICAL_ERROR": 1,
+            "UNPROCESSED": 0
+          }
+        },
+        "qwen3_shard3.json": {
+          "role": "NON_S2_V4_SIDECAR_AS_PROVIDED",
+          "status_counts": {
+            "INTERRUPTED": 0,
+            "INVALID": 0,
+            "NOT_ATTEMPTED": 0,
+            "SUCCESS": 940,
+            "TECHNICAL_ERROR": 0,
+            "UNPROCESSED": 0
+          }
+        },
+        "recovery.json": {
+          "role": "RECOVERY_SIDECAR",
+          "status_counts": {
+            "INTERRUPTED": 0,
+            "INVALID": 0,
+            "NOT_ATTEMPTED": 0,
+            "SUCCESS": 224,
+            "TECHNICAL_ERROR": 0,
+            "UNPROCESSED": 0
+          }
+        }
       }
     },
     "internvl_saved_score_auroc_recomputed": 0.8861824613751756,
     "qwen25_saved_score_auroc_recomputed": 0.8266558463706973,
     "qwen3_pooled_auroc_recomputed": false,
-    "qwen3_original_s2_archive_available": false,
     "internvl_report_member_sha256": {
       "InterVL3/Shard 0/hnlo-train-v4-internvl3-s0-a1.tar.gz": "0cc2ce2e306969a673db24720d31fb7a6491fc922064180d43c85d3f66d5bc44",
       "InterVL3/Shard 1/hnlo-train-v4-internvl3-s1-a1.tar.gz": "b0676166910cf419e291d90858ffc39c50ceaaae3956c3c36130b2036cd565fc",
@@ -119,8 +157,32 @@
   },
   "tests": {
     "command": "python -m unittest tests.test_three_model_summaries tests.test_ls1.EvaluationTests.test_auc_ranking_survives_probability_saturation tests.test_ls1.EvaluationTests.test_auc_ties_and_absence -v",
-    "pass": 13,
+    "pass": 16,
     "fail": 0,
-    "skip": 0
+    "skip": 0,
+    "test_script_sha256": "92324eb7a1a6b21197d0d325bb62487ea0136bbf7cbde8b1e75d6bd3be3c4809"
+  },
+  "execution_parent_commit": "2a7647db37b0aac09fcb3888de32fb50cb9b868c",
+  "provenance_correction": {
+    "review_url": "https://github.com/tantdna2/SafeShift/pull/126#issuecomment-6355755837",
+    "scope": "QWEN3_S2_LINEAGE_ONLY_NO_MODEL_METRIC_CHANGE",
+    "original_v4_member_validation_not_established": true,
+    "original_s2_expected_archive_sha256": "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920",
+    "original_s2_archive_found_in_checked_locations": false,
+    "search_scope": [
+      "Owner Downloads top-level and Qwen3_Output/Shard 2",
+      "workspace data/processed",
+      "OOM investigation worktree data/processed",
+      "analysis worktree data/processed"
+    ],
+    "search_is_exhaustive_across_all_owner_storage": false,
+    "observed_local_archive": {
+      "basename": "hnlo-train-v4-qwen3-s2-a1.tar.gz",
+      "sha256": "508a2e122ee999da728e8d09c66f5157331e6fe1a40adaa82e2869a30c6e0147",
+      "role": "SECOND_DUPLICATE_S2_DIAGNOSTIC"
+    },
+    "reported_model_statistics_unchanged": true,
+    "staged_input_hashes_unchanged": true,
+    "prior_f1_tests_passed": 13
   }
 }

@@ -5,6 +5,11 @@ import json
 import unittest
 
 from scripts.analyze_three_model_summaries import check_report, close, export_rows, metadata_census, statistics, sum_matrices
+from scripts.analyze_three_model_summaries import qwen3_s2_provenance
+
+
+# Independent regression value from PR #126 review, not imported from the code.
+KNOWN_DUPLICATE_S2_SHA256 = "6e72dd81401381de36678163a26d890e492961ad3edf8e43b8e4b0f388089708"
 
 
 class AggregateChecks(unittest.TestCase):
@@ -96,6 +101,22 @@ class AggregateChecks(unittest.TestCase):
         self.assertEqual(result["point_id_groups"], 1)
         self.assertEqual(result["anomaly_regex_family_keys"], 1)
         self.assertFalse(result["source_groups_verified_independent"])
+
+    def test_known_duplicate_digest_cannot_be_claimed_as_original_v4(self):
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_S2_RESULT_CANNOT_BE_ORIGINAL_V4"):
+            qwen3_s2_provenance(KNOWN_DUPLICATE_S2_SHA256, claimed_role="ORIGINAL_V4")
+
+    def test_missing_original_allows_only_explicit_duplicate_consistency(self):
+        proof = qwen3_s2_provenance(KNOWN_DUPLICATE_S2_SHA256)
+        self.assertEqual(proof["role"], "SECOND_DUPLICATE_S2_DIAGNOSTIC")
+        self.assertEqual(proof["usage"], "CONSISTENCY_ONLY")
+        self.assertFalse(proof["original_s2_independently_verified"])
+        self.assertFalse(proof["counts_toward_original_v4_member_validation"])
+
+    def test_unknown_digest_cannot_be_promoted_by_filename_or_role(self):
+        for role in ("ORIGINAL_V4", "SECOND_DUPLICATE_S2_DIAGNOSTIC"):
+            with self.assertRaisesRegex(ValueError, "S2_RESULT_ARCHIVE_PROVENANCE_REQUIRED"):
+                qwen3_s2_provenance("0" * 64, claimed_role=role)
 
 
 if __name__ == "__main__":
