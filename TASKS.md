@@ -2444,3 +2444,25 @@ OOM repair. Supplemental recovery cohort only; `baseline_pooling_allowed=false`.
 No GPU/Kaggle, checkpoint/data download, real image decode, GT parsing/evaluation,
 grant, F2, Antigravity or merge. Source-lock checks hash versioned manifest bytes
 without parsing labels. Stop at one new Draft PR.
+
+## Three-model scientific analysis of existing TRAIN results (2026-10-23)
+
+- [x] Start from main `4774f02e84507811243cc587ba877f582614b051` in an isolated
+  worktree; preserve the original workspace and mandatory four-model scope.
+- [x] Preserve the Lead-supplied three-file aggregate package; reconcile JSON/CSV,
+  domain/support/confusion totals and V4-success + Recovery224 arithmetic.
+- [x] Recompute Qwen2.5/InternVL3 AUROC from saved report scores; check Qwen2.5
+  official CSV hashes, available Qwen3 result sidecars, exact cohort IDs and
+  original V4 failure coverage. No new raw-logit audit or Qwen3 pooled-AUROC claim.
+- [x] Report RQ1, severe errors, imbalance controls, observed metadata and limits
+  of RQ2/RQ3; retain separate supplemental recovery status and Moondream2.
+- [x] CPU checks: 13/13 tests PASS; aggregate/export checks PASS. Evidence and
+  reproducibility: [scientific report](notes/three_model_scientific_analysis_20261023.md).
+- [ ] Direct ChatGPT review of the new Draft PR; no merge in this task.
+- [ ] Obtain original Qwen3 S2 saved-score evidence and reviewed source clusters
+  before independent pooled-score recomputation/appropriate paired source CI.
+- [ ] Lead decisions for confounder definitions, Moondream2 treatment and any
+  prospective transfer/threshold/holdout study remain separate and pending.
+
+Descriptive previously exposed TRAIN only. No GPU/inference, new dataset annotation
+read, TEST evaluation, threshold fitting, protocol/authority change or Antigravity.

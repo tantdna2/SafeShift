@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-23",
+  "source_base_commit": "4774f02e84507811243cc587ba877f582614b051",
+  "implementation_uncommitted_at_execution": true,
+  "analysis_script_sha256": "bacf61c0b56aed4905511bdb81fe1397ead2482da8f8401d6da51314b0ec0d92",
+  "python": "3.11.9",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "new_dependencies": [],
+  "seed": null,
+  "command": "python -m scripts.analyze_three_model_summaries --local-evidence data/processed/three_model_analysis_20261023/inputs --metadata-audit data/processed/three_model_analysis_20261023/duplicate_metadata_audit.json --output data/processed/three_model_analysis_20261023/final_checks.json",
+  "source_zip_sha256": "1e6440c01d68e926a8c1f5abb8401e6718273bdd08ff8b7e16330d0d22baaf9c",
+  "aggregate_checks": "PASS",
+  "available_export_checks": {
+    "scope": "SAVED_REPORT_ROWS_AND_RESULT_SIDECARS_NOT_RAW_AUDIT",
+    "same_id_label_domain_q25_internvl": 3763,
+    "same_id_and_truth_support_qwen3": 3763,
+    "qwen3_v4_success": 3539,
+    "qwen3_status_counts": {
+      "qwen3_shard0.json": {
+        "INTERRUPTED": 0,
+        "INVALID": 0,
+        "NOT_ATTEMPTED": 0,
+        "SUCCESS": 941,
+        "TECHNICAL_ERROR": 0,
+        "UNPROCESSED": 0
+      },
+      "qwen3_shard1.json": {
+        "INTERRUPTED": 0,
+        "INVALID": 0,
+        "NOT_ATTEMPTED": 0,
+        "SUCCESS": 941,
+        "TECHNICAL_ERROR": 0,
+        "UNPROCESSED": 0
+      },
+      "qwen3_shard2.json": {
+        "INTERRUPTED": 0,
+        "INVALID": 0,
+        "NOT_ATTEMPTED": 223,
+        "SUCCESS": 717,
+        "TECHNICAL_ERROR": 1,
+        "UNPROCESSED": 0
+      },
+      "qwen3_shard3.json": {
+        "INTERRUPTED": 0,
+        "INVALID": 0,
+        "NOT_ATTEMPTED": 0,
+        "SUCCESS": 940,
+        "TECHNICAL_ERROR": 0,
+        "UNPROCESSED": 0
+      },
+      "recovery.json": {
+        "INTERRUPTED": 0,
+        "INVALID": 0,
+        "NOT_ATTEMPTED": 0,
+        "SUCCESS": 224,
+        "TECHNICAL_ERROR": 0,
+        "UNPROCESSED": 0
+      }
+    },
+    "internvl_saved_score_auroc_recomputed": 0.8861824613751756,
+    "qwen25_saved_score_auroc_recomputed": 0.8266558463706973,
+    "qwen3_pooled_auroc_recomputed": false,
+    "qwen3_original_s2_archive_available": false,
+    "internvl_report_member_sha256": {
+      "InterVL3/Shard 0/hnlo-train-v4-internvl3-s0-a1.tar.gz": "0cc2ce2e306969a673db24720d31fb7a6491fc922064180d43c85d3f66d5bc44",
+      "InterVL3/Shard 1/hnlo-train-v4-internvl3-s1-a1.tar.gz": "b0676166910cf419e291d90858ffc39c50ceaaae3956c3c36130b2036cd565fc",
+      "InterVL3/Shard 2/hnlo-train-v4-internvl3-s2-a1.tar.gz": "59ad0ab8efd8b1b512ef9abe462b0abd0691529d608d687399c3ec097c6080bf",
+      "InterVL3/Shard 3/hnlo-train-v4-internvl3-s3-a1.tar.gz": "a76c9b4c064ac12a566b226184308a69213634613ea2087128a068c8d7f885a1"
+    },
+    "inputs_sha256": {
+      "InterVL3_Output.zip": "5400bfefef38372cd42d17223f59ef7a4ea97fd7415c9d6c234ed9b309161e90",
+      "qwen25_samples.csv": "59023ddd838a6e2d2b6bda66c58a2a49e77c5d9557ac7f89308d12db65330911",
+      "qwen3_shard0.json": "b8960093f2f3f1a74f6c67d721c443dc092b0c5138a57464f16039d9d3829527",
+      "qwen3_shard1.json": "0d1b34096040cec3d94da8eb3c54d53cf9d82602b33646f322a9917942394f4e",
+      "qwen3_shard2.json": "6e72dd81401381de36678163a26d890e492961ad3edf8e43b8e4b0f388089708",
+      "qwen3_shard3.json": "d7e8789892e3f2c831180e008751987b10dda59894d7a83c8be942b005e25fbd",
+      "recovery.json": "81b48d4ab45cc98b1deb8e2cdcb0e7d43dc396436fa714d10350d27448894f0d"
+    }
+  },
+  "existing_metadata_census": {
+    "source_sha256": "16039f2302027ffe53f3bcdbfc80c762c88e823fbf303d5672030587cd9602d6",
+    "n": 3763,
+    "scope": "EXISTING_AUDIT_TRAIN_METADATA_NO_NEW_IMAGE_OR_ANNOTATION_READ",
+    "point_id_groups": 2424,
+    "anomaly_regex_family_keys": 12,
+    "normal_regex_family_keys": 1710,
+    "source_groups_verified_independent": false,
+    "platform_by_domain": {
+      "coal_conveyor": {
+        "SuspendedRail": 822
+      },
+      "metallurgy": {
+        "SuspendedRail": 47,
+        "Wheeled": 496
+      },
+      "oil_chemical": {
+        "Wheeled": 707,
+        "SuspendedRail": 71
+      },
+      "power": {
+        "SuspendedRail": 85,
+        "Wheeled": 571
+      },
+      "tunnel": {
+        "SuspendedRail": 944,
+        "Wheeled": 20
+      }
+    }
+  },
+  "no_new_raw_logit_audit": true,
+  "no_new_inference": true,
+  "ci_computed": false,
+  "aggregate_input_sha256": {
+    "notes/evidence/three_model_20261023/SafeShift_three_model_report_20261023.md": "239a7b39ec2c098d491f0944e7d12cf13066763be1ae19850c1c3a5dc8aeaeef",
+    "notes/evidence/three_model_20261023/SafeShift_three_model_comparison_20261023.json": "4b7dc9f1018d935ca2c746d4278825ca985ece71d272f6979cece70781425e44",
+    "notes/evidence/three_model_20261023/SafeShift_three_model_metrics_20261023.csv": "2a32f6dec5f124d73b07dc6af66615ba656093153d76940355b72c81cd6d8d44",
+    "notes/evidence/three_model_20261023/qwen25_official_confusion.csv": "87f93b9e9e445bfbf1c1191a729504f9966982fa4fb6e1a9b0d0ad8c5c779807",
+    "notes/pa3_r2_cpu_completion_20261015.summary.json": "9824001156cd3ada15505383910fec3a7df4f83500e8cfc829aef812c1a42d4e"
+  },
+  "tests": {
+    "command": "python -m unittest tests.test_three_model_summaries tests.test_ls1.EvaluationTests.test_auc_ranking_survives_probability_saturation tests.test_ls1.EvaluationTests.test_auc_ties_and_absence -v",
+    "pass": 13,
+    "fail": 0,
+    "skip": 0
+  }
+}
