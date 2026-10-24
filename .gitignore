@@ -1,25 +1,20 @@
-# Local dataset and derived data (keep empty directory placeholders)
-/data/raw/**
-!/data/raw/.gitkeep
-/data/processed/**
-!/data/processed/.gitkeep
-# Generated full-text manifest and run provenance remain local; regenerate via CLI.
-/data/manifests/dataset_manifest.csv
-/data/manifests/dataset_manifest.provenance.json
-/data/manifests/dataset_validation*.json
-# Detailed duplicate pairs and upstream provenance stay local.
-/data/manifests/duplicate_leakage_audit*.json
-/data/manifests/distribution_imbalance_audit*.json
-**/InspecSafe-V1/
-**/inspecsafe-v1/
+# Local datasets, derived data and experiment artifacts
+/data/
 /datasets/
+**/InspecSafe-V1*/
+**/inspecsafe-v1*/
+/outputs/
+/artifacts/
+/runs/
+/wandb/
+/mlruns/
+*.log
 
 # Dataset archives, bulk tables and binary stores
 *.zip
 *.tar
-*.tar.gz
-*.tgz
 *.gz
+*.tgz
 *.bz2
 *.xz
 *.7z
@@ -33,7 +28,7 @@
 *.npz
 *.lmdb
 
-# Raw media; small shareable figures/fixtures below are explicit exceptions
+# Media: review any future small synthetic fixture before adding an exception
 *.jpg
 *.jpeg
 *.png
@@ -49,8 +44,8 @@
 *.webm
 
 # Model weights and checkpoints
-**/checkpoints/
-**/weights/
+checkpoints/
+weights/
 *.ckpt
 *.pt
 *.pth
@@ -58,29 +53,6 @@
 *.onnx
 *.gguf
 *.bin
-
-# Run outputs are local; only reviewed, small figures are tracked
-/outputs/**
-!/outputs/figures/
-!/outputs/figures/**/
-!/outputs/figures/*.png
-!/outputs/figures/*.jpg
-!/outputs/figures/*.jpeg
-!/outputs/figures/*.webp
-!/outputs/figures/*.svg
-!/outputs/figures/*.pdf
-!/outputs/figures/*.md
-!/outputs/figures/**/.gitkeep
-/runs/
-/wandb/
-/mlruns/
-*.log
-
-# Small synthetic or shareable image fixtures only; never dataset samples
-!/tests/fixtures/**/
-!/tests/fixtures/**/*.png
-!/tests/fixtures/**/*.jpg
-!/tests/fixtures/**/*.jpeg
 
 # Python environments, caches and build artifacts
 __pycache__/
@@ -105,9 +77,11 @@ dist/
 # Secrets and machine-specific files
 .env
 .env.*
-!.env.example
 *.pem
 *.key
+/.aws/
+/.codex/
+/.worktrees/
 .idea/
 .vscode/
 .DS_Store
