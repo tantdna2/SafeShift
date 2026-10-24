@@ -23,6 +23,24 @@ Draft PR; [ARCHITECTURE](ARCHITECTURE.md) mô tả phạm vi API.
 
 ## Việc còn thiếu
 
+### Gói quyết định Seminar đã hoàn thành trong PR #131 (24/10/2026)
+
+- [x] Inventory/hash-verify metadata và saved reports được phép; đối soát
+  visual catalog với pair table, không sửa lịch sử.
+- [x] Q2.5/IVL3 trên 3.763 ID chung; Q3 S0/S1/S3 để so ba model trên 2.822 ID,
+  Recovery224 riêng; 10 biến thể/cohort, **PROPOSED**.
+- [x] Code CPU, tests tổng hợp, oracle số bằng cặp/BFS; so C với D9R22,
+  đánh giá A, brief giảng viên và blockers cụ thể.
+- [ ] ChatGPT kiểm tra toàn bộ Draft PR; giảng viên/Research Lead quyết định
+  hướng, estimand/grouping và roster. Không merge trong task này.
+
+[Hồ sơ](SOURCE_FEASIBILITY_GATE_20261024.md) và
+[receipt](SOURCE_FEASIBILITY_RECEIPT_20261024.json) ghi bằng chứng mới/giới hạn.
+Các ô trên không phải hoàn tất RQ/protocol, source verification, raw audit
+hoặc thí nghiệm bốn model. D9R22/DEC-PA3-011/A/C giữ nguyên thẩm quyền.
+
+### Phần nghiên cứu và thẩm quyền vẫn còn thiếu
+
 1. **Khép bằng chứng cũ:** tìm đúng artifact Qwen3 S2 gốc/CSV đúng hash và giữ
    riêng rerun/recovery; xử lý giới hạn receipt Qwen2.5 và audit raw/score theo
    hợp đồng từng model. Không sửa số lịch sử hoặc tự gọi consistency là raw PASS.
