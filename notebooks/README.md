@@ -10,7 +10,7 @@ Không thực thi notebook ở giai đoạn dọn repository.
 | Nhóm | File / mẫu tên | Hồ sơ cần đọc |
 | --- | --- | --- |
 | Qwen2.5 PA3-R2 | [pa3_r2_full_train_kaggle.ipynb](pa3_r2_full_train_kaggle.ipynb) | [R2 runbook](../notes/pa3_r2_runbook.md), [CPU completion](../notes/pa3_r2_cpu_completion_20261015.md). Kết quả gắn với source lịch sử, không phải lần chạy mới. |
-| TRAIN V4, hai mô hình × bốn shard | `SafeShift_HNLO_TRAIN_{qwen3,internvl3}_SHARD{0,1,2,3}_V4.ipynb` — 8 file | [TRAIN V4](../notes/hnlo_train_v4_20261019.md), [phân tích kết quả](../notes/three_model_scientific_analysis_20261023.md). Qwen3 V4 chưa hoàn tất cohort gốc. |
+| TRAIN V4, hai mô hình × bốn shard | `SafeShift_HNLO_TRAIN_{qwen3,internvl3}_SHARD{0,1,2,3}_V4.ipynb` — 8 file | [TRAIN V4](../notes/hnlo_train_v4_20261019.md), [phân tích kết quả](../notes/reports/three_model_scientific_analysis_20261023.md). Qwen3 V4 chưa hoàn tất cohort gốc. |
 | Qwen3 Recovery224 | [SafeShift_QWEN3_S2_RECOVERY224_V1.ipynb](SafeShift_QWEN3_S2_RECOVERY224_V1.ipynb) | [Recovery runbook](../notes/qwen3_s2_recovery224_20261022.md). Cohort bổ sung, `baseline_pooling_allowed=false`. |
 
 ## Notebook hỗ trợ kỹ thuật cần giữ
@@ -34,7 +34,7 @@ Không thực thi notebook ở giai đoạn dọn repository.
 Tổng các nhóm: 10 notebook gắn kết quả gần đây + 7 hỗ trợ + 15 lịch sử = 32.
 Phân nhóm không thay trạng thái qualification, FAIL hoặc quyền thực thi.
 Toàn bộ 32 notebook đều xuất hiện trong source lock Recovery224; chưa chuyển vào
-`archive/`. [Kế hoạch giai đoạn 2](../notes/repository_organization_phase1_20261024.md)
+`archive/`. [Kế hoạch giai đoạn 2](../notes/reports/repository_organization_phase1_20261024.md)
 nêu điều kiện trước mọi thay đổi đường dẫn.
 
 Các script `build_*` trong [scripts](../scripts/) có thể ghi lại notebook,

@@ -1,14 +1,18 @@
 # Tìm tài liệu SafeShift
 
-Mục lục chọn lọc tại `main@cf6d4d633fd8bf5179672733211061686c7af6e9`, ngày 24/10/2026.
+Mục lục chọn lọc tại `main@934575e1c5064e37dc76a42e5267a639eb20dbbc`, ngày 24/10/2026.
 Bắt đầu bằng [hướng dẫn repository](../REPOSITORY_GUIDE.md).
 Tài liệu được phân theo vai trò; ngày mới hơn không tự thay thế quyết định đã duyệt.
+
+[Báo cáo tổng hợp](reports/README.md) tập trung tại reports; đường dẫn cũ của hai
+báo cáo đã chuyển vẫn giữ trang dẫn và anchor. [Giai đoạn 2](reports/repository_organization_phase2_20261024.md)
+ghi kiểm tra phụ thuộc, phân loại file và kế hoạch dọn tiếp.
 
 ## Kết quả và trạng thái cần đọc trước
 
 | Tài liệu | Vai trò và giới hạn |
 | --- | --- |
-| [Phân tích ba mô hình 23/10](three_model_scientific_analysis_20261023.md) | Tổng hợp hiện tại trên TRAIN; phân biệt raw audit, saved-score recomputation và kết quả được cung cấp. |
+| [Phân tích ba mô hình 23/10](reports/three_model_scientific_analysis_20261023.md) | Tổng hợp hiện tại trên TRAIN; phân biệt raw audit, saved-score recomputation và kết quả được cung cấp. |
 | [Receipt kiểm tra ba mô hình](evidence/three_model_20261023/verification_20261023.json) | Hash đầu vào, phạm vi tái tính và giới hạn S2 gốc; không có raw audit mới. |
 | [Gói aggregate của Research Lead](evidence/three_model_20261023/) | Đầu vào giữ nguyên bytes. Đọc diễn giải trong báo cáo khoa học và receipt trước khi dùng số. |
 | [Qwen2.5 CPU completion](pa3_r2_cpu_completion_20261015.md), [summary](pa3_r2_cpu_completion_20261015.summary.json) | Bằng chứng raw recomputation PASS trên Linux; giới hạn outer receipt Shard 1 và Windows 1-ULP được giữ nguyên. |
@@ -56,5 +60,5 @@ không sửa dữ liệu hoặc thiết kế split trong task tổ chức reposi
 blocker; nhiều tài liệu thuộc source lock. Các file khác trong thư mục vẫn được
 giữ để truy vết, không bị coi là dư thừa vì vắng trong mục lục này.
 
-[Báo cáo tổ chức giai đoạn 1 và kế hoạch giai đoạn 2](repository_organization_phase1_20261024.md)
+[Báo cáo tổ chức giai đoạn 1 và kế hoạch giai đoạn 2](reports/repository_organization_phase1_20261024.md)
 ghi kiểm kê, phụ thuộc và các Draft PR cần người dùng xử lý riêng.

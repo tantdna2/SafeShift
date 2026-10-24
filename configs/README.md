@@ -40,4 +40,4 @@ notebook hoặc grant trong giai đoạn 1.
 
 Kết quả tổng hợp nhỏ nằm ở [notes/evidence](../notes/evidence/); raw outputs,
 checkpoints và dataset không được thêm vào Git. Thay đổi tổ chức về sau phải qua
-[bảng phụ thuộc giai đoạn 2](../notes/repository_organization_phase1_20261024.md).
+[bảng phụ thuộc giai đoạn 2](../notes/reports/repository_organization_phase1_20261024.md).
