@@ -1,6 +1,6 @@
 # SafeShift — bắt đầu từ đây
 
-Hướng dẫn tại `main@cf6d4d633fd8bf5179672733211061686c7af6e9`, ngày 24/10/2026.
+Hướng dẫn tại `main@934575e1c5064e37dc76a42e5267a639eb20dbbc`, ngày 24/10/2026.
 Trang này bổ sung điều hướng và trạng thái bằng chứng mới hơn cho [README](README.md).
 README được giữ nguyên vì đang được pin bằng hash trong các source lock thực nghiệm.
 
@@ -14,13 +14,14 @@ nghiêng về Anomaly. Điểm này chưa phải xác suất hay quyết định
 
 | Bạn cần tìm | Mở tại đây |
 | --- | --- |
-| Kết quả và giới hạn khoa học mới nhất đã vào main | [Phân tích ba mô hình ngày 23/10](notes/three_model_scientific_analysis_20261023.md) |
+| Kết quả và giới hạn khoa học mới nhất đã vào main | [Phân tích ba mô hình ngày 23/10](notes/reports/three_model_scientific_analysis_20261023.md) |
 | Bằng chứng baseline Qwen2.5 đã kiểm toán | [CPU completion](notes/pa3_r2_cpu_completion_20261015.md), [summary JSON](notes/pa3_r2_cpu_completion_20261015.summary.json) |
 | Tài liệu hiện tại, lịch sử và nguồn bằng chứng | [Mục lục notes](notes/README.md) |
 | Notebook nào phục vụ kết quả nào | [Mục lục notebooks](notebooks/README.md) |
 | Cấu hình, manifest, source lock và authority | [Hướng dẫn configs](configs/README.md) |
 | Kế hoạch và thẩm quyền nghiên cứu | [ROADMAP](ROADMAP.md), [DECISIONS](DECISIONS.md), [TASKS](TASKS.md) |
-| Kiểm kê và phương án tổ chức giai đoạn 2 | [Báo cáo tổ chức repository](notes/repository_organization_phase1_20261024.md) |
+| Kiểm kê và phương án tổ chức giai đoạn 2 | [Báo cáo tổ chức repository](notes/reports/repository_organization_phase1_20261024.md) |
+| Báo cáo tổng hợp và kết quả dọn giai đoạn 2 | [Mục lục reports](notes/reports/README.md), [phân loại và kế hoạch tiếp theo](notes/reports/repository_organization_phase2_20261024.md) |
 
 ## Trạng thái nghiên cứu và mức kiểm chứng
 
@@ -43,7 +44,7 @@ Level04 là Normal; cohort đầy đủ có 3.763 ảnh, 749 Anomaly / 3.014 Nor
 | Qwen3, ghép mô tả V4-success + Recovery224 | 0,952935 | Tổng hợp báo cáo 3.763 ảnh | Phân tích xuyên cohort; chưa tái tính độc lập AUROC gộp từ vector điểm gốc đầy đủ, không phải baseline V4 hoàn tất. |
 | Moondream2 | N/A | Chưa có kết quả TRAIN HNLO tương thích đã kiểm toán | Vẫn thuộc phạm vi bốn mô hình bắt buộc; không tự loại bỏ hoặc thay bằng mô hình khác. |
 
-Nguồn và phạm vi kiểm chứng: [báo cáo ba mô hình](notes/three_model_scientific_analysis_20261023.md),
+Nguồn và phạm vi kiểm chứng: [báo cáo ba mô hình](notes/reports/three_model_scientific_analysis_20261023.md),
 [receipt kiểm tra](notes/evidence/three_model_20261023/verification_20261023.json)
 và [CPU audit Qwen2.5](notes/pa3_r2_cpu_completion_20261015.md).
 Sidecar S2 chạy lại chỉ kiểm tra nhất quán, không chứng minh lượt S2 đầu tiên.
