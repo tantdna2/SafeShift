@@ -1,2 +1,0 @@
-# Full JPEG/PNG verification and pixel decoding; manifest builder remains stdlib-only.
-Pillow==12.3.0

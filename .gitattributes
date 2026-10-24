@@ -1,24 +1,2 @@
-# Preserve the exact bytes hashed by synthetic-v1 provenance across checkouts.
-/scripts/generate_external_gate_cases.py text eol=lf
-/configs/pre_freeze/external_gate_cases.v1.json text eol=lf
-/configs/pre_freeze/external_gate_cases.v1.provenance.json text eol=lf
-/configs/pre_freeze/qwen3_external_gate.v1.json text eol=lf
-# Byte-pinned D9R10 qualification plan, identical on Windows and Kaggle.
-/configs/pre_freeze/paligemma_interface_qualification.v1.json text eol=lf
-# Stable D9R12 result-record checksum across checkouts.
-/configs/pre_freeze/paligemma_interface_runtime_result.v1.json text eol=lf
-# Byte-pinned D9R13 frozen external gate plan.
-/configs/pre_freeze/paligemma_external_gate.v1.json text eol=lf
-# Stable classification qualification provenance, separate from synthetic-v1.
-/configs/pre_freeze/classification_qualification_cases.v1.json text eol=lf
-/configs/pre_freeze/classification_qualification_plan.v1.json text eol=lf
-/scripts/generate_classification_qualification_cases.py text eol=lf
-# Prospective v2 source/contract locks; historical entries above are unchanged.
-/configs/pre_freeze/external_grounding_interface_cases.v2.json text eol=lf
-/configs/pre_freeze/grounding_interface_*.v2.json text eol=lf
-/safeshift/protocol/grounding_interface_candidate.py text eol=lf
-/safeshift/protocol/grounding_interface_geometry.py text eol=lf
-/scripts/prepare_grounding_interface_v2.py text eol=lf
-# Byte-pinned PA3 seminar-direction diagnostic manifests and authority (hash bound).
-/data/manifests/pa3_seminar_direction_*.json text eol=lf
-/configs/pa3/seminar_direction_authority.v1.json text eol=lf
+# Stable text checkouts across platforms; historical byte rules stay at old commits.
+* text=auto eol=lf

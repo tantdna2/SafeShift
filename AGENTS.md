@@ -1,29 +1,55 @@
 # Hướng dẫn làm việc với SafeShift
 
-## Trước khi làm việc
+## Phạm vi hiện tại
 
-- Luôn đọc `AGENTS.md`, `ROADMAP.md` và `TASKS.md` trước khi bắt đầu mỗi task.
-- Xác định phạm vi task hiện tại; không sửa file không liên quan.
-- Week 1 chỉ khảo sát và audit InspecSafe-V1. Chưa triển khai parser dataset hoặc chạy thí nghiệm VLM ở bước khởi tạo này.
+- Đọc `AGENTS.md`, `README.md` và `docs/HISTORY.md` trước mỗi task.
+- Main là nền tảng cho giai đoạn nghiên cứu mới; chỉ có package tối giản và smoke
+  test. Xác định phạm vi được giao, giữ nguyên file local ngoài phạm vi.
+- Code, notebook, môi trường, test và hồ sơ nghiên cứu cũ nằm tại các ref lưu trữ
+  ghi trong `docs/HISTORY.md`. Tra cứu bằng đúng commit; không nhập lại code cũ
+  vào main khi chưa được review và chấp thuận.
 
-## Tính toàn vẹn nghiên cứu
+## Bảo vệ lịch sử và thẩm quyền nghiên cứu
 
-- Không tự ý thay đổi định nghĩa dataset, split, nhãn hoặc metric. Mọi đề xuất thay đổi phải được thảo luận, chấp thuận và ghi vào `DECISIONS.md` trước khi áp dụng.
-- Không bịa số liệu, kết quả, schema hoặc đặc điểm dataset. Phân biệt thông tin đã kiểm chứng, giả thuyết và câu hỏi còn mở; ghi nguồn cho các nhận định.
-- Giữ nguyên dữ liệu gốc. Mọi sản phẩm dẫn xuất nằm trong `data/processed/`, với quy trình tạo lại được ghi rõ.
-- Sau này khi chạy VLM, phải lưu **raw model output** của từng mẫu/lần gọi trước khi parse hoặc tổng hợp; giữ liên kết với sample ID, prompt, model/version, cấu hình sinh và run ID. Không chỉ lưu nhãn hoặc điểm tổng hợp.
+- Giữ bất biến nhánh `legacy/pre-reset-20261024` và annotated tag
+  `safeshift-pre-reset-20261024`; không di chuyển, ghi đè hoặc force-push các ref này.
+  Không viết lại lịch sử Git hoặc sửa source lock để chạy release cũ ở HEAD mới.
+- D9R22 vẫn là phạm vi có hiệu lực trong hồ sơ nghiên cứu; DEC-PA3-011 vẫn
+  **PROPOSED**. Hướng A/C chưa được phê duyệt. Reset không hủy quyết định đã có,
+  phê duyệt hướng mới, thay đổi kết quả/AUROC hay nâng trạng thái kiểm toán.
+- Quyền thực thi cũ chỉ áp dụng cho đúng source/release/run/attempt đã cấp;
+  không chuyển quyền đó sang main mới. GPU, inference, đọc TEST/dữ liệu bị khóa,
+  nhãn/annotation và thí nghiệm mới đều cần phạm vi và quyền cụ thể.
+- Không tự thay dataset, split, nhãn, metric, protocol hoặc roster. Giữ yêu cầu
+  Seminar bốn mô hình trong hồ sơ cũ; mọi thay đổi cần Research Lead duyệt và ghi
+  vào log quyết định mới dưới `docs/` trước khi áp dụng, không sửa quyết định cũ.
+- Phân biệt bằng chứng đã kiểm chứng, thông tin được cung cấp, giả thuyết và câu
+  hỏi mở; dẫn nguồn. Không bịa kết quả hoặc coi TRAIN đã phơi nhiễm là holdout.
+- Sáu Draft PR cũ được liệt kê trong `docs/HISTORY.md`; không tự sửa, đóng,
+  rebase hoặc merge chúng khi làm việc trên cấu trúc mới.
 
 ## Dữ liệu và Git
 
-- Không commit InspecSafe-V1, dữ liệu thô, bản sao ảnh/video, archive dataset hoặc dữ liệu dẫn xuất dung lượng lớn, kể cả qua Git LFS.
-- Không commit model checkpoints, raw model output dung lượng lớn, secrets hoặc credentials.
-- Tuân thủ `.gitignore`; không dùng `git add -f` để đưa dữ liệu bị loại trừ vào Git. Kiểm tra staged diff và danh sách file trước khi commit.
-- Chỉ version control code, tài liệu, test fixtures nhỏ được phép chia sẻ và manifest/figure nhỏ đã kiểm tra. Manifest không chứa dữ liệu nhúng hoặc đường dẫn tuyệt đối của máy cá nhân.
+- Giữ nguyên dữ liệu gốc. Sản phẩm dẫn xuất local đặt trong `data/processed/`,
+  có quy trình tạo lại rõ ràng; cả `data/` được ignore mặc định trên main mới.
+- Không commit dataset, ảnh/video thật, archive dữ liệu, checkpoint, raw model
+  output hoặc artifact lớn, secrets hay credentials, kể cả qua Git LFS.
+- Chỉ version control code, tài liệu và fixture nhỏ tổng hợp/được phép chia sẻ
+  sau review. Không dùng `git add -f`; kiểm tra toàn bộ staged diff và danh sách
+  file trước commit. Manifest không chứa dữ liệu nhúng hoặc đường dẫn máy cá nhân.
+- Khi được phép chạy VLM, lưu raw output của từng mẫu/lần gọi **trước** parse
+  hoặc tổng hợp; liên kết sample ID, prompt, model/version, cấu hình sinh và run ID.
+  Giữ cả lỗi, lần chạy dở và provenance, không chỉ nhãn hoặc điểm tổng hợp.
 
-## Reproducibility và code
+## Code và bằng chứng kiểm tra
 
-- Dùng relative path tính từ repository root trong code, cấu hình, manifest và tài liệu. Không hard-code đường dẫn riêng của một máy.
-- Ghi nguồn/version/checksum dataset, môi trường và dependency versions, lệnh chạy, cấu hình, seed khi có ngẫu nhiên, Git commit và vị trí artifact cho mỗi lần chạy.
-- Code dùng lại phải có test phù hợp, gồm các trường hợp lỗi hoặc biên có ý nghĩa; fixtures phải nhỏ, tổng hợp hoặc được phép chia sẻ, không lấy dataset thật để commit vào tests.
-- Chạy các kiểm tra phù hợp với thay đổi và ghi rõ kiểm tra nào chưa chạy cùng lý do.
-- Cập nhật trạng thái task theo việc thực sự hoàn thành; ghi quyết định và thí nghiệm vào đúng log, không đánh dấu hoàn tất khi chưa có bằng chứng.
+- Dùng đường dẫn tương đối từ repository root trong code, cấu hình và tài liệu.
+- Ghi nguồn/version/checksum đầu vào, môi trường/dependency versions, lệnh chạy,
+  cấu hình, seed nếu có ngẫu nhiên, Git commit và vị trí artifact cho mỗi lần chạy.
+- Code dùng lại cần test phù hợp, gồm lỗi/biên có ý nghĩa. Không lấy mẫu dataset
+  thật làm fixture được commit; không thêm dependency khi chưa cần.
+- Smoke test hiện tại: `python -B -m unittest discover -s tests -v`.
+  Chạy kiểm tra phù hợp thay đổi; ghi rõ kết quả, giới hạn và kiểm tra chưa chạy
+  trong PR/log. Chỉ đánh dấu hoàn thành khi có bằng chứng.
+- Test lịch sử thuộc commit lưu trữ và môi trường tương ứng; không chạy chúng
+  trên scaffold mới rồi kết luận hệ thống cũ lỗi.

@@ -1,5 +1,0 @@
-# These four source documents are byte-pinned, including the official CRLF CSV.
-SafeShift_three_model_report_20261023.md -text
-SafeShift_three_model_comparison_20261023.json -text
-SafeShift_three_model_metrics_20261023.csv -text
-qwen25_official_confusion.csv -text whitespace=cr-at-eol
