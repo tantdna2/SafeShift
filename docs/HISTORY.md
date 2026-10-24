@@ -103,3 +103,17 @@ code cũ trở lại nếu merge nguyên nhánh. Source lock và authority của
 không áp dụng cho scaffold mới. Research Lead cần quyết định riêng về từng PR;
 không tự rebase, cập nhật lock, đóng hoặc merge chúng trong task reset.
 Giữ reset ở Draft PR để ChatGPT kiểm tra GitHub và phê duyệt merge sau.
+
+## Foundation V1 sau reset (24/10/2026)
+
+Foundation V1 được xây từ main sau reset
+[`1ad17459a3db07ab84a780723317f6681b979770`](https://github.com/tantdna2/SafeShift/commit/1ad17459a3db07ab84a780723317f6681b979770).
+Inventory 7 file ở mục trên mô tả thời điểm clean reset; Foundation V1 mở rộng
+thành 24 file để có package, validation, phép đếm classification cơ bản, model
+transport interface, demo CPU tổng hợp và tài liệu. Xem
+[ARCHITECTURE](ARCHITECTURE.md) và [ROADMAP](ROADMAP.md).
+
+Phần lịch sử phía trên, ref bảo toàn, source locks, kết quả và authority không
+thay đổi. Code mới không tương đương release thực nghiệm cũ, không chạy nghiên
+cứu mới và không nâng trạng thái audit. Task Foundation V1 dừng ở Draft PR để
+ChatGPT kiểm tra GitHub trực tiếp; không merge hay gọi Antigravity.

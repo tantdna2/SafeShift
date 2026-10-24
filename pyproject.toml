@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "safeshift"
+version = "0.1.0"
+description = "CPU foundations for industrial safety VLM evaluation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["safeshift", "safeshift.*"]

@@ -1,1 +1,1 @@
-"""SafeShift: nền tảng tối giản cho giai đoạn nghiên cứu tiếp theo."""
+"""SafeShift CPU foundations; importing the package performs no data/model I/O."""
