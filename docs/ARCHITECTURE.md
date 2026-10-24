@@ -1,7 +1,7 @@
 # Kiến trúc Foundation V1
 
-Code mới hỗ trợ bản ghi trong bộ nhớ và phép đếm phân loại có nguồn lịch sử.
-Không phụ thuộc code thực nghiệm cũ. Cây có **24 file, 7 thư mục** không tính
+Code mới hỗ trợ bản ghi trong bộ nhớ, phép đếm phân loại và CPU sensitivity
+PROPOSED trên saved reports. Không import code thực nghiệm cũ. Cây có **29 file, 7 thư mục** không tính
 root; `data/` local và virtual environment không thuộc inventory Git.
 
 ```text
@@ -17,6 +17,8 @@ SafeShift/
 │   ├── DATA_AND_ETHICS.md
 │   ├── RESULTS_AND_LIMITATIONS.md
 │   ├── ROADMAP.md
+│   ├── SOURCE_FEASIBILITY_GATE_20261024.md
+│   ├── SOURCE_FEASIBILITY_RECEIPT_20261024.json
 │   └── HISTORY.md
 ├── safeshift/
 │   ├── __init__.py
@@ -26,17 +28,20 @@ SafeShift/
 │   │   └── validation.py
 │   ├── evaluation/
 │   │   ├── __init__.py
-│   │   └── metrics.py
+│   │   ├── metrics.py
+│   │   └── sensitivity.py
 │   └── models/
 │       ├── __init__.py
 │       └── contracts.py
 ├── scripts/
-│   └── demo_cpu.py
+│   ├── demo_cpu.py
+│   └── analyze_source_sensitivity.py
 └── tests/
     ├── test_smoke.py
     ├── test_schema.py
     ├── test_metrics.py
-    └── test_demo.py
+    ├── test_demo.py
+    └── test_source_sensitivity.py
 ```
 
 ## Luồng đang hoạt động
@@ -77,6 +82,8 @@ Validation trong evaluation bảo vệ cả người gọi trực tiếp, ngoài
 | `evaluation/metrics.py` | Hai iterable record → dict JSON-compatible với `n_images`, `valid_canonical_n`, `invalid_n`, `confusion_matrix`, `support`, `per_class`. |
 | `models/contracts.py` | `ModelInput(sample_id, image_path, prompt)`; `ModelOutput` chứa sample/run/model/revision và tham chiếu raw/prompt/generation config; `VisionLanguageModel.generate()` là typing Protocol. |
 | `scripts/demo_cpu.py` | Sáu ví dụ viết tay → báo cáo tổng hợp xác định; không dùng model giả. |
+| `evaluation/sensitivity.py` | Exact join metadata/saved reports; weighted AUROC tie=0,5, components, support/undefined và đại diện exact. Chỉ **PROPOSED_EXPLORATORY**, tách khỏi classification benchmark API. |
+| `scripts/analyze_source_sensitivity.py` | Receipt bất biến tại `31a04e6`, checksum metadata/CSV/archive/manifest; TRAIN Q2.5/IVL3 và hai cohort Q3 riêng tùy chọn; output ignored, chặn ghi đè. Không đọc ảnh/annotation/raw logit payload. |
 | `tests/` | Smoke tests giữ nguyên; schema/validation/model transport, metrics và CLI demo trên fixture tổng hợp. |
 | `pyproject.toml` | Package Python 3.11+, setuptools build, không runtime dependencies; chỉ đóng gói `safeshift*`. |
 
@@ -118,12 +125,19 @@ tương đương của toàn engine lịch sử. Strict application mapping mớ
 phải parser output mô hình được freeze.
 
 Chưa triển khai: dataset loader/parser, image I/O, model backend/inference,
-response parser, raw-output writer/auditor, HNLO/PA3, LS1/calibration, AUROC,
+response parser, raw-output writer/auditor, HNLO/PA3, LS1/calibration, production AUROC,
 RQ2 hazard strata, RQ3 disagreement, bootstrap/CI, grounding, threshold selection
 và production benchmark harness. Một số có công thức ở lịch sử nhưng nằm ngoài
 task này; metric/production contract còn pending phải chờ review thẩm quyền.
 
 ## Phát triển Seminar và Khóa luận
+
+Weighted AUROC mới là công cụ thăm dò trên saved score, không tính lại HNLO
+hoặc đổi metric chính thức. Rule `w_i=1/group_size` giữ nhãn/score mỗi ảnh;
+point/family/dHash components là giả định độ nhạy, không source registry hoặc
+đơn vị độc lập được xác minh. Output/receipt và cohort boundaries ở
+[hồ sơ khả thi](SOURCE_FEASIBILITY_GATE_20261024.md). Không đưa phép phân tích
+này vào demo tổng hợp hoặc tự thay endpoint D9R22.
 
 Mỗi task thêm chức năng nhỏ vào module thích hợp, kèm test lỗi/biên bằng dữ liệu
 tổng hợp và nguồn hợp đồng. Thêm backend khi có yêu cầu được duyệt, giữ model

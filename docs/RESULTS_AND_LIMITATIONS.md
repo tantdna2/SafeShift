@@ -5,6 +5,16 @@ Các số dưới đây thuộc snapshot trước reset
 Foundation V1 chỉ đối chiếu tài liệu/code, không đọc lại artifact thật, không
 chạy raw audit, saved-score recomputation hoặc thực nghiệm mô hình mới.
 
+**Bổ sung PR #131, 24/10/2026:** [hồ sơ khả thi](SOURCE_FEASIBILITY_GATE_20261024.md)
+và [receipt mới](SOURCE_FEASIBILITY_RECEIPT_20261024.json) đã hash-verify và tái
+tính saved-score trên artifact được phép. Q2.5/IVL3 khớp đủ 3.763 ID–nhãn–miền;
+exact weighting cho AUROC 0,825397/0,885748 so với theo ảnh 0,826656/0,886182.
+Đã nối riêng Q3 S0/S1/S3 qua receipt/archive/manifest/CSV để so ba model trên
+2.822 ID, cùng Recovery224 riêng; không tính toàn V4 gốc hoặc pooling. Mọi
+weighting/grouping mới là **PROPOSED_EXPLORATORY**, không sửa bảng lịch sử sau
+đây hoặc nâng thành raw PASS. Catalog 7 exact pairs trong visual note có
+membership không khớp artifact đúng hash, được ghi riêng trong hồ sơ mới.
+
 Nguồn chính là [báo cáo khoa học ba mô hình 23/10/2026](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/reports/three_model_scientific_analysis_20261023.md)
 và [receipt mô tả phạm vi kiểm chứng](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/evidence/three_model_20261023/verification_20261023.json).
 RQ1–RQ3 trong báo cáo đó theo hướng **DEC-PA3-011 PROPOSED**, không thay các RQ
