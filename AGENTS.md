@@ -2,9 +2,15 @@
 
 ## Phạm vi hiện tại
 
-- Đọc `AGENTS.md`, `README.md` và `docs/HISTORY.md` trước mỗi task.
-- Main là nền tảng cho giai đoạn nghiên cứu mới; chỉ có package tối giản và smoke
-  test. Xác định phạm vi được giao, giữ nguyên file local ngoài phạm vi.
+- Đọc `AGENTS.md`, `README.md` và `docs/ROADMAP.md` trước mỗi task; task liên quan
+  code phải đọc thêm `docs/ARCHITECTURE.md`. Task description là phạm vi công việc
+  hiện tại. Root `ROADMAP.md` và `TASKS.md` thuộc lịch sử trước reset, không có trên
+  main mới; tra qua `docs/HISTORY.md` khi cần, không tạo lại các log cũ.
+- Foundation V1 có record/validation, phép đếm classification cơ bản, model
+  transport interface và demo CPU tổng hợp. Không có dataset parser/backend hay
+  quyền thực nghiệm mới. Xác định phạm vi được giao, giữ file local ngoài phạm vi.
+- Sau tài liệu đầu vào, chỉ đọc module/test và nguồn hợp đồng liên quan theo
+  bảng định tuyến trong ARCHITECTURE; không nạp toàn bộ 693 file lịch sử.
 - Code, notebook, môi trường, test và hồ sơ nghiên cứu cũ nằm tại các ref lưu trữ
   ghi trong `docs/HISTORY.md`. Tra cứu bằng đúng commit; không nhập lại code cũ
   vào main khi chưa được review và chấp thuận.
@@ -44,6 +50,13 @@
 ## Code và bằng chứng kiểm tra
 
 - Dùng đường dẫn tương đối từ repository root trong code, cấu hình và tài liệu.
+- Giữ bốn nhãn canonical và quy tắc INVALID/support/recall theo nguồn lịch sử
+  đã dẫn trong ARCHITECTURE. Application records/model transport mới không phải
+  production schema/parser hoặc protocol freeze. Không tự bổ sung metric pending.
+- Demo và tests chỉ dùng bản ghi tổng hợp, phải phân biệt rõ với kết quả thật;
+  không đưa số demo vào báo cáo khoa học, không viết backend sinh dự đoán giả.
+- Chỉ thêm code/module/thư mục có chức năng được giao; không tạo train.py,
+  notebook GPU, inference pipeline hoặc nhập lại stub/hệ thống cũ cho đủ cấu trúc.
 - Ghi nguồn/version/checksum đầu vào, môi trường/dependency versions, lệnh chạy,
   cấu hình, seed nếu có ngẫu nhiên, Git commit và vị trí artifact cho mỗi lần chạy.
 - Code dùng lại cần test phù hợp, gồm lỗi/biên có ý nghĩa. Không lấy mẫu dataset

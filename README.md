@@ -1,20 +1,96 @@
 # SafeShift
 
-SafeShift là dự án nghiên cứu đánh giá mô hình thị giác–ngôn ngữ trong bối cảnh
-an toàn công nghiệp. Repository đang chuẩn bị cho giai đoạn nghiên cứu mới.
+SafeShift nghiên cứu độ tin cậy của mô hình thị giác–ngôn ngữ (VLM) khi đánh giá
+ảnh an toàn công nghiệp: mô hình phân loại sai ở đâu, lỗi nguy hiểm tập trung
+ở nhóm nào, và bất đồng giữa các mô hình có giúp nhận diện quyết định thiếu
+tin cậy hay không. Một nhãn có vẻ hợp lý hoặc AUROC cao chưa đủ để kết luận
+hệ thống có thể dùng cho quyết định an toàn.
 
-Main tối giản là nền tảng phát triển tiếp theo, **không phải release tương đương
-các thực nghiệm cũ**. Hướng nghiên cứu và protocol mới cần được phê duyệt riêng;
-việc dọn repository không cấp quyền thực nghiệm.
+**Foundation V1** cung cấp package Python, validation, phép đếm đánh giá cơ bản
+và demo CPU tổng hợp. Code hiện tại chưa chạy mô hình hoặc đọc dataset thật;
+các kết quả nghiên cứu được dẫn dưới đây thuộc snapshot lịch sử.
 
-Toàn bộ 693 file đã được Git theo dõi trước reset được giữ tại nhánh
-[`legacy/pre-reset-20261024`](https://github.com/tantdna2/SafeShift/tree/legacy/pre-reset-20261024)
-và annotated tag
-[`safeshift-pre-reset-20261024`](https://github.com/tantdna2/SafeShift/tree/safeshift-pre-reset-20261024).
-Xem [lịch sử và cách tra cứu](docs/HISTORY.md) cùng [quy tắc làm việc](AGENTS.md).
+## Phạm vi nghiên cứu
 
-Kiểm tra cấu trúc mới bằng Python, chỉ cần thư viện chuẩn:
+Dataset là **InspecSafe-V1**, với năm miền công nghiệp và bốn mức nhãn nguyên
+gốc `Level01`–`Level04`; Level01 nguy hiểm nhất, Level04 là Normal. Theo audit
+lịch sử, có 5.013 ảnh: 3.763 TRAIN và 1.250 TEST. Giữ split và nhãn nguyên bản;
+xem [nguồn, dữ liệu và giới hạn](docs/DATA_AND_ETHICS.md).
+
+Bốn mô hình thuộc yêu cầu Seminar: **Qwen2.5-VL-3B-Instruct,
+Qwen3-VL-8B-Instruct, InternVL3-2B-hf và Moondream2**.
+[D9R22 đang có hiệu lực](docs/RESEARCH_OVERVIEW.md): RQ1 về độ vững phân loại
+xuyên miền, RQ2 về nơi tập trung lỗi nghiêm trọng, RQ3 về nhất quán/bất đồng
+giữa mô hình. Protocol freeze và quyền thực thi vẫn là các điều kiện riêng.
+
+Hướng dùng **Hazard–Normal Label Log-Odds (HNLO, tên kỹ thuật lịch sử PA3)**
+để nghiên cứu giá trị điểm nội tại, yếu tố gây nhiễu và khả năng chuyển miền
+vẫn thuộc **DEC-PA3-011 PROPOSED**, chưa thay D9R22. HNLO không phải xác suất
+nguy cơ đã hiệu chuẩn. Hướng A/C chưa được phê duyệt.
+
+## Bằng chứng lịch sử tiêu biểu
+
+Các số sau chỉ mô tả TRAIN đã phơi nhiễm, không chứng minh khả năng khái quát hóa:
+
+| Mô hình | HNLO AUROC | Mức bằng chứng và giới hạn |
+| --- | ---: | --- |
+| Qwen2.5 | 0,8266558463706973 | Raw audit CPU Linux lịch sử PASS, 3.763/3.763 SUCCESS; nhãn sinh ra cảnh báo cả 3.014 Normal. |
+| InternVL3 | ≈0,886182 | Tái tính từ saved score, không phải raw audit mới; nhãn cũng cảnh báo cả 3.014 Normal. |
+| Qwen3 | 0,952935 | Bản ghép mô tả V4 + Recovery224, số được cung cấp; chưa tái tính độc lập từ vector điểm gốc đầy đủ. |
+| Moondream2 | Chưa có kết quả tương thích đã audit | Vẫn là mô hình bắt buộc; chưa hoàn tất raw-logit capture/validation và kết quả TRAIN cho hướng HNLO. |
+
+Nguồn: [CPU audit Qwen2.5](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/pa3_r2_cpu_completion_20261015.md)
+và [báo cáo ba mô hình ngày 23/10](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/reports/three_model_scientific_analysis_20261023.md).
+Xem [kết quả và giới hạn](docs/RESULTS_AND_LIMITATIONS.md) trước khi sử dụng các số này.
+Foundation V1 không tái chạy hoặc nâng trạng thái kiểm toán của bằng chứng cũ.
+
+## Chạy trên CPU
+
+Từ repository root, dùng **Python 3.11+**. Tests và demo chỉ dùng standard library:
 
 ```console
 python -B -m unittest discover -s tests -v
+python -B -m scripts.demo_cpu
 ```
+
+Demo tạo sáu bản ghi viết tay, gồm một dự đoán INVALID, rồi xuất JSON có thông
+báo **SYNTHETIC DEMO — NOT RESEARCH RESULT**. Không cần GPU, ảnh hoặc thư viện AI.
+Không đưa số demo vào bảng kết quả khoa học. Dùng lệnh module từ root để Python
+tìm package; demo không được đóng gói như một backend hoặc công cụ suy luận.
+
+Cài package để import từ dự án khác (tùy chọn, trong virtual environment):
+
+```console
+python -m venv .venv
+```
+
+Kích hoạt bằng `.venv\Scripts\Activate.ps1` trên PowerShell hoặc
+`source .venv/bin/activate` trên Linux/macOS, rồi chạy:
+
+```console
+python -m pip install -e .
+python -c "import safeshift; print(safeshift.__file__)"
+```
+
+Package không có runtime dependencies. Pip cần setuptools/wheel cho bước build;
+không cần cài package để chạy tests/demo từ repository root.
+
+## Đọc và phát triển code
+
+| Vị trí | Chức năng |
+| --- | --- |
+| `safeshift/data/` | Bản ghi trong bộ nhớ, nhãn chuẩn và validation; không phải dataset parser. |
+| `safeshift/evaluation/` | Ma trận nhầm lẫn, support, recall; giữ INVALID trong mẫu số. |
+| `safeshift/models/` | Hợp đồng đầu vào/đầu ra và typing interface; inference chưa triển khai. |
+| `scripts/demo_cpu.py` | Ví dụ tổng hợp xác định, JSON ra stdout. |
+| `tests/` | Smoke tests và kiểm thử tổng hợp cho code đang hoạt động. |
+| `docs/` | Phạm vi, kiến trúc, dữ liệu, bằng chứng, lộ trình và lịch sử. |
+
+Đọc [AGENTS.md](AGENTS.md) và [ARCHITECTURE](docs/ARCHITECTURE.md) trước task code.
+Theo dõi phần thiếu và điều kiện phê duyệt ở [ROADMAP](docs/ROADMAP.md).
+Code dùng lại nằm trong package, chỉ thêm thư mục khi có chức năng cụ thể.
+
+Toàn bộ 693 file trước reset vẫn ở các ref bất biến, được liệt kê trong
+[HISTORY](docs/HISTORY.md). Không phục hồi hệ thống cũ vào main, chuyển quyền
+thực thi cũ sang code mới, hoặc tự sửa sáu Draft PR cũ. Dữ liệu, raw output,
+checkpoint và secrets nằm ngoài Git.
