@@ -33,7 +33,7 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 - **PLAN-01:** hoàn thiện Execution Plan và cơ chế continuity trong đúng hai file Markdown.
 - Branch: `docs/final-execution-plan-20261026`; BASE bằng main ở đầu file.
-- Trạng thái: đang chuẩn bị Draft PR; chưa merge, chưa có kiểm toán/duyệt ChatGPT cho PR này.
+- Trạng thái: [PR #134](https://github.com/tantdna2/SafeShift/pull/134) **OPEN / DRAFT**, sản phẩm tài liệu đã hoàn thiện và tự kiểm; chưa merge, chờ ChatGPT kiểm tra GitHub/kiểm toán theo quy trình.
 - Phạm vi: task cards M1–M8, hồ sơ M1, reuse/gap/setup tối thiểu, checks/cohort/authority và trạng thái dự án. Không code/setup/inference/GPU/TEST.
 - BASE/HEAD chính xác và kết quả kiểm tra cuối ghi ở mô tả PR để tránh hash tự tham chiếu.
 
