@@ -36,13 +36,18 @@ Các số sau chỉ mô tả TRAIN đã phơi nhiễm, không chứng minh khả
 | --- | ---: | --- |
 | Qwen2.5 | 0,8266558463706973 | Raw audit CPU Linux lịch sử PASS, 3.763/3.763 SUCCESS; nhãn sinh ra cảnh báo cả 3.014 Normal. |
 | InternVL3 | ≈0,886182 | Tái tính từ saved score, không phải raw audit mới; nhãn cũng cảnh báo cả 3.014 Normal. |
-| Qwen3 | 0,952935 | Bản ghép mô tả V4 + Recovery224, số được cung cấp; chưa tái tính độc lập từ vector điểm gốc đầy đủ. |
+| Qwen3 V4-success gốc | 0,9527927338600111 | Đã khép S2 gốc/saved-score ngày 25/10: 3.539/3.763 SUCCESS (94,0473%); không raw audit mới. Recovery224 giữ riêng, không pooling baseline. |
 | Moondream2 | Chưa có kết quả tương thích đã audit | Vẫn là mô hình bắt buộc; chưa hoàn tất raw-logit capture/validation và kết quả TRAIN cho hướng HNLO. |
 
 Nguồn: [CPU audit Qwen2.5](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/pa3_r2_cpu_completion_20261015.md)
 và [báo cáo ba mô hình ngày 23/10](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/reports/three_model_scientific_analysis_20261023.md).
 Xem [kết quả và giới hạn](docs/RESULTS_AND_LIMITATIONS.md) trước khi sử dụng các số này.
 Foundation V1 không tái chạy hoặc nâng trạng thái kiểm toán của bằng chứng cũ.
+
+[Hồ sơ PR #131](docs/SOURCE_FEASIBILITY_GATE_20261024.md) bổ sung CPU saved-score
+verification và 40 sensitivity variants **PROPOSED**; ba model so cùng 3.539
+V4-success IDs, giữ riêng kết quả Q2.5/IVL3 đầy đủ và recovery. Bản ghép V4+
+recovery 0,952935 trong hồ sơ lịch sử vẫn REPORTED, không benchmark chính thức.
 
 ## Chạy trên CPU
 
