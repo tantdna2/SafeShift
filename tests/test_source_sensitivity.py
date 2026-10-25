@@ -1,6 +1,7 @@
 """Synthetic only: pairwise oracle, joins, grouping assumptions and archive I/O."""
 
 import copy
+import csv
 import hashlib
 import io
 import itertools
@@ -11,6 +12,9 @@ import tempfile
 import unittest
 from unittest import mock
 import zipfile
+from collections import Counter
+
+from scripts import analyze_source_sensitivity as cli
 
 from safeshift.evaluation.sensitivity import (
     components, evaluate, join_reports, summarize_groups, weighted_auc,
@@ -288,6 +292,212 @@ class InputTests(unittest.TestCase):
             internvl_rows(archive([name]), {"wrong.tar.gz": "0" * 64})
         with self.assertRaises(ValueError):
             internvl_rows(archive([name]), {"synthetic.tar.gz": "0" * 64})
+
+
+def original_fixture(mutate=None):
+    """Four synthetic planned rows; two successes, one error, one unattempted."""
+    rows, metadata, inference, journal = [], {}, [], []
+    statuses = ("SUCCESS", "SUCCESS", "TECHNICAL_ERROR", "NOT_ATTEMPTED")
+    for i, status in enumerate(statuses):
+        sid, level = f"synthetic-original-{i}", ("Level01" if i % 2 == 0 else "Level04")
+        flags = (status != "NOT_ATTEMPTED", status == "SUCCESS", status == "SUCCESS")
+        rows.append({"sample_id": sid, "true_level": level, "domain": "synthetic",
+                     "status": status, "pa3_score": str(2 - i) if status == "SUCCESS" else "",
+                     "generated_label": "Level01" if status == "SUCCESS" else "",
+                     "true_binary_label": "Anomaly" if level != "Level04" else "Normal",
+                     **dict(zip(("attempted", "persisted", "parsed"), map(str, flags)))})
+        metadata[sid] = {"sample_id": sid, "safety_level": level, "folder_domain": "synthetic",
+                         "split": "train", "byte_sha256": str(i)}
+        inference.append({"sample_id": sid, "image_sha256": str(i), "image_locator": "synthetic/unused"})
+        journal.append({"sample_id": sid, "ordinal": i, "status": status,
+                        **dict(zip(("attempted", "persisted", "parsed"), flags))})
+    unit = {"model": "qwen3", "id": "synthetic-model", "revision": "synthetic-revision",
+            "python": "3.11", "cuda": "synthetic", "cuda_visible_devices": "synthetic",
+            "shard": 2, "count": 4, "run_id": "hnlo-train-v4-qwen3-s2-a1",
+            "attempt_id": "hnlo-train-v4-qwen3-s2-20261019-a1"}
+    scope = {"batch_size": 1, "max_new_tokens": 32}
+    endpoint = {"eligible_ids": [r["sample_id"] for r in rows[:2]], "positive_n": 1,
+                "negative_n": 1, "pair_denominator": 1, "tie_credit": 0.5, "value": 1}
+    source = dict.fromkeys(("implementation_commit", "authority_commit", "merge_commit", "payload_sha256", "pr_number"), "synthetic")
+    result = {"unit": copy.deepcopy(unit), "schema": "hnlo-train-unit-result-v1", "scope": "DESCRIPTIVE_FULL_TRAIN",
+              "retry": False, "research_generalization_claim": False, "status": "PARTIAL", "sample_journal": journal,
+              "coverage": {"planned": 4, "scored": 2, "attempted": 3, "parsed": 2, "persisted": 2,
+                           "anomaly_n": 2, "normal_n": 2, "level_counts": {"Level01": 2, "Level04": 2},
+                           "coverage": 0.5, "status_counts": dict(Counter(statuses)), "auroc": copy.deepcopy(endpoint)},
+              "metrics": {"overall": {"auroc_pa3": copy.deepcopy(endpoint)}}}
+    binding = {"unit": copy.deepcopy(unit), "samples": copy.deepcopy(inference), "source": source,
+               "authority": {"scope": copy.deepcopy(scope)}}
+    state = {"rows": rows, "result": result, "binding": binding, "metadata": metadata}
+    if mutate:
+        mutate(state)
+    text = io.StringIO()
+    writer = csv.DictWriter(text, fieldnames=list(rows[0]))
+    writer.writeheader()
+    writer.writerows(rows)
+    files = {"evidence/report/samples.csv": text.getvalue().encode(),
+             "evidence/binding.json": json.dumps(binding).encode(),
+             "evidence/result.json": json.dumps(result).encode()}
+    manifest = json.dumps({"files": [{"path": k.removeprefix("evidence/"), "size_bytes": len(v),
+                                      "sha256": hashlib.sha256(v).hexdigest()} for k, v in files.items()]}).encode()
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+        for name, payload in {**files, "manifest.json": manifest}.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(payload)
+            tar.addfile(info, io.BytesIO(payload))
+    payload = buffer.getvalue()
+    result["export"] = {"archive": "hnlo-train-v4-qwen3-s2-a1.tar.gz", "archive_bytes": len(payload),
+                        "archive_sha256": hashlib.sha256(payload).hexdigest(), "manifest_sha256": hashlib.sha256(manifest).hexdigest(),
+                        "status": "EXPORTED", "unit": copy.deepcopy(unit)}
+    return payload, result, unit, inference, scope, metadata
+
+
+class OriginalV4Tests(unittest.TestCase):
+    def test_all_planned_rows_preserved_and_only_success_scores_evaluated(self):
+        rows, receipt = cli.verify_v4_shard(*original_fixture())
+        self.assertEqual(len(rows), 4)
+        self.assertEqual(receipt["status_counts"], {"SUCCESS": 2, "TECHNICAL_ERROR": 1, "NOT_ATTEMPTED": 1})
+        self.assertEqual(receipt["auroc_recomputed"], 1)
+        self.assertEqual(receipt["planned_n"], 4)
+
+    def test_missing_extra_duplicate_and_wrong_ids_fail(self):
+        for mutate in (lambda s: s["rows"].pop(), lambda s: s["rows"].append(s["rows"][0]),
+                       lambda s: s["rows"][0].update(sample_id="wrong"),
+                       lambda s: s["binding"]["samples"].reverse(),
+                       lambda s: s["result"]["sample_journal"][1].update(ordinal=0)):
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
+                cli.verify_v4_shard(*original_fixture(mutate))
+
+    def test_status_coverage_and_non_success_prediction_fail(self):
+        changes = [lambda s: s["rows"][0].update(status="INVALID"),
+                   lambda s: s["rows"][0].update(parsed="False"),
+                   lambda s: s["rows"][2].update(pa3_score="2"),
+                   lambda s: s["result"]["coverage"].update(coverage=1),
+                   lambda s: s["result"]["coverage"].update(planned=3),
+                   lambda s: s["result"]["coverage"]["status_counts"].update(SUCCESS=3),
+                   lambda s: s["result"]["coverage"].update(anomaly_n=0)]
+        for mutate in changes:
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
+                cli.verify_v4_shard(*original_fixture(mutate))
+
+    def test_eligible_ids_support_and_nonfinite_metric_fail(self):
+        for value in (["wrong"], ["synthetic-original-0"] * 2):
+            with self.assertRaises(ValueError):
+                cli.verify_v4_shard(*original_fixture(lambda s: s["result"]["metrics"]["overall"]["auroc_pa3"].update(eligible_ids=value)))
+        for value in (0, float("nan"), float("inf")):
+            with self.assertRaises(ValueError):
+                cli.verify_v4_shard(*original_fixture(lambda s: s["result"]["metrics"]["overall"]["auroc_pa3"].update(value=value)))
+
+    def test_invalid_ground_truth_score_and_config_fail(self):
+        for mutate in (lambda s: s["rows"][0].update(true_level="unknown"),
+                       lambda s: s["rows"][0].update(true_level="Level04"),
+                       lambda s: s["rows"][0].update(pa3_score="nan"),
+                       lambda s: s["rows"][0].update(pa3_score="inf"),
+                       lambda s: s["binding"]["authority"]["scope"].update(max_new_tokens=16),
+                       lambda s: s["result"]["unit"].update(run_id="recovery")):
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
+                cli.verify_v4_shard(*original_fixture(mutate))
+
+    def test_archive_manifest_and_export_unit_mismatch_fail(self):
+        for field in ("archive_sha256", "manifest_sha256"):
+            args = original_fixture()
+            args[1]["export"][field] = "0" * 64
+            with self.assertRaises(ValueError):
+                cli.verify_v4_shard(*args)
+        args = original_fixture()
+        args[1]["export"]["unit"]["revision"] = "wrong"
+        with self.assertRaises(ValueError):
+            cli.verify_v4_shard(*args)
+
+    def test_single_class_auc_stays_undefined(self):
+        def mutate(s):
+            for row in s["rows"]:
+                row.update(true_level="Level04", true_binary_label="Normal")
+                s["metadata"][row["sample_id"]]["safety_level"] = "Level04"
+            s["result"]["coverage"].update(anomaly_n=0, normal_n=4, level_counts={"Level04": 4})
+            for e in (s["result"]["coverage"]["auroc"], s["result"]["metrics"]["overall"]["auroc_pa3"]):
+                e.update(positive_n=0, negative_n=2, pair_denominator=0, value=None)
+        _, receipt = cli.verify_v4_shard(*original_fixture(mutate))
+        self.assertIsNone(receipt["auroc_recomputed"])
+
+    def make_zip(self, change=None):
+        payload, result, *_ = original_fixture()
+        with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as tar:
+            manifest = tar.extractfile("manifest.json").read()
+        result_bytes = json.dumps(result).encode()
+        export = json.dumps({**result["export"], "result_sha256": hashlib.sha256(result_bytes).hexdigest()}).encode()
+        files = {".tar.gz": payload, "_result.json": result_bytes, "_export.json": export,
+                 "_export_sha256.json": json.dumps({"sha256": hashlib.sha256(export).hexdigest()}).encode(),
+                 "_manifest.json": manifest, "_sha256.json": json.dumps({
+                     "archive": result["export"]["archive"], "sha256": result["export"]["archive_sha256"],
+                     "size_bytes": len(payload), "manifest_sha256": result["export"]["manifest_sha256"],
+                     "status": "EXPORT_VALID", "verified_evidence_members": 3}).encode()}
+        if change:
+            change(files)
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_STORED) as outer:
+            for suffix, value in files.items():
+                outer.writestr("Qwen3-Shard2-V4/hnlo-train-v4-qwen3-s2-a1" + suffix, value)
+        return buffer.getvalue(), payload
+
+    def test_original_zip_binding_and_wrong_original_sha(self):
+        payload, tar = self.make_zip()
+        with mock.patch.multiple(cli, S2_ORIGINAL_SIZE=len(tar), S2_ORIGINAL_SHA256=hashlib.sha256(tar).hexdigest()):
+            _, _, receipt = cli.original_s2_zip(payload)
+            self.assertEqual(receipt["zip_crc"], "PASS")
+        with self.assertRaisesRegex(ValueError, "identity"):
+            cli.original_s2_zip(payload)
+
+    def test_zip_crc_structure_and_sidecar_corruption_fail(self):
+        changes = [lambda f: f.pop("_manifest.json"),
+                   lambda f: f.update({"_extra.json": b"{}"}),
+                   lambda f: f.update({"_manifest.json": b"{}"}),
+                   lambda f: f.update({"_export_sha256.json": b'{"sha256":"wrong"}'})]
+        for change in changes:
+            payload, tar = self.make_zip(change)
+            with mock.patch.multiple(cli, S2_ORIGINAL_SIZE=len(tar), S2_ORIGINAL_SHA256=hashlib.sha256(tar).hexdigest()):
+                with self.assertRaises(ValueError):
+                    cli.original_s2_zip(payload)
+        payload, tar = self.make_zip()
+        corrupt = payload.replace(b"EXPORT_VALID", b"EXPORT_XALID")
+        with mock.patch.multiple(cli, S2_ORIGINAL_SIZE=len(tar), S2_ORIGINAL_SHA256=hashlib.sha256(tar).hexdigest()):
+            with self.assertRaises((ValueError, zipfile.BadZipFile)):
+                cli.original_s2_zip(corrupt)
+
+    def full_cohort(self):
+        shards, metadata = {}, {}
+        for shard, count in enumerate((941, 941, 941, 940)):
+            rows = [{"sample_id": f"synthetic-{shard}-{i}", "true_level": "Level04",
+                     "status": ("SUCCESS" if shard != 2 or i < 717 else
+                                "TECHNICAL_ERROR" if i == 717 else "NOT_ATTEMPTED")} for i in range(count)]
+            unit = {"model": "qwen3", "id": "synthetic", "revision": "synthetic", "python": "synthetic",
+                    "cuda": "synthetic", "cuda_visible_devices": "synthetic", "shard": shard, "count": count,
+                    "run_id": f"hnlo-train-v4-qwen3-s{shard}-a1",
+                    "attempt_id": f"hnlo-train-v4-qwen3-s{shard}-20261019-a1"}
+            shards[shard] = (rows, {"unit": unit, "source": {"synthetic": True}, "archive_sha256": cli.S2_ORIGINAL_SHA256})
+            metadata.update({r["sample_id"]: {} for r in rows})
+        return shards, metadata
+
+    def test_original_full_cohort_counts_and_failure_denominator(self):
+        success, receipt = cli.verify_v4_cohort(*self.full_cohort())
+        self.assertEqual(len(success), 3539)
+        self.assertEqual(receipt["planned_n"], 3763)
+        self.assertAlmostEqual(receipt["coverage"], 3539 / 3763)
+        self.assertFalse(receipt["baseline_pooling_allowed"])
+
+    def test_recovery_diagnostic_incomplete_duplicate_and_missing_cohort_fail(self):
+        for kind in ("recovery", "diagnostic", "missing-shard", "duplicate-id", "status", "source", "revision", "missing-id"):
+            shards, metadata = self.full_cohort()
+            if kind == "recovery": shards[2][1]["unit"]["run_id"] = "hnlo-qwen3-s2-recovery224-v1-20261022"
+            elif kind == "diagnostic": shards[2][1]["archive_sha256"] = "wrong"
+            elif kind == "missing-shard": del shards[2]
+            elif kind == "duplicate-id": shards[2][0][0]["sample_id"] = shards[0][0][0]["sample_id"]
+            elif kind == "status": shards[2][0][0]["status"] = "NOT_ATTEMPTED"
+            elif kind == "source": shards[2][1]["source"] = {"other": True}
+            elif kind == "revision": shards[2][1]["unit"]["revision"] = "wrong"
+            else: metadata.pop(next(iter(metadata)))
+            with self.subTest(kind=kind), self.assertRaises(ValueError):
+                cli.verify_v4_cohort(shards, metadata)
 
 
 if __name__ == "__main__":

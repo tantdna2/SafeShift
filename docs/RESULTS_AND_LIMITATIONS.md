@@ -11,9 +11,17 @@ tính saved-score trên artifact được phép. Q2.5/IVL3 khớp đủ 3.763 ID
 exact weighting cho AUROC 0,825397/0,885748 so với theo ảnh 0,826656/0,886182.
 Đã nối riêng Q3 S0/S1/S3 qua receipt/archive/manifest/CSV để so ba model trên
 2.822 ID, cùng Recovery224 riêng; không tính toàn V4 gốc hoặc pooling. Mọi
-weighting/grouping mới là **PROPOSED_EXPLORATORY**, không sửa bảng lịch sử sau
-đây hoặc nâng thành raw PASS. Catalog 7 exact pairs trong visual note có
+weighting/grouping mới là **PROPOSED_EXPLORATORY**, không sửa số lịch sử hoặc
+nâng thành raw PASS. Catalog 7 exact pairs trong visual note có
 membership không khớp artifact đúng hash, được ghi riêng trong hồ sơ mới.
+
+**Cập nhật 25/10/2026:** S2 gốc đã có đúng hash từ ZIP Owner cung cấp; archive
+identity và saved-score verification PASS. Đã khép bốn shard V4 gốc: 3.763
+planned, 3.539 SUCCESS, 1 TECHNICAL_ERROR/223 NOT_ATTEMPTED; coverage
+94,047302684%. AUROC gốc tái tính **0,9527927338600111**, khớp lịch sử. Ba
+model trên cùng 3.539 SUCCESS IDs: Q2.5 **0,8243818245861219**, IVL3
+**0,88286846475117**, Q3 **0,9527927338600111**. Thêm 10 sensitivity variants,
+giữ 30 cũ và recovery riêng; không raw replay/PASS mới hoặc pooling.
 
 Nguồn chính là [báo cáo khoa học ba mô hình 23/10/2026](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/reports/three_model_scientific_analysis_20261023.md)
 và [receipt mô tả phạm vi kiểm chứng](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/evidence/three_model_20261023/verification_20261023.json).
@@ -29,8 +37,8 @@ support Level01/02/03/04 = 490/251/8/3.014. Anomaly là Level01–03.
 | --- | ---: | ---: | --- |
 | Qwen2.5, PA3-R2 | 0,8266558463706973 | 130/3.763 = 3,45% | Raw audit CPU Linux PASS theo hồ sơ chính thức; đối chiếu 23/10 chỉ tái tính saved score. |
 | InternVL3 | 0,8861824613751756 | 164/3.763 = 4,36% | Tái tính từ CSV saved score trong bốn tar; không phải raw-logit audit đầy đủ. |
-| Qwen3, V4-success gốc | 0,952793 | Không tách trong bảng này | 3.539/3.763 SUCCESS được cung cấp; thiếu xác minh độc lập membership/score vector đầy đủ. |
-| Qwen3, Recovery224 | 0,954519 | Không tách trong bảng này | 224/224 SUCCESS được báo cáo, cohort/config riêng. |
+| Qwen3, V4-success gốc | 0,9527927338600111 | Không tách trong bảng này | **VERIFIED_SAVED_SCORE 25/10**: 3.539/3.763 SUCCESS và membership/status đủ bốn shard; không raw audit mới. |
+| Qwen3, Recovery224 | 0,9545189504373177 | Không tách trong bảng này | 224/224 saved SUCCESS đã kiểm 24/10, cohort/config riêng, không pooling V4. |
 | Qwen3, bản ghép mô tả | 0,952935 | 2.932/3.763 = 77,92% | Số từ tổng hợp được cung cấp; chưa tái tính độc lập AUROC từ vector điểm gốc đầy đủ. |
 | Moondream2 | Chưa có kết quả HNLO TRAIN tương thích đã audit | Chưa xác lập tại các nguồn này | Vẫn thuộc yêu cầu bốn mô hình; không bỏ hoặc tự thay endpoint. |
 
@@ -50,17 +58,20 @@ và khác biệt Windows 1-ULP vẫn được giữ ở CPU completion.
 score/confusion; chưa chứng minh toàn bộ chuỗi raw logits, token alignment,
 runtime và integrity bằng raw replay. Không đổi nhãn mức bằng chứng thành raw PASS.
 
-**Qwen3:** V4 gốc báo cáo 3.539 SUCCESS (94,05%), 1 TECHNICAL_ERROR và
-223 NOT_ATTEMPTED. Recovery224 báo cáo 49 Anomaly/175 Normal. Sidecar S2 đã kiểm
-tra thuộc lượt chạy lại trùng attempt, không phải S2 V4 đầu tiên. Archive gốc
-được kỳ vọng có SHA-256
+**Qwen3, trạng thái mới nhất 25/10:** đã kiểm S2 V4 gốc có SHA-256
 `2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920`
-chưa được tìm thấy tại các vị trí đã kiểm tra trong báo cáo lịch sử.
+và size 12.031.765 bytes từ `Qwen3-Shard2-V4.zip`. Đối soát archive/manifest/
+binding/result/CSV và historical ordered manifests khép đúng 3.763 planned;
+3.539 saved SUCCESS có score/nhãn hợp lệ. S2 717 SUCCESS/1 TECHNICAL_ERROR/
+223 NOT_ATTEMPTED, AUROC 0,9526425641148669; V4-success gốc gộp 700 A/2.839 N
+cho AUROC 0,9527927338600111. Đây là saved-score verification, **không raw audit**.
 
-Ghép các sidecar sẵn có có thể khớp 3.763 ID/support/confusion, nhưng không xác
-nhận độc lập 717 ảnh S2 gốc hoặc toàn bộ 3.539 V4-success gốc. Giữ
-`baseline_pooling_allowed=false`; bản ghép là mô tả xuyên cohort, không biến V4
-thành baseline hoàn tất và không lấy trung bình AUROC hai cohort. Nguồn:
+Receipt 23/10 chỉ có S2 duplicate diagnostic nên chưa xác nhận được lượt gốc;
+hạn chế thiếu artifact đó **đã được gỡ 25/10**, không sửa receipt lịch sử.
+Archive diagnostic vẫn bị loại, không dùng thay gốc. Recovery224 giữ riêng
+49 A/175 N, `baseline_pooling_allowed=false`; V4 execution vẫn PARTIAL,
+không biến V4+recovery thành baseline hoàn tất 3.763. Không lấy trung bình AUROC
+hai cohort. Nguồn lịch sử trước bổ sung:
 [báo cáo provenance đã sửa](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/reports/three_model_scientific_analysis_20261023.md),
 [OOM evidence boundary](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/qwen3_s2_oom_20261022.md#source-and-evidence-boundary),
 [issue #125 CONSUMED](https://github.com/tantdna2/SafeShift/issues/125#issuecomment-6354355448).

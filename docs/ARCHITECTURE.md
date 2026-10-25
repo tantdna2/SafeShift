@@ -83,7 +83,7 @@ Validation trong evaluation bảo vệ cả người gọi trực tiếp, ngoài
 | `models/contracts.py` | `ModelInput(sample_id, image_path, prompt)`; `ModelOutput` chứa sample/run/model/revision và tham chiếu raw/prompt/generation config; `VisionLanguageModel.generate()` là typing Protocol. |
 | `scripts/demo_cpu.py` | Sáu ví dụ viết tay → báo cáo tổng hợp xác định; không dùng model giả. |
 | `evaluation/sensitivity.py` | Exact join metadata/saved reports; weighted AUROC tie=0,5, components, support/undefined và đại diện exact. Chỉ **PROPOSED_EXPLORATORY**, tách khỏi classification benchmark API. |
-| `scripts/analyze_source_sensitivity.py` | Receipt bất biến tại `31a04e6`, checksum metadata/CSV/archive/manifest; TRAIN Q2.5/IVL3 và hai cohort Q3 riêng tùy chọn; output ignored, chặn ghi đè. Không đọc ảnh/annotation/raw logit payload. |
+| `scripts/analyze_source_sensitivity.py` | Receipt/ordered inference metadata bất biến tại `31a04e6`, checksum ZIP/archive/manifest/binding/result/CSV; kiểm đủ trạng thái V4 và tùy chọn thêm cohort V4-success gốc bên cạnh các cohort trước. Output ignored, không overwrite; không ảnh/annotation/raw logit payload hoặc pooling recovery. |
 | `tests/` | Smoke tests giữ nguyên; schema/validation/model transport, metrics và CLI demo trên fixture tổng hợp. |
 | `pyproject.toml` | Package Python 3.11+, setuptools build, không runtime dependencies; chỉ đóng gói `safeshift*`. |
 

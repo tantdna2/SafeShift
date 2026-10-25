@@ -29,6 +29,10 @@ Draft PR; [ARCHITECTURE](ARCHITECTURE.md) mô tả phạm vi API.
   visual catalog với pair table, không sửa lịch sử.
 - [x] Q2.5/IVL3 trên 3.763 ID chung; Q3 S0/S1/S3 để so ba model trên 2.822 ID,
   Recovery224 riêng; 10 biến thể/cohort, **PROPOSED**.
+- [x] **25/10:** ZIP S2 gốc CRC/hash/sidecars PASS; đủ bốn V4 shard, planned
+  3.763 và 3.539 SUCCESS/1 lỗi/223 chưa chạy; saved AUROC khớp lịch sử.
+- [x] Thêm cohort ba model/3.539 SUCCESS gốc và 10 biến thể; giữ 30 cũ,
+  Recovery224 riêng. 51 tests tổng hợp và 110 AUROC gộp qua oracle độc lập PASS.
 - [x] Code CPU, tests tổng hợp, oracle số bằng cặp/BFS; so C với D9R22,
   đánh giá A, brief giảng viên và blockers cụ thể.
 - [ ] ChatGPT kiểm tra toàn bộ Draft PR; giảng viên/Research Lead quyết định
@@ -41,9 +45,10 @@ hoặc thí nghiệm bốn model. D9R22/DEC-PA3-011/A/C giữ nguyên thẩm quy
 
 ### Phần nghiên cứu và thẩm quyền vẫn còn thiếu
 
-1. **Khép bằng chứng cũ:** tìm đúng artifact Qwen3 S2 gốc/CSV đúng hash và giữ
-   riêng rerun/recovery; xử lý giới hạn receipt Qwen2.5 và audit raw/score theo
-   hợp đồng từng model. Không sửa số lịch sử hoặc tự gọi consistency là raw PASS.
+1. **Khép phần raw/receipt còn thiếu:** Qwen3 S2 gốc và full V4 saved-score đã
+   khép 25/10, giữ rerun/recovery riêng. Còn raw replay theo hợp đồng model và
+   quyền cụ thể, giới hạn outer receipt Qwen2.5. Không sửa lịch sử hoặc gọi
+   archive/saved-score verification là raw PASS.
 2. **Chốt hướng khoa học:** D9R22 tiếp tục có hiệu lực, DEC-PA3-011/HNLO vẫn
    PROPOSED, hướng A/C chưa được phê duyệt. Research Lead quyết định hướng và
    ghi append-only; không sửa quyết định cũ để khớp code mới.

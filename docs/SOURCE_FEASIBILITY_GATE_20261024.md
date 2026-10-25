@@ -1,8 +1,10 @@
 # SafeShift — Hồ sơ quyết định khả thi Seminar
 
-Ngày 24/10/2026, Asia/Bangkok. **BASE_SHA / main đã xác minh:**
+Khởi tạo 24/10/2026, cập nhật bằng chứng S2 gốc **25/10/2026**, Asia/Bangkok.
+**BASE_SHA / main của PR:**
 `2810bee6f404a1c41cca4a2bbe45baf5ac48358a`.
 Tiếp tục branch PR #131 từ `c492a0b546248f1e9496dfa0248450548ace5ba1`.
+Cập nhật 25/10 tiếp tục từ `bb31ef749fc0e31627f550a16188f82ac59fe6e2`.
 Các nguồn lịch sử bên dưới đều ở snapshot bất biến
 `31a04e6f7175cca818c63b4de0153246b3f3ecdb`.
 
@@ -21,6 +23,12 @@ thay cho nhận định trước đó rằng khả dụng artifact local chưa r
 - Nối riêng saved reports Qwen3 S0/S1/S3 qua result → archive → manifest → CSV
   và eligible IDs. So ba model trên **2.822 ID chung**; phân tích **Recovery224
   riêng**, không ghép vào V4.
+- **25/10: đã khép S2 V4 gốc** từ ZIP Owner cung cấp: đúng hash/size, CRC,
+  sidecars, config và 941 ID/trạng thái. Bốn shard có 3.763 planned, **3.539
+  SUCCESS (94,0473%)**, 1 TECHNICAL_ERROR/223 NOT_ATTEMPTED. AUROC Q3 gốc tính
+  lại **0,9527927338600111**; thêm 10 biến thể trên cùng 3.539 ID của ba model.
+  Đây là **saved-score verification PASS**, không raw audit hoặc V4 execution
+  hoàn tất 100%. Recovery224 vẫn riêng.
 - Exact TRAIN có 44 cặp; score/nhãn đồng nhất trong mỗi cặp ở các model/cohort
   đã kiểm. Mỗi nhóm tổng trọng số 1 làm AUROC Qwen2.5 đổi **0,826656 → 0,825397**,
   InternVL3 **0,886182 → 0,885748**. Ranking gộp giữ nguyên trong mọi kịch bản
@@ -35,7 +43,8 @@ NO-GO hiện tại.** Chưa có map nguồn thật đủ tin cậy, CI phù hợ
 cùng nguồn nhưng khác trạng thái nguy cơ. Ranking ổn định trong một số giả định
 chưa chứng minh ưu thế thống kê hoặc hazard validity.
 
-Số chính xác, checksum, coverage và mọi kết quả gộp của 30 kịch bản nằm trong
+Số chính xác, checksum, coverage và kết quả gộp **40 kịch bản** (giữ 30 ngày
+24/10, thêm 10 V4-success gốc ngày 25/10) nằm trong
 [receipt tổng hợp](SOURCE_FEASIBILITY_RECEIPT_20261024.json).
 Receipt Git không chứa per-image scores, raw output, ảnh hoặc annotation.
 
@@ -72,7 +81,7 @@ riêng khác trong các notes/worktree quyết định đã kiểm; không khẳ
 | `InterVL3_Output.zip` | **76.261.594 bytes**, hash `5400bfefef38372cd42d17223f59ef7a4ea97fd7415c9d6c234ed9b309161e90`; đủ 4 tar duy nhất và 4 CSV đúng member hash R3 | 3.763 SUCCESS; chỉ đọc `evidence/report/samples.csv` mỗi tar. Không replay raw hoặc xác minh lại runtime/token alignment. |
 | Qwen3 S0/S1/S3 | 3 result đúng hash R3; archive hash/size, manifest hash, CSV hash/size, eligible IDs và AUROC từng shard khớp | **2.822 saved rows được kiểm chứng mới**, cohort đúng ba shard khả dụng; không phải toàn 3.539 V4-success gốc. Hash đầy đủ ở receipt mới. |
 | Qwen3 Recovery224 | Result đúng R3; archive hash `da56ff98a6504faff7f3bff73b9797a25c8b36cadd87d8a3be056379f785c673`, manifest/CSV/224 IDs khớp | Cohort bổ sung riêng, 49 A/175 N; không pooling V4, không chứng minh nguyên nhân OOM hoặc hết selection bias. |
-| Qwen3 S2 gốc | Cần archive hash `2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920`; chưa có tại các vị trí đã kiểm | Blocker cho vector V4 gốc đầy đủ, AUROC/gap/ranking toàn V4 gốc. Không tuyên bố mất ở mọi kho Owner. |
+| Qwen3 S2 gốc | **Đã tìm được và xác minh 25/10** từ `Qwen3-Shard2-V4.zip`; TAR 12.031.765 bytes, hash `2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920` | 941 planned: 717 SUCCESS/1 TECHNICAL_ERROR/223 NOT_ATTEMPTED; AUROC saved score 0,9526425641148669. Blocker thiếu S2 gốc đã khép ở cấp archive/saved-score; không raw PASS. |
 | S2 cùng basename đang có | Hash lại **12.038.105 bytes**, `508a2e122ee999da728e8d09c66f5157331e6fe1a40adaa82e2869a30c6e0147`, khác hash gốc | **SECOND_DUPLICATE_S2_DIAGNOSTIC**, consistency-only. Không lấy score để lấp 717 S2 gốc hoặc tính baseline. |
 | `InternVL3_V4_full_output_audit.json` local | 5.069 bytes, hash `95dd157338f1f5758bf6c981a9a32bff2252a08991f06c8e33439213720ef170`; tuyên bố integrity/raw replay | **REPORTED audit summary**: task không replay raw và chưa xác lập source/command/env của receipt local này; không nâng thành raw PASS mới. |
 | Moondream2 | Có hồ sơ T1/capture PREP [M3][M3], chưa có TRAIN HNLO tương thích đủ điều kiện trong gói kiểm | Giữ roster bắt buộc. T1/capture CPU không là TRAIN PASS; không tự bỏ model/đổi endpoint. |
@@ -81,7 +90,8 @@ riêng khác trong các notes/worktree quyết định đã kiểm; không khẳ
 Bản dùng để tính đã stage vào `data/processed/seminar_feasibility_20261024/inputs/`
 trong worktree PR, được ignore. Quyền CPU hồi cứu từ yêu cầu hiện tại áp dụng
 metadata/saved reports hợp lệ; không kế thừa grant inference. Với Qwen3 chỉ
-đọc manifest inventory và CSV, không mở raw logit/journal payload. Quan hệ
+đọc manifest inventory, binding/result metadata và CSV, không mở raw logit/
+journal payload. Quan hệ
 xuyên split trong audit có sẵn được dùng đối soát ID; không truy cập dataset
 TEST hoặc tính endpoint TEST.
 
@@ -225,7 +235,7 @@ cohort theo archive khả dụng, không chọn theo score tốt. Weighting gi�
 30 exact pairs trong cohort đồng score/nhãn ở ba model. Đại diện đầu/cuối giữ
 2.792 ảnh (548 A/2.244 N), khớp exact weighting. Gộp cohort luôn Q3 > IVL3 > Q2.5
 trong 10 biến thể; theo ảnh Q3 vẫn kém IVL3 ở coal/metallurgy. Không suy cohort
-này đại diện S2 thiếu hoặc dân số mới.
+này đại diện phần S2 hoặc dân số mới; phân tích V4-success gốc đầy đủ ở dưới.
 
 **Recovery224 riêng:** 224/224 SUCCESS, tương ứng 5,95% TRAIN;
 L01/02/03/04 = 30/19/0/175, 49 A/175 N. Đối chiếu cùng 224 ID Q2.5/IVL3:
@@ -243,9 +253,95 @@ Không có Level03 recovery. Không điền 0,5 cho thiếu mẫu số; các nh�
 family, exact trong recovery cũng đơn lớp.
 
 Q3 recovery saved AUROC khớp số báo cáo 0,954519, không cấp quyền pooling.
-**Không tính** AUROC toàn V4 gốc 3.539 hoặc bản ghép 3.763. Các số Q3
-0,952793/0,952935 ở [RESULTS_AND_LIMITATIONS](RESULTS_AND_LIMITATIONS.md) vẫn
-**REPORTED**. Không so gap 2.822 với gap 224 như hiệu ứng của recovery.
+**25/10 đã tái tính riêng V4-success gốc 3.539**, như mục kế tiếp. Bản ghép
+3.763 V4+Recovery ở [RESULTS_AND_LIMITATIONS](RESULTS_AND_LIMITATIONS.md) vẫn
+**REPORTED**, chưa được dùng làm baseline chính thức. Không so gap giữa các
+cohort 2.822/224/3.539 như hiệu ứng của recovery hay của việc tìm lại S2.
+
+### Khép Qwen3 V4 gốc — cập nhật 25/10/2026
+
+**S2_ORIGINAL_IDENTITY=PASS; S2_SAVED_SCORE_VERIFICATION=PASS;
+V4_ORIGINAL_COHORT_VERIFICATION=PASS. RAW_AUDIT=NOT_PERFORMED.**
+
+ZIP **12.618.750 bytes**, SHA-256
+`e77199b0818c45e2a15be2815485493fa4a78d064f82288d497fd8d82ecd4f0d`;
+CRC toàn ZIP PASS, đúng một thư mục và sáu file cần thiết, không thiếu/thừa/
+trùng member. TAR hash/size đúng giá trị gốc nêu ở inventory. Export checksum,
+result hash `fcf70c6c6a8915f858cf95583ec40f02003379fd85c3f8681da2ec9c4500a1c6`,
+sidecar manifest và manifest trong TAR cùng hash
+`b5c5b3dfb6e9ad270174d364a7544ed93e4d47f8518e372ecdd106b862b33ae1`.
+Các metadata/report member được kiểm hash/size với inventory. Không kiểm lại
+hash từng raw payload hoặc replay logits; checksum receipt lịch sử tuyên bố
+54.221 evidence members được đối soát với số entry của inventory, không biến
+thành raw audit mới.
+
+Bốn unit có model `Qwen/Qwen3-VL-8B-Instruct`, revision
+`0c351dd01ed87e9c1b53cbc748cba10e6187ff3b`, Python 3.12.13/CUDA 12.8/T4×2
+theo metadata. Run IDs `hnlo-train-v4-qwen3-s{0..3}-a1`, attempt IDs
+`hnlo-train-v4-qwen3-s{0..3}-20261019-a1`. Config scope khớp toàn bộ hợp đồng
+[V4 contract][V4C] tại snapshot, gồm prompt hash, batch=1, max_new_tokens=32,
+do_sample=false, threshold=null và retry/resume=false. Đây là xác minh metadata
+cấu hình đã lưu, không tái xác minh runtime thật.
+
+Binding samples khớp **đúng thứ tự, ID, image hash và locator** của bốn inference
+manifests lịch sử đã khóa hash [cohort contract][V4M]. Sample journal trong
+result, CSV và eligible IDs nhất quán; nhãn/miền khớp audit TRAIN đúng hash.
+Không mở image locator. Common source metadata: implementation `a6e08ce…`,
+authority `1ad2c1cb…`, merge/release `c9e22792…`, source payload `7817f431…`;
+đầy đủ hashes/sizes và quan hệ binding ở receipt. S2 internal result trong TAR
+khớp external result sau loại riêng trường export phát sinh sau đóng archive.
+
+| Shard gốc | Planned | SUCCESS | TECHNICAL_ERROR | NOT_ATTEMPTED | SUCCESS A / N | AUROC saved score |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S0 | 941 | 941 | 0 | 0 | 173 / 768 | 0,958062380 |
+| S1 | 941 | 941 | 0 | 0 | 192 / 749 | 0,957366767 |
+| S2 gốc | 941 | 717 | 1 | 223 | 146 / 571 | 0,952642564 |
+| S3 | 940 | 940 | 0 | 0 | 189 / 751 | 0,942757100 |
+| V4 gốc | **3.763** | **3.539** | **1** | **223** | **700 / 2.839** | **0,952792734** |
+
+Không overlap/thiếu ID ngoài các trạng thái đã ghi; union planned khớp đúng
+3.763 ID TRAIN. SUCCESS support L01/02/03/04 = **460/232/8/2.839**. AUROC gộp
+được tính trực tiếp từ vector 3.539 score với **700×2.839=1.987.300 cặp**,
+không trung bình AUROC shard. Khớp giá trị lịch sử chính xác
+`0.9527927338600111`; S2 có 83.366 cặp. Coverage **3.539/3.763 = 94,047302684%**,
+không đổi mẫu số thành 3.539 để gọi 100%. Run V4 vẫn PARTIAL vì lỗi và phần
+chưa chạy; xác minh cohort PASS không chứng minh hết selection bias.
+
+### Ba model trên cùng 3.539 V4-success gốc
+
+Exact join đủ 3.539 ID–nhãn–miền và score hữu hạn giữa Q2.5, IVL3, Q3. Các
+model khác được giới hạn đúng SUCCESS IDs của Q3 gốc, không lấy giao tùy ý
+hoặc thêm Recovery224. Weighting giữ đủ 3.539 ảnh; tất cả vẫn **PROPOSED_EXPLORATORY**.
+
+| Giả định | Nhóm | Qwen2.5 | InternVL3 | Qwen3 | Q3 − IVL3 | IVL3 − Q2.5 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Ảnh | 3.539 | 0,824382 | 0,882868 | 0,952793 | +0,069924 | +0,058487 |
+| Exact | 3.499 | 0,823171 | 0,882282 | 0,952347 | +0,070065 | +0,059111 |
+| Point | 2.332 | 0,803151 | 0,886062 | 0,942010 | +0,055948 | +0,082911 |
+| Family | 1.677 | 0,790105 | 0,854154 | 0,940724 | +0,086569 | +0,064049 |
+| Exact+point | 2.311 | 0,801857 | 0,885257 | 0,941696 | +0,056439 | +0,083400 |
+| Exact+point+family | 1.627 | 0,762804 | 0,831761 | 0,940537 | +0,108776 | +0,068957 |
+| Exact+point+near8 | 1.670 | 0,787269 | 0,884096 | 0,936447 | +0,052350 | +0,096828 |
+| Exact+point+family+near8 | 1.322 | 0,723678 | 0,783838 | 0,933677 | +0,149840 | +0,060159 |
+
+Hai đại diện exact đầu/cuối giữ **3.499 ảnh = 692 A/2.807 N**, cho cùng AUROC
+dòng exact. Có 40 exact pairs (8 A, 32 N), score/nhãn đồng nhất cả ba model.
+Nhóm exact/point/family/hợp exact+point+family đều một lớp; nội nhóm AUROC
+undefined. Near8 union có 3 mixed groups, 1.667/1.670 nhóm undefined; hợp cả
+bốn còn 1 mixed, 1.321/1.322 undefined. Group summary, khối lượng A/N, support
+và mọi pairwise model gap của 10 biến thể đều có trong receipt.
+
+Ranking gộp **Q3 > IVL3 > Q2.5** trong cả 10 biến thể; Q3−IVL3 từ khoảng
+0,052350 đến 0,149840. Không chọn grouping theo gap; thay đổi estimand/mixture
+của các nhóm một lớp vẫn hạn chế diễn giải. Theo ảnh, IVL3 dẫn coal/metallurgy,
+Q3 dẫn oil/power/tunnel; metallurgy chỉ 9 A. Không có CI/source identity mới.
+
+**Kết luận thay đổi:** số V4-success gốc trước chỉ REPORTED nay được kiểm
+chứng ở cấp archive/metadata/saved-score. Blocker thiếu S2 gốc đã được gỡ.
+**Kết luận giữ nguyên có căn cứ:** source-independent validity, A matched
+hazard–normal, calibration/threshold và generalization vẫn chưa chứng minh;
+khuyến nghị C cho Seminar, A mở rộng có điều kiện vẫn phù hợp. Không suy ưu thế
+thống kê từ thứ hạng quan sát, không pooling V4+Recovery thành baseline 3.763.
 
 ## 5. Đánh giá cuối hướng A
 
@@ -282,14 +378,14 @@ số nguồn và ngân sách.
 | Phân loại | Việc / bằng chứng | Trạng thái thực tế |
 | --- | --- | --- |
 | **Đã hoàn thành** | Inventory/checksum, phân cấp evidence, đối soát 002875/002660 và 7 visual pairs, code CPU, hồ sơ/brief, tự review | Hoàn thành trong phạm vi PR; không sửa lịch sử. |
-| **Đã kiểm chứng** | 3.763 Q2.5/IVL3 ID–GT–domain/saved AUROC; Q3 S0/S1/S3/recovery archive–manifest–CSV–IDs; 44 exact TRAIN pairs | Artifact/saved-score verification mới; raw PASS Q2.5 kế thừa, không raw PASS mới Q3/IVL3. |
-| **Mới là thăm dò** | 10 biến thể × 3 cohort; AUROC/gaps, weighting/đại diện, support/undefined | Đã tính thật; **PROPOSED**, không metric/protocol/split chính thức. |
-| **Chưa thực hiện được** | Toàn vector Q3 V4 gốc; CI/kiểm định theo nguồn; TEST leakage impact; causal hazard validity; threshold safety | Blocker data/mapping/authority, không lấy số báo cáo/heuristic thay đầu vào. |
+| **Đã kiểm chứng** | 3.763 Q2.5/IVL3 ID–GT–domain/saved AUROC; Q3 đủ bốn shard V4 gốc/3.763 planned và 3.539 SUCCESS; recovery riêng; 44 exact TRAIN pairs | Archive/metadata/saved-score verification; raw PASS Q2.5 kế thừa, không raw PASS mới Q3/IVL3. |
+| **Mới là thăm dò** | 10 biến thể × 4 cohort; AUROC/gaps, weighting/đại diện, support/undefined | Đã tính thật; **PROPOSED**, không metric/protocol/split chính thức. |
+| **Chưa thực hiện được** | Raw replay Q3/IVL3 trong task; CI/kiểm định theo nguồn; TEST leakage impact; causal hazard validity; threshold safety | Saved-score S2/V4 đã khép, các blocker còn lại về evidence/mapping/authority không được thay bằng heuristic. |
 | **Phải xin quyền hoặc thêm data** | Raw replay còn thiếu; source/visual adjudication, proxy/annotation, matched/independent cohort; inference/TEST nếu cần sau này | Artifact và authority cụ thể; Draft PR không cấp quyền. |
 
 | Blocker | Đầu vào để mở lại | Phần độc lập đã hoàn thành |
 | --- | --- | --- |
-| S2 gốc thiếu/hash sai lượt | Owner cung cấp archive đúng `2dc356fc…cd920` hoặc CSV gốc có binding manifest/receipt/source/run gốc; kiểm 717 SUCCESS và failure tail | Q2.5/IVL3 đầy đủ, Q3 S0/S1/S3/recovery riêng; không diagnostic thay thế. |
+| S2 gốc: **ĐÃ KHÉP 25/10** | Đã có đúng ZIP/TAR, binding/941 trạng thái/717 SUCCESS; raw replay vẫn ngoài scope | Thêm V4-success 3.539; giữ 30 biến thể cũ và Recovery224 riêng; không diagnostic thay thế. |
 | Visual catalog không khớp | Receipt/contact-sheet/ID map/version dataset gốc và người review; mở ảnh/annotation sau quyền | Dùng TRAIN metadata audit đúng hash; narrative visual vẫn kế thừa, membership chưa khép. |
 | Thiếu source identity/overlap | Upstream map sample→site/video/camera/session hoặc adjudication có provenance/coverage; hai trạng thái/nuisance phù hợp | C thăm dò; không gọi group count là source count. |
 | Raw audit chưa khép | Raw artifacts, execution source/hợp đồng audit và quyền replay; Q25 còn giới hạn outer receipt | Saved-score validity; receipt local tuyên bố replay không là PASS của task. |
@@ -337,9 +433,10 @@ cơ công nghiệp trước ảnh lặp và phụ thuộc nguồn”. Chưa đ�
   nhạy định lượng trên saved predictions, kể cả ranking không đổi. Chưa nhận
   thuật toán mới/“đầu tiên”; Khóa luận cần matched/source/external và label
   invariance vượt phần đã nghiên cứu.
-- **Data đáp ứng không?** Đủ hồi cứu hai model/3.763 ảnh, ba model/2.822 ảnh,
-  recovery riêng/224. Chưa đủ source identity, matched hazard–normal, Q3 S2
-  gốc hoặc TRAIN HNLO model thứ tư.
+- **Data đáp ứng không?** Đủ hồi cứu hai model/3.763 ảnh và ba model trên
+  **3.539 SUCCESS V4 gốc đã xác minh**; giữ 2.822 cũ và recovery/224 riêng để
+  truy vết. Q3 còn 1 lỗi/223 chưa chạy trong planned 3.763; chưa đủ source
+  identity, matched hazard–normal hoặc TRAIN HNLO model thứ tư.
 - **Seminar xong gì?** Công cụ CPU có tests, coverage/ID conflicts, AUROC/gap/
   sensitivity đã tính và giới hạn. Chưa xong CI theo nguồn, ngưỡng an toàn,
   transfer hoặc raw audit mới.
@@ -357,7 +454,8 @@ cơ công nghiệp trước ảnh lặp và phụ thuộc nguồn”. Chưa đ�
    protocol riêng.
 3. Đáp ứng bốn model, gồm N/A/fallback/hoãn nếu cần; không loại theo score.
    Kết quả một phần có đủ yêu cầu Seminar hay cần bổ sung?
-4. Quyền/trách nhiệm tìm S2 gốc, khép raw/receipt audit, đối soát visual IDs.
+4. S2 gốc đã khép saved-score; còn quyền/trách nhiệm khép raw/receipt audit,
+   đối soát visual IDs.
    Ảnh/annotation/TEST/inference sau này cần authority đúng phạm vi.
 5. Dữ liệu A, người xác minh nguồn/nhãn, independent target, mốc GO/STOP và
    ngân sách; chốt trước quan sát target, không tạo split/ngưỡng để có số đẹp.
@@ -365,29 +463,31 @@ cơ công nghiệp trước ảnh lặp và phụ thuộc nguồn”. Chưa đ�
 ## 10. Tái lập, kiểm thử, bàn giao
 
 Python **3.11.9**, Windows; standard library, không dependency mới; seed=null.
-Run `seminar-feasibility-20261024-analysis-v2` trên parent PR head `c492a0b…`
-với implementation chưa commit, ghi trung thực cùng source SHA-256 ở receipt.
-Commit cuối chứa đúng source bytes đó; HEAD cuối lấy từ PR/Git, không nhúng hash
-tự tham chiếu vào tài liệu.
+Run cũ `seminar-feasibility-20261024-analysis-v2` trên parent `c492a0b…`, source
+được lưu tại `bb31ef7…`. Run mới **`seminar-feasibility-20261025-analysis-v4`**
+trên parent `bb31ef7…`, implementation chưa commit, ghi source SHA-256 đúng
+bytes được bàn giao. Receipt giữ riêng provenance/validation cũ và mới; HEAD
+cuối lấy từ PR/Git, không nhúng hash tự tham chiếu vào tài liệu.
 
 Stage **artifact được phép** vào thư mục ignored §2: Q25 CSV, InternVL zip,
 metadata audit; tùy chọn ba Q3 result S0/S1/S3 và recovery result theo tên R3,
-bốn archive theo basename trong export. Không dùng S2 diagnostic. Tool lấy
-receipt bất biến bằng `git show`, không tải data/model.
+bốn archive S0/S1/S3/recovery theo basename trong export. ZIP S2 gốc đặt riêng
+tại `data/processed/seminar_feasibility_20261025/inputs/Qwen3-Shard2-V4.zip`.
+Không dùng S2 diagnostic. Tool lấy receipt và ordered inference metadata bất
+biến bằng `git show`, không tải data/model hoặc mở ảnh/annotation.
 
 ```console
-python -B -m scripts.analyze_source_sensitivity --input-dir data/processed/seminar_feasibility_20261024/inputs --metadata-audit data/processed/seminar_feasibility_20261024/inputs/duplicate_metadata_audit.json --include-qwen3-available --output data/processed/seminar_feasibility_20261024/analysis_v2.json
+python -B -m scripts.analyze_source_sensitivity --input-dir data/processed/seminar_feasibility_20261024/inputs --metadata-audit data/processed/seminar_feasibility_20261024/inputs/duplicate_metadata_audit.json --include-qwen3-available --qwen3-original-s2-zip data/processed/seminar_feasibility_20261025/inputs/Qwen3-Shard2-V4.zip --output data/processed/seminar_feasibility_20261025/analysis_v4.json
 python -B -m unittest discover -s tests -v
 git diff --check
 ```
 
 Output tồn tại thì từ chối ghi đè; rerun chọn tên mới. Receipt chứa input/member/
 source hashes, môi trường, lệnh và output hash. Full output có cả các miền theo
-mọi weighting nằm local `data/processed/`. Receipt Git giữ số gộp 30 kịch bản
-và các miền theo ảnh, không có ID–score vector. `analysis.json` (hai model) và
-`analysis_v2.json` (thêm cohort Q3 riêng) giữ riêng, không ghi đè lịch sử.
+mọi weighting nằm local `data/processed/`. Receipt Git giữ số gộp **40 kịch bản**
+và các miền theo ảnh, không ID–score vector. Giữ các output cũ, không ghi đè.
 
-**Đã chạy:** 40/40 unittest PASS, không FAIL/SKIP; 16 tests mới bằng fixture
+**Lượt 24/10:** 40/40 unittest PASS, không FAIL/SKIP; 16 tests bằng fixture
 tổng hợp: oracle cặp/ties/weights, lớp rỗng/đơn lớp, graph bắc cầu/mixed, exact
 join/lỗi/flags/nonfinite, checksum, member archive trùng/thiếu/symlink, chỉ đọc
 manifest/report Q3, chặn overwrite. Verification số độc lập dùng **BFS khác
@@ -395,6 +495,20 @@ implementation và liệt kê cặp positive–negative trực tiếp**, khớp 
 gộp**, sai số tối đa `2.886579864025407e-15`. Đây là kiểm tra CPU cùng task,
 không phải lượt kiểm toán độc lập Antigravity. Verifier/output local ở run
 directory, hash/lệnh ghi trong receipt.
+
+**Lượt 25/10:** **51/51 unittest PASS**, 0 FAIL/SKIP; thêm 11 tests tổng hợp cho
+ZIP/CRC/hash, archive/manifest/export, ID thiếu/thừa/trùng/order, config/unit,
+status/coverage/eligible IDs, nhãn/score nonfinite và undefined, cấm recovery
+hoặc diagnostic thay V4 gốc. BFS/pairwise oracle độc lập khớp **110/110 AUROC
+gộp** của 40 kịch bản, sai số tối đa `3.9968028886505635e-15`; xác nhận 30 kịch
+bản cũ giữ nguyên giá trị. Đây là self-verification cùng task, không là lượt
+audit độc lập Antigravity.
+
+Kiểm tra riêng không tái dùng rank implementation: đếm hai lần concordance
+bằng số nguyên, cho S2 **158.836/(2×83.366)** và V4-success gốc
+**3.786.970/(2×1.987.300)**, khớp chính xác hai AUROC đã nêu. Kiểm cả S0/S1/S3
+theo cách này sai khác tối đa `1.1102230246251565e-16` do float. Receipt giữ
+tử số/mẫu số và kết quả, không lưu các cặp hoặc score theo ảnh vào Git.
 
 Không chạy GPU/inference, dataset TEST/ảnh/annotation khóa, raw replay, CI,
 threshold selection hoặc thí nghiệm mới vì ngoài scope/thiếu mapping/quyền.
@@ -410,3 +524,5 @@ ChatGPT kiểm tra toàn bộ PR; **không merge, không gọi Antigravity**.
 [R3]: https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/evidence/three_model_20261023/verification_20261023.json
 [S3]: https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/evidence/three_model_20261023/SafeShift_three_model_report_20261023.md
 [Q25]: https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/pa3_r2_cpu_completion_20261015.md
+[V4C]: https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/safeshift/diagnostics/hnlo_train/contract.py
+[V4M]: https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/safeshift/diagnostics/hnlo_train/cohort.py
