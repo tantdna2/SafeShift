@@ -22,16 +22,17 @@ Qwen3-VL-8B-Instruct, InternVL3-2B-hf và Moondream2**.
 [D9R22 và successor Owner](docs/RESEARCH_OVERVIEW.md) giữ ba lõi phân loại xuyên
 miền, lỗi nghiêm trọng và bất đồng. [Quyết định M1](docs/research/DECISIONS.md)
 ghi lựa chọn Owner tích hợp HNLO trong Seminar hồi cứu và dùng HNLO+bất đồng
-để xếp ưu tiên kiểm tra ở Khóa luận. Successor có hiệu lực sau kiểm chứng/merge;
-khi PR còn Draft, D9R22 vẫn có hiệu lực. Moondream2 N/A được chấp nhận ở cấp
+để xếp ưu tiên kiểm tra ở Khóa luận. Successor có hiệu lực sau [hậu merge #135](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6409830030).
+Moondream2 N/A được chấp nhận ở cấp
 dự án cho định lượng Seminar, không tuyên bố ngoại lệ học vụ đã được duyệt.
 
 Hướng dùng **Hazard–Normal Label Log-Odds (HNLO, tên kỹ thuật lịch sử PA3)**
 để nghiên cứu giá trị điểm nội tại, yếu tố gây nhiễu và khả năng chuyển miền
 được chọn trong phạm vi M1 trên; DEC-PA3-011 lịch sử vẫn **PROPOSED**, không
 sửa hồi tố hoặc duyệt toàn bộ hướng A/C độc lập. HNLO không phải xác suất nguy
-cơ đã hiệu chuẩn. [Protocol/config M2](docs/research/SEMINAR_PROTOCOL.md) đã soạn,
-**còn review độc lập và Owner duyệt version/N/A**, chưa frozen hoặc mở M3.
+cơ đã hiệu chuẩn. [Protocol/config M2](docs/research/SEMINAR_PROTOCOL.md) **đã khóa
+bằng quyết định M2 và hai SHA-256**, giữ nguyên cờ snapshot lúc soạn.
+M3 đang triển khai trong Draft, chỉ CPU synthetic; xem [PROJECT_STATE](docs/PROJECT_STATE.md).
 Quyền dữ liệu/GPU/TEST và yêu cầu học vụ chưa được cấp từ quyết định đề tài.
 
 ## Bằng chứng lịch sử tiêu biểu
@@ -62,12 +63,17 @@ Từ repository root, dùng **Python 3.11+**. Tests và demo chỉ dùng standar
 ```console
 python -B -m unittest discover -s tests -v
 python -B -m scripts.demo_cpu
+python -B scripts/analyze_seminar.py --config docs/research/seminar_analysis_config.v1.json --output-dir data/processed/seminar/m3-synthetic-review
 ```
 
 Demo tạo sáu bản ghi viết tay, gồm một dự đoán INVALID, rồi xuất JSON có thông
 báo **SYNTHETIC DEMO — NOT RESEARCH RESULT**. Không cần GPU, ảnh hoặc thư viện AI.
 Không đưa số demo vào bảng kết quả khoa học. Dùng lệnh module từ root để Python
 tìm package; demo không được đóng gói như một backend hoặc công cụ suy luận.
+
+[Seminar CPU](docs/SEMINAR_ANALYSIS.md) tạo đủ R1–R5 và receipt từ 12 bản ghi
+synthetic viết tay, kiểm authority/hashes trước chạy và từ chối overwrite.
+Không đọc artifact thật; R5 giữ `PENDING_ANALYST_M4`. M4 cần grant riêng.
 
 Cài package để import từ dự án khác (tùy chọn, trong virtual environment):
 
