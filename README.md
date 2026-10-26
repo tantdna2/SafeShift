@@ -19,14 +19,20 @@ xem [nguồn, dữ liệu và giới hạn](docs/DATA_AND_ETHICS.md).
 
 Bốn mô hình thuộc yêu cầu Seminar: **Qwen2.5-VL-3B-Instruct,
 Qwen3-VL-8B-Instruct, InternVL3-2B-hf và Moondream2**.
-[D9R22 đang có hiệu lực](docs/RESEARCH_OVERVIEW.md): RQ1 về độ vững phân loại
-xuyên miền, RQ2 về nơi tập trung lỗi nghiêm trọng, RQ3 về nhất quán/bất đồng
-giữa mô hình. Protocol freeze và quyền thực thi vẫn là các điều kiện riêng.
+[D9R22 và successor Owner](docs/RESEARCH_OVERVIEW.md) giữ ba lõi phân loại xuyên
+miền, lỗi nghiêm trọng và bất đồng. [Quyết định M1](docs/research/DECISIONS.md)
+ghi lựa chọn Owner tích hợp HNLO trong Seminar hồi cứu và dùng HNLO+bất đồng
+để xếp ưu tiên kiểm tra ở Khóa luận. Successor có hiệu lực sau kiểm chứng/merge;
+khi PR còn Draft, D9R22 vẫn có hiệu lực. Moondream2 N/A được chấp nhận ở cấp
+dự án cho định lượng Seminar, không tuyên bố ngoại lệ học vụ đã được duyệt.
 
 Hướng dùng **Hazard–Normal Label Log-Odds (HNLO, tên kỹ thuật lịch sử PA3)**
 để nghiên cứu giá trị điểm nội tại, yếu tố gây nhiễu và khả năng chuyển miền
-vẫn thuộc **DEC-PA3-011 PROPOSED**, chưa thay D9R22. HNLO không phải xác suất
-nguy cơ đã hiệu chuẩn. Hướng A/C chưa được phê duyệt.
+được chọn trong phạm vi M1 trên; DEC-PA3-011 lịch sử vẫn **PROPOSED**, không
+sửa hồi tố hoặc duyệt toàn bộ hướng A/C độc lập. HNLO không phải xác suất nguy
+cơ đã hiệu chuẩn. [Protocol/config M2](docs/research/SEMINAR_PROTOCOL.md) đã soạn,
+**còn review độc lập và Owner duyệt version/N/A**, chưa frozen hoặc mở M3.
+Quyền dữ liệu/GPU/TEST và yêu cầu học vụ chưa được cấp từ quyết định đề tài.
 
 ## Bằng chứng lịch sử tiêu biểu
 

@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
 Cập nhật: **26/10/2026 (Asia/Bangkok)**. Bản nhớ trạng thái, không phải quyền thực nghiệm.
-Main đã fetch/đối chiếu GitHub: `bffc6032e65b38cb04b33520275a089d87d0d37f`.
+Main đã đối chiếu GitHub: `a425ab04695319a42bfdd2f89192717dddbb891b`.
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -13,11 +13,12 @@ Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là liv
 
 ## CURRENT STATUS
 
-- **Milestone hiện tại: M1 — chờ phê duyệt khoa học chính thức.** M2–M8 chưa hoàn tất/chưa được tài liệu này cấp quyền.
-- D9R22 vẫn có hiệu lực; HNLO/DEC-PA3-011 **PROPOSED**; A/C chưa được phê duyệt.
-- PR #133 hoàn thành về tài liệu và merge; không đồng nghĩa M1 PASS/protocol freeze.
+- **M1:** quyết định Owner/Research Lead trong quyền dự án đã ghi tại [DEC-20261026-M1](research/DECISIONS.md); chờ kiểm chứng/merge hồ sơ để successor có hiệu lực.
+- **M2:** protocol/config hoàn thành về tài liệu; **khoa học PENDING review độc lập + Owner duyệt đúng version/N/A**. Chưa frozen, chưa M2 PASS.
+- D9R22 còn hiệu lực khi PR này Draft; successor chỉ thay phần liệt kê sau merge. DEC-PA3-011 lịch sử giữ PROPOSED; hướng tích hợp HNLO được Owner chọn, không duyệt toàn bộ A/C độc lập.
+- PR #133/#134 đã merge; merge tài liệu không tự freeze M2 hoặc cấp quyền thực nghiệm.
 - Foundation V1 + công cụ saved-score CPU đã có; chưa có hệ thống Seminar R1–R5 hoàn chỉnh, backend VLM/raw writer/triage production.
-- Chặn setup/phân tích mới cho đến quyết định M1, protocol M2 và task/quyền tương ứng.
+- M3 chưa triển khai, setup/phân tích thật chưa được cấp trong task M1/M2.
 
 ## VERIFIED COMPLETED WORK
 
@@ -28,41 +29,42 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 | Foundation V1: records/validation, exact join, confusion/support/recall, transport interface, demo tổng hợp | [#130](https://github.com/tantdna2/SafeShift/pull/130), [`2810bee6f404a1c41cca4a2bbe45baf5ac48358a`](https://github.com/tantdna2/SafeShift/commit/2810bee6f404a1c41cca4a2bbe45baf5ac48358a); [ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/130#issuecomment-6380465749) |
 | Source feasibility/sensitivity CPU và original V4 saved-score verification | [#131](https://github.com/tantdna2/SafeShift/pull/131), [`3bcd3535ea51e023de77417ed5f2077607d49c93`](https://github.com/tantdna2/SafeShift/commit/3bcd3535ea51e023de77417ed5f2077607d49c93); [ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/131#issuecomment-6394591862) |
 | Hướng xuyên Seminar–Khóa luận và Master Plan M1–M8, chỉ phạm vi tài liệu | [#133](https://github.com/tantdna2/SafeShift/pull/133), [`bffc6032e65b38cb04b33520275a089d87d0d37f`](https://github.com/tantdna2/SafeShift/commit/bffc6032e65b38cb04b33520275a089d87d0d37f); [ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/133#issuecomment-6399480255) |
+| Execution Plan M1–M8 và continuity | [#134 MERGED](https://github.com/tantdna2/SafeShift/pull/134), [`a425ab04695319a42bfdd2f89192717dddbb891b`](https://github.com/tantdna2/SafeShift/commit/a425ab04695319a42bfdd2f89192717dddbb891b); trạng thái/merge SHA kiểm trực tiếp GitHub trong task này, cùng [xác nhận ChatGPT](https://github.com/tantdna2/SafeShift/pull/134#issuecomment-6406751802) |
 
 ## ACTIVE WORK
 
-- **PLAN-01:** hoàn thiện Execution Plan và cơ chế continuity trong đúng hai file Markdown.
-- Branch: `docs/final-execution-plan-20261026`; BASE bằng main ở đầu file.
-- Trạng thái: [PR #134](https://github.com/tantdna2/SafeShift/pull/134) **OPEN / DRAFT**, sản phẩm tài liệu đã hoàn thiện và tự kiểm; chưa merge, chờ ChatGPT kiểm tra GitHub/kiểm toán theo quy trình.
-- Phạm vi: task cards M1–M8, hồ sơ M1, reuse/gap/setup tối thiểu, checks/cohort/authority và trạng thái dự án. Không code/setup/inference/GPU/TEST.
+- **M1-01 + M2-01 trong một Draft PR:** hồ sơ quyết định append-only, [protocol](research/SEMINAR_PROTOCOL.md), [config v1](research/seminar_analysis_config.v1.json) và đồng bộ tài liệu hiện hành.
+- Branch: `docs/m1-m2-seminar-protocol-20261026`; BASE bằng main ở đầu file.
+- Trạng thái bàn giao: **DRAFT / CHỜ REVIEW**, chưa merge; PR URL/BASE/HEAD và kiểm tra cuối ở mô tả PR.
+- Phạm vi chỉ tài liệu/config; không setup project, M3, artifact analysis, raw replay, inference/GPU/TEST. Review M2 còn pending trong cùng PR, không task/PR khảo sát phụ.
 - BASE/HEAD chính xác và kết quả kiểm tra cuối ghi ở mô tả PR để tránh hash tự tham chiếu.
 
 ## KEY DECISIONS
 
-- Giữ đề tài đã chọn trong PR #133; không mở lại P1/P2/P3. Lựa chọn đề xuất không tự thành quyết định khoa học.
+- Giữ đề tài PR #133, A1–A8 đã được Owner quyết định trong quyền dự án theo [nguồn thật](https://github.com/tantdna2/SafeShift/pull/134#issuecomment-6406751802); không phải chữ ký giảng viên/đổi chuẩn học phần.
 - Bốn model: Qwen2.5-VL-3B-Instruct, Qwen3-VL-8B-Instruct, InternVL3-2B-hf, Moondream2.
-- Seminar đề nghị bảng bốn model, định lượng ba; Moondream2 HNLO TRAIN N/A cần ngoại lệ Lead, **chưa được duyệt**. Feature set Khóa luận cần duyệt riêng.
+- Owner chấp nhận bảng bốn model, định lượng ba, Moondream2 HNLO TRAIN N/A ở cấp dự án (A4). Ngoại lệ học vụ chưa xác minh; feature set Khóa luận cần quyết định riêng.
 - Q25/IVL3 full 3.763; common ba model đúng 3.539 SUCCESS Q3 V4 gốc; Q3 planned 3.763 = 3.539 SUCCESS + 1 lỗi + 223 chưa chạy. Recovery224 riêng, không pooling.
-- IVL3/Q3 là saved-score verification, không raw PASS mới. Source identity/CI chưa được xác minh/tính; sensitivity vẫn PROPOSED_EXPLORATORY.
+- IVL3/Q3 là saved-score verification, không raw PASS mới. Source identity/CI chưa xác minh/tính; metric và sensitivity v1 được đặc tả để review, chưa tự approved.
 - False-safe V4-only phải đếm đúng ID; không lấy 38 hoặc khoảng 30–38 từ composite làm số chính thức. Bất đồng suy biến trong tập triage mới là giả thuyết cần đo.
 - H-T so cùng predictor/cohort/review budget, baseline Q3-HNLO-only và toàn chi phí model phụ; đánh giá xác nhận cần nguồn/nhãn độc lập, target giữ kín.
 
 ## KNOWN BLOCKERS
 
-- Thiếu quyết định Research Lead/giảng viên về RQ/HNLO, ngoại lệ Moondream2, N/A/control và mức đóng góp Khóa luận đủ chuẩn: chặn M1 PASS/M2.
-- Chưa có protocol M2 đã duyệt và authority task setup/CPU artifact mới: chặn M3/M4; code Foundation không tự cấp quyền.
-- Chưa xác minh đủ hazard map/continuous controls cho mọi ô Seminar; M2 phải khóa khả dụng/N/A có duyệt, không bịa field.
+- B04: thiếu review độc lập và Owner duyệt protocol/config hash + N/A cụ thể; chặn **M2 khoa học PASS/M3**, dù tài liệu đã DONE. M1 không còn thiếu lựa chọn Owner; hiệu lực successor chờ merge.
+- B01/B02/B05: hazard mapping 12 atoms/7 nhóm, continuous controls và D3 mismatch/proxy mapping thiếu bằng chứng; protocol khóa BLOCKED/N/A đúng panel, acceptance giới hạn còn pending, không giả đủ S-RQ2 hazard.
+- B03: Q25 attempt IDs/một số native details IVL3/recovery chưa xác minh, giữ giới hạn hash-bound saved-report; không tự nâng raw/runtime audit.
+- B06: chưa có task setup M3/quyền artifact M4, quyền mới raw/GPU/ảnh/nhãn/TEST; chuẩn học vụ/ngoại lệ chính thức không được Owner tự quyết thay bên ngoài.
 - Chưa có nguồn đánh giá độc lập/nhãn chuyên gia/target custodian/precision-events và tài nguyên được xác nhận: chặn M6/M7 xác nhận, không chặn Seminar sau các gate riêng.
 - Raw audit/model capability còn giới hạn; không yêu cầu raw replay mới cho mọi kết luận saved-score. Moondream2 thiếu endpoint tương thích không được âm thầm loại bỏ.
 
 ## NEXT TASK
 
-**M1-01 — Nhận và ghi quyết định khoa học chính thức.**
+**M3-01 — Triển khai trọn vẹn hệ thống phân tích Seminar CPU, sau M1/M2 PASS.**
 
-- Đầu vào: [EXECUTION_PLAN §2](EXECUTION_PLAN.md#2-hồ-sơ-m1-sẵn-để-trình-research-leadgiảng-viên), hai tài liệu PR #133, điều kiện hậu audit và thẩm quyền D9R22/DEC-PA3-011.
-- Điều kiện bắt đầu: bàn giao/review kế hoạch hiện tại hoàn tất theo quy trình, task trình duyệt được giao; chỉ ghi approved khi có phản hồi thực của người có thẩm quyền.
-- Sản phẩm: quyết định append-only dưới `docs/research/DECISIONS.md` (dự kiến), người duyệt/ngày/bằng chứng, approved/pending/ngoại lệ và quyền bước tiếp; cập nhật state cùng Draft PR. Hồ sơ trình duyệt đã sẵn, không thêm PR soạn brief.
-- Chỉ M1 PASS mới giao M2-01; không chuyển thẳng sang setup/thực nghiệm.
+- **Chưa được bắt đầu:** review/phê duyệt M2 và chấp nhận N/A/claim ở B01–B05 phải hoàn tất trong cùng gói PR hiện tại; hồ sơ M1 phải có hiệu lực và task CPU riêng được giao.
+- Đầu vào trực tiếp: protocol/config v1 đã review đúng hash, quyết định append-only và [Execution Plan M3](EXECUTION_PLAN.md#m3-01--hoàn-thiện-hệ-thống-phân-tích-seminar-cpu); không khảo sát/lập kế hoạch lần nữa.
+- Sản phẩm M3: reader/provenance/status, metric/report R1–R5, CLI, synthetic tests/oracle, docs/config/receipt trong một PR. Không đọc artifact thật hoặc triển khai GPU/backend/triage.
 
 ## IMPORTANT REFERENCES
 

@@ -4,6 +4,15 @@ Ngày lập: **26/10/2026 (Asia/Bangkok)**. BASE đã đối chiếu GitHub và 
 Đây là bản giao việc từ [hướng đã chọn](research/SEMINAR_THESIS_DIRECTION_LOCK_20261025.md) và [Master Plan](research/SEMINAR_THESIS_MASTER_PLAN_20261025.md), không thay hai tài liệu đó hoặc tạo quyết định khoa học mới.
 Trạng thái tiếp nối ngắn gọn: [PROJECT_STATE](PROJECT_STATE.md).
 
+> **Cập nhật 26/10/2026 sau merge #134:** Owner đã giao ghi M1 và soạn M2 trong
+> **một Draft PR**, theo [chỉ thị có giới hạn](https://github.com/tantdna2/SafeShift/pull/134#issuecomment-6406751802).
+> [DEC-20261026-M1](research/DECISIONS.md) ghi quyết định A1–A8 trong quyền dự án;
+> [protocol/config M2](research/SEMINAR_PROTOCOL.md) đã soạn, **review khoa học còn
+> PENDING**. Những câu “hiện tại chờ M1”, “tất cả PENDING” và NEXT M1 bên dưới
+> là snapshot lập kế hoạch trước chỉ thị này, không trạng thái hiện hành.
+> A6/học vụ không được tự gán APPROVED. Successor D9R22 chờ kiểm chứng/merge;
+> M3-01 là task tiếp sau M1/M2 PASS và task CPU riêng, chưa được thực hiện hôm nay.
+
 ## 1. Phạm vi, thẩm quyền và cách giao việc
 
 **Đề tài:** SafeShift — Đánh giá và cải thiện độ tin cậy của quyết định nguy cơ an toàn công nghiệp bằng mô hình ngôn ngữ–thị giác.
