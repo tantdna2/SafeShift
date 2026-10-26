@@ -15,12 +15,15 @@ cứu nhãn–HNLO–lỗi/bất đồng; Khóa luận thực nghiệm logistic 
 tiên kiểm tra với Q3 cố định. Không tự nhận kiến trúc mới, phê duyệt giảng viên,
 thay đổi chuẩn học phần hay quyền dữ liệu/tài nguyên.
 
-Hồ sơ successor chỉ có hiệu lực sau kiểm chứng/merge; **khi còn Draft, D9R22
-vẫn có hiệu lực**. Sau merge, kế thừa lõi D9R22 và chỉ thay/bổ sung các phần
+Hồ sơ successor chỉ có hiệu lực sau merge và ChatGPT xác minh hậu merge;
+**khi PR #135 còn Draft, D9R22 vẫn có hiệu lực**. Sau đó kế thừa lõi D9R22 và chỉ thay/bổ sung các phần
 liệt kê ở quyết định mới; DEC-PA3-011 lịch sử không bị sửa thành APPROVED.
 [Protocol M2](research/SEMINAR_PROTOCOL.md) và [config v1](research/seminar_analysis_config.v1.json)
-đã hoàn thành về tài liệu, **chưa frozen, còn review độc lập và Owner duyệt đúng
-version/N/A**. Tên đề tài được chọn là “SafeShift: Đánh giá và cải thiện độ tin
+được **Owner phê duyệt M2 v1 đúng hai hash** tại [DEC-20261026-M2](research/DECISIONS.md#dec-20261026-m2),
+sau [đối chiếu kiểm toán PASS](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408340899)
+và [quyết định Owner](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408943462).
+Khóa khoa học có hiệu lực repository chờ merge/xác minh hậu merge; chưa COMPLETE
+khi Draft. Tên đề tài được chọn là “SafeShift: Đánh giá và cải thiện độ tin
 cậy của quyết định nguy cơ an toàn công nghiệp bằng mô hình ngôn ngữ–thị giác”.
 
 ## Hợp đồng lịch sử và phần được bổ sung
@@ -32,7 +35,7 @@ cậy của quyết định nguy cơ an toàn công nghiệp bằng mô hình ng
 | S-RQ2 | Lỗi nghiêm trọng theo 12 atoms; 7 nhóm phụ, chồng lấp không cộng | Lỗi tập trung ở đâu, nhạy thế nào với missing/ảnh trùng/giả định nhóm? Hazard mapping hiện BLOCKED đúng panel. |
 | S-RQ3 | Nhất quán/bất đồng, tái dùng dự đoán RQ1/RQ2 | Bất đồng và HNLO liên hệ với lỗi/false-safe hay chỉ phản ánh thiên lệch chung? Không dùng hazard AUROC thay error detection. |
 | Đầu vào phân tích | Nhãn đã parse và metadata có quyền | Saved HNLO/report đúng hash/run; Q25/IVL3 3.763 và ba model cùng 3.539 Q3 V4 SUCCESS gốc; Recovery224 riêng |
-| Phần chưa chốt | Production/freeze/execution không suy từ readiness | M2 review/version approval/N/A cụ thể; quyền setup/CPU artifact/raw/GPU/ảnh/nhãn/TEST riêng |
+| Hiệu lực và quyền còn chờ | Production/freeze/execution không suy từ readiness | M2 Owner đã duyệt đúng hash và giới hạn; chờ merge + hậu merge. M3 CPU SYNTHETIC cần task riêng sau đó; M4/artifact thật/raw/GPU/ảnh/nhãn/TEST/Khóa luận chưa cấp quyền. |
 
 Nguồn D9R22 là
 [config được phê duyệt](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/configs/pre_freeze/d9r22_seminar_scope.v1.json).
@@ -40,7 +43,13 @@ HNLO và điều kiện phê duyệt nằm trong
 [DEC-PA3-011](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/DECISIONS.md#dec-pa3-011--proposed-seminar-internal-hazard-score-direction-2026-10-16)
 và [hồ sơ bốn mô hình](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/pa3_four_model_seminar_scope.md).
 Bảng đối chiếu này không cấp quyền chạy; công thức/denominator/cohort/ties nằm
-trong protocol M2 đang chờ review, không để người triển khai tự chọn.
+trong protocol M2 v1 đúng hash đã được Owner duyệt, không để người triển khai tự chọn.
+
+Hai file khoa học giữ nguyên từng byte, gồm `frozen=false`, PENDING và refs null
+lúc soạn. Các cờ đó và lời chờ duyệt trong snapshot cũ không phủ định quyết định
+append-only mới. M3 phải đối chiếu DEC-20261026-M2 có hiệu lực, bằng chứng hậu
+merge/task và hai hash trước chạy fixture; thiếu hiệu lực hoặc sai hash thì từ
+chối chạy, không tự đổi cờ/hash để kích hoạt.
 
 Theo D9R22, grounding được hoãn khỏi phạm vi Seminar chính và có thể là mở rộng
 Khóa luận; việc hoãn không phải thất bại khoa học. Các nhóm metric RQ3 mới được
@@ -72,14 +81,19 @@ kiểu dữ liệu. Không có thực nghiệm mới trong Foundation V1. Nhữn
 TRAIN đã có thuộc source/release cũ và được phân loại theo mức kiểm chứng trong
 [RESULTS_AND_LIMITATIONS](RESULTS_AND_LIMITATIONS.md).
 
-M1 ghi nhận lựa chọn Owner; M2 tài liệu DONE nhưng khoa học PENDING. Hazard map,
-continuous controls, mismatch/proxy mapping và một số native provenance details
-còn thiếu; N/A/claim cụ thể cần chấp nhận theo protocol B01–B05. Không giả có
-đủ mapping để kết luận đầy đủ S-RQ2, không gọi HNLO vượt mọi continuous control.
+M1 APPROVED khoa học dự án; M2 **OWNER_APPROVED_FOR_PROJECT_SEMINAR** đúng hash,
+cả hai chờ hiệu lực repository sau merge + ChatGPT xác minh hậu merge. B04 đã
+có kiểm toán/đối chiếu PASS và Owner duyệt. Owner chấp nhận B01 BLOCKED 12 atoms/
+7 nhóm, xuất 19 placeholders; B02 continuous logit controls N/A; B03 giới hạn
+saved-report/provenance; B05 mismatch/proxy BLOCKED, giữ năm folder_domain.
+Các thiếu hụt vẫn tồn tại: không kết luận per-atom/group, không tuyên bố HNLO
+vượt control chưa có hoặc mạo nhận raw audit mới/nguồn thật/nhân quả.
 
 Khóa luận cần nguồn/nhãn chuyên gia/target giữ kín độc lập, đủ nguồn/sự kiện theo
 precision plan trước target; TRAIN phơi nhiễm không thay đánh giá xác nhận.
 Chuẩn học vụ, quyền dữ liệu/tài nguyên và protocol approval là các trục riêng.
-Xem [PROJECT_STATE](PROJECT_STATE.md) và [ROADMAP](ROADMAP.md). Sau M1/M2 PASS,
-NEXT TASK là **M3-01: hệ thống phân tích Seminar CPU trọn vẹn**; hiện chưa triển
-khai hoặc được cấp setup/GPU/inference/TEST từ task tài liệu này.
+Xem [PROJECT_STATE](PROJECT_STATE.md) và [ROADMAP](ROADMAP.md). Sau ChatGPT xác
+minh hậu merge M1/M2 và chính thức giao việc, NEXT TASK là **M3-01: hệ thống
+phân tích Seminar CPU trọn vẹn, chỉ fixtures SYNTHETIC**. M3 chưa triển khai;
+M4/artifact thật, GPU/inference/raw replay/TEST/ảnh/nhãn/tài nguyên ngoài và
+các giai đoạn Khóa luận chưa cấp quyền.

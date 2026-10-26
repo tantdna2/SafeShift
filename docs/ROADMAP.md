@@ -13,14 +13,27 @@ Không merge hoặc gọi Antigravity để chuyển sang kiểm toán độc l�
   cho ghi M1 và soạn M2 trong một Draft PR. [Quyết định append-only](research/DECISIONS.md)
   ghi A1–A8 trong quyền SafeShift Owner/Research Lead; successor chỉ có hiệu lực
   sau kiểm chứng/merge, trước đó D9R22 còn hiệu lực. Không sửa lịch sử.
-- [Protocol M2](research/SEMINAR_PROTOCOL.md)/[config v1](research/seminar_analysis_config.v1.json)
-  **DONE tài liệu / PENDING khoa học**, cần review độc lập, Owner duyệt version
-  và N/A/claim B01–B05; không tự freeze từ quyết định M1.
+- [DEC-20261026-M2](research/DECISIONS.md#dec-20261026-m2) ghi **OWNER_APPROVED_FOR_PROJECT_SEMINAR**
+  cho [protocol](research/SEMINAR_PROTOCOL.md)/[config v1](research/seminar_analysis_config.v1.json)
+  đúng hai hash, sau [đối chiếu PASS](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408340899)
+  và [Owner phê duyệt](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408943462).
+  M1/M2 chờ hiệu lực repository sau **PR #135 merge + ChatGPT xác minh hậu merge**;
+  PR hiện OPEN/DRAFT, chưa COMPLETE; quyết định khoa học không cấp quyền merge.
+- B01/B05 giữ BLOCKED, B02 N/A, B03 giới hạn saved-report/provenance đã được
+  chấp nhận: 19 placeholders hazard, không kết luận atom/nhóm; giữ năm folder_domain,
+  không claim HNLO vượt control chưa có, raw audit mới hoặc nguồn/nhân quả.
 - Moondream2 N/A đã được Owner chấp nhận cho định lượng Seminar **cấp dự án**,
   đủ roster bốn model. Chưa xác minh ngoại lệ/chuẩn học vụ của giảng viên.
-- NEXT TASK sau M1/M2 PASS: **M3-01 triển khai trọn hệ thống phân tích CPU**,
-  reader/metrics/CLI/tests/config/docs; chưa triển khai M3 trong task này.
-  M4 vẫn cần grant artifact riêng. Không mở task khảo sát/kế hoạch phụ.
+- NEXT TASK sau ChatGPT xác minh hậu merge M1/M2 và chính thức giao M3:
+  **M3-01 triển khai trọn hệ thống phân tích CPU, chỉ fixtures SYNTHETIC**,
+  reader/metrics/CLI/tests/config/docs; **M3 chưa triển khai**. M4/artifact thật,
+  raw/GPU/inference/TEST/ảnh/nhãn/tài nguyên ngoài và Khóa luận chưa cấp quyền.
+  Không mở task khảo sát/kế hoạch phụ.
+
+Hai file khoa học giữ nguyên bytes đã duyệt, gồm cờ PENDING/`frozen=false` lúc
+soạn. Quyết định M2 append-only + hai hash + bằng chứng hiệu lực quyết định khóa
+khoa học; M3 phải kiểm trước chạy fixture, thiếu hiệu lực hoặc hash sai thì từ
+chối. Chấp nhận giới hạn không có nghĩa dữ liệu thiếu đã được khắc phục.
 
 Phần Foundation và gói #131 dưới đây là snapshot bằng chứng đã hoàn thành;
 các lời chờ quyết định trước 26/10 được cập nhật bằng mục này và PROJECT_STATE.
@@ -56,7 +69,8 @@ Draft PR; [ARCHITECTURE](ARCHITECTURE.md) mô tả phạm vi API.
 - [x] Code CPU, tests tổng hợp, oracle số bằng cặp/BFS; so C với D9R22,
   đánh giá A, brief giảng viên và blockers cụ thể.
 - [x] PR #131 đã merge; [bằng chứng hậu merge](https://github.com/tantdna2/SafeShift/pull/131#issuecomment-6394591862).
-  Hướng/estimand do Owner quyết định tại M1; metric/grouping v1 còn review M2.
+  Hướng/estimand do Owner quyết định tại M1; metric/grouping M2 v1 đã được Owner
+  duyệt đúng hash, chờ hiệu lực repository theo mục cập nhật trên.
 
 [Hồ sơ](SOURCE_FEASIBILITY_GATE_20261024.md) và
 [receipt](SOURCE_FEASIBILITY_RECEIPT_20261024.json) ghi bằng chứng mới/giới hạn.
@@ -70,12 +84,12 @@ nhật trên; không nâng evidence của #131 hay duyệt toàn bộ hướng A
    khép 25/10, giữ rerun/recovery riêng. Còn raw replay theo hợp đồng model và
    quyền cụ thể, giới hạn outer receipt Qwen2.5. Không sửa lịch sử hoặc gọi
    archive/saved-score verification là raw PASS.
-2. **Hiệu lực M1:** quyết định Owner đã được ghi append-only, chờ kiểm chứng/
-   merge successor. Phạm vi HNLO tích hợp được chọn; chuẩn học vụ chưa xác minh.
-3. **Review hợp đồng M2:** protocol/config đã có công thức/eligibility/denominator,
-   model/run/cohort và C01–C10; cần review độc lập và quyết định đúng version.
-   Hazard map/control/mismatch/provenance thiếu được chặn riêng, N/A/claim chưa
-   tự approved. Không mặc định token mapping Qwen áp cho model khác.
+2. **Hiệu lực M1:** quyết định Owner APPROVED khoa học dự án, chờ merge successor
+   và ChatGPT xác minh hậu merge. Chuẩn học vụ chưa xác minh.
+3. **Hiệu lực M2:** kiểm toán/đối chiếu PASS và Owner đã duyệt đúng hai hash cùng
+   giới hạn B01/B02/B03/B05/Moondream2. Còn kiểm HEAD bổ sung, quyền merge và
+   xác minh hậu merge; không sửa protocol/config để đổi PENDING/frozen. Dữ liệu
+   thiếu vẫn thiếu; không mặc định token mapping Qwen áp cho model khác.
 4. **Bổ sung code có nhiệm vụ cụ thể:** dataset adapter được phép, artifact
    writer/raw-before-parse, provenance/checksum, parser và evaluation đã duyệt;
    mỗi phần có test synthetic và review. Không phục hồi toàn pipeline cũ.

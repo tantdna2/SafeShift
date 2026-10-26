@@ -85,3 +85,107 @@ Quyền học vụ, quyền dữ liệu/tài nguyên và phê duyệt M2 tách b
 không tự phủ định A1–A8 trong thẩm quyền Owner, cũng không được gán quyền đó
 APPROVED để khép milestone. **M3-01 chỉ bắt đầu sau M1 có hiệu lực, M2 khoa học
 PASS và giao task triển khai CPU riêng**; task hiện tại dừng ở một Draft PR.
+
+## DEC-20261026-M2
+
+### Người quyết định, bằng chứng và trạng thái
+
+- Người quyết định: **SafeShift Owner / Research Lead**, theo xác nhận Owner
+  trong cuộc trò chuyện và [comment phê duyệt M2 v1](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408943462).
+  Comment do ChatGPT chuyển phát biểu Owner vào GitHub `tantdna2`; không phải
+  chữ ký/văn bản phê duyệt của giảng viên, nhà trường hoặc chủ dữ liệu bên ngoài.
+- Ngày phê duyệt: **26/10/2026 (Asia/Bangkok)**; comment tạo lúc
+  `2026-10-26T05:28:35Z` (12:28:35 giờ Bangkok).
+- **Trạng thái: OWNER_APPROVED_FOR_PROJECT_SEMINAR** cho chính xác hai file
+  dưới đây và các giới hạn đã chấp nhận; không thay metric/cohort/model/dữ liệu.
+- B04: báo cáo kiểm toán độc lập Antigravity được ghi nhận **PASS /
+  READY_FOR_OWNER_FREEZE** tại HEAD `6c78973f715c814735a51c871d2fac5de697b20b`;
+  [ChatGPT đối chiếu độc lập PASS](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408340899)
+  xác nhận đã đọc báo cáo, kiểm GitHub và tái tính hai hash. Comment phê duyệt
+  Owner nêu trên xác nhận quyết định khoa học theo đúng version sau đối chiếu.
+  Đây là bằng chứng kế thừa được dẫn nguồn, không phải Codex tự nhận đã thực
+  hiện kiểm toán độc lập mới hoặc chứng minh implementation M3 đã tồn tại.
+- PR #135 vẫn **OPEN / DRAFT**, chưa merge. Phê duyệt khoa học dự án đã có;
+  **khóa khoa học có hiệu lực trên repository chỉ sau khi PR #135 được merge
+  và ChatGPT xác minh hậu merge**. Chưa có merge authorization trong quyết định
+  này, không đánh dấu M1/M2 COMPLETE hoặc bắt đầu M3 khi còn Draft.
+
+### Hai nội dung bất biến được phê duyệt
+
+| Nội dung | File | SHA-256 của chính bytes được duyệt |
+| --- | --- | --- |
+| Protocol v1 | [SEMINAR_PROTOCOL.md](SEMINAR_PROTOCOL.md) | `54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1` |
+| Config v1 | [seminar_analysis_config.v1.json](seminar_analysis_config.v1.json) | `dd3b86660f0795dba099abac0d8a3b8bd3498e625e49b128aa9c50e72639e5ff` |
+
+Không sửa hai file, kể cả cờ `frozen=false`, `scientific_status` PENDING,
+`approval_ref=null`, các acceptance refs null và trạng thái quyền lúc soạn.
+Những giá trị này cùng lời chờ duyệt trong bản gốc là **snapshot trước phê
+duyệt**; không được đọc riêng để phủ định quyết định mới, cũng không được sửa
+chúng để tạo hash mới. Trạng thái approval/freeze có hiệu lực xác định bằng
+**quyết định append-only này + hai hash + bằng chứng đủ điều kiện hiệu lực**.
+
+Mục này bổ sung quyết định M1, hoàn tất phần review/phê duyệt M2 còn chờ trong
+M1 và các snapshot tài liệu trước phê duyệt; không sửa hoặc hồi tố nội dung M1,
+D9R22/DEC-PA3-011. Giới hạn còn thiếu bằng chứng không trở thành dữ liệu đã có.
+
+### Các giới hạn Owner đã chấp nhận
+
+| Thành phần | Quyết định và phạm vi kết luận được phép |
+| --- | --- |
+| B01 | Chấp nhận **BLOCKED** cho 12 hazard atoms và 7 nhóm: xuất **19 placeholders** có cờ trạng thái; không kết luận theo từng atom/nhóm. Giữ các panel miền, mức nhãn và lỗi đã đặc tả. Không coi thiếu map là đã khắc phục. |
+| B02 | Chấp nhận **N/A** cho continuous logit controls (entropy/margin/probability từ logits). Không tuyên bố HNLO vượt đối chứng chưa có hoặc đã loại confounding; không thay bằng entropy vote/textual confidence. |
+| B03 | Chấp nhận **UNVERIFIED_DETAIL** và giới hạn phân tích trên saved reports lịch sử đúng hash; không mạo nhận raw audit mới, native attempt provenance chưa biết hoặc runtime verification đầy đủ. Recovery vẫn reference-only, không ghép vào V4 gốc. |
+| B05 | Chấp nhận **BLOCKED** cho mismatch/proxy mapping; vẫn phân tích theo năm `folder_domain` của D3. Không suy nhãn người/thiết bị, site/nguồn đã xác minh hoặc kết luận nhân quả từ metadata heuristic. |
+| Moondream2 / A4 | Giữ model trong roster **bốn mô hình**; HNLO TRAIN định lượng **N/A ở cấp dự án Seminar**. Không là ngoại lệ học vụ đã xác minh và không cho phép bỏ model ở công việc tương lai. |
+| B04 | **Đã đáp ứng review độc lập, ChatGPT đối chiếu PASS và Owner phê duyệt M2 v1 đúng hai hash**, theo các nguồn trên. HEAD bổ sung quyết định/trạng thái vẫn phải được ChatGPT kiểm tra trước quyền merge; hiệu lực khóa chờ merge và xác minh hậu merge. |
+| B06 / M3 | Chỉ cấp **phạm vi có điều kiện cho task M3 kế tiếp: CPU + fixtures hoàn toàn SYNTHETIC**. Cần M1/M2 đã merge, ChatGPT xác minh hậu merge và ChatGPT chính thức giao M3. Hiện chưa triển khai M3. Không cấp quyền payload thật/M4, GPU, inference, raw replay, TEST, ảnh/annotation/nhãn, lấy dataset development/target, tài nguyên bên ngoài hoặc quyền mới cho các giai đoạn Khóa luận. |
+
+### Hợp đồng kiểm hiệu lực bắt buộc cho M3
+
+M3 phải kiểm trước khi chạy fixtures: quyết định này hiện diện trong source
+M1/M2 đã merge được xác minh; có nguồn ChatGPT xác minh hậu merge gắn đúng
+merge commit và giao task M3; bytes protocol/config đúng hai hash dưới đây,
+đồng thời config `protocol.sha256` khớp protocol. **Thiếu quyết định có hiệu
+lực, thiếu bằng chứng hậu merge/task grant, hoặc sai bất kỳ hash nào → từ chối
+chạy**, không fallback sang cờ PENDING/frozen của snapshot hoặc tự cập nhật hash.
+Receipt synthetic phải dẫn decision ID, merge/post-merge/task refs, source SHA
+và hai content hashes. Đây là yêu cầu cho M3 triển khai/test sau khi được giao,
+không phải code hoặc bằng chứng runtime enforcement trong task tài liệu này.
+
+Khối dữ liệu dưới đây là phần của quyết định append-only để M3 đối chiếu;
+`effective_when` là điều kiện phải kiểm, không phải tuyên bố chúng đã xảy ra:
+
+```json
+{
+  "schema_version": "safeshift-m2-owner-decision-v1",
+  "decision_id": "DEC-20261026-M2",
+  "status": "OWNER_APPROVED_FOR_PROJECT_SEMINAR",
+  "approved_by": "SafeShift Owner / Research Lead",
+  "approval_ref": "https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408943462",
+  "audit_reconciliation_ref": "https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408340899",
+  "reviewed_scientific_head_sha": "6c78973f715c814735a51c871d2fac5de697b20b",
+  "protocol": {
+    "path": "docs/research/SEMINAR_PROTOCOL.md",
+    "sha256": "54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1"
+  },
+  "config": {
+    "path": "docs/research/seminar_analysis_config.v1.json",
+    "sha256": "dd3b86660f0795dba099abac0d8a3b8bd3498e625e49b128aa9c50e72639e5ff"
+  },
+  "effective_when": [
+    "PR_135_MERGED_WITH_M1_M2_DECISIONS",
+    "CHATGPT_POST_MERGE_VERIFICATION_FOR_EXACT_MERGE_COMMIT"
+  ],
+  "m3_scope": "CPU_SYNTHETIC_FIXTURES_ONLY",
+  "m3_additional_condition": "CHATGPT_FORMALLY_ASSIGNS_M3_AFTER_EFFECTIVENESS",
+  "m4_real_artifact_access_granted": false,
+  "gpu_inference_raw_replay_test_image_label_external_resource_access_granted": false,
+  "thesis_execution_granted": false,
+  "merge_authorized_by_this_decision": false
+}
+```
+
+Thay đổi hai file khoa học về sau cần quyết định version/hash mới, không chuyển
+phê duyệt này sang bytes khác. **NEXT TASK sau xác minh hậu merge và giao việc:
+M3-01 — triển khai trọn hệ thống phân tích Seminar CPU trên fixture SYNTHETIC**.
+M4 cần quyền đọc artifact thật riêng; Khóa luận/học vụ vẫn có các gate riêng.
