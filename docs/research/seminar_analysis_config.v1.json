@@ -1,0 +1,864 @@
+{
+  "schema_version": "safeshift-seminar-analysis-config-v1",
+  "protocol": {
+    "id": "safeshift-seminar-retrospective-v1",
+    "path": "docs/research/SEMINAR_PROTOCOL.md",
+    "sha256": "54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1",
+    "frozen": false,
+    "documentation_status": "DONE",
+    "scientific_status": "INDEPENDENT_REVIEW_AND_OWNER_APPROVAL_PENDING",
+    "approval_ref": null
+  },
+  "decision_ref": "docs/research/DECISIONS.md#dec-20261026-m1--phạm-vi-seminarkhóa-luận-do-owner-quyết-định",
+  "base_sha": "a425ab04695319a42bfdd2f89192717dddbb891b",
+  "timezone": "Asia/Bangkok",
+  "execution_permissions": {
+    "documentation_and_git_receipt_read": "AUTHORIZED_CURRENT_TASK",
+    "m3_implementation_task": "NOT_YET_GRANTED",
+    "m4_artifact_read_grant_ref": null,
+    "real_analysis_enabled": false,
+    "raw_replay": false,
+    "image_annotation_read": false,
+    "test_access": false,
+    "gpu_inference": false,
+    "new_label_data_rights": false
+  },
+  "evidence_lock": {
+    "path": "docs/SOURCE_FEASIBILITY_RECEIPT_20261024.json",
+    "sha256": "4670b92ba67d1e4c24bfaf85a2fde19cbaa71a56af2927f379611682d610c0d3",
+    "historical_sources": [
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "notes/pa3_r2_cpu_completion_20261015.summary.json",
+        "sha256": "9824001156cd3ada15505383910fec3a7df4f83500e8cfc829aef812c1a42d4e",
+        "role": "CONTRACT_REFERENCE_NOT_EXECUTION_GRANT"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "notes/pa3_r2_cpu_completion_20261015.md",
+        "sha256": "239c071f471d6b0c50f9ecb83501291ae61aa1889a179a88f3e939619a589fc0",
+        "role": "CONTRACT_REFERENCE_NOT_EXECUTION_GRANT"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "configs/diagnostics/hnlo_train_authority.v4.json",
+        "sha256": "b1b2bda93074a1f7b9c83df6a9e80934c11c5ce40e25f2702ff70cf1e95ef492",
+        "role": "CONTRACT_REFERENCE_NOT_EXECUTION_GRANT"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "notes/evidence/three_model_20261023/verification_20261023.json",
+        "sha256": "a684c69d81ef6439391bc9c1829905c8338601e4cbf33f802aef985286181833",
+        "role": "CONTRACT_REFERENCE_NOT_EXECUTION_GRANT"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "configs/pre_freeze/d9r22_seminar_scope.v1.json",
+        "sha256": "5eaf32e87288c900d4021bd774a613c8147d8140976092e45a7fde23245b4aeb",
+        "role": "CONTRACT_REFERENCE_NOT_EXECUTION_GRANT"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "data/manifests/pa3_full_train_shard0.v1.json",
+        "sha256": "37b9fae412db374c54b79bbb83aad1d0ba3029d06fe836b71952763550054f70",
+        "role": "ORDERED_V4_MEMBERSHIP_REFERENCE"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "data/manifests/pa3_full_train_shard1.v1.json",
+        "sha256": "9482465485f316dbef12116c99239da1f9e868a7075c2c06281148ec0641bc10",
+        "role": "ORDERED_V4_MEMBERSHIP_REFERENCE"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "data/manifests/pa3_full_train_shard2.v1.json",
+        "sha256": "f9d2370dd5feece46c91ffe88171cb7cd5e838d3a7818000894b7f71d3829695",
+        "role": "ORDERED_V4_MEMBERSHIP_REFERENCE"
+      },
+      {
+        "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+        "path": "data/manifests/pa3_full_train_shard3.v1.json",
+        "sha256": "d72046fe5265ee8896745584140c322f9fa14a11fdddd8abd40e75270d06e4c8",
+        "role": "ORDERED_V4_MEMBERSHIP_REFERENCE"
+      }
+    ]
+  },
+  "reference_artifact_allowlist": [
+    {
+      "id": "train_metadata",
+      "path": "data/processed/seminar_feasibility_20261024/inputs/duplicate_metadata_audit.json",
+      "sha256": "16039f2302027ffe53f3bcdbfc80c762c88e823fbf303d5672030587cd9602d6",
+      "role": "TRAIN_METADATA_PROJECTION_ONLY_NO_IMAGE_OR_TEST_PAYLOAD",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": [],
+      "projection_fields": [
+        "sample_id",
+        "split",
+        "safety_level",
+        "folder_domain",
+        "byte_sha256",
+        "pixel_sha256",
+        "point_id",
+        "source_family"
+      ],
+      "edge_projection": "near_pair_evidence: train-train only, dhash_distance<=8"
+    },
+    {
+      "id": "q25_report",
+      "path": "data/processed/seminar_feasibility_20261024/inputs/qwen25_samples.csv",
+      "sha256": "59023ddd838a6e2d2b6bda66c58a2a49e77c5d9557ac7f89308d12db65330911",
+      "role": "SAVED_REPORT",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": []
+    },
+    {
+      "id": "ivl3_reports",
+      "path": "data/processed/seminar_feasibility_20261024/inputs/InterVL3_Output.zip",
+      "sha256": "5400bfefef38372cd42d17223f59ef7a4ea97fd7415c9d6c234ed9b309161e90",
+      "role": "NESTED_SAVED_REPORTS",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": [
+        {
+          "container_member": "InterVL3/Shard 0/hnlo-train-v4-internvl3-s0-a1.tar.gz",
+          "report_member": "evidence/report/samples.csv",
+          "report_sha256": "0cc2ce2e306969a673db24720d31fb7a6491fc922064180d43c85d3f66d5bc44"
+        },
+        {
+          "container_member": "InterVL3/Shard 1/hnlo-train-v4-internvl3-s1-a1.tar.gz",
+          "report_member": "evidence/report/samples.csv",
+          "report_sha256": "b0676166910cf419e291d90858ffc39c50ceaaae3956c3c36130b2036cd565fc"
+        },
+        {
+          "container_member": "InterVL3/Shard 2/hnlo-train-v4-internvl3-s2-a1.tar.gz",
+          "report_member": "evidence/report/samples.csv",
+          "report_sha256": "59ad0ab8efd8b1b512ef9abe462b0abd0691529d608d687399c3ec097c6080bf"
+        },
+        {
+          "container_member": "InterVL3/Shard 3/hnlo-train-v4-internvl3-s3-a1.tar.gz",
+          "report_member": "evidence/report/samples.csv",
+          "report_sha256": "a76c9b4c064ac12a566b226184308a69213634613ea2087128a068c8d7f885a1"
+        }
+      ]
+    },
+    {
+      "id": "q3_s0_result",
+      "path": "data/processed/seminar_feasibility_20261024/inputs/qwen3_shard0.json",
+      "sha256": "b8960093f2f3f1a74f6c67d721c443dc092b0c5138a57464f16039d9d3829527",
+      "role": "ORIGINAL_V4_RESULT_SIDECAR",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": []
+    },
+    {
+      "id": "q3_s0_archive",
+      "path": null,
+      "sha256": "bcaaa0b09dd664a39d0a1059d442e6eac2ed7352634e18dc0525926bb25e0dcc",
+      "role": "ORIGINAL_V4_ARCHIVE",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": [
+        {
+          "name": "evidence/binding.json",
+          "sha256": "073891823d6f1a08ebf7f58d94cbd1ffece02a8cfc92c6f01324ac947aceb31e",
+          "size_bytes": 343433
+        },
+        {
+          "name": "evidence/report/samples.csv",
+          "sha256": "2a915def0555fdfa63f23eca48b7e6089ca6562bde5feaac7e625c9ca6175c0b",
+          "size_bytes": 148268
+        },
+        {
+          "name": "evidence/result.json",
+          "sha256": "d41ba3bfc8eaccf837496f7bcfa83dd4b7d683abf3cb26076c979e7eebd0ace0",
+          "size_bytes": 743915
+        },
+        {
+          "name": "manifest.json",
+          "sha256": "036fe817a81b6942964a9c27f63f1be36c080dd8df4cd0549518d29422ca8162",
+          "size_bytes": 12035992
+        }
+      ],
+      "path_resolution": {
+        "sidecar_artifact_id": "q3_s0_result",
+        "basename_json_pointer": "/export/archive",
+        "parent": "data/processed/seminar_feasibility_20261024/inputs"
+      },
+      "size_bytes": 15312302
+    },
+    {
+      "id": "q3_s1_result",
+      "path": "data/processed/seminar_feasibility_20261024/inputs/qwen3_shard1.json",
+      "sha256": "0d1b34096040cec3d94da8eb3c54d53cf9d82602b33646f322a9917942394f4e",
+      "role": "ORIGINAL_V4_RESULT_SIDECAR",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": []
+    },
+    {
+      "id": "q3_s1_archive",
+      "path": null,
+      "sha256": "af4e05c3d8b63e552166a8f7eb671ae3ec4836fef32ec4e534b0563cc13017c2",
+      "role": "ORIGINAL_V4_ARCHIVE",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": [
+        {
+          "name": "evidence/binding.json",
+          "sha256": "04f174fa7e04132286ed7c3b6b18bfb1b8090a4bfd18ef30126c2b055c6c0f8a",
+          "size_bytes": 343377
+        },
+        {
+          "name": "evidence/report/samples.csv",
+          "sha256": "1510762c7c4420537993a85f6366138dfa37c5b898ed1afe5cac6350173e3add",
+          "size_bytes": 148470
+        },
+        {
+          "name": "evidence/result.json",
+          "sha256": "7744a07108fccaec89c97accefe2417b4c70dd8cae7bae4d1757a7f3148759e2",
+          "size_bytes": 743870
+        },
+        {
+          "name": "manifest.json",
+          "sha256": "e7f9e356e9643d607cb167cbc425b85450f535ebe76d2d368338fc2b6384f3f3",
+          "size_bytes": 12035992
+        }
+      ],
+      "path_resolution": {
+        "sidecar_artifact_id": "q3_s1_result",
+        "basename_json_pointer": "/export/archive",
+        "parent": "data/processed/seminar_feasibility_20261024/inputs"
+      },
+      "size_bytes": 15328483
+    },
+    {
+      "id": "q3_s3_result",
+      "path": "data/processed/seminar_feasibility_20261024/inputs/qwen3_shard3.json",
+      "sha256": "d7e8789892e3f2c831180e008751987b10dda59894d7a83c8be942b005e25fbd",
+      "role": "ORIGINAL_V4_RESULT_SIDECAR",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": []
+    },
+    {
+      "id": "q3_s3_archive",
+      "path": null,
+      "sha256": "07abe1551e51b9194dcd1a32b79a93940a435a6567b61275d887c6d0878a5273",
+      "role": "ORIGINAL_V4_ARCHIVE",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": [
+        {
+          "name": "evidence/binding.json",
+          "sha256": "ae3037b42a70fb6d9a6f12cffe604280c8f9d09cded9fa205309a6c2160d9151",
+          "size_bytes": 343472
+        },
+        {
+          "name": "evidence/report/samples.csv",
+          "sha256": "e75854f20190cf572dc68b09697712ae525a50433ea329db9e1fb4f4492b1d65",
+          "size_bytes": 148569
+        },
+        {
+          "name": "evidence/result.json",
+          "sha256": "2d495e0eeed301766870974b9c32713525041044da16f0edaec6c65faa214188",
+          "size_bytes": 743812
+        },
+        {
+          "name": "manifest.json",
+          "sha256": "6aa273860e54781b3eebf00308b236c702ee0b4ca2a3bc341472cea8e1f5055c",
+          "size_bytes": 12023213
+        }
+      ],
+      "path_resolution": {
+        "sidecar_artifact_id": "q3_s3_result",
+        "basename_json_pointer": "/export/archive",
+        "parent": "data/processed/seminar_feasibility_20261024/inputs"
+      },
+      "size_bytes": 15298327
+    },
+    {
+      "id": "q3_s2_original_zip",
+      "path": "data/processed/seminar_feasibility_20261025/inputs/Qwen3-Shard2-V4.zip",
+      "sha256": "e77199b0818c45e2a15be2815485493fa4a78d064f82288d497fd8d82ecd4f0d",
+      "role": "ORIGINAL_V4_S2_ZIP",
+      "permission_status": "NOT_GRANTED_FOR_NEW_ANALYSIS",
+      "readable_members": [
+        "manifest.json",
+        "evidence/binding.json",
+        "evidence/result.json",
+        "evidence/report/samples.csv"
+      ],
+      "zip_crc_required": true,
+      "zip_member_count": 7,
+      "sidecars": {
+        "hnlo-train-v4-qwen3-s2-a1.tar.gz": {
+          "sha256": "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920",
+          "size_bytes": 12031765
+        },
+        "hnlo-train-v4-qwen3-s2-a1_export.json": {
+          "sha256": "1461cfcbedbd97484cad05fc48f0688727e6ad4126f24ef20addc666d9685c4f",
+          "size_bytes": 948
+        },
+        "hnlo-train-v4-qwen3-s2-a1_export_sha256.json": {
+          "sha256": "de8008d14bffc997775ad205ce6d2cca25983b77cb99512929bf21e199a18e52",
+          "size_bytes": 83
+        },
+        "hnlo-train-v4-qwen3-s2-a1_manifest.json": {
+          "sha256": "b5c5b3dfb6e9ad270174d364a7544ed93e4d47f8518e372ecdd106b862b33ae1",
+          "size_bytes": 9499470
+        },
+        "hnlo-train-v4-qwen3-s2-a1_result.json": {
+          "sha256": "fcf70c6c6a8915f858cf95583ec40f02003379fd85c3f8681da2ec9c4500a1c6",
+          "size_bytes": 661391
+        },
+        "hnlo-train-v4-qwen3-s2-a1_sha256.json": {
+          "sha256": "9d8834389ad9aa97bb4a591cfd6e6a99950031913a317d9362fea0b55a96330c",
+          "size_bytes": 313
+        }
+      },
+      "inner_tar_sha256": "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920",
+      "inner_tar_size_bytes": 12031765,
+      "member_hashes_ref": "/original_qwen3_v4/shards/2/members"
+    }
+  ],
+  "input_policy": {
+    "read_requires_separate_task_grant": true,
+    "root": "data/processed",
+    "unknown_or_missing_artifact": "BLOCK_DEPENDENT_OUTPUT",
+    "hash_mismatch": "FAIL",
+    "reject_path_escape": true,
+    "reject_duplicate_archive_member": true,
+    "reject_overwrite": true,
+    "raw_payload_members_allowed": false,
+    "csv_fields": [
+      "sample_id",
+      "true_level",
+      "domain",
+      "status",
+      "generated_label",
+      "pa3_score"
+    ],
+    "optional_native_flags": [
+      "attempted",
+      "persisted",
+      "parsed"
+    ],
+    "expected_native_statuses": [
+      "SUCCESS",
+      "TECHNICAL_ERROR",
+      "NOT_ATTEMPTED"
+    ],
+    "unexpected_native_status": "STOP_NO_SILENT_NORMALIZATION",
+    "invalid_score_nonfinite": "FAIL_NOT_MISSING",
+    "missing_input_imputation": false
+  },
+  "models": {
+    "qwen25": {
+      "id": "Qwen/Qwen2.5-VL-3B-Instruct",
+      "revision": "66285546d2b821cf421d4f5eb2576359d3770cd3",
+      "release": "PA3_R2",
+      "run_ids": [
+        "pa3-qwen-r2-train-shard-0",
+        "pa3-qwen-r2-train-shard-1",
+        "pa3-qwen-r2-train-shard-2",
+        "pa3-qwen-r2-train-shard-3"
+      ],
+      "attempt_ids": null,
+      "unverified_detail_ref": "B03",
+      "execution_source_commit": "c1527713ca7175b3d71248d51f1715693795e6e8",
+      "evidence_level": "INHERITED_RAW_CPU_AUDIT_WITH_OUTER_RECEIPT_LIMIT",
+      "current_analysis_level": "SAVED_REPORT_ONLY",
+      "native_contract_ref": "notes/pa3_r2_cpu_completion_20261015.summary.json"
+    },
+    "internvl3": {
+      "id": "OpenGVLab/InternVL3-2B-hf",
+      "release": "V4",
+      "units": [
+        {
+          "model": "internvl3",
+          "id": "OpenGVLab/InternVL3-2B-hf",
+          "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+          "python": "3.11.11",
+          "cuda_visible_devices": "0",
+          "cuda": "12.4",
+          "shard": 0,
+          "count": 941,
+          "run_id": "hnlo-train-v4-internvl3-s0-a1",
+          "attempt_id": "hnlo-train-v4-internvl3-s0-20261019-a1",
+          "inference_sha256": "37b9fae412db374c54b79bbb83aad1d0ba3029d06fe836b71952763550054f70",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 941
+        },
+        {
+          "model": "internvl3",
+          "id": "OpenGVLab/InternVL3-2B-hf",
+          "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+          "python": "3.11.11",
+          "cuda_visible_devices": "0",
+          "cuda": "12.4",
+          "shard": 1,
+          "count": 941,
+          "run_id": "hnlo-train-v4-internvl3-s1-a1",
+          "attempt_id": "hnlo-train-v4-internvl3-s1-20261019-a1",
+          "inference_sha256": "9482465485f316dbef12116c99239da1f9e868a7075c2c06281148ec0641bc10",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 941
+        },
+        {
+          "model": "internvl3",
+          "id": "OpenGVLab/InternVL3-2B-hf",
+          "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+          "python": "3.11.11",
+          "cuda_visible_devices": "0",
+          "cuda": "12.4",
+          "shard": 2,
+          "count": 941,
+          "run_id": "hnlo-train-v4-internvl3-s2-a1",
+          "attempt_id": "hnlo-train-v4-internvl3-s2-20261019-a1",
+          "inference_sha256": "f9d2370dd5feece46c91ffe88171cb7cd5e838d3a7818000894b7f71d3829695",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 941
+        },
+        {
+          "model": "internvl3",
+          "id": "OpenGVLab/InternVL3-2B-hf",
+          "revision": "cb57a075cb75a2e6d1b668b128d48bb00ae321d2",
+          "python": "3.11.11",
+          "cuda_visible_devices": "0",
+          "cuda": "12.4",
+          "shard": 3,
+          "count": 940,
+          "run_id": "hnlo-train-v4-internvl3-s3-a1",
+          "attempt_id": "hnlo-train-v4-internvl3-s3-20261019-a1",
+          "inference_sha256": "d72046fe5265ee8896745584140c322f9fa14a11fdddd8abd40e75270d06e4c8",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 940
+        }
+      ],
+      "evidence_level": "VERIFIED_SAVED_SCORE",
+      "raw_replay_performed": false,
+      "native_contract_ref": "configs/diagnostics/hnlo_train_authority.v4.json",
+      "unverified_detail_ref": "B03"
+    },
+    "qwen3": {
+      "id": "Qwen/Qwen3-VL-8B-Instruct",
+      "release": "V4_ORIGINAL",
+      "units": [
+        {
+          "model": "qwen3",
+          "id": "Qwen/Qwen3-VL-8B-Instruct",
+          "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+          "python": "3.12.13",
+          "cuda_visible_devices": "0,1",
+          "cuda": "12.8",
+          "shard": 0,
+          "count": 941,
+          "run_id": "hnlo-train-v4-qwen3-s0-a1",
+          "attempt_id": "hnlo-train-v4-qwen3-s0-20261019-a1",
+          "inference_sha256": "37b9fae412db374c54b79bbb83aad1d0ba3029d06fe836b71952763550054f70",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 941
+        },
+        {
+          "model": "qwen3",
+          "id": "Qwen/Qwen3-VL-8B-Instruct",
+          "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+          "python": "3.12.13",
+          "cuda_visible_devices": "0,1",
+          "cuda": "12.8",
+          "shard": 1,
+          "count": 941,
+          "run_id": "hnlo-train-v4-qwen3-s1-a1",
+          "attempt_id": "hnlo-train-v4-qwen3-s1-20261019-a1",
+          "inference_sha256": "9482465485f316dbef12116c99239da1f9e868a7075c2c06281148ec0641bc10",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 941
+        },
+        {
+          "model": "qwen3",
+          "id": "Qwen/Qwen3-VL-8B-Instruct",
+          "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+          "python": "3.12.13",
+          "cuda_visible_devices": "0,1",
+          "cuda": "12.8",
+          "shard": 2,
+          "count": 941,
+          "run_id": "hnlo-train-v4-qwen3-s2-a1",
+          "attempt_id": "hnlo-train-v4-qwen3-s2-20261019-a1",
+          "inference_sha256": "f9d2370dd5feece46c91ffe88171cb7cd5e838d3a7818000894b7f71d3829695",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 941
+        },
+        {
+          "model": "qwen3",
+          "id": "Qwen/Qwen3-VL-8B-Instruct",
+          "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+          "python": "3.12.13",
+          "cuda_visible_devices": "0,1",
+          "cuda": "12.8",
+          "shard": 3,
+          "count": 940,
+          "run_id": "hnlo-train-v4-qwen3-s3-a1",
+          "attempt_id": "hnlo-train-v4-qwen3-s3-20261019-a1",
+          "inference_sha256": "d72046fe5265ee8896745584140c322f9fa14a11fdddd8abd40e75270d06e4c8",
+          "max_attempts": 1,
+          "max_loads": 1,
+          "max_generate_calls": 940
+        }
+      ],
+      "evidence_level": "VERIFIED_SAVED_SCORE",
+      "run_status": "PARTIAL",
+      "raw_replay_performed": false,
+      "native_contract_ref": "configs/diagnostics/hnlo_train_authority.v4.json",
+      "source_bindings_ref": "/original_qwen3_v4/shards",
+      "baseline_pooling_allowed": false
+    },
+    "moondream2": {
+      "id": "vikhyatk/moondream2",
+      "revision": null,
+      "release": null,
+      "run_ids": null,
+      "attempt_ids": null,
+      "quantitative_status": "N/A",
+      "na_reason": "NO_AUDITED_COMPATIBLE_HNLO_TRAIN_RUN",
+      "project_exception_ref": "DEC-20261026-M1:A4",
+      "course_exception_verified": false,
+      "remains_in_roster": true
+    }
+  },
+  "labels": {
+    "canonical": [
+      "Level01",
+      "Level02",
+      "Level03",
+      "Level04"
+    ],
+    "hazard_positive": [
+      "Level01",
+      "Level02",
+      "Level03"
+    ],
+    "normal": "Level04",
+    "invalid_prediction": null,
+    "ordinal_index": {
+      "Level01": 1,
+      "Level02": 2,
+      "Level03": 3,
+      "Level04": 4
+    }
+  },
+  "domains": [
+    "coal_conveyor",
+    "metallurgy",
+    "oil_chemical",
+    "power",
+    "tunnel"
+  ],
+  "domain_policy": "D3_FOLDER_DOMAIN_WITH_UNCHANGED_MISMATCH_SENSITIVITY",
+  "cohorts": {
+    "T3763": {
+      "membership_rule": "EXACT_TRAIN_METADATA_IDS",
+      "expected_n": 3763,
+      "expected_levels": [
+        490,
+        251,
+        8,
+        3014
+      ],
+      "models": [
+        "qwen25",
+        "internvl3"
+      ],
+      "expected_domain_anomaly_normal": {
+        "coal_conveyor": [
+          172,
+          650
+        ],
+        "metallurgy": [
+          9,
+          534
+        ],
+        "oil_chemical": [
+          287,
+          491
+        ],
+        "power": [
+          81,
+          575
+        ],
+        "tunnel": [
+          200,
+          764
+        ]
+      }
+    },
+    "V3539": {
+      "membership_rule": "ORIGINAL_QWEN3_V4_SUCCESS_ONLY",
+      "expected_n": 3539,
+      "expected_levels": [
+        460,
+        232,
+        8,
+        2839
+      ],
+      "models": [
+        "qwen25",
+        "internvl3",
+        "qwen3"
+      ],
+      "parent_planned": "T3763"
+    },
+    "M224": {
+      "membership_rule": "T3763_MINUS_V3539",
+      "expected_n": 224,
+      "expected_levels": [
+        30,
+        19,
+        0,
+        175
+      ],
+      "role": "MISSINGNESS_ONLY"
+    },
+    "REC224": {
+      "membership_rule": "SEPARATE_RECOVERY_RUN_REFERENCE_ONLY",
+      "expected_n": 224,
+      "expected_anomaly_normal": [
+        49,
+        175
+      ],
+      "run_id": "hnlo-qwen3-s2-recovery224-v1-20261022",
+      "revision": null,
+      "attempt_id": null,
+      "baseline_pooling_allowed": false,
+      "reanalyze_enabled": false,
+      "binding_ref": "/qwen3_archive_bindings/recovery.json"
+    }
+  },
+  "qwen3_expected_planned_status": {
+    "SUCCESS": 3539,
+    "TECHNICAL_ERROR": 1,
+    "NOT_ATTEMPTED": 223
+  },
+  "membership_digest": {
+    "algorithm": "sha256",
+    "encoding": "UTF-8",
+    "serialization": "SORT_FULL_IDS_UNICODE_CODEPOINT_ONE_PER_LF_FINAL_LF_EMPTY_BYTES_IF_EMPTY",
+    "verified_id_digest": null,
+    "derive_at": "M4_AFTER_ARTIFACT_GRANT"
+  },
+  "metric_contract": {
+    "approval_status": "PROPOSED_EXACT_CONTRACT_REVIEW_PENDING",
+    "definitions_path": "docs/research/SEMINAR_PROTOCOL.md",
+    "classification_section": "4",
+    "dangerous_error_section": "5",
+    "disagreement_section": "6",
+    "classification_set": "O_OUTPUT_INCLUDING_INVALID",
+    "score_set": "F_CONTRACT_VALID_FINITE",
+    "paired_score_control_set": "J_INTERSECTION_F_CANONICAL_LABEL",
+    "confusion_shape": [
+      4,
+      5
+    ],
+    "invalid_in_support": true,
+    "no_output_in_confusion": false,
+    "undefined_value": null,
+    "undefined_reason_required": true,
+    "auc_tie_credit": 0.5,
+    "auc_tie_comparison": "EXACT_PARSED_NUMERIC_EQUALITY_NO_EPSILON",
+    "auc_tolerance_absolute": 1e-12,
+    "macro_recall": "MEAN_PRESENT_CLASSES_REPORT_CLASS_LIST",
+    "hard_hazard_score": "generated_label != Level04",
+    "ordinal_hazard_score": "4 - ordinal_index[generated_label]",
+    "binary_constant_controls": [
+      "ALWAYS_NORMAL",
+      "ALWAYS_ANOMALY_NO_FOUR_CLASS_SEVERITY"
+    ],
+    "metrics": [
+      "confusion4x5",
+      "support",
+      "recall",
+      "accuracy4",
+      "macro_recall",
+      "binary_counts_with_invalid",
+      "binary_observed_rates",
+      "hazard_auc",
+      "same_id_auc_delta",
+      "false_safe",
+      "severe_miss",
+      "level03_counts",
+      "completion_bounds_assumed",
+      "joint_parse",
+      "unanimous4",
+      "unanimous2",
+      "pairwise_kappa4",
+      "pairwise_kappa2",
+      "vote_entropy4",
+      "vote_entropy2",
+      "ordinal_disagreement",
+      "shared_blind_spots",
+      "error_complementarity",
+      "error_detection_auc",
+      "risk_coverage_tie_blocks"
+    ],
+    "not_in_v1": [
+      "AP_AUPRC",
+      "ECE_BRIER_CALIBRATION",
+      "OPERATIONAL_THRESHOLD",
+      "HNLO_GLOBAL_FOUR_CLASS_ERROR_DETECTION",
+      "SOURCE_CI_PVALUES"
+    ],
+    "continuous_logit_controls": {
+      "status": "N/A_PROPOSED",
+      "reason_ref": "B02",
+      "implemented": false,
+      "fields_verified": false
+    }
+  },
+  "disagreement_panels": [
+    {
+      "id": "three_model_main",
+      "cohort": "V3539",
+      "models": [
+        "qwen25",
+        "internvl3",
+        "qwen3"
+      ]
+    },
+    {
+      "id": "two_model_secondary",
+      "cohort": "T3763",
+      "models": [
+        "qwen25",
+        "internvl3"
+      ]
+    }
+  ],
+  "error_association": {
+    "predictor": "qwen3",
+    "release": "V4_ORIGINAL",
+    "cohort": "V3539",
+    "eligibility": "JOINT_CANONICAL_ALL_THREE_MODELS",
+    "positive_labels": [
+      "Q3_FOUR_CLASS_ERROR",
+      "Q3_FALSE_SAFE"
+    ],
+    "signals_high_is_review": [
+      "vote_entropy4",
+      "vote_entropy2",
+      "ordinal_disagreement"
+    ],
+    "predicted_normal_subset": "Q3_GENERATED_LEVEL04",
+    "hnlo_signal": "Q3_ONLY_HIGH_HAZARD_WITHIN_PREDICTED_LEVEL04",
+    "hnlo_global_error_auc_enabled": false,
+    "cross_signal_comparison": "SAME_ID_INTERSECTION_IN_B04",
+    "risk_curve_ties": "WHOLE_BLOCKS_KEEP_LOW_SIGNAL",
+    "risk_curve_points": "ZERO_PLUS_ALL_UNIQUE_SIGNAL_CUTOFFS",
+    "threshold_selection": false
+  },
+  "sensitivity": {
+    "status": "PROPOSED_EXPLORATORY_REVIEW_PENDING",
+    "cohorts": [
+      "T3763",
+      "V3539"
+    ],
+    "variants": [
+      "image",
+      "exact",
+      "point",
+      "family",
+      "exact_point",
+      "exact_point_family",
+      "exact_point_near8",
+      "exact_point_family_near8",
+      "exact_representative_first",
+      "exact_representative_last"
+    ],
+    "endpoint_scope": "HAZARD_AUC_HNLO_AND_PAIRED_HARD_ORDINAL_CONTROLS",
+    "weight_rule": "1/component_size",
+    "domain_weights": "RETAIN_GLOBAL_COHORT_WEIGHTS",
+    "representatives": "LEXICOGRAPHIC_FULL_ID_FIRST_LAST_NO_SCORE_SELECTION",
+    "within_cohort_components_only": true,
+    "near8_existing_edges_only": true,
+    "source_identity_verified": false,
+    "ci_enabled": false
+  },
+  "blocked_components": {
+    "B01": {
+      "status": "BLOCKED",
+      "component": "12_ATOMS_7_GROUPS_MAPPING",
+      "map_ref": null,
+      "placeholder_count": 19,
+      "na_acceptance_ref": null
+    },
+    "B02": {
+      "status": "N/A_PROPOSED",
+      "component": "CONTINUOUS_LOGIT_AND_PROXY_CONTROLS",
+      "na_acceptance_ref": null
+    },
+    "B03": {
+      "status": "UNVERIFIED_DETAIL",
+      "component": "ATTEMPT_NATIVE_RECOVERY_PROVENANCE",
+      "acceptance_ref": null
+    },
+    "B04": {
+      "status": "PENDING",
+      "component": "INDEPENDENT_REVIEW_AND_OWNER_VERSION_APPROVAL",
+      "review_ref": null
+    },
+    "B05": {
+      "status": "BLOCKED",
+      "component": "D3_MISMATCH_AND_PROXY_MAPPING",
+      "map_ref": null,
+      "na_acceptance_ref": null
+    },
+    "B06": {
+      "status": "NOT_GRANTED_OR_EXTERNALLY_UNVERIFIED",
+      "component": "TASK_DATA_RESOURCE_ACADEMIC_AUTHORITY"
+    }
+  },
+  "expected_saved_auc_inherited": {
+    "T3763": {
+      "qwen25": 0.8266558463706973,
+      "internvl3": 0.8861824613751756
+    },
+    "V3539": {
+      "qwen25": 0.8243818245861219,
+      "internvl3": 0.88286846475117,
+      "qwen3": 0.9527927338600111
+    }
+  },
+  "outputs": {
+    "root": "data/processed/seminar",
+    "format": [
+      "json",
+      "csv",
+      "markdown"
+    ],
+    "report_ids": [
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R5"
+    ],
+    "acceptance_checks": [
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10"
+    ],
+    "r5_m3_verdict": "PENDING_ANALYST_M4",
+    "json_allow_nan": false,
+    "receipt_required": true,
+    "moondream_na_row_required": true
+  },
+  "seed": null,
+  "seed_reason": "DETERMINISTIC_NO_RESAMPLING_OR_RANDOM_TIE_BREAKS",
+  "next_task_when_approved": "M3-01_COMPLETE_SEMINAR_CPU_SYSTEM"
+}

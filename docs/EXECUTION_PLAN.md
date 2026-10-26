@@ -4,6 +4,23 @@ Ngày lập: **26/10/2026 (Asia/Bangkok)**. BASE đã đối chiếu GitHub và 
 Đây là bản giao việc từ [hướng đã chọn](research/SEMINAR_THESIS_DIRECTION_LOCK_20261025.md) và [Master Plan](research/SEMINAR_THESIS_MASTER_PLAN_20261025.md), không thay hai tài liệu đó hoặc tạo quyết định khoa học mới.
 Trạng thái tiếp nối ngắn gọn: [PROJECT_STATE](PROJECT_STATE.md).
 
+> **Cập nhật quyết định 26/10/2026 trên cùng [Draft PR #135](https://github.com/tantdna2/SafeShift/pull/135):**
+> [M1](research/DECISIONS.md) APPROVED khoa học dự án;
+> [DEC-20261026-M2](research/DECISIONS.md#dec-20261026-m2) **OWNER_APPROVED_FOR_PROJECT_SEMINAR**,
+> đúng hai SHA-256 protocol/config bất biến, sau [kiểm toán/đối chiếu PASS](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408340899)
+> và [Owner duyệt version/giới hạn](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408943462).
+> Hiệu lực repository chờ #135 merge + ChatGPT xác minh hậu merge; chưa COMPLETE
+> khi Draft. Các lời “chờ M1/M2”, “tất cả PENDING”, NEXT M1 và điều kiện trình
+> duyệt bên dưới là snapshot trước quyết định mới, không trạng thái hiện hành.
+> B01/B05 BLOCKED, B02 N/A, B03 giới hạn saved-report và Moondream2 N/A đã được
+> chấp nhận; không có nghĩa dữ liệu thiếu đã được khắc phục hoặc học vụ đã duyệt.
+> Hai file đã duyệt giữ nguyên `frozen=false`/PENDING/refs null lúc soạn; trạng
+> thái khóa có hiệu lực dùng quyết định append-only + hai hash + bằng chứng hậu
+> merge. M3 phải từ chối chạy fixture nếu thiếu quyết định có hiệu lực hoặc hash sai.
+> **M3-01 chưa triển khai**; chỉ CPU + fixture hoàn toàn SYNTHETIC sau ChatGPT
+> xác minh hậu merge và chính thức giao M3. Không cấp quyền M4/artifact thật,
+> raw/GPU/inference/TEST/ảnh/nhãn/tài nguyên ngoài hoặc các giai đoạn Khóa luận.
+
 ## 1. Phạm vi, thẩm quyền và cách giao việc
 
 **Đề tài:** SafeShift — Đánh giá và cải thiện độ tin cậy của quyết định nguy cơ an toàn công nghiệp bằng mô hình ngôn ngữ–thị giác.
