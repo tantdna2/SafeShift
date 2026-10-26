@@ -22,6 +22,11 @@ from safeshift.evaluation.sensitivity import (
     components, evaluate, exact_score_consistency, index_rows, join_reports, partition_edges, weighted_auc,
 )
 
+from safeshift.data.saved_reports import (
+    report_rows, auc_matches, internvl_rows, verified_archive_members,
+    archive_report, verify_v4_shard,
+)
+
 HISTORY = "31a04e6f7175cca818c63b4de0153246b3f3ecdb"
 RECEIPT = "notes/evidence/three_model_20261023/verification_20261023.json"
 S2_ORIGINAL_SHA256 = "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920"
@@ -44,82 +49,6 @@ def checked_bytes(path, expected):
     if hashlib.sha256(payload).hexdigest() != expected:
         raise ValueError(f"checksum mismatch: {path.as_posix()}")
     return payload
-
-
-def report_rows(payload):
-    return list(csv.DictReader(io.StringIO(payload.decode("utf-8-sig"))))
-
-
-def auc_matches(actual, expected):
-    if actual is None or expected is None:
-        return actual is expected
-    return type(expected) in (int, float) and isfinite(expected) and abs(actual - expected) <= 1e-12
-
-
-def internvl_rows(payload, expected_members):
-    rows = []
-    with zipfile.ZipFile(io.BytesIO(payload)) as outer:
-        names = [n for n in outer.namelist() if n.endswith(".tar.gz")]
-        if len(names) != len(set(names)) or set(names) != set(expected_members):
-            raise ValueError("exact unique receipt archive members required")
-        for name in sorted(names):
-            found = []
-            with tarfile.open(fileobj=io.BytesIO(outer.read(name)), mode="r|gz") as archive:
-                for member in archive:
-                    if member.name == "evidence/report/samples.csv":
-                        if not member.isfile():
-                            raise ValueError("report must be a regular archive member")
-                        found.append(archive.extractfile(member).read())
-            if len(found) != 1 or hashlib.sha256(found[0]).hexdigest() != expected_members[name]:
-                raise ValueError("unique samples member with receipt checksum required")
-            rows.extend(report_rows(found[0]))
-    return rows
-
-
-def verified_archive_members(payload, export, names):
-    """Read only an explicit metadata/report allowlist, bound to the inventory."""
-    if (len(payload) != export["archive_bytes"]
-            or hashlib.sha256(payload).hexdigest() != export["archive_sha256"]):
-        raise ValueError("Qwen3 archive checksum/size mismatch")
-    found = {}
-    with tarfile.open(fileobj=io.BytesIO(payload), mode="r|gz") as archive:
-        for member in archive:
-            if member.name in {"manifest.json", *names}:
-                if member.name in found or not member.isfile():
-                    raise ValueError("unique regular manifest/report members required")
-                found[member.name] = archive.extractfile(member).read()
-    if set(found) != {"manifest.json", *names}:
-        raise ValueError("missing Qwen3 manifest/report")
-    if hashlib.sha256(found["manifest.json"]).hexdigest() != export["manifest_sha256"]:
-        raise ValueError("Qwen3 manifest checksum mismatch")
-    entries = json.loads(found["manifest.json"])["files"]
-    inventory = {entry["path"]: entry for entry in entries}
-    if len(inventory) != len(entries):
-        raise ValueError("unique inventory paths required")
-    for name in names:
-        entry = inventory[name.removeprefix("evidence/")]
-        if len(found[name]) != entry["size_bytes"] or hashlib.sha256(found[name]).hexdigest() != entry["sha256"]:
-            raise ValueError("Qwen3 saved metadata/report inventory mismatch")
-    return found
-
-
-def archive_report(payload, result):
-    """Bind complete saved reports; this is never raw-logit replay/PASS."""
-    found = verified_archive_members(payload, result["export"], {"evidence/report/samples.csv"})
-    saved = found["evidence/report/samples.csv"]
-    rows = report_rows(saved)
-    table = index_rows(rows, "true_level")
-    expected = result["metrics"]["overall"]["auroc_pa3"]
-    if (len(expected["eligible_ids"]) != len(set(expected["eligible_ids"]))
-            or set(table) != set(expected["eligible_ids"])):
-        raise ValueError("Qwen3 report/result exact eligible IDs required")
-    actual = weighted_auc([r["true_level"] != "Level04" for r in rows],
-                          [float(r["pa3_score"]) for r in rows])
-    if not auc_matches(actual, expected["value"]):
-        raise ValueError("Qwen3 saved-score AUROC differs from pinned result")
-    return rows, {"archive_sha256": result["export"]["archive_sha256"],
-                  "manifest_sha256": result["export"]["manifest_sha256"], "samples_sha256": hashlib.sha256(saved).hexdigest(),
-                  "n_saved_rows": len(rows), "run_id": result["unit"]["run_id"]}
 
 
 def original_s2_zip(payload):
@@ -159,91 +88,6 @@ def original_s2_zip(payload):
         "zip_size_bytes": len(payload), "zip_crc": "PASS", "zip_member_count": len(names),
         "sidecars": {prefix.split("/")[-1] + suffix: {"sha256": hashlib.sha256(b).hexdigest(), "size_bytes": len(b)}
                      for suffix, b in files.items()},
-    }
-
-
-def verify_v4_shard(payload, result, expected_unit, inference, scope, train_metadata):
-    """Validate all planned rows/statuses before selecting SUCCESS for AUROC."""
-    unit = result["unit"]
-    if unit != expected_unit or unit["model"] != "qwen3" or result["export"]["unit"] != unit:
-        raise ValueError("original V4 unit identity required; recovery/rerun pooling forbidden")
-    found = verified_archive_members(payload, result["export"],
-                                     {"evidence/report/samples.csv", "evidence/binding.json", "evidence/result.json"})
-    binding = json.loads(found["evidence/binding.json"])
-    inside = json.loads(found["evidence/result.json"])
-    if inside != {k: v for k, v in result.items() if k != "export"}:
-        raise ValueError("internal and external result mismatch")
-    if (binding["unit"] != unit or binding["authority"]["scope"] != scope
-            or binding["samples"] != inference):
-        raise ValueError("V4 config or historical ordered shard membership mismatch")
-    if (result["schema"] != "hnlo-train-unit-result-v1" or result["scope"] != "DESCRIPTIVE_FULL_TRAIN"
-            or result["retry"] is not False or result["research_generalization_claim"] is not False):
-        raise ValueError("original V4 result scope mismatch")
-    rows = report_rows(found["evidence/report/samples.csv"])
-    table = index_rows(rows, "true_level")
-    planned = [r["sample_id"] for r in inference]
-    if (len(set(planned)) != len(planned) or len(planned) != unit["count"]
-            or [r["sample_id"] for r in rows] != planned):
-        raise ValueError("exact planned report IDs/order required")
-    journal = result["sample_journal"]
-    if [r["sample_id"] for r in journal] != planned or [r["ordinal"] for r in journal] != list(range(len(planned))):
-        raise ValueError("exact journal membership/order required")
-    statuses = Counter()
-    for position, row in enumerate(rows):
-        sid, status = row["sample_id"], row["status"]
-        meta = train_metadata[sid]
-        if (row["true_level"] != meta["safety_level"] or row["domain"] != meta["folder_domain"]
-                or inference[position]["image_sha256"] != meta["byte_sha256"]
-                or row["true_binary_label"] != ("Normal" if row["true_level"] == "Level04" else "Anomaly")):
-            raise ValueError("planned ID/ground truth/domain/image-hash mismatch")
-        if status not in {"SUCCESS", "TECHNICAL_ERROR", "NOT_ATTEMPTED"}:
-            raise ValueError("unexpected V4 status")
-        flags = (status != "NOT_ATTEMPTED", status == "SUCCESS", status == "SUCCESS")
-        entry = journal[position]
-        if (entry["status"] != status
-                or tuple(row[k] for k in ("attempted", "persisted", "parsed")) != tuple(str(x) for x in flags)
-                or tuple(entry[k] for k in ("attempted", "persisted", "parsed")) != flags):
-            raise ValueError("saved status/journal/flags mismatch")
-        if status != "SUCCESS" and (row["pa3_score"] != "" or row["generated_label"] != ""):
-            raise ValueError("non-success row must not become a scored prediction")
-        statuses[status] += 1
-    saved_coverage = result["coverage"]
-    expected_counts = {key: statuses[key] for key in saved_coverage["status_counts"]}
-    if (set(statuses) - set(expected_counts) or saved_coverage["status_counts"] != expected_counts
-            or saved_coverage["planned"] != len(rows) or saved_coverage["scored"] != statuses["SUCCESS"]
-            or saved_coverage["attempted"] != statuses["SUCCESS"] + statuses["TECHNICAL_ERROR"]
-            or saved_coverage["parsed"] != statuses["SUCCESS"] or saved_coverage["persisted"] != statuses["SUCCESS"]
-            or saved_coverage["anomaly_n"] != sum(r["true_level"] != "Level04" for r in rows)
-            or saved_coverage["normal_n"] != sum(r["true_level"] == "Level04" for r in rows)
-            or saved_coverage["level_counts"] != dict(Counter(r["true_level"] for r in rows))
-            or abs(saved_coverage["coverage"] - statuses["SUCCESS"] / len(rows)) > 1e-12
-            or result["status"] != ("COMPLETE" if statuses["SUCCESS"] == len(rows) else "PARTIAL")):
-        raise ValueError("saved coverage/counts mismatch")
-    success = [r for r in rows if r["status"] == "SUCCESS"]
-    metadata = [train_metadata[r["sample_id"]] for r in success]
-    join_reports(metadata, {"qwen3": success})
-    expected = result["metrics"]["overall"]["auroc_pa3"]
-    positives = sum(r["true_level"] != "Level04" for r in success)
-    negatives = len(success) - positives
-    auc = weighted_auc([r["true_level"] != "Level04" for r in success], [float(r["pa3_score"]) for r in success])
-    for endpoint in (expected, saved_coverage["auroc"]):
-        ids = endpoint["eligible_ids"]
-        if (len(set(ids)) != len(ids) or set(ids) != {r["sample_id"] for r in success}
-                or endpoint["positive_n"] != positives or endpoint["negative_n"] != negatives
-                or endpoint["pair_denominator"] != positives * negatives or endpoint["tie_credit"] != 0.5
-                or not auc_matches(auc, endpoint["value"])):
-            raise ValueError("saved eligible IDs/support/AUROC mismatch")
-    return rows, {
-        "status": "PASS_SAVED_SCORE_NOT_RAW_AUDIT", "unit": unit,
-        "archive_sha256": result["export"]["archive_sha256"], "archive_size_bytes": len(payload),
-        "manifest_sha256": result["export"]["manifest_sha256"],
-        "members": {name: {"sha256": hashlib.sha256(b).hexdigest(), "size_bytes": len(b)}
-                    for name, b in found.items()},
-        "source": {k: binding["source"][k] for k in
-                   ("implementation_commit", "authority_commit", "merge_commit", "payload_sha256", "pr_number")},
-        "planned_n": len(rows), "status_counts": dict(sorted(statuses.items())),
-        "success_positive_n": positives, "success_negative_n": negatives, "auroc_recomputed": auc,
-        "ordered_ids_and_image_hashes_match_history": True, "config_scope_matches_history": True,
     }
 
 

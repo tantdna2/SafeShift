@@ -1,5 +1,27 @@
 # Kiến trúc Foundation V1
 
+## M3 Seminar CPU — trạng thái hiện hành
+
+[M1/M2 đã có hiệu lực](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6409830030)
+tại merge `28fdf82512577f2ed0fb435fb2c12b88e82baf2f`. M3 đang ở Draft, CPU
+synthetic-only. Inventory và các câu “chưa triển khai” bên dưới là snapshot
+Foundation; phần Seminar hiện hành được cập nhật trong bảng này và
+[hướng dẫn CLI/schema](SEMINAR_ANALYSIS.md).
+
+| Module | Trách nhiệm M3 |
+| --- | --- |
+| `data/saved_reports.py` | M2/merge/task/hash gate; fixture tổng hợp; archive/member/CRC/path/link checks; native byte-only adapters chuyển từ CLI cũ; normalized ledger versioned và exact joins |
+| `evaluation/seminar.py` | M2 classification/ranking/errors/disagreement/curves/sensitivity; dùng lại metrics/sensitivity hiện có; không inference/threshold tuning |
+| `scripts/analyze_seminar.py` | Một lệnh R1–R5 + receipt, source/input/output hashes, refuse overwrite, exit codes; không input artifact thật |
+| `tests/test_seminar.py` | C01–C10 synthetic, oracle pair enumeration/BFS/tính tay, lỗi/biên, CLI và audit fence I/O |
+
+Luồng: authority → fixture ZIP/TAR trong RAM → checked reader → ledger P/O/L/F/J
+→ metric engine → CSV/JSON/R5 trace → receipt. R5 là `PENDING_ANALYST_M4`.
+Native helpers được CLI sensitivity cũ import lại, không đổi quyền hoặc tự chạy
+pipeline cũ. Không thêm runtime dependency. Synthetic không là kết quả nghiên cứu.
+
+## Snapshot Foundation trước M3
+
 Code mới hỗ trợ bản ghi trong bộ nhớ, phép đếm phân loại và CPU sensitivity
 PROPOSED trên saved reports. Không import code thực nghiệm cũ. Cây có **29 file, 7 thư mục** không tính
 root; `data/` local và virtual environment không thuộc inventory Git.
