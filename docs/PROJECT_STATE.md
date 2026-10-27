@@ -34,7 +34,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 ## ACTIVE WORK
 
 - **Task mới chỉ tài liệu:** đánh giá A/B/C, CT1–CT3/E1–E5, literature update, thiết kế thí nghiệm/task/gates trong [THESIS_EXECUTION_PLAN_2026](research/THESIS_EXECUTION_PLAN_2026.md); **PROPOSED — PENDING OWNER APPROVAL**.
-- Branch: `docs/thesis-execution-plan-20261027`, tách #136; BASE bằng main ở đầu file. Dừng một Draft PR để ChatGPT kiểm trực tiếp, không merge.
+- Branch: `docs/thesis-execution-plan-20261027`, tách #136; cùng [Draft PR #137](https://github.com/tantdna2/SafeShift/pull/137), BASE bằng main ở đầu file. Cập nhật candidates trong chính PR này; không tạo branch/PR mới, không merge/Ready for Review.
+- **OWNER_SELECTED_CANDIDATES:** `google/gemma-3-4b-it`, `microsoft/Phi-3.5-vision-instruct`, `HuggingFaceTB/SmolVLM2-2.2B-Instruct`; ba mô hình bổ sung ngoài Figure 6 InspecSafe gốc. Revision/nguồn/compatibility và P1–P4 tại §10.1–10.3 của kế hoạch.
+- **KAGGLE_COMPATIBILITY: UNVERIFIED/NOT_RUN; SCIENTIFIC_UTILITY: UNPROVEN; ROSTER/FEATURE CHANGE: PENDING O3/T0; RUN AUTHORIZATION: NOT_GRANTED.** Mục tiêu 2×T4, 16 GB mỗi GPU, không 32 GB thống nhất; FP16/attention/deps cần qualification, Gemma access chưa xác nhận. Giữ Q3 predictor và roster lịch sử.
+- [PRE-AUDIT PASS ChatGPT](https://github.com/tantdna2/SafeShift/pull/137#issuecomment-6432171551) chỉ HEAD `11a47c69372f64c51f6fcc8986bcc5c93eee3c17`; không scientific/merge approval. HEAD mới cần ChatGPT kiểm lại; Antigravity chưa có bằng chứng bắt đầu/kết luận trên discussion đã kiểm. Nếu chưa bắt đầu dùng HEAD mới; nếu đang audit thì bổ sung delta trong cùng session, không coi PASS cũ bao phủ.
 - Chỉ sửa kế hoạch mới và PROJECT_STATE. Không sửa DECISIONS/M2, code/data, PR #136 hoặc PR cũ. Khuyến nghị xử lý #136/R1–R5 tại §12, quyết định O8 còn PENDING.
 - BASE/HEAD chính xác và kết quả kiểm tra cuối ghi ở mô tả PR để tránh hash tự tham chiếu.
 
@@ -55,7 +58,7 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 - B01/B02/B05: Owner chấp nhận 12 atoms/7 nhóm BLOCKED (**19 placeholders**), continuous controls N/A, mismatch/proxy BLOCKED; giữ năm folder_domain. Không kết luận hazard strata/đối chứng chưa có/nhân quả; thiếu dữ liệu vẫn còn.
 - B03: Owner chấp nhận giới hạn hash-bound saved-report/provenance chưa đủ, không nâng thành raw audit mới; recovery reference-only, V4 gốc riêng.
 - B06: quyền M3 CPU SYNTHETIC đã được giao sau #135; M4/artifact thật, raw/GPU/inference/ảnh/nhãn/TEST/tài nguyên ngoài và thesis chưa được cấp bởi task này.
-- O1–O8 của kế hoạch mới PENDING: học vụ/CT1 triage, protocol/metric/feature/roster, nguồn/GT/custodian, events/precision/budget, run rights, evidence/user study, hướng xử lý #136. Thiếu nguồn/nhãn độc lập chặn xác nhận; TRAIN chia lại không thành holdout.
+- O1–O8 còn quyết định triển khai PENDING: học vụ/CT1 triage, protocol/metric/feature/roster, nguồn/GT/custodian, events/precision/budget, run rights, evidence/user study, hướng xử lý #136. Riêng danh sách ba candidates đã Owner chốt; final auxiliary chỉ sau P1–P4/O3, không tự loại Q25/IVL3/Moondream2. Thiếu nguồn/nhãn độc lập chặn xác nhận; TRAIN chia lại không thành holdout.
 - Raw audit/model capability còn giới hạn; không yêu cầu raw replay mới cho mọi kết luận saved-score. Moondream2 thiếu endpoint tương thích không được âm thầm loại bỏ.
 
 ## NEXT TASK
