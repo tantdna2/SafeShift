@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật: **26/10/2026 (Asia/Bangkok)**. Bản nhớ trạng thái, không phải quyền thực nghiệm.
-Main đã đối chiếu GitHub: `a425ab04695319a42bfdd2f89192717dddbb891b`.
+Cập nhật: **27/10/2026 (Asia/Bangkok)**. Bản nhớ trạng thái, không phải quyền thực nghiệm.
+Main đã fetch/đối chiếu GitHub: `28fdf82512577f2ed0fb435fb2c12b88e82baf2f` (PR #135 MERGED).
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -13,9 +13,9 @@ Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là liv
 
 ## CURRENT STATUS
 
-- **M1:** **APPROVED khoa học dự án** tại [DEC-20261026-M1](research/DECISIONS.md); hiệu lực repository chờ merge và ChatGPT xác minh hậu merge.
-- **M2 v1:** **OWNER_APPROVED_FOR_PROJECT_SEMINAR**, đúng hai SHA-256 tại [DEC-20261026-M2](research/DECISIONS.md#dec-20261026-m2); review độc lập/ChatGPT đối chiếu PASS, Owner đã duyệt giới hạn. Khóa hiệu lực chờ PR #135 merge + ChatGPT xác minh hậu merge; chưa COMPLETE khi Draft.
-- D9R22 còn hiệu lực khi PR này Draft; successor chỉ thay phần liệt kê sau merge. DEC-PA3-011 lịch sử giữ PROPOSED; hướng tích hợp HNLO được Owner chọn, không duyệt toàn bộ A/C độc lập.
+- **M1:** **APPROVED khoa học dự án** tại [DEC-20261026-M1](research/DECISIONS.md); PR #135 đã merge, task pilot không tự nâng trạng thái ChatGPT xác minh hậu merge.
+- **M2 v1:** **OWNER_APPROVED_FOR_PROJECT_SEMINAR**, đúng hai SHA-256 tại [DEC-20261026-M2](research/DECISIONS.md#dec-20261026-m2); PR #135 đã MERGED theo GitHub. Task pilot không sửa protocol/config/quyết định hoặc tự xác nhận hậu merge khoa học của ChatGPT.
+- D9R22/successor theo đúng decision và bằng chứng hiệu lực gốc; không đổi trong task pilot. DEC-PA3-011 lịch sử giữ PROPOSED, không duyệt toàn bộ A/C độc lập.
 - PR #133/#134 đã merge; merge tài liệu không tự freeze M2 hoặc cấp quyền thực nghiệm.
 - Foundation V1 + công cụ saved-score CPU đã có; chưa có hệ thống Seminar R1–R5 hoàn chỉnh, backend VLM/raw writer/triage production.
 - **M3 CHƯA TRIỂN KHAI**; phạm vi CPU + fixture SYNTHETIC chỉ có hiệu lực sau hậu merge được ChatGPT xác minh và ChatGPT chính thức giao task M3. M4/artifact thật và Khóa luận chưa cấp quyền.
@@ -33,10 +33,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## ACTIVE WORK
 
-- **M1-01 + M2-01 trong một Draft PR:** hồ sơ quyết định append-only, [protocol](research/SEMINAR_PROTOCOL.md), [config v1](research/seminar_analysis_config.v1.json) và đồng bộ tài liệu hiện hành.
-- Branch: `docs/m1-m2-seminar-protocol-20261026`; BASE bằng main ở đầu file.
-- Trạng thái bàn giao: [PR #135](https://github.com/tantdna2/SafeShift/pull/135) **OPEN / DRAFT**, chưa merge; HEAD bổ sung quyết định/trạng thái chờ ChatGPT đối chiếu trước quyền merge.
-- Phạm vi tiếp nối cùng nhiệm vụ: append quyết định M2 + cập nhật trạng thái; giữ nguyên protocol/config từng byte. Không setup M3, artifact analysis, raw replay, inference/GPU/TEST hoặc PR phụ.
+- **Owner giao code PREP pilot TRAIN ba VLM:** Gemma 3 4B, Phi-3.5 Vision, SmolVLM2-2.2B; 160 main + tối đa 20 Qwen V4 false-safe, cùng exact IDs, classification và kiểm HNLO riêng từng model.
+- Branch: `implement/kaggle-three-vlm-pilot-20261027`, worktree riêng từ main đầu file; không dùng Draft #136/#137 làm base, không sửa chúng.
+- Ba notebook native One-Click, selector/bundle, source/config/grant gates, raw/CPU replay/report/resume và full runner locked; [runbook](KAGGLE_THREE_VLM_PILOT.md), [audit](THREE_VLM_TECHNICAL_AUDIT.md). Một Draft PR để ChatGPT review; merge/audit độc lập chờ quyền riêng.
+- **Thực nghiệm NOT_RUN**: không ảnh/dataset/raw Qwen artifact/weights/GPU; public model source/tokenizer CPU only. Gemma tokenizer gated 401. Ngưỡng/manifest/HNLO contract chờ Lead duyệt; không tự cấp grant.
 - BASE/HEAD chính xác và kết quả kiểm tra cuối ghi ở mô tả PR để tránh hash tự tham chiếu.
 
 ## KEY DECISIONS
@@ -52,7 +52,7 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## KNOWN BLOCKERS
 
-- B04 đã đáp ứng review/phê duyệt khoa học: [ChatGPT đối chiếu PASS](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408340899), [Owner duyệt đúng version](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408943462). Còn kiểm HEAD bổ sung, quyền merge và xác minh hậu merge để khóa hiệu lực repository.
+- B04 có [ChatGPT đối chiếu PASS](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408340899), [Owner duyệt version](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6408943462), PR #135 đã merge. Không nâng trạng thái audit hay kiểm hiệu lực M3 trong task pilot.
 - B01/B02/B05: Owner chấp nhận 12 atoms/7 nhóm BLOCKED (**19 placeholders**), continuous controls N/A, mismatch/proxy BLOCKED; giữ năm folder_domain. Không kết luận hazard strata/đối chứng chưa có/nhân quả; thiếu dữ liệu vẫn còn.
 - B03: Owner chấp nhận giới hạn hash-bound saved-report/provenance chưa đủ, không nâng thành raw audit mới; recovery reference-only, V4 gốc riêng.
 - B06: M3 CPU SYNTHETIC có điều kiện, chưa kích hoạt khi Draft; M4/artifact thật, raw/GPU/inference/ảnh/nhãn/TEST/tài nguyên ngoài và Khóa luận chưa cấp quyền. Học vụ/ngoại lệ chính thức chưa xác minh.
@@ -61,11 +61,11 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**M3-01 — Triển khai trọn vẹn hệ thống phân tích Seminar CPU, sau xác minh hậu merge M1/M2.**
+**ChatGPT kiểm trực tiếp Draft PR bộ pilot ba VLM, quyết định audit độc lập trước grant Kaggle.**
 
-- **Chưa được bắt đầu:** PR #135 phải merge, ChatGPT xác minh hậu merge M1/M2 và chính thức giao task M3. Phê duyệt Owner đã có, không cần khảo sát/lập kế hoạch hoặc xin lại quyết định cùng version.
-- Đầu vào trực tiếp: protocol/config v1 đã review đúng hash, quyết định append-only và [Execution Plan M3](EXECUTION_PLAN.md#m3-01--hoàn-thiện-hệ-thống-phân-tích-seminar-cpu); không khảo sát/lập kế hoạch lần nữa.
-- Sản phẩm M3: reader/provenance/status, metric/report R1–R5, CLI, synthetic tests/oracle, docs/config/receipt; kiểm quyết định M2 có hiệu lực + hai hash trước chạy fixture. Không đọc artifact thật hoặc triển khai GPU/backend/triage.
+- Code PREP chỉ hoàn tất khi có notebook/runner/tests/docs và một Draft PR; chưa là PASS model hoặc HNLO. Không sửa/merge PR #136/#137 hoặc mở PR phụ.
+- Sau review mới xét grant CPU preparation (3763 TRAIN headers/hashes/folder GT), optional original-V4 saved artifacts, rồi manifest/ngưỡng/source-bound inference grant riêng từng model. Hiện tất cả NOT_GRANTED.
+- Pilot thực nghiệm DONE chỉ khi có archive thật và kết luận từng model; FULL TRAIN 3763/model là nhiệm vụ sau, cần pilot GO + ChatGPT review + Owner grant riêng; TEST đóng.
 
 ## IMPORTANT REFERENCES
 
