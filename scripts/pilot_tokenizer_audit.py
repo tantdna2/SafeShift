@@ -14,8 +14,9 @@ from safeshift.pilot.hnlo import probe
 from safeshift.pilot.contract import LEVELS, MODELS
 
 
-def audit(source, dependencies, output):
-    sys.path.insert(0, str(dependencies))
+def audit(source, dependencies, output, models=("phi", "smolvlm2", "gemma")):
+    if dependencies:
+        sys.path.insert(0, str(dependencies))
     import tokenizers
     import jinja2
     from jinja2.sandbox import ImmutableSandboxedEnvironment
@@ -23,8 +24,12 @@ def audit(source, dependencies, output):
     prompt = Path("configs/pilot/classification_c1.txt").read_text(encoding="utf-8")
     result = {"status": "TEXT_ONLY_NOT_GPU_HNLO_VALIDATION", "tokenizers": tokenizers.__version__,
               "jinja2": jinja2.__version__, "models": {}}
-    for key in ("phi", "smolvlm2"):
+    for key in models:
         root = Path(source) / key
+        if not (root / "tokenizer.json").is_file():
+            result["models"][key] = {"model": MODELS[key], "status": "BLOCKED_SOURCE_TOKENIZER_UNAVAILABLE",
+                                     "mapping": None, "generated_alignment": "NOT_RUN"}
+            continue
         tokenizer = tokenizers.Tokenizer.from_file(str(root / "tokenizer.json"))
         config = json.loads((root / "tokenizer_config.json").read_bytes())
         template = config.get("chat_template")
@@ -45,17 +50,17 @@ def audit(source, dependencies, output):
             "tokenizer_sha256": hashlib.sha256((root / "tokenizer.json").read_bytes()).hexdigest(),
             "standalone_labels": {l: tokenizer.encode(l, add_special_tokens=False).ids for l in LEVELS},
             "actual_image_boundary": "NOT_RUN", "generated_alignment": "NOT_RUN"}
-    result["models"]["gemma"] = {"model": MODELS["gemma"], "status": "BLOCKED_GATED_401_NO_TOKENIZER",
-                                    "mapping": None, "generated_alignment": "NOT_RUN"}
     write(output, result)
 
 
 def main():
     p = argparse.ArgumentParser()
-    for name in ("source", "dependencies", "output"):
+    for name in ("source", "output"):
         p.add_argument("--" + name, required=True)
+    p.add_argument("--dependencies", help="Optional isolated dependency directory; otherwise current CPU environment")
+    p.add_argument("--models", nargs="+", choices=tuple(MODELS), default=list(MODELS))
     a = p.parse_args()
-    audit(a.source, a.dependencies, a.output)
+    audit(a.source, a.dependencies, a.output, a.models)
 
 
 if __name__ == "__main__":

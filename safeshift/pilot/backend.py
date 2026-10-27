@@ -15,6 +15,18 @@ from .contract import GENERATION, MODELS
 from .hnlo import candidate_ids, probe, tokenizer_replay
 
 
+def check_source_review(repo, key):
+    """A valid token is access, not approval of previously unread source bytes."""
+    locked = read(Path(repo) / "configs/pilot/model_source_lock.json")[key]
+    spec = MODELS[key]
+    if locked.get("id") != spec["id"] or locked.get("revision") != spec["revision"]:
+        raise PermissionError("BLOCKED_SOURCE_REVIEW_IDENTITY_MISMATCH")
+    required = {"config.json", "tokenizer.json", "tokenizer_config.json", "preprocessor_config.json"}
+    if locked.get("unavailable") or not required <= set(locked.get("files", {})):
+        raise PermissionError("BLOCKED_SOURCE_TOKENIZER_AUDIT_INCOMPLETE:" + key)
+    return locked
+
+
 def check_software(repo, key):
     expected = read(Path(repo) / "configs/pilot/runtime_versions.json")[key]
     actual = {name: importlib.metadata.version(name) for name in expected}
@@ -25,6 +37,7 @@ def check_software(repo, key):
 
 def provision(repo, key, cache, token=None):
     """No pickle weights. Inspect/reject custom-code drift BEFORE any import."""
+    locked = check_source_review(repo, key)
     from huggingface_hub import HfApi, snapshot_download
     spec = MODELS[key]
     info = HfApi().model_info(spec["id"], revision=spec["revision"], files_metadata=True, token=token)
@@ -32,7 +45,6 @@ def provision(repo, key, cache, token=None):
         raise ValueError("MODEL_REVISION_MISMATCH")
     names = [r.rfilename for r in info.siblings]
     executable = {n for n in names if n.endswith(".py")}
-    locked = read(Path(repo) / "configs/pilot/model_source_lock.json")[key]
     if executable != {n for n in locked["files"] if n.endswith(".py")}:
         raise ValueError("UNREVIEWED_EXECUTABLE_CODE")
     allowed = [n for n in names if "/" not in n and n.endswith((".json", ".model", ".txt", ".py", ".safetensors"))]

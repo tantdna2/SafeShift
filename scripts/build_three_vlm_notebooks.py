@@ -49,8 +49,16 @@ locked; Save & Run All cannot promote a pilot to full execution.
 After ChatGPT code review and separate Research Lead/Owner grant: attach exactly
 one approved **private** `safeshift-pilot-input` bundle and `grant_{key}.json`;
 Internet ON, accelerator **T4 ×2 (16 GB each)**. Only GPU0 is used in FP16/eager.
-For Gemma accept official terms and enable Kaggle Secret `HF_TOKEN` with read
-access. No code, path, SHA, model revision or crop edits are required.
+Gemma is currently BLOCKED by incomplete config/tokenizer source audit. Official
+HF access plus reviewed source hashes/tokenizer audit and a regenerated release
+are required before a Gemma run; a token alone cannot unlock this version. Then
+enable Kaggle Secret `HF_TOKEN` with read access. Phi/Smol gates are independent.
+No code, path, SHA, model revision or crop edits are required.
+
+Scratch uses measured working storage (venv/cache/pip temp), not `/tmp`. Shared
+scratch/output filesystem needs at least 32 GiB free, plus resume allowance;
+insufficient space stops before installation. Phi remains 16 crops/FP16/eager:
+T4 OOM risk is UNVERIFIED, and OOM stops instead of changing preprocessing.
 
 For authorized resume also attach the exact prior archive renamed
 `resume_{key}.zip` and a new source/config/input-bound resume grant. SUCCESS is
@@ -58,7 +66,9 @@ not rerun; errors/INVALID need a separate exact-ID retry grant.
 
 Download the printed result ZIP and `.sha256.json` from Outputs, including failed
 or partial attempts. `/kaggle/working` is ephemeral; Save Version/outputs and
-download immediately. See `docs/KAGGLE_THREE_VLM_PILOT.md` in the same Draft PR.
+download immediately. Owned scratch is cleaned after the worker; if cleanup fails,
+download evidence ZIP only, never publish the whole working tree with cache/weights.
+See `docs/KAGGLE_THREE_VLM_PILOT.md` in the same Draft PR.
 Classification and HNLO statuses are independent. CPU tests/source audit do not
 prove T4 execution, HNLO alignment or pilot quality.
 """

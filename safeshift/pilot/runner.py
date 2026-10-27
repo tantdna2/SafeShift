@@ -136,13 +136,14 @@ def execute(store, rows, backend_factory, grant, key, plan, time_budget=None):
 
 def run(repo, bundle, grant, source_hash, output, mode="PILOT", parent=None):
     run_start = time.monotonic()
-    from .backend import NativeBackend, check_software, provision
+    from .backend import NativeBackend, check_software, check_source_review, provision
     repo, output, bundle = Path(repo), Path(output), Path(bundle)
     key = grant["model_key"]
     if source_digest(repo) != source_hash:
         raise PermissionError("ACTUAL_RUNTIME_SOURCE_MISMATCH")
     authorize(grant, model=key, mode=mode, source_hash=source_hash, manifest_hash=grant.get("manifest_sha256"),
               count=grant.get("max_initial_ids"), parent=grant.get("resume_parent_archive_sha256") if parent else None)
+    check_source_review(repo, key)
     if sha(safe(bundle, "pilot_manifest.json")) != grant["manifest_sha256"]:
         raise PermissionError("APPROVED_CANONICAL_MANIFEST_BYTES_REQUIRED_BEFORE_PARSE")
     plan, rows = load_bundle(bundle, mode, verify_images=False)

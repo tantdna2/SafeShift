@@ -38,6 +38,12 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 - Ba notebook native One-Click, selector/bundle, source/config/grant gates, raw/CPU replay/report/resume và full runner locked; [runbook](KAGGLE_THREE_VLM_PILOT.md), [audit](THREE_VLM_TECHNICAL_AUDIT.md). Một Draft PR để ChatGPT review; merge/audit độc lập chờ quyền riêng.
 - **Thực nghiệm NOT_RUN**: không ảnh/dataset/raw Qwen artifact/weights/GPU; public model source/tokenizer CPU only. Gemma tokenizer gated 401. Ngưỡng/manifest/HNLO contract chờ Lead duyệt; không tự cấp grant.
 - BASE/HEAD chính xác và kết quả kiểm tra cuối ghi ở mô tả PR để tránh hash tự tham chiếu.
+- **PR #138 audit FAIL, đang khắc phục trong cùng branch/session** theo
+  [biên bản ChatGPT](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6438422457).
+  Sửa admission scratch/output theo filesystem, chuyển temp/cache về working,
+  giữ bằng chứng khi worker/export lỗi, chặn Gemma khi source lock chưa đủ;
+  tái hiện cài thư viện Linux đúng hai bước. Bằng chứng cuối trong
+  [technical audit](THREE_VLM_TECHNICAL_AUDIT.md). Không tự nâng FAIL thành audit PASS.
 
 ## KEY DECISIONS
 
@@ -61,7 +67,8 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**ChatGPT kiểm trực tiếp Draft PR bộ pilot ba VLM, quyết định audit độc lập trước grant Kaggle.**
+**ChatGPT kiểm HEAD sửa của Draft PR #138, sau đó tái audit tập trung trong cùng session Antigravity #138.**
+Giữ FAIL/DRAFT tới khi được đối chiếu; chưa merge hoặc có grant Kaggle.
 
 - Code PREP chỉ hoàn tất khi có notebook/runner/tests/docs và một Draft PR; chưa là PASS model hoặc HNLO. Không sửa/merge PR #136/#137 hoặc mở PR phụ.
 - Sau review mới xét grant CPU preparation (3763 TRAIN headers/hashes/folder GT), optional original-V4 saved artifacts, rồi manifest/ngưỡng/source-bound inference grant riêng từng model. Hiện tất cả NOT_GRANTED.

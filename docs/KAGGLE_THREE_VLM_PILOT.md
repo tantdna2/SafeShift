@@ -32,8 +32,9 @@ package runtime, prompt, dependency pins, source lock và CPU token evidence.
 Owner không nhập revision, SHA, đường dẫn, prompt hoặc thay cell.
 
 Luồng sau khi **được cấp quyền**: kiểm source/grant → consume attempt local →
-kiểm original TRAIN master/manifest/dimension inventory/toàn bộ ảnh selected →
-nhập resume archive được phép → kiểm hai GPU bằng nvidia-smi → venv riêng →
+kiểm source/tokenizer lock đủ evidence → original TRAIN master/manifest/dimension
+inventory/toàn bộ ảnh selected → đo storage → nhập resume archive được phép →
+kiểm hai GPU bằng nvidia-smi → venv riêng →
 kiểm versions/CUDA FP16 nhỏ trước weights → pinned snapshot/safetensors/custom
 code → native greedy từng ảnh → raw fsync → strict parser → CPU HNLO replay →
 report đủ planned IDs → ZIP/checksum. First-12 gate là các ordinal 0–11 trong
@@ -148,20 +149,87 @@ Không dùng topology/grant cũ hoặc hiểu một chuỗi URL là tự chứng
    direct mount hoặc `datasets/<owner>/<slug>`, tối đa 512 directory entries;
    zero/multiple bundle/grant bị chặn, không yêu cầu sửa đường dẫn thủ công.
 3. Chọn **T4 ×2**. Preflight đòi hai T4 khoảng 16 GB/card, GPU0 free ≥14 GiB;
-   GPU1 để trống. Không cộng VRAM. Venv/model cache nằm ở temp scratch; cần
-   28 GiB free scratch và 4 GiB free output trước setup. Đây là admission estimate,
-   không bằng chứng mọi ảnh fit. Thời gian/quota/RAM/driver/disk thực tế phải được
-   Owner kiểm trước; chưa đo Kaggle trong task này.
+   GPU1 để trống. Không cộng VRAM. Scratch riêng từng session nằm dưới
+   `/kaggle/working/data/processed/three_vlm_scratch/`; venv, HF/model/custom-code
+   cache và `TMPDIR/TMP/TEMP` của pip/worker đều vào vùng này, không dựa `/tmp`.
+   `storage_admission.json` ghi `st_dev`, mount, total/used/free thực đo.
+   Cần 28 GiB scratch + 4 GiB output; **chung filesystem phải còn tổng ≥32 GiB**,
+   khác filesystem phải đủ từng phần. Không cộng hai quan sát free của cùng device.
+   Resume cộng thêm 4× số byte giải nén archive vào output allowance (extraction,
+   retained sample copies và ZIP). Thiếu thì BLOCKED trước cài thư viện/weights;
+   không tự giảm ngưỡng hay chuyển sang `/tmp`. Đây là minimum admission estimate,
+   không allocation reservation hoặc chứng minh peak disk/ảnh fit. Kaggle mount,
+   quota/driver/RAM/retention thực tế vẫn chưa được đo.
 4. Với Gemma, tài khoản HF phải chấp nhận [Gemma terms/model access](https://huggingface.co/google/gemma-3-4b-it),
-   tạo read token, lưu Kaggle Secret tên `HF_TOKEN`, cho notebook dùng secret.
+   dùng read token hợp lệ của Owner, lưu Kaggle Secret tên `HF_TOKEN`, cho notebook dùng secret.
    Không dán token vào cell/grant/log. Thiếu quyền/401/403 giữ BLOCKED hoặc failure
    model-access với 0 attempted, không fallback sang revision/model khác.
+   **Bản hiện tại còn chặn Gemma bởi source/tokenizer audit chưa hoàn tất**, kể cả
+   token hợp lệ; phải theo quy trình dưới đây trước phát hành grant/notebook mới.
 5. Save & Run All một lần cho attempt đã cấp. Mỗi model có fresh venv riêng,
    pinned packages, FP16/eager, batch1, greedy max64, không FA2/BF16/quantization,
    không thay preprocessing để cứu OOM. Không đổi cell rồi rerun attempt.
 6. Download ZIP và `.sha256.json` in ở cuối, kể cả BLOCKED/FAILED/PARTIAL.
    Save Version/Outputs và tải ngay; working/temp có thể mất khi session kết thúc.
    Notebook không upload kết quả hoặc gửi thông tin cho ai.
+
+Sau worker kết thúc hoặc timeout, supervisor chỉ dọn scratch có đúng marker và
+đường dẫn session thuộc working; không xóa evidence/input/attempt ledger. Nếu dọn
+thất bại, xuất ZIP vẫn được thử và in `SCRATCH_CLEANUP_FAILED`: chỉ tải ZIP evidence,
+không publish cả working tree chứa venv/cache/weights. Nếu kernel/VM bị hủy cứng,
+finalizer có thể không chạy; giữ giới hạn ephemeral/retention đã nêu. Raw/partial
+ZIP không bị ghi đè. Lỗi ghi session/failure metadata không ngăn thử export.
+
+### Gemma: quyền truy cập và audit trước GPU
+
+| Trục trạng thái | Bằng chứng hiện tại |
+| --- | --- |
+| Access | BLOCKED: lần audit public trước trả HTTP 401 cho 10 tài nguyên; không thử token trong task sửa. |
+| Source/tokenizer | Chưa đủ bằng chứng: lock `files:{}`/`unavailable` chưa được bổ sung; fail closed trước dataset/GPU/weights. |
+| HNLO | HNLO_UNVERIFIED: chưa biết mapping thật/decision alignment/raw logits/replay. |
+| GPU/classification | NOT_RUN; không có T4 hoặc ảnh TRAIN trong task code. |
+
+Owner đăng nhập tài khoản HF được cấp quyền và chấp nhận điều khoản tại model
+chính thức; xem [HF gated access](https://huggingface.co/docs/hub/models-gated).
+Chỉ sau quyền **source/tokenizer audit riêng**, Owner/reviewer cung cấp token đọc
+qua biến môi trường `HF_TOKEN` bằng secret manager, không qua command argument,
+notebook, grant, Git hoặc chat. Công cụ dưới đây chỉ lấy text/code/tokenizer ở
+revision đã khóa, không tải weights/ảnh, không import code model:
+
+```console
+python -B -m scripts.pilot_source_audit --models gemma --authenticated --output data/processed/gemma_authorized_source_audit
+```
+
+Output mới/exclusive, không overwrite audit cũ. HTTP redirect bỏ Authorization;
+token không lưu vào inventory hoặc log. Với CPU environment đã cài đúng
+`tokenizers==0.21.1`, `Jinja2==3.1.6`, kiểm text-only C1/chat template:
+
+```console
+python -B -m scripts.pilot_tokenizer_audit --models gemma --source data/processed/gemma_authorized_source_audit --output data/processed/gemma_authorized_tokenizer_evidence.json
+```
+
+Reviewer kiểm inventory/checksum/revision, config/auto_map/processor/chat template,
+tokenizer và bất kỳ executable source nào; đánh giá kết quả probe kể cả negative.
+Chỉ sau review, cập nhật hashes/`unavailable` trong source lock và CPU evidence,
+regenerate **cả ba** notebook rồi review source digest mới trong cùng PR/release
+được phép. Không yêu cầu Owner sửa notebook/revision thủ công. Cấp grant mới bind
+source/config/manifest sau khi release được duyệt. Không đổi model revision, nhãn
+hay prompt để làm mapping thuận tiện. Quyền access và CPU probe không là HNLO PASS:
+runtime vẫn phải kiểm generated IDs/raw decision step/CPU oracle trên ảnh thật.
+Phi/Smol có lock riêng và không bị khóa theo Gemma; vẫn cần grant riêng của chúng.
+
+### Phi và hardlink: giữ chính sách, ghi đúng phần chưa biết
+
+Phi giữ **16 crops, FP16, eager, GPU0**. Ảnh lớn trong first-12 vẫn có thể OOM trên
+T4 16 GiB; chưa có phép đo GPU để khẳng định fit. OOM dừng, giữ raw/error/tail
+NOT_ATTEMPTED; không giảm crop/độ phân giải hoặc đổi backend. Mọi cấu hình khác
+chỉ là phương án cần Owner/Lead duyệt riêng trước dùng, không fallback tự động.
+
+`safe()` tiếp tục yêu cầu regular file, không symlink/junction và `st_nlink == 1`.
+Chưa có stat trace của mount Kaggle thật chứng minh false rejection, nên rủi ro
+đó là **UNVERIFIED**, không thêm ngoại lệ. Nếu một lần chạy được cấp quyền bị chặn,
+lưu stat/link count/mount và manifest/hash đã được phép đọc để reviewer đánh giá;
+không bỏ kiểm tra hoặc tự copy/đổi bundle ngay trong notebook.
 
 ## Raw, capture, replay và báo cáo
 

@@ -8,7 +8,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 import uuid
 
@@ -17,13 +16,86 @@ from .contract import MODELS, authorize, digest, source_digest
 from .manifest import discover, load_bundle
 from .report import save_reports
 from .runner import error_record
+from .backend import check_source_review
+
+
+def dependency_commands(python, repo, key):
+    """Ordered commands shared by bootstrap and the CPU Linux install rehearsal."""
+    pip = [str(python), "-m", "pip"]
+    return [pip + ["install", "--disable-pip-version-check", "--no-cache-dir", "pip==25.0.1"],
+            pip + ["install", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu124",
+                   "torch==2.6.0+cu124", "torchvision==0.21.0+cu124"],
+            pip + ["install", "--no-cache-dir", "-r", str(Path(repo) / f"configs/pilot/{key}.requirements.txt")],
+            pip + ["check"]]
+
+
+def filesystem_usage(path):
+    """Measure the actual filesystem, including bind mounts sharing st_dev."""
+    path = Path(path).resolve(strict=True)
+    usage = shutil.disk_usage(path)
+    mount = path
+    while mount.parent != mount and not os.path.ismount(mount):
+        mount = mount.parent
+    return {"device": path.stat().st_dev, "mount": str(mount),
+            "total_bytes": usage.total, "used_bytes": usage.used, "free_bytes": usage.free}
+
+
+def storage_admission(scratch, output, resume_bytes=0):
+    """Minimum headroom, not a prediction of peak use or a reserved allocation.
+
+    Resume allowance covers extraction, retained sample copies and their ZIP.
+    Group by device so two observations never count the same free bytes twice.
+    """
+    paths = {"scratch": filesystem_usage(scratch), "output": filesystem_usage(output)}
+    needs = {"scratch": 28 * 2**30, "output": 4 * 2**30 + 4 * resume_bytes}
+    groups = {}
+    for name, observed in paths.items():
+        group = groups.setdefault(observed["device"], {"roles": [], "required_bytes": 0,
+                                                       "free_bytes": observed["free_bytes"]})
+        group["roles"].append(name)
+        group["required_bytes"] += needs[name]
+        group["free_bytes"] = min(group["free_bytes"], observed["free_bytes"])
+    return {"paths": paths, "requirements_bytes": needs, "filesystems": list(groups.values()),
+            "resume_uncompressed_bytes": resume_bytes,
+            "admitted": all(g["free_bytes"] >= g["required_bytes"] for g in groups.values())}
+
+
+def prepare_scratch(work, session):
+    """Only the explicitly selected working root; never silently use host /tmp."""
+    scratch = safe(work, "data/processed/three_vlm_scratch/" + session)
+    scratch.mkdir(parents=True, exist_ok=False)
+    temporary = scratch / "tmp"
+    temporary.mkdir()
+    # A real exclusive write verifies writability (access() alone is insufficient).
+    write(scratch / "location.json", {"scope": "working_directory", "session": session})
+    return scratch, {**os.environ, "TMPDIR": str(temporary), "TMP": str(temporary),
+                     "TEMP": str(temporary), "HF_HOME": str(scratch / "hf_home"),
+                     "HF_MODULES_CACHE": str(scratch / "hf_modules"),
+                     "XDG_CACHE_HOME": str(scratch / "xdg_cache"),
+                     "TORCH_HOME": str(scratch / "torch_cache")}
+
+
+def cleanup_scratch(work, scratch, session):
+    """Remove only this session's owned runtime/cache, never evidence or inputs.
+
+    Working-directory scratch must not become part of Kaggle's saved outputs.
+    subprocess.run has returned/killed-and-waited before the finalizer calls this.
+    """
+    expected = safe(work, "data/processed/three_vlm_scratch/" + session)
+    if Path(scratch).resolve() != expected.resolve() or not expected.resolve().is_relative_to(Path(work).resolve()):
+        raise ValueError("SCRATCH_CLEANUP_SCOPE_MISMATCH")
+    if read(expected / "location.json") != {"scope": "working_directory", "session": session}:
+        raise ValueError("SCRATCH_CLEANUP_OWNERSHIP_MISMATCH")
+    shutil.rmtree(expected)
 
 
 def gpu_preflight():
     output = subprocess.check_output(["nvidia-smi", "--query-gpu=name,memory.total,memory.free,driver_version",
                                       "--format=csv,noheader,nounits"], text=True)
     rows = [[x.strip() for x in line.split(",")] for line in output.strip().splitlines()]
-    if len(rows) != 2 or any("T4" not in r[0] or not 14000 <= int(r[1]) <= 17000 for r in rows):
+    if (len(rows) != 2 or any(len(r) != 4 or r[0] not in ("Tesla T4", "NVIDIA T4", "T4")
+                             or not r[1].isdigit() or not r[2].isdigit()
+                             or not 14000 <= int(r[1]) <= 17000 for r in rows)):
         raise RuntimeError("BLOCKED_EXPECTED_TWO_T4_EACH_16GB_NO_POOLED_VRAM")
     if int(rows[0][2]) < 14 * 1024:
         raise RuntimeError("BLOCKED_GPU0_FREE_BELOW_14_GIB")
@@ -70,7 +142,7 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
     session = uuid.uuid4().hex
     output = work / "data/processed/three_vlm" / (key + "-" + session)
     output.mkdir(parents=True, exist_ok=False)
-    stage, plan, grant, blocked = "authority", None, None, False
+    stage, plan, grant, blocked, scratch = "authority", None, None, False, None
     started = time.monotonic()
     try:
         if source_digest(repo) != source_hash:
@@ -95,6 +167,8 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
         write(consumption, {"run_id": grant["run_id"], "source_sha256": source_hash,
                             "session": session, "consumed_before_data": True})
         write(output / "grant.json", grant)
+        stage = "source_review"
+        check_source_review(repo, key)  # Gemma access alone cannot qualify an empty source lock.
         stage = "dataset"
         bundle = discover(inputs, "bundle.json").parent
         if sha(safe(bundle, "pilot_manifest.json")) != grant["manifest_sha256"]:
@@ -106,21 +180,28 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
         load_bundle(bundle, "PILOT", verify_images=True)
         write(output / "input_verification.json", {"source_sha256": source_hash, "images_verified": len(rows),
                                                    "master_membership_n": 3763, "split": "TRAIN"})
-        parent = None
+        parent, archive, resume_bytes = None, None, 0
         if grant.get("resume_parent_archive_sha256"):
             stage = "resume"
             archive = discover(inputs, f"resume_{key}.zip")
             if sha(archive) != grant["resume_parent_archive_sha256"]:
                 raise ValueError("RESUME_ARCHIVE_HASH")
+            import zipfile
+            with zipfile.ZipFile(archive) as z:
+                resume_bytes = sum(i.file_size for i in z.infolist())
+        stage = "storage"
+        scratch, setup_env = prepare_scratch(work, session)
+        admission = storage_admission(scratch, output, resume_bytes)
+        write(output / "storage_admission.json", admission)
+        if not admission["admitted"]:
+            raise OSError("BLOCKED_FILESYSTEM_COMBINED_HEADROOM_REQUIRED")
+        if archive:
+            stage = "resume"
             parent = import_archive(archive, output / "prior")
         stage = "hardware"
         write(output / "gpu_preflight.json", gpu_preflight())
         if platform.system() != "Linux" or sys.version_info[:2] not in ((3, 11), (3, 12)):
             raise RuntimeError("BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED")
-        scratch = Path(tempfile.gettempdir()) / "data/processed/safeshift-three-vlm" / session
-        scratch.mkdir(parents=True, exist_ok=False)
-        if shutil.disk_usage(scratch).free < 28 * 2**30 or shutil.disk_usage(output).free < 4 * 2**30:
-            raise OSError("BLOCKED_SCRATCH_28GIB_OUTPUT_4GIB_ADMISSION")
         write(output / "host.json", {"python": sys.version, "platform": platform.platform(),
               "scratch_free": shutil.disk_usage(scratch).free, "output_free": shutil.disk_usage(output).free})
         stage = "software"
@@ -130,18 +211,15 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
                 remaining = grant["max_seconds"] - (time.monotonic() - started)
                 if remaining <= 0:
                     raise TimeoutError("SETUP_TIME_CAP")
-                subprocess.run(args, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=remaining)
+                subprocess.run(args, env=setup_env, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=remaining)
             call([sys.executable, "-m", "venv", str(runtime)])
             python = runtime / "bin/python"
-            call([str(python), "-m", "pip", "install", "--disable-pip-version-check", "--no-cache-dir", "pip==25.0.1"])
-            call([str(python), "-m", "pip", "install", "--no-cache-dir", "--index-url",
-                  "https://download.pytorch.org/whl/cu124", "torch==2.6.0+cu124", "torchvision==0.21.0+cu124"])
-            call([str(python), "-m", "pip", "install", "--no-cache-dir", "-r", str(repo / f"configs/pilot/{key}.requirements.txt")])
-            call([str(python), "-m", "pip", "check"])
+            for command in dependency_commands(python, repo, key):
+                call(command)
         freeze = subprocess.check_output([str(python), "-m", "pip", "freeze"], text=True)
         write_bytes(output / "pip_freeze.txt", freeze.encode())
         stage = "worker"
-        env = os.environ.copy()
+        env = setup_env.copy()
         env.update(PYTHONPATH=str(repo), CUDA_VISIBLE_DEVICES="0", TOKENIZERS_PARALLELISM="false",
                    SAFESHIFT_MODEL_CACHE=str(scratch / "model_cache"), PYTHONDONTWRITEBYTECODE="1",
                    SAFESHIFT_SUPERVISED="1")
@@ -164,10 +242,18 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
         print("Worker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.")
     except BaseException as error:
         blocked = True
-        write(output / "supervisor_failure.json", {"status": "BLOCKED" if stage in ("authority", "dataset", "hardware", "software") else "FAILED",
-                                                   **error_record(error, stage)})
+        try:
+            write(output / "supervisor_failure.json", {"status": "BLOCKED" if stage in ("authority", "source_review", "dataset", "storage", "hardware", "software") else "FAILED",
+                                                       **error_record(error, stage)})
+        except BaseException:
+            print("FAILURE_RECORD_WRITE_FAILED; existing evidence retained.")
         print("STOP:", stage, type(error).__name__, "— inspect exported evidence.")
     finally:
+        if scratch is not None:
+            try:
+                cleanup_scratch(work, scratch, session)
+            except BaseException:
+                print("SCRATCH_CLEANUP_FAILED: do not publish/save entire working tree; download evidence ZIP only.")
         try:
             if plan is not None:
                 # Separate fallback directory avoids overwriting torn reports.
@@ -176,9 +262,12 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
                     save_reports(output / "recovered_report", plan, {key: results}, blocked=True)
         except BaseException as error:
             print("REPORT_FAILED", type(error).__name__, "raw/partial evidence retained for export.")
-        write(output / "session.json", {"session_id": session, "model_key": key, "mode": "PILOT",
-              "source_sha256": source_hash, "seconds": time.monotonic() - started,
-              "supervisor_blocked": blocked, "gpu_experiment_claim": "SEE_ACTUAL_EVIDENCE_ONLY"})
+        try:
+            write(output / "session.json", {"session_id": session, "model_key": key, "mode": "PILOT",
+                  "source_sha256": source_hash, "seconds": time.monotonic() - started,
+                  "supervisor_blocked": blocked, "gpu_experiment_claim": "SEE_ACTUAL_EVIDENCE_ONLY"})
+        except BaseException:
+            print("SESSION_RECORD_WRITE_FAILED; export still attempted.")
         archive = output.parent / (output.name + ".zip")
         try:
             checksum = export(output, archive)

@@ -451,8 +451,11 @@ class ArtifactAndEngineTests(unittest.TestCase):
                     r["capture_error"] = "SYNTHETIC HNLO failure"
                     return r
             native_parse = c.parse_label
+            parsed = []
             def observed(text):
-                self.assertTrue(list(store.root.rglob("raw.json")))
+                current = store.root / f"samples/{len(parsed):06d}/raw.json"
+                self.assertEqual(read(current)["response"], text)
+                parsed.append(text)
                 return native_parse(text)
             with patch("safeshift.pilot.runner.parse_label", observed):
                 results, blocked = execute(store, rows, SyntheticBackend, grant(), "gemma", p)
