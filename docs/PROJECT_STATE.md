@@ -61,10 +61,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
   yêu cầu; 160 NOT_ATTEMPTED. Không tái sử dụng grant a1. Smol a1 RESERVED,
   NOT_EXECUTED; không chạy với working cũ. Classification NOT_RUN,
   HNLO_UNVERIFIED cho cả hai; không suy OOM hay chất lượng từ storage failure.
-- **Storage fix DRAFT chờ ChatGPT kiểm GitHub và audit:** scratch `/kaggle/tmp`,
+- **Storage fix [#139](https://github.com/tantdna2/SafeShift/pull/139) DRAFT, delta chờ review/audit:** scratch `/kaggle/tmp`,
   output `/kaggle/working`, giữ admission 28+4 GiB; preflight CPU-only không
-  dùng grant, kiểm allocation và giữ receipt. Chưa đo mount/quota thật trên
-  Kaggle, chưa chứng minh peak storage/VRAM hay khả năng chạy model.
+  dùng grant, kiểm allocation và giữ receipt. Chưa đo mount/quota thật trên Kaggle.
+  Theo [review audit](https://github.com/tantdna2/SafeShift/pull/139#issuecomment-6465128380), thêm tạo root khi thiếu dưới cha đã kiểm; audit PASS cũ không tự bao phủ delta.
 - [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
   thay trạng thái FAIL/DRAFT cũ bằng CODE PREP COMPLETE. Grant Phi/Smol riêng không
   nâng thành model/HNLO PASS; Gemma nằm ngoài quyền lần này.
@@ -91,7 +91,7 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**ChatGPT kiểm Draft storage fix trên GitHub và quyết định audit độc lập.**
+**ChatGPT kiểm HEAD mới #139; delta audit trong session Antigravity hiện có.**
 Sau review, đo CPU-only preflight tại đúng môi trường Kaggle và giữ receipt;
 chưa cấp grant hay khởi chạy pilot từ task này. Phi cần run/attempt mới và grant
 review bind source/config/manifest; không tái sử dụng a1. Smol vẫn pending.

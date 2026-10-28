@@ -5,6 +5,7 @@ Notebooks call launch(..., mode='PILOT') literally. No promotion from pilot.
 import os
 import re
 import json
+import errno
 from pathlib import Path
 import platform
 import shutil
@@ -129,9 +130,7 @@ def storage_preflight(work=None, scratch_root=None):
         return None
     scratch = None
     try:
-        checked_scratch = checked_root(scratch_root)
-        if checked_scratch.is_relative_to(work) or work.is_relative_to(checked_scratch):
-            raise ValueError("SCRATCH_OUTPUT_ROOT_OVERLAP")
+        checked_scratch = provision_scratch_root(work, scratch_root)
         scratch, _ = prepare_scratch(checked_scratch, session)
         result = storage_receipt(scratch, output)
     except (OSError, ValueError) as error:
@@ -166,6 +165,62 @@ def checked_root(root):
     if not root.is_dir():
         raise ValueError("STORAGE_ROOT_MISSING_OR_NOT_DIRECTORY")
     return root
+
+
+def provision_scratch_root(work, root):
+    """Validate/create only the sibling tmp root; retain it across sessions.
+
+    Kaggle defaults bind this to /kaggle/tmp under the existing /kaggle parent.
+    Explicit work/root arguments support isolated CPU tests, with the same layout.
+    Never create ancestors, follow aliases, overwrite an entry or select a fallback.
+    """
+    work = checked_root(work)
+    root = Path(root)
+    if not root.is_absolute() or ".." in root.parts or root != work.parent / "tmp":
+        raise ValueError("SCRATCH_ROOT_MUST_BE_SIBLING_TMP")
+    parent = checked_root(work.parent)
+    identity = lambda info: (info.st_dev, info.st_ino)
+    parent_identity = identity(parent.lstat())
+    parent_fd = root_fd = None
+    try:
+        if os.name == "posix":
+            flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+            parent_fd = os.open(parent, flags)
+            if identity(os.fstat(parent_fd)) != parent_identity:
+                raise ValueError("SCRATCH_PARENT_CHANGED")
+            try:
+                os.stat("tmp", dir_fd=parent_fd, follow_symlinks=False)
+            except FileNotFoundError:
+                try:
+                    os.mkdir("tmp", mode=0o700, dir_fd=parent_fd)
+                except FileExistsError:
+                    pass  # Concurrent creator: open/revalidate; never trust EEXIST.
+            checked_root(root)
+            root_fd = os.open("tmp", flags, dir_fd=parent_fd)
+            root_identity = identity(os.fstat(root_fd))
+        else:
+            try:
+                root.lstat()
+            except FileNotFoundError:
+                try:
+                    root.mkdir(mode=0o700, exist_ok=False)
+                except FileExistsError:
+                    pass
+            checked_root(root)
+            root_identity = identity(root.lstat())
+        # Detect parent replacement or a different mounted/path entry after mkdir.
+        checked_root(parent)
+        checked_root(root)
+        if identity(parent.lstat()) != parent_identity or identity(root.lstat()) != root_identity:
+            raise ValueError("SCRATCH_ROOT_OR_PARENT_CHANGED")
+        if not os.access(root, os.W_OK | os.X_OK):
+            raise PermissionError(errno.EACCES, "SCRATCH_ROOT_NOT_WRITABLE_OR_SEARCHABLE", str(root))
+        return root
+    finally:
+        if root_fd is not None:
+            os.close(root_fd)
+        if parent_fd is not None:
+            os.close(parent_fd)
 
 
 def prepare_scratch(root, session):
@@ -325,9 +380,7 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
                 resume_bytes = sum(i.file_size for i in z.infolist())
         stage = "storage"
         try:
-            checked_scratch = checked_root(scratch_root)
-            if checked_scratch.is_relative_to(work) or work.is_relative_to(checked_scratch):
-                raise ValueError("SCRATCH_OUTPUT_ROOT_OVERLAP")
+            checked_scratch = provision_scratch_root(work, scratch_root)
             scratch, setup_env = prepare_scratch(checked_scratch, session)
             admission = storage_receipt(scratch, output, resume_bytes)
         except (OSError, ValueError) as error:

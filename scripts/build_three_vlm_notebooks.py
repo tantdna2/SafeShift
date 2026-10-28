@@ -61,7 +61,9 @@ enable Kaggle Secret `HF_TOKEN` with read access. Phi/Smol gates are independent
 No code, path, SHA, model revision or crop edits are required.
 
 Scratch uses `/kaggle/tmp` and output uses `/kaggle/working`; preflight measures
-both, including real temporary allocation of 28 GiB + 4 GiB. Shared filesystems
+both. A missing `/kaggle/tmp` is created only under the validated `/kaggle`
+parent; existing or concurrently created roots are revalidated. Preflight checks
+include real temporary allocation of 28 GiB + 4 GiB. Shared filesystems
 need at least 32 GiB free, plus resume allowance. Allocation is released and is
 not a guarantee of future quota or peak usage. Insufficient space stops before
 installation. Phi remains 16 crops/FP16/eager:
@@ -85,7 +87,9 @@ prove T4 execution, HNLO alignment or pilot quality.
 Run this notebook without any dataset or grant, before allocating a pilot attempt.
 It does not call a GPU, download weights or execute a model. It checks
 `/kaggle/tmp` and `/kaggle/working`, with exclusive temporary allocations of
-28 GiB and 4 GiB concurrently. The allocations are released immediately: PASS
+28 GiB and 4 GiB concurrently. If `/kaggle/tmp` is absent, it is created safely
+under the validated `/kaggle` parent; existing roots are checked and retained.
+The allocations are released immediately: PASS
 does not guarantee later quota, peak usage, GPU fit, or permission to run.
 Download the printed `storage_preflight.json`; failure to write a receipt is
 reported in the notebook output. This operation may be slow and consume capacity

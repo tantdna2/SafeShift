@@ -32,7 +32,7 @@ tạo cùng payload cho cả ba, chỉ key model khác. `source_digest()` ràng 
 package runtime, prompt, dependency pins, source lock và CPU token evidence.
 Owner không nhập revision, SHA, đường dẫn, prompt hoặc thay cell.
 Source SHA-256 của payload storage-fix Draft:
-`bf81c42e857461ed5b03c964e2242305989dd1b3cdb541608b5f3bc210d12f18`.
+`b2d549d36adb5dda97ef6563059f3725185fe1bdf71d2ce28a5bd8f06a1f4c1e`.
 Grant cũ bind source trước thay đổi không tự áp dụng cho source này.
 
 Luồng sau khi **được cấp quyền**: kiểm source/grant → consume attempt local →
@@ -154,7 +154,20 @@ và SHA-256 riêng dưới `/kaggle/working/data/processed/three_vlm_preflight/`
 đường dẫn; nếu không ghi được receipt thì in lỗi JSON ra notebook output. Tải cả
 receipt và sidecar. Mỗi lần là session mới, không ghi đè.
 
-Scratch cố định `/kaggle/tmp`, output cố định `/kaggle/working`. Đo mount,
+Scratch cố định `/kaggle/tmp`, output cố định `/kaggle/working`. Nếu scratch root
+chưa tồn tại, cả preflight và pilot dùng chung cơ chế kiểm cha `/kaggle` rồi tạo
+duy nhất `tmp` bằng mkdir exclusive, mode 0700. Root có sẵn hoặc được tạo đồng
+thời được kiểm lại: directory thật, không symlink/junction, có quyền ghi/traverse,
+không chồng working. Trên Linux dùng directory descriptor với O_NOFOLLOW và so
+device/inode để phát hiện thay cha/root trong lúc tạo. Không tạo thư mục cha,
+không sửa quyền root có sẵn; lỗi quyền/alias/identity thì BLOCKED với receipt.
+Root chung được giữ lại; chỉ scratch theo session có marker được cleanup.
+Delta tạo root: 12 tests CPU mới; toàn bộ suite Windows Python 3.11 có
+140 PASS + 3 SKIP (Linux-only), WSL Linux Python 3.14 có 143/143 PASS.
+Supervisor dùng runtime gate mô phỏng; đây không là Kaggle/Python 3.11–3.12 hay
+GPU qualification. Các test kiểm root thiếu/có sẵn, EEXIST đồng thời, quyền,
+alias/non-directory, identity thay đổi, shared filesystem và giữ receipt khi lỗi.
+Đo mount,
 device, total/used/free, và cấp phát vật lý độc quyền đồng thời **28 GiB scratch
 + 4 GiB output**, kiểm số block và fsync để kiểm writability/quota thực tế tại
 thời điểm đó. Có thể tốn thời gian và tạm chiếm ≥32 GiB; không chạy song song với
