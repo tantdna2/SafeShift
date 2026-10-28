@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 import errno
@@ -22,6 +23,81 @@ from urllib.request import Request
 
 GIB = 2**30
 GPU = "Tesla T4, 15360, 14800, 550.90.07\nTesla T4, 15360, 14800, 550.90.07\n"
+
+
+def python_probe(path, version=(3, 12, 12), *, eligible=True, missing=()):
+    modules = {name: ("ModuleNotFoundError" if name in missing else "PASS") for name in b.ESSENTIAL_STDLIB}
+    return {"candidate": str(path), "eligible": eligible and not missing,
+            "reason": "PASS" if eligible and not missing else "ESSENTIAL_STDLIB_MISSING:" + ",".join(missing),
+            "implementation": "CPython", "version": list(version), "platform": "Linux",
+            "machine": "x86_64", "pointer_bits": 64, "executable": str(path),
+            "prefix": str(Path(path).parent.parent), "base_prefix": "/usr",
+            "modules": modules}
+
+
+class InterpreterSelectionTests(unittest.TestCase):
+    def test_python313_kernel_selects_independent_python312(self):
+        candidates = ["/usr/bin/python3.12", "/usr/bin/python3.11", "/usr/bin/python3"]
+        def probe(path, env=None):
+            if str(path).endswith("3.12"):
+                return python_probe(path)
+            if str(path).endswith("3.11"):
+                return {"candidate": str(path), "eligible": False, "reason": "INTERPRETER_NOT_FOUND"}
+            return python_probe(path, (3, 13, 15), eligible=False)
+        with patch.object(b, "probe_interpreter", side_effect=probe):
+            selected, receipt = b.select_interpreter(candidates=candidates)
+        self.assertEqual(selected, Path("/usr/bin/python3.12"))
+        self.assertEqual(receipt["selected"]["version"][:2], [3, 12])
+        self.assertFalse(receipt["fallback_to_python_313"])
+
+    def test_python312_then_python311_are_allowed_in_policy_order(self):
+        for available, expected in (({"/usr/bin/python3.12", "/usr/bin/python3.11"}, "python3.12"),
+                                    ({"/usr/bin/python3.11"}, "python3.11")):
+            def probe(path, env=None, available=available):
+                return python_probe(path, (3, 12, 1) if str(path).endswith("3.12") else (3, 11, 9)) \
+                    if str(path) in available else {"candidate": str(path), "eligible": False,
+                                                    "reason": "INTERPRETER_NOT_FOUND"}
+            with self.subTest(available=available), patch.object(b, "probe_interpreter", side_effect=probe):
+                selected, _ = b.select_interpreter(candidates=["/usr/bin/python3.12", "/usr/bin/python3.11"])
+                self.assertEqual(selected.name, expected)
+
+    def test_missing_venv_or_ensurepip_rejects_python312(self):
+        def probe(path, env=None):
+            if str(path).endswith("3.12"):
+                return python_probe(path, missing=("venv", "ensurepip"))
+            return python_probe(path, (3, 11, 9))
+        with patch.object(b, "probe_interpreter", side_effect=probe):
+            selected, receipt = b.select_interpreter(candidates=["/usr/bin/python3.12", "/usr/bin/python3.11"])
+        self.assertEqual(selected.name, "python3.11")
+        self.assertIn("ESSENTIAL_STDLIB_MISSING", receipt["candidates"][0]["reason"])
+
+    def test_missing_and_wrong_version_fail_closed_without_python313(self):
+        values = [{"candidate": "/missing", "eligible": False, "reason": "INTERPRETER_NOT_FOUND"},
+                  python_probe("/usr/bin/python3", (3, 13, 15), eligible=False)]
+        with patch.object(b, "probe_interpreter", side_effect=values):
+            with self.assertRaisesRegex(RuntimeError, "NO_QUALIFIED") as caught:
+                b.select_interpreter(candidates=["/missing", "/usr/bin/python3"])
+        self.assertEqual(len(caught.exception.interpreter_probes), 2)
+        self.assertFalse(any(v["eligible"] for v in caught.exception.interpreter_probes))
+
+    def test_requirements_and_runtime_lock_match_for_phi_and_smol(self):
+        for key in ("phi", "smolvlm2"):
+            value = b.runtime_contract(ROOT, key)
+            self.assertEqual(value["pins"]["torch"], "2.6.0+cu124")
+            self.assertEqual(value["pins"]["torchvision"], "0.21.0+cu124")
+            self.assertEqual(value["python_policy"], ["3.11", "3.12"])
+
+    def test_runtime_lock_or_requirement_source_drift_is_blocked(self):
+        with tempfile.TemporaryDirectory() as d:
+            repo = Path(d)
+            config = repo / "configs/pilot"
+            config.mkdir(parents=True)
+            (config / "runtime_versions.json").write_bytes((ROOT / "configs/pilot/runtime_versions.json").read_bytes())
+            text = (ROOT / "configs/pilot/phi.requirements.txt").read_text(encoding="utf-8")
+            (config / "phi.requirements.txt").write_text(text.replace("transformers==4.43.3",
+                                                                       "transformers==4.51.3"), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "RUNTIME_LOCK_MISMATCH"):
+                b.runtime_contract(repo, "phi")
 
 
 class ScratchRootTests(unittest.TestCase):
@@ -291,6 +367,30 @@ class StorageTests(unittest.TestCase):
             self.assertEqual(read(output / "storage_preflight.sha256.json")["sha256"], sha(output / "storage_preflight.json"))
             self.assertEqual(list(scratch.iterdir()), [])
 
+    def test_environment_preflight_consumes_no_grant_attempt_or_gpu(self):
+        for key in ("phi", "smolvlm2"):
+            with self.subTest(model=key), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                work, scratch = root / "working", root / "tmp"
+                work.mkdir()
+                scratch.mkdir()
+                runtime_receipt = {"status": "PASS", "selected_python": "/usr/bin/python3.12",
+                                   "worker_python": str(scratch / "venv-py312/bin/python"),
+                                   "kernel_python": "/usr/bin/python3", "kernel_worker_separated": True}
+                with patch.object(b, "storage_admission", return_value={"admitted": True, "reason": "SYNTHETIC"}), \
+                     patch.object(b, "prepare_runtime", return_value=(Path(runtime_receipt["worker_python"]), {}, runtime_receipt)), \
+                     patch.object(b, "discover", side_effect=AssertionError("NO_GRANT_OR_DATA")), \
+                     patch.object(b, "gpu_preflight", side_effect=AssertionError("NO_GPU")):
+                    output = b.environment_preflight(key, source_digest(ROOT), ROOT, work, scratch)
+                receipt = read(output / "environment_preflight.json")
+                self.assertEqual(receipt["status"], "PASS")
+                self.assertFalse(receipt["attempt_consumed"])
+                self.assertFalse(receipt["grant_read"])
+                self.assertEqual(receipt["gpu"], "NOT_CALLED")
+                self.assertFalse((work / "data/processed/three_vlm_attempts").exists())
+                self.assertTrue(output.with_suffix(".zip").is_file())
+                self.assertEqual(list(scratch.iterdir()), [])
+
     def test_output_not_writable_prints_failure_without_grant(self):
         with tempfile.TemporaryDirectory() as d, \
              patch.object(b, "safe", side_effect=PermissionError(errno.EACCES, "denied")), \
@@ -341,6 +441,17 @@ class StorageTests(unittest.TestCase):
                 b.prepare_scratch(root, "synthetic")
             with self.assertRaises(ValueError):
                 b.prepare_scratch(root, "../../escape")
+
+    def test_scratch_environment_drops_notebook_python_paths(self):
+        with tempfile.TemporaryDirectory() as d, patch.dict(os.environ, {
+                "PYTHONPATH": "/notebook/python3.13/site-packages",
+                "PYTHONHOME": "/notebook/python3.13", "PYTHONUSERBASE": "/notebook/user"}):
+            scratch, env = b.prepare_scratch(d, "isolated")
+            self.assertNotIn("PYTHONPATH", env)
+            self.assertNotIn("PYTHONHOME", env)
+            self.assertNotIn("PYTHONUSERBASE", env)
+            self.assertEqual(env["PYTHONNOUSERSITE"], "1")
+            b.cleanup_scratch(d, scratch, "isolated")
 
     def test_real_hardlink_remains_rejected(self):
         with tempfile.TemporaryDirectory() as d:
@@ -399,8 +510,21 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
                 if worker:
                     worker(output)
             return subprocess.CompletedProcess(command, 0)
+        def interpreter_probe(python, env=None):
+            candidate = Path(python)
+            in_venv = candidate.name == "python" and candidate.parent.name == "bin"
+            prefix = candidate.parent.parent if in_venv else Path("/synthetic/cpython312")
+            return {"candidate": str(candidate), "eligible": True, "reason": "PASS",
+                    "implementation": "CPython", "version": [3, 12, 12], "platform": "Linux",
+                    "machine": "x86_64", "pointer_bits": 64, "executable": str(candidate),
+                    "prefix": str(prefix), "base_prefix": "/synthetic/base-python312",
+                    "modules": {name: "PASS" for name in b.ESSENTIAL_STDLIB}}
         loader = patches.enter_context(patch.object(b, "load_bundle", return_value=(p, p["main"])))
-        patches.enter_context(patch.object(b, "supported_runtime", return_value=True))
+        patches.enter_context(patch.object(b, "interpreter_candidates", return_value=[sys.executable]))
+        patches.enter_context(patch.object(b, "probe_interpreter", side_effect=interpreter_probe))
+        patches.enter_context(patch.object(b, "validate_runtime_environment", return_value={
+            "identity": {"version": [3, 12], "isolated_from_notebook_python": True},
+            "software": {"status": "SYNTHETIC_CPU_ABI_PASS"}}))
         patches.enter_context(patch.object(b, "storage_admission", return_value={"admitted": disk_ok, "SYNTHETIC": True}))
         patches.enter_context(patch.object(b.subprocess, "run", side_effect=run))
         patches.enter_context(patch.object(b.subprocess, "check_output", side_effect=lambda cmd, **kw: GPU if cmd[0] == "nvidia-smi" else "SYNTHETIC_FREEZE\n"))
@@ -423,7 +547,10 @@ class SupervisorTests(unittest.TestCase):
                 self.assertTrue(root.is_dir())
                 self.assertEqual(list(root.iterdir()), [])
                 self.assertTrue(out.with_suffix(".zip").is_file())
-                self.assertTrue(any("safeshift.pilot.runner" in cmd for cmd, _ in case[5]))
+                worker = next(cmd for cmd, _ in case[5] if "safeshift.pilot.runner" in cmd)
+                requirement_install = next(cmd for cmd, _ in case[5] if "-r" in cmd)
+                self.assertEqual(Path(requirement_install[-1]).name, f"{key}.requirements.txt")
+                self.assertEqual(worker[0], read(out / "runtime_preflight.json")["worker_python"])
 
     def test_real_launch_orders_cuda_install_before_requirements_and_check(self):
         with supervisor_case() as case:
@@ -431,15 +558,28 @@ class SupervisorTests(unittest.TestCase):
             commands = [c for c, _ in case[5]]
             runtime = commands[0][-1]
             expected = b.dependency_commands(Path(runtime) / "bin/python", ROOT, "phi")
-            self.assertEqual(commands[1:5], expected)
-            self.assertIn("https://download.pytorch.org/whl/cu124", commands[2])
-            self.assertIn("torch==2.6.0+cu124", commands[2])
-            self.assertIn("torchvision==0.21.0+cu124", commands[2])
-            self.assertEqual(commands[4][-1], "check")
+            self.assertEqual(commands[2:6], expected)
+            self.assertEqual(commands[0][0], sys.executable)
+            self.assertEqual(commands[0][1:7], ["-I", "-B", "-m", "venv", "--copies", runtime])
+            self.assertEqual(commands[1][-2:], ["pip", "--version"])
+            self.assertIn("https://download.pytorch.org/whl/cu124", commands[3])
+            self.assertIn("torch==2.6.0+cu124", commands[3])
+            self.assertIn("torchvision==0.21.0+cu124", commands[3])
+            self.assertEqual(commands[5][-1], "check")
             self.assertEqual(commands[-1][-2:], ["--mode", "PILOT"])
             for _, kwargs in case[5]:
                 self.assertTrue(Path(kwargs["env"]["TMPDIR"]).is_relative_to(case[0] / "tmp"))
             self.assertEqual(case[5][-1][1]["env"]["CUDA_VISIBLE_DEVICES"], "0")
+            runtime_receipt = read(out / "runtime_preflight.json")
+            self.assertEqual(case[5][-1][1]["env"]["SAFESHIFT_WORKER_PYTHON"],
+                             runtime_receipt["worker_python"])
+            self.assertEqual(case[5][-1][1]["env"]["SAFESHIFT_RUNTIME_ROOT"],
+                             runtime_receipt["runtime_root"])
+            self.assertEqual(runtime_receipt["status"], "PASS")
+            self.assertFalse(runtime_receipt["attempt_consumed"])
+            self.assertTrue(read(out / "environment_preflight.json")["ready_for_attempt_consumption"])
+            ledger = case[2] / "data/processed/three_vlm_attempts" / case[4]["attempt_id"]
+            self.assertTrue(read(ledger)["consumed_after_cpu_preflight"])
             self.assertTrue(out.with_suffix(".zip").is_file())
 
     def test_insufficient_storage_blocks_installer_and_exports_receipt(self):
@@ -505,17 +645,24 @@ class SupervisorTests(unittest.TestCase):
         with supervisor_case() as case:
             with patch.object(b.subprocess, "run", side_effect=subprocess.CalledProcessError(1, ["SYNTHETIC_PIP"])):
                 out = self.launch(case)
-            self.assertEqual(read(out / "supervisor_failure.json")["stage"], "software")
+            failure = read(out / "supervisor_failure.json")
+            self.assertEqual(failure["stage"], "cpu_runtime_preflight")
+            self.assertFalse(failure["attempt_consumed"])
             self.assertTrue((out / "setup.log").is_file())
             self.assertFalse((out / "worker.log").exists())
+            self.assertEqual(read(out / "environment_preflight.json")["status"], "BLOCKED")
+            self.assertEqual(read(out / "runtime_preflight.json")["status"], "BLOCKED")
+            self.assertFalse((case[2] / "data/processed/three_vlm_attempts" / case[4]["attempt_id"]).exists())
             self.assertTrue(out.with_suffix(".zip").is_file())
 
     def test_disk_full_during_install_exports_failure_and_no_worker(self):
         with supervisor_case() as case:
             with patch.object(b.subprocess, "run", side_effect=OSError(errno.ENOSPC, "disk full")):
                 out = self.launch(case)
-            self.assertEqual(read(out / "supervisor_failure.json")["stage"], "software")
+            self.assertEqual(read(out / "supervisor_failure.json")["stage"], "cpu_runtime_preflight")
+            self.assertFalse(read(out / "supervisor_failure.json")["attempt_consumed"])
             self.assertFalse((out / "worker.log").exists())
+            self.assertFalse((case[2] / "data/processed/three_vlm_attempts" / case[4]["attempt_id"]).exists())
             self.assertTrue(out.with_suffix(".zip").is_file())
 
     def test_attempt_reuse_does_not_overwrite_old_output(self):

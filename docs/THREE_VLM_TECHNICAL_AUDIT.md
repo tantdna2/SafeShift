@@ -228,3 +228,31 @@ không chứng minh Python 3.12/Kaggle image/CUDA driver/T4 hoặc network mọi
 Không weights, real TRAIN/TEST/annotations, Gemma credential hoặc GPU nào được
 dùng trong lần sửa này. Kaggle/T4, native remote Phi execution, image preprocessing,
 HNLO runtime/alignment/coverage/overhead và classification quality tiếp tục NOT_RUN.
+
+## Python 3.13 kernel / 3.12 worker fix — 28/10/2026
+
+BASE `4693d8c1eed4e60069272b975275e6adb17905fe` là merge PR #139. Owner-provided
+Phi a2 đã xác minh storage/T4 rồi dừng 0/160 inference vì supervisor kiểm version
+của kernel Python 3.13.15 thay vì chọn `/usr/bin/python3.12` có sẵn. a1/a2 không
+được tái sử dụng. Không GPU/inference/grant mới trong lần sửa này.
+
+Đã đối chiếu trực tiếp Qwen3 tại `31a04e6`: runtime CPython độc lập, exact source
+checksum, fresh site-packages, pip check/log và worker bằng interpreter đã build.
+Phi/Smol áp dụng các nguyên tắc đó nhưng không copy build system: probe system
+CPython 3.12 rồi 3.11, fresh scratch venv, exact requirements/runtime lock,
+pip freeze, CPU ABI smoke và worker runtime identity. Không candidate hợp lệ thì
+BLOCKED; không fallback 3.13 hoặc tự tải/build Python. Recipe CPython khóa của
+Qwen3 chỉ là phương án cần review riêng nếu Kaggle system 3.12 không đủ.
+
+Boundary attempt được chuyển sau toàn bộ gate CPU có thể xác minh: authority,
+source/config, bundle, storage/resume, interpreter, venv, dependency install,
+version và native CPU ABI. Failure trước đó lưu receipt với
+`attempt_consumed=false`, không tạo ledger. Sau consumption mới gọi nvidia-smi,
+CUDA admission, tải weights và worker; mọi bước dùng cùng venv đã qualified.
+
+Hai environment-preflight notebook model-specific được builder tạo, không đọc
+grant/data, không gọi GPU hay tải weights. Kết quả code cuối: 152 tests PASS trên
+Windows Python 3.11.9 (3 Linux-only SKIP) và 152/152 PASS trên WSL Linux x86_64
+Python 3.14.4. WSL không có Python 3.11/3.12, nên real Linux 3.12 dependency
+rehearsal và Kaggle environment preflight vẫn NOT RUN. Chi tiết/bảng so sánh và
+giới hạn: [Kaggle Python runtime audit](KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).

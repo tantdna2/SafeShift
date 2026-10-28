@@ -13,28 +13,14 @@ import sys
 import time
 
 from safeshift.pilot.artifacts import sha, write, write_bytes
-from safeshift.pilot.bootstrap import dependency_commands
+from safeshift.pilot.bootstrap import dependency_commands, select_interpreter
 from safeshift.pilot.contract import MODELS
 
 
 def cpu_smoke(key):
     """Installed native library/CPU ABI only; no model construction or CUDA API."""
-    import torch
-    import torchvision
-    import transformers
-    # Real native torchvision op catches binary mismatch without a GPU or image.
-    boxes = torch.tensor([[0., 0., 1., 1.], [0., 0., 2., 2.]])
-    kept = torchvision.ops.nms(boxes, torch.tensor([.9, .8]), .5)
-    assert kept.tolist() == [0, 1]
-    assert torch.ones(2, dtype=torch.float16).sum().item() == 2.0
-    model_class = (transformers.AutoModelForCausalLM if key == "phi" else
-                   transformers.Gemma3ForConditionalGeneration if key == "gemma" else
-                   transformers.SmolVLMForConditionalGeneration)
-    return {"status": "CPU_LIBRARY_IMPORT_AND_NATIVE_OP_PASS_NOT_INFERENCE",
-            "torch": torch.__version__, "torchvision": torchvision.__version__,
-            "transformers": transformers.__version__, "model_api": model_class.__name__,
-            "processor_api": transformers.AutoProcessor.__name__, "gpu": "NOT_RUN",
-            "custom_phi_execution": "NOT_RUN", "weights": "NOT_DOWNLOADED"}
+    from safeshift.pilot.backend import cpu_software_probe
+    return cpu_software_probe(Path.cwd(), key)
 
 
 def main():
@@ -46,26 +32,29 @@ def main():
     output = (repo / args.output).resolve()
     if not output.is_relative_to(repo / "data/processed"):
         raise ValueError("OUTPUT_MUST_BE_UNDER_DATA_PROCESSED")
-    if platform.system() != "Linux" or sys.version_info[:2] not in ((3, 11), (3, 12)):
-        raise RuntimeError("LINUX_PYTHON_311_OR_312_REQUIRED")
     output.mkdir(parents=True, exist_ok=False)
     temporary = output / "tmp"
     temporary.mkdir()
-    env = {**os.environ, "TMPDIR": str(temporary), "TMP": str(temporary), "TEMP": str(temporary),
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith("PIP_") and not k.startswith("PYTHON")}
+    env.update({"TMPDIR": str(temporary), "TMP": str(temporary), "TEMP": str(temporary),
            "CUDA_VISIBLE_DEVICES": "", "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
-           "PYTHONPATH": str(repo), "PYTHONDONTWRITEBYTECODE": "1"}
+           "PYTHONPATH": str(repo), "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1"})
+    selected, selection = select_interpreter(env)
     python = output / "venv/bin/python"
-    commands = [[sys.executable, "-m", "venv", str(output / "venv")],
+    env.update(SAFESHIFT_WORKER_PYTHON=str(python), SAFESHIFT_RUNTIME_ROOT=str(output / "venv"),
+               SAFESHIFT_NOTEBOOK_PYTHON=str(Path(sys.executable).resolve()))
+    commands = [[str(selected), "-I", "-B", "-m", "venv", "--copies", str(output / "venv")],
                 *dependency_commands(python, repo, args.model)]
-    # Metadata check uses the production function without ML imports/GPU probing.
+    # The same future worker verifies isolation, pins and native CPU ABI.
     commands += [[str(python), "-B", "-c",
-                  "import json; from safeshift.pilot.backend import check_software; "
-                  f"print(json.dumps(check_software({str(repo)!r}, {args.model!r}), sort_keys=True))"],
-                 [str(python), "-B", "-c",
-                  "import json; from scripts.rehearse_pilot_dependencies import cpu_smoke; "
-                  f"print(json.dumps(cpu_smoke({args.model!r}), sort_keys=True))"],
+                  "import json; from safeshift.pilot.bootstrap import runtime_identity; "
+                  "from safeshift.pilot.backend import cpu_software_probe; "
+                  f"print(json.dumps({{'identity': runtime_identity({str(python)!r}, {str(output / 'venv')!r}), "
+                  f"'software': cpu_software_probe({str(repo)!r}, {args.model!r})}}, sort_keys=True))"],
                  [str(python), "-m", "pip", "freeze"]]
-    receipt = {"model": args.model, "platform": platform.platform(), "python": sys.version,
+    receipt = {"model": args.model, "platform": platform.platform(), "controller_python": sys.version,
+               "interpreter_selection": selection, "selected_python": str(selected),
                "status": "NOT_COMPLETED", "gpu": "NOT_RUN", "weights": "NOT_DOWNLOADED",
                "requirements_sha256": sha(repo / f"configs/pilot/{args.model}.requirements.txt"),
                "steps": []}

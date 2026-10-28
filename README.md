@@ -108,6 +108,11 @@ selector 160+≤20 TRAIN, native runner/raw writer, HNLO probe/replay, report v�
 resume. Đây là code PREP chờ review/grant, chưa là kết quả Kaggle/HNLO hoặc thay
 roster lịch sử. FULL TRAIN khóa, TEST đóng; xem [technical audit](docs/THREE_VLM_TECHNICAL_AUDIT.md).
 
+Kernel Kaggle Python 3.13 chỉ điều phối stdlib. Phi/Smol dùng worker CPython
+3.12/3.11 trong scratch venv độc lập; hai notebook environment preflight kiểm
+pins/CPU ABI mà không đọc grant/data, gọi GPU hoặc tải weights. Xem
+[runtime audit và đối chiếu Qwen3](docs/KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).
+
 Toàn bộ 693 file trước reset vẫn ở các ref bất biến, được liệt kê trong
 [HISTORY](docs/HISTORY.md). Không phục hồi hệ thống cũ vào main, chuyển quyền
 thực thi cũ sang code mới, hoặc tự sửa sáu Draft PR cũ. Dữ liệu, raw output,

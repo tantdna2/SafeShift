@@ -23,6 +23,155 @@ from .backend import check_source_review
 
 SCRATCH_BUDGET_BYTES = 28 * 2**30
 OUTPUT_BUDGET_BYTES = 4 * 2**30
+SUPPORTED_PYTHON = ((3, 11), (3, 12))
+ESSENTIAL_STDLIB = ("venv", "ensurepip", "ssl", "hashlib", "ctypes", "bz2", "lzma", "zlib", "sqlite3")
+
+
+def _distribution_name(value):
+    return re.sub(r"[-_.]+", "-", value).lower()
+
+
+def runtime_contract(repo, key):
+    """Bind the requirements text to the exact runtime-version lock."""
+    repo = Path(repo)
+    expected = read(repo / "configs/pilot/runtime_versions.json")[key]
+    requirements = {}
+    for raw in (repo / f"configs/pilot/{key}.requirements.txt").read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.count("==") != 1:
+            raise ValueError("EXACT_REQUIREMENT_PIN_REQUIRED:" + line)
+        name, version = line.split("==", 1)
+        normalized = _distribution_name(name)
+        if normalized in requirements:
+            raise ValueError("DUPLICATE_REQUIREMENT_PIN:" + normalized)
+        requirements[normalized] = version
+    locked = {_distribution_name(name): version for name, version in expected.items()}
+    if requirements != locked:
+        raise ValueError("REQUIREMENTS_RUNTIME_LOCK_MISMATCH:" + key)
+    if (requirements.get("torch") != "2.6.0+cu124"
+            or requirements.get("torchvision") != "0.21.0+cu124"):
+        raise ValueError("PINNED_CUDA_RUNTIME_CHANGED")
+    return {"model_key": key, "python_policy": ["3.11", "3.12"],
+            "requirements_sha256": sha(repo / f"configs/pilot/{key}.requirements.txt"),
+            "runtime_versions_sha256": sha(repo / "configs/pilot/runtime_versions.json"),
+            "pytorch_index": "https://download.pytorch.org/whl/cu124",
+            "pins": expected}
+
+
+def interpreter_candidates(kernel=None):
+    """Prefer Kaggle's known 3.12/3.11 system interpreters, never Python 3.13."""
+    ordered = [Path("/usr/bin/python3.12"), Path("/usr/bin/python3.11"),
+               Path(kernel or sys.executable)]
+    result = []
+    for candidate in ordered:
+        value = str(candidate.absolute())
+        if value not in result:
+            result.append(value)
+    return result
+
+
+def probe_interpreter(python, env=None):
+    """Inspect a candidate in its own process without importing notebook packages."""
+    code = r'''import importlib, json, platform, struct, sys
+names = %r
+modules = {}
+for name in names:
+    try:
+        importlib.import_module(name)
+        modules[name] = "PASS"
+    except BaseException as error:
+        modules[name] = type(error).__name__ + ": " + str(error)[:200]
+print(json.dumps({"implementation": platform.python_implementation(),
+ "version": list(sys.version_info[:3]), "platform": platform.system(),
+ "machine": platform.machine(), "pointer_bits": struct.calcsize("P") * 8,
+ "executable": sys.executable, "prefix": sys.prefix, "base_prefix": sys.base_prefix,
+ "modules": modules}, sort_keys=True))''' % (ESSENTIAL_STDLIB,)
+    candidate = Path(python)
+    receipt = {"candidate": str(candidate), "eligible": False}
+    if not candidate.is_file():
+        return {**receipt, "reason": "INTERPRETER_NOT_FOUND"}
+    try:
+        process = subprocess.run([str(candidate), "-I", "-B", "-c", code], env=env,
+                                 text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 timeout=60, check=False)
+        if process.returncode:
+            return {**receipt, "reason": "INTERPRETER_PROBE_FAILED",
+                    "returncode": process.returncode, "stderr": process.stderr[-1000:]}
+        value = json.loads(process.stdout.strip().splitlines()[-1])
+    except (OSError, ValueError, IndexError, subprocess.TimeoutExpired) as error:
+        return {**receipt, "reason": "INTERPRETER_PROBE_FAILED",
+                "error": type(error).__name__ + ": " + str(error)[:500]}
+    version = tuple(value.get("version", [])[:2])
+    reasons = []
+    if value.get("implementation") != "CPython":
+        reasons.append("CPYTHON_REQUIRED")
+    if version not in SUPPORTED_PYTHON:
+        reasons.append("PYTHON_311_OR_312_REQUIRED")
+    if value.get("platform") != "Linux":
+        reasons.append("LINUX_REQUIRED")
+    if str(value.get("machine", "")).lower() not in ("x86_64", "amd64") or value.get("pointer_bits") != 64:
+        reasons.append("LINUX_X86_64_REQUIRED")
+    missing = [name for name in ESSENTIAL_STDLIB if value.get("modules", {}).get(name) != "PASS"]
+    if missing:
+        reasons.append("ESSENTIAL_STDLIB_MISSING:" + ",".join(missing))
+    return {**receipt, **value, "eligible": not reasons,
+            "reason": "PASS" if not reasons else ";".join(reasons)}
+
+
+def select_interpreter(env=None, candidates=None):
+    probes = [probe_interpreter(path, env) for path in (candidates or interpreter_candidates())]
+    for result in probes:
+        if result["eligible"]:
+            return Path(result["candidate"]), {"selected": result, "candidates": probes,
+                                                "fallback_to_python_313": False}
+    error = RuntimeError("BLOCKED_NO_QUALIFIED_PINNED_LINUX_PYTHON_311_OR_312")
+    error.interpreter_probes = probes
+    raise error
+
+
+def runtime_identity(expected_python, expected_root):
+    """Called inside the selected venv; reject host/notebook site-package leakage."""
+    import site
+    expected_python = Path(expected_python).resolve()
+    expected_root = Path(expected_root).resolve()
+    actual_python = Path(sys.executable).resolve()
+    actual_root = Path(sys.prefix).resolve()
+    version = sys.version_info[:2]
+    site_paths = [Path(p).resolve() for p in sys.path if p and ("site-packages" in p or "dist-packages" in p)]
+    foreign = [str(p) for p in site_paths if not p.is_relative_to(expected_root)]
+    mismatched = [p for p in sys.path if p and re.search(r"python3\.(?:[0-9]+)", p)
+                  and f"python{version[0]}.{version[1]}" not in p]
+    if (platform.system() != "Linux" or platform.machine().lower() not in ("x86_64", "amd64")
+            or version not in SUPPORTED_PYTHON or actual_python != expected_python
+            or actual_root != expected_root or Path(sys.base_prefix).resolve() == actual_root
+            or foreign or mismatched or site.getusersitepackages() in sys.path
+            or os.environ.get("PYTHONNOUSERSITE") != "1"):
+        raise RuntimeError("ISOLATED_WORKER_RUNTIME_IDENTITY_MISMATCH")
+    return {"python": sys.version, "version": list(version), "implementation": platform.python_implementation(),
+            "platform": platform.platform(), "machine": platform.machine(),
+            "executable": str(actual_python), "prefix": str(actual_root),
+            "base_prefix": str(Path(sys.base_prefix).resolve()), "foreign_site_packages": foreign,
+            "mismatched_python_paths": mismatched, "user_site_enabled": site.ENABLE_USER_SITE,
+            "notebook_kernel_executable": os.environ.get("SAFESHIFT_NOTEBOOK_PYTHON"),
+            "isolated_from_notebook_python": os.environ.get("SAFESHIFT_NOTEBOOK_PYTHON") != str(actual_python)}
+
+
+def validate_runtime_environment(python, runtime, repo, key, env):
+    """Use the future worker process for identity, pin and CPU ABI checks."""
+    code = ("import json; from safeshift.pilot.bootstrap import runtime_identity; "
+            "from safeshift.pilot.backend import cpu_software_probe; "
+            f"print(json.dumps({{'identity': runtime_identity({str(python)!r}, {str(runtime)!r}), "
+            f"'software': cpu_software_probe({str(repo)!r}, {key!r})}}, sort_keys=True))")
+    process = subprocess.run([str(python), "-B", "-c", code], env=env, text=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, check=False)
+    if process.returncode:
+        raise RuntimeError("PINNED_CPU_SOFTWARE_PREFLIGHT_FAILED:" + process.stderr[-1000:])
+    try:
+        return json.loads(process.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError) as error:
+        raise RuntimeError("PINNED_CPU_SOFTWARE_PREFLIGHT_INVALID_RECEIPT") from error
 
 
 def dependency_commands(python, repo, key):
@@ -33,6 +182,81 @@ def dependency_commands(python, repo, key):
                    "torch==2.6.0+cu124", "torchvision==0.21.0+cu124"],
             pip + ["install", "--no-cache-dir", "-r", str(Path(repo) / f"configs/pilot/{key}.requirements.txt")],
             pip + ["check"]]
+
+
+def prepare_runtime(repo, key, scratch, output, setup_env, *, started=None, max_seconds=None,
+                    candidates=None):
+    """Create and qualify the exact worker runtime before an attempt is consumed."""
+    repo, scratch, output = Path(repo), Path(scratch), Path(output)
+    receipt = {"schema": "safeshift-cpu-runtime-preflight-v1", "model_key": key,
+               "status": "BLOCKED", "attempt_consumed": False, "gpu": "NOT_CALLED",
+               "weights": "NOT_DOWNLOADED", "stage": "runtime_contract", "steps": []}
+    python = runtime = None
+    try:
+        receipt["contract"] = runtime_contract(repo, key)
+        receipt["stage"] = "interpreter_selection"
+        selected, selection = select_interpreter(setup_env, candidates)
+        receipt["interpreter_selection"] = selection
+        version = selection["selected"]["version"][:2]
+        runtime = scratch / ("venv-py" + "".join(map(str, version)))
+        python = runtime / "bin/python"
+        receipt["stage"] = "venv_creation"
+        with (output / "setup.log").open("xb") as log:
+            def call(command, stage):
+                receipt["stage"] = stage
+                if started is not None and max_seconds is not None:
+                    remaining = max_seconds - (time.monotonic() - started)
+                    if remaining <= 0:
+                        raise TimeoutError("CPU_PREFLIGHT_TIME_CAP:" + stage)
+                else:
+                    remaining = 7200
+                began = time.monotonic()
+                process = subprocess.run(command, env=setup_env, stdout=log, stderr=subprocess.STDOUT,
+                                         check=False, timeout=remaining)
+                receipt["steps"].append({"stage": stage, "command": list(map(str, command)),
+                                         "returncode": process.returncode,
+                                         "seconds": time.monotonic() - began})
+                if process.returncode:
+                    raise RuntimeError("CPU_RUNTIME_PREFLIGHT_COMMAND_FAILED:" + stage)
+            call([str(selected), "-I", "-B", "-m", "venv", "--copies", str(runtime)], "venv_creation")
+            call([str(python), "-I", "-B", "-m", "pip", "--version"], "venv_pip_check")
+            venv_probe = probe_interpreter(python, setup_env)
+            receipt["venv_interpreter"] = venv_probe
+            if (not venv_probe["eligible"] or Path(venv_probe.get("prefix", "")).resolve() != runtime.resolve()
+                    or Path(venv_probe.get("base_prefix", "")).resolve() == runtime.resolve()):
+                raise RuntimeError("CREATED_VENV_IDENTITY_MISMATCH")
+            for ordinal, command in enumerate(dependency_commands(python, repo, key)):
+                call(command, f"dependency_{ordinal}")
+            log.flush()
+            os.fsync(log.fileno())
+        receipt["setup_log_sha256"] = sha(output / "setup.log")
+        receipt["stage"] = "pip_freeze"
+        freeze = subprocess.check_output([str(python), "-m", "pip", "freeze"], text=True,
+                                         env=setup_env, timeout=300)
+        write_bytes(output / "pip_freeze.txt", freeze.encode())
+        receipt["pip_freeze_sha256"] = sha(output / "pip_freeze.txt")
+        receipt["stage"] = "cpu_software_probe"
+        runtime_env = dict(setup_env)
+        runtime_env.update(PYTHONPATH=str(repo), PYTHONDONTWRITEBYTECODE="1", PYTHONNOUSERSITE="1",
+                           SAFESHIFT_WORKER_PYTHON=str(python), SAFESHIFT_RUNTIME_ROOT=str(runtime),
+                           SAFESHIFT_NOTEBOOK_PYTHON=str(Path(sys.executable).resolve()),
+                           CUDA_VISIBLE_DEVICES="")
+        receipt["qualification"] = validate_runtime_environment(python, runtime, repo, key, runtime_env)
+        receipt.update(status="PASS", stage="complete", selected_python=str(selected),
+                       worker_python=str(python), runtime_root=str(runtime),
+                       kernel_python=str(Path(sys.executable).resolve()),
+                       kernel_worker_separated=Path(sys.executable).resolve() != python.resolve())
+        return python, runtime_env, receipt
+    except BaseException as error:
+        receipt["error"] = {"type": type(error).__name__, "message": str(error)[:2000],
+                            "errno": getattr(error, "errno", None)}
+        if hasattr(error, "interpreter_probes"):
+            receipt["interpreter_selection"] = {"selected": None,
+                                                  "candidates": error.interpreter_probes,
+                                                  "fallback_to_python_313": False}
+        raise
+    finally:
+        write(output / "runtime_preflight.json", receipt)
 
 
 def filesystem_usage(path):
@@ -156,6 +380,64 @@ def storage_preflight(work=None, scratch_root=None):
     return output
 
 
+def environment_preflight(key, source_hash, repo, work=None, scratch_root=None, candidates=None):
+    """Install/qualify one model runtime on CPU without a grant or attempt."""
+    if key not in ("phi", "smolvlm2"):
+        raise PermissionError("CPU_ENVIRONMENT_PREFLIGHT_PHI_OR_SMOL_ONLY")
+    repo = Path(repo).resolve()
+    work = checked_root(work or "/kaggle/working")
+    scratch_root = Path(scratch_root or "/kaggle/tmp")
+    session = uuid.uuid4().hex
+    output = safe(work, "data/processed/three_vlm_environment_preflight/" + key + "-" + session)
+    output.mkdir(parents=True, exist_ok=False)
+    scratch = None
+    result = {"schema": "safeshift-kaggle-environment-preflight-v1", "model_key": key,
+              "status": "BLOCKED", "attempt_consumed": False, "grant_read": False,
+              "dataset_read": False, "gpu": "NOT_CALLED", "weights": "NOT_DOWNLOADED",
+              "source_sha256": source_hash, "stage": "source"}
+    try:
+        if source_digest(repo) != source_hash:
+            raise PermissionError("ACTUAL_EMBEDDED_SOURCE_MISMATCH")
+        check_source_review(repo, key)
+        result["runtime_contract"] = runtime_contract(repo, key)
+        result["stage"] = "storage"
+        checked_scratch = provision_scratch_root(work, scratch_root)
+        scratch, setup_env = prepare_scratch(checked_scratch, session)
+        admission = storage_receipt(scratch, output)
+        write(output / "storage_admission.json", admission)
+        if not admission["admitted"]:
+            raise OSError("BLOCKED_FILESYSTEM_COMBINED_HEADROOM_REQUIRED")
+        result["stage"] = "runtime"
+        _, _, runtime_receipt = prepare_runtime(repo, key, scratch, output, setup_env,
+                                                candidates=candidates)
+        if runtime_receipt["status"] != "PASS":
+            raise RuntimeError("CPU_RUNTIME_PREFLIGHT_DID_NOT_PASS")
+        result.update(status="PASS", stage="complete",
+                      selected_python=runtime_receipt["selected_python"],
+                      worker_python=runtime_receipt["worker_python"],
+                      kernel_python=runtime_receipt["kernel_python"],
+                      kernel_worker_separated=runtime_receipt["kernel_worker_separated"])
+    except BaseException as error:
+        result["error"] = {"type": type(error).__name__, "message": str(error)[:2000],
+                           "errno": getattr(error, "errno", None)}
+    finally:
+        if scratch is not None:
+            try:
+                cleanup_scratch(scratch_root, scratch, session)
+            except BaseException as error:
+                result["status"] = "BLOCKED"
+                result["scratch_cleanup_error"] = type(error).__name__ + ": " + str(error)[:1000]
+        write(output / "environment_preflight.json", result)
+        archive = output.parent / (output.name + ".zip")
+        try:
+            checksum = export(output, archive)
+            print("ENVIRONMENT_PREFLIGHT", result["status"], key, "Download", archive.name,
+                  "and", archive.name + ".sha256.json", "SHA256", checksum)
+        except BaseException as error:
+            print("ENVIRONMENT_PREFLIGHT_EXPORT_FAILED", type(error).__name__, output)
+    return output
+
+
 def checked_root(root):
     """Reject aliases in every existing ancestor, including the root itself."""
     root = Path(root).absolute()
@@ -234,9 +516,10 @@ def prepare_scratch(root, session):
     temporary.mkdir()
     # A real exclusive write verifies writability (access() alone is insufficient).
     write(scratch / "location.json", {"scope": "kaggle_tmp", "session": session})
-    env = {k: v for k, v in os.environ.items() if not k.startswith("PIP_")}
-    env.pop("PYTHONPATH", None)
-    env.pop("PYTHONUSERBASE", None)
+    # The notebook kernel may be Python 3.13 with preloaded site packages. The
+    # worker runtime must inherit none of its Python/pip path configuration.
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith("PIP_") and not k.startswith("PYTHON")}
     return scratch, {**env, "HOME": str(scratch), "TMPDIR": str(temporary), "TMP": str(temporary),
                      "TEMP": str(temporary), "HF_HOME": str(scratch / "hf_home"),
                      "HF_MODULES_CACHE": str(scratch / "hf_modules"),
@@ -287,10 +570,6 @@ def gpu_preflight():
             "flash_attention": False, "quantization": None}
 
 
-def supported_runtime():
-    return platform.system() == "Linux" and sys.version_info[:2] in ((3, 11), (3, 12))
-
-
 def recover_accounting(output, plan):
     """CPU supervisor accounts interrupted/torn worker records without re-inference."""
     root = output / "run"
@@ -332,6 +611,7 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
     output = safe(work, "data/processed/three_vlm/" + key + "-" + session)
     output.mkdir(parents=True, exist_ok=False)
     stage, plan, grant, blocked, scratch = "authority", None, None, False, None
+    attempt_consumed, python, runtime_env = False, None, None
     started = time.monotonic()
     try:
         if source_digest(repo) != source_hash:
@@ -351,13 +631,12 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
             raise PermissionError("EXPLICIT_TIME_CAP_REQUIRED")
         consumption = work / "data/processed/three_vlm_attempts" / grant["attempt_id"]
         consumption.parent.mkdir(parents=True, exist_ok=True)
-        # Local ledger survives only while filesystem survives. External ledger
-        # uniqueness is separately attested in the human-issued grant.
-        write(consumption, {"run_id": grant["run_id"], "source_sha256": source_hash,
-                            "session": session, "consumed_before_data": True})
+        if consumption.exists():
+            raise FileExistsError("ATTEMPT_ID_ALREADY_CONSUMED")
         write(output / "grant.json", grant)
         stage = "source_review"
-        check_source_review(repo, key)  # Gemma access alone cannot qualify an empty source lock.
+        source_review = check_source_review(repo, key)  # Access alone cannot qualify unread source.
+        runtime_lock = runtime_contract(repo, key)
         stage = "dataset"
         bundle = discover(inputs, "bundle.json").parent
         if sha(safe(bundle, "pilot_manifest.json")) != grant["manifest_sha256"]:
@@ -394,31 +673,40 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
         if archive:
             stage = "resume"
             parent = import_archive(archive, output / "prior")
+        stage = "cpu_runtime_preflight"
+        python, runtime_env, runtime_receipt = prepare_runtime(
+            repo, key, scratch, output, setup_env, started=started, max_seconds=grant["max_seconds"])
+        write(output / "environment_preflight.json", {
+            "schema": "safeshift-pre-consumption-environment-preflight-v1", "status": "PASS",
+            "attempt_consumed": False, "ready_for_attempt_consumption": True,
+            "model_key": key, "source_sha256": source_hash,
+            "source_review": source_review["review_status"], "runtime_contract": runtime_lock,
+            "manifest_sha256": digest(plan), "images_verified": len(rows),
+            "storage_admission_sha256": sha(output / "storage_admission.json"),
+            "runtime_preflight_sha256": sha(output / "runtime_preflight.json"),
+            "selected_python": runtime_receipt["selected_python"],
+            "worker_python": runtime_receipt["worker_python"],
+            "kernel_python": runtime_receipt["kernel_python"],
+            "kernel_worker_separated": runtime_receipt["kernel_worker_separated"],
+            "resume_verified": bool(parent), "gpu": "NOT_CALLED", "weights": "NOT_DOWNLOADED"})
+        stage = "attempt_consumption"
+        # Local ledger survives only while the filesystem survives. Its exclusive
+        # write is the formal boundary after every CPU-verifiable gate has passed.
+        write(consumption, {"run_id": grant["run_id"], "source_sha256": source_hash,
+                            "session": session, "consumed_after_cpu_preflight": True,
+                            "environment_preflight_sha256": sha(output / "environment_preflight.json")})
+        attempt_consumed = True
         stage = "hardware"
         write(output / "gpu_preflight.json", gpu_preflight())
-        if not supported_runtime():
-            raise RuntimeError("BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED")
-        write(output / "host.json", {"python": sys.version, "platform": platform.platform(),
+        write(output / "host.json", {"notebook_python": sys.version,
+              "notebook_executable": str(Path(sys.executable).resolve()),
+              "worker_python": str(python.resolve()), "platform": platform.platform(),
               "scratch_free": shutil.disk_usage(scratch).free, "output_free": shutil.disk_usage(output).free})
-        stage = "software"
-        runtime = scratch / "venv"
-        with (output / "setup.log").open("x", encoding="utf-8") as log:
-            def call(args):
-                remaining = grant["max_seconds"] - (time.monotonic() - started)
-                if remaining <= 0:
-                    raise TimeoutError("SETUP_TIME_CAP")
-                subprocess.run(args, env=setup_env, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=remaining)
-            call([sys.executable, "-m", "venv", str(runtime)])
-            python = runtime / "bin/python"
-            for command in dependency_commands(python, repo, key):
-                call(command)
-        freeze = subprocess.check_output([str(python), "-m", "pip", "freeze"], text=True, env=setup_env)
-        write_bytes(output / "pip_freeze.txt", freeze.encode())
         stage = "worker"
-        env = setup_env.copy()
+        env = runtime_env.copy()
         env.update(PYTHONPATH=str(repo), CUDA_VISIBLE_DEVICES="0", TOKENIZERS_PARALLELISM="false",
                    SAFESHIFT_MODEL_CACHE=str(scratch / "model_cache"), PYTHONDONTWRITEBYTECODE="1",
-                   SAFESHIFT_SUPERVISED="1")
+                   PYTHONNOUSERSITE="1", SAFESHIFT_SUPERVISED="1")
         if key == "gemma" and not env.get("HF_TOKEN"):
             try:
                 from kaggle_secrets import UserSecretsClient
@@ -439,8 +727,19 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
     except BaseException as error:
         blocked = True
         try:
-            write(output / "supervisor_failure.json", {"status": "BLOCKED" if stage in ("authority", "source_review", "dataset", "storage", "hardware", "software") else "FAILED",
-                                                       **error_record(error, stage)})
+            failure = {"status": "BLOCKED" if stage in ("authority", "source_review", "dataset", "storage",
+                                                          "resume", "cpu_runtime_preflight", "attempt_consumption",
+                                                          "hardware") else "FAILED",
+                       "attempt_consumed": attempt_consumed, **error_record(error, stage)}
+            write(output / "supervisor_failure.json", failure)
+            preflight = output / "environment_preflight.json"
+            if not preflight.exists() and not attempt_consumed:
+                write(preflight, {"schema": "safeshift-pre-consumption-environment-preflight-v1",
+                                  "status": "BLOCKED", "attempt_consumed": False,
+                                  "ready_for_attempt_consumption": False, "model_key": key,
+                                  "source_sha256": source_hash, "stage": stage,
+                                  "error": error_record(error, stage), "gpu": "NOT_CALLED",
+                                  "weights": "NOT_DOWNLOADED"})
         except BaseException:
             print("FAILURE_RECORD_WRITE_FAILED; existing evidence retained.")
         print("STOP:", stage, type(error).__name__, "— inspect exported evidence.")
@@ -461,7 +760,8 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
         try:
             write(output / "session.json", {"session_id": session, "model_key": key, "mode": "PILOT",
                   "source_sha256": source_hash, "seconds": time.monotonic() - started,
-                  "supervisor_blocked": blocked, "gpu_experiment_claim": "SEE_ACTUAL_EVIDENCE_ONLY"})
+                  "supervisor_blocked": blocked, "attempt_consumed": attempt_consumed,
+                  "gpu_experiment_claim": "SEE_ACTUAL_EVIDENCE_ONLY"})
         except BaseException:
             print("SESSION_RECORD_WRITE_FAILED; export still attempted.")
         archive = output.parent / (output.name + ".zip")

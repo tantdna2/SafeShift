@@ -10,7 +10,9 @@ from safeshift.pilot.contract import MODELS, source_digest, source_files
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def notebook(key, repo=ROOT, preflight=False):
+def notebook(key, repo=ROOT, preflight=False, environment=False):
+    if preflight and environment:
+        raise ValueError("ONE_PREFLIGHT_KIND_ONLY")
     payload = {p: (repo / p).read_bytes().decode("utf-8") for p in source_files(repo)}
     encoded = base64.b64encode(zlib.compress(json.dumps(payload, sort_keys=True).encode(), 9)).decode()
     checksum = source_digest(repo)
@@ -45,6 +47,11 @@ print("Evidence directory:", evidence)
                             f'evidence = launch({key!r}, expected_source_sha256, root, mode="PILOT")',
                             'from safeshift.pilot.bootstrap import storage_preflight\n'
                             'evidence = storage_preflight()')
+    if environment:
+        code = code.replace('from safeshift.pilot.bootstrap import launch\n'
+                            f'evidence = launch({key!r}, expected_source_sha256, root, mode="PILOT")',
+                            'from safeshift.pilot.bootstrap import environment_preflight\n'
+                            f'evidence = environment_preflight({key!r}, expected_source_sha256, root)')
     md = f"""# SafeShift — {MODELS[key]['id']} TRAIN PILOT v1
 
 **PREP / NOT RUN.** 160 primary + at most 20 verified Qwen false-safe IDs.
@@ -68,6 +75,12 @@ need at least 32 GiB free, plus resume allowance. Allocation is released and is
 not a guarantee of future quota or peak usage. Insufficient space stops before
 installation. Phi remains 16 crops/FP16/eager:
 T4 OOM risk is UNVERIFIED, and OOM stops instead of changing preprocessing.
+
+The notebook kernel may be Python 3.13. It remains the stdlib supervisor only:
+the pilot prefers and validates `/usr/bin/python3.12`, then an eligible Python
+3.11, creates a fresh venv in scratch, and uses that exact interpreter for pip,
+`pip freeze`, CPU ABI checks, model download and the worker. It never falls back
+to Python 3.13 or mixes notebook site-packages into the worker.
 
 For authorized resume also attach the exact prior archive renamed
 `resume_{key}.zip` and a new source/config/input-bound resume grant. SUCCESS is
@@ -95,11 +108,29 @@ Download the printed `storage_preflight.json`; failure to write a receipt is
 reported in the notebook output. This operation may be slow and consume capacity
 temporarily. Do not start a pilot if BLOCKED or if conditions have changed.
 """
+    if environment:
+        md = f"""# SafeShift — {MODELS[key]['id']} CPU environment preflight
+
+Run this notebook on the intended Kaggle image before issuing a new attempt.
+It needs Internet for pinned package installation, but no dataset, grant, GPU,
+model weights or inference. The Python 3.13 kernel remains the supervisor only.
+The preflight prefers `/usr/bin/python3.12`, accepts only qualified Linux x86_64
+CPython 3.11/3.12, creates a fresh scratch venv and uses it for the exact pinned
+CUDA-wheel install, `pip check`, `pip freeze`, version checks and CPU-only native
+library smoke. Missing `venv`/`ensurepip`, dependency failure, host-package
+leakage or wrong versions produce a BLOCKED receipt and consume no attempt.
+
+All venv/cache/temp bytes stay under `/kaggle/tmp`; receipts/logs and a ZIP stay
+under `/kaggle/working`. Weights are not downloaded and CUDA is not called.
+Download the printed ZIP and sidecar. PASS proves only this CPU environment
+rehearsal at that time, not model load, T4 fit, inference or HNLO validity.
+"""
     return {"cells": [{"cell_type": "markdown", "id": "instructions", "metadata": {}, "source": md.splitlines(True)},
                       {"cell_type": "code", "id": "pilot-launch", "metadata": {}, "execution_count": None, "outputs": [], "source": code.splitlines(True)}],
             "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
-                         "language_info": {"name": "python", "version": "3.11"},
-                         "safeshift": {"mode": "STORAGE_PREFLIGHT" if preflight else "PILOT",
+                         "language_info": {"name": "python"},
+                         "safeshift": {"mode": ("STORAGE_PREFLIGHT" if preflight else
+                                                   "ENVIRONMENT_PREFLIGHT" if environment else "PILOT"),
                                        "model_key": None if preflight else key, "source_sha256": checksum}},
             "nbformat": 4, "nbformat_minor": 5}
 
@@ -112,6 +143,10 @@ def main():
         path.write_text(json.dumps(notebook(key), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     path = root / "SafeShift_STORAGE_PREFLIGHT.ipynb"
     path.write_text(json.dumps(notebook("phi", preflight=True), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    for key in ("phi", "smolvlm2"):
+        path = root / f"SafeShift_ENVIRONMENT_PREFLIGHT_{key}.ipynb"
+        path.write_text(json.dumps(notebook(key, environment=True), indent=1, ensure_ascii=False) + "\n",
+                        encoding="utf-8", newline="\n")
     print("SOURCE_SHA256", source_digest(ROOT))
 
 

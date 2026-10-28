@@ -35,6 +35,25 @@ def check_software(repo, key):
     return actual
 
 
+def cpu_software_probe(repo, key):
+    """Exercise the installed CPU ABI without touching CUDA, weights or images."""
+    versions = check_software(repo, key)
+    import torch
+    import torchvision
+    import transformers
+    boxes = torch.tensor([[0., 0., 1., 1.], [0., 0., 2., 2.]])
+    kept = torchvision.ops.nms(boxes, torch.tensor([.9, .8]), .5)
+    if kept.tolist() != [0, 1] or torch.ones(2, dtype=torch.float16).sum().item() != 2.0:
+        raise RuntimeError("CPU_LIBRARY_ABI_SMOKE_FAILED")
+    model_class = (transformers.AutoModelForCausalLM if key == "phi" else
+                   transformers.Gemma3ForConditionalGeneration if key == "gemma" else
+                   transformers.SmolVLMForConditionalGeneration)
+    return {"status": "CPU_LIBRARY_IMPORT_AND_NATIVE_OP_PASS_NOT_INFERENCE",
+            "versions": versions, "model_api": model_class.__name__,
+            "processor_api": transformers.AutoProcessor.__name__, "gpu": "NOT_CALLED",
+            "weights": "NOT_DOWNLOADED", "custom_phi_execution": "NOT_RUN"}
+
+
 def provision(repo, key, cache, token=None):
     """No pickle weights. Inspect/reject custom-code drift BEFORE any import."""
     locked = check_source_review(repo, key)

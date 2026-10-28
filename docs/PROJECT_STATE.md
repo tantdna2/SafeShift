@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
 Cập nhật: **28/10/2026 (Asia/Bangkok)**. Bản nhớ trạng thái, không phải quyền thực nghiệm.
-Main đối chiếu trực tiếp GitHub: `843794119440dd18cca109ba345f7cefe4ec8552` (PR #138 MERGED).
+Main đối chiếu trực tiếp GitHub: `4693d8c1eed4e60069272b975275e6adb17905fe` (PR #139 MERGED).
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -31,26 +31,15 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 | Hướng xuyên Seminar–Khóa luận và Master Plan M1–M8, chỉ phạm vi tài liệu | [#133](https://github.com/tantdna2/SafeShift/pull/133), [`bffc6032e65b38cb04b33520275a089d87d0d37f`](https://github.com/tantdna2/SafeShift/commit/bffc6032e65b38cb04b33520275a089d87d0d37f); [ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/133#issuecomment-6399480255) |
 | Execution Plan M1–M8 và continuity | [#134 MERGED](https://github.com/tantdna2/SafeShift/pull/134), [`a425ab04695319a42bfdd2f89192717dddbb891b`](https://github.com/tantdna2/SafeShift/commit/a425ab04695319a42bfdd2f89192717dddbb891b); trạng thái/merge SHA kiểm trực tiếp GitHub trong task này, cùng [xác nhận ChatGPT](https://github.com/tantdna2/SafeShift/pull/134#issuecomment-6406751802) |
 | Code PREP pilot ba VLM: notebooks, selector/bundle, grants, raw/replay/report/resume; FULL TRAIN khóa | [#138 MERGED](https://github.com/tantdna2/SafeShift/pull/138), [`843794119440dd18cca109ba345f7cefe4ec8552`](https://github.com/tantdna2/SafeShift/commit/843794119440dd18cca109ba345f7cefe4ec8552); [ChatGPT hậu merge PASS](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628), chỉ CODE PREPARATION COMPLETE |
+| Scratch `/kaggle/tmp`, output `/kaggle/working`, storage admission/receipt 28+4 GiB | [#139 MERGED](https://github.com/tantdna2/SafeShift/pull/139), [`4693d8c1eed4e60069272b975275e6adb17905fe`](https://github.com/tantdna2/SafeShift/commit/4693d8c1eed4e60069272b975275e6adb17905fe); code storage fix, không phải Kaggle/model PASS |
 
 ## ACTIVE WORK
 
-- **Chuẩn bị và nghiệm thu 160 ảnh TRAIN gốc: PASS**, dừng trước Kaggle.
-  [Owner/Research Lead cấp quyền CPU](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460760653)
-  đã xác minh; grant local `data/processed/permissions/prepare.json`, không commit.
-- Dùng nguyên source main từ `.worktrees/pilot-real-train-20261028`, chạy tại
-  workspace gốc để đọc `data/raw/InspecSafe-V1/train`; không alias/copy raw data.
-  Đúng master hash, 3.763 ID TRAIN duy nhất và từng input hash/header PASS.
-- Bundle local `data/processed/three_vlm_inputs/safeshift-pilot-input`: đủ
-  **160 ID duy nhất, 80 L04 + 48 L01 + 24 L02 + 8 L03**, 0 bổ sung; `load_bundle()`
-  PASS, ordered selector tái lập. SHA manifest:
-  `f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995`.
-- Owner chấp nhận giữ nguyên **156 JPEG + 4 PNG gốc mang đuôi .jpg** trong chỉ thị
-  hiện tại; không coi giữ nguyên nguồn là biến đổi dữ liệu. 4 PNG đối chiếu original/
-  master/order PASS; 160/160 verify, full-decode, in-memory RGB và hash trước/sau PASS.
-  Không lưu RGB hoặc sửa ảnh/đuôi/nhãn/IDs; có 159 RGB + 1 RGBA ở nguồn đóng gói.
-- ZIP riêng tư: `data/processed/three_vlm_inputs/safeshift-pilot-input.zip`,
-  99.398.230 bytes; đủ 166 regular files (160 ảnh + 6 JSON), CRC/từng SHA-256 PASS.
-  ZIP SHA: `d57e3ee48d45c2e8b6eb06e79ce4694198c7df21883af7bfb4f375395acad0cd`.
+- **Chuẩn bị và nghiệm thu 160 ảnh TRAIN gốc: PASS**, dừng trước Kaggle; [quyền CPU](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460760653) đã xác minh, grant local không commit.
+- Dùng nguyên source main/workspace gốc, không alias/copy raw; master hash, 3.763 ID TRAIN duy nhất và từng input hash/header PASS.
+- Bundle local đủ **160 ID, 80 L04 + 48 L01 + 24 L02 + 8 L03**, 0 bổ sung; selector/load PASS; manifest SHA `f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995`.
+- Owner chấp nhận giữ nguyên **156 JPEG + 4 PNG gốc mang đuôi .jpg**; 160/160 verify/decode/RGB/hash PASS, không sửa ảnh/đuôi/nhãn/ID; nguồn có 159 RGB + 1 RGBA.
+- ZIP riêng tư 99.398.230 bytes, 166 regular files, CRC/từng SHA-256 PASS; ZIP SHA `d57e3ee48d45c2e8b6eb06e79ce4694198c7df21883af7bfb4f375395acad0cd`.
 - 77 nhóm lịch sử (nhóm lớn nhất 79 ảnh), 15 kích thước; không claim độc lập.
   Bằng chứng riêng tư trong workspace gốc:
   `data/processed/three_vlm_acceptance_20261028/` (receipt, PNG bindings, checksum).
@@ -61,10 +50,17 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
   yêu cầu; 160 NOT_ATTEMPTED. Không tái sử dụng grant a1. Smol a1 RESERVED,
   NOT_EXECUTED; không chạy với working cũ. Classification NOT_RUN,
   HNLO_UNVERIFIED cho cả hai; không suy OOM hay chất lượng từ storage failure.
-- **Storage fix [#139](https://github.com/tantdna2/SafeShift/pull/139) DRAFT, delta chờ review/audit:** scratch `/kaggle/tmp`,
-  output `/kaggle/working`, giữ admission 28+4 GiB; preflight CPU-only không
-  dùng grant, kiểm allocation và giữ receipt. Chưa đo mount/quota thật trên Kaggle.
-  Theo [review audit](https://github.com/tantdna2/SafeShift/pull/139#issuecomment-6465128380), thêm tạo root khi thiếu dưới cha đã kiểm; audit PASS cũ không tự bao phủ delta.
+- **Storage fix #139 đã MERGED.** Phi a2 do Owner báo: run
+  `safeshift_phi_pilot_20261028_r2`, attempt `phi_pilot_20261028_a2`, ZIP SHA
+  `de99f708f1120680028b4533a645f248e3e5ff44818ecccf7d573b7fc8525586`;
+  160/160 ảnh, storage 28+4 GiB và T4×2 PASS, dừng trước inference tại
+  `BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED`; 0/160 inference. a2 đã
+  CONSUMED, không tái sử dụng. Kernel 3.13.15 có `/usr/bin/python3.12`.
+- Draft runtime fix hiện tách kernel/worker: probe CPython 3.12/3.11, fresh venv,
+  exact pins/pip freeze/CPU ABI và receipt trước consumption; không fallback 3.13.
+  Hai environment-preflight notebook Phi/Smol không grant/data/GPU/weights.
+  Code tests 152 PASS Windows (3 Linux-only SKIP), 152/152 PASS WSL Linux; Linux
+  3.12/Kaggle dependency rehearsal vẫn NOT RUN vì WSL chỉ có Python 3.14.4.
 - [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
   thay trạng thái FAIL/DRAFT cũ bằng CODE PREP COMPLETE. Grant Phi/Smol riêng không
   nâng thành model/HNLO PASS; Gemma nằm ngoài quyền lần này.
@@ -91,10 +87,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**ChatGPT kiểm HEAD mới #139; delta audit trong session Antigravity hiện có.**
-Sau review, đo CPU-only preflight tại đúng môi trường Kaggle và giữ receipt;
-chưa cấp grant hay khởi chạy pilot từ task này. Phi cần run/attempt mới và grant
-review bind source/config/manifest; không tái sử dụng a1. Smol vẫn pending.
+**Review Draft runtime fix Phi/Smol từ BASE #139.** Sau merge, chạy storage và
+environment preflight CPU-only trên đúng Kaggle Python 3.13 + `/usr/bin/python3.12`,
+tải receipt/sidecar rồi audit. Chưa cấp grant hay khởi chạy pilot từ task code.
+Phi/Smol cần run/attempt/grant mới; không tái sử dụng Phi a1/a2 hoặc Smol a1.
 
 ## IMPORTANT REFERENCES
 

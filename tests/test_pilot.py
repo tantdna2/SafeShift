@@ -645,6 +645,19 @@ class NotebookAndPreflightTests(unittest.TestCase):
         self.assertEqual(actual["metadata"]["safeshift"]["mode"], "STORAGE_PREFLIGHT")
         self.assertEqual(actual["cells"][1]["outputs"], [])
 
+    def test_environment_notebooks_are_reproducible_cpu_only_and_model_specific(self):
+        for key in ("phi", "smolvlm2"):
+            path = ROOT / f"notebooks/SafeShift_ENVIRONMENT_PREFLIGHT_{key}.ipynb"
+            actual = json.loads(path.read_bytes())
+            self.assertEqual(actual, notebook(key, environment=True))
+            code = "".join(actual["cells"][1]["source"])
+            compile(code, str(path), "exec")
+            self.assertIn(f"environment_preflight({key!r}", code)
+            self.assertNotIn("evidence = launch(", code)
+            self.assertEqual(actual["metadata"]["safeshift"]["mode"], "ENVIRONMENT_PREFLIGHT")
+            self.assertEqual(actual["metadata"]["safeshift"]["model_key"], key)
+            self.assertEqual(actual["cells"][1]["outputs"], [])
+
     def test_gpu_t4_not_pooled_memory(self):
         valid = "Tesla T4, 15360, 14800, 550.90.07\nTesla T4, 15360, 14800, 550.90.07\n"
         with patch("subprocess.check_output", return_value=valid):
