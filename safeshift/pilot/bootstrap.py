@@ -6,6 +6,7 @@ import os
 import re
 import json
 import errno
+import hashlib
 from pathlib import Path
 import platform
 import shutil
@@ -13,6 +14,8 @@ import subprocess
 import sys
 import time
 import uuid
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from .artifacts import export, import_archive, read, safe, sha, write, write_bytes
 from .contract import MODELS, authorize, digest, source_digest
@@ -24,11 +27,38 @@ from .backend import check_source_review
 SCRATCH_BUDGET_BYTES = 28 * 2**30
 OUTPUT_BUDGET_BYTES = 4 * 2**30
 SUPPORTED_PYTHON = ((3, 11), (3, 12))
-ESSENTIAL_STDLIB = ("venv", "ensurepip", "ssl", "hashlib", "ctypes", "bz2", "lzma", "zlib", "sqlite3")
+ESSENTIAL_STDLIB = ("venv", "ssl", "hashlib", "ctypes", "bz2", "lzma", "zlib", "sqlite3")
+INTERPRETER_PROBE_MODULES = ESSENTIAL_STDLIB + ("ensurepip",)
 
 
 def _distribution_name(value):
     return re.sub(r"[-_.]+", "-", value).lower()
+
+
+def pip_bootstrap_contract(repo):
+    """Validate the reviewed pip wheel source and its hash-locked requirement."""
+    repo = Path(repo)
+    manifest_path = repo / "configs/pilot/pip_bootstrap.json"
+    requirement_path = repo / "configs/pilot/pip_bootstrap.requirements.txt"
+    value = read(manifest_path)
+    pin = value.get("pip", {}) if isinstance(value, dict) else {}
+    parsed = urlparse(str(pin.get("url", "")))
+    if (value.get("schema") != "safeshift-pip-bootstrap-v1"
+            or value.get("method") != "supervisor-pip-python-local-verified-wheel"
+            or value.get("controller_minimum_version") != "22.3"
+            or pin.get("version") != "25.0.1"
+            or pin.get("filename") != "pip-25.0.1-py3-none-any.whl"
+            or not isinstance(pin.get("size_bytes"), int) or pin["size_bytes"] <= 0
+            or not re.fullmatch(r"[0-9a-f]{64}", str(pin.get("sha256", "")))
+            or parsed.scheme != "https" or parsed.hostname != "files.pythonhosted.org"
+            or Path(parsed.path).name != pin.get("filename")
+            or pin.get("provenance") != "https://pypi.org/pypi/pip/25.0.1/json"):
+        raise ValueError("PINNED_PIP_BOOTSTRAP_CONTRACT_INVALID")
+    expected = f"pip=={pin['version']} --hash=sha256:{pin['sha256']}"
+    if requirement_path.read_text(encoding="utf-8").strip() != expected:
+        raise ValueError("PINNED_PIP_BOOTSTRAP_REQUIREMENT_MISMATCH")
+    return {**value, "manifest_sha256": sha(manifest_path),
+            "requirements_sha256": sha(requirement_path)}
 
 
 def runtime_contract(repo, key):
@@ -57,7 +87,7 @@ def runtime_contract(repo, key):
             "requirements_sha256": sha(repo / f"configs/pilot/{key}.requirements.txt"),
             "runtime_versions_sha256": sha(repo / "configs/pilot/runtime_versions.json"),
             "pytorch_index": "https://download.pytorch.org/whl/cu124",
-            "pins": expected}
+            "pins": expected, "pip_bootstrap": pip_bootstrap_contract(repo)}
 
 
 def interpreter_candidates(kernel=None):
@@ -87,7 +117,7 @@ print(json.dumps({"implementation": platform.python_implementation(),
  "version": list(sys.version_info[:3]), "platform": platform.system(),
  "machine": platform.machine(), "pointer_bits": struct.calcsize("P") * 8,
  "executable": sys.executable, "prefix": sys.prefix, "base_prefix": sys.base_prefix,
- "modules": modules}, sort_keys=True))''' % (ESSENTIAL_STDLIB,)
+ "modules": modules}, sort_keys=True))''' % (INTERPRETER_PROBE_MODULES,)
     candidate = Path(python)
     receipt = {"candidate": str(candidate), "eligible": False}
     if not candidate.is_file():
@@ -117,7 +147,9 @@ print(json.dumps({"implementation": platform.python_implementation(),
     if missing:
         reasons.append("ESSENTIAL_STDLIB_MISSING:" + ",".join(missing))
     return {**receipt, **value, "eligible": not reasons,
-            "reason": "PASS" if not reasons else ";".join(reasons)}
+            "reason": "PASS" if not reasons else ";".join(reasons),
+            "ensurepip": value.get("modules", {}).get("ensurepip", "NOT_PROBED"),
+            "pip_bootstrap_required": value.get("modules", {}).get("ensurepip") != "PASS"}
 
 
 def select_interpreter(env=None, candidates=None):
@@ -129,6 +161,114 @@ def select_interpreter(env=None, candidates=None):
     error = RuntimeError("BLOCKED_NO_QUALIFIED_PINNED_LINUX_PYTHON_311_OR_312")
     error.interpreter_probes = probes
     raise error
+
+
+def fetch_pip_bootstrap(repo, scratch):
+    """Fetch one exact PyPI wheel with bounded bytes and verify before execution."""
+    contract = pip_bootstrap_contract(repo)
+    pin = contract["pip"]
+    root = Path(scratch) / "pip-bootstrap"
+    root.mkdir(mode=0o700, exist_ok=False)
+    target = root / pin["filename"]
+    receipt = {"status": "BLOCKED", "url": pin["url"], "final_url": None,
+               "filename": pin["filename"], "expected_sha256": pin["sha256"],
+               "expected_size_bytes": pin["size_bytes"], "received_size_bytes": 0,
+               "actual_sha256": None, "provenance": pin["provenance"]}
+    digest_value = hashlib.sha256()
+    received = 0
+    try:
+        request = Request(pin["url"], headers={"User-Agent": "SafeShift-pip-bootstrap/1"})
+        with urlopen(request, timeout=120) as response, target.open("xb") as stream:
+            receipt["final_url"] = response.geturl()
+            if receipt["final_url"] != pin["url"] or getattr(response, "status", 200) != 200:
+                raise ValueError("PINNED_PIP_BOOTSTRAP_UNEXPECTED_RESPONSE")
+            content_length = response.headers.get("Content-Length")
+            if content_length is not None and int(content_length) != pin["size_bytes"]:
+                raise ValueError("PINNED_PIP_BOOTSTRAP_CONTENT_LENGTH_MISMATCH")
+            while block := response.read(1024 * 1024):
+                received += len(block)
+                if received > pin["size_bytes"]:
+                    raise ValueError("PINNED_PIP_BOOTSTRAP_SIZE_OVERFLOW")
+                digest_value.update(block)
+                stream.write(block)
+            stream.flush()
+            os.fsync(stream.fileno())
+        receipt.update(received_size_bytes=received, actual_sha256=digest_value.hexdigest())
+        if received != pin["size_bytes"] or receipt["actual_sha256"] != pin["sha256"]:
+            raise ValueError("PINNED_PIP_BOOTSTRAP_CHECKSUM_MISMATCH")
+        receipt["status"] = "PASS"
+        return target, receipt
+    except BaseException as error:
+        receipt.update(received_size_bytes=received, actual_sha256=digest_value.hexdigest(),
+                       error={"type": type(error).__name__, "message": str(error)[:1000],
+                              "errno": getattr(error, "errno", None)})
+        error.pip_bootstrap_receipt = receipt
+        raise
+
+
+def pip_controller_probe(env):
+    """Qualify only the supervisor pip feature used to target a pip-free venv."""
+    command = [str(Path(sys.executable).resolve()), "-I", "-B", "-m", "pip", "--version"]
+    process = subprocess.run(command, env=env, text=True, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, timeout=60, check=False)
+    match = re.search(r"\bpip\s+(\d+)\.(\d+)(?:\.(\d+))?\b", process.stdout)
+    version = tuple(map(int, match.groups(default="0"))) if match else ()
+    receipt = {"command": command, "returncode": process.returncode,
+               "stdout": process.stdout[-1000:], "stderr": process.stderr[-1000:],
+               "controller_python": str(Path(sys.executable).resolve()),
+               "controller_python_version": list(sys.version_info[:3]),
+               "pip_version": ".".join(map(str, version)) if version else None,
+               "method": "pip --python", "worker_package_installation": False}
+    if process.returncode or version < (22, 3, 0):
+        error = RuntimeError("PIP_PYTHON_BOOTSTRAP_CONTROLLER_UNAVAILABLE")
+        error.pip_controller_receipt = receipt
+        raise error
+    return receipt
+
+
+def pip_bootstrap_command(worker_python, repo, wheel):
+    """Use the supervisor only as controller; install solely into worker Python."""
+    return [str(Path(sys.executable).resolve()), "-I", "-B", "-m", "pip", "--isolated",
+            "--python", str(worker_python), "--disable-pip-version-check", "install",
+            "--no-cache-dir", "--no-index", "--find-links", str(Path(wheel).parent),
+            "--only-binary=:all:", "--no-deps", "--require-hashes", "-r",
+            str(Path(repo) / "configs/pilot/pip_bootstrap.requirements.txt")]
+
+
+def inspect_worker_pip(python, runtime, expected_version, env):
+    """Prove exact pip version and package paths are owned by the target venv."""
+    code = r'''import importlib.metadata as metadata, json, pathlib, pip, sys
+dist = metadata.distribution("pip")
+print(json.dumps({"version": pip.__version__, "metadata_version": dist.version,
+ "pip_file": str(pathlib.Path(pip.__file__).resolve()),
+ "distribution_root": str(pathlib.Path(dist.locate_file("")).resolve()),
+ "executable": str(pathlib.Path(sys.executable).resolve()),
+ "prefix": str(pathlib.Path(sys.prefix).resolve()),
+ "base_prefix": str(pathlib.Path(sys.base_prefix).resolve()),
+ "python_version": list(sys.version_info[:3])}, sort_keys=True))'''
+    process = subprocess.run([str(python), "-I", "-B", "-c", code], env=env, text=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60, check=False)
+    try:
+        value = json.loads(process.stdout.strip().splitlines()[-1]) if not process.returncode else {}
+    except (ValueError, IndexError):
+        value = {}
+    root = Path(runtime).resolve()
+    owned_paths = [Path(value.get(name, "")).resolve() for name in
+                   ("pip_file", "distribution_root", "executable", "prefix")]
+    wrong_python_path = any(re.search(r"python3\.13", str(path), re.IGNORECASE) for path in owned_paths)
+    if (process.returncode or value.get("version") != expected_version
+            or value.get("metadata_version") != expected_version
+            or any(not path.is_relative_to(root) for path in owned_paths)
+            or Path(value.get("prefix", "")).resolve() != root
+            or Path(value.get("base_prefix", "")).resolve() == root
+            or tuple(value.get("python_version", [])[:2]) not in SUPPORTED_PYTHON
+            or wrong_python_path):
+        error = RuntimeError("WORKER_PIP_IDENTITY_MISMATCH")
+        error.worker_pip_receipt = {**value, "returncode": process.returncode,
+                                    "stderr": process.stderr[-1000:],
+                                    "python313_path_detected": wrong_python_path}
+        raise error
+    return {**value, "returncode": process.returncode, "python313_path_detected": False}
 
 
 def runtime_identity(expected_python, expected_root):
@@ -176,9 +316,8 @@ def validate_runtime_environment(python, runtime, repo, key, env):
 
 def dependency_commands(python, repo, key):
     """Ordered commands shared by bootstrap and the CPU Linux install rehearsal."""
-    pip = [str(python), "-m", "pip"]
-    return [pip + ["install", "--disable-pip-version-check", "--no-cache-dir", "pip==25.0.1"],
-            pip + ["install", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu124",
+    pip = [str(python), "-I", "-B", "-m", "pip", "--isolated", "--disable-pip-version-check"]
+    return [pip + ["install", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu124",
                    "torch==2.6.0+cu124", "torchvision==0.21.0+cu124"],
             pip + ["install", "--no-cache-dir", "-r", str(Path(repo) / f"configs/pilot/{key}.requirements.txt")],
             pip + ["check"]]
@@ -218,20 +357,32 @@ def prepare_runtime(repo, key, scratch, output, setup_env, *, started=None, max_
                                          "seconds": time.monotonic() - began})
                 if process.returncode:
                     raise RuntimeError("CPU_RUNTIME_PREFLIGHT_COMMAND_FAILED:" + stage)
-            call([str(selected), "-I", "-B", "-m", "venv", "--copies", str(runtime)], "venv_creation")
-            call([str(python), "-I", "-B", "-m", "pip", "--version"], "venv_pip_check")
+            call([str(selected), "-I", "-B", "-m", "venv", "--without-pip", "--copies", str(runtime)],
+                 "venv_creation_without_pip")
             venv_probe = probe_interpreter(python, setup_env)
             receipt["venv_interpreter"] = venv_probe
             if (not venv_probe["eligible"] or Path(venv_probe.get("prefix", "")).resolve() != runtime.resolve()
                     or Path(venv_probe.get("base_prefix", "")).resolve() == runtime.resolve()):
                 raise RuntimeError("CREATED_VENV_IDENTITY_MISMATCH")
+            call([str(python), "-I", "-B", "-c",
+                  "import importlib.util,sys;sys.exit(0 if importlib.util.find_spec('pip') is None else 9)"],
+                 "venv_pip_absent_before_bootstrap")
+            receipt["pip_controller"] = pip_controller_probe(setup_env)
+            wheel, bootstrap_receipt = fetch_pip_bootstrap(repo, scratch)
+            receipt["pip_bootstrap"] = bootstrap_receipt
+            call(pip_bootstrap_command(python, repo, wheel), "pip_bootstrap_into_worker")
+            receipt["worker_pip"] = inspect_worker_pip(
+                python, runtime, receipt["contract"]["pip_bootstrap"]["pip"]["version"], setup_env)
+            call([str(python), "-I", "-B", "-m", "pip", "--isolated", "--version"],
+                 "worker_pip_version")
             for ordinal, command in enumerate(dependency_commands(python, repo, key)):
                 call(command, f"dependency_{ordinal}")
             log.flush()
             os.fsync(log.fileno())
         receipt["setup_log_sha256"] = sha(output / "setup.log")
         receipt["stage"] = "pip_freeze"
-        freeze = subprocess.check_output([str(python), "-m", "pip", "freeze"], text=True,
+        freeze = subprocess.check_output([str(python), "-I", "-B", "-m", "pip", "--isolated",
+                                          "freeze", "--all"], text=True,
                                          env=setup_env, timeout=300)
         write_bytes(output / "pip_freeze.txt", freeze.encode())
         receipt["pip_freeze_sha256"] = sha(output / "pip_freeze.txt")
@@ -248,6 +399,12 @@ def prepare_runtime(repo, key, scratch, output, setup_env, *, started=None, max_
                        kernel_worker_separated=Path(sys.executable).resolve() != python.resolve())
         return python, runtime_env, receipt
     except BaseException as error:
+        if hasattr(error, "pip_bootstrap_receipt"):
+            receipt["pip_bootstrap"] = error.pip_bootstrap_receipt
+        if hasattr(error, "pip_controller_receipt"):
+            receipt["pip_controller"] = error.pip_controller_receipt
+        if hasattr(error, "worker_pip_receipt"):
+            receipt["worker_pip"] = error.worker_pip_receipt
         receipt["error"] = {"type": type(error).__name__, "message": str(error)[:2000],
                             "errno": getattr(error, "errno", None)}
         if hasattr(error, "interpreter_probes"):

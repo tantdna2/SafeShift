@@ -1,7 +1,6 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật: **28/10/2026 (Asia/Bangkok)**. Bản nhớ trạng thái, không phải quyền thực nghiệm.
-Main đối chiếu trực tiếp GitHub: `4693d8c1eed4e60069272b975275e6adb17905fe` (PR #139 MERGED).
+Cập nhật **28/10/2026 (Asia/Bangkok)**; main GitHub `064e31654fa44c5ad55fdb69159692ed69b78a77` (PR #140 MERGED). Không phải quyền thực nghiệm.
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -32,6 +31,7 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 | Execution Plan M1–M8 và continuity | [#134 MERGED](https://github.com/tantdna2/SafeShift/pull/134), [`a425ab04695319a42bfdd2f89192717dddbb891b`](https://github.com/tantdna2/SafeShift/commit/a425ab04695319a42bfdd2f89192717dddbb891b); trạng thái/merge SHA kiểm trực tiếp GitHub trong task này, cùng [xác nhận ChatGPT](https://github.com/tantdna2/SafeShift/pull/134#issuecomment-6406751802) |
 | Code PREP pilot ba VLM: notebooks, selector/bundle, grants, raw/replay/report/resume; FULL TRAIN khóa | [#138 MERGED](https://github.com/tantdna2/SafeShift/pull/138), [`843794119440dd18cca109ba345f7cefe4ec8552`](https://github.com/tantdna2/SafeShift/commit/843794119440dd18cca109ba345f7cefe4ec8552); [ChatGPT hậu merge PASS](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628), chỉ CODE PREPARATION COMPLETE |
 | Scratch `/kaggle/tmp`, output `/kaggle/working`, storage admission/receipt 28+4 GiB | [#139 MERGED](https://github.com/tantdna2/SafeShift/pull/139), [`4693d8c1eed4e60069272b975275e6adb17905fe`](https://github.com/tantdna2/SafeShift/commit/4693d8c1eed4e60069272b975275e6adb17905fe); code storage fix, không phải Kaggle/model PASS |
+| Worker CPython 3.12/3.11 và GPU receipt trước ledger | [#140 MERGED](https://github.com/tantdna2/SafeShift/pull/140), [`064e31654fa44c5ad55fdb69159692ed69b78a77`](https://github.com/tantdna2/SafeShift/commit/064e31654fa44c5ad55fdb69159692ed69b78a77); thiếu `ensurepip` vẫn là blocker sau merge, không phải Kaggle/model PASS |
 
 ## ACTIVE WORK
 
@@ -56,13 +56,15 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
   160/160 ảnh, storage 28+4 GiB và T4×2 PASS, dừng trước inference tại
   `BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED`; 0/160 inference. a2 đã
   CONSUMED, không tái sử dụng. Kernel 3.13.15 có `/usr/bin/python3.12`.
-- Draft runtime fix hiện tách kernel/worker: probe CPython 3.12/3.11, fresh venv,
-  exact pins/pip freeze/CPU ABI và receipt trước consumption; không fallback 3.13.
-  Delta audit LOW chuyển `nvidia-smi` + receipt PASS trước ledger; thiếu/sai GPU,
-  VRAM/lệnh/receipt lỗi không tiêu thụ attempt; CUDA thật vẫn sau ledger.
-  Hai environment-preflight notebook Phi/Smol không grant/data/GPU/weights.
-  Code tests Windows 158 (155 PASS, 3 Linux-only SKIP), WSL Linux 158/158 PASS; Linux
-  3.12/Kaggle dependency rehearsal vẫn NOT RUN vì WSL chỉ có Python 3.14.4.
+- Phi a3 supplied ZIP SHA `05cc071ec11384e25c9e2187a7be89141ba351bb2c05c83a5cffe066a574b088`:
+  CPython 3.12.3/module thiết yếu PASS, chỉ thiếu `ensurepip`; không có 3.11. PR #140
+  loại candidate trước venv/package dù 160/160 ảnh/storage PASS; attempt chưa consumed.
+- Follow-up Draft từ BASE `064e316`: `venv --without-pip --copies`; wheel pip 25.0.1
+  khóa URL/size/SHA được `pip --python` cài local-only vào target, rồi worker kiểm
+  version/path/prefix trước pins, `pip check`, freeze/CPU ABI. Python 3.13 chỉ điều
+  khiển bootstrap pip, không chạy worker/cài dependency model; lỗi BLOCKED trước ledger.
+- Rehearsal Windows 3.11 thật PASS; full suites Win 165/4 SKIP, Linux 168/1 SKIP,
+  không phải Kaggle 3.12 PASS. Notebook Phi/Smol tạo lại; Gemma vẫn BLOCKED.
 - [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
   thay trạng thái FAIL/DRAFT cũ bằng CODE PREP COMPLETE. Grant Phi/Smol riêng không
   nâng thành model/HNLO PASS; Gemma nằm ngoài quyền lần này.
@@ -89,10 +91,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**ChatGPT kiểm HEAD delta Draft #140 rồi Antigravity audit trong session cũ.** Sau merge, chạy storage và
-environment preflight CPU-only trên đúng Kaggle Python 3.13 + `/usr/bin/python3.12`,
-tải receipt/sidecar rồi audit. Chưa cấp grant hay khởi chạy pilot từ task code.
-Phi/Smol cần run/attempt/grant mới; không tái sử dụng Phi a1/a2 hoặc Smol a1.
+**ChatGPT kiểm follow-up Draft sửa thiếu `ensurepip`.** Sau merge, chạy storage và
+environment preflight CPU-only trên Kaggle Python 3.13 + `/usr/bin/python3.12`, tải
+receipt/sidecar rồi audit. Chưa cấp grant/pilot; Phi/Smol cần quyết định run/attempt
+được review. Không tái sử dụng Phi a1/a2 hoặc Smol a1; a3 không tự cấp quyền chạy.
 
 ## IMPORTANT REFERENCES
 
