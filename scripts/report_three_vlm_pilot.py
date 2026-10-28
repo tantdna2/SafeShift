@@ -30,6 +30,8 @@ def combine_archives(archives, output):
                 failures[key] = read(root / "supervisor_failure.json") if (root / "supervisor_failure.json").exists() else None
                 continue
             identity = read(root / "run/identity.json")
+            from safeshift.pilot.output_diagnostics import summarize
+            runtime[key]["output_diagnostics"] = summarize(root / "run")
             config = digest(settings(key))
             grant = read(root / "grant.json")
             if (identity["model_key"] != key or identity["model"] != MODELS[key] or identity["manifest_sha256"] != expected

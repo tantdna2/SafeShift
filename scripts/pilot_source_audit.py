@@ -55,7 +55,7 @@ def audit(root, keys, authenticated=False):
         files = [r["rfilename"] for r in metadata["siblings"]
                  if "/" not in r["rfilename"] and r["rfilename"].endswith((".py", ".json", ".md", ".txt", ".model"))
                  and not r["rfilename"].endswith(".safetensors.index.json")]
-        result = {"id": model_id, "revision": revision, "files": {}, "unavailable": {}}
+        result = {"id": model_id, "revision": revision, "authenticated": authenticated, "files": {}, "unavailable": {}}
         for name in files:
             url = f"https://huggingface.co/{model_id}/resolve/{revision}/{name}"
             try:
@@ -63,7 +63,8 @@ def audit(root, keys, authenticated=False):
                 write_bytes(target / name, payload)
                 result["files"][name] = hashlib.sha256(payload).hexdigest()
             except Exception as error:
-                result["unavailable"][name] = error_record(error, "source_audit")
+                result["unavailable"][name] = {**error_record(error, "source_audit"),
+                                                "http_status": getattr(error, "code", None)}
         results[key] = result
         print(key, "review files", len(result["files"]), "unavailable", list(result["unavailable"]))
     write(root / "inventory.json", results)

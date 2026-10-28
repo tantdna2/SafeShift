@@ -130,6 +130,19 @@ checks. The worker uses that reviewed class directly: AutoModel in Transformers
 Strict explicit/internal/cached eager checks remain. A conflict blocks before
 consumption. Diagnostics identify config paths/classes and resource observations.
 
+Smol's 4.51.3 CPU gate verifies public source/tokenizer hashes and Hub revision/
+two-shard safetensors LFS metadata and the locked public index without weights. The real native class
+loads the full meta architecture (24 Llama + 27 vision eager layers, both cached
+flash flags false). The native processor handles 1x1, medium and large synthetic
+RGB inputs with the unchanged 1536/384 splitting and 81 tokens per image tile.
+Token prefix, assistant boundary, masks, dtypes and the 8192 context limit are
+checked using the same preparation function as the worker. Requirements include
+the processor's mandatory num2words/docopt. CPU admission is not weight/GPU proof.
+
+First12 PASS is a technical observation even if all 12 outputs are INVALID.
+The original gate, C1, parser, HNLO and thresholds are unchanged. Raw repetition/
+format diagnostics are descriptive only; labels are never rescued or rewritten.
+
 After the CPU checks, the pilot checks T4 x2 and GPU0 free memory with
 `nvidia-smi` and saves its receipt before consuming the attempt. Missing/wrong
 GPUs, insufficient free memory or a failed receipt write stop with no attempt
@@ -188,6 +201,14 @@ check (16 crops, image tokens, masks, shapes and dtypes). It checks
 explicit eager in both Phi and its independent CLIP config, and all 32 decoder
 and 24 vision attention classes. Source/config/import/attention failures block
 before any attempt. This executes reviewed remote config/constructor code on CPU.
+
+For Smol the 4.51.3 native loader constructs the full FP16 architecture on meta;
+24 text and 27 vision layers require explicit eager and no cached flash flag.
+Public source/tokenizer hashes and checkpoint revision/inventory/LFS metadata
+are verified without weights. Native synthetic images (1x1, medium, large) test
+the unchanged processor, image tokens, prompt boundary, masks, dtypes and context
+limit. num2words/docopt are pinned because this processor requires them. No real
+model forward, scripted model predictions or CUDA work occurs in this notebook.
 
 All venv/cache/temp bytes stay under `/kaggle/tmp`; receipts/logs and a ZIP stay
 under `/kaggle/working`. Weights are not downloaded and CUDA is not called.

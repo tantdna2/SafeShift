@@ -49,7 +49,7 @@ def cpu_software_probe(repo, key):
     model_class = (transformers.AutoModelForCausalLM if key == "phi" else
                    transformers.Gemma3ForConditionalGeneration if key == "gemma" else
                    transformers.SmolVLMForConditionalGeneration)
-    attention = None
+    attention = smol = None
     if key == "phi":
         from .phi_attention import cpu_attention_probe
         from .phi_inputs import cpu_processor_probe, cpu_checkpoint_probe
@@ -59,12 +59,16 @@ def cpu_software_probe(repo, key):
             processor_probe = cpu_processor_probe(repo)
         with phase(os.environ.get("SAFESHIFT_CPU_DIAGNOSTICS"), "cpu_admission", "phi_checkpoint_metadata"):
             checkpoint = cpu_checkpoint_probe(repo)
+    if key == "smolvlm2":
+        from .smol import cpu_probe
+        smol = cpu_probe(repo)
     return {"status": "CPU_LIBRARY_IMPORT_AND_NATIVE_OP_PASS_NOT_INFERENCE",
             "versions": versions, "model_api": model_class.__name__,
             "processor_api": transformers.AutoProcessor.__name__, "gpu": "NOT_CALLED",
             "weights": "NOT_DOWNLOADED", "phi_attention": attention,
             "phi_processor": processor_probe if key == "phi" else None,
             "phi_checkpoint_metadata": checkpoint if key == "phi" else None,
+            "smol_cpu_admission": smol,
             "custom_phi_execution": "META_FROM_PRETRAINED_AND_SYNTHETIC_PROCESSOR" if key == "phi" else "NOT_RUN"}
 
 
@@ -76,6 +80,9 @@ def provision(repo, key, cache, token=None):
     info = HfApi().model_info(spec["id"], revision=spec["revision"], files_metadata=True, token=token)
     if info.sha != spec["revision"]:
         raise ValueError("MODEL_REVISION_MISMATCH")
+    if key == "smolvlm2":
+        from .smol import checkpoint_metadata
+        checkpoint_metadata(repo, info)
     names = [r.rfilename for r in info.siblings]
     executable = {n for n in names if n.endswith(".py")}
     if executable != {n for n in locked["files"] if n.endswith(".py")}:
@@ -100,6 +107,9 @@ def provision(repo, key, cache, token=None):
     for name in locked["files"]:
         if name.endswith((".py", ".json", ".model", ".txt")) and name not in hashes:
             raise ValueError("REVIEWED_SOURCE_MISSING:" + name)
+    if key == "smolvlm2":
+        from .smol import verified_index
+        verified_index(repo, snapshot)  # Before requesting any checkpoint bytes.
     for name in ("config.json", "processor_config.json", "preprocessor_config.json", "tokenizer_config.json"):
         payload = read(snapshot / name) if (snapshot / name).exists() else {}
         if "--" in str(payload.get("auto_map", {})):
@@ -138,6 +148,14 @@ def memory(torch):
     return result
 
 
+def native_generation_config(model):
+    """Same fresh greedy configuration for production and CPU scripted calls."""
+    from transformers import GenerationConfig
+    return GenerationConfig(**GENERATION, bos_token_id=model.generation_config.bos_token_id,
+                            eos_token_id=model.generation_config.eos_token_id,
+                            pad_token_id=model.generation_config.pad_token_id)
+
+
 class NativeBackend:
     def __init__(self, key, snapshot, prompt, *, repo=None, evidence=None):
         load_start = time.perf_counter()
@@ -152,6 +170,9 @@ class NativeBackend:
         with phase(evidence, "processor_load", "native_processor"):
             if key == "phi":
                 from .phi_inputs import load_processor
+                self.processor = load_processor(repo, snapshot)
+            elif key == "smolvlm2":
+                from .smol import load_processor
                 self.processor = load_processor(repo, snapshot)
             else:
                 self.processor = transformers.AutoProcessor.from_pretrained(str(snapshot), **kwargs)
@@ -176,6 +197,20 @@ class NativeBackend:
                 attention = {**attention, "modules": verify_phi_attention(self.model, module)}
                 if evidence is not None:
                     write(Path(evidence) / "phi_attention_runtime.json", attention)
+        elif key == "smolvlm2":
+            from .smol import load_model, load_config
+            if repo is None:
+                raise ValueError("SMOL_REVIEWED_SOURCE_ROOT_REQUIRED")
+            with phase(evidence, "model_load", "smol_from_pretrained"):
+                config = load_config(repo, snapshot)
+                if evidence is not None:
+                    write(Path(evidence) / "smol_attention_config.json",
+                          {"effective": {p: c._attn_implementation for p, c in
+                                         (("outer", config), ("text", config.text_config), ("vision", config.vision_config))},
+                           "revision": spec["revision"]})
+                self.model, attention = load_model(repo, snapshot)
+                if evidence is not None:
+                    write(Path(evidence) / "smol_attention_runtime.json", attention)
         else:
             self.model = cls.from_pretrained(str(snapshot), **load_kwargs).eval()
         if any(p.device.type != "cuda" or p.device.index != 0 or p.dtype != torch.float16
@@ -189,10 +224,7 @@ class NativeBackend:
         from tokenizers import Tokenizer
         self.cpu_tokenizer = Tokenizer.from_str(self.serialized_tokenizer.decode()) if self.serialized_tokenizer else None
         # Fresh native greedy config prevents inherited forcing/suppression.
-        self.generation = transformers.GenerationConfig(
-            **GENERATION, bos_token_id=self.model.generation_config.bos_token_id,
-            eos_token_id=self.model.generation_config.eos_token_id,
-            pad_token_id=self.model.generation_config.pad_token_id)
+        self.generation = native_generation_config(self.model)
         self.environment = {"model_class": type(self.model).__name__, "processor_class": type(self.processor).__name__,
                             "model_config": self.model.config.to_dict(),
                             "processor": self.processor.to_dict() if hasattr(self.processor, "to_dict") else {},
@@ -201,7 +233,7 @@ class NativeBackend:
                             "generation": self.generation.to_dict(), "load_memory": memory(torch)}
         self.environment["load_seconds"] = time.perf_counter() - load_start
         if attention is not None:
-            self.environment["phi_attention"] = attention
+            self.environment["phi_attention" if key == "phi" else "smol_attention"] = attention
 
     def prepare(self, image):
         if self.key == "phi":
@@ -209,6 +241,11 @@ class NativeBackend:
             rendered, inputs = prepare_inputs(self.processor, self.prompt, image)
             if inputs["input_ids"].shape[1] + GENERATION["max_new_tokens"] > self.model.config.max_position_embeddings:
                 raise ValueError("PHI_NATIVE_CONTEXT_LIMIT")
+        elif self.key == "smolvlm2":
+            from .smol import prepare_inputs
+            rendered, inputs = prepare_inputs(self.processor, self.prompt, image)
+            if inputs["input_ids"].shape[1] + GENERATION["max_new_tokens"] > self.model.config.text_config.max_position_embeddings:
+                raise ValueError("SMOL_NATIVE_CONTEXT_LIMIT")
         else:
             messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": self.prompt}]}]
             rendered = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)

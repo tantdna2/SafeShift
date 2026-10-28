@@ -1,6 +1,6 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **29/10/2026 (Asia/Bangkok)**; main đã fetch `f8ba79cf17fb12a9745c555a692cbb42f32be45d` (merge PR #142). Không phải quyền thực nghiệm.
+Cập nhật **29/10/2026 (Asia/Bangkok)**; BASE/main đã fetch `a7dacd6ebb1d0bb9ee3fd2c0fb63a0a1001e90e4` (merge PR #144). Không phải quyền thực nghiệm.
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -46,25 +46,22 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
   `data/processed/three_vlm_acceptance_20261028/` (receipt, PNG bindings, checksum).
   Báo cáo BLOCKED cũ giữ nguyên lịch sử; receipt mới ghi PASS theo quyết định Owner.
   Không đổi notebook/source. Qwen/TEST/FULL_TRAIN vẫn đóng.
-- Phi a1/a2 CONSUMED/BLOCKED, a3 BLOCKED trước consumption; giữ bằng chứng và
-  checksums trong [runbook](KAGGLE_THREE_VLM_PILOT.md). Không tái dùng a1/a2.
-- **Phi r4/a4 do Owner báo:** Python 3.12/bootstrap/torch/Transformers, 160 ảnh,
-  storage, T4×2 và đúng checkpoint revision tải xong PASS; `model_load` ImportError
-  yêu cầu `flash_attn`, 0/160 inference, `attempt_consumed=true`. Không tái dùng a4.
-  Chưa được cấp archive/checksum a4 để kiểm độc lập; không bịa receipt/hash.
-- **Phi a5 consumed:** [incident Owner/ChatGPT](https://github.com/tantdna2/SafeShift/pull/142#issuecomment-6476943083)
-  ghi hai shard load xong rồi explicit eager FAIL, 0/160; không tái dùng a5.
-- **Issue #143, một Draft PR end-to-end:** real pinned loader tái hiện a4/a5;
-  AutoModel 4.43.3 re-exec reset CLIP thành SDPA. Sửa bằng reviewed-class loader
-  dùng chung CPU meta/worker, giữ strict eager 32/24 lớp, source/FP16/GPU0/16 crops.
-- CPU native processor/token/checkpoint metadata admission trước ledger; diagnostics,
-  native raw-before-parse, HNLO/report/ZIP và sáu notebook đã tạo lại. Linux 3.11:
-  195/195 PASS (bật cả pip/native opt-in); Windows 185 PASS/10 SKIP, 0 lỗi. Synthetic
-  160-call native generation→raw→HNLO→report/archive replay PASS, không model inference.
-  [Hồ sơ/coverage/receipt](PHI_KAGGLE_END_TO_END_143.md). Kaggle 3.12, weights/GPU,
-  peak RAM/VRAM và HNLO thật **UNVERIFIED**. Chưa grant a6, audit độc lập hoặc merge.
-- Smol a1 lịch sử RESERVED/NOT_EXECUTED; Gemma vẫn BLOCKED. Grant cũ không bind
-  source mới; task này không tạo grant hoặc run/attempt mới, không merge.
+- Phi a1/a2/a4/a5 consumed, a3 blocked trước ledger; xem [runbook](KAGGLE_THREE_VLM_PILOT.md).
+  PR #144 đã merge; [hồ sơ CPU #143](PHI_KAGGLE_END_TO_END_143.md) giữ bằng chứng sửa a4/a5.
+- **Phi a6 CONSUMED:** [ChatGPT aggregate evidence](https://github.com/tantdna2/SafeShift/pull/144#issuecomment-6480224537)
+  xác nhận 160 native calls nhưng **0/160 C1 JSON hợp lệ**, 142 chuỗi token giống nhau,
+  HNLO validated=0, first12 technical PASS, NO_GO_FULL_TRAIN. ZIP SHA
+  `19b9c201bde2c018b501b5eefd4cd00f8f4f6e9b7fe92b9cd79e6a9bfcfdb161`.
+  Task #145 kiểm record GitHub này, không tái audit ZIP riêng tư; không cứu nhãn/đổi C1.
+- **Issue #145, một Draft PR:** [Smol readiness/Gemma gate](SMOL_KAGGLE_READINESS_145.md),
+  [CPU receipt](SMOL_CPU_RECEIPT_145.json): real loader CPU meta + native processor,
+  regression a4/a5 và 160-call scripted raw→HNLO→report→ZIP/import; thêm chẩn đoán lặp raw.
+  Smol processor 4.51.3 thiếu num2words đã tái hiện; khóa num2words/docopt riêng cho Smol.
+  Sáu notebook cùng source mới, mọi quyết định khoa học/threshold/gate/parser bất biến.
+  CPU phần mềm không chứng minh Smol weights/T4/VRAM/first image/C1/HNLO thật.
+- Smol a1 lịch sử RESERVED/NOT_EXECUTED, grant cũ không bind source mới. Gemma vẫn
+  **BLOCKED_SOURCE_TOKENIZER_AUDIT_INCOMPLETE**: audit không credentials trả 401 cho
+  10 config/tokenizer; lock `files={}` không đổi. Không grant/run/attempt mới hoặc merge.
 - [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
   thay trạng thái FAIL/DRAFT cũ bằng CODE PREP COMPLETE. Grant Phi/Smol riêng không
   nâng thành model/HNLO PASS; Gemma nằm ngoài quyền lần này.
@@ -91,9 +88,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**ChatGPT trực tiếp review Draft Issue #143**, quyết định audit độc lập rồi mới
-duyệt merge/hậu merge. Sau PASS mới cấp release/grant bind source và attempt mới,
-Owner Save & Run All một lần. Không tái dùng a4/a5; không tự cấp a6 hoặc chạy GPU.
+**ChatGPT trực tiếp review Draft Issue #145**, quyết định audit độc lập vì thay đổi
+runtime/metric-adjacent rồi mới xét merge/hậu merge. Release/grant Smol phải bind
+source đã merge và attempt mới qua ledger riêng. Không tự cấp grant, chạy Kaggle/GPU,
+retry Phi a6 hoặc nới gate Gemma. Điều kiện thực nghiệm còn thiếu ở bảng coverage #145.
 
 ## IMPORTANT REFERENCES
 
