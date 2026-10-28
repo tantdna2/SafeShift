@@ -33,7 +33,8 @@ def rehearse(repo, snapshot, base_commit):
             guards.enter_context(patch.object(torch.cuda, name, side_effect=forbidden))
         guards.enter_context(patch.object(torch.nn.functional, "scaled_dot_product_attention", side_effect=forbidden))
         guards.enter_context(patch.object(torch, "load", side_effect=forbidden))
-        guards.enter_context(patch.object(transformers.PreTrainedModel, "from_pretrained", side_effect=forbidden))
+        # Production admission now uses the real from_pretrained(None, empty
+        # state_dict) route. torch.load/CUDA/forward remain forbidden below.
         with eager_phi(repo, snapshot) as (config, cls, module, receipt):
             for bad in (module.Phi3FlashAttention2, module.Phi3SdpaAttention,
                         module.CLIPAttentionFA2, CLIPSdpaAttention, CLIPFlashAttention2):

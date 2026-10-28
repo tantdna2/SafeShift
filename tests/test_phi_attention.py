@@ -133,12 +133,13 @@ class ConfigTests(unittest.TestCase):
 
     def test_native_loader_passes_config_and_preserves_gpu_fp16_crops(self):
         # Stop at model-load error: inspect the actual NativeBackend boundary.
-        with fake_transformers() as (_, transformer, _, _, _), tempfile.TemporaryDirectory() as d:
+        with fake_transformers() as (_, transformer, dynamic, _, _), tempfile.TemporaryDirectory() as d:
             loader = Mock(side_effect=ImportError("SYNTHETIC_WEIGHT_LOAD_ERROR"))
             processor = Mock(return_value=NS())
-            transformer.AutoModelForCausalLM = NS(from_pretrained=loader)
-            transformer.AutoProcessor = NS(from_pretrained=processor)
-            with patch.dict(sys.modules, {"torch": NS(float16="SYNTHETIC_FP16")}):
+            dynamic.get_class_from_dynamic_module.return_value.from_pretrained = loader
+            transformer.AutoModelForCausalLM = NS(from_pretrained=Mock(side_effect=AssertionError("AUTO_RELOAD_FORBIDDEN")))
+            with patch.dict(sys.modules, {"torch": NS(float16="SYNTHETIC_FP16")}), \
+                    patch("safeshift.pilot.phi_inputs.load_processor", processor):
                 with self.assertRaisesRegex(ImportError, "SYNTHETIC_WEIGHT_LOAD_ERROR"):
                     NativeBackend("phi", "SYNTHETIC", "C1", repo=ROOT, evidence=d)
             args = loader.call_args.kwargs
@@ -149,8 +150,9 @@ class ConfigTests(unittest.TestCase):
             self.assertTrue(args["use_safetensors"])
             self.assertTrue(args["local_files_only"])
             self.assertEqual(args["revision"], MODELS["phi"]["revision"])
-            self.assertEqual(args["code_revision"], MODELS["phi"]["revision"])
-            self.assertEqual(processor.call_args.kwargs["num_crops"], 16)
+            self.assertNotIn("code_revision", args)
+            self.assertNotIn("trust_remote_code", args)
+            processor.assert_called_once_with(ROOT, "SYNTHETIC")
             self.assertEqual(read(Path(d) / "phi_attention_config.json")["checkpoint_attention"],
                              "flash_attention_2")
             self.assertFalse((Path(d) / "phi_attention_runtime.json").exists())

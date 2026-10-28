@@ -68,10 +68,32 @@ def read(path):
                       parse_constant=lambda x: (_ for _ in ()).throw(ValueError("NONFINITE_JSON")))
 
 
-def export(root, archive):
+def export(root, archive, log_limit=8 * 2**20):
     """Includes partial files. No images, weights or runtime in the evidence root."""
     root, archive = Path(root), Path(archive)
-    members = {p.relative_to(root).as_posix(): sha(p) for p in root.rglob("*") if p.is_file()}
+    paths = [p for p in root.rglob("*") if p.is_file()]
+    if (root / "checksums.json").exists():
+        raise FileExistsError("EVIDENCE_ALREADY_SEALED")
+    members, bounded = {}, {}
+    for p in paths:
+        name = p.relative_to(root).as_posix()
+        if p.suffix == ".log" and p.stat().st_size > log_limit:
+            # Never truncate/overwrite the original evidence. Export a bounded
+            # tail under a DISTINCT name with custody of the complete log hash.
+            tail = p.with_name(p.name + ".tail.txt")
+            with p.open("rb") as stream:
+                stream.seek(-log_limit, os.SEEK_END)
+                payload = stream.read(log_limit)
+            tail_hash = write_bytes(tail, payload)
+            bounded[name] = {"original_sha256": sha(p), "original_bytes": p.stat().st_size,
+                             "exported_path": tail.relative_to(root).as_posix(),
+                             "exported_sha256": tail_hash, "exported_bytes": len(payload),
+                             "coverage": "TAIL_ONLY_FULL_LOG_RETAINED_IN_DIRECTORY"}
+            members[tail.relative_to(root).as_posix()] = tail_hash
+        else:
+            members[name] = sha(p)
+    if bounded:
+        members["log_exports.json"] = write(root / "log_exports.json", bounded)
     if "checksums.json" in members:
         raise FileExistsError("EVIDENCE_ALREADY_SEALED")
     write(root / "checksums.json", members)

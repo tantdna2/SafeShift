@@ -310,6 +310,13 @@ def validate_runtime_environment(python, runtime, repo, key, env):
         error = RuntimeError("PINNED_CPU_SOFTWARE_PREFLIGHT_FAILED:" + process.stderr[-1000:])
         error.cpu_probe_failure = {"returncode": process.returncode,
                                    "stdout": process.stdout, "stderr": process.stderr}
+        for name in ("stdout", "stderr"):
+            payload = error.cpu_probe_failure[name].encode("utf-8", errors="replace")
+            if len(payload) > 8 * 2**20:
+                error.cpu_probe_failure[name + "_original_sha256"] = hashlib.sha256(payload).hexdigest()
+                error.cpu_probe_failure[name + "_original_bytes"] = len(payload)
+                error.cpu_probe_failure[name] = payload[-8 * 2**20:].decode("utf-8", errors="replace")
+                error.cpu_probe_failure[name + "_coverage"] = "TAIL_ONLY"
         raise error
     try:
         return json.loads(process.stdout.strip().splitlines()[-1])
@@ -394,7 +401,7 @@ def prepare_runtime(repo, key, scratch, output, setup_env, *, started=None, max_
         runtime_env.update(PYTHONPATH=str(repo), PYTHONDONTWRITEBYTECODE="1", PYTHONNOUSERSITE="1",
                            SAFESHIFT_WORKER_PYTHON=str(python), SAFESHIFT_RUNTIME_ROOT=str(runtime),
                            SAFESHIFT_NOTEBOOK_PYTHON=str(Path(sys.executable).resolve()),
-                           CUDA_VISIBLE_DEVICES="")
+                           CUDA_VISIBLE_DEVICES="", SAFESHIFT_CPU_DIAGNOSTICS=str(output / "cpu_probe"))
         receipt["qualification"] = validate_runtime_environment(python, runtime, repo, key, runtime_env)
         receipt.update(status="PASS", stage="complete", selected_python=str(selected),
                        worker_python=str(python), runtime_root=str(runtime),
@@ -966,5 +973,10 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
             print("Download", archive.name, "and", archive.name + ".sha256.json", "SHA256", checksum)
         except BaseException as error:
             # Retain partial ZIP/directory; never pretend successful export.
+            try:
+                write(Path(str(archive) + ".export_failure.json"),
+                      {"attempt_consumed": attempt_consumed, **error_record(error, "export")})
+            except BaseException:
+                pass  # A full/read-only filesystem may prevent every new write.
             print("EXPORT_FAILED", type(error).__name__, "download retained directory/partial archive.")
     return output

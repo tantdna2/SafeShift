@@ -3,6 +3,7 @@ import base64
 import hashlib
 import json
 from pathlib import Path
+import textwrap
 import zlib
 
 from safeshift.pilot.contract import MODELS, source_digest, source_files
@@ -25,11 +26,15 @@ actual = hashlib.sha256((json.dumps(inventory,sort_keys=True,ensure_ascii=True,s
 if actual != expected_source_sha256:
     raise RuntimeError("EMBEDDED_SOURCE_CORRUPT")
 root = pathlib.Path("/kaggle/working/data/processed/three_vlm_code") / actual
+if any(p.is_symlink() for p in (root, *root.parents)):
+    raise RuntimeError("EMBEDDED_ROOT_ALIAS")
 root.mkdir(parents=True, exist_ok=True)
 for name, text in payload.items():
     p = root / name
     if pathlib.PurePosixPath(name).is_absolute() or ".." in pathlib.PurePosixPath(name).parts:
         raise RuntimeError("UNSAFE_EMBEDDED_PATH")
+    if any(parent.is_symlink() for parent in (p, *p.parents)):
+        raise RuntimeError("EMBEDDED_PATH_ALIAS")
     p.parent.mkdir(parents=True,exist_ok=True)
     if p.exists():
         if p.read_bytes() != text.encode():
@@ -38,6 +43,8 @@ for name, text in payload.items():
         with p.open("xb") as stream:
             stream.write(text.encode())
 sys.path.insert(0,str(root))
+if "safeshift" in sys.modules and not pathlib.Path(sys.modules["safeshift"].__file__).resolve().is_relative_to(root.resolve()):
+    raise RuntimeError("STALE_IMPORTED_SAFESHIFT_REQUIRES_CLEAN_SESSION")
 from safeshift.pilot.bootstrap import launch
 evidence = launch({key!r}, expected_source_sha256, root, mode="PILOT")
 print("Evidence directory:", evidence)
@@ -52,6 +59,33 @@ print("Evidence directory:", evidence)
                             f'evidence = launch({key!r}, expected_source_sha256, root, mode="PILOT")',
                             'from safeshift.pilot.bootstrap import environment_preflight\n'
                             f'evidence = environment_preflight({key!r}, expected_source_sha256, root)')
+    # Keep diagnostics even when payload/extraction/import fails before launch.
+    # Stdlib only; do not trust or import a corrupt payload to export its failure.
+    preamble = '''import pathlib, json, hashlib, zipfile, uuid
+'''
+    fallback = '''except BaseException as error:
+    directory = pathlib.Path("/kaggle/working/data/processed/three_vlm_bootstrap") / uuid.uuid4().hex
+    directory.mkdir(parents=True, exist_ok=False)
+    record = {"status":"BLOCKED", "stage":"notebook_bootstrap", "attempt_consumed":False,
+              "type":type(error).__name__, "constraint":str(error)[:300],
+              "source_sha256":globals().get("expected_source_sha256"),
+              "cuda":"NOT_CALLED", "weights":"NOT_REQUESTED"}
+    payload_bytes = (json.dumps(record, sort_keys=True)+"\\n").encode()
+    (directory / "failure.json").write_bytes(payload_bytes)
+    hashes = {"failure.json":hashlib.sha256(payload_bytes).hexdigest()}
+    (directory / "checksums.json").write_text(json.dumps(hashes), encoding="utf-8")
+    archive = directory.with_suffix(".zip")
+    with zipfile.ZipFile(archive,"x",compression=zipfile.ZIP_DEFLATED) as packed:
+        for name in ("failure.json","checksums.json"):
+            packed.write(directory / name,name)
+    (pathlib.Path(str(archive)+".sha256.json")).write_text(json.dumps({"sha256":hashlib.sha256(archive.read_bytes()).hexdigest()}),encoding="utf-8")
+    print("BLOCKED before attempt: download", archive, "and its .sha256.json")
+    raise
+'''
+    # Only extraction/import is inside this pre-consumption fallback. The
+    # supervisor owns truthful consumption/export once launch has been called.
+    body, call = code.rsplit("evidence = ", 1)
+    code = preamble + "try:\n" + textwrap.indent(body, "    ") + fallback + "evidence = " + call
     md = f"""# SafeShift — {MODELS[key]['id']} TRAIN PILOT v1
 
 **PREP / NOT RUN.** 160 primary + at most 20 verified Qwen false-safe IDs.
@@ -59,7 +93,8 @@ No dataset, weights or inference is authorized by this notebook. FULL TRAIN is
 locked; Save & Run All cannot promote a pilot to full execution.
 
 After ChatGPT code review and separate Research Lead/Owner grant: attach exactly
-one approved **private** `safeshift-pilot-input` bundle and `grant_{key}.json`;
+one approved **private** `safeshift-pilot-input` Dataset and one **private** grant
+Dataset containing `grant_{key}.json` at its root. Remove old grant inputs;
 Internet ON, accelerator **T4 ×2 (16 GB each)**. Only GPU0 is used in FP16/eager.
 Gemma is currently BLOCKED by incomplete config/tokenizer source audit. Official
 HF access plus reviewed source hashes/tokenizer audit and a regenerated release
@@ -86,11 +121,14 @@ All dependency installs, `pip check`, `pip freeze --all`, CPU ABI checks, model
 download and the worker then use only `venv/bin/python`. It never falls back to
 Python 3.13 or mixes notebook site-packages into the worker.
 
-Phi's CPU checks fetch only three pinned config/code files, verify their hashes,
-and build a meta skeleton without weights, CUDA or forward. They explicitly set
-eager after config deserialization and for the independent CLIP config, then
-verify every decoder/vision attention class. A conflict blocks before consumption.
-The real loader repeats the same config handling and checks the actual modules.
+Phi's CPU checks fetch only hash-locked public source/tokenizer files, never
+weights. The exact reviewed class runs `from_pretrained(None, state_dict={{}})`
+on meta (no forward/CUDA), checks all 32 Phi + 24 CLIP eager layers, then the
+native processor handles one synthetic RGB image with 16 crops, token/mask/grid
+checks. The worker uses that reviewed class directly: AutoModel in Transformers
+4.43.3 re-executes remote code and resets the independent CLIP config (a5).
+Strict explicit/internal/cached eager checks remain. A conflict blocks before
+consumption. Diagnostics identify config paths/classes and resource observations.
 
 After the CPU checks, the pilot checks T4 x2 and GPU0 free memory with
 `nvidia-smi` and saves its receipt before consuming the attempt. Missing/wrong
@@ -100,6 +138,11 @@ consumption. The worker still performs the real CUDA FP16 admission afterwards.
 For authorized resume also attach the exact prior archive renamed
 `resume_{key}.zip` and a new source/config/input-bound resume grant. SUCCESS is
 not rerun; errors/INVALID need a separate exact-ID retry grant.
+
+Choose **Save Version → Save & Run All once**, not an interactive run followed
+by another Save & Run All. Kaggle starts a separate clean session, so earlier
+interactive installs/files do not qualify it. Set Internet/T4 x2 and attach both
+private Inputs for this saved version. Never rerun a consumed attempt.
 
 Download the printed result ZIP and `.sha256.json` from Outputs, including failed
 or partial attempts. `/kaggle/working` is ephemeral; Save Version/outputs and
@@ -138,8 +181,10 @@ supervisor uses `pip --python` to install it only into the target venv. Missing
 `venv`, bootstrap/controller/hash failure, dependency failure, host-package
 leakage or wrong versions produce a BLOCKED receipt and consume no attempt.
 
-For Phi this also downloads only the three hash-locked config/modeling source
-files and constructs a full meta skeleton (no weights/CUDA/forward). It checks
+For Phi this downloads only hash-locked public source/tokenizer files and runs
+the real reviewed class `from_pretrained(None, state_dict={{}})` on full meta
+(no checkpoint weights/CUDA/forward), followed by a native synthetic RGB processor
+check (16 crops, image tokens, masks, shapes and dtypes). It checks
 explicit eager in both Phi and its independent CLIP config, and all 32 decoder
 and 24 vision attention classes. Source/config/import/attention failures block
 before any attempt. This executes reviewed remote config/constructor code on CPU.

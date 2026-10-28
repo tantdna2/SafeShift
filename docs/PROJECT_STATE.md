@@ -1,6 +1,6 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **29/10/2026 (Asia/Bangkok)**; main đã fetch `49ab2e8832683d4ae4877291cd7a82abbc533d2b` (merge PR #141). Không phải quyền thực nghiệm.
+Cập nhật **29/10/2026 (Asia/Bangkok)**; main đã fetch `f8ba79cf17fb12a9745c555a692cbb42f32be45d` (merge PR #142). Không phải quyền thực nghiệm.
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -52,12 +52,17 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
   storage, T4×2 và đúng checkpoint revision tải xong PASS; `model_load` ImportError
   yêu cầu `flash_attn`, 0/160 inference, `attempt_consumed=true`. Không tái dùng a4.
   Chưa được cấp archive/checksum a4 để kiểm độc lập; không bịa receipt/hash.
-- **Draft sửa Phi eager:** đã tái hiện config JSON ghi đè kwarg eager ở 4.43.3;
-  khóa config trong bộ nhớ cho Phi và CLIP, kiểm đủ 32/24 lớp eager, CPU meta gate
-  trước consumption. Giữ revision/weights/FP16/GPU0/16 crops/protocol, không cài FA2.
-- CPU rehearsal đúng stack Linux 3.11 PASS (không CUDA/weights/forward), unit tests
-  mới 12/12 PASS; [audit và receipt](PHI_EAGER_ATTENTION_AUDIT_20261029.md).
-  Notebook đã tạo lại; Kaggle 3.12/model load/inference/HNLO chưa kiểm bản sửa.
+- **Phi a5 consumed:** [incident Owner/ChatGPT](https://github.com/tantdna2/SafeShift/pull/142#issuecomment-6476943083)
+  ghi hai shard load xong rồi explicit eager FAIL, 0/160; không tái dùng a5.
+- **Issue #143, một Draft PR end-to-end:** real pinned loader tái hiện a4/a5;
+  AutoModel 4.43.3 re-exec reset CLIP thành SDPA. Sửa bằng reviewed-class loader
+  dùng chung CPU meta/worker, giữ strict eager 32/24 lớp, source/FP16/GPU0/16 crops.
+- CPU native processor/token/checkpoint metadata admission trước ledger; diagnostics,
+  native raw-before-parse, HNLO/report/ZIP và sáu notebook đã tạo lại. Linux 3.11:
+  195/195 PASS (bật cả pip/native opt-in); Windows 185 PASS/10 SKIP, 0 lỗi. Synthetic
+  160-call native generation→raw→HNLO→report/archive replay PASS, không model inference.
+  [Hồ sơ/coverage/receipt](PHI_KAGGLE_END_TO_END_143.md). Kaggle 3.12, weights/GPU,
+  peak RAM/VRAM và HNLO thật **UNVERIFIED**. Chưa grant a6, audit độc lập hoặc merge.
 - Smol a1 lịch sử RESERVED/NOT_EXECUTED; Gemma vẫn BLOCKED. Grant cũ không bind
   source mới; task này không tạo grant hoặc run/attempt mới, không merge.
 - [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
@@ -86,9 +91,9 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**Review Draft sửa Phi eager**, gồm receipt CPU và source/checksum, sau đó kiểm
-preflight mới trên Kaggle Python 3.12 khi được phép. Model/GPU/inference cần quyền
-riêng bind source mới và attempt mới; a4 đã consumed, không tái dùng. Chưa merge.
+**ChatGPT trực tiếp review Draft Issue #143**, quyết định audit độc lập rồi mới
+duyệt merge/hậu merge. Sau PASS mới cấp release/grant bind source và attempt mới,
+Owner Save & Run All một lần. Không tái dùng a4/a5; không tự cấp a6 hoặc chạy GPU.
 
 ## IMPORTANT REFERENCES
 

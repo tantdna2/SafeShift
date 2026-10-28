@@ -1,5 +1,10 @@
 # Three-VLM TRAIN pilot v1 — PREP, chưa cấp quyền chạy
 
+**29/10, Issue #143:** [hồ sơ Phi end-to-end](PHI_KAGGLE_END_TO_END_143.md) thay
+phần mô tả gate Phi cũ: real `from_pretrained` CPU meta, native synthetic processor,
+Hub checkpoint metadata, chẩn đoán trước/sau ledger và hướng dẫn private grant
+Dataset/Save & Run All sạch. Không grant a6/GPU/inference/merge; Kaggle UNVERIFIED.
+
 Ngày 28/10/2026 (Asia/Bangkok). BASE/main đã fetch và đối chiếu GitHub:
 `4693d8c1eed4e60069272b975275e6adb17905fe` (PR #139 đã merge). Đây là task code do Owner giao,
 không phải kích hoạt kế hoạch Draft [#137](https://github.com/tantdna2/SafeShift/pull/137).
@@ -33,8 +38,8 @@ Builder [build_three_vlm_notebooks.py](../scripts/build_three_vlm_notebooks.py)
 tạo cùng payload cho cả ba, chỉ key model khác. `source_digest()` ràng buộc cả
 package runtime, prompt, dependency pins, source lock và CPU token evidence.
 Owner không nhập revision, SHA, đường dẫn, prompt hoặc thay cell.
-Source SHA-256 của payload Phi eager-fix Draft:
-`850bc40eb4b40cc359ce87d56b1f86a790f0ea67990b8e263ea4e36c2e64dfa1`.
+Source SHA-256 của payload Issue #143 Draft:
+`df1a36ac670e28f511011746265bf5ff19819360744fc9e5e89f08535addd071`.
 Grant cũ bind source trước thay đổi không tự áp dụng cho source này.
 
 Luồng sau khi **được cấp quyền**: kiểm source/grant → kiểm source/tokenizer lock,
@@ -216,10 +221,13 @@ Internet ON nhưng **không gắn dataset/grant và không bật GPU**. Mỗi no
 5. bằng pip của worker, cài nguyên pins/index hiện có, chạy `pip check`, lưu
    `pip freeze --all`, exact-version check và CPU-only native ABI smoke cho
    torch/torchvision/Transformers;
-6. riêng Phi: chỉ tải ba file config/configuration/modeling đã khóa hash, import
-   đúng remote code rồi dựng skeleton meta FP16 (không weights/CUDA/forward).
-   Đặt eager **sau deserialize**, truyền config tường minh và khóa config CLIP
-   độc lập; kiểm đủ 32 `Phi3Attention` + 24 `CLIPAttention`, không FA2/SDPA;
+6. riêng Phi: tải public source/tokenizer đã khóa hash, import đúng remote code
+   rồi chạy **real `from_pretrained(None,state_dict={})` trên meta FP16** qua
+   cùng reviewed-class loader của worker (không weights/CUDA/forward). Đặt eager
+   sau deserialize, scope CLIP độc lập, kiểm đủ 32 Phi + 24 CLIP. Không dùng lại
+   AutoModel re-exec làm reset CLIP (a5). Native processor một ảnh RGB synthetic
+   kiểm 16 crops/token/mask/grid/dtype/shape. Hub metadata kiểm revision, paths,
+   hai shard/LFS identities; chưa tải hoặc hash local weights;
 7. dọn venv/cache sau khi ghi receipt/log/ZIP vào `/kaggle/working`.
 
 Attention receipt nằm trong `runtime_preflight.json` →
@@ -228,7 +236,7 @@ Attention receipt nằm trong `runtime_preflight.json` →
 Khi nạp thật, cùng helper kiểm lại source và cấu hình, ghi
 `phi_attention_config.json` trước weights load và `phi_attention_runtime.json`
 sau kiểm các module thực tế; các receipt theo cơ chế ZIP/checksum hiện có.
-CPU meta PASS không chứng minh weights load, T4 memory hoặc inference/HNLO.
+CPU meta-loader PASS không chứng minh weights load, T4 memory hoặc inference/HNLO.
 
 Missing interpreter/module thiết yếu, controller không hỗ trợ `pip --python`,
 wheel thiếu/sai URL/size/hash, lỗi venv/pip/install/import/ABI, path rò từ Python
@@ -245,7 +253,8 @@ Pip/source-only attention preflight trước boundary và weights/worker sau bou
 `venv/bin/python`; worker kiểm lại executable, prefix,
 version và site-package isolation trước weights.
 
-Bằng chứng task code hiện tại: Windows 158 tests (155 PASS + 3 SKIP Linux-only);
+Số liệu rehearsal cũ dưới đây là lịch sử; nghiệm thu hiện tại ở hồ sơ #143.
+Bằng chứng task code trước đây: Windows 158 tests (155 PASS + 3 SKIP Linux-only);
 WSL Linux 158/158 PASS. WSL chỉ có Python 3.14.4, nên **dependency rehearsal thật trên
 Linux 3.12 NOT RUN**. Không coi test mô phỏng là Kaggle qualification. Xem
 [runtime audit](KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).

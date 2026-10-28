@@ -13,6 +13,7 @@ from unittest.mock import patch
 from .artifacts import read, sha, write
 from .contract import GENERATION, MODELS
 from .hnlo import candidate_ids, probe, tokenizer_replay
+from .diagnostics import phase
 
 
 def check_source_review(repo, key):
@@ -51,12 +52,20 @@ def cpu_software_probe(repo, key):
     attention = None
     if key == "phi":
         from .phi_attention import cpu_attention_probe
-        attention = cpu_attention_probe(repo)
+        from .phi_inputs import cpu_processor_probe, cpu_checkpoint_probe
+        with phase(os.environ.get("SAFESHIFT_CPU_DIAGNOSTICS"), "cpu_admission", "phi_loader_meta"):
+            attention = cpu_attention_probe(repo)
+        with phase(os.environ.get("SAFESHIFT_CPU_DIAGNOSTICS"), "cpu_admission", "phi_synthetic_processor"):
+            processor_probe = cpu_processor_probe(repo)
+        with phase(os.environ.get("SAFESHIFT_CPU_DIAGNOSTICS"), "cpu_admission", "phi_checkpoint_metadata"):
+            checkpoint = cpu_checkpoint_probe(repo)
     return {"status": "CPU_LIBRARY_IMPORT_AND_NATIVE_OP_PASS_NOT_INFERENCE",
             "versions": versions, "model_api": model_class.__name__,
             "processor_api": transformers.AutoProcessor.__name__, "gpu": "NOT_CALLED",
             "weights": "NOT_DOWNLOADED", "phi_attention": attention,
-            "custom_phi_execution": "CONFIG_AND_META_CONSTRUCTION_ONLY" if key == "phi" else "NOT_RUN"}
+            "phi_processor": processor_probe if key == "phi" else None,
+            "phi_checkpoint_metadata": checkpoint if key == "phi" else None,
+            "custom_phi_execution": "META_FROM_PRETRAINED_AND_SYNTHETIC_PROCESSOR" if key == "phi" else "NOT_RUN"}
 
 
 def provision(repo, key, cache, token=None):
@@ -120,9 +129,13 @@ def provision(repo, key, cache, token=None):
 
 
 def memory(torch):
-    return {"gpu0_allocated": torch.cuda.memory_allocated(0), "gpu0_reserved": torch.cuda.memory_reserved(0),
-            "gpu0_peak_allocated": torch.cuda.max_memory_allocated(0),
-            "gpu0_peak_reserved": torch.cuda.max_memory_reserved(0)}
+    result = {"gpu0_allocated": torch.cuda.memory_allocated(0), "gpu0_reserved": torch.cuda.memory_reserved(0),
+              "gpu0_peak_allocated": torch.cuda.max_memory_allocated(0),
+              "gpu0_peak_reserved": torch.cuda.max_memory_reserved(0)}
+    if hasattr(torch.cuda, "mem_get_info"):
+        free, total = torch.cuda.mem_get_info(0)
+        result.update(gpu0_free_bytes=free, gpu0_total_bytes=total)
+    return result
 
 
 class NativeBackend:
@@ -136,8 +149,12 @@ class NativeBackend:
                   "revision": spec["revision"]}
         if spec["remote_code"]:
             kwargs["code_revision"] = spec["revision"]
-        self.processor = transformers.AutoProcessor.from_pretrained(
-            str(snapshot), **kwargs, **({"num_crops": 16} if key == "phi" else {}))
+        with phase(evidence, "processor_load", "native_processor"):
+            if key == "phi":
+                from .phi_inputs import load_processor
+                self.processor = load_processor(repo, snapshot)
+            else:
+                self.processor = transformers.AutoProcessor.from_pretrained(str(snapshot), **kwargs)
         cls = (transformers.AutoModelForCausalLM if key == "phi" else
                transformers.Gemma3ForConditionalGeneration if key == "gemma" else
                transformers.SmolVLMForConditionalGeneration)
@@ -145,13 +162,17 @@ class NativeBackend:
                        "attn_implementation": "eager", "use_safetensors": True}
         attention = None
         if key == "phi":
-            from .phi_attention import eager_phi, verify_phi_attention
+            from .phi_attention import eager_phi, load_phi, verify_phi_attention
             if repo is None:
                 raise ValueError("PHI_REVIEWED_SOURCE_ROOT_REQUIRED")
-            with eager_phi(repo, snapshot) as (config, _, module, attention):
+            with phase(evidence, "model_load", "phi_from_pretrained"), \
+                    eager_phi(repo, snapshot) as (config, reviewed_class, module, attention):
                 if evidence is not None:
                     write(Path(evidence) / "phi_attention_config.json", attention)
-                self.model = cls.from_pretrained(str(snapshot), config=config, **load_kwargs).eval()
+                # AutoModel 4.43.3 re-executes the remote module and resets the
+                # scoped CLIP constant. Use the exact reviewed class already
+                # resolved above; its REAL from_pretrained still loads weights.
+                self.model = load_phi(reviewed_class, config, snapshot).eval()
                 attention = {**attention, "modules": verify_phi_attention(self.model, module)}
                 if evidence is not None:
                     write(Path(evidence) / "phi_attention_runtime.json", attention)
@@ -184,9 +205,10 @@ class NativeBackend:
 
     def prepare(self, image):
         if self.key == "phi":
-            messages = [{"role": "user", "content": "<|image_1|>\n" + self.prompt}]
-            rendered = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            inputs = self.processor(rendered, [image], return_tensors="pt")
+            from .phi_inputs import prepare_inputs
+            rendered, inputs = prepare_inputs(self.processor, self.prompt, image)
+            if inputs["input_ids"].shape[1] + GENERATION["max_new_tokens"] > self.model.config.max_position_embeddings:
+                raise ValueError("PHI_NATIVE_CONTEXT_LIMIT")
         else:
             messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": self.prompt}]}]
             rendered = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
@@ -201,12 +223,14 @@ class NativeBackend:
         torch = self.torch
         sample_dir = Path(sample_dir)
         self.stage = "preprocessing"
-        with Image.open(image_path) as original:
-            if getattr(original, "n_frames", 1) != 1:
-                raise ValueError("STILL_IMAGE_REQUIRED")
-            original.load()
-            with original.convert("RGB") as image:
-                rendered, inputs = self.prepare(image)
+        with phase(sample_dir, self.stage, "decode_rgb_processor_transfer"):
+            with Image.open(image_path) as original:
+                if getattr(original, "n_frames", 1) != 1:
+                    raise ValueError("STILL_IMAGE_REQUIRED")
+                image_format, image_mode, image_size = original.format, original.mode, list(original.size)
+                original.load()
+                with original.convert("RGB") as image:
+                    rendered, inputs = self.prepare(image)
         input_ids = inputs["input_ids"][0].tolist()
         try:
             token_probe = probe(self.tokenizer, rendered, input_ids)
@@ -217,7 +241,11 @@ class NativeBackend:
             probe_error = type(error).__name__ + ": " + str(error)
         write(sample_dir / "request.json", {"prompt": self.prompt, "rendered_prompt": rendered,
               "input_ids": input_ids, "token_probe": token_probe, "generation": self.generation.to_dict(),
-              "input_shapes": {k: list(v.shape) for k, v in inputs.items()}})
+              "input_shapes": {k: list(v.shape) for k, v in inputs.items()},
+              "input_dtypes": {k: str(v.dtype) for k, v in inputs.items()},
+              "input_devices": {k: str(v.device) for k, v in inputs.items()},
+              "image": {"decoded_format": image_format, "source_mode": image_mode,
+                        "size": image_size, "processor_mode": "RGB"}})
         steps, errors, processors_seen = [], [], None
         overhead_seconds, overhead_allocated = 0.0, 0
 
@@ -264,21 +292,37 @@ class NativeBackend:
         start = time.perf_counter()
         handle = self.model.register_forward_hook(capture, with_kwargs=True)
         try:
-            with patch.object(self.model, "_get_logits_processor", observe_processors), torch.inference_mode():
+            with phase(sample_dir, self.stage, "native_generate"), \
+                    patch.object(self.model, "_get_logits_processor", observe_processors), torch.inference_mode():
                 write(sample_dir / "native_call.json", {"invocation": 1, "max_new_tokens": 64})
                 result = self.model.generate(**inputs, generation_config=self.generation)
             torch.cuda.synchronize(0)
+        except BaseException as error:
+            try:
+                observed = memory(torch)
+            except BaseException as observation_error:
+                observed = {"status": "UNAVAILABLE", "error_type": type(observation_error).__name__}
+            try:
+                write(sample_dir / "generation_failure_memory.json", observed)
+            except OSError:
+                pass  # Original error and phase receipt still carry custody.
+            raise
         finally:
             handle.remove()
         seconds = time.perf_counter() - start
         all_ids = result.sequences[0].tolist()
-        if all_ids[:len(input_ids)] != input_ids:
+        prefix_match = all_ids[:len(input_ids)] == input_ids
+        # Persist even a malformed native return before validating or decoding.
+        write(sample_dir / "native.json", {"input_ids": input_ids, "returned_ids": all_ids,
+              "generated_ids": all_ids[len(input_ids):], "input_prefix_match": prefix_match})
+        if not prefix_match:
             raise ValueError("NATIVE_INPUT_PREFIX_CHANGED")
         generated = all_ids[len(input_ids):]
-        # Durable native token IDs before first decode/parsing.
-        write(sample_dir / "native.json", {"input_ids": input_ids, "generated_ids": generated})
+        if not 1 <= len(generated) <= GENERATION["max_new_tokens"]:
+            raise ValueError("NATIVE_GENERATED_TOKEN_COUNT")
         self.stage = "decode"
-        response = self.tokenizer.decode(generated, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        with phase(sample_dir, self.stage, "native_tokenizer_decode"):
+            response = self.tokenizer.decode(generated, skip_special_tokens=True, clean_up_tokenization_spaces=False)
         eos = self.generation.eos_token_id
         raw = {"response": response, "generated_ids": generated, "input_ids": input_ids, "token_probe": token_probe,
                 "steps": steps, "actual_logits_processors": processors_seen,
