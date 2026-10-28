@@ -3,6 +3,9 @@
 Notebooks call launch(..., mode='PILOT') literally. No promotion from pilot.
 """
 import os
+import re
+import json
+import errno
 from pathlib import Path
 import platform
 import shutil
@@ -17,6 +20,9 @@ from .manifest import discover, load_bundle
 from .report import save_reports
 from .runner import error_record
 from .backend import check_source_review
+
+SCRATCH_BUDGET_BYTES = 28 * 2**30
+OUTPUT_BUDGET_BYTES = 4 * 2**30
 
 
 def dependency_commands(python, repo, key):
@@ -41,13 +47,13 @@ def filesystem_usage(path):
 
 
 def storage_admission(scratch, output, resume_bytes=0):
-    """Minimum headroom, not a prediction of peak use or a reserved allocation.
+    """Observe each filesystem and temporarily allocate both budgets together.
 
     Resume allowance covers extraction, retained sample copies and their ZIP.
     Group by device so two observations never count the same free bytes twice.
     """
     paths = {"scratch": filesystem_usage(scratch), "output": filesystem_usage(output)}
-    needs = {"scratch": 28 * 2**30, "output": 4 * 2**30 + 4 * resume_bytes}
+    needs = {"scratch": SCRATCH_BUDGET_BYTES, "output": OUTPUT_BUDGET_BYTES + 4 * resume_bytes}
     groups = {}
     for name, observed in paths.items():
         group = groups.setdefault(observed["device"], {"roles": [], "required_bytes": 0,
@@ -55,36 +61,214 @@ def storage_admission(scratch, output, resume_bytes=0):
         group["roles"].append(name)
         group["required_bytes"] += needs[name]
         group["free_bytes"] = min(group["free_bytes"], observed["free_bytes"])
-    return {"paths": paths, "requirements_bytes": needs, "filesystems": list(groups.values()),
-            "resume_uncompressed_bytes": resume_bytes,
-            "admitted": all(g["free_bytes"] >= g["required_bytes"] for g in groups.values())}
+    result = {"paths": paths, "requirements_bytes": needs, "filesystems": list(groups.values()),
+              "resume_uncompressed_bytes": resume_bytes, "admitted": False,
+              "allocation": {}, "reason": "INSUFFICIENT_FILESYSTEM_FREE",
+              "limitation": "Allocation is released immediately; quotas and free space may change. "
+                            "Provider or delayed-write limits and peak usage are not guaranteed."}
+    if not all(g["free_bytes"] >= g["required_bytes"] for g in groups.values()):
+        return result
+    probes = []
+    try:
+        if not hasattr(os, "posix_fallocate"):
+            raise OSError("PHYSICAL_ALLOCATION_UNSUPPORTED")
+        for name, path in (("scratch", scratch), ("output", output)):
+            probe = Path(path) / (".allocation-probe-" + uuid.uuid4().hex)
+            flags = os.O_CREAT | os.O_EXCL | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
+            fd = os.open(probe, flags, 0o600)
+            probes.append((fd, probe))
+            os.posix_fallocate(fd, 0, needs[name])
+            os.fsync(fd)
+            info = os.fstat(fd)
+            if info.st_size != needs[name] or (hasattr(info, "st_blocks") and info.st_blocks * 512 < needs[name]):
+                raise OSError("PHYSICAL_ALLOCATION_NOT_CONFIRMED:" + name)
+            result["allocation"][name] = {"requested_bytes": needs[name], "allocated_bytes": info.st_blocks * 512,
+                                           "status": "ALLOCATED"}
+        result["reason"] = "ALLOCATION_CHECK_PASSED_RELEASED"
+        result["admitted"] = True
+    except (OSError, ValueError) as error:
+        result["reason"] = "ALLOCATION_CHECK_FAILED"
+        result["allocation_error"] = {"type": type(error).__name__, "errno": getattr(error, "errno", None),
+                                      "message": str(error)}
+    finally:
+        for fd, probe in reversed(probes):
+            try:
+                os.close(fd)
+                probe.unlink()
+            except OSError as error:
+                result["admitted"] = False
+                result["reason"] = "ALLOCATION_PROBE_CLEANUP_FAILED"
+                result.setdefault("cleanup_errors", []).append(str(error))
+    return result
 
 
-def prepare_scratch(work, session):
-    """Only the explicitly selected working root; never silently use host /tmp."""
-    scratch = safe(work, "data/processed/three_vlm_scratch/" + session)
-    scratch.mkdir(parents=True, exist_ok=False)
+def storage_receipt(scratch, output, resume_bytes=0):
+    """Always return a failure receipt when observation or permission checks fail."""
+    try:
+        return storage_admission(scratch, output, resume_bytes)
+    except (OSError, ValueError) as error:
+        return {"admitted": False, "reason": "OBSERVATION_FAILED",
+                "scratch": str(scratch), "output": str(output),
+                "error": {"type": type(error).__name__, "errno": getattr(error, "errno", None),
+                          "message": str(error)}}
+
+
+def storage_preflight(work=None, scratch_root=None):
+    """CPU-only resource check; never reads grants, inputs or calls a GPU."""
+    work = Path(work or "/kaggle/working")
+    scratch_root = Path(scratch_root or "/kaggle/tmp")
+    session = uuid.uuid4().hex
+    try:
+        work = checked_root(work)
+        output = safe(work, "data/processed/three_vlm_preflight/" + session)
+        output.mkdir(parents=True, exist_ok=False)
+    except (OSError, ValueError) as error:
+        print("STORAGE_PREFLIGHT_RECEIPT", json.dumps({"admitted": False, "reason": "OUTPUT_PREPARATION_FAILED",
+              "scratch_root": str(scratch_root), "output_root": str(work),
+              "error": {"type": type(error).__name__, "errno": getattr(error, "errno", None),
+                        "message": str(error)}}, sort_keys=True))
+        return None
+    scratch = None
+    try:
+        checked_scratch = provision_scratch_root(work, scratch_root)
+        scratch, _ = prepare_scratch(checked_scratch, session)
+        result = storage_receipt(scratch, output)
+    except (OSError, ValueError) as error:
+        result = {"admitted": False, "reason": "SCRATCH_PREPARATION_FAILED",
+                  "scratch_root": str(scratch_root), "output": str(output),
+                  "error": {"type": type(error).__name__, "errno": getattr(error, "errno", None),
+                            "message": str(error)}}
+    finally:
+        if scratch is not None:
+            try:
+                cleanup_scratch(scratch_root, scratch, session)
+            except (OSError, ValueError) as error:
+                result["admitted"] = False
+                result["scratch_cleanup_error"] = str(error)
+    try:
+        receipt_hash = write(output / "storage_preflight.json", result)
+        write(output / "storage_preflight.sha256.json", {"sha256": receipt_hash})
+    except OSError as error:
+        result["admitted"] = False
+        result["receipt_write_error"] = str(error)
+        print("STORAGE_PREFLIGHT_RECEIPT", json.dumps(result, sort_keys=True))
+    print("STORAGE_PREFLIGHT", "PASS" if result["admitted"] else "BLOCKED", result.get("reason"), output)
+    return output
+
+
+def checked_root(root):
+    """Reject aliases in every existing ancestor, including the root itself."""
+    root = Path(root).absolute()
+    for path in (root, *root.parents):
+        if path.is_symlink() or (hasattr(path, "is_junction") and path.is_junction()):
+            raise ValueError("STORAGE_ROOT_ALIAS")
+    if not root.is_dir():
+        raise ValueError("STORAGE_ROOT_MISSING_OR_NOT_DIRECTORY")
+    return root
+
+
+def provision_scratch_root(work, root):
+    """Validate/create only the sibling tmp root; retain it across sessions.
+
+    Kaggle defaults bind this to /kaggle/tmp under the existing /kaggle parent.
+    Explicit work/root arguments support isolated CPU tests, with the same layout.
+    Never create ancestors, follow aliases, overwrite an entry or select a fallback.
+    """
+    work = checked_root(work)
+    root = Path(root)
+    if not root.is_absolute() or ".." in root.parts or root != work.parent / "tmp":
+        raise ValueError("SCRATCH_ROOT_MUST_BE_SIBLING_TMP")
+    parent = checked_root(work.parent)
+    identity = lambda info: (info.st_dev, info.st_ino)
+    parent_identity = identity(parent.lstat())
+    parent_fd = root_fd = None
+    try:
+        if os.name == "posix":
+            flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+            parent_fd = os.open(parent, flags)
+            if identity(os.fstat(parent_fd)) != parent_identity:
+                raise ValueError("SCRATCH_PARENT_CHANGED")
+            try:
+                os.stat("tmp", dir_fd=parent_fd, follow_symlinks=False)
+            except FileNotFoundError:
+                try:
+                    os.mkdir("tmp", mode=0o700, dir_fd=parent_fd)
+                except FileExistsError:
+                    pass  # Concurrent creator: open/revalidate; never trust EEXIST.
+            checked_root(root)
+            root_fd = os.open("tmp", flags, dir_fd=parent_fd)
+            root_identity = identity(os.fstat(root_fd))
+        else:
+            try:
+                root.lstat()
+            except FileNotFoundError:
+                try:
+                    root.mkdir(mode=0o700, exist_ok=False)
+                except FileExistsError:
+                    pass
+            checked_root(root)
+            root_identity = identity(root.lstat())
+        # Detect parent replacement or a different mounted/path entry after mkdir.
+        checked_root(parent)
+        checked_root(root)
+        if identity(parent.lstat()) != parent_identity or identity(root.lstat()) != root_identity:
+            raise ValueError("SCRATCH_ROOT_OR_PARENT_CHANGED")
+        if not os.access(root, os.W_OK | os.X_OK):
+            raise PermissionError(errno.EACCES, "SCRATCH_ROOT_NOT_WRITABLE_OR_SEARCHABLE", str(root))
+        return root
+    finally:
+        if root_fd is not None:
+            os.close(root_fd)
+        if parent_fd is not None:
+            os.close(parent_fd)
+
+
+def prepare_scratch(root, session):
+    """Create a session-owned scratch under the explicit temporary root."""
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", session):
+        raise ValueError("INVALID_SCRATCH_SESSION")
+    root = checked_root(root)
+    scratch = safe(root, "safeshift-pilot-" + session)
+    scratch.mkdir(mode=0o700, exist_ok=False)
     temporary = scratch / "tmp"
     temporary.mkdir()
     # A real exclusive write verifies writability (access() alone is insufficient).
-    write(scratch / "location.json", {"scope": "working_directory", "session": session})
-    return scratch, {**os.environ, "TMPDIR": str(temporary), "TMP": str(temporary),
+    write(scratch / "location.json", {"scope": "kaggle_tmp", "session": session})
+    env = {k: v for k, v in os.environ.items() if not k.startswith("PIP_")}
+    env.pop("PYTHONPATH", None)
+    env.pop("PYTHONUSERBASE", None)
+    return scratch, {**env, "HOME": str(scratch), "TMPDIR": str(temporary), "TMP": str(temporary),
                      "TEMP": str(temporary), "HF_HOME": str(scratch / "hf_home"),
                      "HF_MODULES_CACHE": str(scratch / "hf_modules"),
+                     "HF_HUB_CACHE": str(scratch / "hf_hub"),
+                     "HUGGINGFACE_HUB_CACHE": str(scratch / "hf_hub"),
+                     "TRANSFORMERS_CACHE": str(scratch / "hf_hub"),
+                     "HF_XET_CACHE": str(scratch / "hf_xet"),
+                     "HF_ASSETS_CACHE": str(scratch / "hf_assets"),
                      "XDG_CACHE_HOME": str(scratch / "xdg_cache"),
-                     "TORCH_HOME": str(scratch / "torch_cache")}
+                     "TORCH_HOME": str(scratch / "torch_cache"),
+                     "TRITON_CACHE_DIR": str(scratch / "triton_cache"),
+                     "CUDA_CACHE_PATH": str(scratch / "cuda_cache"),
+                     "PYTHONPYCACHEPREFIX": str(scratch / "pycache"),
+                     "PYTHONNOUSERSITE": "1",
+                     "PIP_CACHE_DIR": str(scratch / "pip_cache"),
+                     "PIP_CONFIG_FILE": os.devnull, "PIP_NO_CACHE_DIR": "1"}
 
 
-def cleanup_scratch(work, scratch, session):
+def cleanup_scratch(root, scratch, session):
     """Remove only this session's owned runtime/cache, never evidence or inputs.
 
-    Working-directory scratch must not become part of Kaggle's saved outputs.
+    Scratch must not become part of Kaggle's saved outputs.
     subprocess.run has returned/killed-and-waited before the finalizer calls this.
     """
-    expected = safe(work, "data/processed/three_vlm_scratch/" + session)
-    if Path(scratch).resolve() != expected.resolve() or not expected.resolve().is_relative_to(Path(work).resolve()):
+    root = checked_root(root)
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", session):
+        raise ValueError("INVALID_SCRATCH_SESSION")
+    expected = safe(root, "safeshift-pilot-" + session)
+    if Path(scratch).absolute() != expected or not expected.is_dir():
         raise ValueError("SCRATCH_CLEANUP_SCOPE_MISMATCH")
-    if read(expected / "location.json") != {"scope": "working_directory", "session": session}:
+    marker = safe(expected, "location.json")
+    if read(marker) != {"scope": "kaggle_tmp", "session": session}:
         raise ValueError("SCRATCH_CLEANUP_OWNERSHIP_MISMATCH")
     shutil.rmtree(expected)
 
@@ -101,6 +285,10 @@ def gpu_preflight():
         raise RuntimeError("BLOCKED_GPU0_FREE_BELOW_14_GIB")
     return {"physical_gpus": rows, "placement": "GPU0 only; GPU1 unused", "bf16": False,
             "flash_attention": False, "quantization": None}
+
+
+def supported_runtime():
+    return platform.system() == "Linux" and sys.version_info[:2] in ((3, 11), (3, 12))
 
 
 def recover_accounting(output, plan):
@@ -132,15 +320,16 @@ def recover_accounting(output, plan):
     return results
 
 
-def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
+def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch_root=None):
     """One authorized attempt; all exceptions retain/export available evidence."""
     if key not in MODELS or mode != "PILOT":
         raise PermissionError("NOTEBOOK_PILOT_ONLY_FULL_REQUIRES_SEPARATE_TASK_AND_CLI")
     repo = Path(repo).resolve()
     inputs = Path(inputs) if inputs else Path("/kaggle/input")
-    work = Path(work) if work else Path("/kaggle/working")
+    work = checked_root(work or "/kaggle/working")
+    scratch_root = Path(scratch_root or "/kaggle/tmp")
     session = uuid.uuid4().hex
-    output = work / "data/processed/three_vlm" / (key + "-" + session)
+    output = safe(work, "data/processed/three_vlm/" + key + "-" + session)
     output.mkdir(parents=True, exist_ok=False)
     stage, plan, grant, blocked, scratch = "authority", None, None, False, None
     started = time.monotonic()
@@ -190,8 +379,15 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
             with zipfile.ZipFile(archive) as z:
                 resume_bytes = sum(i.file_size for i in z.infolist())
         stage = "storage"
-        scratch, setup_env = prepare_scratch(work, session)
-        admission = storage_admission(scratch, output, resume_bytes)
+        try:
+            checked_scratch = provision_scratch_root(work, scratch_root)
+            scratch, setup_env = prepare_scratch(checked_scratch, session)
+            admission = storage_receipt(scratch, output, resume_bytes)
+        except (OSError, ValueError) as error:
+            admission = {"admitted": False, "reason": "SCRATCH_PREPARATION_FAILED",
+                         "scratch_root": str(scratch_root), "output": str(output),
+                         "error": {"type": type(error).__name__, "errno": getattr(error, "errno", None),
+                                   "message": str(error)}}
         write(output / "storage_admission.json", admission)
         if not admission["admitted"]:
             raise OSError("BLOCKED_FILESYSTEM_COMBINED_HEADROOM_REQUIRED")
@@ -200,7 +396,7 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
             parent = import_archive(archive, output / "prior")
         stage = "hardware"
         write(output / "gpu_preflight.json", gpu_preflight())
-        if platform.system() != "Linux" or sys.version_info[:2] not in ((3, 11), (3, 12)):
+        if not supported_runtime():
             raise RuntimeError("BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED")
         write(output / "host.json", {"python": sys.version, "platform": platform.platform(),
               "scratch_free": shutil.disk_usage(scratch).free, "output_free": shutil.disk_usage(output).free})
@@ -216,7 +412,7 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
             python = runtime / "bin/python"
             for command in dependency_commands(python, repo, key):
                 call(command)
-        freeze = subprocess.check_output([str(python), "-m", "pip", "freeze"], text=True)
+        freeze = subprocess.check_output([str(python), "-m", "pip", "freeze"], text=True, env=setup_env)
         write_bytes(output / "pip_freeze.txt", freeze.encode())
         stage = "worker"
         env = setup_env.copy()
@@ -251,7 +447,7 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT"):
     finally:
         if scratch is not None:
             try:
-                cleanup_scratch(work, scratch, session)
+                cleanup_scratch(scratch_root, scratch, session)
             except BaseException:
                 print("SCRATCH_CLEANUP_FAILED: do not publish/save entire working tree; download evidence ZIP only.")
         try:

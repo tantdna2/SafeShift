@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import errno
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from safeshift.pilot import bootstrap as b
@@ -22,12 +24,205 @@ GIB = 2**30
 GPU = "Tesla T4, 15360, 14800, 550.90.07\nTesla T4, 15360, 14800, 550.90.07\n"
 
 
+class ScratchRootTests(unittest.TestCase):
+    def test_absent_root_created_under_existing_parent_with_restrictive_mode(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work = parent / "working"
+            work.mkdir()
+            root = parent / "tmp"
+            self.assertEqual(b.provision_scratch_root(work, root), root)
+            self.assertTrue(root.is_dir())
+            self.assertEqual(list(root.iterdir()), [])
+            if os.name == "posix":
+                self.assertEqual(root.stat().st_mode & 0o777, 0o700)
+
+    def test_existing_root_is_preserved(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root = parent / "working", parent / "tmp"
+            work.mkdir()
+            root.mkdir()
+            write(root / "other-session.json", {"SYNTHETIC": True})
+            before = root.stat()
+            self.assertEqual(b.provision_scratch_root(work, root), root)
+            self.assertEqual(root.stat().st_ino, before.st_ino)
+            self.assertEqual(root.stat().st_mode, before.st_mode)
+            self.assertTrue((root / "other-session.json").is_file())
+
+    def test_concurrent_eexist_revalidates_directory_and_rejects_file(self):
+        for directory in (True, False):
+            with self.subTest(directory=directory), tempfile.TemporaryDirectory() as d:
+                parent = Path(d)
+                work, root = parent / "working", parent / "tmp"
+                work.mkdir()
+                original = os.mkdir
+                def concurrent(path, mode=0o777, *, dir_fd=None):
+                    if directory:
+                        if dir_fd is None:
+                            original(path, mode)
+                        else:
+                            original(path, mode, dir_fd=dir_fd)
+                    else:
+                        root.write_bytes(b"SYNTHETIC_CONCURRENT_FILE")
+                    raise FileExistsError(errno.EEXIST, "concurrent creator")
+                with patch.object(b.os, "mkdir", side_effect=concurrent):
+                    if directory:
+                        self.assertEqual(b.provision_scratch_root(work, root), root)
+                    else:
+                        with self.assertRaisesRegex(ValueError, "NOT_DIRECTORY"):
+                            b.provision_scratch_root(work, root)
+
+    def test_denied_creation_and_invalid_roots_create_no_fallback(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root = parent / "working", parent / "tmp"
+            work.mkdir()
+            with patch.object(b.os, "mkdir", side_effect=PermissionError(errno.EACCES, "denied")):
+                with self.assertRaises(PermissionError):
+                    b.provision_scratch_root(work, root)
+            for invalid in (Path("tmp"), parent / "other", work / "tmp", parent / "other/../tmp", work):
+                with self.subTest(root=str(invalid)), self.assertRaisesRegex(ValueError, "SIBLING_TMP"):
+                    b.provision_scratch_root(work, invalid)
+            self.assertEqual(list(parent.iterdir()), [work])
+
+    def test_parent_alias_and_existing_nondirectory_are_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root = parent / "working", parent / "tmp"
+            work.mkdir()
+            original = Path.is_symlink
+            with patch.object(Path, "is_symlink", lambda p: p == parent or original(p)):
+                with self.assertRaisesRegex(ValueError, "ALIAS"):
+                    b.provision_scratch_root(work, root)
+            self.assertFalse(root.exists())
+            root.write_bytes(b"SYNTHETIC_FILE")
+            with self.assertRaisesRegex(ValueError, "NOT_DIRECTORY"):
+                b.provision_scratch_root(work, root)
+            self.assertEqual(root.read_bytes(), b"SYNTHETIC_FILE")
+
+    @unittest.skipUnless(os.name == "posix", "real directory symlink requires Linux")
+    def test_real_root_and_parent_symlinks_are_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root, target = parent / "working", parent / "tmp", parent / "target"
+            work.mkdir()
+            target.mkdir()
+            root.symlink_to(target, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "ALIAS"):
+                b.provision_scratch_root(work, root)
+            alias = parent / "alias"
+            alias.symlink_to(parent, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "ALIAS"):
+                b.provision_scratch_root(alias / "working", alias / "tmp")
+            self.assertEqual(list(target.iterdir()), [])
+
+    @unittest.skipUnless(os.name == "posix", "directory descriptor check requires Linux")
+    def test_parent_or_root_identity_mismatch_fails_closed(self):
+        for changed in ("parent", "root"):
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as d:
+                parent = Path(d)
+                work, root = parent / "working", parent / "tmp"
+                work.mkdir()
+                root.mkdir()
+                original = os.fstat
+                calls = []
+                def mismatch(fd):
+                    info = original(fd)
+                    calls.append(fd)
+                    if (changed == "parent" and len(calls) == 1) or (changed == "root" and len(calls) == 2):
+                        return SimpleNamespace(st_dev=info.st_dev + 1, st_ino=info.st_ino)
+                    return info
+                with patch.object(b.os, "fstat", side_effect=mismatch):
+                    with self.assertRaisesRegex(ValueError, "CHANGED"):
+                        b.provision_scratch_root(work, root)
+
+    def test_missing_root_preflight_shared_filesystem_blocks_with_receipt(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root = parent / "working", parent / "tmp"
+            work.mkdir()
+            observation = {"device": 1, "free_bytes": int(19.5 * GIB)}
+            with patch.object(b, "filesystem_usage", return_value=observation), \
+                 patch.object(b.subprocess, "run", side_effect=AssertionError("NO_WORKER")):
+                out = b.storage_preflight(work, root)
+            receipt = read(out / "storage_preflight.json")
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["reason"], "INSUFFICIENT_FILESYSTEM_FREE")
+            self.assertEqual(receipt["filesystems"][0]["required_bytes"], 32 * GIB)
+            self.assertEqual(list(root.iterdir()), [])
+
+    def test_missing_root_creation_denied_retains_preflight_receipt(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root = parent / "working", parent / "tmp"
+            work.mkdir()
+            original = os.mkdir
+            def denied(path, mode=0o777, *, dir_fd=None):
+                if path == "tmp" or Path(path) == root:
+                    raise PermissionError(errno.EACCES, "root creation denied")
+                return original(path, mode) if dir_fd is None else original(path, mode, dir_fd=dir_fd)
+            with patch.object(b.os, "mkdir", side_effect=denied):
+                out = b.storage_preflight(work, root)
+            receipt = read(out / "storage_preflight.json")
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["error"]["errno"], errno.EACCES)
+            self.assertFalse(root.exists())
+
+    def test_existing_root_without_write_or_search_permission_is_blocked(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root = parent / "working", parent / "tmp"
+            work.mkdir()
+            root.mkdir()
+            with patch.object(b.os, "access", return_value=False):
+                with self.assertRaises(PermissionError):
+                    b.provision_scratch_root(work, root)
+
+    def test_new_root_cleanup_failure_keeps_receipt_and_owned_session(self):
+        with tempfile.TemporaryDirectory() as d:
+            parent = Path(d)
+            work, root = parent / "working", parent / "tmp"
+            work.mkdir()
+            with patch.object(b, "storage_admission", return_value={"admitted": True, "reason": "SYNTHETIC"}), \
+                 patch.object(b, "cleanup_scratch", side_effect=OSError("cleanup denied")):
+                out = b.storage_preflight(work, root)
+            receipt = read(out / "storage_preflight.json")
+            self.assertFalse(receipt["admitted"])
+            self.assertIn("cleanup denied", receipt["scratch_cleanup_error"])
+            sessions = list(root.iterdir())
+            self.assertEqual(len(sessions), 1)
+            self.assertEqual(read(sessions[0] / "location.json")["scope"], "kaggle_tmp")
+
+
 class StorageTests(unittest.TestCase):
+    @unittest.skipUnless(hasattr(os, "posix_fallocate"), "Linux allocation API unavailable")
+    def test_small_real_allocation_is_released(self):
+        with tempfile.TemporaryDirectory() as d:
+            scratch, output = Path(d) / "scratch", Path(d) / "output"
+            scratch.mkdir()
+            output.mkdir()
+            with patch.object(b, "SCRATCH_BUDGET_BYTES", 1024 * 1024), \
+                 patch.object(b, "OUTPUT_BUDGET_BYTES", 512 * 1024):
+                receipt = b.storage_admission(scratch, output)
+            self.assertTrue(receipt["admitted"], receipt)
+            self.assertEqual(receipt["allocation"]["scratch"]["requested_bytes"], 1024 * 1024)
+            self.assertEqual(list(scratch.iterdir()), [])
+            self.assertEqual(list(output.iterdir()), [])
+
     def admission(self, devices, frees, resume=0):
         observations = [{"device": dev, "free_bytes": free * GIB}
                         for dev, free in zip(devices, frees)]
-        with patch.object(b, "filesystem_usage", side_effect=observations):
-            return b.storage_admission("scratch", "output", resume)
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "scratch").mkdir()
+            (root / "output").mkdir()
+            with patch.object(b, "filesystem_usage", side_effect=observations), \
+                 patch.object(b.os, "posix_fallocate", create=True), \
+                 patch.object(b.os, "fsync"), \
+                 patch.object(b.os, "fstat", side_effect=[SimpleNamespace(st_size=28*GIB, st_blocks=28*GIB//512),
+                                                           SimpleNamespace(st_size=4*GIB+4*resume, st_blocks=(4*GIB+4*resume)//512)]):
+                return b.storage_admission(root / "scratch", root / "output", resume)
 
     def test_shared_filesystem_requires_sum_not_two_independent_checks(self):
         self.assertFalse(self.admission((1, 1), (31, 31))["admitted"])
@@ -47,6 +242,90 @@ class StorageTests(unittest.TestCase):
     def test_resume_extraction_copy_archive_headroom_is_additional(self):
         self.assertFalse(self.admission((1, 1), (35, 35), GIB)["admitted"])
         self.assertTrue(self.admission((1, 1), (36, 36), GIB)["admitted"])
+
+    def test_quota_failure_after_statvfs_pass_is_blocked_and_probe_removed(self):
+        with tempfile.TemporaryDirectory() as d:
+            scratch, output = Path(d) / "scratch", Path(d) / "output"
+            scratch.mkdir()
+            output.mkdir()
+            observations = [{"device": 1, "free_bytes": 40 * GIB},
+                            {"device": 2, "free_bytes": 40 * GIB}]
+            with patch.object(b, "filesystem_usage", side_effect=observations), \
+                 patch.object(b.os, "posix_fallocate", side_effect=OSError(errno.EDQUOT, "quota"), create=True):
+                receipt = b.storage_admission(scratch, output)
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["reason"], "ALLOCATION_CHECK_FAILED")
+            self.assertEqual(receipt["allocation_error"]["errno"], errno.EDQUOT)
+            self.assertEqual(list(scratch.iterdir()), [])
+
+    def test_second_quota_failure_releases_both_simultaneous_probes(self):
+        with tempfile.TemporaryDirectory() as d:
+            scratch, output = Path(d) / "scratch", Path(d) / "output"
+            scratch.mkdir()
+            output.mkdir()
+            observations = [{"device": 1, "free_bytes": 40 * GIB},
+                            {"device": 2, "free_bytes": 40 * GIB}]
+            with patch.object(b, "filesystem_usage", side_effect=observations), \
+                 patch.object(b.os, "posix_fallocate", side_effect=[None, OSError(errno.EDQUOT, "output quota")], create=True), \
+                 patch.object(b.os, "fsync"), \
+                 patch.object(b.os, "fstat", return_value=SimpleNamespace(st_size=28*GIB, st_blocks=28*GIB//512)):
+                receipt = b.storage_admission(scratch, output)
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["allocation"]["scratch"]["status"], "ALLOCATED")
+            self.assertEqual(receipt["allocation_error"]["errno"], errno.EDQUOT)
+            self.assertEqual(list(scratch.iterdir()), [])
+            self.assertEqual(list(output.iterdir()), [])
+
+    def test_preflight_never_reads_grant_or_calls_subprocess(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, scratch = root / "working", root / "tmp"
+            work.mkdir()
+            scratch.mkdir()
+            with patch.object(b, "storage_admission", return_value={"admitted": True, "reason": "SYNTHETIC"}), \
+                 patch.object(b, "discover", side_effect=AssertionError("NO_GRANT")), \
+                 patch.object(b.subprocess, "run", side_effect=AssertionError("NO_PROCESS")), \
+                 patch.object(b.subprocess, "check_output", side_effect=AssertionError("NO_GPU")):
+                output = b.storage_preflight(work, scratch)
+            self.assertTrue(read(output / "storage_preflight.json")["admitted"])
+            self.assertEqual(read(output / "storage_preflight.sha256.json")["sha256"], sha(output / "storage_preflight.json"))
+            self.assertEqual(list(scratch.iterdir()), [])
+
+    def test_output_not_writable_prints_failure_without_grant(self):
+        with tempfile.TemporaryDirectory() as d, \
+             patch.object(b, "safe", side_effect=PermissionError(errno.EACCES, "denied")), \
+             patch("builtins.print") as printed:
+            self.assertIsNone(b.storage_preflight(d, d))
+            self.assertIn("OUTPUT_PREPARATION_FAILED", str(printed.call_args))
+
+    def test_preflight_permission_failure_receipt_and_cleanup_failure(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, scratch = root / "working", root / "tmp"
+            work.mkdir()
+            scratch.mkdir()
+            with patch.object(b, "prepare_scratch", side_effect=PermissionError(errno.EACCES, "denied")):
+                out = b.storage_preflight(work, scratch)
+            receipt = read(out / "storage_preflight.json")
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["error"]["errno"], errno.EACCES)
+            with patch.object(b, "storage_admission", return_value={"admitted": True, "reason": "SYNTHETIC"}), \
+                 patch.object(b, "cleanup_scratch", side_effect=OSError("cleanup denied")):
+                out = b.storage_preflight(work, scratch)
+            receipt = read(out / "storage_preflight.json")
+            self.assertFalse(receipt["admitted"])
+            self.assertIn("cleanup denied", receipt["scratch_cleanup_error"])
+
+    def test_symlink_scratch_root_is_blocked(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, scratch = root / "working", root / "tmp"
+            work.mkdir()
+            scratch.mkdir()
+            original = Path.is_symlink
+            with patch.object(Path, "is_symlink", lambda p: p == scratch or original(p)):
+                out = b.storage_preflight(work, scratch)
+            self.assertIn("STORAGE_ROOT_ALIAS", read(out / "storage_preflight.json")["error"]["message"])
 
     def test_actual_filesystem_observation_and_working_scratch(self):
         with tempfile.TemporaryDirectory() as d:
@@ -96,9 +375,11 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
     with tempfile.TemporaryDirectory() as d, ExitStack() as patches:
         root = Path(d)
         inputs, work = root / "input", root / "working"
+        scratch_root = root / "tmp"
         bundle = inputs / "private"
         bundle.mkdir(parents=True)
         work.mkdir()
+        scratch_root.mkdir()
         p = plan()
         write(bundle / "bundle.json", {"SYNTHETIC": True})
         write(bundle / "pilot_manifest.json", p)
@@ -119,7 +400,7 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
                     worker(output)
             return subprocess.CompletedProcess(command, 0)
         loader = patches.enter_context(patch.object(b, "load_bundle", return_value=(p, p["main"])))
-        patches.enter_context(patch.object(b.platform, "system", return_value="Linux"))
+        patches.enter_context(patch.object(b, "supported_runtime", return_value=True))
         patches.enter_context(patch.object(b, "storage_admission", return_value={"admitted": disk_ok, "SYNTHETIC": True}))
         patches.enter_context(patch.object(b.subprocess, "run", side_effect=run))
         patches.enter_context(patch.object(b.subprocess, "check_output", side_effect=lambda cmd, **kw: GPU if cmd[0] == "nvidia-smi" else "SYNTHETIC_FREEZE\n"))
@@ -129,7 +410,20 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
 class SupervisorTests(unittest.TestCase):
     def launch(self, case, key="phi"):
         _, inputs, work, _, g, _, _ = case
-        return b.launch(key, g["source_sha256"], ROOT, inputs, work)
+        return b.launch(key, g["source_sha256"], ROOT, inputs, work, scratch_root=case[0] / "tmp")
+
+    def test_pilot_creates_missing_root_using_shared_provisioner(self):
+        for key in ("phi", "smolvlm2"):
+            with self.subTest(model=key), supervisor_case(key=key) as case:
+                root = case[0] / "tmp"
+                root.rmdir()  # Empty synthetic fixture, never a runtime root.
+                with patch.object(b, "provision_scratch_root", wraps=b.provision_scratch_root) as provision:
+                    out = self.launch(case, key)
+                provision.assert_called_once_with(case[2], root)
+                self.assertTrue(root.is_dir())
+                self.assertEqual(list(root.iterdir()), [])
+                self.assertTrue(out.with_suffix(".zip").is_file())
+                self.assertTrue(any("safeshift.pilot.runner" in cmd for cmd, _ in case[5]))
 
     def test_real_launch_orders_cuda_install_before_requirements_and_check(self):
         with supervisor_case() as case:
@@ -144,7 +438,7 @@ class SupervisorTests(unittest.TestCase):
             self.assertEqual(commands[4][-1], "check")
             self.assertEqual(commands[-1][-2:], ["--mode", "PILOT"])
             for _, kwargs in case[5]:
-                self.assertTrue(Path(kwargs["env"]["TMPDIR"]).is_relative_to(case[2]))
+                self.assertTrue(Path(kwargs["env"]["TMPDIR"]).is_relative_to(case[0] / "tmp"))
             self.assertEqual(case[5][-1][1]["env"]["CUDA_VISIBLE_DEVICES"], "0")
             self.assertTrue(out.with_suffix(".zip").is_file())
 
@@ -213,6 +507,14 @@ class SupervisorTests(unittest.TestCase):
                 out = self.launch(case)
             self.assertEqual(read(out / "supervisor_failure.json")["stage"], "software")
             self.assertTrue((out / "setup.log").is_file())
+            self.assertFalse((out / "worker.log").exists())
+            self.assertTrue(out.with_suffix(".zip").is_file())
+
+    def test_disk_full_during_install_exports_failure_and_no_worker(self):
+        with supervisor_case() as case:
+            with patch.object(b.subprocess, "run", side_effect=OSError(errno.ENOSPC, "disk full")):
+                out = self.launch(case)
+            self.assertEqual(read(out / "supervisor_failure.json")["stage"], "software")
             self.assertFalse((out / "worker.log").exists())
             self.assertTrue(out.with_suffix(".zip").is_file())
 

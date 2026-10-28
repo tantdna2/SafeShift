@@ -10,7 +10,7 @@ from safeshift.pilot.contract import MODELS, source_digest, source_files
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def notebook(key, repo=ROOT):
+def notebook(key, repo=ROOT, preflight=False):
     payload = {p: (repo / p).read_bytes().decode("utf-8") for p in source_files(repo)}
     encoded = base64.b64encode(zlib.compress(json.dumps(payload, sort_keys=True).encode(), 9)).decode()
     checksum = source_digest(repo)
@@ -40,6 +40,11 @@ from safeshift.pilot.bootstrap import launch
 evidence = launch({key!r}, expected_source_sha256, root, mode="PILOT")
 print("Evidence directory:", evidence)
 '''
+    if preflight:
+        code = code.replace('from safeshift.pilot.bootstrap import launch\n'
+                            f'evidence = launch({key!r}, expected_source_sha256, root, mode="PILOT")',
+                            'from safeshift.pilot.bootstrap import storage_preflight\n'
+                            'evidence = storage_preflight()')
     md = f"""# SafeShift — {MODELS[key]['id']} TRAIN PILOT v1
 
 **PREP / NOT RUN.** 160 primary + at most 20 verified Qwen false-safe IDs.
@@ -55,9 +60,13 @@ are required before a Gemma run; a token alone cannot unlock this version. Then
 enable Kaggle Secret `HF_TOKEN` with read access. Phi/Smol gates are independent.
 No code, path, SHA, model revision or crop edits are required.
 
-Scratch uses measured working storage (venv/cache/pip temp), not `/tmp`. Shared
-scratch/output filesystem needs at least 32 GiB free, plus resume allowance;
-insufficient space stops before installation. Phi remains 16 crops/FP16/eager:
+Scratch uses `/kaggle/tmp` and output uses `/kaggle/working`; preflight measures
+both. A missing `/kaggle/tmp` is created only under the validated `/kaggle`
+parent; existing or concurrently created roots are revalidated. Preflight checks
+include real temporary allocation of 28 GiB + 4 GiB. Shared filesystems
+need at least 32 GiB free, plus resume allowance. Allocation is released and is
+not a guarantee of future quota or peak usage. Insufficient space stops before
+installation. Phi remains 16 crops/FP16/eager:
 T4 OOM risk is UNVERIFIED, and OOM stops instead of changing preprocessing.
 
 For authorized resume also attach the exact prior archive renamed
@@ -72,11 +81,26 @@ See `docs/KAGGLE_THREE_VLM_PILOT.md` in the same Draft PR.
 Classification and HNLO statuses are independent. CPU tests/source audit do not
 prove T4 execution, HNLO alignment or pilot quality.
 """
+    if preflight:
+        md = """# SafeShift — CPU-only storage preflight
+
+Run this notebook without any dataset or grant, before allocating a pilot attempt.
+It does not call a GPU, download weights or execute a model. It checks
+`/kaggle/tmp` and `/kaggle/working`, with exclusive temporary allocations of
+28 GiB and 4 GiB concurrently. If `/kaggle/tmp` is absent, it is created safely
+under the validated `/kaggle` parent; existing roots are checked and retained.
+The allocations are released immediately: PASS
+does not guarantee later quota, peak usage, GPU fit, or permission to run.
+Download the printed `storage_preflight.json`; failure to write a receipt is
+reported in the notebook output. This operation may be slow and consume capacity
+temporarily. Do not start a pilot if BLOCKED or if conditions have changed.
+"""
     return {"cells": [{"cell_type": "markdown", "id": "instructions", "metadata": {}, "source": md.splitlines(True)},
                       {"cell_type": "code", "id": "pilot-launch", "metadata": {}, "execution_count": None, "outputs": [], "source": code.splitlines(True)}],
             "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
                          "language_info": {"name": "python", "version": "3.11"},
-                         "safeshift": {"mode": "PILOT", "model_key": key, "source_sha256": checksum}},
+                         "safeshift": {"mode": "STORAGE_PREFLIGHT" if preflight else "PILOT",
+                                       "model_key": None if preflight else key, "source_sha256": checksum}},
             "nbformat": 4, "nbformat_minor": 5}
 
 
@@ -86,6 +110,8 @@ def main():
     for key in MODELS:
         path = root / f"SafeShift_TRAIN_PILOT_{key}.ipynb"
         path.write_text(json.dumps(notebook(key), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    path = root / "SafeShift_STORAGE_PREFLIGHT.ipynb"
+    path.write_text(json.dumps(notebook("phi", preflight=True), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print("SOURCE_SHA256", source_digest(ROOT))
 
 
