@@ -3,7 +3,7 @@
 Phạm vi là sửa code chuẩn bị môi trường, không chạy GPU/inference, không phát hành
 grant và không thay giao thức khoa học. BASE là
 `4693d8c1eed4e60069272b975275e6adb17905fe` (merge PR #139). Source payload sau
-sửa có SHA-256 `dd79ccd2e6d870f9d643afbcfea5cde596e42f75ef545bf905d0b11c90a2add0`.
+sửa có SHA-256 `ae5cfa1954402e2fb96f0480c4ce5fc7da812e3f649b6d5bfd1fa0377bc9889d`.
 
 ## Bằng chứng đầu vào và giới hạn xác minh
 
@@ -38,7 +38,7 @@ snapshot. Các nguyên tắc được áp dụng có chọn lọc:
 | Cache/weights/temp | Runtime và model cache ngoài evidence | Venv, pip/HF/Torch/Triton/CUDA cache, weights và temp đều dưới `/kaggle/tmp`; receipt/log ở `/kaggle/working` |
 | Worker | Khởi chạy bằng interpreter vừa build | Khởi chạy bằng đúng `venv/bin/python`; worker tự kiểm `sys.executable`, `sys.prefix`, version và site-package leakage |
 | Failure evidence | Log theo phase, raw/evidence giữ khi lỗi | `runtime_preflight.json`, `environment_preflight.json`, setup log/freeze hashes, supervisor failure và ZIP exclusive |
-| Attempt boundary | HNLO TRAIN lịch sử ghi consumption trước manifest/resource/software | Phi/Smol chỉ ghi ledger sau mọi gate CPU: authority/source/config, bundle, storage/resume, Python, venv, dependencies và CPU ABI |
+| Attempt boundary | HNLO TRAIN lịch sử ghi consumption trước manifest/resource/software | Phi/Smol chỉ ghi ledger sau mọi gate CPU và receipt `nvidia-smi` PASS; SHA-256 GPU receipt được bind vào ledger |
 
 Không sao chép hệ thống build Qwen3 vào pilot. Cách mới tận dụng interpreter Kaggle
 có sẵn và giữ policy Python 3.11/3.12. Nếu không có candidate đủ điều kiện hoặc
@@ -55,9 +55,12 @@ fallback.
 4. Tạo venv trong scratch, kiểm pip, cài đúng CUDA wheels rồi requirements, chạy
    `pip check`, `pip freeze`, exact-version check và CPU-only torch/torchvision/
    Transformers ABI smoke. Không gọi CUDA hoặc tải weights.
-5. Chỉ sau receipt PASS mới ghi ledger attempt. Sau đó mới kiểm T4 và khởi chạy
-   worker bằng đúng interpreter đã qualified.
-6. Worker kiểm lại runtime identity trước source/bundle/model provisioning. Model
+5. Kiểm T4×2/GPU0 free ≥14 GiB bằng `nvidia-smi`, ghi GPU/environment receipt
+   PASS rồi mới ghi ledger attempt độc quyền. Lỗi phần cứng/lệnh/ghi receipt giữ
+   BLOCKED, `attempt_consumed=false`, không tạo ledger, xuất evidence/partial ZIP.
+6. Worker dùng đúng interpreter đã qualified và giữ kiểm CUDA FP16 thật sau
+   consumption; `nvidia-smi` không chứng minh CUDA hay model chạy được.
+   Worker kiểm lại runtime identity trước source/bundle/model provisioning. Model
    snapshot, weights và Phi remote code vẫn dùng revision/source lock hiện hành.
 
 Hai notebook `SafeShift_ENVIRONMENT_PREFLIGHT_phi.ipynb` và
@@ -75,8 +78,8 @@ source/tokenizer audit; không được mở quyền qua thay đổi runtime nà
 
 ## Kiểm thử và bằng chứng chưa có
 
-- Windows Python 3.11.9: 152 tests PASS, 3 Linux-only SKIP.
-- WSL Linux x86_64 Python 3.14.4: 152/152 PASS; đây là test stdlib/code path,
+- Windows Python 3.11.9: 158 tests, 155 PASS và 3 Linux-only SKIP.
+- WSL Linux x86_64 Python 3.14.4: 158/158 PASS; đây là test stdlib/code path,
   không phải runtime được phép cho dependency rehearsal.
 - Builder notebook deterministic và payload parity PASS; `git diff --check` PASS.
 - NOT RUN: cài dependencies thật trên Linux/Kaggle Python 3.12, model weights,
@@ -85,3 +88,19 @@ source/tokenizer audit; không được mở quyền qua thay đổi runtime nà
 Gate tiếp theo sau review/merge là chạy hai environment-preflight notebook trên
 Kaggle hiện tại, tải ZIP/sidecar và audit receipt. Chỉ sau PASS mới xem xét run,
 attempt và grant Phi/Smol hoàn toàn mới. Không tái sử dụng a1/a2.
+
+## Delta sau audit PR #140
+
+Owner đã cung cấp phát hiện LOW trong báo cáo Antigravity
+`Pasted markdown(20261028-122905).md`: HEAD `84837807ef6fcae1ef7658ef1c54fc2df3eb0cc8`
+ghi ledger trước `gpu_preflight()`, gây tiêu thụ attempt nếu Kaggle cấp sai hoặc
+thiếu GPU. Audit PASS được báo cho HEAD đó; delta này vẫn chờ ChatGPT kiểm và
+Antigravity audit trong session cũ, không tự kế thừa PASS.
+
+Đã chuyển quan sát `nvidia-smi` cùng receipt/host metadata lên trước ledger.
+Receipt lưu raw output, return code, GPU observations và lỗi; supervisor failure
+còn giữ observation nếu receipt write lỗi, partial file/ZIP không bị ghi đè.
+Ledger chỉ được ghi sau receipt PASS, bind cả GPU và environment receipt hashes.
+Sáu tests mới bao phủ đúng/sai/thiếu GPU, VRAM, command failure/timeout, receipt
+write/torn và thứ tự CPU → GPU → receipts → ledger → worker cho Phi/Smol.
+Mọi tình huống phần cứng trong tests đều mô phỏng; task không gọi GPU hoặc CUDA.

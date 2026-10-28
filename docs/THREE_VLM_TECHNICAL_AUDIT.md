@@ -247,8 +247,9 @@ Qwen3 chỉ là phương án cần review riêng nếu Kaggle system 3.12 không
 Boundary attempt được chuyển sau toàn bộ gate CPU có thể xác minh: authority,
 source/config, bundle, storage/resume, interpreter, venv, dependency install,
 version và native CPU ABI. Failure trước đó lưu receipt với
-`attempt_consumed=false`, không tạo ledger. Sau consumption mới gọi nvidia-smi,
-CUDA admission, tải weights và worker; mọi bước dùng cùng venv đã qualified.
+`attempt_consumed=false`, không tạo ledger. Delta audit LOW bổ sung `nvidia-smi`
+và receipt PASS trước ledger; CUDA admission, tải weights và worker vẫn sau
+consumption, dùng cùng venv đã qualified. Quan sát GPU không là CUDA/model PASS.
 
 Hai environment-preflight notebook model-specific được builder tạo, không đọc
 grant/data, không gọi GPU hay tải weights. Kết quả code cuối: 152 tests PASS trên
@@ -256,3 +257,11 @@ Windows Python 3.11.9 (3 Linux-only SKIP) và 152/152 PASS trên WSL Linux x86_6
 Python 3.14.4. WSL không có Python 3.11/3.12, nên real Linux 3.12 dependency
 rehearsal và Kaggle environment preflight vẫn NOT RUN. Chi tiết/bảng so sánh và
 giới hạn: [Kaggle Python runtime audit](KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).
+
+Delta cùng PR #140 sau HEAD `8483780`: 6 tests mới kiểm GPU đúng/sai/thiếu,
+GPU0 thiếu VRAM, command missing/nonzero/timeout, receipt write/torn và thứ tự
+CPU receipt → nvidia-smi → GPU/environment receipts → ledger → worker. Failure
+không tạo ledger và giữ `attempt_consumed=false`; raw observation và partial
+receipt được giữ trong ZIP. Windows: 158 tests (155 PASS, 3 Linux-only SKIP);
+WSL Linux: 158/158 PASS. Đây là test mô phỏng phần cứng; không gọi GPU/inference.
+Delta còn chờ ChatGPT kiểm HEAD mới và Antigravity audit trong session cũ.

@@ -34,14 +34,15 @@ tạo cùng payload cho cả ba, chỉ key model khác. `source_digest()` ràng 
 package runtime, prompt, dependency pins, source lock và CPU token evidence.
 Owner không nhập revision, SHA, đường dẫn, prompt hoặc thay cell.
 Source SHA-256 của payload runtime-fix Draft:
-`dd79ccd2e6d870f9d643afbcfea5cde596e42f75ef545bf905d0b11c90a2add0`.
+`ae5cfa1954402e2fb96f0480c4ce5fc7da812e3f649b6d5bfd1fa0377bc9889d`.
 Grant cũ bind source trước thay đổi không tự áp dụng cho source này.
 
 Luồng sau khi **được cấp quyền**: kiểm source/grant → kiểm source/tokenizer lock,
 original TRAIN master/manifest/dimension inventory/toàn bộ ảnh selected → đo
 storage → kiểm/nhập resume archive → chọn CPython Linux 3.12/3.11 độc lập với
-kernel → venv riêng → cài/check/freeze và CPU ABI smoke → ghi receipt preflight →
-**consume attempt local** → kiểm hai GPU bằng nvidia-smi → kiểm CUDA FP16 nhỏ →
+kernel → venv riêng → cài/check/freeze và CPU ABI smoke → kiểm hai GPU bằng
+`nvidia-smi` → ghi GPU/environment receipt PASS → **consume attempt local** →
+kiểm CUDA FP16 nhỏ trong worker →
 pinned snapshot/safetensors/custom
 code → native greedy từng ảnh → raw fsync → strict parser → CPU HNLO replay →
 report đủ planned IDs → ZIP/checksum. First-12 gate là các ordinal 0–11 trong
@@ -51,6 +52,11 @@ classification thành công. Lỗi model/config/OOM/preprocessing/I/O hoặc raw
 nonfinite dừng model, giữ tail NOT_ATTEMPTED. INVALID không được sửa/cứu nhãn.
 Mọi blocker trước boundary consumption giữ `attempt_consumed=false`; không tạo
 ledger và không fallback sang Python 3.13.
+`gpu_preflight.json` chỉ ghi quan sát phần cứng từ `nvidia-smi`, gồm output và
+return code/lỗi; không chứng minh CUDA hoặc model đã chạy. Thiếu GPU, sai T4×2,
+GPU0 free <14 GiB, lỗi/timeout lệnh hoặc lỗi ghi receipt đều BLOCKED trước ledger.
+Ledger ràng buộc SHA-256 của receipt GPU PASS đã ghi bền vững. Khi receipt bị
+ghi dở, supervisor failure giữ cả quan sát phần cứng và partial file trong ZIP.
 
 ## Dữ liệu và chọn manifest trước khi chạy model
 
@@ -213,13 +219,15 @@ kiện, phương án duy nhất trong task này là dừng và xin review riêng
 CPython source+checksum đã khóa theo nguyên tắc Qwen3; không tự kích hoạt recipe.
 
 Pilot notebook lặp lại cùng gate ngay trong session được cấp quyền vì preflight
-là ảnh chụp nhất thời. `runtime_preflight.json` và `environment_preflight.json`
-phải PASS trước exclusive ledger write. Sau boundary đó, pip/model download/
-worker đều dùng đúng `venv/bin/python`; worker kiểm lại executable, prefix,
+là ảnh chụp nhất thời. `runtime_preflight.json` phải PASS; riêng pilot còn kiểm
+`nvidia-smi` và ghi `gpu_preflight.json`/`environment_preflight.json` PASS trước
+exclusive ledger write. Hai notebook environment-preflight vẫn chỉ chạy CPU.
+Pip trước boundary và model download/worker sau boundary đều dùng đúng
+`venv/bin/python`; worker kiểm lại executable, prefix,
 version và site-package isolation trước weights.
 
-Bằng chứng task code hiện tại: Windows 152 PASS + 3 SKIP Linux-only; WSL Linux
-152/152 PASS. WSL chỉ có Python 3.14.4, nên **dependency rehearsal thật trên
+Bằng chứng task code hiện tại: Windows 158 tests (155 PASS + 3 SKIP Linux-only);
+WSL Linux 158/158 PASS. WSL chỉ có Python 3.14.4, nên **dependency rehearsal thật trên
 Linux 3.12 NOT RUN**. Không coi test mô phỏng là Kaggle qualification. Xem
 [runtime audit](KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).
 

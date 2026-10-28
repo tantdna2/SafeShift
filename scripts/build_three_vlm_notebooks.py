@@ -82,6 +82,11 @@ the pilot prefers and validates `/usr/bin/python3.12`, then an eligible Python
 `pip freeze`, CPU ABI checks, model download and the worker. It never falls back
 to Python 3.13 or mixes notebook site-packages into the worker.
 
+After the CPU checks, the pilot checks T4 x2 and GPU0 free memory with
+`nvidia-smi` and saves its receipt before consuming the attempt. Missing/wrong
+GPUs, insufficient free memory or a failed receipt write stop with no attempt
+consumption. The worker still performs the real CUDA FP16 admission afterwards.
+
 For authorized resume also attach the exact prior archive renamed
 `resume_{key}.zip` and a new source/config/input-bound resume grant. SUCCESS is
 not rerun; errors/INVALID need a separate exact-ID retry grant.

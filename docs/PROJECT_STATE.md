@@ -58,8 +58,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
   CONSUMED, không tái sử dụng. Kernel 3.13.15 có `/usr/bin/python3.12`.
 - Draft runtime fix hiện tách kernel/worker: probe CPython 3.12/3.11, fresh venv,
   exact pins/pip freeze/CPU ABI và receipt trước consumption; không fallback 3.13.
+  Delta audit LOW chuyển `nvidia-smi` + receipt PASS trước ledger; thiếu/sai GPU,
+  VRAM/lệnh/receipt lỗi không tiêu thụ attempt; CUDA thật vẫn sau ledger.
   Hai environment-preflight notebook Phi/Smol không grant/data/GPU/weights.
-  Code tests 152 PASS Windows (3 Linux-only SKIP), 152/152 PASS WSL Linux; Linux
+  Code tests Windows 158 (155 PASS, 3 Linux-only SKIP), WSL Linux 158/158 PASS; Linux
   3.12/Kaggle dependency rehearsal vẫn NOT RUN vì WSL chỉ có Python 3.14.4.
 - [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
   thay trạng thái FAIL/DRAFT cũ bằng CODE PREP COMPLETE. Grant Phi/Smol riêng không
@@ -87,7 +89,7 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**Review Draft runtime fix Phi/Smol từ BASE #139.** Sau merge, chạy storage và
+**ChatGPT kiểm HEAD delta Draft #140 rồi Antigravity audit trong session cũ.** Sau merge, chạy storage và
 environment preflight CPU-only trên đúng Kaggle Python 3.13 + `/usr/bin/python3.12`,
 tải receipt/sidecar rồi audit. Chưa cấp grant hay khởi chạy pilot từ task code.
 Phi/Smol cần run/attempt/grant mới; không tái sử dụng Phi a1/a2 hoặc Smol a1.

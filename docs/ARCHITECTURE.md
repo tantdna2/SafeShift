@@ -179,7 +179,7 @@ execution release hoặc kết quả thật. Không thay API/metrics Foundation 
 | `pilot/contract.py`, `manifest.py` | Model/config/authority/source binding; đúng master TRAIN, selector xác định, input discovery/validation; không có dataset read khi import. |
 | `pilot/backend.py` | Ba native adapters; preflight trước weights, audited Phi code, single-T4 FP16/eager; không synthetic prediction backend production. |
 | `pilot/artifacts.py`, `hnlo.py` | Exclusive durable raw/partial archive/resume; model-specific token branch/actual decision proof, independent decoder và numeric oracle. |
-| `pilot/runner.py`, `bootstrap.py` | Kernel stdlib chọn CPython Linux 3.12/3.11, scratch venv/pins/CPU ABI trước consumption; worker khóa executable/prefix, sau đó GPU/model/first12; dừng lỗi; PILOT không promote FULL. |
+| `pilot/runner.py`, `bootstrap.py` | Kernel stdlib chọn CPython Linux 3.12/3.11, scratch venv/pins/CPU ABI và receipt `nvidia-smi` trước consumption; worker khóa executable/prefix, sau đó CUDA/model/first12; dừng lỗi; PILOT không promote FULL. |
 | `pilot/report.py` | Exact planned-ID accounting, classification + HNLO coverage, domain/supplement tách riêng; thresholds đề xuất chưa duyệt. |
 | `scripts/prepare_three_vlm_pilot.py`, `export_pilot_qwen_verified.py` | CPU preparation và optional original-V4 exporter, mỗi phần cần data/artifact grant riêng trước đọc. |
 | `scripts/report_three_vlm_pilot.py`, `build_three_vlm_notebooks.py` | Hash/replay/exact join archives; reproducible embedded-source notebook generation. |
@@ -197,6 +197,9 @@ Kaggle notebook kernel có thể là Python 3.13; nó không được dùng làm
 Supervisor probe candidate bằng chính tiến trình đó, yêu cầu CPython Linux x86_64
 3.11/3.12 cùng module stdlib thiết yếu, rồi tạo `venv --copies`. Requirements phải
 khớp `runtime_versions.json`; pip check/freeze và CPU native op chạy trước ledger.
+Pilot còn ghi receipt `nvidia-smi` PASS trước ledger, bind receipt hash; lỗi GPU
+hoặc ghi receipt giữ BLOCKED không tiêu thụ attempt. Hai notebook environment
+preflight vẫn chỉ chạy CPU; CUDA FP16 thật được kiểm trong worker sau ledger.
 Worker kiểm lại `sys.executable`, `sys.prefix`, version và mọi site-packages để
 ngăn rò thư viện kernel. Không candidate hợp lệ thì lưu BLOCKED receipt, không
 fallback 3.13 hoặc tự build/download Python.

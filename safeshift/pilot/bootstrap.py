@@ -1,4 +1,4 @@
-"""Stdlib-only Kaggle supervisor. Grant -> input -> GPU -> isolated env -> worker.
+"""Stdlib-only supervisor. Grant -> CPU runtime -> nvidia-smi -> consume -> worker.
 
 Notebooks call launch(..., mode='PILOT') literally. No promotion from pilot.
 """
@@ -557,17 +557,33 @@ def cleanup_scratch(root, scratch, session):
 
 
 def gpu_preflight():
-    output = subprocess.check_output(["nvidia-smi", "--query-gpu=name,memory.total,memory.free,driver_version",
-                                      "--format=csv,noheader,nounits"], text=True)
-    rows = [[x.strip() for x in line.split(",")] for line in output.strip().splitlines()]
-    if (len(rows) != 2 or any(len(r) != 4 or r[0] not in ("Tesla T4", "NVIDIA T4", "T4")
-                             or not r[1].isdigit() or not r[2].isdigit()
-                             or not 14000 <= int(r[1]) <= 17000 for r in rows)):
-        raise RuntimeError("BLOCKED_EXPECTED_TWO_T4_EACH_16GB_NO_POOLED_VRAM")
-    if int(rows[0][2]) < 14 * 1024:
-        raise RuntimeError("BLOCKED_GPU0_FREE_BELOW_14_GIB")
-    return {"physical_gpus": rows, "placement": "GPU0 only; GPU1 unused", "bf16": False,
-            "flash_attention": False, "quantization": None}
+    """Observe physical GPUs via nvidia-smi only; never initialize CUDA."""
+    command = ["nvidia-smi", "--query-gpu=name,memory.total,memory.free,driver_version",
+               "--format=csv,noheader,nounits"]
+    receipt = {"method": "nvidia-smi", "command": command, "status": "BLOCKED",
+               "cuda_validation": "NOT_RUN", "model_execution": "NOT_RUN"}
+    try:
+        output = subprocess.check_output(command, text=True, stderr=subprocess.STDOUT, timeout=60)
+        receipt.update(nvidia_smi_output=output, returncode=0)
+        rows = [[x.strip() for x in line.split(",")] for line in output.strip().splitlines()]
+        receipt["physical_gpus"] = rows
+        if (len(rows) != 2 or any(len(r) != 4 or r[0] not in ("Tesla T4", "NVIDIA T4", "T4")
+                                 or not r[1].isdigit() or not r[2].isdigit()
+                                 or not 14000 <= int(r[1]) <= 17000 for r in rows)):
+            raise RuntimeError("BLOCKED_EXPECTED_TWO_T4_EACH_16GB_NO_POOLED_VRAM")
+        if int(rows[0][2]) < 14 * 1024:
+            raise RuntimeError("BLOCKED_GPU0_FREE_BELOW_14_GIB")
+        return {**receipt, "status": "PASS", "placement": "GPU0 only; GPU1 unused", "bf16": False,
+                "flash_attention": False, "quantization": None}
+    except BaseException as error:
+        receipt["error"] = error_record(error, "hardware")
+        receipt["returncode"] = getattr(error, "returncode", receipt.get("returncode"))
+        diagnostic = getattr(error, "output", None)
+        if diagnostic is not None:
+            receipt["nvidia_smi_output"] = (diagnostic.decode("utf-8", errors="replace")
+                                            if isinstance(diagnostic, bytes) else diagnostic)
+        error.gpu_preflight_receipt = receipt
+        raise
 
 
 def recover_accounting(output, plan):
@@ -612,6 +628,7 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
     output.mkdir(parents=True, exist_ok=False)
     stage, plan, grant, blocked, scratch = "authority", None, None, False, None
     attempt_consumed, python, runtime_env = False, None, None
+    hardware_receipt = None
     started = time.monotonic()
     try:
         if source_digest(repo) != source_hash:
@@ -676,6 +693,20 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
         stage = "cpu_runtime_preflight"
         python, runtime_env, runtime_receipt = prepare_runtime(
             repo, key, scratch, output, setup_env, started=started, max_seconds=grant["max_seconds"])
+        stage = "hardware"
+        try:
+            hardware_receipt = {**gpu_preflight(), "attempt_consumed": False}
+        except BaseException as error:
+            hardware_receipt = {**getattr(error, "gpu_preflight_receipt", {}),
+                                "status": "BLOCKED", "attempt_consumed": False,
+                                "error": error_record(error, stage)}
+            write(output / "gpu_preflight.json", hardware_receipt)
+            raise
+        write(output / "gpu_preflight.json", hardware_receipt)
+        write(output / "host.json", {"notebook_python": sys.version,
+              "notebook_executable": str(Path(sys.executable).resolve()),
+              "worker_python": str(python.resolve()), "platform": platform.platform(),
+              "scratch_free": shutil.disk_usage(scratch).free, "output_free": shutil.disk_usage(output).free})
         write(output / "environment_preflight.json", {
             "schema": "safeshift-pre-consumption-environment-preflight-v1", "status": "PASS",
             "attempt_consumed": False, "ready_for_attempt_consumption": True,
@@ -684,24 +715,22 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
             "manifest_sha256": digest(plan), "images_verified": len(rows),
             "storage_admission_sha256": sha(output / "storage_admission.json"),
             "runtime_preflight_sha256": sha(output / "runtime_preflight.json"),
+            "gpu_preflight_sha256": sha(output / "gpu_preflight.json"),
             "selected_python": runtime_receipt["selected_python"],
             "worker_python": runtime_receipt["worker_python"],
             "kernel_python": runtime_receipt["kernel_python"],
             "kernel_worker_separated": runtime_receipt["kernel_worker_separated"],
-            "resume_verified": bool(parent), "gpu": "NOT_CALLED", "weights": "NOT_DOWNLOADED"})
+            "resume_verified": bool(parent), "gpu": "NVIDIA_SMI_ONLY", "cuda": "NOT_CALLED",
+            "weights": "NOT_DOWNLOADED"})
         stage = "attempt_consumption"
         # Local ledger survives only while the filesystem survives. Its exclusive
-        # write is the formal boundary after every CPU-verifiable gate has passed.
+        # write is the formal boundary after CPU and nvidia-smi receipts are durable.
         write(consumption, {"run_id": grant["run_id"], "source_sha256": source_hash,
                             "session": session, "consumed_after_cpu_preflight": True,
+                            "consumed_after_gpu_preflight": True,
+                            "gpu_preflight_sha256": sha(output / "gpu_preflight.json"),
                             "environment_preflight_sha256": sha(output / "environment_preflight.json")})
         attempt_consumed = True
-        stage = "hardware"
-        write(output / "gpu_preflight.json", gpu_preflight())
-        write(output / "host.json", {"notebook_python": sys.version,
-              "notebook_executable": str(Path(sys.executable).resolve()),
-              "worker_python": str(python.resolve()), "platform": platform.platform(),
-              "scratch_free": shutil.disk_usage(scratch).free, "output_free": shutil.disk_usage(output).free})
         stage = "worker"
         env = runtime_env.copy()
         env.update(PYTHONPATH=str(repo), CUDA_VISIBLE_DEVICES="0", TOKENIZERS_PARALLELISM="false",
@@ -731,6 +760,9 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
                                                           "resume", "cpu_runtime_preflight", "attempt_consumption",
                                                           "hardware") else "FAILED",
                        "attempt_consumed": attempt_consumed, **error_record(error, stage)}
+            if stage == "hardware" and hardware_receipt is not None:
+                # Keep the observation even if its own receipt write was torn.
+                failure["gpu_preflight"] = hardware_receipt
             write(output / "supervisor_failure.json", failure)
             preflight = output / "environment_preflight.json"
             if not preflight.exists() and not attempt_consumed:
@@ -738,7 +770,9 @@ def launch(key, source_hash, repo, inputs=None, work=None, mode="PILOT", scratch
                                   "status": "BLOCKED", "attempt_consumed": False,
                                   "ready_for_attempt_consumption": False, "model_key": key,
                                   "source_sha256": source_hash, "stage": stage,
-                                  "error": error_record(error, stage), "gpu": "NOT_CALLED",
+                                  "error": error_record(error, stage),
+                                  "gpu": "NVIDIA_SMI_ONLY" if stage == "hardware" else "NOT_CALLED",
+                                  "cuda": "NOT_CALLED",
                                   "weights": "NOT_DOWNLOADED"})
         except BaseException:
             print("FAILURE_RECORD_WRITE_FAILED; existing evidence retained.")

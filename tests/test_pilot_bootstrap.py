@@ -591,6 +591,136 @@ class SupervisorTests(unittest.TestCase):
             self.assertEqual(len(read(out / "recovered_report/comparison.json")), 160)
             self.assertTrue(out.with_suffix(".zip").is_file())
 
+    def assert_hardware_blocked_without_consumption(self, case, out):
+        failure = read(out / "supervisor_failure.json")
+        self.assertEqual((failure["status"], failure["stage"]), ("BLOCKED", "hardware"))
+        self.assertFalse(failure["attempt_consumed"])
+        self.assertFalse(read(out / "session.json")["attempt_consumed"])
+        self.assertFalse((case[2] / "data/processed/three_vlm_attempts" / case[4]["attempt_id"]).exists())
+        environment = read(out / "environment_preflight.json")
+        self.assertEqual(environment["status"], "BLOCKED")
+        self.assertFalse(environment["ready_for_attempt_consumption"])
+        self.assertEqual(environment["cuda"], "NOT_CALLED")
+        self.assertEqual(read(out / "runtime_preflight.json")["status"], "PASS")
+        self.assertFalse(any("safeshift.pilot.runner" in command for command, _ in case[5]))
+        self.assertFalse((out / "worker.log").exists())
+        self.assertEqual(len(read(out / "recovered_report/comparison.json")), 160)
+        self.assertTrue(out.with_suffix(".zip").is_file())
+        return import_archive(out.with_suffix(".zip"), case[0] / "recovered")
+
+    def check_hardware_failure(self, *, observation=None, error=None):
+        with supervisor_case() as case:
+            def query(command, **kwargs):
+                if command[0] == "nvidia-smi":
+                    if error is not None:
+                        raise error
+                    return observation
+                return "SYNTHETIC_FREEZE\n"
+            with patch.object(b.subprocess, "check_output", side_effect=query):
+                out = self.launch(case)
+            recovered = self.assert_hardware_blocked_without_consumption(case, out)
+            receipt = read(recovered / "gpu_preflight.json")
+            self.assertEqual(receipt["status"], "BLOCKED")
+            self.assertFalse(receipt["attempt_consumed"])
+            self.assertEqual(receipt["method"], "nvidia-smi")
+            self.assertEqual(receipt["cuda_validation"], "NOT_RUN")
+            self.assertEqual(receipt["model_execution"], "NOT_RUN")
+            if error is None:
+                self.assertEqual(receipt["nvidia_smi_output"], observation)
+            else:
+                self.assertEqual(receipt["error"]["type"], type(error).__name__)
+            return receipt
+
+    def test_missing_gpu_blocks_without_consuming_attempt(self):
+        for observation in ("", GPU.splitlines(True)[0]):
+            with self.subTest(observation=observation):
+                self.check_hardware_failure(observation=observation)
+
+    def test_wrong_gpu_blocks_without_consuming_attempt(self):
+        self.check_hardware_failure(observation=GPU.replace("Tesla T4", "NVIDIA P100"))
+
+    def test_gpu0_insufficient_vram_blocks_without_consuming_attempt(self):
+        receipt = self.check_hardware_failure(observation=GPU.replace("14800", "14335", 1))
+        self.assertEqual(receipt["physical_gpus"][0][2], "14335")
+        self.assertIn("GPU0_FREE_BELOW_14_GIB", receipt["error"]["message"])
+
+    def test_nvidia_smi_command_errors_block_and_preserve_diagnostics(self):
+        errors = (FileNotFoundError(errno.ENOENT, "SYNTHETIC_NVIDIA_SMI_MISSING"),
+                  subprocess.CalledProcessError(9, ["nvidia-smi"], output="SYNTHETIC_DRIVER_FAILURE\n"),
+                  subprocess.TimeoutExpired(["nvidia-smi"], 60, output=b"SYNTHETIC_TIMEOUT\n"))
+        for error in errors:
+            with self.subTest(error=type(error).__name__):
+                receipt = self.check_hardware_failure(error=error)
+                self.assertEqual(receipt["returncode"], getattr(error, "returncode", None))
+                if getattr(error, "output", None) is not None:
+                    expected = error.output.decode() if isinstance(error.output, bytes) else error.output
+                    self.assertEqual(receipt["nvidia_smi_output"], expected)
+
+    def test_gpu_receipt_write_failure_blocks_and_retains_partial_evidence(self):
+        actual_write = b.write
+        for partial in (False, True):
+            with self.subTest(partial=partial), supervisor_case() as case:
+                def fail_receipt(path, value):
+                    if Path(path).name == "gpu_preflight.json":
+                        if partial:
+                            Path(path).write_bytes(b'SYNTHETIC_TORN_RECEIPT')
+                        raise OSError(errno.ENOSPC, "SYNTHETIC_GPU_RECEIPT_WRITE_FAILURE")
+                    return actual_write(path, value)
+                with patch.object(b, "write", side_effect=fail_receipt):
+                    out = self.launch(case)
+                recovered = self.assert_hardware_blocked_without_consumption(case, out)
+                failure = read(recovered / "supervisor_failure.json")
+                self.assertIn("GPU_RECEIPT_WRITE_FAILURE", failure["message"])
+                self.assertEqual(failure["gpu_preflight"]["nvidia_smi_output"], GPU)
+                self.assertEqual(failure["gpu_preflight"]["status"], "PASS")
+                if partial:
+                    self.assertEqual((recovered / "gpu_preflight.json").read_bytes(), b'SYNTHETIC_TORN_RECEIPT')
+                else:
+                    self.assertFalse((recovered / "gpu_preflight.json").exists())
+
+    def test_cpu_then_hardware_receipts_then_exclusive_ledger_then_worker(self):
+        actual_write = b.write
+        for key in ("phi", "smolvlm2"):
+            with self.subTest(model=key), supervisor_case(key=key) as case:
+                events = []
+                ledger = case[2] / "data/processed/three_vlm_attempts" / case[4]["attempt_id"]
+                def observed_write(path, value):
+                    result = actual_write(path, value)
+                    name = "ledger" if Path(path) == ledger else Path(path).name
+                    if name in ("runtime_preflight.json", "gpu_preflight.json", "environment_preflight.json", "ledger"):
+                        events.append(name)
+                    return result
+                def query(command, **kwargs):
+                    if command[0] == "nvidia-smi":
+                        self.assertFalse(ledger.exists())
+                        self.assertEqual(events, ["runtime_preflight.json"])
+                        events.append("nvidia-smi")
+                        return GPU
+                    return "SYNTHETIC_FREEZE\n"
+                def worker(out):
+                    self.assertTrue(ledger.is_file())
+                    self.assertEqual(read(out / "gpu_preflight.json")["status"], "PASS")
+                    self.assertFalse(read(out / "gpu_preflight.json")["attempt_consumed"])
+                    events.append("worker")
+                # The fixture's process boundary invokes only this synthetic callback.
+                original_run = b.subprocess.run.side_effect
+                def process(command, **kwargs):
+                    if "safeshift.pilot.runner" in command:
+                        worker(Path(command[command.index("--output") + 1]))
+                    return original_run(command, **kwargs)
+                with patch.object(b, "write", side_effect=observed_write), \
+                     patch.object(b.subprocess, "check_output", side_effect=query), \
+                     patch.object(b.subprocess, "run", side_effect=process):
+                    out = self.launch(case, key)
+                self.assertEqual(events, ["runtime_preflight.json", "nvidia-smi", "gpu_preflight.json",
+                                          "environment_preflight.json", "ledger", "worker"])
+                consumption = read(ledger)
+                self.assertTrue(consumption["consumed_after_gpu_preflight"])
+                self.assertEqual(consumption["gpu_preflight_sha256"], sha(out / "gpu_preflight.json"))
+                self.assertEqual(read(out / "environment_preflight.json")["gpu_preflight_sha256"],
+                                 consumption["gpu_preflight_sha256"])
+                self.assertTrue(read(out / "session.json")["attempt_consumed"])
+
     def test_worker_crash_keeps_raw_and_accounts_every_id(self):
         def crash(out):
             store = Store(out / "run", {"synthetic": True})
