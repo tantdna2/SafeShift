@@ -1,6 +1,7 @@
 """Bounded, stop-on-technical-error engine, separately invoked FULL_TRAIN path."""
 import argparse
 import hashlib
+import os
 from pathlib import Path
 import re
 import shutil
@@ -137,8 +138,14 @@ def execute(store, rows, backend_factory, grant, key, plan, time_budget=None):
 def run(repo, bundle, grant, source_hash, output, mode="PILOT", parent=None):
     run_start = time.monotonic()
     from .backend import NativeBackend, check_software, check_source_review, provision
+    from .bootstrap import runtime_identity
     repo, output, bundle = Path(repo), Path(output), Path(bundle)
     key = grant["model_key"]
+    expected_python = os.environ.get("SAFESHIFT_WORKER_PYTHON")
+    expected_root = os.environ.get("SAFESHIFT_RUNTIME_ROOT")
+    if not expected_python or not expected_root:
+        raise RuntimeError("SUPERVISED_WORKER_RUNTIME_BINDING_REQUIRED")
+    write(output / "worker_runtime_identity.json", runtime_identity(expected_python, expected_root))
     if source_digest(repo) != source_hash:
         raise PermissionError("ACTUAL_RUNTIME_SOURCE_MISMATCH")
     authorize(grant, model=key, mode=mode, source_hash=source_hash, manifest_hash=grant.get("manifest_sha256"),
@@ -184,7 +191,6 @@ def run(repo, bundle, grant, source_hash, output, mode="PILOT", parent=None):
                     raise ValueError("ACTUAL_IMAGE_DIMENSIONS_OR_STILL_IMAGE_MISMATCH")
                 image.verify()
         # HF_TOKEN provided by Kaggle Secrets via supervisor, never persisted.
-        import os
         cache = os.environ.get("SAFESHIFT_MODEL_CACHE", str(repo / "data/processed/three_vlm_model_cache"))
         provision_start = time.monotonic()
         snapshot, receipt = provision(repo, key, cache, os_token())
@@ -253,8 +259,11 @@ def main():
                 raise ValueError("RESUME_ARCHIVE_HASH")
             a.parent = import_archive(a.resume_archive, output / "prior")
         output.mkdir(parents=True, exist_ok=True)
-        import os
         env = {**os.environ, "SAFESHIFT_SUPERVISED": "1", "CUDA_VISIBLE_DEVICES": "0"}
+        env.update(SAFESHIFT_WORKER_PYTHON=str(Path(sys.executable).resolve()),
+                   SAFESHIFT_RUNTIME_ROOT=str(Path(sys.prefix).resolve()),
+                   SAFESHIFT_NOTEBOOK_PYTHON=str(Path(sys.executable).resolve()),
+                   PYTHONNOUSERSITE="1")
         command = [sys.executable, "-B", "-m", "safeshift.pilot.runner", "--repo", a.repo,
                    "--bundle", a.bundle, "--grant", a.grant, "--source-hash", a.source_hash,
                    "--output", str(output), "--mode", a.mode]

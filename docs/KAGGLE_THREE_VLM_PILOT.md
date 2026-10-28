@@ -1,7 +1,7 @@
 # Three-VLM TRAIN pilot v1 — PREP, chưa cấp quyền chạy
 
-Ngày 27/10/2026 (Asia/Bangkok). BASE/main đã fetch và đối chiếu GitHub:
-`28fdf82512577f2ed0fb435fb2c12b88e82baf2f`. Đây là task code do Owner giao,
+Ngày 28/10/2026 (Asia/Bangkok). BASE/main đã fetch và đối chiếu GitHub:
+`4693d8c1eed4e60069272b975275e6adb17905fe` (PR #139 đã merge). Đây là task code do Owner giao,
 không phải kích hoạt kế hoạch Draft [#137](https://github.com/tantdna2/SafeShift/pull/137).
 Không sửa #136/#137, M2, roster hoặc kết quả lịch sử. Các ngưỡng, cách lấy mẫu,
 parser và hợp đồng HNLO dưới đây là **PROPOSED FOR THIS PILOT**, cần Research Lead
@@ -21,6 +21,8 @@ dự đoán demo. Quyền cũ không dùng được cho schema grant mới.
 | Phi | [notebook](../notebooks/SafeShift_TRAIN_PILOT_phi.ipynb) |
 | SmolVLM2 | [notebook](../notebooks/SafeShift_TRAIN_PILOT_smolvlm2.ipynb) |
 | CPU-only storage preflight | [notebook](../notebooks/SafeShift_STORAGE_PREFLIGHT.ipynb) |
+| CPU environment preflight Phi | [notebook](../notebooks/SafeShift_ENVIRONMENT_PREFLIGHT_phi.ipynb) |
+| CPU environment preflight Smol | [notebook](../notebooks/SafeShift_ENVIRONMENT_PREFLIGHT_smolvlm2.ipynb) |
 | Mã chung | [safeshift/pilot](../safeshift/pilot/) |
 | Source/config/model/code hashes | [configs/pilot](../configs/pilot/) |
 | Tests CPU tổng hợp | [test_pilot.py](../tests/test_pilot.py) |
@@ -31,21 +33,30 @@ Builder [build_three_vlm_notebooks.py](../scripts/build_three_vlm_notebooks.py)
 tạo cùng payload cho cả ba, chỉ key model khác. `source_digest()` ràng buộc cả
 package runtime, prompt, dependency pins, source lock và CPU token evidence.
 Owner không nhập revision, SHA, đường dẫn, prompt hoặc thay cell.
-Source SHA-256 của payload storage-fix Draft:
-`b2d549d36adb5dda97ef6563059f3725185fe1bdf71d2ce28a5bd8f06a1f4c1e`.
+Source SHA-256 của payload runtime-fix Draft:
+`ae5cfa1954402e2fb96f0480c4ce5fc7da812e3f649b6d5bfd1fa0377bc9889d`.
 Grant cũ bind source trước thay đổi không tự áp dụng cho source này.
 
-Luồng sau khi **được cấp quyền**: kiểm source/grant → consume attempt local →
-kiểm source/tokenizer lock đủ evidence → original TRAIN master/manifest/dimension
-inventory/toàn bộ ảnh selected → đo storage → nhập resume archive được phép →
-kiểm hai GPU bằng nvidia-smi → venv riêng →
-kiểm versions/CUDA FP16 nhỏ trước weights → pinned snapshot/safetensors/custom
+Luồng sau khi **được cấp quyền**: kiểm source/grant → kiểm source/tokenizer lock,
+original TRAIN master/manifest/dimension inventory/toàn bộ ảnh selected → đo
+storage → kiểm/nhập resume archive → chọn CPython Linux 3.12/3.11 độc lập với
+kernel → venv riêng → cài/check/freeze và CPU ABI smoke → kiểm hai GPU bằng
+`nvidia-smi` → ghi GPU/environment receipt PASS → **consume attempt local** →
+kiểm CUDA FP16 nhỏ trong worker →
+pinned snapshot/safetensors/custom
 code → native greedy từng ảnh → raw fsync → strict parser → CPU HNLO replay →
 report đủ planned IDs → ZIP/checksum. First-12 gate là các ordinal 0–11 trong
 manifest, bao gồm capture nhỏ ngay ảnh đầu; không gọi model thêm để probe.
 Không có lỗi chặn thì tiếp tục phần còn lại. Lỗi HNLO riêng không dừng phần
 classification thành công. Lỗi model/config/OOM/preprocessing/I/O hoặc raw
 nonfinite dừng model, giữ tail NOT_ATTEMPTED. INVALID không được sửa/cứu nhãn.
+Mọi blocker trước boundary consumption giữ `attempt_consumed=false`; không tạo
+ledger và không fallback sang Python 3.13.
+`gpu_preflight.json` chỉ ghi quan sát phần cứng từ `nvidia-smi`, gồm output và
+return code/lỗi; không chứng minh CUDA hoặc model đã chạy. Thiếu GPU, sai T4×2,
+GPU0 free <14 GiB, lỗi/timeout lệnh hoặc lỗi ghi receipt đều BLOCKED trước ledger.
+Ledger ràng buộc SHA-256 của receipt GPU PASS đã ghi bền vững. Khi receipt bị
+ghi dở, supervisor failure giữ cả quan sát phần cứng và partial file trong ZIP.
 
 ## Dữ liệu và chọn manifest trước khi chạy model
 
@@ -185,14 +196,63 @@ cache ngoài evidence. Bản này không phục hồi code Qwen3: dùng root `/k
 tường minh, kiểm alias/marker, cấp phát để thăm dò quota và fail closed; không
 khẳng định Qwen3 lịch sử đã kiểm quota theo cùng phương pháp.
 
+## CPU-only Python/dependency preflight trước grant/attempt
+
+Kaggle thực tế do Owner cung cấp có kernel Python 3.13.15 nhưng
+`/usr/bin/python3.12` tồn tại. Kernel chỉ chạy supervisor stdlib; không phải
+worker runtime. Chạy lần lượt notebook environment Phi và Smol ở bảng đầu,
+Internet ON nhưng **không gắn dataset/grant và không bật GPU**. Mỗi notebook:
+
+1. kiểm embedded source/source lock và requirements khớp byte-level runtime lock;
+2. ưu tiên `/usr/bin/python3.12`, sau đó Python 3.11; probe bằng chính interpreter
+   đó, yêu cầu CPython Linux x86_64 64-bit cùng `venv`, `ensurepip`, SSL/compression;
+3. tạo fresh `venv --copies` trong `/kaggle/tmp`, loại mọi `PYTHONPATH`,
+   `PYTHONHOME`, user-site và pip config từ kernel;
+4. cài nguyên pins/index hiện có, chạy `pip check`, lưu `pip freeze`, exact-version
+   check và CPU-only native ABI smoke cho torch/torchvision/Transformers;
+5. dọn venv/cache sau khi ghi receipt/log/ZIP vào `/kaggle/working`.
+
+Missing interpreter/module, lỗi venv/pip/install/import/ABI, path rò từ Python
+3.13, version/source sai, storage/quyền hoặc cleanup đều BLOCKED. Không download
+hoặc build Python và không thử Python 3.13. Nếu system Python 3.12 không đủ điều
+kiện, phương án duy nhất trong task này là dừng và xin review riêng cho recipe
+CPython source+checksum đã khóa theo nguyên tắc Qwen3; không tự kích hoạt recipe.
+
+Pilot notebook lặp lại cùng gate ngay trong session được cấp quyền vì preflight
+là ảnh chụp nhất thời. `runtime_preflight.json` phải PASS; riêng pilot còn kiểm
+`nvidia-smi` và ghi `gpu_preflight.json`/`environment_preflight.json` PASS trước
+exclusive ledger write. Hai notebook environment-preflight vẫn chỉ chạy CPU.
+Pip trước boundary và model download/worker sau boundary đều dùng đúng
+`venv/bin/python`; worker kiểm lại executable, prefix,
+version và site-package isolation trước weights.
+
+Bằng chứng task code hiện tại: Windows 158 tests (155 PASS + 3 SKIP Linux-only);
+WSL Linux 158/158 PASS. WSL chỉ có Python 3.14.4, nên **dependency rehearsal thật trên
+Linux 3.12 NOT RUN**. Không coi test mô phỏng là Kaggle qualification. Xem
+[runtime audit](KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).
+
+### Phi a1/a2 đã tiêu thụ — không tái sử dụng
+
+Owner báo a2 run `safeshift_phi_pilot_20261028_r2`, attempt
+`phi_pilot_20261028_a2`, ZIP SHA-256
+`de99f708f1120680028b4533a645f248e3e5ff44818ecccf7d573b7fc8525586`.
+160/160 ảnh, storage 28+4 GiB và T4×2 PASS; kernel Python 3.13.15 làm supervisor
+cũ dừng tại `BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED`, 0/160 inference.
+Đây là supplied run evidence chưa được chạy lại trong task code. a1/a2 giữ nguyên
+lịch sử CONSUMED/BLOCKED; mọi validation sau merge cần run/attempt/grant mới.
+
 ## Owner: Save & Run All sau review và grant
 
-1. Chờ review code, grant manifest/ngưỡng/model/GPU/export và input release được
-   Lead phát hành. Giữ Internet ON; upload notebook nguyên bản từ release đã review.
-2. Attach đúng một private bundle và grant file tương ứng. Discovery chỉ hỗ trợ
+1. Sau Draft được review/merge, chạy storage preflight rồi đúng environment
+   preflight Phi/Smol trên Kaggle image dự kiến, **không grant/dataset/GPU**; tải
+   ZIP/sidecar và dừng nếu BLOCKED. Không dùng a1/a2 hoặc tự phát hành grant.
+2. Chỉ sau receipt được review, chờ grant manifest/ngưỡng/model/GPU/export và
+   input release được Lead phát hành. Giữ Internet ON; upload notebook nguyên bản
+   từ release đã review.
+3. Attach đúng một private bundle và grant file tương ứng. Discovery chỉ hỗ trợ
    direct mount hoặc `datasets/<owner>/<slug>`, tối đa 512 directory entries;
    zero/multiple bundle/grant bị chặn, không yêu cầu sửa đường dẫn thủ công.
-3. Chọn **T4 ×2**. Preflight đòi hai T4 khoảng 16 GB/card, GPU0 free ≥14 GiB;
+4. Chọn **T4 ×2**. Preflight đòi hai T4 khoảng 16 GB/card, GPU0 free ≥14 GiB;
    GPU1 để trống. Không cộng VRAM. Scratch riêng từng session nằm dưới
    `/kaggle/tmp/safeshift-pilot-<session>`; venv, HF/model/custom-code
    cache và `TMPDIR/TMP/TEMP` của pip/worker đều vào vùng này.
@@ -204,16 +264,16 @@ khẳng định Qwen3 lịch sử đã kiểm quota theo cùng phương pháp.
    không tự giảm ngưỡng hay chuyển root. Allocation được thử lại trước cài đặt;
    nó được giải phóng sau kiểm tra, không giữ chỗ hay chứng minh peak disk/ảnh fit.
    Kaggle mount, quota/driver/RAM/retention thực tế vẫn chưa được đo trong task này.
-4. Với Gemma, tài khoản HF phải chấp nhận [Gemma terms/model access](https://huggingface.co/google/gemma-3-4b-it),
+5. Với Gemma, tài khoản HF phải chấp nhận [Gemma terms/model access](https://huggingface.co/google/gemma-3-4b-it),
    dùng read token hợp lệ của Owner, lưu Kaggle Secret tên `HF_TOKEN`, cho notebook dùng secret.
    Không dán token vào cell/grant/log. Thiếu quyền/401/403 giữ BLOCKED hoặc failure
    model-access với 0 attempted, không fallback sang revision/model khác.
    **Bản hiện tại còn chặn Gemma bởi source/tokenizer audit chưa hoàn tất**, kể cả
    token hợp lệ; phải theo quy trình dưới đây trước phát hành grant/notebook mới.
-5. Save & Run All một lần cho attempt đã cấp. Mỗi model có fresh venv riêng,
+6. Save & Run All một lần cho attempt đã cấp. Mỗi model có fresh venv riêng,
    pinned packages, FP16/eager, batch1, greedy max64, không FA2/BF16/quantization,
    không thay preprocessing để cứu OOM. Không đổi cell rồi rerun attempt.
-6. Download ZIP và `.sha256.json` in ở cuối, kể cả BLOCKED/FAILED/PARTIAL.
+7. Download ZIP và `.sha256.json` in ở cuối, kể cả BLOCKED/FAILED/PARTIAL.
    Save Version/Outputs và tải ngay; working/temp có thể mất khi session kết thúc.
    Notebook không upload kết quả hoặc gửi thông tin cho ai.
 
