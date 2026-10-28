@@ -264,4 +264,15 @@ CPU receipt → nvidia-smi → GPU/environment receipts → ledger → worker. F
 không tạo ledger và giữ `attempt_consumed=false`; raw observation và partial
 receipt được giữ trong ZIP. Windows: 158 tests (155 PASS, 3 Linux-only SKIP);
 WSL Linux: 158/158 PASS. Đây là test mô phỏng phần cứng; không gọi GPU/inference.
+
+Follow-up từ BASE merge #140 xử lý evidence Phi a3: CPython 3.12.3 có `venv`
+và mọi module ABI thiết yếu nhưng thiếu `ensurepip`, nên probe cũ loại sai trước
+tạo môi trường. Runtime mới tạo `venv --without-pip --copies`, tải wheel pip
+25.0.1 từ URL PyPI khóa size/SHA-256, rồi dùng supervisor `pip --python` cài
+local-only/hash-required vào target. Worker kiểm pip version/executable/prefix/
+package paths trước mọi dependency; Python 3.13 chỉ là controller. Thiếu source,
+hash sai, package lỗi, rò 3.13 hoặc receipt lỗi đều BLOCKED trước ledger; Gemma
+vẫn dừng ở source review. Rehearsal Windows CPU thật của riêng cơ chế bootstrap
+PASS; full Windows suite 165 PASS/4 SKIP và WSL Linux 168 PASS/1 SKIP. Kaggle
+Linux 3.12 dependency và model/GPU vẫn NOT RUN.
 Delta còn chờ ChatGPT kiểm HEAD mới và Antigravity audit trong session cũ.

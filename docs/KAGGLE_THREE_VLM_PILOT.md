@@ -205,18 +205,25 @@ Internet ON nhưng **không gắn dataset/grant và không bật GPU**. Mỗi no
 
 1. kiểm embedded source/source lock và requirements khớp byte-level runtime lock;
 2. ưu tiên `/usr/bin/python3.12`, sau đó Python 3.11; probe bằng chính interpreter
-   đó, yêu cầu CPython Linux x86_64 64-bit cùng `venv`, `ensurepip`, SSL/compression;
-3. tạo fresh `venv --copies` trong `/kaggle/tmp`, loại mọi `PYTHONPATH`,
-   `PYTHONHOME`, user-site và pip config từ kernel;
-4. cài nguyên pins/index hiện có, chạy `pip check`, lưu `pip freeze`, exact-version
-   check và CPU-only native ABI smoke cho torch/torchvision/Transformers;
-5. dọn venv/cache sau khi ghi receipt/log/ZIP vào `/kaggle/working`.
+   đó, yêu cầu CPython Linux x86_64 64-bit cùng `venv`, SSL/compression/sqlite;
+   trạng thái `ensurepip` được ghi nhưng thiếu module này không loại candidate;
+3. tạo fresh `venv --without-pip --copies` trong `/kaggle/tmp`, loại mọi
+   `PYTHONPATH`, `PYTHONHOME`, user-site và pip config từ kernel;
+4. tải đúng wheel pip 25.0.1 từ URL PyPI đã khóa size/SHA-256, kiểm trước thực thi,
+   rồi dùng supervisor `pip --python` cài local-only/hash-required vào
+   `venv/bin/python`. Kiểm version, executable, prefix và package paths; Python
+   3.13 chỉ làm controller, không cài dependency hoặc chạy trong worker;
+5. bằng pip của worker, cài nguyên pins/index hiện có, chạy `pip check`, lưu
+   `pip freeze --all`, exact-version check và CPU-only native ABI smoke cho
+   torch/torchvision/Transformers;
+6. dọn venv/cache sau khi ghi receipt/log/ZIP vào `/kaggle/working`.
 
-Missing interpreter/module, lỗi venv/pip/install/import/ABI, path rò từ Python
+Missing interpreter/module thiết yếu, controller không hỗ trợ `pip --python`,
+wheel thiếu/sai URL/size/hash, lỗi venv/pip/install/import/ABI, path rò từ Python
 3.13, version/source sai, storage/quyền hoặc cleanup đều BLOCKED. Không download
-hoặc build Python và không thử Python 3.13. Nếu system Python 3.12 không đủ điều
-kiện, phương án duy nhất trong task này là dừng và xin review riêng cho recipe
-CPython source+checksum đã khóa theo nguyên tắc Qwen3; không tự kích hoạt recipe.
+hoặc build Python và không thử Python 3.13 làm worker. Nếu system Python 3.12
+không đủ điều kiện hoặc bootstrap đã khóa không PASS, dừng và xin review riêng
+cho recipe CPython source+checksum theo nguyên tắc Qwen3; không tự kích hoạt.
 
 Pilot notebook lặp lại cùng gate ngay trong session được cấp quyền vì preflight
 là ảnh chụp nhất thời. `runtime_preflight.json` phải PASS; riêng pilot còn kiểm
@@ -231,7 +238,7 @@ WSL Linux 158/158 PASS. WSL chỉ có Python 3.14.4, nên **dependency rehearsal
 Linux 3.12 NOT RUN**. Không coi test mô phỏng là Kaggle qualification. Xem
 [runtime audit](KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).
 
-### Phi a1/a2 đã tiêu thụ — không tái sử dụng
+### Phi a1/a2 đã tiêu thụ; a3 BLOCKED trước consumption
 
 Owner báo a2 run `safeshift_phi_pilot_20261028_r2`, attempt
 `phi_pilot_20261028_a2`, ZIP SHA-256
@@ -240,6 +247,15 @@ Owner báo a2 run `safeshift_phi_pilot_20261028_r2`, attempt
 cũ dừng tại `BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED`, 0/160 inference.
 Đây là supplied run evidence chưa được chạy lại trong task code. a1/a2 giữ nguyên
 lịch sử CONSUMED/BLOCKED; mọi validation sau merge cần run/attempt/grant mới.
+
+Owner cung cấp thêm ZIP a3 SHA-256
+`05cc071ec11384e25c9e2187a7be89141ba351bb2c05c83a5cffe066a574b088`:
+160/160 ảnh và storage PASS; `/usr/bin/python3.12` là CPython 3.12.3 Linux x86_64,
+mọi module thiết yếu PASS nhưng `ensurepip` không tồn tại và không có Python 3.11.
+Runtime cũ dừng ở `BLOCKED_NO_QUALIFIED_PINNED_LINUX_PYTHON_311_OR_312` trước
+mọi lệnh tạo venv/cài package; `attempt_consumed=false`. Task này dùng evidence
+đó làm reproduction target, không gọi nó là Kaggle validation của candidate mới
+và không suy quyền chạy/attempt identity tiếp theo từ receipt a3.
 
 ## Owner: Save & Run All sau review và grant
 

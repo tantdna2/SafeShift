@@ -78,9 +78,13 @@ T4 OOM risk is UNVERIFIED, and OOM stops instead of changing preprocessing.
 
 The notebook kernel may be Python 3.13. It remains the stdlib supervisor only:
 the pilot prefers and validates `/usr/bin/python3.12`, then an eligible Python
-3.11, creates a fresh venv in scratch, and uses that exact interpreter for pip,
-`pip freeze`, CPU ABI checks, model download and the worker. It never falls back
-to Python 3.13 or mixes notebook site-packages into the worker.
+3.11, and creates a fresh `venv --without-pip --copies` in scratch. Missing
+`ensurepip` is recorded but allowed. The supervisor downloads one exact pip wheel
+whose URL, size and SHA-256 are source-locked, then uses official `pip --python`
+only to install that wheel into the target venv with no index and required hash.
+All dependency installs, `pip check`, `pip freeze --all`, CPU ABI checks, model
+download and the worker then use only `venv/bin/python`. It never falls back to
+Python 3.13 or mixes notebook site-packages into the worker.
 
 After the CPU checks, the pilot checks T4 x2 and GPU0 free memory with
 `nvidia-smi` and saves its receipt before consuming the attempt. Missing/wrong
@@ -121,8 +125,11 @@ It needs Internet for pinned package installation, but no dataset, grant, GPU,
 model weights or inference. The Python 3.13 kernel remains the supervisor only.
 The preflight prefers `/usr/bin/python3.12`, accepts only qualified Linux x86_64
 CPython 3.11/3.12, creates a fresh scratch venv and uses it for the exact pinned
-CUDA-wheel install, `pip check`, `pip freeze`, version checks and CPU-only native
-library smoke. Missing `venv`/`ensurepip`, dependency failure, host-package
+CUDA-wheel install, `pip check`, `pip freeze --all`, version checks and CPU-only
+native library smoke. The venv is created `--without-pip --copies`; missing
+`ensurepip` is allowed. A source-locked pip 25.0.1 wheel is verified before the
+supervisor uses `pip --python` to install it only into the target venv. Missing
+`venv`, bootstrap/controller/hash failure, dependency failure, host-package
 leakage or wrong versions produce a BLOCKED receipt and consume no attempt.
 
 All venv/cache/temp bytes stay under `/kaggle/tmp`; receipts/logs and a ZIP stay

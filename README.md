@@ -109,8 +109,10 @@ resume. Đây là code PREP chờ review/grant, chưa là kết quả Kaggle/HNL
 roster lịch sử. FULL TRAIN khóa, TEST đóng; xem [technical audit](docs/THREE_VLM_TECHNICAL_AUDIT.md).
 
 Kernel Kaggle Python 3.13 chỉ điều phối stdlib. Phi/Smol dùng worker CPython
-3.12/3.11 trong scratch venv độc lập; hai notebook environment preflight kiểm
-pins/CPU ABI mà không đọc grant/data, gọi GPU hoặc tải weights. Xem
+3.12/3.11 trong scratch venv độc lập; thiếu `ensurepip` được xử lý bằng venv
+`--without-pip` và wheel pip source/hash-locked cài đúng target qua `pip --python`.
+Hai notebook environment preflight kiểm pins/CPU ABI mà không đọc grant/data,
+gọi GPU hoặc tải weights. Xem
 [runtime audit và đối chiếu Qwen3](docs/KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).
 
 Toàn bộ 693 file trước reset vẫn ở các ref bất biến, được liệt kê trong

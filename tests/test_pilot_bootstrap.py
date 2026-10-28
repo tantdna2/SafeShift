@@ -1,5 +1,6 @@
 """CPU fault injection at the actual supervisor boundaries, never GPU proof."""
 from contextlib import ExitStack, contextmanager
+import hashlib
 import os
 import io
 import json
@@ -26,13 +27,17 @@ GPU = "Tesla T4, 15360, 14800, 550.90.07\nTesla T4, 15360, 14800, 550.90.07\n"
 
 
 def python_probe(path, version=(3, 12, 12), *, eligible=True, missing=()):
-    modules = {name: ("ModuleNotFoundError" if name in missing else "PASS") for name in b.ESSENTIAL_STDLIB}
-    return {"candidate": str(path), "eligible": eligible and not missing,
-            "reason": "PASS" if eligible and not missing else "ESSENTIAL_STDLIB_MISSING:" + ",".join(missing),
+    modules = {name: ("ModuleNotFoundError" if name in missing else "PASS")
+               for name in b.INTERPRETER_PROBE_MODULES}
+    essential_missing = tuple(name for name in missing if name in b.ESSENTIAL_STDLIB)
+    return {"candidate": str(path), "eligible": eligible and not essential_missing,
+            "reason": "PASS" if eligible and not essential_missing
+                      else "ESSENTIAL_STDLIB_MISSING:" + ",".join(essential_missing),
             "implementation": "CPython", "version": list(version), "platform": "Linux",
             "machine": "x86_64", "pointer_bits": 64, "executable": str(path),
             "prefix": str(Path(path).parent.parent), "base_prefix": "/usr",
-            "modules": modules}
+            "modules": modules, "ensurepip": modules["ensurepip"],
+            "pip_bootstrap_required": modules["ensurepip"] != "PASS"}
 
 
 class InterpreterSelectionTests(unittest.TestCase):
@@ -61,15 +66,25 @@ class InterpreterSelectionTests(unittest.TestCase):
                 selected, _ = b.select_interpreter(candidates=["/usr/bin/python3.12", "/usr/bin/python3.11"])
                 self.assertEqual(selected.name, expected)
 
-    def test_missing_venv_or_ensurepip_rejects_python312(self):
+    def test_missing_ensurepip_keeps_python312_eligible_for_locked_bootstrap(self):
         def probe(path, env=None):
             if str(path).endswith("3.12"):
-                return python_probe(path, missing=("venv", "ensurepip"))
+                return python_probe(path, (3, 12, 3), missing=("ensurepip",))
             return python_probe(path, (3, 11, 9))
         with patch.object(b, "probe_interpreter", side_effect=probe):
             selected, receipt = b.select_interpreter(candidates=["/usr/bin/python3.12", "/usr/bin/python3.11"])
+        self.assertEqual(selected.name, "python3.12")
+        self.assertEqual(receipt["selected"]["ensurepip"], "ModuleNotFoundError")
+        self.assertTrue(receipt["selected"]["pip_bootstrap_required"])
+
+    def test_missing_venv_still_rejects_python312(self):
+        def probe(path, env=None):
+            return python_probe(path, missing=("venv",)) if str(path).endswith("3.12") \
+                else python_probe(path, (3, 11, 9))
+        with patch.object(b, "probe_interpreter", side_effect=probe):
+            selected, receipt = b.select_interpreter(candidates=["/usr/bin/python3.12", "/usr/bin/python3.11"])
         self.assertEqual(selected.name, "python3.11")
-        self.assertIn("ESSENTIAL_STDLIB_MISSING", receipt["candidates"][0]["reason"])
+        self.assertIn("ESSENTIAL_STDLIB_MISSING:venv", receipt["candidates"][0]["reason"])
 
     def test_missing_and_wrong_version_fail_closed_without_python313(self):
         values = [{"candidate": "/missing", "eligible": False, "reason": "INTERPRETER_NOT_FOUND"},
@@ -86,6 +101,9 @@ class InterpreterSelectionTests(unittest.TestCase):
             self.assertEqual(value["pins"]["torch"], "2.6.0+cu124")
             self.assertEqual(value["pins"]["torchvision"], "0.21.0+cu124")
             self.assertEqual(value["python_policy"], ["3.11", "3.12"])
+            self.assertEqual(value["pip_bootstrap"]["pip"]["version"], "25.0.1")
+            self.assertEqual(value["pip_bootstrap"]["method"],
+                             "supervisor-pip-python-local-verified-wheel")
 
     def test_runtime_lock_or_requirement_source_drift_is_blocked(self):
         with tempfile.TemporaryDirectory() as d:
@@ -98,6 +116,83 @@ class InterpreterSelectionTests(unittest.TestCase):
                                                                        "transformers==4.51.3"), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "RUNTIME_LOCK_MISMATCH"):
                 b.runtime_contract(repo, "phi")
+
+
+class PipBootstrapTests(unittest.TestCase):
+    def bootstrap_pin(self, payload=b"SYNTHETIC_VERIFIED_PIP_WHEEL"):
+        return {"pip": {"url": "https://files.pythonhosted.org/synthetic.whl",
+                        "filename": "synthetic.whl", "sha256": hashlib.sha256(payload).hexdigest(),
+                        "size_bytes": len(payload), "provenance": "https://pypi.org/synthetic"}}
+
+    def response(self, payload, url):
+        stream = io.BytesIO(payload)
+        stream.status = 200
+        stream.geturl = lambda: url
+        stream.headers = {"Content-Length": str(len(payload))}
+        return stream
+
+    def test_verified_exact_wheel_is_persisted_for_local_only_install(self):
+        payload = b"SYNTHETIC_VERIFIED_PIP_WHEEL"
+        pin = self.bootstrap_pin(payload)
+        with tempfile.TemporaryDirectory() as d, \
+                patch.object(b, "pip_bootstrap_contract", return_value=pin), \
+                patch.object(b, "urlopen", return_value=self.response(payload, pin["pip"]["url"])):
+            wheel, receipt = b.fetch_pip_bootstrap(ROOT, d)
+            self.assertEqual(wheel.read_bytes(), payload)
+            self.assertEqual(receipt["status"], "PASS")
+            self.assertEqual(receipt["actual_sha256"], pin["pip"]["sha256"])
+
+    def test_wrong_pip_wheel_hash_blocks_with_actual_and_expected_evidence(self):
+        payload = b"SYNTHETIC_TAMPERED_PIP_WHEEL"
+        pin = self.bootstrap_pin(b"SYNTHETIC_EXPECTED_PIP_WHEEL")
+        pin["pip"]["size_bytes"] = len(payload)
+        with tempfile.TemporaryDirectory() as d, \
+                patch.object(b, "pip_bootstrap_contract", return_value=pin), \
+                patch.object(b, "urlopen", return_value=self.response(payload, pin["pip"]["url"])):
+            with self.assertRaisesRegex(ValueError, "CHECKSUM_MISMATCH") as caught:
+                b.fetch_pip_bootstrap(ROOT, d)
+        receipt = caught.exception.pip_bootstrap_receipt
+        self.assertEqual(receipt["status"], "BLOCKED")
+        self.assertEqual(receipt["expected_sha256"], pin["pip"]["sha256"])
+        self.assertEqual(receipt["actual_sha256"], hashlib.sha256(payload).hexdigest())
+
+    def test_bootstrap_command_targets_worker_and_never_resolves_an_index(self):
+        command = b.pip_bootstrap_command("/scratch/venv/bin/python", ROOT, "/scratch/wheel/pip.whl")
+        self.assertEqual(Path(command[0]).resolve(), Path(sys.executable).resolve())
+        self.assertEqual(command[command.index("--python") + 1], "/scratch/venv/bin/python")
+        for option in ("--isolated", "--no-index", "--require-hashes", "--no-deps"):
+            self.assertIn(option, command)
+
+    def test_worker_pip_identity_rejects_python313_path_leakage(self):
+        with tempfile.TemporaryDirectory() as d:
+            runtime = Path(d) / "venv-py312"
+            value = {"version": "25.0.1", "metadata_version": "25.0.1",
+                     "pip_file": "/kernel/python3.13/site-packages/pip/__init__.py",
+                     "distribution_root": str(runtime / "lib/python3.12/site-packages"),
+                     "executable": str(runtime / "bin/python"), "prefix": str(runtime),
+                     "base_prefix": "/usr", "python_version": [3, 12, 3]}
+            process = subprocess.CompletedProcess([], 0, json.dumps(value) + "\n", "")
+            with patch.object(b.subprocess, "run", return_value=process), \
+                    self.assertRaisesRegex(RuntimeError, "WORKER_PIP_IDENTITY_MISMATCH") as caught:
+                b.inspect_worker_pip(runtime / "bin/python", runtime, "25.0.1", {})
+        self.assertTrue(caught.exception.worker_pip_receipt["python313_path_detected"])
+
+    @unittest.skipUnless(os.environ.get("SAFESHIFT_REAL_PIP_BOOTSTRAP") == "1",
+                         "opt-in real network/venv pip --python rehearsal")
+    def test_real_verified_wheel_bootstraps_pip_free_venv(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            runtime = root / "venv"
+            subprocess.run([sys.executable, "-I", "-B", "-m", "venv", "--without-pip", "--copies",
+                            str(runtime)], check=True)
+            worker = runtime / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+            wheel, receipt = b.fetch_pip_bootstrap(ROOT, root)
+            self.assertEqual(receipt["status"], "PASS")
+            controller = b.pip_controller_probe(dict(os.environ))
+            self.assertGreaterEqual(tuple(map(int, controller["pip_version"].split(".")))[:2], (22, 3))
+            subprocess.run(b.pip_bootstrap_command(worker, ROOT, wheel), check=True)
+            inspected = b.inspect_worker_pip(worker, runtime, "25.0.1", dict(os.environ))
+            self.assertFalse(inspected["python313_path_detected"])
 
 
 class ScratchRootTests(unittest.TestCase):
@@ -518,10 +613,20 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
                     "implementation": "CPython", "version": [3, 12, 12], "platform": "Linux",
                     "machine": "x86_64", "pointer_bits": 64, "executable": str(candidate),
                     "prefix": str(prefix), "base_prefix": "/synthetic/base-python312",
-                    "modules": {name: "PASS" for name in b.ESSENTIAL_STDLIB}}
+                    "modules": {name: ("ModuleNotFoundError" if name == "ensurepip" else "PASS")
+                                for name in b.INTERPRETER_PROBE_MODULES},
+                    "ensurepip": "ModuleNotFoundError", "pip_bootstrap_required": True}
         loader = patches.enter_context(patch.object(b, "load_bundle", return_value=(p, p["main"])))
         patches.enter_context(patch.object(b, "interpreter_candidates", return_value=[sys.executable]))
         patches.enter_context(patch.object(b, "probe_interpreter", side_effect=interpreter_probe))
+        patches.enter_context(patch.object(b, "pip_controller_probe", return_value={
+            "pip_version": "25.0.1", "method": "pip --python", "worker_package_installation": False}))
+        patches.enter_context(patch.object(b, "fetch_pip_bootstrap", side_effect=lambda repo, scratch: (
+            Path(scratch) / "pip-bootstrap/pip-25.0.1-py3-none-any.whl",
+            {"status": "PASS", "actual_sha256": "a" * 64, "expected_sha256": "a" * 64})))
+        patches.enter_context(patch.object(b, "inspect_worker_pip", return_value={
+            "version": "25.0.1", "metadata_version": "25.0.1", "python_version": [3, 12, 12],
+            "python313_path_detected": False}))
         patches.enter_context(patch.object(b, "validate_runtime_environment", return_value={
             "identity": {"version": [3, 12], "isolated_from_notebook_python": True},
             "software": {"status": "SYNTHETIC_CPU_ABI_PASS"}}))
@@ -548,7 +653,9 @@ class SupervisorTests(unittest.TestCase):
                 self.assertEqual(list(root.iterdir()), [])
                 self.assertTrue(out.with_suffix(".zip").is_file())
                 worker = next(cmd for cmd, _ in case[5] if "safeshift.pilot.runner" in cmd)
-                requirement_install = next(cmd for cmd, _ in case[5] if "-r" in cmd)
+                requirement_install = next(cmd for cmd, _ in case[5]
+                                           if any(Path(str(part)).name == f"{key}.requirements.txt"
+                                                  for part in cmd))
                 self.assertEqual(Path(requirement_install[-1]).name, f"{key}.requirements.txt")
                 self.assertEqual(worker[0], read(out / "runtime_preflight.json")["worker_python"])
 
@@ -558,14 +665,19 @@ class SupervisorTests(unittest.TestCase):
             commands = [c for c, _ in case[5]]
             runtime = commands[0][-1]
             expected = b.dependency_commands(Path(runtime) / "bin/python", ROOT, "phi")
-            self.assertEqual(commands[2:6], expected)
+            self.assertEqual(commands[4:7], expected)
             self.assertEqual(commands[0][0], sys.executable)
-            self.assertEqual(commands[0][1:7], ["-I", "-B", "-m", "venv", "--copies", runtime])
-            self.assertEqual(commands[1][-2:], ["pip", "--version"])
-            self.assertIn("https://download.pytorch.org/whl/cu124", commands[3])
-            self.assertIn("torch==2.6.0+cu124", commands[3])
-            self.assertIn("torchvision==0.21.0+cu124", commands[3])
-            self.assertEqual(commands[5][-1], "check")
+            self.assertEqual(commands[0][1:8],
+                             ["-I", "-B", "-m", "venv", "--without-pip", "--copies", runtime])
+            self.assertIn("find_spec('pip') is None", commands[1][-1])
+            self.assertEqual(Path(commands[2][0]).resolve(), Path(sys.executable).resolve())
+            self.assertEqual(commands[2][commands[2].index("--python") + 1], str(Path(runtime) / "bin/python"))
+            self.assertIn("--no-index", commands[2])
+            self.assertEqual(commands[3][-2:], ["--isolated", "--version"])
+            self.assertIn("https://download.pytorch.org/whl/cu124", commands[4])
+            self.assertIn("torch==2.6.0+cu124", commands[4])
+            self.assertIn("torchvision==0.21.0+cu124", commands[4])
+            self.assertEqual(commands[6][-1], "check")
             self.assertEqual(commands[-1][-2:], ["--mode", "PILOT"])
             for _, kwargs in case[5]:
                 self.assertTrue(Path(kwargs["env"]["TMPDIR"]).is_relative_to(case[0] / "tmp"))
@@ -577,6 +689,9 @@ class SupervisorTests(unittest.TestCase):
                              runtime_receipt["runtime_root"])
             self.assertEqual(runtime_receipt["status"], "PASS")
             self.assertFalse(runtime_receipt["attempt_consumed"])
+            self.assertTrue(runtime_receipt["interpreter_selection"]["selected"]["pip_bootstrap_required"])
+            self.assertEqual(runtime_receipt["pip_bootstrap"]["status"], "PASS")
+            self.assertEqual(runtime_receipt["worker_pip"]["version"], "25.0.1")
             self.assertTrue(read(out / "environment_preflight.json")["ready_for_attempt_consumption"])
             ledger = case[2] / "data/processed/three_vlm_attempts" / case[4]["attempt_id"]
             self.assertTrue(read(ledger)["consumed_after_cpu_preflight"])
@@ -793,6 +908,76 @@ class SupervisorTests(unittest.TestCase):
             self.assertFalse(read(out / "supervisor_failure.json")["attempt_consumed"])
             self.assertFalse((out / "worker.log").exists())
             self.assertFalse((case[2] / "data/processed/three_vlm_attempts" / case[4]["attempt_id"]).exists())
+            self.assertTrue(out.with_suffix(".zip").is_file())
+
+    def test_missing_pip_bootstrap_blocks_both_models_with_evidence(self):
+        for key in ("phi", "smolvlm2"):
+            with self.subTest(model=key), supervisor_case(key=key) as case:
+                error = FileNotFoundError(errno.ENOENT, "SYNTHETIC_BOOTSTRAP_SOURCE_MISSING")
+                error.pip_bootstrap_receipt = {"status": "BLOCKED", "expected_sha256": "a" * 64,
+                                               "actual_sha256": None, "received_size_bytes": 0}
+                with patch.object(b, "fetch_pip_bootstrap", side_effect=error):
+                    out = self.launch(case, key)
+                receipt = read(out / "runtime_preflight.json")
+                self.assertEqual(receipt["status"], "BLOCKED")
+                self.assertFalse(receipt["attempt_consumed"])
+                self.assertEqual(receipt["pip_bootstrap"]["status"], "BLOCKED")
+                self.assertFalse((case[2] / "data/processed/three_vlm_attempts" /
+                                  case[4]["attempt_id"]).exists())
+                self.assertTrue(out.with_suffix(".zip").is_file())
+
+    def test_wrong_bootstrap_hash_blocks_before_dependency_install(self):
+        with supervisor_case() as case:
+            error = ValueError("PINNED_PIP_BOOTSTRAP_CHECKSUM_MISMATCH")
+            error.pip_bootstrap_receipt = {"status": "BLOCKED", "expected_sha256": "a" * 64,
+                                           "actual_sha256": "b" * 64, "received_size_bytes": 1841526}
+            with patch.object(b, "fetch_pip_bootstrap", side_effect=error):
+                out = self.launch(case)
+            receipt = read(out / "runtime_preflight.json")
+            self.assertEqual(receipt["pip_bootstrap"]["actual_sha256"], "b" * 64)
+            self.assertEqual(receipt["error"]["message"], "PINNED_PIP_BOOTSTRAP_CHECKSUM_MISMATCH")
+            self.assertFalse(any("torch==2.6.0+cu124" in command for command, _ in case[5]))
+
+    def test_dependency_install_failure_blocks_before_ledger(self):
+        with supervisor_case() as case:
+            original = b.subprocess.run.side_effect
+            def process(command, **kwargs):
+                if "torch==2.6.0+cu124" in command:
+                    return subprocess.CompletedProcess(command, 7)
+                return original(command, **kwargs)
+            with patch.object(b.subprocess, "run", side_effect=process):
+                out = self.launch(case)
+            self.assertEqual(read(out / "runtime_preflight.json")["stage"], "dependency_0")
+            self.assertFalse(read(out / "supervisor_failure.json")["attempt_consumed"])
+            self.assertFalse((case[2] / "data/processed/three_vlm_attempts" /
+                              case[4]["attempt_id"]).exists())
+
+    def test_python313_worker_pip_leak_blocks_before_ledger(self):
+        with supervisor_case() as case:
+            error = RuntimeError("WORKER_PIP_IDENTITY_MISMATCH")
+            error.worker_pip_receipt = {"version": "25.0.1",
+                                        "pip_file": "/kernel/python3.13/site-packages/pip/__init__.py",
+                                        "python313_path_detected": True}
+            with patch.object(b, "inspect_worker_pip", side_effect=error):
+                out = self.launch(case)
+            receipt = read(out / "runtime_preflight.json")
+            self.assertTrue(receipt["worker_pip"]["python313_path_detected"])
+            self.assertFalse(read(out / "supervisor_failure.json")["attempt_consumed"])
+            self.assertFalse((case[2] / "data/processed/three_vlm_attempts" /
+                              case[4]["attempt_id"]).exists())
+
+    def test_runtime_receipt_write_failure_blocks_and_still_exports(self):
+        actual_write = b.write
+        with supervisor_case() as case:
+            def fail_runtime_receipt(path, value):
+                if Path(path).name == "runtime_preflight.json":
+                    raise OSError(errno.ENOSPC, "SYNTHETIC_RUNTIME_RECEIPT_WRITE_FAILURE")
+                return actual_write(path, value)
+            with patch.object(b, "write", side_effect=fail_runtime_receipt):
+                out = self.launch(case)
+            self.assertFalse((out / "runtime_preflight.json").exists())
+            self.assertEqual(read(out / "supervisor_failure.json")["stage"], "cpu_runtime_preflight")
+            self.assertFalse(read(out / "supervisor_failure.json")["attempt_consumed"])
             self.assertTrue(out.with_suffix(".zip").is_file())
 
     def test_attempt_reuse_does_not_overwrite_old_output(self):
