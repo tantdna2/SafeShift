@@ -48,10 +48,15 @@ def cpu_software_probe(repo, key):
     model_class = (transformers.AutoModelForCausalLM if key == "phi" else
                    transformers.Gemma3ForConditionalGeneration if key == "gemma" else
                    transformers.SmolVLMForConditionalGeneration)
+    attention = None
+    if key == "phi":
+        from .phi_attention import cpu_attention_probe
+        attention = cpu_attention_probe(repo)
     return {"status": "CPU_LIBRARY_IMPORT_AND_NATIVE_OP_PASS_NOT_INFERENCE",
             "versions": versions, "model_api": model_class.__name__,
             "processor_api": transformers.AutoProcessor.__name__, "gpu": "NOT_CALLED",
-            "weights": "NOT_DOWNLOADED", "custom_phi_execution": "NOT_RUN"}
+            "weights": "NOT_DOWNLOADED", "phi_attention": attention,
+            "custom_phi_execution": "CONFIG_AND_META_CONSTRUCTION_ONLY" if key == "phi" else "NOT_RUN"}
 
 
 def provision(repo, key, cache, token=None):
@@ -121,7 +126,7 @@ def memory(torch):
 
 
 class NativeBackend:
-    def __init__(self, key, snapshot, prompt):
+    def __init__(self, key, snapshot, prompt, *, repo=None, evidence=None):
         load_start = time.perf_counter()
         import torch
         import transformers
@@ -136,9 +141,22 @@ class NativeBackend:
         cls = (transformers.AutoModelForCausalLM if key == "phi" else
                transformers.Gemma3ForConditionalGeneration if key == "gemma" else
                transformers.SmolVLMForConditionalGeneration)
-        self.model = cls.from_pretrained(str(snapshot), **kwargs, torch_dtype=torch.float16,
-                                         device_map={"": 0}, attn_implementation="eager",
-                                         use_safetensors=True).eval()
+        load_kwargs = {**kwargs, "torch_dtype": torch.float16, "device_map": {"": 0},
+                       "attn_implementation": "eager", "use_safetensors": True}
+        attention = None
+        if key == "phi":
+            from .phi_attention import eager_phi, verify_phi_attention
+            if repo is None:
+                raise ValueError("PHI_REVIEWED_SOURCE_ROOT_REQUIRED")
+            with eager_phi(repo, snapshot) as (config, _, module, attention):
+                if evidence is not None:
+                    write(Path(evidence) / "phi_attention_config.json", attention)
+                self.model = cls.from_pretrained(str(snapshot), config=config, **load_kwargs).eval()
+                attention = {**attention, "modules": verify_phi_attention(self.model, module)}
+                if evidence is not None:
+                    write(Path(evidence) / "phi_attention_runtime.json", attention)
+        else:
+            self.model = cls.from_pretrained(str(snapshot), **load_kwargs).eval()
         if any(p.device.type != "cuda" or p.device.index != 0 or p.dtype != torch.float16
                for p in self.model.parameters() if p.is_floating_point()):
             raise ValueError("EXACT_FP16_SINGLE_T4_PLACEMENT_REQUIRED")
@@ -161,6 +179,8 @@ class NativeBackend:
                             "chat_template": self.tokenizer.chat_template if key == "phi" else self.processor.chat_template,
                             "generation": self.generation.to_dict(), "load_memory": memory(torch)}
         self.environment["load_seconds"] = time.perf_counter() - load_start
+        if attention is not None:
+            self.environment["phi_attention"] = attention
 
     def prepare(self, image):
         if self.key == "phi":

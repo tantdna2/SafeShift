@@ -196,7 +196,7 @@ def run(repo, bundle, grant, source_hash, output, mode="PILOT", parent=None):
         snapshot, receipt = provision(repo, key, cache, os_token())
         receipt["provision_seconds"] = time.monotonic() - provision_start
         write(output / "model_snapshot.json", receipt)
-        backend = NativeBackend(key, snapshot, prompt.decode())
+        backend = NativeBackend(key, snapshot, prompt.decode(), repo=repo, evidence=output)
         if backend.serialized_tokenizer:
             if tokenizer_file.exists():
                 if tokenizer_file.read_bytes() != backend.serialized_tokenizer:

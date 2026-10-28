@@ -307,7 +307,10 @@ def validate_runtime_environment(python, runtime, repo, key, env):
     process = subprocess.run([str(python), "-B", "-c", code], env=env, text=True,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=300, check=False)
     if process.returncode:
-        raise RuntimeError("PINNED_CPU_SOFTWARE_PREFLIGHT_FAILED:" + process.stderr[-1000:])
+        error = RuntimeError("PINNED_CPU_SOFTWARE_PREFLIGHT_FAILED:" + process.stderr[-1000:])
+        error.cpu_probe_failure = {"returncode": process.returncode,
+                                   "stdout": process.stdout, "stderr": process.stderr}
+        raise error
     try:
         return json.loads(process.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError) as error:
@@ -399,6 +402,8 @@ def prepare_runtime(repo, key, scratch, output, setup_env, *, started=None, max_
                        kernel_worker_separated=Path(sys.executable).resolve() != python.resolve())
         return python, runtime_env, receipt
     except BaseException as error:
+        if hasattr(error, "cpu_probe_failure"):
+            receipt["cpu_probe_failure"] = error.cpu_probe_failure
         if hasattr(error, "pip_bootstrap_receipt"):
             receipt["pip_bootstrap"] = error.pip_bootstrap_receipt
         if hasattr(error, "pip_controller_receipt"):

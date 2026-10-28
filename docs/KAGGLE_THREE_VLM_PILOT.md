@@ -33,8 +33,8 @@ Builder [build_three_vlm_notebooks.py](../scripts/build_three_vlm_notebooks.py)
 tạo cùng payload cho cả ba, chỉ key model khác. `source_digest()` ràng buộc cả
 package runtime, prompt, dependency pins, source lock và CPU token evidence.
 Owner không nhập revision, SHA, đường dẫn, prompt hoặc thay cell.
-Source SHA-256 của payload runtime-fix Draft:
-`ae5cfa1954402e2fb96f0480c4ce5fc7da812e3f649b6d5bfd1fa0377bc9889d`.
+Source SHA-256 của payload Phi eager-fix Draft:
+`850bc40eb4b40cc359ce87d56b1f86a790f0ea67990b8e263ea4e36c2e64dfa1`.
 Grant cũ bind source trước thay đổi không tự áp dụng cho source này.
 
 Luồng sau khi **được cấp quyền**: kiểm source/grant → kiểm source/tokenizer lock,
@@ -216,7 +216,19 @@ Internet ON nhưng **không gắn dataset/grant và không bật GPU**. Mỗi no
 5. bằng pip của worker, cài nguyên pins/index hiện có, chạy `pip check`, lưu
    `pip freeze --all`, exact-version check và CPU-only native ABI smoke cho
    torch/torchvision/Transformers;
-6. dọn venv/cache sau khi ghi receipt/log/ZIP vào `/kaggle/working`.
+6. riêng Phi: chỉ tải ba file config/configuration/modeling đã khóa hash, import
+   đúng remote code rồi dựng skeleton meta FP16 (không weights/CUDA/forward).
+   Đặt eager **sau deserialize**, truyền config tường minh và khóa config CLIP
+   độc lập; kiểm đủ 32 `Phi3Attention` + 24 `CLIPAttention`, không FA2/SDPA;
+7. dọn venv/cache sau khi ghi receipt/log/ZIP vào `/kaggle/working`.
+
+Attention receipt nằm trong `runtime_preflight.json` →
+`qualification.software.phi_attention`; lỗi giữ stdout/stderr CPU đầy đủ trong
+`cpu_probe_failure`. Lỗi source/config/import/module phải BLOCKED trước GPU/ledger.
+Khi nạp thật, cùng helper kiểm lại source và cấu hình, ghi
+`phi_attention_config.json` trước weights load và `phi_attention_runtime.json`
+sau kiểm các module thực tế; các receipt theo cơ chế ZIP/checksum hiện có.
+CPU meta PASS không chứng minh weights load, T4 memory hoặc inference/HNLO.
 
 Missing interpreter/module thiết yếu, controller không hỗ trợ `pip --python`,
 wheel thiếu/sai URL/size/hash, lỗi venv/pip/install/import/ABI, path rò từ Python
@@ -229,7 +241,7 @@ Pilot notebook lặp lại cùng gate ngay trong session được cấp quyền 
 là ảnh chụp nhất thời. `runtime_preflight.json` phải PASS; riêng pilot còn kiểm
 `nvidia-smi` và ghi `gpu_preflight.json`/`environment_preflight.json` PASS trước
 exclusive ledger write. Hai notebook environment-preflight vẫn chỉ chạy CPU.
-Pip trước boundary và model download/worker sau boundary đều dùng đúng
+Pip/source-only attention preflight trước boundary và weights/worker sau boundary đều dùng đúng
 `venv/bin/python`; worker kiểm lại executable, prefix,
 version và site-package isolation trước weights.
 

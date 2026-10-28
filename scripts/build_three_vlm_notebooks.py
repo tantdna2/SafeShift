@@ -86,6 +86,12 @@ All dependency installs, `pip check`, `pip freeze --all`, CPU ABI checks, model
 download and the worker then use only `venv/bin/python`. It never falls back to
 Python 3.13 or mixes notebook site-packages into the worker.
 
+Phi's CPU checks fetch only three pinned config/code files, verify their hashes,
+and build a meta skeleton without weights, CUDA or forward. They explicitly set
+eager after config deserialization and for the independent CLIP config, then
+verify every decoder/vision attention class. A conflict blocks before consumption.
+The real loader repeats the same config handling and checks the actual modules.
+
 After the CPU checks, the pilot checks T4 x2 and GPU0 free memory with
 `nvidia-smi` and saves its receipt before consuming the attempt. Missing/wrong
 GPUs, insufficient free memory or a failed receipt write stop with no attempt
@@ -131,6 +137,12 @@ native library smoke. The venv is created `--without-pip --copies`; missing
 supervisor uses `pip --python` to install it only into the target venv. Missing
 `venv`, bootstrap/controller/hash failure, dependency failure, host-package
 leakage or wrong versions produce a BLOCKED receipt and consume no attempt.
+
+For Phi this also downloads only the three hash-locked config/modeling source
+files and constructs a full meta skeleton (no weights/CUDA/forward). It checks
+explicit eager in both Phi and its independent CLIP config, and all 32 decoder
+and 24 vision attention classes. Source/config/import/attention failures block
+before any attempt. This executes reviewed remote config/constructor code on CPU.
 
 All venv/cache/temp bytes stay under `/kaggle/tmp`; receipts/logs and a ZIP stay
 under `/kaggle/working`. Weights are not downloaded and CUDA is not called.

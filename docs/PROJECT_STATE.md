@@ -1,6 +1,6 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **28/10/2026 (Asia/Bangkok)**; main GitHub `064e31654fa44c5ad55fdb69159692ed69b78a77` (PR #140 MERGED). Không phải quyền thực nghiệm.
+Cập nhật **29/10/2026 (Asia/Bangkok)**; main đã fetch `49ab2e8832683d4ae4877291cd7a82abbc533d2b` (merge PR #141). Không phải quyền thực nghiệm.
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -32,6 +32,7 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 | Code PREP pilot ba VLM: notebooks, selector/bundle, grants, raw/replay/report/resume; FULL TRAIN khóa | [#138 MERGED](https://github.com/tantdna2/SafeShift/pull/138), [`843794119440dd18cca109ba345f7cefe4ec8552`](https://github.com/tantdna2/SafeShift/commit/843794119440dd18cca109ba345f7cefe4ec8552); [ChatGPT hậu merge PASS](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628), chỉ CODE PREPARATION COMPLETE |
 | Scratch `/kaggle/tmp`, output `/kaggle/working`, storage admission/receipt 28+4 GiB | [#139 MERGED](https://github.com/tantdna2/SafeShift/pull/139), [`4693d8c1eed4e60069272b975275e6adb17905fe`](https://github.com/tantdna2/SafeShift/commit/4693d8c1eed4e60069272b975275e6adb17905fe); code storage fix, không phải Kaggle/model PASS |
 | Worker CPython 3.12/3.11 và GPU receipt trước ledger | [#140 MERGED](https://github.com/tantdna2/SafeShift/pull/140), [`064e31654fa44c5ad55fdb69159692ed69b78a77`](https://github.com/tantdna2/SafeShift/commit/064e31654fa44c5ad55fdb69159692ed69b78a77); thiếu `ensurepip` vẫn là blocker sau merge, không phải Kaggle/model PASS |
+| Pip bootstrap không cần ensurepip | [#141](https://github.com/tantdna2/SafeShift/pull/141), main merge `49ab2e8832683d4ae4877291cd7a82abbc533d2b` đã fetch; trạng thái hậu merge ChatGPT chưa kiểm trong task này. |
 
 ## ACTIVE WORK
 
@@ -45,26 +46,20 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
   `data/processed/three_vlm_acceptance_20261028/` (receipt, PNG bindings, checksum).
   Báo cáo BLOCKED cũ giữ nguyên lịch sử; receipt mới ghi PASS theo quyết định Owner.
   Không đổi notebook/source. Qwen/TEST/FULL_TRAIN vẫn đóng.
-- [Phi a1](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6463455960)
-  **CONSUMED/BLOCKED tại storage** trước inference: 19,501869 GiB free / 32 GiB
-  yêu cầu; 160 NOT_ATTEMPTED. Không tái sử dụng grant a1. Smol a1 RESERVED,
-  NOT_EXECUTED; không chạy với working cũ. Classification NOT_RUN,
-  HNLO_UNVERIFIED cho cả hai; không suy OOM hay chất lượng từ storage failure.
-- **Storage fix #139 đã MERGED.** Phi a2 do Owner báo: run
-  `safeshift_phi_pilot_20261028_r2`, attempt `phi_pilot_20261028_a2`, ZIP SHA
-  `de99f708f1120680028b4533a645f248e3e5ff44818ecccf7d573b7fc8525586`;
-  160/160 ảnh, storage 28+4 GiB và T4×2 PASS, dừng trước inference tại
-  `BLOCKED_PINNED_LINUX_PYTHON_311_OR_312_REQUIRED`; 0/160 inference. a2 đã
-  CONSUMED, không tái sử dụng. Kernel 3.13.15 có `/usr/bin/python3.12`.
-- Phi a3 supplied ZIP SHA `05cc071ec11384e25c9e2187a7be89141ba351bb2c05c83a5cffe066a574b088`:
-  CPython 3.12.3/module thiết yếu PASS, chỉ thiếu `ensurepip`; không có 3.11. PR #140
-  loại candidate trước venv/package dù 160/160 ảnh/storage PASS; attempt chưa consumed.
-- Follow-up Draft từ BASE `064e316`: `venv --without-pip --copies`; wheel pip 25.0.1
-  khóa URL/size/SHA được `pip --python` cài local-only vào target, rồi worker kiểm
-  version/path/prefix trước pins, `pip check`, freeze/CPU ABI. Python 3.13 chỉ điều
-  khiển bootstrap pip, không chạy worker/cài dependency model; lỗi BLOCKED trước ledger.
-- Rehearsal Windows 3.11 thật PASS; full suites Win 165/4 SKIP, Linux 168/1 SKIP,
-  không phải Kaggle 3.12 PASS. Notebook Phi/Smol tạo lại; Gemma vẫn BLOCKED.
+- Phi a1/a2 CONSUMED/BLOCKED, a3 BLOCKED trước consumption; giữ bằng chứng và
+  checksums trong [runbook](KAGGLE_THREE_VLM_PILOT.md). Không tái dùng a1/a2.
+- **Phi r4/a4 do Owner báo:** Python 3.12/bootstrap/torch/Transformers, 160 ảnh,
+  storage, T4×2 và đúng checkpoint revision tải xong PASS; `model_load` ImportError
+  yêu cầu `flash_attn`, 0/160 inference, `attempt_consumed=true`. Không tái dùng a4.
+  Chưa được cấp archive/checksum a4 để kiểm độc lập; không bịa receipt/hash.
+- **Draft sửa Phi eager:** đã tái hiện config JSON ghi đè kwarg eager ở 4.43.3;
+  khóa config trong bộ nhớ cho Phi và CLIP, kiểm đủ 32/24 lớp eager, CPU meta gate
+  trước consumption. Giữ revision/weights/FP16/GPU0/16 crops/protocol, không cài FA2.
+- CPU rehearsal đúng stack Linux 3.11 PASS (không CUDA/weights/forward), unit tests
+  mới 12/12 PASS; [audit và receipt](PHI_EAGER_ATTENTION_AUDIT_20261029.md).
+  Notebook đã tạo lại; Kaggle 3.12/model load/inference/HNLO chưa kiểm bản sửa.
+- Smol a1 lịch sử RESERVED/NOT_EXECUTED; Gemma vẫn BLOCKED. Grant cũ không bind
+  source mới; task này không tạo grant hoặc run/attempt mới, không merge.
 - [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
   thay trạng thái FAIL/DRAFT cũ bằng CODE PREP COMPLETE. Grant Phi/Smol riêng không
   nâng thành model/HNLO PASS; Gemma nằm ngoài quyền lần này.
@@ -91,10 +86,9 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**ChatGPT kiểm follow-up Draft sửa thiếu `ensurepip`.** Sau merge, chạy storage và
-environment preflight CPU-only trên Kaggle Python 3.13 + `/usr/bin/python3.12`, tải
-receipt/sidecar rồi audit. Chưa cấp grant/pilot; Phi/Smol cần quyết định run/attempt
-được review. Không tái sử dụng Phi a1/a2 hoặc Smol a1; a3 không tự cấp quyền chạy.
+**Review Draft sửa Phi eager**, gồm receipt CPU và source/checksum, sau đó kiểm
+preflight mới trên Kaggle Python 3.12 khi được phép. Model/GPU/inference cần quyền
+riêng bind source mới và attempt mới; a4 đã consumed, không tái dùng. Chưa merge.
 
 ## IMPORTANT REFERENCES
 
