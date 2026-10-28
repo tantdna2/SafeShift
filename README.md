@@ -101,6 +101,13 @@ không cần cài package để chạy tests/demo từ repository root.
 Theo dõi phần thiếu và điều kiện phê duyệt ở [ROADMAP](docs/ROADMAP.md).
 Code dùng lại nằm trong package, chỉ thêm thư mục khi có chức năng cụ thể.
 
+## Kaggle TRAIN pilot ba VLM — PREP
+
+[Runbook pilot](docs/KAGGLE_THREE_VLM_PILOT.md) mô tả ba notebook Gemma/Phi/Smol,
+selector 160+≤20 TRAIN, native runner/raw writer, HNLO probe/replay, report và
+resume. Đây là code PREP chờ review/grant, chưa là kết quả Kaggle/HNLO hoặc thay
+roster lịch sử. FULL TRAIN khóa, TEST đóng; xem [technical audit](docs/THREE_VLM_TECHNICAL_AUDIT.md).
+
 Toàn bộ 693 file trước reset vẫn ở các ref bất biến, được liệt kê trong
 [HISTORY](docs/HISTORY.md). Không phục hồi hệ thống cũ vào main, chuyển quyền
 thực thi cũ sang code mới, hoặc tự sửa sáu Draft PR cũ. Dữ liệu, raw output,

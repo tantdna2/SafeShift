@@ -167,3 +167,27 @@ Sau đó chỉ đọc `schema.py`/`validation.py` + `test_schema.py` cho task re
 `test_demo.py` cho task demo. Task bằng chứng đọc `RESULTS_AND_LIMITATIONS.md`
 rồi đúng nguồn commit được dẫn. Không nạp toàn bộ 693 file, không phục hồi mã
 cũ hàng loạt và không gọi công cụ khác để tự mở rộng thẩm quyền thực nghiệm.
+
+## Ba VLM TRAIN pilot v1 — code PREP (27/10/2026)
+
+Phần Foundation/inventory phía trên mô tả phạm vi nền trước task pilot. Gói mới
+`safeshift/pilot/` có chức năng được Owner giao trong cùng Draft PR; chưa có
+execution release hoặc kết quả thật. Không thay API/metrics Foundation hay M2.
+
+| Module / script | Trách nhiệm |
+| --- | --- |
+| `pilot/contract.py`, `manifest.py` | Model/config/authority/source binding; đúng master TRAIN, selector xác định, input discovery/validation; không có dataset read khi import. |
+| `pilot/backend.py` | Ba native adapters; preflight trước weights, audited Phi code, single-T4 FP16/eager; không synthetic prediction backend production. |
+| `pilot/artifacts.py`, `hnlo.py` | Exclusive durable raw/partial archive/resume; model-specific token branch/actual decision proof, independent decoder và numeric oracle. |
+| `pilot/runner.py`, `bootstrap.py` | Consume/grant/checksum/data/GPU/software gates, first12 và phần còn lại; dừng lỗi; PILOT notebook không promote FULL. |
+| `pilot/report.py` | Exact planned-ID accounting, classification + HNLO coverage, domain/supplement tách riêng; thresholds đề xuất chưa duyệt. |
+| `scripts/prepare_three_vlm_pilot.py`, `export_pilot_qwen_verified.py` | CPU preparation và optional original-V4 exporter, mỗi phần cần data/artifact grant riêng trước đọc. |
+| `scripts/report_three_vlm_pilot.py`, `build_three_vlm_notebooks.py` | Hash/replay/exact join archives; reproducible embedded-source notebook generation. |
+
+Model/data imports nặng nằm sau authorization; package/test CPU mặc định vẫn chỉ
+standard library. Các công cụ public source/tokenizer audit dùng dependencies
+riêng, không weights. Đọc [runbook](KAGGLE_THREE_VLM_PILOT.md),
+[source/CPU audit](THREE_VLM_TECHNICAL_AUDIT.md) và `tests/test_pilot.py` trước sửa
+gói này; không đọc lại toàn lịch sử hoặc chuyển grant cũ. Review/audit độc lập,
+real TRAIN preparation, model access/native T4/Phi ABI, real HNLO/quality và
+FULL TRAIN đều có gate riêng, hiện chưa được thực nghiệm.
