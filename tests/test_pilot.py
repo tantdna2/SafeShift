@@ -634,6 +634,17 @@ class NotebookAndPreflightTests(unittest.TestCase):
             self.assertEqual(actual["cells"][1]["outputs"], [])
         self.assertEqual(len(hashes), 1)
 
+    def test_storage_notebook_is_reproducible_and_does_not_launch_pilot(self):
+        path = ROOT / "notebooks/SafeShift_STORAGE_PREFLIGHT.ipynb"
+        actual = json.loads(path.read_bytes())
+        self.assertEqual(actual, notebook("phi", preflight=True))
+        code = "".join(actual["cells"][1]["source"])
+        compile(code, str(path), "exec")
+        self.assertIn("storage_preflight()", code)
+        self.assertNotIn("launch(", code)
+        self.assertEqual(actual["metadata"]["safeshift"]["mode"], "STORAGE_PREFLIGHT")
+        self.assertEqual(actual["cells"][1]["outputs"], [])
+
     def test_gpu_t4_not_pooled_memory(self):
         valid = "Tesla T4, 15360, 14800, 550.90.07\nTesla T4, 15360, 14800, 550.90.07\n"
         with patch("subprocess.check_output", return_value=valid):

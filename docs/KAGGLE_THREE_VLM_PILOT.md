@@ -20,6 +20,7 @@ dự đoán demo. Quyền cũ không dùng được cho schema grant mới.
 | Gemma | [notebook](../notebooks/SafeShift_TRAIN_PILOT_gemma.ipynb) |
 | Phi | [notebook](../notebooks/SafeShift_TRAIN_PILOT_phi.ipynb) |
 | SmolVLM2 | [notebook](../notebooks/SafeShift_TRAIN_PILOT_smolvlm2.ipynb) |
+| CPU-only storage preflight | [notebook](../notebooks/SafeShift_STORAGE_PREFLIGHT.ipynb) |
 | Mã chung | [safeshift/pilot](../safeshift/pilot/) |
 | Source/config/model/code hashes | [configs/pilot](../configs/pilot/) |
 | Tests CPU tổng hợp | [test_pilot.py](../tests/test_pilot.py) |
@@ -30,6 +31,9 @@ Builder [build_three_vlm_notebooks.py](../scripts/build_three_vlm_notebooks.py)
 tạo cùng payload cho cả ba, chỉ key model khác. `source_digest()` ràng buộc cả
 package runtime, prompt, dependency pins, source lock và CPU token evidence.
 Owner không nhập revision, SHA, đường dẫn, prompt hoặc thay cell.
+Source SHA-256 của payload storage-fix Draft:
+`bf81c42e857461ed5b03c964e2242305989dd1b3cdb541608b5f3bc210d12f18`.
+Grant cũ bind source trước thay đổi không tự áp dụng cho source này.
 
 Luồng sau khi **được cấp quyền**: kiểm source/grant → consume attempt local →
 kiểm source/tokenizer lock đủ evidence → original TRAIN master/manifest/dimension
@@ -141,7 +145,34 @@ thực Owner. Code kiểm scope/hash và ledger local; reviewer/Owner chịu tr�
 xác minh approval refs và ledger ngoài. Kaggle VM mới không giữ được local ledger.
 Không dùng topology/grant cũ hoặc hiểu một chuỗi URL là tự chứng minh phê duyệt.
 
-## Owner: Save & Run All
+## CPU-only storage preflight trước grant/attempt
+
+Sau khi ChatGPT kiểm GitHub và quyết định audit độc lập cho Draft này, Owner có
+thể chạy notebook `SafeShift_STORAGE_PREFLIGHT.ipynb` trong phiên Kaggle dự kiến.
+Notebook không cần dataset, grant, GPU, weights hoặc inference. Nó ghi receipt
+và SHA-256 riêng dưới `/kaggle/working/data/processed/three_vlm_preflight/`, in
+đường dẫn; nếu không ghi được receipt thì in lỗi JSON ra notebook output. Tải cả
+receipt và sidecar. Mỗi lần là session mới, không ghi đè.
+
+Scratch cố định `/kaggle/tmp`, output cố định `/kaggle/working`. Đo mount,
+device, total/used/free, và cấp phát vật lý độc quyền đồng thời **28 GiB scratch
++ 4 GiB output**, kiểm số block và fsync để kiểm writability/quota thực tế tại
+thời điểm đó. Có thể tốn thời gian và tạm chiếm ≥32 GiB; không chạy song song với
+công việc dùng chung quota. Nếu không đủ chỗ, quota từ chối, allocation không
+được hỗ trợ, đường dẫn alias hoặc không ghi được: BLOCKED, không fallback. Giải
+phóng allocation sau kiểm tra; PASS không đặt chỗ, không chứng minh quota dịch vụ
+khác, delayed-write, peak dùng đĩa, khả năng GPU, hay cấp quyền thực nghiệm. Nếu
+không thể dọn probe hoặc scratch, BLOCKED và giữ thông báo để xử lý có kiểm soát.
+Preflight là ảnh chụp nhất thời; thực tế có thể thay đổi trước hoặc trong pilot.
+
+Nguồn đối chiếu Qwen3 tại `31a04e6`: `hnlo_train/bootstrap.py` dùng
+`tempfile.gettempdir()` ngoài working; `orchestrate.py`/`budget.py` đo scratch và
+output, cộng nhu cầu khi chung `st_dev`; `one_click/provision.py` tạo runtime và
+cache ngoài evidence. Bản này không phục hồi code Qwen3: dùng root `/kaggle/tmp`
+tường minh, kiểm alias/marker, cấp phát để thăm dò quota và fail closed; không
+khẳng định Qwen3 lịch sử đã kiểm quota theo cùng phương pháp.
+
+## Owner: Save & Run All sau review và grant
 
 1. Chờ review code, grant manifest/ngưỡng/model/GPU/export và input release được
    Lead phát hành. Giữ Internet ON; upload notebook nguyên bản từ release đã review.
@@ -150,16 +181,16 @@ Không dùng topology/grant cũ hoặc hiểu một chuỗi URL là tự chứng
    zero/multiple bundle/grant bị chặn, không yêu cầu sửa đường dẫn thủ công.
 3. Chọn **T4 ×2**. Preflight đòi hai T4 khoảng 16 GB/card, GPU0 free ≥14 GiB;
    GPU1 để trống. Không cộng VRAM. Scratch riêng từng session nằm dưới
-   `/kaggle/working/data/processed/three_vlm_scratch/`; venv, HF/model/custom-code
-   cache và `TMPDIR/TMP/TEMP` của pip/worker đều vào vùng này, không dựa `/tmp`.
+   `/kaggle/tmp/safeshift-pilot-<session>`; venv, HF/model/custom-code
+   cache và `TMPDIR/TMP/TEMP` của pip/worker đều vào vùng này.
    `storage_admission.json` ghi `st_dev`, mount, total/used/free thực đo.
    Cần 28 GiB scratch + 4 GiB output; **chung filesystem phải còn tổng ≥32 GiB**,
    khác filesystem phải đủ từng phần. Không cộng hai quan sát free của cùng device.
    Resume cộng thêm 4× số byte giải nén archive vào output allowance (extraction,
    retained sample copies và ZIP). Thiếu thì BLOCKED trước cài thư viện/weights;
-   không tự giảm ngưỡng hay chuyển sang `/tmp`. Đây là minimum admission estimate,
-   không allocation reservation hoặc chứng minh peak disk/ảnh fit. Kaggle mount,
-   quota/driver/RAM/retention thực tế vẫn chưa được đo.
+   không tự giảm ngưỡng hay chuyển root. Allocation được thử lại trước cài đặt;
+   nó được giải phóng sau kiểm tra, không giữ chỗ hay chứng minh peak disk/ảnh fit.
+   Kaggle mount, quota/driver/RAM/retention thực tế vẫn chưa được đo trong task này.
 4. Với Gemma, tài khoản HF phải chấp nhận [Gemma terms/model access](https://huggingface.co/google/gemma-3-4b-it),
    dùng read token hợp lệ của Owner, lưu Kaggle Secret tên `HF_TOKEN`, cho notebook dùng secret.
    Không dán token vào cell/grant/log. Thiếu quyền/401/403 giữ BLOCKED hoặc failure
@@ -174,7 +205,7 @@ Không dùng topology/grant cũ hoặc hiểu một chuỗi URL là tự chứng
    Notebook không upload kết quả hoặc gửi thông tin cho ai.
 
 Sau worker kết thúc hoặc timeout, supervisor chỉ dọn scratch có đúng marker và
-đường dẫn session thuộc working; không xóa evidence/input/attempt ledger. Nếu dọn
+đường dẫn session thuộc `/kaggle/tmp`; không xóa evidence/input/attempt ledger. Nếu dọn
 thất bại, xuất ZIP vẫn được thử và in `SCRATCH_CLEANUP_FAILED`: chỉ tải ZIP evidence,
 không publish cả working tree chứa venv/cache/weights. Nếu kernel/VM bị hủy cứng,
 finalizer có thể không chạy; giữ giới hạn ephemeral/retention đã nêu. Raw/partial

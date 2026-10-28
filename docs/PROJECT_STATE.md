@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật: **27/10/2026 (Asia/Bangkok)**. Bản nhớ trạng thái, không phải quyền thực nghiệm.
-Main đã fetch/đối chiếu GitHub: `28fdf82512577f2ed0fb435fb2c12b88e82baf2f` (PR #135 MERGED).
+Cập nhật: **28/10/2026 (Asia/Bangkok)**. Bản nhớ trạng thái, không phải quyền thực nghiệm.
+Main đối chiếu trực tiếp GitHub: `843794119440dd18cca109ba345f7cefe4ec8552` (PR #138 MERGED).
 Khi mở chat mới phải kiểm GitHub lại; không coi snapshot này là live state.
 
 ## PROJECT IDENTITY
@@ -30,20 +30,44 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 | Source feasibility/sensitivity CPU và original V4 saved-score verification | [#131](https://github.com/tantdna2/SafeShift/pull/131), [`3bcd3535ea51e023de77417ed5f2077607d49c93`](https://github.com/tantdna2/SafeShift/commit/3bcd3535ea51e023de77417ed5f2077607d49c93); [ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/131#issuecomment-6394591862) |
 | Hướng xuyên Seminar–Khóa luận và Master Plan M1–M8, chỉ phạm vi tài liệu | [#133](https://github.com/tantdna2/SafeShift/pull/133), [`bffc6032e65b38cb04b33520275a089d87d0d37f`](https://github.com/tantdna2/SafeShift/commit/bffc6032e65b38cb04b33520275a089d87d0d37f); [ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/133#issuecomment-6399480255) |
 | Execution Plan M1–M8 và continuity | [#134 MERGED](https://github.com/tantdna2/SafeShift/pull/134), [`a425ab04695319a42bfdd2f89192717dddbb891b`](https://github.com/tantdna2/SafeShift/commit/a425ab04695319a42bfdd2f89192717dddbb891b); trạng thái/merge SHA kiểm trực tiếp GitHub trong task này, cùng [xác nhận ChatGPT](https://github.com/tantdna2/SafeShift/pull/134#issuecomment-6406751802) |
+| Code PREP pilot ba VLM: notebooks, selector/bundle, grants, raw/replay/report/resume; FULL TRAIN khóa | [#138 MERGED](https://github.com/tantdna2/SafeShift/pull/138), [`843794119440dd18cca109ba345f7cefe4ec8552`](https://github.com/tantdna2/SafeShift/commit/843794119440dd18cca109ba345f7cefe4ec8552); [ChatGPT hậu merge PASS](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628), chỉ CODE PREPARATION COMPLETE |
 
 ## ACTIVE WORK
 
-- **Owner giao code PREP pilot TRAIN ba VLM:** Gemma 3 4B, Phi-3.5 Vision, SmolVLM2-2.2B; 160 main + tối đa 20 Qwen V4 false-safe, cùng exact IDs, classification và kiểm HNLO riêng từng model.
-- Branch: `implement/kaggle-three-vlm-pilot-20261027`, worktree riêng từ main đầu file; không dùng Draft #136/#137 làm base, không sửa chúng.
-- Ba notebook native One-Click, selector/bundle, source/config/grant gates, raw/CPU replay/report/resume và full runner locked; [runbook](KAGGLE_THREE_VLM_PILOT.md), [audit](THREE_VLM_TECHNICAL_AUDIT.md). Một Draft PR để ChatGPT review; merge/audit độc lập chờ quyền riêng.
-- **Thực nghiệm NOT_RUN**: không ảnh/dataset/raw Qwen artifact/weights/GPU; public model source/tokenizer CPU only. Gemma tokenizer gated 401. Ngưỡng/manifest/HNLO contract chờ Lead duyệt; không tự cấp grant.
-- BASE/HEAD chính xác và kết quả kiểm tra cuối ghi ở mô tả PR để tránh hash tự tham chiếu.
-- **PR #138 audit FAIL, đang khắc phục trong cùng branch/session** theo
-  [biên bản ChatGPT](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6438422457).
-  Sửa admission scratch/output theo filesystem, chuyển temp/cache về working,
-  giữ bằng chứng khi worker/export lỗi, chặn Gemma khi source lock chưa đủ;
-  tái hiện cài thư viện Linux đúng hai bước. Bằng chứng cuối trong
-  [technical audit](THREE_VLM_TECHNICAL_AUDIT.md). Không tự nâng FAIL thành audit PASS.
+- **Chuẩn bị và nghiệm thu 160 ảnh TRAIN gốc: PASS**, dừng trước Kaggle.
+  [Owner/Research Lead cấp quyền CPU](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460760653)
+  đã xác minh; grant local `data/processed/permissions/prepare.json`, không commit.
+- Dùng nguyên source main từ `.worktrees/pilot-real-train-20261028`, chạy tại
+  workspace gốc để đọc `data/raw/InspecSafe-V1/train`; không alias/copy raw data.
+  Đúng master hash, 3.763 ID TRAIN duy nhất và từng input hash/header PASS.
+- Bundle local `data/processed/three_vlm_inputs/safeshift-pilot-input`: đủ
+  **160 ID duy nhất, 80 L04 + 48 L01 + 24 L02 + 8 L03**, 0 bổ sung; `load_bundle()`
+  PASS, ordered selector tái lập. SHA manifest:
+  `f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995`.
+- Owner chấp nhận giữ nguyên **156 JPEG + 4 PNG gốc mang đuôi .jpg** trong chỉ thị
+  hiện tại; không coi giữ nguyên nguồn là biến đổi dữ liệu. 4 PNG đối chiếu original/
+  master/order PASS; 160/160 verify, full-decode, in-memory RGB và hash trước/sau PASS.
+  Không lưu RGB hoặc sửa ảnh/đuôi/nhãn/IDs; có 159 RGB + 1 RGBA ở nguồn đóng gói.
+- ZIP riêng tư: `data/processed/three_vlm_inputs/safeshift-pilot-input.zip`,
+  99.398.230 bytes; đủ 166 regular files (160 ảnh + 6 JSON), CRC/từng SHA-256 PASS.
+  ZIP SHA: `d57e3ee48d45c2e8b6eb06e79ce4694198c7df21883af7bfb4f375395acad0cd`.
+- 77 nhóm lịch sử (nhóm lớn nhất 79 ảnh), 15 kích thước; không claim độc lập.
+  Bằng chứng riêng tư trong workspace gốc:
+  `data/processed/three_vlm_acceptance_20261028/` (receipt, PNG bindings, checksum).
+  Báo cáo BLOCKED cũ giữ nguyên lịch sử; receipt mới ghi PASS theo quyết định Owner.
+  Không đổi notebook/source. Qwen/TEST/FULL_TRAIN vẫn đóng.
+- [Phi a1](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6463455960)
+  **CONSUMED/BLOCKED tại storage** trước inference: 19,501869 GiB free / 32 GiB
+  yêu cầu; 160 NOT_ATTEMPTED. Không tái sử dụng grant a1. Smol a1 RESERVED,
+  NOT_EXECUTED; không chạy với working cũ. Classification NOT_RUN,
+  HNLO_UNVERIFIED cho cả hai; không suy OOM hay chất lượng từ storage failure.
+- **Storage fix DRAFT chờ ChatGPT kiểm GitHub và audit:** scratch `/kaggle/tmp`,
+  output `/kaggle/working`, giữ admission 28+4 GiB; preflight CPU-only không
+  dùng grant, kiểm allocation và giữ receipt. Chưa đo mount/quota thật trên
+  Kaggle, chưa chứng minh peak storage/VRAM hay khả năng chạy model.
+- [Hậu merge #138](https://github.com/tantdna2/SafeShift/pull/138#issuecomment-6460450628)
+  thay trạng thái FAIL/DRAFT cũ bằng CODE PREP COMPLETE. Grant Phi/Smol riêng không
+  nâng thành model/HNLO PASS; Gemma nằm ngoài quyền lần này.
 
 ## KEY DECISIONS
 
@@ -67,12 +91,10 @@ Chỉ ghi phần đã merge và có biên bản ChatGPT kiểm GitHub. Các test
 
 ## NEXT TASK
 
-**ChatGPT kiểm HEAD sửa của Draft PR #138, sau đó tái audit tập trung trong cùng session Antigravity #138.**
-Giữ FAIL/DRAFT tới khi được đối chiếu; chưa merge hoặc có grant Kaggle.
-
-- Code PREP chỉ hoàn tất khi có notebook/runner/tests/docs và một Draft PR; chưa là PASS model hoặc HNLO. Không sửa/merge PR #136/#137 hoặc mở PR phụ.
-- Sau review mới xét grant CPU preparation (3763 TRAIN headers/hashes/folder GT), optional original-V4 saved artifacts, rồi manifest/ngưỡng/source-bound inference grant riêng từng model. Hiện tất cả NOT_GRANTED.
-- Pilot thực nghiệm DONE chỉ khi có archive thật và kết luận từng model; FULL TRAIN 3763/model là nhiệm vụ sau, cần pilot GO + ChatGPT review + Owner grant riêng; TEST đóng.
+**ChatGPT kiểm Draft storage fix trên GitHub và quyết định audit độc lập.**
+Sau review, đo CPU-only preflight tại đúng môi trường Kaggle và giữ receipt;
+chưa cấp grant hay khởi chạy pilot từ task này. Phi cần run/attempt mới và grant
+review bind source/config/manifest; không tái sử dụng a1. Smol vẫn pending.
 
 ## IMPORTANT REFERENCES
 
@@ -87,7 +109,7 @@ Giữ FAIL/DRAFT tới khi được đối chiếu; chưa merge hoặc có grant
 - Không mở TEST/dữ liệu khóa, GPU/inference, annotation hoặc chạy lại release legacy khi chưa có quyền đúng phạm vi/source/run/attempt.
 - Không tự đổi dataset/split/nhãn/metric/roster/quyết định; ghi quyết định mới sau duyệt, không sửa lịch sử. TRAIN phơi nhiễm không thành holdout.
 - Giữ raw bất biến và raw-before-parse khi được phép inference; derived ở `data/processed/`, không commit dataset/raw/checkpoint/secrets hoặc dùng `git add -f`.
-- Không tác động PR cũ/legacy refs hoặc nâng saved-score thành raw audit. Dừng task hiện tại ở đúng một Draft PR để ChatGPT kiểm GitHub.
+- Không tác động PR cũ/legacy refs hoặc nâng saved-score thành raw audit. Task dữ liệu dừng ở bundle để ChatGPT kiểm, hoặc báo BLOCKED khi thiếu quyền/nguồn; không tạo PR riêng chỉ cho trạng thái.
 
 ## UPDATE RULES
 

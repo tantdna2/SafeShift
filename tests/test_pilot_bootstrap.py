@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import errno
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from safeshift.pilot import bootstrap as b
@@ -23,11 +25,33 @@ GPU = "Tesla T4, 15360, 14800, 550.90.07\nTesla T4, 15360, 14800, 550.90.07\n"
 
 
 class StorageTests(unittest.TestCase):
+    @unittest.skipUnless(hasattr(os, "posix_fallocate"), "Linux allocation API unavailable")
+    def test_small_real_allocation_is_released(self):
+        with tempfile.TemporaryDirectory() as d:
+            scratch, output = Path(d) / "scratch", Path(d) / "output"
+            scratch.mkdir()
+            output.mkdir()
+            with patch.object(b, "SCRATCH_BUDGET_BYTES", 1024 * 1024), \
+                 patch.object(b, "OUTPUT_BUDGET_BYTES", 512 * 1024):
+                receipt = b.storage_admission(scratch, output)
+            self.assertTrue(receipt["admitted"], receipt)
+            self.assertEqual(receipt["allocation"]["scratch"]["requested_bytes"], 1024 * 1024)
+            self.assertEqual(list(scratch.iterdir()), [])
+            self.assertEqual(list(output.iterdir()), [])
+
     def admission(self, devices, frees, resume=0):
         observations = [{"device": dev, "free_bytes": free * GIB}
                         for dev, free in zip(devices, frees)]
-        with patch.object(b, "filesystem_usage", side_effect=observations):
-            return b.storage_admission("scratch", "output", resume)
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            (root / "scratch").mkdir()
+            (root / "output").mkdir()
+            with patch.object(b, "filesystem_usage", side_effect=observations), \
+                 patch.object(b.os, "posix_fallocate", create=True), \
+                 patch.object(b.os, "fsync"), \
+                 patch.object(b.os, "fstat", side_effect=[SimpleNamespace(st_size=28*GIB, st_blocks=28*GIB//512),
+                                                           SimpleNamespace(st_size=4*GIB+4*resume, st_blocks=(4*GIB+4*resume)//512)]):
+                return b.storage_admission(root / "scratch", root / "output", resume)
 
     def test_shared_filesystem_requires_sum_not_two_independent_checks(self):
         self.assertFalse(self.admission((1, 1), (31, 31))["admitted"])
@@ -47,6 +71,90 @@ class StorageTests(unittest.TestCase):
     def test_resume_extraction_copy_archive_headroom_is_additional(self):
         self.assertFalse(self.admission((1, 1), (35, 35), GIB)["admitted"])
         self.assertTrue(self.admission((1, 1), (36, 36), GIB)["admitted"])
+
+    def test_quota_failure_after_statvfs_pass_is_blocked_and_probe_removed(self):
+        with tempfile.TemporaryDirectory() as d:
+            scratch, output = Path(d) / "scratch", Path(d) / "output"
+            scratch.mkdir()
+            output.mkdir()
+            observations = [{"device": 1, "free_bytes": 40 * GIB},
+                            {"device": 2, "free_bytes": 40 * GIB}]
+            with patch.object(b, "filesystem_usage", side_effect=observations), \
+                 patch.object(b.os, "posix_fallocate", side_effect=OSError(errno.EDQUOT, "quota"), create=True):
+                receipt = b.storage_admission(scratch, output)
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["reason"], "ALLOCATION_CHECK_FAILED")
+            self.assertEqual(receipt["allocation_error"]["errno"], errno.EDQUOT)
+            self.assertEqual(list(scratch.iterdir()), [])
+
+    def test_second_quota_failure_releases_both_simultaneous_probes(self):
+        with tempfile.TemporaryDirectory() as d:
+            scratch, output = Path(d) / "scratch", Path(d) / "output"
+            scratch.mkdir()
+            output.mkdir()
+            observations = [{"device": 1, "free_bytes": 40 * GIB},
+                            {"device": 2, "free_bytes": 40 * GIB}]
+            with patch.object(b, "filesystem_usage", side_effect=observations), \
+                 patch.object(b.os, "posix_fallocate", side_effect=[None, OSError(errno.EDQUOT, "output quota")], create=True), \
+                 patch.object(b.os, "fsync"), \
+                 patch.object(b.os, "fstat", return_value=SimpleNamespace(st_size=28*GIB, st_blocks=28*GIB//512)):
+                receipt = b.storage_admission(scratch, output)
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["allocation"]["scratch"]["status"], "ALLOCATED")
+            self.assertEqual(receipt["allocation_error"]["errno"], errno.EDQUOT)
+            self.assertEqual(list(scratch.iterdir()), [])
+            self.assertEqual(list(output.iterdir()), [])
+
+    def test_preflight_never_reads_grant_or_calls_subprocess(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, scratch = root / "working", root / "scratch"
+            work.mkdir()
+            scratch.mkdir()
+            with patch.object(b, "storage_admission", return_value={"admitted": True, "reason": "SYNTHETIC"}), \
+                 patch.object(b, "discover", side_effect=AssertionError("NO_GRANT")), \
+                 patch.object(b.subprocess, "run", side_effect=AssertionError("NO_PROCESS")), \
+                 patch.object(b.subprocess, "check_output", side_effect=AssertionError("NO_GPU")):
+                output = b.storage_preflight(work, scratch)
+            self.assertTrue(read(output / "storage_preflight.json")["admitted"])
+            self.assertEqual(read(output / "storage_preflight.sha256.json")["sha256"], sha(output / "storage_preflight.json"))
+            self.assertEqual(list(scratch.iterdir()), [])
+
+    def test_output_not_writable_prints_failure_without_grant(self):
+        with tempfile.TemporaryDirectory() as d, \
+             patch.object(b, "safe", side_effect=PermissionError(errno.EACCES, "denied")), \
+             patch("builtins.print") as printed:
+            self.assertIsNone(b.storage_preflight(d, d))
+            self.assertIn("OUTPUT_PREPARATION_FAILED", str(printed.call_args))
+
+    def test_preflight_permission_failure_receipt_and_cleanup_failure(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, scratch = root / "working", root / "scratch"
+            work.mkdir()
+            scratch.mkdir()
+            with patch.object(b, "prepare_scratch", side_effect=PermissionError(errno.EACCES, "denied")):
+                out = b.storage_preflight(work, scratch)
+            receipt = read(out / "storage_preflight.json")
+            self.assertFalse(receipt["admitted"])
+            self.assertEqual(receipt["error"]["errno"], errno.EACCES)
+            with patch.object(b, "storage_admission", return_value={"admitted": True, "reason": "SYNTHETIC"}), \
+                 patch.object(b, "cleanup_scratch", side_effect=OSError("cleanup denied")):
+                out = b.storage_preflight(work, scratch)
+            receipt = read(out / "storage_preflight.json")
+            self.assertFalse(receipt["admitted"])
+            self.assertIn("cleanup denied", receipt["scratch_cleanup_error"])
+
+    def test_symlink_scratch_root_is_blocked(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, scratch = root / "working", root / "scratch"
+            work.mkdir()
+            scratch.mkdir()
+            original = Path.is_symlink
+            with patch.object(Path, "is_symlink", lambda p: p == scratch or original(p)):
+                out = b.storage_preflight(work, scratch)
+            self.assertIn("STORAGE_ROOT_ALIAS", read(out / "storage_preflight.json")["error"]["message"])
 
     def test_actual_filesystem_observation_and_working_scratch(self):
         with tempfile.TemporaryDirectory() as d:
@@ -96,9 +204,11 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
     with tempfile.TemporaryDirectory() as d, ExitStack() as patches:
         root = Path(d)
         inputs, work = root / "input", root / "working"
+        scratch_root = root / "scratch"
         bundle = inputs / "private"
         bundle.mkdir(parents=True)
         work.mkdir()
+        scratch_root.mkdir()
         p = plan()
         write(bundle / "bundle.json", {"SYNTHETIC": True})
         write(bundle / "pilot_manifest.json", p)
@@ -119,7 +229,7 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
                     worker(output)
             return subprocess.CompletedProcess(command, 0)
         loader = patches.enter_context(patch.object(b, "load_bundle", return_value=(p, p["main"])))
-        patches.enter_context(patch.object(b.platform, "system", return_value="Linux"))
+        patches.enter_context(patch.object(b, "supported_runtime", return_value=True))
         patches.enter_context(patch.object(b, "storage_admission", return_value={"admitted": disk_ok, "SYNTHETIC": True}))
         patches.enter_context(patch.object(b.subprocess, "run", side_effect=run))
         patches.enter_context(patch.object(b.subprocess, "check_output", side_effect=lambda cmd, **kw: GPU if cmd[0] == "nvidia-smi" else "SYNTHETIC_FREEZE\n"))
@@ -129,7 +239,7 @@ def supervisor_case(key="phi", worker=None, disk_ok=True, resume=False):
 class SupervisorTests(unittest.TestCase):
     def launch(self, case, key="phi"):
         _, inputs, work, _, g, _, _ = case
-        return b.launch(key, g["source_sha256"], ROOT, inputs, work)
+        return b.launch(key, g["source_sha256"], ROOT, inputs, work, scratch_root=case[0] / "scratch")
 
     def test_real_launch_orders_cuda_install_before_requirements_and_check(self):
         with supervisor_case() as case:
@@ -144,7 +254,7 @@ class SupervisorTests(unittest.TestCase):
             self.assertEqual(commands[4][-1], "check")
             self.assertEqual(commands[-1][-2:], ["--mode", "PILOT"])
             for _, kwargs in case[5]:
-                self.assertTrue(Path(kwargs["env"]["TMPDIR"]).is_relative_to(case[2]))
+                self.assertTrue(Path(kwargs["env"]["TMPDIR"]).is_relative_to(case[0] / "scratch"))
             self.assertEqual(case[5][-1][1]["env"]["CUDA_VISIBLE_DEVICES"], "0")
             self.assertTrue(out.with_suffix(".zip").is_file())
 
@@ -213,6 +323,14 @@ class SupervisorTests(unittest.TestCase):
                 out = self.launch(case)
             self.assertEqual(read(out / "supervisor_failure.json")["stage"], "software")
             self.assertTrue((out / "setup.log").is_file())
+            self.assertFalse((out / "worker.log").exists())
+            self.assertTrue(out.with_suffix(".zip").is_file())
+
+    def test_disk_full_during_install_exports_failure_and_no_worker(self):
+        with supervisor_case() as case:
+            with patch.object(b.subprocess, "run", side_effect=OSError(errno.ENOSPC, "disk full")):
+                out = self.launch(case)
+            self.assertEqual(read(out / "supervisor_failure.json")["stage"], "software")
             self.assertFalse((out / "worker.log").exists())
             self.assertTrue(out.with_suffix(".zip").is_file())
 
