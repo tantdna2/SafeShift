@@ -25,7 +25,8 @@ def error_record(error, stage):
                 "OOM" if "out of memory" in str(error).lower() or "OutOfMemory" in name else
                 "PREPROCESSING" if stage == "preprocessing" else
                 "LIBRARY" if isinstance(error, (ImportError, AttributeError, TypeError)) else "TECHNICAL")
-    return {"type": name, "message": message, "stage": stage, "category": category}
+    return {"type": name, "message": message, "stage": stage, "category": category,
+            "subcomponent": getattr(error, "subcomponent", stage), "errno": getattr(error, "errno", None)}
 
 
 def identity(key, plan, rows, source_hash, run_id):
@@ -113,7 +114,9 @@ def execute(store, rows, backend_factory, grant, key, plan, time_budget=None):
                       "hnlo_probe": "SEE_PER_SAMPLE_EVIDENCE; classification continues independently"})
     except BaseException as error:
         blocked = True
-        e = error_record(error, getattr(backend, "stage", "model_load"))
+        e = error_record(error, getattr(error, "stage", getattr(backend, "stage", "model_load")))
+        from .diagnostics import failure_detail
+        write(store.root / "failure_detail.json", failure_detail(error, e["stage"], e["subcomponent"]))
         write(store.root / "failure.json", e)
         if active:
             i, row, previous = active
@@ -176,27 +179,32 @@ def run(repo, bundle, grant, source_hash, output, mode="PILOT", parent=None):
     execution_rows = [{**r, "image": str(bundle / r["image"])} for r in rows]
     def factory():
         from .bootstrap import gpu_preflight
-        write(output / "worker_gpu_preflight.json", gpu_preflight())
-        import torch
-        if torch.cuda.device_count() != 1 or torch.cuda.get_device_capability(0) != (7, 5):
-            raise ValueError("ONE_VISIBLE_T4_COMPUTE_75_REQUIRED")
-        if not torch.cuda.is_available() or float(torch.ones(1, device="cuda:0", dtype=torch.float16).sum().item()) != 1.0:
-            raise RuntimeError("CUDA_FP16_FUNCTIONAL_ADMISSION_FAILED_BEFORE_WEIGHTS")
+        from .diagnostics import phase
+        with phase(output, "cuda_admission", "gpu0_fp16"):
+            write(output / "worker_gpu_preflight.json", gpu_preflight())
+            import torch
+            if torch.cuda.device_count() != 1 or torch.cuda.get_device_capability(0) != (7, 5):
+                raise ValueError("ONE_VISIBLE_T4_COMPUTE_75_REQUIRED")
+            if not torch.cuda.is_available() or float(torch.ones(1, device="cuda:0", dtype=torch.float16).sum().item()) != 1.0:
+                raise RuntimeError("CUDA_FP16_FUNCTIONAL_ADMISSION_FAILED_BEFORE_WEIGHTS")
         versions = check_software(repo, key)
         write(output / "versions.json", versions)
         from PIL import Image
-        for row in rows:
-            with Image.open(bundle / row["image"]) as image:
-                if image.size != (row["width"], row["height"]) or getattr(image, "n_frames", 1) != 1:
-                    raise ValueError("ACTUAL_IMAGE_DIMENSIONS_OR_STILL_IMAGE_MISMATCH")
-                image.verify()
+        with phase(output, "input_decode", "all_image_headers"):
+            for row in rows:
+                with Image.open(bundle / row["image"]) as image:
+                    if image.size != (row["width"], row["height"]) or getattr(image, "n_frames", 1) != 1:
+                        raise ValueError("ACTUAL_IMAGE_DIMENSIONS_OR_STILL_IMAGE_MISMATCH")
+                    image.verify()
         # HF_TOKEN provided by Kaggle Secrets via supervisor, never persisted.
         cache = os.environ.get("SAFESHIFT_MODEL_CACHE", str(repo / "data/processed/three_vlm_model_cache"))
         provision_start = time.monotonic()
-        snapshot, receipt = provision(repo, key, cache, os_token())
+        with phase(output, "model_provision", "snapshot_hashes"):
+            snapshot, receipt = provision(repo, key, cache, os_token())
         receipt["provision_seconds"] = time.monotonic() - provision_start
         write(output / "model_snapshot.json", receipt)
-        backend = NativeBackend(key, snapshot, prompt.decode(), repo=repo, evidence=output)
+        with phase(output, "model_load", "native_backend_constructor"):
+            backend = NativeBackend(key, snapshot, prompt.decode(), repo=repo, evidence=output)
         if backend.serialized_tokenizer:
             if tokenizer_file.exists():
                 if tokenizer_file.read_bytes() != backend.serialized_tokenizer:
@@ -209,7 +217,9 @@ def run(repo, bundle, grant, source_hash, output, mode="PILOT", parent=None):
     timing = {"worker_total_seconds": time.monotonic() - run_start,
               "runtime": read(store.root / "runtime.json") if (store.root / "runtime.json").exists() else None,
               "checkpoint": read(output / "model_snapshot.json") if (output / "model_snapshot.json").exists() else None}
-    save_reports(output / "report", plan, {key: results}, blocked, {key: failure}, {key: timing})
+    from .diagnostics import phase
+    with phase(output, "report", "planned_id_reports"):
+        save_reports(output / "report", plan, {key: results}, blocked, {key: failure}, {key: timing})
     return results
 
 
