@@ -1,5 +1,15 @@
 # Three-VLM TRAIN pilot v1 — PREP, chưa cấp quyền chạy
 
+**29/10, Issue #145:** [Smol readiness/Gemma gate](SMOL_KAGGLE_READINESS_145.md)
+và [CPU receipt](SMOL_CPU_RECEIPT_145.json) cập nhật trạng thái hiện tại. Smol CPU
+admission nay kiểm loader native meta 24+27 eager, processor synthetic/ảnh token,
+source/tokenizer và Hub inventory/LFS trước ledger; requirements bổ sung bắt buộc
+num2words/docopt. Sáu notebook tạo lại cùng payload. Phi a6 đã **CONSUMED**, 160
+native calls nhưng **0 C1 JSON hợp lệ**, theo [biên bản](https://github.com/tantdna2/SafeShift/pull/144#issuecomment-6480224537).
+Source digest hiện tại nằm trong CPU receipt và notebook metadata; digest #143
+dưới đây là lịch sử. Không grant Smol mới, Kaggle/GPU, hoặc merge trong #145.
+First12 technical PASS có thể xảy ra với 12 INVALID; không tự đổi gate khoa học.
+
 **29/10, Issue #143:** [hồ sơ Phi end-to-end](PHI_KAGGLE_END_TO_END_143.md) thay
 phần mô tả gate Phi cũ: real `from_pretrained` CPU meta, native synthetic processor,
 Hub checkpoint metadata, chẩn đoán trước/sau ledger và hướng dẫn private grant
@@ -221,7 +231,11 @@ Internet ON nhưng **không gắn dataset/grant và không bật GPU**. Mỗi no
 5. bằng pip của worker, cài nguyên pins/index hiện có, chạy `pip check`, lưu
    `pip freeze --all`, exact-version check và CPU-only native ABI smoke cho
    torch/torchvision/Transformers;
-6. riêng Phi: tải public source/tokenizer đã khóa hash, import đúng remote code
+6. riêng Smol: cùng gate native 4.51.3 tại [hồ sơ #145](SMOL_KAGGLE_READINESS_145.md),
+   tải public source/tokenizer đã khóa hash, loader meta không weights/forward,
+   kiểm 24 text + 27 vision eager/cached flags và processor synthetic 1×1/vừa/lớn;
+   token prefix, 81 image tokens/tile, int masks, FP16 transfer/context 8192 và
+   Hub revision/inventory/two-shard LFS/index metadata. Riêng Phi: tải public source/tokenizer đã khóa hash, import đúng remote code
    rồi chạy **real `from_pretrained(None,state_dict={})` trên meta FP16** qua
    cùng reviewed-class loader của worker (không weights/CUDA/forward). Đặt eager
    sau deserialize, scope CLIP độc lập, kiểm đủ 32 Phi + 24 CLIP. Không dùng lại

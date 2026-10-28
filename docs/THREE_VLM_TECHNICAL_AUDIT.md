@@ -1,5 +1,14 @@
 # Three-VLM technical PREP audit — 27/10/2026
 
+**Cập nhật 29/10, Issue #145:** [nghiệm thu Smol native CPU và Gemma gate](SMOL_KAGGLE_READINESS_145.md)
+cùng [receipt/checksums](SMOL_CPU_RECEIPT_145.json) thay phần trạng thái Smol
+text-only lịch sử bên dưới: kiểm loader thật meta, processor ảnh tổng hợp và
+native generation scripted→raw→HNLO/report/ZIP. Đã tái hiện processor 4.51.3 thiếu
+num2words; bổ sung hai dependency khóa riêng cho Smol, giữ pins hiện có/science.
+Gemma không credentials: cả 10 config/tokenizer 401, source lock giữ nguyên BLOCKED.
+Phi a6 thật 0/160 valid C1 theo [aggregate GitHub](https://github.com/tantdna2/SafeShift/pull/144#issuecomment-6480224537),
+không coi CPU synthetic PASS là bằng chứng chất lượng hoặc HNLO GPU.
+
 Đây là source/CPU self-review, **không audit độc lập hoặc GPU PASS**. BASE:
 `28fdf82512577f2ed0fb435fb2c12b88e82baf2f`, HEAD/file inventory/source digest cuối
 ghi trong một Draft PR. Nhánh/worktree riêng từ GitHub main; workspace cũ giữ

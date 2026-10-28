@@ -31,7 +31,7 @@ def failure_detail(error, stage, subcomponent):
     clean = error_record(RuntimeError(trace), stage)["message"]
     return {**error_record(error, stage), "subcomponent": subcomponent,
             "traceback_tail": clean, "traceback_truncated": len(trace) > 2000,
-            "attention": getattr(error, "phi_attention_receipt", None)}
+            "attention": getattr(error, "phi_attention_receipt", getattr(error, "smol_attention_receipt", None))}
 
 
 @contextmanager

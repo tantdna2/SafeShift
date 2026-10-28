@@ -103,6 +103,13 @@ Code dùng lại nằm trong package, chỉ thêm thư mục khi có chức năn
 
 ## Kaggle TRAIN pilot ba VLM — PREP
 
+[Issue #145: Smol readiness và Gemma gate](docs/SMOL_KAGGLE_READINESS_145.md)
+bổ sung real-loader CPU meta, native synthetic processor và 160-call scripted
+raw/HNLO/report/ZIP; yêu cầu `num2words/docopt` được khóa riêng cho Smol 4.51.3.
+Đây là nghiệm thu phần mềm, không dự đoán Smol thật. Phi a6 đã consumed với
+0/160 C1 JSON hợp lệ theo biên bản GitHub; Gemma vẫn BLOCKED do 10 file gated 401.
+Không tự đổi C1/parser/HNLO hoặc chạy/cấp grant từ Draft này.
+
 [Runbook pilot](docs/KAGGLE_THREE_VLM_PILOT.md) mô tả ba notebook Gemma/Phi/Smol,
 selector 160+≤20 TRAIN, native runner/raw writer, HNLO probe/replay, report và
 resume. Đây là code PREP chờ review/grant, chưa là kết quả Kaggle/HNLO hoặc thay

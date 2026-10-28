@@ -21,7 +21,8 @@ def error_record(error, stage):
     message = re.sub(r"(?:[A-Za-z]:[\\/]|/)(?:[^\s:'\"]+[\\/])+[^\s:'\"]*", "[PATH]", message)
     message = message[:2000]
     name = type(error).__name__
-    category = ("ACCESS" if isinstance(error, PermissionError) or getattr(getattr(error, "response", None), "status_code", None) in (401, 403) else
+    category = ("ACCESS" if isinstance(error, PermissionError) or getattr(getattr(error, "response", None), "status_code", None) in (401, 403)
+                or getattr(error, "code", None) in (401, 403) else
                 "OOM" if "out of memory" in str(error).lower() or "OutOfMemory" in name else
                 "PREPROCESSING" if stage == "preprocessing" else
                 "LIBRARY" if isinstance(error, (ImportError, AttributeError, TypeError)) else "TECHNICAL")
@@ -219,6 +220,9 @@ def run(repo, bundle, grant, source_hash, output, mode="PILOT", parent=None):
               "checkpoint": read(output / "model_snapshot.json") if (output / "model_snapshot.json").exists() else None}
     from .diagnostics import phase
     with phase(output, "report", "planned_id_reports"):
+        from .output_diagnostics import summarize
+        timing["output_diagnostics"] = summarize(store.root)
+        write(output / "output_diagnostics.json", timing["output_diagnostics"])
         save_reports(output / "report", plan, {key: results}, blocked, {key: failure}, {key: timing})
     return results
 

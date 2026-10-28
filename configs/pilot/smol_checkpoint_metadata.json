@@ -1,0 +1,28 @@
+{
+  "schema": "safeshift-smol-checkpoint-metadata-v1",
+  "revision": "482adb537c021c86670beed01cd58990d01e72e4",
+  "provenance": {
+    "metadata_url": "https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-2.2B-Instruct/revision/482adb537c021c86670beed01cd58990d01e72e4?blobs=true",
+    "index_url": "https://huggingface.co/HuggingFaceTB/SmolVLM2-2.2B-Instruct/resolve/482adb537c021c86670beed01cd58990d01e72e4/model.safetensors.index.json",
+    "accessed": "2026-10-29",
+    "credentials": false,
+    "weight_bytes_requested": 0
+  },
+  "weights": {
+    "model-00001-of-00002.safetensors": {
+      "sha256": "7c88a90e78f567460b2369a0369cc4dafbfda5607c9cb090b30fa4437b0282f2",
+      "bytes": 4959390584
+    },
+    "model-00002-of-00002.safetensors": {
+      "sha256": "cf3d0958a8240f71054a6812038f2a6bfbe2e5124573a3b363f6b120c9a52657",
+      "bytes": 4027833472
+    }
+  },
+  "index": {
+    "filename": "model.safetensors.index.json",
+    "sha256": "d7c4b7a36f51bc15755cb11938c76f66be56e7c0d2bf3606335a8f77f90a551d",
+    "bytes": 63881,
+    "tensor_count": 657,
+    "total_tensor_bytes": 8987139520
+  }
+}
