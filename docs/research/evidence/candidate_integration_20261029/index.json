@@ -1,0 +1,10 @@
+{
+  "code_commit": "65640ddf91bd0ce75e594c372af098ecb59194eb",
+  "receipts": {
+    "internvl35-linux.json": "ddf077c89fbda6267766c8feb01e1e29a0400332335007deb1f523f24002d954",
+    "internvl35-windows.json": "a459ce2f4430727325727b50fc8d9682258c972c35d72237eac7af26c18c7a0a",
+    "minicpm4-linux.json": "eabf203decec91f46a9f64a5e6e8e54ba1670d6bbe0a6e397b9d328a3cda0acf",
+    "minicpm4-windows.json": "86a3e0bcc7952af2a59f2468d95d240d06bcaf96d83a81d72f5f3fa3eadca548"
+  },
+  "schema": "safeshift-candidate-integration-evidence-index-v1"
+}

@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **29/10/2026 (Asia/Bangkok)** trong task CPU G2/G3 sau PR #149.
-Main đã kiểm GitHub/fetch/ls-remote: `6342b15b0d70c27b28f4bcb5e53f04f6951d6171`.
+Cập nhật **29/10/2026 (Asia/Bangkok)** trong task tích hợp CPU sau PR #150.
+Main khi bắt đầu đã kiểm GitHub/fetch: `bbbd351e19e404f1108413578c7ed024f92e814d`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.
 
 ## PROJECT IDENTITY
@@ -13,8 +13,10 @@ Main đã kiểm GitHub/fetch/ls-remote: `6342b15b0d70c27b28f4bcb5e53f04f6951d61
 
 ## CURRENT STATUS
 
+- **PR #150 MERGED**, merge `bbbd351e19e404f1108413578c7ed024f92e814d`, xác minh GitHub `merged=true` và origin/main trước task này. Findings CPU của #150 là baseline lịch sử; không phải kết luận về adapter mới bên dưới.
+
 - **PR #137 MERGED**, merge `1488dcb5212164e2946a15055d1da6e8be9096d2`; [ChatGPT hậu merge PASS](https://github.com/tantdna2/SafeShift/pull/137#issuecomment-6488172066). Hoàn tất phạm vi repository/technical của #137, không scientific approval hoặc GPU readiness.
-- **PR #149 MERGED**, merge là main đã xác minh ở trên. Shortlist report hoàn tất phạm vi tài liệu; CPU G2/G3 mới có kết quả riêng bên dưới, không scientific approval/qualification.
+- **PR #149 MERGED**, merge `6342b15b0d70c27b28f4bcb5e53f04f6951d6171`. Shortlist report hoàn tất phạm vi tài liệu; CPU G2/G3 mới có kết quả riêng bên dưới, không scientific approval/qualification.
 - [Issue #148 cập nhật 29/10](https://github.com/tantdna2/SafeShift/issues/148) bỏ ON HOLD **chỉ cho public research/metadata/CPU không weights và shortlist report**. Dòng #137 DRAFT/#148 ON HOLD trong các tài liệu cũ là snapshot đã bị live evidence này thay thế trong phạm vi tương ứng.
 - **M1 EFFECTIVE cấp dự án / M2 v1 FROZEN** theo [DECISIONS](research/DECISIONS.md), hai SHA và [hậu merge #135](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6409830030). Không sửa bytes protocol/config để cập nhật cờ cũ.
 - DEC-PA3-011 lịch sử giữ PROPOSED; successor M1 chỉ thay phần đã được duyệt của D9R22. Grant cũ không chuyển sang thesis/model/source mới.
@@ -63,17 +65,18 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - Ranking là ưu tiên kiểm chứng theo nguồn, không accuracy đã đo. T4×2 không pooled 32 GB; FP16/attention/tiles/native wrapper và per-GPU memory còn phải G2/G4/G5.
 - Báo cáo so A cũ fixed-Q3+auxiliary với B peers hiện proposed; tách classifier, cross-check, fusion/review và HNLO optional; không đặt numerical thresholds hoặc phê duyệt ensemble rule.
 
-## ACTIVE WORK — CPU G2/G3, PUBLIC/SYNTHETIC, KHÔNG WEIGHTS
+## ACTIVE WORK — HAI CANDIDATE, TÍCH HỢP CPU TRƯỚC KAGGLE
 
-- [Báo cáo và tái lập](research/CPU_G2_G3_CANDIDATES_20261029.md), [receipts công khai nhỏ](research/evidence/cpu_g2_g3_20261029/index.json): bản sửa guard thực chạy `15c0e72993ebe44912c0b1858bc42fc28bc31315`, Codex-reported, cùng session/nhánh Draft PR #150. [ChatGPT CHANGES REQUESTED](https://github.com/tantdna2/SafeShift/pull/150#issuecomment-6492535296) tại HEAD cũ `f7318a3851c040808c140e0aab2f4c50c37bab0e`; bản sửa chờ review lại rồi independent security/technical audit, không tự nhận PASS.
-- Guard mới liệt kê mọi snapshot entry, `lstat` root/files, từ chối directory/symlink/hard link/Windows reparse-junction. Không resolve root alias; bỏ recursive copytree, chỉ copy locked names không follow symlinks rồi kiểm lại source/đích trước import. Focused **18=15 PASS+3 SKIP**; root/child junction thật Windows PASS,3 real-symlink tests SKIP vì thiếu quyền OS. Lock13/15 file giữ nguyên, không tự tải nguồn phụ.
-- Hai venv CPython3.11.9 Windows, Torch2.6.0+cpu/torchvision0.21.0+cpu; InternVL Transformers4.55.4 và MiniCPM4.51.3. Pins/transitives, pip check, compiled CPU ABI và actual AutoProcessor/AutoTokenizer/AutoConfig/class import **PASS**. Không constructor/weights/model loader.
-- **InternVL3_5-4B-HF @ `6bd4487402110ef9889ba50eb7aefeb302526fed`: các checks CPU khả thi PASS; tổng thể BLOCKED.** Native tiling 1–13 views, image ID151671,256 tokens/view, RGB/6 sizes/PNG-RGBA→RGB, C1 byte/expanded-input và GenerationConfig construction PASS. Actual generate/weight loader/attention/GPU chưa kiểm.
-- **MiniCPM-V-4 @ `6f69a8235885be89608f3a71ffd40695b379e1e7`: FAIL CPU processor/wrapper; các phần cần weights/GPU BLOCKED.** RGB1×1 gây ValueError normalization;5 sizes khác + PNG-RGBA→RGB PASS,1–10 views gồm global,64 tokens/view. Native `chat` mặc định beam3/repetition1.2; frozen kwargs chỉ giữ beam1/max64, lọc các flags khác, buộc decode text. Không sửa upstream/input policy/generation/raw API để cứu PASS.
-- Mỗi stack:15 mock-ID cases qua tokenizer/Store/parser/diagnostics và5 native corrupted-input checks PASS; G3+snapshot suite **45=42 PASS+3 SKIP,0 failure/error**. Full repo **246=224 PASS+22 SKIP,0 failures/errors**; skipped15 Phi/Smol native,1 network bootstrap,3 Linux FS/allocation và3 real-symlink tests thiếu quyền OS, không gọi là PASS. MiniCPM1×1/wrapper FAIL và InternVL tổng thể BLOCKED được tái lập trên code mới; không model predictions/behavior/HNLO validation.
-- Model `from_pretrained` thật/effective attention, actual continuation/raw custody/logits/HNLO, FP16/VRAM/industrial C1 quality và isolated-child driver **BLOCKED**. Windows CPU không chứng nhận Linux/CUDA tuple. Cần adapter/release review, khép MiniCPM findings, G0–G4/quyền mới và G5 panel Normal/hazard/multidomain/early stops đã duyệt trước GPU.
-- Tái dùng source downloader, parser/raw writer/runner fault tests; không pipeline/production backend mới. Pilot source digest giữ `1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884`; C1/protocol/M2/labels/metrics/roster/grants/notebooks không đổi. Không weights/inference/GPU/Kaggle/private TRAIN/TEST/GT/archive. **0 candidates qualified; GPU order PENDING O3; peer slot3 VACANT.**
-- Dừng tại Draft PR CPU để ChatGPT review GitHub trực tiếp; không Ready/merge hoặc tự cấp quyền tiếp theo.
+- **CPU READY trong phạm vi phần mềm đã kiểm thử; GPU release BLOCKED.** [Báo cáo/tái lập](research/CANDIDATE_INTEGRATION_CPU_20261029.md), [receipts](research/evidence/candidate_integration_20261029/index.json), code commit `65640ddf91bd0ce75e594c372af098ecb59194eb`, nhánh `implement/candidate-integration-20261029`, từ main sau #150. Một Draft PR để ChatGPT review; chưa review/audit/merge hoặc scientific approval.
+- `safeshift/candidates/` cung cấp hai adapter với source public đúng revision, native loader/processor, C1/generation cố định, explicit eager, raw IDs trước decode và bounded raw logits. Tái dùng runner/Store/parser/replay/archive qua tests; không ghi candidate vào registry/grants của pilot cũ.
+- **InternVL3.5 HF:** `OpenGVLab/InternVL3_5-4B-HF` @ `6bd4487402110ef9889ba50eb7aefeb302526fed`; native HF 4.55.4, image ID151671/256 tokens/view; 36+24 attention layers và 841 tensor keys qua native key conversion. Prefix phải khớp trước lấy continuation.
+- **MiniCPM-V-4:** `openbmb/MiniCPM-V-4` @ `6f69a8235885be89608f3a71ffd40695b379e1e7`; native 4.51.3,32+27 layers/741 tensor keys. Sửa ambiguity RGB1×1 bằng trục HWC tường minh, giữ native resize/slices/normalize; dùng `generate(decode_text=False)` giữ generation contract/logits, continuation-only và hai EOS native. Native chat lỗi vẫn được tái lập, không dùng nó để classify.
+- Kiểm native tensor/image plumbing với scripted towers, image bounds/shape/dtype/context, exact spatial parity, bốn nhãn/whitespace/INVALID/EOS/max64, lỗi load/decode/ENOSPC và raw-before-parse/tail/archive. Loader meta và file safetensors rỗng chỉ chứng minh phần mềm/cấu hình, không deserialization weights thật.
+- Snapshot guard #150 giữ exact flat allowlist/no aliases; bổ sung kiểm dedicated remote cache trước import, implementation/version lock, checkpoint index/LFS metadata lock, protected science/source lock và verifier cho receipts. Không đổi public source lock13/15 file, CPU requirements hoặc C1.
+- Mỗi model **Windows65=62 PASS+3 symlink SKIP**, **Linux65=64 PASS+1 Windows-junction SKIP**, không failure/error. Cả13 native tests PASS trên từng stack/OS. Full exact-export suite **Windows266=231 PASS+35 SKIP**, **Linux266=236 PASS+30 SKIP**; sáu notebook byte/builder/compile PASS, không execute cells. Skip details/phạm vi trong receipts; không nâng Phi/Smol native chưa rerun thành PASS. Bằng chứng do Codex thực chạy, không CI hoặc independent audit.
+- Giữ pilot source digest `1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884`; sáu notebooks không sửa. Không chạy notebook, weights, inference/GPU/CUDA/Kaggle, private TRAIN/TEST/GT/archive, không cấp grant, chọn model thứ tư hoặc đổi giao thức để đạt PASS.
+- **GPU release BLOCKED**: cần ChatGPT review, G0/G1 đăng ký execution release/source/runtime/grant mới; G4 Linux/CUDA isolated-child/device/memory và G5 finite first image/quality/utility/HNLO bằng quyền riêng. O1–O8/T0/O3 PENDING, peer slot3 VACANT,0 candidates qualified.
+- [CPU G2/G3 lịch sử #150](research/CPU_G2_G3_CANDIDATES_20261029.md) và receipts cũ giữ nguyên: MiniCPM native1×1/chat FAIL và InternVL tổng thể BLOCKED ở code cũ. Kết quả adapter mới không sửa hồi tố findings hay reviewer status của #150.
 
 ## KEY DECISIONS / LIMITS GIỮ NGUYÊN
 
@@ -89,9 +92,9 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 
 ## NEXT STEP / BLOCKERS
 
-1. **ChatGPT review lại source guard/staging và receipts mới trong Draft PR #150**, rồi handoff independent security/technical audit theo review. MiniCPM1×1/generation/raw FAIL và các mục BLOCKED giữ nguyên. #149 đã merge; hai ưu tiên nghiên cứu/slot3 trống giữ nguyên, chưa qualified. Không merge hoặc Ready for Review tự động.
+1. **ChatGPT review Draft PR tích hợp hai candidate**: exact HEAD/diff/receipts và phạm vi CPU; không tự nhận audit PASS hoặc merge. #150 đã merge; không dùng review cũ thay nghiệm thu adapter mới.
 2. Sau review, cân nhắc independent methodology audit và Owner/giảng viên O1–O8/T0; O3 chốt bounded qualification sequence/attempt cap trước thực nghiệm, final roster sau evidence.
-3. G0–G6 theo [runbook](KAGGLE_FAILURES_AND_RELEASE_GATES.md): CPU kết quả chỉ đúng phạm vi ở trên, real weight loader/Linux/CUDA/production adapters còn BLOCKED; MiniCPM có FAIL cần review. G4/G5 cần quyền mới; CPU không vượt behavior gate.
+3. G0–G6 theo [runbook](KAGGLE_FAILURES_AND_RELEASE_GATES.md): CPU chỉ đúng phạm vi có receipt; real weights/CUDA, execution release và behavior/HNLO vẫn BLOCKED/NOT_RUN. G4/G5 cần quyền mới; CPU không vượt behavior gate.
 4. Thiếu nguồn/GT/custody/reviewers/precision/quota hoặc không đủ 4 qualified → NO-GO thiết kế xác nhận; giảm scope cần quyết định, không mở model zoo hoặc target thay thế.
 
 ## REFERENCES / UPDATE RULES

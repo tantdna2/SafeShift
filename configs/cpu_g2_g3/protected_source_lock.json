@@ -1,0 +1,14 @@
+{
+  "base": "bbbd351e19e404f1108413578c7ed024f92e814d",
+  "files": {
+    "AGENTS.md": "aa2f1830012fe73ba8859ceea0e87442510cc57bd5d115042dd40ec27def0183",
+    "configs/cpu_g2_g3/internvl35.requirements.txt": "991317e95a03a217ea4aba43bc8fc2e904fa5c581a37673481979eb1e80f5519",
+    "configs/cpu_g2_g3/minicpm4.requirements.txt": "5416ac49ef5a855d90256bdf4696903ea3fce95846646e0c6e30f3728e359dd6",
+    "configs/cpu_g2_g3/public_source_lock.json": "7a4840f6ffc0834cbe73e44ddcf4dc593dfaf1a37a98d412a20fab9cd6bd4ae7",
+    "configs/pilot/classification_c1.txt": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "docs/research/DECISIONS.md": "c63843647842d650faa6e486ce3a10c4a18c046d941b98514dd105aa15187225",
+    "docs/research/SEMINAR_PROTOCOL.md": "54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1",
+    "docs/research/THESIS_EXECUTION_PLAN_2026.md": "0a6437e592075635fb23e2fd8abb2caadd7e57eea207dff934d8f5733108afb4",
+    "docs/research/seminar_analysis_config.v1.json": "dd3b86660f0795dba099abac0d8a3b8bd3498e625e49b128aa9c50e72639e5ff"
+  }
+}
