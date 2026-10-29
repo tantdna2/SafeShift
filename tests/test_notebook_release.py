@@ -163,6 +163,18 @@ class SnapshotAndAuthorityTests(unittest.TestCase):
         self.assertEqual(result["release_status"], "BLOCKED")
         self.assertEqual(result["gates"]["G5_behavior"], "REQUIRES_AUTHORIZED_GPU")
 
+    def test_export_git_context_preserves_offline_no_native_environment(self):
+        from scripts.check_notebook_release import command
+        with patch("scripts.check_notebook_release.subprocess.run") as child:
+            command(["python", "synthetic.py"], Path('.'), git_context={"GIT_DIR": "synthetic-git", "GIT_WORK_TREE": "synthetic-export"})
+        env = child.call_args.kwargs["env"]
+        self.assertEqual(env["GIT_DIR"], "synthetic-git")
+        self.assertEqual(env["GIT_WORK_TREE"], "synthetic-export")
+        self.assertEqual(env["CUDA_VISIBLE_DEVICES"], "")
+        self.assertEqual(env["HF_HUB_OFFLINE"], "1")
+        with self.assertRaises(ValueError):
+            command([], Path('.'), git_context={"PYTHONPATH": "untrusted"})
+
     def test_receipt_cannot_overwrite_or_issue_grant(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "receipt.json"; path.write_bytes(b'original')
