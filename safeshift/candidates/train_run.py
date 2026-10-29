@@ -56,6 +56,7 @@ Called only after raw is durable and before the authoritative parser. No raw
 tokens, logits, legacy identity fields or adapter records are rewritten.
 """
     binding = context["execution_release"]
+    require(type(raw) is dict and type(identity) is dict, "RAW_CONFIGURATION_EVIDENCE_SCHEMA")
     require(all(identity.get(n) == v for n, v in binding.items()), "STORE_EXECUTION_RELEASE_BINDING")
     require(raw.get("execution_release") == binding, "RAW_EXECUTION_RELEASE_BINDING")
     require(raw.get("configuration_provenance") == context, "RAW_CONFIGURATION_PROVENANCE_BINDING")
@@ -78,6 +79,7 @@ tokens, logits, legacy identity fields or adapter records are rewritten.
 def validate_native_configuration(sample, context):
     effective = context["configuration_contract"]["effective_candidate"]
     native, request = read(sample / "native.json"), read(sample / "request.json")
+    require(type(native) is dict, "NATIVE_CONFIGURATION_EVIDENCE_SCHEMA")
     require(type(request) is dict and type(request.get("generation")) is dict
             and type(request.get("prompt")) is str and type(request.get("image")) is dict
             and type(request.get("input_detail")) is dict, "NATIVE_REQUEST_CONFIGURATION_SCHEMA")

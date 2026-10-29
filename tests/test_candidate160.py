@@ -229,6 +229,13 @@ class Candidate160Tests(unittest.TestCase):
                         self.assertEqual(recovered[rows[0]["sample_id"]]["status"], "TECHNICAL_ERROR")
                 (sample/"raw.json").write_text(json.dumps(raw_original))
                 (sample/"result.json").write_text(json.dumps({**result_original, "raw_sha256": sha(sample/"raw.json")}))
+                identity_path = root/"out/calls/000000/run/identity.json"
+                for path in (sample/"raw.json", sample/"native.json", sample/"request.json", identity_path):
+                    original_bytes = path.read_bytes()
+                    path.write_text("[]")
+                    with self.subTest(malformed=path.name):
+                        self.assertEqual(run.recover(root/"out", rows, g)[rows[0]["sample_id"]]["status"], "TECHNICAL_ERROR")
+                    path.write_bytes(original_bytes)
                 changed_grant = {**g, "candidate_execution_config_sha256": "0"*64}
                 self.assertEqual(run.recover(root/"out", rows, changed_grant)[rows[0]["sample_id"]]["status"], "TECHNICAL_ERROR")
 
