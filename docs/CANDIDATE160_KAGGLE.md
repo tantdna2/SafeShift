@@ -16,6 +16,10 @@ classifier/peer/HNLO. Không mở FULL TRAIN, chọn slot 3, chuyển grant cũ 
 C1/parser/preprocess/precision/generation để đạt PASS. Sáu notebook cũ và adapter
 PR #151 giữ nguyên bytes; không đổi protocol, split, nhãn hoặc metric.
 
+Review [ChatGPT #6501983735](https://github.com/tantdna2/SafeShift/pull/152#issuecomment-6501983735)
+yêu cầu sửa provenance trên cùng PR #152. Config/grant v2 dưới đây thay mô tả
+candidate cũ; các receipts trước review chỉ chứng minh code tại HEAD cũ.
+
 ## Nguồn và manifest chung
 
 | Thành phần | Khóa / mức bằng chứng |
@@ -94,10 +98,11 @@ Không có grant thực trong Git; `preparation.json` giữ các giá trị chư
 null. Tests có fixture tự ghi rõ SYNTHETIC, không cấp quyền thật. Không dùng
 thresholds Phi/Smol/Gemma hoặc suy approval từ request chuẩn bị160.
 
-Grant schema `safeshift-candidate160-grant-v1` bắt buộc:
+Grant schema `safeshift-candidate160-grant-v2` bắt buộc:
 
 - Exact `model_key`, model dict, `base`, `runtime_ref`, `source_sha256`,
-  `config_sha256`, `manifest_sha256`, `inventory_sha256`, `data_revision`,
+  `legacy_transport_config_sha256`, `candidate_execution_config_sha256`,
+  `manifest_sha256`, `inventory_sha256`, `data_revision`,
   `master_sha256`, `split=TRAIN`. Giá trị runtime/config có trong notebook metadata.
 - `max_initial_ids=160`, `max_native_calls=160`, `retry_sample_ids=[]`,
   `resume=false`; fresh `run_id`/`attempt_id`, explicit `max_seconds` gồm setup,
@@ -127,6 +132,42 @@ chữ ký số hay distributed ledger**: Owner/Lead phải kiểm ledger thực 
 reserve duy nhất cho saved VM, cấm concurrent jobs/cross-session replay và cập nhật
 consumption theo evidence. Snapshot attach không tự chứng minh global freshness.
 Giới hạn này phải được reviewer chấp nhận trước release; không tự gắn READY.
+
+## Hai cấu hình và hai hash, không hoán đổi
+
+`safeshift-candidate160-config-v2` có hai phần tách biệt:
+
+- `legacy_transport_compatibility.settings_snapshot` là bản sao nguyên vẹn của
+  `pilot.settings(key)` khi enroll đúng model. Các chuỗi Phi cropping, generic
+  outer-forward, pilot contract và selection seed ở đây **chỉ là descriptor lịch
+  sử phục vụ transport**, không mô tả thao tác candidate hoặc chọn lại cohort.
+- `effective_candidate` mô tả adapter PR #151 thực tế: InternVL native HF
+  template/tiling, logits từ `internvl_outer`, sequence prompt+continuation;
+  MiniCPM native slices/resize/normalize/patch packing với RGB HWC tường minh,
+  native generate→_decode→LLM, logits từ `minicpm_llm_forward`, sequence chỉ
+  continuation từ inputs_embeds. Cả hai giữ C1/generation/precision/eager đã khóa.
+  Không có Phi `num_crops=16` hoặc seed selector mới trong phần này.
+
+| Trường / nơi giữ | Nghĩa và phép kiểm |
+| --- | --- |
+| `legacy_transport_config_sha256` | Canonical digest của exact frozen `pilot.settings(key)`; chỉ nhận diện transport lịch sử. |
+| `candidate_execution_config_sha256` | Canonical digest toàn bộ config v2, gồm khối legacy được dán nhãn và phần effective candidate; đây là config cần duyệt cho execution. |
+| `raw.identity.config_sha256` | Alias lịch sử do frozen pilot runner ghi; phải bằng legacy transport hash, **không** bằng candidate execution hash. Không đổi tên/ghi lại trường này. |
+| Grant v2, Store identity, `raw.execution_release` | Bắt buộc cả hai hash với tên đầy đủ, đúng model/source/ref/run/attempt; trường candidate mơ hồ `config_sha256` bị từ chối. |
+| `configuration_binding.json`, `raw.configuration_provenance` | Giữ full config v2, mapping alias và execution binding để reviewer/recovery tính lại cả hai hash. |
+
+Sau khi raw đã lưu bền vững và **trước parser**, CandidateStore đối soát config
+với hợp đồng đúng model, tính lại hash hai scope, kiểm alias của runner, native
+logit boundary và sequence semantics. Hash sai/hoán đổi, grant v1, model/source/
+attempt sai, effective metadata bị gán Phi hoặc thiếu provenance đều fail closed;
+raw tokens/logits đã nhận vẫn giữ nguyên. Recovery kiểm lại config với hợp đồng
+và grant mà supervisor đang giữ; sửa raw rồi cập nhật checksum file vẫn không
+làm provenance sai thành SUCCESS. Đây là kiểm chứng cấu hình, không đổi parser,
+HNLO hoặc điều kiện dừng khoa học. Native step `origin` descriptor giữ nguyên
+bytes của adapter; module capture thực tế được chỉ rõ ở effective logits/boundary.
+
+Grant v1/cấu hình v1 không cấp quyền cho v2. Cần approval/source/ref/hash mới;
+không sửa hoặc tự cấp grant lịch sử để đi qua cổng.
 
 ## First image, behavior và review
 

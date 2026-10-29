@@ -1,165 +1,142 @@
-# Hai notebook candidate160 — biên bản CPU thực chạy
+# Candidate160 — CPU nghiệm thu sau review provenance PR #152
 
-29/10/2026, Asia/Bangkok. **CODE/CPU CHECKS PASS trong phạm vi dưới đây;
-execution release BLOCKED. Actual GPU/weights/behavior/HNLO UNVERIFIED.**
-Kết quả do Codex thực chạy, không CI, ChatGPT-rerun hoặc independent audit.
+29/10/2026, Asia/Bangkok. Cùng Draft PR #152, theo
+[review ChatGPT](https://github.com/tantdna2/SafeShift/pull/152#issuecomment-6501983735).
+Không merge, grant, Kaggle, GPU, trọng số thật, suy luận VLM hoặc private TRAIN/TEST.
 
-PR #151 được kiểm GitHub `merged=true`, merge/base
-`95eb4e8801ea746e1a760b9d529920bffb3c26cb`; main vẫn đúng SHA này ở lần kiểm cuối.
-Nhánh mới `prep/candidate160-20261029`, worktree độc lập; không thay workspace cũ.
-Không có API tạo chat Codex mới; isolation ở mức nhánh/worktree.
+## Source và phạm vi sửa
 
-## Source đã thực chạy
+- HEAD đã review: `65da8a3dfd19c7f61b3e1a48465d1db7c97bdaac`.
+- Base/main: `95eb4e8801ea746e1a760b9d529920bffb3c26cb`, sau PR #151 MERGED.
+- Runtime source mới: **`820200bba7c6f5796961acb64befef0c651772b3`**.
+- Notebook/release commit nghiệm thu mới: **`c75113f4a62d8d30303269f4a8bd72fc71040c15`**.
+- Embedded source SHA256:
+  **`3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e`**.
+- Sau commit nghiệm thu chỉ cập nhật docs/receipts, không đổi logic runtime/tests/
+  builder/notebooks để dùng lại kết quả. HEAD bàn giao cuối ghi trong PR body.
 
-- Runtime source commit notebook: `56898c492fde1a962237f11058f1f78bee281122`.
-- Commit chứa hai notebook: `8e4a47f9a8342c518eff9c76c22445fe0118ed89`.
-- Toàn bộ bốn native receipts và hai release checks ghi Git commit
-  **`aae742352f647263524d5c5f1dbeb47ee5ec5d14`**. Commit này bổ sung release
-  checker tám notebook; embedded runtime/test sources của bốn native lượt giữ
-  nguyên trong lúc chạy, từng file có SHA trong receipts.
-- Embedded candidate source SHA256:
-  `471236817cb5723e73c06c186ede72208226c02f3c9bbd13ee6cc1ab193aae23`.
-- Pilot source digest cũ giữ nguyên
-  `1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884`.
-  Adapter PR #151, C1/generation/parser/HNLO và sáu notebook cũ không thay bytes.
+Config v2 giữ exact `pilot.settings(key)` trong `legacy_transport_compatibility`
+với scope **historical, not effective**. Phi cropping, pilot contract/selection
+seed và descriptor outer-forward ở đây chỉ là tương thích transport lịch sử.
+`effective_candidate` mô tả đúng native preprocessing, generation, logits boundary
+và sequence semantics của từng candidate PR #151. Grant v2/Store/raw/recovery
+phân biệt hai hash và từ chối trường candidate `config_sha256` mơ hồ.
 
-Không dùng self-referential notebook SHA: builder kiểm mọi payload byte bằng
-`git show <runtime_ref>:<path>`, rồi commit notebooks/docs/evidence phía sau.
-Git HEAD bàn giao cuối ghi PR body; sau commit nghiệm thu chỉ thêm docs/receipts
-và sửa docstring checker cho đúng scope, không đổi logic runtime/tests/notebooks.
-Không nhận docs commit là một lượt native mới.
+Không thay nguồn khoa học đã khóa: pilot contract/runner/Store/parser/HNLO/metrics,
+adapter PR #151, source/checkpoint/dependency locks, C1, nhãn, manifest160/thứ tự,
+checkpoint revisions hoặc stop policy. Git blob/diff và exact function-source
+comparison cho `policy_check`/`manifest` đã kiểm. Pilot source digest vẫn
+`1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884`;
+sáu notebook cũ giữ nguyên bytes. Không PR mới hoặc thay roster/protocol.
 
-## Kết quả nghiệm thu cuối
+## Hai hash cấu hình
 
-| Lượt thực chạy | Tổng | PASS | SKIP | FAIL/ERROR |
+| Model | `legacy_transport_config_sha256` | `candidate_execution_config_sha256` |
+| --- | --- | --- |
+| InternVL3.5 HF | `9a6d80324c1b6f3d9d4e05ac210a5d8e6f3e6a4ac4b18dd70d75751b4cc93b7a` | `57727194e7eefe4b652bdf0b89a9675e7727866ffe4dfbc6334b0c07bda69474` |
+| MiniCPM-V-4 | `5de12ffd4063e7801e2f028daace0f4e85e6eefe3cff75c00f36aa0d287aee49` | `4bbd04cb734c732ce708e3d63c07a059d02f0c5501517b11664c528e24a87b3f` |
+
+Legacy hash = canonical digest exact frozen `pilot.settings(key)` khi enroll đúng
+model. Execution hash = canonical digest toàn bộ config v2, gồm legacy snapshot
+có dán nhãn và effective candidate. Không hoán đổi chúng.
+
+Frozen runner giữ `raw.identity.config_sha256` bằng **legacy** hash. Raw thêm
+`execution_release` với cả hai tên rõ scope, model/source/ref/run/attempt;
+`configuration_provenance` giữ full config v2 và mapping alias. CandidateStore
+lưu raw trước kiểm chứng, rồi kiểm config/hashes, request model/revision/C1/
+generation/processor, native logit boundary và sequence trước parser. Recovery
+kiểm lại hợp đồng và grant supervisor giữ; provenance sai không thành SUCCESS
+kể cả result checksum đã được sửa khớp. Raw IDs/logits không bị ghi lại.
+
+Native `steps[*].origin` giữ descriptor gốc về hook nói chung. Effective target
+là model/`internvl_outer` cho InternVL và `model.llm`/`minicpm_llm_forward` cho
+MiniCPM; không gán cơ chế pilot cũ cho candidate. [Runbook](../CANDIDATE160_KAGGLE.md)
+mô tả chi tiết schema/alias và điều kiện trước thực nghiệm.
+
+## Kết quả CPU mới
+
+| Lượt thực chạy trên source cuối | Tổng | PASS | SKIP | FAIL/ERROR |
 | --- | ---: | ---: | ---: | ---: |
-| InternVL, isolated Windows CPU | 60 | 57 | 3 | 0/0 |
-| MiniCPM, isolated Windows CPU | 60 | 57 | 3 | 0/0 |
-| InternVL, isolated Linux CPU | 60 | 59 | 1 | 0/0 |
-| MiniCPM, isolated Linux CPU | 60 | 59 | 1 | 0/0 |
-| Exact Git export, full Windows suite | 289 | 252 | 37 | 0/0 |
-| Exact Git export, full Linux suite | 289 | 257 | 32 | 0/0 |
+| InternVL Windows CPU | 64 | 61 | 3 | 0/0 |
+| MiniCPM Windows CPU | 64 | 61 | 3 | 0/0 |
+| InternVL Linux CPU | 64 | 63 | 1 | 0/0 |
+| MiniCPM Linux CPU | 64 | 63 | 1 | 0/0 |
+| Exact Git export full Windows | 293 | 256 | 37 | 0/0 |
+| Exact Git export full Linux | 293 | 261 | 32 | 0/0 |
 
-**Cả15 native integration tests PASS cho mỗi model trên mỗi OS**, gồm hai test
-mới:160 ảnh tổng hợp qua production CandidateBackend/native processor/generation
-scripted/Store/parser/HNLO/report/archive; corrupt image bị chặn trước native call.
-Không real VLM forward, tensor weights thật hoặc GPU. Empty/meta constructors
-và file safetensors rỗng là kiểm phần mềm, không actual checkpoint validation.
+Hai full release checkers kiểm đủ8 notebook, mọi cell/source/payload/pins/builder
+bytes và source mutation, trả **CODE_PASS / release_status=BLOCKED**. Candidate
+cells thật chạy CPU trong thư mục tổng hợp không grant → BLOCKED/nonconsumed,
+archive/sidecar verify PASS. Sáu notebook cũ chỉ byte/build/compile kiểm.
 
-Windows focused SKIP3 là real symlink tests thiếu OS permission; real junction
-test PASS. Linux SKIP1 là Windows junction. Full Windows SKIP37 = candidate15,
-Phi6, Smol9, live pip-bootstrap1, Windows symlink3 và Linux filesystem3. Full Linux
-SKIP32 = candidate15/Phi6/Smol9/live pip1/Windows junction1. Candidate15 có receipts
-native riêng bên trên; không nâng Phi/Smol/live bootstrap chưa rerun thành PASS.
+Windows full SKIP37 = candidate15/Phi6/Smol9/live pip1 và6 platform checks;
+Linux SKIP32 = candidate15/Phi6/Smol9/live pip1/Windows junction1. Candidate native
+có receipts riêng; không dùng full-suite skips để suy native hoặc GPU PASS.
+Focused Windows SKIP3 là real symlink tests thiếu OS permission; junction thật
+PASS. Linux SKIP1 là Windows junction. Cả15 native tests PASS/model/OS, gồm160
+synthetic native calls. Bốn receipts ghi source unchanged và cùng Git commit
+`c75113f4a62d8d30303269f4a8bd72fc71040c15`. Các lượt trước hai guard schema cuối
+được giữ như development logs, không dùng chứng minh source cuối PASS.
 
-Hai release checkers trả **CODE_PASS / release_status=BLOCKED**. Kiểm đúng8
-notebook, cell IDs/JSON/AST/outputs/counts, mọi embedded source, builder bytes,
-SHA/source inventory/config/pins và mutation checks. Candidate cells được thực
-thi trên CPU trong thư mục tổng hợp, không grant; kết quả mong đợi **BLOCKED,
-attempt_consumed=false**, archive/sidecar verify PASS. Không gọi là Kaggle run.
-Sáu notebook lịch sử chỉ được byte/build/compile kiểm, không execute.
+Không dùng [receipts tại HEAD cũ](https://github.com/tantdna2/SafeShift/tree/65da8a3dfd19c7f61b3e1a48465d1db7c97bdaac/docs/research/evidence/candidate160_20261029)
+để chứng minh mã sửa PASS. Hồ sơ cũ giữ ở exact Git ref; index/receipts HEAD mới
+phải có source/commit/config v2 đã thực chạy. Đây là Codex-recorded evidence,
+không GitHub CI, ChatGPT-rerun hoặc independent audit.
 
-Release checker tái dùng wrapper cũ, mở rộng hai payload inventories; trong Git
-export, builder/tests được cấp Git object context chỉ để đọc exact refs từ repo
-gốc. Không copy dữ liệu hoặc sửa Git metadata từ test. Trusted tests không là
-OS security sandbox. Trường `notebook_cells_executed` của receipt ghi rõ scope
-CPU/no-grant; docstring wrapper đã được cập nhật cho đúng phạm vi này.
+## Regression và môi trường
 
-## CPU environment và dữ liệu kiểm
+Bổ sung kiểm thử cho cả hai model: snapshot lịch sử/effective tách riêng, hash
+tính lại độc lập; grant thiếu/sai/hoán đổi hash, schema v1/model sai; raw alias/
+release/model/source/attempt sai, metadata Phi/legacy logits, request model/
+generation/crop sai, sequence drift. Tất cả bị chặn trước parse sau raw durable;
+native IDs giữ nguyên và partial archive vẫn verify. Recovery từ chối provenance
+sai dù raw/result file checksums đã được cập nhật khớp. Raw/native/request/Store
+metadata bị thay thành kiểu JSON sai cũng thành TECHNICAL_ERROR, không làm mất
+nhánh accounting/export. Hai guard schema cuối được nghiệm thu bằng receipts mới.
 
-CPython **3.11.9** trên Windows và WSL2 Linux, dùng lại isolated CPU venv/public
-snapshot/index đã có của #150/#151, không cài/tải source hoặc weights mới.
-Native fixture kiểm lại exact CPU requirements #151, pip check/freeze, module
-ownership và compiled CPU torchvision NMS: Torch2.6.0+cpu, torchvision0.21.0+cpu,
-Accelerate1.6.0, NumPy1.26.4, Pillow10.4.0. InternVL TF4.55.4/tokenizers0.21.4/
-Hub0.34.4; MiniCPM TF4.51.3/tokenizers0.21.1/Hub0.30.2. Required fixture setup
-failure sẽ làm suite ERROR; không skip để ghi native PASS.
+Mỗi lượt160 scripted native/model/OS đối soát **mọi raw** có cả hai hash đúng và
+request thật với model, frozen generation flags, RGB, boundary/sequence. Chạy lại
+pipeline/order/cap/review/no retry, NaN/OOM/INVALID/ENOSPC/archive và tests PR #151.
+Network/CUDA/real model forward/weights bị guard; meta/empty safetensors chỉ CPU
+rehearsal, không model inference hay real checkpoint validation.
 
-CUDA requirements mới chỉ PREP: Torch2.6.0+cu124/torchvision0.21.0+cu124,
-CPython3.11.9, CUDA build12.4. **Không cài/kiểm actual CUDA wheel stack hoặc driver
-trong task này**; không suy CPU-wheel PASS sang CUDA-wheel ABI/GPU PASS. Notebook
-tự kiểm stack thật trước consumption và kiểm CUDA child sau consumption; tuple
-vẫn cần approval/runtime qualification mới.
-
-Chỉ fixture tổng hợp xác định, không random seed:160 IDs tổng hợp, PNG RGBA17×1
-với extension `.jpg`, native synthetic sizes/parity/token checks từ #151. Scripted
-logits/tokenizers test bốn nhãn/whitespace/INVALID/EOS/max64; không số phân loại
-thật được tạo. Cả hai model test cùng synthetic160 order. Mỗi native lượt chạy
-160 calls trong test mới; control-plane test cũng chạy160/model bằng character
-double, độc lập với thí nghiệm thật và không tiêu external attempt.
-
-## Phạm vi lỗi và custody đã kiểm
-
-- Grant/ledger mới, source/model/config/ref/manifest/rights/expiry, thiếu G0/T0/O3,
-  policy null/sai, TEST/supplement/count161/duplicate ID, thứ tự manifest; không
-  selector hoặc mở private inventory/master/annotation.
-- Cùng160 order, một checkpoint load, call cap, first image, early behavior,
-  thiếu/sai/STOP review, observation-bound CONTINUE chỉ trong synthetic fixture,
-  deadline trước load và NOT_ATTEMPTED tail. No overwrite/retry/resume.
-- Native CPU processor/token/attention/image tests PR #151; CUDA preflight bằng
-  doubles cho hai T4, nonpooled memory, wrong driver/free memory và child failure.
-  Supervisor stages CPU→hardware→consume→worker, timeout/failure/recovery được
-  mô phỏng và ghi scope SYNTHETIC, không giả thành actual GPU receipt.
-- OOM/import/decode, NaN/Inf handling inherited tests, INVALID/duplicate JSON,
-  repetition/dominance/false-safe/false-alarm criteria, token/step custody loss,
-  independent CPU decoder mismatch, raw ENOSPC/checkpoint/report/ZIP errors.
-- CandidateStore lưu raw trước custody validation/parser; validation failure vẫn
-  giữ raw/native evidence rồi dừng. Missing/torn raw/result không thành SUCCESS;
-  supervisor phục hồi planned accounting, exclusive archive/checksums/reimport.
-- Failure finalizer vẫn thử export, không overwrite torn evidence. Disk/kill/VM
-  loss ngoài khả năng ghi được báo giới hạn; không bảo đảm ZIP đủ nếu hết đĩa.
-
-Các lượt phát triển không là nghiệm thu cuối: lần full đầu thiếu ignored scratch
-`data/processed/` cho test cũ; một raw fault injection nhắm sai hàm ghi; fixture
-MiniCPM tách lớp làm dedicated HF module cache stale. Đã sửa test/fixture, không
-relax source admission hoặc adapter. Builder từng từ chối ref nhập sai và tests
-đã bắt source/payload thay đổi khi development run còn mở; các lượt đó không
-được nhận PASS hoặc dùng làm kết quả thật. Logs phát triển giữ local ignored.
+CPython **3.11.9**, isolated CPU venv Windows và WSL2 Linux; public source/index
+cache đã hash-lock. Native fixture kiểm CPU pins/pip check/freeze/module ownership/
+compiled NMS: Torch2.6.0+cpu/torchvision0.21.0+cpu, Accelerate1.6.0, NumPy1.26.4,
+Pillow10.4.0; InternVL TF4.55.4/tokenizers0.21.4/Hub0.34.4, MiniCPM TF4.51.3/
+tokenizers0.21.1/Hub0.30.2. Không tải source/weights hoặc cài env mới.
+CUDA wheel tuple2.6.0+cu124/0.21.0+cu124 chưa cài/nghiệm thu; không suy CPU PASS
+sang GPU ABI/driver/VRAM hoặc chất lượng/HNLO thật.
 
 ## Receipts và tái lập
 
-[Public index + SHA từng receipt](evidence/candidate160_20261029/index.json).
-Bốn native receipts là bytes nguyên bản, có per-test events, executed-file hashes,
-log hash, OS/Python/Git, source unchanged và scope. Hai release receipts là bản
-sao **chỉ che temporary synthetic paths** trong stdout/stderr; `publication`
-giữ original receipt SHA và đúng fields bị che. Counts/results/log hashes gốc
-giữ nguyên. Không ảnh/private IDs/GT/token outputs hoặc trọng số trong receipts.
+[Public index](evidence/candidate160_20261029/index.json) khóa SHA từng file. Bốn
+candidate receipts v2 nguyên bản, có full config/hashes v2, executed-file hashes,
+per-test events, Git/OS/Python/log SHA/source unchanged. Hai release receipts chỉ
+che synthetic temporary paths trong stdout/stderr; giữ original receipt/log SHA,
+counts/results và liệt kê fields bị che. Không private IDs/GT/ảnh, model outputs
+thật hoặc credentials trong public artifacts.
 
-Lệnh thực chạy, từ root; `<cpu-env-python>` là Python của CPU requirements #151,
-`<public-snapshot>`/`<index>` là caches public đã kiểm hash, không dataset:
+Lệnh thực chạy từ root; dùng Python/cache CPU đã pin, không dataset:
 
 ```console
-python -B -m scripts.build_candidate160_notebooks --runtime-ref 56898c492fde1a962237f11058f1f78bee281122
-<cpu-env-python> -B -m scripts.rehearse_candidate160 --model internvl35 --snapshot <public-snapshot> --index <index> --output data/processed/candidate160/internvl35-w2
-<cpu-env-python> -B -m scripts.rehearse_candidate160 --model minicpm4 --snapshot <public-snapshot> --index <index> --output data/processed/candidate160/minicpm4-w2
-python -B -m scripts.check_notebook_release --runtime-ref aae742352f647263524d5c5f1dbeb47ee5ec5d14 --output data/processed/candidate160/release-windows.json
+python -B -m scripts.build_candidate160_notebooks --runtime-ref 820200bba7c6f5796961acb64befef0c651772b3
+<cpu-env-python> -B -m scripts.rehearse_candidate160 --model internvl35 --snapshot <public-snapshot> --index <index> --output data/processed/candidate160-review/internvl35-w2
+<cpu-env-python> -B -m scripts.rehearse_candidate160 --model minicpm4 --snapshot <public-snapshot> --index <index> --output data/processed/candidate160-review/minicpm4-w2
+python -B -m scripts.check_notebook_release --runtime-ref c75113f4a62d8d30303269f4a8bd72fc71040c15 --output data/processed/candidate160-review/release-windows-final.json
 ```
 
-Linux dùng venv CPU riêng cùng requirements, outputs `internvl35-linux2`,
-`minicpm4-linux2`, `release-linux.json`; không Windows venv trong Linux. WSL cần
-explicit Git context tới metadata/worktree tương ứng vì `.git` của worktree do
-Windows tạo dùng path Windows; không sửa config/ref. Checkout Linux thuần không
-cần bước đó. Lượt Linux ban đầu bị sandbox từ chối WSL service, sau escalation
-được phép đã chạy; không bypass quyền hoặc dùng GPU để khép CPU.
+Linux dùng CPU venv riêng, outputs `internvl35-linux2`, `minicpm4-linux2`,
+`release-linux-final.json`. WSL cần Git context explicit tới worktree/metadata do
+Windows tạo, không sửa config/ref; checkout Linux thuần không cần bước đó.
+Artifacts gốc ở ignored `data/processed/candidate160-review/`; đổi output name khi
+tái lập, không ghi đè. Development checks không thay receipts nghiệm thu mới.
 
-Các output names phía trên đã tồn tại: tái lập dùng tên output mới. Biên bản này
-chỉ ghi relative paths, không hard-code machine paths. Log và receipt gốc nằm
-ignored `data/processed/candidate160/`; receipts công khai có hashes trong index.
+## Giới hạn
 
-## BLOCKED / UNVERIFIED còn lại
-
-1. ChatGPT direct review exact Draft PR HEAD/diff/receipts; independent audit khi
-   được yêu cầu riêng; không tự merge hoặc ký review.
-2. G0/T0/O3 và các scope liên quan, manifest reuse approval mới cho hai model,
-   numerical stop/behavior/review stages/time/driver/VRAM, runtime tuple và quyền
-   private data/checkpoint/GPU/export. Tất cả chưa chốt giữ null/BLOCKED.
-3. Current external ledger/fresh saved-VM reservation; snapshot attach và marker
-   local không là cryptographic/distributed one-shot enforcement. Phương thức
-   cung cấp quyết định Lead vào saved Kaggle VM **UNVERIFIED**, không vượt gate.
-4. Actual bundle/checkpoint bytes trên Kaggle, CPython3.11.9 availability, storage,
-   worker CUDA/driver/isolation/T4 VRAM, real checkpoint deserialize/placement,
-   finite FP16 outputs, classification quality/peer utility và empirical HNLO
-   **NOT_RUN/UNVERIFIED**. Không weights/data/Kaggle/GPU được thực hiện ở task này.
-
-[Runbook cấu hình/authority/retention](../CANDIDATE160_KAGGLE.md) mô tả các điều
-kiện trước khi chạy thật. Trần160 không là quyền tự động hoặc cam kết chạy đủ160.
+Giữ Draft PR #152, chờ ChatGPT kiểm exact new HEAD/source/receipts; chưa independent
+audit hoặc merge. G0/T0/O3, fresh grant v2/ledger, policy/Lead review/runtime
+approval, official checkpoint và delivery review vào saved VM vẫn BLOCKED/
+UNVERIFIED. Actual bundle/checkpoint bytes, Kaggle CPython/storage, CUDA child/
+driver/T4 VRAM/FP16, classification/peer utility và empirical HNLO NOT_RUN/
+UNVERIFIED. Thay đổi provenance không cấp quyền data/GPU.

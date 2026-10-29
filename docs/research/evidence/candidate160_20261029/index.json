@@ -1,17 +1,29 @@
 {
   "base": "95eb4e8801ea746e1a760b9d529920bffb3c26cb",
-  "files": {
-    "internvl35-linux.json": "8f07963f3ee20e6b957280f4badbfb3ec9e89dd536aec5908b1d0db56c0f7796",
-    "internvl35-windows.json": "6ad07568df77c3fe3649ed3582dacce4151782205e7f793a35df0d438238ee47",
-    "minicpm4-linux.json": "fd66e8eb6a81e6bbab9e6acddf84069482f3bae81a46a35ef61b7e97a8fa4e2e",
-    "minicpm4-windows.json": "bfdcc1c651f397e1875dda227be1f487a7e4a16cb032a62a6d74fe065fe2c70c",
-    "release-linux.json": "781182c292f6ee27f1f0a9373d0148fa8bdfcce4fed11dbae78d08d787445493",
-    "release-windows.json": "ff5135308865cb3677a49575ffba52d1babc2729ceb9f1d3d1f45e47a9c457c7"
+  "configuration_hashes": {
+    "internvl35": {
+      "candidate_execution_config_sha256": "57727194e7eefe4b652bdf0b89a9675e7727866ffe4dfbc6334b0c07bda69474",
+      "legacy_transport_config_sha256": "9a6d80324c1b6f3d9d4e05ac210a5d8e6f3e6a4ac4b18dd70d75751b4cc93b7a"
+    },
+    "minicpm4": {
+      "candidate_execution_config_sha256": "4bbd04cb734c732ce708e3d63c07a059d02f0c5501517b11664c528e24a87b3f",
+      "legacy_transport_config_sha256": "5de12ffd4063e7801e2f028daace0f4e85e6eefe3cff75c00f36aa0d287aee49"
+    }
   },
-  "release_checked_ref": "aae742352f647263524d5c5f1dbeb47ee5ec5d14",
+  "files": {
+    "internvl35-linux.json": "7b2a4920b86bf8f9cb53ec19f8f27fa95b8922381dd86648d37e7e8ed4437e67",
+    "internvl35-windows.json": "478e0805d3e14954e96b097e95649d907b56de8d993fefc1fbce5a913394cd35",
+    "minicpm4-linux.json": "6b90e963545cc822ed445f8b555e15640fdb587fb4b47e4654280b1ddb6cb6c2",
+    "minicpm4-windows.json": "30a5f96ebfdd92eda1521894ca4edaee3010853725dd5b0ebd11cafeb49d09ad",
+    "release-linux.json": "51f85c0f4cd041fca6c6ab1e5d467e6a693d021f98c4dbb712296e3a526571c9",
+    "release-windows.json": "7a9a35351dc9955d7747fb14176b993a80753de9ad3cc6afe68d201335fa61b1"
+  },
+  "release_checked_ref": "c75113f4a62d8d30303269f4a8bd72fc71040c15",
   "release_status": "BLOCKED",
-  "runtime_ref": "56898c492fde1a962237f11058f1f78bee281122",
-  "schema": "safeshift-candidate160-cpu-public-index-v1",
-  "scope": "SYNTHETIC_CPU_ONLY; no private data, weights, GPU or real behavior result",
-  "source_sha256": "471236817cb5723e73c06c186ede72208226c02f3c9bbd13ee6cc1ab193aae23"
+  "review_ref": "https://github.com/tantdna2/SafeShift/pull/152#issuecomment-6501983735",
+  "reviewed_head": "65da8a3dfd19c7f61b3e1a48465d1db7c97bdaac",
+  "runtime_ref": "820200bba7c6f5796961acb64befef0c651772b3",
+  "schema": "safeshift-candidate160-cpu-public-index-v2",
+  "scope": "FRESH_POST_REVIEW_SYNTHETIC_CPU_ONLY; no private data, weights, GPU or real behavior result",
+  "source_sha256": "3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e"
 }
