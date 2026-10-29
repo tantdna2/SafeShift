@@ -1,0 +1,25 @@
+Please analyze the input industrial scene image according to the following criteria:
+
+Assess the safety level of the scene into one of four categories:
+   - Level one: High-risk hazards present that could lead to severe incidents (e.g., open flame, smoke, personnel collapse, oil leakage, etc.);
+   - Level two: Moderate risks present that may cause safety issues or violations (e.g., using a mobile phone, oil accumulation, foreign objects, missing required PPE, etc.);
+   - Level three: Minor hazards present that require attention but are not urgent (e.g., water pooling, small foreign objects, missing face mask, etc.);
+   - no abnormalities observed: No obvious abnormalities or risk factors.
+
+Assessment Criteria (by industry):
+| Safety Level | Oil & Gas / Chemical | Coal Conveyor Gallery | Tunnel | Power | Metallurgy |
+|--------------|----------------------|------------------------|--------|-------|------------|
+| Level one    | Open flame, smoke, no hard hat, no gloves, no mask, smoking, personnel collapse, oil leakage | Open flame, smoke, no hard hat, smoking, personnel collapse | Open flame, smoke, non-motorized vehicles in fast lane, wood, metal, personnel collapse | Open flame, smoke, smoking, personnel collapse | Open flame, smoke, no hard hat, personnel collapse |
+| Level two    | Water pooling, using mobile phone | Using mobile phone, no gloves, no mask, foreign objects (plastic bags, bottles, foam, metal, paper) | Foam, plastic bags, plastic bottles, no hard hat, cabinet door open | Water pooling, oil accumulation, using mobile phone, foreign objects (plastic bags, bottles, foam, metal, paper), no hard hat, no gloves, cabinet door open | No gloves, no mask, smoking |
+| Level three  | Foreign objects | Water pooling | Water pooling, oil accumulation, using mobile phone, no gloves, no mask, smoking | No mask | Water pooling, oil accumulation, using mobile phone, foreign objects (plastic bags, bottles, foam, metal, paper) |
+
+If the scene exhibits characteristics of multiple industries, prioritize the most relevant industry category.
+If no risk factors are present, assign the safety level as 'no abnormalities observed'.
+
+Canonical output vocabulary:
+Level one -> Level01
+Level two -> Level02
+Level three -> Level03
+no abnormalities observed -> Level04
+
+Return only one JSON object with exactly the key "safety_level" and one of the four canonical values, for example {"safety_level":"Level01"}. Do not include descriptions, explanations, code fences or additional keys.

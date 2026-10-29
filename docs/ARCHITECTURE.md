@@ -167,3 +167,50 @@ Sau đó chỉ đọc `schema.py`/`validation.py` + `test_schema.py` cho task re
 `test_demo.py` cho task demo. Task bằng chứng đọc `RESULTS_AND_LIMITATIONS.md`
 rồi đúng nguồn commit được dẫn. Không nạp toàn bộ 693 file, không phục hồi mã
 cũ hàng loạt và không gọi công cụ khác để tự mở rộng thẩm quyền thực nghiệm.
+
+## Ba VLM TRAIN pilot v1 — code PREP (27/10/2026)
+
+Phần Foundation/inventory phía trên mô tả phạm vi nền trước task pilot. Gói mới
+`safeshift/pilot/` có chức năng được Owner giao trong cùng Draft PR; chưa có
+execution release hoặc kết quả thật. Không thay API/metrics Foundation hay M2.
+
+| Module / script | Trách nhiệm |
+| --- | --- |
+| `pilot/contract.py`, `manifest.py` | Model/config/authority/source binding; đúng master TRAIN, selector xác định, input discovery/validation; không có dataset read khi import. |
+| `pilot/backend.py` | Ba native adapters; preflight trước weights, audited Phi code, single-T4 FP16/eager; không synthetic prediction backend production. |
+| `pilot/phi_attention.py`, `phi_inputs.py` | Phi 4.43.3: config eager sau deserialize, CLIP scope và reviewed-class `from_pretrained` dùng chung CPU meta/worker; tránh AutoModel re-exec reset CLIP. CPU native synthetic processor 16 crops/token/grid/mask/dtype và Hub checkpoint metadata trước ledger. Giữ strict eager; không weights/CUDA/forward tại gate CPU. |
+| `pilot/smol.py` | Smol 4.51.3: source hashes, native `from_pretrained` meta/worker, 24+27 explicit eager và cached flags; native processor/token/mask/context checks dùng chung; source-only Hub revision/inventory/LFS CPU admission. |
+| `pilot/output_diagnostics.py`, `scripts/diagnose_pilot_outputs.py` | Mô tả lặp chuỗi raw/JSON/EOS/max64 từ evidence; verify ZIP/sidecar và SHA. Không threshold/stop gate, cứu nhãn hoặc thay metric. |
+| `pilot/diagnostics.py` | Event start/pass/failure theo stage/subcomponent, config/class cụ thể, traceback giới hạn/redacted, RAM/cgroup; giữ lỗi constructor trước khi backend object tồn tại. |
+| `pilot/artifacts.py`, `hnlo.py` | Exclusive durable raw/partial archive/resume; model-specific token branch/actual decision proof, independent decoder và numeric oracle. |
+| `pilot/runner.py`, `bootstrap.py` | Kernel stdlib chọn CPython Linux 3.12/3.11; tạo venv không pip, bootstrap wheel pip đã khóa hash vào đúng target, kiểm pins/CPU ABI và receipt `nvidia-smi` trước consumption; worker khóa executable/prefix, sau đó CUDA/model/first12; dừng lỗi; PILOT không promote FULL. |
+| `pilot/report.py` | Exact planned-ID accounting, classification + HNLO coverage, domain/supplement tách riêng; thresholds đề xuất chưa duyệt. |
+| `scripts/prepare_three_vlm_pilot.py`, `export_pilot_qwen_verified.py` | CPU preparation và optional original-V4 exporter, mỗi phần cần data/artifact grant riêng trước đọc. |
+| `scripts/report_three_vlm_pilot.py`, `build_three_vlm_notebooks.py` | Hash/replay/exact join archives; reproducible embedded-source notebook generation. |
+| `SafeShift_ENVIRONMENT_PREFLIGHT_{phi,smolvlm2}.ipynb` | Cùng runtime qualification production nhưng không grant/data/GPU/weights/attempt; receipt ở working, venv/cache/temp ở scratch. |
+
+Model/data imports nặng nằm sau authorization; package/test CPU mặc định vẫn chỉ
+standard library. Các công cụ public source/tokenizer audit dùng dependencies
+riêng, không weights. Đọc [runbook](KAGGLE_THREE_VLM_PILOT.md),
+[source/CPU audit](THREE_VLM_TECHNICAL_AUDIT.md) và `tests/test_pilot.py` trước sửa
+gói này; không đọc lại toàn lịch sử hoặc chuyển grant cũ. Review/audit độc lập,
+real TRAIN preparation, model access/native T4/Phi ABI, real HNLO/quality và
+FULL TRAIN đều có gate riêng, hiện chưa được thực nghiệm.
+
+Issue #143 bổ sung [nghiệm thu Phi end-to-end](PHI_KAGGLE_END_TO_END_143.md):
+real-loader a4/a5 reproduction và native generation pipeline với scripted logits
+CPU, không model inference. Logs lớn xuất tail có hash/coverage tường minh;
+raw không truncate. Bằng chứng phần mềm không chứng minh T4 fit/HNLO thực tế.
+
+Kaggle notebook kernel có thể là Python 3.13; nó không được dùng làm worker.
+Supervisor probe candidate bằng chính tiến trình đó, yêu cầu CPython Linux x86_64
+3.11/3.12 cùng module stdlib thiết yếu (`ensurepip` chỉ được quan sát), rồi tạo
+`venv --without-pip --copies`. Supervisor pip hỗ trợ `--python` cài local wheel
+pip 25.0.1 đã khóa URL/size/SHA vào target; worker tự kiểm version/path/prefix.
+Requirements phải khớp `runtime_versions.json`; pip check/freeze và CPU native op chạy trước ledger.
+Pilot còn ghi receipt `nvidia-smi` PASS trước ledger, bind receipt hash; lỗi GPU
+hoặc ghi receipt giữ BLOCKED không tiêu thụ attempt. Hai notebook environment
+preflight vẫn chỉ chạy CPU; CUDA FP16 thật được kiểm trong worker sau ledger.
+Worker kiểm lại `sys.executable`, `sys.prefix`, version và mọi site-packages để
+ngăn rò thư viện kernel. Không candidate hợp lệ thì lưu BLOCKED receipt, không
+fallback 3.13 hoặc tự build/download Python.

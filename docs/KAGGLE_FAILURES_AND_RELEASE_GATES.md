@@ -61,10 +61,10 @@ chỉ vì đường dẫn/receipt tồn tại trong tài liệu này.
 
 ## Một command CPU, dùng lại hệ thống hiện có
 
-Từ repository root của PR #137, với commit runtime đã fetch và review:
+Từ repository root của PR #137 sau tích hợp, PowerShell/bash lấy full SHA HEAD (review theo đúng commit; output phải mới):
 
 ```console
-python -B -m scripts.check_notebook_release --runtime-ref 67fc1ffc9519e068072644e0f891932fed28f463 --output data/processed/release_gate_20261029/final_v2.json
+python -B -m scripts.check_notebook_release --runtime-ref $(git rev-parse HEAD) --output data/processed/release_gate_20261029/integrated.json
 ```
 
 Command xuất Git snapshot vào thư mục tạm, chạy chính
@@ -89,7 +89,7 @@ hash-lock, pinned env, đúng scope trước khi chạy. Không biến chúng th
 runner mới. G5 chỉ là thiết kế trong PR này, không cài early behavior stop vào six
 released notebooks hoặc đổi frozen thresholds. Issue #147 không được tự khép.
 
-## Kiểm thực chạy tại #137, 29/10/2026
+## Kết quả trước tích hợp, HEAD 68b875b, 29/10/2026
 
 Windows / CPython 3.11.9: branch suite **68 PASS**, gồm 17 tests wrapper mới;
 exact main snapshot suite **211 discovered = 192 PASS + 19 SKIP, 0 failures/errors**.
@@ -109,15 +109,19 @@ Các lượt phát triển wrapper trước receipt này có lỗi encoding/thi�
 trong Git export, đã sửa ở wrapper, không sửa runtime hoặc che thành PASS; chúng
 không là Kaggle attempts. Không đưa các local logs vào Git.
 
-## Chặn tích hợp và bàn giao
+## Tích hợp main và bàn giao
 
-PR #137 vẫn dựa BASE `28fdf82512577f2ed0fb435fb2c12b88e82baf2f`; main đã là
-`67fc1ffc9519e068072644e0f891932fed28f463`. `git merge-tree --write-tree --messages`
-phát hiện conflict `docs/PROJECT_STATE.md`; chưa merge/rebase/force-push. Dùng
-explicit runtime SHA ở command để kiểm source main có thật, không giả pipeline
-có sẵn trên branch cũ. Cần quyền hợp nhất main **không rewrite lịch sử**, đối soát
-state cả hai phía, rồi chạy lại suite/receipt trên integrated HEAD trước release.
-Conflict này và native/GPU gaps là blocker merge/release, không được dấu bằng CODE_PASS.
+[ChatGPT 29/10](https://github.com/tantdna2/SafeShift/pull/137#issuecomment-6487634755)
+đã cho phép merge `origin/main` (`67fc1ffc9519e068072644e0f891932fed28f463`)
+vào đúng branch #137 bằng merge commit. Chỉ conflict `docs/PROJECT_STATE.md`,
+đã reconcile facts #138–#146/bundle/Phi a6/Smol a2 và thesis PROPOSED; không
+rebase/force-push hoặc merge PR vào main. BASE/merge-base mới là main trên;
+BASE gốc `28fdf82512577f2ed0fb435fb2c12b88e82baf2f` giữ trong lịch sử PR.
+Kết quả trước tích hợp ở mục trên chỉ là receipt lịch sử. Phải chạy toàn suite
+và command trên **chính integrated commit**; HEAD/merge parents/test counts và
+receipt SHA ghi PR body để tránh self-referencing commit. PR phải chỉ có năm
+paths được duyệt so latest main; protected science/runtime/notebooks giống main.
+Native/GPU gaps vẫn chặn release, không được che bằng CODE_PASS.
 
 Kết quả thực chạy, SHA và inventory cuối ghi ở PR body. ChatGPT kiểm GitHub HEAD/diff,
 sau đó kiểm toán khoa học độc lập **và code gate mới** trước bất kỳ merge. Kế hoạch
