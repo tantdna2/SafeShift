@@ -5,17 +5,19 @@ BASE: `1488dcb5212164e2946a15055d1da6e8be9096d2`. **RESEARCH ONLY / PROPOSED / S
 
 ## 1. Kết luận để review
 
-Đề xuất **ba ứng viên để kiểm chứng tiếp**, theo thứ tự:
+**Cập nhật R1/R2 theo [review ChatGPT trên PR #149](https://github.com/tantdna2/SafeShift/pull/149#issuecomment-6488880467), sau HEAD `a970fa8d451ac7005f632616272d1690ff7c7b11`.** Review yêu cầu bổ sung căn cứ lựa chọn; chưa có merge/science/GPU approval.
 
-1. **`OpenGVLab/InternVL3_5-4B-Instruct`** — ưu tiên cân bằng độ phân giải, khả năng instruction và chi phí tham số; đường attention không FA2 có trong source.
-2. **`openbmb/MiniCPM-V-4`** — backbone MiniCPM4, xử lý ảnh theo slices, bộ nhớ tham số thấp hơn; phải kiểm chặt wrapper, processor và generation mặc định.
-3. **`llava-hf/llava-onevision-qwen2-7b-ov-hf`** — bản tích hợp Transformers của LLaVA-OneVision, checkpoint FP16 và đường processor chuẩn; cần model sharding thật trên hai T4.
+Đề xuất **hai ưu tiên kiểm chứng**, để trống vị trí thứ ba:
 
-Đây là **thứ tự ưu tiên nghiên cứu**, không xếp hạng accuracy đã đo và không đổi roster. **Số ứng viên mới qualified cho thực nghiệm hiện tại: 0/3**. Strict C1 behavior, nhận đúng nguy cơ nhỏ, hiệu quả kiểm tra chéo và T4 end-to-end của cả ba đều **UNVERIFIED**; quyền chạy mới **BLOCKED**. Không có căn cứ để ghi READY hoặc đảm bảo đủ bốn thành viên. Nếu các ứng viên không vượt G0–G6/P1–P4 thì báo thiếu thành viên; không tự đưa ứng viên dự bị vào chạy.
+1. **`OpenGVLab/InternVL3_5-4B-HF`**, revision `6bd4487402110ef9889ba50eb7aefeb302526fed` — ưu tiên đầu cho **CPU qualification tương lai**, thay ưu tiên custom `-Instruct` trong báo cáo trước. Native model/processor giảm code nạp động và tiền xử lý thủ công; đây là checkpoint khác giai đoạn huấn luyện, **không phải bản tương đương đã chứng minh**. So sánh đầy đủ ở §7.1.
+2. **`openbmb/MiniCPM-V-4`**, revision `6f69a8235885be89608f3a71ffd40695b379e1e7` — giữ ưu tiên 2; slices/backbone MiniCPM4 và dung lượng tham số có triển vọng, wrapper/generation/raw custody vẫn cần kiểm.
+3. **VACANT / chưa đề xuất checkpoint.** Rút LLaVA khỏi vị trí ưu tiên 3. LLaVA (C03) và Idefics3/Llama3 (C04) vẫn là hai đối tượng so sánh có căn cứ, không được tự động chạy. LLaVA thuận lợi hơn về FP16/KV/bộ nhớ; Idefics3 mở giả thuyết bổ sung khác lineage nhưng có thêm rủi ro license/instruction/BF16. Chưa đủ bằng chứng để nhận chi phí hai T4 cho một trong hai thay vì giữ slot trống (§7.3).
+
+Đây là **thứ tự ưu tiên nghiên cứu**, không accuracy ranking, official roster hoặc grant CPU/native mới. **Số ứng viên mới qualified cho thực nghiệm: 0**. C1 behavior, hazard nhỏ, peer utility, T4 end-to-end và HNLO của hai ưu tiên đều **UNVERIFIED**; execution **BLOCKED**. Để trống slot không phê duyệt hệ ba model: thiết kế bốn peers vẫn thiếu thành viên, không được tuyên bố READY hoặc tự chuyển sang phương pháp khác.
 
 Qwen3 vẫn là mô hình mốc được Owner đặt trong phạm vi. Trong thiết kế được đề xuất, nó cũng phải được đánh giá độc lập và luân phiên làm focal như ba peers; bằng chứng HNLO lịch sử không miễn qualification C1/cost/cohort mới. Không thay Qwen3 bằng Qwen3.5.
 
-**VERIFIED — thẩm quyền:** [PR #137 đã merge](https://github.com/tantdna2/SafeShift/pull/137), đúng BASE trên và [biên bản ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/137#issuecomment-6488172066). Cập nhật đầu Issue #148 cho phép public research/metadata/CPU không weights, thay dòng ON HOLD cũ **chỉ trong phạm vi này**. O1–O8/T0 và O3 final roster vẫn pending; [#147](https://github.com/tantdna2/SafeShift/issues/147) còn OPEN, không thuộc task sửa lỗi này.
+**VERIFIED — thẩm quyền:** [PR #137 đã merge](https://github.com/tantdna2/SafeShift/pull/137), đúng BASE trên và [biên bản ChatGPT hậu merge](https://github.com/tantdna2/SafeShift/pull/137#issuecomment-6488172066). Cập nhật đầu Issue #148 cho phép public research/metadata/CPU không weights, thay dòng ON HOLD cũ **chỉ trong phạm vi này**. O1–O8/T0 và O3 final roster vẫn pending; [#147](https://github.com/tantdna2/SafeShift/issues/147) còn OPEN khi kiểm scope gốc, không thuộc task sửa lỗi này.
 
 ## 2. Cách đọc bằng chứng và phạm vi tìm kiếm
 
@@ -41,7 +43,7 @@ Nhật ký tìm kiếm thực hiện ngày trên; đây là truy vấn khám ph�
 | `site.nvidia.com T4 tensor core GPU 16 GB 70 W FP16`; `site.github.com/Dao-AILab/flash-attention Turing T4 Ampere` | Đối chiếu giới hạn phần cứng và attention với nguồn chính thức. |
 | `site.pytorch.org scaled_dot_product_attention backend math float16`; `site.huggingface.co/docs/transformers idefics3 transformers 4.51.3` | Phân biệt SDPA API, CUDA kernel và mức kiểm chứng FP16. |
 | GET `https://huggingface.co/api/models/{model_id}?blobs=true` | Resolve 12 ứng viên + Qwen3 mốc; lấy SHA, gating, inventory, số tham số/dtype/LFS metadata. Không lấy tensor bytes. |
-| GET `/resolve/{full_sha}/{allowlisted_file}` | Đọc card/config/generation/processor/tokenizer metadata, source `.py` như văn bản, weight **index JSON**; thêm 9 file tokenizer cho shortlist. |
+| GET `/resolve/{full_sha}/{allowlisted_file}` | Đọc card/config/generation/processor/tokenizer metadata, source `.py` như văn bản, weight **index JSON**; thêm 9 file tokenizer cho ba ưu tiên ở bản trước review. |
 
 Không gọi inference API, import remote model code, `from_pretrained`, tải weights, mở ảnh/GT/TEST hay artifact riêng. PDF/figures/S3 công khai là tài liệu bài báo, không phải đọc TEST records. Không tạo notebook, grant, annotation hoặc package/runtime mới.
 
@@ -106,7 +108,7 @@ C1 bytes tại BASE có SHA-256 **`816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2
 
 **VERIFIED ở mức metadata:** 12 candidate IDs dưới đây resolve bằng API, tất cả public (`private=false`); chỉ Gemma `gated=manual`, các model khác `gated=false`. Card/config ở full revision được đọc qua anonymous GET. “Open access” ở đây không phải đã download/hash weights hoặc xác nhận quyền tài khoản Kaggle. Giấy phép là **khai báo publisher**, không chứng nhận pháp lý cho mọi downstream use.
 
-Link tên model trỏ vào **card đúng revision**, tab Files dùng cùng SHA; file cụ thể và hash shortlist ở §10. Tên không rút gọn khi triển khai.
+Longlist C01–C12 bên dưới là tập gốc; R1 thêm so sánh biến thể C01-HF ở §7.1. Link tên model trỏ vào **card đúng revision**, tab Files dùng cùng SHA; file cụ thể và hashes ở §10. Tên không rút gọn khi triển khai.
 
 | ID | Checkpoint chính xác / nguồn sơ cấp | Full revision | License khai báo / access |
 | --- | --- | --- | --- |
@@ -123,6 +125,8 @@ Link tên model trỏ vào **card đúng revision**, tab Files dùng cùng SHA; 
 | C11 | [Qwen/Qwen3.5-4B][m11] | `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a` | Apache-2.0; public. Kiến trúc hybrid mới; không thay Qwen3 mốc. |
 | C12 | [openbmb/MiniCPM-V-4.6][m12] | `36f34a661a4bd35d0dc2294cb044d2584646c7d3` | Apache-2.0; public; Instruct, khác checkpoint Thinking. |
 
+**Phạm vi R1 bổ sung:** C01–C12 giữ định danh longlist gốc, không đánh số lại. C01-HF là biến thể implementation/checkpoint được so riêng ở §7.1; bản custom không hậu tố chỉ là mốc provenance. Shortlist hiện chỉ C01-HF/C02, không còn ba ưu tiên cũ.
+
 **Q3 mốc, không tính vào 12:** [Qwen/Qwen3-VL-8B-Instruct][q3], public Apache-2.0, revision public quan sát `0c351dd01ed87e9c1b53cbc748cba10e6187ff3b`. Đây là inventory observation, **không cập nhật source lock/run lịch sử**; equivalence với historical Q3 release phải đối chiếu riêng trước run mới.
 
 C03 có nguồn [tác giả](https://github.com/LLaVA-VL/LLaVA-NeXT), [checkpoint gốc](https://huggingface.co/lmms-lab/llava-onevision-qwen2-7b-ov) và [tài liệu tích hợp chính thức Transformers 4.51.3](https://huggingface.co/docs/transformers/v4.51.3/en/model_doc/llava_onevision). Card HF có đoạn copy từ `si` và metadata mô tả BF16, trong khi checkpoint được chọn là `ov-hf`, tensor metadata F16. Dùng exact artifact identity, không suy hai bản byte-equivalent; conversion parity **UNVERIFIED**.
@@ -135,10 +139,10 @@ C03 có nguồn [tác giả](https://github.com/LLaVA-VL/LLaVA-NeXT), [checkpoin
 
 | ID | Vision / chi tiết nhỏ / nhận ngành — cơ sở triển vọng, chưa hiệu quả thật | C1 và phân loại độc lập | Kiểm tra chéo / HNLO riêng | Quyết định nghiên cứu |
 | --- | --- | --- | --- | --- |
-| C01 | InternViT-300M + Qwen3; 448-pixel tiles, max 12 + thumbnail; 256 visual tokens/tile. Giữ global context cùng local views, nhưng seams/resize và instruction ngành còn phải kiểm. | **UNVERIFIED**; Instruct có đường hỏi ảnh, không cần thêm Thinking prompt. Native conversation khác tokenizer template. | Peers **UNVERIFIED**, có Qwen lineage chung với Q3; HNLO **UNVERIFIED**, logits interface không chứng minh alignment. | Ưu tiên 1, conditional. |
+| C01 | InternViT-300M + Qwen3; 448-pixel tiles, max 12 + thumbnail; 256 visual tokens/tile. Giữ global context cùng local views, nhưng seams/resize và instruction ngành còn phải kiểm. | **UNVERIFIED**; Instruct có đường hỏi ảnh, không cần thêm Thinking prompt. Native conversation khác tokenizer template. | Peers **UNVERIFIED**, có Qwen lineage chung với Q3; HNLO **UNVERIFIED**, logits interface không chứng minh alignment. | Không còn ưu tiên 1; so với C01-HF tại §7.1. |
 | C02 | SigLIP2 + MiniCPM4; 448 scale, tối đa 9 slices, 64 image features/slice trong config. Nén hiệu quả có thể mất chi tiết PPE. | **UNVERIFIED**; có image chat, nhưng wrapper tự đổi sampling/beam settings và xử lý text cuối. | Peers **UNVERIFIED**; backbone khác không bảo đảm lỗi độc lập; HNLO **UNVERIFIED**, raw-token custody cần đường native. | Ưu tiên 2, conditional. |
-| C03 | SigLIP SO400M + Qwen2; 384 patches, `anyres_max_9`; giữ nhiều local views nhưng phải kiểm image-token grid/unpadding. | **UNVERIFIED**; instruction model và native HF generation; không áp ví dụ decode cắt cứng 2 tokens trong README. | Peers **UNVERIFIED**; Qwen2 chung lineage; HNLO **UNVERIFIED** dù có standard logits. | Ưu tiên 3, conditional, hai GPU. |
-| C04 | SigLIP + Llama-3.1; longest edge 1456, tiles 364,169 tokens/tile. OCR/VQA có nguồn, không chứng minh hazard. | **UNVERIFIED**; card cảnh báo SFT-only có thể cần prompt iterations; các iterations/prefix gợi ý **không được áp vào C1**. | Peers/HNLO **UNVERIFIED**; architecture liên quan Smol, không suy cùng outcome. | Chưa shortlist: nặng hơn C03, instruction/parent-license questions chưa khép; không FAIL toàn model. |
+| C03 | SigLIP SO400M + Qwen2; 384 patches, `anyres_max_9`; giữ nhiều local views nhưng phải kiểm image-token grid/unpadding. | **UNVERIFIED**; instruction model và native HF generation; không áp ví dụ decode cắt cứng 2 tokens trong README. | Peers **UNVERIFIED**; Qwen2 chung lineage; HNLO **UNVERIFIED** dù có standard logits. | Đã rút ưu tiên 3; comparator với C04, slot VACANT (§7.3). |
+| C04 | SigLIP + Llama-3.1; longest edge 1456, tiles 364,169 tokens/tile. OCR/VQA có nguồn, không chứng minh hazard. | **UNVERIFIED**; card cảnh báo SFT-only có thể cần prompt iterations; các iterations/prefix gợi ý **không được áp vào C1**. | Peers/HNLO **UNVERIFIED**; architecture liên quan Smol, không suy cùng outcome. | Comparator non-Qwen chính với C03; chưa shortlist, không FAIL toàn model (§7.3). |
 | C05 | Qwen3-8B + SigLIP2, slices/64-query resampler; card hỗ trợ ảnh high-res và mode thinking tùy chọn. | **UNVERIFIED**; muốn fast mode phải khóa explicit flag/template, không strip reasoning để cứu JSON. | Peers/HNLO **UNVERIFIED**; Qwen3 backbone không chứng minh thêm thông tin cho Q3. | Chưa shortlist: 16,197 GiB FP16 chỉ tham số, custom multi-GPU + mode tăng rủi ro so C02. |
 | C06 | CLIP + Qwen2; native 336 crop, `max_crops=12`; PixMo visual grounding là triển vọng, không ground-truth an toàn. | **UNVERIFIED**; custom `processor.process`/`generate_from_batch`, không lấy pointing làm C1. | Peers/HNLO **UNVERIFIED**; FP32→FP16 equivalence chưa kiểm. | Chưa shortlist: FP32 weights 32,084 GB; card kiểm FP32/autocast BF16, không bằng chứng T4 FP16 tương ứng. |
 | C07 | Dynamic-resolution Qwen2.5 vision, 14 patch / merge 2; high-res có thể tăng activation rất mạnh. | **FAIL trong setting lịch sử được dẫn:** nhãn báo hazard cho toàn 3.014 Normal; C1 thesis mới **UNVERIFIED**. Không suy HNLO AUROC thành classifier tốt. | HNLO lịch sử có evidence, alignment cho setting mới **UNVERIFIED**; peers chưa chứng minh. | Chưa shortlist: prior behavior + cùng họ Qwen, không dùng để lấp slot. Roster cũ giữ nguyên. |
@@ -167,7 +171,7 @@ Không dùng “nhỏ hơn là yếu”, “lớn hơn là tốt” hoặc “kh
 | C11 | `Qwen3_5ForConditionalGeneration`, `Qwen2Tokenizer`, config trỏ Qwen3VL processor. | Card hướng Transformers source/main; chưa resolve immutable compatible implementation trong task này → **UNVERIFIED**, không dùng stored 4.57 làm pin. |
 | C12 | `MiniCPMV4_6ForConditionalGeneration`, `Qwen2Tokenizer`, `MiniCPMV4_6Processor`. | Card/config yêu cầu Transformers ≥5.7.0. Card cảnh báo torchcodec/CUDA; still-image không tự cần video codec. Python/Torch/CUDA exact tuple **UNVERIFIED**. |
 
-Mọi tokenizer/processor ở bảng mới chỉ được kiểm **source/config**, không chạy native encode/decode/vision processor. Riêng shortlist đã tải và hash vocabulary/tokenizer files không weights (§10); chưa chứng minh tokenization của bốn continuation hoặc JSON valid-rate.
+Mọi tokenizer/processor ở bảng mới chỉ được kiểm **source/config**, không chạy native encode/decode/vision processor. Riêng C01/C02/C03 ở bản trước review đã đọc/hash vocabulary/tokenizer files không weights (§10); chưa chứng minh tokenization của bốn continuation hoặc JSON valid-rate.
 
 ## 6. T4×2: feasibility có điều kiện, không pooled 32 GB
 
@@ -192,41 +196,73 @@ Mọi tokenizer/processor ở bảng mới chỉ được kiểm **source/config
 
 Q3 mốc: 8,767B, khoảng 16,330 GiB parameter-only FP16; không lấy Q3 OOM lịch sử làm bằng chứng tất cả model mới đều fail. Bằng chứng Phi/Smol ở [biên bản a6](https://github.com/tantdna2/SafeShift/pull/144#issuecomment-6480224537) và [a2](https://github.com/tantdna2/SafeShift/pull/146#issuecomment-6485519647) là đọc aggregate, không re-audit private ZIP.
 
-**UNVERIFIED — kế hoạch tài nguyên cho shortlist:** batch một ảnh, từng model tuần tự; không giữ cả bốn model resident. Với C03, cần map contiguous decoder blocks, vision/projector, embeddings/head và input/output transfers theo native modules; đo GPU0/GPU1 độc lập. `device_map="auto"` không đủ: kiểm `hf_device_map`, tránh CPU/disk fallback ngầm, giữ nguyên no-split blocks, finite/logits/image placement. DDP nhân bản model không cộng VRAM. [Accelerate 1.6 big-model inference](https://huggingface.co/docs/accelerate/v1.6.0/en/concept_guides/big_model_inference) hướng dẫn dispatch nhưng không chứng nhận checkpoint này trên Kaggle.
+**UNVERIFIED — kế hoạch tài nguyên cho các phương án:** batch một ảnh, từng model tuần tự; không giữ cả bốn model resident. Với C03, cần map contiguous decoder blocks, vision/projector, embeddings/head và input/output transfers theo native modules; đo GPU0/GPU1 độc lập. `device_map="auto"` không đủ: kiểm `hf_device_map`, tránh CPU/disk fallback ngầm, giữ nguyên no-split blocks, finite/logits/image placement. DDP nhân bản model không cộng VRAM. [Accelerate 1.6 big-model inference](https://huggingface.co/docs/accelerate/v1.6.0/en/concept_guides/big_model_inference) hướng dẫn dispatch nhưng không chứng nhận checkpoint này trên Kaggle.
 
 Điều kiện từng GPU: **weights trên GPU + KV + peak activations + output buffers + allocator margin < free memory thực**. Không ấn định một margin giả trước profiling. Tham số model có số “4B/7B” không gồm đúng cùng thành phần; dùng total ở metadata. T4 Phi từng báo chỉ 14,562 GiB usable, nên không dùng 16 GiB danh nghĩa làm giới hạn chắc chắn.
 
 LFS metadata cho C01/C02/C03 lần lượt khoảng9,465/8,119/16,062 **GB** checkpoint; đây là disk/download dự kiến, không VRAM. RAM phải chứa load staging/offload nếu được duyệt; storage tách immutable evidence khỏi scratch cache, tính cả download bị hỏng và package cache. Không cộng nhầm F32 checkpoint size của Molmo/Smol thành runtime FP16 peak. Quantization/crop reduction/precision fallback chỉ là phương án cần duyệt riêng, không tự dùng để gọi T4 PASS.
 
-**Runtime proposal, không lock mới:** worker CPython 3.11 hoặc 3.12 Linux riêng kernel Kaggle; C01 bắt đầu xem xét Transformers 4.52.1, C02/C03 xem xét4.51.3; tham khảo Torch 2.6.0+cu124/torchvision 0.21.0+cu124/Accelerate 1.6.0/Pillow 10.4.0 của repo. Các tuple này **UNVERIFIED đối với shortlist**, chưa pip-resolve/import/ABI/native rehearsal; timm/einops và dependency transitives chưa có lock. Không công bố “đã xác minh môi trường triển khai” từ bảng này. G2 phải pin đầy đủ, review exact implementation và thử CPU production path trước bất kỳ Kaggle session.
+C01-HF cùng total params/dtype với C01 tại metadata; dùng 8,815 GiB parameter-only, **không** chuyển peak/quality/parity giữa checkpoints.
 
-## 7. Shortlist: bằng chứng, bẫy và điều kiện giữ từng ứng viên
+**Runtime proposal, không lock mới:** worker CPython 3.11 hoặc 3.12 Linux riêng kernel Kaggle; C01 custom xem xét Transformers 4.52.1, **C01-HF xem xét 4.55.4** theo §7.1, C02/C03/C04 xem xét 4.51.3; tham khảo Torch 2.6.0+cu124/torchvision 0.21.0+cu124/Accelerate 1.6.0/Pillow 10.4.0 của repo. Các tuple này **UNVERIFIED đối với shortlist**, chưa pip-resolve/import/ABI/native rehearsal; timm/einops và dependency transitives chưa có lock. Không công bố “đã xác minh môi trường triển khai” từ bảng này. G2 phải pin đầy đủ, review exact implementation và thử CPU production path trước bất kỳ Kaggle session.
 
-### Ưu tiên 1 — InternVL3_5-4B-Instruct (C01)
+## 7. R1/R2: đối chiếu phương án và thứ tự kiểm chứng đã sửa
 
-**VERIFIED:** [config][m1config] có dynamic image, 448/patch 14/downsample 0,5, thumbnail và 12 tiles; phép tính 256 tokens/tile khớp source. Card yêu cầu Transformers ≥4.52.1; source constructor dùng `use_flash_attn=False` để chọn decoder eager và vision non-FA2. Đây là lựa chọn nguồn thuận lợi hơn việc patch attention sau load kiểu Phi a5.
+### 7.1. R1 — ưu tiên InternVL3_5-4B-HF cho CPU qualification, không giả định parity
 
-**UNVERIFIED — lý do ưu tiên:** multiscale input và instruction checkpoint tạo đường đánh giá chi tiết nhỏ/bối cảnh với 8,815 GiB parameter budget; chưa biết khả năng áp Table 3, obey C1 hoặc bổ trợ Q3. Qwen3 backbone chung làm independent-error claim đặc biệt không có căn cứ.
+**VERIFIED — định danh tại 29/10/2026:** cả hai public, `private=false`, `gated=false`, publisher khai Apache-2.0. Chỉ đọc metadata/source; chưa kiểm tensor bytes hoặc cấp quyền dùng weights.
 
-**Điều kiện trước G5:** model dùng `internvl2_5` conversation với system text sẵn có, không phải cứ `tokenizer.apply_chat_template` là tương đương. Metadata tokenizer còn chứa logic thinking; phải audit đúng đường `chat/get_prompt`, giữ C1 nguyên văn, không thêm R1 system prompt. Processor ở pin là recipe RGB/resize/normalize/tile trong README, không bịa `AutoProcessor`. Native CPU cần xác nhận cả 36 decoder và 24 vision layers, token `<IMG_CONTEXT>` ID 151671, tile-count↔256×tiles, mask/device/dtype, input envelope và raw IDs trước decode. 12 tiles + thumbnail không đồng nghĩa cả ảnh giữ nguyên độ phân giải. HNLO là nhánh optional chưa alignment.
+| Phương án | Exact checkpoint / revision | Vai trò sau review |
+| --- | --- | --- |
+| C01, custom đã sàng lọc | [OpenGVLab/InternVL3_5-4B-Instruct][m1] / `a3fd3158be4027880d91ccee80ea8089559e0896` | Giữ trong longlist và receipt lịch sử; không còn ưu tiên 1. |
+| C01-HF, biến thể bổ sung R1 | [OpenGVLab/InternVL3_5-4B-HF][ivlhf] / `6bd4487402110ef9889ba50eb7aefeb302526fed` | Ưu tiên 1 có điều kiện cho qualification CPU tương lai; chưa chạy native. |
 
-### Ưu tiên 2 — MiniCPM-V-4 (C02)
+**Không phải chỉ đổi format:** card chính thức liệt kê `-Instruct` ở CPT + SFT, còn dòng không hậu tố ở CPT + SFT + CascadeRL; metadata HF nêu parent `InternVL3_5-4B-MPO`. Đối chiếu thêm bản custom cùng dòng cuối [`OpenGVLab/InternVL3_5-4B` tại `481f6e32467eab4e922ccd7fd6cf420441a62331`][ivlbase], cũng khai parent MPO. Đây là **VERIFIED publisher provenance claim**, không xác nhận độc lập training/weights. Bản custom không hậu tố chỉ dùng làm mốc truy nguồn, không thêm slot. Không lấy từ “Instruct” làm bằng chứng checkpoint không thể sinh reasoning; tài liệu SFT còn mô tả dữ liệu reasoning.
+
+| Điểm quyết định | Custom `-Instruct` — bằng chứng / giới hạn | HF — bằng chứng / giới hạn |
+| --- | --- | --- |
+| Loader và class | Config `auto_map` trỏ remote `InternVLChatModel`/`InternVisionModel`; phải pin Python, kiểm class provenance/reload như bài học Phi a5. | [Config][ivlhfconfig] là `InternVLForConditionalGeneration`, `model_type=internvl`, không `auto_map`; inventory pin không có model `.py`. Đường native `AutoModelForImageTextToText`/`AutoProcessor` có trong [Transformers source][ivlmodel]. Đề xuất kiểm `trust_remote_code=False`, chưa xác nhận load thành công. |
+| Library/environment | Card ≥4.52.1; manual torchvision/PIL transform, timm/einops và fallback vision phải audit. | Config lưu 4.55.0; card chung vẫn ghi ≥4.52.1 nhưng dẫn docs 4.55.4. Chọn **source 4.55.4 để xét G2**, không coi 4.52.1 là minimum đã chứng minh cho pin này. Native fast image/video processors vẫn cần kiểm torchvision/backend/transitive imports, không đồng nghĩa ít dependency đã cài. |
+| Image preprocessing | README `dynamic_preprocess`: RGB, 448 tiles, tối đa 12 + thumbnail, normalize ImageNet; phải giữ đúng recipe và image-token expansion thủ công. | [Preprocessor][ivlhfpre] dùng `GotOcr2ImageProcessorFast`, 448, RGB, ImageNet, `max_patches=12`. File lưu `crop_to_patches=false`, nhưng [`InternVLProcessor`][ivlprocessor] mặc định truyền **true**. Không gọi image processor riêng rồi suy đã dùng tiling native. [Fast processor][ivlimage] có thumbnail; resize/crop tensors so PIL chưa có pixel parity. |
+| Tokens/template/C1 | Qwen2Tokenizer; `internvl2_5` conversation thêm system text tiếng Trung từ source; tokenizer template không thay được chat path. `<IMG_CONTEXT>` 151671, 256 tokens/tile. | Qwen2Tokenizer + `InternVLProcessor`; [template riêng][ivlhftemplate] dùng roles/image marker, không tự thêm system hoặc thinking. Config/processor/tokenizer khớp 151671 và 256. Processor mở rộng marker theo patch count, bao `<img>…</img>`. Đã kiểm text-stage giữ C1 đúng một lần; chưa native encode/vision. |
+| Generation/raw | `chat` decode rồi split theo separator và `strip()`; raw IDs phải được lưu trước lớp này, không cứu JSON bằng cleanup. | Native `generate` cho đường lấy IDs trực tiếp, slice theo input length và lưu trước decode/parse. Ít wrapper riêng hơn là **suy luận kỹ thuật**, chưa custody PASS. Không thêm Thinking system prompt, examples, grammar forcing hoặc bỏ reasoning để cứu C1. |
+| Attention/T4 | Constructor `use_flash_attn=False` có đường decoder eager/vision non-FA2; dispatch thực chưa kiểm. | Source 4.55.4 có eager/SDPA dispatch cho vision và native text config Qwen3. Đề xuất explicit `attn_implementation="eager"` rồi assert **cả 36 text/24 vision layers**; không copy `use_flash_attn=True`/BF16/A100 từ card. FP16 finite/SDPA kernel trên T4 **UNVERIFIED**. |
+| Bộ nhớ | Hub 4.732.489.216 params BF16 → 8,815 GiB FP16 parameter-only. | Cùng total/dtype khai báo → cũng 8,815 GiB; có triển vọng một T4, không chứng minh peak/fit. Cùng số tham số không chứng minh cùng tensor values. |
+| Weight/inference equivalence | Không tải weights hoặc chạy conversion. | **UNVERIFIED** cả HF↔custom cuối lẫn HF↔`-Instruct`; trường hợp sau còn khác training stage. Không chuyển receipt/qualified status giữa chúng. |
+
+Nguồn implementation đã đọc tại full revisions: Transformers 4.55.4 `d79b2d981f28b2730d402244ac3c2e9a8c054eee`; repo InternVL `2410d1dbf208f0e799459aff9376e5747dbf41a2`. [custom2hf][ivlconvert] đổi keys và tách vision QKV, dùng `strict=False`, rồi so L2 trên keys chung; [hf2custom][ivlconvertback] là chiều ngược. Sự tồn tại của script không là receipt đã chạy cho hai pin đang so, không kiểm preprocessing/prompt/inference parity. Không thực thi các script đó. Card HF còn chứa ví dụ 8B/BF16/custom flags; vì vậy chọn đường dựa trên exact config + versioned source, không copy example nguyên xi.
+
+**Quyết định nghiên cứu — UNVERIFIED readiness:** ưu tiên exact C01-HF nêu trên vì loại được một nhóm rủi ro remote reload, manual tiles và hidden decode cleanup trong adapter dự kiến, trong khi parameter budget không tăng. Đây là **đổi checkpoint ưu tiên trong báo cáo PROPOSED**, không đổi frozen checkpoint hay source lock. Không chọn vì CascadeRL được cho là accuracy/C1 tốt hơn. G2 tiếp theo phải review snapshot/model class, native processor/template, effective crops/patches, image IDs và raw continuation; G5 mới có thể kiểm quality/FP16/VRAM khi có quyền riêng. Nếu template/pixel mapping không giữ được hợp đồng hoặc cần thêm instruction thì dừng `SCIENCE_DECISION_REQUIRED`; không tự chuyển về custom như fallback. Format preference đã nêu rõ, còn qualified format/runtime **PENDING**.
+
+### 7.2. Ưu tiên 2 — MiniCPM-V-4 (C02)
 
 **VERIFIED:** [config][m2config] và [processor][m2processor] khớp 5 trường image-feature-size/patch/use-image-id/max-slices/slice-mode khi kiểm CPU. Native source dùng 64-query resampling, language SDPA và vision eager ở non-FA2 path. Public tokenizer bytes đã hash.
 
-**UNVERIFIED — lý do ưu tiên:**7,561 GiB parameter-only, backbone MiniCPM4 và xử lý slices là phương án khả thi đáng kiểm so C05 lớn hơn; không cho điểm đa dạng kiến trúc như một lợi ích đã đo.
+**UNVERIFIED — lý do ưu tiên:** 7,561 GiB parameter-only, backbone MiniCPM4 và xử lý slices là phương án khả thi đáng kiểm so C05 lớn hơn; không cho điểm đa dạng kiến trúc như một lợi ích đã đo.
 
 **Điều kiện trước G5:** trong [modeling_minicpmv.py][m2code], `chat(processor=None)` gọi `AutoProcessor.from_pretrained(self.config._name_or_path, trust_remote_code=True)` không truyền revision. Native path phải nhận processor từ snapshot đã pin, không vô tình resolve `main`. `sampling=False` mặc định `num_beams=3`, `repetition_penalty=1.2`; không được mặc định nó bằng frozen greedy. API lọc kwargs nên phải kiểm giá trị **thực được dùng**, không chỉ kwargs request. `chat` trả decoded/stripped text; cần lưu raw generated IDs/bytes trước phần xử lý này. Nếu không làm được trong hợp đồng hiện hành, dừng để review adapter/science, không sửa C1. FP16 finite, SDPA dispatch và real compliance đều chưa kiểm.
 
-### Ưu tiên 3 — LLaVA-OneVision-Qwen2-7B-OV-HF (C03)
+### 7.3. R2 — LLaVA vs Idefics3: để trống vị trí thứ ba
 
-**VERIFIED:** [config][m3config] và Hub tensor metadata là F16; native HF model/processor có tài liệu versioned, `anyres_max_9`, RGB conversion, image/video IDs 151646/151647 khớp added tokens. Cơ chế high-res thích hợp để **kiểm tra giả thuyết** về PPE nhỏ, không bằng chứng phát hiện PPE.
+**VERIFIED nguồn / UNVERIFIED utility:** C03 và C04 giữ exact revisions ở §4; cards/config public được đối chiếu lại. C04 là đối thủ non-Qwen mạnh nhất **về khả năng đưa vào so sánh trong longlist này**, không phải đã đo mạnh nhất về hazard: native Transformers, public access, high-resolution và Llama-3.1. MiniCPM4 đã ở slot 2; Phi/Smol có failure chưa khép, Gemma bị 401. Không dùng chúng lấp slot chỉ để khác backbone; Molmo/C05/C07/C11/C12 vẫn Qwen lineage, không giải quyết chính tradeoff R2.
 
-**UNVERIFIED — lý do ưu tiên:** FP16 checkpoint + native Transformers giảm một số rủi ro remote loader/mode so C05/C06; được xếp sau hai 4B vì 14,959 GiB parameter-only buộc giải quyết sharding. C04 cũng native nhưng nặng hơn và không có lợi thế C1 đã chứng minh; không loại C04 chỉ từ tuổi model/benchmark score.
+| Tiêu chí | C03: LLaVA-OneVision-Qwen2-7B-OV-HF | C04: Idefics3-8B-Llama3 | Hệ quả lựa chọn |
+| --- | --- | --- | --- |
+| C1/bốn mức/năm ngành | Instruction model, template native; ví dụ card có cắt cứng `[2:]` phải tránh, dùng actual input length. Chưa validation Table 3/C1. | Card SFT-only cảnh báo đôi khi cần prompt iterations/prefix. Không được áp các sửa prompt đó vào C1; cảnh báo **không là FAIL** trước khi kiểm đúng C1. | Không có evidence hazard classification để cho model nào thắng; JSON syntax và semantic accuracy là hai gate khác nhau. |
+| Chi tiết nguy hiểm nhỏ | SigLIP SO400M, 384 patches, anyres/unpadding; `anyres_max_9` không chứng minh allocation tối đa 9 ở mọi bước. | SigLIP, longest edge 1456, split 364, 169 tokens/tile + global representation; OCR/VQA có cơ sở thiết kế. | Cả hai có cơ chế multiscale, nhưng PPE/phone/glare/occlusion và nhận ngành **UNVERIFIED**; số tiles/tokens không cùng thước đo chất lượng. |
+| Bổ sung cho Q3 | Qwen2 khác thế hệ Qwen3 nhưng cùng lineage; nếu giữ C03 thì 3/4 LMs là Qwen (Q3 + InternVL + LLaVA). | Llama-3.1 tạo giả thuyết về khác prior/instruction behavior; khi dùng C04 chỉ 2/4 LMs là Qwen. | Không suy 3/4 là lỗi tương quan, hoặc 2/4 là cải thiện. C03/C04 cùng SigLIP lineage, cùng ảnh/C1 và khó khăn thị giác; phải đo paired shared errors. |
+| License/access | Card Apache-2.0, public pin; bản HF conversion không được suy byte-equivalent với tác giả. | Card Apache-2.0, public pin, parent Llama-3.1-Instruct. [Giấy phép parent][llama31license] có điều kiện sử dụng/phân phối/attribution; chưa có kết luận áp dụng downstream vào artifact SafeShift cụ thể. | Không gọi C04 bị cấm nghiên cứu hoặc gated chỉ vì parent; cần khép phạm vi license trước release. C03 ít ambiguity hơn trong hồ sơ nguồn hiện có, không là legal clearance. |
+| Weights/VRAM từng T4 | F16, 8,031B → 14,959 GiB parameters; vượt 14,562 GiB usable từng thấy ở T4 pilot, chưa có KV/vision. | BF16, 8,462B → 15,762 GiB FP16 parameters; phải kiểm BF16→FP16 finite. Card có nêu FP16 là lựa chọn, nên không loại vì “chỉ BF16”. | Cả hai cần **model sharding thực**, không DDP/pooling. C03 ít hơn khoảng **0,803 GiB** tham số, chưa chứng minh peak thấp hơn khi native image tokens khác. |
+| KV/cache và chi phí | [Text config][m3config]: 28 layers, 4 KV heads, head dim 128. | [Text config][ideficsconfig]: 32 layers, 8 KV heads, head dim 128. | Với batch 1, 4.096 cached tokens, K+V FP16 thường: C03 **0,21875 GiB**, C04 **0,5 GiB**. Đây là phép tính hình dạng, không profiling; actual vision token count, sharding, output logits/activations còn khác. |
+| Loader/processor/environment | Native `LlavaOnevisionForConditionalGeneration`/`LlavaOnevisionProcessor`, card ≥4.45; source/docs 4.51.3. Exact FP16/sharding chưa chạy. | Native `Idefics3ForConditionalGeneration`/`Idefics3Processor`, card >4.46; [source 4.51.3][ideficsmodel] có eager/SDPA vision. Config còn nested `auto_map` và `_flash_attn_2_enabled=true`; không suy native class tự loại mọi config drift. | Cả hai phải audit text+vision effective attention, no-split blocks, inputs/feature placement và CPU/disk fallback. Native integration có ở **cả hai**, không là lợi thế riêng đủ để chốt C03. |
 
-**Điều kiện trước G5:** khóa exact HF conversion; card có template text và processor multimodal riêng, phải kiểm đường processor thật. Trong README có `output[0][2:]`; không copy offset cố định vì C1 dài khác ví dụ. Phải slice từ prompt length thật, lưu generated IDs nguyên vẹn, kiểm image-token count/patch grid/feature packing và EOS. Không tin `anyres_max_9` nghĩa là mọi bước vision chỉ có 9 crops: config grid có 36 aspect/resolution combinations, encoder/feature packing phải đo actual shapes. Native eager/SDPA, effective attention cả text/vision, cross-device transfer và peak mỗi T4 chưa kiểm. HNLO cũng chưa validated.
+Phép tính KV dùng `2 × layers × KV_heads × head_dim × cached_tokens × 2 bytes / 2^30`; số token 4.096 chỉ để so kích thước ở cùng chiều dài, **không đặt context cap/prompt budget mới**. Khi chia layers, KV đi theo device map, không chia đôi peak một cách máy móc.
 
-**Không ứng viên nào được bypass G2 vì có tên native class, bypass G5 vì CPU PASS, hoặc bypass P3 vì “khác family”.** Nếu một trong ba không thể giữ nguyên C1, slot đó để trống; việc xem lại C04–C12 cần O3/attempt cap, không vòng tìm kiếm vô hạn.
+**Kết luận đã đổi:** C03 có lợi thế vận hành cụ thể (F16, ít tham số/KV hơn, license declaration đơn giản hơn), nên vẫn đáng cân nhắc hơn C04 **nếu mục tiêu chỉ là giảm gánh nặng triển khai**. Nhưng vị trí thứ ba được yêu cầu là một peer phân loại và kiểm tra chéo có ích, không chỉ một loader chạy được. C04 có lợi ích giả thuyết khác lineage nhưng chưa có paired error evidence để bù rủi ro bổ sung. Vì cả hai thêm yêu cầu hai-T4 chưa được rehearsal, báo cáo **rút ưu tiên 3, để VACANT**, không thay bằng C04 chỉ vì Llama. Đây là lựa chọn bảo thủ trước qualification, không kết luận hai model FAIL hay không có ích. Hai ưu tiên đầu giữ triển vọng parameter budget một T4; đó cũng chỉ là cơ sở sàng lọc, chưa là fit/quality PASS.
+
+**Bằng chứng có thể thay đổi quyết định, chưa được chạy:** sau O3/quyền riêng, chọn một comparison sequence hữu hạn trên development mới có quyền, cùng original IDs/C1/input envelope và planned accounting cho Q3, C03/C04 cùng các peers khác nếu đủ điều kiện. So (a) classification từng model: invalid/no-output, Normal false alarms, hazard false-safe/severe errors và support theo ngành/mức; (b) Q3 sai–candidate đúng, Q3 đúng–candidate sai, cả hai sai, nhất là shared false-safe; (c) leave-one-out ở từng focal và fusion/review ở **cùng full compute/review budget**. Ghi latency, peak GPU0/GPU1, failed calls và coverage. Không chỉ đếm disagreement hoặc output label diversity. Rule/threshold/uncertainty/source units phải được duyệt trước outputs; không dùng TEST/TRAIN lộ để chọn winner. Nếu không có utility đủ theo tiêu chí đã duyệt thì slot tiếp tục trống. HNLO là nhánh optional, không tie-break tự động.
+
+**Không candidate nào được bypass G2/G5/P3.** Bảng so sánh không cấp quyền chạy C03 lẫn C04, mở model zoo hoặc tự giảm thiết kế bốn peers.
 
 ## 8. Học từng failure Phi, Smol, Gemma trước khi tốn Kaggle
 
@@ -269,7 +305,7 @@ Thiết kế A là **bản đề xuất cũ** Qwen3 fixed + tối đa một auxi
 ### 9.2. Bằng chứng cần có cho từng tầng, chưa được chạy
 
 1. **Independent classification:** cùng original IDs và planned ledger, C1/raw/config nguyên vẹn; báo 4×5 confusion, valid/INVALID/no-output/technical error/not-attempted, support/coverage, false-safe và severe errors theo domain/level. Các metric Macro-F1/BA/FPR/FNR cần đúng O2/frozen definitions, không tự biến đề xuất thành metric production. So trên toàn planned cohort và common evaluable IDs, không giấu failures bằng complete-case riêng từng model.
-2. **Peer checking:** mỗi model làm focal một lượt, ba model khác là peers. Đếm lỗi focal được peers phát hiện thêm, focal đúng nhưng bị phản đối, shared mistakes và missed errors; báo mẫu số khi peers thiếu/INVALID. Disagreement chỉ tín hiệu, không là GT. Kiểm binary/ordinal và leave-one-out nếu được duyệt; chưa có paired predictions thì complementary utility của **từng** C01/C02/C03 vẫn UNVERIFIED.
+2. **Peer checking:** mỗi model làm focal một lượt, ba model khác là peers. Đếm lỗi focal được peers phát hiện thêm, focal đúng nhưng bị phản đối, shared mistakes và missed errors; báo mẫu số khi peers thiếu/INVALID. Disagreement chỉ tín hiệu, không là GT. Kiểm binary/ordinal và leave-one-out nếu được duyệt; chưa có paired predictions thì complementary utility của **từng** C01-HF/C02 và comparators C03/C04 vẫn UNVERIFIED.
 3. **Fusion khác review triage:** so rule hợp nhất được phê duyệt với strongest single chọn trên development, có abstain/missing policy khóa trước; review capture so ở cùng ngân sách và full model cost. Một model làm triage tốt nhưng classifier yếu không tự đủ tiêu chí slot ngang hàng. Nếu ensemble thua single hoặc chi phí không đáng, giữ kết quả âm; không đổi primary sang review hậu nghiệm.
 
 Bốn focal, nhiều domains và ablations tăng multiple testing. O2/O5 phải định primary/secondary, correction/CI, independent sampling unit, source clusters và thiếu support trước target. Không tự coi frame độc lập, tự đặt thresholds/counts hoặc dùng TRAIN lộ/TEST làm target. D/V/T/U và expert labels theo O4, còn **BLOCKED**. Selection protocol khóa development-only trước target; reviewer có quyền kiểm GT nhưng model không nhận GT hay nhãn của peers trong lượt independent.
@@ -282,13 +318,13 @@ Không trung bình raw logits/HNLO khác tokenizer, không lấy self-reported c
 
 ## 10. Kiểm CPU đã làm và bằng chứng tái kiểm công khai
 
-**VERIFIED — thực chạy:** Windows, CPython 3.11.9; stdlib urllib/JSON/AST/SHA-256 và Jinja2 3.1.6. Không Torch/Transformers/tokenizers được cài trong interpreter này; không cài thêm. Thu 13 Hub metadata records; 114 allowlisted source/config/card files HTTP200,7 HTTP401 Gemma; thêm 9 tokenizer files shortlist HTTP200. Hash kiểm lại **123/123 file đã tải**, parse **69 JSON**, AST syntax **27 `.py`** không import. Đây không phải full source security review hay native load.
+**VERIFIED — Codex-reported local execution ở bản trước review, không độc lập/CI:** Windows, CPython 3.11.9; stdlib urllib/JSON/AST/SHA-256 và Jinja2 3.1.6. Không Torch/Transformers/tokenizers được cài trong interpreter này; không cài thêm. Thu 13 Hub metadata records; 114 allowlisted source/config/card files HTTP200,7 HTTP401 Gemma; thêm 9 tokenizer files C01/C02/C03 HTTP200. Hash kiểm lại **123/123 file đã tải**, parse **69 JSON**, AST syntax **27 `.py`** không import. Đây không phải full source security review hay native load.
 
 Kiểm nhất quán C02 config–processor **5/5**; C01 image tokens/tile256 và `<IMG_CONTEXT>`151671; C03 image/video token IDs 151646/151647. Render Jinja **text-stage** của C02/C03 giữ C1 nguyên văn đúng 1 lần trong wrapper tổng hợp; chưa chạy tokenizer hay native multimodal processor, nên không xác nhận full rendered prompt/image tokens/runtime. Không dùng Jinja tokenizer template của C01 thay native conversation.
 
-Local research files ở `data/processed/issue148_public/` (ignored), chỉ nguồn công khai/receipts/script kiểm một lần; không commit upstream source hoặc PDF. Receipt SHA-256: metadata/source `6217b41f719f3dbed40bfaec8f46e7ce8acb7c9e37cef77ec2ccdc53693b9328`; tokenizer `4b41baabb790b0ab565795d80dbf17d1f154635ae6e639756f2067372cd30ed2`; CPU `a2936516a910b7a772ba3013086ed1c7950dbf7519fff1c5abead92e0312efd4`. Các hash local chỉ xác định receipt, không yêu cầu reviewer tin file không có trên GitHub; nguồn pinned và các kết quả cốt lõi nằm ngay báo cáo.
+Local research files ở `data/processed/issue148_public/` (ignored), chỉ nguồn công khai/receipts/script kiểm một lần; không commit upstream source hoặc PDF. Receipt SHA-256: metadata/source `6217b41f719f3dbed40bfaec8f46e7ce8acb7c9e37cef77ec2ccdc53693b9328`; tokenizer `4b41baabb790b0ab565795d80dbf17d1f154635ae6e639756f2067372cd30ed2`; CPU `a2936516a910b7a772ba3013086ed1c7950dbf7519fff1c5abead92e0312efd4`. Các hash local chỉ xác định receipt; ChatGPT không có các receipt ignored này để xác minh độc lập 123 checks. Không gọi chúng là independent audit/CI. Nguồn pinned và các kết quả cốt lõi nằm ngay báo cáo.
 
-### File receipts quan trọng cho ba ưu tiên
+### File receipts của C01/C02/C03 tại bản trước review
 
 Tất cả URL file được xây bằng mẫu `https://huggingface.co/{exact_model_id}/resolve/{full_revision}/{filename}` từ §4; không dùng `main`. Links config/processor/source bên dưới và cards ở §4 dẫn đúng revision. Giá trị SHA là bytes trả từ GET, không tensor checkpoint hash.
 
@@ -330,6 +366,36 @@ print(json.loads(raw)["architectures"])
 | C03 `vocab.json` | `ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910` |
 | C03 `merges.txt` | `8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5` |
 | C03 `added_tokens.json` | `33e0fb93dadacb864bd2f2e8441e147daa2baceb67f94d3ef5283b495572cea0` |
+
+### Bổ sung R1/R2: checks thực chạy trong lần sửa này
+
+**VERIFIED — Codex-reported, không independent audit/CI:** đọc lại 17 nguồn công khai ở full revisions trong bảng dưới, HTTP200 và SHA-256 khớp lần đọc đầu; gồm 8 file C01-HF, 6 source Transformers, 2 conversion scripts và giấy phép parent. Parse 6 HF JSON; AST syntax 8 source Python, không import hoặc thực thi. Render HF Jinja text-stage bằng Jinja2 3.1.6: C1 giữ nguyên đúng một lần, một image placeholder, không tự thêm system/`<think>`; config/processor/tokenizer khớp image sequence 256 và token 151671. Tokenizer vocabulary/full encode, pixel preprocessing và model forward vẫn **NOT_RUN**.
+
+Source 4.55.4 và 4.51.3 được resolve sang full commits rồi GET lại/hash, không chỉ trỏ `main`. R2 đọc lại pinned cards C03/C04, config và source Idefics3; phép tính parameter/KV chỉ dùng metadata, không profiling. Không mở rộng literature search toàn bộ và không tạo script/file nghiên cứu mới; các phép kiểm bổ sung chạy inline, chỉ trong RAM. Thử truyền nguyên source vào lệnh inline đầu tiên bị giới hạn độ dài command Windows trước khi chạy Python; đã chuyển sang đọc đúng allowlist URLs trong RAM, không coi lần lỗi đó là PASS.
+
+| Nguồn đã pin, bytes nguồn không weights | SHA-256 kiểm lại |
+| --- | --- |
+| [hf/README.md][ivlhf] | `1c4697758f1d67ddd63eee7b08acb221fbf2eb8cd8e459ee28fbc9f1abe02c1f` |
+| [hf/config.json][ivlhfconfig] | `d127456863b66b0cf656a36f4419db0607651af381aeaf6b88af729d2399708d` |
+| [hf/preprocessor_config.json][ivlhfpre] | `af09ffbe57900d5ae07f93f4c20693559a272e32fa6c5f816132cb71985aac98` |
+| [hf/processor_config.json][ivlhfprocessorconf] | `3511f4ae65c2fa5c1ab6a0fb2bb2fe767d6f0ee53ba412953b33acc892327c2a` |
+| [hf/tokenizer_config.json][ivlhftokenizer] | `5d109a013cdc2b9b5914dbd9564e8e1ef591b91c4d5d5584a00b1f01f28c0749` |
+| [hf/chat_template.jinja][ivlhftemplate] | `b3e3fa7cdeceec1d3dfe0d17b77724baf3857714e688f3a700261567e96140eb` |
+| [hf/generation_config.json][ivlhfgeneration] | `b17e2c6813e1f5e4de267a4c7697b46f69ba7ba95643c8253ad671fab7d7271c` |
+| [hf/video_preprocessor_config.json][ivlhfvideo] | `b7f9c784a27f30ddb3fc78fca353ab6ce982c2a263b702e2547302e8c1e0087a` |
+| [processing_internvl.py][ivlprocessor] | `795b804916076ca70bd11a92f3f049905b1af71ffb73d3c38964999b139c00d6` |
+| [modeling_internvl.py][ivlmodel] | `e49fb3e8e596ec2e6b6e30365ef878eda8d061b448ac507fa4f27575f1e25f2c` |
+| [image_processing_got_ocr2_fast.py][ivlimage] | `fcbe8009a25c43ae00ce7488615ad27a7eecb6ead6cacda21449b8480c02ed77` |
+| [configuration_internvl.py][ivlconfiguration] | `a473f001b0c1b3e6b6982a1a753180fbceb2f30f62a3ef6b9fe9a11523057b6d` |
+| [modeling_idefics3.py][ideficsmodel] | `609e261d2da6bdc89a2a96e15fa4b134029358914b42c296031f653f68c7bab5` |
+| [processing_idefics3.py][ideficsprocessor] | `2e0963d416e3684262d12d43a34f72181ae54f52891e2bc16ffeab8915e7a27c` |
+| [custom2hf.py][ivlconvert] | `4511ecfa804b8beb89d3c79cb604749234bb572be07e0a07b6f615083dad2311` |
+| [hf2custom.py][ivlconvertback] | `af34b15c78283feef7d1241438516b612d50611084a9da8df13e6be6129f3c69` |
+| [llama31_license][llama31license] | `bf2eac60b81e5c5f779fc3b4849d3bfacfd63f97f3eb68b44e9c6868c5801712` |
+
+Reviewer có thể dùng mẫu stdlib ở trên với URL/full revision/file/expected SHA tương ứng. Bảng hash không chứng minh native loader hoặc conversion đã chạy; không gộp 17 checks bổ sung với 123 checks lịch sử thành một independent audit.
+
+**QA tài liệu thực chạy:** 19 bảng Markdown, 21 relative links và reference definitions PASS; 19 links nguồn mới trả HTTP200. Kiểm lại 12 identity/revision/memory rows và 17 file receipts lịch sử; 123 nguồn local cũ vẫn khớp hash, 69 JSON/27 AST vẫn parse được. KV tại cùng 4.096 tokens khớp 0,21875/0,5 GiB. C1 byte hash giữ nguyên; diff chỉ hai tài liệu được yêu cầu, không source lock/protocol/notebook. Đây là kiểm tra do Codex chạy, chưa review độc lập.
 
 **Giới hạn kiểm tra:** không native CPU processor/tokenizer, empty-weight constructor, pip ABI rehearsal, CUDA driver, allocation, FP16 forward, raw custody mới, output behavior, HNLO replay hoặc performance. Không chạy full repo inference/native opt-ins hoặc CPU saved-score audit vì không thay code và không được mở artifact riêng. Native checks phải báo NOT_RUN, không gộp với static PASS.
 
@@ -386,6 +452,26 @@ Các citations dưới đây là model cards/source artifacts đã đọc, khôn
 [m2processor]: https://huggingface.co/openbmb/MiniCPM-V-4/blob/6f69a8235885be89608f3a71ffd40695b379e1e7/preprocessor_config.json
 [m2code]: https://huggingface.co/openbmb/MiniCPM-V-4/blob/6f69a8235885be89608f3a71ffd40695b379e1e7/modeling_minicpmv.py
 [m3config]: https://huggingface.co/llava-hf/llava-onevision-qwen2-7b-ov-hf/blob/0d50680527681998e456c7b78950205bedd8a068/config.json
+
+[ivlhf]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/README.md
+[ivlhfconfig]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/config.json
+[ivlhfpre]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/preprocessor_config.json
+[ivlhfprocessorconf]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/processor_config.json
+[ivlhftokenizer]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/tokenizer_config.json
+[ivlhftemplate]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/chat_template.jinja
+[ivlhfgeneration]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/generation_config.json
+[ivlhfvideo]: https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/blob/6bd4487402110ef9889ba50eb7aefeb302526fed/video_preprocessor_config.json
+[ivlbase]: https://huggingface.co/OpenGVLab/InternVL3_5-4B/blob/481f6e32467eab4e922ccd7fd6cf420441a62331/README.md
+[ideficsconfig]: https://huggingface.co/HuggingFaceM4/Idefics3-8B-Llama3/blob/fddb4ff79181e55a994674777e06cd5456ce3dc3/config.json
+[ivlprocessor]: https://github.com/huggingface/transformers/blob/d79b2d981f28b2730d402244ac3c2e9a8c054eee/src/transformers/models/internvl/processing_internvl.py
+[ivlmodel]: https://github.com/huggingface/transformers/blob/d79b2d981f28b2730d402244ac3c2e9a8c054eee/src/transformers/models/internvl/modeling_internvl.py
+[ivlimage]: https://github.com/huggingface/transformers/blob/d79b2d981f28b2730d402244ac3c2e9a8c054eee/src/transformers/models/got_ocr2/image_processing_got_ocr2_fast.py
+[ivlconfiguration]: https://github.com/huggingface/transformers/blob/d79b2d981f28b2730d402244ac3c2e9a8c054eee/src/transformers/models/internvl/configuration_internvl.py
+[ideficsmodel]: https://github.com/huggingface/transformers/blob/5f4ecf2d9f867a1255131d2461d75793c0cf1db2/src/transformers/models/idefics3/modeling_idefics3.py
+[ideficsprocessor]: https://github.com/huggingface/transformers/blob/5f4ecf2d9f867a1255131d2461d75793c0cf1db2/src/transformers/models/idefics3/processing_idefics3.py
+[ivlconvert]: https://github.com/OpenGVLab/InternVL/blob/2410d1dbf208f0e799459aff9376e5747dbf41a2/internvl_chat/tools/internvl_custom2hf.py
+[ivlconvertback]: https://github.com/OpenGVLab/InternVL/blob/2410d1dbf208f0e799459aff9376e5747dbf41a2/internvl_chat/tools/internvl_hf2custom.py
+[llama31license]: https://github.com/meta-llama/llama-models/blob/0e0b8c519242d5833d8c11bffc1232b77ad7f301/models/llama3_1/LICENSE
 
 ### Phương pháp hỗ trợ
 

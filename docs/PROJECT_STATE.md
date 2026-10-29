@@ -40,17 +40,21 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - **Phi a6 CONSUMED / NO_GO_FULL_TRAIN:** [aggregate ChatGPT](https://github.com/tantdna2/SafeShift/pull/144#issuecomment-6480224537), 160 native calls, 0/160 C1 valid, 8 sequences/142 lần lặp một sequence, HNLO validated 0. first 12 technical PASS không là classification PASS.
 - **Smol a2 CONSUMED / NO_GO_FULL_TRAIN:** [aggregate ChatGPT](https://github.com/tantdna2/SafeShift/pull/146#issuecomment-6485519647), 160 calls, 107 valid đều Level01, 53 INVALID, 2 responses, HNLO validated 0; frozen-continuation mismatch không giải thích căn nguyên collapse.
 - Phi a1/a2/a4/a5 consumed; a3 FAILED_PRELEDGER/nonconsumed. Smol a1 RESERVED/NOT_EXECUTED lịch sử không là quyền source mới. [Incident/gate register](KAGGLE_FAILURES_AND_RELEASE_GATES.md) giữ chi tiết.
-- **Gemma BLOCKED_SOURCE_TOKENIZER_AUDIT_INCOMPLETE:**10 config/tokenizer 401 ở audit cũ. #148 kiểm anonymous 7 metadata requests cũng 401; không phải GPU failure, không tự tạo lock/grant.
+- **Gemma BLOCKED_SOURCE_TOKENIZER_AUDIT_INCOMPLETE:** 10 config/tokenizer 401 ở audit cũ. #148 kiểm anonymous 7 metadata requests cũng 401; không phải GPU failure, không tự tạo lock/grant.
 - `OWNER_SELECTED_CANDIDATES` Gemma/Phi/Smol ngày 27/10 là sự kiện lịch sử, chưa qualified ba peers. Không cứu parser/C1/HNLO surfaces hoặc tiêu attempt tiếp.
 
 ## ACTIVE WORK — ISSUE #148, RESEARCH ONLY
 
-- Báo cáo [THESIS_VLM_CANDIDATE_SCREENING_20261029](research/THESIS_VLM_CANDIDATE_SCREENING_20261029.md) đã soạn, **chờ ChatGPT review trong một Draft PR**, chưa approved/merged/qualified roster.
+- Báo cáo [THESIS_VLM_CANDIDATE_SCREENING_20261029](research/THESIS_VLM_CANDIDATE_SCREENING_20261029.md) ở **[PR #149 OPEN/DRAFT](https://github.com/tantdna2/SafeShift/pull/149)**. [Review R1/R2](https://github.com/tantdna2/SafeShift/pull/149#issuecomment-6488880467) trên HEAD `a970fa8d451ac7005f632616272d1690ff7c7b11` là **CHANGES REQUESTED**; bản sửa này chờ review tiếp, chưa approved/merged.
 - Đã đọc InspecSafe arXiv v2, publisher, Figure 6, Table 3, S2/S3 và repo tác giả pinned; phân biệt paper benchmark với strict C1 JSON và TRAIN lịch sử.
-- Longlist **12 ứng viên** có full revisions/official sources/license/access/config, ngoài Qwen3 mốc. Shortlist nghiên cứu có điều kiện: **(1) InternVL3_5-4B-Instruct, (2) MiniCPM-V-4, (3) LLaVA-OneVision-Qwen2-7B-OV-HF**.
+- Giữ longlist **12 ứng viên gốc**, bổ sung so sánh C01-HF và truy nguồn custom không hậu tố. Ưu tiên nghiên cứu mới: **(1) `OpenGVLab/InternVL3_5-4B-HF` @ `6bd4487402110ef9889ba50eb7aefeb302526fed`, (2) `openbmb/MiniCPM-V-4` @ `6f69a8235885be89608f3a71ffd40695b379e1e7`; vị trí 3 VACANT**.
+- R1: native HF giảm remote loader/manual preprocessing/hidden decode cleanup, nhưng khác training stage với `-Instruct`; tensor/inference parity **UNVERIFIED**. CPU qualification tương lai ưu tiên source Transformers 4.55.4; không sửa lock hoặc chạy native trong lần này.
+- R2: LLaVA lợi hơn Idefics3/Llama3 về FP16/parameter/KV; Idefics3 là comparator non-Qwen chính, có câu hỏi license/instruction và BF16→FP16. Cả hai cần sharding hai T4 chưa kiểm; chưa có paired hazard/shared-error evidence để chốt slot 3. Không coi khác backbone là lỗi độc lập.
 - **0 ứng viên mới qualified**; classification thật/peer utility/HNLO của shortlist **UNVERIFIED**, quyền execution **BLOCKED**. Không sửa official roster hoặc tự thay Qwen3.
-- CPU nhẹ thực chạy: 13 Hub records; 114 source/config/card files + 9 tokenizer files đọc/hash; 123 hash checks, 69 JSON parses, 27 AST parses; 5 MiniCPM config cross-checks, token-ID checks và 2 text-stage Jinja/C1 checks. Đây không native processor/tokenizer/model PASS.
-- Không cài Torch/Transformers, tải weights, inference/GPU/Kaggle/TEST/private artifacts, tạo grant/notebook hoặc sửa khoa học. Chỉ 2 file tài liệu trong PR; BASE/HEAD/validation nằm trong PR body.
+- CPU nhẹ ở bản trước review, **Codex-reported, không independent/CI**: 13 Hub records; 114 source/config/card files + 9 tokenizer files đọc/hash; 123 hash checks, 69 JSON parses, 27 AST parses; 5 MiniCPM config cross-checks, token-ID checks và 2 text-stage Jinja/C1 checks. Đây không native processor/tokenizer/model PASS.
+- Bổ sung R1/R2 thực chạy inline: 17 pinned source hashes/HTTP200, 6 HF JSON, 8 Python AST không import; HF text-stage Jinja/C1/image-token consistency PASS. Có bảng hash/link công khai; native processor/tokenizer/model **NOT_RUN**, không independent audit. Không tạo script mới.
+- QA R1/R2: 19 bảng, 21 relative links, 19 source links HTTP200; kiểm lại identity/revision/hash lịch sử và KV arithmetic PASS. C1/protected files không đổi; chỉ hai tài liệu trong diff.
+- Không cài Torch/Transformers, tải weights, inference/GPU/Kaggle/TEST/private artifacts, tạo grant/notebook hoặc sửa khoa học. Chỉ 2 file tài liệu trong PR; BASE/HEAD/validation nằm trong PR body và bàn giao.
 - Ranking là ưu tiên kiểm chứng theo nguồn, không accuracy đã đo. T4×2 không pooled 32 GB; FP16/attention/tiles/native wrapper và per-GPU memory còn phải G2/G4/G5.
 - Báo cáo so A cũ fixed-Q3+auxiliary với B peers hiện proposed; tách classifier, cross-check, fusion/review và HNLO optional; không đặt numerical thresholds hoặc phê duyệt ensemble rule.
 
@@ -68,7 +72,7 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 
 ## NEXT STEP / BLOCKERS
 
-1. **Dừng ở Draft PR của Issue #148 để ChatGPT trực tiếp kiểm GitHub, 12 candidates, 3 priorities và evidence.** Không merge hoặc Ready for Review tự động.
+1. **Dừng ở Draft PR của Issue #148 để ChatGPT kiểm lại R1/R2, C01-HF vs custom, C03 vs C04, hai ưu tiên và slot thứ ba trống.** Không merge hoặc Ready for Review tự động.
 2. Sau review, cân nhắc independent methodology audit và Owner/giảng viên O1–O8/T0; O3 chốt bounded qualification sequence/attempt cap trước thực nghiệm, final roster sau evidence.
 3. G0–G6 theo [runbook](KAGGLE_FAILURES_AND_RELEASE_GATES.md): native CPU/runtime chưa nghiệm thu; G4/G5 cần quyền mới. CPU metadata không vượt behavior gate.
 4. Thiếu nguồn/GT/custody/reviewers/precision/quota hoặc không đủ 4 qualified → NO-GO thiết kế xác nhận; giảm scope cần quyết định, không mở model zoo hoặc target thay thế.
