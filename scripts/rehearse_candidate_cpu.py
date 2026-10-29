@@ -15,6 +15,7 @@ from pathlib import Path
 import platform
 import shutil
 import socket
+import stat
 import subprocess
 import sys
 from types import SimpleNamespace
@@ -36,16 +37,45 @@ def require(value, message):
         raise ValueError(message)
 
 
+def snapshot_stat(path, *, directory=False):
+    """Inspect the entry itself, including Windows junction/reparse attributes."""
+    info = path.lstat()
+    require(not stat.S_ISLNK(info.st_mode) and
+            not (getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT),
+            "SOURCE_ALIAS_FORBIDDEN")
+    require(stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode),
+            "SNAPSHOT_DIRECTORY_REQUIRED" if directory else "SOURCE_REGULAR_FILE_REQUIRED")
+    if not directory:
+        require(info.st_nlink == 1, "SOURCE_ALIAS_FORBIDDEN")
+    return info
+
+
 def verify_snapshot(snapshot, key):
     """Never execute local Python until every public source byte is locked."""
     spec = read(LOCK)[key]
-    require(snapshot.is_dir() and not snapshot.is_symlink(), "SNAPSHOT_DIRECTORY_REQUIRED")
-    actual = {p.name for p in snapshot.iterdir() if p.is_file()}
+    snapshot_stat(snapshot, directory=True)
+    # Enumerate ALL entries, including hidden names and dangling/directory links.
+    # Do not recurse into any directory or follow an entry to classify it.
+    actual = {p.name for p in snapshot.iterdir()}
     require(actual == set(spec["files"]), "SNAPSHOT_EXACT_ALLOWLIST_REQUIRED")
     for name, checksum in spec["files"].items():
         p = snapshot / name
-        require(not p.is_symlink() and p.stat().st_nlink == 1, "SOURCE_ALIAS_FORBIDDEN")
+        snapshot_stat(p)
         require(sha(p) == checksum, "SOURCE_CHECKSUM:" + name)
+    return spec
+
+
+def stage_snapshot(snapshot, local, key):
+    """Copy only locked flat files; revalidate both trees before any remote import."""
+    spec = verify_snapshot(snapshot, key)
+    local.mkdir(exist_ok=False)
+    for name in spec["files"]:
+        snapshot_stat(snapshot / name)
+        # A link introduced after validation must not be followed by the copy.
+        # The destination check below also rejects links and changed file bytes.
+        shutil.copyfile(snapshot / name, local / name, follow_symlinks=False)
+    require(verify_snapshot(snapshot, key) == spec, "SOURCE_LOCK_CHANGED_DURING_COPY")
+    require(verify_snapshot(local, key) == spec, "SOURCE_LOCK_CHANGED_DURING_COPY")
     return spec
 
 
@@ -390,14 +420,17 @@ def main():
                "weights": "NOT_DOWNLOADED_OR_LOADED", "inference": "NOT_RUN", "gpu": "NOT_CALLED"}
     try:
         receipt["checks"]["environment"] = {"status": "PASS", **environment(a.model)}
-        snapshot = Path(a.snapshot).resolve()
-        spec = verify_snapshot(snapshot, a.model)
-        receipt["model"] = {k: spec[k] for k in ("id", "revision")}
-        receipt["checks"]["source"] = {"status": "PASS", "files": spec["files"]}
+        # Preserve the supplied root entry so lstat can reject a root alias too.
+        snapshot = Path(a.snapshot).absolute()
+        spec = read(LOCK)[a.model]
         # Work from a short, revision-named path to keep dynamic imports on Windows
         # reproducible and separate from a user's global HF module cache.
         local = output / spec["revision"]
-        shutil.copytree(snapshot, local)
+        spec = stage_snapshot(snapshot, local, a.model)
+        receipt["model"] = {k: spec[k] for k in ("id", "revision")}
+        receipt["checks"]["source"] = {"status": "PASS", "files": spec["files"],
+                                       "staged_exact_flat_snapshot": "PASS",
+                                       "guard": "lstat_no_links_or_reparse; allowlisted_nonrecursive_copy; source_and_destination_reverified"}
         os.environ["HF_MODULES_CACHE"] = str(output / "modules")
         with ExitStack() as stack:
             guard(stack)
