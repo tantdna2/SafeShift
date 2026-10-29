@@ -117,7 +117,10 @@ def native_setup(snapshot, key, evidence):
                                   (("processor", processor), ("tokenizer", tokenizer), ("config", config))}
     evidence["native_classes"]["model_import_only"] = model_class.__name__
     evidence["trust_remote_code"] = opts["trust_remote_code"]
-    evidence["native_image_config"] = processor.image_processor.to_dict()
+    fields = (("crop_to_patches", "min_patches", "max_patches", "do_convert_rgb")
+              if key == "internvl35" else
+              ("max_slice_nums", "scale_resolution", "patch_size", "image_feature_size", "use_image_id", "slice_mode"))
+    evidence["native_image_config"] = {name: getattr(processor.image_processor, name) for name in fields}
     evidence["implementation_sha256"] = {}
     for obj in (type(processor), type(processor.image_processor), type(tokenizer), model_class):
         evidence["implementation_sha256"][obj.__name__] = sha(inspect.getfile(obj))
