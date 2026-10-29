@@ -45,11 +45,15 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 
 ## ACTIVE WORK — ISSUE #148, RESEARCH ONLY
 
-- Báo cáo [THESIS_VLM_CANDIDATE_SCREENING_20261029](research/THESIS_VLM_CANDIDATE_SCREENING_20261029.md) ở **[PR #149 OPEN/DRAFT](https://github.com/tantdna2/SafeShift/pull/149)**. [Review R1/R2](https://github.com/tantdna2/SafeShift/pull/149#issuecomment-6488880467) trên HEAD `a970fa8d451ac7005f632616272d1690ff7c7b11` là **CHANGES REQUESTED**; bản sửa này chờ review tiếp, chưa approved/merged.
+- Báo cáo [THESIS_VLM_CANDIDATE_SCREENING_20261029](research/THESIS_VLM_CANDIDATE_SCREENING_20261029.md) ở **[PR #149 OPEN/DRAFT](https://github.com/tantdna2/SafeShift/pull/149)**. [Review mới](https://github.com/tantdna2/SafeShift/pull/149#issuecomment-6489345290) trên HEAD `50e836f93ccb55b190e2666b258f33af2e831403`: **R1 PASS / R2 PASS**, còn R3 lịch sử InternVL. Bản bổ sung R3 chờ review tiếp, chưa được phép merge.
 - Đã đọc InspecSafe arXiv v2, publisher, Figure 6, Table 3, S2/S3 và repo tác giả pinned; phân biệt paper benchmark với strict C1 JSON và TRAIN lịch sử.
 - Giữ longlist **12 ứng viên gốc**, bổ sung so sánh C01-HF và truy nguồn custom không hậu tố. Ưu tiên nghiên cứu mới: **(1) `OpenGVLab/InternVL3_5-4B-HF` @ `6bd4487402110ef9889ba50eb7aefeb302526fed`, (2) `openbmb/MiniCPM-V-4` @ `6f69a8235885be89608f3a71ffd40695b379e1e7`; vị trí 3 VACANT**.
 - R1: native HF giảm remote loader/manual preprocessing/hidden decode cleanup, nhưng khác training stage với `-Instruct`; tensor/inference parity **UNVERIFIED**. CPU qualification tương lai ưu tiên source Transformers 4.55.4; không sửa lock hoặc chạy native trong lần này.
 - R2: LLaVA lợi hơn Idefics3/Llama3 về FP16/parameter/KV; Idefics3 là comparator non-Qwen chính, có câu hỏi license/instruction và BF16→FP16. Cả hai cần sharding hai T4 chưa kiểm; chưa có paired hazard/shared-error evidence để chốt slot 3. Không coi khác backbone là lỗi độc lập.
+- R3: InternVL3-2B-hf lịch sử đúng **164/3.763 (4,36%)**, **3.014/3.014 Normal→Anomaly**; HNLO **0,8861824613751756** là saved-score, không raw-logit PASS. CUDA SONAME lookup thất bại ở child worker, cuInit chưa gọi; không suy driver cũ hoặc bản 3.5 đã sửa. Hai bản đều native HF, ba processor/template files trùng hash; image token 151667→151671 khác.
+- Giữ InternVL #1 **chỉ qualification CPU đọc nguồn/không weights**, MiniCPM #2; prior behavioral risk lớn, chưa có bằng chứng chất lượng hơn MiniCPM. **Thứ tự Kaggle PENDING O3**, không kế thừa thứ tự CPU. G2 đúng token/template/raw, G4 actual isolated-child CUDA loader, G5 GT Normal/hazard đa miền + strict C1/repetition/early stop phải được duyệt trước 160/full; thresholds/GT/grants còn PENDING.
+- R3 thực kiểm: sáu public metadata/template files 2B đúng revision, HTTP200/hash khớp audit, năm JSON; ba hash chung và arithmetic aggregate được đối chiếu, không raw/GT/HNLO recomputation. R1/R2 không nghiên cứu lại.
+- QA R3: 20 bảng, 21 relative links/reference definitions, sáu source links mới HTTP200; scope đúng hai docs và nội dung R1/R2 giữ nguyên. C1/protected files không đổi; checks do Codex chạy, không independent audit/CI.
 - **0 ứng viên mới qualified**; classification thật/peer utility/HNLO của shortlist **UNVERIFIED**, quyền execution **BLOCKED**. Không sửa official roster hoặc tự thay Qwen3.
 - CPU nhẹ ở bản trước review, **Codex-reported, không independent/CI**: 13 Hub records; 114 source/config/card files + 9 tokenizer files đọc/hash; 123 hash checks, 69 JSON parses, 27 AST parses; 5 MiniCPM config cross-checks, token-ID checks và 2 text-stage Jinja/C1 checks. Đây không native processor/tokenizer/model PASS.
 - Bổ sung R1/R2 thực chạy inline: 17 pinned source hashes/HTTP200, 6 HF JSON, 8 Python AST không import; HF text-stage Jinja/C1/image-token consistency PASS. Có bảng hash/link công khai; native processor/tokenizer/model **NOT_RUN**, không independent audit. Không tạo script mới.
@@ -72,7 +76,7 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 
 ## NEXT STEP / BLOCKERS
 
-1. **Dừng ở Draft PR của Issue #148 để ChatGPT kiểm lại R1/R2, C01-HF vs custom, C03 vs C04, hai ưu tiên và slot thứ ba trống.** Không merge hoặc Ready for Review tự động.
+1. **Dừng ở Draft PR của Issue #148 để ChatGPT kiểm bổ sung R3 lịch sử InternVL và model-specific gates; R1/R2 đã PASS. Hai ưu tiên CPU và slot thứ ba trống giữ nguyên.** Không merge hoặc Ready for Review tự động.
 2. Sau review, cân nhắc independent methodology audit và Owner/giảng viên O1–O8/T0; O3 chốt bounded qualification sequence/attempt cap trước thực nghiệm, final roster sau evidence.
 3. G0–G6 theo [runbook](KAGGLE_FAILURES_AND_RELEASE_GATES.md): native CPU/runtime chưa nghiệm thu; G4/G5 cần quyền mới. CPU metadata không vượt behavior gate.
 4. Thiếu nguồn/GT/custody/reviewers/precision/quota hoặc không đủ 4 qualified → NO-GO thiết kế xác nhận; giảm scope cần quyết định, không mở model zoo hoặc target thay thế.
