@@ -16,6 +16,9 @@ MODELS = {
     "gemma": ("google/gemma-3-4b-it", "093f9f388b31de276ce2de164bdc2081324b9767"),
     "phi": ("microsoft/Phi-3.5-vision-instruct", "12b77fb40b63a2c73c68243d3f767aab688a1b2a"),
     "smolvlm2": ("HuggingFaceTB/SmolVLM2-2.2B-Instruct", "482adb537c021c86670beed01cd58990d01e72e4"),
+    # Public CPU qualification only; these entries do not enroll pilot backends.
+    "internvl35": ("OpenGVLab/InternVL3_5-4B-HF", "6bd4487402110ef9889ba50eb7aefeb302526fed"),
+    "minicpm4": ("openbmb/MiniCPM-V-4", "6f69a8235885be89608f3a71ffd40695b379e1e7"),
 }
 
 
@@ -53,7 +56,7 @@ def audit(root, keys, authenticated=False):
         if metadata["sha"] != revision:
             raise ValueError("REVISION_MISMATCH")
         files = [r["rfilename"] for r in metadata["siblings"]
-                 if "/" not in r["rfilename"] and r["rfilename"].endswith((".py", ".json", ".md", ".txt", ".model"))
+                 if "/" not in r["rfilename"] and r["rfilename"].endswith((".py", ".json", ".md", ".txt", ".model", ".jinja"))
                  and not r["rfilename"].endswith(".safetensors.index.json")]
         result = {"id": model_id, "revision": revision, "authenticated": authenticated, "files": {}, "unavailable": {}}
         for name in files:
@@ -73,7 +76,7 @@ def audit(root, keys, authenticated=False):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--models", nargs="+", choices=tuple(MODELS), default=list(MODELS))
+    p.add_argument("--models", nargs="+", choices=tuple(MODELS), default=["gemma", "phi", "smolvlm2"])
     p.add_argument("--output", default="data/processed/three_vlm_source_audit")
     p.add_argument("--authenticated", action="store_true",
                    help="Owner-authorized text/source access only; reads HF_TOKEN from environment")
