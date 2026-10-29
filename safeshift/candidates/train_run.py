@@ -21,6 +21,22 @@ def not_attempted():
             "hnlo": {"status": "HNLO_UNVERIFIED", "hnlo": None}}
 
 
+def native_custody(sample, raw):
+    native = read(Path(sample) / "native.json")
+    require(native["generated_ids"] == raw["generated_ids"] and raw["generated_ids"]
+            and len(raw["steps"]) == len(raw["generated_ids"]), "NATIVE_RAW_TOKEN_CUSTODY")
+    for n, step in enumerate(raw["steps"]):
+        require(read(Path(sample) / f"steps/{n:03d}.json") == step, "RAW_LOGIT_CUSTODY")
+    require(raw.get("cpu_tokenizer_replay", {}).get("status") == "PASS", "RAW_TOKENIZER_REPLAY_FAILURE")
+
+
+class CandidateStore(Store):
+    def raw(self, ordinal, record):
+        checksum = super().raw(ordinal, record)  # preserve received raw before validation/parse
+        native_custody(self.root / f"samples/{ordinal:06d}", record)
+        return checksum
+
+
 def recover(output, rows):
     """Reconcile disk, including torn raw/result writes and interrupted calls."""
     results = {}
@@ -44,6 +60,7 @@ def recover(output, rows):
                     require(native == 1 and sha(sample / "raw.json") == saved["raw_sha256"]
                             and parse_label(raw["response"]) == saved["label"]
                             and (saved["status"] == "SUCCESS") == (saved["label"] is not None), "RAW_CUSTODY")
+                    native_custody(sample, raw)
                     require(raw["identity"]["sample_id"] == row["sample_id"]
                             and raw["identity"]["input_sha256"] == row["image_sha256"], "RAW_INPUT_IDENTITY")
                     if saved["hnlo"].get("replay_status") != "FAIL":
@@ -55,15 +72,17 @@ def recover(output, rows):
     return results
 
 
-def observations(output, rows, results):
+def observations(output, rows, results, sequence_counts=None):
     attempted = [r for r in rows if results[r["sample_id"]]["attempts"]]
     labels = Counter(results[r["sample_id"]]["label"] for r in attempted
                      if results[r["sample_id"]]["status"] == "SUCCESS")
-    raw_sequences = Counter()
-    for i, row in enumerate(rows):
-        path = Path(output) / f"calls/{i:06d}/run/samples/000000/raw.json"
-        if path.exists():
-            raw_sequences[digest(read(path)["generated_ids"])] += 1
+    raw_sequences = sequence_counts
+    if raw_sequences is None:
+        raw_sequences = Counter()
+        for i, row in enumerate(rows):
+            path = Path(output) / f"calls/{i:06d}/run/samples/000000/raw.json"
+            if path.exists():
+                raw_sequences[digest(read(path)["generated_ids"])] += 1
     normals = [r for r in attempted if r["level"] == "Level04" and results[r["sample_id"]]["label"]]
     anomalies = [r for r in attempted if r["level"] != "Level04" and results[r["sample_id"]]["label"]]
     return {"attempted": len(attempted), "invalid": sum(v["status"] == "INVALID" for v in results.values()),
@@ -136,11 +155,6 @@ class GuardedBackend:
         require(sha(image) == self.row["image_sha256"], "IMAGE_CHANGED_BEFORE_CALL")
         before = self.memory(True) if self.memory else None
         raw = self.native.generate(image, sample)
-        native = read(Path(sample) / "native.json")
-        require(native["generated_ids"] == raw["generated_ids"] and raw["generated_ids"]
-                and len(raw["steps"]) == len(raw["generated_ids"]), "NATIVE_RAW_TOKEN_CUSTODY")
-        for n, step in enumerate(raw["steps"]):
-            require(read(Path(sample) / f"steps/{n:03d}.json") == step, "RAW_LOGIT_CUSTODY")
         raw["execution_release"] = self.binding
         if self.memory:
             raw["memory"] = self.memory(False)
@@ -159,7 +173,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
     policy = policy_check(grant["policy"])
     output = Path(output)
     deadline = clock() + grant["max_seconds"] if deadline is None else deadline
-    native, reason = None, None
+    native, reason, sequence_counts = None, None, Counter()
     results = {r["sample_id"]: not_attempted() for r in rows}
     actual_config = grant["config_sha256"]
     try:
@@ -171,7 +185,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                 if clock() >= deadline:
                     reason = "TIME_CAP_BEFORE_NEXT_CALL"
                     break
-                store = Store(output / f"calls/{i:06d}/run", {
+                store = CandidateStore(output / f"calls/{i:06d}/run", {
                     "ordinal": i, "sample_id": row["sample_id"], "model": model(grant["model_key"]),
                     "run_id": grant["run_id"], "attempt_id": grant["attempt_id"],
                     "source_sha256": grant["source_sha256"], "manifest_sha256": grant["manifest_sha256"],
@@ -198,7 +212,9 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                 if results[row["sample_id"]]["hnlo"].get("replay_status") == "FAIL":
                     reason = "RAW_REPLAY_TECHNICAL_FAILURE"
                     break
-                o = observations(output, rows, results)
+                raw_path = store.root / "samples/000000/raw.json"
+                sequence_counts[digest(read(raw_path)["generated_ids"])] += 1
+                o = observations(output, rows, results, sequence_counts)
                 reason = behavior_stop(o, policy)
                 checkpoint = {"completed": i + 1, "observations": o,
                               "kind": "FIRST_IMAGE_TECHNICAL" if i == 0 else "EARLY_BEHAVIOR" if i + 1 == policy["early_behavior_after"] else "OBSERVATION",

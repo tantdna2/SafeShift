@@ -439,5 +439,43 @@ class NativeCandidateTests(unittest.TestCase):
                 import_archive(root/"synthetic.zip", root/"imported")
 
 
+    def test_candidate160_native_processor_tokens_raw_runner_and_archive(self):
+        from test_candidate160 import fixture, grant, review
+        from safeshift.candidates import train_runtime as rt, train_run as run
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            plan, rows = fixture(root)
+            for row, metadata in zip(rows, plan["main"]):
+                path = Path(row["image"])
+                with self.Image.new("RGBA", (17, 1), (40, 80, 120, 50)) as image:
+                    image.save(path, format="PNG")
+                checksum = rt.sha(path)
+                for value in (row, metadata):
+                    value.update(image_sha256=checksum, width=17, height=1)
+            backend, scripted_llm = self.backend()
+            self.assertEqual(rt.verify_images(root, plan["main"])["verified_images"], 160)
+            result, reason = run.run_calls(root/"out", plan, rows, lambda: backend,
+                                          grant(KEY), reviewer=review)
+            self.assertIsNone(reason)
+            self.assertEqual(sum(v["native_calls"] for v in result.values()), 160)
+            self.assertTrue(all(v["status"] == "SUCCESS" for v in result.values()))
+            self.assertTrue(read(root/"out/calls/000000/run/samples/000000/raw.json")["generated_ids"])
+            self.assertFalse(scripted_llm._forward_hooks)
+            export(root/"out", root/"scripted.zip")
+            from safeshift.pilot.artifacts import verify_archive
+            verify_archive(root/"scripted.zip")
+            self.assertTrue((root/"out/tokenizer/runtime_tokenizer.json").is_file())
+
+    def test_candidate160_corrupt_image_before_native_generation(self):
+        from test_candidate160 import fixture
+        from safeshift.candidates.train_runtime import verify_images
+        from PIL import UnidentifiedImageError
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            plan, _ = fixture(root)
+            with self.assertRaises(UnidentifiedImageError):
+                verify_images(root, plan["main"])
+
+
 if __name__ == "__main__":
     unittest.main()

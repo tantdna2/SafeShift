@@ -32,11 +32,11 @@ def main():
                           SAFESHIFT_CANDIDATE_INDEX=str(Path(args.index).absolute()))
     os.environ.update(CUDA_VISIBLE_DEVICES="", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1")
     names = sources() + ["scripts/build_candidate160_notebooks.py", "scripts/rehearse_candidate160.py",
-        "tests/test_candidate160.py", "tests/test_candidate160_native.py", "tests/test_candidate160_notebooks.py"]
+        "tests/test_candidate160.py", "tests/test_candidate_native.py", "tests/test_candidate160_notebooks.py"]
     hashes = {n: sha(ROOT/n) for n in names}
     sys.path.insert(0, str(ROOT/"tests"))
     suite = unittest.TestSuite()
-    for name in ("test_candidate160", "test_candidate160_native", "test_candidate160_notebooks",
+    for name in ("test_candidate160", "test_candidate160_notebooks",
                  "test_candidate_native", "test_candidate_cpu", "test_candidate_integration"):
         suite.addTests(unittest.defaultTestLoader.loadTestsFromName(name))
     with (output/"tests.log").open("x", encoding="utf-8") as log, redirect_stdout(log), redirect_stderr(log):

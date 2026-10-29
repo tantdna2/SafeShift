@@ -205,7 +205,7 @@ class Candidate160Tests(unittest.TestCase):
                 self.assertEqual(sum(v["status"] == "NOT_ATTEMPTED" for v in results.values()), 156)
 
     def test_oom_decode_import_nonfinite_invalid_raw_write_and_loss_stop(self):
-        for kind in ("oom", "decode", "library", "nonfinite", "invalid", "raw_write", "ids_loss", "step_loss"):
+        for kind in ("oom", "decode", "library", "nonfinite", "invalid", "raw_write", "ids_loss", "step_loss", "cpu_decode_mismatch"):
             with self.subTest(kind=kind), tempfile.TemporaryDirectory() as d:
                 root = Path(d)
                 p, rows = fixture(root)
@@ -214,6 +214,7 @@ class Candidate160Tests(unittest.TestCase):
                          "decode": ValueError("SYNTHETIC decode failure"), "library": ImportError("SYNTHETIC")}.get(kind)
                 if kind == "nonfinite": value["steps"][0]["all_finite"] = False
                 if kind == "invalid": value["response"] = '{"safety_level":"Level01","safety_level":"Level04"}'
+                if kind == "cpu_decode_mismatch": value["cpu_tokenizer_replay"]["status"] = "FAIL"
                 backend = Scripted(fault=fault, value=value)
                 original = backend.generate
                 def generate(image, sample):
@@ -235,6 +236,8 @@ class Candidate160Tests(unittest.TestCase):
                 self.assertEqual(backend.calls, 1)
                 self.assertIsNotNone(reason)
                 self.assertEqual(sum(v["status"] == "NOT_ATTEMPTED" for v in result.values()), 159)
+                if kind in ("ids_loss", "step_loss", "cpu_decode_mismatch"):
+                    self.assertTrue((root/"out/calls/000000/run/samples/000000/raw.json").exists())
                 export(root/"out", root/"partial.zip")
                 verify_archive(root/"partial.zip")
 
