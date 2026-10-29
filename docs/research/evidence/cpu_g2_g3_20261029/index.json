@@ -1,0 +1,16 @@
+{
+  "base_main": "6342b15b0d70c27b28f4bcb5e53f04f6951d6171",
+  "evidence_kind": "CODEX_REPORTED_PUBLIC_SYNTHETIC_CPU_NOT_INDEPENDENT_AUDIT",
+  "executed_code_commit": "18fa30e1c106b0298c7679c5d91096cd57ba21d6",
+  "files_sha256": {
+    "internvl35.json": "734103fdb0ba7cc0c80f6042c1ef542dac50f08ff24a5a53ea177420a345f91c",
+    "minicpm4.json": "06febfe31c8bd9ed203ab258759c508fe50402533111645b1952ac5536961782",
+    "unittest.json": "96a1eb26f3f193e0b00da530d64b16d902a37960b8ae5fe79b3cbaedaa918451"
+  },
+  "scope": "No weights, inference, GPU, Kaggle, private TRAIN/TEST, raw archives or grants accessed",
+  "source_fetch_incident": {
+    "file": "internvl35/vocab.json",
+    "first_result": "TimeoutError after 60 seconds",
+    "retry": "GET same exact public revision, 2776833 bytes, SHA256 ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+  }
+}

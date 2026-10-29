@@ -1,0 +1,84 @@
+{
+  "run": 233,
+  "failures": 0,
+  "errors": 0,
+  "skips": [
+    {
+      "test": "test_a4_and_a5_real_loader_before_after (test_phi_native.NativePhiTests.test_a4_and_a5_real_loader_before_after)",
+      "reason": "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+    },
+    {
+      "test": "test_cpu_admission_processor_and_shapes_and_token_boundaries (test_phi_native.NativePhiTests.test_cpu_admission_processor_and_shapes_and_token_boundaries)",
+      "reason": "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+    },
+    {
+      "test": "test_first12_failure_and_capture_io_keep_native_custody (test_phi_native.NativePhiTests.test_first12_failure_and_capture_io_keep_native_custody)",
+      "reason": "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+    },
+    {
+      "test": "test_generation_failures_stop_raw_and_tail_accounting (test_phi_native.NativePhiTests.test_generation_failures_stop_raw_and_tail_accounting)",
+      "reason": "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+    },
+    {
+      "test": "test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_phi_native.NativePhiTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)",
+      "reason": "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+    },
+    {
+      "test": "test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_phi_native.NativePhiTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)",
+      "reason": "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+    },
+    {
+      "test": "test_real_verified_wheel_bootstraps_pip_free_venv (test_pilot_bootstrap.PipBootstrapTests.test_real_verified_wheel_bootstraps_pip_free_venv)",
+      "reason": "opt-in real network/venv pip --python rehearsal"
+    },
+    {
+      "test": "test_parent_or_root_identity_mismatch_fails_closed (test_pilot_bootstrap.ScratchRootTests.test_parent_or_root_identity_mismatch_fails_closed)",
+      "reason": "directory descriptor check requires Linux"
+    },
+    {
+      "test": "test_real_root_and_parent_symlinks_are_rejected (test_pilot_bootstrap.ScratchRootTests.test_real_root_and_parent_symlinks_are_rejected)",
+      "reason": "real directory symlink requires Linux"
+    },
+    {
+      "test": "test_small_real_allocation_is_released (test_pilot_bootstrap.StorageTests.test_small_real_allocation_is_released)",
+      "reason": "Linux allocation API unavailable"
+    },
+    {
+      "test": "test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical (test_smol_native.NativeSmolTests.test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_all_four_labels_and_three_surfaces_use_actual_native_branch (test_smol_native.NativeSmolTests.test_all_four_labels_and_three_surfaces_use_actual_native_branch)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_first12_failure_and_capture_io_keep_native_custody (test_smol_native.NativeSmolTests.test_first12_failure_and_capture_io_keep_native_custody)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_generation_failures_stop_raw_and_tail_accounting (test_smol_native.NativeSmolTests.test_generation_failures_stop_raw_and_tail_accounting)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_independent_tokenizer_mismatch_and_raw_before_parser (test_smol_native.NativeSmolTests.test_independent_tokenizer_mismatch_and_raw_before_parser)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_smol_native.NativeSmolTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_native_processor_shapes_tokens_prompt_and_corruption (test_smol_native.NativeSmolTests.test_native_processor_shapes_tokens_prompt_and_corruption)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_smol_native.NativeSmolTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    },
+    {
+      "test": "test_real_loader_original_checkpoint_and_nested_attention (test_smol_native.NativeSmolTests.test_real_loader_original_checkpoint_and_nested_attention)",
+      "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
+    }
+  ],
+  "log_sha256": "5c36da95e45ffb95b461ec112523e602174cb6f7cbc9ecff8bd21af4680c7543"
+}
