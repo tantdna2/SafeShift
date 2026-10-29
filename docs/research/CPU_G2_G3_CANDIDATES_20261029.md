@@ -1,11 +1,13 @@
 # CPU G2/G3 — InternVL3.5 HF và MiniCPM-V-4
 
-29/10/2026, Asia/Bangkok. **Codex thực chạy, chưa independent audit/ChatGPT review.**
+29/10/2026, Asia/Bangkok. **Codex thực chạy bản sửa guard; chờ ChatGPT review lại và independent audit.**
 GitHub xác nhận PR #149 MERGED, main đúng
 `6342b15b0d70c27b28f4bcb5e53f04f6951d6171` bằng connector, fetch và `ls-remote`.
-Nhánh/worktree mới `audit/cpu-g2-g3-20261029`; không có công cụ tạo một phiên chat
-Codex mới. Lượt cuối chạy đúng code commit
-`18fa30e1c106b0298c7679c5d91096cd57ba21d6`, sau đó chỉ thêm docs/receipts.
+Cùng session/nhánh/worktree `audit/cpu-g2-g3-20261029`, Draft PR #150.
+[ChatGPT review](https://github.com/tantdna2/SafeShift/pull/150#issuecomment-6492535296)
+yêu cầu sửa guard tại HEAD cũ `f7318a3851c040808c140e0aab2f4c50c37bab0e`.
+Lượt mới chạy đúng code commit `15c0e72993ebe44912c0b1858bc42fc28bc31315`,
+sau đó chỉ thêm docs/receipts; không tự nhận reviewer PASS.
 
 Phạm vi Owner giao: môi trường CPU riêng, public source/tokenizer và ảnh tổng hợp;
 không weights, model construction/forward/inference, CUDA/GPU/Kaggle, private
@@ -26,7 +28,7 @@ TRAIN/TEST/GT/raw archive, grant hay thay khoa học. Không đăng ký backend 
 | Generation contract trước model boundary | **PASS** cấu tạo native GenerationConfig; actual generate **BLOCKED** | **FAIL** native `chat()` không truyền nguyên generation/raw contract |
 | Native input bị làm sai có chủ đích | **PASS** 5/5 lỗi bị từ chối | **PASS** 5/5 lỗi bị từ chối |
 | Mock IDs qua tokenizer/Store/parser/diagnostics | **PASS** 15 ca | **PASS** 15 ca |
-| G3 reused unit suite | **PASS** 32/32, không SKIP | **PASS** 32/32, không SKIP |
+| G3 reused + snapshot unit suite | **42 PASS / 3 SKIP**, 0 failure/error | **42 PASS / 3 SKIP**, 0 failure/error |
 | Real weight loader / effective per-layer attention | **BLOCKED** thiếu weights | **BLOCKED** thiếu weights |
 | Actual continuation/raw custody/FP16/VRAM/quality/HNLO | **BLOCKED** thiếu weights/quyền GPU | **BLOCKED** thiếu weights/quyền GPU |
 | Tổng thể trước release GPU | **BLOCKED** | **FAIL**, đồng thời còn các mục **BLOCKED** trên |
@@ -58,15 +60,40 @@ Dùng lại `scripts.pilot_source_audit`, chỉ thêm hai lựa chọn explicit 
 không `snapshot_download` weights. [Public source lock](../../configs/cpu_g2_g3/public_source_lock.json)
 ghi từng filename/hash và URL pattern. Một GET InternVL `vocab.json` timeout
 60 giây; thử lại đúng URL/revision thành công, 2.776.833 bytes, hash trong index.
-Đây là lỗi lấy source, không model failure. Không sửa receipt lần lỗi thành PASS.
+Đây là lỗi lấy source lịch sử, không model failure. Không sửa receipt lần lỗi
+thành PASS. Lượt sửa guard dùng lại đúng 28 file public đã khóa hash; không tải lại.
 
-Trước import remote MiniCPM, parser AST đã đọc cả 7 Python files; kiểm imports,
+Trước import remote MiniCPM ở lượt đầu, parser AST đã đọc cả 7 Python files; kiểm imports,
 processor/image processor và `chat/generate/decode` source liên quan. Đây không
 phải full independent security audit. Native probe kiểm exact allowlist/hash,
-copy vào snapshot local tên revision và cache riêng, dùng `local_files_only=True`
+stage vào snapshot local tên revision và cache riêng, dùng `local_files_only=True`
 với `revision/code_revision` cụ thể. Socket network, CUDA và weight-loader bị
 guard; không thay class bằng class giả. Chỉ import class/model mapping, **không
 gọi constructor/from_pretrained của model**, không empty weights rồi gọi loader PASS.
+
+### Bản sửa guard theo review — trước copy và import
+
+`verify_snapshot` cũ chỉ đếm `is_file()`, bỏ qua thư mục/link thư mục trong khi
+`copytree` vẫn chép chúng. Bản sửa kiểm root bằng `lstat`, liệt kê **mọi direct
+entry** gồm tên ẩn/dangling links, đối chiếu exact filenames rồi chỉ chấp nhận
+regular file có một hard link. Từ chối directory/symlink và mọi Windows
+`FILE_ATTRIBUTE_REPARSE_POINT`, gồm junction; không resolve root alias trước kiểm.
+Danh sách 13/15 file và expected hashes giữ nguyên.
+
+`stage_snapshot` thay recursive `copytree`: chỉ chép từng tên đã khóa bằng
+`copyfile(follow_symlinks=False)` vào thư mục mới, kiểm lại toàn source và đích
+(types, exact entries, hashes) trước remote import. Thư mục thêm giữa hai bước
+không được chép; source thay đổi hoặc staged bytes hỏng làm dừng. Đây là kiểm
+source/staging trong CPU harness, không tuyên bố sandbox hệ điều hành cho remote code.
+
+Focused suite **18 = 15 PASS + 3 SKIP, 0 failure/error**: snapshot hợp lệ, missing/
+corrupt/extra/weight/hidden files, thư mục rỗng/thư mục chứa `.py`, thay file bằng
+directory, hard link, reparse attributes, root/child junction thật trên Windows,
+source thêm thư mục khi copy và bytes đích bị sửa. Ba real-symlink tests (root,
+file/dangling, directory) SKIP vì OS không cho tạo symbolic link; không gọi là
+PASS. Junction thật và mocked reparse attribute checks đã chạy PASS trên Windows.
+Thay đổi AST chỉ ở guard/staging/main wiring; environment/native setup/C1/
+generation/preprocessing/mock outputs/input checks không đổi so HEAD đã review.
 
 ## Ảnh và token — không đổi cấu hình gốc
 
@@ -143,7 +170,7 @@ remote code, không override repetition penalty, chuyển API hoặc đổi C1 �
 Tái dùng `Store`, strict `parse_label`, `output_diagnostics.summarize` và tests
 `ParserTests`, `ArtifactAndEngineTests`, `test_phi_evidence`, `test_smol_evidence`.
 Không viết engine/runner thứ hai; không thêm grant hoặc candidate production backend.
-Mỗi stack chạy **32 unit tests PASS, 0 SKIP**, gồm raw durable trước parse,
+Mỗi stack chạy **45 unit tests = 42 PASS + 3 SKIP, 0 failure/error**, gồm raw durable trước parse,
 ENOSPC/write failure/tail NOT_ATTEMPTED, no overwrite, partial archive/CRC/hash,
 load/OOM/error/redaction và report/export failures. Tests mô phỏng không xác nhận
 filesystem luôn durable khi mất điện/hard-kill hoặc disk full tuyệt đối.
@@ -157,9 +184,10 @@ collapse/early stop. JSON đúng không EOS vẫn theo parser cũ, EOS diagnosti
 riêng; không sửa label bằng EOS. Mô phỏng token IDs, không scripted model forward.
 
 **5 native input faults/model** đều bị từ chối: IDs float, mask zero, thiếu image
-token/placeholder, pixels half và C1 thay đổi. Toàn repo: **233 discovered = 214
-PASS + 19 SKIP, 0 failures/errors**. SKIP là 6 Phi native, 9 Smol native, 1 network
-pip-bootstrap opt-in, 3 Linux filesystem/allocation. Không suy những SKIP thành
+token/placeholder, pixels half và C1 thay đổi. Toàn repo: **246 discovered = 224
+PASS + 22 SKIP, 0 failures/errors**. SKIP là 6 Phi native, 9 Smol native, 1 network
+pip-bootstrap opt-in, 3 Linux filesystem/allocation và 3 real-symlink tests thiếu
+quyền OS ở trên. Không suy những SKIP thành
 PASS; không tái audit/diagnose behavior Phi/Smol hoặc đóng #147.
 
 ## Tái lập
@@ -174,8 +202,8 @@ python -m venv data/processed/cpu_g2_g3/env-minicpm
 data/processed/cpu_g2_g3/env-internvl/Scripts/python.exe -m pip install -r configs/cpu_g2_g3/internvl35.requirements.txt
 data/processed/cpu_g2_g3/env-minicpm/Scripts/python.exe -m pip install -r configs/cpu_g2_g3/minicpm4.requirements.txt
 python -B -m scripts.pilot_source_audit --models internvl35 minicpm4 --output data/processed/cpu_g2_g3/public
-data/processed/cpu_g2_g3/env-internvl/Scripts/python.exe -B -m scripts.rehearse_candidate_cpu --model internvl35 --snapshot data/processed/cpu_g2_g3/public/internvl35 --output data/processed/cpu_g2_g3/ivl-final
-data/processed/cpu_g2_g3/env-minicpm/Scripts/python.exe -B -m scripts.rehearse_candidate_cpu --model minicpm4 --snapshot data/processed/cpu_g2_g3/public/minicpm4 --output data/processed/cpu_g2_g3/mcp-final
+data/processed/cpu_g2_g3/env-internvl/Scripts/python.exe -B -m scripts.rehearse_candidate_cpu --model internvl35 --snapshot data/processed/cpu_g2_g3/public/internvl35 --output data/processed/cpu_g2_g3/ivl-r1
+data/processed/cpu_g2_g3/env-minicpm/Scripts/python.exe -B -m scripts.rehearse_candidate_cpu --model minicpm4 --snapshot data/processed/cpu_g2_g3/public/minicpm4 --output data/processed/cpu_g2_g3/mcp-r1
 python -B -m unittest discover -s tests -v
 ```
 
@@ -190,7 +218,9 @@ dừng sớm ở MiniCPM 1×1, harness sau đó được sửa để giữ FAIL 
 
 ## Điều kiện trước GPU đầu tiên — vẫn chưa được cấp quyền
 
-1. ChatGPT review Draft này trực tiếp; runtime reviewer kiểm source/license/lock
+1. ChatGPT review lại bản sửa guard và receipts; sau đó handoff independent
+   security/technical audit theo review, trước mọi merge. Không tự gọi audit hoặc
+   nhận audit PASS từ task này. Runtime reviewer kiểm source/license/lock
    và native CPU findings. InternVL cần candidate adapter dùng cùng native path;
    MiniCPM phải khép generation/raw API và lỗi 1×1 bằng thay đổi có review. Không
    cho hai checkpoint chạy bằng backend khác hoặc tự dùng wrapper mặc định.

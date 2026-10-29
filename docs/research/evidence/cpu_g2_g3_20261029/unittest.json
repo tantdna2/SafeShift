@@ -1,8 +1,22 @@
 {
-  "run": 233,
-  "failures": 0,
-  "errors": 0,
+  "git_commit": "15c0e72993ebe44912c0b1858bc42fc28bc31315",
+  "command": "python -B -m unittest discover -s tests -v",
+  "run": 246,
+  "process_returncode": 0,
+  "status": "PASS",
   "skips": [
+    {
+      "test": "test_symlinked_directory_is_rejected (test_candidate_cpu.CandidateCPUTests.test_symlinked_directory_is_rejected)",
+      "reason": "OS symbolic link permission unavailable"
+    },
+    {
+      "test": "test_symlinked_file_and_dangling_link_are_rejected (test_candidate_cpu.CandidateCPUTests.test_symlinked_file_and_dangling_link_are_rejected)",
+      "reason": "OS symbolic link permission unavailable"
+    },
+    {
+      "test": "test_symlinked_root_is_rejected_without_resolving_it (test_candidate_cpu.CandidateCPUTests.test_symlinked_root_is_rejected_without_resolving_it)",
+      "reason": "OS symbolic link permission unavailable"
+    },
     {
       "test": "test_a4_and_a5_real_loader_before_after (test_phi_native.NativePhiTests.test_a4_and_a5_real_loader_before_after)",
       "reason": "Opt-in pinned Phi public-source CPU rehearsal; no weights"
@@ -80,5 +94,8 @@
       "reason": "opt-in hash-locked Smol public source/tokenizer snapshot required"
     }
   ],
-  "log_sha256": "5c36da95e45ffb95b461ec112523e602174cb6f7cbc9ecff8bd21af4680c7543"
+  "log_sha256": "dcec7fcbad49cafab73e1de3b6f7fbd4ca5780eddb8fe08c77457b1d41f86cf5",
+  "failures": 0,
+  "errors": 0,
+  "passed": 224
 }

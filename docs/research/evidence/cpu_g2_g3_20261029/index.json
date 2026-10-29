@@ -1,11 +1,32 @@
 {
   "base_main": "6342b15b0d70c27b28f4bcb5e53f04f6951d6171",
   "evidence_kind": "CODEX_REPORTED_PUBLIC_SYNTHETIC_CPU_NOT_INDEPENDENT_AUDIT",
-  "executed_code_commit": "18fa30e1c106b0298c7679c5d91096cd57ba21d6",
+  "executed_code_commit": "15c0e72993ebe44912c0b1858bc42fc28bc31315",
   "files_sha256": {
-    "internvl35.json": "734103fdb0ba7cc0c80f6042c1ef542dac50f08ff24a5a53ea177420a345f91c",
-    "minicpm4.json": "06febfe31c8bd9ed203ab258759c508fe50402533111645b1952ac5536961782",
-    "unittest.json": "96a1eb26f3f193e0b00da530d64b16d902a37960b8ae5fe79b3cbaedaa918451"
+    "internvl35.json": "dac41c6e9c89d92bb8f4f18823a4511c4e69a30e22d353e917e1e523a20d5ab8",
+    "minicpm4.json": "d837caa7f58d1b0e81460c935c1c88e5abf8750dbd673b072844f85c024d9f1d",
+    "unittest.json": "61622efe664c2f491f4c949802c2ca04881eb14240642be077571ac1f79aa488"
+  },
+  "focused_snapshot_tests": {
+    "errors": 0,
+    "failures": 0,
+    "passed": 15,
+    "run": 18,
+    "skip_reason": "Three real symlink tests: OS symbolic link permission unavailable",
+    "skipped": 3,
+    "windows_junction_root_and_child": "PASS_REAL_WINDOWS_JUNCTION"
+  },
+  "public_source_rerun": "Reused exact hash-locked 13/15 public files; no network redownload; original source_fetch_incident below is historical",
+  "review_revision": {
+    "previous_executed_code_commit": "18fa30e1c106b0298c7679c5d91096cd57ba21d6",
+    "previous_files_sha256": {
+      "internvl35.json": "734103fdb0ba7cc0c80f6042c1ef542dac50f08ff24a5a53ea177420a345f91c",
+      "minicpm4.json": "06febfe31c8bd9ed203ab258759c508fe50402533111645b1952ac5536961782",
+      "unittest.json": "96a1eb26f3f193e0b00da530d64b16d902a37960b8ae5fe79b3cbaedaa918451"
+    },
+    "previous_head": "f7318a3851c040808c140e0aab2f4c50c37bab0e",
+    "review_url": "https://github.com/tantdna2/SafeShift/pull/150#issuecomment-6492535296",
+    "scope": "Snapshot guard/staging and tests only; MiniCPM negative findings preserved; same PR/session"
   },
   "scope": "No weights, inference, GPU, Kaggle, private TRAIN/TEST, raw archives or grants accessed",
   "source_fetch_incident": {
