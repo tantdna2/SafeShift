@@ -20,7 +20,7 @@ from safeshift.pilot.manifest import discover
 from safeshift.pilot.runner import error_record
 from .source import ROOT, LOCK, require, stage_snapshot
 from .loading import verify_weights
-from .train_contract import KEYS, MANIFEST, authorize, config, manifest, model, source_hash, sources
+from .train_contract import KEYS, MANIFEST, authorize, config, configuration_hashes, manifest, model, source_hash, sources
 from .train_run import recover, run_calls
 
 
@@ -214,6 +214,7 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None)
         deadline = min(started + grant["max_seconds"], time.monotonic() + grant["expires_unix"] - time.time())
         write(output / "authorization_binding.json", {"grant_sha256": digest(grant), "ledger_sha256": digest(ledger),
               "runtime_ref": ref, "source_sha256": source, "manifest_sha256": MANIFEST,
+              **configuration_hashes(key),
               "approval_refs": {n: grant[n] for n in ("G0", "T0", "O3", "research_lead_review_ref")}})
         write(output / "grant.json", grant)
         write(output / "ledger_reservation.json", ledger)
@@ -294,7 +295,7 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None)
                 print("Finalizer write failed:", name, type(error).__name__, flush=True)
         if rows:
             try:
-                results = recover(output, rows)
+                results = recover(output, rows, grant)
                 retain("supervisor_accounting.json", [{"ordinal": i, "sample_id": r["sample_id"], **results[r["sample_id"]]}
                                                       for i, r in enumerate(rows)])
             except BaseException as error:

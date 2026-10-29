@@ -11,7 +11,7 @@ import unittest
 import zlib
 
 from safeshift.candidates.source import ROOT
-from safeshift.candidates.train_contract import BASE, KEYS, MANIFEST, sources, source_hash
+from safeshift.candidates.train_contract import BASE, KEYS, MANIFEST, config, configuration_hashes, sources, source_hash
 from safeshift.pilot.artifacts import read, verify_archive
 from safeshift.pilot.contract import source_digest
 from scripts.build_candidate160_notebooks import notebook
@@ -29,6 +29,12 @@ class Candidate160NotebookTests(unittest.TestCase):
             self.assertEqual(meta["source_sha256"], source_hash())
             self.assertEqual(meta["status"], "BLOCKED")
             self.assertEqual(meta["max_images"], 160)
+            self.assertEqual(meta["config"], config(key))
+            self.assertEqual(meta["configuration_hashes"], configuration_hashes(key))
+            self.assertNotIn("transport", meta["config"])
+            effective = json.dumps(meta["config"]["effective_candidate"])
+            self.assertNotIn("num_crops", effective)
+            self.assertNotIn("passive_outer_forward_four_logits_single_branch_v1", effective)
             expected = json.dumps(notebook(key, meta["runtime_ref"]), indent=1, ensure_ascii=False)+"\n"
             self.assertEqual(path.read_bytes(), expected.encode())
             code = ""

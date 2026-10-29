@@ -5,6 +5,7 @@ The public preparation contract deliberately contains no execution grant/thresho
 """
 from contextlib import contextmanager
 from collections import Counter
+from copy import deepcopy
 from pathlib import Path
 import re
 import time
@@ -43,18 +44,77 @@ candidate identity. No grant from that legacy contract is accepted here.
         del pilot.MODELS[key]
 
 
-def config(key):
+def legacy_transport_snapshot(key):
+    """Exact frozen runner descriptor, NOT effective candidate processing/selection."""
+    if key in pilot.MODELS:
+        require(pilot.MODELS[key] == model(key), "LEGACY_TRANSPORT_MODEL_DRIFT")
+        return deepcopy(pilot.settings(key))
     with enrollment(key):
-        transport = pilot.settings(key)
-    return {"schema": "safeshift-candidate160-config-v1", "base": BASE,
-            "transport": transport, "max_native_calls": 160, "manifest_sha256": MANIFEST,
-            "preprocessing": "PR151 CandidateBackend native processor unchanged",
-            "placement": "cuda:0 only; second physical T4 observed, never pooled",
-            "python": "3.11.9", "cuda_build": "12.4",
-            "requirements_sha256": sha(ROOT / f"configs/candidate160/{key}.requirements.txt"),
-            "generation": pilot.GENERATION, "prompt_sha256": pilot.PROMPT_SHA,
-            "checkpoint_lock_sha256": sha(LOCK.with_name("checkpoint_metadata_lock.json")),
-            "public_source_lock_sha256": sha(LOCK)}
+        return deepcopy(pilot.settings(key))
+
+
+def config(key):
+    transport = legacy_transport_snapshot(key)
+    internvl = key == "internvl35"
+    return {"schema": "safeshift-candidate160-config-v2",
+            "legacy_transport_compatibility": {
+                "scope": "HISTORICAL_DESCRIPTORS_ONLY_NOT_EFFECTIVE_PROCESSING_OR_SELECTION",
+                "settings_snapshot": transport,
+                "legacy_transport_config_sha256": pilot.digest(transport),
+                "legacy_runner_hash_field": "identity.config_sha256",
+                "native_step_origin_scope": "generic hooked-module descriptor; use effective_candidate.logits below"},
+            "effective_candidate": {
+                "base": BASE, "model_key": key, "model": model(key),
+                "adapter": "safeshift.candidates.backend.CandidateBackend",
+                "preprocessing": {
+                    "decode": "PIL content decode; still image; RGB conversion",
+                    "entrypoint": "safeshift.candidates.inputs.prepare_inputs",
+                    "implementation": ("native HF InternVLProcessor template and image tiling" if internvl else
+                        "MiniCPM native slicing/resize/normalization/patch packing with explicit RGB channels-last"),
+                    "image_entrypoint": ("processor(text=rendered, images=image, return_tensors=pt)" if internvl else
+                        "minicpm_image.rgb_image_inputs -> processor._convert_images_texts_to_inputs"),
+                    "input_validation": "safeshift.candidates.inputs.validate_inputs unchanged"},
+                "logits": {"boundary": "internvl_outer" if internvl else "minicpm_llm_forward",
+                           "hook_target": "model" if internvl else "model.llm",
+                           "timing": "forward output before generation logits processors",
+                           "hnlo_replay": "safeshift.pilot.hnlo.replay unchanged"},
+                "sequence_semantics": "prompt_plus_continuation" if internvl else "continuation_only_inputs_embeds",
+                "generation": {
+                    "frozen_overrides": deepcopy(pilot.GENERATION), "prompt_sha256": pilot.PROMPT_SHA,
+                    "entrypoint": ("model.generate" if internvl else
+                                   "model.generate(decode_text=False, stream=False) -> _decode -> llm.generate"),
+                    "native_special_tokens": "pinned native GenerationConfig; effective IDs saved in request.json",
+                    "repetition_penalty": 1.0},
+                "selection": {"method": "reuse exact historical manifest bytes/order; no selector or new seed",
+                              "manifest_sha256": MANIFEST, "max_native_calls": 160},
+                "dtype": "float16", "attention": "eager", "quantization": None, "batch_size": 1,
+                "placement": "cuda:0 only; second physical T4 observed, never pooled",
+                "python": "3.11.9", "cuda_build": "12.4",
+                "requirements_sha256": sha(ROOT / f"configs/candidate160/{key}.requirements.txt"),
+                "adapter_source_sha256": {name: sha(ROOT / "safeshift/candidates" / name)
+                                           for name in ("backend.py", "inputs.py", "loading.py", "minicpm_image.py")},
+                "checkpoint_lock_sha256": sha(LOCK.with_name("checkpoint_metadata_lock.json")),
+                "public_source_lock_sha256": sha(LOCK)}}
+
+
+def configuration_hashes(key):
+    """Two different scopes. Never substitute one digest for the other."""
+    return {"legacy_transport_config_sha256": pilot.digest(legacy_transport_snapshot(key)),
+            "candidate_execution_config_sha256": pilot.digest(config(key))}
+
+
+def validate_configuration_hashes(value, key):
+    require("config_sha256" not in value, "AMBIGUOUS_CANDIDATE_CONFIG_HASH_FORBIDDEN")
+    for name, expected in configuration_hashes(key).items():
+        require(value.get(name) == expected, "CONFIGURATION_HASH_BINDING:" + name)
+
+
+def execution_binding(grant):
+    validate_configuration_hashes(grant, grant["model_key"])
+    require(grant["model"] == model(grant["model_key"]), "EXECUTION_MODEL_BINDING")
+    return deepcopy({name: grant[name] for name in (
+        "model_key", "model", "legacy_transport_config_sha256", "candidate_execution_config_sha256",
+        "source_sha256", "runtime_ref", "base", "attempt_id", "run_id", "manifest_sha256")})
 
 
 def sources(repo=ROOT):
@@ -94,11 +154,12 @@ def policy_check(p):
 
 
 def authorize(g, key, source, ref, ledger, now=None):
-    require(type(g) is dict and g.get("schema") == "safeshift-candidate160-grant-v1",
+    require(type(g) is dict and g.get("schema") == "safeshift-candidate160-grant-v2",
             "BLOCKED_NO_NEW_CANDIDATE_GRANT")
+    validate_configuration_hashes(g, key)
     expected = {"model_key": key, "model": model(key), "source_sha256": source,
                 "runtime_ref": ref, "base": BASE, "manifest_sha256": MANIFEST,
-                "inventory_sha256": INVENTORY, "config_sha256": pilot.digest(config(key)),
+                "inventory_sha256": INVENTORY, **configuration_hashes(key),
                 "data_revision": pilot.DATA_REVISION, "master_sha256": pilot.MASTER_SHA,
                 "split": "TRAIN", "max_initial_ids": 160, "max_native_calls": 160,
                 "retry_sample_ids": [], "resume": False}

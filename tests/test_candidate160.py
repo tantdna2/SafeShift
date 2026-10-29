@@ -30,10 +30,10 @@ def policy():
 
 
 def grant(key="internvl35"):
-    return {"schema": "safeshift-candidate160-grant-v1", "model_key": key, "model": c.model(key),
+    return {"schema": "safeshift-candidate160-grant-v2", "model_key": key, "model": c.model(key),
             "base": c.BASE, "source_sha256": "c"*64, "runtime_ref": "a"*40,
             "manifest_sha256": c.MANIFEST, "inventory_sha256": c.INVENTORY,
-            "config_sha256": legacy.digest(c.config(key)), "data_revision": legacy.DATA_REVISION,
+            **c.configuration_hashes(key), "data_revision": legacy.DATA_REVISION,
             "master_sha256": legacy.MASTER_SHA, "split": "TRAIN", "max_initial_ids": 160,
             "max_native_calls": 160, "retry_sample_ids": [], "resume": False,
             **{n: "SYNTHETIC_TEST_REVIEW_ONLY" for n in ("G0", "T0", "O3", "code_review_ref",
@@ -76,8 +76,8 @@ class Scripted:
     stage = "synthetic_generation"
     serialized_tokenizer = b'{"scope":"synthetic-character-tokenizer"}\n'
 
-    def __init__(self, fault=None, value=None):
-        self.calls, self.ids, self.fault, self.value = 0, [], fault, value
+    def __init__(self, fault=None, value=None, key="internvl35"):
+        self.calls, self.ids, self.fault, self.value, self.key = 0, [], fault, value, key
 
     def generate(self, image, sample):
         self.ids.append(Path(image).name)
@@ -86,14 +86,152 @@ class Scripted:
         if self.fault:
             raise self.fault
         value = copy.deepcopy(self.value if self.value is not None else raw(legacy.LEVELS[(self.calls-1) % 4]))
+        value.setdefault("logit_capture_boundary", "internvl_outer" if self.key == "internvl35" else "minicpm_llm_forward")
         value["raw_nonfinite"] = any(not s["all_finite"] for s in value["steps"])
-        write(sample / "native.json", {"generated_ids": value["generated_ids"]})
+        write(sample / "native.json", {"generated_ids": value["generated_ids"],
+              "sequence_semantics": "prompt_plus_continuation" if self.key == "internvl35" else "continuation_only_inputs_embeds"})
+        spec = c.model(self.key)
+        write(sample / "request.json", {"scope": "SYNTHETIC_TEST_ONLY", "model": {n: spec[n] for n in ("id", "revision")},
+              "prompt": (ROOT/"configs/pilot/classification_c1.txt").read_bytes().decode(),
+              "generation": {**legacy.GENERATION, "repetition_penalty": 1.0}, "image": {"processor_mode": "RGB"},
+              "input_detail": {"tiles_including_thumbnail" if self.key == "internvl35" else "slices_including_global": 1}})
         for n, step in enumerate(value["steps"]):
             write(sample / f"steps/{n:03d}.json", step)
         return value
 
 
 class Candidate160Tests(unittest.TestCase):
+    def test_legacy_snapshot_and_effective_model_processing_are_separate(self):
+        expected = {"internvl35": ("internvl_outer", "prompt_plus_continuation", "InternVLProcessor"),
+                    "minicpm4": ("minicpm_llm_forward", "continuation_only_inputs_embeds", "MiniCPM native")}
+        for key, (boundary, semantics, processor) in expected.items():
+            with self.subTest(key=key):
+                cfg = c.config(key)
+                with c.enrollment(key):
+                    historical = copy.deepcopy(legacy.settings(key))
+                compatibility = cfg["legacy_transport_compatibility"]
+                effective = cfg["effective_candidate"]
+                self.assertEqual(compatibility["settings_snapshot"], historical)
+                self.assertIn("NOT_EFFECTIVE", compatibility["scope"])
+                self.assertEqual(historical["selection_seed"], legacy.SEED)
+                self.assertIn("phi single-image num_crops=16", historical["preprocessing"])
+                for stale in ("num_crops", "phi", "passive_outer_forward", legacy.SEED, "three-vlm-train-v1"):
+                    self.assertNotIn(stale, json.dumps(effective))
+                self.assertIn(processor, effective["preprocessing"]["implementation"])
+                self.assertEqual(effective["logits"]["boundary"], boundary)
+                self.assertEqual(effective["sequence_semantics"], semantics)
+                self.assertEqual(effective["model"], c.model(key))
+                self.assertEqual(effective["generation"]["frozen_overrides"], legacy.GENERATION)
+                hashes = c.configuration_hashes(key)
+                self.assertEqual(hashes["legacy_transport_config_sha256"], legacy.digest(historical))
+                self.assertEqual(hashes["candidate_execution_config_sha256"], legacy.digest(cfg))
+                self.assertNotEqual(*hashes.values())
+                cfg["effective_candidate"]["preprocessing"]["implementation"] = "Phi num_crops=16"
+                self.assertNotEqual(legacy.digest(cfg), hashes["candidate_execution_config_sha256"])
+                self.assertNotEqual(cfg, c.config(key))
+
+    def test_grant_rejects_swapped_missing_stale_and_wrong_model_config_hashes(self):
+        for key in c.KEYS:
+            original = grant(key)
+            legacy_hash = original["legacy_transport_config_sha256"]
+            execution_hash = original["candidate_execution_config_sha256"]
+            mutations = [
+                {"legacy_transport_config_sha256": execution_hash},
+                {"candidate_execution_config_sha256": legacy_hash},
+                {"legacy_transport_config_sha256": execution_hash, "candidate_execution_config_sha256": legacy_hash},
+                {"legacy_transport_config_sha256": None}, {"candidate_execution_config_sha256": None},
+                {"config_sha256": execution_hash}, {"schema": "safeshift-candidate160-grant-v1"},
+                {"model": {**original["model"], "revision": "0"*40}}]
+            with patch.object(legacy, "settings", wraps=legacy.settings) as settings:
+                c.authorize(original, key, original["source_sha256"], original["runtime_ref"], ledger(original))
+                self.assertTrue(settings.called)
+            for mutation in mutations:
+                changed = {**original, **mutation}
+                with self.subTest(key=key, mutation=mutation), self.assertRaises(ValueError):
+                    c.authorize(changed, key, original["source_sha256"], original["runtime_ref"], ledger(changed))
+
+    def test_raw_config_binding_faults_stop_before_parser_with_raw_retained(self):
+        from safeshift.pilot import runner
+        for key in c.KEYS:
+            for defect in ("legacy_alias", "legacy_release", "execution_release", "source", "attempt", "model",
+                           "phi_processing", "legacy_logits", "boundary", "sequence", "runner_settings",
+                           "request_model", "request_generation", "request_crops"):
+                with self.subTest(key=key, defect=defect), tempfile.TemporaryDirectory() as d:
+                    root = Path(d)
+                    p, rows = fixture(root)
+                    backend = Scripted(key=key)
+                    original = run.CandidateStore.raw
+                    def corrupt(store, ordinal, value):
+                        binding = value["execution_release"]
+                        if defect == "legacy_alias": value["identity"]["config_sha256"] = binding["candidate_execution_config_sha256"]
+                        if defect == "legacy_release": binding["legacy_transport_config_sha256"] = "0"*64
+                        if defect == "execution_release": binding["candidate_execution_config_sha256"] = "0"*64
+                        if defect == "source": binding["source_sha256"] = "0"*64
+                        if defect == "attempt": binding["attempt_id"] = "SYNTHETIC_wrong_attempt"
+                        if defect == "model": binding["model"]["revision"] = "0"*40
+                        effective = value["configuration_provenance"]["configuration_contract"]["effective_candidate"]
+                        if defect == "phi_processing": effective["preprocessing"]["implementation"] = "Phi num_crops=16"
+                        if defect == "legacy_logits": effective["logits"]["boundary"] = "passive_outer_forward_four_logits_single_branch_v1"
+                        if defect == "boundary": value["logit_capture_boundary"] = "wrong_module"
+                        if defect == "sequence":
+                            path = store.root/f"samples/{ordinal:06d}/native.json"
+                            native = read(path)
+                            native["sequence_semantics"] = "wrong_prompt_slicing"
+                            path.write_text(json.dumps(native))
+                        if defect.startswith("request_"):
+                            path = store.root/f"samples/{ordinal:06d}/request.json"
+                            request = read(path)
+                            if defect == "request_model": request["model"]["revision"] = "0"*40
+                            if defect == "request_generation": request["generation"]["max_new_tokens"] = 65
+                            if defect == "request_crops": request["input_detail"]["num_crops"] = 16
+                            path.write_text(json.dumps(request))
+                        return original(store, ordinal, value)
+                    native_settings = runner.settings
+                    def settings(model_key):
+                        result = native_settings(model_key)
+                        if defect == "runner_settings": result["preprocessing"] = "SYNTHETIC settings drift"
+                        return result
+                    with patch.object(run.CandidateStore, "raw", corrupt), patch.object(runner, "settings", settings), \
+                         patch.object(runner, "parse_label", side_effect=AssertionError("MUST_NOT_PARSE_BAD_PROVENANCE")) as parser:
+                        result, reason = run.run_calls(root/"out", p, rows, lambda: backend, grant(key), reviewer=review)
+                    self.assertEqual(backend.calls, 1)
+                    self.assertIsNotNone(reason)
+                    self.assertEqual(result[rows[0]["sample_id"]]["status"], "TECHNICAL_ERROR")
+                    self.assertEqual(sum(r["status"] == "NOT_ATTEMPTED" for r in result.values()), 159)
+                    parser.assert_not_called()
+                    saved = read(root/"out/calls/000000/run/samples/000000/raw.json")
+                    self.assertEqual(saved["generated_ids"], raw("Level01")["generated_ids"])
+                    export(root/"out", root/"partial.zip")
+                    verify_archive(root/"partial.zip")
+
+    def test_recovery_recomputes_both_hashes_despite_self_consistent_file_checksums(self):
+        for key in c.KEYS:
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                p, rows = fixture(root)
+                g = grant(key)
+                g["policy"].update(dominance_min_valid=1, dominance_max_fraction=0)
+                result, _ = run.run_calls(root/"out", p, rows, lambda: Scripted(key=key), g)
+                self.assertEqual(result[rows[0]["sample_id"]]["status"], "SUCCESS")
+                sample = root/"out/calls/000000/run/samples/000000"
+                raw_original, result_original = read(sample/"raw.json"), read(sample/"result.json")
+                for defect in ("transport_hash", "execution_hash", "claim", "model", "source"):
+                    value = copy.deepcopy(raw_original)
+                    if defect == "transport_hash": value["identity"]["config_sha256"] = value["execution_release"]["candidate_execution_config_sha256"]
+                    if defect == "execution_hash": value["execution_release"]["candidate_execution_config_sha256"] = value["identity"]["config_sha256"]
+                    if defect == "claim": value["configuration_provenance"]["configuration_contract"]["effective_candidate"]["preprocessing"]["implementation"] = "Phi num_crops=16"
+                    if defect == "model": value["identity"]["model"]["revision"] = "0"*40
+                    if defect == "source": value["execution_release"]["source_sha256"] = "0"*64
+                    (sample/"raw.json").write_text(json.dumps(value))
+                    (sample/"result.json").write_text(json.dumps({**result_original, "raw_sha256": sha(sample/"raw.json")}))
+                    with self.subTest(defect=defect):
+                        recovered = run.recover(root/"out", rows, g)
+                        self.assertEqual(recovered[rows[0]["sample_id"]]["status"], "TECHNICAL_ERROR")
+                (sample/"raw.json").write_text(json.dumps(raw_original))
+                (sample/"result.json").write_text(json.dumps({**result_original, "raw_sha256": sha(sample/"raw.json")}))
+                changed_grant = {**g, "candidate_execution_config_sha256": "0"*64}
+                self.assertEqual(run.recover(root/"out", rows, changed_grant)[rows[0]["sample_id"]]["status"], "TECHNICAL_ERROR")
+
     def test_public_contract_has_no_grant_thresholds_or_historical_ids(self):
         value = read(ROOT / "configs/candidate160/preparation.json")
         self.assertEqual(value["status"], "BLOCKED")
@@ -109,7 +247,8 @@ class Candidate160Tests(unittest.TestCase):
             c.authorize(g, key, g["source_sha256"], g["runtime_ref"], ledger(g), now=1)
             defects = {"schema": "safeshift-pilot-grant-v1", "G0": None, "T0": "PENDING", "O3": "",
                 "source_sha256": "d"*64, "model_key": "phi", "manifest_sha256": "0"*64,
-                "config_sha256": "0"*64, "runtime_ref": "b"*40, "max_initial_ids": 161,
+                "config_sha256": "0"*64, "legacy_transport_config_sha256": "0"*64,
+                "candidate_execution_config_sha256": "0"*64, "runtime_ref": "b"*40, "max_initial_ids": 161,
                 "max_native_calls": 161, "resume": True, "retry_sample_ids": ["synthetic"],
                 "allow_train_images": False, "allow_folder_gt": False, "allow_gpu": False,
                 "allow_checkpoint_read": False, "policy": None, "expires_unix": 0}
@@ -151,7 +290,7 @@ class Candidate160Tests(unittest.TestCase):
                 root = Path(d)
                 p, rows = fixture(root)
                 output = root/"evidence"
-                backend = Scripted()
+                backend = Scripted(key=key)
                 factory_calls = []
                 def factory():
                     factory_calls.append(1)
@@ -163,6 +302,13 @@ class Candidate160Tests(unittest.TestCase):
                 self.assertTrue(all(v["status"] == "SUCCESS" and v["native_calls"] == v["attempts"] == 1
                                     for v in results.values()))
                 self.assertEqual(run.recover(output, rows), results)
+                hashes = c.configuration_hashes(key)
+                for i in range(160):
+                    received = read(output/f"calls/{i:06d}/run/samples/000000/raw.json")
+                    self.assertEqual(received["identity"]["config_sha256"], hashes["legacy_transport_config_sha256"])
+                    self.assertEqual({n: received["execution_release"][n] for n in hashes}, hashes)
+                    self.assertEqual(legacy.digest(received["configuration_provenance"]["configuration_contract"]),
+                                     hashes["candidate_execution_config_sha256"])
                 orders.append(backend.ids)
                 self.assertEqual(read(output/"checkpoints/001.json")["kind"], "FIRST_IMAGE_TECHNICAL")
                 self.assertEqual(read(output/"checkpoints/004.json")["kind"], "EARLY_BEHAVIOR")

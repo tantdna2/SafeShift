@@ -10,7 +10,7 @@ import sys
 import unittest
 
 from safeshift.candidates.source import ROOT, require
-from safeshift.candidates.train_contract import KEYS, sources, source_hash
+from safeshift.candidates.train_contract import KEYS, config, configuration_hashes, sources, source_hash
 from safeshift.pilot.artifacts import sha, write
 from scripts.rehearse_candidate_integration import ReceiptResult
 
@@ -42,7 +42,8 @@ def main():
     with (output/"tests.log").open("x", encoding="utf-8") as log, redirect_stdout(log), redirect_stderr(log):
         result = unittest.TextTestRunner(stream=log, verbosity=2, resultclass=ReceiptResult).run(suite)
     changed = hashes != {n: sha(ROOT/n) for n in names}
-    receipt = {"schema": "safeshift-candidate160-cpu-evidence-v1", "model_key": args.model,
+    receipt = {"schema": "safeshift-candidate160-cpu-evidence-v2", "model_key": args.model,
+        "configuration_contracts": {key: {"hashes": configuration_hashes(key), "contract": config(key)} for key in KEYS},
         "executed_utc": datetime.now(timezone.utc).isoformat(), "python": platform.python_version(),
         "platform": platform.platform(), "git_commit": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),

@@ -14,7 +14,7 @@ import zlib
 
 from scripts.build_three_vlm_notebooks import notebook as legacy_notebook
 from safeshift.candidates.source import ROOT, require
-from safeshift.candidates.train_contract import BASE, KEYS, MANIFEST, config, model, sources, source_hash
+from safeshift.candidates.train_contract import BASE, KEYS, MANIFEST, config, configuration_hashes, model, sources, source_hash
 from safeshift.pilot.contract import source_digest
 
 
@@ -64,6 +64,13 @@ FP16/eager/batch1/cuda:0; GPU1 chỉ quan sát, VRAM không gộp. Mọi source/
 generation/C1/parser/processor theo PR #151; không fallback/quantize/resize cứu lỗi.
 CUDA tuple là PREP, chưa có nghiệm thu GPU hoặc runtime approval.
 
+Config v2 tách `legacy_transport_compatibility` (snapshot mô tả lịch sử, không
+phải xử lý/seed thực tế) và `effective_candidate` của đúng mô hình. Grant v2 và
+raw evidence bắt buộc hai hash riêng: `legacy_transport_config_sha256` và
+`candidate_execution_config_sha256`. Trường frozen `raw.identity.config_sha256`
+chỉ là alias hash transport; không phải hash thực thi. Notebook/raw metadata
+ghi mapping này và kiểm cả hai trước parse/recovery. Không crop theo mô tả Phi.
+
 Attach private Inputs đã duyệt, tên file duy nhất (direct mount hoặc
 datasets/owner/slug; không sửa code/path/SHA):
 
@@ -107,7 +114,8 @@ CPU scripted PASS không là GPU PASS, chất lượng thật hoặc empirical H
     result["metadata"]["safeshift"] = {"mode": "CANDIDATE160_PREP", "status": "BLOCKED",
         "base": BASE, "runtime_ref": ref, "model_key": key, "model": spec,
         "source_sha256": source_hash(repo), "manifest_sha256": MANIFEST,
-        "config": config(key), "max_images": 160, "gpu": "UNVERIFIED", "behavior": "UNVERIFIED"}
+        "config": config(key), "configuration_hashes": configuration_hashes(key),
+        "max_images": 160, "gpu": "UNVERIFIED", "behavior": "UNVERIFIED"}
     return result
 
 
