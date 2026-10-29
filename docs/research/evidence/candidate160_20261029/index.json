@@ -1,0 +1,17 @@
+{
+  "base": "95eb4e8801ea746e1a760b9d529920bffb3c26cb",
+  "files": {
+    "internvl35-linux.json": "8f07963f3ee20e6b957280f4badbfb3ec9e89dd536aec5908b1d0db56c0f7796",
+    "internvl35-windows.json": "6ad07568df77c3fe3649ed3582dacce4151782205e7f793a35df0d438238ee47",
+    "minicpm4-linux.json": "fd66e8eb6a81e6bbab9e6acddf84069482f3bae81a46a35ef61b7e97a8fa4e2e",
+    "minicpm4-windows.json": "bfdcc1c651f397e1875dda227be1f487a7e4a16cb032a62a6d74fe065fe2c70c",
+    "release-linux.json": "781182c292f6ee27f1f0a9373d0148fa8bdfcce4fed11dbae78d08d787445493",
+    "release-windows.json": "ff5135308865cb3677a49575ffba52d1babc2729ceb9f1d3d1f45e47a9c457c7"
+  },
+  "release_checked_ref": "aae742352f647263524d5c5f1dbeb47ee5ec5d14",
+  "release_status": "BLOCKED",
+  "runtime_ref": "56898c492fde1a962237f11058f1f78bee281122",
+  "schema": "safeshift-candidate160-cpu-public-index-v1",
+  "scope": "SYNTHETIC_CPU_ONLY; no private data, weights, GPU or real behavior result",
+  "source_sha256": "471236817cb5723e73c06c186ede72208226c02f3c9bbd13ee6cc1ab193aae23"
+}

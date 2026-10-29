@@ -1,7 +1,9 @@
 """Offline CPU acceptance of a reviewed Git snapshot; never authorizes a run.
 
 Reuse the snapshot's notebook builder, source contract and stdlib test suite.
-Never execute notebook cells, native opt-ins, network probes, grants or weights.
+Candidate no-grant cells execute only through synthetic CPU tests; legacy cells
+are inspected without execution. Never enable native opt-ins, network probes,
+real grants, weights or GPU execution.
 The runtime ref is trusted reviewed repository code, not an arbitrary upload.
 """
 import argparse
