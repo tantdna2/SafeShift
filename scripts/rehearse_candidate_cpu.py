@@ -37,46 +37,16 @@ def require(value, message):
         raise ValueError(message)
 
 
-def snapshot_stat(path, *, directory=False):
-    """Inspect the entry itself, including Windows junction/reparse attributes."""
-    info = path.lstat()
-    require(not stat.S_ISLNK(info.st_mode) and
-            not (getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT),
-            "SOURCE_ALIAS_FORBIDDEN")
-    require(stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode),
-            "SNAPSHOT_DIRECTORY_REQUIRED" if directory else "SOURCE_REGULAR_FILE_REQUIRED")
-    if not directory:
-        require(info.st_nlink == 1, "SOURCE_ALIAS_FORBIDDEN")
-    return info
+from safeshift.candidates.source import snapshot_stat
+from safeshift.candidates import source as candidate_source
 
 
 def verify_snapshot(snapshot, key):
-    """Never execute local Python until every public source byte is locked."""
-    spec = read(LOCK)[key]
-    snapshot_stat(snapshot, directory=True)
-    # Enumerate ALL entries, including hidden names and dangling/directory links.
-    # Do not recurse into any directory or follow an entry to classify it.
-    actual = {p.name for p in snapshot.iterdir()}
-    require(actual == set(spec["files"]), "SNAPSHOT_EXACT_ALLOWLIST_REQUIRED")
-    for name, checksum in spec["files"].items():
-        p = snapshot / name
-        snapshot_stat(p)
-        require(sha(p) == checksum, "SOURCE_CHECKSUM:" + name)
-    return spec
+    return candidate_source.verify_snapshot(snapshot, key, LOCK)
 
 
 def stage_snapshot(snapshot, local, key):
-    """Copy only locked flat files; revalidate both trees before any remote import."""
-    spec = verify_snapshot(snapshot, key)
-    local.mkdir(exist_ok=False)
-    for name in spec["files"]:
-        snapshot_stat(snapshot / name)
-        # A link introduced after validation must not be followed by the copy.
-        # The destination check below also rejects links and changed file bytes.
-        shutil.copyfile(snapshot / name, local / name, follow_symlinks=False)
-    require(verify_snapshot(snapshot, key) == spec, "SOURCE_LOCK_CHANGED_DURING_COPY")
-    require(verify_snapshot(local, key) == spec, "SOURCE_LOCK_CHANGED_DURING_COPY")
-    return spec
+    return candidate_source.stage_snapshot(snapshot, local, key, LOCK)
 
 
 def environment(key):
@@ -110,7 +80,7 @@ def environment(key):
             "freeze_all": sorted(freeze), "compiled_torchvision_nms": "PASS"}
 
 
-def guard(stack):
+def guard(stack, *, allow_empty_state_loader=False):
     """Fail closed on network, weights and CUDA even inside public remote code."""
     import torch, transformers, safetensors.torch
     os.environ.update(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", CUDA_VISIBLE_DEVICES="",
@@ -120,41 +90,14 @@ def guard(stack):
     for target in ("init", "_lazy_init", "is_available", "device_count", "get_device_capability",
                    "synchronize", "mem_get_info"):
         stack.enter_context(patch.object(torch.cuda, target, side_effect=AssertionError("CUDA_FORBIDDEN")))
-    for owner, name in ((torch, "load"), (safetensors.torch, "load_file"),
-                        (transformers.PreTrainedModel, "from_pretrained")):
+    guarded = [(torch, "load"), (safetensors.torch, "load_file")]
+    if not allow_empty_state_loader:
+        guarded.append((transformers.PreTrainedModel, "from_pretrained"))
+    for owner, name in guarded:
         stack.enter_context(patch.object(owner, name, side_effect=AssertionError("WEIGHTS_FORBIDDEN")))
 
 
-def native_setup(snapshot, key, evidence):
-    import transformers
-    opts = dict(local_files_only=True, trust_remote_code=key == "minicpm4")
-    spec = read(LOCK)[key]
-    opts.update(revision=spec["revision"], code_revision=spec["revision"])
-    processor = transformers.AutoProcessor.from_pretrained(str(snapshot), **opts)
-    tokenizer = transformers.AutoTokenizer.from_pretrained(str(snapshot), **opts)
-    config = transformers.AutoConfig.from_pretrained(str(snapshot), **opts)
-    require(processor.tokenizer.get_vocab() == tokenizer.get_vocab(), "TOKENIZER_PROCESSOR_VOCAB_MISMATCH")
-    if key == "internvl35":
-        from transformers.models.auto.modeling_auto import MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING
-        model_class = MODEL_FOR_IMAGE_TEXT_TO_TEXT_MAPPING[type(config)]
-    else:
-        from transformers.dynamic_module_utils import get_class_from_dynamic_module
-        model_class = get_class_from_dynamic_module(config.auto_map["AutoModel"], str(snapshot),
-                                                    local_files_only=True, revision=spec["revision"],
-                                                    code_revision=spec["revision"])
-    # Import and map the real class. Do not instantiate it or claim weight loading.
-    evidence["native_classes"] = {name: type(obj).__name__ for name, obj in
-                                  (("processor", processor), ("tokenizer", tokenizer), ("config", config))}
-    evidence["native_classes"]["model_import_only"] = model_class.__name__
-    evidence["trust_remote_code"] = opts["trust_remote_code"]
-    fields = (("crop_to_patches", "min_patches", "max_patches", "do_convert_rgb")
-              if key == "internvl35" else
-              ("max_slice_nums", "scale_resolution", "patch_size", "image_feature_size", "use_image_id", "slice_mode"))
-    evidence["native_image_config"] = {name: getattr(processor.image_processor, name) for name in fields}
-    evidence["implementation_sha256"] = {}
-    for obj in (type(processor), type(processor.image_processor), type(tokenizer), model_class):
-        evidence["implementation_sha256"][obj.__name__] = sha(inspect.getfile(obj))
-    return processor, tokenizer, config, model_class
+from safeshift.candidates.loading import native_setup
 
 
 def prepare(processor, key, prompt, image):
@@ -173,51 +116,7 @@ def prepare(processor, key, prompt, image):
     return rendered, inputs
 
 
-def validate_inputs(processor, key, config, rendered, inputs, prompt):
-    import torch
-    ids, mask = inputs["input_ids"], inputs["attention_mask"]
-    require(ids.ndim == 2 and ids.shape[0] == 1 and ids.dtype in (torch.int32, torch.int64), "INPUT_IDS_DTYPE_SHAPE")
-    require(mask.shape == ids.shape and bool((mask == 1).all()), "ATTENTION_MASK")
-    require(bool((ids >= 0).all()) and bool((ids < len(processor.tokenizer)).all()), "VOCAB_RANGE")
-    decoded = processor.tokenizer.decode(ids[0].tolist(), skip_special_tokens=False,
-                                        clean_up_tokenization_spaces=False)
-    require(decoded.count(prompt) == 1, "EXPANDED_INPUT_C1_TRUNCATED_OR_CHANGED")
-    require(ids.shape[1] + GENERATION["max_new_tokens"] <=
-            (config.text_config.max_position_embeddings if key == "internvl35" else config.max_position_embeddings),
-            "CONTEXT_OVERFLOW")
-    pixels = inputs["pixel_values"]
-    if key == "internvl35":
-        require(config.image_token_id == 151671, "EXACT_4B_HF_IMAGE_TOKEN")
-        require(processor.image_seq_length == 256, "NATIVE_256_TOKENS_PER_TILE")
-        count = int((ids == config.image_token_id).sum())
-        require(pixels.ndim == 4 and list(pixels.shape[1:]) == [3, 448, 448], "INTERNVL_TILES")
-        require(1 <= pixels.shape[0] <= 13 and count == pixels.shape[0] * 256, "IMAGE_TOKEN_TILE_COUNT")
-        tensors = [pixels]
-        detail = {"tiles_including_thumbnail": pixels.shape[0], "image_tokens": count,
-                  "pixel_shapes": [list(pixels.shape)]}
-    else:
-        ip = processor.image_processor
-        require((ip.image_feature_size, ip.patch_size, ip.max_slice_nums, ip.scale_resolution, ip.use_image_id) ==
-                (config.query_num, config.patch_size, config.slice_config.max_slice_nums,
-                 config.slice_config.scale_resolution, config.use_image_id), "MINICPM_CONFIG_PROCESSOR_DRIFT")
-        tensors = pixels[0]
-        bounds = inputs["image_bound"][0]
-        require(len(tensors) == len(bounds) and 1 <= len(tensors) <= 10, "SLICE_BOUND_COUNT")
-        require(all(int(end - start) == 64 for start, end in bounds), "SLICE_64_QUERY_TOKENS")
-        require(all(int((ids[0, start:end] == processor.tokenizer.unk_id).sum()) == 64
-                    for start, end in bounds), "SLICE_PLACEHOLDER_IDS")
-        require(len(inputs["tgt_sizes"][0]) == len(tensors), "PATCH_GRID_COUNT")
-        for tensor, grid in zip(tensors, inputs["tgt_sizes"][0]):
-            require(tensor.shape[0] == 3 and tensor.numel() == 3 * int(grid.prod()) * 14**2,
-                    "PIXEL_PATCH_GRID")
-        detail = {"slices_including_global": len(tensors), "image_tokens": len(tensors) * 64,
-                  "pixel_shapes": [list(t.shape) for t in tensors],
-                  "patch_grids": inputs["tgt_sizes"][0].tolist()}
-    require(all(t.device.type == "cpu" and t.dtype == torch.float32 and bool(torch.isfinite(t).all())
-                for t in tensors), "PIXELS_CPU_FLOAT32_FINITE")
-    return {**detail, "input_length": ids.shape[1], "ids_dtype": str(ids.dtype),
-            "mask_dtype": str(mask.dtype), "rendered_sha256": hashlib.sha256(rendered.encode()).hexdigest(),
-            "input_ids_sha256": hashlib.sha256(ids.cpu().numpy().tobytes()).hexdigest()}
+from safeshift.candidates.inputs import validate_inputs
 
 
 def processor_probe(processor, key, config, output):
