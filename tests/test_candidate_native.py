@@ -439,5 +439,58 @@ class NativeCandidateTests(unittest.TestCase):
                 import_archive(root/"synthetic.zip", root/"imported")
 
 
+    def test_candidate160_native_processor_tokens_raw_runner_and_archive(self):
+        from test_candidate160 import fixture, grant, review
+        from safeshift.candidates import train_runtime as rt, train_run as run
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            plan, rows = fixture(root)
+            for row, metadata in zip(rows, plan["main"]):
+                path = Path(row["image"])
+                with self.Image.new("RGBA", (17, 1), (40, 80, 120, 50)) as image:
+                    image.save(path, format="PNG")
+                checksum = rt.sha(path)
+                for value in (row, metadata):
+                    value.update(image_sha256=checksum, width=17, height=1)
+            backend, scripted_llm = self.backend()
+            self.assertEqual(rt.verify_images(root, plan["main"])["verified_images"], 160)
+            result, reason = run.run_calls(root/"out", plan, rows, lambda: backend,
+                                          grant(KEY), reviewer=review)
+            self.assertIsNone(reason)
+            self.assertEqual(sum(v["native_calls"] for v in result.values()), 160)
+            self.assertTrue(all(v["status"] == "SUCCESS" for v in result.values()))
+            self.assertTrue(read(root/"out/calls/000000/run/samples/000000/raw.json")["generated_ids"])
+            from safeshift.candidates.train_contract import config, configuration_hashes
+            hashes = configuration_hashes(KEY)
+            expected_boundary = "internvl_outer" if KEY == "internvl35" else "minicpm_llm_forward"
+            expected_sequence = "prompt_plus_continuation" if KEY == "internvl35" else "continuation_only_inputs_embeds"
+            for ordinal in range(160):
+                sample = root/f"out/calls/{ordinal:06d}/run/samples/000000"
+                received, native_ids, request = read(sample/"raw.json"), read(sample/"native.json"), read(sample/"request.json")
+                self.assertEqual(received["identity"]["config_sha256"], hashes["legacy_transport_config_sha256"])
+                self.assertEqual({name: received["execution_release"][name] for name in hashes}, hashes)
+                self.assertEqual(received["configuration_provenance"]["configuration_contract"], config(KEY))
+                self.assertEqual(received["logit_capture_boundary"], expected_boundary)
+                self.assertEqual(native_ids["sequence_semantics"], expected_sequence)
+                self.assertEqual({name: request["generation"][name] for name in GENERATION}, GENERATION)
+                self.assertEqual(request["model"], {name: self.spec[name] for name in ("id", "revision")})
+                self.assertEqual(request["image"]["processor_mode"], "RGB")
+            self.assertFalse(scripted_llm._forward_hooks)
+            export(root/"out", root/"scripted.zip")
+            from safeshift.pilot.artifacts import verify_archive
+            verify_archive(root/"scripted.zip")
+            self.assertTrue((root/"out/tokenizer/runtime_tokenizer.json").is_file())
+
+    def test_candidate160_corrupt_image_before_native_generation(self):
+        from test_candidate160 import fixture
+        from safeshift.candidates.train_runtime import verify_images
+        from PIL import UnidentifiedImageError
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            plan, _ = fixture(root)
+            with self.assertRaises(UnidentifiedImageError):
+                verify_images(root, plan["main"])
+
+
 if __name__ == "__main__":
     unittest.main()

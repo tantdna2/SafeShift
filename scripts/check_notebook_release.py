@@ -1,7 +1,9 @@
 """Offline CPU acceptance of a reviewed Git snapshot; never authorizes a run.
 
 Reuse the snapshot's notebook builder, source contract and stdlib test suite.
-Never execute notebook cells, native opt-ins, network probes, grants or weights.
+Candidate no-grant cells execute only through synthetic CPU tests; legacy cells
+are inspected without execution. Never enable native opt-ins, network probes,
+real grants, weights or GPU execution.
 The runtime ref is trusted reviewed repository code, not an arbitrary upload.
 """
 import argparse
@@ -166,9 +168,21 @@ items={f"SafeShift_TRAIN_PILOT_{k}.ipynb":notebook(k) for k in MODELS}
 items["SafeShift_STORAGE_PREFLIGHT.ipynb"]=notebook("phi",preflight=True)
 for k in ("phi","smolvlm2"):
  items[f"SafeShift_ENVIRONMENT_PREFLIGHT_{k}.ipynb"]=notebook(k,environment=True)
-print(json.dumps({"expected":{k:json.dumps(v,indent=1,ensure_ascii=False)+"\\n" for k,v in items.items()},
+result={"expected":{k:json.dumps(v,indent=1,ensure_ascii=False)+"\\n" for k,v in items.items()},
  "sources":{p:(root/p).read_text(encoding="utf-8") for p in source_files(root)},
- "digest":source_digest(root)}))
+ "digest":source_digest(root)}
+if (root/"scripts/build_candidate160_notebooks.py").is_file():
+ from scripts.build_candidate160_notebooks import notebook as candidate_notebook
+ from safeshift.candidates.train_contract import KEYS,sources,source_hash
+ candidates={}
+ for key in KEYS:
+  name=f"SafeShift_CANDIDATE160_{key}.ipynb"
+  saved=json.loads((root/"notebooks"/name).read_bytes())
+  candidates[name]=candidate_notebook(key,saved["metadata"]["safeshift"]["runtime_ref"])
+ result["candidate_expected"]={k:json.dumps(v,indent=1,ensure_ascii=False)+"\\n" for k,v in candidates.items()}
+ result["candidate_sources"]={p:(root/p).read_text(encoding="utf-8") for p in sources(root)}
+ result["candidate_digest"]=source_hash(root)
+print(json.dumps(result))
 '''
 
 TEST = '''import json,sys,unittest
@@ -185,8 +199,15 @@ sys.exit(0 if result.wasSuccessful() and result.testsRun else 1)
 '''
 
 
-def command(args, cwd, timeout=180):
-    return subprocess.run(args, cwd=cwd, env=child_env(), capture_output=True, timeout=timeout)
+def command(args, cwd, timeout=180, git_context=None):
+    env = child_env()
+    if git_context:
+        # Read-only Git object access for exact-ref builders inside an export.
+        # Do not inject Python/module/native opt-in variables into the snapshot.
+        if set(git_context) != {"GIT_DIR", "GIT_WORK_TREE"}:
+            raise ValueError("READ_ONLY_GIT_CONTEXT_REQUIRED")
+        env.update(git_context)
+    return subprocess.run(args, cwd=cwd, env=env, capture_output=True, timeout=timeout)
 
 
 def evaluate(repo, runtime_ref):
@@ -210,6 +231,9 @@ def evaluate(repo, runtime_ref):
         if archive.returncode:
             raise ValueError("SOURCE_EXPORT_FAILED")
         receipt["snapshot_archive_sha256"] = sha(archive.stdout)
+        git_directory = command(["git", "rev-parse", "--absolute-git-dir"], repo)
+        if git_directory.returncode:
+            raise ValueError("READ_ONLY_SOURCE_GIT_CONTEXT_UNAVAILABLE")
         with tempfile.TemporaryDirectory(prefix="safeshift-release-cpu-") as directory:
             root = Path(directory).resolve()
             unpack_snapshot(archive.stdout, root)
@@ -221,19 +245,22 @@ def evaluate(repo, runtime_ref):
             (root / "data/processed").mkdir(parents=True, exist_ok=True)
             tracked = {p.relative_to(root).as_posix(): sha(p.read_bytes())
                        for p in root.rglob("*") if p.is_file()}
-            build = command([sys.executable, "-B", "-I", "-c", BUILD], root)
+            git_context = {"GIT_DIR": git_directory.stdout.decode().strip(), "GIT_WORK_TREE": str(root)}
+            build = command([sys.executable, "-B", "-I", "-c", BUILD], root, git_context=git_context)
             if build.returncode:
                 raise ValueError("REPOSITORY_BUILDER_FAILED")
             built = strict_json(build.stdout)
             actual = {p.name for p in (root / "notebooks").glob("*.ipynb")}
-            if actual != set(built["expected"]):
+            expected = {**built["expected"], **built.get("candidate_expected", {})}
+            if actual != set(expected):
                 raise ValueError("NOTEBOOK_INVENTORY_MISMATCH")
             receipt["checks"]["notebooks"] = {
                 name: inspect_notebook((root / "notebooks" / name).read_bytes(), expected.encode(),
-                                       built["sources"], built["digest"])
-                for name, expected in built["expected"].items()}
+                                       built["candidate_sources"] if name in built.get("candidate_expected", {}) else built["sources"],
+                                       built["candidate_digest"] if name in built.get("candidate_expected", {}) else built["digest"])
+                for name, expected in expected.items()}
             receipt["gates"]["G1_notebook"] = "PASS"
-            tests = command([sys.executable, "-B", "-I", "-c", TEST], root, timeout=600)
+            tests = command([sys.executable, "-B", "-I", "-c", TEST], root, timeout=600, git_context=git_context)
             lines = [l for l in tests.stdout.decode("utf-8").splitlines()
                      if l.startswith("RELEASE_TEST_RESULT=")]
             receipt["checks"]["stdlib_suite"] = {
@@ -251,6 +278,9 @@ def evaluate(repo, runtime_ref):
             receipt["gates"]["G3_custody"] = "PASS_STDLIB_ONLY_NATIVE_SKIPS_SEPARATE"
             receipt["software_status"] = "CODE_PASS"
             receipt["source_sha256"] = built["digest"]
+            if built.get("candidate_digest"):
+                receipt["candidate_source_sha256"] = built["candidate_digest"]
+                receipt["notebook_cells_executed"] = "CPU_NO_GRANT_BLOCKED_ONLY_IN_SYNTHETIC_DIRECTORIES"
             receipt["limits"] = ["No native opt-in or live pip/source audit was run.",
                                  "Scripted tests do not establish real model behavior.",
                                  "No authority, ledger, release or GPU readiness certified.",

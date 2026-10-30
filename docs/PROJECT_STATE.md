@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **29/10/2026 (Asia/Bangkok)** trong task tích hợp CPU sau PR #150.
-Main khi bắt đầu đã kiểm GitHub/fetch: `bbbd351e19e404f1108413578c7ed024f92e814d`.
+Cập nhật **29/10/2026 (Asia/Bangkok)** trong task notebook160 sau PR #151.
+Main khi bắt đầu đã kiểm GitHub/fetch: `95eb4e8801ea746e1a760b9d529920bffb3c26cb`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.
 
 ## PROJECT IDENTITY
@@ -12,6 +12,8 @@ Main khi bắt đầu đã kiểm GitHub/fetch: `bbbd351e19e404f1108413578c7ed02
 - Thiết kế/primary/metric/final roster/nguồn mới vẫn **PROPOSED; O1–O8/T0 PENDING**. HNLO optional theo từng model, không xác suất nguy cơ hoặc confidence đã hiệu chuẩn.
 
 ## CURRENT STATUS
+
+- **PR #151 MERGED**, GitHub `merged=true`, merge `95eb4e8801ea746e1a760b9d529920bffb3c26cb`, xác minh live trong task này. Adapter CPU READY trong phạm vi #151; không cấp GPU/data/grant hoặc scientific qualification.
 
 - **PR #150 MERGED**, merge `bbbd351e19e404f1108413578c7ed024f92e814d`, xác minh GitHub `merged=true` và origin/main trước task này. Findings CPU của #150 là baseline lịch sử; không phải kết luận về adapter mới bên dưới.
 
@@ -65,9 +67,9 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - Ranking là ưu tiên kiểm chứng theo nguồn, không accuracy đã đo. T4×2 không pooled 32 GB; FP16/attention/tiles/native wrapper và per-GPU memory còn phải G2/G4/G5.
 - Báo cáo so A cũ fixed-Q3+auxiliary với B peers hiện proposed; tách classifier, cross-check, fusion/review và HNLO optional; không đặt numerical thresholds hoặc phê duyệt ensemble rule.
 
-## ACTIVE WORK — HAI CANDIDATE, TÍCH HỢP CPU TRƯỚC KAGGLE
+## MERGED #151 — HAI CANDIDATE, TÍCH HỢP CPU TRƯỚC KAGGLE
 
-- **CPU READY trong phạm vi phần mềm đã kiểm thử; GPU release BLOCKED.** [Báo cáo/tái lập](research/CANDIDATE_INTEGRATION_CPU_20261029.md), [receipts](research/evidence/candidate_integration_20261029/index.json), code commit `65640ddf91bd0ce75e594c372af098ecb59194eb`, nhánh `implement/candidate-integration-20261029`, từ main sau #150. Một Draft PR để ChatGPT review; chưa review/audit/merge hoặc scientific approval.
+- **CPU READY trong phạm vi phần mềm đã kiểm thử; GPU release BLOCKED.** [Báo cáo/tái lập](research/CANDIDATE_INTEGRATION_CPU_20261029.md), [receipts](research/evidence/candidate_integration_20261029/index.json), code commit `65640ddf91bd0ce75e594c372af098ecb59194eb`, nhánh `implement/candidate-integration-20261029`, từ main sau #150. PR #151 đã merge ở SHA phía trên; các receipts dưới đây là snapshot CPU của #151, không bằng chứng GPU hoặc scientific approval.
 - `safeshift/candidates/` cung cấp hai adapter với source public đúng revision, native loader/processor, C1/generation cố định, explicit eager, raw IDs trước decode và bounded raw logits. Tái dùng runner/Store/parser/replay/archive qua tests; không ghi candidate vào registry/grants của pilot cũ.
 - **InternVL3.5 HF:** `OpenGVLab/InternVL3_5-4B-HF` @ `6bd4487402110ef9889ba50eb7aefeb302526fed`; native HF 4.55.4, image ID151671/256 tokens/view; 36+24 attention layers và 841 tensor keys qua native key conversion. Prefix phải khớp trước lấy continuation.
 - **MiniCPM-V-4:** `openbmb/MiniCPM-V-4` @ `6f69a8235885be89608f3a71ffd40695b379e1e7`; native 4.51.3,32+27 layers/741 tensor keys. Sửa ambiguity RGB1×1 bằng trục HWC tường minh, giữ native resize/slices/normalize; dùng `generate(decode_text=False)` giữ generation contract/logits, continuation-only và hai EOS native. Native chat lỗi vẫn được tái lập, không dùng nó để classify.
@@ -77,6 +79,17 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - Giữ pilot source digest `1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884`; sáu notebooks không sửa. Không chạy notebook, weights, inference/GPU/CUDA/Kaggle, private TRAIN/TEST/GT/archive, không cấp grant, chọn model thứ tư hoặc đổi giao thức để đạt PASS.
 - **GPU release BLOCKED**: cần ChatGPT review, G0/G1 đăng ký execution release/source/runtime/grant mới; G4 Linux/CUDA isolated-child/device/memory và G5 finite first image/quality/utility/HNLO bằng quyền riêng. O1–O8/T0/O3 PENDING, peer slot3 VACANT,0 candidates qualified.
 - [CPU G2/G3 lịch sử #150](research/CPU_G2_G3_CANDIDATES_20261029.md) và receipts cũ giữ nguyên: MiniCPM native1×1/chat FAIL và InternVL tổng thể BLOCKED ở code cũ. Kết quả adapter mới không sửa hồi tố findings hay reviewer status của #150.
+
+## ACTIVE WORK — HAI NOTEBOOK CANDIDATE160 PREP
+
+- Task Owner mới: chuẩn bị tối đa160 ảnh/model, không dataset/weights/GPU/Kaggle execution. Nhánh/worktree riêng từ đúng SHA sau #151; dừng ở **một Draft PR**.
+- [Runbook](CANDIDATE160_KAGGLE.md), [biên bản CPU](research/CANDIDATE160_CPU_20261029.md); hai notebook riêng [InternVL](../notebooks/SafeShift_CANDIDATE160_internvl35.ipynb) và [MiniCPM](../notebooks/SafeShift_CANDIDATE160_minicpm4.ipynb), builder tái lập và source/ref/config pins.
+- Cùng manifest lịch sử SHA `f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995`, đúng160 ID/order và quota80/48/24/8 theo receipt metadata công khai #138. Không mở private manifest/ảnh/TEST, không selector hoặc supplement; actual bundle bytes chưa được reverify trong task này.
+- Tái dùng adapter #151, runner execute/Store/parser/HNLO/metrics/archive; giữ nguyên source runtime/pilot và sáu notebook cũ. First-image/early behavior nằm trong160, review gắn hash checkpoint; thiếu quyết định dừng/NOT_ATTEMPTED tail, no retry/resume/overwrite.
+- `configs/candidate160/preparation.json` giữ grant=null, G0/T0/O3/runtime/driver/stop thresholds/mốc review PENDING. Không tự lấy numerical thresholds hoặc grants Phi/Smol/Gemma. CUDA tuple mới là PREP cần review; không claims VRAM fit hoặc quality/HNLO PASS.
+- [Review ChatGPT #152](https://github.com/tantdna2/SafeShift/pull/152#issuecomment-6501983735) yêu cầu sửa metadata Phi kế thừa và provenance hai hash tại HEAD `65da8a3…`. Cùng PR đã sửa config/grant v2: tách legacy transport snapshot khỏi effective candidate; `legacy_transport_config_sha256` khác `candidate_execution_config_sha256`, đối soát raw trước parse và recovery, không đổi pilot/adapter/science/stop policy.
+- Runtime mới `820200bba7c6f5796961acb64befef0c651772b3`, notebook/release commit `c75113f4a62d8d30303269f4a8bd72fc71040c15`, source SHA `3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e`. Nghiệm thu mới mỗi model Windows64=61 PASS+3 SKIP, Linux64=63 PASS+1 SKIP; cả15 native tests PASS/model/OS, gồm160 scripted calls kiểm hai hash/request. Full exact-export Windows293=256 PASS+37 SKIP, Linux293=261 PASS+32 SKIP, không FAIL/ERROR; tám notebook kiểm PASS, candidate cells không grant CPU vẫn BLOCKED. Receipts v2 mới thay current index, không dùng receipts HEAD cũ cho source mới. Actual weights/CUDA/GPU/behavior **UNVERIFIED**; chưa independent audit, ChatGPT re-review hoặc merge.
+- External ledger snapshot không là chữ ký số/distributed one-shot enforcement; fresh reservation/current ledger và phương thức giao review vào saved VM cần review/approval riêng. Không vì code CPU PASS mà tự mở release.
 
 ## KEY DECISIONS / LIMITS GIỮ NGUYÊN
 
@@ -92,7 +105,7 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 
 ## NEXT STEP / BLOCKERS
 
-1. **ChatGPT review Draft PR tích hợp hai candidate**: exact HEAD/diff/receipts và phạm vi CPU; không tự nhận audit PASS hoặc merge. #150 đã merge; không dùng review cũ thay nghiệm thu adapter mới.
+1. **ChatGPT review đúng một Draft PR notebook160**: exact HEAD/diff/source/notebooks/receipts và CPU scope. #151 đã merge; không dùng CPU hoặc review adapter thay G0/G1/G4/G5 mới.
 2. Sau review, cân nhắc independent methodology audit và Owner/giảng viên O1–O8/T0; O3 chốt bounded qualification sequence/attempt cap trước thực nghiệm, final roster sau evidence.
 3. G0–G6 theo [runbook](KAGGLE_FAILURES_AND_RELEASE_GATES.md): CPU chỉ đúng phạm vi có receipt; real weights/CUDA, execution release và behavior/HNLO vẫn BLOCKED/NOT_RUN. G4/G5 cần quyền mới; CPU không vượt behavior gate.
 4. Thiếu nguồn/GT/custody/reviewers/precision/quota hoặc không đủ 4 qualified → NO-GO thiết kế xác nhận; giảm scope cần quyết định, không mở model zoo hoặc target thay thế.
