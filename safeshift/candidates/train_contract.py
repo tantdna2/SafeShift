@@ -16,7 +16,7 @@ from safeshift.pilot.artifacts import read, safe, sha
 from .source import ROOT, LOCK, require
 
 BASE = "95eb4e8801ea746e1a760b9d529920bffb3c26cb"
-PACKAGE_BASE = "f79f7bddeac62e8fb8378d6798c25387f45f0f37"
+PACKAGE_BASE = "fc1e454212455685e1775601ebfd6aab9535c932"
 MANIFEST = "f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995"
 INVENTORY = "0a8a84e726e690622de311326680ecbbc4a04fa04a0a45ff14ff96412caae427"
 KEYS = ("internvl35", "minicpm4")
@@ -36,6 +36,10 @@ def batch_check(g):
 This validates an externally supplied record; it does not authenticate its author
 or confer approval. The Owner must verify the cited Lead decision independently.
 """
+    from .train_owner import SCHEMA, MODE, validate
+    if g.get("schema") == SCHEMA:
+        validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
+        return MODE
     mode = g["policy"].get("review_mode", "EXTERNAL")
     require(mode in ("EXTERNAL", "PREAPPROVED_BATCH"), "REVIEW_MODE_REQUIRED")
     if mode == "EXTERNAL":
@@ -163,6 +167,10 @@ def source_hash(repo=ROOT):
 
 
 def policy_check(p):
+    from .train_owner import MODE, policy
+    if type(p) is dict and p.get("review_mode") == MODE:
+        require(p == policy(), "OWNER_TECHNICAL_POLICY_DRIFT")
+        return p
     require(type(p) is dict, "APPROVED_STOP_POLICY_REQUIRED")
     for n in ("early_behavior_after", "invalid_max_count", "repeat_max_count",
               "dominance_min_valid", "normal_min_support", "anomaly_min_support"):
@@ -189,6 +197,10 @@ def policy_check(p):
 
 
 def authorize(g, key, source, ref, ledger, now=None):
+    from .train_owner import SCHEMA, validate
+    if type(g) is dict and g.get("schema") == SCHEMA:
+        require(ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
+        return validate(g, key, source, ref, now=now)
     require(type(g) is dict and g.get("schema") == "safeshift-candidate160-grant-v2",
             "BLOCKED_NO_NEW_CANDIDATE_GRANT")
     validate_configuration_hashes(g, key)

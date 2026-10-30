@@ -39,88 +39,75 @@ def notebook(key, ref, repo=ROOT):
                         'pathlib.Path.cwd() / "data/processed/candidate160_code"')
     code = code.replace('pathlib.Path("/kaggle/working/data/processed/three_vlm_bootstrap")',
                         '(pathlib.Path.cwd() / "data/processed/candidate160_bootstrap")')
-    code = code.replace("from safeshift.pilot.bootstrap import launch", "from safeshift.candidates.train_runtime import launch")
+    code = code.replace("from safeshift.pilot.bootstrap import launch", "from safeshift.candidates.train_runtime import launch_owner as launch")
     code = code.replace('launch(\'phi\', expected_source_sha256, root, mode="PILOT")',
-                        f'launch({key!r}, expected_source_sha256, root, {ref!r})')
+                        f'launch({key!r}, expected_source_sha256, root, {ref!r}, owner_start=True)')
     require("safeshift.pilot.bootstrap import launch" not in code and 'mode="PILOT"' not in code,
             "CANDIDATE_LAUNCH_ROUTE_REQUIRED")
     compile(code, "candidate160_notebook", "exec")
     spec = model(key)
-    instructions = f"""# SafeShift — {spec['id']} — tối đa 160 TRAIN
+    instructions = f"""# SafeShift ? {spec['id']} ? m?t l??t, t?i ?a 160 TRAIN
 
-**PREP / BLOCKED. GPU và behavior UNVERIFIED.** Không chạy bản PREP này trên
-Kaggle trước review/release và quyền mới G0/T0/O3. Không có grant trong notebook.
-Không đọc TRAIN/TEST, tải weights hoặc GPU trong task xây dựng/kiểm thử CPU.
+**Owner k?ch ho?t b?ng Save Version ? Save & Run All m?t l?n**, sau khi PR n?y
+???c ChatGPT ki?m GitHub v? audit ??c l?p tr??c merge. Kh?ng c?n grant,
+reservation hay file CONTINUE th? c?ng. Thao t?c ch?y notebook l? y?u c?u
+th?c thi c?a Owner trong ??ng ph?m vi quy?t ??nh ng?y 30/10/2026, ghi t?i
+`docs/research/CANDIDATE160_OWNER_DECISION_20261030.md`; m?y kh?ng k? thay Lead.
+??y l? code ch?a ???c ki?m GPU; ch?t l??ng th?t v? HNLO th?c nghi?m UNVERIFIED.
 
 Model `{spec['id']}` @ `{spec['revision']}`; Transformers `{spec['transformers']}`.
-Adapter contract base sau PR #151 `{BASE}`; package base sau PR #152 MERGED
-`{PACKAGE_BASE}`; runtime source commit `{ref}`.
-Hai notebook dùng đúng manifest lịch sử SHA256 `{MANIFEST}`, cùng 160 ID/thứ tự,
-80 Level04/48 Level01/24 Level02/8 Level03. Không selector, supplement hoặc TEST.
+Adapter base #151 `{BASE}`; package base #153 `{PACKAGE_BASE}`.
+Runtime commit `{ref}`. C?ng manifest SHA256 `{MANIFEST}` v? ??ng 160 ?nh TRAIN
+/th? t? l?ch s?, kh?ng ch?n l?i, TEST, supplement ho?c FULL TRAIN.
+Kh?ng chuy?n quy?n n?y sang d? li?u b?n th? ba ho?c th? nghi?m kh?c.
 
-Sau phê duyệt riêng: Kaggle **T4 ×2**, Internet ON chỉ để cài software pinned.
-Kernel chỉ điều phối stdlib; worker CPython **3.11.9** riêng, Torch **2.6.0+cu124**,
-CUDA build **12.4**, torchvision **0.21.0+cu124**. Không tự tải/chọn Python khác.
-FP16/eager/batch1/cuda:0; GPU1 chỉ quan sát, VRAM không gộp. Mọi source/config/
-generation/C1/parser/processor theo PR #151; không fallback/quantize/resize cứu lỗi.
-CUDA tuple là PREP, chưa có nghiệm thu GPU hoặc runtime approval.
+1. M? ??ng notebook model trong m?t Kaggle session ch?a ch?y; ch?n **T4 ?2**,
+   Internet ON ?? c?i software pinned. Kh?ng ch?y interactive tr??c khi Save.
+2. Attach bundle Owner ?? upload: `pilot_manifest.json` v?
+   `images/000000.jpg` ? `images/000159.jpg`.
+3. Attach checkpoint ?? upload: `candidate_checkpoint_{key}.json`,
+   `source/{spec['revision']}/` ??ng source allowlist v? `weights/` ??ng
+   index + hai shards ?? kh?a SHA256. Xem `docs/CANDIDATE160_KAGGLE.md`.
+4. Save Version ? **Save & Run All** m?t l?n. Kh?ng s?a cell, SHA, model,
+   version ho?c input ?? ?i qua l?i. Kh?ng retry/resume ho?c ghi ??.
+5. Download ZIP + `.sha256.json` ???c in ? cell cu?i, k? c? l?i/partial;
+   gi? private. `COMPLETED_AWAITING_REVIEW` kh?ng ph?i model qualification.
 
-Config v2 tách `legacy_transport_compatibility` (snapshot mô tả lịch sử, không
-phải xử lý/seed thực tế) và `effective_candidate` của đúng mô hình. Grant v2 và
-raw evidence bắt buộc hai hash riêng: `legacy_transport_config_sha256` và
-`candidate_execution_config_sha256`. Trường frozen `raw.identity.config_sha256`
-chỉ là alias hash transport; không phải hash thực thi. Notebook/raw metadata
-ghi mapping này và kiểm cả hai trước parse/recovery. Không crop theo mô tả Phi.
+Run ID/attempt ID v? consumption log ???c t?o t? ??ng. Kh?a slot c? ??nh theo
+model/cohort ch?n ch?y tr?ng trong c?ng working filesystem, k? c? source ??i,
+UUID m?i ho?c l?i admission. Kh?ng x?a kh?a/rerun. Kaggle session m?i kh?ng c?
+ledger c? kh?ng cho ph?p kh?a local ch?ng minh ?? ch?ng tr?ng to?n c?c: Owner
+ch? t?o m?t saved job/model, kh?ng ch?y concurrent ho?c t?o session thay th?.
+Attached saved Outputs c? marker ? layout chu?n ???c ki?m ?? ch?n replay.
 
-Attach private Inputs đã duyệt, tên file duy nhất (direct mount hoặc
-datasets/owner/slug; không sửa code/path/SHA):
+Worker ph?i l? CPython **3.11.9**, Linux x86_64, Torch **2.6.0+cu124**,
+torchvision **0.21.0+cu124**, CUDA12.4, FP16/eager/batch1/cuda:0; GPU1 ch? quan
+s?t. Kh?ng fallback Python, precision ho?c t?i weights. Ki?m t?t c? SHA256,
+source/config/manifest, decode160 ?nh, dependencies/ABI, disk, RAM/cgroup,
+CUDA/driver/T4/per-GPU VRAM v? child FP16 tr??c consumption; ki?m l?i sau ??.
+Admission c?n28 GiB scratch +4 GiB output (32 GiB n?u c?ng filesystem).
+Driver d?ng compatibility floor525.60.13 thay allowlist ch?a quy?t ??nh;
+RAM>=4 GiB, live scratch/output>=1 GiB m?i n?i, GPU0 headroom>=256 MiB.
+C?c reserve k? thu?t kh?ng ??m b?o checkpoint th?c fit; OOM v?n d?ng.
 
-1. Bundle lịch sử đã giải nén: `pilot_manifest.json`, `images/000000.jpg` đến
-   `images/000159.jpg`. Chỉ mở sau grant mới; hash và decode trước consumption.
-2. `grant_candidate160_{key}.json` + `ledger_candidate160_{key}.json`, mới và
-   đúng model/source/ref/config/manifest/policy; không Phi/Smol/Gemma grant.
-3. Official checkpoint đã được Owner provision riêng: marker
-   `candidate_checkpoint_{key}.json`, `source/{spec['revision']}/` chứa đúng public
-   allowlist, `weights/` chứa đúng index+hai safetensors shards theo lock #151.
-   Notebook không downloader weights; tuyệt đối không upload data/weights công khai.
+**Ch?nh s?ch d?ng ???c thay ??i c?ng khai ?? reviewer ??nh gi?:** l?i k? thu?t,
+NaN/Inf, m?t raw/custody, thi?u t?i nguy?n ho?c h?t12 gi? d?ng ngay. INVALID,
+l?p sequence, l?ch nh?n v? l?i Normal/hazard ???c ghi ?? review sau l??t ch?y;
+ch?a c? ng??ng khoa h?c ???c quy?t ??nh n?n kh?ng t? ??t ng??ng hay d?ng v?
+thi?u GT support ? m?c s?m. Kh?ng c? file CONTINUE ho?c quy?t ??nh Lead gi?.
+C? th? ti?u ??160 calls d? behavior k?m; k?t qu? kh?ng ???c t? n?ng th?nh PASS.
 
-Grant schema, marker, ledger, pending policy và quyền: xem
-`docs/CANDIDATE160_KAGGLE.md` trong PR này. Chưa chốt policy/driver/mốc review thì
-BLOCKED trước data/weights/GPU/attempt. Không dùng các thresholds pilot cũ.
-Storage dùng admission vật lý cũ 28 GiB scratch +4 GiB output; cùng filesystem cần
-32 GiB free. Không bỏ cổng nếu VM chỉ có 20 GiB. Checkpoint attached read-only.
-
-First image và các mốc behavior đều nằm trong160. Save & Run All liên tục chỉ
-khả thi khi Lead duyệt rõ `review_mode=PREAPPROVED_BATCH` cùng batch authorization
-đúng execution binding/policy hashes và toàn bộ continuation conditions. Máy ghi
-`AUTO_CONTINUE`/`AUTO_STOP` riêng, không giả record Research Lead CONTINUE. Tại
-mốc1 và các mốc đã duyệt, kiểm lại durable results/custody, behavior, support GT,
-tài nguyên và hạn grant. Thiếu support ở early/later checkpoint cũng STOP.
-Bất kỳ lỗi/ngưỡng vi phạm nào dừng ngay, giữ NOT_ATTEMPTED cho phần chưa gọi.
-
-Chưa có phê duyệt batch → BLOCKED trước call; EXTERNAL mode vẫn chờ review Lead
-thật và có thể dừng ở checkpoint đầu, không hứa chạy đủ160 trong Save & Run All.
-Không chỉnh mode hoặc tự tạo approval để vượt cổng. Worksheets chưa ký và checker:
-`python -B -m scripts.candidate160_authority --model {key} --templates data/processed/authority-{key}`.
-Xem checklist duy nhất cuối `docs/CANDIDATE160_KAGGLE.md` để đủ quyền và Inputs.
-
-Chỉ Save Version → Save & Run All **một lần** sau quyền riêng, fresh session.
-Không interactive run rồi Save & Run All lần nữa; không reuse reservation/attempt.
-Mỗi ảnh giữ request/native token IDs/step logits/raw trước parser và kết quả.
-Child CUDA FP16 probe trước consumption, rồi kiểm lại trong worker.
-RAM/cgroup, disk và GPU0 free theo policy được theo dõi từng ảnh.
-NaN/Inf/OOM/lỗi raw hoặc storage dừng; JSON INVALID/repetition/label bias theo
-policy đã duyệt. Mọi ảnh chưa gọi là NOT_ATTEMPTED, không SUCCESS.
-
-Download private ZIP và `.sha256.json` được in, kể cả failure/partial. Archive có
-manifest/checksums/accounting/report/checkpoint/review và runtime receipts; không
-ảnh/weights. Raw HNLO chỉ VALIDATED nếu frozen replay/continuation thực khớp.
-CPU scripted PASS không là GPU PASS, chất lượng thật hoặc empirical HNLO PASS.
+Raw IDs/logits/request ???c l?u tr??c parser; parser/C1/HNLO, model revision,
+checkpoint v? config effective/legacy hashes gi? nguy?n. ?nh ch?a g?i l?
+NOT_ATTEMPTED. Archive ch?a execution/slot/consumption log,160 accounting,
+raw/checkpoints/technical decisions, behavior observations v? receipts.
+Kh?ng ch?a ?nh/weights. Hard kill/VM loss/disk failure c? th? m?t ZIP ho?n ch?nh;
+gi? m?i bytes c?n l?i v? kh?ng ch?y l?i. CPU synthetic PASS kh?ng l? GPU PASS.
 """
     result["cells"][0]["source"] = instructions.splitlines(True)
     result["cells"][1]["source"] = code.splitlines(True)
     result["cells"][1]["id"] = "candidate160-launch"
-    result["metadata"]["safeshift"] = {"mode": "CANDIDATE160_PREP", "status": "BLOCKED",
+    result["metadata"]["safeshift"] = {"mode": "CANDIDATE160_OWNER_ACTIVATED", "status": "AWAITING_INDEPENDENT_REVIEW",
         "base": BASE, "package_base": PACKAGE_BASE, "runtime_ref": ref, "model_key": key, "model": spec,
         "source_sha256": source_hash(repo), "manifest_sha256": MANIFEST,
         "config": config(key), "configuration_hashes": configuration_hashes(key),

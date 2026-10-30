@@ -16,6 +16,7 @@ from safeshift.pilot.runner import execute, error_record
 from safeshift.pilot.report import measurements
 from .source import require
 from .train_contract import config, enrollment, execution_binding, policy_check, batch_check
+from .train_owner import SCHEMA as OWNER_SCHEMA, MODE as OWNER_MODE
 
 
 def not_attempted():
@@ -33,7 +34,7 @@ def native_custody(sample, raw):
 
 
 def configuration_context(grant):
-    require(grant.get("schema") == "safeshift-candidate160-grant-v2", "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
+    require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
     return {"schema": "safeshift-candidate160-configuration-evidence-v2",
             "execution_release": execution_binding(grant),
             "configuration_contract": config(grant["model_key"])}
@@ -108,14 +109,14 @@ class CandidateStore(Store):
         return checksum
 
 
-def recover(output, rows, grant=None):
+def recover(output, rows, grant=None, *, start_ordinal=0):
     """Reconcile disk, including torn raw/result writes and interrupted calls."""
     results = {}
     try:
         context = validate_context(read(Path(output) / "configuration_binding.json"), grant)
     except (OSError, ValueError, KeyError, TypeError):
         context = None
-    for i, row in enumerate(rows):
+    for i, row in enumerate(rows, start_ordinal):
         sample = Path(output) / f"calls/{i:06d}/run/samples/000000"
         started = (sample / "started.json").exists()
         native = int((sample / "native_call.json").exists())
@@ -172,6 +173,9 @@ def observations(output, rows, results, sequence_counts=None):
 
 
 def behavior_stop(o, policy):
+    if policy.get("review_mode") == OWNER_MODE:
+        # Counts remain observations; no unapproved scientific threshold.
+        return None
     if o["invalid"] > policy["invalid_max_count"]:
         return "JSON_INVALID_LIMIT"
     if o["max_identical_token_sequences"] > policy["repeat_max_count"]:
@@ -273,6 +277,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
     require(len(rows) == len({r["sample_id"] for r in rows}) == 160, "EXACT_SHARED_160_PLAN")
     policy = policy_check(grant["policy"])
     mode = batch_check(grant)  # Missing delegation blocks before any model load/call.
+    record_hash_field = "execution_sha256" if mode == OWNER_MODE else "grant_sha256"
     output = Path(output)
     context = validate_context(configuration_context(grant), grant)
     deadline = clock() + grant["max_seconds"] if deadline is None else deadline
@@ -289,7 +294,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                     reason = "TIME_CAP_BEFORE_NEXT_CALL"
                     break
                 resource_receipt = resources() if resources else {"scope": "CPU_TEST_NO_RESOURCE_OBSERVER"}
-                if mode == "PREAPPROVED_BATCH":
+                if mode in ("PREAPPROVED_BATCH", OWNER_MODE):
                     require(resources is not None, "BATCH_LIVE_RESOURCE_OBSERVER_REQUIRED")
                 write(output / f"resources/{i+1:03d}.json", resource_receipt)
                 store = CandidateStore(output / f"calls/{i:06d}/run", {
@@ -319,15 +324,31 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                 o = observations(output, rows, results, sequence_counts)
                 reason = reason or behavior_stop(o, policy)
                 checkpoint = {"completed": i + 1, "observations": o,
-                              "kind": "FIRST_IMAGE_TECHNICAL" if i == 0 else "EARLY_BEHAVIOR" if i + 1 == policy["early_behavior_after"] else "OBSERVATION",
+                              "kind": "FIRST_IMAGE_TECHNICAL" if i == 0 else "EARLY_BEHAVIOR" if i + 1 == policy.get("early_behavior_after") else "OBSERVATION",
                               "results_sha256": digest(results), "stop_reason": reason,
                               "model_key": grant["model_key"], "source_sha256": grant["source_sha256"],
                               "manifest_sha256": grant["manifest_sha256"], "attempt_id": grant["attempt_id"]}
                 write(output / f"checkpoints/{i+1:03d}.json", checkpoint)
                 if reason:
                     write(output / f"decisions/{i+1:03d}.json", {"decision": "STOP", "reason": reason,
-                          "checkpoint_sha256": digest(checkpoint), "grant_sha256": digest(grant)})
+                          "checkpoint_sha256": digest(checkpoint), record_hash_field: digest(grant)})
                     break
+                if mode == OWNER_MODE:
+                    custody = recover(output, [row], grant, start_ordinal=i) == {row["sample_id"]: results[row["sample_id"]]}
+                    current = clock() < deadline and time.time() < grant["expires_unix"]
+                    require(custody, "OWNER_RAW_CUSTODY_LOSS")
+                    observed_resources = resources()
+                    reason = None if current else "TIME_CAP_AFTER_CALL"
+                    write(output / f"decisions/{i+1:03d}.json", {
+                        "schema": "safeshift-candidate160-owner-technical-decision-v1",
+                        "decision": "STOP" if reason else "PLAN_LIMIT_REACHED" if i == 159 else "TECHNICAL_CONTINUE",
+                        "reason": reason, "checkpoint_sha256": digest(checkpoint),
+                        "execution_sha256": digest(grant), "owner_decision_record": grant["owner_decision_record"],
+                        "custody": "CURRENT_RESULT_REPLAY_PASS", "resource_observation": observed_resources,
+                        "behavior_limits": policy["behavior_limits"]})
+                    if reason:
+                        break
+                    continue
                 if i + 1 in policy["review_after"]:
                     if mode == "PREAPPROVED_BATCH":
                         # Re-read durable journals at each authorized milestone.
@@ -368,8 +389,11 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
         if any(v["status"] == "TECHNICAL_ERROR" for v in results.values()):
             reason = reason or "EVIDENCE_CUSTODY_LOSS"
         write(output / "controller_decision.json", {"decision": "STOP" if reason else "BATCH_ENDED",
-              "reason": reason, "review_mode": mode, "grant_sha256": digest(grant),
+              "reason": reason, "review_mode": mode, record_hash_field: digest(grant),
               "attempted": sum(v["attempts"] for v in results.values())})
+        write(output / "behavior_observations.json", {"observations": observations(output, rows, results, sequence_counts),
+              "policy": "OBSERVE_ONLY_NO_SCIENTIFIC_THRESHOLDS" if mode == OWNER_MODE else "EXTERNAL_POLICY",
+              "classification_quality": "UNVERIFIED_PENDING_REVIEW"})
         write(output / "accounting.json", [{"ordinal": i, "sample_id": r["sample_id"], **results[r["sample_id"]]}
                                            for i, r in enumerate(rows)])
         write(output / "summary.json", {"status": "STOPPED" if reason else "COMPLETED_AWAITING_REVIEW",
