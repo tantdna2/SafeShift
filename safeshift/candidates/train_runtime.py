@@ -23,6 +23,7 @@ from .source import ROOT, LOCK, require, stage_snapshot
 from .loading import verify_weights
 from .train_contract import KEYS, MANIFEST, authorize, config, configuration_hashes, manifest, model, source_hash, sources
 from .train_run import recover, run_calls
+from . import train_owner as owner
 
 
 def pins(key):
@@ -65,7 +66,8 @@ def hardware(policy):
     for i, row in enumerate(receipt["physical_gpus"]):
         # CUDA 12.x minor-version compatibility floor, not a guarantee of kernel support.
         require(tuple(map(int, row[3].split("."))) >= (525, 60, 13), "CUDA12_LINUX_DRIVER_TOO_OLD")
-        require(row[3] in policy["driver_versions"], "UNAPPROVED_NVIDIA_DRIVER")
+        if policy.get("review_mode") != owner.MODE:
+            require(row[3] in policy["driver_versions"], "UNAPPROVED_NVIDIA_DRIVER")
         require(int(row[2]) >= policy["free_mib_per_gpu"][i], "PER_GPU_FREE_MEMORY")
     return receipt
 
@@ -237,39 +239,56 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
     return python, env
 
 
-def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None):
-    """Missing grant blocks BEFORE private manifest/images/checkpoint or GPU reads."""
+def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None, owner_start=False):
+    """Owner activation or legacy authority precedes inputs and hardware reads."""
     require(key in KEYS, "CANDIDATE_KEY")
+    require(type(owner_start) is bool, "EXPLICIT_OWNER_ACTIVATION_BOOLEAN")
     inputs = Path(inputs or "/kaggle/input")
     work = Path(work or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
     output = safe(work, key + "-" + uuid.uuid4().hex)
     output.mkdir(exist_ok=False)
     consumed, grant, plan, rows, scratch = False, None, None, [], None
+    slot_name, slot_record, owns_slot = None, None, False
     stage, reason = "authority", None
     started = time.monotonic()
     try:
         require(source_hash(repo) == source, "NOTEBOOK_RUNTIME_SOURCE_MISMATCH")
-        grant_file = discover(inputs, f"grant_candidate160_{key}.json")
-        grant = read(grant_file)
-        ledger_file = discover(inputs, f"ledger_candidate160_{key}.json")
-        ledger = read(ledger_file)
+        if owner_start is True:
+            grant = owner.execution(key, source, ref, owner_start=True)
+            ledger = None
+            authorize(grant, key, source, ref, ledger)
+            # A deterministic slot, not the new random run ID, excludes duplicates.
+            slot_name, slot_record = owner.reserve(work, grant, inputs)
+            owns_slot = True
+            write(output / slot_name, slot_record)
+            grant_file, ledger_file = output / "owner_execution.json", None
+            write(grant_file, grant)
+        else:
+            grant_file = discover(inputs, f"grant_candidate160_{key}.json")
+            grant = read(grant_file)
+            ledger_file = discover(inputs, f"ledger_candidate160_{key}.json")
+            ledger = read(ledger_file)
         authorize(grant, key, source, ref, ledger)
         deadline = min(started + grant["max_seconds"], time.monotonic() + grant["expires_unix"] - time.time())
-        write(output / "authorization_binding.json", {"grant_sha256": digest(grant), "ledger_sha256": digest(ledger),
+        write(output / "authorization_binding.json", {"execution_sha256" if owner_start else "grant_sha256": digest(grant),
               "runtime_ref": ref, "source_sha256": source, "manifest_sha256": MANIFEST,
               **configuration_hashes(key),
-              "approval_refs": {n: grant[n] for n in ("G0", "T0", "O3", "research_lead_review_ref")}})
-        write(output / "grant.json", grant)
-        write(output / "ledger_reservation.json", ledger)
+              **({"owner_decision_record": owner.DECISION, "activation": grant["activation"]} if owner_start else
+                 {"ledger_sha256": digest(ledger),
+                  "approval_refs": {n: grant[n] for n in ("G0", "T0", "O3", "research_lead_review_ref")}})})
+        if not owner_start:
+            write(output / "grant.json", grant)
+            write(output / "ledger_reservation.json", ledger)
         write(output / "release_config.json", config(key))
         write(output / "dependency_pins.json", pins(key))
         write(output / "source_inventory.json", {p: sha(Path(repo)/p) for p in sources(repo)})
         # Local marker supplements, and cannot replace, the external ledger.
         attempts = work / "attempts"
         attempts.mkdir(exist_ok=True)
-        reservation = safe(attempts, grant["attempt_id"] + ".reserved.json")
-        write(reservation, {"grant_sha256": digest(grant), "external_ledger_ref": grant["external_ledger_ref"]})
+        if not owner_start:
+            reservation = safe(attempts, grant["attempt_id"] + ".reserved.json")
+            write(reservation, {"grant_sha256": digest(grant), "external_ledger_ref": grant["external_ledger_ref"]})
         stage = "manifest"
         bundle = discover(inputs, "pilot_manifest.json").parent
         plan, rows = manifest(bundle)
@@ -296,8 +315,9 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None)
         env.update(SAFESHIFT_REVIEW_DIRECTORY=str(review_dir), SAFESHIFT_DEADLINE_MONOTONIC=str(deadline))
         command = [str(python), "-B", "-m", "safeshift.candidates.train_runtime", "--repo", str(repo),
                    "--output", str(output), "--bundle", str(bundle), "--snapshot", str(snapshot),
-                   "--weights", str(weights), "--grant", str(grant_file), "--ledger", str(ledger_file),
-                   "--source", source, "--ref", ref]
+                   "--weights", str(weights), "--source", source, "--ref", ref]
+        command += (["--execution", str(grant_file)] if owner_start else
+                    ["--grant", str(grant_file), "--ledger", str(ledger_file)])
         stage = "cpu_native_and_images"
         with (output / "cpu.log").open("xb") as log:
             subprocess.run(command + ["--check-only"], env=env, stdout=log, stderr=subprocess.STDOUT,
@@ -312,19 +332,25 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None)
         require(read(output / "preledger_cuda.json")["worker_cuda"] == "MEASURED_FP16_FUNCTIONAL",
                 "PRELEDGER_CUDA_RECEIPT_REQUIRED")
         # Check expiry/source/ledger/input hashes again immediately before consume.
-        require(read(grant_file) == grant and read(ledger_file) == ledger, "AUTHORITY_CHANGED")
+        require(read(grant_file) == grant and (ledger_file is None or read(ledger_file) == ledger), "AUTHORITY_CHANGED")
         authorize(grant, key, source, ref, ledger)
+        if owner_start:
+            require(read(safe(attempts, slot_name)) == slot_record
+                    and read(output / slot_name) == slot_record, "OWNER_SLOT_CUSTODY_CHANGED")
         require(source_hash(repo) == source and manifest(bundle)[0] == plan, "PRELEDGER_SOURCE_CHANGED")
         require(time.monotonic() < deadline, "TIME_CAP_PRELEDGER")
         consumed = None  # A failed exclusive create/fsync is never asserted unconsumed.
-        write(safe(attempts, grant["attempt_id"] + ".consumed.json"), {"run_id": grant["run_id"],
-              "attempt_id": grant["attempt_id"], "source_sha256": source, "grant_sha256": digest(grant),
-              "external_ledger_ref": grant["external_ledger_ref"], "attempt_consumed": True})
+        write(safe(attempts, ("owner_slot_" + grant["slot_sha256"] if owner_start else grant["attempt_id"]) + ".consumed.json"), {"run_id": grant["run_id"],
+              "attempt_id": grant["attempt_id"], "source_sha256": source,
+              "execution_sha256" if owner_start else "grant_sha256": digest(grant),
+              **({"slot_sha256": grant["slot_sha256"]} if owner_start else {"external_ledger_ref": grant["external_ledger_ref"]}),
+              "attempt_consumed": True})
         consumed = True
         write(output / "consumption.json", {"attempt_consumed": True, "attempt_id": grant["attempt_id"]})
         stage = "worker"
         env["CUDA_VISIBLE_DEVICES"] = "0"
-        print("Research Lead review drop directory:", review_dir, flush=True)
+        print("Owner execution (no review file required):" if owner_start else "Research Lead review drop directory:",
+              grant["run_id"] if owner_start else review_dir, flush=True)
         with (output / "worker.log").open("xb") as log:
             subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT,
                            check=True, timeout=max(1, deadline-time.monotonic()))
@@ -358,6 +384,15 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None)
               "classification_quality": "UNVERIFIED_PENDING_RESULT_REVIEW", "source_sha256": source,
               "runtime_ref": ref, "manifest_sha256": MANIFEST,
               "accounting": "160_PRIVATE_PLANNED_ROWS" if rows else "NOT_READ_NO_DATA_AUTHORITY"})
+        if owns_slot:
+            terminal = {**slot_record, "status": "CONSUMED" if consumed is True else
+                        "UNKNOWN_DO_NOT_RETRY" if consumed is None else "BLOCKED_RESERVED_NO_RETRY",
+                        "attempt_consumed": consumed, "stage": stage, "failure": reason}
+            retain("owner_consumption_log.json", terminal)
+            try:
+                write(safe(work / "attempts", slot_name + ".terminal.json"), terminal)
+            except BaseException as error:
+                finalizer_errors.append(error_record(error, "owner_slot_terminal"))
         if scratch:
             # Keep scratch outside saved Outputs, using the existing owned cleanup.
             try:
@@ -377,14 +412,32 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None)
     return output
 
 
+def launch_owner(key, source, repo, ref, *, owner_start=False, **kwargs):
+    """The Owner starts the single scoped slot by running the shipped notebook."""
+    require(owner_start is True, "OWNER_START_REQUIRED")
+    return launch(key, source, repo, ref, owner_start=True, **kwargs)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("repo", "output", "bundle", "snapshot", "weights", "grant", "ledger", "source", "ref"):
+    for name in ("repo", "output", "bundle", "snapshot", "weights", "source", "ref"):
         parser.add_argument("--" + name, required=True)
+    authority = parser.add_mutually_exclusive_group(required=True)
+    authority.add_argument("--execution", help="Owner execution record, not an external grant")
+    authority.add_argument("--grant", help="Legacy external grant")
+    parser.add_argument("--ledger", help="Required only with legacy --grant")
     parser.add_argument("--check-only", action="store_true")
     parser.add_argument("--cuda-check-only", action="store_true")
     a = parser.parse_args()
-    worker(a.repo, a.output, a.bundle, a.snapshot, a.weights, read(a.grant), read(a.ledger), a.source, a.ref,
+    if a.execution:
+        require(a.ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
+        execution, ledger = read(a.execution), None
+        require(execution.get("schema") == owner.SCHEMA, "OWNER_EXECUTION_SCHEMA")
+    else:
+        require(a.ledger is not None, "LEGACY_LEDGER_REQUIRED")
+        execution, ledger = read(a.grant), read(a.ledger)
+        require(execution.get("schema") != owner.SCHEMA, "USE_OWNER_EXECUTION_ARGUMENT")
+    worker(a.repo, a.output, a.bundle, a.snapshot, a.weights, execution, ledger, a.source, a.ref,
            check_only=a.check_only, cuda_check_only=a.cuda_check_only)
 
 

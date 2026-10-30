@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **30/10/2026 (Asia/Bangkok)** trong task batch160 sau PR #152 MERGED.
-Main đã kiểm GitHub/remote: `f79f7bddeac62e8fb8378d6798c25387f45f0f37`.
+Cập nhật **30/10/2026 (Asia/Bangkok)** trong task Owner Save & Run All sau PR #153 MERGED.
+Main đã kiểm GitHub/remote: `fc1e454212455685e1775601ebfd6aab9535c932`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.
 
 ## PROJECT IDENTITY
@@ -13,8 +13,33 @@ Main đã kiểm GitHub/remote: `f79f7bddeac62e8fb8378d6798c25387f45f0f37`.
 
 ## CURRENT STATUS
 
+- **PR #153 MERGED**, GitHub `merged=true`, merge `fc1e454212455685e1775601ebfd6aab9535c932`.
+  Owner đã trực tiếp yêu cầu bỏ thủ tục phê duyệt lặp lại cho một lượt/model
+  InternVL3.5/MiniCPM-V-4, ≤160 TRAIN, dùng bundle/checkpoint Owner đã upload.
+  [Record chỉ thị và phạm vi](research/CANDIDATE160_OWNER_DECISION_20261030.md),
+  [runbook mới](CANDIDATE160_KAGGLE.md), [CPU acceptance](research/CANDIDATE160_OWNER_CPU_20261030.md).
+  Hai notebook dùng Save & Run All làm kích hoạt, tự sinh run/attempt/slot và
+  consumption log; không grant/reservation/CONTINUE thủ công hoặc approval ref giả.
+  Cần ChatGPT kiểm GitHub và audit độc lập trước merge Draft PR này; task chỉ
+  synthetic CPU, không GPU, real weights hoặc private TRAIN/GT/TEST.
+
+  Technical errors/NaN/Inf/raw/custody/resources/time vẫn dừng; behavior và GT
+  support chỉ ghi để review sau run vì chưa quyết định scientific thresholds.
+  Đây là thay đổi chính sách dừng công khai trong PR, không silent approval.
+  Giữ parser/HNLO/C1/model/checkpoint/cohort/order và mọi giới hạn160/no-retry/
+  no-resume/no-overwrite. Không mở quyền bên thứ ba/TEST/FULL TRAIN/khác scope.
+  Khóa fixed slot chống duplicate trong cùng output root và attached Outputs
+  chuẩn; không distributed/global exactly-once cho VM mới thiếu lịch sử.
+  Actual Kaggle Python/CUDA/T4/VRAM/weights/behavior/HNLO vẫn UNVERIFIED.
+  **CPU CODE PASS:** exact-export310 tests =273 PASS/37 SKIP,0 failures/errors;
+  native Windows67 tests/model =64 PASS/3 symlink SKIP,15/15 native PASS gồm
+  đúng160 ảnh tổng hợp/model qua Owner path. Linux3/3 activation/scope/atomic
+  slot PASS. [Receipts/checksum index](research/evidence/candidate160_owner_20261030/index.json).
+  Tested snapshot `f427e59c90f15c5bb87db26ff1aad5e038310af8`; runtime
+  `93bc2f110822c3cfd3c910da8f8adb11a0d9ac1f`; sau đó chỉ docs/receipts.
+
 - **PR #152 MERGED**, GitHub `merged=true`, merge `f79f7bddeac62e8fb8378d6798c25387f45f0f37`.
-  Gói batch mới **CODE PASS / execution BLOCKED**, một Draft PR chờ ChatGPT.
+  Gói batch #153 lịch sử **CODE PASS / execution BLOCKED** theo cơ chế cũ.
   [CPU report/receipts](research/CANDIDATE160_BATCH_CPU_20261030.md); quyền batch
   chưa duyệt, real weights/GPU/runtime/behavior UNVERIFIED.
 

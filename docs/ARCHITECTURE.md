@@ -1,5 +1,18 @@
 # Kiến trúc Foundation V1
 
+## Candidate160 Owner activation — 30/10/2026
+
+Hai notebook candidate dùng `train_runtime.launch_owner` → `train_owner` tạo
+execution/slot tự động → cùng preflight/supervisor/worker → `train_run` giữ raw,
+parser/HNLO/recovery/archive. `train_owner` là record kích hoạt Owner, không
+grant hoặc chữ ký Lead; nhánh grant/batch cũ giữ compatibility. Runtime config
+v2, public/checkpoint locks và pilot engine không đổi. [Runbook](CANDIDATE160_KAGGLE.md)
+và [quyết định](research/CANDIDATE160_OWNER_DECISION_20261030.md) ghi scope,
+chính sách technical-stop/behavior-observe, engineering reserves và giới hạn
+khóa local. `test_candidate160_owner.py` kiểm one-shot/negative/supervisor160;
+native candidate test kiểm160 ảnh tổng hợp qua Owner path cho từng model.
+Implementation chờ ChatGPT audit trước merge; không bằng chứng GPU/quality.
+
 Code mới hỗ trợ bản ghi trong bộ nhớ, phép đếm phân loại và CPU sensitivity
 PROPOSED trên saved reports. Không import code thực nghiệm cũ. Cây có **29 file, 7 thư mục** không tính
 root; `data/` local và virtual environment không thuộc inventory Git.

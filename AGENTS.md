@@ -34,6 +34,23 @@
 - Sáu Draft PR cũ được liệt kê trong `docs/HISTORY.md`; không tự sửa, đóng,
   rebase hoặc merge chúng khi làm việc trên cấu trúc mới.
 
+## Chỉ thị Owner về chạy Kaggle
+
+Khi Owner trực tiếp yêu cầu chạy Kaggle trong phạm vi dữ liệu và tài nguyên họ
+kiểm soát, không hỏi lại quyền chạy hoặc yêu cầu phê duyệt thủ công từng notebook.
+Thực hiện phần đã được yêu cầu và đưa ra thao tác cụ thể. Nếu có blocker kỹ thuật
+hoặc phần ngoài quyền Owner, nêu chính xác blocker và cách xử lý; không coi đó
+là thiếu sự đồng ý chung của Owner.
+
+Giữ nguyên các kiểm tra kỹ thuật, giới hạn từng lượt chạy, quyết định khoa học,
+source/hash/custody, raw-before-parse, chống retry/replay và xuất evidence theo
+hợp đồng hiện hành. TEST vẫn đóng; không tự đổi dataset/split/nhãn/metric/HNLO/
+protocol/model revision. Chỉ thị này không cấp quyền của chủ dữ liệu/bên thứ ba
+hoặc cho GPU job ngoài phạm vi, và không thay phê duyệt học vụ. Không giả approval
+ref, tự đặt ngưỡng khoa học hoặc bỏ cổng kỹ thuật để vượt blocker.
+
+Nguồn: [bản ghi chỉ thị Owner do ChatGPT chuyển lên GitHub ngày 30/10/2026](https://github.com/tantdna2/SafeShift/pull/153#issuecomment-6516812967).
+
 ## Dữ liệu và Git
 
 - Giữ nguyên dữ liệu gốc. Sản phẩm dẫn xuất local đặt trong `data/processed/`,

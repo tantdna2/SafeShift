@@ -440,7 +440,8 @@ class NativeCandidateTests(unittest.TestCase):
 
 
     def test_candidate160_native_processor_tokens_raw_runner_and_archive(self):
-        from test_candidate160 import fixture, batch_grant
+        from test_candidate160 import fixture
+        from safeshift.candidates.train_owner import execution
         from safeshift.candidates import train_runtime as rt, train_run as run
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
@@ -455,7 +456,8 @@ class NativeCandidateTests(unittest.TestCase):
             backend, scripted_llm = self.backend()
             self.assertEqual(rt.verify_images(root, plan["main"])["verified_images"], 160)
             result, reason = run.run_calls(root/"out", plan, rows, lambda: backend,
-                                          batch_grant(KEY), resources=lambda: {"scope": "SYNTHETIC_CPU_NOT_GPU"},
+                                          execution(KEY, "c"*64, "a"*40, owner_start=True),
+                                          resources=lambda: {"scope": "SYNTHETIC_CPU_NOT_GPU"},
                                           reviewer=lambda *a: self.fail("BATCH_MUST_NOT_WAIT_FOR_EXTERNAL_FILE"))
             self.assertIsNone(reason)
             self.assertEqual(sum(v["native_calls"] for v in result.values()), 160)
