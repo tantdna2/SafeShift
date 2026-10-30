@@ -12,6 +12,7 @@ Adapter contract base `95eb4e8…` vẫn giữ nguyên để không sửa proven
 - [Contract pending, grant=null](../configs/candidate160/preparation.json)
 - [Unsigned worksheets / authority checker](../scripts/candidate160_authority.py)
 - [Đề xuất thẩm quyền batch — chưa duyệt](research/CANDIDATE160_BATCH_DECISION_20261030.md)
+- [CODE PASS mới / receipts và giới hạn](research/CANDIDATE160_BATCH_CPU_20261030.md)
 
 Đây là executable PREP cần review, không `READY_FOR_GPU`, không qualification
 classifier/peer/HNLO. Không mở FULL TRAIN, chọn slot 3, chuyển grant cũ hoặc thay
@@ -261,6 +262,8 @@ whitespace thay canonical digest. Mọi sửa policy/model/source/run/attempt/co
 làm approval binding không còn hợp lệ. Không ký/approve bằng tool tạo worksheets.
 
 Batch bắt buộc review sau ảnh1, early behavior và các mốc Lead chỉ định (<160).
+Supervisor vẫn in drop-directory để tương thích external mode; batch không đọc
+directory đó và không cần Owner đưa file CONTINUE vào saved VM.
 Ở mỗi mốc máy recover journals đối soát exact cumulative result; kiểm technical,
 NaN/Inf/replay, behavior thresholds, live resources, deadline/expiry. Từ early
 checkpoint trở đi phải có valid >= `dominance_min_valid`, valid Normal >=

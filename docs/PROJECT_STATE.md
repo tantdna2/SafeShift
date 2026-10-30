@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **29/10/2026 (Asia/Bangkok)** trong task notebook160 sau PR #151.
-Main khi bắt đầu đã kiểm GitHub/fetch: `95eb4e8801ea746e1a760b9d529920bffb3c26cb`.
+Cập nhật **30/10/2026 (Asia/Bangkok)** trong task batch160 sau PR #152 MERGED.
+Main đã kiểm GitHub/remote: `f79f7bddeac62e8fb8378d6798c25387f45f0f37`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.
 
 ## PROJECT IDENTITY
@@ -12,6 +12,11 @@ Main khi bắt đầu đã kiểm GitHub/fetch: `95eb4e8801ea746e1a760b9d529920b
 - Thiết kế/primary/metric/final roster/nguồn mới vẫn **PROPOSED; O1–O8/T0 PENDING**. HNLO optional theo từng model, không xác suất nguy cơ hoặc confidence đã hiệu chuẩn.
 
 ## CURRENT STATUS
+
+- **PR #152 MERGED**, GitHub `merged=true`, merge `f79f7bddeac62e8fb8378d6798c25387f45f0f37`.
+  Gói batch mới **CODE PASS / execution BLOCKED**, một Draft PR chờ ChatGPT.
+  [CPU report/receipts](research/CANDIDATE160_BATCH_CPU_20261030.md); quyền batch
+  chưa duyệt, real weights/GPU/runtime/behavior UNVERIFIED.
 
 - **PR #151 MERGED**, GitHub `merged=true`, merge `95eb4e8801ea746e1a760b9d529920bffb3c26cb`, xác minh live trong task này. Adapter CPU READY trong phạm vi #151; không cấp GPU/data/grant hoặc scientific qualification.
 
@@ -112,9 +117,15 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - [Runbook và checklist duy nhất](CANDIDATE160_KAGGLE.md#checklist-bàn-giao-duy-nhất)
   nêu từng quyền, threshold/mốc/driver/resource limits, grants/reservations/Inputs
   thật còn thiếu. `preparation.json` giữ null/BLOCKED, không EXPERIMENT READY.
-- Nghiệm thu source cuối và receipts được ghi trong cùng PR; tests đang hoàn
-  thiện, chưa dùng bằng chứng #152 chứng nhận thay đổi mới. Dừng ở Draft PR cho
-  ChatGPT kiểm exact HEAD và quyết định audit/merge; không tự merge.
+- [Nghiệm thu CPU mới](research/CANDIDATE160_BATCH_CPU_20261030.md): mỗi model
+  Windows73=70 PASS+3 SKIP, Linux73=72 PASS+1 SKIP; cả15 native tests PASS/model/OS,
+  gồm160 synthetic images qua native processor/generation và batch. Full immutable
+  export Windows302=265 PASS+37 SKIP, Linux302=270 PASS+32 SKIP, không FAIL/ERROR.
+  SKIP không tính PASS; tám notebook/source/builder/cells/archives kiểm PASS.
+  Source `5189a456b62e5dbef631b712eb0b377044bc84066d6ffd190976e3ee26901e1d`,
+  runtime `04090aeb182883da25726a12cbd6371d3d6c9913`. Không dùng receipts #152
+  chứng nhận source mới. Dừng ở Draft PR cho ChatGPT kiểm exact HEAD và quyết
+  định audit/merge; chưa independent audit, quyền thực nghiệm hoặc EXPERIMENT READY.
 
 ## KEY DECISIONS / LIMITS GIỮ NGUYÊN
 
