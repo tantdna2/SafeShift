@@ -34,6 +34,12 @@ class CandidateIntegrationTests(unittest.TestCase):
 
     def test_protected_pilot_c1_generation_and_source_bytes(self):
         for filename, checksum in read(LOCK.with_name("protected_source_lock.json"))["files"].items():
+            if filename == "AGENTS.md":
+                # PR154 merged Owner instructions after the historical source
+                # lock. Preserve that lock; assert the exact verified main BASE
+                # 39ec489403753ada10f4924c4b0d6077e027f5e1 instructions separately.
+                self.assertEqual(checksum, "aa2f1830012fe73ba8859ceea0e87442510cc57bd5d115042dd40ec27def0183")
+                checksum = "ad4309eae94bd270a0080eb51d91291239e337fd3fd3612f899a1703bc61e3d2"
             self.assertEqual(sha(ROOT/filename), checksum, filename)
         self.assertEqual(sha(ROOT/"configs/pilot/classification_c1.txt"), PROMPT_SHA)
         self.assertEqual(set(MODELS), {"phi", "smolvlm2", "gemma"})
