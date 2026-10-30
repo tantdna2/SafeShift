@@ -26,8 +26,17 @@ Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
   Chỉ COMPLETE khi final HEAD được ChatGPT kiểm GitHub, Antigravity audit độc
   lập, merge được cấp quyền riêng và hậu merge xác minh quy tắc trên main.
   Các kiểm thử/bằng chứng30/10 bên dưới là snapshot cũ, không tự nâng HEAD mới.
+  **CPU CODE PASS31/10:** runtime `f679e3153a1418cd521d1875cfa797b5aded8570`,
+  tested snapshot `0363db4976f39f8c4249ab84a7c54986f41e1e99`;
+  full Linux332 =300 PASS/32 SKIP/0 lỗi,10 notebook khớp builder;
+  Windows focused43 =38 PASS/5 SKIP/0 lỗi. Hai actual worker CLI đều qua
+  exact3.11.9/cu124 pins/NMS ABI/source-bound envelope +8 synthetic sizes,
+  có guards cấm CUDA/weights/real-forward. Source/hash lịch sử được đối chiếu
+  bằng Git objects; không sửa locks. [Receipts mới](research/evidence/candidate160_envfirst_20261031/index.json).
+  LIVE_GPU_PREFLIGHT/WEIGHTS_LOADED/INFERENCE/SCIENTIFIC vẫn chưa được chứng minh
+  trên Kaggle. Final HEAD mới phải được review/audit lại, không tự merge.
 
-- **Candidate160 Kaggle environment repair — DRAFT / chưa GPU PASS.**
+- **Snapshot bàn giao30/10 Candidate160 environment repair — DRAFT / chưa GPU PASS.**
   Thêm bounded Notebook Output discovery riêng cho Candidate160; giữ pilot cũ.
   CPython3.11.9 standalone20240726 đã tải/kiểm29.713.170 bytes/SHA upstream;
   venv copies cần libpython cùng SHA trong venv/lib. Preflight notebook riêng

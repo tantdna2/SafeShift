@@ -1,6 +1,6 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
-30/10/2026, Asia/Bangkok. Environment repair base **PR #154 MERGED**:
+31/10/2026, Asia/Bangkok; tiếp tục cùng Draft PR #155. Environment repair base **PR #154 MERGED**:
 `39ec489403753ada10f4924c4b0d6077e027f5e1`, đã kiểm remote main.
 PR này cần ChatGPT kiểm GitHub và audit độc lập trước merge.
 Task chỉ synthetic CPU; GPU/real weights/behavior vẫn UNVERIFIED.
@@ -239,8 +239,9 @@ là snapshot lịch sử, không thủ tục bổ sung cho hai notebook Owner n�
 
 Runtime commit `e55aab81f66c81d3e295f9065ecec1b4fdb23ad0`, embedded source SHA256
 `c01902bc0b96e1aa89159311e0ae48417b72e99a897ec24b1d96da628ff2853b`.
-Exact Git export kiểm cuối: `2306aecb280acfedd1dd11523f14b60f892c771f`;
-cập nhật sau đó chỉ tài liệu/receipts. Cả10 notebook (gồm4 candidate) khớp
+Exact Git export của lần bàn giao30/10: `2306aecb280acfedd1dd11523f14b60f892c771f`;
+HEAD `bf45a9766000582d67538278c5b848f7bcf8e242` lúc đó chỉ thêm tài liệu/receipts.
+Đây là bằng chứng lịch sử, không tự áp cho runtime mới31/10. Cả10 notebook (gồm4 candidate) khớp
 deterministic builder, payload/hash/pins, cells compile và không execution output.
 
 | Kiểm tra | Kết quả | Giới hạn |
@@ -306,3 +307,62 @@ unittest.main(module="test_candidate_native", verbosity=2)
 FP16 thật, load/peak RAM/VRAM của checkpoint,160 real predictions/behavior/HNLO,
 và eligibility incident từ private Output cũ. Thiếu điều kiện thực tế thì BLOCKED.
 Không grant/merge/GPU/data run hoặc independent audit được thực hiện ở Codex.
+
+## Nghiệm thu tiếp tục31/10 — environment-first, cùng PR #155
+
+Bắt đầu từ HEAD `bf45a9766000582d67538278c5b848f7bcf8e242`, BASE main giữ nguyên
+`39ec489403753ada10f4924c4b0d6077e027f5e1`. Runtime mới
+`f679e3153a1418cd521d1875cfa797b5aded8570`, source SHA256
+`ed5e9f677efac015990d3fceb35ef1057cc4ac52dae468afb6c5491713bc47de`;
+exact tested snapshot `0363db4976f39f8c4249ab84a7c54986f41e1e99`.
+Các thay đổi sau snapshot này chỉ docs/receipts; không dùng kết quả30/10 để tự
+chứng nhận HEAD mới. Không có lỗi test cuối nào được waive.
+
+| Kiểm tra mới | Kết quả | Bằng chứng và giới hạn |
+| --- | --- | --- |
+| Full stdlib suite, exact Linux export | 332 =300 PASS +32 SKIP,0 FAIL/ERROR | Cả10 notebook khớp builder/payload; native opt-ins15/Phi6/Smol9/live pip1/Windows junction1 chưa chạy trong suite này |
+| Windows focused | 43 =38 PASS +5 SKIP,0 FAIL/ERROR | Environment/incident/preflight/notebook/protected BASE/storage;4 symlink +1 Linux allocation API không có trên Windows |
+| Actual worker CLI, InternVL3.5 | PASS | Exact3.11.9/cu124 distributions, compiled CPU NMS, envelope/source binding và meta/native processor8 synthetic sizes |
+| Actual worker CLI, MiniCPM-V-4 | PASS | Cùng kiểm chứng, đúng riêng pins4.51.3; network/CUDA/weights/real-forward bị guard chặn |
+
+[Index/receipts mới](research/evidence/candidate160_envfirst_20261031/index.json)
+giữ hashes/code/test outcomes/versions và scope CPU; không chứa máy cá nhân,
+dataset, weights hoặc raw model output. Logs gốc ở ignored
+`data/processed/candidate160-envfirst-20261031/`. Meta/processor function không
+đổi từ30/10; không lặp native160 suite trước đó để nhận thành bằng chứng GPU.
+
+Các negative tests bao phủ marker thiếu/trùng/layout sai, source/weights sai,
+Python/setup/download/hash/package lỗi, receipt thiếu/sai status/check/model/
+source/ref/evidence, source/ref/deadline từ đầu, interrupt, GPU/driver/CUDA
+failure doubles, đồng thời allocation cùng/khác device/quota/fsync, scratch
+partial/cleanup, export/sidecar failure dù mọi check trước đó PASS, và preflight
+lặp. Mọi trường hợp đều assert không slot/attempt/model call. Test hồi quy owner,
+incident/replay/custody/raw/HNLO vẫn chạy trong full suite; code của chúng không đổi.
+
+`AGENTS.md` chỉ append quy tắc mới: test đối chiếu Git object `bbbd351e…`
+với lock lịch sử và object BASE `39ec489…` với SHA riêng, rồi kiểm nguyên prefix
+BASE trong file hiện tại. Không sửa quá khứ/source lock để cho hash mới đi qua.
+Một development test inventory ban đầu trên Windows bị guard chặn lệnh OS của
+stdlib platform; đã sửa double OS của test, chạy lại PASS. Không phải Kaggle attempt.
+
+```console
+python -B -m scripts.build_candidate160_notebooks --runtime-ref f679e3153a1418cd521d1875cfa797b5aded8570
+python -B -m unittest discover -s tests -v
+python -B -m scripts.check_notebook_release --runtime-ref 0363db4976f39f8c4249ab84a7c54986f41e1e99 --output data/processed/envfirst-proof/release-new.json
+```
+
+Worker CLI qualification dùng cùng worker/env do `prepare_runtime` tạo:
+`PYTHONPATH=<repo>`, `PYTHONNOUSERSITE=1`,
+`SAFESHIFT_WORKER_PYTHON=<venv>/bin/python`, `SAFESHIFT_RUNTIME_ROOT=<venv>`,
+`CUDA_VISIBLE_DEVICES=""`, dedicated `HF_MODULES_CACHE` và offline public cache.
+Với output mới riêng từng model, chạy hai chế độ sau (không `--cuda` trong CPU audit):
+
+```console
+<worker> -B -m safeshift.candidates.train_preflight --worker --key <internvl35-or-minicpm4> --repo <repo> --output <new-output> --source ed5e9f677efac015990d3fceb35ef1057cc4ac52dae468afb6c5491713bc47de --ref f679e3153a1418cd521d1875cfa797b5aded8570 --software-only
+<worker> -B -m safeshift.candidates.train_preflight --worker --key <internvl35-or-minicpm4> --repo <repo> --output <new-output> --source ed5e9f677efac015990d3fceb35ef1057cc4ac52dae468afb6c5491713bc47de --ref f679e3153a1418cd521d1875cfa797b5aded8570 --snapshot <locked-public-source>
+```
+
+**Vẫn chưa kiểm:** target Kaggle hiện tại và allocation28+4 GiB, T4×2/driver/
+CUDA FP16 thực tế, real weight loading/peak fit, inference/behavior/HNLO và
+private incident eligibility. Preflight thực tế có thể BLOCKED; không cam kết
+không còn lỗi GPU/model. Quy tắc mới vẫn DRAFT/PENDING review/audit/merge/hậu merge.
