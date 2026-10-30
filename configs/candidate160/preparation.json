@@ -27,5 +27,12 @@
   "free_mib_per_gpu": null,
   "max_seconds": null,
   "gpu_result": "UNVERIFIED",
-  "behavior_result": "UNVERIFIED"
+  "behavior_result": "UNVERIFIED",
+  "package_base": "f79f7bddeac62e8fb8378d6798c25387f45f0f37",
+  "review_mode": null,
+  "batch_authorization": null,
+  "free_ram_mib": null,
+  "free_scratch_mib": null,
+  "free_output_mib": null,
+  "free_gpu0_runtime_mib": null
 }

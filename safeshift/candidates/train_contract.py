@@ -8,6 +8,7 @@ from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 import re
+import math
 import time
 
 from safeshift.pilot import contract as pilot
@@ -15,9 +16,41 @@ from safeshift.pilot.artifacts import read, safe, sha
 from .source import ROOT, LOCK, require
 
 BASE = "95eb4e8801ea746e1a760b9d529920bffb3c26cb"
+PACKAGE_BASE = "f79f7bddeac62e8fb8378d6798c25387f45f0f37"
 MANIFEST = "f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995"
 INVENTORY = "0a8a84e726e690622de311326680ecbbc4a04fa04a0a45ff14ff96412caae427"
 KEYS = ("internvl35", "minicpm4")
+BATCH_CONDITIONS = ["all_durable_results_recover_exactly", "no_technical_or_nonfinite_output",
+                    "all_behavior_limits_pass", "approved_support_at_early_and_later_reviews",
+                    "live_resource_limits_pass", "grant_and_deadline_current"]
+
+
+def approval_ref(value):
+    return (isinstance(value, str) and bool(value.strip())
+            and value.strip().upper() not in ("PENDING", "UNAPPROVED", "BLOCKED", "NULL", "NONE"))
+
+
+def batch_check(g):
+    """An optional, explicit delegation. Legacy grants retain external review.
+
+This validates an externally supplied record; it does not authenticate its author
+or confer approval. The Owner must verify the cited Lead decision independently.
+"""
+    mode = g["policy"].get("review_mode", "EXTERNAL")
+    require(mode in ("EXTERNAL", "PREAPPROVED_BATCH"), "REVIEW_MODE_REQUIRED")
+    if mode == "EXTERNAL":
+        require(g.get("batch_authorization") is None, "BATCH_AUTHORITY_WITH_EXTERNAL_MODE")
+        return mode
+    b = g.get("batch_authorization")
+    require(type(b) is dict and b.get("schema") == "safeshift-candidate160-batch-authorization-v1",
+            "BLOCKED_BATCH_NOT_APPROVED")
+    require(b.get("allow_automatic_continuation") is True
+            and approval_ref(b.get("research_lead_approval_ref")), "EXPLICIT_RESEARCH_LEAD_BATCH_APPROVAL_REQUIRED")
+    require(b.get("policy_sha256") == pilot.digest(g["policy"])
+            and b.get("execution_binding_sha256") == pilot.digest(execution_binding(g)), "BATCH_APPROVAL_BINDING")
+    require(b.get("conditions") == BATCH_CONDITIONS, "EXPLICIT_BATCH_CONDITIONS_REQUIRED")
+    require(1 in g["policy"]["review_after"], "BATCH_FIRST_IMAGE_REVIEW_REQUIRED")
+    return mode
 
 
 def model(key):
@@ -150,6 +183,8 @@ def policy_check(p):
                     for v in p["driver_versions"]), "APPROVED_DRIVER_ALLOWLIST_REQUIRED")
     require(type(p.get("free_mib_per_gpu")) is list and len(p["free_mib_per_gpu"]) == 2
             and all(type(n) is int and n > 0 for n in p["free_mib_per_gpu"]), "PER_GPU_ADMISSION_REQUIRED")
+    for n in ("free_ram_mib", "free_scratch_mib", "free_output_mib", "free_gpu0_runtime_mib"):
+        require(type(p.get(n)) is int and p[n] > 0, "LIVE_RESOURCE_LIMIT_REQUIRED:" + n)
     return p
 
 
@@ -167,7 +202,7 @@ def authorize(g, key, source, ref, ledger, now=None):
         require(type(g.get(n)) is type(value) and g[n] == value, "GRANT_BINDING:" + n)
     for n in ("G0", "T0", "O3", "code_review_ref", "manifest_review_ref", "policy_approval_ref",
               "runtime_approval_ref", "external_ledger_ref", "owner_approval_ref", "research_lead_review_ref"):
-        require(isinstance(g.get(n), str) and g[n].strip() and g[n] != "PENDING", "APPROVAL_REQUIRED:" + n)
+        require(approval_ref(g.get(n)), "APPROVAL_REQUIRED:" + n)
     for n in ("allow_train_images", "allow_folder_gt", "allow_checkpoint_read", "allow_gpu",
               "allow_raw_export", "allow_software_install", "private_custody_approved"):
         require(g.get(n) is True, "EXPLICIT_PERMISSION:" + n)
@@ -175,8 +210,10 @@ def authorize(g, key, source, ref, ledger, now=None):
         require(isinstance(g.get(n), str) and re.fullmatch(r"[A-Za-z0-9_-]{1,100}", g[n]), "IDENTITY:" + n)
     require(type(g.get("max_seconds")) is int and 0 < g["max_seconds"] <= 43200, "TIME_CAP_REQUIRED")
     now = time.time() if now is None else now
-    require(type(g.get("expires_unix")) in (int, float) and now < g["expires_unix"], "EXPIRED_GRANT")
+    require(type(g.get("expires_unix")) in (int, float) and math.isfinite(g["expires_unix"])
+            and now < g["expires_unix"], "EXPIRED_GRANT")
     policy_check(g.get("policy"))
+    batch_check(g)
     require(type(ledger) is dict and ledger == {
         "schema": "safeshift-candidate160-reservation-v1", "status": "RESERVED_NOT_EXECUTED",
         "attempt_id": g["attempt_id"], "run_id": g["run_id"], "model_key": key,

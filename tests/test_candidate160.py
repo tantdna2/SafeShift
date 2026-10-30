@@ -26,7 +26,8 @@ def policy():
             "invalid_max_count": 160, "repeat_max_count": 160, "dominance_min_valid": 160,
             "dominance_max_fraction": 1, "normal_min_support": 160, "normal_fpr_max": 1,
             "anomaly_min_support": 160, "anomaly_fnr_max": 1,
-            "driver_versions": ["550.0"], "free_mib_per_gpu": [14336, 1]}
+            "driver_versions": ["550.0"], "free_mib_per_gpu": [14336, 1],
+            "free_ram_mib": 1, "free_scratch_mib": 1, "free_output_mib": 1, "free_gpu0_runtime_mib": 1}
 
 
 def grant(key="internvl35"):
@@ -52,14 +53,30 @@ def ledger(g):
             "grant_sha256": legacy.digest(g)}
 
 
+def batch_grant(key="internvl35"):
+    g = grant(key)
+    g["policy"].update(review_mode="PREAPPROVED_BATCH", review_after=[1, 4, 40, 80, 120, 159],
+                       dominance_min_valid=1, normal_min_support=1, anomaly_min_support=1)
+    g["batch_authorization"] = {"schema": "safeshift-candidate160-batch-authorization-v1",
+        "allow_automatic_continuation": True, "research_lead_approval_ref": "SYNTHETIC_TEST_ONLY_NO_REAL_APPROVAL",
+        "policy_sha256": legacy.digest(g["policy"]),
+        "execution_binding_sha256": legacy.digest(c.execution_binding(g)), "conditions": c.BATCH_CONDITIONS}
+    return g
+
+
 def review(checkpoint, g, *args):
     return {"schema": "safeshift-candidate160-review-v1", "checkpoint_sha256": legacy.digest(checkpoint),
             **{n: g[n] for n in ("attempt_id", "run_id", "model_key", "source_sha256", "manifest_sha256")},
             "research_lead_review_ref": "SYNTHETIC_TEST_DECISION", "decision": "CONTINUE"}
 
 
-def fixture(root):
-    p = plan(candidates())
+def fixture(root, *, staged=False):
+    synthetic = candidates()
+    if staged:
+        # Synthetic sentinel order only; never reads/selects a private cohort.
+        first = [next(r for r in synthetic if r["level"] == level) for level in legacy.LEVELS]
+        synthetic = first + [r for r in synthetic if r not in first]
+    p = plan(synthetic)
     p["dimension_inventory_sha256"] = c.INVENTORY
     rows = p["main"]
     for i, row in enumerate(rows):
@@ -475,7 +492,7 @@ class Candidate160Tests(unittest.TestCase):
             verify_archive(Path(str(output)+".zip"))
 
     def test_supervisor_cpu_simulation_preledger_failure_consumption_worker_tail_and_export(self):
-        for failure in ("cpu", "hardware", "worker_timeout", "review_stop"):
+        for failure in ("cpu", "hardware", "cuda", "worker_timeout", "review_stop"):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as d:
                 root = Path(d)
                 mount = root/"input/private"
@@ -503,6 +520,11 @@ class Candidate160Tests(unittest.TestCase):
                             self.assertFalse((output/"consumption.json").exists())
                             if failure == "cpu": raise ImportError("SYNTHETIC processor missing dependency")
                             write(output/"software_cpu.json", {"scope": "SIMULATED_NO_GPU"})
+                        elif "--cuda-check-only" in command:
+                            events.append("CUDA_CHILD_PREFLIGHT")
+                            self.assertFalse((output/"consumption.json").exists())
+                            if failure == "cuda": raise RuntimeError("SYNTHETIC child CUDA initialization failure")
+                            write(output/"preledger_cuda.json", {"worker_cuda": "MEASURED_FP16_FUNCTIONAL", "scope": "SYNTHETIC"})
                         else:
                             events.append("WORKER")
                             self.assertTrue(read(output/"consumption.json")["attempt_consumed"])
@@ -529,7 +551,7 @@ class Candidate160Tests(unittest.TestCase):
                     self.assertEqual(backend.calls, expected_calls)
                     self.assertEqual(sum(r["status"] == "NOT_ATTEMPTED" for r in accounting), 160-expected_calls)
                     self.assertEqual(events[0], "CPU_PREFLIGHT")
-                    if consumed: self.assertEqual(events, ["CPU_PREFLIGHT", "HARDWARE_SIMULATION", "WORKER"])
+                    if consumed: self.assertEqual(events, ["CPU_PREFLIGHT", "HARDWARE_SIMULATION", "CUDA_CHILD_PREFLIGHT", "WORKER"])
                     verify_archive(Path(str(output)+".zip"))
 
     def test_finalizer_write_failure_still_exports_and_export_failure_retains_directory(self):

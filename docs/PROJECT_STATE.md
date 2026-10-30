@@ -80,7 +80,12 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - **GPU release BLOCKED**: cần ChatGPT review, G0/G1 đăng ký execution release/source/runtime/grant mới; G4 Linux/CUDA isolated-child/device/memory và G5 finite first image/quality/utility/HNLO bằng quyền riêng. O1–O8/T0/O3 PENDING, peer slot3 VACANT,0 candidates qualified.
 - [CPU G2/G3 lịch sử #150](research/CPU_G2_G3_CANDIDATES_20261029.md) và receipts cũ giữ nguyên: MiniCPM native1×1/chat FAIL và InternVL tổng thể BLOCKED ở code cũ. Kết quả adapter mới không sửa hồi tố findings hay reviewer status của #150.
 
-## ACTIVE WORK — HAI NOTEBOOK CANDIDATE160 PREP
+## MERGED #152 — HAI NOTEBOOK CANDIDATE160 PREP
+
+- **PR #152 MERGED**, merge `f79f7bddeac62e8fb8378d6798c25387f45f0f37`,
+  [GitHub](https://github.com/tantdna2/SafeShift/pull/152), verified30/10/2026.
+  Các bullet bên dưới là bằng chứng CPU và giới hạn tại #152; trạng thái chờ merge
+  trong snapshot cũ đã được thay bởi mục này. Không chuyển grants sang source mới.
 
 - Task Owner mới: chuẩn bị tối đa160 ảnh/model, không dataset/weights/GPU/Kaggle execution. Nhánh/worktree riêng từ đúng SHA sau #151; dừng ở **một Draft PR**.
 - [Runbook](CANDIDATE160_KAGGLE.md), [biên bản CPU](research/CANDIDATE160_CPU_20261029.md); hai notebook riêng [InternVL](../notebooks/SafeShift_CANDIDATE160_internvl35.ipynb) và [MiniCPM](../notebooks/SafeShift_CANDIDATE160_minicpm4.ipynb), builder tái lập và source/ref/config pins.
@@ -88,8 +93,28 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - Tái dùng adapter #151, runner execute/Store/parser/HNLO/metrics/archive; giữ nguyên source runtime/pilot và sáu notebook cũ. First-image/early behavior nằm trong160, review gắn hash checkpoint; thiếu quyết định dừng/NOT_ATTEMPTED tail, no retry/resume/overwrite.
 - `configs/candidate160/preparation.json` giữ grant=null, G0/T0/O3/runtime/driver/stop thresholds/mốc review PENDING. Không tự lấy numerical thresholds hoặc grants Phi/Smol/Gemma. CUDA tuple mới là PREP cần review; không claims VRAM fit hoặc quality/HNLO PASS.
 - [Review ChatGPT #152](https://github.com/tantdna2/SafeShift/pull/152#issuecomment-6501983735) yêu cầu sửa metadata Phi kế thừa và provenance hai hash tại HEAD `65da8a3…`. Cùng PR đã sửa config/grant v2: tách legacy transport snapshot khỏi effective candidate; `legacy_transport_config_sha256` khác `candidate_execution_config_sha256`, đối soát raw trước parse và recovery, không đổi pilot/adapter/science/stop policy.
-- Runtime mới `820200bba7c6f5796961acb64befef0c651772b3`, notebook/release commit `c75113f4a62d8d30303269f4a8bd72fc71040c15`, source SHA `3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e`. Nghiệm thu mới mỗi model Windows64=61 PASS+3 SKIP, Linux64=63 PASS+1 SKIP; cả15 native tests PASS/model/OS, gồm160 scripted calls kiểm hai hash/request. Full exact-export Windows293=256 PASS+37 SKIP, Linux293=261 PASS+32 SKIP, không FAIL/ERROR; tám notebook kiểm PASS, candidate cells không grant CPU vẫn BLOCKED. Receipts v2 mới thay current index, không dùng receipts HEAD cũ cho source mới. Actual weights/CUDA/GPU/behavior **UNVERIFIED**; chưa independent audit, ChatGPT re-review hoặc merge.
+- Runtime #152 `820200bba7c6f5796961acb64befef0c651772b3`, notebook/release commit `c75113f4a62d8d30303269f4a8bd72fc71040c15`, source SHA `3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e`. Snapshot CPU mỗi model Windows64=61 PASS+3 SKIP, Linux64=63 PASS+1 SKIP; cả15 native tests PASS/model/OS, gồm160 scripted calls kiểm hai hash/request. Full exact-export Windows293=256 PASS+37 SKIP, Linux293=261 PASS+32 SKIP, không FAIL/ERROR; tám notebook kiểm PASS, candidate cells không grant CPU vẫn BLOCKED. Actual weights/CUDA/GPU/behavior **UNVERIFIED**; merge không nâng các bằng chứng này.
 - External ledger snapshot không là chữ ký số/distributed one-shot enforcement; fresh reservation/current ledger và phương thức giao review vào saved VM cần review/approval riêng. Không vì code CPU PASS mà tự mở release.
+
+## ACTIVE WORK — GÓI BATCH CANDIDATE160 SAU #152 (30/10/2026)
+
+- Một nhánh/Draft PR từ đúng main `f79f7bd…`; hoàn thiện cả notebook, runtime,
+  authority worksheets/checker, tests và handoff trong cùng phạm vi. Không Kaggle,
+  GPU, tải weights hoặc truy cập private TRAIN/TEST trong task này.
+- [Batch authority PROPOSED](research/DECISIONS.md#dec-20261030-candidate160-batch--proposed--unapproved):
+  máy chỉ AUTO_CONTINUE khi Lead cho phép rõ đúng policy/execution binding và
+  mọi điều kiện đạt. Missing approval chặn trước call; EXTERNAL review giữ được.
+  Không giả CONTINUE, không tự duyệt chính sách khoa học hoặc numerical limits.
+- Child CUDA FP16 preledger rồi kiểm lại trong worker; Linux NVIDIA/Triton pins
+  đầy đủ từ official wheel metadata; RAM/cgroup/disk/GPU0 runtime headroom theo
+  policy. Không đổi adapter/source/checkpoint locks #151, C1/parser/HNLO/generation,
+  manifest/order160 hoặc sáu notebook cũ. Model/real weights/T4 fit còn UNVERIFIED.
+- [Runbook và checklist duy nhất](CANDIDATE160_KAGGLE.md#checklist-bàn-giao-duy-nhất)
+  nêu từng quyền, threshold/mốc/driver/resource limits, grants/reservations/Inputs
+  thật còn thiếu. `preparation.json` giữ null/BLOCKED, không EXPERIMENT READY.
+- Nghiệm thu source cuối và receipts được ghi trong cùng PR; tests đang hoàn
+  thiện, chưa dùng bằng chứng #152 chứng nhận thay đổi mới. Dừng ở Draft PR cho
+  ChatGPT kiểm exact HEAD và quyết định audit/merge; không tự merge.
 
 ## KEY DECISIONS / LIMITS GIỮ NGUYÊN
 
@@ -105,7 +130,7 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 
 ## NEXT STEP / BLOCKERS
 
-1. **ChatGPT review đúng một Draft PR notebook160**: exact HEAD/diff/source/notebooks/receipts và CPU scope. #151 đã merge; không dùng CPU hoặc review adapter thay G0/G1/G4/G5 mới.
+1. **ChatGPT review đúng một Draft PR batch160 mới sau #152 MERGED**: exact HEAD/diff/source/notebooks/receipts và CPU scope; không dùng CPU hoặc review adapter thay G0/G1/G4/G5 mới.
 2. Sau review, cân nhắc independent methodology audit và Owner/giảng viên O1–O8/T0; O3 chốt bounded qualification sequence/attempt cap trước thực nghiệm, final roster sau evidence.
 3. G0–G6 theo [runbook](KAGGLE_FAILURES_AND_RELEASE_GATES.md): CPU chỉ đúng phạm vi có receipt; real weights/CUDA, execution release và behavior/HNLO vẫn BLOCKED/NOT_RUN. G4/G5 cần quyền mới; CPU không vượt behavior gate.
 4. Thiếu nguồn/GT/custody/reviewers/precision/quota hoặc không đủ 4 qualified → NO-GO thiết kế xác nhận; giảm scope cần quyết định, không mở model zoo hoặc target thay thế.

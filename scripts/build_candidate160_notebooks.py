@@ -14,7 +14,7 @@ import zlib
 
 from scripts.build_three_vlm_notebooks import notebook as legacy_notebook
 from safeshift.candidates.source import ROOT, require
-from safeshift.candidates.train_contract import BASE, KEYS, MANIFEST, config, configuration_hashes, model, sources, source_hash
+from safeshift.candidates.train_contract import BASE, PACKAGE_BASE, KEYS, MANIFEST, config, configuration_hashes, model, sources, source_hash
 from safeshift.pilot.contract import source_digest
 
 
@@ -53,7 +53,8 @@ Kaggle trước review/release và quyền mới G0/T0/O3. Không có grant tron
 Không đọc TRAIN/TEST, tải weights hoặc GPU trong task xây dựng/kiểm thử CPU.
 
 Model `{spec['id']}` @ `{spec['revision']}`; Transformers `{spec['transformers']}`.
-Base sau PR #151 `{BASE}`; runtime source commit `{ref}`.
+Adapter contract base sau PR #151 `{BASE}`; package base sau PR #152 MERGED
+`{PACKAGE_BASE}`; runtime source commit `{ref}`.
 Hai notebook dùng đúng manifest lịch sử SHA256 `{MANIFEST}`, cùng 160 ID/thứ tự,
 80 Level04/48 Level01/24 Level02/8 Level03. Không selector, supplement hoặc TEST.
 
@@ -89,17 +90,25 @@ BLOCKED trước data/weights/GPU/attempt. Không dùng các thresholds pilot c�
 Storage dùng admission vật lý cũ 28 GiB scratch +4 GiB output; cùng filesystem cần
 32 GiB free. Không bỏ cổng nếu VM chỉ có 20 GiB. Checkpoint attached read-only.
 
-First image là một trong 160, sau đó stage behavior theo policy đã duyệt. Tại
-checkpoint review bắt buộc, worker chỉ chờ quyết định **Research Lead** gắn SHA
-checkpoint hiện tại. Drop directory in ra trước worker; checkpoint private nằm
-trong output `checkpoints/NNN.json`. Cấp record review theo runbook vào drop
-directory bằng phương thức đã duyệt, không tự tạo quyết định. Không có quyết
-định trong thời gian đã duyệt → STOP/NOT_ATTEMPTED tail; không tự resume/retry.
-Save & Run All có thể kết thúc tại cổng này: 160 là trần kế hoạch, không hứa chạy đủ.
+First image và các mốc behavior đều nằm trong160. Save & Run All liên tục chỉ
+khả thi khi Lead duyệt rõ `review_mode=PREAPPROVED_BATCH` cùng batch authorization
+đúng execution binding/policy hashes và toàn bộ continuation conditions. Máy ghi
+`AUTO_CONTINUE`/`AUTO_STOP` riêng, không giả record Research Lead CONTINUE. Tại
+mốc1 và các mốc đã duyệt, kiểm lại durable results/custody, behavior, support GT,
+tài nguyên và hạn grant. Thiếu support ở early/later checkpoint cũng STOP.
+Bất kỳ lỗi/ngưỡng vi phạm nào dừng ngay, giữ NOT_ATTEMPTED cho phần chưa gọi.
+
+Chưa có phê duyệt batch → BLOCKED trước call; EXTERNAL mode vẫn chờ review Lead
+thật và có thể dừng ở checkpoint đầu, không hứa chạy đủ160 trong Save & Run All.
+Không chỉnh mode hoặc tự tạo approval để vượt cổng. Worksheets chưa ký và checker:
+`python -B -m scripts.candidate160_authority --model {key} --templates data/processed/authority-{key}`.
+Xem checklist duy nhất cuối `docs/CANDIDATE160_KAGGLE.md` để đủ quyền và Inputs.
 
 Chỉ Save Version → Save & Run All **một lần** sau quyền riêng, fresh session.
 Không interactive run rồi Save & Run All lần nữa; không reuse reservation/attempt.
 Mỗi ảnh giữ request/native token IDs/step logits/raw trước parser và kết quả.
+Child CUDA FP16 probe trước consumption, rồi kiểm lại trong worker.
+RAM/cgroup, disk và GPU0 free theo policy được theo dõi từng ảnh.
 NaN/Inf/OOM/lỗi raw hoặc storage dừng; JSON INVALID/repetition/label bias theo
 policy đã duyệt. Mọi ảnh chưa gọi là NOT_ATTEMPTED, không SUCCESS.
 
@@ -112,7 +121,7 @@ CPU scripted PASS không là GPU PASS, chất lượng thật hoặc empirical H
     result["cells"][1]["source"] = code.splitlines(True)
     result["cells"][1]["id"] = "candidate160-launch"
     result["metadata"]["safeshift"] = {"mode": "CANDIDATE160_PREP", "status": "BLOCKED",
-        "base": BASE, "runtime_ref": ref, "model_key": key, "model": spec,
+        "base": BASE, "package_base": PACKAGE_BASE, "runtime_ref": ref, "model_key": key, "model": spec,
         "source_sha256": source_hash(repo), "manifest_sha256": MANIFEST,
         "config": config(key), "configuration_hashes": configuration_hashes(key),
         "max_images": 160, "gpu": "UNVERIFIED", "behavior": "UNVERIFIED"}
