@@ -209,10 +209,11 @@ class Candidate160BatchTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as d:
                 root = Path(d)
                 with patch.object(rt.boot, "interpreter_candidates", return_value=[root/"python"]), \
-                     patch.object(rt.boot, "probe_interpreter", return_value={"eligible": True, "version": version}), \
+                     patch.object(rt.boot, "probe_interpreter", return_value={"eligible": True, "version": version, "prefix": str(root/"scratch/venv3119")}), \
+                     patch("safeshift.candidates.train_python.provision", side_effect=RuntimeError("SYNTHETIC_PINNED_PROVIDER_SELECTED")), \
                      patch.object(rt.boot, "pip_controller_probe", side_effect=RuntimeError("SYNTHETIC_SELECTED_3119")), \
                      patch.object(rt.subprocess, "run"):
-                    with self.assertRaisesRegex((RuntimeError, ValueError), "SELECTED_3119" if allowed else "3119_NOT_FOUND"):
+                    with self.assertRaisesRegex((RuntimeError, ValueError), "SELECTED_3119" if allowed else "PINNED_PROVIDER_SELECTED"):
                         rt.prepare_runtime(ROOT, "internvl35", root/"scratch", root, {}, float("inf"))
 
 

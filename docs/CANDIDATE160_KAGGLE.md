@@ -1,12 +1,15 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
-30/10/2026, Asia/Bangkok. Base **PR #153 MERGED**:
-`fc1e454212455685e1775601ebfd6aab9535c932`, đã kiểm GitHub và remote main.
+30/10/2026, Asia/Bangkok. Environment repair base **PR #154 MERGED**:
+`39ec489403753ada10f4924c4b0d6077e027f5e1`, đã kiểm remote main.
 PR này cần ChatGPT kiểm GitHub và audit độc lập trước merge.
 Task chỉ synthetic CPU; GPU/real weights/behavior vẫn UNVERIFIED.
 
 - [InternVL notebook](../notebooks/SafeShift_CANDIDATE160_internvl35.ipynb)
 - [MiniCPM notebook](../notebooks/SafeShift_CANDIDATE160_minicpm4.ipynb)
+- [InternVL preflight không tiêu lượt](../notebooks/SafeShift_CANDIDATE160_PREFLIGHT_internvl35.ipynb)
+- [MiniCPM preflight không tiêu lượt](../notebooks/SafeShift_CANDIDATE160_PREFLIGHT_minicpm4.ipynb)
+- [Quyết định môi trường và replacement incident](research/CANDIDATE160_KAGGLE_ENV_DECISION_20261030.md)
 - [Quyết định Owner và thay đổi chính sách dừng](research/CANDIDATE160_OWNER_DECISION_20261030.md)
 - [CPU acceptance và giới hạn](research/CANDIDATE160_OWNER_CPU_20261030.md)
 
@@ -18,7 +21,13 @@ Luồng grant/batch #153 giữ compatibility, không phải UI notebook mới.
 
 ## Thao tác trên Kaggle
 
-Sau review/audit và merge, chạy riêng mỗi notebook đúng một lần:
+Sau review/audit và merge, chạy notebook preflight riêng trước; có thể lặp lại
+preflight vì không tạo Owner slot/attempt. Dùng cùng Inputs/Internet/T4×2 như
+notebook160. Download ZIP/sidecar, đọc `preflight.json`: từng gate
+PASS/BLOCKED/NOT_RUN. `PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED` chỉ là admission
+trước load; không READY hoặc model-fit/quality/HNLO PASS. Không tự launch160.
+
+Sau đó chạy riêng mỗi notebook160 đúng một lần trong saved session sạch:
 
 1. Fresh Kaggle notebook, **T4 ×2**, Internet ON cho pinned software.
    Chỉ một saved job/model; không chạy interactive trước Save & Run All.
@@ -30,13 +39,26 @@ Sau review/audit và merge, chạy riêng mỗi notebook đúng một lần:
    model dict từ `train_contract.model(key)` gồm id/revision/transformers/
    attention/remote_code. Đúng 13/15 source files allowlist, index + hai shards
    đúng size/SHA của lock #151. Không links/extra files hoặc downloader weights.
-   Discovery nhận direct mounts và `datasets/<owner>/<slug>`, tên file duy nhất.
+   Discovery nhận direct mounts, `datasets/<owner>/<slug>` và
+   `notebooks/<owner>/<slug>`, tên file duy nhất; tối đa512 entries, độ sâu cố
+   định. Checkpoint Notebook Output hiện có giữ nguyên source/weights, không
+   chuyển Dataset hoặc tải lại nhiều GB. Layout chuẩn của sự cố Owner:
+   `/kaggle/input/notebooks/nguynanhtn/safeshift-prepare-internvl35/`.
 4. **Save Version → Save & Run All một lần.** Không sửa cell, SHA, model,
    revision, Python hoặc precision để vượt lỗi; không retry/resume/overwrite.
 5. Download private ZIP và `.sha256.json` được in, kể cả failure/partial.
    Không publish raw/manifest/GT/checkpoint; không chạy lại khi mất archive.
 
-Chỉ hai nhóm Inputs: bundle và checkpoint. Không cần authority Dataset hoặc
+Hai nhóm Inputs thường: bundle và checkpoint. Riêng sự cố InternVL FOUND_0,
+attach thêm saved Output cũ nguyên vẹn, gồm `data/processed/candidate160/attempts/`
+và evidence directory đã sealed của run cũ. Runtime tự kiểm nguyên nhân/bindings/
+160 NOT_ATTEMPTED/attempts0/native_calls0/attempt_consumed=false trước khi tạo
+duy nhất `replacement1`, cùng campaign/slot, UUID run/attempt mới và incident
+hashes. Không sửa/xóa marker cũ. Thiếu/partial/consumed/unknown hoặc replacement
+đã có → BLOCKED; không retry/resume/replacement2. Không có bằng chứng cũ đầy đủ
+trong task Codex này nên chưa khẳng định run Owner đủ điều kiện.
+
+Không cần authority Dataset hoặc
 gõ run/attempt ID, threshold, driver allowlist/thời hạn. Sai Input → BLOCKED
 trước model call. Không upload dữ liệu hoặc chạy Kaggle trong task code này.
 
@@ -74,14 +96,16 @@ ref hoặc Lead approval giả. Các quyết định khoa học/academic khác g
 
 Trước private inputs, exclusive O_EXCL+fsync marker:
 `data/processed/candidate160/attempts/owner_slot_<slot_sha256>.json`.
-UUID/source/ref mới không đổi slot. Giữ marker cả khi preflight BLOCKED;
-không release/resume/retry. Kiểm lại marker/execution/source/input trước consume.
+UUID/source/ref mới không đổi slot. Giữ marker cả khi admission notebook160
+BLOCKED; không release/resume/retry. Preflight riêng không tạo marker. Ngoại lệ
+incident FOUND_0 đủ sealed evidence mới tạo một replacement1 riêng, giữ slot cũ.
+Kiểm lại marker/execution/source/input trước consume.
 Ghi consumed marker trước worker; lỗi create/fsync không rõ → UNKNOWN_DO_NOT_RETRY.
 Terminal log tự ghi, không cần Owner ký/cập nhật permission record thủ công.
 
 Cùng output root chặn duplicate/concurrent bằng exclusive create. Attached saved
 Outputs cũ được kiểm marker ở mount root hoặc
-`data/processed/candidate160/attempts/` (direct hoặc datasets/owner/slug),
+`data/processed/candidate160/attempts/` (direct, datasets hoặc notebooks/owner/slug),
 kể cả marker RESERVED/không đọc được. Không quét cây ảnh/weights.
 **Giới hạn:** filesystem ephemeral không phải distributed ledger. VM mới không
 attach lịch sử, concurrent VM hoặc layout lịch sử khác không có bằng chứng
@@ -92,11 +116,15 @@ sau lỗi/mất VM hoặc xóa marker. Không tuyên bố global exactly-once.
 
 SHA256 embedded runtime/Git ref, C1, hai config hashes, public source, checkpoint
 index/shards, manifest/membership/order và ảnh phải khớp. Decode/RGB160 ảnh trước
-consumption; hash lại trước native call. Không tải weights/Python.
+consumption; hash lại trước native call. Không tải weights.
 
 Kernel stdlib; worker CPython3.11.9 Linux x86_64 riêng, venv/pip bootstrap
 hash-locked; Torch2.6.0+cu124/vision0.21.0+cu124, CUDA12.4, exact pins/no extra
-libraries, pip check/freeze/native CPU ABI. Thiếu đúng interpreter → BLOCKED.
+libraries, pip check/freeze/native CPU ABI. Thiếu đúng interpreter có sẵn thì
+provision từ python-build-standalone20240726 đã khóa URL/size/SHA256 tại
+`configs/candidate160/python3119.json` (29.713.170 bytes). Kiểm safe extraction,
+stdlib và venv/libpython trước dùng; lỗi download/hash/runtime → BLOCKED.
+Không thay LD_LIBRARY_PATH hoặc dùng Python3.13 làm worker.
 Hai physical T4, GPU0≥14GiB free trước load, GPU1 không pooled/sharded.
 Child chỉ thấy GPU0 compute7.5; CUDA FP16 probe trước consume và kiểm lại trong
 actual worker. Per-image memory/headroom receipts giữ nguyên.

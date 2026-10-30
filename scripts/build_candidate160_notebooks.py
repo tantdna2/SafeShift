@@ -18,7 +18,7 @@ from safeshift.candidates.train_contract import BASE, PACKAGE_BASE, KEYS, MANIFE
 from safeshift.pilot.contract import source_digest
 
 
-def notebook(key, ref, repo=ROOT):
+def notebook(key, ref, repo=ROOT, *, preflight=False):
     require(key in KEYS and re.fullmatch(r"[0-9a-f]{40}", ref), "EXACT_RUNTIME_COMMIT_REQUIRED")
     repo = Path(repo)
     payload = {p: (repo / p).read_text(encoding="utf-8") for p in sources(repo)}
@@ -112,6 +112,55 @@ giữ mọi bytes còn lại và không chạy lại. CPU synthetic PASS không 
         "source_sha256": source_hash(repo), "manifest_sha256": MANIFEST,
         "config": config(key), "configuration_hashes": configuration_hashes(key),
         "max_images": 160, "gpu": "UNVERIFIED", "behavior": "UNVERIFIED"}
+    if preflight:
+        code = code.replace("from safeshift.candidates.train_runtime import launch_owner as launch",
+                            "from safeshift.candidates.train_preflight import launch_preflight as launch")
+        code = code.replace(", owner_start=True)", ")")
+        code = code.replace("candidate160_code", "candidate160_preflight_code")
+        code = code.replace("root.mkdir(parents=True, exist_ok=False)", "root.mkdir(parents=True, exist_ok=True)")
+        result["cells"][1]["source"] = code.splitlines(True)
+        result["cells"][1]["id"] = "candidate160-preflight"
+        result["cells"][0]["source"] = f"""# SafeShift — {spec['id']} — preflight không tiêu lượt
+
+Sau review/merge, attach đúng bundle160 TRAIN và checkpoint Dataset hoặc Notebook
+Output `notebooks/<owner>/<slug>/`. Chọn Internet ON và T4 ×2, Run All notebook
+preflight này. Có thể chạy lại; không tạo execution/Owner slot, không tải/nạp
+weights và không gọi mô hình. Hash index/shards đọc từ Input; CPU native empty
+meta/processor dùng ảnh tổng hợp; child CUDA FP16 chỉ là phép toán tensor.
+
+Python3.13 kernel chỉ điều phối. Worker CPython3.11.9 tự provision từ archive
+python-build-standalone20240726 đã khóa URL/size/SHA256; không cần cài thủ công.
+Software pins/cu124/precision/model revision/C1/parser/HNLO giữ nguyên.
+Kiểm đồng thời cấp phát thật28 GiB scratch +4 GiB output; dung lượng free không
+thay thế bằng chứng cấp phát. Không có CUDA/model-fit PASS từ CPU local.
+
+Download ZIP/sidecar và xem `preflight.json`: từng check PASS/BLOCKED/NOT_RUN.
+Chỉ PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED khi mọi cổng được kiểm; không READY
+hoặc bảo đảm peak memory/quality. Không tự chạy notebook160 sau preflight.
+Run160 vẫn kiểm lại mọi admission trước consumption vì tài nguyên có thể đổi.
+Preflight không cấp quyền replay một lượt đã consumed/unknown.
+
+Runtime `{ref}`, source SHA256 `{source_hash(repo)}`.
+""".splitlines(True)
+        result["metadata"]["safeshift"]["mode"] = "CANDIDATE160_NO_ATTEMPT_PREFLIGHT"
+    else:
+        instructions = instructions.replace("Không fallback Python, precision hoặc tải weights.",
+            "Worker3.11.9 tự provision archive python-build-standalone20240726 đã khóa URL/size/SHA; không fallback Python/precision hoặc tải weights.")
+        instructions += f"""
+
+**Trước lượt160:** dùng `SafeShift_CANDIDATE160_PREFLIGHT_{key}.ipynb` riêng,
+không tạo slot/attempt hoặc nạp weights. Checkpoint Notebook Output giữ nguyên
+`notebooks/<owner>/<slug>/candidate_checkpoint_{key}.json` với source/weights;
+không cần chuyển Dataset hoặc tải lại checkpoint. Preflight không tự launch160.
+
+**Sự cố InternVL checkpoint_source FOUND_0:** giữ và attach saved Output cũ.
+Chỉ khi sealed evidence chứng minh attempt_consumed=false,160 NOT_ATTEMPTED,
+native_calls=0 và đúng sự cố thì runtime tự tạo một replacement1 có incident
+binding trong cùng campaign/slot. Không xóa marker, retry/resume lượt cũ hoặc
+đổi campaign. Thiếu/partial/consumed/unknown hoặc đã có replacement → BLOCKED.
+Xem `docs/research/CANDIDATE160_KAGGLE_ENV_DECISION_20261030.md`.
+"""
+        result["cells"][0]["source"] = instructions.splitlines(True)
     return result
 
 
@@ -122,6 +171,10 @@ def main():
     for key in KEYS:
         path = ROOT / f"notebooks/SafeShift_CANDIDATE160_{key}.ipynb"
         path.write_text(json.dumps(notebook(key, args.runtime_ref), indent=1, ensure_ascii=False)+"\n",
+                        encoding="utf-8", newline="\n")
+        print(path.relative_to(ROOT))
+        path = ROOT / f"notebooks/SafeShift_CANDIDATE160_PREFLIGHT_{key}.ipynb"
+        path.write_text(json.dumps(notebook(key, args.runtime_ref, preflight=True), indent=1, ensure_ascii=False)+"\n",
                         encoding="utf-8", newline="\n")
         print(path.relative_to(ROOT))
 

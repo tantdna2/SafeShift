@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **30/10/2026 (Asia/Bangkok)** trong task Owner Save & Run All sau PR #153 MERGED.
-Main đã kiểm GitHub/remote: `fc1e454212455685e1775601ebfd6aab9535c932`.
+Cập nhật **30/10/2026 (Asia/Bangkok)** trong task sửa Kaggle Candidate160 sau PR #154 MERGED.
+Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.
 
 ## PROJECT IDENTITY
@@ -12,6 +12,20 @@ Main đã kiểm GitHub/remote: `fc1e454212455685e1775601ebfd6aab9535c932`.
 - Thiết kế/primary/metric/final roster/nguồn mới vẫn **PROPOSED; O1–O8/T0 PENDING**. HNLO optional theo từng model, không xác suất nguy cơ hoặc confidence đã hiệu chuẩn.
 
 ## CURRENT STATUS
+
+- **Candidate160 Kaggle environment repair — DRAFT / chưa GPU PASS.**
+  Thêm bounded Notebook Output discovery riêng cho Candidate160; giữ pilot cũ.
+  CPython3.11.9 standalone20240726 đã tải/kiểm29.713.170 bytes/SHA upstream;
+  venv copies cần libpython cùng SHA trong venv/lib. Preflight notebook riêng
+  không execution/slot/attempt/weights/model call; receipt từng gate không suy READY.
+  Ngoại lệ một replacement1 chỉ cho sealed incident InternVL checkpoint_source
+  FOUND_0 có160 NOT_ATTEMPTED/attempts0/native_calls0 và consumed=false; giữ
+  campaign/slot/marker cũ, chặn partial/consumed/unknown và lần thay thế thứ hai.
+  [Quyết định/giới hạn](research/CANDIDATE160_KAGGLE_ENV_DECISION_20261030.md),
+  [runbook](CANDIDATE160_KAGGLE.md). Bằng chứng Kaggle cũ chỉ OWNER_REPORTED;
+  chưa có original private archive để xác nhận đủ điều kiện replacement.
+  ChatGPT kiểm GitHub và Antigravity audit độc lập vẫn bắt buộc trước merge.
+  Không GPU/private TRAIN/GT/TEST/weights hoặc merge trong task này.
 
 - **PR #153 MERGED**, GitHub `merged=true`, merge `fc1e454212455685e1775601ebfd6aab9535c932`.
   Owner đã trực tiếp yêu cầu bỏ thủ tục phê duyệt lặp lại cho một lượt/model
