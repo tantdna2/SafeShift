@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import uuid
+import shutil
 
 from safeshift.pilot import bootstrap as boot
 from safeshift.pilot.artifacts import export, read, safe, sha, write, write_bytes
@@ -44,6 +45,9 @@ def software(key, *, identity=True):
     expected = pins(key)
     observed = {name: metadata.version(name) for name in expected}
     require(observed == expected, "PINNED_DEPENDENCY_MISMATCH")
+    normalize = lambda name: name.lower().replace("_", "-").replace(".", "-")
+    installed = {normalize(d.metadata["Name"]): d.version for d in metadata.distributions()}
+    require(installed == {normalize(n): v for n, v in expected.items()}, "UNLOCKED_INSTALLED_DEPENDENCY")
     import torch
     import torchvision
     import transformers
@@ -59,9 +63,37 @@ def software(key, *, identity=True):
 def hardware(policy):
     receipt = boot.gpu_preflight()
     for i, row in enumerate(receipt["physical_gpus"]):
+        # CUDA 12.x minor-version compatibility floor, not a guarantee of kernel support.
+        require(tuple(map(int, row[3].split("."))) >= (525, 60, 13), "CUDA12_LINUX_DRIVER_TOO_OLD")
         require(row[3] in policy["driver_versions"], "UNAPPROVED_NVIDIA_DRIVER")
         require(int(row[2]) >= policy["free_mib_per_gpu"][i], "PER_GPU_FREE_MEMORY")
     return receipt
+
+
+def resources(policy, scratch, output, *, gpu=False):
+    """Observe live RAM/cgroup, scratch and output separately; no pooled VRAM."""
+    import psutil
+    ram = psutil.virtual_memory().available
+    limits = []
+    # Kaggle containers can have a lower limit than host psutil reports.
+    for limit, used in (("/sys/fs/cgroup/memory.max", "/sys/fs/cgroup/memory.current"),
+                        ("/sys/fs/cgroup/memory/memory.limit_in_bytes", "/sys/fs/cgroup/memory/memory.usage_in_bytes")):
+        path = Path(limit)
+        if path.is_file():
+            text = path.read_text().strip()
+            if text != "max":
+                remaining = max(0, int(text) - int(Path(used).read_text()))
+                limits.append(remaining)
+                ram = min(ram, remaining)
+    observed = {"free_ram_mib": ram // 2**20, "free_scratch_mib": shutil.disk_usage(scratch).free // 2**20,
+                "free_output_mib": shutil.disk_usage(output).free // 2**20, "cgroup_remaining_bytes": limits}
+    for name in ("free_ram_mib", "free_scratch_mib", "free_output_mib"):
+        require(observed[name] >= policy[name], f"LIVE_RESOURCE_LIMIT:{name}:{observed[name]}<{policy[name]}")
+    if gpu:
+        import torch
+        observed["free_gpu0_runtime_mib"] = torch.cuda.mem_get_info(0)[0] // 2**20
+        require(observed["free_gpu0_runtime_mib"] >= policy["free_gpu0_runtime_mib"], "LIVE_RESOURCE_LIMIT:gpu0")
+    return observed
 
 
 def worker_cuda(policy):
@@ -107,14 +139,21 @@ def verify_images(bundle, rows):
     return {"verified_images": len(rows), "method": "SHA256+native_PIL_decode+RGB; no image rewritten"}
 
 
-def worker(repo, output, bundle, snapshot, weights, grant, ledger, source, ref, *, check_only=False):
+def worker(repo, output, bundle, snapshot, weights, grant, ledger, source, ref, *, check_only=False, cuda_check_only=False):
     repo, output = Path(repo), Path(output)
     authorize(grant, grant["model_key"], source, ref, ledger)
     require(source_hash(repo) == source, "WORKER_SOURCE_CHANGED")
+    if cuda_check_only:
+        # Authorized GPU probe but no native calls, weights, manifest or consumption.
+        write(output / "preledger_cuda_software.json", software(grant["model_key"]))
+        write(output / "preledger_cuda.json", worker_cuda(grant["policy"]))
+        return
     if not check_only:
         require(read(output / "consumption.json") == {"attempt_consumed": True, "attempt_id": grant["attempt_id"]},
                 "SUPERVISOR_CONSUMPTION_REQUIRED_BEFORE_GPU")
     write(output / ("software_cpu.json" if check_only else "worker_software.json"), software(grant["model_key"]))
+    write(output / ("resources_cpu.json" if check_only else "worker_resources.json"),
+          resources(grant["policy"], os.environ["SAFESHIFT_RUNTIME_ROOT"], output))
     plan, rows = manifest(bundle)
     write(output / ("images_cpu.json" if check_only else "worker_images.json"), verify_images(bundle, rows))
     prompt = (repo / "configs/pilot/classification_c1.txt").read_bytes()
@@ -147,6 +186,7 @@ def worker(repo, output, bundle, snapshot, weights, grant, ledger, source, ref, 
     run_calls(output, plan, execution,
               lambda: CandidateBackend(grant["model_key"], snapshot, weights, prompt.decode(), device="cuda:0"),
               grant, memory=memory, reviews=os.environ["SAFESHIFT_REVIEW_DIRECTORY"],
+              resources=lambda: resources(grant["policy"], os.environ["SAFESHIFT_RUNTIME_ROOT"], output, gpu=True),
               deadline=float(os.environ["SAFESHIFT_DEADLINE_MONOTONIC"]))
 
 
@@ -154,7 +194,11 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
     """Reuse reviewed interpreter/venv/pip primitives; candidate-specific pins."""
     candidates = []
     observations = []
-    for candidate in boot.interpreter_candidates():
+    paths = boot.interpreter_candidates() + [Path("/usr/local/bin/python3.11"), Path("/opt/conda/bin/python3.11")]
+    located = shutil.which("python3.11")
+    if located:
+        paths.append(Path(located))
+    for candidate in dict.fromkeys(paths):
         value = boot.probe_interpreter(candidate, env)
         observations.append(value)
         if value.get("eligible") and value.get("version", [])[:3] == [3, 11, 9]:
@@ -176,9 +220,9 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
         call(boot.pip_bootstrap_command(python, repo, wheel), log)
         write(output / "worker_pip.json", boot.inspect_worker_pip(python, runtime, "25.0.1", env))
         pip = [python, "-I", "-B", "-m", "pip", "--isolated", "--disable-pip-version-check"]
-        call(pip + ["install", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu124",
+        call(pip + ["install", "--no-deps", "--no-cache-dir", "--index-url", "https://download.pytorch.org/whl/cu124",
                     "torch==2.6.0+cu124", "torchvision==0.21.0+cu124"], log)
-        call(pip + ["install", "--no-cache-dir", "-r", repo / f"configs/candidate160/{key}.requirements.txt"], log)
+        call(pip + ["install", "--no-deps", "--no-cache-dir", "-r", repo / f"configs/candidate160/{key}.requirements.txt"], log)
         call(pip + ["check"], log)
         log.flush()
         os.fsync(log.fileno())
@@ -260,6 +304,13 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None)
                            check=True, timeout=max(1, deadline-time.monotonic()))
         stage = "gpu_preledger"
         write(output / "hardware_preledger.json", hardware(grant["policy"]))
+        stage = "cuda_child_preledger"
+        with (output / "cuda_preledger.log").open("xb") as log:
+            subprocess.run(command + ["--cuda-check-only"], env={**env, "CUDA_VISIBLE_DEVICES": "0"},
+                           stdout=log, stderr=subprocess.STDOUT, check=True,
+                           timeout=max(1, deadline-time.monotonic()))
+        require(read(output / "preledger_cuda.json")["worker_cuda"] == "MEASURED_FP16_FUNCTIONAL",
+                "PRELEDGER_CUDA_RECEIPT_REQUIRED")
         # Check expiry/source/ledger/input hashes again immediately before consume.
         require(read(grant_file) == grant and read(ledger_file) == ledger, "AUTHORITY_CHANGED")
         authorize(grant, key, source, ref, ledger)
@@ -331,9 +382,10 @@ def main():
     for name in ("repo", "output", "bundle", "snapshot", "weights", "grant", "ledger", "source", "ref"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--check-only", action="store_true")
+    parser.add_argument("--cuda-check-only", action="store_true")
     a = parser.parse_args()
     worker(a.repo, a.output, a.bundle, a.snapshot, a.weights, read(a.grant), read(a.ledger), a.source, a.ref,
-           check_only=a.check_only)
+           check_only=a.check_only, cuda_check_only=a.cuda_check_only)
 
 
 if __name__ == "__main__":

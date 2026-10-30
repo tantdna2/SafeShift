@@ -15,7 +15,7 @@ from safeshift.pilot.hnlo import replay
 from safeshift.pilot.runner import execute, error_record
 from safeshift.pilot.report import measurements
 from .source import require
-from .train_contract import config, enrollment, execution_binding, policy_check
+from .train_contract import config, enrollment, execution_binding, policy_check, batch_check
 
 
 def not_attempted():
@@ -220,10 +220,29 @@ The Owner may deliver an approved review record to this separate drop directory.
         time.sleep(min(1, max(0, end - time.monotonic())))
 
 
+def batch_decision(checkpoint, grant, *, custody, resources, current):
+    """Machine evaluation under explicit prior delegation, never a Lead CONTINUE."""
+    require(batch_check(grant) == "PREAPPROVED_BATCH", "BLOCKED_BATCH_NOT_APPROVED")
+    o, p = checkpoint["observations"], grant["policy"]
+    support = (checkpoint["completed"] < p["early_behavior_after"] or
+               (o["valid"] >= p["dominance_min_valid"] and o["normal_support"] >= p["normal_min_support"]
+                and o["anomaly_support"] >= p["anomaly_min_support"]))
+    checks = {"custody": custody, "technical": checkpoint["stop_reason"] is None,
+              "behavior": behavior_stop(o, p) is None, "support": support,
+              "resources": resources, "current": current}
+    return {"schema": "safeshift-candidate160-automatic-decision-v1",
+            "decision": "AUTO_CONTINUE" if all(checks.values()) else "AUTO_STOP", "checks": checks,
+            "reason": "ALL_PREAPPROVED_CONDITIONS_PASS" if all(checks.values()) else
+                      "FAILED:" + ",".join(n for n, passed in checks.items() if not passed),
+            "checkpoint_sha256": digest(checkpoint), "grant_sha256": digest(grant),
+            "policy_sha256": digest(p), "execution_binding": execution_binding(grant),
+            "research_lead_approval_ref": grant["batch_authorization"]["research_lead_approval_ref"]}
+
+
 class GuardedBackend:
     """No generation/parser changes: validate durable native evidence and memory."""
-    def __init__(self, native, row, context, *, memory=None):
-        self.native, self.row, self.context, self.memory = native, row, context, memory
+    def __init__(self, native, row, context, *, memory=None, resources=None):
+        self.native, self.row, self.context, self.memory, self.resources = native, row, context, memory, resources
         self.environment = native.environment
 
     @property
@@ -232,6 +251,8 @@ class GuardedBackend:
 
     def generate(self, image, sample):
         require(sha(image) == self.row["image_sha256"], "IMAGE_CHANGED_BEFORE_CALL")
+        if self.resources:
+            write(Path(sample) / "resources_before_native.json", self.resources())
         before = self.memory(True) if self.memory else None
         raw = self.native.generate(image, sample)
         raw["execution_release"] = deepcopy(self.context["execution_release"])
@@ -243,7 +264,7 @@ class GuardedBackend:
 
 
 def run_calls(output, plan, rows, factory, grant, *, memory=None, reviewer=await_review,
-              reviews=None, deadline=None, clock=time.monotonic):
+              reviews=None, deadline=None, clock=time.monotonic, resources=None):
     """At most 160 one-call engine invocations; one cached checkpoint load.
 
 Factory/reviewer/memory injection is for CPU tests. Production supplies only the
@@ -251,6 +272,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
 """
     require(len(rows) == len({r["sample_id"] for r in rows}) == 160, "EXACT_SHARED_160_PLAN")
     policy = policy_check(grant["policy"])
+    mode = batch_check(grant)  # Missing delegation blocks before any model load/call.
     output = Path(output)
     context = validate_context(configuration_context(grant), grant)
     deadline = clock() + grant["max_seconds"] if deadline is None else deadline
@@ -266,6 +288,10 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                 if clock() >= deadline:
                     reason = "TIME_CAP_BEFORE_NEXT_CALL"
                     break
+                resource_receipt = resources() if resources else {"scope": "CPU_TEST_NO_RESOURCE_OBSERVER"}
+                if mode == "PREAPPROVED_BATCH":
+                    require(resources is not None, "BATCH_LIVE_RESOURCE_OBSERVER_REQUIRED")
+                write(output / f"resources/{i+1:03d}.json", resource_receipt)
                 store = CandidateStore(output / f"calls/{i:06d}/run", {
                     **context["execution_release"], "ordinal": i, "sample_id": row["sample_id"],
                     "input_sha256": row["image_sha256"], "runner_manifest_sha256": digest(plan)}, context)
@@ -277,23 +303,21 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                                 "RAW_TOKENIZER_SERIALIZATION_REQUIRED")
                         write_bytes(output / "tokenizer/runtime_tokenizer.json", native.serialized_tokenizer)
                     return GuardedBackend(native, row, context,
-                        memory=memory)
+                        memory=memory, resources=resources)
                 one, blocked = execute(store, [row], cached_factory, grant, grant["model_key"], plan,
                                        time_budget=max(0, deadline - clock()))
                 results[row["sample_id"]] = one[row["sample_id"]]
                 if blocked or results[row["sample_id"]]["status"] in ("TECHNICAL_ERROR", "NOT_ATTEMPTED"):
                     reason = "TECHNICAL_STOP"
-                    break
-                if results[row["sample_id"]]["raw_nonfinite"]:
+                elif results[row["sample_id"]]["raw_nonfinite"]:
                     reason = "NONFINITE_RAW_MODEL_OUTPUT"
-                    break
-                if results[row["sample_id"]]["hnlo"].get("replay_status") == "FAIL":
+                elif results[row["sample_id"]]["hnlo"].get("replay_status") == "FAIL":
                     reason = "RAW_REPLAY_TECHNICAL_FAILURE"
-                    break
                 raw_path = store.root / "samples/000000/raw.json"
-                sequence_counts[digest(read(raw_path)["generated_ids"])] += 1
+                if not reason:
+                    sequence_counts[digest(read(raw_path)["generated_ids"])] += 1
                 o = observations(output, rows, results, sequence_counts)
-                reason = behavior_stop(o, policy)
+                reason = reason or behavior_stop(o, policy)
                 checkpoint = {"completed": i + 1, "observations": o,
                               "kind": "FIRST_IMAGE_TECHNICAL" if i == 0 else "EARLY_BEHAVIOR" if i + 1 == policy["early_behavior_after"] else "OBSERVATION",
                               "results_sha256": digest(results), "stop_reason": reason,
@@ -301,24 +325,51 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                               "manifest_sha256": grant["manifest_sha256"], "attempt_id": grant["attempt_id"]}
                 write(output / f"checkpoints/{i+1:03d}.json", checkpoint)
                 if reason:
+                    write(output / f"decisions/{i+1:03d}.json", {"decision": "STOP", "reason": reason,
+                          "checkpoint_sha256": digest(checkpoint), "grant_sha256": digest(grant)})
                     break
                 if i + 1 in policy["review_after"]:
+                    if mode == "PREAPPROVED_BATCH":
+                        # Re-read durable journals at each authorized milestone.
+                        custody = recover(output, rows, grant) == results
+                        observed_resources = resources()  # Failure cannot become AUTO_CONTINUE.
+                        value = batch_decision(checkpoint, grant, custody=custody, resources=True,
+                            current=clock() < deadline and time.time() < grant["expires_unix"])
+                        value["resource_observation"] = observed_resources
+                        write(output / f"decisions/{i+1:03d}.json", value)
+                        if value["decision"] != "AUTO_CONTINUE":
+                            reason = value["reason"]
+                            break
+                        continue
                     value = reviewer(checkpoint, grant, reviews, deadline)
                     if value is None:
                         reason = "RESEARCH_LEAD_REVIEW_REQUIRED"
+                        write(output / f"decisions/{i+1:03d}.json", {"decision": "STOP", "reason": reason,
+                              "checkpoint_sha256": digest(checkpoint)})
                         break
                     decision = review_record(value, checkpoint, grant)
                     write(output / f"reviews/{i+1:03d}.json", value)
+                    write(output / f"decisions/{i+1:03d}.json", {"decision": decision, "authority": "EXTERNAL_LEAD",
+                          "review_sha256": digest(value), "checkpoint_sha256": digest(checkpoint)})
                     if decision != "CONTINUE":
                         reason = "RESEARCH_LEAD_STOP"
                         break
+                else:
+                    write(output / f"decisions/{i+1:03d}.json", {
+                        "decision": "PLAN_LIMIT_REACHED" if i == 159 else "WITHIN_APPROVED_STAGE",
+                        "checkpoint_sha256": digest(checkpoint), "grant_sha256": digest(grant)})
     except BaseException as error:
         reason = "CONTROLLER_FAILURE"
         write(output / "controller_failure.json", error_record(error, "candidate160_controller"))
     finally:
+        # Release model references even when final accounting/export cannot be written.
+        native = None
         results = recover(output, rows, grant)
         if any(v["status"] == "TECHNICAL_ERROR" for v in results.values()):
             reason = reason or "EVIDENCE_CUSTODY_LOSS"
+        write(output / "controller_decision.json", {"decision": "STOP" if reason else "BATCH_ENDED",
+              "reason": reason, "review_mode": mode, "grant_sha256": digest(grant),
+              "attempted": sum(v["attempts"] for v in results.values())})
         write(output / "accounting.json", [{"ordinal": i, "sample_id": r["sample_id"], **results[r["sample_id"]]}
                                            for i, r in enumerate(rows)])
         write(output / "summary.json", {"status": "STOPPED" if reason else "COMPLETED_AWAITING_REVIEW",

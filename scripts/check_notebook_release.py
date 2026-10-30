@@ -260,7 +260,10 @@ def evaluate(repo, runtime_ref):
                                        built["candidate_digest"] if name in built.get("candidate_expected", {}) else built["digest"])
                 for name, expected in expected.items()}
             receipt["gates"]["G1_notebook"] = "PASS"
-            tests = command([sys.executable, "-B", "-I", "-c", TEST], root, timeout=600, git_context=git_context)
+            # Candidate160 adds full batch/recovery/archive rehearsals for both
+            # models. Durable fsync on Windows can exceed the old ten-minute
+            # checker budget; this is only a CPU test budget, never run authority.
+            tests = command([sys.executable, "-B", "-I", "-c", TEST], root, timeout=1800, git_context=git_context)
             lines = [l for l in tests.stdout.decode("utf-8").splitlines()
                      if l.startswith("RELEASE_TEST_RESULT=")]
             receipt["checks"]["stdlib_suite"] = {

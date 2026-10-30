@@ -1,15 +1,18 @@
 # InternVL3.5 HF / MiniCPM-V-4 — Kaggle 160 PREP
 
-29/10/2026, Asia/Bangkok. **BLOCKED cho thực nghiệm.** Owner yêu cầu chuẩn bị
-hai notebook, không cấp quyền đọc dữ liệu, checkpoint hoặc dùng GPU. Không chạy
-Kaggle, tải weights hoặc mở private TRAIN/TEST trong task này. Công cụ hiện tại
-không tạo được phiên chat Codex mới; nhánh/worktree độc lập bắt đầu đúng main
-`95eb4e8801ea746e1a760b9d529920bffb3c26cb`, sau PR #151 đã merge.
+30/10/2026, Asia/Bangkok. **BLOCKED cho thực nghiệm; GPU/behavior UNVERIFIED.**
+Gói phần mềm sau [PR #152 MERGED](https://github.com/tantdna2/SafeShift/pull/152)
+từ đúng main `f79f7bddeac62e8fb8378d6798c25387f45f0f37`, trong một Draft PR.
+Không chạy Kaggle, tải weights hoặc mở private TRAIN/TEST trong task này.
+Adapter contract base `95eb4e8…` vẫn giữ nguyên để không sửa provenance lịch sử.
 
 - [InternVL notebook](../notebooks/SafeShift_CANDIDATE160_internvl35.ipynb)
 - [MiniCPM notebook](../notebooks/SafeShift_CANDIDATE160_minicpm4.ipynb)
 - [Builder](../scripts/build_candidate160_notebooks.py)
 - [Contract pending, grant=null](../configs/candidate160/preparation.json)
+- [Unsigned worksheets / authority checker](../scripts/candidate160_authority.py)
+- [Đề xuất thẩm quyền batch — chưa duyệt](research/CANDIDATE160_BATCH_DECISION_20261030.md)
+- [CODE PASS mới / receipts và giới hạn](research/CANDIDATE160_BATCH_CPU_20261030.md)
 
 Đây là executable PREP cần review, không `READY_FOR_GPU`, không qualification
 classifier/peer/HNLO. Không mở FULL TRAIN, chọn slot 3, chuyển grant cũ hoặc thay
@@ -63,8 +66,15 @@ hành. Không upload private data hoặc weights bằng task PREP này.
    attention/remote_code. Không có downloader weights trong notebook.
 5. File discovery dùng bounded helper có sẵn: direct mounts hoặc
    `datasets/<owner>/<slug>`, filename duy nhất. Không edit path/SHA/cell để cứu.
-6. Save Version → Save & Run All một lần sau approval. Không chạy interactive
+6. Kiểm authority offline bằng command dưới và đủ checklist cuối tài liệu.
+   Với Save & Run All liên tục, bắt buộc có Lead approval thật cho
+   `PREAPPROVED_BATCH`; EXTERNAL mode có thể dừng ở review checkpoint.
+7. Save Version → Save & Run All một lần sau approval. Không chạy interactive
    rồi Save & Run All lần nữa. Không rerun reservation hoặc consumed attempt.
+8. Chờ saved version kết thúc; xem stdout `supervisor_status`/failure và
+   `summary.json` trong Outputs. Tải đúng thư mục evidence ZIP cùng
+   `<ZIP>.sha256.json` được in ở cell cuối, giữ private. Không tải/publish toàn
+   working tree hoặc đưa private raw/manifest/GT lên GitHub.
 
 Worker yêu cầu CPython **3.11.9**, Linux x86_64; kernel có thể khác version nhưng
 chỉ chạy stdlib. Dùng interpreter probe, fresh `venv --without-pip --copies` và
@@ -72,10 +82,15 @@ pip wheel hash-locked của bootstrap hiện có. Không tải/build Python, kh�
 fallback 3.12/3.13 hoặc dùng kernel site-packages. Không có interpreter này thì
 BLOCKED trước attempt; availability trên Kaggle **UNVERIFIED**.
 
-Requirements riêng giữ pins CPU #151, chỉ chuyển Torch/torchvision sang
+Requirements riêng giữ pins CPU #151, chuyển Torch/torchvision sang
 `2.6.0+cu124`/`0.21.0+cu124`, bỏ marker Windows; đây là CUDA tuple **PREP cần
-runtime approval**, chưa được thử GPU. Cài cu124 từ index chính thức trước pins
-còn lại, pip check/freeze, version/path isolation và compiled CPU NMS. Trong child
+runtime approval**, chưa được thử GPU. Bổ sung đủ14 Linux NVIDIA/Triton pins từ
+[official cu124 METADATA](https://download.pytorch.org/whl/cu124/torch-2.6.0%2Bcu124-cp311-cp311-linux_x86_64.whl.metadata)
+SHA256 `76581c0d424f2d45de443327dfe1d5e115fd5e090b553deca3c3e23fc31c8da0`.
+[PyTorch official tuple](https://docs.pytorch.org/get-started/previous-versions/)
+xác nhận Torch2.6/vision0.21/cu124. Cài `--no-deps` với toàn bộ pins, pip check,
+freeze; worker từ chối cả dependency thừa/chưa khóa, version/path isolation và
+compiled CPU NMS. Không suy metadata verification là CUDA wheel/ABI PASS. Trong child
 preledger, native loader meta và processor tổng hợp dùng production path; hash/
 decode ảnh thật chỉ sau authority. Không model forward ở CPU admission.
 
@@ -85,12 +100,25 @@ riêng từng GPU/driver allowlist do Lead duyệt. Trong child sau consumption:
 visible T4 compute 7.5, CUDA build12.4, CUDA FP16 functional check và mem_get_info
 trước weights. Per-image allocated/reserved/peak/free được giữ. Host nvidia-smi
 PASS không thay CUDA child PASS hoặc đảm bảo fit checkpoint lâu dài.
+Child CUDA FP16 probe nay chạy **trước consumption** (quyền GPU đã phải có),
+không manifest/weights/model call; thiếu receipt đo thật hoặc lỗi cuInit → BLOCKED,
+không consumed. Sau consumption child chính vẫn kiểm lại để phát hiện drift.
+Driver phải nằm trong allowlist Lead duyệt và đạt ít nhất Linux525.60.13 theo
+[CUDA12 minor compatibility floor](https://docs.nvidia.com/cuda/archive/12.4.0/cuda-toolkit-release-notes/index.html).
+CUDA12.4 GA có toolkit driver550.54.14; minor compatibility có giới hạn, không
+coi đạt floor là native kernels/real checkpoint PASS hoặc tự đổi driver/runtime.
 
 Storage tái dùng physical allocation admission **28 GiB scratch +4 GiB output**;
 cùng filesystem cần 32 GiB free, không cộng hai lần cùng free space. Không bỏ
 cổng nếu Kaggle chỉ có khoảng20 GiB. Weights attached read-only, source/cache/
 venv ở sibling Kaggle tmp, evidence ở working. Cleanup chỉ scratch session sở
 hữu; lỗi cleanup được giữ và không được publish toàn working tree.
+Policy còn yêu cầu minimum `free_ram_mib` (min host available và cgroup remaining),
+`free_scratch_mib`, `free_output_mib`, `free_gpu0_runtime_mib`. CPU admission kiểm
+RAM/disk, từng ảnh kiểm lại RAM/disk và GPU0 free; ở review batch kiểm thêm lần
+nữa. Đây là giới hạn do Lead phải duyệt, không mặc định số. GPU admission trước
+load `free_mib_per_gpu` khác runtime headroom sau load; không đòi14GiB còn trống
+sau khi model đã chiếm bộ nhớ. Model load/forward OOM dừng, giữ consumed và evidence.
 
 ## Authority contract — phải do bên có thẩm quyền cung cấp
 
@@ -122,6 +150,11 @@ Grant schema `safeshift-candidate160-grant-v2` bắt buộc:
   `free_mib_per_gpu=[GPU0,GPU1]`. Count/rate là **maximum được phép**; dừng khi
   vượt (`>`), rate chỉ xét khi đủ minimum support hợp lệ. Không bắt batch nhỏ phải
   xuất đủ bốn nhãn. Giới hạn này không phải ngưỡng chứng minh scientific utility.
+- Live resource minima: `free_ram_mib`, `free_scratch_mib`, `free_output_mib`,
+  `free_gpu0_runtime_mib`, đều số nguyên dương, không gộp VRAM.
+- `policy.review_mode`: `EXTERNAL` hoặc `PREAPPROVED_BATCH`. Thiếu field giữ
+  external review tương thích; không suy ra quyền batch. `batch_authorization`
+  phải null khi external; batch cần object phê duyệt riêng dưới đây.
 
 Ledger schema `safeshift-candidate160-reservation-v1` có đúng
 `status=RESERVED_NOT_EXECUTED`, run/attempt/model/source/runtime_ref/manifest,
@@ -194,12 +227,56 @@ manifest khớp, `research_lead_review_ref` thật và `decision=CONTINUE|STOP`.
 Tên record là `<checkpoint_sha256>.json` trong drop directory in trước worker.
 Notebook không viết decision và không chấp nhận quyết định của checkpoint cũ.
 
-Delivery vào saved Kaggle VM phải được Owner/Lead phê duyệt và xác minh riêng;
-chưa đo khả năng tương tác UI/service thực tế trong PREP. Nếu không có phương
-thức delivery hợp lệ, để hold kết thúc và export; **không vượt gate**. Thiếu
-record, sai binding, STOP hoặc hết deadline → dừng, mọi ảnh chưa gọi giữ
-NOT_ATTEMPTED. Khi attempt đã kết thúc, không hỗ trợ resume/retry; continuation
-cần quyết định và implementation/release riêng, không tái dùng notebook/attempt.
+Đoạn trên chỉ áp dụng `EXTERNAL`. Saved VM không có delivery đã xác minh thì
+để STOP/export, không hứa160 hoặc tự sinh CONTINUE. Nhánh batch giải quyết nhu cầu
+thực thi liên tục bằng **ủy quyền trước**, hiện chỉ là đề xuất chưa được duyệt.
+
+`PREAPPROVED_BATCH` cần grant `batch_authorization` schema
+`safeshift-candidate160-batch-authorization-v1` với đúng:
+
+```json
+{
+  "schema": "safeshift-candidate160-batch-authorization-v1",
+  "allow_automatic_continuation": null,
+  "research_lead_approval_ref": null,
+  "policy_sha256": null,
+  "execution_binding_sha256": null,
+  "conditions": [
+    "all_durable_results_recover_exactly",
+    "no_technical_or_nonfinite_output",
+    "all_behavior_limits_pass",
+    "approved_support_at_early_and_later_reviews",
+    "live_resource_limits_pass",
+    "grant_and_deadline_current"
+  ]
+}
+```
+
+null nghĩa **chưa duyệt**, object trên không phải grant dùng được. Lead phải
+cho phép rõ `allow_automatic_continuation=true` và viện dẫn approval thật chấp
+thuận đúng điều kiện, mốc và numerical policy. Hash canonical dùng
+`pilot.contract.digest(grant['policy'])` và
+`digest(train_contract.execution_binding(grant))`; sau khi hoàn tất mọi trường,
+ledger thật phải reserve `digest(grant)` chính xác. Không dùng SHA file JSON có
+whitespace thay canonical digest. Mọi sửa policy/model/source/run/attempt/config
+làm approval binding không còn hợp lệ. Không ký/approve bằng tool tạo worksheets.
+
+Batch bắt buộc review sau ảnh1, early behavior và các mốc Lead chỉ định (<160).
+Supervisor vẫn in drop-directory để tương thích external mode; batch không đọc
+directory đó và không cần Owner đưa file CONTINUE vào saved VM.
+Ở mỗi mốc máy recover journals đối soát exact cumulative result; kiểm technical,
+NaN/Inf/replay, behavior thresholds, live resources, deadline/expiry. Từ early
+checkpoint trở đi phải có valid >= `dominance_min_valid`, valid Normal >=
+`normal_min_support`, valid hazard >= `anomaly_min_support`; thiếu support STOP,
+không tự coi rate chưa xác định là PASS. Không đòi đủ bốn nhãn dự đoán.
+
+`decisions/NNN.json` ghi `AUTO_CONTINUE|AUTO_STOP`, từng check, observations-bound
+checkpoint hash, grant/policy hash, execution binding, resource observation và
+Lead prior approval ref. Không dùng schema external review hoặc giả chữ ký Lead.
+Giữa các mốc cũng ghi `WITHIN_APPROVED_STAGE`; mọi checkpoint/error và terminal
+decision được giữ. Lỗi/vi phạm → STOP/NOT_ATTEMPTED, không retry/resume hoặc dùng
+attempt lại. Chỉ khi tất cả điều kiện luôn đạt mới có thể tới160; chưa có approval
+thật thì release vẫn BLOCKED, dù test CPU mô phỏng hoàn tất160.
 
 ## Archive và kiểm tra kết quả thật
 
@@ -248,3 +325,48 @@ So đủ160 IDs/order/call cap, raw-before-parse, no overwrite, first/behavior/r
 faults và ZIP reimport. Tất cả cells/payload/pins/Git SHA được kiểm; notebook cells
 thật được chạy trên CPU trong sandbox tổng hợp **không grant**, kỳ vọng BLOCKED.
 Kết quả thực chạy và giới hạn trong [biên bản CPU](research/CANDIDATE160_CPU_20261029.md).
+
+## Checklist bàn giao duy nhất
+
+Mọi ô dưới đây còn **PENDING/BLOCKED** cho run thật. Public PREP không chứa grant,
+chữ ký, numerical thresholds hay Inputs riêng. Không cần task/PR kỹ thuật phụ để
+điền quyền thật; nếu approval/source/runtime thay đổi ngoài hợp đồng thì phải
+review lại release tương ứng. Owner/Lead giữ private các biểu mẫu đã hoàn tất.
+
+| Ai cung cấp | Nội dung phải cung cấp/kiểm trước Save & Run All |
+| --- | --- |
+| ChatGPT / reviewer | Review đúng HEAD Draft PR mới, notebook/source/runtime SHA, hai config hashes, receipts/skips và các giới hạn; xác minh #152 MERGED, không chuyển grant #152/cũ. |
+| Owner + Research Lead | G0/T0/O3, code/manifest/policy/runtime/external-ledger/owner/Lead approval refs thật cho từng model; O3 chốt thứ tự hai run và cap; G0/T0 giữ yêu cầu khoa học/giảng viên/custody theo scope thật, không suy từ merge/code PASS. |
+| Owner + bên có thẩm quyền | Cho phép rõ TRAIN images, folder GT, official checkpoint, GPU, software install, private raw export và custody. Không annotation mới, TEST, supplement hoặc FULL TRAIN. |
+| Research Lead | Duyệt chính sách **PREAPPROVED_BATCH** và prior delegation đúng binding/hash, mốc1/early/later, sáu điều kiện, tất cả count/rate/support/time/resource/driver limits; expiry finite. Mọi giá trị null phải được quyết định thật. Nếu không duyệt, giữ EXTERNAL/BLOCKED cho nhu cầu batch. |
+| Owner / ledger custodian | Hai grant v2 độc lập, run/attempt IDs mới; hai reservation records hiện hành từ ledger ngoài, exact canonical grant hash, RESERVED_NOT_EXECUTED. Chỉ một saved VM/attempt, không concurrent/cross-session replay; xác nhận rủi ro snapshot không enforcement phân tán và quy trình ghi consumption/UNKNOWN theo evidence sau run. |
+| Owner | Private bundle đúng manifest SHA/order160, đủ images/000000.jpg…000159.jpg; cùng Input cho hai notebook. Không chọn lại hoặc upload public. Giữ actual image SHA/dimensions cho preflight kiểm. |
+| Owner / checkpoint custodian | Mỗi model một private Input marker đúng model dict, source/<pinned revision> đủ allowlist13/15, weights/index+hai shards đúng lock SHA/size; không extra files/links. Không tải hoặc provision weights trong task này. |
+| Owner / runtime reviewer | Saved VM thực có CPython3.11.9 Linux x86_64 ở interpreter candidates/PATH, cài đủ locked cu124 tuple, driver allowlist + compatibility, hai T4 riêng, RAM/cgroup/storage đủ minima và32GiB admission nếu cùng filesystem. Không đổi Python/precision/model/checkpoint/attention để vượt cổng. Actual CUDA/weights/VRAM vẫn UNVERIFIED cho tới receipt thật. |
+| Owner | Mở đúng notebook theo model, fresh session; attach đúng ba nhóm Inputs, T4×2, Internet cho pinned software; check authority trước, rồi một Save & Run All duy nhất. Thiếu preconditions → không tiêu attempt để thử vận may. |
+| Owner / Research Lead sau run | Download ZIP+sidecar, đối soát consumed/UNKNOWN/planned160/native-call cap/NOT_ATTEMPTED/raw hashes/decisions, cập nhật ledger ngoài; final behavior/HNLO/utility review riêng. Không dùng COMPLETED làm qualification, không rerun khi lỗi hoặc thiếu archive. |
+
+Tạo worksheets **chưa ký** trên checkout chứa hai notebook cuối (đường dẫn output
+mới, không ghi đè), thực hiện riêng cho `internvl35` và `minicpm4`:
+
+```console
+python -B -m scripts.candidate160_authority --model internvl35 --templates data/processed/authority-internvl35
+python -B -m scripts.candidate160_authority --model minicpm4 --templates data/processed/authority-minicpm4
+python -B -m scripts.candidate160_authority --model internvl35 --check <approved-grant.json> --ledger <current-reservation.json>
+python -B -m scripts.candidate160_authority --model minicpm4 --check <approved-grant.json> --ledger <current-reservation.json>
+```
+
+Tool chỉ điền facts về source/model/config/manifest; decisions/rights/IDs/time,
+ledger reservation status/hash và batch authorization để null. File batch worksheet
+là phần để Lead duyệt, sau đó object có thẩm quyền phải đặt vào grant. Checker
+chỉ xác minh cấu trúc/binding và expiry, không chứng thực tác giả/chữ ký, freshness
+phân tán hoặc GPU readiness; không đọc TRAIN/checkpoint hoặc sửa ledger.
+
+Sau download, trên môi trường riêng được phép đọc raw, so SHA256 ZIP với field
+`sha256` của sidecar rồi gọi `safeshift.pilot.artifacts.verify_archive` (CRC,
+exact members/member SHA). `import_archive` tạo directory mới; `train_run.recover`
+đối soát raw/native/request/token/logits/HNLO/config của các planned rows trong
+archived manifest. Receipts CPU mới chứng minh roundtrip này trên fixture160,
+không chứng minh archive thật chưa chạy. Hard kill/VM loss/đĩa đầy có thể chỉ còn
+partial bytes; giữ evidence directory và mọi lỗi export, không hứa ZIP hợp lệ
+khi thiết bị lưu trữ không ghi được.
