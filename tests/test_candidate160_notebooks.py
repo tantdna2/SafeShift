@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 import zlib
 
@@ -73,7 +74,12 @@ class Candidate160NotebookTests(unittest.TestCase):
                 nb = read(ROOT/f"notebooks/SafeShift_CANDIDATE160_{key}.ipynb")
                 code = "\n".join("".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "code")
                 script = root/"execute_cells.py"
-                script.write_text(code, encoding="utf-8")
+                # No real hardware command in a CPU notebook rehearsal, even if
+                # WSL happens to expose the host nvidia-smi executable.
+                guarded = ('from unittest.mock import patch\n'
+                           'with patch("subprocess.check_output", side_effect=AssertionError("GPU_OBSERVATION_FORBIDDEN_IN_CPU_TEST")):\n'
+                           + textwrap.indent(code, '    '))
+                script.write_text(guarded, encoding="utf-8")
                 process = subprocess.run([sys.executable, "-I", "-B", str(script)], cwd=root,
                     env={**os.environ, "CUDA_VISIBLE_DEVICES": "", "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1"},
                     text=True, capture_output=True, timeout=60)
@@ -111,7 +117,10 @@ class Candidate160NotebookTests(unittest.TestCase):
             with self.subTest(key=key), tempfile.TemporaryDirectory() as d:
                 root = Path(d)
                 script = root/"preflight.py"
-                script.write_text(code, encoding="utf-8")
+                guarded = ('from unittest.mock import patch\n'
+                           'with patch("subprocess.check_output", side_effect=AssertionError("GPU_OBSERVATION_FORBIDDEN_IN_CPU_TEST")):\n'
+                           + textwrap.indent(code, '    '))
+                script.write_text(guarded, encoding="utf-8")
                 for _ in range(2):
                     process = subprocess.run([sys.executable, "-I", "-B", str(script)], cwd=root,
                         env={**os.environ, "CUDA_VISIBLE_DEVICES": "", "HF_HUB_OFFLINE": "1"},
