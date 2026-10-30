@@ -101,7 +101,7 @@ Các merge SHA, audit links và bundle receipts chi tiết vẫn được lưu t
 - Một nhánh/Draft PR từ đúng main `f79f7bd…`; hoàn thiện cả notebook, runtime,
   authority worksheets/checker, tests và handoff trong cùng phạm vi. Không Kaggle,
   GPU, tải weights hoặc truy cập private TRAIN/TEST trong task này.
-- [Batch authority PROPOSED](research/DECISIONS.md#dec-20261030-candidate160-batch--proposed--unapproved):
+- [Batch authority PROPOSED](research/CANDIDATE160_BATCH_DECISION_20261030.md):
   máy chỉ AUTO_CONTINUE khi Lead cho phép rõ đúng policy/execution binding và
   mọi điều kiện đạt. Missing approval chặn trước call; EXTERNAL review giữ được.
   Không giả CONTINUE, không tự duyệt chính sách khoa học hoặc numerical limits.

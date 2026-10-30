@@ -11,7 +11,7 @@ Adapter contract base `95eb4e8…` vẫn giữ nguyên để không sửa proven
 - [Builder](../scripts/build_candidate160_notebooks.py)
 - [Contract pending, grant=null](../configs/candidate160/preparation.json)
 - [Unsigned worksheets / authority checker](../scripts/candidate160_authority.py)
-- [Đề xuất thẩm quyền batch — chưa duyệt](research/DECISIONS.md#dec-20261030-candidate160-batch--proposed--unapproved)
+- [Đề xuất thẩm quyền batch — chưa duyệt](research/CANDIDATE160_BATCH_DECISION_20261030.md)
 
 Đây là executable PREP cần review, không `READY_FOR_GPU`, không qualification
 classifier/peer/HNLO. Không mở FULL TRAIN, chọn slot 3, chuyển grant cũ hoặc thay
