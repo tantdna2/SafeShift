@@ -5,6 +5,10 @@
 - Nguồn: task “ĐƠN GIẢN HÓA CHẠY KAGGLE SAFESHIFT”, base main sau #153
   `fc1e454212455685e1775601ebfd6aab9535c932`; GitHub #153 merged=true đã kiểm.
   Không có permalink của chat được cung cấp; không bịa approval URL/ref/chữ ký.
+- Nguồn GitHub: [bản ghi chỉ thị Owner tại PR #153](https://github.com/tantdna2/SafeShift/pull/153#issuecomment-6516812967).
+  Đây là bản ghi chỉ thị Owner do ChatGPT chuyển lên GitHub, không phải chữ ký
+  phê duyệt của giảng viên, Research Lead hoặc bên thứ ba; không xác nhận quyền
+  pháp lý bên ngoài hay nghiệm thu học vụ.
 - Chỉ thị trực tiếp: “Owner đã trực tiếp yêu cầu không tiếp tục quy trình hỏi
   phê duyệt thủ công lặp lại cho các lượt chạy thuộc quyền của Owner.”
   Owner yêu cầu triển khai cơ chế chủ động kích hoạt, tự sinh định danh/consumption
