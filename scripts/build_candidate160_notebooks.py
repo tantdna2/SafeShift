@@ -134,11 +134,29 @@ Software pins/cu124/precision/model revision/C1/parser/HNLO giữ nguyên.
 Kiểm đồng thời cấp phát thật28 GiB scratch +4 GiB output; dung lượng free không
 thay thế bằng chứng cấp phát. Không có CUDA/model-fit PASS từ CPU local.
 
-Download ZIP/sidecar và xem `preflight.json`: từng check PASS/BLOCKED/NOT_RUN.
-Chỉ PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED khi mọi cổng được kiểm; không READY
-hoặc bảo đảm peak memory/quality. Không tự chạy notebook160 sau preflight.
+**Cách chạy diagnostic trước thực nghiệm:** tạo notebook Kaggle riêng bằng file
+này, attach cùng bundle/checkpoint Inputs của run160; T4 ×2, Internet ON.
+Chạy Run All/Save & Run All của preflight, không mở notebook160 cùng lúc.
+Preflight đọc/hash/decode Inputs, tải software pinned, cấp phát tạm28+4 GiB và
+xóa scratch thuộc session; giữ evidence trong `data/processed/candidate160_preflight`.
+Không cần grant/CONTINUE hoặc approval lặp lại trong phạm vi Owner đã cấp.
+
+Download cả **ZIP**, **ZIP.sha256.json** và **.preflight-result.json** được in.
+Receipt cuối `.preflight-result.json` phải có `evidence_export=VERIFIED`;
+`preflight.json` trong ZIP còn ghi export PENDING vì được seal trước export.
+Thiếu receipt cuối/checksum sai/export lỗi/partial → BLOCKED, giữ mọi file.
+Receipt ghi từng check PASS/BLOCKED/NOT_RUN và tách ENVIRONMENT_OBSERVED,
+CPU_SOFTWARE_PASS, LIVE_GPU_PREFLIGHT_PASS, WEIGHTS_LOADED, INFERENCE_VERIFIED,
+SCIENTIFIC_QUALIFIED. Ba mức cuối vẫn NOT_RUN/UNVERIFIED trong preflight.
+Chỉ PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED khi mọi cổng được kiểm và export xác minh;
+không READY hoặc bảo đảm peak memory/quality. Không tự chạy notebook160 sau đó.
 Run160 vẫn kiểm lại mọi admission trước consumption vì tài nguyên có thể đổi.
 Preflight không cấp quyền replay một lượt đã consumed/unknown.
+
+Nếu cần thông tin Kaggle thực tế, gửi status/checks/levels và lỗi từ receipt
+cuối hoặc ZIP private cho người review; không publish ảnh, weights hoặc secrets.
+Code/local CPU PASS không phải GPU PASS; HEAD mới vẫn cần ChatGPT kiểm GitHub
+và Antigravity audit độc lập trước merge. Quy tắc mới chưa COMPLETE trên main.
 
 Runtime `{ref}`, source SHA256 `{source_hash(repo)}`.
 """.splitlines(True)

@@ -22,6 +22,16 @@ from safeshift.pilot import manifest as historical
 from test_candidate160 import fixture
 
 
+def synthetic_child_evidence(name, key):
+    from safeshift.candidates.train_runtime import pins
+    return {"software_cpu": {"versions": pins(key), "compiled_cpu_nms": "PASS", "cuda_build": "12.4",
+                             "identity": {"scope": "SYNTHETIC"}},
+            "cuda_child": {"worker_cuda": "MEASURED_FP16_FUNCTIONAL", "worker_visible_gpus": 1, "scope": "SYNTHETIC"},
+            "cpu_native": {"meta_loader": {"status": "EAGER_MODULES_VERIFIED"}, "synthetic_images": [{}]*8},
+            "images_cpu": {"verified_images": 160},
+            "live_resources": {"free_ram_mib": 8192, "free_scratch_mib": 8192, "free_output_mib": 8192}}[name]
+
+
 class InputTests(unittest.TestCase):
     def test_both_models_direct_dataset_and_notebook_layouts_and_old_pilot_unchanged(self):
         for key in c.KEYS:
@@ -185,14 +195,19 @@ class PreflightTests(unittest.TestCase):
 
     def test_independent_checks_partial_failures_and_never_reserves_or_calls_model(self):
         for key in c.KEYS:
-            for fault in (None, "input", "checkpoint", "storage", "python", "cpu", "gpu", "cuda", "resource"):
+            for fault in (None, "input", "checkpoint", "storage", "python", "cpu", "gpu", "cuda", "resource",
+                          "package", "child_missing", "child_status", "child_source", "child_ref", "child_model", "child_incomplete",
+                          "cleanup", "export", "sidecar", "images"):
                 with self.subTest(key=key, fault=fault), tempfile.TemporaryDirectory() as d, ExitStack() as stack:
                     root = Path(d)
                     bundle = root/"input/notebooks/account/bundle"
                     bundle.mkdir(parents=True)
                     plan, _ = fixture(bundle)
                     write(bundle/"pilot_manifest.json", plan)
+                    write(bundle/"marker", {"scope": "SYNTHETIC_CHECKPOINT_MARKER"})
                     stack.enter_context(patch.object(c, "MANIFEST", sha(bundle/"pilot_manifest.json")))
+                    stack.enter_context(patch.object(preflight, "environment_observation", return_value={
+                        "kernel": {"system": "Linux", "machine": "x86_64", "pointer_bits": 64, "version": "3.13.15"}, "scope": "SYNTHETIC"}))
                     scratch = root/"tmp"
                     scratch.mkdir()
                     stack.enter_context(patch.object(preflight.boot, "provision_scratch_root", return_value=scratch))
@@ -213,23 +228,67 @@ class PreflightTests(unittest.TestCase):
                         self.assertIn("safeshift.candidates.train_preflight", command)
                         self.assertNotIn("--execution", command)
                         output = Path(command[command.index("--output")+1])
-                        suffix = "cuda_child" if "--cuda" in command else "live_resources" if "--resources" in command else "images_cpu" if "--images" in command else "cpu_native"
-                        if (fault, suffix) in (("cpu", "cpu_native"), ("cuda", "cuda_child"), ("resource", "live_resources")):
+                        suffix = "software_cpu" if "--software-only" in command else "cuda_child" if "--cuda" in command else "live_resources" if "--resources" in command else "images_cpu" if "--images" in command else "cpu_native"
+                        if (fault, suffix) in (("cpu", "cpu_native"), ("cuda", "cuda_child"), ("resource", "live_resources"),
+                                               ("package", "software_cpu"), ("images", "images_cpu")):
                             raise subprocess.CalledProcessError(1, "SYNTHETIC")
-                        write(output/(suffix+".json"), {"scope": "SYNTHETIC_NOT_GPU_PROOF"})
+                        receipt = {"schema": preflight.CHILD_SCHEMA, "status": "PASS", "check": suffix,
+                            "model_key": key, "source_sha256": command[command.index("--source")+1],
+                            "runtime_ref": command[command.index("--ref")+1], "evidence": synthetic_child_evidence(suffix, key)}
+                        if suffix == "software_cpu":
+                            if fault == "child_missing":
+                                return
+                            for invalid, field, value in (("child_status", "status", "BLOCKED"), ("child_source", "source_sha256", "0"*64),
+                                                          ("child_ref", "runtime_ref", "b"*40), ("child_model", "model_key", "wrong"),
+                                                          ("child_incomplete", "evidence", {})):
+                                if fault == invalid:
+                                    receipt[field] = value
+                        self.assertEqual(kwargs["env"]["CUDA_VISIBLE_DEVICES"], "0" if suffix == "cuda_child" else "")
+                        write(output/(suffix+".json"), receipt)
                     stack.enter_context(patch.object(preflight.subprocess, "run", side_effect=child))
+                    if fault == "cleanup":
+                        stack.enter_context(patch.object(preflight.boot, "cleanup_scratch", side_effect=OSError("SYNTHETIC CLEANUP")))
+                    if fault == "export":
+                        stack.enter_context(patch.object(preflight, "export", side_effect=OSError("SYNTHETIC EXPORT")))
+                    if fault == "sidecar":
+                        real_export = preflight.export
+                        def corrupt_export(out, archive):
+                            real_export(out, archive)
+                            Path(str(archive)+".sha256.json").write_text('{"sha256":"WRONG"}')
+                        stack.enter_context(patch.object(preflight, "export", side_effect=corrupt_export))
                     if fault == "input":
                         (bundle/"pilot_manifest.json").unlink()
-                    output = preflight.launch_preflight(key, c.source_hash(), ROOT, "a"*40,
-                        inputs=root/"input", work=root/"out", scratch_root=scratch)
-                    report = read(output/"preflight.json")
+                    if fault in ("export", "sidecar"):
+                        with self.assertRaises((OSError, ValueError)):
+                            preflight.launch_preflight(key, c.source_hash(), ROOT, "a"*40,
+                                inputs=root/"input", work=root/"out", scratch_root=scratch)
+                        output = next(p for p in (root/"out").iterdir() if p.is_dir())
+                    else:
+                        output = preflight.launch_preflight(key, c.source_hash(), ROOT, "a"*40,
+                            inputs=root/"input", work=root/"out", scratch_root=scratch)
+                    report = read(Path(str(output)+".preflight-result.json"))
                     self.assertEqual(report["status"], "PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED" if fault is None else "BLOCKED", report)
                     self.assertIs(report["attempt_consumed"], False)
                     self.assertEqual(report["native_calls"], 0)
                     self.assertFalse(list((root/"out").glob("**/owner_slot*")))
                     reserve.assert_not_called()
                     execution.assert_not_called()
-                    verify_archive(Path(str(output)+".zip"))
+                    self.assertEqual(report["levels"]["WEIGHTS_LOADED"], "NOT_RUN")
+                    self.assertEqual(report["levels"]["INFERENCE_VERIFIED"], "NOT_RUN")
+                    self.assertEqual(report["levels"]["SCIENTIFIC_QUALIFIED"], "UNVERIFIED")
+                    if fault == "package" or str(fault).startswith("child_"):
+                        self.assertNotEqual(report["levels"]["CPU_SOFTWARE_PASS"], "PASS")
+                        self.assertEqual(report["checks"]["cuda_child"]["status"], "NOT_RUN")
+                    if fault == "gpu":
+                        self.assertEqual(report["checks"]["cuda_child"]["status"], "NOT_RUN")
+                    if fault in ("export", "sidecar"):
+                        staged = read(output/"preflight.json")
+                        self.assertEqual(staged["status"], "PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED")
+                        self.assertTrue(staged["evidence_export"].startswith("PENDING"))
+                        self.assertEqual(report["evidence_export"], "BLOCKED")
+                        self.assertEqual(report["status"], "BLOCKED")
+                    if fault not in ("export", "sidecar"):
+                        verify_archive(Path(str(output)+".zip"))
 
 
 class IncidentTests(unittest.TestCase):

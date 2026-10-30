@@ -5,6 +5,43 @@
 PR này cần ChatGPT kiểm GitHub và audit độc lập trước merge.
 Task chỉ synthetic CPU; GPU/real weights/behavior vẫn UNVERIFIED.
 
+## Chỉ thị environment-first ngày 31/10/2026 — cùng Draft PR #155
+
+[Owner directive](https://github.com/tantdna2/SafeShift/pull/155#issuecomment-6533181366)
+yêu cầu kiểm môi trường trước khi thiết kế/phát hành notebook thực nghiệm.
+Quy tắc đã được bổ sung append-only vào `AGENTS.md` trong Draft này; chưa
+COMPLETE trên main. Mỗi HEAD mới cần ChatGPT kiểm GitHub và Antigravity audit
+độc lập trước quyền merge riêng và xác minh hậu merge. Không tái sử dụng audit
+hoặc quyền merge của HEAD cũ.
+
+Bằng chứng sau là **OWNER_REPORTED** tại comment, không phép đo mới của Codex:
+
+| Điều kiện | Điều đã được báo | Điều còn thiếu |
+| --- | --- | --- |
+| InternVL Input | Đúng1 marker trong `/kaggle/input/notebooks/<owner>/<slug>/`, có source/ và weights/ cạnh marker | SHA/allowlist/index/shards và load chưa được chứng minh |
+| Python | Kernel3.13.15; worker3.11.9 không thấy ở các vị trí đã probe | Provision/venv/pins/ABI trong saved Kaggle session thực tế |
+| Output | working19,50 GiB free, device1794 | Writability/fsync và cấp phát thật4 GiB hiện tại |
+| Scratch | kaggle1048,77 GiB free, device56; tmp thiếu trong probe đầu | Safe creation/quyền/ghi/fsync/cấp phát28 GiB/cleanup, không dựa vào sự tồn tại tmp |
+| GPU và mô hình | Chưa có GPU/driver/CUDA/weights/behavior/HNLO PASS từ screenshots | Toàn bộ live GPU/weight-load/model-fit/inference/scientific qualification |
+
+Không đặt runtime vào working chỉ vì output còn19,50 GiB. Preflight đo devices
+thực tế: khác filesystem cần28+4 GiB riêng; cùng device cần32 GiB cộng lại,
+và xác nhận cấp phát đồng thời, không cộng dung lượng free hai lần.
+
+Preflight v2 ghi inventory kernel/ABI/OS/kiến trúc/visibility và RAM/cgroup
+trước provisioning; chặn host sai, source/ref sai hoặc Inputs không hợp lệ.
+Runtime setup chưa là software PASS: child riêng kiểm actual pins/identity/NMS
+ABI. Mỗi child receipt phải đúng schema/check/model/source/ref/status và đủ
+evidence. Nguồn sai, receipt thiếu/partial/khác binding, package sai, hết budget,
+allocation/quota/fsync/cleanup hoặc export sai đều không đủ admission.
+GPU/driver được quan sát riêng; child CUDA chỉ chạy sau GPU và software admission.
+Deadline12 giờ tính từ đầu preflight, không reset sau hash/provision.
+
+Receipt tách sáu mức `ENVIRONMENT_OBSERVED`, `CPU_SOFTWARE_PASS`,
+`LIVE_GPU_PREFLIGHT_PASS`, `WEIGHTS_LOADED`, `INFERENCE_VERIFIED`,
+`SCIENTIFIC_QUALIFIED`. Preflight giữ ba mức cuối NOT_RUN/UNVERIFIED; CUDA tensor
+PASS cũng chưa chứng minh load weights, peak RAM/VRAM hoặc chất lượng model.
+
 - [InternVL notebook](../notebooks/SafeShift_CANDIDATE160_internvl35.ipynb)
 - [MiniCPM notebook](../notebooks/SafeShift_CANDIDATE160_minicpm4.ipynb)
 - [InternVL preflight không tiêu lượt](../notebooks/SafeShift_CANDIDATE160_PREFLIGHT_internvl35.ipynb)
@@ -21,11 +58,33 @@ Luồng grant/batch #153 giữ compatibility, không phải UI notebook mới.
 
 ## Thao tác trên Kaggle
 
-Sau review/audit và merge, chạy notebook preflight riêng trước; có thể lặp lại
-preflight vì không tạo Owner slot/attempt. Dùng cùng Inputs/Internet/T4×2 như
-notebook160. Download ZIP/sidecar, đọc `preflight.json`: từng gate
-PASS/BLOCKED/NOT_RUN. `PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED` chỉ là admission
-trước load; không READY hoặc model-fit/quality/HNLO PASS. Không tự launch160.
+Khi cần thông tin target thực tế, Owner dùng notebook preflight độc lập đã được
+bàn giao/kiểm nguồn trước notebook thực nghiệm, với cùng Inputs/Internet/T4×2.
+Không cần grant/CONTINUE hoặc xin lại quyền notebook đã được Owner cấp. Không
+chạy production để phát hiện lỗi môi trường cơ bản. Preflight có thể lặp lại
+vì không tạo Owner execution/slot/attempt; không tự launch160.
+
+1. Mở đúng `SafeShift_CANDIDATE160_PREFLIGHT_<key>.ipynb` trong Kaggle session
+   riêng. Attach cùng bundle160/checkpoint đã upload (Dataset hoặc Notebook
+   Output); không đổi file/path/hash. Chọn Internet ON và T4×2.
+2. Run All/Save & Run All **chỉ preflight**. Software pinned có thể được tải/cài;
+   hash/decode Inputs, cấp phát tạm28+4 GiB, CPU empty meta/processor và CUDA
+   FP16 tensor probe có thể chạy. Không nạp/tải weights hoặc gọi mô hình.
+   Scratch session được dọn theo ownership marker; lỗi dọn giữ BLOCKED/evidence.
+3. Download cả ZIP, `.zip.sha256.json`, và `.preflight-result.json` được in.
+   File cuối phải có `evidence_export=VERIFIED`; checksum phải khớp ZIP.
+   `preflight.json` bên trong ZIP còn ghi export PENDING do được seal trước
+   export. Dùng receipt cuối để xét status; thiếu file cuối/ZIP/sidecar, checksum
+   sai hoặc export partial đều BLOCKED. Giữ mọi bytes còn lại khi lỗi/hard kill.
+4. Đọc `status`, `checks` và `levels` ở receipt cuối; gửi receipt/lỗi hoặc ZIP
+   qua kênh private cho người review nếu cần thông tin thực tế. Không publish
+   ảnh/weights/manifest nhãn/secrets. Mỗi check ghi PASS/BLOCKED/NOT_RUN và lỗi.
+   `PRELOAD_CHECKS_PASS_MODEL_UNVERIFIED` chỉ là admission trước load, không
+   READY hoặc model-fit/quality/HNLO PASS. Output/caches lớn nằm ngoài Git.
+
+Không có Kaggle preflight mới được chạy bởi Codex trong task này. Sau review,
+audit và merge được cho phép riêng, notebook160 vẫn kiểm admission lại trong
+saved session vì tài nguyên có thể thay đổi; receipt preflight không cấp retry.
 
 Sau đó chạy riêng mỗi notebook160 đúng một lần trong saved session sạch:
 

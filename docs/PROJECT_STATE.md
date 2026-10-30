@@ -1,6 +1,6 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **30/10/2026 (Asia/Bangkok)** trong task sửa Kaggle Candidate160 sau PR #154 MERGED.
+Cập nhật **31/10/2026 (Asia/Bangkok)** trong cùng Draft PR #155, theo chỉ thị environment-first.
 Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.
 
@@ -12,6 +12,20 @@ Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
 - Thiết kế/primary/metric/final roster/nguồn mới vẫn **PROPOSED; O1–O8/T0 PENDING**. HNLO optional theo từng model, không xác suất nguy cơ hoặc confidence đã hiệu chuẩn.
 
 ## CURRENT STATUS
+
+- **Yêu cầu environment-first 31/10 — IMPLEMENTED IN DRAFT / chưa COMPLETE.**
+  [Chỉ thị Owner](https://github.com/tantdna2/SafeShift/pull/155#issuecomment-6533181366)
+  được ghi append-only trong `AGENTS.md`. Cùng branch/PR155, không PR mới.
+  Preflight v2 thêm inventory kernel/ABI/OS/RAM/cgroup/visibility, software
+  qualification child riêng, receipt binding/đủ evidence, các mức PASS riêng,
+  deadline từ đầu và final result fail-closed khi export/sidecar/cleanup lỗi.
+  [Runbook](CANDIDATE160_KAGGLE.md) ghi facts OWNER_REPORTED và cách Owner chạy
+  diagnostic với cùng Inputs/settings; còn thiếu bằng chứng Kaggle thực tế.
+  Không đổi khoa học/model revision/metric/cohort hoặc cơ chế chống retry.
+  Chưa chạy Kaggle/GPU/weights/private data/attempt hoặc merge ở Codex.
+  Chỉ COMPLETE khi final HEAD được ChatGPT kiểm GitHub, Antigravity audit độc
+  lập, merge được cấp quyền riêng và hậu merge xác minh quy tắc trên main.
+  Các kiểm thử/bằng chứng30/10 bên dưới là snapshot cũ, không tự nâng HEAD mới.
 
 - **Candidate160 Kaggle environment repair — DRAFT / chưa GPU PASS.**
   Thêm bounded Notebook Output discovery riêng cho Candidate160; giữ pilot cũ.
