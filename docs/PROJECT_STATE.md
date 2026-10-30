@@ -31,6 +31,12 @@ Main đã kiểm GitHub/remote: `fc1e454212455685e1775601ebfd6aab9535c932`.
   Khóa fixed slot chống duplicate trong cùng output root và attached Outputs
   chuẩn; không distributed/global exactly-once cho VM mới thiếu lịch sử.
   Actual Kaggle Python/CUDA/T4/VRAM/weights/behavior/HNLO vẫn UNVERIFIED.
+  **CPU CODE PASS:** exact-export310 tests =273 PASS/37 SKIP,0 failures/errors;
+  native Windows67 tests/model =64 PASS/3 symlink SKIP,15/15 native PASS gồm
+  đúng160 ảnh tổng hợp/model qua Owner path. Linux3/3 activation/scope/atomic
+  slot PASS. [Receipts/checksum index](research/evidence/candidate160_owner_20261030/index.json).
+  Tested snapshot `f427e59c90f15c5bb87db26ff1aad5e038310af8`; runtime
+  `93bc2f110822c3cfd3c910da8f8adb11a0d9ac1f`; sau đó chỉ docs/receipts.
 
 - **PR #152 MERGED**, GitHub `merged=true`, merge `f79f7bddeac62e8fb8378d6798c25387f45f0f37`.
   Gói batch #153 lịch sử **CODE PASS / execution BLOCKED** theo cơ chế cũ.
