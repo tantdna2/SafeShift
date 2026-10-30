@@ -1,139 +1,139 @@
-# InternVL3.5 / MiniCPM-V-4 ? Owner Save & Run All
+# InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
-30/10/2026, Asia/Bangkok. Base sau **PR #153 MERGED**:
-`fc1e454212455685e1775601ebfd6aab9535c932`, ?? ki?m GitHub v? remote main.
-Thay ??i n?y c?n ChatGPT ki?m GitHub v? audit ??c l?p tr??c merge.
-Task tri?n khai ch? CPU t?ng h?p; GPU/real weights/behavior v?n UNVERIFIED.
+30/10/2026, Asia/Bangkok. Base **PR #153 MERGED**:
+`fc1e454212455685e1775601ebfd6aab9535c932`, đã kiểm GitHub và remote main.
+PR này cần ChatGPT kiểm GitHub và audit độc lập trước merge.
+Task chỉ synthetic CPU; GPU/real weights/behavior vẫn UNVERIFIED.
 
 - [InternVL notebook](../notebooks/SafeShift_CANDIDATE160_internvl35.ipynb)
 - [MiniCPM notebook](../notebooks/SafeShift_CANDIDATE160_minicpm4.ipynb)
-- [Quy?t ??nh Owner v? thay ??i ch?nh s?ch d?ng](research/CANDIDATE160_OWNER_DECISION_20261030.md)
-- [CPU acceptance v? gi?i h?n](research/CANDIDATE160_OWNER_CPU_20261030.md)
+- [Quyết định Owner và thay đổi chính sách dừng](research/CANDIDATE160_OWNER_DECISION_20261030.md)
+- [CPU acceptance và giới hạn](research/CANDIDATE160_OWNER_CPU_20261030.md)
 
-Owner ?? y?u c?u b? th? t?c xin ph?p l?p l?i cho l??t thu?c quy?n Owner.
-Lu?ng notebook m?i d?ng **Save & Run All l? k?ch ho?t tr?c ti?p**. Kh?ng y?u c?u
-file grant, reservation, approval refs ho?c CONTINUE. Execution record l? nh?t k?
-m?y g?n v?i quy?t ??nh Owner trong chat, kh?ng v?n b?n k? thay Research Lead.
-Lu?ng grant/batch #153 v?n ???c gi? cho t??ng th?ch, kh?ng ph?i UI notebook m?i.
+Owner yêu cầu bỏ thủ tục xin phép lặp lại cho lượt thuộc quyền Owner.
+Notebook mới dùng **Save & Run All là kích hoạt trực tiếp**. Không cần file
+grant, reservation, approval refs hoặc CONTINUE. Execution record là nhật ký
+máy gắn với chỉ thị Owner trong chat, không văn bản ký thay Research Lead.
+Luồng grant/batch #153 giữ compatibility, không phải UI notebook mới.
 
-## Thao t?c tr?n Kaggle
+## Thao tác trên Kaggle
 
-Sau review/audit v? merge, Owner ch?y ri?ng t?ng notebook ??ng m?t l?n:
+Sau review/audit và merge, chạy riêng mỗi notebook đúng một lần:
 
-1. Fresh Kaggle notebook, **T4 ?2**, Internet ON cho pinned software.
-   Kh?ng ch?y interactive r?i Save & Run All l?n n?a; ch? m?t saved job/model.
-2. Attach bundle Owner ?? upload: `pilot_manifest.json` v?
-   `images/000000.jpg` ? `images/000159.jpg`.
-3. Attach checkpoint Owner ?? upload: `candidate_checkpoint_<key>.json`,
-   `source/<revision>/` v? `weights/`. Key l? `internvl35` ho?c `minicpm4`.
-   Marker ph?i ??ng `{"schema":"safeshift-candidate160-checkpoint-v1","model":...}`;
-   `model` l? dict t? `train_contract.model(key)` g?m id/revision/transformers/
-   attention/remote_code. Source ph?i ??ng 13/15 files allowlist; weights ??ng
-   index + hai shards size/SHA c?a lock #151. Kh?ng links/extra files ho?c downloader.
-   Discovery nh?n direct mounts v? `datasets/<owner>/<slug>`; t?n file duy nh?t.
-4. **Save Version ? Save & Run All m?t l?n.** Kh?ng ch?nh cell, model, revision,
-   SHA, Python ho?c precision ?? v??t preflight. Kh?ng c?n file CONTINUE.
-5. Download private ZIP v? `.sha256.json` ???c in, k? c? failure. Kh?ng publish
-   raw, manifest, GT ho?c checkpoint; kh?ng ch?y l?i khi l?i hay m?t archive.
+1. Fresh Kaggle notebook, **T4 ×2**, Internet ON cho pinned software.
+   Chỉ một saved job/model; không chạy interactive trước Save & Run All.
+2. Attach bundle Owner đã upload: `pilot_manifest.json` và
+   `images/000000.jpg` … `images/000159.jpg`.
+3. Attach checkpoint Owner đã upload: `candidate_checkpoint_<key>.json`,
+   `source/<revision>/` và `weights/`. Key: `internvl35` hoặc `minicpm4`.
+   Marker: `{"schema":"safeshift-candidate160-checkpoint-v1","model":...}`;
+   model dict từ `train_contract.model(key)` gồm id/revision/transformers/
+   attention/remote_code. Đúng 13/15 source files allowlist, index + hai shards
+   đúng size/SHA của lock #151. Không links/extra files hoặc downloader weights.
+   Discovery nhận direct mounts và `datasets/<owner>/<slug>`, tên file duy nhất.
+4. **Save Version → Save & Run All một lần.** Không sửa cell, SHA, model,
+   revision, Python hoặc precision để vượt lỗi; không retry/resume/overwrite.
+5. Download private ZIP và `.sha256.json` được in, kể cả failure/partial.
+   Không publish raw/manifest/GT/checkpoint; không chạy lại khi mất archive.
 
-Ch? c?n hai nh?m Inputs: bundle v? checkpoint. Kh?ng c?n authority Dataset.
-N?u Input layout/bytes kh?ng kh?p, notebook xu?t BLOCKED evidence tr??c model call.
-Owner kh?ng ph?i g? run ID, attempt ID, ng??ng, driver allowlist hay th?i h?n.
+Chỉ hai nhóm Inputs: bundle và checkpoint. Không cần authority Dataset hoặc
+gõ run/attempt ID, threshold, driver allowlist/thời hạn. Sai Input → BLOCKED
+trước model call. Không upload dữ liệu hoặc chạy Kaggle trong task code này.
 
-## Ph?m vi b?t bi?n
+## Phạm vi bất biến
 
-| Th?nh ph?n | Kh?a |
+| Thành phần | Khóa |
 | --- | --- |
-| InternVL | `OpenGVLab/InternVL3_5-4B-HF` @ `6bd4487402110ef9889ba50eb7aefeb302526fed`, Transformers4.55.4 |
-| MiniCPM | `openbmb/MiniCPM-V-4` @ `6f69a8235885be89608f3a71ffd40695b379e1e7`, Transformers4.51.3 |
+| InternVL | `OpenGVLab/InternVL3_5-4B-HF` @ `6bd4487402110ef9889ba50eb7aefeb302526fed`; Transformers4.55.4 |
+| MiniCPM | `openbmb/MiniCPM-V-4` @ `6f69a8235885be89608f3a71ffd40695b379e1e7`; Transformers4.51.3 |
 | Manifest SHA256 | `f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995` |
 | Inventory SHA256 | `0a8a84e726e690622de311326680ecbbc4a04fa04a0a45ff14ff96412caae427` |
 | C1 SHA256 | `816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3` |
-| Cohort | Exact160 TRAIN/th? t? c?; 80 L04/48 L01/24 L02/8 L03; kh?ng ch?n l?i/supplement/TEST |
-| Execution | M?t load, batch1, FP16/eager/cuda:0, ?160 native calls/model, kh?ng retry/resume/overwrite |
+| Cohort | Exact160 TRAIN/thứ tự cũ; 80 L04/48 L01/24 L02/8 L03, không selector/supplement/TEST |
+| Execution | Một load, batch1, FP16/eager/cuda:0, ≤160 native calls/model, không retry/resume/overwrite |
 
-Gi? adapter/native generation/checkpoint/public locks #151, strict parser/C1/HNLO
-v? s?u notebook pilot c?. Hai configuration hashes v?n t?ch bi?t:
-`legacy_transport_config_sha256` l? snapshot transport l?ch s?;
-`candidate_execution_config_sha256` l? full config v2/effective candidate.
-`raw.identity.config_sha256` v?n alias transport. Full config v? execution binding
-???c ki?m tr??c parser/recovery; kh?ng ho?n ??i hash ho?c m? t? Phi th?nh candidate.
+Giữ adapter/native generation/checkpoint/public locks #151, strict parser/C1/HNLO
+và sáu notebook pilot cũ. Hai config hashes vẫn tách biệt:
+`legacy_transport_config_sha256` là snapshot transport lịch sử;
+`candidate_execution_config_sha256` là full config v2/effective candidate.
+`raw.identity.config_sha256` vẫn alias transport. Full config và execution binding
+được kiểm trước parser/recovery, không hoán đổi hash hoặc mô tả Phi thành candidate.
 
-Quy?t ??nh ch? ?p d?ng m?t l??t/model trong campaign Owner n?y, bundle TRAIN v?
-checkpoint Owner ?? upload. Kh?ng c?p quy?n b?n th? ba, TEST, annotation m?i,
-FULL TRAIN, model/ngu?n kh?c ho?c khoa h?c/roster m?i. C?n quy?n ??c l?p th?c c?
-cho t?i nguy?n ngo?i quy?n Owner; notebook kh?ng ch?ng th?c quy?n ph?p l? c?a upload.
+Chỉ áp dụng một lượt/model trong campaign Owner, bundle TRAIN/checkpoint đã upload.
+Không cấp quyền bên thứ ba, TEST, annotation mới, FULL TRAIN, model/nguồn khác
+hoặc khoa học/roster mới. Cần quyền thực có cho tài nguyên ngoài quyền Owner;
+notebook không chứng thực quyền pháp lý của upload.
 
-## K?ch ho?t, nh?t k? v? ch?ng tr?ng
+## Kích hoạt, nhật ký và chống trùng
 
-`launch_owner(..., owner_start=True)` ???c g?i t? cell shipped. API kh?ng c?
-activation r? r?ng s? t? ch?i. T? t?o execution schema ri?ng, UUID run/attempt,
-source/ref/config/manifest binding, th?i gian t?o/h?n v? slot c? ??nh theo
-campaign/model/revision/cohort. Kh?ng t?o grant, G0/T0/O3, ch? k?, external ledger
-ref ho?c Lead approval gi?. Ph?m vi khoa h?c O1?O8/T0 kh?c v?n gi? tr?ng th?i c?.
+`launch_owner(..., owner_start=True)` được gọi từ cell shipped. API thiếu
+activation rõ ràng từ chối. Tự tạo execution schema riêng, UUID run/attempt,
+source/ref/config/manifest binding, thời gian/hạn và slot cố định theo
+campaign/model/revision/cohort. Không tạo grant, G0/T0/O3, chữ ký, external ledger
+ref hoặc Lead approval giả. Các quyết định khoa học/academic khác giữ trạng thái cũ.
 
-Tr??c ??c manifest/checkpoint, ghi marker ??c quy?n O_EXCL+fsync v?o
+Trước private inputs, exclusive O_EXCL+fsync marker:
 `data/processed/candidate160/attempts/owner_slot_<slot_sha256>.json`.
-UUID m?i ho?c source/ref kh?c kh?ng ??i slot. Marker gi? nguy?n c? khi preflight
-BLOCKED; kh?ng release/resume/retry. Tr??c worker ghi consumed marker, r?i worker
-ki?m consumption; l?i create/fsync kh?ng ch?c ch?n ? UNKNOWN_DO_NOT_RETRY.
-Terminal log t? t?o, kh?ng c?n Owner c?p nh?t ledger quy?n th? c?ng.
+UUID/source/ref mới không đổi slot. Giữ marker cả khi preflight BLOCKED;
+không release/resume/retry. Kiểm lại marker/execution/source/input trước consume.
+Ghi consumed marker trước worker; lỗi create/fsync không rõ → UNKNOWN_DO_NOT_RETRY.
+Terminal log tự ghi, không cần Owner ký/cập nhật permission record thủ công.
 
-C?ng output root ch?n duplicate v? concurrent launch b?ng exclusive create.
-N?u attach saved Outputs c?, discovery ki?m marker ? mount root ho?c
-`data/processed/candidate160/attempts/` (direct ho?c datasets/owner/slug), k? c?
-marker c?n RESERVED/kh?ng ??c ???c. Kh?ng qu?t c?y ?nh/weights.
-**Gi?i h?n:** filesystem ephemeral kh?ng ph?i distributed ledger. Session m?i
-kh?ng attach l?ch s?, hai VM ??ng th?i ho?c layout l?ch s? kh?c kh?ng c? b?ng
-ch?ng to?n c?c ?? ch?n. Owner ch? kh?i t?o m?t saved job/model; kh?ng t?o session
-thay th? sau l?i/m?t VM, kh?ng x?a marker. Kh?ng tuy?n b? global exactly-once.
+Cùng output root chặn duplicate/concurrent bằng exclusive create. Attached saved
+Outputs cũ được kiểm marker ở mount root hoặc
+`data/processed/candidate160/attempts/` (direct hoặc datasets/owner/slug),
+kể cả marker RESERVED/không đọc được. Không quét cây ảnh/weights.
+**Giới hạn:** filesystem ephemeral không phải distributed ledger. VM mới không
+attach lịch sử, concurrent VM hoặc layout lịch sử khác không có bằng chứng
+toàn cục để chặn. Owner chỉ tạo một saved job/model, không tạo session thay thế
+sau lỗi/mất VM hoặc xóa marker. Không tuyên bố global exactly-once.
 
-## C?c c?ng k? thu?t v?n b?t bu?c
+## Các cổng kỹ thuật vẫn bắt buộc
 
 SHA256 embedded runtime/Git ref, C1, hai config hashes, public source, checkpoint
-index/shards, manifest/membership/order v? ?nh ??u ph?i kh?p. Decode/RGB160 ?nh
-tr??c consumption; hash l?i ngay tr??c native call. Kh?ng t?i weights/Python.
+index/shards, manifest/membership/order và ảnh phải khớp. Decode/RGB160 ảnh trước
+consumption; hash lại trước native call. Không tải weights/Python.
 
-Kernel ch? stdlib; worker CPython3.11.9 Linux x86_64 ri?ng, venv/pip bootstrap
+Kernel stdlib; worker CPython3.11.9 Linux x86_64 riêng, venv/pip bootstrap
 hash-locked; Torch2.6.0+cu124/vision0.21.0+cu124, CUDA12.4, exact pins/no extra
-libraries, pip check/freeze/native CPU ABI. Thi?u ??ng interpreter ? BLOCKED.
-Hai physical T4, GPU0?14GiB free tr??c load, GPU1 kh?ng pooled/sharded; isolated
-child ch? th?y GPU0 compute7.5. Child CUDA FP16 probe tr??c consumption v? ki?m
-l?i trong actual worker. Per-image memory/headroom receipts gi? nguy?n.
+libraries, pip check/freeze/native CPU ABI. Thiếu đúng interpreter → BLOCKED.
+Hai physical T4, GPU0≥14GiB free trước load, GPU1 không pooled/sharded.
+Child chỉ thấy GPU0 compute7.5; CUDA FP16 probe trước consume và kiểm lại trong
+actual worker. Per-image memory/headroom receipts giữ nguyên.
 
-C?c thay ??i engineering ???c c?ng khai ?? review: thay driver allowlist ch?a
-???c quy?t ??nh b?ng CUDA12 Linux compatibility floor525.60.13 + measured child
-probe; kh?ng kh?ng ??nh m?i driver tr?n floor ??u ch?y model. Admission disk c?
-28GiB scratch +4GiB output/32GiB n?u chung filesystem gi? nguy?n. Live minima:
-RAM/cgroup4GiB, scratch1GiB, output1GiB, GPU0 free256MiB sau load/tr??c m?i call.
-??y l? reserve k? thu?t ?? xu?t c?a implementation, kh?ng scientific thresholds
-ho?c b?o ??m peak fit. H?t12 gi? t? b?t ??u supervisor/setup c?ng d?ng; kh?ng gia h?n.
+Engineering settings công khai để review: thay driver allowlist chưa quyết định
+bằng CUDA12 Linux compatibility floor525.60.13 + measured child probe, không
+khẳng định mọi driver trên floor đều chạy model. Disk admission cũ28GiB scratch
++4GiB output/32GiB nếu chung filesystem giữ nguyên. Live minima: RAM/cgroup4GiB,
+scratch/output1GiB mỗi nơi, GPU0 free256MiB sau load/trước call. Đây là reserve
+kỹ thuật của implementation, không scientific thresholds hoặc bảo đảm peak fit.
+Hết12 giờ từ bắt đầu supervisor/setup dừng, không gia hạn.
 
-## Ch?nh s?ch d?ng thay ??i ? c?n reviewer ??nh gi? tr??c merge
+## Chính sách dừng thay đổi — cần reviewer đánh giá trước merge
 
-Lu?ng Owner kh?ng d?ng c?c ng??ng behavior/support ch?a ???c Owner quy?t ??nh.
-Kh?ng ?i?n ch?ng b?ng s? permissive ?? gi? th?nh policy ?? duy?t. M?i call v?n
-l?u INVALID, raw sequence repetition, label counts v? conditional valid GT
-Normal/hazard counters theo code c?; k?t qu?/custody ???c replay t?ng call v?
-??i so?t to?n b? cu?i l??t. Ghi technical decision ri?ng; kh?ng gi? Lead CONTINUE.
+Luồng Owner không dùng behavior/support thresholds chưa được quyết định.
+Không điền số permissive để giả thành policy đã duyệt. Mỗi call giữ INVALID,
+raw sequence repetition, label counts và conditional valid GT Normal/hazard
+counters theo code cũ; replay custody mỗi call và đối soát toàn bộ cuối lượt.
+Ghi technical decision riêng, không giả Lead CONTINUE.
 
-D?ng ngay khi l?i k? thu?t/load/OOM/decode/raw/request/token/config/replay/custody,
-NaN/Inf, resource ho?c deadline. INVALID/repetition/dominance/false-safe/false-alarm
-**ch? quan s?t**, kh?ng t? d?ng theo scientific threshold ho?c thi?u support s?m.
-V? v?y behavior k?m c? th? ti?u ??160 calls; kh?ng coi COMPLETED l? quality PASS.
-??y l? thay ??i ch?nh s?ch so v?i #153, ch?a ph?i scientific protocol approval.
-Full result review/qualification v? HNLO evidence v?n ri?ng; kh?ng c?u parser/score.
+Dừng ngay khi lỗi kỹ thuật/load/OOM/decode/raw/request/token/config/replay/custody,
+NaN/Inf, resource hoặc deadline. INVALID/repetition/dominance/false-safe/false-alarm
+**chỉ quan sát**; không scientific early stop hoặc dừng vì thiếu support sớm.
+Behavior kém có thể tiêu đủ160 calls; COMPLETED không là quality PASS.
+Đây là thay đổi so với #153 để review, chưa phải scientific protocol approval.
+Full result review/qualification và HNLO evidence vẫn riêng, không cứu parser/score.
 
-## Archive v? t?i l?p CPU
+## Archive và tái lập CPU
 
-Archive g?m owner execution/slot/consumption log, source/config/dependency receipts,
-manifest,160 accounting rows (SUCCESS+INVALID+TECHNICAL_ERROR+NOT_ATTEMPTED=160),
-per-call request/native IDs/raw/logits tr??c parser, tokenizer, checkpoints,
-technical decisions, behavior observations, summary/recovery/member checksums.
-Kh?ng ?nh/weights. Ki?m ZIP CRC/exact member hashes b?ng
-`safeshift.pilot.artifacts.verify_archive`; SHA outer ph?i kh?p sidecar.
-Import v?o directory m?i v? `train_run.recover` ??i so?t v?i manifest/execution.
-Hard kill/disk failure/VM loss c? th? ch? c?n partial evidence, kh?ng h?a ZIP ??y ??.
+Archive gồm owner execution/slot/consumption log, source/config/dependency receipts,
+manifest,160 accounting (SUCCESS+INVALID+TECHNICAL_ERROR+NOT_ATTEMPTED=160),
+request/native IDs/raw/logits trước parser, tokenizer, checkpoints, technical
+decisions, behavior observations, summary/recovery/member checksums; không ảnh/weights.
+Kiểm ZIP CRC/exact member SHA bằng `safeshift.pilot.artifacts.verify_archive`;
+outer SHA phải khớp sidecar. Import vào directory mới, `train_run.recover`
+đối soát manifest/execution. Hard kill/disk failure/VM loss có thể chỉ còn partial
+evidence; không hứa ZIP đầy đủ và không retry.
 
 ```console
 python -B -m scripts.build_candidate160_notebooks --runtime-ref <metadata.runtime_ref>
@@ -142,8 +142,8 @@ python -B -m scripts.rehearse_candidate160 --model internvl35 --snapshot <public
 python -B -m scripts.rehearse_candidate160 --model minicpm4 --snapshot <public-source> --index <public-index> --output data/processed/owner160/minicpm-new
 ```
 
-Native CPU tests ch? d?ng stack pinned/cache public ?? c?, empty/meta model,
-160 ?nh t?ng h?p v? scripted logits; network/CUDA/real forward/weights b? ch?n.
-Kh?ng nh?n synthetic behavior l? ch?t l??ng model th?t. Runbook #153 v? c?c
-worksheets c? l? [snapshot l?ch s?](https://github.com/tantdna2/SafeShift/blob/fc1e454212455685e1775601ebfd6aab9535c932/docs/CANDIDATE160_KAGGLE.md),
-kh?ng th? t?c b? sung cho hai notebook Owner n?y.
+Native CPU tests chỉ dùng pinned stack/cache public đã có, empty/meta loader,
+160 ảnh tổng hợp/scripted logits; network/CUDA/real forward/weights bị chặn.
+Không nhận synthetic behavior là chất lượng thật. Worksheets và
+[runbook #153](https://github.com/tantdna2/SafeShift/blob/fc1e454212455685e1775601ebfd6aab9535c932/docs/CANDIDATE160_KAGGLE.md)
+là snapshot lịch sử, không thủ tục bổ sung cho hai notebook Owner này.
