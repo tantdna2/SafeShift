@@ -1,0 +1,77 @@
+{
+  "environment_validator": "train_runtime.software exact production pins, replaces historical CPU-wheel-only environment validator",
+  "errors": 0,
+  "failures": 0,
+  "gpu": "FORBIDDEN",
+  "log_sha256": "db4f5f2f858634db16ba461445c1792ff608612a555adae48b47636b8231c1cc",
+  "model_key": "minicpm4",
+  "private_data": "NOT_ACCESSED",
+  "scope": "PRODUCTION_CU124_SOFTWARE_CPU_SYNTHETIC_SCRIPTED_LOGITS_NOT_MODEL_PREDICTIONS",
+  "skips": 0,
+  "source_sha256": "c01902bc0b96e1aa89159311e0ae48417b72e99a897ec24b1d96da628ff2853b",
+  "test_events": [
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_candidate160_corrupt_image_before_native_generation"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_candidate160_native_processor_tokens_raw_runner_and_archive"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_decode_error_retains_exact_native_ids"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_existing_runner_raw_before_parse_failure_tail_and_archive"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_four_labels_whitespace_and_existing_fifteen_raw_cases"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_input_faults_and_dtype_transfer"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_invalid_repetition_and_max64_are_not_rescued"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_malformed_sequences_persist_before_rejection"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_meta_loader_inventory_and_attention_faults"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_native_empty_safetensors_path_loader_and_failure"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_native_generation_contract_raw_ids_logits_eos_and_decode_order"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_real_native_embedding_glue_with_scripted_towers"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_sizes_spatial_native_parity_and_rgb_normalization"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_weight_loader_failure_uses_exact_config_and_no_fallback"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_native.NativeCandidateTests.test_write_failure_stops_before_decode_and_removes_hook"
+    }
+  ],
+  "tested_snapshot": "2306aecb280acfedd1dd11523f14b60f892c771f",
+  "tests_run": 15,
+  "weights": "FORBIDDEN"
+}

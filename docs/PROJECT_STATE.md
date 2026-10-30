@@ -26,6 +26,14 @@ Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
   chưa có original private archive để xác nhận đủ điều kiện replacement.
   ChatGPT kiểm GitHub và Antigravity audit độc lập vẫn bắt buộc trước merge.
   Không GPU/private TRAIN/GT/TEST/weights hoặc merge trong task này.
+  **CPU CODE PASS:** exact export `2306aecb280acfedd1dd11523f14b60f892c771f`,
+  324 tests =292 PASS/32 SKIP/0 lỗi;10 notebook khớp builder. Windows focused
+  13 tests =9 PASS/4 symlink SKIP;4 notebook tests PASS. Cả hai production
+  CPython3.11.9/cu124 stacks qua exact pins/ABI/native meta +8 synthetic sizes.
+  Native exact-export suite15/15 PASS/model, gồm160 ảnh tổng hợp/model qua
+  production cu124 software với scripted logits; không model predictions thật.
+  [Receipts](research/evidence/candidate160_env_20261030/index.json) và runbook
+  ghi BASE-reproduced stale AGENTS assertion, correction và các giới hạn thật.
 
 - **PR #153 MERGED**, GitHub `merged=true`, merge `fc1e454212455685e1775601ebfd6aab9535c932`.
   Owner đã trực tiếp yêu cầu bỏ thủ tục phê duyệt lặp lại cho một lượt/model

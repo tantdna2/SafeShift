@@ -175,3 +175,75 @@ Native CPU tests chỉ dùng pinned stack/cache public đã có, empty/meta load
 Không nhận synthetic behavior là chất lượng thật. Worksheets và
 [runbook #153](https://github.com/tantdna2/SafeShift/blob/fc1e454212455685e1775601ebfd6aab9535c932/docs/CANDIDATE160_KAGGLE.md)
 là snapshot lịch sử, không thủ tục bổ sung cho hai notebook Owner này.
+
+## Nghiệm thu environment repair — 30/10/2026
+
+Runtime commit `e55aab81f66c81d3e295f9065ecec1b4fdb23ad0`, embedded source SHA256
+`c01902bc0b96e1aa89159311e0ae48417b72e99a897ec24b1d96da628ff2853b`.
+Exact Git export kiểm cuối: `2306aecb280acfedd1dd11523f14b60f892c771f`;
+cập nhật sau đó chỉ tài liệu/receipts. Cả10 notebook (gồm4 candidate) khớp
+deterministic builder, payload/hash/pins, cells compile và không execution output.
+
+| Kiểm tra | Kết quả | Giới hạn |
+| --- | --- | --- |
+| Full stdlib suite, exact Linux export | 324 =292 PASS +32 SKIP,0 FAIL/ERROR | Native opt-ins15/Phi6/Smol9/live pip1/Windows junction1 tách riêng |
+| Windows environment/incident suite | 13 =9 PASS +4 symlink SKIP | Gồm replacement160 tổng hợp và chặn lần chạy tiếp theo |
+| Windows notebook suite | 4/4 PASS | Cells thật trong subprocess CPU, hardware commands bị chặn; preflight chạy lặp không slot |
+| Standalone production software, cả hai model | PASS | CPython3.11.9 Linux x86_64/stdlib/venv, exact cu124 distributions, pip check/freeze, compiled CPU NMS |
+| Production native meta/processor, cả hai model | 8 synthetic sizes/model PASS | Empty-state loader, không weights/model forward/CUDA |
+| Native suite trong exact export, production cu124 worker | InternVL15/15 +MiniCPM15/15 PASS,0 SKIP/FAIL/ERROR | Gồm160 ảnh tổng hợp/model; native processor/generation với scripted logits, raw/replay/archive và negative cases |
+
+[Receipts nhỏ và checksum index](research/evidence/candidate160_env_20261030/index.json)
+giữ exact source hashes, phiên bản thực và test outcomes; không private data,
+ảnh, runtime binaries hoặc raw model output. Full stdout/logs ở ignored
+`data/processed/candidate160-env-audit/`, không phải Kaggle evidence.
+
+Full suite bao phủ path/marker/source/shard admission, cùng/khác filesystem,
+allocation/quota/fsync/cleanup, live RAM/cgroup/disk/VRAM limit doubles,
+failure/partial/archive, consumed/unknown/replay, raw-before-parse và160
+accounting/order cho cả hai model. Không coi simulated CUDA receipt là GPU PASS.
+
+BASE có lỗi test sẵn: `protected_source_lock.json` khóa AGENTS từ trước #154
+(`aa2f183…`), trong khi chính BASE có `ad4309e…`. Đã tái hiện targeted test trên
+export BASE. Không sửa lock lịch sử hoặc AGENTS; assertion ghi riêng exact
+AGENTS của main đã xác minh, còn các protected scientific/runtime bytes giữ nguyên.
+Lượt full trước correction324 có1 FAIL/32 SKIP; lượt cuối ở snapshot trên0 lỗi.
+
+Development audit cũng phát hiện PBS venv copies thiếu libpython (đã sửa và
+kiểm lại). `/tmp` local WSL là tmpfs3,9 GiB gây ENOSPC khi cài software; nghiệm
+thu cuối dùng filesystem Linux đủ chỗ, không giảm pins/reserves. NTFS có terminfo
+case collisions nên kiểm archive trên Linux. Các rehearsal cũ bị thay thế hoặc
+dừng được giữ logs, không cộng vào counts PASS. Không phải Kaggle attempts.
+
+```console
+python -B -m scripts.rehearse_candidate160_environment --key internvl35 --snapshot <public-source> --scratch-root <linux-scratch> --output data/processed/env-proof/internvl-new
+python -B -m scripts.rehearse_candidate160_environment --key minicpm4 --snapshot <public-source> --scratch-root <linux-scratch> --output data/processed/env-proof/minicpm-new
+python -B -m scripts.check_notebook_release --runtime-ref 2306aecb280acfedd1dd11523f14b60f892c771f --output data/processed/env-proof/release-new.json
+```
+
+Native suite dùng `test_candidate_native`, public snapshot/index đã khóa và
+worker3.11.9/cu124 nói trên, threads2. Legacy `rehearse_candidate_cpu.environment`
+chỉ nhận CPU wheel; riêng nghiệm thu cu124 thay validator đó bằng production
+`train_runtime.software` (exact distributions/identity/compiled CPU ABI).
+Các generation tests và network/CUDA/weights/real-forward guards giữ nguyên.
+Từ exact export với `PYTHONPATH=.:tests`, các biến
+`SAFESHIFT_CANDIDATE_KEY`, `SAFESHIFT_CANDIDATE_SNAPSHOT`,
+`SAFESHIFT_CANDIDATE_INDEX`, `SAFESHIFT_WORKER_PYTHON`, `SAFESHIFT_RUNTIME_ROOT`,
+`PYTHONNOUSERSITE=1`, chạy đoạn sau bằng worker cho từng model:
+
+```python
+import torch, unittest
+from scripts import rehearse_candidate_cpu as old
+from safeshift.candidates.train_runtime import software
+def production_cpu_environment(key):
+    receipt = software(key)
+    torch.set_num_threads(2)
+    return receipt
+old.environment = production_cpu_environment
+unittest.main(module="test_candidate_native", verbosity=2)
+```
+
+**Còn chưa kiểm:** Kaggle allocation28+4 GiB thật, driver/T4×2/isolated CUDA
+FP16 thật, load/peak RAM/VRAM của checkpoint,160 real predictions/behavior/HNLO,
+và eligibility incident từ private Output cũ. Thiếu điều kiện thực tế thì BLOCKED.
+Không grant/merge/GPU/data run hoặc independent audit được thực hiện ở Codex.
