@@ -38,6 +38,10 @@ or confer approval. The Owner must verify the cited Lead decision independently.
 """
     from .train_owner import SCHEMA, MODE, validate
     from . import train_history as history
+    from . import train_smoke as smoke
+    if g.get("schema") == smoke.SCHEMA:
+        smoke.validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
+        return MODE
     if g.get("schema") == history.SCHEMA:
         history.validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
         return MODE
@@ -203,6 +207,10 @@ def policy_check(p):
 def authorize(g, key, source, ref, ledger, now=None):
     from .train_owner import SCHEMA, validate
     from . import train_history as history
+    from . import train_smoke as smoke
+    if type(g) is dict and g.get("schema") == smoke.SCHEMA:
+        require(ledger is None, "TECHNICAL_SMOKE_IS_NOT_AN_EXTERNAL_GRANT")
+        return smoke.validate(g, key, source, ref, now=now)
     if type(g) is dict and g.get("schema") == history.SCHEMA:
         require(ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
         return history.validate(g, key, source, ref, now=now)

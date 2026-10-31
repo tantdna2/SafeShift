@@ -47,7 +47,8 @@ def native_cpu(key, snapshot, repo):
     from .inputs import prepare_inputs, validate_inputs
     from PIL import Image
     from safeshift.pilot.contract import PROMPT_SHA
-    prompt = Path(repo) / "configs/pilot/classification_c1.txt"
+    snapshot, repo = Path(snapshot), Path(repo)
+    prompt = repo / "configs/pilot/classification_c1.txt"
     require(sha(prompt) == PROMPT_SHA, "C1_HASH")
     evidence = {}
     processor, tokenizer, config, cls = native_setup(snapshot, key, evidence)

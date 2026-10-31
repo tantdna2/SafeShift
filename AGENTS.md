@@ -150,3 +150,46 @@ quyết định cũ; luồng grant/pilot khác giữ hợp đồng riêng.
   Task mã nguồn chỉ CPU synthetic, không GPU hoặc tiêu lượt thực nghiệm.
 - Dừng ở một Draft PR. ChatGPT kiểm GitHub và Antigravity audit độc lập trước
   merge; không tự nhận audit hoặc merge đã hoàn thành.
+
+## Quy trình bắt buộc cho mọi notebook Kaggle — Owner 31/10/2026
+
+Nguồn: [chỉ thị Owner tại PR #156](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+và task trực tiếp khôi phục thực nghiệm ngày31/10/2026. Đây là bổ sung có truy
+vết, áp dụng cho mọi model/cohort/notebook Kaggle hiện tại và tương lai, kể cả
+phiên Codex mới; không hồi tố sửa các quyết định lịch sử.
+
+- Khi phát triển bất kỳ notebook SafeShift nào dự kiến chạy trên Kaggle,
+  Codex phải kiểm mã nguồn và local integration, rồi **tự chạy trên Kaggle
+  thật** bằng CLI/API chính thức, với dữ liệu thật trong phạm vi được phép,
+  dùng số mẫu tối thiểu đủ kiểm các đường kỹ thuật quan trọng. Ban đầu một
+  ảnh theo thứ tự đã khóa; thêm trường hợp chỉ khi có lý do kỹ thuật ghi rõ.
+- Kiểm cùng production entrypoint/child/CLI/path types, runtime/pins/Input,
+  source/checkpoint/revision/precision/C1; phải nạp weights thật, inference
+  thật trên GPU, raw-before-parse, parser/HNLO liên quan và export ZIP/SHA256.
+  Preflight, CPU mock/unit tests hoặc GPU tensor probe không đủ bàn giao.
+- Smoke có ID, sample ID/hash, cấu hình, source/notebook hash, giới hạn ảnh/
+  calls/time/resource và evidence riêng. Không tiêu/sửa production history,
+  không trộn vào kết quả khoa học, không tạo cohort khoa học hoặc đổi dữ liệu/
+  split/nhãn/prompt/model/precision/parser/HNLO/metric/protocol để đạt PASS.
+- Lỗi phải giữ cả log/raw/archive/receipt FAIL, sửa tận gốc, thêm regression,
+  chạy local rồi kiểm Kaggle lại có giới hạn. Không retry vô hạn/job trùng.
+  Chỉ phiên bản notebook/source cuối có bằng chứng thật mới được bàn giao
+  **READY FOR REVIEW**; source/runtime/Input thay đổi phải kiểm lại tương ứng.
+- Không kết nối/xác thực được, thiếu Input/GPU/quota/quyền hoặc chưa chạy
+  inference/export thật → **BLOCKED / NOT VERIFIED**, không READY FOR OWNER.
+  Không yêu cầu Owner trở thành người phát hiện lỗi cơ bản bằng production.
+- Owner đã cho phép các smoke kỹ thuật có giới hạn trên dữ liệu/tài nguyên họ
+  kiểm soát; không hỏi lại quyền chung từng lần. Dùng xác thực chính thức,
+  không yêu cầu token/password/kaggle.json qua chat, không log/commit/upload
+  credentials và không đổi privacy hoặc suy quyền sang TEST/bên thứ ba.
+- Sau ChatGPT review, Antigravity audit độc lập và merge được cấp quyền,
+  **Owner tự chạy thực nghiệm chính thức đầy đủ**, gửi Output cho ChatGPT.
+  Codex không tự chạy toàn bộ cohort thay Owner. Một smoke PASS không chứng
+  minh cả160 ảnh/long-run/quality hoặc hoàn tất quyết định khoa học PENDING.
+
+Trong phạm vi này, quy tắc mới thay hướng dẫn cũ cho phép bàn giao chỉ với
+preflight/Owner diagnostic và giới hạn task chỉ CPU ở snapshot Candidate160
+phía trên. Retry/resume production vẫn theo quyết định recovery; smoke một
+call riêng không dùng production reservation/history. Không xóa artifact
+CONSUMED/BLOCKED_RESERVED_NO_RETRY/UNKNOWN/replacement1. Dừng ở Draft PR #156;
+không tự merge, tự nhận audit PASS hoặc đổi scientific selection=PENDING.

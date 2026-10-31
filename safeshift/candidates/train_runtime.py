@@ -25,6 +25,23 @@ from .train_contract import KEYS, MANIFEST, authorize, config, configuration_has
 from .train_run import recover, run_calls, lineage_accounting
 from . import train_owner as owner
 from . import train_history as history
+from . import train_smoke as smoke
+
+
+def worker_command(python, repo, output, bundle, snapshot, weights, source, ref, *, execution=None, grant=None, ledger=None):
+    """One OS argument boundary for supervisor and real CPU CLI regression."""
+    command = [str(python), "-B", "-m", "safeshift.candidates.train_runtime"]
+    for name, value in (("repo", repo), ("output", output), ("bundle", bundle),
+                        ("snapshot", snapshot), ("weights", weights), ("source", source), ("ref", ref)):
+        command += ["--" + name, str(value)]
+    require((execution is not None) != (grant is not None), "ONE_WORKER_AUTHORITY_REQUIRED")
+    if execution is not None:
+        require(ledger is None, "EXECUTION_HAS_NO_EXTERNAL_LEDGER")
+        command += ["--execution", str(execution)]
+    else:
+        require(ledger is not None, "LEGACY_LEDGER_REQUIRED")
+        command += ["--grant", str(grant), "--ledger", str(ledger)]
+    return command
 
 
 def pins(key):
@@ -143,7 +160,8 @@ def verify_images(bundle, rows):
 
 
 def worker(repo, output, bundle, snapshot, weights, grant, ledger, source, ref, *, check_only=False, cuda_check_only=False):
-    repo, output = Path(repo), Path(output)
+    repo, output, bundle, snapshot, weights = map(Path, (repo, output, bundle, snapshot, weights))
+    require(not (check_only and cuda_check_only), "ONE_WORKER_CHECK_MODE_REQUIRED")
     authorize(grant, grant["model_key"], source, ref, ledger)
     require(source_hash(repo) == source, "WORKER_SOURCE_CHANGED")
     if cuda_check_only:
@@ -163,21 +181,8 @@ def worker(repo, output, bundle, snapshot, weights, grant, ledger, source, ref, 
     require(sha(repo / "configs/pilot/classification_c1.txt") == PROMPT_SHA, "C1_HASH")
     if check_only:
         # Real production source/native processor/meta loader, no weights/forward/CUDA.
-        from .loading import native_setup, load_meta_model
-        from .inputs import prepare_inputs, validate_inputs
-        from PIL import Image
-        evidence = {}
-        processor, tokenizer, config, cls = native_setup(snapshot, grant["model_key"], evidence)
-        empty, attention = load_meta_model(snapshot, grant["model_key"], config, cls)
-        evidence["meta_loader"] = attention
-        evidence["synthetic_images"] = []
-        for size in ((1, 1), (1, 17), (17, 1), (3, 19), (19, 3), (640, 480), (200, 1200), (2048, 1536)):
-            with Image.new("RGB", size, (40, 80, 120)) as image:
-                rendered, inputs = prepare_inputs(processor, grant["model_key"], prompt.decode(), image)
-                evidence["synthetic_images"].append(validate_inputs(processor, grant["model_key"], config,
-                                                                 rendered, inputs, prompt.decode()))
-        write(output / "native_cpu.json", evidence)
-        del empty, processor, tokenizer
+        from .train_preflight import native_cpu
+        write(output / "native_cpu.json", native_cpu(grant["model_key"], snapshot, repo))
         return
     write(output / "worker_hardware_observation.json", hardware(grant["policy"]))
     write(output / "worker_cuda.json", worker_cuda(grant["policy"]))
@@ -259,10 +264,12 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
 
 
 def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None, owner_start=False,
-           recovery_action=None, child_options=None):
+           recovery_action=None, child_options=None, technical_smoke=False):
     """Owner activation or legacy authority precedes inputs and hardware reads."""
     require(key in KEYS, "CANDIDATE_KEY")
     require(type(owner_start) is bool, "EXPLICIT_OWNER_ACTIVATION_BOOLEAN")
+    require(type(technical_smoke) is bool and (not technical_smoke or
+            (owner_start and recovery_action is None)), "ISOLATED_TECHNICAL_SMOKE_REQUIRED")
     inputs = Path(inputs or "/kaggle/input")
     work = Path(work or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
@@ -274,7 +281,12 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
     started = time.monotonic()
     try:
         require(source_hash(repo) == source, "NOTEBOOK_RUNTIME_SOURCE_MISMATCH")
-        if owner_start is True:
+        if technical_smoke:
+            grant = smoke.execution(key, source, ref)
+            ledger, ledger_file = None, None
+            grant_file = output / "technical_execution.json"
+            write(grant_file, grant)
+        elif owner_start is True:
             index = history.collect(work, inputs, output, key) if recovery_action is not None else None
             grant = (history.execution(key, source, ref, index, action=recovery_action, owner_start=True)
                      if index is not None else owner.execution(key, source, ref, owner_start=True))
@@ -304,7 +316,7 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         write(output / "authorization_binding.json", {"execution_sha256" if owner_start else "grant_sha256": digest(grant),
               "runtime_ref": ref, "source_sha256": source, "manifest_sha256": MANIFEST,
               **configuration_hashes(key),
-              **({"owner_decision_record": owner.DECISION, "activation": grant["activation"]} if owner_start else
+              **({"owner_decision_record": grant["owner_decision_record"], "activation": grant["activation"]} if owner_start else
                  {"ledger_sha256": digest(ledger),
                   "approval_refs": {n: grant[n] for n in ("G0", "T0", "O3", "research_lead_review_ref")}})})
         if not owner_start:
@@ -323,6 +335,8 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         bundle = discover(inputs, "pilot_manifest.json").parent
         plan, rows = manifest(bundle)
         write(output / "pilot_manifest.json", plan)
+        if technical_smoke:
+            write(output / "technical_selection.json", smoke.selection(rows, grant))
         if recovery_action is not None:
             recovery = history.recovery_plan(output, rows, grant)
             write(output / "recovery_plan.json", recovery)
@@ -346,11 +360,8 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         review_dir = safe(work, "reviews/" + grant["attempt_id"])
         review_dir.mkdir(parents=True, exist_ok=False)
         env.update(SAFESHIFT_REVIEW_DIRECTORY=str(review_dir), SAFESHIFT_DEADLINE_MONOTONIC=str(deadline))
-        command = [str(python), "-B", "-m", "safeshift.candidates.train_runtime", "--repo", str(repo),
-                   "--output", str(output), "--bundle", str(bundle), "--snapshot", str(snapshot),
-                   "--weights", str(weights), "--source", source, "--ref", ref]
-        command += (["--execution", str(grant_file)] if owner_start else
-                    ["--grant", str(grant_file), "--ledger", str(ledger_file)])
+        command = worker_command(python, repo, output, bundle, snapshot, weights, source, ref,
+            execution=grant_file if owner_start else None, grant=None if owner_start else grant_file, ledger=ledger_file)
         stage = "cpu_native_and_images"
         with (output / "cpu.log").open("xb") as log:
             subprocess.run(command + ["--check-only"], env=env, stdout=log, stderr=subprocess.STDOUT,
@@ -367,17 +378,21 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         # Check expiry/source/ledger/input hashes again immediately before consume.
         require(read(grant_file) == grant and (ledger_file is None or read(ledger_file) == ledger), "AUTHORITY_CHANGED")
         authorize(grant, key, source, ref, ledger)
-        if owner_start:
+        if owner_start and not technical_smoke:
             require(read(safe(attempts, slot_name)) == slot_record
                     and read(output / slot_name) == slot_record, "OWNER_SLOT_CUSTODY_CHANGED")
         require(source_hash(repo) == source and manifest(bundle)[0] == plan, "PRELEDGER_SOURCE_CHANGED")
         require(time.monotonic() < deadline, "TIME_CAP_PRELEDGER")
         consumed = None  # A failed exclusive create/fsync is never asserted unconsumed.
-        write(safe(attempts, (slot_name.removesuffix(".json") if owner_start else grant["attempt_id"]) + ".consumed.json"), {"run_id": grant["run_id"],
+        consumption_record = {"run_id": grant["run_id"],
               "attempt_id": grant["attempt_id"], "source_sha256": source,
               "execution_sha256" if owner_start else "grant_sha256": digest(grant),
               **({"slot_sha256": grant["slot_sha256"]} if owner_start else {"external_ledger_ref": grant["external_ledger_ref"]}),
-              "attempt_consumed": True})
+              "attempt_consumed": True}
+        if technical_smoke:
+            write(output / "technical_consumption.json", consumption_record)
+        else:
+            write(safe(attempts, (slot_name.removesuffix(".json") if owner_start else grant["attempt_id"]) + ".consumed.json"), consumption_record)
         consumed = True
         write(output / "consumption.json", {"attempt_consumed": True, "attempt_id": grant["attempt_id"]})
         stage = "worker"
@@ -447,6 +462,14 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
             print("EXPORT_FAILED; retain evidence directory/partial archive:", output, type(error).__name__, flush=True)
             raise
         print("Download private evidence:", archive, "and", str(archive)+".sha256.json", flush=True)
+        if technical_smoke:
+            try:
+                final = smoke.receipt(output, archive, grant)
+            except BaseException as error:
+                final = {"status": "BLOCKED_NOT_VERIFIED", "source_sha256": source, "runtime_ref": ref,
+                         "archive_sha256": sha(archive), "failure": error_record(error, "technical_smoke_receipt")}
+            write(Path(str(output) + ".smoke-result.json"), final)
+            print("Technical smoke:", final["status"], flush=True)
     return output
 
 
@@ -456,29 +479,35 @@ def launch_owner(key, source, repo, ref, *, owner_start=False, action="resume", 
     work = Path(kwargs.pop("work", None) or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
     with history.lease(work, key) as child_options:
+        if action == "technical_smoke":
+            return launch(key, source, repo, ref, work=work.with_name(work.name + "_smoke"),
+                          owner_start=True, technical_smoke=True, child_options=child_options, **kwargs)
         return launch(key, source, repo, ref, work=work, owner_start=True,
                       recovery_action=action, child_options=child_options, **kwargs)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("repo", "output", "bundle", "snapshot", "weights", "source", "ref"):
+    for name in ("repo", "output", "bundle", "snapshot", "weights"):
+        parser.add_argument("--" + name, type=Path, required=True)
+    for name in ("source", "ref"):
         parser.add_argument("--" + name, required=True)
     authority = parser.add_mutually_exclusive_group(required=True)
-    authority.add_argument("--execution", help="Owner execution record, not an external grant")
-    authority.add_argument("--grant", help="Legacy external grant")
-    parser.add_argument("--ledger", help="Required only with legacy --grant")
-    parser.add_argument("--check-only", action="store_true")
-    parser.add_argument("--cuda-check-only", action="store_true")
+    authority.add_argument("--execution", type=Path, help="Owner execution record, not an external grant")
+    authority.add_argument("--grant", type=Path, help="Legacy external grant")
+    parser.add_argument("--ledger", type=Path, help="Required only with legacy --grant")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check-only", action="store_true")
+    mode.add_argument("--cuda-check-only", action="store_true")
     a = parser.parse_args()
     if a.execution:
         require(a.ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
         execution, ledger = read(a.execution), None
-        require(execution.get("schema") in (owner.SCHEMA, history.SCHEMA), "OWNER_EXECUTION_SCHEMA")
+        require(execution.get("schema") in (owner.SCHEMA, history.SCHEMA, smoke.SCHEMA), "OWNER_EXECUTION_SCHEMA")
     else:
         require(a.ledger is not None, "LEGACY_LEDGER_REQUIRED")
         execution, ledger = read(a.grant), read(a.ledger)
-        require(execution.get("schema") not in (owner.SCHEMA, history.SCHEMA), "USE_OWNER_EXECUTION_ARGUMENT")
+        require(execution.get("schema") not in (owner.SCHEMA, history.SCHEMA, smoke.SCHEMA), "USE_OWNER_EXECUTION_ARGUMENT")
     worker(a.repo, a.output, a.bundle, a.snapshot, a.weights, execution, ledger, a.source, a.ref,
            check_only=a.check_only, cuda_check_only=a.cuda_check_only)
 

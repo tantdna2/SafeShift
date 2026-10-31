@@ -13,6 +13,7 @@ def require(value, message):
 
 def snapshot_stat(path, *, directory=False):
     """Inspect the entry itself, including Windows junction/reparse attributes."""
+    path = Path(path)  # Accept CLI/os.PathLike values without resolving aliases.
     info = path.lstat()
     require(not stat.S_ISLNK(info.st_mode) and
             not (getattr(info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT),
@@ -26,6 +27,7 @@ def snapshot_stat(path, *, directory=False):
 
 def verify_snapshot(snapshot, key, lock=LOCK):
     """Never execute local Python until every public source byte is locked."""
+    snapshot = Path(snapshot)
     spec = read(lock)[key]
     snapshot_stat(snapshot, directory=True)
     # Enumerate ALL entries, including hidden names and dangling/directory links.
@@ -41,6 +43,7 @@ def verify_snapshot(snapshot, key, lock=LOCK):
 
 def stage_snapshot(snapshot, local, key, lock=LOCK):
     """Copy only locked flat files; revalidate both trees before any remote import."""
+    snapshot, local = Path(snapshot), Path(local)
     spec = verify_snapshot(snapshot, key, lock)
     local.mkdir(exist_ok=False)
     for name in spec["files"]:

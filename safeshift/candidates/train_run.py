@@ -18,6 +18,7 @@ from .source import require
 from .train_contract import config, enrollment, execution_binding, policy_check, batch_check
 from .train_owner import SCHEMA as OWNER_SCHEMA, MODE as OWNER_MODE
 from . import train_history as history
+from . import train_smoke as smoke
 
 
 def not_attempted():
@@ -50,7 +51,7 @@ def native_custody(sample, raw):
 
 
 def configuration_context(grant):
-    require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA, history.SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
+    require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA, history.SCHEMA, smoke.SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
     return {"schema": "safeshift-candidate160-configuration-evidence-v2",
             "execution_release": execution_binding(grant),
             "configuration_contract": config(grant["model_key"])}
@@ -304,12 +305,18 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
         recovery = history.recovery_plan(output, rows, grant)
         require(read(output / "recovery_plan.json") == recovery, "RECOVERY_PLAN_CHANGED")
     pending = set(range(160) if recovery is None else recovery["pending_ordinals"])
+    technical_smoke = grant.get("schema") == smoke.SCHEMA
+    if technical_smoke:
+        smoke.selection(rows, grant)  # Exact one-image cap and locked ordinal.
+        pending = set(grant["selected_ordinals"])
     try:
         write(output / "configuration_binding.json", context)
         with enrollment(grant["model_key"]):
             for i, row in enumerate(rows):
                 if i not in pending:
                     continue
+                require(sum(v["native_calls"] for v in results.values()) < grant["max_native_calls"],
+                        "NATIVE_CALL_CAP_REACHED")
                 if time.time() >= grant["expires_unix"]:
                     reason = "GRANT_EXPIRED_BEFORE_NEXT_CALL"
                     break
@@ -326,7 +333,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                 def cached_factory():
                     nonlocal native
                     if native is None:
-                        if recovery is not None:
+                        if recovery is not None or technical_smoke:
                             write(output / "model_load_attempt.json", {"attempt_id": grant["attempt_id"],
                                 "load_attempts": 1, "ordinal": i})
                         native = factory()
@@ -425,9 +432,12 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
         if recovery is not None:
             write(output / "lineage_accounting.json", lineage_accounting(recovery, rows, results, grant))
         write(output / "summary.json", {"status": "STOPPED" if reason else "COMPLETED_AWAITING_REVIEW",
-              "reason": reason, "metrics": measurements(rows, results),
+              "reason": reason, "metrics": None if technical_smoke else measurements(rows, results),
               "classification_quality": "AWAITING_RESEARCH_LEAD_REVIEW", "gpu_qualification": "SEE_MEASURED_WORKER_RECEIPTS",
               "full_train_authorized": False, "retry_or_resume_allowed": recovery is not None,
+              **({"purpose": grant["purpose"], "scheduled": 1, "scientific_selection": "EXCLUDED",
+                  "pooling_allowed": False, "metrics_scope": "TECHNICAL_SMOKE_NO_SCIENTIFIC_METRICS"}
+                 if technical_smoke else {}),
               **({"run_kind": recovery["run_kind"], "scientific_selection": "PENDING", "pooling_allowed": False,
                   "scheduled": len(pending), "previously_durable": len(recovery["already_durable_ordinals"]),
                   "metrics_scope": "THIS_ATTEMPT_ONLY_NOT_A_POOLED_ANALYSIS"} if recovery is not None else {})})

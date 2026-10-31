@@ -1,5 +1,36 @@
 # SafeShift — PROJECT STATE
 
+## Khôi phục Kaggle và quy trình kiểm chứng thật —31/10/2026, PR #156
+
+Session mới xác minh remote: PR156 OPEN/DRAFT, branch
+`fix/candidate160-recovery-20261031`, HEAD ban đầu `b1a56d0ce3fbd484820f56fa921bfbba9ec7f1d9`,
+main `6252a7de91d9d98bd68a33b9bc13ae9888f2b9da`. Tiếp tục cùng worktree/PR,
+không tạo PR mới, force-push hoặc sửa lịch sử. Nguồn quy tắc toàn dự án:
+[Owner directive](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161),
+đã bổ sung append-only vào AGENTS. Các đoạn “task chỉ CPU”/Owner chạy diagnostic
+bên dưới là snapshot cũ; task mới cho phép Codex bounded smoke trên TRAIN đã khóa.
+
+Đã xác minh archive InternVL lỗi cũ SHA256
+`aee7f4b782c6eb31c780afc8f3d7756c5f91e30a5d9eab506417c2817c818e8c`,
+28 member checksums khớp; `cpu_native_and_images`,160 NOT_ATTEMPTED,
+native calls0/consumed=false. Giữ nguyên archive. Đã tái hiện cùng str/lstat
+ở cả hai production worker subprocess thật với pins Linux3.11.9/cu124,
+locked source và bundle thật; sau chuẩn hóa Path, cả hai CPU CLI PASS.
+Không mock native_setup/verify_snapshot/worker trong regression này.
+
+Kaggle CLI2.2.5 cài trong environment local riêng; authenticated read-only
+kernels/datasets/status/Output download PASS. Không ghi secrets vào Git.
+Smoke mới dùng cùng production supervisor/worker, manifest160 nguyên vẹn,
+chỉ ordinal0/1 call/3600 giây, evidence riêng, không production reservation/
+history hoặc scientific metrics. Notebook mặc định technical_smoke để tránh
+tự chạy full160. **KAGGLE INFERENCE NOT VERIFIED** cho tới receipt thật cuối.
+Xem [runbook](CANDIDATE160_KAGGLE.md) và [bằng chứng task mới](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+NEXT: local final suite + exact notebook Kaggle smoke từng model; giữ FAIL/PASS,
+cập nhật receipt/source/notebook SHA; ChatGPT kiểm GitHub và Antigravity audit
+độc lập trước merge. Scientific selection PENDING/pooling=false, TEST đóng.
+Không tự tuyên bố READY FOR OWNER hoặc chạy chính thức160 thay Owner.
+
 ## Task retry/resume Candidate160 —31/10/2026
 
 Base mới từ remote main `6252a7d` (PR155 đã merge). Một Draft PR mã nguồn thay

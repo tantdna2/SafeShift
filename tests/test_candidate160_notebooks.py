@@ -63,7 +63,7 @@ class Candidate160NotebookTests(unittest.TestCase):
             self.assertIn("Save & Run All", instructions)
             self.assertIn("không tự đặt ngưỡng", instructions)
             self.assertNotIn("from safeshift.pilot.bootstrap import launch", code)
-            self.assertIn('candidate160_action = "resume"', code)
+            self.assertIn('candidate160_action = "technical_smoke"', code)
             self.assertIn("exist_ok=True", code)
         self.assertEqual(payloads[0], payloads[1])
         self.assertEqual(source_digest(ROOT), "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884")
@@ -85,10 +85,10 @@ class Candidate160NotebookTests(unittest.TestCase):
                     env={**os.environ, "CUDA_VISIBLE_DEVICES": "", "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1"},
                     text=True, capture_output=True, timeout=60)
                 self.assertEqual(process.returncode, 0, process.stderr)
-                archives = list((root/"data/processed/candidate160").glob("*.zip"))
+                archives = list((root/"data/processed/candidate160_smoke").glob("*.zip"))
                 self.assertEqual(len(archives), 1)
                 verify_archive(archives[0])
-                status = next((root/"data/processed/candidate160").glob("*/supervisor_status.json"))
+                status = next((root/"data/processed/candidate160_smoke").glob("*/supervisor_status.json"))
                 record = read(status)
                 self.assertEqual(record["status"], "BLOCKED")
                 self.assertFalse(record["attempt_consumed"])
@@ -98,7 +98,7 @@ class Candidate160NotebookTests(unittest.TestCase):
                 again = subprocess.run([sys.executable, "-I", "-B", str(script)], cwd=root,
                                        text=True, capture_output=True, timeout=60)
                 self.assertEqual(again.returncode, 0, again.stderr)
-                self.assertEqual(len(list((root/"data/processed/candidate160").glob("*.zip"))), 2)
+                self.assertEqual(len(list((root/"data/processed/candidate160_smoke").glob("*.zip"))), 2)
 
     def test_wrong_runtime_ref_and_uncommitted_source_are_rejected(self):
         for key in KEYS:

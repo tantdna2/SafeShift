@@ -1,5 +1,56 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
+## Quy trình hiện hành PR156: Codex kiểm Kaggle thật trước bàn giao
+
+Nguồn: [Owner31/10](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161),
+áp dụng cho mọi notebook Kaggle. Các hướng dẫn bên dưới về Owner chạy preflight
+đầu tiên/task chỉ CPU là snapshot trước chỉ thị này, không đủ điều kiện release.
+
+Codex dùng Kaggle CLI chính thức trong virtual environment riêng (Python3.11+).
+`kaggle --version`, `kaggle kernels push --help` xác minh phiên bản/cú pháp;
+`kaggle kernels list --mine`, `kaggle datasets list --mine`, `kaggle quota`,
+`kaggle kernels status <owner/slug>` kiểm read-only trước submit. Nếu chưa auth,
+Owner tự chạy `kaggle auth login` qua browser theo [tài liệu chính thức](https://github.com/Kaggle/kaggle-cli/blob/main/docs/README.md#authentication).
+Không dán token/password/kaggle.json vào chat; không ghi credentials trong repo.
+
+Notebook cuối mặc định `candidate160_action = "technical_smoke"`; upload chính
+file này, không chỉnh source/locks. Private kernel mới chỉ dành smoke, cùng
+dataset `nguynanhtn/safeshift-pilot-input`, đúng checkpoint Notebook Output của
+model, Internet ON, accelerator `NvidiaTeslaT4` (T4×2). Không attach TEST hoặc
+dataset gốc đầy đủ. Metadata `is_private=true`; không thay quyền nguồn cũ.
+`kaggle kernels push -p <ignored-staging-folder> --accelerator NvidiaTeslaT4 -t 3900`
+submit một lần; ghi version, notebook SHA256 và source SHA256 trước upload.
+Theo dõi status có giới hạn; không submit trùng khi job còn QUEUED/RUNNING.
+`kaggle kernels output <owner/slug/version> -p <new-private-evidence-folder>`
+tải bằng chứng vào vị trí mới, không dùng --force ghi đè evidence cũ.
+
+Smoke vẫn kiểm manifest/order/hash/decode160 và checkpoint/shards/source/pins/
+storage/driver/CUDA như production, nhưng chỉ gọi ảnh ordinal0 theo manifest:
+max1 native call,1 load,3600 giây gồm setup. Sample ID/hash/kích thước/lý do
+trong technical_selection.json; output ở candidate160_smoke, không production
+execution/reservation/history/scientific metrics. Khóa tiến trình dùng chung
+chỉ để ngăn duplicate; không consumption production. Không attach smoke Output
+làm production history. Preflight giữ chức năng diagnostic riêng.
+
+Phải kiểm ZIP/checksums/sidecar và `.smoke-result.json`: TECHNICAL_SMOKE_PASS
+chỉ khi actual native model/weights/GPU/inference/raw/parser/HNLO/custody,
+controller và cleanup/export đều đạt. COMPLETE của Kaggle hoặc CPU preflight
+không tự là PASS. Lỗi: giữ thư mục/ZIP/log/receipt, sửa cùng branch, thêm
+regression, local integration và kiểm lại tối thiểu. Không retry vô hạn.
+Không có GPU/Input/quota/auth → BLOCKED/NOT VERIFIED, không bàn giao READY.
+
+**Owner chạy chính thức sau review/audit/merge:**
+
+1. Chọn notebook đúng model và đúng authorized Inputs như smoke đã kiểm;
+   dừng job cũ. Attach đủ production Outputs cũ để resume, giữ mọi marker.
+2. Đặt `candidate160_action = "resume"` (hoặc `"rerun"` cho series mới160),
+   giữ nguyên mọi cấu hình nghiên cứu. Save Version → Save & Run All.
+3. Tải ZIP + SHA256 dù PASS/FAIL/partial, giữ private và gửi ChatGPT phân tích.
+
+Codex không tự chạy full160. Scientific selection=PENDING/pooling=false;
+một ảnh không chứng minh cả160, rare sizes, long-run OOM hoặc chất lượng.
+Xem [bằng chứng mới](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
 ## Hướng dẫn hiện hành — retry/resume31/10/2026
 
 Main base `6252a7de91d9d98bd68a33b9bc13ae9888f2b9da`, sau PR155.

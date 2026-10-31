@@ -48,6 +48,18 @@ def notebook(key, ref, repo=ROOT, *, preflight=False):
     spec = model(key)
     instructions = f"""# SafeShift — {spec['id']} — Candidate160 retry/resume
 
+**Mặc định an toàn: `candidate160_action = "technical_smoke"`.** Codex chạy đúng
+notebook này trên Kaggle: một ảnh đầu tiên của manifest TRAIN160 đã khóa, một
+native call, tối đa3600 giây gồm setup; không production slot/history/metrics.
+Weights/C1/precision/parser/HNLO/source locks và mọi admission production giữ
+nguyên. Evidence riêng `data/processed/candidate160_smoke`, ZIP + SHA256 +
+`.smoke-result.json`; chỉ receipt cuối TECHNICAL_SMOKE_PASS mới chứng minh
+load/inference/raw/export thật. Một ảnh không chứng minh cả160 hoặc khoa học.
+Sau ChatGPT review, Antigravity audit và merge được phép, Owner đặt
+`candidate160_action = "resume"` để chạy chính thức, hoặc `"rerun"` cho series
+mới. Không attach smoke Outputs làm lịch sử production. Thay đổi ảnh hưởng
+runtime/source/notebook phải kiểm Kaggle lại; preflight/CPU không đủ bàn giao.
+
 **Owner kích hoạt bằng Save Version → Save & Run All.** Sau review/merge, có thể
 chạy lại trong phạm vi đã giao mà không grant/reservation/CONTINUE thủ công.
 Mỗi lần chạy có run ID/attempt ID riêng; tối đa160 native calls,12 giờ/lượt,
@@ -157,7 +169,7 @@ Runtime `{ref}`, source SHA256 `{source_hash(repo)}`.
         result["metadata"]["safeshift"]["mode"] = "CANDIDATE160_NO_ATTEMPT_PREFLIGHT"
     else:
         code = code.replace("import base64, hashlib, json, pathlib, sys, zlib",
-                            'import base64, hashlib, json, pathlib, sys, zlib\n    candidate160_action = "resume"  # or "rerun" for a separate full attempt')
+                            'import base64, hashlib, json, pathlib, sys, zlib\n    candidate160_action = "technical_smoke"  # after review/merge Owner selects "resume" or "rerun"')
         code = code.replace(", owner_start=True)", ", owner_start=True, action=candidate160_action)")
         result["cells"][1]["source"] = code.splitlines(True)
         compile(code, "candidate160_notebook", "exec")

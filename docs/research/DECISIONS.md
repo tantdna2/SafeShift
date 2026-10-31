@@ -204,3 +204,20 @@ protocol/raw-before-parse/quyền dữ liệu. **Scientific result selection PEN
 không pooling hoặc chọn kết quả thuận lợi.** Chỉ task CPU synthetic; một Draft
 PR chờ ChatGPT kiểm GitHub và Antigravity audit độc lập trước merge. Không GPU,
 attempt thực nghiệm, tự phê duyệt khoa học hoặc merge.
+
+## DEC-20261031-KAGGLE-TECHNICAL-VERIFICATION
+
+[Owner directive PR156](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+và task trực tiếp cùng ngày yêu cầu Codex kiểm mọi notebook Kaggle trên Kaggle
+thật trước bàn giao, có bounded inference trên đúng TRAIN/Input/model/config
+đã được phép. Quy tắc này được ghi append-only trong AGENTS; mở rộng task CPU
+cũ sang kiểm kỹ thuật thật trong phạm vi Owner, không duyệt khoa học/học vụ,
+TEST/bên thứ ba hoặc quyền merge. Owner vẫn chạy full experiment sau review.
+
+Candidate160 thêm technical_smoke riêng: manifest160 nguyên bytes/order,
+ordinal0,1 call,1 load,3600 giây/setup; không production reservation/history,
+retry loop, scientific metrics hoặc pooling. Dùng cùng supervisor/worker,
+source/checkpoint/C1/precision/parser/HNLO và admission. Giữ evidence FAIL/PASS,
+receipt/hash của source/notebook cuối; chưa có actual weights/inference/export
+đạt thì BLOCKED/NOT VERIFIED. [Hồ sơ](CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+Scientific result selection vẫn PENDING; không thay quyết định recovery trước.
