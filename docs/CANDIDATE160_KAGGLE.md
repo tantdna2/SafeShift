@@ -1,5 +1,60 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
+## Bàn giao production engineering —31/10/2026
+
+**Hai route READY_FOR_TECHNICAL_REVIEW, chưa READY_FOR_OWNER.** Fresh ChatGPT
+review exact HEAD, Antigravity audit độc lập và merge được cấp quyền riêng
+vẫn bắt buộc. MiniCPM official FP32 thêm
+**BLOCKED_PENDING_SCIENTIFIC_DECISION**. Không tự chạy160 hoặc lặp FP16 đã NaN.
+[Báo cáo/SHAs/receipts](research/CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md)
+là trạng thái hiện hành; các hướng dẫn/smoke bên dưới giữ làm lịch sử.
+
+- Dùng `SafeShift_CANDIDATE160_PRODUCTION_internvl35.ipynb` cho InternVL.
+- Dùng `SafeShift_CANDIDATE160_PRODUCTION_minicpm4_FP32.ipynb` cho MiniCPM
+  effective implementation; không dùng notebook FP16 cũ như bản đã qualify.
+
+Cả hai file trên đã được Codex chạy thật với default `qualify`:3 ordinal
+TRAIN0/15/111 chốt trước theo kích thước,1 load/3 calls/3600 giây, không metrics.
+13/3/13 InternVL tiles và10/3/5 MiniCPM slices đã thực sự được xử lý. Raw/
+finite logits/strict parser/HNLO handling/cleanup/ZIP/SHA đều verify. Chính
+notebook đó import ZIP sang workspace mới và kiểm resume0 calls/0 loads.
+Qualification history ở `data/processed/candidate160_q*`, tách official
+`data/processed/candidate160`; không attach kỹ thuật để lấy official completion.
+
+**Owner sau review/audit/merge:** InternVL dùng đúng notebook production/Input/
+checkpoint đã kiểm; dừng job cũ, attach đủ official Outputs rồi đặt
+`candidate160_action = "resume"`. INVALID có raw/custody hợp lệ được skip
+như SUCCESS. `"rerun"` tạo series mới, không tự chọn/gộp kết quả khoa học.
+Owner tự chạy official160 và gửi Output cho ChatGPT. Một bounded check không
+bảo đảm full160/12 giờ hoặc mọi kích thước sẽ PASS.
+
+**MiniCPM chưa được chạy official:** cần Owner/Lead quyết định rõ có nhận
+`minicpm4-resampler-attention-fp32-v1` và effective config đã đo làm baseline
+official TRAIN160 hay không. Activation code phải gắn quyết định có truy vết,
+được review và kiểm lại final source. `resume`/`rerun` FP32 hiện bị chặn
+trước Input/consumption/load, kể cả direct worker. Không tự mở bằng approval giả.
+Scientific selection/pooling vẫn PENDING, tách với quyết định implementation.
+
+**Khi lỗi/ngắt:** giữ mọi directory/raw/partial/ZIP/sidecar và attempts; không
+xóa lock/marker/history hoặc sửa source hash. Dừng phiên cũ, attach đầy đủ
+official Outputs vào VM mới, `resume` tạo attempt mới và chỉ gọi phần pending.
+Raw hợp lệ trước khi kịp result được replay trong plan mới; lỗi load/OOM/
+NaN/Inf/resource/time dừng attempt, không retry nội bộ. ZIP/sidecar/raw/history
+hỏng hoặc mâu thuẫn phải bổ sung bản evidence nguyên vẹn; không sửa bytes để qua
+gate. OS lock chỉ bảo vệ workspace chung; không có global lock giữa hai VM.
+
+**Tải evidence trên Windows:** nếu cây file dài làm CLI tải toàn bộ bị lỗi,
+dùng thư mục ignored ngắn từ repo root và filter ZIP/sidecar/final receipt;
+raw nằm đầy đủ trong sealed ZIP. Không dùng `--force` hoặc ghi đè lượt cũ:
+
+```powershell
+kaggle kernels output <owner/slug/version> -p data/processed/kaggle-export-new --file-pattern '.*(\.zip|\.zip\.sha256\.json|\.qualification-result\.json)$'
+```
+
+Nếu private reads trả401 trong khi list/quota vẫn hoạt động, refresh phiên
+OAuth hiện có qua SDK chính thức; chỉ đăng nhập lại qua browser nếu refresh
+không được. Không print token/config secrets hoặc đưa credentials vào chat/Git.
+
 ## Trial kỹ thuật mới: MiniCPM resampler FP32, chưa cấp quyền production
 
 Owner đã cho phép ngoại lệ hẹp trong [quyết định mới](research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception).

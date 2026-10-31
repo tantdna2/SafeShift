@@ -1,5 +1,41 @@
 # SafeShift — PROJECT STATE
 
+## Hai production routes đã kiểm Kaggle thật —31/10/2026
+
+**READY_FOR_TECHNICAL_REVIEW cả hai; MiniCPM official FP32 vẫn
+BLOCKED_PENDING_SCIENTIFIC_DECISION. Chưa READY_FOR_OWNER.** Giữ Draft PR156,
+chờ fresh ChatGPT exact-HEAD review, Antigravity audit độc lập và quyền merge
+riêng. Không full160/TEST/kết quả khoa học chính thức trong task này.
+
+Hai notebook mới `SafeShift_CANDIDATE160_PRODUCTION_internvl35.ipynb` và
+`SafeShift_CANDIDATE160_PRODUCTION_minicpm4_FP32.ipynb` đã chạy đúng source/
+cell bytes trên Kaggle private,3 ảnh TRAIN định trước0/15/111 mỗi model,
+1 load/3 calls mỗi job. Cùng production entrypoint/child/controller/history;
+raw/ZIP/SHA256/cleanup và import sealed ZIP sang workspace mới rồi resume
+zero-load/zero-call đều PASS. Profile kỹ thuật/config/campaign/series tách
+official, FP16 và FP32; metrics excluded, no pooling.
+
+InternVL:38/38 logits steps hữu hạn; parser INVALID/SUCCESS/INVALID. Hai
+INVALID do native model sinh code fence, independent decode khớp; không sửa
+parser/prompt. Ảnh15 (chốt trước theo diện tích nhỏ nhất) có HNLO thực
+7.301041903017601, native branch và Decimal oracle PASS; hai ảnh kia unaligned.
+MiniCPM:33/33 steps hữu hạn,3 SUCCESS; HNLO vẫn unaligned vì native continuation
+khác segmentation đã prove dù decoded JSON giống nhau. Không thay token/score.
+
+Runtime `b5448d031b287bc7adabd58ec36d98e671449b9d`, tested export
+`2a062e5d0896bd789a7c27db9876fe6406ae2bb6`, source
+`09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08`.
+Final Linux374 =334 PASS/40 SKIP/0 FAIL/ERROR; native numerics8/8 PASS;
+hai production CPU subprocess PASS, đủ160 images/8 processor sizes mỗi model.
+Giữ lỗi setup/401/download và mọi evidence cũ. [Báo cáo chi tiết](research/CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md)
+ghi notebook/source/config/ZIP SHA, receipts, giới hạn và cách Owner chạy.
+
+Quyết định hẹp còn thiếu: Owner/Lead có dùng
+`minicpm4-resampler-attention-fp32-v1` làm baseline official TRAIN160 hay không.
+Gate fail-closed trước consumption/load; không mở bằng notebook flag/approval
+giả. Chưa chứng minh forced VM kill, global lock/cross-VM concurrency hoặc
+full160/12-hour resource behavior. Các mục dưới là lịch sử, không verdict mới.
+
 ## MiniCPM ngoại lệ hẹp: Kaggle technical smoke PASS —31/10/2026
 
 **READY FOR REVIEW cho trial kỹ thuật, vẫn Draft PR156. Không READY FOR OWNER/

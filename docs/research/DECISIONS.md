@@ -320,3 +320,24 @@ Quyết định khoa học còn thiếu: Owner/Lead chấp thuận hay từ ch�
 `minicpm4-resampler-attention-fp32-v1` làm effective baseline cho official
 TRAIN160, cùng identity/config đã kiểm; selection/pooling vẫn cần quyết định
 riêng trước phân tích khoa học. Không thể mở gate bằng notebook flag/approval giả.
+
+## RESULT-20261031-CANDIDATE160-PRODUCTION-ENGINEERING
+
+Hai notebook PRODUCTION cuối đã được Codex tự kiểm trên Kaggle private với
+đúng source `09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08`,
+3 ordinal đã chốt0/15/111 mỗi model,1 load/3 native calls; finite logits/raw/
+native tokenizer/parser/HNLO handling/cleanup/ZIP/SHA PASS. Resume sealed ZIP
+vào workspace mới thực sự0 loads/0 calls, giữ INVALID là durable completion.
+[Báo cáo và receipts](CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md).
+
+InternVL có38/38 finite steps, INVALID/SUCCESS/INVALID; case15 HNLO thực
+7.301041903017601 với native branch/Decimal oracle khớp. Hai INVALID do code
+fence thật, không sửa parser. MiniCPM33/33 finite steps,3 SUCCESS, HNLO vẫn
+unaligned do alternative native segmentation ngoài continuations đã prove.
+Không đổi arithmetic implementation đã PASS, checkpoint/TRAIN160/C1/parser/
+HNLO/metric; không chọn theo output hoặc nâng trạng thái khoa học.
+
+**READY_FOR_TECHNICAL_REVIEW**, không READY_FOR_OWNER. Official MiniCPM FP32
+vẫn BLOCKED_PENDING_SCIENTIFIC_DECISION; decision adoption baseline còn thiếu.
+Giữ Draft PR156, fresh ChatGPT review và Antigravity audit độc lập trước merge.
+Không full160/TEST, không coi3 ảnh là kiểm đủ12 giờ/all160 hoặc global lock.

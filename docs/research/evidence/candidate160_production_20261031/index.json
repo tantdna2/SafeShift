@@ -1,0 +1,23 @@
+{
+  "files": {
+    "alignment-investigation.json": "6b2ad3bbcbf33ed80970883cce0b487a39613c5d8598c7395fcab8bf56bee654",
+    "invocation-ledger.json": "7b2d39aa80e0294300feb3b85308519226f8f0b1ead200c940ca118fd37818f4",
+    "kaggle-internvl35.json": "09f28a78bbbeb1b0e68ce0c22f1201f936216295b9012f8fa8ab00995cb02957",
+    "kaggle-minicpm4.json": "29cd69b0e5b8daf15de1b74abbabd64da7948392e79a0bf6388ddc64e1e1af73",
+    "local-checks.json": "9e8baca302867e363354e7ed631a5f0dcb9871e79ee42e0dc48a7f68370d09eb",
+    "preserved-history.json": "b489895aaf74ab626f20fd6ff12471f1c3540e3b7f03de4b9147cf8c8be9d0d3",
+    "release.json": "583b236ae28151363cf788d8cb8f5082559aaa9bb5b05527b1e53a7f4ac7ffdc",
+    "remote-internvl35.json": "763987159c2bff0a189d539671abe47d17a7c3d5a4f7ee1f2ac9cd22da4ea8cd",
+    "remote-minicpm4.json": "84cba5b47556e8730f9c1cd55988ac8f5614aa384e1b62eb1cb3489999427f30"
+  },
+  "independent_antigravity_audit": "NOT_RUN",
+  "official160_run": "NOT_RUN",
+  "official_minicpm_fp32": "BLOCKED_PENDING_SCIENTIFIC_DECISION",
+  "raw_images_weights_credentials_in_git": false,
+  "ready_for_owner": false,
+  "reference_head": "04fa29fa053d1a9fcc49361794a5140f3dc1678e",
+  "runtime_ref": "b5448d031b287bc7adabd58ec36d98e671449b9d",
+  "schema": "safeshift-candidate160-production-engineering-evidence-v1",
+  "source_sha256": "09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08",
+  "status": "READY_FOR_TECHNICAL_REVIEW"
+}
