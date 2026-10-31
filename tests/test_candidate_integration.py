@@ -50,6 +50,21 @@ class CandidateIntegrationTests(unittest.TestCase):
                 for level in ("ENVIRONMENT_OBSERVED", "CPU_SOFTWARE_PASS", "LIVE_GPU_PREFLIGHT_PASS",
                               "WEIGHTS_LOADED", "INFERENCE_VERIFIED", "SCIENTIFIC_QUALIFIED"):
                     self.assertIn(level, added)
+                latest = subprocess.check_output(["git", "show", "6252a7de91d9d98bd68a33b9bc13ae9888f2b9da:AGENTS.md"], cwd=ROOT)
+                self.assertTrue(current.startswith(latest), "Recovery directive must only append to main instructions")
+                self.assertIn("CANDIDATE160_RECOVERY_DECISION_20261031.md", current[len(latest):].decode("utf-8"))
+                continue
+            if filename == "docs/research/DECISIONS.md":
+                # Owner explicitly requires an append-only operating decision.
+                # Verify the locked Git object and preserve the entire main
+                # prefix; the historical source lock itself stays unchanged.
+                historical = subprocess.check_output(["git", "show", "bbbd351e19e404f1108413578c7ed024f92e814d:" + filename], cwd=ROOT)
+                self.assertEqual(hashlib.sha256(historical).hexdigest(), checksum)
+                base = subprocess.check_output(["git", "show", "6252a7de91d9d98bd68a33b9bc13ae9888f2b9da:" + filename], cwd=ROOT)
+                self.assertTrue(base.startswith(historical))
+                current = (ROOT/filename).read_bytes()
+                self.assertTrue(current.startswith(base), "Research decisions must never be rewritten")
+                self.assertIn("DEC-20261031-CANDIDATE160-RECOVERY", current[len(base):].decode("utf-8"))
                 continue
             self.assertEqual(sha(ROOT/filename), checksum, filename)
         self.assertEqual(sha(ROOT/"configs/pilot/classification_c1.txt"), PROMPT_SHA)
