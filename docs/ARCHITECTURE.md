@@ -1,5 +1,76 @@
 # Kiến trúc Foundation V1
 
+## Effective MiniCPM resampler FP32 technical route —31/10/2026
+
+Notebook technical riêng → `launch_owner` với action chỉ1 ảnh → shared OS lease
+→ cùng production supervisor/CLI/worker → `minicpm_resampler_fp32.backend` →
+backend/load weights native cũ → instance-only derived resampler method. Source
+gốc được verify hash nguyên vẹn; thay đúng4 expressions của method locked,
+không global patch/class/file mutation. Chỉ score/softmax/value product FP32,
+value result cast về FP16 trước out_proj; projections/query scaling không đổi.
+Source original/effective descriptor/derived method/config đều có hash riêng.
+
+`train_contract.config` mặc định vẫn trả config gốc; implementation ID opt-in
+tạo config effective riêng và được khóa trong execution binding/raw/context.
+Default history không coi config mới là completion cũ. Effective route chỉ có
+smoke campaign/series/output riêng, không resume/full-run/history import/metrics.
+`train_run` xác minh file effective_numerics trước nhận raw/custody và receipt
+cuối yêu cầu counters3 phép tính hữu hạn + return FP16 + native load evidence.
+Technical Owner authority không cấp baseline/full160/TEST/merge.
+
+[Báo cáo](research/MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md) ghi actual Kaggle
+1-image PASS, HNLO unaligned và giới hạn; các phần phía dưới giữ lịch sử trước
+ngoại lệ. Bốn notebook gốc rebuild source payload chưa tự qualify lại trên Kaggle.
+
+## Kaggle technical smoke và regression production CLI —31/10/2026
+
+Notebook Candidate160 cuối mặc định `technical_smoke` → `launch_owner` giữ cùng
+process lease để loại trừ job trùng → cùng `launch`/supervisor/runtime/worker
+production. `train_smoke` có schema/run prefix/campaign/output riêng, không
+production reservation/history hoặc scientific metrics. Manifest160 nguyên
+vẹn được admission, chỉ ordinal0 được schedule,1 native call/1 load/3600 giây.
+`resume`/`rerun` production tiếp tục dùng luồng recovery phía dưới, không dùng
+completion của smoke. TEST/quyền bên thứ ba/khoa học không đổi.
+
+`worker_command` là ranh giới tạo CLI dùng chung cho supervisor và regression
+thật. Argparse types mọi filesystem argument thành Path; direct worker caller
+cũng chuẩn hóa đủ repo/output/bundle/snapshot/weights. Source stat/verify/stage
+chuẩn hóa str/os.PathLike nhưng giữ lstat/alias/allowlist/checksum. `native_cpu`
+dùng chung giữa preflight và production, không còn hai bản processor/meta check.
+`scripts.rehearse_candidate160_worker` gọi child production thật, không mocks;
+đã tái hiện lỗi cũ rồi kiểm lại cả hai pinned CPU stacks với authorized bundle.
+
+Kaggle `.smoke-result.json` chỉ TECHNICAL_SMOKE_PASS khi actual native GPU/
+weights/inference, durable raw/parser/HNLO/custody, cleanup và ZIP/SHA256 đủ
+evidence. Status COMPLETE/preflight/CPU không chứng minh model inference.
+[AGENTS](../AGENTS.md) bắt buộc quy trình này cho mọi notebook/model hiện tại
+và tương lai; notebook cũ không được nâng READY hồi tố. Review/audit trước merge
+và Owner chạy chính thức vẫn riêng. [Hồ sơ kiểm chứng](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+## Candidate160 retry/resume —31/10/2026
+
+Production notebooks → `train_runtime.launch_owner` → kernel `train_history.lease`
+→ bounded history discovery/snapshot → execution v2 + immutable per-attempt
+reservation → manifest/recovery plan → unchanged environment admission/worker.
+`train_run.run_calls` chỉ schedule pending ordinals; gọi engine `execute` cũ
+với journal riêng, không dùng retry logic của pilot. Pilot/adapter/C1/HNLO/
+checkpoint/source locks giữ nguyên. Luồng Owner v1/grant cũ còn để đọc lịch sử
+và test compatibility; không là production retry entrypoint.
+
+`history_index.json` khóa từng run ID bằng snapshot member hashes, execution
+digest, series ID và ancestors. Lịch sử được flatten để export tiếp sang phiên
+Kaggle khác; directory/ZIP copies trùng được deduplicate, copies khác hash chặn.
+`recovery_plan.json` ghi tất cả kết quả/attempt/calls/raw hashes, pending và
+completion kỹ thuật; `lineage_accounting.json` cộng counts vận hành nhưng không
+chọn output. Rerun mở series riêng để resume nó không lấy completion baseline.
+Không scientific pooling/selection; xem [quyết định](research/CANDIDATE160_RECOVERY_DECISION_20261031.md).
+
+Khóa OS giữ tới lúc supervisor và Linux child đều đóng descriptor; không TTL
+hoặc xóa lock file. Chỉ loại trừ trong shared workspace, không distributed
+exactly-once giữa VM. Owner phải dừng phiên cũ trước, attach đủ lịch sử.
+`test_candidate160_recovery.py` kiểm failure/resume/ZIP/migration/dedup/rerun;
+bộ compatibility v1 vẫn kiểm hợp đồng lịch sử riêng.
+
 ## Candidate160 Owner activation — 30/10/2026
 
 Hai notebook candidate dùng `train_runtime.launch_owner` → `train_owner` tạo

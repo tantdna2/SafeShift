@@ -274,12 +274,14 @@ class OwnerExecutionTests(unittest.TestCase):
                 if fault == "export":
                     stack.enter_context(patch.object(rt, "export", side_effect=OSError(errno.ENOSPC, "SYNTHETIC EXPORT")))
                     with self.assertRaises(OSError):
-                        rt.launch_owner(key, c.source_hash(), ROOT, "a"*40, owner_start=True,
+                        rt.launch(key, c.source_hash(), ROOT, "a"*40, owner_start=True,
                                         inputs=root/"input", work=root/"out", scratch_root=scratch)
                     self.assertEqual(backend.calls, 0)
                     self.assertEqual(len(list((root/"out").glob("*/owner_consumption_log.json"))), 1)
                     return
-                output = rt.launch_owner(key, c.source_hash(), ROOT, "a"*40, owner_start=True,
+                # Retain the v1 entrypoint as a historical compatibility test.
+                # Production launch_owner now uses the separately tested v2 path.
+                output = rt.launch(key, c.source_hash(), ROOT, "a"*40, owner_start=True,
                                          inputs=root/"input", work=root/"out", scratch_root=scratch)
                 status = read(output/"supervisor_status.json")
                 consumed = None if fault == "consume" else fault in (None, "worker")
@@ -296,7 +298,7 @@ class OwnerExecutionTests(unittest.TestCase):
                 else:
                     self.assertEqual(backend.calls, 0)
                     self.assertIsNotNone(status["failure"])
-                second = rt.launch_owner(key, c.source_hash(), ROOT, "a"*40, owner_start=True,
+                second = rt.launch(key, c.source_hash(), ROOT, "a"*40, owner_start=True,
                                          inputs=root/"input", work=root/"out", scratch_root=scratch)
                 self.assertEqual(read(second/"supervisor_status.json")["status"], "BLOCKED")
                 self.assertEqual(read(second/"supervisor_status.json")["stage"], "authority")

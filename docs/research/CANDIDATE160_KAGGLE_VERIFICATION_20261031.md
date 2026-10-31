@@ -1,0 +1,120 @@
+# Candidate160: production path regression and real Kaggle verification
+
+Status: BLOCKED — measured MiniCPM FP16 native attention overflow; protected numerical-policy decision required. PR #156 remains Draft; independent ChatGPT
+review and Antigravity audit are required before merge. No scientific approval
+or result-selection decision is changed.
+
+Final exact Linux Git export `7bb353529f2ad29bee56620ab94586aaf87fdcea`:
+**358 tests =322 PASS/36 SKIP/0 failures/errors**. Four native tracer CPU tests
+also passed separately in the pinned3.11.9/cu124 stack. Both real production
+CPU CLI checks passed. All four real Kaggle jobs ended; total4 engineering
+native calls, all on the same original first image. No full160 experiment ran.
+The final runtime/notebook bytes remain the tested `c7a48bc...` source, runtime
+`ad6c6ed23d33d218fd199d77c817f002a3ec0944`; subsequent changes are diagnostic
+tools/tests/docs/receipts and do not change the embedded production source.
+[Receipt index](evidence/candidate160_kaggle_20261031/index.json) records full
+hashes, private job versions, results and unchanged protected bytes. The
+chronological verification records below retain earlier runs and failures.
+
+Authority: [Owner directive](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+and the Owner's direct task on 2026-10-31. This extends the previous CPU-only
+task to bounded engineering inference on Owner-controlled, locked TRAIN inputs.
+
+The retained Owner failure archive has SHA256
+`aee7f4b782c6eb31c780afc8f3d7756c5f91e30a5d9eab506417c2817c818e8c`;
+all28 member checksums verify. It records BLOCKED at cpu_native_and_images,
+160 NOT_ATTEMPTED,0 native calls and attempt_consumed=false. No member or old
+reservation/status is changed.
+
+The new regression reproduced AttributeError(str.lstat) in both unmodified
+production `python -B -m safeshift.candidates.train_runtime --check-only`
+subprocesses. These ran real authorization, exact installed pins/ABI, locked
+manifest160, all160 image hash/decode checks and real native/meta loaders.
+There were no native_setup, verify_snapshot or worker mocks. The first local
+invocation used the wrong downloaded bundle directory and failed earlier;
+its separate logs are retained too. Corrected invocations reproduced the
+reported bug before the fix; both passed after the path-boundary fix.
+
+The CLI now types all filesystem arguments as Path, and the worker normalizes
+all five path arguments for direct callers. Snapshot stat/verify/stage accept
+str/os.PathLike without resolving aliases or weakening lstat/allowlist/hash
+checks. Preflight and production use the same native CPU check and production
+command constructor. Model source/revision/checkpoint locks, adapters, C1,
+precision, parser/HNLO, scientific configuration hashes and original160 order
+are preserved.
+
+Technical smoke has a separate schema/run prefix/output tree, one ordinal(0),
+one model load, at most one native call and3600 seconds including setup. Full
+manifest admission remains mandatory. The same supervisor provisions software,
+hashes weights/source, runs CPU/CUDA children and the real GPU worker, retains
+raw before parse and exports checked ZIP/sidecar. A final receipt additionally
+requires measured CUDA, real native model runtime/attention evidence, durable
+raw/result/custody, completed controller, cleanup and verified export. Failures
+produce BLOCKED_NOT_VERIFIED. Smoke emits no scientific metrics or production
+reservation and cannot resume/pool into a production series.
+
+The exact deliverable notebook defaults to technical_smoke. After all required
+review/audit/merge gates, Owner changes only candidate160_action to resume (or
+rerun for a new full series), retains authorized Inputs and runs the official
+experiment personally. One-image engineering evidence cannot establish full160
+completion, rare processor cases, sustained VRAM/time behavior or model quality.
+
+Full exact Linux Git export `c9c2f24680e4eb21290dbf2e3b8fb308a5c8bf2e` passed354
+tests:321 PASS/33 SKIP/0 failures/errors. The33 skips require separate native
+opt-ins; both actual production CLI checks were also run and passed in their
+pinned3.11.9/cu124 stacks. Windows notebook4/4 and smoke5/5 passed. Earlier
+slow Windows recovery/WSL-on-NTFS suite invocations were interrupted, their logs
+retained without a PASS claim; the replacement exact Linux export completed.
+
+Kaggle InternVL version1 used the exact deliverable cell code/source and private
+authorized Inputs on T4x2. Real weights and one inference completed; raw,
+tokenizer/native custody, parser/defined HNLO handling, cleanup and archive
+checks verify. ZIP SHA256 `b62204d36dc1c22c0bd6ceb40de5e2c0f899721f16788c13220a22a94bc96e5c`.
+The model emitted code fences; the unchanged strict parser correctly records
+INVALID and HNLO RAW_LOGITS_AVAILABLE_BUT_UNALIGNED. Numeric HNLO and scientific
+quality are not established, and no output is rescued or used in research.
+
+Kaggle MiniCPM version1 loaded the locked weights, then one actual native call
+produced nonfinite logits at64/64 generation steps. Controller stopped and the
+receipt is BLOCKED_NOT_VERIFIED. This is not an OOM: peak allocated9,736,494,592
+bytes. ZIP SHA256 `7d9e1947e8316dd2586feaa44bcdbc52fa7dcabe52bc8aaf95050c4de333c939`;
+all member checksums verify and raw/log/failure evidence is retained unchanged.
+A separate one-image diagnostic observes the same FP16 weights and native
+module outputs, stopping at the first nonfinite output without changing values,
+precision, eager attention, prompt, processor or checkpoint. It is diagnosis,
+not release qualification; production remains blocked pending actual resolution.
+
+The first real numerical diagnostic verified4,059,533,040 FP16 parameters, all
+finite. The first observed bad module is `resampler.attn.out_proj` (Linear):
+its input already contains70,400 NaNs and its output1,408,000 NaNs. Thus the
+problem is inside the preceding native resampler attention, rather than corrupt
+loaded parameters. This does not yet pinpoint the earliest functional operation.
+Diagnostic ZIP SHA256 `96189820991e62fa3f077cd24697ac0fd533c8f19591894b270ad91de7b21886`.
+
+A final observation-only line trace will record native projected Q/K/V, masks,
+scores before softmax and probabilities before the value product on the same
+image. No operation is replaced or upcast. Its CPU test uses the actual locked
+public attention class with tiny synthetic tensors. The first local tracer test
+failed because it watched `forward` instead of `multi_head_attention_forward`;
+this was fixed and all4 pinned CPU tests passed before any GPU submit of that
+tracer. The failed local staging is retained; it never started a Kaggle job.
+
+The final real trace completed and verifies the cause: projected Q/K/V and
+scaled Q are finite, masks are finite zeros with0 fully masked rows. Native
+FP16 `baddbmm` produces60,522 positive infinities; the following softmax
+produces569,800 NaNs. These propagate into the output projection. Source bytes
+and computations were observed unchanged; no precision switch was executed.
+Probe2 ZIP SHA256 `f4c27ff30bc9eb9132a5d9d736b18bbce45f42464d91ca38a943ffe3335c3b5c`.
+Repeating this unchanged configuration is not a repair. The Owner's section9
+locks precision/effective source, so the [specific proposed numerical-policy change](MINICPM4_NUMERICS_PENDING_DECISION_20261031.md)
+is PENDING and unapplied. The package remains BLOCKED, with no finite MiniCPM
+smoke PASS and no READY FOR OWNER/independent audit claim.
+
+The later full exact export `00d2611f25a878a975e04e71a6c6cf7a12db5a0d` also
+passed357 tests:322 PASS/35 SKIP/0 failures/errors, including the diagnostic
+admission tests. Two torch observer tests require the separate pinned stack,
+where they passed; the subsequent native tracer regression also passed there.
+
+Credentials,
+private images, weights, raw model outputs and full private logs stay ignored
+under data/processed; only sanitized small receipts/hashes may enter Git.

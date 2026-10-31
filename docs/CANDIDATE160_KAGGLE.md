@@ -1,5 +1,217 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
+## Bàn giao production engineering —31/10/2026
+
+**Hai route READY_FOR_TECHNICAL_REVIEW, chưa READY_FOR_OWNER.** Fresh ChatGPT
+review exact HEAD, Antigravity audit độc lập và merge được cấp quyền riêng
+vẫn bắt buộc. MiniCPM official FP32 thêm
+**BLOCKED_PENDING_SCIENTIFIC_DECISION**. Không tự chạy160 hoặc lặp FP16 đã NaN.
+[Báo cáo/SHAs/receipts](research/CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md)
+là trạng thái hiện hành; các hướng dẫn/smoke bên dưới giữ làm lịch sử.
+
+- Dùng `SafeShift_CANDIDATE160_PRODUCTION_internvl35.ipynb` cho InternVL.
+- Dùng `SafeShift_CANDIDATE160_PRODUCTION_minicpm4_FP32.ipynb` cho MiniCPM
+  effective implementation; không dùng notebook FP16 cũ như bản đã qualify.
+
+Cả hai file trên đã được Codex chạy thật với default `qualify`:3 ordinal
+TRAIN0/15/111 chốt trước theo kích thước,1 load/3 calls/3600 giây, không metrics.
+13/3/13 InternVL tiles và10/3/5 MiniCPM slices đã thực sự được xử lý. Raw/
+finite logits/strict parser/HNLO handling/cleanup/ZIP/SHA đều verify. Chính
+notebook đó import ZIP sang workspace mới và kiểm resume0 calls/0 loads.
+Qualification history ở `data/processed/candidate160_q*`, tách official
+`data/processed/candidate160`; không attach kỹ thuật để lấy official completion.
+
+**Owner sau review/audit/merge:** InternVL dùng đúng notebook production/Input/
+checkpoint đã kiểm; dừng job cũ, attach đủ official Outputs rồi đặt
+`candidate160_action = "resume"`. INVALID có raw/custody hợp lệ được skip
+như SUCCESS. `"rerun"` tạo series mới, không tự chọn/gộp kết quả khoa học.
+Owner tự chạy official160 và gửi Output cho ChatGPT. Một bounded check không
+bảo đảm full160/12 giờ hoặc mọi kích thước sẽ PASS.
+
+**MiniCPM chưa được chạy official:** cần Owner/Lead quyết định rõ có nhận
+`minicpm4-resampler-attention-fp32-v1` và effective config đã đo làm baseline
+official TRAIN160 hay không. Activation code phải gắn quyết định có truy vết,
+được review và kiểm lại final source. `resume`/`rerun` FP32 hiện bị chặn
+trước Input/consumption/load, kể cả direct worker. Không tự mở bằng approval giả.
+Scientific selection/pooling vẫn PENDING, tách với quyết định implementation.
+
+**Khi lỗi/ngắt:** giữ mọi directory/raw/partial/ZIP/sidecar và attempts; không
+xóa lock/marker/history hoặc sửa source hash. Dừng phiên cũ, attach đầy đủ
+official Outputs vào VM mới, `resume` tạo attempt mới và chỉ gọi phần pending.
+Raw hợp lệ trước khi kịp result được replay trong plan mới; lỗi load/OOM/
+NaN/Inf/resource/time dừng attempt, không retry nội bộ. ZIP/sidecar/raw/history
+hỏng hoặc mâu thuẫn phải bổ sung bản evidence nguyên vẹn; không sửa bytes để qua
+gate. OS lock chỉ bảo vệ workspace chung; không có global lock giữa hai VM.
+
+**Tải evidence trên Windows:** nếu cây file dài làm CLI tải toàn bộ bị lỗi,
+dùng thư mục ignored ngắn từ repo root và filter ZIP/sidecar/final receipt;
+raw nằm đầy đủ trong sealed ZIP. Không dùng `--force` hoặc ghi đè lượt cũ:
+
+```powershell
+kaggle kernels output <owner/slug/version> -p data/processed/kaggle-export-new --file-pattern '.*(\.zip|\.zip\.sha256\.json|\.qualification-result\.json)$'
+```
+
+Nếu private reads trả401 trong khi list/quota vẫn hoạt động, refresh phiên
+OAuth hiện có qua SDK chính thức; chỉ đăng nhập lại qua browser nếu refresh
+không được. Không print token/config secrets hoặc đưa credentials vào chat/Git.
+
+## Trial kỹ thuật mới: MiniCPM resampler FP32, chưa cấp quyền production
+
+Owner đã cho phép ngoại lệ hẹp trong [quyết định mới](research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception).
+HOLD phía dưới là lịch sử; chỉ score/softmax/value product trong resampler dùng
+FP32, weights FP16/model/checkpoint/ảnh/C1/eager/parser/HNLO không đổi. Dùng
+notebook riêng `SafeShift_CANDIDATE160_MINICPM4_FP32_ATTENTION_SMOKE.ipynb`,
+không đổi notebook160 thành full-run. Route mới chỉ1 ảnh ordinal0/1 native call/
+3600 giây, output candidate160_smoke_resampler_fp32_v1 và series/config/hash
+riêng. Không attach smoke như production history, không resume/pooling với FP16.
+
+Codex kiểm local/native CLI trước, rồi submit private Kaggle với cùng
+`nguynanhtn/safeshift-pilot-input`, Output `nguynanhtn/safeshift-prepare-minicpm4`,
+container target cũ, T4x2/Internet ON. Tải vào thư mục mới, giữ mọi FAIL/PASS.
+Receipt cuối phải kiểm actual weights/inference/finite/effective ID/counters/
+raw/parser/HNLO handling/cleanup/ZIP/SHA256. Chưa có evidence thật cuối thì
+NOT VERIFIED; CPU/preflight không đủ. [Hồ sơ trial](research/MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md).
+Ngay cả khi trial PASS: giữ Draft PR156, báo ChatGPT kiểm GitHub rồi quyết định
+Antigravity audit; chưa được chạy chính thức160 hoặc dùng làm baseline khoa học.
+
+**Kết quả đã đo:** notebook effective version1 trên Kaggle đã TECHNICAL_SMOKE_PASS:
+1 ảnh/1 call, weights FP16,11/11 logits steps hữu hạn, parser SUCCESS, HNLO
+unaligned (chưa numeric score), raw/ZIP/SHA256/cleanup hợp lệ. Xem
+[receipts](research/evidence/minicpm_resampler_fp32_20261031/index.json).
+Đây là trial đã chạy, không lệnh để Owner chạy chính thức hoặc lặp thêm. Không
+sửa action thành160/resume; quyền hiện tại chưa cho full-run effective policy.
+Owner chờ ChatGPT review GitHub rồi quyết định audit/phạm vi tiếp theo.
+
+## Quy trình hiện hành PR156: Codex kiểm Kaggle thật trước bàn giao
+
+Nguồn: [Owner31/10](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161),
+áp dụng cho mọi notebook Kaggle. Các hướng dẫn bên dưới về Owner chạy preflight
+đầu tiên/task chỉ CPU là snapshot trước chỉ thị này, không đủ điều kiện release.
+
+**Trạng thái thực tế31/10: BLOCKED.** InternVL đã qua weights/inference/raw/ZIP
+smoke1 ảnh nhưng strict parser giữ INVALID/HNLO unaligned. MiniCPM nạp weights
+được nhưng native attention FP16 overflow; hai diagnostic giữ nguyên cấu hình
+đã đo nguyên nhân. Không chạy production160 để lặp lỗi này. Xem
+[bằng chứng](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md) và
+[quyết định còn PENDING](research/MINICPM4_NUMERICS_PENDING_DECISION_20261031.md).
+
+Codex dùng Kaggle CLI chính thức trong virtual environment riêng (Python3.11+).
+`kaggle --version`, `kaggle kernels push --help` xác minh phiên bản/cú pháp;
+`kaggle kernels list --mine`, `kaggle datasets list --mine`, `kaggle quota`,
+`kaggle kernels status <owner/slug>` kiểm read-only trước submit. Nếu chưa auth,
+Owner tự chạy `kaggle auth login` qua browser theo [tài liệu chính thức](https://github.com/Kaggle/kaggle-cli/blob/main/docs/README.md#authentication).
+Không dán token/password/kaggle.json vào chat; không ghi credentials trong repo.
+
+Notebook cuối mặc định `candidate160_action = "technical_smoke"`; upload chính
+file này, không chỉnh source/locks. Private kernel mới chỉ dành smoke, cùng
+dataset `nguynanhtn/safeshift-pilot-input`, đúng checkpoint Notebook Output của
+model, Internet ON, accelerator `NvidiaTeslaT4` (T4×2). Không attach TEST hoặc
+dataset gốc đầy đủ. Metadata `is_private=true`; không thay quyền nguồn cũ.
+`kaggle kernels push -p <ignored-staging-folder> --accelerator NvidiaTeslaT4 -t 3900`
+submit một lần; ghi version, notebook SHA256 và source SHA256 trước upload.
+Theo dõi status có giới hạn; không submit trùng khi job còn QUEUED/RUNNING.
+`kaggle kernels output <owner/slug/version> -p <new-private-evidence-folder>`
+tải bằng chứng vào vị trí mới, không dùng --force ghi đè evidence cũ.
+
+Smoke vẫn kiểm manifest/order/hash/decode160 và checkpoint/shards/source/pins/
+storage/driver/CUDA như production, nhưng chỉ gọi ảnh ordinal0 theo manifest:
+max1 native call,1 load,3600 giây gồm setup. Sample ID/hash/kích thước/lý do
+trong technical_selection.json; output ở candidate160_smoke, không production
+execution/reservation/history/scientific metrics. Khóa tiến trình dùng chung
+chỉ để ngăn duplicate; không consumption production. Không attach smoke Output
+làm production history. Preflight giữ chức năng diagnostic riêng.
+
+Phải kiểm ZIP/checksums/sidecar và `.smoke-result.json`: TECHNICAL_SMOKE_PASS
+chỉ khi actual native model/weights/GPU/inference/raw/parser/HNLO/custody,
+controller và cleanup/export đều đạt. COMPLETE của Kaggle hoặc CPU preflight
+không tự là PASS. Lỗi: giữ thư mục/ZIP/log/receipt, sửa cùng branch, thêm
+regression, local integration và kiểm lại tối thiểu. Không retry vô hạn.
+Không có GPU/Input/quota/auth → BLOCKED/NOT VERIFIED, không bàn giao READY.
+
+**Owner chạy chính thức sau review/audit/merge:**
+
+1. Chọn notebook đúng model và đúng authorized Inputs như smoke đã kiểm;
+   dừng job cũ. Attach đủ production Outputs cũ để resume, giữ mọi marker.
+2. Đặt `candidate160_action = "resume"` (hoặc `"rerun"` cho series mới160),
+   giữ nguyên mọi cấu hình nghiên cứu. Save Version → Save & Run All.
+3. Tải ZIP + SHA256 dù PASS/FAIL/partial, giữ private và gửi ChatGPT phân tích.
+
+Codex không tự chạy full160. Scientific selection=PENDING/pooling=false;
+một ảnh không chứng minh cả160, rare sizes, long-run OOM hoặc chất lượng.
+Xem [bằng chứng mới](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+## Hướng dẫn hiện hành — retry/resume31/10/2026
+
+Main base `6252a7de91d9d98bd68a33b9bc13ae9888f2b9da`, sau PR155.
+[Quyết định vận hành mới](research/CANDIDATE160_RECOVERY_DECISION_20261031.md)
+thay khóa one-shot/no-retry cho đúng hai notebook Owner. Các phần phía dưới mục
+“Snapshot trước thay đổi recovery” là lịch sử; cấm retry/resume/replacement2 ở
+đó không áp dụng cho production v2 mới. Giữ mọi scientific/data/technical gates.
+
+1. Sau review/audit/merge, chạy preflight riêng với cùng bundle/checkpoint,
+   Internet ON/T4×2. Preflight không tạo execution/attempt/slot hoặc nạp weights;
+   kiểm receipt cuối `.preflight-result.json` + ZIP + SHA256. Mức GPU tensor PASS
+   không chứng minh model-fit. Production vẫn kiểm admission lại.
+2. Mở notebook production đúng model. Giữ bundle160 TRAIN và checkpoint Inputs
+   như đã khóa. Dừng phiên/job cũ trước khi khôi phục; không chạy hai jobs cùng
+   model đồng thời. Không xin lại approval/grant/CONTINUE trong scope Owner.
+3. Phiên Kaggle mới: attach toàn bộ Outputs cũ. Runtime nhận:
+   `notebooks/<owner>/<slug>/data/processed/candidate160/<key>-<uuid>/`, thư mục
+   run trực tiếp ở mount, hoặc evidence `<key>-<uuid>.zip` ở mount/parent chuẩn.
+   ZIP phải nguyên vẹn với checksums; sidecar nếu có phải khớp. Giữ thư mục
+   `attempts/`, history/markers và mọi partial/error. Không chỉ attach summary
+   hoặc raw rời rạc, không sửa/xóa trạng thái cũ để vượt cổng.
+4. **Save Version → Save & Run All**, `candidate160_action = "resume"` mặc định.
+   Mỗi kích hoạt có ID mới. Chỉ ảnh chưa có durable raw/custody trong series
+   hiện hành được gọi; INVALID hợp lệ cũng đã hoàn thành. Raw hợp lệ chưa có
+   result được replay trong plan mới; không sửa file lịch sử. Không tự retry
+   bên trong attempt; GPU/load/raw/resource/time error dừng để giữ evidence.
+5. Khi cần chạy lại toàn bộ160 ảnh, đổi duy nhất cấu hình
+   `candidate160_action = "rerun"` ở đầu code cell; Save & Run All tạo FULL_RERUN
+   và series mới. Lần tiếp tục để `resume` sẽ tiếp nối series này, không lấy
+   completion của baseline trước đó. Không đổi protocol/hash/model để sửa lỗi.
+6. Download private ZIP + `.sha256.json` được in kể cả STOPPED/BLOCKED/partial.
+   Nếu kill chưa kịp ZIP, giữ saved Output directory. Phiên sau attach lại đầy đủ.
+   Không có ảnh/weights trong evidence ZIP; không publish raw/nhãn hoặc secrets.
+
+`recovery_plan.json` ghi pending/durable ordinals và toàn bộ lineage/raw hashes;
+`history_index.json` khóa snapshots/ancestors; `lineage_accounting.json` đếm
+attempts/native calls theo run và toàn lịch sử. `model_load_attempt.json` phân
+biệt lần thử load với native calls=0. Bản sao cùng run ID/hash chỉ tính một lần;
+copies khác nhau, thiếu ancestor hoặc marker orphan → BLOCKED trước load.
+`BLOCKED_RESERVED_NO_RETRY`, `CONSUMED`, UNKNOWN và `replacement1` cũ được nhập
+nguyên trạng; không còn là khóa vĩnh viễn. Bổ sung đúng Output/evidence bị thiếu
+rồi chạy lại, không cần approval thủ công hoặc xóa marker. Hai nhánh lịch sử
+độc lập làm resume BLOCKED; explicit rerun tạo series mới giữ cả hai nhánh.
+
+Mỗi attempt ≤160 calls, một call/ảnh được schedule, một load,12 giờ. Resume đã
+đủ160 durable sẽ tạo evidence no-op, không setup/GPU/weights/model call. Lock OS
+tự nhả khi supervisor/worker kết thúc; Linux child giữ lock nếu supervisor chết.
+Lock này không liên lạc giữa VM Kaggle riêng biệt: Owner phải dừng job cũ và
+cung cấp đầy đủ Outputs. Không claim global exactly-once khi không shared state.
+
+**Scientific result selection=PENDING; pooling_allowed=false.** INITIAL,
+RECOVERY, FULL_RERUN và mỗi series giữ riêng; completion union chỉ phục vụ
+scheduling kỹ thuật. Không chọn best/first/latest cho nghiên cứu, không ghép
+metric/AUROC hoặc tự nâng qualification. Metrics trong summary chỉ thuộc attempt
+đó; decisions khoa học mới phải được ghi trước khi áp dụng.
+
+Manifest/order160 TRAIN, model revisions, checkpoint/source locks, C1, HNLO,
+parser/nhãn/metric/protocol và quyền dữ liệu không đổi. Task mã nguồn không GPU,
+Kaggle, weights hoặc attempt thực nghiệm. [Bằng chứng CPU mới](research/CANDIDATE160_RECOVERY_CPU_20261031.md).
+Dừng ở **một Draft PR** cho ChatGPT kiểm GitHub; Antigravity audit độc lập bắt
+buộc trước merge. Không tự merge hoặc coi CPU synthetic là GPU PASS.
+
+CPU acceptance: export `afbf030` có347 tests =315 PASS/32 SKIP/0 lỗi;10 notebooks
+khớp builder,15 recovery tests mới PASS; Windows11 focused/notebook/prefix checks
+PASS. [Receipts/checksums](research/evidence/candidate160_recovery_20261031/index.json)
+giữ cả lần kiểm đầu có2 assertion lỗi và correction chỉ trong tests. Runtime
+`0f0d272c60c3a574814c1b0d3dc4a73ee169b30c`, candidate source SHA256
+`f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb`.
+Không native opt-in/live pip/full Windows hoặc actual Kaggle/model fit ở Codex.
+
+## Snapshot trước thay đổi recovery — không phải thủ tục hiện hành
+
 31/10/2026, Asia/Bangkok; tiếp tục cùng Draft PR #155. Environment repair base **PR #154 MERGED**:
 `39ec489403753ada10f4924c4b0d6077e027f5e1`, đã kiểm remote main.
 PR này cần ChatGPT kiểm GitHub và audit độc lập trước merge.

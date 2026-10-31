@@ -189,3 +189,155 @@ Thay đổi hai file khoa học về sau cần quyết định version/hash mớ
 phê duyệt này sang bytes khác. **NEXT TASK sau xác minh hậu merge và giao việc:
 M3-01 — triển khai trọn hệ thống phân tích Seminar CPU trên fixture SYNTHETIC**.
 M4 cần quyền đọc artifact thật riêng; Khóa luận/học vụ vẫn có các gate riêng.
+
+## DEC-20261031-CANDIDATE160-RECOVERY
+
+Owner trực tiếp yêu cầu bỏ One-Shot/No-Retry cho hai notebook Candidate160
+InternVL3.5/MiniCPM-V-4; có thể retry/resume sau lỗi/load/ngắt Kaggle và khôi
+phục từ Outputs mà không approval thủ công từng lần trong phạm vi đã giao.
+[Quyết định vận hành đầy đủ](CANDIDATE160_RECOVERY_DECISION_20261031.md) ghi
+attempt/series/lineage bất biến, migration trạng thái cũ, bounded calls/khóa
+tiến trình và giới hạn cross-VM. Bổ sung append-only; không sửa quyết định cũ.
+
+Giữ160 TRAIN/order/revisions/checkpoint/source hashes/C1/HNLO/metric/nhãn/
+protocol/raw-before-parse/quyền dữ liệu. **Scientific result selection PENDING;
+không pooling hoặc chọn kết quả thuận lợi.** Chỉ task CPU synthetic; một Draft
+PR chờ ChatGPT kiểm GitHub và Antigravity audit độc lập trước merge. Không GPU,
+attempt thực nghiệm, tự phê duyệt khoa học hoặc merge.
+
+## DEC-20261031-KAGGLE-TECHNICAL-VERIFICATION
+
+[Owner directive PR156](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+và task trực tiếp cùng ngày yêu cầu Codex kiểm mọi notebook Kaggle trên Kaggle
+thật trước bàn giao, có bounded inference trên đúng TRAIN/Input/model/config
+đã được phép. Quy tắc này được ghi append-only trong AGENTS; mở rộng task CPU
+cũ sang kiểm kỹ thuật thật trong phạm vi Owner, không duyệt khoa học/học vụ,
+TEST/bên thứ ba hoặc quyền merge. Owner vẫn chạy full experiment sau review.
+
+Candidate160 thêm technical_smoke riêng: manifest160 nguyên bytes/order,
+ordinal0,1 call,1 load,3600 giây/setup; không production reservation/history,
+retry loop, scientific metrics hoặc pooling. Dùng cùng supervisor/worker,
+source/checkpoint/C1/precision/parser/HNLO và admission. Giữ evidence FAIL/PASS,
+receipt/hash của source/notebook cuối; chưa có actual weights/inference/export
+đạt thì BLOCKED/NOT VERIFIED. [Hồ sơ](CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+Scientific result selection vẫn PENDING; không thay quyết định recovery trước.
+
+## FINDING-20261031-MINICPM-FP16-NUMERICS — BLOCKED / proposed change PENDING
+
+Real Kaggle smoke và hai bounded diagnostics trên đúng ảnh0/model/checkpoint/
+FP16/eager đã khóa xác nhận weights/Q/K/V hữu hạn, mask không fully masked;
+native resampler FP16 baddbmm sinh60.522 +Inf, softmax sinh569.800 NaN. Không
+OOM, không lỗi archive/Path. Các ZIP/raw/log/hash được giữ; xem
+[hồ sơ bằng chứng](CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+[Đề xuất numerical policy riêng cho attention](MINICPM4_NUMERICS_PENDING_DECISION_20261031.md)
+là **PENDING, chưa áp dụng/chưa được phê duyệt**. Task Owner mục9 khóa precision/
+source; bounded smoke authority không tự là ngoại lệ thay các trường đó. Không
+upcast, đổi source lock, đổi precision/model/ảnh/prompt/parser hoặc tắt validation
+để vượt lỗi. Cần quyết định Owner cụ thể trước triển khai exception/effective
+implementation mới; teacher/third-party authority và quyền merge vẫn riêng.
+Không thay scientific result selection=PENDING, không pooling hoặc chạy full160.
+
+## DEC-20261031-OWNER-HOLD-MINICPM-NUMERICS
+
+Owner trực tiếp chọn **phương án1: giữ BLOCKED** sau
+[đánh giá sơ bộ GitHub của ChatGPT](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540368755)
+tại HEAD `51f6eec3be1e1c3eb6a69346e9bd1571be7c87d1`. Chưa cho phép thay đổi
+precision/effective source; ngoại lệ FP32 trong resampler vẫn **PENDING,
+NOT AUTHORIZED, NOT APPLIED**. Không coi đánh giá này là final review PASS,
+Antigravity audit, phê duyệt khoa học hoặc quyền merge.
+
+Giữ nguyên Draft PR156, toàn bộ bằng chứng Kaggle và lỗi FP16. Không merge,
+không chạy lại cấu hình MiniCPM chưa sửa, không chạy160 ảnh chính thức. Chỉ
+tiếp tục triển khai/kiểm số học khi có quyết định Owner riêng về phạm vi thay
+đổi, trong đúng session Codex/branch/PR156. Giữ scientific selection=PENDING,
+pooling_allowed=false và toàn bộ model/checkpoint/source/precision locks.
+Đây là xác nhận HOLD, không phê duyệt hoặc phủ nhận hồi tố đề xuất số học.
+
+## DEC-20261031-MINICPM-RESAMPLER-FP32-TECHNICAL-EXCEPTION
+
+Owner trực tiếp cho phép **triển khai và thử kỹ thuật ngoại lệ số học hẹp**
+trong cùng session/branch/Draft PR156, sau HOLD tại HEAD25d3ec8. Phạm vi duy
+nhất: MiniCPM resampler attention score, softmax và phép nhân với value dùng
+FP32, kết quả về dtype gốc trước output projection. Weights giữ FP16; model/
+checkpoint/revision/source lock gốc, TRAIN160/order, C1, eager, parser, HNLO và
+mọi quyết định khoa học giữ nguyên. Không áp dụng precision toàn mô hình.
+
+Khai báo effective implementation/configuration/ID/hash mới; giữ nguyên tất
+cả evidence FP16 FAIL. Kiểm regression số học/finite/load/history/isolation,
+rồi Codex tự chạy technical smoke trên Kaggle thật, trước tiên đúng ảnh0 của
+TRAIN160,1 call có giới hạn. Phiên bản thử kỹ thuật riêng không resume/pool
+với FP16 cũ hoặc production; chưa cấp quyền chạy160 ảnh/full experiment/TEST.
+
+Quyền này chỉ là **AUTHORIZED_FOR_BOUNDED_TECHNICAL_TRIAL**, không phê duyệt
+baseline/phương pháp khoa học, result selection, audit PASS hoặc merge. Smoke
+chưa PASS phải BLOCKED; nếu PASS giữ Draft để ChatGPT review GitHub rồi quyết
+định Antigravity audit độc lập. Ngoại lệ hẹp này thay HOLD chỉ trong phạm vi
+trên; mọi thay đổi rộng hơn vẫn chưa được cấp quyền. Không sửa quyết định cũ.
+
+## RESULT-20261031-MINICPM-RESAMPLER-FP32-TECHNICAL
+
+Trial được phép ở trên đã **TECHNICAL_SMOKE_PASS** trên Kaggle thật với đúng
+notebook/runtime/effective config được khóa:1 ảnh0 TRAIN160 gốc/1 load/1 call,
+weights FP16, resampler score/softmax/value FP32, output về FP16;11/11 raw
+logit steps hữu hạn, parser SUCCESS, raw/custody/ZIP/SHA256/cleanup PASS.
+[Báo cáo/receipts](MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md) giữ đủ hashes
+và evidence FP16 FAIL cũ nguyên trạng. HNLO unaligned, numeric HNLO chưa chứng
+minh. Đây là kết quả kỹ thuật, không APPROVED baseline/model quality/science.
+
+Giữ **Draft PR156 / READY FOR REVIEW trial kỹ thuật** để ChatGPT kiểm exact
+GitHub HEAD rồi quyết định audit Antigravity độc lập. Scientific result selection
+vẫn PENDING/pooling=false; không official160/TEST/merge hoặc đổi locks ngoài
+ngoại lệ. Không suy PASS của1 ảnh sang toàn cohort, runtime dài hoặc các model/
+notebook chưa được kiểm lại sau đổi embedded source. Owner chưa cấp quyền
+production cho numerical policy này qua quyết định technical trial.
+
+## DEC-20261031-CANDIDATE160-PRODUCTION-ENGINEERING
+
+Nguồn: [Owner follow-up directive](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540904325)
+và task trực tiếp trong session mới. Cho phép hoàn thiện và tự kiểm kỹ thuật
+hai đường production dự kiến bàn giao, cùng branch/Draft PR156. Chuẩn bị
+đường MiniCPM FP32 với effective ID/config/source/hash và history riêng;
+**không phê duyệt baseline khoa học hoặc activation official160 FP32**.
+Scientific result selection vẫn PENDING, pooling=false; TEST vẫn đóng.
+
+Profile vận hành riêng `train160-production-engineering-v1` dùng đúng manifest
+TRAIN160, không đổi order/nhãn/split/C1/parser/HNLO/model/checkpoint. Ba ordinal
+được chốt trước inference mới theo metadata kích thước đã xác minh:0 (đầu),
+15 (diện tích nhỏ nhất, tie ordinal đầu),111 (height/width lớn nhất, tie đầu).
+Không dùng prediction/GT để chọn. Đây là bounded engineering scope, không
+cohort nghiên cứu mới.1 load/≤3 native calls/3600 giây mỗi attempt; không retry
+nội bộ. Dùng cùng production supervisor/worker/controller/raw/history/export.
+Resume/rerun kỹ thuật chỉ trong scope này, không trở thành lịch sử official.
+Sau PASS, import sealed ZIP vào workspace mới để kiểm resume zero-load/zero-call.
+
+InternVL fence/INVALID và MiniCPM alternative native token segmentation phải
+được giữ đúng parser/continuation contract hiện hành. Không tạo numeric HNLO
+bằng thay token, decode gần đúng hoặc đổi surfaces. Không hồi tố sửa raw hoặc
+receipts cũ. Trước Owner full run: final-source Kaggle evidence, fresh ChatGPT
+exact-HEAD review, Antigravity audit độc lập và merge được cấp quyền riêng.
+Quyết định khoa học còn thiếu: Owner/Lead chấp thuận hay từ chối
+`minicpm4-resampler-attention-fp32-v1` làm effective baseline cho official
+TRAIN160, cùng identity/config đã kiểm; selection/pooling vẫn cần quyết định
+riêng trước phân tích khoa học. Không thể mở gate bằng notebook flag/approval giả.
+
+## RESULT-20261031-CANDIDATE160-PRODUCTION-ENGINEERING
+
+Hai notebook PRODUCTION cuối đã được Codex tự kiểm trên Kaggle private với
+đúng source `09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08`,
+3 ordinal đã chốt0/15/111 mỗi model,1 load/3 native calls; finite logits/raw/
+native tokenizer/parser/HNLO handling/cleanup/ZIP/SHA PASS. Resume sealed ZIP
+vào workspace mới thực sự0 loads/0 calls, giữ INVALID là durable completion.
+[Báo cáo và receipts](CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md).
+
+InternVL có38/38 finite steps, INVALID/SUCCESS/INVALID; case15 HNLO thực
+7.301041903017601 với native branch/Decimal oracle khớp. Hai INVALID do code
+fence thật, không sửa parser. MiniCPM33/33 finite steps,3 SUCCESS, HNLO vẫn
+unaligned do alternative native segmentation ngoài continuations đã prove.
+Không đổi arithmetic implementation đã PASS, checkpoint/TRAIN160/C1/parser/
+HNLO/metric; không chọn theo output hoặc nâng trạng thái khoa học.
+
+**READY_FOR_TECHNICAL_REVIEW**, không READY_FOR_OWNER. Official MiniCPM FP32
+vẫn BLOCKED_PENDING_SCIENTIFIC_DECISION; decision adoption baseline còn thiếu.
+Giữ Draft PR156, fresh ChatGPT review và Antigravity audit độc lập trước merge.
+Không full160/TEST, không coi3 ảnh là kiểm đủ12 giờ/all160 hoặc global lock.

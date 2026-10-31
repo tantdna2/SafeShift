@@ -123,3 +123,105 @@ Nguồn bắt buộc: [chỉ thị Owner ngày 31/10/2026 tại PR #155](https:/
 Quy tắc này chỉ COMPLETE sau final HEAD được ChatGPT review, Antigravity audit,
 merge được cho phép riêng và hậu merge xác minh có quy tắc trên main; Draft/CPU
 PASS hoặc comment không tự hoàn tất yêu cầu.
+
+## Candidate160 retry/resume — chỉ thị Owner 31/10/2026
+
+Nguồn: task trực tiếp của Owner “Loại bỏ cơ chế One-Shot/No-Retry” cho
+InternVL3.5 và MiniCPM-V-4, ghi tại
+[DEC-20261031-CANDIDATE160-RECOVERY](docs/research/CANDIDATE160_RECOVERY_DECISION_20261031.md).
+Đây là bổ sung vận hành, thay các lệnh cấm retry/resume/replacement và khóa
+vĩnh viễn **chỉ cho hai notebook Candidate160 Owner**. Không sửa hoặc hồi tố
+quyết định cũ; luồng grant/pilot khác giữ hợp đồng riêng.
+
+- Owner có thể tiếp tục/chạy lại sau lỗi trong phạm vi đã giao, kể cả lỗi load,
+  mà không xin phép thủ công từng lần. Mỗi kích hoạt tạo run/attempt riêng;
+  tối đa160 calls và12 giờ/lượt, không retry nội bộ vô hạn hoặc job trùng.
+- Giữ mọi raw/error/attempt/hash/marker cũ; resume dùng lịch sử kiểm checksum và
+  custody, kể cả Outputs Kaggle cũ. Không xóa khóa hoặc sửa source lock để chạy.
+  Thiếu/mâu thuẫn lịch sử phải ghi BLOCKED và yêu cầu bổ sung evidence có sẵn.
+- Rerun toàn bộ tạo series riêng; resume tiếp tục series vận hành hiện hành.
+  INITIAL/RECOVERY/FULL_RERUN không tự trộn vào khoa học. Quy tắc chọn kết quả
+  phân tích là **PENDING**; không chọn output thuận lợi, gộp AUROC hoặc nâng PASS.
+- Khóa tiến trình tự nhả khi tiến trình/worker kết thúc. Kaggle VM độc lập không
+  có shared lock: Owner phải dừng phiên trước và attach đủ Outputs trước resume;
+  không claim global exactly-once khi thiếu shared state.
+- Giữ nguyên160 TRAIN/order/revisions/source/checkpoint hashes/C1/HNLO/metric/
+  nhãn/protocol/raw-before-parse, preflight môi trường và mọi quyền dữ liệu.
+  Task mã nguồn chỉ CPU synthetic, không GPU hoặc tiêu lượt thực nghiệm.
+- Dừng ở một Draft PR. ChatGPT kiểm GitHub và Antigravity audit độc lập trước
+  merge; không tự nhận audit hoặc merge đã hoàn thành.
+
+## Quy trình bắt buộc cho mọi notebook Kaggle — Owner 31/10/2026
+
+Nguồn: [chỉ thị Owner tại PR #156](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+và task trực tiếp khôi phục thực nghiệm ngày31/10/2026. Đây là bổ sung có truy
+vết, áp dụng cho mọi model/cohort/notebook Kaggle hiện tại và tương lai, kể cả
+phiên Codex mới; không hồi tố sửa các quyết định lịch sử.
+
+- Khi phát triển bất kỳ notebook SafeShift nào dự kiến chạy trên Kaggle,
+  Codex phải kiểm mã nguồn và local integration, rồi **tự chạy trên Kaggle
+  thật** bằng CLI/API chính thức, với dữ liệu thật trong phạm vi được phép,
+  dùng số mẫu tối thiểu đủ kiểm các đường kỹ thuật quan trọng. Ban đầu một
+  ảnh theo thứ tự đã khóa; thêm trường hợp chỉ khi có lý do kỹ thuật ghi rõ.
+- Kiểm cùng production entrypoint/child/CLI/path types, runtime/pins/Input,
+  source/checkpoint/revision/precision/C1; phải nạp weights thật, inference
+  thật trên GPU, raw-before-parse, parser/HNLO liên quan và export ZIP/SHA256.
+  Preflight, CPU mock/unit tests hoặc GPU tensor probe không đủ bàn giao.
+- Smoke có ID, sample ID/hash, cấu hình, source/notebook hash, giới hạn ảnh/
+  calls/time/resource và evidence riêng. Không tiêu/sửa production history,
+  không trộn vào kết quả khoa học, không tạo cohort khoa học hoặc đổi dữ liệu/
+  split/nhãn/prompt/model/precision/parser/HNLO/metric/protocol để đạt PASS.
+- Lỗi phải giữ cả log/raw/archive/receipt FAIL, sửa tận gốc, thêm regression,
+  chạy local rồi kiểm Kaggle lại có giới hạn. Không retry vô hạn/job trùng.
+  Chỉ phiên bản notebook/source cuối có bằng chứng thật mới được bàn giao
+  **READY FOR REVIEW**; source/runtime/Input thay đổi phải kiểm lại tương ứng.
+- Không kết nối/xác thực được, thiếu Input/GPU/quota/quyền hoặc chưa chạy
+  inference/export thật → **BLOCKED / NOT VERIFIED**, không READY FOR OWNER.
+  Không yêu cầu Owner trở thành người phát hiện lỗi cơ bản bằng production.
+- Owner đã cho phép các smoke kỹ thuật có giới hạn trên dữ liệu/tài nguyên họ
+  kiểm soát; không hỏi lại quyền chung từng lần. Dùng xác thực chính thức,
+  không yêu cầu token/password/kaggle.json qua chat, không log/commit/upload
+  credentials và không đổi privacy hoặc suy quyền sang TEST/bên thứ ba.
+- Sau ChatGPT review, Antigravity audit độc lập và merge được cấp quyền,
+  **Owner tự chạy thực nghiệm chính thức đầy đủ**, gửi Output cho ChatGPT.
+  Codex không tự chạy toàn bộ cohort thay Owner. Một smoke PASS không chứng
+  minh cả160 ảnh/long-run/quality hoặc hoàn tất quyết định khoa học PENDING.
+
+Trong phạm vi này, quy tắc mới thay hướng dẫn cũ cho phép bàn giao chỉ với
+preflight/Owner diagnostic và giới hạn task chỉ CPU ở snapshot Candidate160
+phía trên. Retry/resume production vẫn theo quyết định recovery; smoke một
+call riêng không dùng production reservation/history. Không xóa artifact
+CONSUMED/BLOCKED_RESERVED_NO_RETRY/UNKNOWN/replacement1. Dừng ở Draft PR #156;
+không tự merge, tự nhận audit PASS hoặc đổi scientific selection=PENDING.
+
+## MiniCPM resampler FP32 — ngoại lệ kỹ thuật Owner31/10/2026
+
+[Quyết định append-only](docs/research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception)
+cho phép riêng score/softmax/value product trong resampler attention dùng FP32,
+output về dtype gốc; weights FP16, eager và mọi model/checkpoint/source lock/
+TRAIN160/C1/parser/HNLO giữ nguyên. Phải có effective implementation/config/ID/
+hash riêng, không giả source gốc không đổi về thực thi. Chỉ thử kỹ thuật có
+giới hạn, bắt đầu1 ảnh thật; không production160, không TEST, không baseline
+khoa học hoặc pooling/result selection. Giữ mọi FAIL/PASS/receipt cũ. Không
+suy rộng quyền sang toàn model/precision/prompt/parser/nguồn khác. Tiếp tục
+đúng session/branch/Draft PR156; ChatGPT review và quyết định audit trước merge.
+
+## Hoàn thiện production engineering — Owner31/10/2026
+
+[Chỉ thị tiếp nối](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540904325)
+cho phép chuẩn bị đường production FP32 riêng và kiểm kỹ thuật tối thiểu trên
+TRAIN; không phê duyệt baseline FP32 hoặc Codex chạy chính thức160. Profile
+`train160-production-engineering-v1` khóa ordinal0,15,111 trước inference mới:
+ảnh đầu, diện tích nhỏ nhất, height/width lớn nhất (tie lấy ordinal đầu).
+Đây là mẫu phủ nhánh kỹ thuật, không scientific cohort hay chọn theo dự đoán.
+Tối đa3 native calls/1 load/3600 giây; history/campaign/slot/series riêng,
+metrics excluded. Kiểm resume bằng sealed ZIP vào workspace mới phải no-op,
+không load/call lại ảnh đã hoàn thành. INVALID là durable completion.
+
+MiniCPM FP32 official resume/rerun giữ
+`BLOCKED_PENDING_SCIENTIFIC_DECISION`, kể cả direct worker/execution record.
+Không tự bóc fence, nới parser, đổi prompt/token/HNLO hoặc hợp nhất series.
+Chuẩn bị đầy đủ chứng cứ trước khi yêu cầu đúng quyết định hẹp về việc dùng
+implementation đã định danh làm baseline khoa học. Codex tự kiểm chính notebook
+production cuối trên Kaggle thật; fresh ChatGPT review và Antigravity audit
+độc lập vẫn bắt buộc. Dừng tại Draft PR156, không merge/full160/TEST.

@@ -42,16 +42,21 @@ def environment_observation():
     return observed
 
 
-def native_cpu(key, snapshot, repo):
+def native_cpu(key, snapshot, repo, *, implementation=None):
     from .loading import native_setup, load_meta_model
     from .inputs import prepare_inputs, validate_inputs
     from PIL import Image
     from safeshift.pilot.contract import PROMPT_SHA
-    prompt = Path(repo) / "configs/pilot/classification_c1.txt"
+    snapshot, repo = Path(snapshot), Path(repo)
+    prompt = repo / "configs/pilot/classification_c1.txt"
     require(sha(prompt) == PROMPT_SHA, "C1_HASH")
     evidence = {}
     processor, tokenizer, config, cls = native_setup(snapshot, key, evidence)
     empty, attention = load_meta_model(snapshot, key, config, cls)
+    if implementation is not None:
+        from . import minicpm_resampler_fp32 as numerical
+        require(key == "minicpm4" and implementation == numerical.ID, "UNKNOWN_EFFECTIVE_IMPLEMENTATION")
+        evidence["effective_implementation"] = numerical.install(empty)
     evidence["meta_loader"] = attention
     evidence["synthetic_images"] = []
     for size in ((1, 1), (1, 17), (17, 1), (3, 19), (19, 3), (640, 480), (200, 1200), (2048, 1536)):
