@@ -37,7 +37,20 @@ This validates an externally supplied record; it does not authenticate its autho
 or confer approval. The Owner must verify the cited Lead decision independently.
 """
     from .train_owner import SCHEMA, MODE, validate
+    from . import train_history as history
+    from . import train_smoke as smoke
+    if g.get("schema") == smoke.SCHEMA:
+        smoke.validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
+        return MODE
+    if g.get("schema") == history.SCHEMA:
+        from .train_route import admission
+        admission(g)
+        history.validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
+        return MODE
     if g.get("schema") == SCHEMA:
+        require(not g.get("technical_qualification"), "QUALIFICATION_REQUIRES_RECOVERY_SCHEMA")
+        from .train_route import admission
+        admission(g)
         validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
         return MODE
     mode = g["policy"].get("review_mode", "EXTERNAL")
@@ -90,7 +103,11 @@ def legacy_transport_snapshot(key):
         return deepcopy(pilot.settings(key))
 
 
-def config(key):
+def config(key, *, implementation=None):
+    if implementation is not None:
+        from . import minicpm_resampler_fp32 as numerical
+        require(key == "minicpm4" and implementation == numerical.ID, "UNKNOWN_EFFECTIVE_IMPLEMENTATION")
+        return numerical.configuration(config(key))
     transport = legacy_transport_snapshot(key)
     internvl = key == "internvl35"
     return {"schema": "safeshift-candidate160-config-v2",
@@ -134,24 +151,29 @@ def config(key):
                 "public_source_lock_sha256": sha(LOCK)}}
 
 
-def configuration_hashes(key):
+def configuration_hashes(key, *, implementation=None):
     """Two different scopes. Never substitute one digest for the other."""
     return {"legacy_transport_config_sha256": pilot.digest(legacy_transport_snapshot(key)),
-            "candidate_execution_config_sha256": pilot.digest(config(key))}
+            "candidate_execution_config_sha256": pilot.digest(config(key, implementation=implementation))}
 
 
 def validate_configuration_hashes(value, key):
     require("config_sha256" not in value, "AMBIGUOUS_CANDIDATE_CONFIG_HASH_FORBIDDEN")
-    for name, expected in configuration_hashes(key).items():
+    for name, expected in configuration_hashes(key, implementation=value.get("effective_implementation")).items():
         require(value.get(name) == expected, "CONFIGURATION_HASH_BINDING:" + name)
 
 
 def execution_binding(grant):
     validate_configuration_hashes(grant, grant["model_key"])
     require(grant["model"] == model(grant["model_key"]), "EXECUTION_MODEL_BINDING")
-    return deepcopy({name: grant[name] for name in (
+    value = {name: grant[name] for name in (
         "model_key", "model", "legacy_transport_config_sha256", "candidate_execution_config_sha256",
-        "source_sha256", "runtime_ref", "base", "attempt_id", "run_id", "manifest_sha256")})
+        "source_sha256", "runtime_ref", "base", "attempt_id", "run_id", "manifest_sha256")}
+    if "effective_implementation" in grant:
+        value["effective_implementation"] = grant["effective_implementation"]
+    if "technical_qualification" in grant:
+        value["technical_qualification"] = grant["technical_qualification"]
+    return deepcopy(value)
 
 
 def sources(repo=ROOT):
@@ -198,8 +220,21 @@ def policy_check(p):
 
 def authorize(g, key, source, ref, ledger, now=None):
     from .train_owner import SCHEMA, validate
+    from . import train_history as history
+    from . import train_smoke as smoke
+    if type(g) is dict and g.get("schema") == smoke.SCHEMA:
+        require(ledger is None, "TECHNICAL_SMOKE_IS_NOT_AN_EXTERNAL_GRANT")
+        return smoke.validate(g, key, source, ref, now=now)
+    if type(g) is dict and g.get("schema") == history.SCHEMA:
+        require(ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
+        from .train_route import admission
+        admission(g)
+        return history.validate(g, key, source, ref, now=now)
     if type(g) is dict and g.get("schema") == SCHEMA:
         require(ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
+        require(not g.get("technical_qualification"), "QUALIFICATION_REQUIRES_RECOVERY_SCHEMA")
+        from .train_route import admission
+        admission(g)
         return validate(g, key, source, ref, now=now)
     require(type(g) is dict and g.get("schema") == "safeshift-candidate160-grant-v2",
             "BLOCKED_NO_NEW_CANDIDATE_GRANT")

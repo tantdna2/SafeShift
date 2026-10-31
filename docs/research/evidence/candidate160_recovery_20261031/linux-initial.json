@@ -1,0 +1,240 @@
+{
+  "checker_sha256": "a93fc7b22a9094d415bb50cd063cda7b4935669f1dca57958579f33c885b8454",
+  "checks": {
+    "notebooks": {
+      "SafeShift_CANDIDATE160_PREFLIGHT_internvl35.ipynb": {
+        "embedded_source_sha256": "f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb",
+        "sha256": "bd4e240a8847c4944c0782670ab12f8ca8c2b6ec099268086c4041cccae7ad7f",
+        "status": "PASS"
+      },
+      "SafeShift_CANDIDATE160_PREFLIGHT_minicpm4.ipynb": {
+        "embedded_source_sha256": "f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb",
+        "sha256": "49245ac0e59cfd32d1ffa897f96997316a78415ea19ecbb4bc5951ffacf546eb",
+        "status": "PASS"
+      },
+      "SafeShift_CANDIDATE160_internvl35.ipynb": {
+        "embedded_source_sha256": "f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb",
+        "sha256": "279f56e059209d10b3b04d78e80b9478691f0a36771e9005aa80f91621d3b62d",
+        "status": "PASS"
+      },
+      "SafeShift_CANDIDATE160_minicpm4.ipynb": {
+        "embedded_source_sha256": "f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb",
+        "sha256": "3d3afd8af9188548c232c29f9e6762cdd88148ca0b9790196c9cc05e1181f9fd",
+        "status": "PASS"
+      },
+      "SafeShift_ENVIRONMENT_PREFLIGHT_phi.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "9f966a61ee06fe459f177136e58ac3affdfd9a1f4d3aeb02948e5d80ba19b2a3",
+        "status": "PASS"
+      },
+      "SafeShift_ENVIRONMENT_PREFLIGHT_smolvlm2.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "1c611aa66aab2605508cc6758ca496cf7450bdb47e3d3e7062bccfc22546f73e",
+        "status": "PASS"
+      },
+      "SafeShift_STORAGE_PREFLIGHT.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "6da5b5afa6855905e780aa4624b9fc0ff9a9ae0dbe00204e4fd51ddb715e8a69",
+        "status": "PASS"
+      },
+      "SafeShift_TRAIN_PILOT_gemma.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "cc48a21012ec58c8d1e45c4e3f04717c7e2dddebaa6dc6d418a1c80f40c6865f",
+        "status": "PASS"
+      },
+      "SafeShift_TRAIN_PILOT_phi.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "364d5f3014ccd175b33122405a0bcf90e76b748a0e26ab87bf77b6b929303793",
+        "status": "PASS"
+      },
+      "SafeShift_TRAIN_PILOT_smolvlm2.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "81a6dcc158be48649b82e049836857d35d6074d4991c5ef0d2463e7bab20a87e",
+        "status": "PASS"
+      }
+    },
+    "stdlib_suite": {
+      "counts": {
+        "errors": 0,
+        "failures": 2,
+        "run": 347,
+        "skip_details": [
+          [
+            "test_windows_junction_root_and_child_are_rejected (test_candidate_cpu.CandidateCPUTests.test_windows_junction_root_and_child_are_rejected)",
+            "Windows junction test"
+          ],
+          [
+            "test_candidate160_corrupt_image_before_native_generation (test_candidate_native.NativeCandidateTests.test_candidate160_corrupt_image_before_native_generation)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_candidate160_native_processor_tokens_raw_runner_and_archive (test_candidate_native.NativeCandidateTests.test_candidate160_native_processor_tokens_raw_runner_and_archive)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_decode_error_retains_exact_native_ids (test_candidate_native.NativeCandidateTests.test_decode_error_retains_exact_native_ids)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_existing_runner_raw_before_parse_failure_tail_and_archive (test_candidate_native.NativeCandidateTests.test_existing_runner_raw_before_parse_failure_tail_and_archive)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_four_labels_whitespace_and_existing_fifteen_raw_cases (test_candidate_native.NativeCandidateTests.test_four_labels_whitespace_and_existing_fifteen_raw_cases)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_input_faults_and_dtype_transfer (test_candidate_native.NativeCandidateTests.test_input_faults_and_dtype_transfer)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_invalid_repetition_and_max64_are_not_rescued (test_candidate_native.NativeCandidateTests.test_invalid_repetition_and_max64_are_not_rescued)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_malformed_sequences_persist_before_rejection (test_candidate_native.NativeCandidateTests.test_malformed_sequences_persist_before_rejection)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_meta_loader_inventory_and_attention_faults (test_candidate_native.NativeCandidateTests.test_meta_loader_inventory_and_attention_faults)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_native_empty_safetensors_path_loader_and_failure (test_candidate_native.NativeCandidateTests.test_native_empty_safetensors_path_loader_and_failure)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_native_generation_contract_raw_ids_logits_eos_and_decode_order (test_candidate_native.NativeCandidateTests.test_native_generation_contract_raw_ids_logits_eos_and_decode_order)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_real_native_embedding_glue_with_scripted_towers (test_candidate_native.NativeCandidateTests.test_real_native_embedding_glue_with_scripted_towers)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_sizes_spatial_native_parity_and_rgb_normalization (test_candidate_native.NativeCandidateTests.test_sizes_spatial_native_parity_and_rgb_normalization)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_weight_loader_failure_uses_exact_config_and_no_fallback (test_candidate_native.NativeCandidateTests.test_weight_loader_failure_uses_exact_config_and_no_fallback)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_write_failure_stops_before_decode_and_removes_hook (test_candidate_native.NativeCandidateTests.test_write_failure_stops_before_decode_and_removes_hook)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_a4_and_a5_real_loader_before_after (test_phi_native.NativePhiTests.test_a4_and_a5_real_loader_before_after)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_cpu_admission_processor_and_shapes_and_token_boundaries (test_phi_native.NativePhiTests.test_cpu_admission_processor_and_shapes_and_token_boundaries)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_first12_failure_and_capture_io_keep_native_custody (test_phi_native.NativePhiTests.test_first12_failure_and_capture_io_keep_native_custody)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_generation_failures_stop_raw_and_tail_accounting (test_phi_native.NativePhiTests.test_generation_failures_stop_raw_and_tail_accounting)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_phi_native.NativePhiTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_phi_native.NativePhiTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_real_verified_wheel_bootstraps_pip_free_venv (test_pilot_bootstrap.PipBootstrapTests.test_real_verified_wheel_bootstraps_pip_free_venv)",
+            "opt-in real network/venv pip --python rehearsal"
+          ],
+          [
+            "test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical (test_smol_native.NativeSmolTests.test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_all_four_labels_and_three_surfaces_use_actual_native_branch (test_smol_native.NativeSmolTests.test_all_four_labels_and_three_surfaces_use_actual_native_branch)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_first12_failure_and_capture_io_keep_native_custody (test_smol_native.NativeSmolTests.test_first12_failure_and_capture_io_keep_native_custody)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_generation_failures_stop_raw_and_tail_accounting (test_smol_native.NativeSmolTests.test_generation_failures_stop_raw_and_tail_accounting)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_independent_tokenizer_mismatch_and_raw_before_parser (test_smol_native.NativeSmolTests.test_independent_tokenizer_mismatch_and_raw_before_parser)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_smol_native.NativeSmolTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_native_processor_shapes_tokens_prompt_and_corruption (test_smol_native.NativeSmolTests.test_native_processor_shapes_tokens_prompt_and_corruption)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_smol_native.NativeSmolTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_real_loader_original_checkpoint_and_nested_attention (test_smol_native.NativeSmolTests.test_real_loader_original_checkpoint_and_nested_attention)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ]
+        ],
+        "skipped": 32
+      },
+      "returncode": 1,
+      "stderr_sha256": "8e571ecce272f4cb86b436c9baf078fb191f29252dc74730aaa18c600fc70a20",
+      "stdout_sha256": "a55d9d18bb458fa8735e3013c796c47eddc99a73187025ee497efc63dfb405d1"
+    }
+  },
+  "cpu_environment": {
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+    "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]"
+  },
+  "failure_disposition": [
+    {
+      "fix_commit": "afbf0307178b2ecfb1d81b7ec2504628bacaaaf0",
+      "reason": "Historical v1 replacement assertion called new production v2 route",
+      "test": "IncidentTests.test_replacement_supervisor_consumes_distinct_marker_preserves_old_and_blocks_second_run"
+    },
+    {
+      "fix_commit": "afbf0307178b2ecfb1d81b7ec2504628bacaaaf0",
+      "reason": "Exact whole-file decision-log hash did not allow Owner-required append-only decision",
+      "test": "CandidateIntegrationTests.test_protected_pilot_c1_generation_and_source_bytes"
+    }
+  ],
+  "gates": {
+    "G0_authority": "BLOCKED_REVIEW_REQUIRED",
+    "G1_notebook": "PASS",
+    "G2_native_environment": "REQUIRES_PINNED_CPU_ENV",
+    "G3_custody": "NOT_RUN",
+    "G4_kaggle": "REQUIRES_AUTHORIZED_GPU",
+    "G5_behavior": "REQUIRES_AUTHORIZED_GPU",
+    "G6_release": "BLOCKED_REVIEW_REQUIRED"
+  },
+  "native_model_forward": "NOT_RUN",
+  "no_grant_created": true,
+  "notebook_cells_executed": false,
+  "public_copy_provenance": {
+    "omitted_fields": [
+      "checks.stdlib_suite.stdout",
+      "checks.stdlib_suite.stderr"
+    ],
+    "original_receipt_sha256": "ef5ec6fb2a758aadc47e733b6f6169d1134f408109b3f5a973e3fee031ab4255",
+    "purpose": "Retain first full-run failures and log hashes without synthetic temporary-path transcripts"
+  },
+  "reason": "ValueError:RUNTIME_TESTS_FAILED_OR_MISSING_SUMMARY",
+  "release_status": "BLOCKED",
+  "runtime_commit": "568abd37f02aeb0f6655d8d2efaeb3c3e4b48b8e",
+  "schema": "safeshift-notebook-cpu-review-v1",
+  "snapshot_archive_sha256": "07a21b52957f98ae6a8ad166f0bd45e2be1d26a5b1029cd6115b2669bb8890a6",
+  "software_status": "FAIL"
+}

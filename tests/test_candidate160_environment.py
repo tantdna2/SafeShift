@@ -409,7 +409,9 @@ class IncidentTests(unittest.TestCase):
                 self.assertTrue(read(output/"consumption.json")["attempt_consumed"])
                 run.run_calls(output, plan, rows, lambda: backend, g, resources=lambda: {})
             stack.enter_context(patch.object(rt.subprocess, "run", side_effect=child))
-            output = rt.launch_owner("internvl35", c.source_hash(), ROOT, "a"*40, owner_start=True,
+            # Exercise the retained v1 replacement contract explicitly. The
+            # production launch_owner route now has v2 multi-attempt semantics.
+            output = rt.launch("internvl35", c.source_hash(), ROOT, "a"*40, owner_start=True,
                 inputs=root/"input", work=root/"out", scratch_root=scratch)
             self.assertIs(read(output/"supervisor_status.json")["attempt_consumed"], True)
             self.assertEqual(backend.calls, 160)
@@ -417,7 +419,7 @@ class IncidentTests(unittest.TestCase):
             self.assertTrue((root/"out/attempts"/(new_name.removesuffix(".json")+".consumed.json")).is_file())
             self.assertFalse((root/"out/attempts"/(original_name.removesuffix(".json")+".consumed.json")).exists())
             self.assertEqual({p: sha(p) for p in directory.iterdir()}, old_hashes)
-            second = rt.launch_owner("internvl35", c.source_hash(), ROOT, "a"*40, owner_start=True,
+            second = rt.launch("internvl35", c.source_hash(), ROOT, "a"*40, owner_start=True,
                 inputs=root/"input", work=root/"out", scratch_root=scratch)
             self.assertEqual(read(second/"supervisor_status.json")["status"], "BLOCKED")
             self.assertEqual(backend.calls, 160)

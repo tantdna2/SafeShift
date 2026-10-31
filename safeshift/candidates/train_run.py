@@ -17,11 +17,28 @@ from safeshift.pilot.report import measurements
 from .source import require
 from .train_contract import config, enrollment, execution_binding, policy_check, batch_check
 from .train_owner import SCHEMA as OWNER_SCHEMA, MODE as OWNER_MODE
+from . import train_history as history
+from . import train_smoke as smoke
 
 
 def not_attempted():
     return {"status": "NOT_ATTEMPTED", "label": None, "attempts": 0, "native_calls": 0,
             "hnlo": {"status": "HNLO_UNVERIFIED", "hnlo": None}}
+
+
+def lineage_accounting(recovery, rows, results, grant):
+    """Operational counts only; every raw/result reference remains per run."""
+    pending = set(recovery["pending_ordinals"])
+    return {"scientific_selection": "PENDING", "pooling_allowed": False,
+        "run_id": grant["run_id"], "series_id": grant["series_id"],
+        "samples": [{"ordinal": i, "sample_id": r["sample_id"],
+            "scheduled_this_attempt": i in pending,
+            "attempts_this_run": results[r["sample_id"]]["attempts"],
+            "native_calls_this_run": results[r["sample_id"]]["native_calls"],
+            "attempts_all_runs": results[r["sample_id"]]["attempts"] + sum(v["attempts"] for v in recovery["lineage"][r["sample_id"]]),
+            "native_calls_all_runs": results[r["sample_id"]]["native_calls"] + sum(v["native_calls"] for v in recovery["lineage"][r["sample_id"]]),
+            "previous_results": recovery["lineage"][r["sample_id"]]}
+            for i, r in enumerate(rows)]}
 
 
 def native_custody(sample, raw):
@@ -34,17 +51,17 @@ def native_custody(sample, raw):
 
 
 def configuration_context(grant):
-    require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
+    require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA, history.SCHEMA, smoke.SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
     return {"schema": "safeshift-candidate160-configuration-evidence-v2",
             "execution_release": execution_binding(grant),
-            "configuration_contract": config(grant["model_key"])}
+            "configuration_contract": config(grant["model_key"], implementation=grant.get("effective_implementation"))}
 
 
 def validate_context(context, grant=None):
     require(context["schema"] == "safeshift-candidate160-configuration-evidence-v2", "CONFIGURATION_EVIDENCE_SCHEMA")
     binding = context["execution_release"]
     require(binding == execution_binding(binding), "EXECUTION_RELEASE_FIELDS")
-    require(context["configuration_contract"] == config(binding["model_key"]), "EFFECTIVE_CONFIGURATION_DRIFT")
+    require(context["configuration_contract"] == config(binding["model_key"], implementation=binding.get("effective_implementation")), "EFFECTIVE_CONFIGURATION_DRIFT")
     if grant is not None:
         require(binding == execution_binding(grant), "APPROVED_EXECUTION_RELEASE_BINDING")
     return context
@@ -94,6 +111,12 @@ def validate_native_configuration(sample, context):
     marker = "tiles_including_thumbnail" if effective["model_key"] == "internvl35" else "slices_including_global"
     require(request["image"]["processor_mode"] == "RGB" and marker in request["input_detail"]
             and "num_crops" not in request["input_detail"], "NATIVE_REQUEST_PREPROCESSING_BINDING")
+    if "numerical_policy" in effective:
+        observed = read(sample / "effective_numerics.json")
+        require(observed["implementation"] == effective["numerical_policy"], "NATIVE_NUMERICAL_POLICY_BINDING")
+        for name in ("scores_fp32_finite_or_negative_mask", "softmax_fp32_finite", "value_product_fp32_finite_and_return_cast"):
+            require(observed["after"][name] - observed["before"][name] == 1, "NATIVE_NUMERICAL_EXECUTION_REQUIRED")
+        require(observed["after"]["returned_dtype"] == "torch.float16", "NATIVE_NUMERICAL_RETURN_DTYPE")
 
 
 class CandidateStore(Store):
@@ -283,10 +306,23 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
     deadline = clock() + grant["max_seconds"] if deadline is None else deadline
     native, reason, sequence_counts = None, None, Counter()
     results = {r["sample_id"]: not_attempted() for r in rows}
+    recovery = None
+    if grant.get("schema") == history.SCHEMA:
+        recovery = history.recovery_plan(output, rows, grant)
+        require(read(output / "recovery_plan.json") == recovery, "RECOVERY_PLAN_CHANGED")
+    pending = set(range(160) if recovery is None else recovery["pending_ordinals"])
+    technical_smoke = grant.get("schema") == smoke.SCHEMA
+    if technical_smoke:
+        smoke.selection(rows, grant)  # Exact one-image cap and locked ordinal.
+        pending = set(grant["selected_ordinals"])
     try:
         write(output / "configuration_binding.json", context)
         with enrollment(grant["model_key"]):
             for i, row in enumerate(rows):
+                if i not in pending:
+                    continue
+                require(sum(v["native_calls"] for v in results.values()) < grant["max_native_calls"],
+                        "NATIVE_CALL_CAP_REACHED")
                 if time.time() >= grant["expires_unix"]:
                     reason = "GRANT_EXPIRED_BEFORE_NEXT_CALL"
                     break
@@ -303,6 +339,9 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                 def cached_factory():
                     nonlocal native
                     if native is None:
+                        if recovery is not None or technical_smoke:
+                            write(output / "model_load_attempt.json", {"attempt_id": grant["attempt_id"],
+                                "load_attempts": 1, "ordinal": i})
                         native = factory()
                         require(isinstance(native.serialized_tokenizer, bytes) and native.serialized_tokenizer,
                                 "RAW_TOKENIZER_SERIALIZATION_REQUIRED")
@@ -396,8 +435,18 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
               "classification_quality": "UNVERIFIED_PENDING_REVIEW"})
         write(output / "accounting.json", [{"ordinal": i, "sample_id": r["sample_id"], **results[r["sample_id"]]}
                                            for i, r in enumerate(rows)])
+        if recovery is not None:
+            write(output / "lineage_accounting.json", lineage_accounting(recovery, rows, results, grant))
         write(output / "summary.json", {"status": "STOPPED" if reason else "COMPLETED_AWAITING_REVIEW",
-              "reason": reason, "metrics": measurements(rows, results),
+              "reason": reason, "metrics": None if technical_smoke or grant.get("technical_qualification") else measurements(rows, results),
               "classification_quality": "AWAITING_RESEARCH_LEAD_REVIEW", "gpu_qualification": "SEE_MEASURED_WORKER_RECEIPTS",
-              "full_train_authorized": False, "retry_or_resume_allowed": False})
+              "full_train_authorized": False, "retry_or_resume_allowed": recovery is not None,
+              **({"purpose": grant["purpose"], "scheduled": 1, "scientific_selection": "EXCLUDED",
+                  "pooling_allowed": False, "metrics_scope": "TECHNICAL_SMOKE_NO_SCIENTIFIC_METRICS"}
+                 if technical_smoke else {}),
+              **({"run_kind": recovery["run_kind"], "scientific_selection": "PENDING", "pooling_allowed": False,
+                  "scheduled": len(pending), "previously_durable": len(recovery["already_durable_ordinals"]),
+                  "metrics_scope": "THIS_ATTEMPT_ONLY_NOT_A_POOLED_ANALYSIS"} if recovery is not None else {}),
+              **({"scientific_selection": "EXCLUDED", "metrics_scope": "TECHNICAL_QUALIFICATION_ONLY"}
+                 if grant.get("technical_qualification") else {})})
     return results, reason

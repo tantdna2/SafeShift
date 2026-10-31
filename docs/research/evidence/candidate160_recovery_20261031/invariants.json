@@ -1,0 +1,217 @@
+{
+  "append_only": [
+    {
+      "base_prefix_unchanged": true,
+      "base_sha256": "7e53bb6dcd60583032d5c2d4a5bb4e140c6d823744077f8fed82774a6b1c1ef3",
+      "current_sha256": "eac5c460c81fa5f4fbb85b8d7df55de61f4a3745360029ebaa2848e0cf834728",
+      "path": "AGENTS.md"
+    },
+    {
+      "base_prefix_unchanged": true,
+      "base_sha256": "c63843647842d650faa6e486ce3a10c4a18c046d941b98514dd105aa15187225",
+      "current_sha256": "9c6a30a9ccccd67bff15abbdd6ab0817416d4a6bc783655d2df5811ec7f7b8ce",
+      "path": "docs/research/DECISIONS.md"
+    }
+  ],
+  "base": "6252a7de91d9d98bd68a33b9bc13ae9888f2b9da",
+  "files": [
+    {
+      "path": "configs/candidate160/internvl35.requirements.txt",
+      "sha256": "5d06ca3c76a9d0230ab1f9c418d7acf6ad63ac0aacb9003dcac989666bc6cee8"
+    },
+    {
+      "path": "configs/candidate160/minicpm4.requirements.txt",
+      "sha256": "77f920b36bbf5d8396c23ed0ea28ded097cfeb3c4ba5761f3bf30269fe443c60"
+    },
+    {
+      "path": "configs/candidate160/preparation.json",
+      "sha256": "c9112c32db31a7ab83d9056b089a572c8c0c4db19128bf3b9c94210e9089cbe3"
+    },
+    {
+      "path": "configs/candidate160/python3119.json",
+      "sha256": "43fc11a647c315191c040cb574cd779e30f04e247c77d89dbb3ee7688ae1112a"
+    },
+    {
+      "path": "configs/cpu_g2_g3/checkpoint_metadata_lock.json",
+      "sha256": "d43e48ca874da1d32a729110b0847d48f25f88a91195af7386c4e4efd74d03bc"
+    },
+    {
+      "path": "configs/cpu_g2_g3/implementation_lock.json",
+      "sha256": "da4b923d2685e24b7223052b8d48ffb64077a7f81f1b936664b2a48e88c66ec9"
+    },
+    {
+      "path": "configs/cpu_g2_g3/internvl35.requirements.txt",
+      "sha256": "991317e95a03a217ea4aba43bc8fc2e904fa5c581a37673481979eb1e80f5519"
+    },
+    {
+      "path": "configs/cpu_g2_g3/minicpm4.requirements.txt",
+      "sha256": "5416ac49ef5a855d90256bdf4696903ea3fce95846646e0c6e30f3728e359dd6"
+    },
+    {
+      "path": "configs/cpu_g2_g3/protected_source_lock.json",
+      "sha256": "8398266d9e1c3942d2f4ea9f391eddee350ef2460c21e06dc99f27977639e5e5"
+    },
+    {
+      "path": "configs/cpu_g2_g3/public_source_lock.json",
+      "sha256": "7a4840f6ffc0834cbe73e44ddcf4dc593dfaf1a37a98d412a20fab9cd6bd4ae7"
+    },
+    {
+      "path": "configs/pilot/authority_template.json",
+      "sha256": "1153a409fc3929e83eb8acbafd87c61e650902eb6c9a57a991946b172cac7742"
+    },
+    {
+      "path": "configs/pilot/classification_c1.txt",
+      "sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3"
+    },
+    {
+      "path": "configs/pilot/gemma.requirements.txt",
+      "sha256": "fc17c2ef5de2fb4224ff95c42b613c771b1da709642a9a7c49419fdc0909400c"
+    },
+    {
+      "path": "configs/pilot/model_source_lock.json",
+      "sha256": "100be298d43ebdf42a752aa29191d6fab001b4a8f2d09fb8d46bad9d1c695448"
+    },
+    {
+      "path": "configs/pilot/phi.requirements.txt",
+      "sha256": "080babcb92bccfd2c4f4fe6cf64dc3cee47b1d6b247778968b54cc82dfb0cbe9"
+    },
+    {
+      "path": "configs/pilot/pip_bootstrap.json",
+      "sha256": "2c225a223c6dad842fdf24478a77bba09acf0ae775f901c3c885e4558e7e1edf"
+    },
+    {
+      "path": "configs/pilot/pip_bootstrap.requirements.txt",
+      "sha256": "97431255127271b4a5c56d678330f15f176903b7adff6ecbf2c2ab30d04d1db2"
+    },
+    {
+      "path": "configs/pilot/runtime_versions.json",
+      "sha256": "4dcc392e62092c8e6def10f6b3f0348ac9356f77b3c22aac502688ac3c64731e"
+    },
+    {
+      "path": "configs/pilot/smol_checkpoint_metadata.json",
+      "sha256": "aa0753fda9ccff60f996b77501dd9fb8da2dab450c038c76f852db15b82367cd"
+    },
+    {
+      "path": "configs/pilot/smolvlm2.requirements.txt",
+      "sha256": "16caf26145eb87efd2042a985e4fd4708cf718e69b6142f81c88cd8c183f5fd1"
+    },
+    {
+      "path": "configs/pilot/tokenizer_cpu_evidence.json",
+      "sha256": "08e514993d444a9d2ef076c4eabae0c06b5375f706c112c12b68317320106063"
+    },
+    {
+      "path": "docs/research/CANDIDATE160_KAGGLE_ENV_DECISION_20261030.md",
+      "sha256": "82c53f3f5074032bb534cd636d3782d1e5662211edcea893f15b85da15dbe06c"
+    },
+    {
+      "path": "docs/research/CANDIDATE160_OWNER_DECISION_20261030.md",
+      "sha256": "a0fe8dc0934f9f17de0a6cac5499098699c150fef7b1f84136a5a149bc30702c"
+    },
+    {
+      "path": "docs/research/SEMINAR_PROTOCOL.md",
+      "sha256": "54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1"
+    },
+    {
+      "path": "docs/research/seminar_analysis_config.v1.json",
+      "sha256": "dd3b86660f0795dba099abac0d8a3b8bd3498e625e49b128aa9c50e72639e5ff"
+    },
+    {
+      "path": "notebooks/SafeShift_ENVIRONMENT_PREFLIGHT_phi.ipynb",
+      "sha256": "9f966a61ee06fe459f177136e58ac3affdfd9a1f4d3aeb02948e5d80ba19b2a3"
+    },
+    {
+      "path": "notebooks/SafeShift_ENVIRONMENT_PREFLIGHT_smolvlm2.ipynb",
+      "sha256": "1c611aa66aab2605508cc6758ca496cf7450bdb47e3d3e7062bccfc22546f73e"
+    },
+    {
+      "path": "notebooks/SafeShift_STORAGE_PREFLIGHT.ipynb",
+      "sha256": "6da5b5afa6855905e780aa4624b9fc0ff9a9ae0dbe00204e4fd51ddb715e8a69"
+    },
+    {
+      "path": "notebooks/SafeShift_TRAIN_PILOT_gemma.ipynb",
+      "sha256": "cc48a21012ec58c8d1e45c4e3f04717c7e2dddebaa6dc6d418a1c80f40c6865f"
+    },
+    {
+      "path": "notebooks/SafeShift_TRAIN_PILOT_phi.ipynb",
+      "sha256": "364d5f3014ccd175b33122405a0bcf90e76b748a0e26ab87bf77b6b929303793"
+    },
+    {
+      "path": "notebooks/SafeShift_TRAIN_PILOT_smolvlm2.ipynb",
+      "sha256": "81a6dcc158be48649b82e049836857d35d6074d4991c5ef0d2463e7bab20a87e"
+    },
+    {
+      "path": "safeshift/candidates/backend.py",
+      "sha256": "5a2db7b60e7d00b4d92375a8c48fc9cf26facda27de7e79a6231115abb4e3b40"
+    },
+    {
+      "path": "safeshift/candidates/inputs.py",
+      "sha256": "0f380ab4272e814fd46c9028345019118f58c39d6b628d95eef988a9fb4ba1eb"
+    },
+    {
+      "path": "safeshift/candidates/loading.py",
+      "sha256": "dd5698528f4783d4a09e92a438cbd4b51a063a53185cc79bb7a0ebca21555309"
+    },
+    {
+      "path": "safeshift/candidates/minicpm_image.py",
+      "sha256": "0956deb6d5816b9a8020e8a8f895e90c8d79234dc0ab8248e325d030c95b5632"
+    },
+    {
+      "path": "safeshift/pilot/__init__.py",
+      "sha256": "2b545548d4f1b28c17e08616d1fd4ce58f259bd97e42b30508f2aff429a9e7b5"
+    },
+    {
+      "path": "safeshift/pilot/artifacts.py",
+      "sha256": "1e2f3b41e4775941d0c255e744a415ced9bceabfe19203953447418977793b91"
+    },
+    {
+      "path": "safeshift/pilot/backend.py",
+      "sha256": "07a4e5ce469e4e7c9ff51416fad306dabee048475ae5991fcf16989aa0fe9c1c"
+    },
+    {
+      "path": "safeshift/pilot/bootstrap.py",
+      "sha256": "3602627b8fead693b9287caba92f8b96d7f4b531f87c00811ce9b3d7e0ea840c"
+    },
+    {
+      "path": "safeshift/pilot/contract.py",
+      "sha256": "23c5440c6f9890be32a6715cc40cfdc0ac248cd168f9742669c20e1f9f09fc19"
+    },
+    {
+      "path": "safeshift/pilot/diagnostics.py",
+      "sha256": "9dc47f91a680f8887dc628b7c176137ae519d3495d66534bfd8eaf485b53e65c"
+    },
+    {
+      "path": "safeshift/pilot/hnlo.py",
+      "sha256": "0b5ee6d3eb73b90343cdc3f6e81767c218c906e9ba7cafc562898d9caed35546"
+    },
+    {
+      "path": "safeshift/pilot/manifest.py",
+      "sha256": "574587b2f77fc140e154b3e5fb44bb9afa0cfb444171b8d5078bf5813cd59df0"
+    },
+    {
+      "path": "safeshift/pilot/output_diagnostics.py",
+      "sha256": "d4e876cf71ab1c9b87fa0a87f7af5c03b9866002b1948cb55a27842e2d99794e"
+    },
+    {
+      "path": "safeshift/pilot/phi_attention.py",
+      "sha256": "1d09a4b28d5631884ba3d23bf932483c9cafb0124db4e85d6bd01e9f7f63a837"
+    },
+    {
+      "path": "safeshift/pilot/phi_inputs.py",
+      "sha256": "e24a609ef94e2a2156c1689bfac3ff06c30857db04cd27ed69099c66604b7ab6"
+    },
+    {
+      "path": "safeshift/pilot/report.py",
+      "sha256": "765cb62c4cbd245c60499a17cb937c145b10fc25def74956c84c451cc2359926"
+    },
+    {
+      "path": "safeshift/pilot/runner.py",
+      "sha256": "714124d474d26e6d4cb7b25812524906d8ea1e8eb6552e32f00d0d237960645a"
+    },
+    {
+      "path": "safeshift/pilot/smol.py",
+      "sha256": "72c23a98be1556b572b2dff4202a77d00b1bf7a1f02c29f492e46ebba61248b4"
+    }
+  ],
+  "schema": "safeshift-candidate160-invariants-v1",
+  "status": "PASS"
+}

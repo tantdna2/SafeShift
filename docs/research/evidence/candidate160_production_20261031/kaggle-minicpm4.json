@@ -1,0 +1,210 @@
+{
+  "configuration": {
+    "candidate_execution_config_sha256": "5b85504ff24ff42d4d629dbf00feb0c484022cfef3a7d57b571eaae99d1c8b00",
+    "legacy_transport_config_sha256": "5de12ffd4063e7801e2f028daace0f4e85e6eefe3cff75c00f36aa0d287aee49"
+  },
+  "independent_audit": "NOT_RUN",
+  "kernel": "nguynanhtn/safeshift-minicpm4-production-qa-20261031",
+  "limits": "Three images only; hard VM kill/cross-VM concurrency/global exactly-once and full160 sustained resources not proven",
+  "notebook_sha256": "7ed8821f03861705df4a2b7f2ef019da2901a59cc14d453ab77c2192646bf433",
+  "official160_run": "NOT_RUN",
+  "official_fp32_status": "BLOCKED_PENDING_SCIENTIFIC_DECISION",
+  "predeclared_ordinals": [
+    0,
+    15,
+    111
+  ],
+  "raw_native_tokenizer_parser_hnlo_replay": "PASS",
+  "ready_for_owner": false,
+  "real_train_images": 3,
+  "records": [
+    {
+      "archive_sha256": "8d1d87a9bf5a987eca7259929f621a608c11aa97059259abf86431026c428e1e",
+      "calls": [
+        {
+          "emitted_code_fence": false,
+          "finite_logit_steps": 11,
+          "hnlo": {
+            "alignment_status": "UNVERIFIED",
+            "capture_status": "RAW_LOGITS_AVAILABLE",
+            "hnlo": null,
+            "reason": "ACTUAL_OUTPUT_NOT_ONE_OF_PROVEN_NATIVE_CONTINUATIONS",
+            "replay_status": "NOT_RUN",
+            "status": "RAW_LOGITS_AVAILABLE_BUT_UNALIGNED"
+          },
+          "image_dimensions": [
+            2336,
+            1752
+          ],
+          "image_sha256": "761f0b03f442a5f3648bd544b0035117f04d7f38bfeb726573b4ecaf92160d14",
+          "input_detail": {
+            "slices_including_global": 10
+          },
+          "memory": {
+            "gpu0_allocated": 8186392576,
+            "gpu0_free": 5604442112,
+            "gpu0_peak_allocated": 9736494592,
+            "gpu0_peak_reserved": 9888071680,
+            "gpu0_reserved": 9888071680,
+            "gpu0_total": 15636037632,
+            "gpu1_inference": "UNUSED"
+          },
+          "ordinal": 0,
+          "parser_status": "SUCCESS",
+          "raw_nonfinite": false,
+          "raw_sha256": "e0443bcd9d6d5eda2b53ef616f2d5fa3d001d21f47d43c3e995ac4dddb8af015",
+          "sample_id_sha256": "dac4a32995e4aa7372949e18f036ff947e1cf2f0f0bea135c15c488dc861b59d"
+        },
+        {
+          "emitted_code_fence": false,
+          "finite_logit_steps": 11,
+          "hnlo": {
+            "alignment_status": "UNVERIFIED",
+            "capture_status": "RAW_LOGITS_AVAILABLE",
+            "hnlo": null,
+            "reason": "ACTUAL_OUTPUT_NOT_ONE_OF_PROVEN_NATIVE_CONTINUATIONS",
+            "replay_status": "NOT_RUN",
+            "status": "RAW_LOGITS_AVAILABLE_BUT_UNALIGNED"
+          },
+          "image_dimensions": [
+            720,
+            404
+          ],
+          "image_sha256": "a12bd1fcda911c4a2aac1c6bf543bac065f51f88d000e57ee77195b1c3ddc910",
+          "input_detail": {
+            "slices_including_global": 3
+          },
+          "memory": {
+            "gpu0_allocated": 8186392576,
+            "gpu0_free": 5604442112,
+            "gpu0_peak_allocated": 8653498880,
+            "gpu0_peak_reserved": 9888071680,
+            "gpu0_reserved": 9888071680,
+            "gpu0_total": 15636037632,
+            "gpu1_inference": "UNUSED"
+          },
+          "ordinal": 15,
+          "parser_status": "SUCCESS",
+          "raw_nonfinite": false,
+          "raw_sha256": "9c0e86a95f3ef3000fb1303699df1a074b784f7c88b684895bd57f1a450663d3",
+          "sample_id_sha256": "77c49bc9b3418e92b8bf446cc9eadc36271e3b62546e4bc3b2052b06f4b1eeef"
+        },
+        {
+          "emitted_code_fence": false,
+          "finite_logit_steps": 11,
+          "hnlo": {
+            "alignment_status": "UNVERIFIED",
+            "capture_status": "RAW_LOGITS_AVAILABLE",
+            "hnlo": null,
+            "reason": "ACTUAL_OUTPUT_NOT_ONE_OF_PROVEN_NATIVE_CONTINUATIONS",
+            "replay_status": "NOT_RUN",
+            "status": "RAW_LOGITS_AVAILABLE_BUT_UNALIGNED"
+          },
+          "image_dimensions": [
+            704,
+            576
+          ],
+          "image_sha256": "52ca633b792ad384ba1ae1dd3d475b5f1b018f911daa4eaec29fa351caa1e8c5",
+          "input_detail": {
+            "slices_including_global": 5
+          },
+          "memory": {
+            "gpu0_allocated": 8186392576,
+            "gpu0_free": 5604442112,
+            "gpu0_peak_allocated": 8930658304,
+            "gpu0_peak_reserved": 9888071680,
+            "gpu0_reserved": 9888071680,
+            "gpu0_total": 15636037632,
+            "gpu1_inference": "UNUSED"
+          },
+          "ordinal": 111,
+          "parser_status": "SUCCESS",
+          "raw_nonfinite": false,
+          "raw_sha256": "69c6f9457c8ac8737ee34c1052bed7bcc7766298695c4ad10e68ea68b702e74e",
+          "sample_id_sha256": "6143658cf85e11fd121a1751cf75c9010e0dd037bb0f380fcfef530a5bcc6041"
+        }
+      ],
+      "cleanup": "PASS",
+      "final_receipt_sha256": "62c251c35b84baff88cc55225bf289a54f36fbc31e63aab4e2fedc12a98e29f1",
+      "finite_logits": "PASS",
+      "gpu": {
+        "physical_gpus": [
+          [
+            "Tesla T4",
+            "15360",
+            "14912",
+            "580.178.04"
+          ],
+          [
+            "Tesla T4",
+            "15360",
+            "14912",
+            "580.178.04"
+          ]
+        ],
+        "worker_cuda": "MEASURED_FP16_FUNCTIONAL",
+        "worker_device": "Tesla T4",
+        "worker_total_bytes": 15636037632,
+        "worker_visible_gpus": 1
+      },
+      "inference": "PASS",
+      "kind": "REAL_GPU_QUALIFICATION",
+      "member_checksums_verified": true,
+      "model_loads": 1,
+      "native_calls": 3,
+      "resource_admission": {
+        "allocation": {
+          "output": {
+            "allocated_bytes": 4294971392,
+            "requested_bytes": 4294967296,
+            "status": "ALLOCATED"
+          },
+          "scratch": {
+            "allocated_bytes": 30064775168,
+            "requested_bytes": 30064771072,
+            "status": "ALLOCATED"
+          }
+        },
+        "limitation": "Allocation is released immediately; quotas and free space may change. Provider or delayed-write limits and peak usage are not guaranteed.",
+        "max_seconds_including_setup": 3600,
+        "separate_filesystems": true,
+        "storage_requirements_bytes": {
+          "output": 4294967296,
+          "scratch": 30064771072
+        },
+        "worker_preload_cgroup_remaining_bytes": [
+          11043016704
+        ],
+        "worker_preload_free_ram_mib": 10531
+      },
+      "run_id": "owner_minicpm4_ec667e3a223e4fbc8e0eb0a5e1383fe8",
+      "series_id": "owner_minicpm4_ec667e3a223e4fbc8e0eb0a5e1383fe8",
+      "sidecar_verified": true,
+      "source_inventory_match": true,
+      "weights_load": "PASS"
+    },
+    {
+      "archive_sha256": "909b84d1796518e173263dad5f83dad62c1b45cee956e40f067f468009a09719",
+      "durable_ordinals": [
+        0,
+        15,
+        111
+      ],
+      "final_receipt_sha256": "e87b0eeb8bef980fa5246ae4bb01eac43e3dab898e694e78d9867b7af6a22fb2",
+      "kind": "SEALED_ZIP_FRESH_WORKSPACE_RESUME",
+      "member_checksums_verified": true,
+      "model_loads": 0,
+      "native_calls": 0,
+      "resume_recovery": "PASS",
+      "run_id": "owner_minicpm4_ce24e5b44431471c85c20c4c5073bb7e",
+      "series_id": "owner_minicpm4_ec667e3a223e4fbc8e0eb0a5e1383fe8",
+      "sidecar_verified": true
+    }
+  ],
+  "runtime_ref": "b5448d031b287bc7adabd58ec36d98e671449b9d",
+  "scientific_pooling_allowed": false,
+  "scientific_result_selection": "PENDING",
+  "source_sha256": "09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08",
+  "status": "READY_FOR_TECHNICAL_REVIEW",
+  "version": 1
+}

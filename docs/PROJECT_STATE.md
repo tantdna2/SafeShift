@@ -1,5 +1,208 @@
 # SafeShift — PROJECT STATE
 
+## Hai production routes đã kiểm Kaggle thật —31/10/2026
+
+**READY_FOR_TECHNICAL_REVIEW cả hai; MiniCPM official FP32 vẫn
+BLOCKED_PENDING_SCIENTIFIC_DECISION. Chưa READY_FOR_OWNER.** Giữ Draft PR156,
+chờ fresh ChatGPT exact-HEAD review, Antigravity audit độc lập và quyền merge
+riêng. Không full160/TEST/kết quả khoa học chính thức trong task này.
+
+Hai notebook mới `SafeShift_CANDIDATE160_PRODUCTION_internvl35.ipynb` và
+`SafeShift_CANDIDATE160_PRODUCTION_minicpm4_FP32.ipynb` đã chạy đúng source/
+cell bytes trên Kaggle private,3 ảnh TRAIN định trước0/15/111 mỗi model,
+1 load/3 calls mỗi job. Cùng production entrypoint/child/controller/history;
+raw/ZIP/SHA256/cleanup và import sealed ZIP sang workspace mới rồi resume
+zero-load/zero-call đều PASS. Profile kỹ thuật/config/campaign/series tách
+official, FP16 và FP32; metrics excluded, no pooling.
+
+InternVL:38/38 logits steps hữu hạn; parser INVALID/SUCCESS/INVALID. Hai
+INVALID do native model sinh code fence, independent decode khớp; không sửa
+parser/prompt. Ảnh15 (chốt trước theo diện tích nhỏ nhất) có HNLO thực
+7.301041903017601, native branch và Decimal oracle PASS; hai ảnh kia unaligned.
+MiniCPM:33/33 steps hữu hạn,3 SUCCESS; HNLO vẫn unaligned vì native continuation
+khác segmentation đã prove dù decoded JSON giống nhau. Không thay token/score.
+
+Runtime `b5448d031b287bc7adabd58ec36d98e671449b9d`, tested export
+`2a062e5d0896bd789a7c27db9876fe6406ae2bb6`, source
+`09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08`.
+Final Linux374 =334 PASS/40 SKIP/0 FAIL/ERROR; native numerics8/8 PASS;
+hai production CPU subprocess PASS, đủ160 images/8 processor sizes mỗi model.
+Giữ lỗi setup/401/download và mọi evidence cũ. [Báo cáo chi tiết](research/CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md)
+ghi notebook/source/config/ZIP SHA, receipts, giới hạn và cách Owner chạy.
+
+Quyết định hẹp còn thiếu: Owner/Lead có dùng
+`minicpm4-resampler-attention-fp32-v1` làm baseline official TRAIN160 hay không.
+Gate fail-closed trước consumption/load; không mở bằng notebook flag/approval
+giả. Chưa chứng minh forced VM kill, global lock/cross-VM concurrency hoặc
+full160/12-hour resource behavior. Các mục dưới là lịch sử, không verdict mới.
+
+## MiniCPM ngoại lệ hẹp: Kaggle technical smoke PASS —31/10/2026
+
+**READY FOR REVIEW cho trial kỹ thuật, vẫn Draft PR156. Không READY FOR OWNER/
+baseline khoa học/full160.** Owner cấp ngoại lệ trong quyết định mới bên dưới;
+HOLD/FP16 BLOCKED phía sau giữ nguyên như lịch sử, không bị xóa hay hồi tố.
+
+Runtime `0fa13ee610244a56d4d999cc5d73841267a28306`, Git export kiểm local
+`0bb1b71f58818ed1e5c85aafa942f63ee9c72279`; source
+`ae94d0033e8215fb3cf1e192c0ef0b5c0e5d76cc8eb904558dc4d9a26186ab7b`.
+Effective ID `minicpm4-resampler-attention-fp32-v1`, digest
+`2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da`;
+effective config SHA256 `5b85504ff24ff42d4d629dbf00feb0c484022cfef3a7d57b571eaae99d1c8b00`.
+Config FP16 gốc/hash/locks giữ nguyên. Full Linux365 =326 PASS/39 SKIP/0 lỗi;
+8 native CPU tests PASS riêng (gồm oracle scalar thêm sau Git export), production
+effective `--check-only` PASS thật,4 baseline notebook tests PASS Windows.
+
+Kaggle private `nguynanhtn/safeshift-minicpm4-fp32-trial-20261031/1`:1 ảnh0
+TRAIN160 gốc,1 load/1 native call; weights4.059.533.040 tham số FP16, eager,
+T4x2/GPU0. Score/softmax/value product FP32 hữu hạn, output về FP16, logits
+11/11 steps hữu hạn, parser SUCCESS. HNLO **RAW_LOGITS_AVAILABLE_BUT_UNALIGNED**,
+numeric HNLO chưa được chứng minh; không sửa parser/prompt/continuation hoặc
+chọn ảnh khác để lấy score. Raw/native/tokenizer/config custody, cleanup và
+ZIP/sidecar được kiểm lại độc lập trên CPU. ZIP SHA256
+`0c1fe3b00a56314cd3688465f59f0ccb8dce09761c349e1724ec0d242c175337`.
+[Bằng chứng mới](research/evidence/minicpm_resampler_fp32_20261031/index.json)
+giữ hash của5 archive trước nguyên vẹn; raw/private images/weights không commit.
+
+NEXT: ChatGPT kiểm GitHub exact HEAD/notebook/effective implementation/receipts,
+rồi quyết định Antigravity audit độc lập. Không tự merge hoặc chạy160/TEST.
+Notebook effective chỉ kỹ thuật, không route full/resume/history; scientific
+result selection vẫn PENDING, pooling=false.4 notebook baseline được rebuild
+payload do source supervisor đổi; bằng chứng Kaggle cũ không tự qualify lại
+chúng. Trial mới này chỉ chứng minh đúng notebook/effective route đã chạy.
+
+## Owner mở lại thử kỹ thuật ngoại lệ hẹp —31/10/2026, PR156
+
+Owner cấp **AUTHORIZED_FOR_BOUNDED_TECHNICAL_TRIAL** cho MiniCPM resampler
+score/softmax/value product FP32, output về dtype gốc trước out_proj; weights
+giữ FP16 và tất cả model/checkpoint/revision/TRAIN160/C1/eager/parser/HNLO/
+scientific locks giữ nguyên. [Quyết định mới](research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception)
+thay HOLD chỉ trong phạm vi thử kỹ thuật này; không baseline khoa học/full160/
+TEST/result selection/merge. Tiếp tục cùng session/branch/Draft PR156.
+
+Effective implementation mới `minicpm4-resampler-attention-fp32-v1` gắn chỉ vào
+instance resampler bằng method dẫn xuất từ source gốc đã hash-verify, thay đúng
+4 expressions (2 nhánh score, softmax, value product). Không sửa snapshot/locks
+gốc, không global monkeypatch, không đổi projection/query scaling/weights.
+Config/hash/series/output/new smoke notebook riêng; raw custody khóa effective
+ID và counter của cả3 phép FP32 hữu hạn. Chặn full-run action cho ngoại lệ.
+
+CPU native regression đã tái hiện overflow lớp attention gốc rồi kiểm finite/
+mask/dtype/weights/class/source không đổi. **KAGGLE SMOKE CHƯA KIỂM CHỨNG cho
+implementation mới** cho tới receipt thật cuối. Bằng chứng FP16 cũ giữ nguyên;
+không tự coi InternVL/legacy notebook được qualify lại sau thay embedded source.
+[Hồ sơ trial mới](research/MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md).
+
+## Owner xác nhận HOLD —31/10/2026, PR #156
+
+Owner đã chọn **phương án1: giữ BLOCKED**, chưa cho phép thay precision hoặc
+effective source. [Đánh giá GitHub của ChatGPT](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540368755)
+được đọc trực tiếp; đánh giá sơ bộ tại HEAD `51f6eec3be1e1c3eb6a69346e9bd1571be7c87d1`
+không phải final review PASS, independent audit hoặc quyền merge. Nhận xét dựa
+trên committed receipts, không phải kiểm độc lập private raw ZIP Kaggle.
+
+Giữ Draft PR156, toàn bộ evidence và lỗi FP16; không merge, không chạy lại
+cấu hình MiniCPM chưa sửa, không chạy chính thức160 ảnh. Ngoại lệ FP32 vẫn
+**PENDING / NOT AUTHORIZED / NOT APPLIED**. Chờ quyết định Owner riêng về phạm
+vi thay đổi số học rồi tiếp tục đúng session/branch/PR156. Quyết định này chỉ
+ghi trạng thái HOLD; không sửa runtime/notebook/locks/receipts hoặc nâng trạng
+thái khoa học. [Bản ghi append-only](research/DECISIONS.md#dec-20261031-owner-hold-minicpm-numerics).
+
+## Khôi phục Kaggle và quy trình kiểm chứng thật —31/10/2026, PR #156
+
+Session mới xác minh remote: PR156 OPEN/DRAFT, branch
+`fix/candidate160-recovery-20261031`, HEAD ban đầu `b1a56d0ce3fbd484820f56fa921bfbba9ec7f1d9`,
+main `6252a7de91d9d98bd68a33b9bc13ae9888f2b9da`. Tiếp tục cùng worktree/PR,
+không tạo PR mới, force-push hoặc sửa lịch sử. Nguồn quy tắc toàn dự án:
+[Owner directive](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161),
+đã bổ sung append-only vào AGENTS. Các đoạn “task chỉ CPU”/Owner chạy diagnostic
+bên dưới là snapshot cũ; task mới cho phép Codex bounded smoke trên TRAIN đã khóa.
+
+Đã xác minh archive InternVL lỗi cũ SHA256
+`aee7f4b782c6eb31c780afc8f3d7756c5f91e30a5d9eab506417c2817c818e8c`,
+28 member checksums khớp; `cpu_native_and_images`,160 NOT_ATTEMPTED,
+native calls0/consumed=false. Giữ nguyên archive. Đã tái hiện cùng str/lstat
+ở cả hai production worker subprocess thật với pins Linux3.11.9/cu124,
+locked source và bundle thật; sau chuẩn hóa Path, cả hai CPU CLI PASS.
+Không mock native_setup/verify_snapshot/worker trong regression này.
+
+Kaggle CLI2.2.5 cài trong environment local riêng; authenticated read-only
+kernels/datasets/status/Output download PASS. Không ghi secrets vào Git.
+Smoke mới dùng cùng production supervisor/worker, manifest160 nguyên vẹn,
+chỉ ordinal0/1 call/3600 giây, evidence riêng, không production reservation/
+history hoặc scientific metrics. Notebook mặc định technical_smoke để tránh
+tự chạy full160. **KAGGLE INFERENCE NOT VERIFIED** cho tới receipt thật cuối.
+Xem [runbook](CANDIDATE160_KAGGLE.md) và [bằng chứng task mới](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+NEXT: local final suite + exact notebook Kaggle smoke từng model; giữ FAIL/PASS,
+cập nhật receipt/source/notebook SHA; ChatGPT kiểm GitHub và Antigravity audit
+độc lập trước merge. Scientific selection PENDING/pooling=false, TEST đóng.
+Không tự tuyên bố READY FOR OWNER hoặc chạy chính thức160 thay Owner.
+
+**Cập nhật thực thi cùng session:** full Linux Git export `c9c2f24680e4eb21290dbf2e3b8fb308a5c8bf2e`
+PASS354 tests =321 PASS/33 SKIP/0 lỗi; source `c7a48bc8479137ca29647c94cfb71d2e7a867b8b7d7ab394776cf5c0105764f4`.
+Hai CPU worker CLI cuối cùng PASS. Kaggle InternVL version1 đã nạp weights,
+inference1 ảnh/1 call, ZIP/raw/checksum PASS; response có code fence nên parser
+giữ INVALID và HNLO unaligned, chưa chứng minh numeric HNLO/quality. Kaggle
+MiniCPM version1 đã load weights và gọi1 ảnh nhưng raw_nonfinite ở64/64 steps,
+controller STOP/receipt BLOCKED; không OOM, peak allocated khoảng9,74GB.
+Archive FAIL SHA256 `7d9e1947e8316dd2586feaa44bcdbc52fa7dcabe52bc8aaf95050c4de333c939`
+được giữ nguyên. **Toàn gói vẫn BLOCKED**, không READY FOR OWNER.
+Đang thêm một diagnostic chỉ quan sát weights/module outputs trên đúng ảnh0,
+giữ nguyên FP16/eager/C1/checkpoint và dừng tại nonfinite đầu tiên; không sửa
+hoặc tắt validation, không chọn ảnh khác để tìm output đẹp. Diagnostic không
+qualification hoặc production run. Artifact thật/raw/weights vẫn private/ignored.
+
+**Blocker đã đo trên Kaggle, sau2 diagnostic một ảnh/call:** toàn bộ4.059.533.040
+tham số FP16 hữu hạn; Q/K/V hữu hạn, mask0/không hàng fully masked. Native
+resampler `baddbmm` FP16 sinh60.522 +Inf, softmax kế tiếp sinh569.800 NaN.
+Không đổi model/source/checkpoint/precision để vượt lỗi. ZIP probe cuối:
+`f4c27ff30bc9eb9132a5d9d736b18bbce45f42464d91ca38a943ffe3335c3b5c`.
+Đường nạp/mã nguồn đã sửa; MiniCPM chưa finite inference PASS. Dừng retry cùng
+cấu hình đã chứng minh lỗi. [Đề xuất sửa tính toán attention — PENDING](research/MINICPM4_NUMERICS_PENDING_DECISION_20261031.md)
+chỉ để review, chưa áp dụng. Cần Owner quyết định ngoại lệ hẹp cho precision/
+effective source trước triển khai; mục9 task hiện tại cấm tự thay. Quy tắc
+chọn kết quả khoa học vẫn PENDING; không pooling/metric/test hoặc full160.
+
+**Kiểm cuối:** Git export `7bb353529f2ad29bee56620ab94586aaf87fdcea` PASS358
+tests =322 PASS/36 SKIP/0 lỗi;4 native tracer CPU tests PASS riêng trong stack
+3.11.9/cu124. Hai production `--check-only` CLI PASS thật. Cả4 Kaggle jobs
+(InternVL smoke1, Mini smoke1, Mini diagnostic1/2) đã COMPLETE, tổng4 native
+calls kỹ thuật, không phải kết quả khoa học. COMPLETE không biến Mini thành PASS.
+Runtime/embedded source vẫn `ad6c6ed23d33d218fd199d77c817f002a3ec0944`/
+`c7a48bc8479137ca29647c94cfb71d2e7a867b8b7d7ab394776cf5c0105764f4`.
+[Index bằng chứng cuối](research/evidence/candidate160_kaggle_20261031/index.json)
+giữ đủ FAIL/PASS/checksums,41 file frozen và2 prefix append-only. NEXT duy nhất
+để sửa Mini: review/phê duyệt hoặc từ chối đề xuất numerical policy PENDING;
+không chạy lại cùng FP16 lỗi, không tự merge hoặc báo READY FOR OWNER.
+
+## Task retry/resume Candidate160 —31/10/2026
+
+Base mới từ remote main `6252a7d` (PR155 đã merge). Một Draft PR mã nguồn thay
+khóa vĩnh viễn bằng run/attempt/series riêng, snapshot lịch sử SHA256, resume
+ảnh chưa hoàn thành từ Outputs directory/ZIP và rerun toàn bộ có truy vết.
+Các marker BLOCKED_RESERVED_NO_RETRY/CONSUMED/replacement1 giữ nguyên bytes.
+[Quyết định mới](research/CANDIDATE160_RECOVERY_DECISION_20261031.md) bổ sung
+append-only; [runbook hiện hành](CANDIDATE160_KAGGLE.md) ghi thao tác và giới hạn.
+
+Scientific result selection **PENDING**, pooling_allowed=false; không tự ghép
+baseline/recovery hoặc chọn output. Không đổi160 TRAIN, revisions/locks, C1,
+HNLO, metric/nhãn/protocol hoặc quyền dữ liệu. Không GPU/Kaggle/weights/private
+data/attempt thực nghiệm trong task. **CPU CODE PASS:** exact Git export
+`afbf0307178b2ecfb1d81b7ec2504628bacaaaf0`:347 tests =315 PASS/32 SKIP/0 lỗi,
+10 notebook khớp builder;15 recovery tests mới PASS. Windows11 focused/notebook/
+prefix checks PASS;49 file bất biến và2 prefix append-only đã đối chiếu.
+Runtime `0f0d272c60c3a574814c1b0d3dc4a73ee169b30c`, source SHA256
+`f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb`.
+[Báo cáo nghiệm thu](research/CANDIDATE160_RECOVERY_CPU_20261031.md) và
+[receipts](research/evidence/candidate160_recovery_20261031/index.json) giữ cả
+full run đầu2 assertion lỗi và full run cuối đã sửa, không waive. Native opt-ins,
+live pip, full Windows suite và GPU/model-fit/inference chưa chạy trong task.
+
+NEXT: ChatGPT kiểm exact Draft HEAD/diff/notebooks/receipts, Antigravity audit
+độc lập trước merge, quyền merge riêng và hậu merge. Không tự nhận DONE audit,
+GPU hoặc khoa học. Các mục bên dưới là snapshot lịch sử, không thủ tục retry
+hiện hành hoặc chứng nhận HEAD mới.
+
 Cập nhật **31/10/2026 (Asia/Bangkok)** trong cùng Draft PR #155, theo chỉ thị environment-first.
 Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.

@@ -14,6 +14,7 @@ from safeshift.pilot.artifacts import read, safe, sha, write
 from . import train_contract as c
 from .source import require
 from .train_inputs import mounts
+from . import train_route as route
 
 SCHEMA = "safeshift-candidate160-owner-execution-v1"
 MODE = "OWNER_ACTIVATED_TECHNICAL"
@@ -30,15 +31,16 @@ def policy():
             "free_output_mib": 1024, "free_gpu0_runtime_mib": 256}
 
 
-def slot(key):
+def slot(key, *, implementation=None, qualification=False):
     require(key in c.KEYS, "ONLY_TWO_REVIEWED_CANDIDATES")
     # Intentionally excludes runtime hash and UUID: editing/restarting source
     # cannot silently obtain another local slot for this model/cohort.
     return pilot.digest({"campaign": CAMPAIGN, "model_key": key,
-                         "model": c.model(key), "manifest_sha256": c.MANIFEST})
+                         "model": c.model(key), "manifest_sha256": c.MANIFEST,
+                         **route.fields(implementation, qualification)})
 
 
-def execution(key, source, ref, *, owner_start=False):
+def execution(key, source, ref, *, owner_start=False, implementation=None, qualification=False):
     require(owner_start is True, "OWNER_START_REQUIRED")
     require(key in c.KEYS, "ONLY_TWO_REVIEWED_CANDIDATES")
     require(isinstance(source, str) and isinstance(ref, str)
@@ -46,7 +48,9 @@ def execution(key, source, ref, *, owner_start=False):
             "OWNER_SOURCE_IDENTITY")
     now = time.time()
     identity = uuid.uuid4().hex
-    return {"schema": SCHEMA, "activation": "OWNER_SAVE_AND_RUN_ALL",
+    scope = route.fields(implementation, qualification)
+    require(implementation is None or key == "minicpm4", "MINICPM_ONLY_NUMERICAL_EXCEPTION")
+    value = {"schema": SCHEMA, "activation": "OWNER_SAVE_AND_RUN_ALL",
             "owner_decision_record": DECISION, "campaign": CAMPAIGN, "slot_sha256": slot(key),
             "model_key": key, "model": c.model(key), "base": c.BASE,
             "source_sha256": source, "runtime_ref": ref, **c.configuration_hashes(key),
@@ -57,13 +61,21 @@ def execution(key, source, ref, *, owner_start=False):
             "run_id": f"owner_{key}_{identity}", "attempt_id": f"owner_{key}_{identity}_a1",
             "created_unix": now, "expires_unix": now + MAX_SECONDS,
             "max_seconds": MAX_SECONDS, "policy": policy()}
+    if scope:
+        value.update(scope, campaign=CAMPAIGN + "-" + pilot.digest(scope),
+                     slot_sha256=slot(key, implementation=implementation, qualification=qualification),
+                     **c.configuration_hashes(key, implementation=implementation))
+    if qualification:
+        value.update(owner_decision_record=route.DECISION, max_native_calls=3,
+                     max_seconds=3600, expires_unix=now + 3600)
+    return value
 
 
 def validate(value, key, source, ref, *, now=None):
     require(type(value) is dict and value.get("schema") == SCHEMA, "OWNER_EXECUTION_SCHEMA")
     # Exact field set prevents fabricated approval/permission records being
     # smuggled into this distinct execution schema.
-    expected = execution(key, source, ref, owner_start=True)
+    expected = execution(key, source, ref, owner_start=True, **route.options(value))
     require(set(value) == set(expected), "OWNER_EXECUTION_FIELDS")
     variable = {"run_id", "attempt_id", "created_unix", "expires_unix"}
     for name in expected.keys() - variable:
@@ -76,7 +88,7 @@ def validate(value, key, source, ref, *, now=None):
                 for n in ("created_unix", "expires_unix")), "OWNER_EXECUTION_TIME")
     now = time.time() if now is None else now
     require(value["created_unix"] <= now < value["expires_unix"]
-            and value["expires_unix"] == value["created_unix"] + MAX_SECONDS, "OWNER_EXECUTION_EXPIRED")
+            and value["expires_unix"] == value["created_unix"] + expected["max_seconds"], "OWNER_EXECUTION_EXPIRED")
     return value
 
 
