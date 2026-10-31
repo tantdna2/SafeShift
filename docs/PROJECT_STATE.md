@@ -2,7 +2,7 @@
 
 ## MiniCPM FP32 adoption implementation —31/10/2026
 
-**IN_PROGRESS / NOT_RELEASED.** Owner adopted the exact effective implementation
+**READY_FOR_TECHNICAL_REVIEW / NOT_RELEASED.** Owner adopted the exact effective implementation
 and authorized Codex to operate official original TRAIN160 after the new activation
 PR is reviewed, independently audited, merged and verified by ChatGPT. Decision:
 [Owner6544285481](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6544285481).
@@ -11,15 +11,27 @@ faculty signature is claimed. Scientific selection/pooling remains PENDING.
 
 Activation pins effective config `5b85504f…`, descriptor `2fe99272…`, MiniCPM and
 the original160 TRAIN manifest in trusted source policy. Numerical adapter bytes
-remain unchanged; source/runtime must receive a new identity and final-source
-Kaggle verification. Direct workers also enforce adoption/config/scope binding.
+remain unchanged; source/runtime have new source SHA256 `b1d6d821…`, runtime
+`c3c223bc…` and final-source Kaggle verification. Direct workers also enforce
+adoption/config/scope binding.
 Default production notebook remains bounded engineering; no official run yet.
 
-Local verification, final-source Kaggle technical receipt and Draft PR are still
-pending in this entry. Then stop for ChatGPT exact-HEAD GitHub review and independent
-Antigravity audit; PR156's waiver does not apply. Official160, artifact verification
-and no-call durable-resume proof remain NOT_RUN in this new task. No TEST or
-Accuracy/Macro-F1/model-choice analysis. Older entries below remain historical.
+Local exact-export Linux suite:343 PASS/40 SKIP/0 FAIL/ERROR; native numerical8/8
+PASS and both real pinned production CPU workers PASS. Final-source private
+Kaggle `nguynanhtn/safeshift-minicpm4-adoption-qa-20261031/1` COMPLETE: one first
+locked TRAIN image,1 load/1 call,11 finite logits steps, parser SUCCESS; HNLO
+unaligned/null retained. ZIP SHA256/CRC/all74 members, raw/native tokenizer/
+strict parser/HNLO replay and source inventory independently rechecked locally.
+Technical only, no official history consumed. No queue cancellation/retry: first
+check after Owner's conditional instruction observed RUNNING, then COMPLETE.
+
+[Report and receipts](research/MINICPM4_FP32_OFFICIAL_ADOPTION_20261031.md) record
+identities, retained errors, skips and private artifact locations. Stop at one
+new Draft PR for ChatGPT exact-HEAD GitHub review and independent Antigravity
+audit; PR156's waiver does not apply. Official160, real160 artifact verification
+and actual complete-series no-call resume remain NOT_RUN. Synthetic INVALID160
+ZIP/resume/no-load is locally verified; this is not a real160 completion claim.
+No TEST or Accuracy/Macro-F1/model-choice analysis. Older entries remain historical.
 
 ## Hai production routes đã kiểm Kaggle thật —31/10/2026
 
