@@ -1,5 +1,20 @@
 # SafeShift — PROJECT STATE
 
+## Owner xác nhận HOLD —31/10/2026, PR #156
+
+Owner đã chọn **phương án1: giữ BLOCKED**, chưa cho phép thay precision hoặc
+effective source. [Đánh giá GitHub của ChatGPT](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540368755)
+được đọc trực tiếp; đánh giá sơ bộ tại HEAD `51f6eec3be1e1c3eb6a69346e9bd1571be7c87d1`
+không phải final review PASS, independent audit hoặc quyền merge. Nhận xét dựa
+trên committed receipts, không phải kiểm độc lập private raw ZIP Kaggle.
+
+Giữ Draft PR156, toàn bộ evidence và lỗi FP16; không merge, không chạy lại
+cấu hình MiniCPM chưa sửa, không chạy chính thức160 ảnh. Ngoại lệ FP32 vẫn
+**PENDING / NOT AUTHORIZED / NOT APPLIED**. Chờ quyết định Owner riêng về phạm
+vi thay đổi số học rồi tiếp tục đúng session/branch/PR156. Quyết định này chỉ
+ghi trạng thái HOLD; không sửa runtime/notebook/locks/receipts hoặc nâng trạng
+thái khoa học. [Bản ghi append-only](research/DECISIONS.md#dec-20261031-owner-hold-minicpm-numerics).
+
 ## Khôi phục Kaggle và quy trình kiểm chứng thật —31/10/2026, PR #156
 
 Session mới xác minh remote: PR156 OPEN/DRAFT, branch

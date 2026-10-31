@@ -237,3 +237,19 @@ upcast, đổi source lock, đổi precision/model/ảnh/prompt/parser hoặc t�
 để vượt lỗi. Cần quyết định Owner cụ thể trước triển khai exception/effective
 implementation mới; teacher/third-party authority và quyền merge vẫn riêng.
 Không thay scientific result selection=PENDING, không pooling hoặc chạy full160.
+
+## DEC-20261031-OWNER-HOLD-MINICPM-NUMERICS
+
+Owner trực tiếp chọn **phương án1: giữ BLOCKED** sau
+[đánh giá sơ bộ GitHub của ChatGPT](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540368755)
+tại HEAD `51f6eec3be1e1c3eb6a69346e9bd1571be7c87d1`. Chưa cho phép thay đổi
+precision/effective source; ngoại lệ FP32 trong resampler vẫn **PENDING,
+NOT AUTHORIZED, NOT APPLIED**. Không coi đánh giá này là final review PASS,
+Antigravity audit, phê duyệt khoa học hoặc quyền merge.
+
+Giữ nguyên Draft PR156, toàn bộ bằng chứng Kaggle và lỗi FP16. Không merge,
+không chạy lại cấu hình MiniCPM chưa sửa, không chạy160 ảnh chính thức. Chỉ
+tiếp tục triển khai/kiểm số học khi có quyết định Owner riêng về phạm vi thay
+đổi, trong đúng session Codex/branch/PR156. Giữ scientific selection=PENDING,
+pooling_allowed=false và toàn bộ model/checkpoint/source/precision locks.
+Đây là xác nhận HOLD, không phê duyệt hoặc phủ nhận hồi tố đề xuất số học.
