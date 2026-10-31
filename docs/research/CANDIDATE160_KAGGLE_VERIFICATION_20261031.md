@@ -72,6 +72,26 @@ module outputs, stopping at the first nonfinite output without changing values,
 precision, eager attention, prompt, processor or checkpoint. It is diagnosis,
 not release qualification; production remains blocked pending actual resolution.
 
+The first real numerical diagnostic verified4,059,533,040 FP16 parameters, all
+finite. The first observed bad module is `resampler.attn.out_proj` (Linear):
+its input already contains70,400 NaNs and its output1,408,000 NaNs. Thus the
+problem is inside the preceding native resampler attention, rather than corrupt
+loaded parameters. This does not yet pinpoint the earliest functional operation.
+Diagnostic ZIP SHA256 `96189820991e62fa3f077cd24697ac0fd533c8f19591894b270ad91de7b21886`.
+
+A final observation-only line trace will record native projected Q/K/V, masks,
+scores before softmax and probabilities before the value product on the same
+image. No operation is replaced or upcast. Its CPU test uses the actual locked
+public attention class with tiny synthetic tensors. The first local tracer test
+failed because it watched `forward` instead of `multi_head_attention_forward`;
+this was fixed and all4 pinned CPU tests passed before any GPU submit of that
+tracer. The failed local staging is retained; it never started a Kaggle job.
+
+The later full exact export `00d2611f25a878a975e04e71a6c6cf7a12db5a0d` also
+passed357 tests:322 PASS/35 SKIP/0 failures/errors, including the diagnostic
+admission tests. Two torch observer tests require the separate pinned stack,
+where they passed; the subsequent native tracer regression also passed there.
+
 Credentials,
 private images, weights, raw model outputs and full private logs stay ignored
 under data/processed; only sanitized small receipts/hashes may enter Git.

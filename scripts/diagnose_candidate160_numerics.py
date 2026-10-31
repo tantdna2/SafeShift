@@ -6,6 +6,8 @@ values, cast computations or alter model/config/source/checkpoint bytes.
 """
 import argparse
 from collections import Counter
+from contextlib import contextmanager
+import inspect
 import os
 from pathlib import Path
 import subprocess
@@ -55,6 +57,49 @@ def observe_model(model, output):
     return handles
 
 
+@contextmanager
+def trace_resampler(model, output):
+    """Observe locals between native operations; never replace an operation."""
+    from safeshift.pilot.artifacts import sha, read, write
+    from safeshift.candidates.source import LOCK, require
+    import torch
+    source = Path(inspect.getsourcefile(type(model.resampler.attn)))
+    require(sha(source) == read(LOCK)["minicpm4"]["files"]["resampler.py"], "DIAGNOSTIC_NATIVE_TRACE_SOURCE")
+    markers = {"attn_output_weights = softmax(": "SCORES_BEFORE_SOFTMAX",
+               "attn_output = torch.bmm(": "PROBABILITIES_BEFORE_VALUE_PRODUCT"}
+    lines = {}
+    for marker, stage in markers.items():
+        found = [i for i, line in enumerate(source.read_text().splitlines(), 1) if marker in line]
+        require(len(found) == 1, "DIAGNOSTIC_TRACE_BOUNDARY_REQUIRED")
+        lines[found[0]] = stage
+    saved = set()
+    previous = sys.gettrace()
+    def trace(frame, event, arg):
+        if frame.f_code.co_filename != str(source) or frame.f_code.co_name != "multi_head_attention_forward":
+            return None
+        if event == "line" and frame.f_lineno in lines and frame.f_lineno not in saved:
+            stage = lines[frame.f_lineno]
+            values = {}
+            for name in ("query", "key", "value", "q_scaled", "q", "k", "v", "attn_mask", "key_padding_mask", "attn_output_weights"):
+                value = frame.f_locals.get(name)
+                if isinstance(value, torch.Tensor):
+                    values[name] = (describe(value) if value.is_floating_point() else
+                        {"dtype": str(value.dtype), "shape": list(value.shape),
+                         "true_count": int(value.sum().item()), "elements": value.numel()})
+                    if name in ("attn_mask", "key_padding_mask") and value.ndim:
+                        masked = torch.isneginf(value) if value.is_floating_point() else value.bool()
+                        values[name]["fully_masked_rows"] = int(masked.all(dim=-1).sum().item())
+            write(output / ("native_trace_" + stage + ".json"),
+                  {"stage": stage, "before_line": frame.f_lineno, "native_source_sha256": sha(source), "tensors": values})
+            saved.add(frame.f_lineno)
+        return trace
+    sys.settrace(trace)
+    try:
+        yield
+    finally:
+        sys.settrace(previous)
+
+
 def child(args, grant):
     import torch
     from safeshift.candidates import train_runtime as rt, train_contract as c
@@ -91,7 +136,8 @@ def child(args, grant):
     handles = observe_model(backend.model, output)
     try:
         # CandidateBackend owns native_call.json immediately before generate.
-        raw = backend.generate(safe(args.bundle, rows[0]["image"]), output / "sample")
+        with trace_resampler(backend.model, output):
+            raw = backend.generate(safe(args.bundle, rows[0]["image"]), output / "sample")
         write(output / "diagnostic_raw.json", raw)
         write(output / "diagnostic_outcome.json", {"status": "ONE_NATIVE_CALL_FINISHED", "raw_nonfinite": raw["raw_nonfinite"]})
     except BaseException as error:
