@@ -1,5 +1,39 @@
 # SafeShift — PROJECT STATE
 
+## MiniCPM ngoại lệ hẹp: Kaggle technical smoke PASS —31/10/2026
+
+**READY FOR REVIEW cho trial kỹ thuật, vẫn Draft PR156. Không READY FOR OWNER/
+baseline khoa học/full160.** Owner cấp ngoại lệ trong quyết định mới bên dưới;
+HOLD/FP16 BLOCKED phía sau giữ nguyên như lịch sử, không bị xóa hay hồi tố.
+
+Runtime `0fa13ee610244a56d4d999cc5d73841267a28306`, Git export kiểm local
+`0bb1b71f58818ed1e5c85aafa942f63ee9c72279`; source
+`ae94d0033e8215fb3cf1e192c0ef0b5c0e5d76cc8eb904558dc4d9a26186ab7b`.
+Effective ID `minicpm4-resampler-attention-fp32-v1`, digest
+`2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da`;
+effective config SHA256 `5b85504ff24ff42d4d629dbf00feb0c484022cfef3a7d57b571eaae99d1c8b00`.
+Config FP16 gốc/hash/locks giữ nguyên. Full Linux365 =326 PASS/39 SKIP/0 lỗi;
+8 native CPU tests PASS riêng (gồm oracle scalar thêm sau Git export), production
+effective `--check-only` PASS thật,4 baseline notebook tests PASS Windows.
+
+Kaggle private `nguynanhtn/safeshift-minicpm4-fp32-trial-20261031/1`:1 ảnh0
+TRAIN160 gốc,1 load/1 native call; weights4.059.533.040 tham số FP16, eager,
+T4x2/GPU0. Score/softmax/value product FP32 hữu hạn, output về FP16, logits
+11/11 steps hữu hạn, parser SUCCESS. HNLO **RAW_LOGITS_AVAILABLE_BUT_UNALIGNED**,
+numeric HNLO chưa được chứng minh; không sửa parser/prompt/continuation hoặc
+chọn ảnh khác để lấy score. Raw/native/tokenizer/config custody, cleanup và
+ZIP/sidecar được kiểm lại độc lập trên CPU. ZIP SHA256
+`0c1fe3b00a56314cd3688465f59f0ccb8dce09761c349e1724ec0d242c175337`.
+[Bằng chứng mới](research/evidence/minicpm_resampler_fp32_20261031/index.json)
+giữ hash của5 archive trước nguyên vẹn; raw/private images/weights không commit.
+
+NEXT: ChatGPT kiểm GitHub exact HEAD/notebook/effective implementation/receipts,
+rồi quyết định Antigravity audit độc lập. Không tự merge hoặc chạy160/TEST.
+Notebook effective chỉ kỹ thuật, không route full/resume/history; scientific
+result selection vẫn PENDING, pooling=false.4 notebook baseline được rebuild
+payload do source supervisor đổi; bằng chứng Kaggle cũ không tự qualify lại
+chúng. Trial mới này chỉ chứng minh đúng notebook/effective route đã chạy.
+
 ## Owner mở lại thử kỹ thuật ngoại lệ hẹp —31/10/2026, PR156
 
 Owner cấp **AUTHORIZED_FOR_BOUNDED_TECHNICAL_TRIAL** cho MiniCPM resampler

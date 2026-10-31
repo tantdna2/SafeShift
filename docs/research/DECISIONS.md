@@ -274,3 +274,20 @@ baseline/phương pháp khoa học, result selection, audit PASS hoặc merge. S
 chưa PASS phải BLOCKED; nếu PASS giữ Draft để ChatGPT review GitHub rồi quyết
 định Antigravity audit độc lập. Ngoại lệ hẹp này thay HOLD chỉ trong phạm vi
 trên; mọi thay đổi rộng hơn vẫn chưa được cấp quyền. Không sửa quyết định cũ.
+
+## RESULT-20261031-MINICPM-RESAMPLER-FP32-TECHNICAL
+
+Trial được phép ở trên đã **TECHNICAL_SMOKE_PASS** trên Kaggle thật với đúng
+notebook/runtime/effective config được khóa:1 ảnh0 TRAIN160 gốc/1 load/1 call,
+weights FP16, resampler score/softmax/value FP32, output về FP16;11/11 raw
+logit steps hữu hạn, parser SUCCESS, raw/custody/ZIP/SHA256/cleanup PASS.
+[Báo cáo/receipts](MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md) giữ đủ hashes
+và evidence FP16 FAIL cũ nguyên trạng. HNLO unaligned, numeric HNLO chưa chứng
+minh. Đây là kết quả kỹ thuật, không APPROVED baseline/model quality/science.
+
+Giữ **Draft PR156 / READY FOR REVIEW trial kỹ thuật** để ChatGPT kiểm exact
+GitHub HEAD rồi quyết định audit Antigravity độc lập. Scientific result selection
+vẫn PENDING/pooling=false; không official160/TEST/merge hoặc đổi locks ngoài
+ngoại lệ. Không suy PASS của1 ảnh sang toàn cohort, runtime dài hoặc các model/
+notebook chưa được kiểm lại sau đổi embedded source. Owner chưa cấp quyền
+production cho numerical policy này qua quyết định technical trial.

@@ -1,5 +1,27 @@
 # Kiến trúc Foundation V1
 
+## Effective MiniCPM resampler FP32 technical route —31/10/2026
+
+Notebook technical riêng → `launch_owner` với action chỉ1 ảnh → shared OS lease
+→ cùng production supervisor/CLI/worker → `minicpm_resampler_fp32.backend` →
+backend/load weights native cũ → instance-only derived resampler method. Source
+gốc được verify hash nguyên vẹn; thay đúng4 expressions của method locked,
+không global patch/class/file mutation. Chỉ score/softmax/value product FP32,
+value result cast về FP16 trước out_proj; projections/query scaling không đổi.
+Source original/effective descriptor/derived method/config đều có hash riêng.
+
+`train_contract.config` mặc định vẫn trả config gốc; implementation ID opt-in
+tạo config effective riêng và được khóa trong execution binding/raw/context.
+Default history không coi config mới là completion cũ. Effective route chỉ có
+smoke campaign/series/output riêng, không resume/full-run/history import/metrics.
+`train_run` xác minh file effective_numerics trước nhận raw/custody và receipt
+cuối yêu cầu counters3 phép tính hữu hạn + return FP16 + native load evidence.
+Technical Owner authority không cấp baseline/full160/TEST/merge.
+
+[Báo cáo](research/MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md) ghi actual Kaggle
+1-image PASS, HNLO unaligned và giới hạn; các phần phía dưới giữ lịch sử trước
+ngoại lệ. Bốn notebook gốc rebuild source payload chưa tự qualify lại trên Kaggle.
+
 ## Kaggle technical smoke và regression production CLI —31/10/2026
 
 Notebook Candidate160 cuối mặc định `technical_smoke` → `launch_owner` giữ cùng

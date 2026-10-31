@@ -196,6 +196,27 @@ class NativeResamplerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"EAGER_EVAL_ZERO_DROPOUT"):
                 a(q,q,v)
 
+    def test_nonuniform_native_attention_matches_independent_scalar_oracle(self):
+        import math
+        torch=self.torch
+        with torch.no_grad():
+            a=self.attention()
+            numerical.install_attention(a)
+            q=torch.tensor([[[2.,-1.,.5,3.]],[[.25,1.,-2.,.5]]],dtype=torch.float16)
+            k=torch.tensor([[[1.,2.,3.,4.]], [[-1.,.5,2.,0.]], [[2.,-1.,0.,1.]]],dtype=torch.float16)
+            v=torch.tensor([[[1.,3.,5.,7.]], [[2.,4.,6.,8.]], [[-1.,-3.,-5.,-7.]]],dtype=torch.float16)
+            actual,probabilities=a(q,k,v,key_padding_mask=torch.tensor([[False,True,False]]))
+            expected=[]
+            for query in q[:,0].tolist():
+                scores=[sum((query[t]/2)*key[t] for t in range(4)) for key in k[:,0].tolist()]
+                scores[1]=-math.inf
+                weights=[math.exp(s-max(scores)) for s in scores]
+                weights=[w/sum(weights) for w in weights]
+                expected.append([sum(weights[i]*float(v[i,0,j]) for i in range(3)) for j in range(4)])
+            target=torch.tensor(expected,dtype=torch.float16).view(2,1,4)
+            self.assertTrue(torch.allclose(actual,target,atol=.004,rtol=.002))
+            self.assertTrue(bool(torch.isfinite(probabilities).all()))
+
     def test_changed_native_source_rejected_before_binding(self):
         def unrelated(): pass
         with self.assertRaises(ValueError): numerical.rewritten_method(unrelated)

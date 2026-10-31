@@ -19,6 +19,14 @@ NOT VERIFIED; CPU/preflight không đủ. [Hồ sơ trial](research/MINICPM4_FP3
 Ngay cả khi trial PASS: giữ Draft PR156, báo ChatGPT kiểm GitHub rồi quyết định
 Antigravity audit; chưa được chạy chính thức160 hoặc dùng làm baseline khoa học.
 
+**Kết quả đã đo:** notebook effective version1 trên Kaggle đã TECHNICAL_SMOKE_PASS:
+1 ảnh/1 call, weights FP16,11/11 logits steps hữu hạn, parser SUCCESS, HNLO
+unaligned (chưa numeric score), raw/ZIP/SHA256/cleanup hợp lệ. Xem
+[receipts](research/evidence/minicpm_resampler_fp32_20261031/index.json).
+Đây là trial đã chạy, không lệnh để Owner chạy chính thức hoặc lặp thêm. Không
+sửa action thành160/resume; quyền hiện tại chưa cho full-run effective policy.
+Owner chờ ChatGPT review GitHub rồi quyết định audit/phạm vi tiếp theo.
+
 ## Quy trình hiện hành PR156: Codex kiểm Kaggle thật trước bàn giao
 
 Nguồn: [Owner31/10](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161),
