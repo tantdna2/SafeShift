@@ -31,6 +31,20 @@ cập nhật receipt/source/notebook SHA; ChatGPT kiểm GitHub và Antigravity 
 độc lập trước merge. Scientific selection PENDING/pooling=false, TEST đóng.
 Không tự tuyên bố READY FOR OWNER hoặc chạy chính thức160 thay Owner.
 
+**Cập nhật thực thi cùng session:** full Linux Git export `c9c2f24680e4eb21290dbf2e3b8fb308a5c8bf2e`
+PASS354 tests =321 PASS/33 SKIP/0 lỗi; source `c7a48bc8479137ca29647c94cfb71d2e7a867b8b7d7ab394776cf5c0105764f4`.
+Hai CPU worker CLI cuối cùng PASS. Kaggle InternVL version1 đã nạp weights,
+inference1 ảnh/1 call, ZIP/raw/checksum PASS; response có code fence nên parser
+giữ INVALID và HNLO unaligned, chưa chứng minh numeric HNLO/quality. Kaggle
+MiniCPM version1 đã load weights và gọi1 ảnh nhưng raw_nonfinite ở64/64 steps,
+controller STOP/receipt BLOCKED; không OOM, peak allocated khoảng9,74GB.
+Archive FAIL SHA256 `7d9e1947e8316dd2586feaa44bcdbc52fa7dcabe52bc8aaf95050c4de333c939`
+được giữ nguyên. **Toàn gói vẫn BLOCKED**, không READY FOR OWNER.
+Đang thêm một diagnostic chỉ quan sát weights/module outputs trên đúng ảnh0,
+giữ nguyên FP16/eager/C1/checkpoint và dừng tại nonfinite đầu tiên; không sửa
+hoặc tắt validation, không chọn ảnh khác để tìm output đẹp. Diagnostic không
+qualification hoặc production run. Artifact thật/raw/weights vẫn private/ignored.
+
 ## Task retry/resume Candidate160 —31/10/2026
 
 Base mới từ remote main `6252a7d` (PR155 đã merge). Một Draft PR mã nguồn thay

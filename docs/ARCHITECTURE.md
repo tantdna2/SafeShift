@@ -1,5 +1,30 @@
 # Kiến trúc Foundation V1
 
+## Kaggle technical smoke và regression production CLI —31/10/2026
+
+Notebook Candidate160 cuối mặc định `technical_smoke` → `launch_owner` giữ cùng
+process lease để loại trừ job trùng → cùng `launch`/supervisor/runtime/worker
+production. `train_smoke` có schema/run prefix/campaign/output riêng, không
+production reservation/history hoặc scientific metrics. Manifest160 nguyên
+vẹn được admission, chỉ ordinal0 được schedule,1 native call/1 load/3600 giây.
+`resume`/`rerun` production tiếp tục dùng luồng recovery phía dưới, không dùng
+completion của smoke. TEST/quyền bên thứ ba/khoa học không đổi.
+
+`worker_command` là ranh giới tạo CLI dùng chung cho supervisor và regression
+thật. Argparse types mọi filesystem argument thành Path; direct worker caller
+cũng chuẩn hóa đủ repo/output/bundle/snapshot/weights. Source stat/verify/stage
+chuẩn hóa str/os.PathLike nhưng giữ lstat/alias/allowlist/checksum. `native_cpu`
+dùng chung giữa preflight và production, không còn hai bản processor/meta check.
+`scripts.rehearse_candidate160_worker` gọi child production thật, không mocks;
+đã tái hiện lỗi cũ rồi kiểm lại cả hai pinned CPU stacks với authorized bundle.
+
+Kaggle `.smoke-result.json` chỉ TECHNICAL_SMOKE_PASS khi actual native GPU/
+weights/inference, durable raw/parser/HNLO/custody, cleanup và ZIP/SHA256 đủ
+evidence. Status COMPLETE/preflight/CPU không chứng minh model inference.
+[AGENTS](../AGENTS.md) bắt buộc quy trình này cho mọi notebook/model hiện tại
+và tương lai; notebook cũ không được nâng READY hồi tố. Review/audit trước merge
+và Owner chạy chính thức vẫn riêng. [Hồ sơ kiểm chứng](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
 ## Candidate160 retry/resume —31/10/2026
 
 Production notebooks → `train_runtime.launch_owner` → kernel `train_history.lease`
