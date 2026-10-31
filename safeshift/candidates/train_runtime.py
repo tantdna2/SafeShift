@@ -269,14 +269,19 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
 
 
 def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None, owner_start=False,
-           recovery_action=None, child_options=None, technical_smoke=False, implementation=None):
+           recovery_action=None, child_options=None, technical_smoke=False, implementation=None, qualification=False):
     """Owner activation or legacy authority precedes inputs and hardware reads."""
     require(key in KEYS, "CANDIDATE_KEY")
     require(type(owner_start) is bool, "EXPLICIT_OWNER_ACTIVATION_BOOLEAN")
+    require(type(qualification) is bool and (not qualification or (owner_start and recovery_action is not None)),
+            "QUALIFICATION_OWNER_RECOVERY_REQUIRED")
     require(type(technical_smoke) is bool and (not technical_smoke or
             (owner_start and recovery_action is None)), "ISOLATED_TECHNICAL_SMOKE_REQUIRED")
-    require(implementation is None or (technical_smoke and key == "minicpm4"),
+    require(implementation is None or ((technical_smoke or recovery_action is not None) and key == "minicpm4"),
             "EFFECTIVE_IMPLEMENTATION_TECHNICAL_ONLY")
+    if implementation and not technical_smoke:
+        from .train_route import admission, fields
+        admission(fields(implementation, qualification))
     inputs = Path(inputs or "/kaggle/input")
     work = Path(work or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
@@ -294,8 +299,10 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
             grant_file = output / "technical_execution.json"
             write(grant_file, grant)
         elif owner_start is True:
-            index = history.collect(work, inputs, output, key) if recovery_action is not None else None
-            grant = (history.execution(key, source, ref, index, action=recovery_action, owner_start=True)
+            index = history.collect(work, inputs, output, key, implementation=implementation,
+                                    qualification=qualification) if recovery_action is not None else None
+            grant = (history.execution(key, source, ref, index, action=recovery_action, owner_start=True,
+                                      implementation=implementation, qualification=qualification)
                      if index is not None else owner.execution(key, source, ref, owner_start=True))
             ledger = None
             authorize(grant, key, source, ref, ledger)
@@ -342,6 +349,9 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         bundle = discover(inputs, "pilot_manifest.json").parent
         plan, rows = manifest(bundle)
         write(output / "pilot_manifest.json", plan)
+        if qualification:
+            from .train_route import selection
+            write(output / "technical_selection.json", selection(rows))
         if technical_smoke:
             write(output / "technical_selection.json", smoke.selection(rows, grant))
         if recovery_action is not None:
@@ -477,15 +487,29 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
                          "archive_sha256": sha(archive), "failure": error_record(error, "technical_smoke_receipt")}
             write(Path(str(output) + ".smoke-result.json"), final)
             print("Technical smoke:", final["status"], flush=True)
+        if qualification:
+            from .train_route import receipt
+            try:
+                final = receipt(output, archive, grant)
+            except BaseException as error:
+                final = {"status": "BLOCKED_NOT_VERIFIED", "source_sha256": source, "runtime_ref": ref,
+                         "archive_sha256": sha(archive), "failure": error_record(error, "qualification_receipt")}
+            write(Path(str(output) + ".qualification-result.json"), final)
+            print("Production engineering qualification:", final["status"], flush=True)
     return output
 
 
-def launch_owner(key, source, repo, ref, *, owner_start=False, action="resume", **kwargs):
+def launch_owner(key, source, repo, ref, *, owner_start=False, action="resume", implementation=None, **kwargs):
     """One bounded, exclusive attempt per invocation; never an automatic loop."""
     require(owner_start is True, "OWNER_START_REQUIRED")
     work = Path(kwargs.pop("work", None) or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
     with history.lease(work, key) as child_options:
+        if action in ("qualify", "qualify_rerun"):
+            suffix = "_q" + ("_fp32" if implementation else "")
+            return launch(key, source, repo, ref, work=work.with_name(work.name + suffix),
+                          owner_start=True, recovery_action="rerun" if action == "qualify_rerun" else "resume",
+                          implementation=implementation, qualification=True, child_options=child_options, **kwargs)
         if action == "technical_smoke_resampler_fp32_v1":
             from .minicpm_resampler_fp32 import ID
             require(key == "minicpm4", "MINICPM_ONLY_NUMERICAL_EXCEPTION")
@@ -493,10 +517,13 @@ def launch_owner(key, source, repo, ref, *, owner_start=False, action="resume", 
                           owner_start=True, technical_smoke=True, implementation=ID,
                           child_options=child_options, **kwargs)
         if action == "technical_smoke":
+            require(implementation is None, "USE_EFFECTIVE_SMOKE_ACTION")
             return launch(key, source, repo, ref, work=work.with_name(work.name + "_smoke"),
                           owner_start=True, technical_smoke=True, child_options=child_options, **kwargs)
+        from .train_route import admission
+        admission({"effective_implementation": implementation} if implementation else {})
         return launch(key, source, repo, ref, work=work, owner_start=True,
-                      recovery_action=action, child_options=child_options, **kwargs)
+                      recovery_action=action, implementation=implementation, child_options=child_options, **kwargs)
 
 
 def main():

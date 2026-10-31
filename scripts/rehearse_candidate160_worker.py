@@ -24,12 +24,18 @@ def main():
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--ref", required=True)
     parser.add_argument("--implementation", choices=("minicpm4-resampler-attention-fp32-v1",))
+    parser.add_argument("--qualification", action="store_true")
     args = parser.parse_args()
     output = args.output.absolute()
     require(output.is_relative_to(ROOT / "data/processed"), "IGNORED_OUTPUT_REQUIRED")
     output.mkdir(parents=True, exist_ok=False)
     source = source_hash()
-    if args.implementation:
+    if args.qualification:
+        from safeshift.candidates import train_history as history, train_route as route
+        index = {"runs": {}, **route.fields(args.implementation, True)}
+        record = history.execution(args.key, source, args.ref, index, owner_start=True,
+                                   implementation=args.implementation, qualification=True)
+    elif args.implementation:
         from safeshift.candidates.train_smoke import execution as smoke_execution
         record = smoke_execution(args.key, source, args.ref, implementation=args.implementation)
     else:

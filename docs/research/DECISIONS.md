@@ -291,3 +291,32 @@ vẫn PENDING/pooling=false; không official160/TEST/merge hoặc đổi locks n
 ngoại lệ. Không suy PASS của1 ảnh sang toàn cohort, runtime dài hoặc các model/
 notebook chưa được kiểm lại sau đổi embedded source. Owner chưa cấp quyền
 production cho numerical policy này qua quyết định technical trial.
+
+## DEC-20261031-CANDIDATE160-PRODUCTION-ENGINEERING
+
+Nguồn: [Owner follow-up directive](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540904325)
+và task trực tiếp trong session mới. Cho phép hoàn thiện và tự kiểm kỹ thuật
+hai đường production dự kiến bàn giao, cùng branch/Draft PR156. Chuẩn bị
+đường MiniCPM FP32 với effective ID/config/source/hash và history riêng;
+**không phê duyệt baseline khoa học hoặc activation official160 FP32**.
+Scientific result selection vẫn PENDING, pooling=false; TEST vẫn đóng.
+
+Profile vận hành riêng `train160-production-engineering-v1` dùng đúng manifest
+TRAIN160, không đổi order/nhãn/split/C1/parser/HNLO/model/checkpoint. Ba ordinal
+được chốt trước inference mới theo metadata kích thước đã xác minh:0 (đầu),
+15 (diện tích nhỏ nhất, tie ordinal đầu),111 (height/width lớn nhất, tie đầu).
+Không dùng prediction/GT để chọn. Đây là bounded engineering scope, không
+cohort nghiên cứu mới.1 load/≤3 native calls/3600 giây mỗi attempt; không retry
+nội bộ. Dùng cùng production supervisor/worker/controller/raw/history/export.
+Resume/rerun kỹ thuật chỉ trong scope này, không trở thành lịch sử official.
+Sau PASS, import sealed ZIP vào workspace mới để kiểm resume zero-load/zero-call.
+
+InternVL fence/INVALID và MiniCPM alternative native token segmentation phải
+được giữ đúng parser/continuation contract hiện hành. Không tạo numeric HNLO
+bằng thay token, decode gần đúng hoặc đổi surfaces. Không hồi tố sửa raw hoặc
+receipts cũ. Trước Owner full run: final-source Kaggle evidence, fresh ChatGPT
+exact-HEAD review, Antigravity audit độc lập và merge được cấp quyền riêng.
+Quyết định khoa học còn thiếu: Owner/Lead chấp thuận hay từ chối
+`minicpm4-resampler-attention-fp32-v1` làm effective baseline cho official
+TRAIN160, cùng identity/config đã kiểm; selection/pooling vẫn cần quyết định
+riêng trước phân tích khoa học. Không thể mở gate bằng notebook flag/approval giả.

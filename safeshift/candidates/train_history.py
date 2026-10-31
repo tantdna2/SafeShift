@@ -16,6 +16,7 @@ from safeshift.pilot.artifacts import read, safe, sha, write, write_bytes, verif
 from safeshift.pilot.contract import digest, parse_label
 from .source import require
 from . import train_contract as c, train_owner as owner
+from . import train_route as route
 
 SCHEMA = "safeshift-candidate160-owner-execution-v2"
 DECISION = "docs/research/CANDIDATE160_RECOVERY_DECISION_20261031.md"
@@ -64,9 +65,12 @@ def _series_id(index, key, action, run_id):
             modern[next(iter(heads))]["series_id"] if heads else owner.slot(key))
 
 
-def execution(key, source, ref, index, *, action="resume", owner_start=False):
+def execution(key, source, ref, index, *, action="resume", owner_start=False, implementation=None, qualification=False):
     require(action in ("resume", "rerun"), "RECOVERY_ACTION")
-    value = owner.execution(key, source, ref, owner_start=owner_start)
+    value = owner.execution(key, source, ref, owner_start=owner_start,
+                            implementation=implementation, qualification=qualification)
+    require({k: index[k] for k in route.fields(implementation, qualification)} ==
+            route.fields(implementation, qualification), "HISTORY_ROUTE_BINDING")
     value.update(schema=SCHEMA, owner_decision_record=DECISION, resume=True,
                  recovery_action=action, history_sha256=digest(index),
                  run_kind="FULL_RERUN" if action == "rerun" else "RECOVERY" if index["runs"] else "INITIAL",
@@ -78,7 +82,8 @@ def validate(value, key, source, ref, *, now=None):
     require(type(value) is dict and value.get("schema") == SCHEMA, "RECOVERY_EXECUTION_SCHEMA")
     extra = {"recovery_action", "history_sha256", "run_kind", "scientific_selection", "series_id"}
     old = {k: deepcopy(v) for k, v in value.items() if k not in extra}
-    old.update(schema=owner.SCHEMA, owner_decision_record=owner.DECISION, resume=False)
+    old.update(schema=owner.SCHEMA, owner_decision_record=(route.DECISION if
+               value.get("technical_qualification") else owner.DECISION), resume=False)
     owner.validate(old, key, source, ref, now=now)
     require(set(value) == set(old) | extra and value["owner_decision_record"] == DECISION
             and value["resume"] is True and value["scientific_selection"] == "PENDING"
@@ -117,8 +122,9 @@ def _scope(directory, key):
     execution_file = safe(directory, "owner_execution.json")
     require(execution_file.stat().st_size <= 16384, "HISTORY_EXECUTION_SIZE_BOUND")
     g = read(execution_file)
-    require(g.get("model_key") == key and g.get("campaign") == owner.CAMPAIGN
-            and g.get("slot_sha256") == owner.slot(key), "HISTORY_CAMPAIGN_BINDING")
+    expected = owner.execution(key, g["source_sha256"], g["runtime_ref"], owner_start=True, **route.options(g))
+    require(g.get("model_key") == key and g.get("campaign") == expected["campaign"]
+            and g.get("slot_sha256") == expected["slot_sha256"], "HISTORY_CAMPAIGN_BINDING")
     validator = validate if g.get("schema") == SCHEMA else owner.validate
     validator(g, key, g["source_sha256"], g["runtime_ref"], now=g["created_unix"])
     terminal = safe(directory, "owner_consumption_log.json")
@@ -136,7 +142,7 @@ def _scope(directory, key):
     return g
 
 
-def collect(work, inputs, output, key):
+def collect(work, inputs, output, key, *, implementation=None, qualification=False):
     """Snapshot available local/attached directories or sealed ZIPs before work.
 
 Orphan markers and conflicting copies block admission, rather than silently
@@ -144,11 +150,15 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
 """
     from .train_inputs import mounts
     work, output = Path(work), Path(output)
+    scope = route.fields(implementation, qualification)
+    slot = owner.slot(key, implementation=implementation, qualification=qualification)
     roots = [work, *mounts(inputs)]
     candidates, markers, archives = set(), [], set()
     visited = 0
     for root in roots:
-        for base in (root, safe(root, "data/processed/candidate160")):
+        suffix = "_q" + ("_fp32" if implementation else "") if qualification else ""
+        for base in dict.fromkeys((root, safe(root, "data/processed/candidate160"),
+                                   safe(root, "data/processed/candidate160" + suffix))):
             if not base.is_dir():
                 continue
             if safe(base, "owner_execution.json").is_file() or safe(base, "supervisor_status.json").is_file():
@@ -170,9 +180,9 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
                     visited += 1
                     require(visited <= 4096, "HISTORY_DISCOVERY_BOUND")
                     entry = safe(attempts, entry.name)
-                    if entry.name.startswith("owner_slot_" + owner.slot(key)) and entry.suffix == ".json":
+                    if entry.name.startswith("owner_slot_" + slot) and entry.suffix == ".json":
                         markers.append(entry)
-            for entry in base.glob("owner_slot_" + owner.slot(key) + "*.json"):
+            for entry in base.glob("owner_slot_" + slot + "*.json"):
                 markers.append(safe(base, entry.name))
     found, diagnostics = {}, {}
     total_files = total_bytes = 0
@@ -210,6 +220,8 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
         g = read(execution_file)
         if g.get("model_key") != key:
             return
+        if route.fields(**route.options(g)) != scope:
+            return  # Different arithmetic/technical scope cannot supply completion.
         g = _scope(directory, key)
         inventory = members(directory)
         if expected is not None:
@@ -285,7 +297,7 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
     index = {"schema": "safeshift-candidate160-history-v1", "model_key": key,
              "manifest_sha256": c.MANIFEST, "runs": dict(sorted(found.items())),
              "markers": sorted(marker_index, key=lambda v: (v["name"], v["sha256"])),
-             "archives": archive_index, "diagnostics": dict(sorted(diagnostics.items()))}
+             "archives": archive_index, "diagnostics": dict(sorted(diagnostics.items())), **scope}
     write(output / "history_index.json", index)
     return index
 
@@ -368,7 +380,9 @@ def recovery_plan(output, rows, g):
                 "attempts": value["attempts"], "native_calls": value["native_calls"],
                 "raw_sha256": record["members"].get(f"calls/{i:06d}/run/samples/000000/raw.json"),
                 "durable_completion": durable, "same_series": same_series})
-    pending = [i for i in range(160) if g["recovery_action"] == "rerun" or i not in completed]
+    require(route.fields(**route.options(index)) == route.fields(**route.options(g)), "RECOVERY_ROUTE_BINDING")
+    selected = route.ORDINALS if g.get("technical_qualification") else range(160)
+    pending = [i for i in selected if g["recovery_action"] == "rerun" or i not in completed]
     return {"schema": "safeshift-candidate160-recovery-plan-v1", "run_id": g["run_id"],
             "history_sha256": g["history_sha256"], "run_kind": g["run_kind"], "series_id": g["series_id"],
             "action": g["recovery_action"], "pending_ordinals": pending,

@@ -438,7 +438,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
         if recovery is not None:
             write(output / "lineage_accounting.json", lineage_accounting(recovery, rows, results, grant))
         write(output / "summary.json", {"status": "STOPPED" if reason else "COMPLETED_AWAITING_REVIEW",
-              "reason": reason, "metrics": None if technical_smoke else measurements(rows, results),
+              "reason": reason, "metrics": None if technical_smoke or grant.get("technical_qualification") else measurements(rows, results),
               "classification_quality": "AWAITING_RESEARCH_LEAD_REVIEW", "gpu_qualification": "SEE_MEASURED_WORKER_RECEIPTS",
               "full_train_authorized": False, "retry_or_resume_allowed": recovery is not None,
               **({"purpose": grant["purpose"], "scheduled": 1, "scientific_selection": "EXCLUDED",
@@ -446,5 +446,7 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                  if technical_smoke else {}),
               **({"run_kind": recovery["run_kind"], "scientific_selection": "PENDING", "pooling_allowed": False,
                   "scheduled": len(pending), "previously_durable": len(recovery["already_durable_ordinals"]),
-                  "metrics_scope": "THIS_ATTEMPT_ONLY_NOT_A_POOLED_ANALYSIS"} if recovery is not None else {})})
+                  "metrics_scope": "THIS_ATTEMPT_ONLY_NOT_A_POOLED_ANALYSIS"} if recovery is not None else {}),
+              **({"scientific_selection": "EXCLUDED", "metrics_scope": "TECHNICAL_QUALIFICATION_ONLY"}
+                 if grant.get("technical_qualification") else {})})
     return results, reason

@@ -91,7 +91,7 @@ class EffectiveContractTests(unittest.TestCase):
             root=Path(d)
             inputs=root/"input"
             inputs.mkdir()
-            with self.assertRaisesRegex(ValueError,"TECHNICAL_ONLY"):
+            with self.assertRaisesRegex(ValueError,"BLOCKED_PENDING_SCIENTIFIC_DECISION"):
                 rt.launch("minicpm4",c.source_hash(),ROOT,"a"*40,owner_start=True,
                     recovery_action="rerun",implementation=numerical.ID,work=root/"out",inputs=inputs)
             out=rt.launch_owner("minicpm4",c.source_hash(),ROOT,"a"*40,owner_start=True,

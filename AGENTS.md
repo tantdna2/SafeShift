@@ -205,3 +205,23 @@ giới hạn, bắt đầu1 ảnh thật; không production160, không TEST, kh�
 khoa học hoặc pooling/result selection. Giữ mọi FAIL/PASS/receipt cũ. Không
 suy rộng quyền sang toàn model/precision/prompt/parser/nguồn khác. Tiếp tục
 đúng session/branch/Draft PR156; ChatGPT review và quyết định audit trước merge.
+
+## Hoàn thiện production engineering — Owner31/10/2026
+
+[Chỉ thị tiếp nối](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540904325)
+cho phép chuẩn bị đường production FP32 riêng và kiểm kỹ thuật tối thiểu trên
+TRAIN; không phê duyệt baseline FP32 hoặc Codex chạy chính thức160. Profile
+`train160-production-engineering-v1` khóa ordinal0,15,111 trước inference mới:
+ảnh đầu, diện tích nhỏ nhất, height/width lớn nhất (tie lấy ordinal đầu).
+Đây là mẫu phủ nhánh kỹ thuật, không scientific cohort hay chọn theo dự đoán.
+Tối đa3 native calls/1 load/3600 giây; history/campaign/slot/series riêng,
+metrics excluded. Kiểm resume bằng sealed ZIP vào workspace mới phải no-op,
+không load/call lại ảnh đã hoàn thành. INVALID là durable completion.
+
+MiniCPM FP32 official resume/rerun giữ
+`BLOCKED_PENDING_SCIENTIFIC_DECISION`, kể cả direct worker/execution record.
+Không tự bóc fence, nới parser, đổi prompt/token/HNLO hoặc hợp nhất series.
+Chuẩn bị đầy đủ chứng cứ trước khi yêu cầu đúng quyết định hẹp về việc dùng
+implementation đã định danh làm baseline khoa học. Codex tự kiểm chính notebook
+production cuối trên Kaggle thật; fresh ChatGPT review và Antigravity audit
+độc lập vẫn bắt buộc. Dừng tại Draft PR156, không merge/full160/TEST.

@@ -43,9 +43,14 @@ or confer approval. The Owner must verify the cited Lead decision independently.
         smoke.validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
         return MODE
     if g.get("schema") == history.SCHEMA:
+        from .train_route import admission
+        admission(g)
         history.validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
         return MODE
     if g.get("schema") == SCHEMA:
+        require(not g.get("technical_qualification"), "QUALIFICATION_REQUIRES_RECOVERY_SCHEMA")
+        from .train_route import admission
+        admission(g)
         validate(g, g["model_key"], g["source_sha256"], g["runtime_ref"])
         return MODE
     mode = g["policy"].get("review_mode", "EXTERNAL")
@@ -166,6 +171,8 @@ def execution_binding(grant):
         "source_sha256", "runtime_ref", "base", "attempt_id", "run_id", "manifest_sha256")}
     if "effective_implementation" in grant:
         value["effective_implementation"] = grant["effective_implementation"]
+    if "technical_qualification" in grant:
+        value["technical_qualification"] = grant["technical_qualification"]
     return deepcopy(value)
 
 
@@ -220,9 +227,14 @@ def authorize(g, key, source, ref, ledger, now=None):
         return smoke.validate(g, key, source, ref, now=now)
     if type(g) is dict and g.get("schema") == history.SCHEMA:
         require(ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
+        from .train_route import admission
+        admission(g)
         return history.validate(g, key, source, ref, now=now)
     if type(g) is dict and g.get("schema") == SCHEMA:
         require(ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
+        require(not g.get("technical_qualification"), "QUALIFICATION_REQUIRES_RECOVERY_SCHEMA")
+        from .train_route import admission
+        admission(g)
         return validate(g, key, source, ref, now=now)
     require(type(g) is dict and g.get("schema") == "safeshift-candidate160-grant-v2",
             "BLOCKED_NO_NEW_CANDIDATE_GRANT")
