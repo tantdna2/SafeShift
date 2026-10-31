@@ -68,6 +68,9 @@ def execution(key, source, ref, *, owner_start=False, implementation=None, quali
     if qualification:
         value.update(owner_decision_record=route.DECISION, max_native_calls=3,
                      max_seconds=3600, expires_unix=now + 3600)
+    elif implementation:
+        from .train_official import binding
+        value["official_numerical_approval"] = binding(key, implementation)
     return value
 
 

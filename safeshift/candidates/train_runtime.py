@@ -280,8 +280,8 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
     require(implementation is None or ((technical_smoke or recovery_action is not None) and key == "minicpm4"),
             "EFFECTIVE_IMPLEMENTATION_TECHNICAL_ONLY")
     if implementation and not technical_smoke:
-        from .train_route import admission, fields
-        admission(fields(implementation, qualification))
+        from .train_route import configuration_admission
+        configuration_admission(key, implementation, qualification)
     inputs = Path(inputs or "/kaggle/input")
     work = Path(work or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
@@ -330,6 +330,8 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         write(output / "authorization_binding.json", {"execution_sha256" if owner_start else "grant_sha256": digest(grant),
               "runtime_ref": ref, "source_sha256": source, "manifest_sha256": MANIFEST,
               **configuration_hashes(key, implementation=implementation),
+              **({"official_numerical_approval": grant["official_numerical_approval"]}
+                 if "official_numerical_approval" in grant else {}),
               **({"owner_decision_record": grant["owner_decision_record"], "activation": grant["activation"]} if owner_start else
                  {"ledger_sha256": digest(ledger),
                   "approval_refs": {n: grant[n] for n in ("G0", "T0", "O3", "research_lead_review_ref")}})})
@@ -520,8 +522,8 @@ def launch_owner(key, source, repo, ref, *, owner_start=False, action="resume", 
             require(implementation is None, "USE_EFFECTIVE_SMOKE_ACTION")
             return launch(key, source, repo, ref, work=work.with_name(work.name + "_smoke"),
                           owner_start=True, technical_smoke=True, child_options=child_options, **kwargs)
-        from .train_route import admission
-        admission({"effective_implementation": implementation} if implementation else {})
+        from .train_route import configuration_admission
+        configuration_admission(key, implementation)
         return launch(key, source, repo, ref, work=work, owner_start=True,
                       recovery_action=action, implementation=implementation, child_options=child_options, **kwargs)
 

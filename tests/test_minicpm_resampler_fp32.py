@@ -84,16 +84,16 @@ class EffectiveContractTests(unittest.TestCase):
                 history._scope(out,"minicpm4")
             self.assertEqual(sha(archive),before)
 
-    def test_effective_launcher_blocks_full_run_and_has_separate_smoke_output(self):
+    def test_effective_launcher_rejects_unknown_implementation_and_isolates_smoke(self):
         from safeshift.candidates import train_runtime as rt
         from safeshift.candidates.source import ROOT
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)
             inputs=root/"input"
             inputs.mkdir()
-            with self.assertRaisesRegex(ValueError,"BLOCKED_PENDING_SCIENTIFIC_DECISION"):
+            with self.assertRaisesRegex(ValueError,"UNKNOWN_EFFECTIVE_IMPLEMENTATION"):
                 rt.launch("minicpm4",c.source_hash(),ROOT,"a"*40,owner_start=True,
-                    recovery_action="rerun",implementation=numerical.ID,work=root/"out",inputs=inputs)
+                    recovery_action="rerun",implementation="unknown",work=root/"out",inputs=inputs)
             out=rt.launch_owner("minicpm4",c.source_hash(),ROOT,"a"*40,owner_start=True,
                 action="technical_smoke_resampler_fp32_v1",work=root/"out",inputs=inputs)
             self.assertEqual(out.parent.name,"out_smoke_resampler_fp32_v1")

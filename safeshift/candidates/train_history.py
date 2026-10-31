@@ -122,6 +122,7 @@ def _scope(directory, key):
     execution_file = safe(directory, "owner_execution.json")
     require(execution_file.stat().st_size <= 16384, "HISTORY_EXECUTION_SIZE_BOUND")
     g = read(execution_file)
+    route.admission(g)
     expected = owner.execution(key, g["source_sha256"], g["runtime_ref"], owner_start=True, **route.options(g))
     require(g.get("model_key") == key and g.get("campaign") == expected["campaign"]
             and g.get("slot_sha256") == expected["slot_sha256"], "HISTORY_CAMPAIGN_BINDING")

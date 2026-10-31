@@ -254,7 +254,7 @@ def production_notebook(key, ref, repo=ROOT):
     nb = notebook(key, ref, repo)
     code = "".join(nb["cells"][1]["source"])
     code = code.replace('candidate160_action = "technical_smoke"  # after review/merge Owner selects "resume" or "rerun"',
-                        'candidate160_action = "qualify"  # three fixed TRAIN cases; official FP32 stays gated')
+                        'candidate160_action = "qualify"  # bounded technical verification; official resume only after review/audit/merge')
     code = code.replace('action=candidate160_action)',
                         f'action=candidate160_action, implementation={implementation!r})')
     code += (f'\nif candidate160_action in ("qualify", "qualify_rerun"):\n'
@@ -263,6 +263,16 @@ def production_notebook(key, ref, repo=ROOT):
              f'    print("Portable recovery evidence:", recovered)\n')
     compile(code, "candidate160-production-engineering", "exec")
     nb["cells"][1]["source"] = code.splitlines(True)
+    authority = ("""Owner adopted the exact MiniCPM FP32 implementation/configuration for the
+original official TRAIN160 campaign in decision6544285481. The reviewed source
+policy checks model, descriptor/config/manifest and the recorded Owner decision,
+including direct worker entry. No notebook flag approves another configuration.
+After ChatGPT review, independent Antigravity audit, authorized merge and live
+postmerge verification, Codex operates official `candidate160_action = "resume"`
+in this same session. Default technical runs remain separate from official160.
+This is Owner project authority, not a separate academic/Research Lead signature.
+""" if implementation else """InternVL official `resume`/`rerun` and its existing authority are unchanged.
+""")
     nb["cells"][0]["source"] = f"""# SafeShift — {model(key)['id']} — production engineering route
 
 Default action `qualify`: exactly three predeclared original TRAIN160 ordinals
@@ -275,15 +285,8 @@ and export. Scientific metrics/selection are excluded; no full160 is run.
 Implementation: `{implementation or 'original-internvl35-fp16'}`.
 Model/revision/checkpoint/TRAIN160/C1/parser/HNLO remain locked. FP32 MiniCPM
 changes only resampler scores/softmax/value product; weights/output remain FP16.
-Its official `resume`/`rerun` action is BLOCKED_PENDING_SCIENTIFIC_DECISION,
-enforced before Inputs/consumption/model load, including direct worker calls.
-No notebook edit or fabricated approval reference unlocks that scientific gate.
-An explicit Owner/Lead decision must adopt the named arithmetic implementation
-for official scientific TRAIN160, followed by reviewed activation code.
-
-InternVL official `resume`/`rerun` remains available only after ChatGPT exact
-HEAD review, independent Antigravity audit and separately authorized merge.
-Owner runs full160 personally. Do not attach technical qualification/smoke
+{authority}
+Do not attach technical qualification/smoke
 Outputs as official history. Official, technical, FP16 and FP32 have distinct
 campaign/slot/config/source/series bindings; no pooling or favorable selection.
 
@@ -298,11 +301,14 @@ full160 memory/time/model quality or numeric HNLO.
 Runtime `{ref}`; source `{source_hash(repo)}`.
 """.splitlines(True)
     nb["metadata"]["safeshift"].update(mode="CANDIDATE160_PRODUCTION_ENGINEERING_V1",
-        default_action="qualify", technical_ordinals=[0, 15, 111], official_fp32_scientific_gate="BLOCKED",
+        default_action="qualify", technical_ordinals=[0, 15, 111],
         config=config(key, implementation=implementation),
         configuration_hashes=configuration_hashes(key, implementation=implementation))
     if implementation:
+        from safeshift.candidates.train_official import binding
         nb["metadata"]["safeshift"]["effective_implementation"] = descriptor()
+        nb["metadata"]["safeshift"]["official_numerical_approval"] = binding(key, implementation)
+        nb["metadata"]["safeshift"]["official_fp32_scientific_gate"] = "OWNER_ADOPTED_REVIEW_AUDIT_MERGE_REQUIRED"
     return nb
 
 

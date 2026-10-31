@@ -173,6 +173,8 @@ def execution_binding(grant):
         value["effective_implementation"] = grant["effective_implementation"]
     if "technical_qualification" in grant:
         value["technical_qualification"] = grant["technical_qualification"]
+    if "official_numerical_approval" in grant:
+        value["official_numerical_approval"] = deepcopy(grant["official_numerical_approval"])
     return deepcopy(value)
 
 

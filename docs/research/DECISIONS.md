@@ -341,3 +341,52 @@ HNLO/metric; không chọn theo output hoặc nâng trạng thái khoa học.
 vẫn BLOCKED_PENDING_SCIENTIFIC_DECISION; decision adoption baseline còn thiếu.
 Giữ Draft PR156, fresh ChatGPT review và Antigravity audit độc lập trước merge.
 Không full160/TEST, không coi3 ảnh là kiểm đủ12 giờ/all160 hoặc global lock.
+
+## DEC-20261031-OWNER-MINICPM-FP32-OFFICIAL-TRAIN160
+
+Source: [Owner decision relay](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6544285481),
+read directly through GitHub REST in this task, plus the Owner's current task.
+The relay explicitly transcribes the Owner; it is not an independent Research
+Lead, faculty or auditor signature. Status: **OWNER_ADOPTED_FOR_PROJECT_TRAIN160**;
+activation requires a separately reviewed, independently audited, authorized
+merge and live postmerge verification. No official execution before that sequence.
+
+The Owner adopts `minicpm4-resampler-attention-fp32-v1` for the original official
+160-image TRAIN campaign. Effective configuration SHA256:
+`5b85504ff24ff42d4d629dbf00feb0c484022cfef3a7d57b571eaae99d1c8b00`;
+numerical descriptor SHA256:
+`2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da`.
+FP16 weights/eager remain; only resampler scores, softmax and value product
+compute FP32, with native dtype restored before output projection. Keep original
+model/revision/checkpoint/public-source/manifest/order/C1/generation/parser/HNLO/
+labels/metrics unchanged. Preserve INVALID and unaligned HNLO as observed.
+
+Trusted source policy `safeshift/candidates/train_official.py` binds only these
+identities and the original TRAIN160 manifest. Supervisor checks actual hashes
+before Inputs; direct workers check the immutable expected Owner adoption record
+and complete execution scope before software/data/GPU/load. Notebook metadata is
+informational, not approval. The frozen numerical descriptor's original technical
+scope/authority text remains historical bytes; the new policy supplies official
+project adoption separately, without relabeling old evidence or changing its hash.
+Source identity changes and must be recorded and requalified on final bytes.
+
+One new Draft PR contains activation, tests, deterministic notebooks, documents
+and small sanitized receipts. Codex performs bounded final-source technical
+Kaggle verification separately; stop for ChatGPT's direct GitHub review and an
+independent Antigravity audit. The audit waiver for PR156 does not apply here.
+Do not assert an audit, merge or academic approval that has not happened.
+
+After ChatGPT verifies the authorized merge, the Owner authorizes Codex in this
+same task/session to operate Kaggle `resume`, attach original private bundle,
+checkpoint and verified official historical Outputs, and finish pending TRAIN160
+within160 native calls/43200 seconds per attempt. Serialize jobs, verify history
+before resume; never erase markers or automatically retry unexplained failures.
+Keep technical/FP16 histories separate from official FP32 completion and preserve
+all raw/errors/ZIPs/sidecars/lineage privately under `data/processed/`.
+
+This decision supersedes the earlier FP32 adoption BLOCKED status and personal
+Owner operator requirement only within this exact original TRAIN160 campaign.
+Scientific selection/pooling remains **PENDING**; TEST, new protocols/metrics/
+roster, thesis D/V/T, Accuracy/Macro-F1 analysis and model choice are outside scope.
+No external academic acceptance is claimed. If independent authority outside the
+Owner is established as required, report BLOCKED with that requirement's source.

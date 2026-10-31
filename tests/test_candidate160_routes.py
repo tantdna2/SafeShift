@@ -71,18 +71,18 @@ class RouteTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 c.authorize(bad, "minicpm4", "c"*64, "a"*40, None)
 
-    def test_official_fp32_gate_before_inputs_workers_and_owner_record_cannot_approve_it(self):
+    def test_official_fp32_requires_recovery_record_not_unreviewed_owner_fields(self):
         wrong = owner.execution("minicpm4", "c"*64, "a"*40, owner_start=True,
                                 implementation=ID, qualification=True)
         with self.assertRaisesRegex(ValueError, "QUALIFICATION_REQUIRES_RECOVERY_SCHEMA"):
             c.authorize(wrong, "minicpm4", "c"*64, "a"*40, None)
         g = owner.execution("minicpm4", "c"*64, "a"*40, owner_start=True, implementation=ID)
-        with self.assertRaisesRegex(ValueError, "BLOCKED_PENDING_SCIENTIFIC_DECISION"):
+        with self.assertRaisesRegex(ValueError, "OFFICIAL_FP32_REQUIRES_RECOVERY_SCHEMA"):
             c.authorize(g, "minicpm4", "c"*64, "a"*40, None)
         with tempfile.TemporaryDirectory() as d:
-            with self.assertRaisesRegex(ValueError, "BLOCKED_PENDING_SCIENTIFIC_DECISION"):
+            with self.assertRaisesRegex(ValueError, "UNKNOWN_EFFECTIVE_IMPLEMENTATION"):
                 rt.launch_owner("minicpm4", "c"*64, Path(d), "a"*40, owner_start=True,
-                                implementation=ID, action="resume", work=Path(d)/"out")
+                                implementation="unknown", action="resume", work=Path(d)/"out")
             self.assertFalse(list(Path(d).rglob("*.json")))
 
     def test_real_controller_three_calls_resume_noop_rerun_new_series_and_arithmetic_isolation(self):
