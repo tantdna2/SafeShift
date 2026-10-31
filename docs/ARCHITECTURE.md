@@ -1,5 +1,29 @@
 # Kiến trúc Foundation V1
 
+## Candidate160 retry/resume —31/10/2026
+
+Production notebooks → `train_runtime.launch_owner` → kernel `train_history.lease`
+→ bounded history discovery/snapshot → execution v2 + immutable per-attempt
+reservation → manifest/recovery plan → unchanged environment admission/worker.
+`train_run.run_calls` chỉ schedule pending ordinals; gọi engine `execute` cũ
+với journal riêng, không dùng retry logic của pilot. Pilot/adapter/C1/HNLO/
+checkpoint/source locks giữ nguyên. Luồng Owner v1/grant cũ còn để đọc lịch sử
+và test compatibility; không là production retry entrypoint.
+
+`history_index.json` khóa từng run ID bằng snapshot member hashes, execution
+digest, series ID và ancestors. Lịch sử được flatten để export tiếp sang phiên
+Kaggle khác; directory/ZIP copies trùng được deduplicate, copies khác hash chặn.
+`recovery_plan.json` ghi tất cả kết quả/attempt/calls/raw hashes, pending và
+completion kỹ thuật; `lineage_accounting.json` cộng counts vận hành nhưng không
+chọn output. Rerun mở series riêng để resume nó không lấy completion baseline.
+Không scientific pooling/selection; xem [quyết định](research/CANDIDATE160_RECOVERY_DECISION_20261031.md).
+
+Khóa OS giữ tới lúc supervisor và Linux child đều đóng descriptor; không TTL
+hoặc xóa lock file. Chỉ loại trừ trong shared workspace, không distributed
+exactly-once giữa VM. Owner phải dừng phiên cũ trước, attach đủ lịch sử.
+`test_candidate160_recovery.py` kiểm failure/resume/ZIP/migration/dedup/rerun;
+bộ compatibility v1 vẫn kiểm hợp đồng lịch sử riêng.
+
 ## Candidate160 Owner activation — 30/10/2026
 
 Hai notebook candidate dùng `train_runtime.launch_owner` → `train_owner` tạo

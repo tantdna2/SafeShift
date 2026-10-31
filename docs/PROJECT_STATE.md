@@ -1,5 +1,25 @@
 # SafeShift — PROJECT STATE
 
+## Task retry/resume Candidate160 —31/10/2026
+
+Base mới từ remote main `6252a7d` (PR155 đã merge). Một Draft PR mã nguồn thay
+khóa vĩnh viễn bằng run/attempt/series riêng, snapshot lịch sử SHA256, resume
+ảnh chưa hoàn thành từ Outputs directory/ZIP và rerun toàn bộ có truy vết.
+Các marker BLOCKED_RESERVED_NO_RETRY/CONSUMED/replacement1 giữ nguyên bytes.
+[Quyết định mới](research/CANDIDATE160_RECOVERY_DECISION_20261031.md) bổ sung
+append-only; [runbook hiện hành](CANDIDATE160_KAGGLE.md) ghi thao tác và giới hạn.
+
+Scientific result selection **PENDING**, pooling_allowed=false; không tự ghép
+baseline/recovery hoặc chọn output. Không đổi160 TRAIN, revisions/locks, C1,
+HNLO, metric/nhãn/protocol hoặc quyền dữ liệu. Không GPU/Kaggle/weights/private
+data/attempt thực nghiệm trong task. CPU verification đang được ghi trong
+[báo cáo nghiệm thu](research/CANDIDATE160_RECOVERY_CPU_20261031.md).
+
+NEXT: ChatGPT kiểm exact Draft HEAD/diff/notebooks/receipts, Antigravity audit
+độc lập trước merge, quyền merge riêng và hậu merge. Không tự nhận DONE audit,
+GPU hoặc khoa học. Các mục bên dưới là snapshot lịch sử, không thủ tục retry
+hiện hành hoặc chứng nhận HEAD mới.
+
 Cập nhật **31/10/2026 (Asia/Bangkok)** trong cùng Draft PR #155, theo chỉ thị environment-first.
 Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.

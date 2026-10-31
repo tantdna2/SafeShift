@@ -123,3 +123,30 @@ Nguồn bắt buộc: [chỉ thị Owner ngày 31/10/2026 tại PR #155](https:/
 Quy tắc này chỉ COMPLETE sau final HEAD được ChatGPT review, Antigravity audit,
 merge được cho phép riêng và hậu merge xác minh có quy tắc trên main; Draft/CPU
 PASS hoặc comment không tự hoàn tất yêu cầu.
+
+## Candidate160 retry/resume — chỉ thị Owner 31/10/2026
+
+Nguồn: task trực tiếp của Owner “Loại bỏ cơ chế One-Shot/No-Retry” cho
+InternVL3.5 và MiniCPM-V-4, ghi tại
+[DEC-20261031-CANDIDATE160-RECOVERY](docs/research/CANDIDATE160_RECOVERY_DECISION_20261031.md).
+Đây là bổ sung vận hành, thay các lệnh cấm retry/resume/replacement và khóa
+vĩnh viễn **chỉ cho hai notebook Candidate160 Owner**. Không sửa hoặc hồi tố
+quyết định cũ; luồng grant/pilot khác giữ hợp đồng riêng.
+
+- Owner có thể tiếp tục/chạy lại sau lỗi trong phạm vi đã giao, kể cả lỗi load,
+  mà không xin phép thủ công từng lần. Mỗi kích hoạt tạo run/attempt riêng;
+  tối đa160 calls và12 giờ/lượt, không retry nội bộ vô hạn hoặc job trùng.
+- Giữ mọi raw/error/attempt/hash/marker cũ; resume dùng lịch sử kiểm checksum và
+  custody, kể cả Outputs Kaggle cũ. Không xóa khóa hoặc sửa source lock để chạy.
+  Thiếu/mâu thuẫn lịch sử phải ghi BLOCKED và yêu cầu bổ sung evidence có sẵn.
+- Rerun toàn bộ tạo series riêng; resume tiếp tục series vận hành hiện hành.
+  INITIAL/RECOVERY/FULL_RERUN không tự trộn vào khoa học. Quy tắc chọn kết quả
+  phân tích là **PENDING**; không chọn output thuận lợi, gộp AUROC hoặc nâng PASS.
+- Khóa tiến trình tự nhả khi tiến trình/worker kết thúc. Kaggle VM độc lập không
+  có shared lock: Owner phải dừng phiên trước và attach đủ Outputs trước resume;
+  không claim global exactly-once khi thiếu shared state.
+- Giữ nguyên160 TRAIN/order/revisions/source/checkpoint hashes/C1/HNLO/metric/
+  nhãn/protocol/raw-before-parse, preflight môi trường và mọi quyền dữ liệu.
+  Task mã nguồn chỉ CPU synthetic, không GPU hoặc tiêu lượt thực nghiệm.
+- Dừng ở một Draft PR. ChatGPT kiểm GitHub và Antigravity audit độc lập trước
+  merge; không tự nhận audit hoặc merge đã hoàn thành.

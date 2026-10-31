@@ -1,5 +1,69 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
+## Hướng dẫn hiện hành — retry/resume31/10/2026
+
+Main base `6252a7de91d9d98bd68a33b9bc13ae9888f2b9da`, sau PR155.
+[Quyết định vận hành mới](research/CANDIDATE160_RECOVERY_DECISION_20261031.md)
+thay khóa one-shot/no-retry cho đúng hai notebook Owner. Các phần phía dưới mục
+“Snapshot trước thay đổi recovery” là lịch sử; cấm retry/resume/replacement2 ở
+đó không áp dụng cho production v2 mới. Giữ mọi scientific/data/technical gates.
+
+1. Sau review/audit/merge, chạy preflight riêng với cùng bundle/checkpoint,
+   Internet ON/T4×2. Preflight không tạo execution/attempt/slot hoặc nạp weights;
+   kiểm receipt cuối `.preflight-result.json` + ZIP + SHA256. Mức GPU tensor PASS
+   không chứng minh model-fit. Production vẫn kiểm admission lại.
+2. Mở notebook production đúng model. Giữ bundle160 TRAIN và checkpoint Inputs
+   như đã khóa. Dừng phiên/job cũ trước khi khôi phục; không chạy hai jobs cùng
+   model đồng thời. Không xin lại approval/grant/CONTINUE trong scope Owner.
+3. Phiên Kaggle mới: attach toàn bộ Outputs cũ. Runtime nhận:
+   `notebooks/<owner>/<slug>/data/processed/candidate160/<key>-<uuid>/`, thư mục
+   run trực tiếp ở mount, hoặc evidence `<key>-<uuid>.zip` ở mount/parent chuẩn.
+   ZIP phải nguyên vẹn với checksums; sidecar nếu có phải khớp. Giữ thư mục
+   `attempts/`, history/markers và mọi partial/error. Không chỉ attach summary
+   hoặc raw rời rạc, không sửa/xóa trạng thái cũ để vượt cổng.
+4. **Save Version → Save & Run All**, `candidate160_action = "resume"` mặc định.
+   Mỗi kích hoạt có ID mới. Chỉ ảnh chưa có durable raw/custody trong series
+   hiện hành được gọi; INVALID hợp lệ cũng đã hoàn thành. Raw hợp lệ chưa có
+   result được replay trong plan mới; không sửa file lịch sử. Không tự retry
+   bên trong attempt; GPU/load/raw/resource/time error dừng để giữ evidence.
+5. Khi cần chạy lại toàn bộ160 ảnh, đổi duy nhất cấu hình
+   `candidate160_action = "rerun"` ở đầu code cell; Save & Run All tạo FULL_RERUN
+   và series mới. Lần tiếp tục để `resume` sẽ tiếp nối series này, không lấy
+   completion của baseline trước đó. Không đổi protocol/hash/model để sửa lỗi.
+6. Download private ZIP + `.sha256.json` được in kể cả STOPPED/BLOCKED/partial.
+   Nếu kill chưa kịp ZIP, giữ saved Output directory. Phiên sau attach lại đầy đủ.
+   Không có ảnh/weights trong evidence ZIP; không publish raw/nhãn hoặc secrets.
+
+`recovery_plan.json` ghi pending/durable ordinals và toàn bộ lineage/raw hashes;
+`history_index.json` khóa snapshots/ancestors; `lineage_accounting.json` đếm
+attempts/native calls theo run và toàn lịch sử. `model_load_attempt.json` phân
+biệt lần thử load với native calls=0. Bản sao cùng run ID/hash chỉ tính một lần;
+copies khác nhau, thiếu ancestor hoặc marker orphan → BLOCKED trước load.
+`BLOCKED_RESERVED_NO_RETRY`, `CONSUMED`, UNKNOWN và `replacement1` cũ được nhập
+nguyên trạng; không còn là khóa vĩnh viễn. Bổ sung đúng Output/evidence bị thiếu
+rồi chạy lại, không cần approval thủ công hoặc xóa marker. Hai nhánh lịch sử
+độc lập làm resume BLOCKED; explicit rerun tạo series mới giữ cả hai nhánh.
+
+Mỗi attempt ≤160 calls, một call/ảnh được schedule, một load,12 giờ. Resume đã
+đủ160 durable sẽ tạo evidence no-op, không setup/GPU/weights/model call. Lock OS
+tự nhả khi supervisor/worker kết thúc; Linux child giữ lock nếu supervisor chết.
+Lock này không liên lạc giữa VM Kaggle riêng biệt: Owner phải dừng job cũ và
+cung cấp đầy đủ Outputs. Không claim global exactly-once khi không shared state.
+
+**Scientific result selection=PENDING; pooling_allowed=false.** INITIAL,
+RECOVERY, FULL_RERUN và mỗi series giữ riêng; completion union chỉ phục vụ
+scheduling kỹ thuật. Không chọn best/first/latest cho nghiên cứu, không ghép
+metric/AUROC hoặc tự nâng qualification. Metrics trong summary chỉ thuộc attempt
+đó; decisions khoa học mới phải được ghi trước khi áp dụng.
+
+Manifest/order160 TRAIN, model revisions, checkpoint/source locks, C1, HNLO,
+parser/nhãn/metric/protocol và quyền dữ liệu không đổi. Task mã nguồn không GPU,
+Kaggle, weights hoặc attempt thực nghiệm. [Bằng chứng CPU mới](research/CANDIDATE160_RECOVERY_CPU_20261031.md).
+Dừng ở **một Draft PR** cho ChatGPT kiểm GitHub; Antigravity audit độc lập bắt
+buộc trước merge. Không tự merge hoặc coi CPU synthetic là GPU PASS.
+
+## Snapshot trước thay đổi recovery — không phải thủ tục hiện hành
+
 31/10/2026, Asia/Bangkok; tiếp tục cùng Draft PR #155. Environment repair base **PR #154 MERGED**:
 `39ec489403753ada10f4924c4b0d6077e027f5e1`, đã kiểm remote main.
 PR này cần ChatGPT kiểm GitHub và audit độc lập trước merge.

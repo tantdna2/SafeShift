@@ -17,11 +17,27 @@ from safeshift.pilot.report import measurements
 from .source import require
 from .train_contract import config, enrollment, execution_binding, policy_check, batch_check
 from .train_owner import SCHEMA as OWNER_SCHEMA, MODE as OWNER_MODE
+from . import train_history as history
 
 
 def not_attempted():
     return {"status": "NOT_ATTEMPTED", "label": None, "attempts": 0, "native_calls": 0,
             "hnlo": {"status": "HNLO_UNVERIFIED", "hnlo": None}}
+
+
+def lineage_accounting(recovery, rows, results, grant):
+    """Operational counts only; every raw/result reference remains per run."""
+    pending = set(recovery["pending_ordinals"])
+    return {"scientific_selection": "PENDING", "pooling_allowed": False,
+        "run_id": grant["run_id"], "series_id": grant["series_id"],
+        "samples": [{"ordinal": i, "sample_id": r["sample_id"],
+            "scheduled_this_attempt": i in pending,
+            "attempts_this_run": results[r["sample_id"]]["attempts"],
+            "native_calls_this_run": results[r["sample_id"]]["native_calls"],
+            "attempts_all_runs": results[r["sample_id"]]["attempts"] + sum(v["attempts"] for v in recovery["lineage"][r["sample_id"]]),
+            "native_calls_all_runs": results[r["sample_id"]]["native_calls"] + sum(v["native_calls"] for v in recovery["lineage"][r["sample_id"]]),
+            "previous_results": recovery["lineage"][r["sample_id"]]}
+            for i, r in enumerate(rows)]}
 
 
 def native_custody(sample, raw):
@@ -34,7 +50,7 @@ def native_custody(sample, raw):
 
 
 def configuration_context(grant):
-    require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
+    require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA, history.SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
     return {"schema": "safeshift-candidate160-configuration-evidence-v2",
             "execution_release": execution_binding(grant),
             "configuration_contract": config(grant["model_key"])}
@@ -283,10 +299,17 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
     deadline = clock() + grant["max_seconds"] if deadline is None else deadline
     native, reason, sequence_counts = None, None, Counter()
     results = {r["sample_id"]: not_attempted() for r in rows}
+    recovery = None
+    if grant.get("schema") == history.SCHEMA:
+        recovery = history.recovery_plan(output, rows, grant)
+        require(read(output / "recovery_plan.json") == recovery, "RECOVERY_PLAN_CHANGED")
+    pending = set(range(160) if recovery is None else recovery["pending_ordinals"])
     try:
         write(output / "configuration_binding.json", context)
         with enrollment(grant["model_key"]):
             for i, row in enumerate(rows):
+                if i not in pending:
+                    continue
                 if time.time() >= grant["expires_unix"]:
                     reason = "GRANT_EXPIRED_BEFORE_NEXT_CALL"
                     break
@@ -303,6 +326,9 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
                 def cached_factory():
                     nonlocal native
                     if native is None:
+                        if recovery is not None:
+                            write(output / "model_load_attempt.json", {"attempt_id": grant["attempt_id"],
+                                "load_attempts": 1, "ordinal": i})
                         native = factory()
                         require(isinstance(native.serialized_tokenizer, bytes) and native.serialized_tokenizer,
                                 "RAW_TOKENIZER_SERIALIZATION_REQUIRED")
@@ -396,8 +422,13 @@ reviewed CandidateBackend and measured CUDA observers in the isolated worker.
               "classification_quality": "UNVERIFIED_PENDING_REVIEW"})
         write(output / "accounting.json", [{"ordinal": i, "sample_id": r["sample_id"], **results[r["sample_id"]]}
                                            for i, r in enumerate(rows)])
+        if recovery is not None:
+            write(output / "lineage_accounting.json", lineage_accounting(recovery, rows, results, grant))
         write(output / "summary.json", {"status": "STOPPED" if reason else "COMPLETED_AWAITING_REVIEW",
               "reason": reason, "metrics": measurements(rows, results),
               "classification_quality": "AWAITING_RESEARCH_LEAD_REVIEW", "gpu_qualification": "SEE_MEASURED_WORKER_RECEIPTS",
-              "full_train_authorized": False, "retry_or_resume_allowed": False})
+              "full_train_authorized": False, "retry_or_resume_allowed": recovery is not None,
+              **({"run_kind": recovery["run_kind"], "scientific_selection": "PENDING", "pooling_allowed": False,
+                  "scheduled": len(pending), "previously_durable": len(recovery["already_durable_ordinals"]),
+                  "metrics_scope": "THIS_ATTEMPT_ONLY_NOT_A_POOLED_ANALYSIS"} if recovery is not None else {})})
     return results, reason

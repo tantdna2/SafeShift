@@ -189,3 +189,18 @@ Thay đổi hai file khoa học về sau cần quyết định version/hash mớ
 phê duyệt này sang bytes khác. **NEXT TASK sau xác minh hậu merge và giao việc:
 M3-01 — triển khai trọn hệ thống phân tích Seminar CPU trên fixture SYNTHETIC**.
 M4 cần quyền đọc artifact thật riêng; Khóa luận/học vụ vẫn có các gate riêng.
+
+## DEC-20261031-CANDIDATE160-RECOVERY
+
+Owner trực tiếp yêu cầu bỏ One-Shot/No-Retry cho hai notebook Candidate160
+InternVL3.5/MiniCPM-V-4; có thể retry/resume sau lỗi/load/ngắt Kaggle và khôi
+phục từ Outputs mà không approval thủ công từng lần trong phạm vi đã giao.
+[Quyết định vận hành đầy đủ](CANDIDATE160_RECOVERY_DECISION_20261031.md) ghi
+attempt/series/lineage bất biến, migration trạng thái cũ, bounded calls/khóa
+tiến trình và giới hạn cross-VM. Bổ sung append-only; không sửa quyết định cũ.
+
+Giữ160 TRAIN/order/revisions/checkpoint/source hashes/C1/HNLO/metric/nhãn/
+protocol/raw-before-parse/quyền dữ liệu. **Scientific result selection PENDING;
+không pooling hoặc chọn kết quả thuận lợi.** Chỉ task CPU synthetic; một Draft
+PR chờ ChatGPT kiểm GitHub và Antigravity audit độc lập trước merge. Không GPU,
+attempt thực nghiệm, tự phê duyệt khoa học hoặc merge.

@@ -43,6 +43,10 @@ def discover(inputs, filename, limit=512):
             candidate = safe(inputs, (mount.relative_to(inputs) / (prefix + filename)).as_posix())
             if candidate.exists():
                 require(candidate.is_file(), "MARKER_REGULAR_FILE_REQUIRED")
+                # Historical evidence carries a copy of the manifest, not images.
+                # Attaching a direct run directory must not create a second bundle.
+                if filename == "pilot_manifest.json" and safe(candidate.parent, "owner_execution.json").is_file():
+                    continue
                 found.append(candidate)
     require(len(found) == 1, f"UNIQUE_{filename}_REQUIRED_FOUND_{len(found)}")
     return found[0]

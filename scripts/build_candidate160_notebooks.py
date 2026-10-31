@@ -34,7 +34,7 @@ def notebook(key, ref, repo=ROOT, *, preflight=False):
         return base64.b64encode(zlib.compress(json.dumps(value, sort_keys=True).encode(), 9)).decode()
     code = code.replace(repr(packed(old_payload)), repr(packed(payload)))
     code = code.replace(source_digest(repo), source_hash(repo))
-    code = code.replace('root.mkdir(parents=True, exist_ok=True)', 'root.mkdir(parents=True, exist_ok=False)')
+    # Reuse only byte-identical embedded code; attempts themselves are exclusive.
     code = code.replace('pathlib.Path("/kaggle/working/data/processed/three_vlm_code")',
                         'pathlib.Path.cwd() / "data/processed/candidate160_code"')
     code = code.replace('pathlib.Path("/kaggle/working/data/processed/three_vlm_bootstrap")',
@@ -46,63 +46,57 @@ def notebook(key, ref, repo=ROOT, *, preflight=False):
             "CANDIDATE_LAUNCH_ROUTE_REQUIRED")
     compile(code, "candidate160_notebook", "exec")
     spec = model(key)
-    instructions = f"""# SafeShift — {spec['id']} — một lượt, tối đa 160 TRAIN
+    instructions = f"""# SafeShift — {spec['id']} — Candidate160 retry/resume
 
-**Owner kích hoạt bằng Save Version → Save & Run All một lần**, sau khi PR này
-được ChatGPT kiểm GitHub và audit độc lập trước merge. Không cần grant,
-reservation hay file CONTINUE thủ công. Thao tác chạy notebook là yêu cầu
-thực thi của Owner trong đúng phạm vi quyết định ngày 30/10/2026, ghi tại
-`docs/research/CANDIDATE160_OWNER_DECISION_20261030.md`; máy không ký thay Lead.
-Đây là code chưa được kiểm GPU; chất lượng thật và HNLO thực nghiệm UNVERIFIED.
+**Owner kích hoạt bằng Save Version → Save & Run All.** Sau review/merge, có thể
+chạy lại trong phạm vi đã giao mà không grant/reservation/CONTINUE thủ công.
+Mỗi lần chạy có run ID/attempt ID riêng; tối đa160 native calls,12 giờ/lượt,
+mỗi ảnh tối đa một call trong lượt. Lỗi kỹ thuật dừng lượt, không tự lặp vô hạn.
+Quyết định vận hành: `docs/research/CANDIDATE160_RECOVERY_DECISION_20261031.md`.
+Chưa có bằng chứng GPU/model-fit; khoa học và chọn kết quả vẫn PENDING.
 
-Model `{spec['id']}` @ `{spec['revision']}`; Transformers `{spec['transformers']}`.
-Adapter base #151 `{BASE}`; package base #153 `{PACKAGE_BASE}`.
-Runtime commit `{ref}`. Cùng manifest SHA256 `{MANIFEST}` và đúng 160 ảnh TRAIN
-/thứ tự lịch sử, không chọn lại, TEST, supplement hoặc FULL TRAIN.
-Không chuyển quyền này sang dữ liệu bên thứ ba hoặc thí nghiệm khác.
+Model `{spec['id']}` @ `{spec['revision']}`, Transformers `{spec['transformers']}`.
+Adapter base `{BASE}`, package base `{PACKAGE_BASE}`; runtime `{ref}`.
+Manifest SHA256 `{MANIFEST}`: giữ đúng160 ảnh TRAIN/thứ tự, không chọn lại ảnh,
+TEST, supplement hoặc FULL TRAIN. C1/parser/HNLO/nhãn/metric/protocol không đổi.
 
-1. Mở đúng notebook model trong một Kaggle session chưa chạy; chọn **T4 ×2**,
-   Internet ON để cài software pinned. Không chạy interactive trước khi Save.
-2. Attach bundle Owner đã upload: `pilot_manifest.json` và
-   `images/000000.jpg` … `images/000159.jpg`.
-3. Attach checkpoint đã upload: `candidate_checkpoint_{key}.json`,
-   `source/{spec['revision']}/` đúng source allowlist và `weights/` đúng
-   index + hai shards đã khóa SHA256. Xem `docs/CANDIDATE160_KAGGLE.md`.
-4. Save Version → **Save & Run All** một lần. Không sửa cell, SHA, model,
-   version hoặc input để đi qua lỗi. Không retry/resume hoặc ghi đè.
-5. Download ZIP + `.sha256.json` được in ở cell cuối, kể cả lỗi/partial;
-   giữ private. `COMPLETED_AWAITING_REVIEW` không phải model qualification.
+1. Chạy notebook `SafeShift_CANDIDATE160_PREFLIGHT_{key}.ipynb` riêng trước,
+   cùng Inputs/settings, Internet ON/T4 ×2. Không mở production song song.
+2. Attach bundle `pilot_manifest.json` + `images/000000.jpg`…`000159.jpg` và
+   checkpoint `candidate_checkpoint_{key}.json`, `source/{spec['revision']}/`,
+   `weights/` đúng allowlist/index/shards SHA256. Dataset và Notebook Output
+   `notebooks/<owner>/<slug>/` đều hỗ trợ.
+3. Khi khôi phục phiên Kaggle mới, dừng phiên cũ trước; attach toàn bộ saved
+   Outputs trước đó. Hỗ trợ directory `data/processed/candidate160/` hoặc ZIP
+   evidence nguyên vẹn. Giữ cả marker/history/sidecar; không xóa hoặc sửa file.
+4. Save & Run All: mặc định `resume` chỉ gọi ảnh chưa có raw/custody hợp lệ,
+   kể cả sau OOM/load error/ngắt phiên. INVALID hợp lệ cũng đã hoàn thành;
+   không gọi lại để tìm kết quả tốt. Raw hợp lệ chưa có result được replay
+   trong recovery plan mới, không sửa lịch sử. Lịch sử thiếu/mâu thuẫn → BLOCKED.
+5. Muốn chạy lại toàn bộ160 ảnh, đặt `candidate160_action = "rerun"` tại dòng
+   cấu hình đầu code cell rồi Save & Run All; đó là FULL_RERUN có ID mới,
+   giữ mọi lượt cũ riêng. Không đổi hashes, protocol, nguồn hoặc model revision.
+6. Download ZIP + `.sha256.json` kể cả partial/lỗi, giữ private. Nếu hard kill
+   chưa có ZIP, attach retained Output directory. Không chạy hai jobs cùng model
+   đồng thời. OS lock chống trùng cùng workspace và worker còn sống; hai VM độc
+   lập không có distributed lock, Owner phải bảo đảm phiên trước đã dừng và
+   cung cấp đủ lịch sử. Không coi thiếu Inputs lịch sử là bằng chứng chưa chạy.
 
-Run ID/attempt ID và consumption log được tạo tự động. Khóa slot cố định theo
-model/cohort chặn chạy trùng trong cùng output root, kể cả source đổi,
-UUID mới hoặc lỗi admission. Không xóa khóa/rerun. Kaggle session mới không có
-ledger cũ không cho phép khóa local chứng minh đã chống trùng toàn cục: Owner
-chỉ tạo một saved job/model, không chạy concurrent hoặc tạo session thay thế.
-Attached saved Outputs có marker ở layout chuẩn được kiểm để chặn replay.
+Raw IDs/logits/request bền vững trước parser; snapshot/call/error/attempt/hash
+không bị ghi đè. `recovery_plan.json` liệt kê mọi lượt và ảnh pending/durable;
+`lineage_accounting.json` chỉ đếm vận hành, không chọn hoặc gộp kết quả khoa học.
+Lượt INITIAL/RECOVERY/FULL_RERUN tách riêng, scientific_selection=PENDING,
+pooling_allowed=false. COMPLETED_AWAITING_REVIEW không phải qualification.
 
-Worker phải là CPython **3.11.9**, Linux x86_64, Torch **2.6.0+cu124**,
-torchvision **0.21.0+cu124**, CUDA12.4, FP16/eager/batch1/cuda:0; GPU1 chỉ quan
-sát. Không fallback Python, precision hoặc tải weights. Kiểm tất cả SHA256,
-source/config/manifest, decode160 ảnh, dependencies/ABI, disk, RAM/cgroup,
-CUDA/driver/T4/per-GPU VRAM và child FP16 trước consumption; kiểm lại sau đó.
-Admission cần28 GiB scratch +4 GiB output (32 GiB nếu cùng filesystem).
-Driver dùng compatibility floor525.60.13 thay allowlist chưa quyết định;
-RAM>=4 GiB, live scratch/output>=1 GiB mỗi nơi, GPU0 headroom>=256 MiB.
-Các reserve kỹ thuật không đảm bảo checkpoint thực fit; OOM vẫn dừng.
+Worker CPython3.11.9/Linux x86_64, torch2.6.0+cu124/torchvision0.21.0+cu124,
+CUDA12.4/FP16/eager/batch1/cuda:0; GPU1 chỉ quan sát. Provision phần mềm pinned,
+không tải weights/fallback. Giữ preflight hash/decode160/ABI/driver/CUDA/RAM/
+cgroup/disk,28 GiB scratch +4 GiB output trước consumption; OOM vẫn dừng.
+NaN/Inf/raw/custody/resource/time errors dừng; behavior chỉ ghi nhận vì chưa có
+ngưỡng khoa học: không tự đặt ngưỡng hoặc nâng scientific PASS.
 
-**Chính sách dừng được thay đổi công khai để reviewer đánh giá:** lỗi kỹ thuật,
-NaN/Inf, mất raw/custody, thiếu tài nguyên hoặc hết12 giờ dừng ngay. INVALID,
-lặp sequence, lệch nhãn và lỗi Normal/hazard được ghi để review sau lượt chạy;
-chưa có ngưỡng khoa học được quyết định nên không tự đặt ngưỡng hay dừng vì
-thiếu GT support ở mốc sớm. Không có file CONTINUE hoặc quyết định Lead giả.
-Có thể tiêu đủ160 calls dù behavior kém; kết quả không được tự nâng thành PASS.
-
-Raw IDs/logits/request được lưu trước parser; parser/C1/HNLO, model revision,
-checkpoint và config effective/legacy hashes giữ nguyên. Ảnh chưa gọi là
-NOT_ATTEMPTED. Archive chứa execution/slot/consumption log,160 accounting,
-raw/checkpoints/technical decisions, behavior observations và receipts.
-Không chứa ảnh/weights. Hard kill/VM loss/disk failure có thể mất ZIP hoàn chỉnh;
-giữ mọi bytes còn lại và không chạy lại. CPU synthetic PASS không là GPU PASS.
+Phải được ChatGPT kiểm GitHub và Antigravity audit độc lập trước merge.
+CPU synthetic PASS không là Kaggle/GPU PASS. Quyền bên thứ ba và TEST vẫn đóng.
 """
     result["cells"][0]["source"] = instructions.splitlines(True)
     result["cells"][1]["source"] = code.splitlines(True)
@@ -162,23 +156,11 @@ Runtime `{ref}`, source SHA256 `{source_hash(repo)}`.
 """.splitlines(True)
         result["metadata"]["safeshift"]["mode"] = "CANDIDATE160_NO_ATTEMPT_PREFLIGHT"
     else:
-        instructions = instructions.replace("Không fallback Python, precision hoặc tải weights.",
-            "Worker3.11.9 tự provision archive python-build-standalone20240726 đã khóa URL/size/SHA; không fallback Python/precision hoặc tải weights.")
-        instructions += f"""
-
-**Trước lượt160:** dùng `SafeShift_CANDIDATE160_PREFLIGHT_{key}.ipynb` riêng,
-không tạo slot/attempt hoặc nạp weights. Checkpoint Notebook Output giữ nguyên
-`notebooks/<owner>/<slug>/candidate_checkpoint_{key}.json` với source/weights;
-không cần chuyển Dataset hoặc tải lại checkpoint. Preflight không tự launch160.
-
-**Sự cố InternVL checkpoint_source FOUND_0:** giữ và attach saved Output cũ.
-Chỉ khi sealed evidence chứng minh attempt_consumed=false,160 NOT_ATTEMPTED,
-native_calls=0 và đúng sự cố thì runtime tự tạo một replacement1 có incident
-binding trong cùng campaign/slot. Không xóa marker, retry/resume lượt cũ hoặc
-đổi campaign. Thiếu/partial/consumed/unknown hoặc đã có replacement → BLOCKED.
-Xem `docs/research/CANDIDATE160_KAGGLE_ENV_DECISION_20261030.md`.
-"""
-        result["cells"][0]["source"] = instructions.splitlines(True)
+        code = code.replace("import base64, hashlib, json, pathlib, sys, zlib",
+                            'import base64, hashlib, json, pathlib, sys, zlib\n    candidate160_action = "resume"  # or "rerun" for a separate full attempt')
+        code = code.replace(", owner_start=True)", ", owner_start=True, action=candidate160_action)")
+        result["cells"][1]["source"] = code.splitlines(True)
+        compile(code, "candidate160_notebook", "exec")
     return result
 
 

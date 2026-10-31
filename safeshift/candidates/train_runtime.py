@@ -1,6 +1,6 @@
 """Candidate160 stdlib supervisor and separately invoked pinned worker.
 
-No downloader for weights, no alternate adapter, retries, resume or FULL TRAIN.
+No downloader for weights, alternate adapter or FULL TRAIN.
 Official checkpoint/source must be attached offline; exact hashes precede load.
 """
 import argparse
@@ -22,8 +22,9 @@ from safeshift.pilot.runner import error_record
 from .source import ROOT, LOCK, require, stage_snapshot
 from .loading import verify_weights
 from .train_contract import KEYS, MANIFEST, authorize, config, configuration_hashes, manifest, model, source_hash, sources
-from .train_run import recover, run_calls
+from .train_run import recover, run_calls, lineage_accounting
 from . import train_owner as owner
+from . import train_history as history
 
 
 def pins(key):
@@ -257,7 +258,8 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
     return python, env
 
 
-def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None, owner_start=False):
+def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None, owner_start=False,
+           recovery_action=None, child_options=None):
     """Owner activation or legacy authority precedes inputs and hardware reads."""
     require(key in KEYS, "CANDIDATE_KEY")
     require(type(owner_start) is bool, "EXPLICIT_OWNER_ACTIVATION_BOOLEAN")
@@ -273,11 +275,21 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
     try:
         require(source_hash(repo) == source, "NOTEBOOK_RUNTIME_SOURCE_MISMATCH")
         if owner_start is True:
-            grant = owner.execution(key, source, ref, owner_start=True)
+            index = history.collect(work, inputs, output, key) if recovery_action is not None else None
+            grant = (history.execution(key, source, ref, index, action=recovery_action, owner_start=True)
+                     if index is not None else owner.execution(key, source, ref, owner_start=True))
             ledger = None
             authorize(grant, key, source, ref, ledger)
             # A deterministic slot, not the new random run ID, excludes duplicates.
-            slot_name, slot_record = owner.reserve(work, grant, inputs)
+            if index is None:
+                slot_name, slot_record = owner.reserve(work, grant, inputs)
+            else:
+                slot_name = "owner_slot_" + grant["slot_sha256"] + "." + grant["run_id"] + ".json"
+                slot_record = {"schema": "safeshift-candidate160-owner-slot-v2", "status": "ATTEMPT_RESERVED",
+                    "slot_sha256": grant["slot_sha256"], "execution_sha256": digest(grant),
+                    "run_id": grant["run_id"], "attempt_id": grant["attempt_id"], "model_key": key,
+                    "manifest_sha256": MANIFEST, "history_sha256": grant["history_sha256"]}
+                write(safe(work, "attempts/" + slot_name), slot_record)
             owns_slot = True
             write(output / slot_name, slot_record)
             grant_file, ledger_file = output / "owner_execution.json", None
@@ -311,6 +323,13 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         bundle = discover(inputs, "pilot_manifest.json").parent
         plan, rows = manifest(bundle)
         write(output / "pilot_manifest.json", plan)
+        if recovery_action is not None:
+            recovery = history.recovery_plan(output, rows, grant)
+            write(output / "recovery_plan.json", recovery)
+            # A complete lineage is a no-op under resume: no software/GPU/load.
+            if not recovery["pending_ordinals"]:
+                stage = "already_durable_no_work"
+                return output
         stage = "checkpoint_source"
         marker, source_dir, weights = checkpoint(inputs, key)
         write(output / "checkpoint_admission.json", verify_weights(weights, key))
@@ -335,14 +354,14 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         stage = "cpu_native_and_images"
         with (output / "cpu.log").open("xb") as log:
             subprocess.run(command + ["--check-only"], env=env, stdout=log, stderr=subprocess.STDOUT,
-                           check=True, timeout=max(1, deadline-time.monotonic()))
+                           check=True, timeout=max(1, deadline-time.monotonic()), **(child_options or {}))
         stage = "gpu_preledger"
         write(output / "hardware_preledger.json", hardware(grant["policy"]))
         stage = "cuda_child_preledger"
         with (output / "cuda_preledger.log").open("xb") as log:
             subprocess.run(command + ["--cuda-check-only"], env={**env, "CUDA_VISIBLE_DEVICES": "0"},
                            stdout=log, stderr=subprocess.STDOUT, check=True,
-                           timeout=max(1, deadline-time.monotonic()))
+                           timeout=max(1, deadline-time.monotonic()), **(child_options or {}))
         require(read(output / "preledger_cuda.json")["worker_cuda"] == "MEASURED_FP16_FUNCTIONAL",
                 "PRELEDGER_CUDA_RECEIPT_REQUIRED")
         # Check expiry/source/ledger/input hashes again immediately before consume.
@@ -367,7 +386,7 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
               grant["run_id"] if owner_start else review_dir, flush=True)
         with (output / "worker.log").open("xb") as log:
             subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT,
-                           check=True, timeout=max(1, deadline-time.monotonic()))
+                           check=True, timeout=max(1, deadline-time.monotonic()), **(child_options or {}))
     except BaseException as error:
         reason = error_record(error, stage)
         try:
@@ -389,9 +408,11 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
                 results = recover(output, rows, grant)
                 retain("supervisor_accounting.json", [{"ordinal": i, "sample_id": r["sample_id"], **results[r["sample_id"]]}
                                                       for i, r in enumerate(rows)])
+                if recovery_action is not None and (output / "recovery_plan.json").is_file() and not (output / "lineage_accounting.json").exists():
+                    retain("lineage_accounting.json", lineage_accounting(read(output / "recovery_plan.json"), rows, results, grant))
             except BaseException as error:
                 finalizer_errors.append(error_record(error, "supervisor_recovery"))
-        retain("supervisor_status.json", {"status": ("BLOCKED" if consumed is False else
+        retain("supervisor_status.json", {"status": ("ALREADY_DURABLE_NO_WORK" if stage == "already_durable_no_work" else "BLOCKED" if consumed is False else
                "CONSUMPTION_UNCERTAIN_DO_NOT_RETRY" if consumed is None else "CONSUMED_REVIEW_EVIDENCE"),
               "attempt_consumed": consumed, "stage": stage, "failure": reason,
               "cpu_checks": "SEE_CPU_RECEIPTS", "gpu": "UNVERIFIED_UNLESS_MEASURED_WORKER_RECEIPT",
@@ -402,6 +423,9 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
             terminal = {**slot_record, "status": "CONSUMED" if consumed is True else
                         "UNKNOWN_DO_NOT_RETRY" if consumed is None else "BLOCKED_RESERVED_NO_RETRY",
                         "attempt_consumed": consumed, "stage": stage, "failure": reason}
+            if recovery_action is not None:
+                terminal.update(status="ATTEMPT_ENDED", recovery_available=True,
+                                run_kind=grant["run_kind"], scientific_selection="PENDING")
             retain("owner_consumption_log.json", terminal)
             try:
                 write(safe(work / "attempts", slot_name + ".terminal.json"), terminal)
@@ -426,10 +450,14 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
     return output
 
 
-def launch_owner(key, source, repo, ref, *, owner_start=False, **kwargs):
-    """The Owner starts the single scoped slot by running the shipped notebook."""
+def launch_owner(key, source, repo, ref, *, owner_start=False, action="resume", **kwargs):
+    """One bounded, exclusive attempt per invocation; never an automatic loop."""
     require(owner_start is True, "OWNER_START_REQUIRED")
-    return launch(key, source, repo, ref, owner_start=True, **kwargs)
+    work = Path(kwargs.pop("work", None) or Path.cwd() / "data/processed/candidate160")
+    work.mkdir(parents=True, exist_ok=True)
+    with history.lease(work, key) as child_options:
+        return launch(key, source, repo, ref, work=work, owner_start=True,
+                      recovery_action=action, child_options=child_options, **kwargs)
 
 
 def main():
@@ -446,11 +474,11 @@ def main():
     if a.execution:
         require(a.ledger is None, "OWNER_EXECUTION_IS_NOT_AN_EXTERNAL_GRANT")
         execution, ledger = read(a.execution), None
-        require(execution.get("schema") == owner.SCHEMA, "OWNER_EXECUTION_SCHEMA")
+        require(execution.get("schema") in (owner.SCHEMA, history.SCHEMA), "OWNER_EXECUTION_SCHEMA")
     else:
         require(a.ledger is not None, "LEGACY_LEDGER_REQUIRED")
         execution, ledger = read(a.grant), read(a.ledger)
-        require(execution.get("schema") != owner.SCHEMA, "USE_OWNER_EXECUTION_ARGUMENT")
+        require(execution.get("schema") not in (owner.SCHEMA, history.SCHEMA), "USE_OWNER_EXECUTION_ARGUMENT")
     worker(a.repo, a.output, a.bundle, a.snapshot, a.weights, execution, ledger, a.source, a.ref,
            check_only=a.check_only, cuda_check_only=a.cuda_check_only)
 
