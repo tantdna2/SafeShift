@@ -62,6 +62,14 @@ Kaggle, weights hoặc attempt thực nghiệm. [Bằng chứng CPU mới](resea
 Dừng ở **một Draft PR** cho ChatGPT kiểm GitHub; Antigravity audit độc lập bắt
 buộc trước merge. Không tự merge hoặc coi CPU synthetic là GPU PASS.
 
+CPU acceptance: export `afbf030` có347 tests =315 PASS/32 SKIP/0 lỗi;10 notebooks
+khớp builder,15 recovery tests mới PASS; Windows11 focused/notebook/prefix checks
+PASS. [Receipts/checksums](research/evidence/candidate160_recovery_20261031/index.json)
+giữ cả lần kiểm đầu có2 assertion lỗi và correction chỉ trong tests. Runtime
+`0f0d272c60c3a574814c1b0d3dc4a73ee169b30c`, candidate source SHA256
+`f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb`.
+Không native opt-in/live pip/full Windows hoặc actual Kaggle/model fit ở Codex.
+
 ## Snapshot trước thay đổi recovery — không phải thủ tục hiện hành
 
 31/10/2026, Asia/Bangkok; tiếp tục cùng Draft PR #155. Environment repair base **PR #154 MERGED**:

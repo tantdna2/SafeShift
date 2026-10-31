@@ -12,8 +12,16 @@ append-only; [runbook hiện hành](CANDIDATE160_KAGGLE.md) ghi thao tác và gi
 Scientific result selection **PENDING**, pooling_allowed=false; không tự ghép
 baseline/recovery hoặc chọn output. Không đổi160 TRAIN, revisions/locks, C1,
 HNLO, metric/nhãn/protocol hoặc quyền dữ liệu. Không GPU/Kaggle/weights/private
-data/attempt thực nghiệm trong task. CPU verification đang được ghi trong
-[báo cáo nghiệm thu](research/CANDIDATE160_RECOVERY_CPU_20261031.md).
+data/attempt thực nghiệm trong task. **CPU CODE PASS:** exact Git export
+`afbf0307178b2ecfb1d81b7ec2504628bacaaaf0`:347 tests =315 PASS/32 SKIP/0 lỗi,
+10 notebook khớp builder;15 recovery tests mới PASS. Windows11 focused/notebook/
+prefix checks PASS;49 file bất biến và2 prefix append-only đã đối chiếu.
+Runtime `0f0d272c60c3a574814c1b0d3dc4a73ee169b30c`, source SHA256
+`f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb`.
+[Báo cáo nghiệm thu](research/CANDIDATE160_RECOVERY_CPU_20261031.md) và
+[receipts](research/evidence/candidate160_recovery_20261031/index.json) giữ cả
+full run đầu2 assertion lỗi và full run cuối đã sửa, không waive. Native opt-ins,
+live pip, full Windows suite và GPU/model-fit/inference chưa chạy trong task.
 
 NEXT: ChatGPT kiểm exact Draft HEAD/diff/notebooks/receipts, Antigravity audit
 độc lập trước merge, quyền merge riêng và hậu merge. Không tự nhận DONE audit,
