@@ -221,3 +221,19 @@ source/checkpoint/C1/precision/parser/HNLO và admission. Giữ evidence FAIL/PA
 receipt/hash của source/notebook cuối; chưa có actual weights/inference/export
 đạt thì BLOCKED/NOT VERIFIED. [Hồ sơ](CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
 Scientific result selection vẫn PENDING; không thay quyết định recovery trước.
+
+## FINDING-20261031-MINICPM-FP16-NUMERICS — BLOCKED / proposed change PENDING
+
+Real Kaggle smoke và hai bounded diagnostics trên đúng ảnh0/model/checkpoint/
+FP16/eager đã khóa xác nhận weights/Q/K/V hữu hạn, mask không fully masked;
+native resampler FP16 baddbmm sinh60.522 +Inf, softmax sinh569.800 NaN. Không
+OOM, không lỗi archive/Path. Các ZIP/raw/log/hash được giữ; xem
+[hồ sơ bằng chứng](CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+[Đề xuất numerical policy riêng cho attention](MINICPM4_NUMERICS_PENDING_DECISION_20261031.md)
+là **PENDING, chưa áp dụng/chưa được phê duyệt**. Task Owner mục9 khóa precision/
+source; bounded smoke authority không tự là ngoại lệ thay các trường đó. Không
+upcast, đổi source lock, đổi precision/model/ảnh/prompt/parser hoặc tắt validation
+để vượt lỗi. Cần quyết định Owner cụ thể trước triển khai exception/effective
+implementation mới; teacher/third-party authority và quyền merge vẫn riêng.
+Không thay scientific result selection=PENDING, không pooling hoặc chạy full160.

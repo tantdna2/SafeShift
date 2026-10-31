@@ -45,6 +45,29 @@ giữ nguyên FP16/eager/C1/checkpoint và dừng tại nonfinite đầu tiên; 
 hoặc tắt validation, không chọn ảnh khác để tìm output đẹp. Diagnostic không
 qualification hoặc production run. Artifact thật/raw/weights vẫn private/ignored.
 
+**Blocker đã đo trên Kaggle, sau2 diagnostic một ảnh/call:** toàn bộ4.059.533.040
+tham số FP16 hữu hạn; Q/K/V hữu hạn, mask0/không hàng fully masked. Native
+resampler `baddbmm` FP16 sinh60.522 +Inf, softmax kế tiếp sinh569.800 NaN.
+Không đổi model/source/checkpoint/precision để vượt lỗi. ZIP probe cuối:
+`f4c27ff30bc9eb9132a5d9d736b18bbce45f42464d91ca38a943ffe3335c3b5c`.
+Đường nạp/mã nguồn đã sửa; MiniCPM chưa finite inference PASS. Dừng retry cùng
+cấu hình đã chứng minh lỗi. [Đề xuất sửa tính toán attention — PENDING](research/MINICPM4_NUMERICS_PENDING_DECISION_20261031.md)
+chỉ để review, chưa áp dụng. Cần Owner quyết định ngoại lệ hẹp cho precision/
+effective source trước triển khai; mục9 task hiện tại cấm tự thay. Quy tắc
+chọn kết quả khoa học vẫn PENDING; không pooling/metric/test hoặc full160.
+
+**Kiểm cuối:** Git export `7bb353529f2ad29bee56620ab94586aaf87fdcea` PASS358
+tests =322 PASS/36 SKIP/0 lỗi;4 native tracer CPU tests PASS riêng trong stack
+3.11.9/cu124. Hai production `--check-only` CLI PASS thật. Cả4 Kaggle jobs
+(InternVL smoke1, Mini smoke1, Mini diagnostic1/2) đã COMPLETE, tổng4 native
+calls kỹ thuật, không phải kết quả khoa học. COMPLETE không biến Mini thành PASS.
+Runtime/embedded source vẫn `ad6c6ed23d33d218fd199d77c817f002a3ec0944`/
+`c7a48bc8479137ca29647c94cfb71d2e7a867b8b7d7ab394776cf5c0105764f4`.
+[Index bằng chứng cuối](research/evidence/candidate160_kaggle_20261031/index.json)
+giữ đủ FAIL/PASS/checksums,41 file frozen và2 prefix append-only. NEXT duy nhất
+để sửa Mini: review/phê duyệt hoặc từ chối đề xuất numerical policy PENDING;
+không chạy lại cùng FP16 lỗi, không tự merge hoặc báo READY FOR OWNER.
+
 ## Task retry/resume Candidate160 —31/10/2026
 
 Base mới từ remote main `6252a7d` (PR155 đã merge). Một Draft PR mã nguồn thay

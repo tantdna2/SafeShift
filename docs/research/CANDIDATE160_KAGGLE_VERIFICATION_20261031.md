@@ -1,8 +1,20 @@
 # Candidate160: production path regression and real Kaggle verification
 
-Status: BLOCKED — MiniCPM nonfinite native logits; diagnosis in progress. PR #156 remains Draft; independent ChatGPT
+Status: BLOCKED — measured MiniCPM FP16 native attention overflow; protected numerical-policy decision required. PR #156 remains Draft; independent ChatGPT
 review and Antigravity audit are required before merge. No scientific approval
 or result-selection decision is changed.
+
+Final exact Linux Git export `7bb353529f2ad29bee56620ab94586aaf87fdcea`:
+**358 tests =322 PASS/36 SKIP/0 failures/errors**. Four native tracer CPU tests
+also passed separately in the pinned3.11.9/cu124 stack. Both real production
+CPU CLI checks passed. All four real Kaggle jobs ended; total4 engineering
+native calls, all on the same original first image. No full160 experiment ran.
+The final runtime/notebook bytes remain the tested `c7a48bc...` source, runtime
+`ad6c6ed23d33d218fd199d77c817f002a3ec0944`; subsequent changes are diagnostic
+tools/tests/docs/receipts and do not change the embedded production source.
+[Receipt index](evidence/candidate160_kaggle_20261031/index.json) records full
+hashes, private job versions, results and unchanged protected bytes. The
+chronological verification records below retain earlier runs and failures.
 
 Authority: [Owner directive](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
 and the Owner's direct task on 2026-10-31. This extends the previous CPU-only
@@ -86,6 +98,17 @@ public attention class with tiny synthetic tensors. The first local tracer test
 failed because it watched `forward` instead of `multi_head_attention_forward`;
 this was fixed and all4 pinned CPU tests passed before any GPU submit of that
 tracer. The failed local staging is retained; it never started a Kaggle job.
+
+The final real trace completed and verifies the cause: projected Q/K/V and
+scaled Q are finite, masks are finite zeros with0 fully masked rows. Native
+FP16 `baddbmm` produces60,522 positive infinities; the following softmax
+produces569,800 NaNs. These propagate into the output projection. Source bytes
+and computations were observed unchanged; no precision switch was executed.
+Probe2 ZIP SHA256 `f4c27ff30bc9eb9132a5d9d736b18bbce45f42464d91ca38a943ffe3335c3b5c`.
+Repeating this unchanged configuration is not a repair. The Owner's section9
+locks precision/effective source, so the [specific proposed numerical-policy change](MINICPM4_NUMERICS_PENDING_DECISION_20261031.md)
+is PENDING and unapplied. The package remains BLOCKED, with no finite MiniCPM
+smoke PASS and no READY FOR OWNER/independent audit claim.
 
 The later full exact export `00d2611f25a878a975e04e71a6c6cf7a12db5a0d` also
 passed357 tests:322 PASS/35 SKIP/0 failures/errors, including the diagnostic

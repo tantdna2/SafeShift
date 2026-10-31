@@ -6,6 +6,13 @@ Nguồn: [Owner31/10](https://github.com/tantdna2/SafeShift/pull/156#issuecommen
 áp dụng cho mọi notebook Kaggle. Các hướng dẫn bên dưới về Owner chạy preflight
 đầu tiên/task chỉ CPU là snapshot trước chỉ thị này, không đủ điều kiện release.
 
+**Trạng thái thực tế31/10: BLOCKED.** InternVL đã qua weights/inference/raw/ZIP
+smoke1 ảnh nhưng strict parser giữ INVALID/HNLO unaligned. MiniCPM nạp weights
+được nhưng native attention FP16 overflow; hai diagnostic giữ nguyên cấu hình
+đã đo nguyên nhân. Không chạy production160 để lặp lỗi này. Xem
+[bằng chứng](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md) và
+[quyết định còn PENDING](research/MINICPM4_NUMERICS_PENDING_DECISION_20261031.md).
+
 Codex dùng Kaggle CLI chính thức trong virtual environment riêng (Python3.11+).
 `kaggle --version`, `kaggle kernels push --help` xác minh phiên bản/cú pháp;
 `kaggle kernels list --mine`, `kaggle datasets list --mine`, `kaggle quota`,
