@@ -1,5 +1,46 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
+## MiniCPM FP32 Owner adoption and activation review —31/10/2026
+
+[Owner6544285481](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6544285481)
+adopts the exact effective FP32 configuration for original official TRAIN160.
+The earlier BLOCKED adoption statements below are historical. The new trusted
+`train_official` policy pins descriptor `2fe99272…`, configuration `5b85504f…`,
+model and manifest; source hash and raw execution binding cover this policy.
+The numerical adapter bytes and both full hashes in the new append-only decision
+remain unchanged. Original descriptor scope text describes its technical origin;
+the new Owner adoption record separately establishes the permitted project use.
+No independent Lead/faculty signature is asserted.
+
+Use `notebooks/SafeShift_CANDIDATE160_PRODUCTION_minicpm4_FP32.ipynb`.
+Default `qualify` remains the separate three-case engineering profile. For a
+minimal final-source verification, action `technical_smoke_resampler_fp32_v1`
+uses the first locked image only, one load/call and3600 seconds, through the same
+production entrypoint/child/adapter/export, with its own smoke series and output.
+That action cannot import or consume official completion. CPU tests exercise
+the official approval, direct-worker rejection,160-call scheduling and recovery.
+Source/runtime/Input changes require the corresponding live verification again.
+
+Stop at the new Draft PR after local tests and bounded real Kaggle checks.
+ChatGPT must review exact GitHub HEAD, then independent Antigravity audit and
+separately authorized merge must complete. No full160 in this preparation stage.
+After ChatGPT confirms the live merge/main/parents/files, Codex continues the same
+session: verify notebook/runtime/source, account/quota, original private dataset
+`nguynanhtn/safeshift-pilot-input`, checkpoint Output
+`nguynanhtn/safeshift-prepare-minicpm4`, and relevant official historical Outputs.
+Inspect all saved versions, verify ZIP/sidecar/member/raw/markers and serialize
+jobs before setting `candidate160_action = "resume"` on the production notebook.
+T4x2/Internet ON, pinned container/Python/CUDA, exact source/checkpoint hashes and
+storage admission remain mandatory. Keep max160 calls/43200 seconds per attempt.
+
+Do not treat technical smoke/qualification or FP16 history as official FP32
+completion. INVALID is durable; HNLO unaligned stays unavailable. Download full
+raw/result/receipt ZIPs and sidecars privately, replay native tokenizer/parser/
+HNLO and lineage on CPU, and verify a complete durable series schedules0 calls/
+loads on resume. No automatic retry, history deletion, Accuracy/Macro-F1 or model
+selection. Scientific selection/pooling remains PENDING. Current evidence and
+remaining release steps are tracked at the top of PROJECT_STATE.
+
 ## Bàn giao production engineering —31/10/2026
 
 **Hai route READY_FOR_TECHNICAL_REVIEW, chưa READY_FOR_OWNER.** Fresh ChatGPT

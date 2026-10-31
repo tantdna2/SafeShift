@@ -225,3 +225,22 @@ Chuẩn bị đầy đủ chứng cứ trước khi yêu cầu đúng quyết đ
 implementation đã định danh làm baseline khoa học. Codex tự kiểm chính notebook
 production cuối trên Kaggle thật; fresh ChatGPT review và Antigravity audit
 độc lập vẫn bắt buộc. Dừng tại Draft PR156, không merge/full160/TEST.
+
+## Owner adopts MiniCPM FP32 for original official TRAIN160 —31/10/2026
+
+[Owner decision6544285481](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6544285481)
+and the current direct task authorize a new cohesive Draft PR for exact numerical
+adoption/activation, tests, documents and final-source bounded Kaggle verification.
+The append-only [decision](docs/research/DECISIONS.md#dec-20261031-owner-minicpm-fp32-official-train160)
+pins the implementation/configuration/descriptor, original TRAIN160 and scope.
+This replaces the preceding adoption BLOCKED status only for that identity;
+it is not a separate Research Lead/faculty signature or approval of other configs.
+
+Stop at Draft PR for ChatGPT's direct GitHub review, independent Antigravity audit
+and separately authorized merge. PR156's audit waiver does not apply to this PR.
+After ChatGPT verifies that merge, Codex is authorized to operate official Kaggle
+resume in the same session, instead of requiring the Owner to upload/run manually.
+Keep technical verification separate, preserve all historical evidence, enforce
+160 native calls/43200 seconds per attempt and check history before resume.
+No official160 before review/audit/merge verification; no TEST, scientific result
+selection/pooling, Accuracy/Macro-F1 analysis or model selection in this task.

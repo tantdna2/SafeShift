@@ -1,5 +1,26 @@
 # SafeShift — PROJECT STATE
 
+## MiniCPM FP32 adoption implementation —31/10/2026
+
+**IN_PROGRESS / NOT_RELEASED.** Owner adopted the exact effective implementation
+and authorized Codex to operate official original TRAIN160 after the new activation
+PR is reviewed, independently audited, merged and verified by ChatGPT. Decision:
+[Owner6544285481](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6544285481).
+This supersedes the historical adoption BLOCKED status below; no separate Lead/
+faculty signature is claimed. Scientific selection/pooling remains PENDING.
+
+Activation pins effective config `5b85504f…`, descriptor `2fe99272…`, MiniCPM and
+the original160 TRAIN manifest in trusted source policy. Numerical adapter bytes
+remain unchanged; source/runtime must receive a new identity and final-source
+Kaggle verification. Direct workers also enforce adoption/config/scope binding.
+Default production notebook remains bounded engineering; no official run yet.
+
+Local verification, final-source Kaggle technical receipt and Draft PR are still
+pending in this entry. Then stop for ChatGPT exact-HEAD GitHub review and independent
+Antigravity audit; PR156's waiver does not apply. Official160, artifact verification
+and no-call durable-resume proof remain NOT_RUN in this new task. No TEST or
+Accuracy/Macro-F1/model-choice analysis. Older entries below remain historical.
+
 ## Hai production routes đã kiểm Kaggle thật —31/10/2026
 
 **READY_FOR_TECHNICAL_REVIEW cả hai; MiniCPM official FP32 vẫn

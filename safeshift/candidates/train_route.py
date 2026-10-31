@@ -25,8 +25,19 @@ def admission(value):
     """An execution record or notebook switch cannot approve a new baseline."""
     opts = options(value)
     fields(**opts)
-    require(not opts["implementation"] or opts["qualification"],
-            "BLOCKED_PENDING_SCIENTIFIC_DECISION:MINICPM_FP32_OFFICIAL_PRODUCTION")
+    if opts["implementation"] and not opts["qualification"]:
+        from .train_official import authorize
+        authorize(value)
+
+
+def configuration_admission(key, implementation, qualification=False):
+    """Check trusted policy before Inputs; worker admission also checks the record."""
+    fields(implementation, qualification)
+    if implementation:
+        require(key == "minicpm4", "MINICPM_ONLY_NUMERICAL_EXCEPTION")
+        if not qualification:
+            from .train_official import binding
+            binding(key, implementation)
 
 
 def selection(rows):
