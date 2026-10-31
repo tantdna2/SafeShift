@@ -182,7 +182,8 @@ def worker(repo, output, bundle, snapshot, weights, grant, ledger, source, ref, 
     if check_only:
         # Real production source/native processor/meta loader, no weights/forward/CUDA.
         from .train_preflight import native_cpu
-        write(output / "native_cpu.json", native_cpu(grant["model_key"], snapshot, repo))
+        write(output / "native_cpu.json", native_cpu(grant["model_key"], snapshot, repo,
+            implementation=grant.get("effective_implementation")))
         return
     write(output / "worker_hardware_observation.json", hardware(grant["policy"]))
     write(output / "worker_cuda.json", worker_cuda(grant["policy"]))
@@ -191,8 +192,12 @@ def worker(repo, output, bundle, snapshot, weights, grant, ledger, source, ref, 
     write(output / "worker_source.json", {"source_sha256": source, "runtime_ref": ref,
                                          "model": model(grant["model_key"])})
     execution = [{**row, "image": str(safe(bundle, row["image"]))} for row in rows]
-    run_calls(output, plan, execution,
-              lambda: CandidateBackend(grant["model_key"], snapshot, weights, prompt.decode(), device="cuda:0"),
+    def factory():
+        if "effective_implementation" in grant:
+            from .minicpm_resampler_fp32 import backend
+            return backend(grant["model_key"], snapshot, weights, prompt.decode(), device="cuda:0")
+        return CandidateBackend(grant["model_key"], snapshot, weights, prompt.decode(), device="cuda:0")
+    run_calls(output, plan, execution, factory,
               grant, memory=memory, reviews=os.environ["SAFESHIFT_REVIEW_DIRECTORY"],
               resources=lambda: resources(grant["policy"], os.environ["SAFESHIFT_RUNTIME_ROOT"], output, gpu=True),
               deadline=float(os.environ["SAFESHIFT_DEADLINE_MONOTONIC"]))
@@ -264,12 +269,14 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
 
 
 def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None, owner_start=False,
-           recovery_action=None, child_options=None, technical_smoke=False):
+           recovery_action=None, child_options=None, technical_smoke=False, implementation=None):
     """Owner activation or legacy authority precedes inputs and hardware reads."""
     require(key in KEYS, "CANDIDATE_KEY")
     require(type(owner_start) is bool, "EXPLICIT_OWNER_ACTIVATION_BOOLEAN")
     require(type(technical_smoke) is bool and (not technical_smoke or
             (owner_start and recovery_action is None)), "ISOLATED_TECHNICAL_SMOKE_REQUIRED")
+    require(implementation is None or (technical_smoke and key == "minicpm4"),
+            "EFFECTIVE_IMPLEMENTATION_TECHNICAL_ONLY")
     inputs = Path(inputs or "/kaggle/input")
     work = Path(work or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
@@ -282,7 +289,7 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
     try:
         require(source_hash(repo) == source, "NOTEBOOK_RUNTIME_SOURCE_MISMATCH")
         if technical_smoke:
-            grant = smoke.execution(key, source, ref)
+            grant = smoke.execution(key, source, ref, implementation=implementation)
             ledger, ledger_file = None, None
             grant_file = output / "technical_execution.json"
             write(grant_file, grant)
@@ -315,14 +322,14 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         deadline = min(started + grant["max_seconds"], time.monotonic() + grant["expires_unix"] - time.time())
         write(output / "authorization_binding.json", {"execution_sha256" if owner_start else "grant_sha256": digest(grant),
               "runtime_ref": ref, "source_sha256": source, "manifest_sha256": MANIFEST,
-              **configuration_hashes(key),
+              **configuration_hashes(key, implementation=implementation),
               **({"owner_decision_record": grant["owner_decision_record"], "activation": grant["activation"]} if owner_start else
                  {"ledger_sha256": digest(ledger),
                   "approval_refs": {n: grant[n] for n in ("G0", "T0", "O3", "research_lead_review_ref")}})})
         if not owner_start:
             write(output / "grant.json", grant)
             write(output / "ledger_reservation.json", ledger)
-        write(output / "release_config.json", config(key))
+        write(output / "release_config.json", config(key, implementation=implementation))
         write(output / "dependency_pins.json", pins(key))
         write(output / "source_inventory.json", {p: sha(Path(repo)/p) for p in sources(repo)})
         # Local marker supplements, and cannot replace, the external ledger.
@@ -479,6 +486,12 @@ def launch_owner(key, source, repo, ref, *, owner_start=False, action="resume", 
     work = Path(kwargs.pop("work", None) or Path.cwd() / "data/processed/candidate160")
     work.mkdir(parents=True, exist_ok=True)
     with history.lease(work, key) as child_options:
+        if action == "technical_smoke_resampler_fp32_v1":
+            from .minicpm_resampler_fp32 import ID
+            require(key == "minicpm4", "MINICPM_ONLY_NUMERICAL_EXCEPTION")
+            return launch(key, source, repo, ref, work=work.with_name(work.name + "_smoke_resampler_fp32_v1"),
+                          owner_start=True, technical_smoke=True, implementation=ID,
+                          child_options=child_options, **kwargs)
         if action == "technical_smoke":
             return launch(key, source, repo, ref, work=work.with_name(work.name + "_smoke"),
                           owner_start=True, technical_smoke=True, child_options=child_options, **kwargs)

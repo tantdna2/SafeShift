@@ -54,14 +54,14 @@ def configuration_context(grant):
     require(grant.get("schema") in ("safeshift-candidate160-grant-v2", OWNER_SCHEMA, history.SCHEMA, smoke.SCHEMA), "CANDIDATE_CONFIGURATION_GRANT_V2_REQUIRED")
     return {"schema": "safeshift-candidate160-configuration-evidence-v2",
             "execution_release": execution_binding(grant),
-            "configuration_contract": config(grant["model_key"])}
+            "configuration_contract": config(grant["model_key"], implementation=grant.get("effective_implementation"))}
 
 
 def validate_context(context, grant=None):
     require(context["schema"] == "safeshift-candidate160-configuration-evidence-v2", "CONFIGURATION_EVIDENCE_SCHEMA")
     binding = context["execution_release"]
     require(binding == execution_binding(binding), "EXECUTION_RELEASE_FIELDS")
-    require(context["configuration_contract"] == config(binding["model_key"]), "EFFECTIVE_CONFIGURATION_DRIFT")
+    require(context["configuration_contract"] == config(binding["model_key"], implementation=binding.get("effective_implementation")), "EFFECTIVE_CONFIGURATION_DRIFT")
     if grant is not None:
         require(binding == execution_binding(grant), "APPROVED_EXECUTION_RELEASE_BINDING")
     return context
@@ -111,6 +111,12 @@ def validate_native_configuration(sample, context):
     marker = "tiles_including_thumbnail" if effective["model_key"] == "internvl35" else "slices_including_global"
     require(request["image"]["processor_mode"] == "RGB" and marker in request["input_detail"]
             and "num_crops" not in request["input_detail"], "NATIVE_REQUEST_PREPROCESSING_BINDING")
+    if "numerical_policy" in effective:
+        observed = read(sample / "effective_numerics.json")
+        require(observed["implementation"] == effective["numerical_policy"], "NATIVE_NUMERICAL_POLICY_BINDING")
+        for name in ("scores_fp32_finite_or_negative_mask", "softmax_fp32_finite", "value_product_fp32_finite_and_return_cast"):
+            require(observed["after"][name] - observed["before"][name] == 1, "NATIVE_NUMERICAL_EXECUTION_REQUIRED")
+        require(observed["after"]["returned_dtype"] == "torch.float16", "NATIVE_NUMERICAL_RETURN_DTYPE")
 
 
 class CandidateStore(Store):

@@ -1,5 +1,27 @@
 # SafeShift — PROJECT STATE
 
+## Owner mở lại thử kỹ thuật ngoại lệ hẹp —31/10/2026, PR156
+
+Owner cấp **AUTHORIZED_FOR_BOUNDED_TECHNICAL_TRIAL** cho MiniCPM resampler
+score/softmax/value product FP32, output về dtype gốc trước out_proj; weights
+giữ FP16 và tất cả model/checkpoint/revision/TRAIN160/C1/eager/parser/HNLO/
+scientific locks giữ nguyên. [Quyết định mới](research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception)
+thay HOLD chỉ trong phạm vi thử kỹ thuật này; không baseline khoa học/full160/
+TEST/result selection/merge. Tiếp tục cùng session/branch/Draft PR156.
+
+Effective implementation mới `minicpm4-resampler-attention-fp32-v1` gắn chỉ vào
+instance resampler bằng method dẫn xuất từ source gốc đã hash-verify, thay đúng
+4 expressions (2 nhánh score, softmax, value product). Không sửa snapshot/locks
+gốc, không global monkeypatch, không đổi projection/query scaling/weights.
+Config/hash/series/output/new smoke notebook riêng; raw custody khóa effective
+ID và counter của cả3 phép FP32 hữu hạn. Chặn full-run action cho ngoại lệ.
+
+CPU native regression đã tái hiện overflow lớp attention gốc rồi kiểm finite/
+mask/dtype/weights/class/source không đổi. **KAGGLE SMOKE CHƯA KIỂM CHỨNG cho
+implementation mới** cho tới receipt thật cuối. Bằng chứng FP16 cũ giữ nguyên;
+không tự coi InternVL/legacy notebook được qualify lại sau thay embedded source.
+[Hồ sơ trial mới](research/MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md).
+
 ## Owner xác nhận HOLD —31/10/2026, PR #156
 
 Owner đã chọn **phương án1: giữ BLOCKED**, chưa cho phép thay precision hoặc

@@ -1,5 +1,24 @@
 # InternVL3.5 / MiniCPM-V-4 — Owner Save & Run All
 
+## Trial kỹ thuật mới: MiniCPM resampler FP32, chưa cấp quyền production
+
+Owner đã cho phép ngoại lệ hẹp trong [quyết định mới](research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception).
+HOLD phía dưới là lịch sử; chỉ score/softmax/value product trong resampler dùng
+FP32, weights FP16/model/checkpoint/ảnh/C1/eager/parser/HNLO không đổi. Dùng
+notebook riêng `SafeShift_CANDIDATE160_MINICPM4_FP32_ATTENTION_SMOKE.ipynb`,
+không đổi notebook160 thành full-run. Route mới chỉ1 ảnh ordinal0/1 native call/
+3600 giây, output candidate160_smoke_resampler_fp32_v1 và series/config/hash
+riêng. Không attach smoke như production history, không resume/pooling với FP16.
+
+Codex kiểm local/native CLI trước, rồi submit private Kaggle với cùng
+`nguynanhtn/safeshift-pilot-input`, Output `nguynanhtn/safeshift-prepare-minicpm4`,
+container target cũ, T4x2/Internet ON. Tải vào thư mục mới, giữ mọi FAIL/PASS.
+Receipt cuối phải kiểm actual weights/inference/finite/effective ID/counters/
+raw/parser/HNLO handling/cleanup/ZIP/SHA256. Chưa có evidence thật cuối thì
+NOT VERIFIED; CPU/preflight không đủ. [Hồ sơ trial](research/MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md).
+Ngay cả khi trial PASS: giữ Draft PR156, báo ChatGPT kiểm GitHub rồi quyết định
+Antigravity audit; chưa được chạy chính thức160 hoặc dùng làm baseline khoa học.
+
 ## Quy trình hiện hành PR156: Codex kiểm Kaggle thật trước bàn giao
 
 Nguồn: [Owner31/10](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161),

@@ -98,7 +98,11 @@ def legacy_transport_snapshot(key):
         return deepcopy(pilot.settings(key))
 
 
-def config(key):
+def config(key, *, implementation=None):
+    if implementation is not None:
+        from . import minicpm_resampler_fp32 as numerical
+        require(key == "minicpm4" and implementation == numerical.ID, "UNKNOWN_EFFECTIVE_IMPLEMENTATION")
+        return numerical.configuration(config(key))
     transport = legacy_transport_snapshot(key)
     internvl = key == "internvl35"
     return {"schema": "safeshift-candidate160-config-v2",
@@ -142,24 +146,27 @@ def config(key):
                 "public_source_lock_sha256": sha(LOCK)}}
 
 
-def configuration_hashes(key):
+def configuration_hashes(key, *, implementation=None):
     """Two different scopes. Never substitute one digest for the other."""
     return {"legacy_transport_config_sha256": pilot.digest(legacy_transport_snapshot(key)),
-            "candidate_execution_config_sha256": pilot.digest(config(key))}
+            "candidate_execution_config_sha256": pilot.digest(config(key, implementation=implementation))}
 
 
 def validate_configuration_hashes(value, key):
     require("config_sha256" not in value, "AMBIGUOUS_CANDIDATE_CONFIG_HASH_FORBIDDEN")
-    for name, expected in configuration_hashes(key).items():
+    for name, expected in configuration_hashes(key, implementation=value.get("effective_implementation")).items():
         require(value.get(name) == expected, "CONFIGURATION_HASH_BINDING:" + name)
 
 
 def execution_binding(grant):
     validate_configuration_hashes(grant, grant["model_key"])
     require(grant["model"] == model(grant["model_key"]), "EXECUTION_MODEL_BINDING")
-    return deepcopy({name: grant[name] for name in (
+    value = {name: grant[name] for name in (
         "model_key", "model", "legacy_transport_config_sha256", "candidate_execution_config_sha256",
-        "source_sha256", "runtime_ref", "base", "attempt_id", "run_id", "manifest_sha256")})
+        "source_sha256", "runtime_ref", "base", "attempt_id", "run_id", "manifest_sha256")}
+    if "effective_implementation" in grant:
+        value["effective_implementation"] = grant["effective_implementation"]
+    return deepcopy(value)
 
 
 def sources(repo=ROOT):

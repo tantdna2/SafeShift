@@ -190,6 +190,55 @@ def main():
                         encoding="utf-8", newline="\n")
         print(path.relative_to(ROOT))
 
+    path = ROOT / "notebooks/SafeShift_CANDIDATE160_MINICPM4_FP32_ATTENTION_SMOKE.ipynb"
+    path.write_text(json.dumps(effective_notebook(args.runtime_ref), indent=1, ensure_ascii=False)+"\n",
+                    encoding="utf-8", newline="\n")
+    print(path.relative_to(ROOT))
+
+
+def effective_notebook(ref, repo=ROOT):
+    """Separate one-image technical deliverable; cannot switch to full production."""
+    from safeshift.candidates.minicpm_resampler_fp32 import ID, descriptor
+    nb = notebook("minicpm4", ref, repo)
+    code = "".join(nb["cells"][1]["source"])
+    code = code.replace('candidate160_action = "technical_smoke"  # after review/merge Owner selects "resume" or "rerun"',
+                        'candidate160_action = "technical_smoke_resampler_fp32_v1"  # only the authorized numerical technical trial')
+    code = code.replace('action=candidate160_action)', 'action="technical_smoke_resampler_fp32_v1")')
+    compile(code, "minicpm-effective-smoke", "exec")
+    nb["cells"][1]["source"] = code.splitlines(True)
+    nb["cells"][0]["source"] = f"""# SafeShift — MiniCPM-V-4 narrow FP32 resampler technical trial
+
+Owner authorizes engineering verification only, not a scientific baseline or
+official160-image experiment. This notebook always executes exactly the
+technical action `technical_smoke_resampler_fp32_v1`; it has no full-run action.
+Same locked TRAIN160 bundle/order and first original image (ordinal0), same
+checkpoint/revision, FP16 weights, C1, eager, parser and HNLO. Only native
+resampler score/softmax/value product compute in FP32, then cast to native
+dtype before out_proj. No original source/checkpoint locks are modified.
+
+Effective implementation `{ID}`; SHA256 `{descriptor()['implementation_sha256']}`.
+One model load/one image/one native call,3600 seconds including setup. Private
+evidence/ZIP/SHA256/final receipt under candidate160_smoke_resampler_fp32_v1;
+separate run and series, no history import/resume/scientific metrics/pooling.
+Keep all previous FP16 failure Outputs unchanged and separate. Do not attach
+smoke outputs as production history. No TEST or third-party Inputs.
+
+Attach `nguynanhtn/safeshift-pilot-input` and the original Owner MiniCPM checkpoint
+Notebook Output; Internet ON/T4x2, GPU0 inference only. Codex executes bounded
+real Kaggle smoke first. No model fit/finite inference PASS until final receipt
+verifies actual weights/CUDA/raw/parser/HNLO handling/custody/cleanup/archive.
+One-image PASS cannot establish numeric HNLO, quality or all160/long-run/rare
+inputs. Keep Draft PR156 for ChatGPT review then independent audit decision;
+no merge or full Owner run is authorized by this technical trial.
+
+Runtime `{ref}`, embedded source `{source_hash(repo)}`.
+""".splitlines(True)
+    nb["metadata"]["safeshift"].update(mode="MINICPM_RESAMPLER_FP32_TECHNICAL_ONLY", max_images=1,
+        config=config("minicpm4", implementation=ID),
+        configuration_hashes=configuration_hashes("minicpm4", implementation=ID),
+        effective_implementation=descriptor())
+    return nb
+
 
 if __name__ == "__main__":
     main()

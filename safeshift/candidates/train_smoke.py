@@ -19,7 +19,7 @@ DIRECTIVE = "https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523
 MAX_SECONDS = 3600
 
 
-def execution(key, source, ref):
+def execution(key, source, ref, *, implementation=None):
     value = owner.execution(key, source, ref, owner_start=True)
     value.update(schema=SCHEMA, activation="CODEX_BOUNDED_TECHNICAL_SMOKE",
         owner_decision_record=DIRECTIVE, campaign="technical-smoke-20261031",
@@ -28,12 +28,21 @@ def execution(key, source, ref):
         max_native_calls=1, max_seconds=MAX_SECONDS, expires_unix=value["created_unix"] + MAX_SECONDS,
         run_id=value["run_id"].replace("owner_", "smoke_", 1),
         attempt_id=value["attempt_id"].replace("owner_", "smoke_", 1))
+    if implementation is not None:
+        from . import minicpm_resampler_fp32 as numerical
+        from .train_contract import configuration_hashes
+        require(key == "minicpm4" and implementation == numerical.ID, "UNKNOWN_EFFECTIVE_IMPLEMENTATION")
+        value.update(effective_implementation=implementation, series_id=value["run_id"],
+                     campaign="technical-smoke-" + implementation, owner_decision_record=numerical.DECISION,
+                     **configuration_hashes(key, implementation=implementation))
     return value
 
 
 def validate(value, key, source, ref, *, now=None):
     require(type(value) is dict and value.get("schema") == SCHEMA, "TECHNICAL_SMOKE_SCHEMA")
-    expected = execution(key, source, ref)
+    expected = execution(key, source, ref, implementation=value.get("effective_implementation"))
+    if "effective_implementation" in value:
+        expected["series_id"] = value["run_id"]
     require(set(value) == set(expected), "TECHNICAL_SMOKE_FIELDS")
     for name in expected.keys() - {"run_id", "attempt_id", "created_unix", "expires_unix"}:
         require(type(value[name]) is type(expected[name]) and digest(value[name]) == digest(expected[name]),
@@ -88,6 +97,19 @@ def receipt(output, archive, grant):
     native_custody(raw_path.parent, raw)
     require(raw.get("raw_nonfinite") is False and
             results[rows[0]["sample_id"]]["hnlo"].get("replay_status") != "FAIL", "SMOKE_RAW_HNLO_FAILURE")
+    effective = {}
+    if "effective_implementation" in grant:
+        from .minicpm_resampler_fp32 import descriptor
+        observed = read(raw_path.parent / "effective_numerics.json")
+        loaded = runtime.get("effective_implementation", {})
+        require(loaded.get("descriptor") == descriptor() == observed["implementation"]
+                and loaded["parameter_identity_preserved"] is True
+                and loaded["all_parameter_dtypes"] == ["float16"], "SMOKE_EFFECTIVE_MODEL_BINDING")
+        for name in ("scores_fp32_finite_or_negative_mask", "softmax_fp32_finite", "value_product_fp32_finite_and_return_cast"):
+            require(observed["after"][name] - observed["before"][name] == 1, "SMOKE_EFFECTIVE_ATTENTION_NOT_EXERCISED")
+        require(observed["after"]["returned_dtype"] == "torch.float16", "SMOKE_EFFECTIVE_RETURN_DTYPE")
+        effective = {"effective_implementation": descriptor(), "numerical_evidence": observed,
+                     "series_id": grant["series_id"], "scientific_baseline_approved": False}
     return {"schema": "safeshift-kaggle-technical-smoke-receipt-v1", "status": "TECHNICAL_SMOKE_PASS",
         "run_id": grant["run_id"], "attempt_id": grant["attempt_id"], "model": grant["model"],
         "source_sha256": grant["source_sha256"], "runtime_ref": grant["runtime_ref"],
@@ -96,4 +118,4 @@ def receipt(output, archive, grant):
         "real_inference": True, "gpu": hardware, "raw_sha256": sha(raw_path),
         "archive_sha256": sha(archive), "hnlo": deepcopy(results[rows[0]["sample_id"]]["hnlo"]),
         "scientific_qualification": "NOT_CLAIMED", "production_history_modified": False,
-        "limitations": "One image only; full160, rare sizes and long-run peak VRAM/time remain unverified"}
+        "limitations": "One image only; full160, rare sizes and long-run peak VRAM/time remain unverified", **effective}

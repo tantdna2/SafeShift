@@ -23,12 +23,17 @@ def main():
     for name in ("snapshot", "bundle", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--ref", required=True)
+    parser.add_argument("--implementation", choices=("minicpm4-resampler-attention-fp32-v1",))
     args = parser.parse_args()
     output = args.output.absolute()
     require(output.is_relative_to(ROOT / "data/processed"), "IGNORED_OUTPUT_REQUIRED")
     output.mkdir(parents=True, exist_ok=False)
     source = source_hash()
-    record = execution(args.key, source, args.ref, owner_start=True)
+    if args.implementation:
+        from safeshift.candidates.train_smoke import execution as smoke_execution
+        record = smoke_execution(args.key, source, args.ref, implementation=args.implementation)
+    else:
+        record = execution(args.key, source, args.ref, owner_start=True)
     execution_file = output / "cpu_execution.json"
     write(execution_file, record)
     runtime = Path(sys.prefix)

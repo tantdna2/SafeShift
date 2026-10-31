@@ -193,3 +193,15 @@ phía trên. Retry/resume production vẫn theo quyết định recovery; smoke 
 call riêng không dùng production reservation/history. Không xóa artifact
 CONSUMED/BLOCKED_RESERVED_NO_RETRY/UNKNOWN/replacement1. Dừng ở Draft PR #156;
 không tự merge, tự nhận audit PASS hoặc đổi scientific selection=PENDING.
+
+## MiniCPM resampler FP32 — ngoại lệ kỹ thuật Owner31/10/2026
+
+[Quyết định append-only](docs/research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception)
+cho phép riêng score/softmax/value product trong resampler attention dùng FP32,
+output về dtype gốc; weights FP16, eager và mọi model/checkpoint/source lock/
+TRAIN160/C1/parser/HNLO giữ nguyên. Phải có effective implementation/config/ID/
+hash riêng, không giả source gốc không đổi về thực thi. Chỉ thử kỹ thuật có
+giới hạn, bắt đầu1 ảnh thật; không production160, không TEST, không baseline
+khoa học hoặc pooling/result selection. Giữ mọi FAIL/PASS/receipt cũ. Không
+suy rộng quyền sang toàn model/precision/prompt/parser/nguồn khác. Tiếp tục
+đúng session/branch/Draft PR156; ChatGPT review và quyết định audit trước merge.

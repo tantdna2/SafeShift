@@ -253,3 +253,24 @@ tiếp tục triển khai/kiểm số học khi có quyết định Owner riêng
 đổi, trong đúng session Codex/branch/PR156. Giữ scientific selection=PENDING,
 pooling_allowed=false và toàn bộ model/checkpoint/source/precision locks.
 Đây là xác nhận HOLD, không phê duyệt hoặc phủ nhận hồi tố đề xuất số học.
+
+## DEC-20261031-MINICPM-RESAMPLER-FP32-TECHNICAL-EXCEPTION
+
+Owner trực tiếp cho phép **triển khai và thử kỹ thuật ngoại lệ số học hẹp**
+trong cùng session/branch/Draft PR156, sau HOLD tại HEAD25d3ec8. Phạm vi duy
+nhất: MiniCPM resampler attention score, softmax và phép nhân với value dùng
+FP32, kết quả về dtype gốc trước output projection. Weights giữ FP16; model/
+checkpoint/revision/source lock gốc, TRAIN160/order, C1, eager, parser, HNLO và
+mọi quyết định khoa học giữ nguyên. Không áp dụng precision toàn mô hình.
+
+Khai báo effective implementation/configuration/ID/hash mới; giữ nguyên tất
+cả evidence FP16 FAIL. Kiểm regression số học/finite/load/history/isolation,
+rồi Codex tự chạy technical smoke trên Kaggle thật, trước tiên đúng ảnh0 của
+TRAIN160,1 call có giới hạn. Phiên bản thử kỹ thuật riêng không resume/pool
+với FP16 cũ hoặc production; chưa cấp quyền chạy160 ảnh/full experiment/TEST.
+
+Quyền này chỉ là **AUTHORIZED_FOR_BOUNDED_TECHNICAL_TRIAL**, không phê duyệt
+baseline/phương pháp khoa học, result selection, audit PASS hoặc merge. Smoke
+chưa PASS phải BLOCKED; nếu PASS giữ Draft để ChatGPT review GitHub rồi quyết
+định Antigravity audit độc lập. Ngoại lệ hẹp này thay HOLD chỉ trong phạm vi
+trên; mọi thay đổi rộng hơn vẫn chưa được cấp quyền. Không sửa quyết định cũ.
