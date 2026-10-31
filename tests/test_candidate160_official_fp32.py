@@ -176,7 +176,12 @@ class OfficialFP32Tests(unittest.TestCase):
                 self.assertIsNotNone(reason)
                 self.assertEqual(len(loads), 1)
                 self.assertEqual(backend.calls, 0 if fault == "load" else 1)
-                self.assertFalse(any(v["status"] == "SUCCESS" for v in results.values()))
+                if fault == "nonfinite":
+                    # The historical parser status and numerical validity are
+                    # separate; stop/recovery must never treat this as durable.
+                    self.assertTrue(results[rows[0]["sample_id"]]["raw_nonfinite"])
+                else:
+                    self.assertFalse(any(v["status"] == "SUCCESS" for v in results.values()))
                 next_out, next_g = start(work, inputs, implementation=ID, qualification=False)
                 self.assertEqual(h.recovery_plan(next_out, rows, next_g)["pending_ordinals"], list(range(160)))
 
@@ -197,6 +202,7 @@ class OfficialFP32Tests(unittest.TestCase):
             marker = attached/name
             marker.unlink()
             write(attached/"owner_execution.json", {**g, "source_sha256": "d"*64})
+            write(attached/"history_index.json", read(out/"history_index.json"))
             with self.assertRaisesRegex(ValueError, "HISTORY_CONFLICTING_RUN"):
                 start(work, inputs, implementation=ID, qualification=False)
 
