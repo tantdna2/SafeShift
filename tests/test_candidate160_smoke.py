@@ -13,6 +13,34 @@ from test_candidate160 import fixture, Scripted
 
 
 class SmokeTests(unittest.TestCase):
+    def test_receipt_requires_complete_gpu_raw_custody_cleanup_and_export_evidence(self):
+        # Explicitly synthetic receipt fixture, never used as Kaggle evidence.
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            plan, rows = fixture(root)
+            g = smoke.execution("internvl35", "c"*64, "a"*40)
+            output = root / "smoke"
+            output.mkdir()
+            native = Scripted()
+            native.environment = {"native": {"implementation_sha256": {"synthetic": "c"*64}},
+                                  "attention": {"status": "EAGER_MODULES_VERIFIED"}}
+            run.run_calls(output, plan, rows, lambda: native, g, resources=lambda: {})
+            write(output / "pilot_manifest.json", plan)
+            write(output / "supervisor_status.json", {"failure": None, "attempt_consumed": True})
+            write(output / "worker_cuda.json", {"worker_cuda": "MEASURED_FP16_FUNCTIONAL", "worker_visible_gpus": 1})
+            write(output / "cleanup.json", {"status": "OWNED_SCRATCH_REMOVED"})
+            archive = root / "smoke.zip"
+            export(output, archive)
+            receipt = smoke.receipt(output, archive, g)
+            self.assertEqual(receipt["status"], "TECHNICAL_SMOKE_PASS")
+            self.assertEqual(receipt["native_calls"], 1)
+            self.assertFalse(receipt["production_history_modified"])
+            # Replacing a sealed artifact invalidates the receipt, even if all
+            # other checks and the Kaggle job's exit code would be successful.
+            archive.write_bytes(b"SYNTHETIC TORN EXPORT")
+            with self.assertRaises(Exception):
+                smoke.receipt(output, archive, g)
+
     def test_exact_one_call_both_models_and_no_scientific_metrics(self):
         for key in c.KEYS:
             for fault in (None, RuntimeError("SYNTHETIC GPU OOM")):
