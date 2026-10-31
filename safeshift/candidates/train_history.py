@@ -151,7 +151,7 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
         for base in (root, safe(root, "data/processed/candidate160")):
             if not base.is_dir():
                 continue
-            if safe(base, "owner_execution.json").is_file():
+            if safe(base, "owner_execution.json").is_file() or safe(base, "supervisor_status.json").is_file():
                 candidates.add(base)
             for entry in base.iterdir():
                 visited += 1
@@ -159,7 +159,8 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
                 entry = safe(base, entry.name)
                 if entry == output:
                     continue
-                if entry.is_dir() and safe(entry, "owner_execution.json").is_file():
+                if entry.is_dir() and (safe(entry, "owner_execution.json").is_file() or
+                        (re.fullmatch(key + r"-[0-9a-f]{32}", entry.name) and safe(entry, "supervisor_status.json").is_file())):
                     candidates.add(entry)
                 if entry.is_file() and re.fullmatch(key + r"-[0-9a-f]{32}\.zip", entry.name):
                     archives.add(entry)
@@ -173,11 +174,38 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
                         markers.append(entry)
             for entry in base.glob("owner_slot_" + owner.slot(key) + "*.json"):
                 markers.append(safe(base, entry.name))
-    found = {}
+    found, diagnostics = {}, {}
     total_files = total_bytes = 0
     def add(directory, expected=None):
         nonlocal total_files, total_bytes
         execution_file = safe(directory, "owner_execution.json")
+        if not execution_file.exists():
+            # Admission/history/source failures before execution creation are
+            # diagnostics, not orphan consumed runs. Keep them without turning
+            # their own exported ZIP into another permanent retry barrier.
+            status = read(safe(directory, "supervisor_status.json"))
+            if status.get("model_key") not in (None, key):
+                return
+            require(status.get("attempt_consumed") is False
+                    and not safe(directory, "consumption.json").exists()
+                    and not safe(directory, "calls").exists(), "HISTORY_MISSING_EXECUTION")
+            inventory = members(directory)
+            seal = safe(directory, "checksums.json")
+            if seal.exists():
+                require(all(inventory.get(n) == v for n, v in read(seal).items() if not n.startswith("history/")),
+                        "HISTORY_DIAGNOSTIC_SEAL")
+            checksum = digest(inventory)
+            if checksum not in diagnostics:
+                total_files += len(inventory)
+                total_bytes += sum(safe(directory, n).stat().st_size for n in inventory)
+                require(total_files <= MAX_FILES and total_bytes <= MAX_BYTES, "HISTORY_TOTAL_BOUND")
+                for name in inventory:
+                    destination = safe(output, "history_diagnostics/" + checksum + "/" + name)
+                    write_bytes(destination, safe(directory, name).read_bytes())
+                    require(sha(destination) == inventory[name], "HISTORY_DIAGNOSTIC_CHANGED")
+                diagnostics[checksum] = {"members": inventory, "snapshot_sha256": checksum,
+                    "scope": "PRE_EXECUTION_FAILURE_NOT_A_MODEL_ATTEMPT"}
+            return
         require(execution_file.stat().st_size <= 16384, "HISTORY_EXECUTION_SIZE_BOUND")
         g = read(execution_file)
         if g.get("model_key") != key:
@@ -257,7 +285,7 @@ claiming a fresh baseline. All old statuses, including replacement1, are evidenc
     index = {"schema": "safeshift-candidate160-history-v1", "model_key": key,
              "manifest_sha256": c.MANIFEST, "runs": dict(sorted(found.items())),
              "markers": sorted(marker_index, key=lambda v: (v["name"], v["sha256"])),
-             "archives": archive_index}
+             "archives": archive_index, "diagnostics": dict(sorted(diagnostics.items()))}
     write(output / "history_index.json", index)
     return index
 

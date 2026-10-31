@@ -302,6 +302,22 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(worker.call_args.args[5], g)
             self.assertIsNone(worker.call_args.args[6])
 
+    def test_pre_execution_blocked_archive_does_not_permanently_lock_next_start(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            work, inputs = self.layout(root)
+            failed = work / ("internvl35-" + "a"*32)
+            write(failed / "supervisor_status.json", {"attempt_consumed": False, "model_key": "internvl35",
+                "status": "BLOCKED", "stage": "authority", "failure": {"scope": "SYNTHETIC"}})
+            export(failed, Path(str(failed)+".zip"))
+            previous = h.members(failed)
+            output, g = start(work, inputs)
+            index = read(output / "history_index.json")
+            self.assertEqual(index["runs"], {})
+            self.assertEqual(len(index["diagnostics"]), 1)
+            self.assertEqual(g["run_kind"], "INITIAL")
+            self.assertEqual(h.members(failed), previous)
+
     @unittest.skipIf(os.name == "nt", "Linux Kaggle inherited-descriptor contract")
     def test_worker_keeps_kernel_lock_after_supervisor_death(self):
         with tempfile.TemporaryDirectory() as d:

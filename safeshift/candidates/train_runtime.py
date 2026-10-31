@@ -417,7 +417,7 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
               "attempt_consumed": consumed, "stage": stage, "failure": reason,
               "cpu_checks": "SEE_CPU_RECEIPTS", "gpu": "UNVERIFIED_UNLESS_MEASURED_WORKER_RECEIPT",
               "classification_quality": "UNVERIFIED_PENDING_RESULT_REVIEW", "source_sha256": source,
-              "runtime_ref": ref, "manifest_sha256": MANIFEST,
+              "runtime_ref": ref, "manifest_sha256": MANIFEST, "model_key": key,
               "accounting": "160_PRIVATE_PLANNED_ROWS" if rows else "NOT_READ_NO_DATA_AUTHORITY"})
         if owns_slot:
             terminal = {**slot_record, "status": "CONSUMED" if consumed is True else
