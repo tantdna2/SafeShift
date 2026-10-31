@@ -17,7 +17,7 @@ import shutil
 from safeshift.pilot import bootstrap as boot
 from safeshift.pilot.artifacts import export, read, safe, sha, write, write_bytes
 from safeshift.pilot.contract import digest, PROMPT_SHA
-from safeshift.pilot.manifest import discover
+from .train_inputs import discover, checkpoint
 from safeshift.pilot.runner import error_record
 from .source import ROOT, LOCK, require, stage_snapshot
 from .loading import verify_weights
@@ -206,7 +206,9 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
         if value.get("eligible") and value.get("version", [])[:3] == [3, 11, 9]:
             candidates.append(candidate)
     write(output / "interpreters.json", observations)
-    require(candidates, "QUALIFIED_CPYTHON_3119_NOT_FOUND_NO_FALLBACK_OR_DOWNLOAD")
+    if not candidates:
+        from .train_python import provision
+        candidates.append(provision(repo, scratch, output, env, deadline))
     runtime = scratch / "venv3119"
     python = runtime / "bin/python"
     def call(command, log):
@@ -216,6 +218,22 @@ def prepare_runtime(repo, key, scratch, output, env, deadline):
                        check=True, timeout=remaining)
     with (output / "setup.log").open("xb") as log:
         call([candidates[0], "-I", "-B", "-m", "venv", "--without-pip", "--copies", runtime], log)
+        # PBS uses $ORIGIN/../lib for libpython. A copied venv executable
+        # therefore needs the same verified library in its own lib directory.
+        # Keep copies and library isolation; do not add a global LD_LIBRARY_PATH.
+        library = Path(candidates[0]).parent.parent / "lib/libpython3.11.so.1.0"
+        if library.is_file():
+            require(not library.is_symlink(), "PYTHON_RUNTIME_LIBRARY_ALIAS")
+            destination = runtime / "lib/libpython3.11.so.1.0"
+            require(not destination.exists(), "PYTHON_RUNTIME_LIBRARY_ALREADY_EXISTS")
+            shutil.copyfile(library, destination)
+            require(sha(destination) == sha(library), "PYTHON_RUNTIME_LIBRARY_COPY_HASH")
+            write(output / "python_venv_library.json", {"sha256": sha(destination),
+                  "method": "verified libpython copied for PBS executable ORIGIN; no loader environment change"})
+        venv_probe = boot.probe_interpreter(python, env)
+        write(output / "venv_interpreter.json", venv_probe)
+        require(venv_probe.get("eligible") and venv_probe.get("version") == [3, 11, 9]
+                and Path(venv_probe["prefix"]).resolve() == runtime.resolve(), "ISOLATED_VENV_PROBE_FAILED")
         write(output / "pip_controller.json", boot.pip_controller_probe(env))
         wheel, receipt = boot.fetch_pip_bootstrap(repo, scratch)
         write(output / "pip_bootstrap.json", receipt)
@@ -294,14 +312,10 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         plan, rows = manifest(bundle)
         write(output / "pilot_manifest.json", plan)
         stage = "checkpoint_source"
-        marker = discover(inputs, f"candidate_checkpoint_{key}.json")
-        require(read(marker) == {"schema": "safeshift-candidate160-checkpoint-v1", "model": model(key)},
-                "OFFICIAL_CHECKPOINT_MARKER")
-        weights = safe(marker.parent, "weights")
+        marker, source_dir, weights = checkpoint(inputs, key)
         write(output / "checkpoint_admission.json", verify_weights(weights, key))
         scratch_root = boot.provision_scratch_root(Path.cwd(), scratch_root or "/kaggle/tmp")
         scratch, env = boot.prepare_scratch(scratch_root, output.name)
-        source_dir = safe(marker.parent, "source/" + model(key)["revision"])
         snapshot = scratch / model(key)["revision"]
         write(output / "public_source_admission.json", stage_snapshot(source_dir, snapshot, key))
         stage = "storage"
@@ -340,7 +354,7 @@ def launch(key, source, repo, ref, *, inputs=None, work=None, scratch_root=None,
         require(source_hash(repo) == source and manifest(bundle)[0] == plan, "PRELEDGER_SOURCE_CHANGED")
         require(time.monotonic() < deadline, "TIME_CAP_PRELEDGER")
         consumed = None  # A failed exclusive create/fsync is never asserted unconsumed.
-        write(safe(attempts, ("owner_slot_" + grant["slot_sha256"] if owner_start else grant["attempt_id"]) + ".consumed.json"), {"run_id": grant["run_id"],
+        write(safe(attempts, (slot_name.removesuffix(".json") if owner_start else grant["attempt_id"]) + ".consumed.json"), {"run_id": grant["run_id"],
               "attempt_id": grant["attempt_id"], "source_sha256": source,
               "execution_sha256" if owner_start else "grant_sha256": digest(grant),
               **({"slot_sha256": grant["slot_sha256"]} if owner_start else {"external_ledger_ref": grant["external_ledger_ref"]}),

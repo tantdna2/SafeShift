@@ -1,0 +1,264 @@
+{
+  "attempt": "NOT_CONSUMED",
+  "errors": 0,
+  "executed_files": {
+    "AGENTS.md": "7e53bb6dcd60583032d5c2d4a5bb4e140c6d823744077f8fed82774a6b1c1ef3",
+    "configs/candidate160/internvl35.requirements.txt": "5d06ca3c76a9d0230ab1f9c418d7acf6ad63ac0aacb9003dcac989666bc6cee8",
+    "configs/candidate160/minicpm4.requirements.txt": "77f920b36bbf5d8396c23ed0ea28ded097cfeb3c4ba5761f3bf30269fe443c60",
+    "configs/candidate160/preparation.json": "c9112c32db31a7ab83d9056b089a572c8c0c4db19128bf3b9c94210e9089cbe3",
+    "configs/candidate160/python3119.json": "43fc11a647c315191c040cb574cd779e30f04e247c77d89dbb3ee7688ae1112a",
+    "configs/cpu_g2_g3/checkpoint_metadata_lock.json": "d43e48ca874da1d32a729110b0847d48f25f88a91195af7386c4e4efd74d03bc",
+    "configs/cpu_g2_g3/implementation_lock.json": "da4b923d2685e24b7223052b8d48ffb64077a7f81f1b936664b2a48e88c66ec9",
+    "configs/cpu_g2_g3/internvl35.requirements.txt": "991317e95a03a217ea4aba43bc8fc2e904fa5c581a37673481979eb1e80f5519",
+    "configs/cpu_g2_g3/minicpm4.requirements.txt": "5416ac49ef5a855d90256bdf4696903ea3fce95846646e0c6e30f3728e359dd6",
+    "configs/cpu_g2_g3/protected_source_lock.json": "8398266d9e1c3942d2f4ea9f391eddee350ef2460c21e06dc99f27977639e5e5",
+    "configs/cpu_g2_g3/public_source_lock.json": "7a4840f6ffc0834cbe73e44ddcf4dc593dfaf1a37a98d412a20fab9cd6bd4ae7",
+    "configs/pilot/authority_template.json": "1153a409fc3929e83eb8acbafd87c61e650902eb6c9a57a991946b172cac7742",
+    "configs/pilot/classification_c1.txt": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "configs/pilot/gemma.requirements.txt": "fc17c2ef5de2fb4224ff95c42b613c771b1da709642a9a7c49419fdc0909400c",
+    "configs/pilot/model_source_lock.json": "100be298d43ebdf42a752aa29191d6fab001b4a8f2d09fb8d46bad9d1c695448",
+    "configs/pilot/phi.requirements.txt": "080babcb92bccfd2c4f4fe6cf64dc3cee47b1d6b247778968b54cc82dfb0cbe9",
+    "configs/pilot/pip_bootstrap.json": "2c225a223c6dad842fdf24478a77bba09acf0ae775f901c3c885e4558e7e1edf",
+    "configs/pilot/pip_bootstrap.requirements.txt": "97431255127271b4a5c56d678330f15f176903b7adff6ecbf2c2ab30d04d1db2",
+    "configs/pilot/runtime_versions.json": "4dcc392e62092c8e6def10f6b3f0348ac9356f77b3c22aac502688ac3c64731e",
+    "configs/pilot/smol_checkpoint_metadata.json": "aa0753fda9ccff60f996b77501dd9fb8da2dab450c038c76f852db15b82367cd",
+    "configs/pilot/smolvlm2.requirements.txt": "16caf26145eb87efd2042a985e4fd4708cf718e69b6142f81c88cd8c183f5fd1",
+    "configs/pilot/tokenizer_cpu_evidence.json": "08e514993d444a9d2ef076c4eabae0c06b5375f706c112c12b68317320106063",
+    "safeshift/__init__.py": "a4907a14d8298c6bc8fbcdcea12fd34de3843ea30c65937d36874c7857574b44",
+    "safeshift/candidates/__init__.py": "fa80278ee7102864b3ffd8a808e8e6a7792a05b1857974691ee763126dab65fc",
+    "safeshift/candidates/backend.py": "5a2db7b60e7d00b4d92375a8c48fc9cf26facda27de7e79a6231115abb4e3b40",
+    "safeshift/candidates/inputs.py": "0f380ab4272e814fd46c9028345019118f58c39d6b628d95eef988a9fb4ba1eb",
+    "safeshift/candidates/loading.py": "dd5698528f4783d4a09e92a438cbd4b51a063a53185cc79bb7a0ebca21555309",
+    "safeshift/candidates/minicpm_image.py": "0956deb6d5816b9a8020e8a8f895e90c8d79234dc0ab8248e325d030c95b5632",
+    "safeshift/candidates/source.py": "efc2743a3a22f8f8d8ad13f34d9fefb2446292119f5fb9e9cd42be282846b55a",
+    "safeshift/candidates/train_contract.py": "2a2ad2025e0c6f83a665e2c76a40a39aa68f49d7621e829b9c00909520c89355",
+    "safeshift/candidates/train_incident.py": "9d798c5064b930f8adc4797efb4899b5a2e9271ff5efe60723a0796376f6bfef",
+    "safeshift/candidates/train_inputs.py": "8127dbc3d82e36bdc434cea96d2e846fb0cd8259f1f0298dbc43fd83e4c57c9e",
+    "safeshift/candidates/train_owner.py": "f81230504c4be7b663691a6412c588f6182237ec2d6d11a3d4a90e1343cf20f0",
+    "safeshift/candidates/train_preflight.py": "ac1c54a0c1305b232502e6e8071667b5321d4f0424438db475d6cc352d3028a8",
+    "safeshift/candidates/train_python.py": "4b01c9704dd6f23f4703a5b911616ece977aefb69ce7e3545a335c161170e209",
+    "safeshift/candidates/train_run.py": "2c2176247c527495bd8a951539fe85e376e2c7422bad9a6ddffba1b62c14afc4",
+    "safeshift/candidates/train_runtime.py": "336981284d18f6ce0599ccc23a38bc9436c3673a159de9b1a7a8cfcbf3404aab",
+    "safeshift/pilot/__init__.py": "2b545548d4f1b28c17e08616d1fd4ce58f259bd97e42b30508f2aff429a9e7b5",
+    "safeshift/pilot/artifacts.py": "1e2f3b41e4775941d0c255e744a415ced9bceabfe19203953447418977793b91",
+    "safeshift/pilot/backend.py": "07a4e5ce469e4e7c9ff51416fad306dabee048475ae5991fcf16989aa0fe9c1c",
+    "safeshift/pilot/bootstrap.py": "3602627b8fead693b9287caba92f8b96d7f4b531f87c00811ce9b3d7e0ea840c",
+    "safeshift/pilot/contract.py": "23c5440c6f9890be32a6715cc40cfdc0ac248cd168f9742669c20e1f9f09fc19",
+    "safeshift/pilot/diagnostics.py": "9dc47f91a680f8887dc628b7c176137ae519d3495d66534bfd8eaf485b53e65c",
+    "safeshift/pilot/hnlo.py": "0b5ee6d3eb73b90343cdc3f6e81767c218c906e9ba7cafc562898d9caed35546",
+    "safeshift/pilot/manifest.py": "574587b2f77fc140e154b3e5fb44bb9afa0cfb444171b8d5078bf5813cd59df0",
+    "safeshift/pilot/output_diagnostics.py": "d4e876cf71ab1c9b87fa0a87f7af5c03b9866002b1948cb55a27842e2d99794e",
+    "safeshift/pilot/phi_attention.py": "1d09a4b28d5631884ba3d23bf932483c9cafb0124db4e85d6bd01e9f7f63a837",
+    "safeshift/pilot/phi_inputs.py": "e24a609ef94e2a2156c1689bfac3ff06c30857db04cd27ed69099c66604b7ab6",
+    "safeshift/pilot/report.py": "765cb62c4cbd245c60499a17cb937c145b10fc25def74956c84c451cc2359926",
+    "safeshift/pilot/runner.py": "714124d474d26e6d4cb7b25812524906d8ea1e8eb6552e32f00d0d237960645a",
+    "safeshift/pilot/smol.py": "72c23a98be1556b572b2dff4202a77d00b1bf7a1f02c29f492e46ebba61248b4",
+    "tests/test_candidate160_environment.py": "ca2e292ef4ec72acb5765fd4645151b0d45bcd83995dbef29f784f1e75756311",
+    "tests/test_candidate160_notebooks.py": "f9aaf921ecbb61e106476c3c64e26407a614b8c1c3131982abb40db67ea855df",
+    "tests/test_candidate160_preflight.py": "33f64bfd976abeafaa3e3ef7bf1067936db1db3ba47d28f84b714d216d669689",
+    "tests/test_candidate_integration.py": "3a319b7bc1d87d8175a025ac9531deeb1d9fe5c47e7cf7e4f024ee19af56d4ed"
+  },
+  "failures": 0,
+  "gpu": "NOT_CALLED",
+  "log_sha256": "4bcba47aa487b85c6f1b886a1853af0276071130327721293b31b80f7d6f2d98",
+  "platform": "Windows",
+  "python": "3.11.9",
+  "scope": "SYNTHETIC_CPU_NOT_KAGGLE_GPU",
+  "skips": 5,
+  "source_sha256": "ed5e9f677efac015990d3fceb35ef1057cc4ac52dae468afb6c5491713bc47de",
+  "source_unchanged": true,
+  "status": "PASS",
+  "test_events": [
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.IncidentTests.test_one_distinct_traceable_replacement_same_campaign_and_no_replay"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.IncidentTests.test_partial_tampered_consumed_unknown_or_nonzero_never_replace"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.IncidentTests.test_replacement_supervisor_consumes_distinct_marker_preserves_old_and_blocks_second_run"
+    },
+    {
+      "reason": "symlink creation unavailable",
+      "status": "SKIP",
+      "test": "test_candidate160_environment.InputTests.test_aliases_rejected_at_every_level (link_at='notebooks')"
+    },
+    {
+      "reason": "symlink creation unavailable",
+      "status": "SKIP",
+      "test": "test_candidate160_environment.InputTests.test_aliases_rejected_at_every_level (link_at='notebooks/account')"
+    },
+    {
+      "reason": "symlink creation unavailable",
+      "status": "SKIP",
+      "test": "test_candidate160_environment.InputTests.test_aliases_rejected_at_every_level (link_at='notebooks/account/slug')"
+    },
+    {
+      "reason": "symlink creation unavailable",
+      "status": "SKIP",
+      "test": "test_candidate160_environment.InputTests.test_aliases_rejected_at_every_level (link_at='notebooks/account/slug/marker.json')"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.InputTests.test_both_models_direct_dataset_and_notebook_layouts_and_old_pilot_unchanged"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.InputTests.test_bounds_and_unsupported_deep_layout"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.InputTests.test_duplicates_wrong_marker_structure_and_traversal_fail_closed"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.PreflightTests.test_export_failure_retains_truthful_report_and_never_creates_slot"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.PreflightTests.test_independent_checks_partial_failures_and_never_reserves_or_calls_model"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.ProviderTests.test_downloader_rejects_wrong_bytes_or_redirect_with_durable_failure"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.ProviderTests.test_regular_executable_and_internal_links_only"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.ProviderTests.test_size_hash_and_resource_bounds_before_execution"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_environment.ProviderTests.test_unsafe_tar_entries_rejected"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_incomplete_child_results_cannot_establish_pass"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_interrupt_preserves_partial_report_and_never_continues_gpu"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_inventory_uses_stdlib_observations_and_excludes_secrets"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_partial_scratch_creation_never_claims_successful_cleanup"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_pass_levels_distinguish_software_gpu_weights_inference_and_science"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_real_checkpoint_admission_missing_duplicate_wrong_mount_source_or_weights_blocks"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_source_failure_or_expired_budget_stops_before_inputs_software_gpu"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_preflight.PreflightAdmissionTests.test_worker_entrypoints_bind_exact_source_and_emit_complete_scoped_receipts"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_notebooks.Candidate160NotebookTests.test_all_cells_embedded_sources_sha_pins_and_deterministic_builder"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_notebooks.Candidate160NotebookTests.test_execute_every_cell_cpu_without_grant_produces_verified_blocked_archive"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_notebooks.Candidate160NotebookTests.test_preflight_builder_cells_and_repeatable_blocked_execution_without_slots"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate160_notebooks.Candidate160NotebookTests.test_wrong_runtime_ref_and_uncommitted_source_are_rejected"
+    },
+    {
+      "status": "PASS",
+      "test": "test_candidate_integration.CandidateIntegrationTests.test_protected_pilot_c1_generation_and_source_bytes"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_actual_filesystem_observation_and_working_scratch"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_distinct_mounts_need_each_own_capacity"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_environment_preflight_consumes_no_grant_attempt_or_gpu"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_output_not_writable_prints_failure_without_grant"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_preflight_never_reads_grant_or_calls_subprocess"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_preflight_permission_failure_receipt_and_cleanup_failure"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_quota_failure_after_statvfs_pass_is_blocked_and_probe_removed"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_real_hardlink_remains_rejected"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_resume_extraction_copy_archive_headroom_is_additional"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_same_device_different_free_observations_take_minimum"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_scratch_cleanup_scope_and_evidence_survival"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_scratch_environment_drops_notebook_python_paths"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_second_quota_failure_releases_both_simultaneous_probes"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_shared_filesystem_requires_sum_not_two_independent_checks"
+    },
+    {
+      "reason": "Linux allocation API unavailable",
+      "status": "SKIP",
+      "test": "test_pilot_bootstrap.StorageTests.test_small_real_allocation_is_released"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_symlink_remains_rejected_without_relaxing_mount_policy"
+    },
+    {
+      "status": "PASS",
+      "test": "test_pilot_bootstrap.StorageTests.test_symlink_scratch_root_is_blocked"
+    }
+  ],
+  "tested_snapshot": "0363db4976f39f8c4249ab84a7c54986f41e1e99",
+  "tests_run": 43
+}

@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 import zlib
 
@@ -73,7 +74,12 @@ class Candidate160NotebookTests(unittest.TestCase):
                 nb = read(ROOT/f"notebooks/SafeShift_CANDIDATE160_{key}.ipynb")
                 code = "\n".join("".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "code")
                 script = root/"execute_cells.py"
-                script.write_text(code, encoding="utf-8")
+                # No real hardware command in a CPU notebook rehearsal, even if
+                # WSL happens to expose the host nvidia-smi executable.
+                guarded = ('from unittest.mock import patch\n'
+                           'with patch("subprocess.check_output", side_effect=AssertionError("GPU_OBSERVATION_FORBIDDEN_IN_CPU_TEST")):\n'
+                           + textwrap.indent(code, '    '))
+                script.write_text(guarded, encoding="utf-8")
                 process = subprocess.run([sys.executable, "-I", "-B", str(script)], cwd=root,
                     env={**os.environ, "CUDA_VISIBLE_DEVICES": "", "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1"},
                     text=True, capture_output=True, timeout=60)
@@ -96,6 +102,50 @@ class Candidate160NotebookTests(unittest.TestCase):
         for key in KEYS:
             with self.assertRaises((ValueError, subprocess.CalledProcessError)):
                 notebook(key, BASE)
+
+    def test_preflight_builder_cells_and_repeatable_blocked_execution_without_slots(self):
+        for key in KEYS:
+            nb = read(ROOT/f"notebooks/SafeShift_CANDIDATE160_PREFLIGHT_{key}.ipynb")
+            meta = nb["metadata"]["safeshift"]
+            self.assertEqual(meta["mode"], "CANDIDATE160_NO_ATTEMPT_PREFLIGHT")
+            self.assertEqual(nb, notebook(key, meta["runtime_ref"], preflight=True))
+            code = "\n".join("".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "code")
+            compile(code, "preflight", "exec")
+            self.assertIn("launch_preflight as launch", code)
+            self.assertNotIn("launch_owner as launch", code)
+            self.assertNotIn("owner_start=True", code)
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                script = root/"preflight.py"
+                guarded = ('from unittest.mock import patch\n'
+                           'with patch("subprocess.check_output", side_effect=AssertionError("GPU_OBSERVATION_FORBIDDEN_IN_CPU_TEST")):\n'
+                           + textwrap.indent(code, '    '))
+                script.write_text(guarded, encoding="utf-8")
+                for _ in range(2):
+                    process = subprocess.run([sys.executable, "-I", "-B", str(script)], cwd=root,
+                        env={**os.environ, "CUDA_VISIBLE_DEVICES": "", "HF_HUB_OFFLINE": "1"},
+                        text=True, capture_output=True, timeout=60)
+                    self.assertEqual(process.returncode, 0, process.stderr)
+                reports = list((root/"data/processed/candidate160_preflight").glob("*/preflight.json"))
+                self.assertEqual(len(reports), 2)
+                for path in reports:
+                    report = read(path)
+                    self.assertEqual(report["status"], "BLOCKED")
+                    self.assertIs(report["attempt_consumed"], False)
+                    self.assertIs(report["owner_slot_created"], False)
+                    self.assertEqual(report["native_calls"], 0)
+                    verify_archive(Path(str(path.parent)+".zip"))
+                    final = read(Path(str(path.parent)+".preflight-result.json"))
+                    self.assertEqual(final["status"], "BLOCKED")
+                    self.assertEqual(final["evidence_export"], "VERIFIED")
+                    self.assertNotEqual(final["levels"]["LIVE_GPU_PREFLIGHT_PASS"], "PASS")
+                    self.assertEqual(final["levels"]["WEIGHTS_LOADED"], "NOT_RUN")
+                    self.assertEqual(final["levels"]["INFERENCE_VERIFIED"], "NOT_RUN")
+                instructions = "".join(nb["cells"][0]["source"])
+                self.assertIn(".preflight-result.json", instructions)
+                self.assertIn("evidence_export=VERIFIED", instructions)
+                self.assertFalse(list(root.glob("**/owner_slot*")))
+                self.assertFalse(list(root.glob("**/consumption.json")))
 
 
 if __name__ == "__main__":

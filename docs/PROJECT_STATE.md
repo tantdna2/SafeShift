@@ -1,7 +1,7 @@
 # SafeShift — PROJECT STATE
 
-Cập nhật **30/10/2026 (Asia/Bangkok)** trong task Owner Save & Run All sau PR #153 MERGED.
-Main đã kiểm GitHub/remote: `fc1e454212455685e1775601ebfd6aab9535c932`.
+Cập nhật **31/10/2026 (Asia/Bangkok)** trong cùng Draft PR #155, theo chỉ thị environment-first.
+Main đã kiểm remote: `39ec489403753ada10f4924c4b0d6077e027f5e1`.
 Đây là snapshot trạng thái, không quyền thực nghiệm; mở task mới phải kiểm GitHub lại.
 
 ## PROJECT IDENTITY
@@ -12,6 +12,51 @@ Main đã kiểm GitHub/remote: `fc1e454212455685e1775601ebfd6aab9535c932`.
 - Thiết kế/primary/metric/final roster/nguồn mới vẫn **PROPOSED; O1–O8/T0 PENDING**. HNLO optional theo từng model, không xác suất nguy cơ hoặc confidence đã hiệu chuẩn.
 
 ## CURRENT STATUS
+
+- **Yêu cầu environment-first 31/10 — IMPLEMENTED IN DRAFT / chưa COMPLETE.**
+  [Chỉ thị Owner](https://github.com/tantdna2/SafeShift/pull/155#issuecomment-6533181366)
+  được ghi append-only trong `AGENTS.md`. Cùng branch/PR155, không PR mới.
+  Preflight v2 thêm inventory kernel/ABI/OS/RAM/cgroup/visibility, software
+  qualification child riêng, receipt binding/đủ evidence, các mức PASS riêng,
+  deadline từ đầu và final result fail-closed khi export/sidecar/cleanup lỗi.
+  [Runbook](CANDIDATE160_KAGGLE.md) ghi facts OWNER_REPORTED và cách Owner chạy
+  diagnostic với cùng Inputs/settings; còn thiếu bằng chứng Kaggle thực tế.
+  Không đổi khoa học/model revision/metric/cohort hoặc cơ chế chống retry.
+  Chưa chạy Kaggle/GPU/weights/private data/attempt hoặc merge ở Codex.
+  Chỉ COMPLETE khi final HEAD được ChatGPT kiểm GitHub, Antigravity audit độc
+  lập, merge được cấp quyền riêng và hậu merge xác minh quy tắc trên main.
+  Các kiểm thử/bằng chứng30/10 bên dưới là snapshot cũ, không tự nâng HEAD mới.
+  **CPU CODE PASS31/10:** runtime `f679e3153a1418cd521d1875cfa797b5aded8570`,
+  tested snapshot `0363db4976f39f8c4249ab84a7c54986f41e1e99`;
+  full Linux332 =300 PASS/32 SKIP/0 lỗi,10 notebook khớp builder;
+  Windows focused43 =38 PASS/5 SKIP/0 lỗi. Hai actual worker CLI đều qua
+  exact3.11.9/cu124 pins/NMS ABI/source-bound envelope +8 synthetic sizes,
+  có guards cấm CUDA/weights/real-forward. Source/hash lịch sử được đối chiếu
+  bằng Git objects; không sửa locks. [Receipts mới](research/evidence/candidate160_envfirst_20261031/index.json).
+  LIVE_GPU_PREFLIGHT/WEIGHTS_LOADED/INFERENCE/SCIENTIFIC vẫn chưa được chứng minh
+  trên Kaggle. Final HEAD mới phải được review/audit lại, không tự merge.
+
+- **Snapshot bàn giao30/10 Candidate160 environment repair — DRAFT / chưa GPU PASS.**
+  Thêm bounded Notebook Output discovery riêng cho Candidate160; giữ pilot cũ.
+  CPython3.11.9 standalone20240726 đã tải/kiểm29.713.170 bytes/SHA upstream;
+  venv copies cần libpython cùng SHA trong venv/lib. Preflight notebook riêng
+  không execution/slot/attempt/weights/model call; receipt từng gate không suy READY.
+  Ngoại lệ một replacement1 chỉ cho sealed incident InternVL checkpoint_source
+  FOUND_0 có160 NOT_ATTEMPTED/attempts0/native_calls0 và consumed=false; giữ
+  campaign/slot/marker cũ, chặn partial/consumed/unknown và lần thay thế thứ hai.
+  [Quyết định/giới hạn](research/CANDIDATE160_KAGGLE_ENV_DECISION_20261030.md),
+  [runbook](CANDIDATE160_KAGGLE.md). Bằng chứng Kaggle cũ chỉ OWNER_REPORTED;
+  chưa có original private archive để xác nhận đủ điều kiện replacement.
+  ChatGPT kiểm GitHub và Antigravity audit độc lập vẫn bắt buộc trước merge.
+  Không GPU/private TRAIN/GT/TEST/weights hoặc merge trong task này.
+  **CPU CODE PASS:** exact export `2306aecb280acfedd1dd11523f14b60f892c771f`,
+  324 tests =292 PASS/32 SKIP/0 lỗi;10 notebook khớp builder. Windows focused
+  13 tests =9 PASS/4 symlink SKIP;4 notebook tests PASS. Cả hai production
+  CPython3.11.9/cu124 stacks qua exact pins/ABI/native meta +8 synthetic sizes.
+  Native exact-export suite15/15 PASS/model, gồm160 ảnh tổng hợp/model qua
+  production cu124 software với scripted logits; không model predictions thật.
+  [Receipts](research/evidence/candidate160_env_20261030/index.json) và runbook
+  ghi BASE-reproduced stale AGENTS assertion, correction và các giới hạn thật.
 
 - **PR #153 MERGED**, GitHub `merged=true`, merge `fc1e454212455685e1775601ebfd6aab9535c932`.
   Owner đã trực tiếp yêu cầu bỏ thủ tục phê duyệt lặp lại cho một lượt/model

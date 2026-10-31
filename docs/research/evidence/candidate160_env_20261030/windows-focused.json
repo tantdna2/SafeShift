@@ -1,0 +1,28 @@
+{
+  "commands": [
+    {
+      "command": "python -B -m unittest test_candidate160_environment -q",
+      "errors": 0,
+      "failures": 0,
+      "pass": 9,
+      "run": 13,
+      "skip_reason": "Windows symlink creation unavailable",
+      "skipped": 4,
+      "source_sha256": "1fce2a61a059f4495b08af955a9dd15d184bcaac38a58544c80a3816af6ca415"
+    },
+    {
+      "command": "python -B -m unittest test_candidate160_notebooks -q",
+      "errors": 0,
+      "failures": 0,
+      "pass": 4,
+      "run": 4,
+      "skipped": 0,
+      "source_sha256": "a400e842b4560e57e970199ebaf9a226c2002dfb8138d11da9cb81a6de3c77b8"
+    }
+  ],
+  "gpu": "NOT_RUN_HARDWARE_COMMANDS_GUARDED",
+  "module_path": "PYTHONPATH=.:tests (use OS path separator)",
+  "recorded_from": "Successful CLI results captured in task; no full stdout log is re-exported here",
+  "scope": "SYNTHETIC_CPU_NO_GPU_WEIGHTS_PRIVATE_DATA",
+  "tested_source_sha256": "c01902bc0b96e1aa89159311e0ae48417b72e99a897ec24b1d96da628ff2853b"
+}

@@ -179,6 +179,10 @@ if (root/"scripts/build_candidate160_notebooks.py").is_file():
   name=f"SafeShift_CANDIDATE160_{key}.ipynb"
   saved=json.loads((root/"notebooks"/name).read_bytes())
   candidates[name]=candidate_notebook(key,saved["metadata"]["safeshift"]["runtime_ref"])
+  name=f"SafeShift_CANDIDATE160_PREFLIGHT_{key}.ipynb"
+  if (root/"notebooks"/name).is_file():
+   saved=json.loads((root/"notebooks"/name).read_bytes())
+   candidates[name]=candidate_notebook(key,saved["metadata"]["safeshift"]["runtime_ref"],preflight=True)
  result["candidate_expected"]={k:json.dumps(v,indent=1,ensure_ascii=False)+"\\n" for k,v in candidates.items()}
  result["candidate_sources"]={p:(root/p).read_text(encoding="utf-8") for p in sources(root)}
  result["candidate_digest"]=source_hash(root)

@@ -10,9 +10,10 @@ import time
 import uuid
 
 from safeshift.pilot import contract as pilot
-from safeshift.pilot.artifacts import safe, write
+from safeshift.pilot.artifacts import read, safe, sha, write
 from . import train_contract as c
 from .source import require
+from .train_inputs import mounts
 
 SCHEMA = "safeshift-candidate160-owner-execution-v1"
 MODE = "OWNER_ACTIVATED_TECHNICAL"
@@ -80,7 +81,8 @@ def validate(value, key, source, ref, *, now=None):
 
 
 def reserve(work, value, inputs):
-    """Exclusive fixed slot; no release/retry even after failed admission.
+    """Exclusive fixed slot; only the documented sealed zero-call incident can
+receive one distinct replacement. The original slot is never changed.
 
 An attached previous output is also a replay barrier. No claim is made about
 another VM whose filesystem/output is not available to this process.
@@ -88,31 +90,77 @@ another VM whose filesystem/output is not available to this process.
     name = "owner_slot_" + value["slot_sha256"] + ".json"
     # Reuse bounded Kaggle mount discovery; do not walk image/weight trees.
     inputs = Path(inputs)
-    visited = 0
-    def directories(parent):
-        nonlocal visited
-        found = []
-        for entry in parent.iterdir():
-            visited += 1
-            require(visited <= 512, "OWNER_HISTORY_DISCOVERY_BOUND")
-            checked = safe(inputs, entry.relative_to(inputs).as_posix())
-            if checked.is_dir():
-                found.append(checked)
-        return found
-    mounts = directories(inputs)
-    for mount in mounts.copy():
-        if mount.name == "datasets":
-            for owner in directories(mount):
-                mounts.extend(directories(owner))
-    for mount in mounts:
-        for relative in (name, "data/processed/candidate160/attempts/" + name):
-            require(not safe(inputs, (mount.relative_to(inputs) / relative).as_posix()).exists(),
-                    "OWNER_SLOT_PRESENT_IN_ATTACHED_OUTPUT")
+    roots = mounts(inputs)
     attempts = safe(work, "attempts")
     attempts.mkdir(exist_ok=True)
+    original, history, terminals = [], [], []
+    locations = [attempts]
+    scanned = 0
+    for mount in roots:
+        locations += [mount, safe(mount, "data/processed/candidate160/attempts")]
+        history.append(mount)
+        parent = safe(mount, "data/processed/candidate160")
+        if parent.is_dir():
+            for entry in parent.iterdir():
+                scanned += 1
+                require(scanned <= 512, "INCIDENT_HISTORY_BOUND")
+                checked = safe(parent, entry.name)
+                if checked.is_dir() and checked.name != "attempts" and checked.name != "reviews":
+                    history.append(checked)
+    # Local failed evidence uses the same bounded, one-level layout.
+    for entry in Path(work).iterdir():
+        scanned += 1
+        require(scanned <= 512, "INCIDENT_HISTORY_BOUND")
+        checked = safe(work, entry.name)
+        if checked.is_dir() and checked.name not in ("attempts", "reviews"):
+            history.append(checked)
+    replacement_name = name.removesuffix(".json") + ".replacement1.json"
+    locations += history
+    for location in locations:
+        require(not safe(location, replacement_name).exists(), "OWNER_REPLACEMENT_ALREADY_RESERVED_DO_NOT_RETRY")
+        require(not safe(location, replacement_name.removesuffix(".json") + ".consumed.json").exists(),
+                "OWNER_REPLACEMENT_ALREADY_CONSUMED_DO_NOT_RETRY")
+        require(not safe(location, name.removesuffix(".json") + ".consumed.json").exists(),
+                "OWNER_CONSUMED_HISTORY_DO_NOT_RETRY")
+        path = safe(location, name)
+        if path.exists():
+            require(path.is_file() and path.stat().st_size <= 16384, "OWNER_HISTORY_MARKER_INVALID")
+            original.append(read(path))
+        terminal = safe(location, name + ".terminal.json")
+        if terminal.exists():
+            require(terminal.is_file() and terminal.stat().st_size <= 16384
+                    and read(terminal).get("attempt_consumed") is False, "OWNER_TERMINAL_CONSUMED_OR_UNKNOWN")
+            terminals.append(terminal)
+    incident = None
+    observed_history = bool(terminals)
+    for directory in history:
+        for filename in ("owner_execution.json", "owner_consumption_log.json"):
+            path = safe(directory, filename)
+            if path.is_file():
+                require(path.stat().st_size <= 16384, "OWNER_HISTORY_RECORD_SIZE_BOUND")
+                record = read(path)
+                if record.get("slot_sha256") == value["slot_sha256"]:
+                    observed_history = True
+                    if filename == "owner_consumption_log.json":
+                        require(record.get("attempt_consumed") is False, "OWNER_CONSUMED_OR_UNKNOWN_HISTORY")
+    require(not observed_history or original, "OWNER_PARTIAL_HISTORY_WITHOUT_RESERVATION")
+    if original:
+        from .train_incident import replacement
+        try:
+            incident = replacement(history, original, value["model_key"])
+            require(all(sha(path) == incident["original_terminal_sha256"] for path in terminals),
+                    "INCIDENT_CONFLICTING_TERMINAL")
+        except (ValueError, OSError, KeyError, TypeError) as error:
+            # Preserve the historical attached/local replay failure categories.
+            if any(safe(location, name).exists() for location in locations[1:]):
+                raise ValueError("OWNER_SLOT_PRESENT_IN_ATTACHED_OUTPUT:" + str(error)) from error
+            raise FileExistsError("OWNER_SLOT_RESERVED_NO_RETRY:" + str(error)) from error
+        name = replacement_name
     record = {"schema": "safeshift-candidate160-owner-slot-v1", "status": "RESERVED_NO_RETRY",
               "slot_sha256": value["slot_sha256"], "execution_sha256": pilot.digest(value),
               "run_id": value["run_id"], "attempt_id": value["attempt_id"],
               "model_key": value["model_key"], "manifest_sha256": c.MANIFEST}
+    if incident is not None:
+        record["replacement_incident"] = incident
     write(safe(attempts, name), record)  # O_EXCL + fsync, never overwrite/release.
     return name, deepcopy(record)
