@@ -390,3 +390,47 @@ Scientific selection/pooling remains **PENDING**; TEST, new protocols/metrics/
 roster, thesis D/V/T, Accuracy/Macro-F1 analysis and model choice are outside scope.
 No external academic acceptance is claimed. If independent authority outside the
 Owner is established as required, report BLOCKED with that requirement's source.
+
+
+## DEC-20261101-T1-OWNER-FALSE-SAFE-DIRECTION
+
+- Ngày: **01/11/2026, Asia/Bangkok**. Người quyết định: **SafeShift Owner**;
+  Codex chỉ ghi lại. Nguồn: [Owner relay do ChatGPT chuyển lên GitHub](https://github.com/tantdna2/SafeShift/pull/158#issuecomment-6552710543)
+  và task T1 trực tiếp của Owner cùng ngày. Đã đọc comment thật trên GitHub.
+- BASE/main đã xác minh: `a113ef707970c50a7420c84e8a8e46fa2dc3db01`;
+  PR158 MERGED. Merge T0 là hoàn tất hồ sơ đề xuất, không tự phê duyệt khoa học.
+- Trạng thái: **OWNER_DIRECTION_ACCEPTED / T1_AUTHORIZED**. Ý chí Owner có
+  hiệu lực theo nguồn nêu trên; hồ sơ này chờ review/merge vào repository.
+  Không ghi chữ ký độc lập của Research Lead, giảng viên, chủ dữ liệu/custodian.
+
+Owner chấp nhận hướng Khóa luận **phát hiện quyết định false-safe và ưu tiên
+người kiểm tra lại**; Qwen3-VL-8B-Instruct là ứng viên focal có điều kiện,
+InternVL3.5-4B-HF và MiniCPM-V-4 đúng resampler FP32 là hai ứng viên kiểm tra
+chéo, tối đa ba mô hình; **tạm dừng tìm mô hình thứ tư**. MiniCPM giữ identity
+`minicpm4-resampler-attention-fp32-v1`, config SHA256
+`5b85504ff24ff42d4d629dbf00feb0c484022cfef3a7d57b571eaae99d1c8b00`,
+descriptor SHA256 `2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da`;
+weights FP16/eager, không đổi thành toàn model FP32. Exact revisions và các
+điều kiện qualification trong [T0 §4](T0_FALSE_SAFE_DESIGN_20261101.md) giữ nguyên.
+
+Phương pháp phải có **baseline, ablation, stress test, phân tích lỗi và khả
+năng tái lập (E1–E5)**. Đây là yêu cầu thiết kế được Owner nêu, không phê duyệt
+công thức/rule cụ thể hoặc chứng nhận đã thực hiện E1–E5. Final model qualification,
+role utility/cost và final roster vẫn PENDING; không bắt buộc giữ đủ ba bằng
+mọi giá hoặc dùng HNLO không tồn tại của MiniCPM.
+
+Quyết định bổ sung phạm vi hướng/candidate cap cho Khóa luận và dừng tuyển
+model thứ tư trong kế hoạch bốn-peer PROPOSED. Không hồi tố M1/M2, roster
+Seminar lịch sử, T0, dataset/split/nhãn/metric/config đã khóa. Không đóng toàn
+bộ O1/O3: O1 còn chuẩn học vụ/negative route theo scope cụ thể; O3 còn final
+roster/qualification/selection. **O2/O4/O5 PENDING**, gồm protocol/series policy,
+nguồn/quyền/GT/D/V/T/custody, budget/gain/severe margin/coverage/CI/precision/
+min sources-events/cost/stop rules. 20%/10 điểm phần trăm/95%/80% không là số
+được duyệt. O6 run authority và O7 reviewer/study giữ riêng, chưa mở bởi T1.
+
+Owner cho **T1 kiểm tài liệu, metadata TRAIN và feasibility**, ghi checklist
+người có quyền cần bổ sung, một Draft PR và PROJECT_STATE. Không acquisition,
+annotation, liên hệ bên thứ ba, Kaggle/GPU/inference, TEST, huấn luyện/ranker,
+triage implementation, pooling hoặc chạy dữ liệu xác nhận. [Hồ sơ T1](THESIS_DATA_PROTOCOL.md)
+đánh giá GO/BLOCKED/NO-GO; hoàn tất T1 không đồng nghĩa xác nhận cải tiến GO.
+Dừng tại Draft PR; ChatGPT review GitHub và quyết định audit; không merge.
