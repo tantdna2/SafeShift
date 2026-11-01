@@ -1,0 +1,43 @@
+{
+  "schema": "safeshift-t1-metadata-check-v1",
+  "base": "a113ef707970c50a7420c84e8a8e46fa2dc3db01",
+  "python": "3.11.9",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "dependencies": [],
+  "seed": null,
+  "input_sha256": {
+    "docs/research/evidence/t0_false_safe_20261101/summary.json": "b1de3faaed3dd3040bc0e74d0b0fcaff6769f682e765ab74214e749128043a3b",
+    "docs/SOURCE_FEASIBILITY_RECEIPT_20261024.json": "4670b92ba67d1e4c24bfaf85a2fde19cbaa71a56af2927f379611682d610c0d3",
+    "data/processed/m160/verification.json": "551d109a99ed8296312cc0619dd019687b0b090f34ec025cc4f83aeb6895eeca",
+    "data/processed/official160-20261031/verification-result.json": "854a22f18de3741ae803c53504ce3a392f43c2a956758ea1656a5d9b04c62a8b",
+    "data/processed/m160/verified/pilot_manifest.json": "f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995",
+    "data/processed/p160/work/review-only/history/owner_internvl35_55badcf1d55d44d98b74324c58b552bf/pilot_manifest.json": "f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995"
+  },
+  "script_sha256": "4fecbcd2c3ab68861a9743b33e83c6cdc1e803969d4cf5f76ee02f901b3d0ea8",
+  "checks": [
+    "base_bytes:docs/research/evidence/t0_false_safe_20261101/summary.json",
+    "base_bytes:docs/SOURCE_FEASIBILITY_RECEIPT_20261024.json",
+    "q3_original_counts",
+    "q3_denominators",
+    "q3_join_inherited",
+    "source_claim_limits",
+    "source_receipt_count",
+    "minicpm4:receipt_hash",
+    "minicpm4:projection",
+    "minicpm4:counts",
+    "internvl35:receipt_hash",
+    "internvl35:projection",
+    "internvl35:counts",
+    "manifest_hash:0",
+    "manifest_hash:1",
+    "manifest_train_membership",
+    "manifest_levels",
+    "manifest_no_source_certificate"
+  ],
+  "PASS": 18,
+  "FAIL": 0,
+  "SKIP": 0,
+  "scope": "METADATA_ONLY_NOT_RAW_REPLAY_OR_NEW_RECOUNT",
+  "model_calls": 0,
+  "TEST_accessed": false
+}

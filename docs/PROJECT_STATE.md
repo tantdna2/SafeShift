@@ -1,5 +1,41 @@
 # SafeShift — PROJECT STATE
 
+## T1 — kiểm quyền/nguồn và khả thi dữ liệu, 01/11/2026
+
+**T1 assessment hoàn tất để review; thực nghiệm xác nhận BLOCKED.**
+[Hồ sơ T1](research/THESIS_DATA_PROTOCOL.md) và
+[receipt metadata](research/evidence/t1_feasibility_20261101.json) ghi nguồn,
+quyền, exposure H/D/V/T, GO/BLOCKED/NO-GO, checklist custodian và quy trình
+chốt budget/gain/severe/coverage/uncertainty/cost; chưa đặt giá trị được duyệt.
+
+GitHub live xác nhận [PR158 MERGED](https://github.com/tantdna2/SafeShift/pull/158),
+main `a113ef707970c50a7420c84e8a8e46fa2dc3db01`.
+[Owner relay6552710543](https://github.com/tantdna2/SafeShift/pull/158#issuecomment-6552710543)
+chấp nhận hướng false-safe/review, Q3 focal có điều kiện và hai peer ứng viên
+InternVL3.5/MiniCPM resampler FP32, tạm dừng model thứ tư.
+[Quyết định append-only](research/DECISIONS.md#dec-20261101-t1-owner-false-safe-direction)
+chỉ ghi đúng phần này cùng E1–E5/T1 authorization; O2/O4/O5, phần còn lại
+O1/O3, final qualification/roster và quyền/học vụ chưa được xác minh vẫn PENDING.
+
+TRAIN/TRAIN160 đã phơi nhiễm: H và D thăm dò có điều kiện, không V/T độc lập.
+T1 kiểm hash hai receipt/hai manifest160 và consistency số T0; không recount
+archive/raw mới. Giữ Q3 V4 gốc 3763 planned/3539 SUCCESS/35 false-safe trên 2455
+Normal; metadata160 148 SUCCESS/12 NOT_ATTEMPTED,4 false-safe/1 severe.
+InternVL3.5 có 135 SUCCESS/25 INVALID; MiniCPM 155/5,0 HNLO số. Không pooling
+Recovery224/composite, không metric/utility mới hoặc qualification tự động.
+
+**GO:** kiểm hồ sơ, thăm dò saved TRAIN trong scope, chuẩn bị hợp đồng/CPU
+synthetic. Phương pháp thật trên TRAIN160 còn O2/series/paired ledger;
+learned ranker và xác nhận nguồn độc lập **BLOCKED**. Không có registry,
+rights/custody V/T, nguồn/events/precision đủ bằng chứng. Giữ TEST đóng.
+
+**NEXT TASK duy nhất:** hoàn thiện gói chứng từ nguồn/custody và quyết định
+O2/O4/O5 theo checklist B1–B6 của T1, để kiểm hồ sơ được người có quyền cung
+cấp; không mở T2 GPU/annotation/training/target. Dừng một Draft PR cho ChatGPT
+review GitHub và quyết định audit, không merge. Các snapshot phía dưới giữ
+nguyên; trạng thái T0 trước Owner relay không thay quyết định mới ở mục này.
+
+
 ## T0 false-safe — đề xuất trình giảng viên, 01/11/2026
 
 **PROPOSED / O1–O5 PENDING; xác nhận thực nghiệm BLOCKED.**
