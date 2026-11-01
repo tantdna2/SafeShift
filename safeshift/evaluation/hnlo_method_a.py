@@ -1,7 +1,7 @@
 """Bounded, in-memory Method A engineering verifier. No production activation.
 
-Only synthetic evidence is admitted in v1. Injected decoders and independently
-held seals are trust inputs, not attestations authenticated by this module.
+Synthetic evidence and the separately authorized Issue165 archive bridge are
+admitted. Injected decoders and seals remain trusted inputs, not attestations.
 See docs/HNLO_METHOD_A.md for the custody boundary and later evidence needs.
 """
 from dataclasses import dataclass
@@ -15,6 +15,7 @@ from safeshift.pilot.hnlo import hnlo, oracle
 
 SCHEMA = "safeshift-hnlo-method-a-v1"
 SCOPE = "CPU_SYNTHETIC_ONLY"
+SAVED_SCOPE = "CPU_SAVED_OFFICIAL160_ISSUE165"
 MAX_TRIALS = 2_000_000  # resource bound, not a scientific threshold
 ORIGIN = "outer_forward_output_before_generate_processors"
 
@@ -57,6 +58,39 @@ class Proof:
     decision_step: int
     sequences: tuple[tuple[int, ...], ...]  # canonical LEVELS order, no EOS
     evidence_sha256: str
+
+
+class EnumerationCache:
+    """Per-run, bounded memoization of exhaustive structural searches only.
+
+    Keys include the exact trusted decoder object and every search input.
+    Builder and independent verifier never share an entry. No custody, step,
+    logit, numeric, or packet validation is cached. Decoders must remain pure.
+    """
+    def __init__(self):
+        self.entries = {}
+        self.hits = 0
+        self.searches = 0
+
+    def search(self, role, decoder, arguments, compute):
+        key = (role, decoder, arguments)
+        if key in self.entries:
+            self.hits += 1
+            result, refusal = self.entries[key]
+            if refusal is not None:
+                raise Refusal(*refusal)
+            return result
+        try:
+            result, refusal = compute(), None
+        except Refusal as error:
+            result, refusal = None, (error.reason, error.status)
+        self.searches += 1
+        if len(self.entries) >= 32:
+            self.entries.pop(next(iter(self.entries)))
+        self.entries[key] = (result, refusal)
+        if refusal is not None:
+            raise Refusal(*refusal)
+        return result
 
 
 def _bounded_json(value):
@@ -110,7 +144,7 @@ def _decode(decoder, ids, skip=False):
 
 def _prepare(packet, decoder, seal):
     _bounded_json(packet)
-    need(packet["schema"] == SCHEMA and packet["scope"] == SCOPE,
+    need(packet["schema"] == SCHEMA and packet["scope"] in (SCOPE, SAVED_SCOPE),
          "SYNTHETIC_SCOPE_REQUIRED", "UNAVAILABLE")
     need(type(seal) is Seal and type(decoder) is Decoder, "TRUST_INPUT_TYPE")
     for checksum in (seal.evidence_sha256, seal.tokenizer_sha256, seal.vocabulary_sha256):
@@ -124,7 +158,8 @@ def _prepare(packet, decoder, seal):
     need(type(vocab) is tuple and 1 <= len(vocab) <= 131_072
          and all(type(t) is int and 0 <= t < 2**31 for t in vocab), "VOCABULARY_REQUIRED")
     need(len(set(vocab)) == len(vocab), "VOCABULARY_DUPLICATE")
-    need(type(special) is tuple and all(type(t) is int and t in vocab for t in special)
+    vocabulary = set(vocab)
+    need(type(special) is tuple and all(type(t) is int and t in vocabulary for t in special)
          and len(set(special)) == len(special), "SPECIAL_IDS")
     need(digest({"ids": sorted(vocab), "special_ids": sorted(special)}) == seal.vocabulary_sha256,
          "VOCABULARY_SEAL_MISMATCH")
@@ -219,14 +254,7 @@ def _matches(decoder, sequence, context, prefix, surfaces, terminal):
     return index
 
 
-def build_proof(packet, decoder, seal):
-    """Exhaustive single-token substitution; never encode/retokenize the output.
-
-    Raises Refusal for missing, ambiguous or contradictory evidence. Search is
-    over the complete sealed vocabulary, NOT just saved sparse logit keys.
-    """
-    body, context, prefix, surfaces, label = _prepare(packet, decoder, seal)
-    terminal = tuple(packet["raw"]["generated_ids"][len(body):])
+def _builder_search(decoder, body, context, prefix, surfaces, terminal):
     families = []
     for position in range(len(body)):
         matches = [[] for _ in LEVELS]
@@ -237,12 +265,66 @@ def build_proof(packet, decoder, seal):
                 matches[index].append(sequence)
         if all(matches):
             need(all(len(m) == 1 for m in matches), "AMBIGUOUS_TOKEN_BRANCH", "UNAVAILABLE")
-            families.append(Proof(position, tuple(m[0] for m in matches), seal.evidence_sha256))
+            families.append((position, tuple(m[0] for m in matches)))
     need(len(families) == 1, "AMBIGUOUS_DECISION_STEP" if families else "NO_SINGLE_TOKEN_FAMILY", "UNAVAILABLE")
     return families[0]
 
 
-def verify_proof(packet, proof, decoder, seal):
+def _search(role, function, decoder, arguments, cache):
+    if cache is None:
+        return function(decoder, *arguments)
+    need(type(cache) is EnumerationCache, "CACHE_TYPE")
+    return cache.search(role, decoder, arguments, lambda: function(decoder, *arguments))
+
+
+def build_proof(packet, decoder, seal, *, cache=None):
+    """Exhaustive single-token substitution; never encode/retokenize the output.
+
+    Raises Refusal for missing, ambiguous or contradictory evidence. Search is
+    over the complete sealed vocabulary, NOT just saved sparse logit keys.
+    """
+    body, context, prefix, surfaces, label = _prepare(packet, decoder, seal)
+    terminal = tuple(packet["raw"]["generated_ids"][len(body):])
+    position, sequences = _search("builder", _builder_search, decoder,
+                                 (body, context, prefix, surfaces, terminal), cache)
+    return Proof(position, sequences, seal.evidence_sha256)
+
+
+def _verifier_search(decoder, body, context, prefix, surfaces, terminal):
+    alternatives = {}
+    for token in sorted(set(decoder.vocabulary) - set(decoder.special_ids)):
+        for position in range(len(body)):
+            candidate = list(body)
+            candidate[position] = token
+            index = _matches(decoder, tuple(candidate), context, prefix, surfaces, terminal)
+            if index is not None:
+                alternatives.setdefault(position, {}).setdefault(index, set()).add(token)
+    return tuple((p, tuple(tuple(sorted(labels[i])) for i in range(4)))
+                 for p, labels in sorted(alternatives.items()) if set(labels) == set(range(4)))
+
+
+def verify_unavailable(packet, decoder, seal, *, cache=None):
+    """Independently enumerate all positions even when the builder refuses.
+
+    This is negative evidence only. It cannot produce a numeric HNLO or select
+    an alias by availability of its sparse coordinate.
+    """
+    body, context, prefix, surfaces, label = _prepare(packet, decoder, seal)
+    terminal = tuple(packet["raw"]["generated_ids"][len(body):])
+    complete = _search("verifier", _verifier_search, decoder,
+                       (body, context, prefix, surfaces, terminal), cache)
+    if any(any(len(tokens) != 1 for tokens in labels) for _, labels in complete):
+        reason = "AMBIGUOUS_TOKEN_BRANCH"
+    elif len(complete) != 1:
+        reason = "AMBIGUOUS_DECISION_STEP" if complete else "NO_SINGLE_TOKEN_FAMILY"
+    else:
+        step, labels = complete[0]
+        reason = "MISSING_DECISION_LOGITS" if any(str(t[0]) not in
+            packet["raw"]["steps"][step]["raw_candidate_logits"] for t in labels) else None
+    return {"reason": reason, "complete_families": complete, "hnlo": None}
+
+
+def verify_proof(packet, proof, decoder, seal, *, cache=None):
     """Rebuild structure and exhaustively check uniqueness with a second decoder.
 
     Does not invoke build_proof or trust its decision/prefix/suffix. Returns a
@@ -265,17 +347,10 @@ def verify_proof(packet, proof, decoder, seal):
         need(_matches(decoder, sequence, context, prefix, surfaces, terminal) == index, "INDEPENDENT_BRANCH_DECODE")
     # Independently collect (position, label) -> token sets, including alternatives
     # omitted by the builder. Do not use its candidate list as the search domain.
-    alternatives = {}
-    for token in sorted(set(decoder.vocabulary) - set(decoder.special_ids)):
-        for position in range(len(body)):
-            candidate = list(body)
-            candidate[position] = token
-            index = _matches(decoder, tuple(candidate), context, prefix, surfaces, terminal)
-            if index is not None:
-                alternatives.setdefault(position, {}).setdefault(index, set()).add(token)
-    complete = {p: labels for p, labels in alternatives.items() if set(labels) == set(range(4))}
+    complete = dict(_search("verifier", _verifier_search, decoder,
+                           (body, context, prefix, surfaces, terminal), cache))
     need(set(complete) == {d}, "INDEPENDENT_DECISION_AMBIGUITY", "UNAVAILABLE")
-    need(all(complete[d][i] == {seqs[i][d]} for i in range(4)), "INDEPENDENT_TOKEN_AMBIGUITY", "UNAVAILABLE")
+    need(all(complete[d][i] == (seqs[i][d],) for i in range(4)), "INDEPENDENT_TOKEN_AMBIGUITY", "UNAVAILABLE")
     step = packet["raw"]["steps"][d]
     keys = [str(s[d]) for s in seqs]
     need(all(k in step["raw_candidate_logits"] for k in keys), "MISSING_DECISION_LOGITS", "UNAVAILABLE")
@@ -283,8 +358,8 @@ def verify_proof(packet, proof, decoder, seal):
     score, independent = hnlo(values), oracle(values)
     need(math.isfinite(score) and math.isfinite(independent)
          and math.isclose(score, independent, rel_tol=1e-10, abs_tol=1e-10), "CPU_ORACLE_FAIL")
-    result = {"schema": SCHEMA, "scope": SCOPE, "status": "PASS", "reason": None,
-              "qualification": "REAL_MINICPM_UNVERIFIED", "hnlo": score, "oracle_hnlo": independent,
+    result = {"schema": SCHEMA, "scope": packet["scope"], "status": "PASS", "reason": None,
+              "qualification": "PENDING_INDEPENDENT_AUDIT" if packet["scope"] == SAVED_SCOPE else "REAL_MINICPM_UNVERIFIED", "hnlo": score, "oracle_hnlo": independent,
               "decision_step": d, "token_ids": dict(zip(LEVELS, (s[d] for s in seqs))),
               "raw_logits": dict(zip(LEVELS, values)), "generated_label": label,
               "evidence_sha256": seal.evidence_sha256, "tokenizer_sha256": seal.tokenizer_sha256,
@@ -293,20 +368,21 @@ def verify_proof(packet, proof, decoder, seal):
     return {**result, "receipt_sha256": digest(result)}
 
 
-def evaluate(packet, native_decoder, independent_decoder, seal, *, proof=None):
+def evaluate(packet, native_decoder, independent_decoder, seal, *, proof=None, cache=None):
     """Fail-closed entrypoint. Rejections always carry hnlo=None, never a score."""
     try:
         need(native_decoder is not independent_decoder
              and native_decoder.decode is not independent_decoder.decode, "INDEPENDENT_DECODER_REQUIRED", "UNAVAILABLE")
-        built = build_proof(packet, native_decoder, seal)
+        built = build_proof(packet, native_decoder, seal, cache=cache)
         if proof is not None:
             need(proof == built, "SUPPLIED_PROOF_MISMATCH")
-        return verify_proof(packet, built, independent_decoder, seal)
+        return verify_proof(packet, built, independent_decoder, seal, cache=cache)
     except Refusal as error:
         status, reason = error.status, error.reason
     except (KeyError, IndexError) as error:
         status, reason = "UNAVAILABLE", "MISSING_EVIDENCE:" + str(error)
     except (TypeError, ValueError, ArithmeticError, AttributeError):
         status, reason = "FAIL", "MALFORMED_EVIDENCE_OR_NUMERIC_FAILURE"
-    return {"schema": SCHEMA, "scope": SCOPE, "status": status, "reason": reason,
+    scope = packet.get("scope", SCOPE) if type(packet) is dict else SCOPE
+    return {"schema": SCHEMA, "scope": scope, "status": status, "reason": reason,
             "qualification": "REAL_MINICPM_UNVERIFIED", "hnlo": None}

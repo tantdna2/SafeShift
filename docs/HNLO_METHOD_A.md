@@ -1,5 +1,11 @@
 # MiniCPM HNLO Method A — CPU synthetic engineering
 
+**Cập nhật Issue #165:** [kiểm chứng archive thật](MINICPM_SAVED_HNLO_165.md)
+bổ sung CPU read-only bridge, scope riêng, structural cache và independent
+negative proof. Kết quả Codex **0/155** do token-branch ambiguity, chờ review/
+audit. Phần dưới là hợp đồng/bằng chứng synthetic gốc của PR164; các câu
+"chưa đọc dữ liệu thật" mô tả task163, không phủ nhận lượt kiểm Issue165.
+
 Scope: [Owner authorization, issue #163](https://github.com/tantdna2/SafeShift/issues/163#issuecomment-6555995581),
 following the [technical proposal](https://github.com/tantdna2/SafeShift/issues/163#issuecomment-6555913422).
 BASE: `c2fb0fadef0cfc855c3f164ed1f662e9de623d58`.

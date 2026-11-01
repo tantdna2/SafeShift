@@ -1,5 +1,49 @@
 # SafeShift — PROJECT STATE
 
+## Issue #165 — MiniCPM official160 saved HNLO, 02/11/2026
+
+**RESULT: KHÔNG — 0/155 SUCCESS; 0/160 planned**, theo Method A hiện hành.
+[Báo cáo kiểm thật](MINICPM_SAVED_HNLO_165.md) và
+[public receipt](research/evidence/issue165_hnlo/public_receipt.json).
+Đây là kết luận kỹ thuật Codex, **PENDING_CHATGPT_REVIEW_AND_INDEPENDENT_AUDIT**;
+không tự chấp nhận khoa học, merge hoặc đổi O2/L1–L4/selection/T2/T3.
+
+- [Issue165](https://github.com/tantdna2/SafeShift/issues/165) cấp quyền đọc đúng
+  official FP32 INITIAL. BASE/main đã kiểm GitHub
+  `41e25fe4de37f2049e81ce978710ad80e682e740`; không Kaggle/GPU/inference/weights,
+  không ảnh/GT/TEST thật hay raw model khác.
+- Archive đúng SHA `46a41359c3ab2978b9ee4ac010518e49a74141641d9334c29035bdc0c8eac877`;
+  đủ4.210 payload checksum, exact run/series/attempt/config/source/runtime.
+  Cả155 SUCCESS qua custody/parser/native alignment,73.448 vocabulary IDs
+  đối chiếu Rust0.21.1 và Python decoder độc lập;1.760 native steps kiểm bản riêng.
+- Cả155 có hai token cho mỗi label tại cùng decision step. Independent full
+  vocabulary/context/EOS enumeration xác nhận `AMBIGUOUS_TOKEN_BRANCH`155/155.
+  Sparse logits không có các alias thay thế; không chọn nhánh theo logit sẵn có.
+  Bốn tọa độ đã lưu qua3 công thức số học155/155, nhưng không đủ proof duy nhất;
+  numeric HNLO hợp lệ0. Không missing custody/resource bound/technical FAIL.
+- Toàn160 gốc giữ nguyên:155 SUCCESS/5 INVALID, original HNLO0. Derived packets,
+  negative proofs, per-member SHA và null results riêng ở
+  `data/processed/issue165/run03/`; private-record SHA
+  `fa544e077faf8048029060946636f8d028977eea69ac79e913f23bb14e15684c`.
+  Không backfill/pooling/metric analysis hoặc cứu5 INVALID.
+- Chỉ thêm CPU archive bridge/CLI, exact structural cache và independent
+  negative verifier. Giữ MAX_TRIALS2.000.000, original parser/HNLO/generation.
+  Cache không bỏ kiểm custody/steps/logits/arithmetic từng record;8 searches
+  độc lập cho4 exact path/context signatures,302 structural cache hits.
+
+Windows CPython3.11.9/tokenizers0.21.1: **133/133 tests PASS** (34 Method A,
+20 bridge/cache/decoder/privacy tests,8 HNLO cũ,71 T2/T3). Fixture viết tay,
+không raw thật commit. Lệnh: `PYTHONPATH=tests` tương ứng shell đang dùng,
+`python -B -m unittest test_hnlo_method_a test_minicpm_saved_hnlo
+test_pilot.HNLOTests test_triage test_triage_adapter -v`; thêm local pinned
+tokenizers path theo runbook để chạy cả Rust/Python synthetic comparison.
+Full Linux và kiểm final HEAD được ghi trong Draft PR. Log/receipt ignored
+tại `data/processed/issue165/`; hash proof-source được public receipt khóa.
+
+**Bàn giao:** đúng một Draft PR cho ChatGPT kiểm GitHub và tổ chức Antigravity
+audit độc lập. Không merge hoặc gọi kết quả khoa học VERIFIED. Các mục cũ bên
+dưới giữ nguyên như snapshot lịch sử, bao gồm task163 chỉ CPU synthetic.
+
 ## Issue #163 — HNLO Method A, CPU synthetic engineering
 
 [Owner authorization](https://github.com/tantdna2/SafeShift/issues/163#issuecomment-6555995581)
