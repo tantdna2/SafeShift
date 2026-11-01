@@ -1,5 +1,68 @@
 # SafeShift — PROJECT STATE
 
+## Issue #163 — HNLO Method A, CPU synthetic engineering
+
+[Owner authorization](https://github.com/tantdna2/SafeShift/issues/163#issuecomment-6555995581)
+cho triển khai đường proof/evaluation riêng từ BASE/main
+`c2fb0fadef0cfc855c3f164ed1f662e9de623d58`, trong một Draft PR mới.
+**CPU synthetic engineering COMPLETE FOR DRAFT REVIEW; real MiniCPM qualification UNVERIFIED.**
+Không thay trạng thái O2/O3/O4/O5/L1–L4; MiniCPM giữ peer label-only.
+Các mục T4/T3/T2 bên dưới là snapshot lịch sử, không được nâng trạng thái.
+
+- [API và hợp đồng](HNLO_METHOD_A.md): builder giữ actual token IDs, thử một
+  token tại từng bước trên toàn vocabulary đã seal; verifier độc lập dựng lại
+  divergence, kiểm exact actual path, context/EOS và tính duy nhất. Không thay
+  4788 bằng10354, không dùng sparse logit keys làm toàn bộ miền tìm token.
+- Chỉ lấy bốn raw logits cùng bước đã chứng minh. Gọi nguyên `hnlo/oracle`
+  cũ với tolerance1e-10; mọi thiếu/mâu thuẫn/mơ hồ trả null có lý do. Không sửa
+  parser, generation, production capture/replay, notebook, T2/T3 hay metric.
+- API in-memory/stdlib, scope CPU_SYNTHETIC_ONLY, decoder/seal được inject.
+  Seal phải đến từ nguồn độc lập; checksum do caller tự tạo và hai callable
+  khác tên không chứng minh custody/decoder independence. Chưa có bridge đọc
+  archive thật hoặc kiểm runtime tokenizer MiniCPM; xem hợp đồng trust boundary.
+- Source runtime `c3c223bc69edd253d57bbba9344e0633b65b3de4` so với BASE: ba
+  file `pilot/hnlo.py`, `candidates/backend.py`, `candidates/train_run.py` giống
+  bytes. Release/T4 identities chỉ được đối chiếu từ tài liệu Git đã tracked.
+
+Windows CPython3.11.9, `Windows-10-10.0.26200-SP0`, không dependency mới:
+**34 Method A +8 HNLO cũ +71 T2/T3 =113 PASS,0 FAIL**.
+Native candidate discovery: **15 SKIP** vì thiếu opt-in public snapshot/stack;
+không gọi đó là native tokenizer PASS. Các lệnh tái lập ở HNLO_METHOD_A.
+Full Windows không chạy lại trong task này; giới hạn INCOMPLETE/MAX_PATH lịch
+sử ở T3 bên dưới giữ nguyên, không tuyên bố đã khắc phục.
+
+Log/receipt tổng hợp local ignored: `data/processed/hnlo-method-a/`.
+Windows log SHA256 `21c210c408d8b2757f4ba7531608d0cf1f2bd89768aa77d28fc10833c7fc188e`.
+Source module SHA256 `4662d31c6d8a6de56240be8de7b366925a64d259bde1fd755a4145b35394bd9c`;
+test SHA256 `07747a6a903719dacede49212e114a633b77872b04768d9cc651438d0faa3e75`.
+Seed arithmetic163; fixture token/logit hoàn toàn viết tay.
+
+Linux WSL2 x86_64/glibc2.43, CPython3.14.4, stdlib:
+full `python3 -B -m unittest discover -s tests -v` **486 tests =446 PASS,
+40 SKIP,0 FAIL/ERROR**,428,689s. Lượt này dùng snapshot trước hai chốt cuối
+(native/EOS IDs phải integer và từ chối generation fields lạ): module SHA256
+`1d6fa326c9d63a593a2b2be22bb628f39b930706df235bd12ff26df1a66369ef`,
+tests `9bfeab014ebcecce3a8ad061a4056e0dbd7eac02c32133e1a1208712dc1d471b`.
+Full log SHA256 `a42f01538227406752780667fda95d53e966ad5c4eb12620d8498aa12340caf8`.
+Đây không phải claim full-suite trên final bytes.
+
+Final bytes đúng hai hash mới ở trên đã kiểm lại trên Linux: **113/113 PASS**,
+1,979s, gồm34 Method A +8 HNLO +71 T2/T3; Windows final113 cũng PASS.
+Lệnh Linux: `PYTHONPATH=tests python3 -B -m unittest test_hnlo_method_a
+test_pilot.HNLOTests test_triage test_triage_adapter -v`.
+Final Linux log SHA256 `8632dbaae9c13eccbb18caa8b5d2bc98fba1c4ef8acc7244bb093c9e9beaa4e9`.
+Mỗi checkout Linux lấy BASE và overlay đúng hai file mới, kiểm SHA trước chạy;
+không copy dữ liệu local hay cài dependency. Full regression không lặp lại
+sau hai chốt validation riêng đã có tests âm tính; native opt-in vẫn SKIP.
+
+Không đọc private raw/logits/tokenizer/ảnh/GT/TEST, không Kaggle/GPU/inference/
+weights. Giữ nguyên160 kết quả; khả năng tính HNLO cho155 SUCCESS vẫn
+**UNVERIFIED**, không suy coverage từ tests tổng hợp. Việc kiểm dữ liệu lưu
+thật cần quyền riêng và custody/artifact đúng danh tính trong tài liệu.
+
+**NEXT:** dừng ở một Draft PR để ChatGPT kiểm GitHub trực tiếp; bắt buộc audit
+độc lập trước hợp nhất. Không tự merge, gọi Antigravity hoặc backfill scores.
+
 ## T4 — hồ sơ lựa chọn kết quả O2, 01/11/2026
 
 **T4 dossier COMPLETE FOR REVIEW; selection PROPOSED; phân tích thật BLOCKED.**
