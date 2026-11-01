@@ -62,12 +62,19 @@ Từ repository root, dùng **Python 3.11+**. Tests và demo chỉ dùng standar
 ```console
 python -B -m unittest discover -s tests -v
 python -B -m scripts.demo_cpu
+python -B -m scripts.demo_triage_cpu --budget 3 --tie-seed public-demo
 ```
 
 Demo tạo sáu bản ghi viết tay, gồm một dự đoán INVALID, rồi xuất JSON có thông
 báo **SYNTHETIC DEMO — NOT RESEARCH RESULT**. Không cần GPU, ảnh hoặc thư viện AI.
 Không đưa số demo vào bảng kết quả khoa học. Dùng lệnh module từ root để Python
 tìm package; demo không được đóng gói như một backend hoặc công cụ suy luận.
+
+Demo T2 so ba queue không học: HNLO-only, peer-only và combined; tính chung
+ca bắt buộc và ca xếp hạng trong K, giữ missingness/backlog/OVERLOAD. API và
+quy tắc đề xuất ở [kiến trúc T2](docs/ARCHITECTURE.md#t2-cpu-synthetic-triage--01112026).
+Chỉ dùng fixture tổng hợp; seed demo công khai, không secret thật. Đưa một ảnh
+vào queue không chứng minh phát hiện/sửa nguy hiểm hoặc cải thiện false-safe.
 
 Cài package để import từ dự án khác (tùy chọn, trong virtual environment):
 
