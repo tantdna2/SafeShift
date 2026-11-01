@@ -16,6 +16,10 @@ python -B -m unittest discover -s tests -p "test_triage*.py" -v
 python -B -m unittest discover -s tests -v
 ```
 
+Full suite lịch sử cần checkout có Git history và thư mục scratch
+`data/processed/` tồn tại (có thể rỗng). Bản `git archive` không đủ cho các
+test notebook dùng `git show`; adapter/demo không cần hai điều kiện này.
+
 CLI chỉ có `--case`, `--budget`, `--tie-seed`; không có đường dẫn đầu vào,
 `--approved`, khóa cấp quyền hoặc production switch. K/seed phải tường minh;
 seed demo công khai, không secret thật. Chín case: `complete`, `missing_row`,

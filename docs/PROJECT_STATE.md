@@ -2,8 +2,8 @@
 
 ## T3 — synthetic provenance adapter, 01/11/2026
 
-**T3 CPU engineering: implementation và targeted tests PASS; full-suite đang
-được kiểm, chưa tuyên bố full Windows PASS hoặc hoàn tất review.**
+**T3 CPU engineering COMPLETE / READY FOR DRAFT REVIEW; real-data activation
+UNAVAILABLE.** Linux full-suite PASS với SKIP; full Windows INCOMPLETE.
 BASE/main đã kiểm GitHub `7026c6fe687bada36a824b36dc1997e7ff844ae7`,
 [PR160 MERGED](https://github.com/tantdna2/SafeShift/pull/160).
 [Owner START T3](https://github.com/tantdna2/SafeShift/pull/160#issuecomment-6553995227)
@@ -26,7 +26,52 @@ bên dưới là snapshot trước merge tương ứng; mục này cập nhật 
 Windows AMD64 `Windows-10-10.0.26200-SP0`, CPython **3.11.9**:
 `python -B -m unittest discover -s tests -p "test_triage*.py" -v`
 → **71 PASS (38 T2 +33 T3), 0 FAIL, 0 ERROR, 0 SKIP**, 2,903s.
-Full-suite và demo CLI cuối đang được ghi nhận trước bàn giao Draft PR.
+`python -B -m unittest discover -s tests -v` trên Linux/WSL x86_64,
+CPython **3.14.4**, kernel6.18.33.2/glibc2.43: **454 tests =414 PASS,
+0 FAIL, 0 ERROR, 40 SKIP**, 563,093s. Checkout local đúng source commit
+`68e8396f54a19967a5f84eb22701fa68b3cc6669`, có Git history cho `git show` và
+thư mục `data/processed/` rỗng để tests tạo scratch. Không copy dữ liệu local.
+Các commit sau chỉ cập nhật tài liệu; SHA256 adapter/demo/tests được đối chiếu
+với source cuối, không thay code để vượt test.
+
+SKIP: Torch CPU3, opt-in candidate stack/snapshot15, pinned worker/bundle1,
+MiniCPM native4, Phi native6, Smol native9, real-network pip1, Windows junction1.
+Không bật opt-in/tải dependencies/model. Đây là CPU engineering, không audit
+độc lập, GPU/model-fit hoặc scientific qualification.
+
+Full Windows đã chạy đúng lệnh nhưng dừng sau2057,625s tại
+`test_oom_then_resume_then_noop_and_explicit_full_rerun_both_models`:
+81 methods PASS,4 SKIP,1 đang chạy khi dừng; chưa đến phần còn lại.
+**INCOMPLETE, không full Windows PASS.** Chưa quan sát FAIL/ERROR trong phần
+đã kết thúc;8 subtest FAIL/MAX_PATH của PR160 là thông tin được cung cấp,
+không tái hiện hoặc kết luận đã sửa ở lượt này. Code/tests recovery giữ nguyên.
+Không suy lỗi mới T3 từ báo cáo lịch sử, không che giới hạn Windows.
+
+Lưu cả lỗi chuẩn bị môi trường: lượt WSL archive thiếu Git history dừng sau
+hai notebook ERROR (126,688s, không full-suite result); lượt checkout đầu có
+413 PASS/1 ERROR/40 SKIP (498,640s), ERROR test Phi do thiếu `data/processed/`.
+Tạo scratch rỗng rồi test Phi8/8 PASS (0,624s), full-suite cuối ở trên PASS.
+Một lần tiếp tục checkout `/tmp` không còn bị chặn trước tests bởi hash check;
+tạo checkout mới đúng commit, không thay source hoặc xóa log lỗi.
+
+Demo CLI cuối `python -B -m scripts.demo_triage_adapter_cpu --budget 2
+--tie-seed public-demo`: exit0/strict JSON PASS. Planned4/C3/M0/E3/K2,
+HNLO-only review `[…01,…02]`, peer-only/combined `[…02,…01]`, backlog1.
+Fixture hash `9fcdcf4a31e14be7ac259c7514c3a2cfc39e70cd9edd08c8f4ed1ffeed4e9b87`.
+Không GT hoặc kết quả cải thiện thật. `git diff --check` PASS.
+
+Source SHA256 (bytes, chung Windows/Linux):
+
+| File | SHA256 |
+| --- | --- |
+| `safeshift/evaluation/triage_adapter.py` | `6fb368fc7713fe2a00160861bf4faab7f0ce37474e089ae30764c496744bcb7f` |
+| `scripts/demo_triage_adapter_cpu.py` | `80846462261e472441e655ba28c89396a8180c1c3a3691bdbb21b260d12413ab` |
+| `tests/test_triage_adapter.py` | `25cc8ffee8e1a9e41701a5c1d9bb80b843183c81c795f789a72190595bf5ade3` |
+
+Full Linux log SHA256
+`917c42131d486d6fa3d6162596db5d4e7442840e78d2e4eb41c8d35eb3499218`;
+Windows partial log SHA256
+`fab8a054160df23d593267cd280fc22bafc54170d5e3ad77d5fee391c7149f3b`.
 Artifacts synthetic/log/receipt local ignored tại `data/processed/t3-synthetic-20261101/`;
 không commit logs chứa đường dẫn máy hoặc dữ liệu riêng tư.
 
@@ -36,8 +81,9 @@ gain/CI/precision/sample size. Không đọc TRAIN160/private reports/raw/ảnh/
 không GPU/Kaggle/inference/model download/ranker/metric mới. Demo không chứng
 minh cải thiện false-safe thật. Không thay M1/M2/T1 hoặc cấp quyền bên thứ ba.
 
-**NEXT:** một Draft PR để ChatGPT review GitHub trực tiếp. Chưa merge/audit độc
-lập; không yêu cầu Antigravity audit/merge trong task T3.
+**NEXT:** [Draft PR161](https://github.com/tantdna2/SafeShift/pull/161) duy nhất
+để ChatGPT review GitHub trực tiếp. Chưa merge/audit độc lập; không yêu cầu
+Antigravity audit/merge trong task T3.
 
 ## T2 — CPU synthetic triage, 01/11/2026
 
