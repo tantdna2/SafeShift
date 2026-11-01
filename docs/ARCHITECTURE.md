@@ -1,5 +1,93 @@
 # Kiến trúc Foundation V1
 
+## T2 CPU synthetic triage — 01/11/2026
+
+`safeshift/evaluation/triage.py` cung cấp API không học, không I/O:
+
+```python
+from safeshift.evaluation.triage import build_review_queue
+
+queue = build_review_queue(
+    planned_ids, focal, peers, mode="combined", budget=K, tie_key=external_key,
+)
+```
+
+`planned_ids` là iterable token opaque 32 ký tự hex thường, được cấp **trước**
+predictions/GT và độc lập với nhãn, miền, filename. Không chuyển file stem thật
+thành token bằng cách hash metadata chứa đáp án. Validation chỉ kiểm hình thức,
+không chứng minh nguồn ID độc lập. Mapping ID→ảnh/GT thuộc custodian bên ngoài.
+Không có GT/domain/path/raw payload trong hợp đồng đầu vào của bộ xếp hạng.
+
+`focal` và từng phần tử `peers` là `ModelResults(identity, records)` bất biến.
+`SourceIdentity(model_id, model_revision, implementation_id, configuration_id,
+run_id, series_id, attempt_id)` giữ reference công khai của **một** nguồn đã chọn;
+đây là lineage do caller cung cấp, không xác minh artifact hoặc cấp quyền chọn
+series. Tối đa hai peers, các model ID phải khác nhau. Không tự gắn candidate
+roster vào API hoặc pool attempts. Caller phải giữ effective MiniCPM identity
+đúng quyết định khi một bước tích hợp thật được cấp quyền riêng.
+
+`ClassifiedResult(sample_id, status, predicted_safety_level=None, hnlo=None)`
+nhận SUCCESS + một nhãn canonical, hoặc INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED
+với nhãn null. ID vắng trong stream tạo MISSING riêng; ID trùng/thừa hoặc record
+không có ID bị từ chối. `ClassifiedResult.from_prediction()` tái dùng
+`PredictionRecord` Foundation với None→INVALID; không sửa hợp đồng lịch sử.
+`HNLOSignal(value, eligible)` chỉ ở focal: caller phải xác nhận upstream HNLO
+đủ điều kiện; số hữu hạn + eligible=True mới VALID. None→MISSING; hữu hạn nhưng
+chưa đủ điều kiện→INELIGIBLE; bool/string/kiểu sai/NaN/Infinity→MALFORMED, không
+coerce/impute. JSON xuất value=null nếu không VALID. Đây không là raw replay,
+kiểm alignment, calibration hoặc xác suất lỗi. Peer HNLO bị từ chối tại API.
+
+| Chế độ explicit | Feature bắt buộc trong C | Thứ tự E |
+| --- | --- | --- |
+| `hnlo_only` | HNLO focal VALID; có thể cấu hình 0 peers | HNLO giảm dần |
+| `peer_only` | Tất cả 1–2 peers cấu hình có nhãn hợp lệ | Số peers hazard / số peers cấu hình, giảm dần |
+| `combined` | Cả hai điều kiện trên | Tỷ lệ peers hazard giảm dần, rồi HNLO giảm dần |
+
+Theo phương án vận hành [T0 §5–6](research/T0_FALSE_SAFE_DESIGN_20261101.md):
+P=planned; C=focal SUCCESS Level04; M=focal không SUCCESS cộng các ca trong C
+thiếu feature bắt buộc của mode; E=C trừ M. Focal hazard không vào M chỉ vì
+thiếu peer/score, nhưng missingness vẫn được báo trên toàn P. Peers lỗi không
+biến thành hazard/Normal; một peer thiếu không làm giảm mẫu số thành một peer.
+HNLO-only ghi nhận peer thiếu nếu caller cung cấp stream, nhưng không buộc
+review vì tín hiệu đó không thuộc arm. Combined thiếu h vẫn vào M, không tự
+fallback sang peer-only. Caller chọn mode riêng để so ablation không score.
+
+K là **số lượng nguyên không âm** caller cấp, không có mặc định/tỷ lệ 20%.
+M được phục vụ trước E, mỗi ID đúng một slot kể cả nhiều lý do thiếu. M>K trả
+OVERLOAD, chọn K ca mandatory và giữ backlog; hết E thì để slot trống.
+WITHIN_CAPACITY chỉ nghĩa M≤K, vẫn có thể tồn ranked backlog, không là safety
+PASS. Output có P/C/M/E counts, budget/slots, review có thứ tự/category/reasons,
+backlog mandatory/ranked và IDs, trạng thái từng case, outputs model tách riêng.
+Coverage status trên P, HNLO trên P và C, complete-peer trên C; mẫu số 0 cho
+fraction=null, không peers cho complete-peer count=null. Không bỏ failure khỏi P.
+
+Mandatory và tie dùng HMAC-SHA256 trên token opaque với key caller cấp; HMAC
+SHA512 có domain riêng phân xử collision, double collision báo lỗi. Tên model,
+lineage và thứ tự input không tham gia priority. Key/digest không xuất JSON;
+caller cố định key trước khi xem predictions/GT, không thử key để chọn queue
+thuận lợi, và giữ key ngoài Git để tái lập. Mọi output là snapshot mới; input không
+bị đổi và sửa output không sửa input. Các ID/reference đầu vào phải không
+chứa dữ liệu riêng tư; API không xác minh danh tính hoặc làm dịch vụ redaction.
+
+Demo `python -B -m scripts.demo_triage_cpu --budget 3 --tie-seed public-demo`
+tạo sáu record viết tay, gọi `compare_review_queues` để so ba **operational**
+queues với M/E riêng từng arm, cùng P/K/key. Hàm cũng trả bảng **signal_control**
+với M là hợp mandatory, E là giao eligibility của ba arms theo T0 §6. Bảng này
+có cờ `ARTIFICIAL_WORKLOAD`, không đại diện chi phí vận hành baseline đơn tín
+hiệu và không chọn arm thắng. Public seed chỉ dùng synthetic. Sau khi tạo mọi queue mới đọc
+đáp án fixture ở `evaluate_synthetic_queue`; báo số lỗi tổng hợp vào review
+qua M/E, không coi routing là người phát hiện/sửa đúng. Chưa chọn baseline
+mạnh nhất, tính CI hoặc thực hiện E1–E5 khoa học.
+Không claim gain từ demo. `tests/test_triage.py` kiểm API, lỗi/biên và CLI không
+site-packages, không file ngoài trong thư mục rỗng. Module không import model
+backend hoặc scientific metrics và không có runtime dependency mới.
+
+Mọi output mang `SYNTHETIC_ONLY`, `PROPOSED_NOT_FROZEN`,
+`NOT_SCIENTIFICALLY_QUALIFIED`. [Owner T2](https://github.com/tantdna2/SafeShift/pull/159#issuecomment-6552925324)
+chỉ cấp triển khai CPU synthetic; [T1](research/THESIS_DATA_PROTOCOL.md) vẫn chặn
+áp dụng trên TRAIN160 thật đến O2/series-selection, và O4/O5/final roster chưa
+được phê duyệt. Không đổi HNLO/parser/metric/protocol/M1/M2 hoặc suy quyền inference.
+
 ## Effective MiniCPM resampler FP32 technical route —31/10/2026
 
 Notebook technical riêng → `launch_owner` với action chỉ1 ảnh → shared OS lease

@@ -1,5 +1,55 @@
 # SafeShift — PROJECT STATE
 
+## T2 — CPU synthetic triage, 01/11/2026
+
+**T2 CPU engineering COMPLETE / READY FOR DRAFT REVIEW; khoa học chưa frozen.**
+BASE/main xác minh `bf231c8d9c2c7fd9a46d1707095ac8e0177a34bb`,
+[PR159 MERGED / T1 COMPLETE](https://github.com/tantdna2/SafeShift/pull/159).
+[Owner T2](https://github.com/tantdna2/SafeShift/pull/159#issuecomment-6552925324)
+cho triển khai phần mềm bằng fixture tổng hợp; thay NEXT TASK trong snapshot
+T1 bên dưới cho phạm vi CPU engineering này, không tự duyệt khoa học.
+
+- `safeshift/evaluation/triage.py`: planned opaque IDs, focal + tối đa hai peers,
+  nhãn/status riêng, HNLO focal có eligibility tường minh; không sửa
+  PredictionRecord, parser, HNLO, metrics hoặc protocol/config lịch sử.
+- Ba mode không học HNLO-only/peer-only/combined; C/M/E/K theo phương án T0.
+  Focal lỗi và feature bắt buộc thiếu vào M; mandatory + ranked dùng chung K,
+  có backlog/OVERLOAD, coverage theo nguồn và lý do từng ca. Key bên ngoài,
+  thứ tự độc lập input, GT không thuộc API xếp hạng.
+- `compare_review_queues` trả operational M/E riêng và signal-control common
+  M/E có cờ artificial workload; không chọn best baseline/fit weights. Demo
+  chỉ dùng đáp án viết tay sau khi tạo queue, routing không là human detection
+  hoặc correction. [API/contract và lệnh chạy](ARCHITECTURE.md#t2-cpu-synthetic-triage--01112026).
+- Output luôn `SYNTHETIC_ONLY / PROPOSED_NOT_FROZEN /
+  NOT_SCIENTIFICALLY_QUALIFIED`; không có kết quả cải thiện false-safe thật.
+
+Validation hiện tại: Windows AMD64, CPython3.11.9, standard library; targeted
+`python -B -m unittest discover -s tests -p test_triage.py -v`: **38 PASS,
+0 FAIL/ERROR, 0 SKIP**. Demo CLI chạy bằng `python -S -B` với public seed
+`public-demo`, K=0/1/3/99 và strict JSON PASS. K=3: planned6/C4/M2/E3,
+slots3, backlog2; K=0/1 OVERLOAD, K=99 slots5/unused94. Đây là số fixture,
+không kết quả nghiên cứu.
+
+Full `python -B -m unittest discover -s tests -v` trên snapshot source cuối,
+Linux/WSL CPython3.14.4: **421 tests = 381 PASS, 0 FAIL/ERROR, 40 SKIP**, 536,282s.
+SKIP: Torch CPU3; opt-in candidate stack/snapshot15; pinned worker/bundle1;
+MiniCPM native4; Phi native6; Smol native9; real-network pip1; Windows junction1.
+Không bật opt-in hoặc tải dependency/model để đổi SKIP thành PASS. Source/test/
+demo SHA256 snapshot được đối chiếu với file cuối; AST3, UTF-8 docs3,
+`git diff --check` và strict JSON PASS. Lượt full-suite Windows ban đầu được
+dừng để dùng lượt Linux source cuối, **không tính là full Windows PASS**;
+38/38 T2 Windows là lượt targeted đã hoàn tất. Đây là kiểm tra của Codex,
+không CI/independent audit, không model/GPU/scientific qualification.
+Artifacts tổng hợp local ignored: `data/processed/t2-synthetic/`; fixture và
+source được version control trong PR, không dataset/private output/secret.
+
+**NEXT:** ChatGPT kiểm trực tiếp exact HEAD của một Draft PR và quyết định
+audit/merge. Chưa audit độc lập hoặc merge. Dữ liệu thật TRAIN160 vẫn BLOCKED
+đến O2 và series-selection; O4/O5, final roster/qualification, quyền nguồn/GT/
+V/T và học vụ vẫn PENDING. Không đọc real TRAIN160/private saved reports/raw/
+ảnh/TEST, không Kaggle/GPU/model download/inference, train hoặc pooling
+Recovery224. T2 không tạo quyền khoa học hay yêu cầu thêm model thứ tư.
+
 ## T1 — kiểm quyền/nguồn và khả thi dữ liệu, 01/11/2026
 
 **T1 assessment hoàn tất để review; thực nghiệm xác nhận BLOCKED.**
