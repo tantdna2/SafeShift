@@ -1,5 +1,36 @@
 # SafeShift — PROJECT STATE
 
+## Issue #165 / Draft PR #166 — điều tra tiếp nối, 02/11/2026
+
+**HARD_BLOCKED_EXISTING_ARCHIVE; VALID_HNLO=0/155; numeric goal chưa hoàn thành.**
+[Chỉ thị Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6561913353)
+thay bàn giao audit trước đó: **AUDIT_HOLD=YES; MERGE_AUTHORIZED=NO**.
+Tiếp tục đúng branch `verify/minicpm-hnlo-165`, đúng Draft PR #166; không task/PR mới.
+[Bằng chứng và điều kiện gỡ chặn](MINICPM_HNLO_NATIVE_INVESTIGATION_165.md),
+[receipt tiếp nối](research/evidence/issue165_hnlo/continuation_receipt.json).
+
+- Source MiniCPM đúng revision/hash tạo Llama LM head toàn vocabulary và gọi
+  native greedy generation; BPE encoder không giới hạn miền output. Hai ID mỗi
+  nhãn đều non-special, không phải EOS, không bị processor/suppression loại bỏ.
+- 155/155 fresh full-input/incremental-prefix/EOS witnesses, hai decoder độc lập,
+  packet dựng lại từ archive gốc khớp proof exhaustive trước. Đây là chứng minh
+  hai ứng viên tại actual prefix, không khẳng định suffix phản thực sẽ được sinh.
+- 1.760 bước có đúng bốn sparse coordinates; bốn alias còn lại không lưu.
+  Inventory lịch sử 4.297 output phân loại đầy đủ:4.211 members của archive,
+  55 source,25 bytecode,4 marker,ZIP+sidecar. Bản extract có đúng4.211 files cùng
+  checksum, không vector bổ sung. Không dùng logit khác prefix/run để điền thiếu.
+- Ngay cả full-vocabulary logits cũng không giải quyết tính duy nhất của Method A
+  cho các path này. Muốn thay cách định nghĩa token-event phải có quyết định khoa
+  học riêng; thu thêm logits/inference tự nó không cấp quyền đổi mapping/metric.
+  Không tự chạy acquisition, teacher forcing, Kaggle/GPU hoặc thay phương pháp.
+- 160 kết quả gốc và archive bất biến. Method A, parser, HNLO, bridge và generation
+  không đổi ở lần tiếp nối. Chỉ thêm diagnostic CPU có thể tái lập,7 synthetic
+  adversarial tests và tài liệu. **140/140 focused tests PASS**; final-HEAD receipt
+  và test-log hash ghi tại PR. Không nhận CI/full-suite mới hoặc audit PASS.
+
+Chờ **ChatGPT kiểm trực tiếp GitHub và quyết định bước tiếp theo**, chưa chuyển
+Antigravity. Các mục dưới là snapshot trước chỉ thị mới, không phải current approval.
+
 ## Issue #165 — MiniCPM official160 saved HNLO, 02/11/2026
 
 **RESULT: KHÔNG — 0/155 SUCCESS; 0/160 planned**, theo Method A hiện hành.

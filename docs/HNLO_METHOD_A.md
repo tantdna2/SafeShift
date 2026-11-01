@@ -2,8 +2,9 @@
 
 **Cập nhật Issue #165:** [kiểm chứng archive thật](MINICPM_SAVED_HNLO_165.md)
 bổ sung CPU read-only bridge, scope riêng, structural cache và independent
-negative proof. Kết quả Codex **0/155** do token-branch ambiguity, chờ review/
-audit. Phần dưới là hợp đồng/bằng chứng synthetic gốc của PR164; các câu
+negative proof. Điều tra tiếp nối: **HARD_BLOCKED_EXISTING_ARCHIVE, 0/155**;
+[native evidence](MINICPM_HNLO_NATIVE_INVESTIGATION_165.md), numeric goal chưa hoàn
+thành, **audit hold**, chờ ChatGPT kiểm GitHub. Phần dưới là hợp đồng/bằng chứng synthetic gốc của PR164; các câu
 "chưa đọc dữ liệu thật" mô tả task163, không phủ nhận lượt kiểm Issue165.
 
 Scope: [Owner authorization, issue #163](https://github.com/tantdna2/SafeShift/issues/163#issuecomment-6555995581),

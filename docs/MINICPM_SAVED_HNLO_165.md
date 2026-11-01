@@ -1,8 +1,12 @@
 # Issue #165 — kiểm chứng HNLO từ official160 đã lưu
 
-**RESULT: KHÔNG — 0/155**, tương ứng **0/160 planned** theo Method A hiện hành.
-Đây là kết luận kỹ thuật Codex từ evidence thật, **chờ ChatGPT review và
-Antigravity audit độc lập trước chấp nhận khoa học/merge**. Không suy rộng thành
+**HARD_BLOCKED_EXISTING_ARCHIVE — 0/155 HNLO hợp lệ theo Method A hiện hành.**
+Mục tiêu lấy numeric HNLO **chưa hoàn thành**. Theo
+[chỉ thị Owner tiếp nối](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6561913353),
+**AUDIT_HOLD=YES; MERGE_AUTHORIZED=NO**. Đã kiểm thêm native generation, full-input
+alias witnesses và output inventory trong cùng Draft PR #166;
+[bằng chứng tiếp nối và điều kiện gỡ chặn](MINICPM_HNLO_NATIVE_INVESTIGATION_165.md).
+Dừng cho ChatGPT kiểm GitHub trước khi quyết định audit. Không suy rộng thành
 MiniCPM nói chung không thể có HNLO; không thay quy tắc bằng cách chọn một alias.
 
 Phạm vi: [Owner Issue #165](https://github.com/tantdna2/SafeShift/issues/165),
@@ -130,7 +134,10 @@ member lineage và kết quả null. `verification.json` chứa aggregate + read
 allowlist counts/identities/checksums. Không upload archive/raw/records private.
 
 [Public receipt](research/evidence/issue165_hnlo/public_receipt.json) ghi kết quả
-real run03; checksum private records:
+real run03 trước chỉ thị tiếp nối; trường `result=NO` là kết quả bộ kiểm kỹ thuật,
+không phải Owner chấp nhận mục tiêu numeric đã hoàn thành. Receipt cũ giữ bất biến;
+[receipt tiếp nối](research/evidence/issue165_hnlo/continuation_receipt.json) ghi
+`HARD_BLOCKED_EXISTING_ARCHIVE` và audit hold. Checksum private records:
 `fa544e077faf8048029060946636f8d028977eea69ac79e913f23bb14e15684c`.
 Tám searches và302 cache hits; 155 independent negative proofs,155 arithmetic
 checks. Các files local ở `data/processed/issue165/run03/`.
