@@ -1,5 +1,43 @@
 # SafeShift — PROJECT STATE
 
+## T0 false-safe — đề xuất trình giảng viên, 01/11/2026
+
+**PROPOSED / O1–O5 PENDING; xác nhận thực nghiệm BLOCKED.**
+[Thiết kế T0](research/T0_FALSE_SAFE_DESIGN_20261101.md) dựa trên báo cáo tư vấn
+Owner đính kèm, đối chiếu main `89d886356c15064b5f1cc2021aa5d614e7e7f53f`.
+Đề nghị chuyển primary của kế hoạch bốn peers/Macro-F1 sang phát hiện thêm
+false-safe cùng ngân sách review; cần Owner/Research Lead quyết định và giảng
+viên xác nhận CT1/chuẩn Khóa luận. Chưa áp dụng thay đổi khoa học.
+
+Panel **ứng viên**, chưa final roster: Qwen3-VL-8B-Instruct focal có điều kiện,
+InternVL3.5-4B-HF và MiniCPM-V-4 đúng resampler FP32 đã định danh làm peers.
+Baseline/peer-only/combo HNLO hợp lệ, không học và learned optional được tách;
+không mặc định ba model qualified hoặc MiniCPM có HNLO số. Giữ nguyên roster
+Seminar, M1/M2/DECISIONS/protocol/config lịch sử. Không khóa review20%, gain10
+điểm, CI95% hoặc giá trị thực nghiệm mới; có fallback trước target.
+
+[Evidence/reproduction](research/T0_FALSE_SAFE_EVIDENCE_20261101.md) có recount
+saved reports Q3 V4 gốc:3.763 planned =3.539 SUCCESS+1 error+223 not attempted;
+35 false-safe/2.455 predicted Normal, gồm13 Level01/22 Level02, không recovery
+pooling. Không raw audit mới. Chưa có verified source registry/V/T kín hoặc
+precision/events đủ bằng chứng; H/TRAIN160 chỉ hồi cứu/thăm dò, TEST vẫn đóng.
+
+**Cập nhật sự kiện #157, không hồi tố snapshot bên dưới:**
+[GitHub hậu merge xác minh](https://github.com/tantdna2/SafeShift/pull/157#issuecomment-6546464187)
+xác nhận PR157 MERGED, đúng main tham chiếu, đã audit/reconcile/merge được phép
+và official TRAIN160 acquisition hoàn tất theo
+[Owner đổi thứ tự run→audit→merge](https://github.com/tantdna2/SafeShift/pull/157#issuecomment-6545287909).
+MiniCPM160:155 SUCCESS/5 INVALID/0 error/0 pending, HNLO số0/160; ZIP SHA256
+`46a41359c3ab2978b9ee4ac010518e49a74141641d9334c29035bdc0c8eac877`.
+InternVL160 theo receipt local:135 SUCCESS/25 INVALID, HNLO số135; không tự
+nhận audit mới ở T0. Scientific selection/pooling, final thesis roster và
+học vụ vẫn PENDING. Các đoạn NOT_RELEASED/NOT_RUN/chờ merge bên dưới là lịch
+sử tiền sự kiện, không trạng thái hiện hành; giữ nguyên evidence/decision bytes.
+
+Task này chỉ tài liệu/bằng chứng tổng hợp và kiểm tra CPU đọc báo cáo/metadata;
+không code thuật toán, dataset/TEST/raw-logit replay, Kaggle/GPU, dữ liệu mới
+hoặc UI. Dừng tại **một Draft PR** cho ChatGPT kiểm, không merge/tự duyệt.
+
 ## MiniCPM FP32 adoption implementation —31/10/2026
 
 **READY_FOR_TECHNICAL_REVIEW / NOT_RELEASED.** Owner adopted the exact effective implementation
