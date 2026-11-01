@@ -434,3 +434,23 @@ annotation, liên hệ bên thứ ba, Kaggle/GPU/inference, TEST, huấn luyện
 triage implementation, pooling hoặc chạy dữ liệu xác nhận. [Hồ sơ T1](THESIS_DATA_PROTOCOL.md)
 đánh giá GO/BLOCKED/NO-GO; hoàn tất T1 không đồng nghĩa xác nhận cải tiến GO.
 Dừng tại Draft PR; ChatGPT review GitHub và quyết định audit; không merge.
+
+## DEC-20261101-T4-OWNER-O2-DOSSIER-AUTHORIZATION
+
+Ngày01/11/2026, Asia/Bangkok. Nguồn: [Owner START T4 tại PR161](https://github.com/tantdna2/SafeShift/pull/161#issuecomment-6554558701),
+đọc trực tiếp GitHub REST trong T4, và task Owner trực tiếp. BASE/main đã
+kiểm `f10bac7dea054c8e199a807dadd768517579e164`. **T4_AUTHORIZED;
+O2_SCIENTIFIC_SELECTION=PENDING**. Đây là chỉ thị lập hồ sơ sau T3 merge,
+không chữ ký phê duyệt chính sách selection hoặc quyền phân tích predictions.
+
+Owner cho một hồ sơ quyết định có ma trận ba model, exact source/run/series/
+attempt, một quy tắc đề nghị, ledger và GO/BLOCKED/NO-GO; được kiểm receipts/
+metadata TRAIN đã có trong quyền T1. [T4-O2-SELECTION-v1](T4_O2_SELECTION_DOSSIER_20261101.md)
+là **PROPOSED**, kể cả đề nghị dùng riêng official InternVL RECOVERY. Không
+chuyển quyền retry/resume hoặc MiniCPM FP32 adoption thành selection approval.
+
+Không đọc ảnh/TEST/raw archives/per-image saved predictions, không Kaggle/GPU/
+inference/training/ranker hoặc phân tích hiệu quả mới; không sửa T2/T3 khi
+không cần. O2 phần còn lại, O3 final roster, O4/O5, quyền dữ liệu/học vụ vẫn
+riêng. Không đặt thresholds hoặc giả authority ID. Cập nhật PROJECT_STATE
+cùng đúng một Draft PR, dừng để ChatGPT kiểm GitHub, không merge/Antigravity.

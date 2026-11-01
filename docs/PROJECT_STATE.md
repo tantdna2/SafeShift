@@ -1,5 +1,38 @@
 # SafeShift — PROJECT STATE
 
+## T4 — hồ sơ lựa chọn kết quả O2, 01/11/2026
+
+**T4 dossier COMPLETE FOR REVIEW; selection PROPOSED; phân tích thật BLOCKED.**
+BASE/main kiểm trực tiếp GitHub `f10bac7dea054c8e199a807dadd768517579e164`,
+T3 đã merge theo [Owner START T4](https://github.com/tantdna2/SafeShift/pull/161#issuecomment-6554558701).
+Task/nhánh T4 mới, không tiếp tục triển khai T3. Các mục dưới là snapshot lịch sử.
+
+[Hồ sơ T4-O2-SELECTION-v1](research/T4_O2_SELECTION_DOSSIER_20261101.md)
+khuyến nghị khóa bốn Qwen3 V4 ORIGINAL và đúng official attempt mỗi peer trước
+phân tích ghép đôi tiếp theo, giữ lỗi/missing và không pooling/thay thế.
+InternVL3.5 official là **RECOVERY** được định danh, cần quyết định O2 chấp
+nhận rõ; MiniCPM official FP32 là INITIAL, label-only, không numeric HNLO.
+Không chọn theo latest/SUCCESS/metric hoặc gọi lựa chọn hồi cứu là chưa phơi nhiễm.
+
+- Qwen3 giữ3763 planned/3539 SUCCESS/1 TECHNICAL_ERROR/223 NOT_ATTEMPTED;
+  trên160 giữ148 SUCCESS/12 NOT_ATTEMPTED và4 false-safe/1 severe kế thừa T0.
+- InternVL3.5 giữ135 SUCCESS/25 INVALID; MiniCPM giữ155/5. Không dùng toàn35
+  lỗi Qwen làm support có hai peer hoặc suy peer đã phát hiện lỗi Qwen.
+- [Receipt T4](research/evidence/t4_o2_metadata_20261101.json): **18 checker T1
+  PASS +10 metadata cross-checks PASS,0 FAIL**; chỉ hashes/metadata, không
+  archive/raw/per-image prediction recount. Full unit/native/GPU suite SKIP
+  vì chỉ tài liệu/receipt; không thay T2/T3/code/tests/protocol.
+- Blockers L1–L4: approval selection; Qwen legacy series/config representation;
+  peer report/config/implementation binding và InternVL ancestor seals;
+  paired ledger/access. UNKNOWN giữ nguyên, không tự đặt ID/hash/chữ ký.
+
+**NEXT duy nhất:** Owner/người duyệt có thẩm quyền trả lời chấp thuận có điều
+kiện hoặc từ chối quy tắc và exact sources tại T4 §8 sau ChatGPT review trực
+tiếp một Draft PR. Hồ sơ đủ để quyết định, không phải O2 đã đóng hay GO chạy
+phân tích; O3 final roster, O4/B1–B4, O5/B5–B6 và học vụ còn riêng. Không TEST,
+ảnh/saved predictions/raw, Kaggle/GPU/inference, ranker hoặc hiệu quả mới.
+Không merge, không gọi Antigravity; các quyền vận hành cũ không cấp selection.
+
 ## T3 — synthetic provenance adapter, 01/11/2026
 
 **T3 CPU engineering COMPLETE / READY FOR DRAFT REVIEW; real-data activation
