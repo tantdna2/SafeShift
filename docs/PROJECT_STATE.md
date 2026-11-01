@@ -1,5 +1,44 @@
 # SafeShift — PROJECT STATE
 
+## T3 — synthetic provenance adapter, 01/11/2026
+
+**T3 CPU engineering: implementation và targeted tests PASS; full-suite đang
+được kiểm, chưa tuyên bố full Windows PASS hoặc hoàn tất review.**
+BASE/main đã kiểm GitHub `7026c6fe687bada36a824b36dc1997e7ff844ae7`,
+[PR160 MERGED](https://github.com/tantdna2/SafeShift/pull/160).
+[Owner START T3](https://github.com/tantdna2/SafeShift/pull/160#issuecomment-6553995227)
+cấp task code CPU synthetic, không mở science/real-data authority. Phần T2/T1
+bên dưới là snapshot trước merge tương ứng; mục này cập nhật phạm vi hiện hành.
+
+- `safeshift/evaluation/triage_adapter.py` xác minh manifest, opaque planned
+  cohort, identity bảy trường từng model, report/row/input SHA256 và ledger
+  lựa chọn đúng source/run/series/attempt; không tự chọn/pool kết quả.
+- HNLO focal VALID cần evidence fixture gắn đúng identity/sample/input/value;
+  peer HNLO bị từ chối. INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED giữ nhãn null;
+  thiếu rows giữ MISSING qua T2, thiếu source/selection bắt buộc thì dừng.
+- Chỉ chín fixture tổng hợp có seal cố định trong source; không có file reader,
+  real-data switch hoặc quyền từ JSON `approved`. T2 không đổi; adapter trả
+  nguyên `ModelResults`/`ClassifiedResult` cùng immutable provenance receipt.
+- [Hướng dẫn/API/checksum contract](TRIAGE_ADAPTER.md), demo CPU adapter→T2,
+  33 tests mới với oracle độc lập, negative cases, no-I/O, immutable inputs,
+  permutations và GT exclusion. Không dependency mới.
+
+Windows AMD64 `Windows-10-10.0.26200-SP0`, CPython **3.11.9**:
+`python -B -m unittest discover -s tests -p "test_triage*.py" -v`
+→ **71 PASS (38 T2 +33 T3), 0 FAIL, 0 ERROR, 0 SKIP**, 2,903s.
+Full-suite và demo CLI cuối đang được ghi nhận trước bàn giao Draft PR.
+Artifacts synthetic/log/receipt local ignored tại `data/processed/t3-synthetic-20261101/`;
+không commit logs chứa đường dẫn máy hoặc dữ liệu riêng tư.
+
+Giới hạn giữ nguyên: **O2 PENDING**, series-selection thực tế chưa duyệt;
+**O4 PENDING/BLOCKED** về nguồn/quyền/custody V/T; **O5 PENDING** về budget,
+gain/CI/precision/sample size. Không đọc TRAIN160/private reports/raw/ảnh/TEST,
+không GPU/Kaggle/inference/model download/ranker/metric mới. Demo không chứng
+minh cải thiện false-safe thật. Không thay M1/M2/T1 hoặc cấp quyền bên thứ ba.
+
+**NEXT:** một Draft PR để ChatGPT review GitHub trực tiếp. Chưa merge/audit độc
+lập; không yêu cầu Antigravity audit/merge trong task T3.
+
 ## T2 — CPU synthetic triage, 01/11/2026
 
 **T2 CPU engineering COMPLETE / READY FOR DRAFT REVIEW; khoa học chưa frozen.**

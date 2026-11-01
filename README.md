@@ -63,6 +63,7 @@ Từ repository root, dùng **Python 3.11+**. Tests và demo chỉ dùng standar
 python -B -m unittest discover -s tests -v
 python -B -m scripts.demo_cpu
 python -B -m scripts.demo_triage_cpu --budget 3 --tie-seed public-demo
+python -B -m scripts.demo_triage_adapter_cpu --budget 2 --tie-seed public-demo
 ```
 
 Demo tạo sáu bản ghi viết tay, gồm một dự đoán INVALID, rồi xuất JSON có thông
@@ -75,6 +76,10 @@ ca bắt buộc và ca xếp hạng trong K, giữ missingness/backlog/OVERLOAD.
 quy tắc đề xuất ở [kiến trúc T2](docs/ARCHITECTURE.md#t2-cpu-synthetic-triage--01112026).
 Chỉ dùng fixture tổng hợp; seed demo công khai, không secret thật. Đưa một ảnh
 vào queue không chứng minh phát hiện/sửa nguy hiểm hoặc cải thiện false-safe.
+
+Demo [adapter T3](docs/TRIAGE_ADAPTER.md) kiểm manifest/checksum và provenance
+riêng của ba model trước bàn giao T2. Chỉ nhận fixture có seal cố định trong
+source; không đọc báo cáo thật hoặc mở quyền bằng trường `approved`.
 
 Cài package để import từ dự án khác (tùy chọn, trong virtual environment):
 

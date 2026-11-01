@@ -1,5 +1,26 @@
 # Kiến trúc Foundation V1
 
+## T3 synthetic provenance adapter — 01/11/2026
+
+`evaluation/triage_adapter.py` nối fixture kết quả đã phân loại vào API T2:
+manifest + content + ba reports + exact selection ledger + focal evidence
+→ kiểm cohort/identity/SHA256/lineage + seal fixture cố định trong source
+→ `AdaptedInputs(planned_ids, focal, peers, ...)` với kiểu T2 nguyên bản.
+`VerifiedSource` giữ source identity, report/row hashes và missing IDs riêng;
+input/evidence/manifest/selection/bundle hashes không tham gia ranking.
+
+Không I/O, raw parser, quyền dữ liệu tự khai báo hoặc production switch.
+Chỉ chín fixture viết tay được seal; thay nội dung dù tự tính lại checksum
+vẫn bị từ chối. Report plan phải đồng nhất ba model; thiếu row giữ MISSING,
+thiếu identity/report/selection thì dừng; không lựa chọn hoặc trộn attempts.
+Peer HNLO bị cấm, focal VALID cần evidence fixture đúng mẫu/identity/input/
+value; null/ineligible không impute, malformed bị từ chối.
+
+Định tuyến: [hướng dẫn/hợp đồng T3](TRIAGE_ADAPTER.md), module trên,
+`tests/test_triage_adapter.py`, `scripts/demo_triage_adapter_cpu.py` và T2 bên
+dưới. Không cần đọc report/raw/ảnh/TEST thật. O2/O4/O5 vẫn PENDING/BLOCKED;
+source seal chứng minh nội dung fixture, không khoa học/quyền/qualification.
+
 ## T2 CPU synthetic triage — 01/11/2026
 
 `safeshift/evaluation/triage.py` cung cấp API không học, không I/O:
