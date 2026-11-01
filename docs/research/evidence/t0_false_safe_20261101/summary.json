@@ -1,0 +1,272 @@
+{
+  "schema": "safeshift-t0-evidence-projection-v1",
+  "date": "2026-11-01",
+  "timezone": "Asia/Bangkok",
+  "base": "89d886356c15064b5f1cc2021aa5d614e7e7f53f",
+  "proposal_status": "PROPOSED",
+  "O1_O5": "PENDING",
+  "confirmatory_feasibility": "BLOCKED",
+  "source_scope": "TRAIN_SAVED_REPORTS_AND_METADATA_ONLY",
+  "raw_replay_performed": false,
+  "TEST_accessed": false,
+  "model_calls": 0,
+  "new_data_collected": false,
+  "source_snapshot_sha256": {
+    "AGENTS.md": "506982ead9deb1783dfbb380c76cac1d287d2ee2e43ca13068d959c27f22fff1",
+    "README.md": "b3d89c79b347aae77781694d5d9708cb138add36eacad64271088e3561410f39",
+    "docs/ROADMAP.md": "b6d6b6385d3277e0a4b9c2505bd6cc0ccc704f62ef000ba9531550167b53ac6e",
+    "docs/HISTORY.md": "8b1def5796db453e286ecc3551bc1d9b1e93217951e572b046ea72ab983e58bb",
+    "docs/PROJECT_STATE.md": "e91c1911f10c21c3da7f7a452c466c823afad67aaac9fba26d67dd6394a709c9",
+    "docs/research/DECISIONS.md": "29854cb25955cdf40e9c10a3149dfd7e99b544917c7e5da9f62cb4a4da117084",
+    "docs/research/SEMINAR_PROTOCOL.md": "54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1",
+    "docs/research/seminar_analysis_config.v1.json": "dd3b86660f0795dba099abac0d8a3b8bd3498e625e49b128aa9c50e72639e5ff",
+    "docs/research/THESIS_EXECUTION_PLAN_2026.md": "0a6437e592075635fb23e2fd8abb2caadd7e57eea207dff934d8f5733108afb4",
+    "docs/RESULTS_AND_LIMITATIONS.md": "a7f35d4b194448b4e908034cd99202bbb52e04808144a319ea04de4a9c19c786",
+    "docs/SOURCE_FEASIBILITY_GATE_20261024.md": "50a5a56003716f776a768cc7003fd8eff59f8d7f3ca83a2c768a118fa872bbe9",
+    "docs/SOURCE_FEASIBILITY_RECEIPT_20261024.json": "4670b92ba67d1e4c24bfaf85a2fde19cbaa71a56af2927f379611682d610c0d3",
+    "docs/DATA_AND_ETHICS.md": "22cbf9eb84dd6682f266e0d230d1aa2b98ce6611ad61e0bfd37c784898e58fb3",
+    "docs/research/CANDIDATE_INTEGRATION_CPU_20261029.md": "fca2600f6cd3cf4a561875f7b17d52c5261be5a05bb3c0430de9ca2877df418a",
+    "docs/research/MINICPM4_FP32_OFFICIAL_ADOPTION_20261031.md": "275039167e1ec3cc0445b68c877bcc363bc187c7e2fd85a2e167e2a824108ecc",
+    "docs/research/CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md": "b5d87d30bc176e9e18f1e490da1267da3dc5346f3637eaa3bdcc2f07e3cd066f",
+    "scripts/analyze_source_sensitivity.py": "1f0c8b4562bc2a91d63b5ef4abf0ecb899c6fd7c20a31bfd40814d2d70761994"
+  },
+  "owner_supplied_sources": [
+    {
+      "basename": "SafeShift_Bao_cao_tham_dinh_Codex_20261101.md",
+      "sha256": "5c726b3215aab5c0d7052146b5ed4cabd0afe3ef191dc0c87adc60153cbbf139",
+      "authority": "ADVISORY_NOT_SCIENTIFIC_APPROVAL"
+    },
+    {
+      "basename": "SafeShift_De_xuat_cai_tien_cua_thay_2026.md",
+      "sha256": "0b9dafd10284060a1c34b50fb78bb8755d8a19b81b196b86b31d3506b0961011",
+      "authority": "OWNER_SUPPLIED_TRANSCRIPTION_NOT_APPROVAL"
+    }
+  ],
+  "saved_report_recount": {
+    "confusion_summary_crosscheck": "PASS",
+    "schema": "safeshift-t0-saved-report-counts-v1",
+    "base": "89d886356c15064b5f1cc2021aa5d614e7e7f53f",
+    "history": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+    "evidence_level": "HASH_BOUND_SAVED_REPORT_RECOUNT_NOT_RAW_AUDIT",
+    "raw_replay": false,
+    "TEST_access": false,
+    "recovery_pooled": false,
+    "planned": 3763,
+    "status": {
+      "SUCCESS": 3539,
+      "TECHNICAL_ERROR": 1,
+      "NOT_ATTEMPTED": 223
+    },
+    "success_gt_levels": {
+      "Level01": 460,
+      "Level02": 232,
+      "Level03": 8,
+      "Level04": 2839
+    },
+    "predicted_normal": 2455,
+    "false_safe": 35,
+    "false_safe_gt_levels": {
+      "Level01": 13,
+      "Level02": 22
+    },
+    "false_safe_folder_domain": {
+      "coal_conveyor": 1,
+      "metallurgy": 1,
+      "oil_chemical": 14,
+      "power": 17,
+      "tunnel": 2
+    },
+    "verified_independent_source_count": null,
+    "shards": [
+      {
+        "shard": 0,
+        "archive_sha256": "bcaaa0b09dd664a39d0a1059d442e6eac2ed7352634e18dc0525926bb25e0dcc",
+        "samples_sha256": "2a915def0555fdfa63f23eca48b7e6089ca6562bde5feaac7e625c9ca6175c0b",
+        "manifest_sha256": "37b9fae412db374c54b79bbb83aad1d0ba3029d06fe836b71952763550054f70",
+        "planned": 941,
+        "status": {
+          "SUCCESS": 941
+        }
+      },
+      {
+        "shard": 1,
+        "archive_sha256": "af4e05c3d8b63e552166a8f7eb671ae3ec4836fef32ec4e534b0563cc13017c2",
+        "samples_sha256": "1510762c7c4420537993a85f6366138dfa37c5b898ed1afe5cac6350173e3add",
+        "manifest_sha256": "9482465485f316dbef12116c99239da1f9e868a7075c2c06281148ec0641bc10",
+        "planned": 941,
+        "status": {
+          "SUCCESS": 941
+        }
+      },
+      {
+        "shard": 2,
+        "archive_sha256": "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920",
+        "samples_sha256": "c5e995270cef84c98b327e65d96650b56ab47e72adff9d0997028d604b489fa8",
+        "manifest_sha256": "f9d2370dd5feece46c91ffe88171cb7cd5e838d3a7818000894b7f71d3829695",
+        "planned": 941,
+        "status": {
+          "SUCCESS": 717,
+          "TECHNICAL_ERROR": 1,
+          "NOT_ATTEMPTED": 223
+        }
+      },
+      {
+        "shard": 3,
+        "archive_sha256": "07abe1551e51b9194dcd1a32b79a93940a435a6567b61275d887c6d0878a5273",
+        "samples_sha256": "e75854f20190cf572dc68b09697712ae525a50433ea329db9e1fb4f4492b1d65",
+        "manifest_sha256": "d72046fe5265ee8896745584140c322f9fa14a11fdddd8abd40e75270d06e4c8",
+        "planned": 940,
+        "status": {
+          "SUCCESS": 940
+        }
+      }
+    ],
+    "original160_metadata_join": {
+      "manifest_sha256": "f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995",
+      "qwen_verified_entries_in_original_manifest": 0,
+      "qwen_status_counts": {
+        "NOT_ATTEMPTED": 12,
+        "SUCCESS": 148
+      },
+      "qwen_predicted_normal": 67,
+      "qwen_false_safe": 4,
+      "qwen_severe_false_safe": 1,
+      "image_hash_level_domain_matches": 160,
+      "classification_qualification": "NOT_ESTABLISHED_BY_METADATA_JOIN",
+      "three_model_utility_evaluated": false
+    }
+  },
+  "recount_script_sha256": "1cd8f3aa66cf905c091dbbe33b9d4558f502b43d4ae562a980bd3b1f70b03e54",
+  "independent_source_count": null,
+  "V_independent_cohort": null,
+  "T_independent_cohort": null,
+  "precision_or_power_calculated": false,
+  "full_panel_peer_utility_on_Q3": "NOT_EVALUATED",
+  "scientific_selection_pooling": "PENDING",
+  "official160_receipt_projections": {
+    "minicpm4": {
+      "run_id": "owner_minicpm4_f52026d3c3bf49dbab2e3a8e33402f36",
+      "attempt_id": "owner_minicpm4_f52026d3c3bf49dbab2e3a8e33402f36_a1",
+      "series_id": "owner_minicpm4_f52026d3c3bf49dbab2e3a8e33402f36",
+      "run_kind": "INITIAL",
+      "archive_sha256": "46a41359c3ab2978b9ee4ac010518e49a74141641d9334c29035bdc0c8eac877",
+      "counts": {
+        "INVALID": 5,
+        "NOT_ATTEMPTED": 0,
+        "SUCCESS": 155,
+        "TECHNICAL_ERROR": 0
+      },
+      "native_calls": 160,
+      "native_steps": 1760,
+      "finite_native_steps": 1760,
+      "hnlo_status_counts": {
+        "RAW_LOGITS_AVAILABLE_BUT_UNALIGNED": 160
+      },
+      "numeric_hnlo_count": 0,
+      "pooling_allowed": false,
+      "receipt_path": "data/processed/m160/verification.json",
+      "receipt_sha256": "551d109a99ed8296312cc0619dd019687b0b090f34ec025cc4f83aeb6895eeca",
+      "evidence_level": "EXISTING_TECHNICAL_RECEIPT_NOT_REPLAYED_BY_T0"
+    },
+    "internvl35": {
+      "run_id": "owner_internvl35_55badcf1d55d44d98b74324c58b552bf",
+      "attempt_id": "owner_internvl35_55badcf1d55d44d98b74324c58b552bf_a1",
+      "series_id": "65302bed5bfea25eb5b21169a53e59b789a852b2251bdb7378e03849802958c1",
+      "run_kind": "RECOVERY",
+      "archive_sha256": "e1f9c50cb162e6d14f0f5ca42927799e8d3595ccf6dab8d72d0ac90840ebbaf6",
+      "counts": {
+        "INVALID": 25,
+        "NOT_ATTEMPTED": 0,
+        "SUCCESS": 135,
+        "TECHNICAL_ERROR": 0
+      },
+      "native_calls": 160,
+      "native_steps": 1700,
+      "finite_native_steps": 1700,
+      "hnlo_status_counts": {
+        "HNLO_VALIDATED": 135,
+        "RAW_LOGITS_AVAILABLE_BUT_UNALIGNED": 25
+      },
+      "numeric_hnlo_count": 135,
+      "pooling_allowed": false,
+      "receipt_path": "data/processed/official160-20261031/verification-result.json",
+      "receipt_sha256": "854a22f18de3741ae803c53504ce3a392f43c2a956758ea1656a5d9b04c62a8b",
+      "evidence_level": "EXISTING_TECHNICAL_RECEIPT_NOT_REPLAYED_BY_T0"
+    }
+  },
+  "official160_manifest": {
+    "sha256": "f1ec6a202c3bba05d91cb3c507d5aa16d9aa3ded2418fa84bd62e77c05522995",
+    "same_bytes": true,
+    "planned": 160,
+    "split": "TRAIN",
+    "levels": {
+      "Level01": 48,
+      "Level02": 24,
+      "Level03": 8,
+      "Level04": 80
+    },
+    "verified_independent_sources": null
+  },
+  "advisory_pair_counts_not_recomputed_in_T0": {
+    "source": "OWNER_SUPPLIED_ADVISORY",
+    "internvl35_hazard_support": 80,
+    "internvl35_false_safe": 2,
+    "internvl35_hazard_INVALID": 20,
+    "minicpm4_hazard_support": 80,
+    "minicpm4_false_safe": 30,
+    "minicpm4_hazard_INVALID": 0,
+    "minicpm4_false_safe_peer_hazard": 22,
+    "minicpm4_false_safe_peer_INVALID": 6,
+    "shared_false_safe": 2,
+    "peer_false_hazard_on_correct_minicpm4_Normal": 34,
+    "performance_confirmation": false
+  },
+  "github_postmerge": {
+    "pr": 157,
+    "state": "closed",
+    "merged": true,
+    "draft": false,
+    "head": "3a249d329c871b1d0f426f7001c676610c7a05de",
+    "merge_commit": "89d886356c15064b5f1cc2021aa5d614e7e7f53f",
+    "postmerge_ref": "https://github.com/tantdna2/SafeShift/pull/157#issuecomment-6546464187",
+    "authority_order_change_ref": "https://github.com/tantdna2/SafeShift/pull/157#issuecomment-6545287909",
+    "evidence_level": "LIVE_PR_METADATA_AND_INHERITED_REVIEW_ATTESTATION_NOT_NEW_RAW_AUDIT"
+  },
+  "executed_local_helper_sha256": "fc30e0f740e64301d6f82b3a9b145f1b471e7993c10e15ebfb98e2ea5c1c1354",
+  "recount_script_hash_convention": "UTF8_LF_WITH_ONE_FINAL_NEWLINE; executed_local_helper_sha256 preserves executed Windows bytes",
+  "validation": {
+    "status": "PASS",
+    "python": "3.11.9",
+    "platform": "Windows",
+    "local_markdown_links_checked": 76,
+    "files": {
+      "docs/PROJECT_STATE.md": {
+        "utf8_no_bom": true,
+        "no_personal_paths_or_token_patterns": true,
+        "markdown_fences_tables_local_links": true
+      },
+      "docs/research/T0_FALSE_SAFE_DESIGN_20261101.md": {
+        "utf8_no_bom": true,
+        "no_personal_paths_or_token_patterns": true,
+        "markdown_fences_tables_local_links": true
+      },
+      "docs/research/T0_FALSE_SAFE_EVIDENCE_20261101.md": {
+        "utf8_no_bom": true,
+        "no_personal_paths_or_token_patterns": true,
+        "markdown_fences_tables_local_links": true
+      },
+      "docs/research/evidence/t0_false_safe_20261101/summary.json": {
+        "utf8_no_bom": true,
+        "no_personal_paths_or_token_patterns": true
+      }
+    },
+    "json_aggregate_and_provenance_checks": "PASS",
+    "embedded_recount_script_bytes_and_compile": "PASS",
+    "source_and_protected_hashes_unchanged": "PASS",
+    "native_GPU_tests": "NOT_RUN_DOCS_ONLY",
+    "independent_audit": "NOT_PERFORMED",
+    "checker_local_sha256": "344952087c4592074338d04afa4c7f1466bb05c34822116c72a4eb2863e0dfdb",
+    "diff_check": "PASS",
+    "full_unit_suite": "NOT_RUN_DOCUMENTATION_ONLY"
+  }
+}
