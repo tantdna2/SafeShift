@@ -14,6 +14,17 @@ is authorized; GPU/inference/TEST/private raw are not. ChatGPT review and
 independent Antigravity audit precede separately authorized merge.
 The Issue169 section below is preserved as a historical snapshot.
 
+Fresh implementation/release matrix: [Issue171 runbook](FRESH_FULLTRAIN_171.md).
+The separate source package reuses planner/controller/native peer adapters and
+raw custody, adds three fresh series, rejects foreign history/unreconciled
+reservations, and prepares six exact-source notebooks. Qwen native contract
+remains BLOCKED (historical two-GPU/max32/SDPA runtime differs from peers).
+Peer native composition is prepared, not pinned-native/live verified. Original
+private3763 projection and image custody are NOT_VERIFIED. O2–O6/B1–B6/G0–G6
+are explicitly listed in the runbook; final CPU evidence will be appended in
+this PR. No historical notebooks, parser/HNLO, source/checkpoint or science
+contracts were changed. No inference, GPU, TEST or private artifacts accessed.
+
 
 ## CURRENT — Issue #169: hồ sơ nguồn full TRAIN, 02/11/2026
 
