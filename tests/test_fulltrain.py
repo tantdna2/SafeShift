@@ -203,6 +203,7 @@ class FulltrainJournalTests(unittest.TestCase):
                 out, backend, first = self.run_plan(root, p, [], ['{"safety_level":"Level04"}', 'prose Level01', RuntimeError("synthetic out of memory")])
                 self.assertEqual(backend.calls, 3)
                 self.assertEqual([v["status"] for v in first["records"]], ["SUCCESS", "INVALID", "TECHNICAL_ERROR"])
+                self.assertEqual(f.cause(first["records"][2]), "GPU_OOM")
                 original_hashes = members(out)
                 h = [first]
                 p2 = make_plan(h, "resume", run="run2", key=key, cap=1)

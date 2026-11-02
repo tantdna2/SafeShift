@@ -85,6 +85,8 @@ def _record(root, row, p):
         else:
             require(value["status"] == "TECHNICAL_ERROR", "RESULT_STATUS_CONFLICT")
             result.update(status="TECHNICAL_ERROR", label=None, error=value.get("error", {}))
+            if value.get("error"):
+                result.pop("reason", None)
     return result
 
 
