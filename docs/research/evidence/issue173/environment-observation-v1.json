@@ -1,0 +1,99 @@
+{
+  "kaggle_status": "COMPLETE",
+  "kaggle_version": 1,
+  "archive_sha256": "c4856044f6c73586039eb22ebe43b1a420cd7b6dc060123758e9780f3363f3cc",
+  "archive_bytes": 1469,
+  "archive_crc_and_members": "PASS",
+  "source_binding": "PASS",
+  "submitted_notebook_sha256": "524dcdf931d4c03a73b18fef6c27e630c93a41fe9c6f1e7d303fb02512761630",
+  "observation": {
+    "checkpoint_gate": "NOT_ATTACHED_NOT_VERIFIED",
+    "checks": {
+      "driver": {
+        "status": "OBSERVED",
+        "value": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "0, Tesla T4, 580.178.04, 15360, 14912\n1, Tesla T4, 580.178.04, 15360, 14912\n"
+        }
+      },
+      "kernel": {
+        "status": "OBSERVED",
+        "value": {
+          "abi": "cpython-313",
+          "architecture": "x86_64",
+          "implementation": "CPython",
+          "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+          "python": "3.13.15"
+        }
+      },
+      "kernel_cuda_tensor_only": {
+        "status": "OBSERVED",
+        "value": {
+          "returncode": 0,
+          "stderr": "",
+          "stdout": "{\"torch\": \"2.11.0+cu128\", \"cuda_build\": \"12.8\", \"available\": true, \"devices\": [{\"index\": 0, \"name\": \"Tesla T4\", \"capability\": [7, 5], \"memory_bytes\": [15473639424, 15636037632], \"fp16_matmul\": [[2.0, 2.0], [2.0, 2.0]]}, {\"index\": 1, \"name\": \"Tesla T4\", \"capability\": [7, 5], \"memory_bytes\": [15473639424, 15636037632], \"fp16_matmul\": [[2.0, 2.0], [2.0, 2.0]]}]}\n"
+        }
+      },
+      "memory": {
+        "status": "OBSERVED",
+        "value": {
+          "cgroup": {
+            "memory.current": "418566144",
+            "memory.max": "32212254720"
+          },
+          "host_available_bytes": 32392462336
+        }
+      },
+      "packages": {
+        "status": "OBSERVED",
+        "value": {
+          "numpy": "2.1.3",
+          "pillow": "13.0.0",
+          "pip": "26.2.2",
+          "torch": "2.11.0+cu128",
+          "torchvision": "0.26.0+cu128",
+          "transformers": "5.16.1"
+        }
+      },
+      "storage": {
+        "status": "OBSERVED",
+        "value": {
+          "allocations": [
+            {
+              "allocated_bytes": 1048576,
+              "device": 54,
+              "free_bytes": 1126140129280,
+              "written_bytes": 1048576
+            },
+            {
+              "allocated_bytes": 1048576,
+              "device": 1794,
+              "free_bytes": 20939481088,
+              "written_bytes": 1048576
+            }
+          ],
+          "cleanup_verified": true,
+          "quota_scope": "SMALL_PROBE_ONLY_NOT_FULL_MODEL_CAPACITY",
+          "same_device": false
+        }
+      }
+    },
+    "data_gate": "DATA_RIGHTS_AND_FRESH_CUSTODY_NOT_VERIFIED",
+    "dataset_accessed": false,
+    "inference_status": "NOT_ATTEMPTED",
+    "model_calls": 0,
+    "owner_slot_consumed": false,
+    "production_authorized": false,
+    "run_id": "issue173-env-ec56693b52df482abd9c0b17caa394c1",
+    "schema": "safeshift-issue173-observation-v1",
+    "scientific_qualified": false,
+    "script_sha256": "54c8759a5a9899d90c616bbebeb1947e48744732f1230e42e3c4a6e163f7fb39",
+    "seconds": 10.815680509000003,
+    "source_commit": "dd152630877c29faf9f4439d902e55720e823378",
+    "status": "ENVIRONMENT_OBSERVED",
+    "utc": "2026-11-02T12:57:39.499172+00:00",
+    "weights_loaded": false,
+    "worker_gate": "PINNED_WORKERS_NOT_VERIFIED"
+  }
+}

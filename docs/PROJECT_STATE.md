@@ -1,5 +1,30 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT — Issue #173: bounded live Kaggle verification, 02/11/2026
+
+**KAGGLE CONNECTED; LIVE ENVIRONMENT OBSERVED; SOFTWARE RETEST IN PROGRESS;
+SMOKE/FULL TRAIN BLOCKED.** [Issue173](https://github.com/tantdna2/SafeShift/issues/173),
+base `50d0c910319a6e93354a3d27887418aeb320709f`, branch
+`feat/issue173-kaggle-preflight`; one Draft PR, no merge.
+[Runbook and evidence](KAGGLE_PREFLIGHT_173.md) record the actual no-Input Kaggle
+environment run and first public-software preflight. InternVL3.5 and MiniCPM
+passed pinned CPU software/native processor/meta checks and isolated-worker
+CUDA FP16 tensor checks. Qwen built CPython3.12.13/zlib1.2.11 and resolved 48
+Linux dependencies, then stopped on an incomplete public download host list.
+The exact candidate URLs/versions/hashes are now sealed, the official hosts
+admitted with negative tests, and the same bounded preflight is being repeated.
+
+These checks load no checkpoint or real image and perform no model inference:
+**0/3 calls consumed**. Existing model/config/source locks, strict C1, MiniCPM
+FP32 resampler/label-only, Qwen semantics and all three `fresh171-*` series are
+unchanged. Original TRAIN/cloud rights/custody, approved Input/checkpoint seals
+and model-load/fit/inference remain unverified; no production fence is removed.
+O2–O6 and scientific qualification remain separate. ChatGPT direct review and
+independent Antigravity audit are required before separately authorized merge.
+
+The Issue171 section below is the preserved preparation snapshot, superseded
+only for the bounded technical Kaggle scope explicitly authorized by Issue173.
+
 ## CURRENT - Issue #171: fresh full TRAIN, 02/11/2026
 
 **OWNER_FRESH_FULLTRAIN_ONLY; REVISED CPU CHECKS PASS; LIVE RELEASE BLOCKED.**
