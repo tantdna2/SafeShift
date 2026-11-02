@@ -7,6 +7,30 @@ and the direct task in this session. One branch `verify/issue173-real-checkpoint
 [Draft PR #175](https://github.com/tantdna2/SafeShift/pull/175), no merge.
 Historical fresh171 production fences remain intact.
 
+## CURRENT — post-v5 review repair, 03/11/2026
+
+[PR175 review repair](ISSUE173_REVIEW_REPAIR.md) supersedes the executable smoke
+instructions below. The current smoke notebook/launch/CLI/worker/constructor
+are permanently **TERMINAL**, including empty fresh VMs. Original v5 executable
+bytes and all five attempts remain immutable historical evidence. Do not use a
+historical source ref to start a new call. Missing/forged v5 evidence cannot
+open the new complete-history admission; no local-marker warning is relied on.
+
+InternVL's exact saved output was natively generated Markdown-fenced JSON;
+token/argmax/prefix/independent decode and pinned C1/config/processor checks match.
+No demonstrated technical capture bug or legal label rescue. Strict INVALID,
+raw, HNLO unavailable and its consumed call remain unchanged.
+
+Fresh MiniCPM-only preflight PASS: **24,321,982,464 bytes available before weights**
+with the unchanged16 GiB floor, actual processor/CUDA and cgroup/cache/process
+evidence; no weights load or native call. Current aggregate remains2/3 calls.
+Mini-only continuation identity and one-call request are separate; launch/worker
+remain **BLOCKED_PENDING_CHATGPT_DIRECT_REVIEW**, even with this real RAM PASS.
+The Owner expressly requires a stop before consuming MiniCPM's remaining call.
+Linux snapshot1c40ff8:41/41 Issue173 +55/55 fulltrain PASS. See the repair dossier
+for exact Kaggle/version/source/ZIP hashes, reproduction and limitations.
+All following v1–v5 results/instructions are preserved historical context.
+
 ## Final handoff — 03/11/2026
 
 **Actual TRAIN bytes and all8 checkpoint shards verified. Two native calls total;

@@ -71,7 +71,7 @@ the original pinned runtime. Its byte-identical decoded text agrees with the
 original saved pinned-runtime/independent-decoder witness; it is not an inference
 runtime migration. Only structural checks/checksums, no raw text/IDs, are exported.
 
-## C. Fresh MiniCPM-only resource investigation — execution pending
+## C. Fresh MiniCPM-only resource investigation — actual preflight PASS, native HOLD
 
 The earlier shared VM retained InternVL's runtime and file pages. Its post-call
 last available RAM was15,512,223,744 bytes, already below the unchanged16 GiB
@@ -112,7 +112,63 @@ The new notebook is diagnostic only. Even a RAM/CUDA/processor PASS cannot open
 the MiniCPM review hold. **Stop for ChatGPT's direct anti-replay/resource review
 before consuming the remaining MiniCPM call.** Live measurements and final-source
 Linux test receipts will be appended here after the authorized no-inference
-preflight; until then they are NOT_RUN, not a RAM repair PASS.
+preflight. The actual results follow; they are a resource/processor preflight,
+not a model-load or inference PASS.
+
+### Actual Kaggle evidence
+
+Private [MiniCPM RAM review notebook](https://www.kaggle.com/code/nguynanhtn/safeshift-issue173-minicpm-ram-review),
+version1, kernel142345684, COMPLETE. Executed runtime source
+`3fd0b8a1c2beba386c4ede0577284045ae0e6394`; notebook SHA
+`2c14cd203bc5c24f14532a503c0e32d33b06162f02d5db5e21d0eb6773060cdc`.
+All remote cell sources match the submitted notebook after Kaggle normalization.
+ZIP SHA256 `fee13e27fb4e9056284a6c11b8ac7dba84dcd654a909f8fe821450f21a8592f3`,
+43 members, CRC/member hashes/outer sidecar independently checked locally.
+[Sanitized RAM/processor evidence](research/evidence/issue173/review/minicpm-only-ram-preflight.json)
+and [source/quota check](research/evidence/issue173/review/kaggle-source-and-quota.json).
+
+| Stage (same fresh MiniCPM-only VM) | Available RAM, bytes | Cgroup anonymous, bytes | Cgroup file memory, bytes |
+| --- | ---: | ---: | ---: |
+| Startup | 31,769,190,400 | 228,421,632 | 187,879,424 |
+| After setup child exits | 17,761,562,624 | 235,851,776 | 13,711,212,544 |
+| After owned file-page advice | 25,173,176,320 | 234,409,984 | 6,502,432,768 |
+| Actual processor constructed | 24,358,436,864 | 678,961,152 | 6,868,832,256 |
+| Immediately before weights (after CUDA tensor) | **24,321,982,464** | 682,553,344 | 6,898,835,456 |
+| After processor child exits | 24,736,821,248 | 234,467,328 | 6,936,788,992 |
+
+The unchanged16 GiB floor (17,179,869,184 bytes) passed in the actual pinned
+worker with about22.65 GiB available. Own-tree scan completed31,776 files;
+32 large regular files/5,381,269,953 bytes advised; no errors, **zero file
+deletions**, no Input/checkpoint/history changes. File memory fell by about
+7.21 GB over reclamation while anonymous memory stayed nearly constant. This
+supports setup file-cache charge as the dominant pressure in this new VM;
+the measured total drop is not attributed exclusively to the advised bytes.
+It does not reconstruct the missing old-v5 cgroup breakdown. The fresh VM also
+removes the known preceding InternVL workload and the old partial-tree scan.
+
+555 bounded memory/process observations retained. Both supervised children
+exited0, process groups cleaned, no direct children/survivors observed after
+each stage or at the end. Setup264.36s; processor/CUDA/pre-load checks8.45s.
+Exact CPython3.11.9/cu124 software/ABI, actual locked processor and synthetic
+image packing, driver580.178.04/T4 and FP16 tensor PASS. Original checkpoint
+byte verification is reused; metadata/index/source/physical shard sizes checked
+without reading/copying8 GiB weights into the page cache. No real images attached.
+
+**Weights loaded=false; native calls=0; consumption=false.** The ZIP contains
+no load reservation, native-call marker or consumption marker. Aggregate remains
+Qwen1/InternVL1/MiniCPM0, total2/3. GPU reservation0 after the job. No native call
+is authorized by this preflight. `smoke173_history.launch/worker` still raise
+MINICPM173_NATIVE_CALL_BLOCKED_PENDING_CHATGPT_DIRECT_REVIEW, including with
+this real PASS receipt. Model fit/load/inference and fresh campaign release
+remain NOT_VERIFIED/BLOCKED until the requested direct review and later exact
+activation, with current history rechecked. A new VM must repeat live resource
+admission; this memory number is not a transferable guarantee.
+
+Reproduce the closed sanitized export check (no model/raw payload export):
+
+```console
+python -B -m scripts.report_minicpm173_preflight --archive <private-preflight.zip> --output data/processed/issue173-verification/new-ram-review-receipt.json
+```
 
 ## D. Validation and preservation
 
@@ -122,6 +178,15 @@ SUCCESS; generated-fence INVALID/corrupted decoder/prefix/argmax; unchanged RAM
 boundary, owned-only advice and protected production fence. Historical single-call
 tests remain reproducible at their immutable executed Git refs; current tests
 require terminal behavior instead of reactivating old model factories.
-Both Linux Issue173 and fulltrain suites will run from one immutable new source
-snapshot. No old receipt is relabeled, no native calls are added, and private
-artifacts remain outside Git. Same Draft PR175 only; no merge or audit PASS.
+Both Linux suites ran from the **same immutable new snapshot**
+`1c40ff8ae31b53967f0df415f2b58609026df30a`: [Issue17341/41 PASS](research/evidence/issue173/review/linux-issue173-1c40ff8.json)
+and [fulltrain55/55 PASS](research/evidence/issue173/review/linux-fulltrain-1c40ff8.json),
+no skips/failures/errors, including actual Linux supervisor/CLI tests and six
+historical PREP payloads. Later review reporting/docs/evidence do not change
+the tested dispatch/preflight source or protected production contracts; no full
+HEAD CI run or independent audit is claimed. Windows development had a read-only
+fsync-mocking mismatch in one advice test, corrected in the test before the
+immutable Linux run; no real native call occurred. Original source/receipts and
+the actual v5 notebook have been rehashed and preserved.
+No old receipt is relabeled, no native calls are added, and private artifacts
+remain outside Git. Same Draft PR175 only; no merge or audit PASS.

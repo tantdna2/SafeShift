@@ -16,11 +16,16 @@ no prompt/parser/generation/preprocessing change or InternVL rerun is authorized
 
 MiniCPM has a separate mini-only review-hold identity and complete five-attempt
 custody admission. Native launch/worker remain hard BLOCKED_PENDING_CHATGPT_REVIEW.
-Authorized next action is a fresh MiniCPM-only no-inference Kaggle preflight,
-measuring RAM/cgroup/process/cache through processor and before weights, with
-the unchanged16 GiB floor. This live preflight and new immutable Linux checks
-are NOT_RUN at this document/source commit. No unused call will be consumed
-before direct review. Merge/audit remain unapproved. Prior handoff below is a
+Fresh MiniCPM-only no-inference Kaggle preflight COMPLETE/PASS, source3fd0b8a:
+actual pinned software/processor/synthetic packing/CUDA FP16, complete31,776-file
+owned scan, no deletions, no surviving child. Before weights24,321,982,464 bytes
+available versus unchanged17,179,869,184-byte floor. Named cgroup file/anon/RSS
+stages and555 observations in [new RAM evidence](research/evidence/issue173/review/minicpm-only-ram-preflight.json).
+Weights/load/inference NOT_RUN;0 new calls; total remains2/3. The unused MiniCPM
+call remains hard BLOCKED until ChatGPT's direct anti-replay/resource review.
+Linux snapshot1c40ff8: Issue17341/41 +fulltrain55/55 PASS, no skips/errors.
+All five original attempts and v5 submitted notebook bytes rehashed unchanged.
+No unused call will be consumed before direct review. Merge/audit remain unapproved. Prior handoff below is a
 historical snapshot; its active v5 executable route is superseded by the terminal
 fence, not by deletion or rewriting of the actual historical evidence.
 
