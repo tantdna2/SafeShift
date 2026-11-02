@@ -2,6 +2,17 @@
 
 ## Issue173 — existing TRAIN/checkpoints and bounded native smoke
 
+Post-v5 review repair: current `scripts/smoke_kaggle173.py` and its published
+notebook are TERMINAL, with no model-load/generation bodies. Historical refs and
+private submissions remain immutable. `smoke173_history.py` admits all five exact
+seals and prepares a MiniCPM-only request under permanent native REVIEW HOLD.
+`scripts/minicpm173_preflight.py`/builder measure fresh single-model RAM/processor/
+CUDA with zero native calls; `scripts/diagnose_internvl173.py` checks the saved
+generated-fence INVALID without rescue. Tests: `test_kaggle173_review.py` plus
+existing Issue173/fulltrain suites. [Current dossier](ISSUE173_REVIEW_REPAIR.md).
+The adapter/source description below records the original historical execution,
+not current permission to dispatch another smoke call.
+
 Route: `verification173.py` streams actual pinned shard/image bytes,
 checks exact indices and bounded safetensors headers without importing a model.
 `scripts/verify_kaggle173_inputs.py` checks existing read-only Kaggle Inputs and

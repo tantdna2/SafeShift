@@ -1,5 +1,29 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT — PR175 review repair, 03/11/2026
+
+[ChatGPT CHANGES_REQUIRED6584783261](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6584783261),
+same session/branch `verify/issue173-real-checkpoints` and Draft PR175.
+[Review repair dossier](ISSUE173_REVIEW_REPAIR.md): current smoke notebook/code
+are permanently terminal after v5, including direct launch/worker/factory/CLI
+on empty fresh-VM paths. Original v5 source/notebook hashes and all five attempts
+remain immutable; Qwen/InternVL consumed1 each, MiniCPM0. No replay has occurred.
+
+Saved InternVL diagnosis proves the output fence was generated natively, not
+introduced by decode/template/capture;14 argmax IDs/EOS, exact C1/config/source
+and independent decode match. Strict INVALID and HNLO unavailable are preserved;
+no prompt/parser/generation/preprocessing change or InternVL rerun is authorized.
+
+MiniCPM has a separate mini-only review-hold identity and complete five-attempt
+custody admission. Native launch/worker remain hard BLOCKED_PENDING_CHATGPT_REVIEW.
+Authorized next action is a fresh MiniCPM-only no-inference Kaggle preflight,
+measuring RAM/cgroup/process/cache through processor and before weights, with
+the unchanged16 GiB floor. This live preflight and new immutable Linux checks
+are NOT_RUN at this document/source commit. No unused call will be consumed
+before direct review. Merge/audit remain unapproved. Prior handoff below is a
+historical snapshot; its active v5 executable route is superseded by the terminal
+fence, not by deletion or rewriting of the actual historical evidence.
+
 ## CURRENT — Issue #173 continuation: actual TRAIN/checkpoint bytes, updated03/11/2026
 
 **DRAFT REVIEW HANDOFF: RIGHTS/TRAIN3763/ALL8 SHARDS VERIFIED; QWEN INFERENCE

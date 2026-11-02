@@ -14,6 +14,8 @@ ROOT=Path(__file__).resolve().parents[1]
 def build(ref, *, smoke=False):
     if len(ref)!=40 or any(c not in '0123456789abcdef' for c in ref):
         raise ValueError('EXACT_COMMITTED_SOURCE_REQUIRED')
+    if smoke:
+        return archived_smoke(ref)
     payload={}
     names=sources(ROOT)+['scripts/verify_kaggle173_inputs.py','safeshift/verification173.py']
     if smoke:
@@ -62,6 +64,23 @@ sys.path.insert(0,str(root))
             'max_model_calls':3 if smoke else 0,'remaining_model_calls':2 if smoke else 0}},
         'cells':[{'cell_type':'markdown','id':'scope','metadata':{},'source':scope},
             {'cell_type':'code','id':'verify','metadata':{},'execution_count':None,'outputs':[],'source':code.splitlines(True)}]}
+
+
+def archived_smoke(ref):
+    """No historical runnable payload is embedded in the post-v5 notebook."""
+    return {'nbformat':4,'nbformat_minor':5,'metadata':{
+        'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},
+        'safeshift':{'issue':173,'source_commit':ref,'state':'TERMINAL_ARCHIVE',
+            'historical_executed_source':'1e744d991613f48d81ccf0046bc35c5fdab9d1e2',
+            'historical_submitted_notebook_sha256':'e6a7cf19d57198fe91432d1bec4c0e24aa8075b8ded52dcaf3149c3b27731222',
+            'max_model_calls':0,'remaining_model_calls':0}},'cells':[
+        {'cell_type':'markdown','id':'terminal','metadata':{},'source':[
+            '# Issue173 v5 — terminal historical record\n',
+            'Qwen and InternVL calls consumed. This published notebook cannot load or call any model.\n',
+            'Original v5 bytes remain immutable at source1e744d9 and in the private staged submission/Output archives.\n',
+            'MiniCPM has one unused call; a separate mini-only path remains blocked pending direct ChatGPT review.\n']},
+        {'cell_type':'code','id':'refuse','metadata':{},'execution_count':None,'outputs':[],
+            'source':["raise PermissionError('ISSUE173_V5_TERMINAL_NO_REPLAY')\n"]}]}
 
 
 if __name__=='__main__':
