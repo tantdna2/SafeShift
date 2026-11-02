@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from safeshift.pilot.artifacts import write,read
+from safeshift.pilot.artifacts import write,read,sha,export
 from scripts import smoke_kaggle173 as smoke
 
 
@@ -80,6 +80,38 @@ class SmokeJournalTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'WORKER_EXACT_ORIGINAL_SCOPE'):
                 smoke.worker('internvl35','native','unused',self.out,self.out)
 
+    def test_previous_zero_summary_cannot_hide_call_or_load_reservation(self):
+        for marker in (None,'qwen3/sample/native_call.json','qwen3/model-load-reservation.json'):
+            with self.subTest(marker=marker):
+                root=self.out/str(len(list(self.out.iterdir()))); root.mkdir()
+                value={'run_id':'issue173-smoke-20261102-v1','source_commit':'a'*40,'model_calls':0,
+                    'models':{k:{'native_calls':0,'weights_loaded':False} for k in smoke.KEYS}}
+                write(root/'summary.json',value)
+                if marker: write(root/marker,{'SYNTHETIC':True})
+                archive=root.with_suffix('.zip'); export(root,archive)
+                pin={'prior_preload_failure_sha256':sha(archive),'prior_source_commit':'a'*40}
+                if marker:
+                    with self.assertRaisesRegex(ValueError,'PRIOR_LOAD_OR_CALL'): smoke.previous_preload_failure(archive,pin)
+                else: self.assertEqual(smoke.previous_preload_failure(archive,pin),value)
+
+    def test_reclamation_is_owned_only_retains_runtime_and_ram_floor(self):
+        root=self.out/smoke.RUN_ID; root.mkdir()
+        for name in ('existing-qwen-software','qwen3/qwen-software/python-source','qwen3/qwen-software/zlib-source'):
+            p=root/name; p.mkdir(parents=True); (p/'SYNTHETIC_CACHE').write_bytes(b'cache')
+        retained=root/'qwen3/qwen-software/venv/lib'; retained.mkdir(parents=True)
+        binary=retained/'synthetic.so'; binary.write_bytes(b'synthetic retained runtime')
+        witness=self.out/'historical-raw'; witness.write_bytes(b'KEEP_HISTORY')
+        with patch.object(smoke.environment,'host_memory',side_effect=[{'available_bytes':100},{'available_bytes':200}]),\
+                patch.object(smoke.os,'fsync'),patch.object(smoke.os,'posix_fadvise',create=True) as advice,\
+                patch.object(smoke.os,'POSIX_FADV_DONTNEED',4,create=True):
+            result=smoke.reclaim_setup_cache(root,self.out,minimum_bytes=1)
+        self.assertEqual(len(result['removed_owned_cache_directories']),3)
+        self.assertEqual(binary.read_bytes(),b'synthetic retained runtime'); advice.assert_called_once()
+        self.assertEqual(witness.read_bytes(),b'KEEP_HISTORY')
+        self.assertEqual(result['ram_floor_mib_unchanged'],16384)
+        self.assertEqual(result['after']['available_bytes'],200)
+        with self.assertRaisesRegex(ValueError,'OWNED_SCRATCH_ROOT'): smoke.reclaim_setup_cache(self.out,self.out)
+
     def test_notebook_committed_payload_compiles_without_outputs(self):
         from scripts.build_kaggle173_verification import build,ROOT
         with self.assertRaisesRegex(ValueError,'EXACT_COMMITTED_SOURCE'): build('main',smoke=True)
@@ -90,6 +122,14 @@ class SmokeJournalTests(unittest.TestCase):
                 compile(''.join(cell['source']),'<smoke-notebook>','exec')
                 self.assertEqual(cell['outputs'],[])
         self.assertEqual(notebook['metadata']['safeshift']['max_model_calls'],3)
+
+    def test_new_release_pin_matches_source_and_keeps_prior_ram_budget(self):
+        from safeshift.fulltrain.contract import source_manifest
+        from safeshift.pilot.contract import digest
+        pin=read(smoke.ROOT/'configs/issue173/real_smoke.json')
+        self.assertEqual(pin['smoke_script_sha256'],sha(Path(smoke.__file__)))
+        self.assertEqual(pin['source_inventory_sha256'],digest(source_manifest()))
+        self.assertEqual(pin['resource_policy']['free_ram_mib'],16384)
 
 
 if __name__=='__main__': unittest.main()

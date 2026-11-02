@@ -169,3 +169,47 @@ appended here; checkpoint verification alone is not an inference PASS.
 python -B -m unittest discover -s tests -p test_kaggle173_smoke.py -v
 python -B -m scripts.build_kaggle173_verification --smoke --source-commit <exact40hex> --output notebooks/SafeShift_ISSUE173_SMOKE.ipynb
 ```
+
+## Preserved first smoke failure and controlled pre-load repair
+
+`safeshift-issue173-native-smoke/1` (kernel142318016) exported successfully;
+**model smoke BLOCKED**, not PASS. [Sanitized failure](research/evidence/issue173/native-smoke-v1-failure.json)
+binds executed source `d14218b4df956721e5d32dfc3ce226b40be8048c` and ZIP
+`a296d13984e179a2087acc25a6f45c58f4e15eeb4e32a4efdc46ce8b2a8fac17`.
+All22 members/CRC/checksums/sidecar and remote cell sources checked. Qwen setup
+completed in303.83s; its exact pinned software/ABI/source and first-image decode
+passed. The unchanged16 GiB available RAM gate then raised `HOST_OR_CGROUP_RAM`,
+before hardware/CUDA checks, a load reservation, weights or any native call.
+No load reservation/native marker/loaded environment exists. All3 calls remain
+unused; peers are NOT_ATTEMPTED. The failing numeric available RAM was not
+captured by v1 and is **unknown**, not invented.
+
+The owned offline wheel extraction and compiled build cache are a plausible
+contributor to the cgroup charge; this is a diagnostic hypothesis until new
+before/after measurements are available. A controlled source repair keeps the
+16 GiB floor and every model/prompt/parser/HNLO/precision/source lock unchanged:
+under a separate300s CPU child, remove only this attempt's redundant public
+wheel/build copies and request advisory cache eviction for large regular files
+in its retained runtime (fsync + POSIX_FADV_DONTNEED). Runtime binaries remain
+intact. No global cache operation, weight/Input/history/raw deletion or RAM
+reinterpretation is used. Source paths resolve strictly within the named owned
+scratch root; retained files and resource/source checks are revalidated before
+load. Advisory success itself is not a RAM PASS.
+
+The next smoke uses a new `issue173-smoke-20261102-v2` identity and private
+notebook, attaches the sealed v1 failure, and requires its exact SHA/source and
+**zero native markers, load reservations and verified loads**. Unknown or consumed
+history blocks; no consumed call is retried. The original CPU byte verification
+is reused, not rerun. Total authorization remains3 model-image calls across both
+attempts, max1/model. No result is imported into fresh171 or official history.
+
+Final-source Linux CPU evidence before the first smoke:31/31 PASS, no skips,
+on immutable `d14218b`, [receipt](research/evidence/issue173/linux-checkpoint-smoke-d14218b.json).
+The broad Windows invocation was interrupted without a suite verdict; it is not
+reported as PASS ([record](research/evidence/issue173/windows-broad-interrupted.json)).
+Its partial log remains private. Focused tests include bad/truncated shard/index,
+bounded headers, missing/duplicate images, combined storage budget, immutable
+payloads, raw-before-parse, durable INVALID, no-retry reservations, forged direct
+worker requests and preserved HNLO failures. New repair regressions cover exact
+owned cleanup/runtime retention, unchanged RAM floor, and refusal to reinterpret
+a zero summary containing a prior call/load reservation.
