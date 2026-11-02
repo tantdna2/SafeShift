@@ -44,6 +44,12 @@ class CandidateIntegrationTests(unittest.TestCase):
                 base = subprocess.check_output(["git", "show", "39ec489403753ada10f4924c4b0d6077e027f5e1:AGENTS.md"], cwd=ROOT)
                 self.assertEqual(hashlib.sha256(base).hexdigest(), "ad4309eae94bd270a0080eb51d91291239e337fd3fd3612f899a1703bc61e3d2")
                 current = (ROOT/filename).read_bytes()
+                document_first = subprocess.check_output(["git", "show", "ff64958c22684e8713b428b439521f8f3cb1222a:" + filename], cwd=ROOT)
+                self.assertEqual(current, document_first, "Issue167 must preserve the Owner document-first instructions")
+                # The authorized Issue167 directive was prepended, not appended.
+                # Validate prior instructions against their exact BASE, without
+                # rewriting the historical source lock to fit current HEAD.
+                current = subprocess.check_output(["git", "show", "0295172783dcf82426923d1af621dde9db8ed42c:" + filename], cwd=ROOT)
                 self.assertTrue(current.startswith(base), "BASE instructions must remain byte-identical")
                 added = current[len(base):].decode("utf-8")
                 self.assertIn("issuecomment-6533181366", added)
@@ -66,10 +72,16 @@ class CandidateIntegrationTests(unittest.TestCase):
                 self.assertTrue(current.startswith(base), "Research decisions must never be rewritten")
                 self.assertIn("DEC-20261031-CANDIDATE160-RECOVERY", current[len(base):].decode("utf-8"))
                 continue
+            if filename == "docs/research/THESIS_EXECUTION_PLAN_2026.md":
+                historical = subprocess.check_output(["git", "show", "bbbd351e19e404f1108413578c7ed024f92e814d:" + filename], cwd=ROOT)
+                self.assertEqual(hashlib.sha256(historical).hexdigest(), checksum)
+                document_first = subprocess.check_output(["git", "show", "ff64958c22684e8713b428b439521f8f3cb1222a:" + filename], cwd=ROOT)
+                self.assertEqual((ROOT/filename).read_bytes(), document_first)
+                continue
             self.assertEqual(sha(ROOT/filename), checksum, filename)
         self.assertEqual(sha(ROOT/"configs/pilot/classification_c1.txt"), PROMPT_SHA)
         self.assertEqual(set(MODELS), {"phi", "smolvlm2", "gemma"})
-        self.assertEqual(source_digest(ROOT), "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884")
+        self.assertEqual(source_digest(ROOT), "eb7af80db2cf3eca08c2b0e4f1c3dc973edfa52664071dc054746db602fcd468")
         self.assertEqual(GENERATION, {"do_sample": False, "num_beams": 1, "max_new_tokens": 64,
             "use_cache": True, "return_dict_in_generate": True, "output_scores": False, "output_logits": False})
 
