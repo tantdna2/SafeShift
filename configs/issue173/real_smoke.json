@@ -1,0 +1,28 @@
+{
+  "schema": "issue173-single-smoke-release-v1",
+  "directive": "https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922",
+  "byte_run_id": "issue173-bytes-95144ec82dbb4dea986d18053099c7da",
+  "byte_source_commit": "964ee5e9e348f0c5ccedf79b37f4a8131e5216d6",
+  "byte_evidence_sha256": "9f4e56e31b83b8e845318c7bc48620f927111072c7eae4691b88d6a15692b7f2",
+  "smoke_script_sha256": "7ff85e48c0b3fa6f9781a7cdbd713c67ae50e4c8fa4c0300e2efcaff5ac752d9",
+  "source_inventory_sha256": "0ea303b003265ef57b0dd418d2e74508599d5e1faad25cb5bfe9f7b86e251972",
+  "resource_policy": {
+    "review_mode": "EXTERNAL",
+    "driver_versions": [
+      "580.178.04"
+    ],
+    "free_mib_per_gpu": [
+      13000,
+      13000
+    ],
+    "free_gpu0_runtime_mib": 13000,
+    "free_ram_mib": 16384,
+    "free_scratch_mib": 24576,
+    "free_output_mib": 1024,
+    "scratch_probe_bytes": 1048576,
+    "output_probe_bytes": 1048576,
+    "max_log_bytes": 16777216,
+    "setup_seconds": 1800,
+    "diagnostic_seconds": 600
+  }
+}

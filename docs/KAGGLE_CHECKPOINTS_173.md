@@ -89,7 +89,83 @@ python -B -m unittest discover -s tests -p test_kaggle173_verification.py -v
 python -B -m scripts.build_kaggle173_verification --source-commit <exact40hex> --output notebooks/SafeShift_ISSUE173_CHECKPOINTS.ipynb
 ```
 
-Live results, final-source receipts and exact blockers will be appended in this
-same branch/PR. Smoke remains subject to the real input/checkpoint/resource gates
-and the total ceiling of one image/model and three calls; no bypass of public
-production authorization is permitted.
+## Actual existing-file verification
+
+Private CPU notebook `nguynanhtn/safeshift-issue173-existing-bytes/1`, kernel ID
+142313709, is **COMPLETE**. Executed source
+`964ee5e9e348f0c5ccedf79b37f4a8131e5216d6`; every remote cell source matches.
+Kaggle normalizes notebook JSON: submitted bytes SHA
+`5dee3f8762975f42b5628ef78f79c213020aa180bece7a820be94e3a55d8ff2f`,
+normalized remote SHA `0354ffd4a54c32bcdf61682deefd53081b4a4fdb55ed654614b085f2d406cc31`.
+The [sanitized receipt](research/evidence/issue173/checkpoint-bytes-v1.json)
+contains actual file sizes, full SHA256s, header/tensor counts and model revisions.
+
+| Model | Actual shard bytes | Tensors | Checkpoint bytes/header/index | Loaded / inference |
+| --- | ---: | ---: | --- | --- |
+| Qwen3 | 17,534,339,512 | 750 | PASS, 4 shards, 16 exact snapshot files | NOT_RUN / 0 |
+| InternVL3.5 | 9,465,085,464 | 841 | PASS, 2 shards, source and marker | NOT_RUN / 0 |
+| MiniCPM-V-4 | 8,119,153,016 | 741 | PASS, 2 shards, source and marker | NOT_RUN / 0 |
+
+**TRAIN_BYTES_PASS**: all 3,763 original JPG bytes checked; 0 missing, 0 changed,
+0 duplicate IDs; original order and common projection for all three models.
+This matches the frozen original master, not a new upstream archive comparison.
+No image was rewritten and no annotation sidecar/TEST file was opened. An early
+bounded dataset-listing operation included filenames across splits; no TEST
+payload was downloaded/read and those private listings stay outside Git.
+
+Runtime: CPython3.13.15 stdlib-only verifier, cgroup limit30 GiB, about19.50 GiB
+Output free and 1.02 TiB scratch free on different devices. No GPU was requested.
+Verification took797.37s. Download/copy bytes=0; model calls=0; weight loads=0.
+Public evidence ZIP SHA256
+`9f4e56e31b83b8e845318c7bc48620f927111072c7eae4691b88d6a15692b7f2`:
+5 members independently checked with CRC/member SHA and sidecar. Separate
+private seal:4 verified members, including the original ordered projection,
+locator mapping and three-model binding; no private IDs/image hashes are in Git.
+
+The initial manual log-stream endpoint returned HTTP error; the official
+`api.kernels_logs_stream` worked and preserved all model progress. A bounded
+dataset-listing helper reached its page ceiling; it was stopped, not silently
+treated as complete. The verifier uses exact original locators, not listing
+order or a directory walk. A local regex/glob mismatch stopped before download
+and was corrected to the Kaggle CLI's regex syntax. All operational evidence is
+retained privately. None caused a model call or checkpoint download.
+
+## Separate one-call smoke route
+
+`scripts/smoke_kaggle173.py` is independent of production authorization and
+does not call its internal worker/factory/controller. A committed proof pin
+requires the actual CPU ZIP above, complete TRAIN and all three real checkpoint
+PASS results. Parent and direct child rederive ordinal0 from the original master;
+arbitrary images, model scopes, source drift, changed budgets and extra calls
+cannot be admitted by an `approved` flag. Exclusive per-model load reservations
+block repeat load/call in the same workspace, including after errors. External
+Kaggle history/terminal/quota checks enforce a single submitted smoke version;
+no global cross-VM exactly-once guarantee is claimed.
+
+The fixed smoke campaign/series namespace is `issue173-smoke-*`, never fresh171.
+Max1 image/model,3 calls total,1 load/model,3300s internal/3600s job. Technical
+resource budgets only: driver580.178.04 from PR174,13,000 MiB free on each physical
+T4,16 GiB available RAM,24 GiB scratch and1 GiB Output; 1 MiB physical/fsync probes
+on scratch/Output. These are not scientific O5 thresholds or full TRAIN release.
+Pinned new-VM interpreter/venv installation is necessary; the completed software
+preparation is not repeated. Qwen consumes the previously verified offline
+archive; no model weights or replacement datasets are downloaded.
+
+The Qwen smoke constructor explicitly admits the old verified flat layout and
+inherits the unchanged QwenBackend generation/decoder/parser/HNLO methods. Its
+own constructor identity/hash is recorded, not misrepresented as the previous
+constructor. The exact model public code, snapshot files, numerical settings,
+device map, max32/SDPA/C1 stay locked. Peers use unchanged CandidateBackend;
+MiniCPM installs only the already adopted resampler FP32 exception and remains
+label-only. No source lock is rewritten, path aliased or large weight copy made.
+
+Raw/native evidence is fsynced before strict parsing and HNLO; INVALID stays
+durable. HNLO failure preserves classification and stops further model work.
+Every failure/partial Output is retained with no automatic retry. A consumed
+call can never be retried under this scope. Final live smoke results will be
+appended here; checkpoint verification alone is not an inference PASS.
+
+```console
+python -B -m unittest discover -s tests -p test_kaggle173_smoke.py -v
+python -B -m scripts.build_kaggle173_verification --smoke --source-commit <exact40hex> --output notebooks/SafeShift_ISSUE173_SMOKE.ipynb
+```

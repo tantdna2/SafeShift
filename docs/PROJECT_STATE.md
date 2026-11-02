@@ -1,5 +1,32 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT — Issue #173 continuation: actual TRAIN/checkpoint bytes, 02/11/2026
+
+**RIGHTS VERIFIED FOR BOUNDED PRIVATE TRAIN SCOPE; TRAIN3763 AND ALL EIGHT
+CHECKPOINT SHARDS PASS; NATIVE SMOKE NOT YET RUN.** New session/worktree from
+verified main `33e9f3cc4daf00c37a31b2347c143444d6add0bb` (PR174 merged).
+[Owner continuation](https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922),
+one branch `verify/issue173-real-checkpoints`, one Draft PR, no merge.
+[Runbook and actual evidence](KAGGLE_CHECKPOINTS_173.md): original master SHA,
+all3763 original TRAIN JPG hashes/order/mapping,0 missing/changed/duplicate;
+Qwen4, InternVL2, MiniCPM2 shards with streamed size/SHA256, exact source/marker/
+index and bounded safetensors header/tensor checks on existing Kaggle Inputs.
+CPU notebook version1 COMPLETE; ZIP/sidecars/CRC/member hashes verified locally.
+No dataset/weights downloaded or copied; no GPU/model load/inference in that job.
+
+Public CC BY4.0 declaration rechecked at the exact original dataset revision,
+combined with historical rights evidence and Owner's current confirmation;
+no redundant blanket confirmation requested. Private projection/seal remains
+outside Git. PR174 pinned software evidence and offline Qwen archive are reused.
+Dedicated smoke preparation is separate from fresh171; cap1 image/model,3 calls
+total. Live smoke is still NOT_RUN at this source commit, never inferred from
+CPU/tensor or checkpoint PASS. Existing model/source/config/parser/HNLO locks,
+production fences and scientific decisions remain unchanged. O2–O6/full TRAIN,
+TEST, scientific selection/pooling and independent review/audit remain separate.
+
+The following PR174 section is preserved as the earlier snapshot; its outstanding
+TRAIN/checkpoint byte verification is superseded only by this bounded evidence.
+
 ## CURRENT — Issue #173: bounded live Kaggle verification, 02/11/2026
 
 **KAGGLE CONNECTED; THREE PINNED SOFTWARE/PROCESSOR AND CUDA TENSOR CHECKS PASS;
