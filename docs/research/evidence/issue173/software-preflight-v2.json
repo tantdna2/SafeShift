@@ -1,0 +1,1877 @@
+{
+  "schema": "issue173-software-summary-v2",
+  "kaggle_version": 2,
+  "kaggle_status": "OUTPUT_AVAILABLE_TERMINAL_STATUS_PENDING",
+  "submitted_notebook_sha256": "d3403f046e1c539b5ec578217f0040259cf56062968027d3730029d40b5b6724",
+  "archive_sha256": "2bb89b3dca1ac8e9c2142bd31364da0e80cca6acd0a1892a98574e1708195cad",
+  "archive_members_verified": 118,
+  "result": {
+    "inputs_attached": false,
+    "model_calls": 0,
+    "models": {
+      "internvl35": {
+        "model_calls": 0,
+        "stage": "complete",
+        "status": "CPU_SOFTWARE_AND_PINNED_GPU_TENSOR_PASS",
+        "weights_loaded": false
+      },
+      "minicpm4": {
+        "model_calls": 0,
+        "stage": "complete",
+        "status": "CPU_SOFTWARE_AND_PINNED_GPU_TENSOR_PASS",
+        "weights_loaded": false
+      },
+      "qwen3": {
+        "model_calls": 0,
+        "stage": "complete",
+        "status": "CPU_SOFTWARE_AND_PINNED_GPU_TENSOR_PASS",
+        "weights_loaded": false
+      }
+    },
+    "production_authorized": false,
+    "run_id": "issue173-software-6328d25993f4430190d351cd86deb19e",
+    "source_commit": "e192fea82c02061dc6dbd1ae0f7ca59b9f1ae2f1",
+    "source_sha256": "7282c5c6e0f8b771b71ea3d0d4d5bd6f88815bdf6155b17c18767ddeea8079c6",
+    "weights_loaded": false
+  },
+  "models": {
+    "qwen3": {
+      "stages": {
+        "setup": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 396.348190727,
+          "status": "EXITED"
+        },
+        "cpu": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 7.889424319999989,
+          "status": "EXITED"
+        },
+        "gpu": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 5.652926566000019,
+          "status": "EXITED"
+        }
+      },
+      "versions": {
+        "accelerate": "1.11.0",
+        "certifi": "2026.10.23",
+        "charset-normalizer": "3.5.2",
+        "cuda-bindings": "12.9.4",
+        "cuda-pathfinder": "1.8.5",
+        "filelock": "4.2.6",
+        "fsspec": "2026.9.0",
+        "hf-xet": "1.8.0",
+        "huggingface-hub": "0.36.0",
+        "idna": "3.20",
+        "jinja2": "3.1.6",
+        "markupsafe": "3.0.4",
+        "mpmath": "1.3.0",
+        "networkx": "3.7",
+        "numpy": "1.26.4",
+        "nvidia-cublas-cu12": "12.8.4.1",
+        "nvidia-cuda-cupti-cu12": "12.8.90",
+        "nvidia-cuda-nvrtc-cu12": "12.8.93",
+        "nvidia-cuda-runtime-cu12": "12.8.90",
+        "nvidia-cudnn-cu12": "9.10.2.21",
+        "nvidia-cufft-cu12": "11.3.3.83",
+        "nvidia-cufile-cu12": "1.13.1.3",
+        "nvidia-curand-cu12": "10.3.9.90",
+        "nvidia-cusolver-cu12": "11.7.3.90",
+        "nvidia-cusparse-cu12": "12.5.8.93",
+        "nvidia-cusparselt-cu12": "0.7.1",
+        "nvidia-nccl-cu12": "2.27.5",
+        "nvidia-nvjitlink-cu12": "12.8.93",
+        "nvidia-nvshmem-cu12": "3.4.5",
+        "nvidia-nvtx-cu12": "12.8.90",
+        "packaging": "26.3",
+        "pillow": "11.3.0",
+        "pip": "25.0.1",
+        "psutil": "7.2.2",
+        "pyyaml": "6.0.3",
+        "regex": "2026.9.29",
+        "requests": "2.34.2",
+        "safetensors": "0.6.2",
+        "setuptools": "84.2.1",
+        "sympy": "1.14.0",
+        "tokenizers": "0.22.2",
+        "torch": "2.10.0+cu128",
+        "torchvision": "0.25.0+cu128",
+        "tqdm": "4.70.1",
+        "transformers": "4.57.1",
+        "triton": "3.6.0",
+        "typing-extensions": "4.16.0",
+        "urllib3": "2.8.0"
+      },
+      "compiled_cpu_nms": "PASS",
+      "runtime_identity": {
+        "python": "3.12.13 (main, Nov  2 2026, 13:26:13) [GCC 13.3.0]",
+        "implementation": "CPython",
+        "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "foreign_site_packages": [],
+        "mismatched_python_paths": [],
+        "user_site_enabled": false
+      },
+      "gpu": {
+        "cuda": "12.8",
+        "gpus": [
+          {
+            "index": 0,
+            "memory_bytes": [
+              15473639424,
+              15636037632
+            ],
+            "name": "Tesla T4"
+          },
+          {
+            "index": 1,
+            "memory_bytes": [
+              15473639424,
+              15636037632
+            ],
+            "name": "Tesla T4"
+          }
+        ],
+        "model_calls": 0,
+        "model_fit": "NOT_VERIFIED",
+        "status": "PINNED_WORKER_TENSOR_PASS",
+        "weights_loaded": false
+      },
+      "tokenizer_t1": {
+        "bare_label_ids": {
+          "Level01": [
+            4449,
+            15,
+            16
+          ],
+          "Level02": [
+            4449,
+            15,
+            17
+          ],
+          "Level03": [
+            4449,
+            15,
+            18
+          ],
+          "Level04": [
+            4449,
+            15,
+            19
+          ]
+        },
+        "candidate_token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "checks": [
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level01",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              16,
+              9207
+            ],
+            "step": 7,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\":\"Level01\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level02",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              17,
+              9207
+            ],
+            "step": 7,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\":\"Level02\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level03",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              18,
+              9207
+            ],
+            "step": 7,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\":\"Level03\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level04",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              19,
+              9207
+            ],
+            "step": 7,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\":\"Level04\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level01",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              16,
+              16707
+            ],
+            "step": 7,
+            "suffix_ids": [
+              16707
+            ],
+            "text": " {\"safety_level\":\"Level01\"}\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level02",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              17,
+              16707
+            ],
+            "step": 7,
+            "suffix_ids": [
+              16707
+            ],
+            "text": " {\"safety_level\":\"Level02\"}\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level03",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              18,
+              16707
+            ],
+            "step": 7,
+            "suffix_ids": [
+              16707
+            ],
+            "text": " {\"safety_level\":\"Level03\"}\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level04",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              5212,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              19,
+              16707
+            ],
+            "step": 7,
+            "suffix_ids": [
+              16707
+            ],
+            "text": " {\"safety_level\":\"Level04\"}\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level01",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15,
+              16,
+              9207
+            ],
+            "step": 8,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\": \"Level01\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level02",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15,
+              17,
+              9207
+            ],
+            "step": 8,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\": \"Level02\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level03",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15,
+              18,
+              9207
+            ],
+            "step": 8,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\": \"Level03\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level04",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              4913,
+              82,
+              38618,
+              8274,
+              788,
+              330,
+              4449,
+              15,
+              19,
+              9207
+            ],
+            "step": 8,
+            "suffix_ids": [
+              9207
+            ],
+            "text": "{\"safety_level\": \"Level04\"}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level01",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              16,
+              698,
+              92
+            ],
+            "step": 9,
+            "suffix_ids": [
+              698,
+              92
+            ],
+            "text": "{\n  \"safety_level\":\"Level01\"\n}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level02",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              17,
+              698,
+              92
+            ],
+            "step": 9,
+            "suffix_ids": [
+              698,
+              92
+            ],
+            "text": "{\n  \"safety_level\":\"Level02\"\n}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level03",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              18,
+              698,
+              92
+            ],
+            "step": 9,
+            "suffix_ids": [
+              698,
+              92
+            ],
+            "text": "{\n  \"safety_level\":\"Level03\"\n}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": false,
+            "generated_label": "Level04",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              515,
+              220,
+              330,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              19,
+              698,
+              92
+            ],
+            "step": 9,
+            "suffix_ids": [
+              698,
+              92
+            ],
+            "text": "{\n  \"safety_level\":\"Level04\"\n}",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level01",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              16,
+              16707,
+              73594
+            ],
+            "step": 10,
+            "suffix_ids": [
+              16707,
+              73594
+            ],
+            "text": "```json\n{\"safety_level\":\"Level01\"}\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level02",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              17,
+              16707,
+              73594
+            ],
+            "step": 10,
+            "suffix_ids": [
+              16707,
+              73594
+            ],
+            "text": "```json\n{\"safety_level\":\"Level02\"}\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level03",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              18,
+              16707,
+              73594
+            ],
+            "step": 10,
+            "suffix_ids": [
+              16707,
+              73594
+            ],
+            "text": "```json\n{\"safety_level\":\"Level03\"}\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level04",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              19,
+              16707,
+              73594
+            ],
+            "step": 10,
+            "suffix_ids": [
+              16707,
+              73594
+            ],
+            "text": "```json\n{\"safety_level\":\"Level04\"}\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level01",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              16,
+              1,
+              1771,
+              73594
+            ],
+            "step": 9,
+            "suffix_ids": [
+              1,
+              1771,
+              73594
+            ],
+            "text": "```\r\n{\"safety_level\":\"Level01\"}\r\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level02",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              17,
+              1,
+              1771,
+              73594
+            ],
+            "step": 9,
+            "suffix_ids": [
+              1,
+              1771,
+              73594
+            ],
+            "text": "```\r\n{\"safety_level\":\"Level02\"}\r\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level03",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              18,
+              1,
+              1771,
+              73594
+            ],
+            "step": 9,
+            "suffix_ids": [
+              1,
+              1771,
+              73594
+            ],
+            "text": "```\r\n{\"safety_level\":\"Level03\"}\r\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level04",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15
+            ],
+            "response_ids": [
+              73594,
+              319,
+              4913,
+              82,
+              38618,
+              8274,
+              3252,
+              4449,
+              15,
+              19,
+              1,
+              1771,
+              73594
+            ],
+            "step": 9,
+            "suffix_ids": [
+              1,
+              1771,
+              73594
+            ],
+            "text": "```\r\n{\"safety_level\":\"Level04\"}\r\n```",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level01",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15,
+              16,
+              16707,
+              13874,
+              3989
+            ],
+            "step": 13,
+            "suffix_ids": [
+              16707,
+              13874,
+              3989
+            ],
+            "text": "\t```json\n{\"safety_level\" : \"Level01\"}\n```\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level02",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15,
+              17,
+              16707,
+              13874,
+              3989
+            ],
+            "step": 13,
+            "suffix_ids": [
+              16707,
+              13874,
+              3989
+            ],
+            "text": "\t```json\n{\"safety_level\" : \"Level02\"}\n```\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level03",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15,
+              18,
+              16707,
+              13874,
+              3989
+            ],
+            "step": 13,
+            "suffix_ids": [
+              16707,
+              13874,
+              3989
+            ],
+            "text": "\t```json\n{\"safety_level\" : \"Level03\"}\n```\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "format_wrapper_detected": true,
+            "generated_label": "Level04",
+            "parser_version": "p21-strict-classification-v1",
+            "prefix_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15
+            ],
+            "response_ids": [
+              197,
+              73594,
+              2236,
+              198,
+              4913,
+              82,
+              38618,
+              8274,
+              1,
+              549,
+              330,
+              4449,
+              15,
+              19,
+              16707,
+              13874,
+              3989
+            ],
+            "step": 13,
+            "suffix_ids": [
+              16707,
+              13874,
+              3989
+            ],
+            "text": "\t```json\n{\"safety_level\" : \"Level04\"}\n```\n",
+            "token_ids": [
+              16,
+              17,
+              18,
+              19
+            ]
+          }
+        ]
+      },
+      "shapes": {
+        "attention_mask": [
+          1,
+          745
+        ],
+        "image_grid_thw": [
+          1,
+          3
+        ],
+        "input_ids": [
+          1,
+          745
+        ],
+        "pixel_values": [
+          784,
+          1536
+        ]
+      },
+      "transformers_sources": {
+        "generation/logits_process.py": "6481506629ff6f021157e893fc64c4e7b5b06a72072771809d679387cb54a4b1",
+        "generation/utils.py": "a20024b1e82ed5361a524d238d2197be5407abc91297dd9888c57e8284d63fef",
+        "models/qwen2/tokenization_qwen2_fast.py": "1025a3b86526283bd86a447f0fe2d991d09775b32d3fdcc233c9e447b0611049",
+        "models/qwen2_vl/image_processing_qwen2_vl.py": "7820a0fcca107e75605e08d9b774285ca2b0316f857bc0225c779794705ecf4f",
+        "models/qwen2_vl/image_processing_qwen2_vl_fast.py": "09bfa9b17df7c3f0c6159bc34008ee50f21d2472cd5bae7e5c21ba1ca13a423c",
+        "models/qwen3_vl/configuration_qwen3_vl.py": "177fd0a4dc1b08307c08ca72cf26b8d7dc028ab6ab5975bf650fc14ab8132a83",
+        "models/qwen3_vl/modeling_qwen3_vl.py": "dd63ed3b124232735b3dca1bfa28f9d6b0d3f7182afcb75dde8f3e724b2b22da",
+        "models/qwen3_vl/processing_qwen3_vl.py": "efd8d64aaf608aad1ffb3e6d503d6a99e5227d007df95c1d9fa905d998cda4a9",
+        "tokenization_utils_fast.py": "558e454ee6850e90e8bc5d1782e35878dfda1da9bfdf997ae113fa7ff771a0f3"
+      },
+      "software_seal": {
+        "marker_sha256": "f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc",
+        "runtime_lock_sha256": "83539f68b589cda7bcc097264cca37d087e41996d313ba0c9c53055d98e15bad",
+        "software_input_scope": "PUBLIC_SOFTWARE_ONLY",
+        "target": "cp312_linux_x86_64",
+        "wheel_bytes": 4187933878
+      },
+      "software_archive": {
+        "scope": "PUBLIC_OFFLINE_SOFTWARE_NO_WEIGHTS",
+        "sha256": "b068aeb381cb3cff2b0978e7b5a398e009cb44dc4a43e6410083a766a252308f",
+        "size": 4209365519,
+        "software_marker_sha256": "f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc"
+      },
+      "pip_check": "No broken requirements found."
+    },
+    "internvl35": {
+      "stages": {
+        "setup": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 153.85270174900006,
+          "status": "EXITED"
+        },
+        "cpu": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 50365,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 9.24120842100001,
+          "status": "EXITED"
+        },
+        "gpu": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 5.654495572000087,
+          "status": "EXITED"
+        }
+      },
+      "versions": {
+        "Jinja2": "3.1.6",
+        "MarkupSafe": "3.0.2",
+        "Pillow": "10.4.0",
+        "PyYAML": "6.0.2",
+        "accelerate": "1.6.0",
+        "certifi": "2025.1.31",
+        "charset-normalizer": "3.4.1",
+        "filelock": "3.18.0",
+        "fsspec": "2025.3.2",
+        "hf-xet": "1.1.8",
+        "huggingface-hub": "0.34.4",
+        "idna": "3.10",
+        "mpmath": "1.3.0",
+        "networkx": "3.4.2",
+        "numpy": "1.26.4",
+        "nvidia-cublas-cu12": "12.4.5.8",
+        "nvidia-cuda-cupti-cu12": "12.4.127",
+        "nvidia-cuda-nvrtc-cu12": "12.4.127",
+        "nvidia-cuda-runtime-cu12": "12.4.127",
+        "nvidia-cudnn-cu12": "9.1.0.70",
+        "nvidia-cufft-cu12": "11.2.1.3",
+        "nvidia-curand-cu12": "10.3.5.147",
+        "nvidia-cusolver-cu12": "11.6.1.9",
+        "nvidia-cusparse-cu12": "12.3.1.170",
+        "nvidia-cusparselt-cu12": "0.6.2",
+        "nvidia-nccl-cu12": "2.21.5",
+        "nvidia-nvjitlink-cu12": "12.4.127",
+        "nvidia-nvtx-cu12": "12.4.127",
+        "packaging": "24.2",
+        "pip": "24.0",
+        "protobuf": "5.29.4",
+        "psutil": "7.0.0",
+        "regex": "2024.11.6",
+        "requests": "2.32.3",
+        "safetensors": "0.5.3",
+        "sentencepiece": "0.2.0",
+        "setuptools": "65.5.0",
+        "sympy": "1.13.1",
+        "tokenizers": "0.21.4",
+        "torch": "2.6.0+cu124",
+        "torchvision": "0.21.0+cu124",
+        "tqdm": "4.67.1",
+        "transformers": "4.55.4",
+        "triton": "3.2.0",
+        "typing_extensions": "4.13.2",
+        "urllib3": "2.4.0"
+      },
+      "compiled_cpu_nms": "PASS",
+      "runtime_identity": {
+        "python": "3.11.9 (main, Jul 25 2024, 22:42:09) [Clang 18.1.8 ]",
+        "implementation": "CPython",
+        "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "foreign_site_packages": [],
+        "mismatched_python_paths": [],
+        "user_site_enabled": false
+      },
+      "gpu": {
+        "cuda": "12.4",
+        "gpus": [
+          {
+            "index": 0,
+            "memory_bytes": [
+              15473639424,
+              15636037632
+            ],
+            "name": "Tesla T4"
+          }
+        ],
+        "model_calls": 0,
+        "model_fit": "NOT_VERIFIED",
+        "status": "PINNED_WORKER_TENSOR_PASS",
+        "weights_loaded": false
+      },
+      "synthetic_shapes_tested": 8,
+      "meta_loader": {
+        "buffer_devices": {
+          "model.language_model.rotary_emb.inv_freq": "meta"
+        },
+        "layers": {
+          "text.0": "Qwen3Attention",
+          "text.1": "Qwen3Attention",
+          "text.10": "Qwen3Attention",
+          "text.11": "Qwen3Attention",
+          "text.12": "Qwen3Attention",
+          "text.13": "Qwen3Attention",
+          "text.14": "Qwen3Attention",
+          "text.15": "Qwen3Attention",
+          "text.16": "Qwen3Attention",
+          "text.17": "Qwen3Attention",
+          "text.18": "Qwen3Attention",
+          "text.19": "Qwen3Attention",
+          "text.2": "Qwen3Attention",
+          "text.20": "Qwen3Attention",
+          "text.21": "Qwen3Attention",
+          "text.22": "Qwen3Attention",
+          "text.23": "Qwen3Attention",
+          "text.24": "Qwen3Attention",
+          "text.25": "Qwen3Attention",
+          "text.26": "Qwen3Attention",
+          "text.27": "Qwen3Attention",
+          "text.28": "Qwen3Attention",
+          "text.29": "Qwen3Attention",
+          "text.3": "Qwen3Attention",
+          "text.30": "Qwen3Attention",
+          "text.31": "Qwen3Attention",
+          "text.32": "Qwen3Attention",
+          "text.33": "Qwen3Attention",
+          "text.34": "Qwen3Attention",
+          "text.35": "Qwen3Attention",
+          "text.4": "Qwen3Attention",
+          "text.5": "Qwen3Attention",
+          "text.6": "Qwen3Attention",
+          "text.7": "Qwen3Attention",
+          "text.8": "Qwen3Attention",
+          "text.9": "Qwen3Attention",
+          "vision.0": "InternVLVisionAttention",
+          "vision.1": "InternVLVisionAttention",
+          "vision.10": "InternVLVisionAttention",
+          "vision.11": "InternVLVisionAttention",
+          "vision.12": "InternVLVisionAttention",
+          "vision.13": "InternVLVisionAttention",
+          "vision.14": "InternVLVisionAttention",
+          "vision.15": "InternVLVisionAttention",
+          "vision.16": "InternVLVisionAttention",
+          "vision.17": "InternVLVisionAttention",
+          "vision.18": "InternVLVisionAttention",
+          "vision.19": "InternVLVisionAttention",
+          "vision.2": "InternVLVisionAttention",
+          "vision.20": "InternVLVisionAttention",
+          "vision.21": "InternVLVisionAttention",
+          "vision.22": "InternVLVisionAttention",
+          "vision.23": "InternVLVisionAttention",
+          "vision.3": "InternVLVisionAttention",
+          "vision.4": "InternVLVisionAttention",
+          "vision.5": "InternVLVisionAttention",
+          "vision.6": "InternVLVisionAttention",
+          "vision.7": "InternVLVisionAttention",
+          "vision.8": "InternVLVisionAttention",
+          "vision.9": "InternVLVisionAttention"
+        },
+        "parameters": 4732489216,
+        "scope": "EMPTY_STATE_META_LOADER_NOT_WEIGHTS_OR_INFERENCE",
+        "status": "EAGER_MODULES_VERIFIED"
+      },
+      "numerical_implementation": null
+    },
+    "minicpm4": {
+      "stages": {
+        "setup": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 165.01621964100002,
+          "status": "EXITED"
+        },
+        "cpu": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 33998,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 6.956025033999936,
+          "status": "EXITED"
+        },
+        "gpu": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 5.197284703999912,
+          "status": "EXITED"
+        }
+      },
+      "versions": {
+        "Jinja2": "3.1.6",
+        "MarkupSafe": "3.0.2",
+        "Pillow": "10.4.0",
+        "PyYAML": "6.0.2",
+        "accelerate": "1.6.0",
+        "certifi": "2025.1.31",
+        "charset-normalizer": "3.4.1",
+        "filelock": "3.18.0",
+        "fsspec": "2025.3.2",
+        "huggingface-hub": "0.30.2",
+        "idna": "3.10",
+        "mpmath": "1.3.0",
+        "networkx": "3.4.2",
+        "numpy": "1.26.4",
+        "nvidia-cublas-cu12": "12.4.5.8",
+        "nvidia-cuda-cupti-cu12": "12.4.127",
+        "nvidia-cuda-nvrtc-cu12": "12.4.127",
+        "nvidia-cuda-runtime-cu12": "12.4.127",
+        "nvidia-cudnn-cu12": "9.1.0.70",
+        "nvidia-cufft-cu12": "11.2.1.3",
+        "nvidia-curand-cu12": "10.3.5.147",
+        "nvidia-cusolver-cu12": "11.6.1.9",
+        "nvidia-cusparse-cu12": "12.3.1.170",
+        "nvidia-cusparselt-cu12": "0.6.2",
+        "nvidia-nccl-cu12": "2.21.5",
+        "nvidia-nvjitlink-cu12": "12.4.127",
+        "nvidia-nvtx-cu12": "12.4.127",
+        "packaging": "24.2",
+        "pip": "24.0",
+        "protobuf": "5.29.4",
+        "psutil": "7.0.0",
+        "regex": "2024.11.6",
+        "requests": "2.32.3",
+        "safetensors": "0.5.3",
+        "sentencepiece": "0.2.0",
+        "setuptools": "65.5.0",
+        "sympy": "1.13.1",
+        "tokenizers": "0.21.1",
+        "torch": "2.6.0+cu124",
+        "torchvision": "0.21.0+cu124",
+        "tqdm": "4.67.1",
+        "transformers": "4.51.3",
+        "triton": "3.2.0",
+        "typing_extensions": "4.13.2",
+        "urllib3": "2.4.0"
+      },
+      "compiled_cpu_nms": "PASS",
+      "runtime_identity": {
+        "python": "3.11.9 (main, Jul 25 2024, 22:42:09) [Clang 18.1.8 ]",
+        "implementation": "CPython",
+        "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "foreign_site_packages": [],
+        "mismatched_python_paths": [],
+        "user_site_enabled": false
+      },
+      "gpu": {
+        "cuda": "12.4",
+        "gpus": [
+          {
+            "index": 0,
+            "memory_bytes": [
+              15473639424,
+              15636037632
+            ],
+            "name": "Tesla T4"
+          }
+        ],
+        "model_calls": 0,
+        "model_fit": "NOT_VERIFIED",
+        "status": "PINNED_WORKER_TENSOR_PASS",
+        "weights_loaded": false
+      },
+      "synthetic_shapes_tested": 8,
+      "meta_loader": {
+        "buffer_devices": {
+          "llm.model.rotary_emb.inv_freq": "meta",
+          "resampler.pos_embed": "cpu"
+        },
+        "layers": {
+          "text.0": "LlamaAttention",
+          "text.1": "LlamaAttention",
+          "text.10": "LlamaAttention",
+          "text.11": "LlamaAttention",
+          "text.12": "LlamaAttention",
+          "text.13": "LlamaAttention",
+          "text.14": "LlamaAttention",
+          "text.15": "LlamaAttention",
+          "text.16": "LlamaAttention",
+          "text.17": "LlamaAttention",
+          "text.18": "LlamaAttention",
+          "text.19": "LlamaAttention",
+          "text.2": "LlamaAttention",
+          "text.20": "LlamaAttention",
+          "text.21": "LlamaAttention",
+          "text.22": "LlamaAttention",
+          "text.23": "LlamaAttention",
+          "text.24": "LlamaAttention",
+          "text.25": "LlamaAttention",
+          "text.26": "LlamaAttention",
+          "text.27": "LlamaAttention",
+          "text.28": "LlamaAttention",
+          "text.29": "LlamaAttention",
+          "text.3": "LlamaAttention",
+          "text.30": "LlamaAttention",
+          "text.31": "LlamaAttention",
+          "text.4": "LlamaAttention",
+          "text.5": "LlamaAttention",
+          "text.6": "LlamaAttention",
+          "text.7": "LlamaAttention",
+          "text.8": "LlamaAttention",
+          "text.9": "LlamaAttention",
+          "vision.0": "SiglipAttention",
+          "vision.1": "SiglipAttention",
+          "vision.10": "SiglipAttention",
+          "vision.11": "SiglipAttention",
+          "vision.12": "SiglipAttention",
+          "vision.13": "SiglipAttention",
+          "vision.14": "SiglipAttention",
+          "vision.15": "SiglipAttention",
+          "vision.16": "SiglipAttention",
+          "vision.17": "SiglipAttention",
+          "vision.18": "SiglipAttention",
+          "vision.19": "SiglipAttention",
+          "vision.2": "SiglipAttention",
+          "vision.20": "SiglipAttention",
+          "vision.21": "SiglipAttention",
+          "vision.22": "SiglipAttention",
+          "vision.23": "SiglipAttention",
+          "vision.24": "SiglipAttention",
+          "vision.25": "SiglipAttention",
+          "vision.26": "SiglipAttention",
+          "vision.3": "SiglipAttention",
+          "vision.4": "SiglipAttention",
+          "vision.5": "SiglipAttention",
+          "vision.6": "SiglipAttention",
+          "vision.7": "SiglipAttention",
+          "vision.8": "SiglipAttention",
+          "vision.9": "SiglipAttention"
+        },
+        "parameters": 4059533040,
+        "scope": "EMPTY_STATE_META_LOADER_NOT_WEIGHTS_OR_INFERENCE",
+        "status": "EAGER_MODULES_VERIFIED"
+      },
+      "numerical_implementation": {
+        "all_parameter_dtypes": [
+          "float16"
+        ],
+        "derived_method_sha256": "0148cd749fb87e5b1549ab99c8177d4a7e31a836274fe2432a4e1036ebb67965",
+        "descriptor": {
+          "attention": "eager",
+          "authority": "docs/research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception",
+          "expression_replacements": [
+            [
+              "torch.baddbmm(attn_mask, q_scaled, k.transpose(-2, -1))",
+              "_safeshift_scores(self, q_scaled, k, attn_mask)"
+            ],
+            [
+              "torch.bmm(q_scaled, k.transpose(-2, -1))",
+              "_safeshift_scores(self, q_scaled, k, None)"
+            ],
+            [
+              "softmax(attn_output_weights, dim=-1)",
+              "_safeshift_probabilities(self, attn_output_weights)"
+            ],
+            [
+              "torch.bmm(attn_output_weights, v)",
+              "_safeshift_values(self, attn_output_weights, v, q.dtype)"
+            ]
+          ],
+          "history_policy": "NEW_ISOLATED_SMOKE_SERIES_NO_IMPORT_NO_POOLING",
+          "id": "minicpm4-resampler-attention-fp32-v1",
+          "implementation_file": "safeshift/candidates/minicpm_resampler_fp32.py",
+          "implementation_file_sha256": "d467037d41b2e5c133a9532c12987f11b624531662a733713e67089631330bf5",
+          "implementation_sha256": "2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da",
+          "original_resampler_sha256": "6f4f91977fd409b15fe7d2e7ab2ee3f88b544e71a1209026a937eece6c6c582e",
+          "return_boundary": "native q.dtype before out_proj",
+          "scope": "TECHNICAL_TRIAL_ONLY_NOT_SCIENTIFIC_BASELINE",
+          "score_dtype": "float32",
+          "softmax_dtype": "float32",
+          "value_product_dtype": "float32",
+          "weights_dtype": "float16"
+        },
+        "native_attention_verification": {
+          "layers": {
+            "text.0": "LlamaAttention",
+            "text.1": "LlamaAttention",
+            "text.10": "LlamaAttention",
+            "text.11": "LlamaAttention",
+            "text.12": "LlamaAttention",
+            "text.13": "LlamaAttention",
+            "text.14": "LlamaAttention",
+            "text.15": "LlamaAttention",
+            "text.16": "LlamaAttention",
+            "text.17": "LlamaAttention",
+            "text.18": "LlamaAttention",
+            "text.19": "LlamaAttention",
+            "text.2": "LlamaAttention",
+            "text.20": "LlamaAttention",
+            "text.21": "LlamaAttention",
+            "text.22": "LlamaAttention",
+            "text.23": "LlamaAttention",
+            "text.24": "LlamaAttention",
+            "text.25": "LlamaAttention",
+            "text.26": "LlamaAttention",
+            "text.27": "LlamaAttention",
+            "text.28": "LlamaAttention",
+            "text.29": "LlamaAttention",
+            "text.3": "LlamaAttention",
+            "text.30": "LlamaAttention",
+            "text.31": "LlamaAttention",
+            "text.4": "LlamaAttention",
+            "text.5": "LlamaAttention",
+            "text.6": "LlamaAttention",
+            "text.7": "LlamaAttention",
+            "text.8": "LlamaAttention",
+            "text.9": "LlamaAttention",
+            "vision.0": "SiglipAttention",
+            "vision.1": "SiglipAttention",
+            "vision.10": "SiglipAttention",
+            "vision.11": "SiglipAttention",
+            "vision.12": "SiglipAttention",
+            "vision.13": "SiglipAttention",
+            "vision.14": "SiglipAttention",
+            "vision.15": "SiglipAttention",
+            "vision.16": "SiglipAttention",
+            "vision.17": "SiglipAttention",
+            "vision.18": "SiglipAttention",
+            "vision.19": "SiglipAttention",
+            "vision.2": "SiglipAttention",
+            "vision.20": "SiglipAttention",
+            "vision.21": "SiglipAttention",
+            "vision.22": "SiglipAttention",
+            "vision.23": "SiglipAttention",
+            "vision.24": "SiglipAttention",
+            "vision.25": "SiglipAttention",
+            "vision.26": "SiglipAttention",
+            "vision.3": "SiglipAttention",
+            "vision.4": "SiglipAttention",
+            "vision.5": "SiglipAttention",
+            "vision.6": "SiglipAttention",
+            "vision.7": "SiglipAttention",
+            "vision.8": "SiglipAttention",
+            "vision.9": "SiglipAttention"
+          },
+          "status": "EAGER_MODULES_VERIFIED"
+        },
+        "native_method_sha256": "9fab26184eded69df6cb057e6722f57f600ed23a5edf2685d2247c7209fb07a3",
+        "parameter_count": 4059533040,
+        "parameter_identity_preserved": true
+      }
+    }
+  }
+}

@@ -2,17 +2,24 @@
 
 ## CURRENT — Issue #173: bounded live Kaggle verification, 02/11/2026
 
-**KAGGLE CONNECTED; LIVE ENVIRONMENT OBSERVED; SOFTWARE RETEST IN PROGRESS;
+**KAGGLE CONNECTED; THREE PINNED SOFTWARE/PROCESSOR AND CUDA TENSOR CHECKS PASS;
 SMOKE/FULL TRAIN BLOCKED.** [Issue173](https://github.com/tantdna2/SafeShift/issues/173),
 base `50d0c910319a6e93354a3d27887418aeb320709f`, branch
-`feat/issue173-kaggle-preflight`; one Draft PR, no merge.
+`feat/issue173-kaggle-preflight`; [Draft PR #174](https://github.com/tantdna2/SafeShift/pull/174), no merge.
 [Runbook and evidence](KAGGLE_PREFLIGHT_173.md) record the actual no-Input Kaggle
 environment run and first public-software preflight. InternVL3.5 and MiniCPM
 passed pinned CPU software/native processor/meta checks and isolated-worker
 CUDA FP16 tensor checks. Qwen built CPython3.12.13/zlib1.2.11 and resolved 48
 Linux dependencies, then stopped on an incomplete public download host list.
-The exact candidate URLs/versions/hashes are now sealed, the official hosts
-admitted with negative tests, and the same bounded preflight is being repeated.
+The exact candidate URLs/versions/hashes were sealed and the official hosts
+admitted with negative tests. Version 2 passed all three models' setup/CPU/GPU
+tensor stages on source `e192fea82c02061dc6dbd1ae0f7ca59b9f1ae2f1`:
+Qwen offline 48-wheel install, pip check, exact installed/source/native ABI and
+28/28 tokenizer cases with the actual processor PASS, CUDA12.8 on both T4s.
+Both peers passed again on isolated CPython3.11.9/cu124, eight synthetic shapes
+and GPU0 tensors. Verified evidence ZIP/SHA256 and the 4.21 GB public-software
+bundle seal are recorded; remote bundle publication/terminal status is still
+being checked. Linux CPU snapshot: 604 run, 563 PASS/41 SKIP; Issue173 focused8/8.
 
 These checks load no checkpoint or real image and perform no model inference:
 **0/3 calls consumed**. Existing model/config/source locks, strict C1, MiniCPM

@@ -29,8 +29,9 @@ attaches zero datasets/checkpoints. Model-specific checkpoint admission and
 smoke stay BLOCKED until those prerequisites are established. The three-call
 ceiling is unused. Production authorization remains unchanged.
 
-Final measurements, commands, tests and continuation conditions will be appended
-in this same branch/PR. No READY FOR OWNER or scientific PASS claim.
+Results and continuation conditions are recorded in this same
+[Draft PR #174](https://github.com/tantdna2/SafeShift/pull/174).
+No READY FOR OWNER or scientific PASS claim.
 
 ## Verified live observation
 
@@ -141,3 +142,88 @@ with package/path restrictions, preserves every artifact hash/version, rejects
 spoofed hosts/credentials/non-HTTPS paths, and exports the sealed offline bundle.
 No fallback package, source/hash relaxation, prompt/parser change or inference
 retry is involved. Version 1 FAIL and every Output remain intact.
+
+## CPU verification and preserved harness limits
+
+- Immutable Git export `e192fea82c02061dc6dbd1ae0f7ca59b9f1ae2f1` on WSL Linux:
+  **604 run, 563 PASS, 41 SKIP, 0 FAIL, 0 ERROR**. All five Linux process-group,
+  timeout/log-limit and parent-death tests executed. Native model opt-ins stayed
+  disabled. [Receipt](research/evidence/issue173/linux-cpu-e192fea.json).
+- Windows fresh-runtime suite at `bf6d599f95ab7715d376bf11a743462d928dde76`:
+  **55 run, 50 PASS, 5 SKIP**, no failures/errors. The skips are Linux supervision
+  tests, subsequently executed above. [Receipt](research/evidence/issue173/windows-fresh-bf6d599.json).
+- Issue173 final focused suite at `e485584`: **8/8 PASS**. Includes repeated
+  observation, failed allocation cleanup, immutable notebook refs, exact payload
+  compilation, wrong source hash/oversize downloads, official/spoofed wheel hosts
+  and setup-failure isolation with evidence ZIP and zero attempts/calls.
+
+The first Linux invocation failed before tests because Windows worktree `.git`
+contains a drive-letter path. A second invocation supplied explicit Linux
+`GIT_DIR`/`GIT_WORK_TREE` but was deliberately interrupted after roughly ten
+minutes on the slow Windows mount; it has no PASS receipt. Both histories/logs
+remain under ignored `data/processed/issue173/`. The completed run used an
+immutable `git archive` export in Linux `/tmp`, with Git object lookup mapped
+to the existing worktree. It did not modify the repository or import private data.
+No new branch or checkout was created for this export. Full CPU test success
+does not replace actual pinned software/GPU or data-rights admission.
+
+## Version 2: all pinned software/processor checks passed
+
+Executed source: `e192fea82c02061dc6dbd1ae0f7ca59b9f1ae2f1`, unchanged in later
+documentation/tests commits. The generated notebook bytes match the submitted
+version exactly. [Sanitized receipt](research/evidence/issue173/software-preflight-v2.json)
+and [complete wheel runtime lock](research/evidence/issue173/qwen-runtime-lock-v2.json)
+were derived from the verified evidence ZIP, not from log success messages.
+
+| Model | Setup | Native CPU | Isolated CUDA |
+| --- | --- | --- | --- |
+| Qwen3 | CPython3.12.13/zlib1.2.11 build; 48 hash-verified wheels; offline install and pip check; 396.35s | Complete version/source/ABI checks; real Qwen3VLProcessor, 28/28 tokenizer checks; synthetic 448x448; 7.89s | cu128, FP16 tensor matmul on both T4s; 5.65s |
+| InternVL3.5 | Exact existing CPython3.11.9/pins; 153.85s | Compiled ABI, eager meta-loader, eight synthetic shapes; 9.24s | cu124, GPU0 FP16 tensor; 5.65s |
+| MiniCPM-V-4 | Exact existing CPython3.11.9/pins; 165.02s | Compiled ABI, eager meta-loader and original FP32 resampler installation, eight synthetic shapes; 6.96s | cu124, GPU0 FP16 tensor; 5.20s |
+
+Qwen's output shapes were input_ids/attention_mask `[1,745]`, image_grid_thw
+`[1,3]`, pixel_values `[784,1536]` for the synthetic processor check.
+All nine pinned Transformers source files matched; no foreign site-packages or
+mismatched Python paths were present, user-site disabled. `pip check` reported
+no broken requirements. Installed distribution names/versions exactly equal the
+48-entry closed runtime lock; wheels total 4,187,933,878 bytes.
+
+Evidence ZIP: 118 checked members,
+SHA256 `2bb89b3dca1ac8e9c2142bd31364da0e80cca6acd0a1892a98574e1708195cad`.
+All member checksums/CRC and outer sidecar were verified locally.
+Public offline software archive: 4,209,365,519 bytes,
+SHA256 `b068aeb381cb3cff2b0978e7b5a398e009cb44dc4a43e6410083a766a252308f`;
+software marker SHA256 `f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc`;
+runtime lock canonical SHA256 `83539f68b589cda7bcc097264cca37d087e41996d313ba0c9c53055d98e15bad`.
+The large archive was sealed on Kaggle; local download/publication verification
+is tracked separately, because its sidecar can appear before the large object.
+
+These results qualify the measured software/processor/tensor paths only.
+No checkpoint hash/load, model forward/generation, real-image behavior,
+model memory fit, original TRAIN custody or scientific qualification was tested.
+Warnings from empty/meta model construction are retained in the private logs.
+No runtime pins, semantic functions, strict C1, FP32 numerical implementation
+or label-only policy changed to achieve these checks.
+
+## Remaining smoke prerequisites
+
+Owner's willingness and account-resource authorization are already recorded;
+they are not the missing approval. Before any of the conditional three calls:
+
+1. Establish the cloud-use rights and custodian-approved original TRAIN
+   master/projection/mapping seals required by Issue173. The current dossier
+   explicitly records fresh custody as NOT_VERIFIED; past160 access does not
+   supply that evidence. Do not infer rights from a mount name or use GT.
+2. Attach and verify the exact checkpoint/source/weights inventory and revision
+   for each model, with approved marker hashes, and the single TRAIN image's
+   original membership/order/hash. No checkpoint was read during these public
+   software checks, so model load and memory fit remain NOT_VERIFIED.
+3. Bind reviewed per-run resource limits and a separate smoke-only identity,
+   immutable reservation/raw-before-parse/export history and the global one-call
+   per-model/three-call ceiling. This PR has no smoke dispatch function; the
+   existing public production fence remains closed, and internal factories must
+   not be invoked to bypass it. Stop before any call when a prerequisite fails.
+
+Smoke outcomes are **NOT_ATTEMPTED**, not SUCCESS/INVALID/TECHNICAL_ERROR, since
+no model call began. No raw model output exists for these runs. No fresh171
+series, labels, metrics, model roster, TEST or full TRAIN authority is changed.
