@@ -89,8 +89,8 @@ def main():
         for diagnostic in (False, True):
             kind = "DIAGNOSTIC" if diagnostic else "PREP"
             value = notebook(key, args.runtime_ref, diagnostic=diagnostic)
-            (ROOT / f"notebooks/SafeShift_FRESH_FULLTRAIN_{kind}_{key}.ipynb").write_text(
-                json.dumps(value, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+            (ROOT / f"notebooks/SafeShift_FRESH_FULLTRAIN_{kind}_{key}.ipynb").write_bytes(
+                (json.dumps(value, indent=1, ensure_ascii=False) + "\n").encode("utf-8"))
 
 
 if __name__ == "__main__":

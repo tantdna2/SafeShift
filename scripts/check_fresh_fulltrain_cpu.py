@@ -33,12 +33,13 @@ def main():
     log = args.output / "unittest.log"
     with log.open("x", encoding="utf-8") as stream:
         result = unittest.TextTestRunner(stream=stream, verbosity=2).run(suite)
+    failed_tests = {getattr(t, "test_case", t).id() for t, _ in result.failures + result.errors}
     value = {"schema": "safeshift-fresh-cpu-receipt-v1", "source_commit": head,
         "source_manifest": source_manifest(), "command": command, "python": sys.version,
         "platform": platform.platform(), "dependencies": "stdlib; native opt-ins disabled",
         "randomness": "NONE", "tests_run": result.testsRun, "failures": len(result.failures),
         "errors": len(result.errors), "skipped": [{"test": str(t), "reason": r} for t, r in result.skipped],
-        "passed": result.testsRun - len(result.skipped) - len(result.failures) - len(result.errors),
+        "passed": result.testsRun - len(result.skipped) - len(failed_tests),
         "seconds": time.monotonic() - began, "status": "PASS" if result.wasSuccessful() else "FAIL",
         "log_sha256": hashlib.sha256(log.read_bytes()).hexdigest(), "scope": "CPU_SYNTHETIC_ONLY",
         "gpu_calls": 0, "real_inference": "NOT_RUN", "release": "BLOCKED"}
