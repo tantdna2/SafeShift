@@ -1,5 +1,19 @@
 # MiniCPM HNLO Method A — CPU synthetic engineering
 
+**Trạng thái hiện hành — 02/11/2026:** theo
+[quyết định Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211)
+và [đối chiếu ChatGPT](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6568226996),
+Owner đã dừng tìm HNLO cho MiniCPM-V-4. Cuộc điều tra kết thúc với kết quả âm:
+**HNLO hợp lệ theo Method A: 0/155**; MiniCPM giữ vai trò **label-only peer candidate
+cho Khóa luận**. **AUDIT_HOLD=NO**, đang chờ kiểm toán cuối;
+**MERGE_AUTHORIZED=NO** cho đến khi ChatGPT cấp quyền. O2/source selection và L1–L4
+vẫn pending; công thức và hợp đồng Method A giữ nguyên. Xem
+[trạng thái dự án hiện hành](PROJECT_STATE.md).
+
+## Snapshot trước quyết định dừng điều tra
+
+Phần dưới ghi trạng thái lịch sử; audit hold cũ đã được quyết định Owner trên thay thế.
+
 **Cập nhật Issue #165:** [kiểm chứng archive thật](MINICPM_SAVED_HNLO_165.md)
 bổ sung CPU read-only bridge, scope riêng, structural cache và independent
 negative proof. Điều tra tiếp nối: **HARD_BLOCKED_EXISTING_ARCHIVE, 0/155**;

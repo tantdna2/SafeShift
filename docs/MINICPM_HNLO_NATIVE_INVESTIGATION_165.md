@@ -1,5 +1,22 @@
 # Issue #165 — native token / retained logits investigation in PR #166
 
+**Current Owner disposition — 2026-11-02:** the Owner has ended further MiniCPM-V-4
+HNLO recovery work. The investigation is **concluded with a negative outcome:
+0/155 qualified HNLO under Method A**. MiniCPM remains a **label-only peer candidate
+for the thesis (Khóa luận)**; numeric HNLO acquisition was not achieved.
+**AUDIT_HOLD=NO; final independent audit pending; MERGE_AUTHORIZED=NO** until
+ChatGPT grants authority. O2/source selection and L1–L4 remain pending separately.
+Sources: [Owner decision](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211),
+[ChatGPT reconciliation request](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6568226996).
+The existing receipts, formula and original160 outcomes remain unchanged; see
+[current project state](PROJECT_STATE.md). The acquisition options below are
+historical analysis, not an active recovery plan or an authorization to execute it.
+
+## Historical investigation disposition before the Owner's closure decision
+
+The following audit-hold snapshot is preserved as history; the current Owner
+disposition above supersedes its hold and pre-audit waiting instructions.
+
 **HARD_BLOCKED_EXISTING_ARCHIVE. VALID_HNLO: 0/155.** Numeric HNLO acquisition
 is not complete. This supersedes the previous completion/audit handoff, pursuant
 to [Owner comment6561913353](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6561913353).

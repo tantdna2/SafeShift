@@ -1,5 +1,29 @@
 # SafeShift — PROJECT STATE
 
+## Issue #165 / Draft PR #166 — quyết định Owner hiện hành, 02/11/2026
+
+Theo [quyết định Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211)
+và [yêu cầu đối chiếu của ChatGPT](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6568226996),
+**Owner đã quyết định dừng tìm HNLO cho MiniCPM-V-4; cuộc điều tra đã kết thúc
+với kết quả âm theo Method A: 0/155 HNLO hợp lệ.** Giữ MiniCPM-V-4 làm
+**mô hình chỉ dùng nhãn (label-only peer candidate) cho Khóa luận**.
+Mục tiêu thu numeric HNLO không đạt; không tiếp tục ép tạo điểm hoặc đổi phương pháp.
+
+**AUDIT_HOLD=NO; INDEPENDENT_AUDIT_REQUESTED=YES; đang chờ kiểm toán cuối.**
+**MERGE_AUTHORIZED=NO** cho đến khi ChatGPT kiểm trực tiếp HEAD cuối và cấp quyền.
+Báo cáo audit trước còn phải đối chiếu theo comment6568226996; chưa ghi audit PASS.
+Antigravity cần kiểm lại phần thay đổi chỉ gồm tài liệu trong cùng phiên audit,
+gắn với code basis `0bc6535d3735484ade77ef54bfc93f9d2939c721` và custody đã có.
+
+O2/T4 exact-source selection và các gate L1–L4 vẫn chờ phê duyệt riêng; quyết định
+label-only không duyệt lựa chọn nguồn hoặc nâng trạng thái khoa học. Sau khi PR #166
+được audit, merge có phép và xác minh hậu merge mới tiếp tục kế hoạch Khóa luận hiện có.
+Giữ nguyên công thức HNLO, receipt, quyết định lịch sử và 160 kết quả gốc
+(155 SUCCESS/5 INVALID). Không thay mã nguồn hoặc chạy lại dữ liệu thật trong cập nhật này.
+
+Các mục dưới là **snapshot lịch sử trước quyết định Owner hiện hành**; những trường
+`AUDIT_HOLD=YES` và chỉ thị chờ trước audit trong đó đã được quyết định trên thay thế.
+
 ## Issue #165 / Draft PR #166 — điều tra tiếp nối, 02/11/2026
 
 **HARD_BLOCKED_EXISTING_ARCHIVE; VALID_HNLO=0/155; numeric goal chưa hoàn thành.**

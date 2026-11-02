@@ -1,5 +1,20 @@
 # Issue #165 — kiểm chứng HNLO từ official160 đã lưu
 
+**Trạng thái hiện hành — 02/11/2026:** Owner đã quyết định dừng tìm HNLO cho
+MiniCPM-V-4 và giữ mô hình làm **label-only peer candidate cho Khóa luận**.
+Cuộc điều tra kết thúc với kết quả âm: **HNLO hợp lệ theo Method A: 0/155**;
+mục tiêu thu numeric HNLO không đạt. **AUDIT_HOLD=NO**, đang chờ kiểm toán cuối;
+**MERGE_AUTHORIZED=NO** cho đến khi ChatGPT cấp quyền. O2/source selection và L1–L4
+vẫn pending. Nguồn: [quyết định Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211),
+[đối chiếu ChatGPT](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6568226996).
+Receipt, công thức HNLO và 160 kết quả gốc giữ nguyên;
+[PROJECT_STATE](PROJECT_STATE.md) ghi disposition hiện hành và yêu cầu audit cuối.
+
+## Snapshot kết luận kỹ thuật trước quyết định Owner
+
+Phần dưới giữ kết luận và trạng thái lịch sử; audit hold và bước chờ trước audit
+đã được quyết định Owner trên thay thế, không còn là trạng thái hiện hành.
+
 **HARD_BLOCKED_EXISTING_ARCHIVE — 0/155 HNLO hợp lệ theo Method A hiện hành.**
 Mục tiêu lấy numeric HNLO **chưa hoàn thành**. Theo
 [chỉ thị Owner tiếp nối](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6561913353),
