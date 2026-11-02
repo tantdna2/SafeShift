@@ -1,5 +1,7 @@
 """Synthetic no-dataset checks for the Issue173 observation/export boundary."""
 import json
+import io
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,6 +12,29 @@ from scripts import observe_kaggle173 as o
 
 
 class ObservationTests(unittest.TestCase):
+    def test_mutable_notebook_ref_rejected(self):
+        from scripts.build_kaggle173_notebook import build, build_software
+        for builder in (build, build_software):
+            with self.assertRaises(ValueError):
+                builder('HEAD')
+
+    def test_public_download_rejects_hash_and_size_preserves_bytes(self):
+        from scripts.prepare_qwen173_software import download
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            with patch('urllib.request.urlopen',return_value=io.BytesIO(b'synthetic')):
+                with self.assertRaisesRegex(ValueError,'HASH_MISMATCH'):
+                    download('https://example.invalid/source',root/'bad', 'a'*64)
+            self.assertEqual((root/'bad').read_bytes(),b'synthetic')
+            with patch('urllib.request.urlopen',return_value=io.BytesIO(b'12345')):
+                with self.assertRaisesRegex(ValueError,'SIZE_BOUND'):
+                    download('https://example.invalid/source',root/'large', 'a'*64,max_bytes=4)
+            self.assertTrue((root/'large').exists())
+            payload=b'synthetic'
+            with patch('urllib.request.urlopen',return_value=io.BytesIO(payload)):
+                row=download('https://example.invalid/source',root/'ok',hashlib.sha256(payload).hexdigest())
+            self.assertEqual(row['size'],len(payload))
+
     def test_repeat_and_failure_retained_without_gpu_or_model(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

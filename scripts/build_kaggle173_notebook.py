@@ -5,11 +5,14 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def build(ref):
+    if len(ref) != 40 or any(c not in '0123456789abcdef' for c in ref):
+        raise ValueError('EXACT_SOURCE_COMMIT_REQUIRED')
     name = 'scripts/observe_kaggle173.py'
     data = subprocess.check_output(['git', 'show', ref + ':' + name], cwd=ROOT)
     if data != (ROOT / name).read_bytes():
@@ -43,9 +46,60 @@ print(receipt)
              'outputs': [], 'source': code.splitlines(True)}]}
 
 
+def build_software(ref):
+    from safeshift.fulltrain.contract import sources
+    if len(ref) != 40 or any(c not in '0123456789abcdef' for c in ref):
+        raise ValueError('EXACT_SOURCE_COMMIT_REQUIRED')
+    names = sources(ROOT) + ['scripts/__init__.py', 'scripts/observe_kaggle173.py',
+        'scripts/prepare_qwen173_software.py', 'scripts/qualify_kaggle173_software.py']
+    payload = {}
+    for name in names:
+        data = subprocess.check_output(['git','show',ref+':'+name],cwd=ROOT)
+        if data != (ROOT/name).read_bytes():
+            raise ValueError('COMMITTED_SOURCE_BYTES_REQUIRED:'+name)
+        payload[name] = data.decode('utf-8')
+    encoded = json.dumps(payload,sort_keys=True).encode()
+    code = f'''import base64, hashlib, json, sys, uuid, zlib
+from pathlib import Path
+data = zlib.decompress(base64.b64decode({base64.b64encode(zlib.compress(encoded,9)).decode()!r}))
+assert hashlib.sha256(data).hexdigest() == {hashlib.sha256(encoded).hexdigest()!r}
+root = Path('/kaggle/temp') / ('issue173-public-code-' + uuid.uuid4().hex)
+root.mkdir(parents=True, exist_ok=False)
+for name, text in json.loads(data).items():
+    assert not name.startswith('/') and '..' not in Path(name).parts and ':' not in name
+    path = root / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('xb') as stream:
+        stream.write(text.encode('utf-8'))
+sys.path.insert(0, str(root))
+from scripts.qualify_kaggle173_software import launch
+print(launch('/kaggle/working', '/kaggle/temp', {ref!r}))
+'''
+    compile(code,'<software-notebook>','exec')
+    return {'nbformat':4,'nbformat_minor':5,'metadata':{
+        'kernelspec':{'display_name':'Python 3','language':'python','name':'python3'},
+        'safeshift':{'issue':173,'source_commit':ref,'payload_sha256':hashlib.sha256(encoded).hexdigest(),
+                    'model_calls':0,'inputs':[]}},'cells':[
+        {'cell_type':'markdown','id':'scope','metadata':{},'source':[
+            '# Issue173 public software preflight\n',
+            'Private; Internet ON; T4x2; attach NO Inputs. No dataset, weights or model inference.\n',
+            'Build exact CPython/zlib, resolve and seal public Qwen wheels on Linux cp312, ',
+            'install offline, then run pinned public processors with synthetic images and tiny CUDA tensors.\n',
+            'Peers retain their existing pinned software, strict C1, MiniCPM FP32 resampler and label-only policy.\n',
+            'Side effects: public downloads/builds/venvs in scratch, bounded logs/receipts/ZIP in Output. ',
+            'Up to 16 GiB Qwen wheels; GPU/job time ceiling 3600 seconds, child deadline 3300 seconds. ',
+            'Zero production slots/calls. No checkpoint/model-fit/scientific PASS.\n',
+            'Scratch software is retained for this VM only; download receipts and ZIP/SHA256. ',
+            'Every rerun has a unique directory and never resumes a model call.\n']},
+        {'cell_type':'code','id':'qualify','metadata':{},'execution_count':None,'outputs':[],
+         'source':code.splitlines(True)}]}
+
+
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--source-commit', required=True)
     p.add_argument('--output', required=True)
+    p.add_argument('--software', action='store_true')
     a = p.parse_args()
-    Path(a.output).write_text(json.dumps(build(a.source_commit), indent=1) + '\n', encoding='utf-8')
+    value = build_software(a.source_commit) if a.software else build(a.source_commit)
+    Path(a.output).write_text(json.dumps(value, indent=1) + '\n', encoding='utf-8')
