@@ -295,10 +295,16 @@ claims are not supplied by software tests; planned count is exactly3763/model.
 
 ## Reproduce and review
 
-[Exact CPU receipts, failures, rerun and source hashes](research/evidence/issue171/README.md)
+[Revised CPU receipts, full rerun and source hashes](research/evidence/issue171/review2/README.md)
 are included in this Draft. They establish preparation behavior only; the native
 and live release gaps above remain open. Do not close Issue171 as fully native
 qualified on the strength of these tests.
+
+The [first submission's evidence](research/evidence/issue171/README.md), including
+the original Linux FAIL receipt, remains unchanged apart from an appended link
+to the new record. The new full invocation uses the immutable code/notebook/test
+snapshot `a3264770138525d2d3e4acd760bd516df9f21d6c`; subsequent documentation and
+evidence do not change those tested bytes.
 
 From repository root, Python3.11+, no additional dependencies:
 

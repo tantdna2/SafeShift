@@ -111,3 +111,12 @@ load/inference/export remain NOT_VERIFIED or NOT_RUN. No approval, O5 value,
 scientific selection, new HNLO method or all-SUCCESS claim is supplied. MiniCPM
 remains label-only. ChatGPT review of final GitHub HEAD, independent Antigravity
 audit and separately authorized merge/release are still required. Stop at Draft.
+
+## Subsequent review correction
+
+The text and receipts above describe the original `542e4dd` submission and are
+retained as history. The [revised engineering evidence](review2/README.md)
+records the Qwen implementation, isolated provisioning/process supervision and
+new immutable full-suite validation requested by ChatGPT. Read that record for
+the current implementation and remaining release prerequisites; no old FAIL
+receipt has been overwritten or relabeled.

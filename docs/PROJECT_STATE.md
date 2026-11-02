@@ -2,7 +2,7 @@
 
 ## CURRENT - Issue #171: fresh full TRAIN, 02/11/2026
 
-**OWNER_FRESH_FULLTRAIN_ONLY; REVIEW CHANGES IN PROGRESS; LIVE RELEASE BLOCKED.**
+**OWNER_FRESH_FULLTRAIN_ONLY; REVISED CPU CHECKS PASS; LIVE RELEASE BLOCKED.**
 [Issue #171](https://github.com/tantdna2/SafeShift/issues/171), branch
 `feat/issue171-fresh-fulltrain`, BASE `1acb3ef7c0deadbbde7da0b1c63b71296e3950e5`.
 First commit: documents only. [Decision](research/DECISIONS.md#dec-20261102-owner-fresh-fulltrain-only)
@@ -27,18 +27,27 @@ and Linux process-group deadlines/parent-death control. All public routes remain
 fenced. Pinned-native/live execution is not verified. Original
 private3763 projection and image custody are NOT_VERIFIED. O2–O6/B1–B6/G0–G6
 are explicitly listed in the runbook. [Draft PR #172](https://github.com/tantdna2/SafeShift/pull/172)
-contains [CPU evidence and limits](research/evidence/issue171/README.md): Windows
-27/27 PASS; Linux full snapshot 569 tests, 527 PASS / 41 SKIP / 1 FAIL from the
-old whole-file thesis assertion. The corrected history-preservation module
-then passed 7/7 on an immutable snapshot; the full FAIL receipt is retained,
-not relabeled PASS. Runtime/notebook bytes are unchanged by that test correction.
-The six notebooks are non-consuming preparation/diagnostic artifacts, not
-production-ready notebooks. Qwen's closed cp312 wheelhouse/CPython-zlib build,
-all native ABI/processor/runtime checks, real custody/model-fit and release authority
-remain unverified. A post-fix immutable full Linux suite and refreshed Windows
-focused checks will be recorded before the revised handoff. No historical
-notebooks, parser/HNLO, source/checkpoint or science
-contracts were changed. No inference, GPU, TEST or private artifacts accessed.
+contains [revised CPU evidence and limits](research/evidence/issue171/review2/README.md).
+Full Linux and focused Windows checks both ran from immutable final source/
+notebook/test snapshot `a3264770138525d2d3e4acd760bd516df9f21d6c`:
+Linux 597 run, 556 PASS / 41 SKIP / 0 FAIL / 0 ERROR;
+Windows 55 run, 50 PASS / 5 SKIP / 0 FAIL / 0 ERROR.
+All five Linux process-control tests ran there; Windows skips them. Native
+opt-ins remain disabled and their skips explicit. Public Qwen tokenizer T1 is
+28/28 PASS on host CPU, not a target processor/runtime qualification.
+The [first submission's evidence](research/evidence/issue171/README.md), including
+the old Linux full FAIL and 7/7 targeted correction, remains intact. New receipts
+record a separate complete rerun, not a relabeling. Runtime payload is
+`70825d24ad4e18877321f7134f773e592e051ff8`; subsequent evidence/docs do not alter
+the tested code/notebooks. The six notebooks are non-consuming preparation/
+diagnostic artifacts, not production-ready notebooks. Qwen's complete sealed
+cp312 wheelhouse is not supplied; CPython/zlib build, pinned native ABI/processor
+checks, original private custody, actual Kaggle/model-fit/load/inference/export
+and release authority remain BLOCKED/NOT_VERIFIED for the reasons in the runbook.
+ChatGPT's review FAIL at `542e4dd` is historical; only fresh external review can
+change it. No Antigravity audit or merge permission is claimed. No historical
+notebooks, parser/HNLO, source/checkpoint or science contracts were changed.
+No inference, GPU, TEST or private artifacts accessed.
 
 
 ## CURRENT — Issue #169: hồ sơ nguồn full TRAIN, 02/11/2026
