@@ -88,6 +88,14 @@ class SmokeJournalTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'ALREADY_CONSUMED'):
                 smoke.worker('qwen3','native','unused',self.out,self.out)
 
+    def test_driver_exit12_is_preserved_and_remains_blocked(self):
+        error=subprocess.CalledProcessError(12,['nvidia-smi'],output='SYNTHETIC_STDOUT',stderr='SYNTHETIC_NVML_FAILURE')
+        with patch.object(smoke.environment,'hardware',side_effect=error),patch.object(smoke.ctypes.util,'find_library',return_value=None):
+            with self.assertRaises(subprocess.CalledProcessError): smoke.driver_check('internvl35',{},self.out,'worker')
+        receipt=read(self.out/'worker-driver-diagnostic.json')
+        self.assertEqual(receipt['status'],'BLOCKED'); self.assertEqual(receipt['returncode'],12)
+        self.assertEqual(receipt['stderr'],'SYNTHETIC_NVML_FAILURE')
+
     @unittest.skipUnless(sys.platform=='linux','real Linux process supervisor')
     def test_supervised_setup_does_not_collide_with_runtime_exclusive_log(self):
         code="from pathlib import Path; import sys; p=Path(sys.argv[1])/'setup.log'; p.open('x').write('SYNTHETIC_SETUP')"

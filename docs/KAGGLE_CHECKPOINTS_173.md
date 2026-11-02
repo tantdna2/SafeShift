@@ -252,3 +252,26 @@ The first v2 save request was rejected409 because the staging title still
 resolved to v1's slug. Inventory, unchanged v1/current-version1 and zero GPU
 reservation proved no v2 job was created. The corrected title/slug was submitted
 once, with identical source. Both intents/reconciliation remain private.
+
+## V3 driver gate and final bounded diagnostic continuation — 03/11/2026
+
+[V3 receipt](research/evidence/issue173/native-smoke-v3-blocked.json): source
+`5139775`, private `safeshift-issue173-native-smoke-v3/1`, kernel142332987,
+26 checked ZIP members, SHA256
+`4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5`.
+InternVL setup/log isolation, pinned software/ABI, image decode, storage probe
+and RAM checks passed. Native hardware observation then failed: nvidia-smi with
+the exact GPU index/name/free-memory/driver query returned12 before CUDA, a load
+reservation or inference. [NVIDIA's return-code definition](https://docs.nvidia.com/deploy/nvidia-smi/index.html)
+identifies12 as NVML library not found/loaded. It does not prove corrupt weights.
+The precise failing stdout/stderr was not captured in v3 and is unknown.
+MiniCPM was not attempted; total remains one Qwen call, zero peer calls/loads.
+
+V4 adds a no-model kernel driver observation and preserves command/exit/stdout/
+stderr plus bounded loader-path diagnostics in the actual pinned child. It
+keeps the same hardware/driver/CUDA/RAM gates and does not install drivers,
+change loader settings or treat Torch tensors as a replacement for NVML.
+It admits the sealed v3 zero-peer history as well as v1/v2. Only if real gates
+pass can the two remaining peer calls occur; Qwen remains blocked at dispatch.
+A persistent driver failure remains BLOCKED, not READY or a need for blanket
+Owner permission. No automatic/infinite retry is implemented.

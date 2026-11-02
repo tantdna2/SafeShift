@@ -1,6 +1,6 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Issue #173 continuation: actual TRAIN/checkpoint bytes, 02/11/2026
+## CURRENT — Issue #173 continuation: actual TRAIN/checkpoint bytes, updated03/11/2026
 
 **RIGHTS VERIFIED FOR BOUNDED PRIVATE TRAIN SCOPE; TRAIN3763 AND ALL EIGHT
 CHECKPOINT SHARDS PASS; QWEN ACTUAL INFERENCE PASS, 1/3 CALLS CONSUMED.** New session/worktree from
@@ -30,7 +30,11 @@ archive remains separate. InternVL hit an exclusive-log filename collision
 before load/call; MiniCPM was not attempted. The v3 correction uses distinct
 supervisor logs and admits both immutable histories: **Qwen cannot be reloaded
 or called**, only two peer calls remain. No scientific series/completion or
-predictions are inherited by this technical ledger.
+predictions are inherited by this technical ledger. V3 fixed the setup-log
+collision and passed peer software/RAM/storage, then nvidia-smi returned12
+(NVML not found/loaded) before CUDA/load/call. A bounded v4 diagnostic preserves
+kernel/worker driver evidence and can use only the two remaining peer calls
+if real gates pass. It does not bypass the driver check or reload Qwen.
 No inference PASS is inferred from CPU/tensor/checkpoint results. Existing model/source/config/parser/HNLO locks,
 production fences and scientific decisions remain unchanged. O2–O6/full TRAIN,
 TEST, scientific selection/pooling and independent review/audit remain separate.

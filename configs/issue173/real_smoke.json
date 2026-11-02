@@ -1,5 +1,5 @@
 {
-  "schema": "issue173-single-smoke-release-v3",
+  "schema": "issue173-single-smoke-release-v4",
   "directive": "https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922",
   "byte_run_id": "issue173-bytes-95144ec82dbb4dea986d18053099c7da",
   "byte_source_commit": "964ee5e9e348f0c5ccedf79b37f4a8131e5216d6",
@@ -8,7 +8,9 @@
   "prior_source_commit": "d14218b4df956721e5d32dfc3ce226b40be8048c",
   "prior_qwen_archive_sha256": "f1f4fefabff4a6fc80f8863bcc314a13949c53815f9b535170cceda1ccd7117d",
   "prior_qwen_source_commit": "ae5b488e379bf526b0509802ce9837b03b0f7885",
-  "smoke_script_sha256": "a5b3e41fa0f021dd154b45e3960c4937b5b6fd4c5fa771c15828414b0b299573",
+  "prior_zero_peer_archive_sha256": "4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5",
+  "prior_zero_peer_source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1",
+  "smoke_script_sha256": "c54cc466042505a9161af2275324212946c6437e9d0448e88d7b0240035103cf",
   "source_inventory_sha256": "0ea303b003265ef57b0dd418d2e74508599d5e1faad25cb5bfe9f7b86e251972",
   "resource_policy": {
     "review_mode": "EXTERNAL",

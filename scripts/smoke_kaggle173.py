@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import shutil
 import stat
+import subprocess
+import ctypes.util
 import sys
 import time
 import traceback
@@ -31,7 +33,7 @@ ACTIVE_KEYS=('internvl35','minicpm4')
 SOFTWARE_SHA='b068aeb381cb3cff2b0978e7b5a398e009cb44dc4a43e6410083a766a252308f'
 SOFTWARE_MARKER='f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc'
 SLUGS=dict(zip(KEYS,('safeshift-qwen3-m1-model-provision-kaggle','safeshift-prepare-internvl35','safeshift-prepare-minicpm4')))
-RUN_ID='issue173-smoke-20261102-v3'
+RUN_ID='issue173-smoke-20261102-v4'
 
 
 def admit_proof(root, expected):
@@ -88,12 +90,30 @@ def supervisor_log(out,stage):
     return Path(out)/(stage+'-supervisor.log')  # runtime exclusively owns setup.log
 
 
+def driver_check(key,policy,out,phase):
+    """Preserve the actual failing subprocess streams; never bypass its gate."""
+    probe={'phase':phase,'binary':shutil.which('nvidia-smi'),'nvml_find_library':ctypes.util.find_library('nvidia-ml'),
+        'loader_environment':{n:os.environ.get(n) for n in ('LD_LIBRARY_PATH','LD_PRELOAD','NVIDIA_VISIBLE_DEVICES','NVIDIA_DRIVER_CAPABILITIES')},
+        'nvml_paths':{p:Path(p).exists() for p in ('/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1',
+            '/usr/local/nvidia/lib64/libnvidia-ml.so.1','/usr/lib64/libnvidia-ml.so.1')}}
+    try:
+        result=environment.hardware(key,policy)
+        probe.update(status='PASS',hardware=result)
+        return result
+    except subprocess.CalledProcessError as error:
+        probe.update(status='BLOCKED',returncode=error.returncode,command=error.cmd,
+            stdout=str(error.stdout or '')[:4096],stderr=str(error.stderr or '')[:4096])
+        raise
+    finally:
+        write(Path(out)/(phase+'-driver-diagnostic.json'),probe)
+
+
 def scope(inputs='/kaggle/input'):
     """Re-derive the sole allowed row; direct child CLI cannot inject an image."""
     from safeshift.candidates.fulltrain import cohort
     from safeshift.fulltrain.contract import source_manifest
     pin=read(ROOT/'configs/issue173/real_smoke.json')
-    require(pin['schema']=='issue173-single-smoke-release-v3' and pin['directive']==DIRECTIVE,'SMOKE_RELEASE_IDENTITY')
+    require(pin['schema']=='issue173-single-smoke-release-v4' and pin['directive']==DIRECTIVE,'SMOKE_RELEASE_IDENTITY')
     require(sha(Path(__file__))==pin['smoke_script_sha256'] and
         digest(source_manifest())==pin['source_inventory_sha256'],'EXACT_SMOKE_SOURCE_PIN')
     proof_root=safe(unique_mount(inputs,'safeshift-issue173-existing-bytes'),pin['byte_run_id'])
@@ -103,6 +123,14 @@ def scope(inputs='/kaggle/input'):
     previous_preload_failure(prior,pin)
     completed=safe(unique_mount(inputs,'safeshift-issue173-native-smoke-v2'),'issue173-smoke-20261102-v2.zip')
     previous=previous_completed_qwen(completed,pin)
+    zero=safe(unique_mount(inputs,'safeshift-issue173-native-smoke-v3'),'issue173-smoke-20261102-v3.zip')
+    require(sha(zero)==pin['prior_zero_peer_archive_sha256'],'PRIOR_ZERO_PEER_PIN')
+    members=verify_archive(zero)
+    require(not any(n.endswith(('native_call.json','model-load-reservation.json','loaded-environment.json')) for n in members),
+        'PRIOR_PEER_RESERVATION_OR_CALL_NO_RETRY')
+    with zipfile.ZipFile(zero) as bundle: old=json.loads(bundle.read('summary.json'))
+    require(old['source_commit']==pin['prior_zero_peer_source_commit'] and old['model_calls']==0
+        and old['prior_native_calls']==1,'PRIOR_ZERO_PEER_ACCOUNTING')
     master=discover(inputs,'master_manifest.json')
     raw=master.read_bytes(); projection=cohort(raw)
     first=projection['samples'][0]
@@ -295,7 +323,7 @@ def worker(key,stage,request,out,scratch):
     from safeshift.fulltrain.preflight import storage_probe
     write(out/'storage-allocation.json',storage_probe(scratch,out,
         scratch_bytes=p['scratch_probe_bytes'],output_bytes=p['output_probe_bytes']))
-    write(out/'hardware.json',environment.hardware(key,p))
+    write(out/'hardware.json',driver_check(key,p,out,'worker'))
     write(out/'cuda.json',environment.cuda(key,p))
     prompt=(ROOT/'configs/pilot/classification_c1.txt').read_text(encoding='utf8')
     require(sha(ROOT/'configs/pilot/classification_c1.txt')==PROMPT_SHA,'C1_PIN')
@@ -328,6 +356,7 @@ def launch(inputs,output,scratch,ref):
         'model_calls':0,'prior_native_calls':1,'production_authorized':False}
     deadline=time.monotonic()+3300
     try:
+        driver_check('internvl35',pin['resource_policy'],root,'kernel')
         for key in ACTIVE_KEYS:
             slug=SLUGS[key]
             out,temp=root/key,scratch/key; out.mkdir(); temp.mkdir()
