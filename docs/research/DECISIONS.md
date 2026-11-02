@@ -469,3 +469,34 @@ cùng đúng một Draft PR, dừng để ChatGPT kiểm GitHub, không merge/An
 
 **Thực hiện:** tài liệu quyết định được ghi **trước code** trong một branch; Codex tiếp tục cùng branch với CPU synthetic full-TRAIN readiness/repair/resume, notebook/preflight G0–G6, tests/runbook và PROJECT_STATE; tạo **duy nhất một Draft PR** rồi dừng. ChatGPT review GitHub thật; vì có đường thay đổi inference/selection phải xét audit Antigravity độc lập. **Không cấp** quyền Kaggle/GPU/full-TRAIN inference, TEST, ảnh/raw/GT ngoài quyền hiện hành; cần approval O2 exact-series, O3 roster, O4 dữ liệu, O5 budget/stop, O6 grant từng run trước chạy thật.
 
+## PROPOSAL-20261102-ISSUE169-FULLTRAIN-SOURCE-REPAIR
+
+Ngày **02/11/2026, Asia/Bangkok**. Nguồn giao việc:
+[Issue #169](https://github.com/tantdna2/SafeShift/issues/169) và task Owner
+trực tiếp, sau [hậu merge PR168](https://github.com/tantdna2/SafeShift/pull/168#issuecomment-6570735120).
+BASE `afc932b2a43cf829db12f53d6ac3d578c6123eec`, đã đối chiếu GitHub.
+**DOCUMENTATION_AUTHORIZED; PROPOSED_FOR_OWNER_REVIEW; O2–O6=PENDING/BLOCKED**.
+Đây là bản ghi đề xuất của Codex, không phải Owner đã duyệt selection.
+Signer/approval ref/time cho đề xuất hiện chưa có; không ký thay bất kỳ ai.
+
+[T4 successor v2](T4_O2_SELECTION_DOSSIER_20261101.md#issue169-successor-full-train)
+tận dụng nguồn T4-v1, đề nghị exact bốn Qwen V4 ORIGINAL, InternVL3.5 official
+RECOVERY, MiniCPM official FP32 INITIAL label-only; kế thừa có điều kiện trên
+cùng3.763 TRAIN IDs, tách resume/repair/rerun và giữ original/attempt/series.
+Qwen legacy thiếu field phải có representation được duyệt; không bịa series
+hoặc config hash. Không ghép Recovery224/composite/smoke hoặc chọn metric đẹp.
+Thay identity/semantics cần version/series/comparability và quyền riêng.
+
+Hướng false-safe/full TRAIN, ba ứng viên tối đa và dừng tuyển thứ tư kế thừa
+quyết định Owner01/11–02/11. [Owner label-only](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211)
+giữ MiniCPM HNLO0/155; không mở lại tìm điểm. Ma trận O1–O6 và L1–L4/B1–B6
+trong dossier chỉ rõ quyền dự án khác học vụ/quyền bên thứ ba, thiếu seal và
+approval khác metadata PASS. Không chốt phương pháp, roster, thresholds hoặc
+freeze M1/M2 từ Issue169. TRAIN H/D không là xác nhận V/T độc lập.
+
+[Receipt](evidence/issue169_source_checks.md) chỉ kiểm tracked metadata và
+docs; không private raw/GT/TEST, Kaggle/GPU/inference, quyền mới hoặc metrics
+thật. Dừng ở một Draft PR; ChatGPT review, quyết định audit độc lập Antigravity
+và merge được cấp riêng. Native integration/history bridge/preflight phải
+được giao task riêng sau decisions/chứng từ; hồ sơ này không mở task/run đó.
+

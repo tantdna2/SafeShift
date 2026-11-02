@@ -1,5 +1,38 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT — Issue #169: hồ sơ nguồn full TRAIN, 02/11/2026
+
+**DOCUMENTATION DONE FOR DRAFT REVIEW; SCIENCE/AUTHORITY PENDING; EXECUTION BLOCKED.**
+[Issue169](https://github.com/tantdna2/SafeShift/issues/169), branch mới duy nhất
+`docs/issue169-fulltrain-source-decision`, BASE
+`afc932b2a43cf829db12f53d6ac3d578c6123eec`.
+GitHub xác nhận [PR168 MERGED/hậu merge PASS](https://github.com/tantdna2/SafeShift/pull/168#issuecomment-6570735120);
+snapshot #167 và các chỉ thị tiếp tục branch cũ bên dưới được giữ làm lịch sử,
+không còn là task đang làm. Engineering #167 chỉ CPU synthetic, chưa native release.
+
+[T4 successor v2](research/T4_O2_SELECTION_DOSSIER_20261101.md#issue169-successor-full-train)
+là **PROPOSED_FOR_OWNER_REVIEW**: bốn Qwen V4 ORIGINAL; đúng InternVL3.5
+official RECOVERY; MiniCPM FP32 INITIAL label-only. Giữ3539/1/223 Qwen,
+135/25 InternVL và155/5 MiniCPM; peers còn3603 ngoài pilot. HNLO MiniCPM0/155.
+Chung đích3763 TRAIN, kế thừa có điều kiện, resume chỉ pending, repair gắn
+failed-outcome/diagnosis/fix/regression, rerun series mới; original bất biến.
+Không pooling hoặc chọn output theo metric, không bịa legacy series/config.
+
+**O1 hướng Owner đã chọn; học vụ còn PENDING. O2–O6 chưa được phê duyệt.**
+Ma trận hiện hành trong T4 nối L1–L4/B1–B6: còn exact selection/comparability,
+Qwen legacy representation, peer report seals/InternVL ancestor graph, paired
+ledger và projection3763/custody/rights, final roles, budget/stop/precision,
+per-run grant và final-source G0–G6. Không quay lại bốn peers, tuyển thứ tư,
+đổi nhãn/parser/HNLO/metric; E1–E5 là yêu cầu thiết kế, chưa kết quả xác nhận.
+
+[Kiểm chứng/reproduction](research/evidence/issue169_source_checks.md): chỉ
+metadata tracked, hashes/identity/counts, links/privacy và bảo toàn snapshots;
+không mở HANDOFF local/ảnh/GT/raw/TEST hoặc chạy model/Kaggle/GPU. Full unit/
+native tests NOT_RUN vì chỉ sửa docs; không dùng kết quả #167 làm checks mới.
+Một Draft PR rồi dừng cho ChatGPT review GitHub và quyết định audit độc lập
+Antigravity trước quyền merge riêng. Sau đủ decisions/chứng từ mới giao task
+native fulltrain/history bridge/preflight; chưa mở task phụ hoặc quyền chạy.
+
 ## Issue #167 — CPU full TRAIN readiness/repair implementation, 02/11/2026
 
 Cùng branch `thesis/fulltrain-3763-repair-20261102`, kế thừa commit tài liệu

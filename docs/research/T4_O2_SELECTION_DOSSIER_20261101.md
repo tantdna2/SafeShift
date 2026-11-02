@@ -1,5 +1,190 @@
 # T4 — hồ sơ quyết định lựa chọn kết quả O2
 
+## Issue169 successor full TRAIN
+
+Ngày **02/11/2026, Asia/Bangkok**. `T4-O2-FULLTRAIN-SELECTION-REPAIR-v2`:
+**PROPOSED_FOR_OWNER_REVIEW; SCIENTIFIC_SELECTION=PENDING; EXECUTION=BLOCKED**.
+[Issue #169](https://github.com/tantdna2/SafeShift/issues/169) chỉ cho lập hồ sơ
+và kiểm metadata tracked. BASE `afc932b2a43cf829db12f53d6ac3d578c6123eec`,
+[PR168 hậu merge](https://github.com/tantdna2/SafeShift/pull/168#issuecomment-6570735120)
+đã được đối chiếu GitHub; engineering #167 hoàn tất đúng CPU synthetic scope.
+Phần này nối tiếp T4-v1/TRAIN160, không hồi tố các snapshot §1–8 bên dưới.
+Đây là **một hồ sơ lựa chọn nguồn**, chưa là ledger cho phép chạy hoặc protocol
+frozen. [Receipt Issue169](evidence/issue169_source_checks.md) ghi phép kiểm,
+hash và giới hạn; các giá trị đầy đủ dùng lại [receipt T4](evidence/t4_o2_metadata_20261101.json).
+
+### S1. Nguồn đề nghị và mức kiểm hiện tại
+
+`VERIFIED_169_METADATA` chỉ nghĩa bytes/identity/counts giữa tài liệu tracked
+đã đối chiếu trong task này. `INHERITED` là kiểm archive/raw/custody của task
+trước; `REPORTED` là lời handoff chưa có binding độc lập; `UNKNOWN` là thiếu
+chứng từ. Không nâng mức kiểm lịch sử vì hash tài liệu khớp. Không mở HANDOFF
+local, manifest private, ZIP, per-image report/GT/raw hoặc tab Downloads.
+
+| Nguồn được đề nghị | Pin phải giữ / bằng chứng | Kế thừa có điều kiện và phần thiếu |
+| --- | --- | --- |
+| Qwen3 focal candidate | Đúng model/revision, bốn V4 ORIGINAL run/attempt, implementation `a6e08ce…`, payload/authority/planned manifest/archive/report/result/binding SHA ở §3.1 và `qwen_original_shards` T4. So chéo T0/source receipt: VERIFIED_169_METADATA. | Giữ 3.539 SUCCESS, 1 TECHNICAL_ERROR, 223 NOT_ATTEMPTED trong 3.763. Archive/member và ordered membership INHERITED; series ID và standalone effective-config SHA UNKNOWN. Không biến authority SHA thành config SHA; xem S3/L2. |
+| InternVL3.5 peer candidate | Đúng `OpenGVLab/InternVL3_5-4B-HF` revision, RECOVERY run/series/attempt, archive/receipt/manifest SHA tại §3.2; khớp projection T0: VERIFIED_169_METADATA. Source/config vẫn REPORTED handoff trong T4; đối chiếu literal không chứng minh execution binding. | 135 SUCCESS/25 INVALID, 0 error/0 pending trong160. Hai historical run IDs chỉ là danh sách; ordered ancestor graph/hash UNKNOWN. Implementation ID riêng và report-member SHA UNKNOWN; L3 chưa khép. Không lấy predictions từ ancestors. |
+| MiniCPM label-only peer candidate | Đúng `openbmb/MiniCPM-V-4` revision, FP32 INITIAL run/series/attempt, source/config/descriptor/archive/manifest ở §3.2. Receipt #165 khớp T4: VERIFIED_169_METADATA; runtime `c3c223bc69edd253d57bbba9344e0633b65b3de4`, environment SHA `59ee1406a67cd79987956c8f06c649ab355444876974537c1ab084e0a9ff3194`. | 155 SUCCESS/5 INVALID trong160; HNLO Method A **0/155**, giữ label-only theo [Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211). Archive validation #165 INHERITED; public receipt không cung cấp report-member seal nên L3 còn BLOCKED. |
+
+MiniCPM weights FP16/eager, chỉ resampler attention score/softmax/value product
+FP32 rồi trả dtype gốc. Không đổi thành toàn model FP32. `verification_sha256`
+trong receipt #165 là chứng từ derivation khác với `receipt_sha256` technical160
+ở T4; không so chúng như cùng một file. Runtime/hash #165 định danh execution
+cũ, không phải qualification HEAD #169. InternVL runtime commit gắn riêng với
+selected execution chưa được public T4/T0 receipt chứng minh: UNKNOWN, không
+lấy runtime của MiniCPM hoặc smoke để điền.
+
+Đề nghị nguồn dựa trên provenance official đã định danh, **không theo metric,
+số SUCCESS hoặc thời gian mới nhất**. Qwen Recovery224/composite/S2 diagnostic,
+peer smoke/engineering/FP16/attempt khác giữ EXCLUDED khỏi nguồn predictions;
+ancestor evidence vẫn cần cho custody. Không lấy legacy InternVL3-2B thay 3.5.
+
+### S2. Quy tắc kế thừa và repair được trình duyệt
+
+1. **Một planned cohort:** custodian phải seal đúng ordered 3.763 TRAIN IDs và
+   image-hash mapping từ master đã khóa, đối chiếu bốn Qwen shards cùng
+   manifest160. Các planned-manifest hashes và manifest160 đã có ở T4;
+   **successor full-cohort projection SHA/order mapping hiện UNKNOWN**. Tổng
+   3.763 không chứng minh exact membership. Không tạo manifest từ counts;
+   mọi model được O3 chọn dùng cùng projection sau L4/O4. Không đổi split/GT.
+2. **Hai lớp bản ghi:** lịch sử gốc bất biến; successor ledger riêng trỏ
+   archive/member/row reference, source/config/run/series/attempt, outcome SHA,
+   operation và approval ref. Lớp vận hành phục vụ scheduling khác lớp
+   scientific selection. Một candidate đã chạy160 có **3.603 ngoài phạm vi
+   pilot**, không được sửa report160 thành 3.763 NOT_ATTEMPTED. Chỉ sau mapping
+   và custody mới khởi tạo pending cho phần chưa chạy của successor. Thiếu
+   history/mâu thuẫn là UNKNOWN/BLOCKED, không mặc nhiên chưa chạy.
+3. **Kế thừa có điều kiện:** đề nghị xét 3.539 Qwen SUCCESS, 135 InternVL
+   SUCCESS và 155 MiniCPM SUCCESS làm immutable reference outputs; giữ cả
+   1/25/5 lỗi và 223 pending. Dùng chúng trong bảng full TRAIN **còn BLOCKED**
+   đến khi O2 duyệt exact bridge + comparability + selection ledger. Mở rộng
+   peer160 sang3763 là campaign/cohort mới, không gọi là resume Candidate160.
+   Không tự ghép inherited SUCCESS với các lượt mới để tuyên bố baseline3763.
+4. **Selection rule đề nghị cho successor:** khóa nguồn từng ID trước chạy;
+   chỉ tiếp nối đúng series đã chỉ định. Sau khi bridge được duyệt, một ID
+   chưa chạy lấy outcome của lần được schedule có quyền; một ID failed chỉ
+   có thể có successor outcome qua repair được chỉ định trước, kể cả outcome
+   mới vẫn INVALID/error. Không chọn best/latest successful trong nhiều
+   attempts. Mỗi repair bổ sung cần quyết định phạm vi trước lượt đó, liên kết
+   outcome cha và giữ cả trước/sau. Không dùng GT/metric chọn ID sửa hoặc
+   attempt. Bảng original vẫn riêng; bảng successor phải công bố số inherited,
+   newly attempted, repaired, unresolved và mọi deviation. Quy tắc này chưa
+   có hiệu lực cho kết quả thật và không cho completion union giữa series.
+5. **Nếu không chứng minh comparability:** giữ nguồn cũ làm historical
+   reference, trình rerun toàn3763 trong series mới; không backfill từ series
+   cũ, không tự chạy rerun. Failure không sửa hợp lệ phải giữ negative result,
+   nguyên nhân/giới hạn và trình scope O1/O3; không bỏ khỏi planned denominator.
+
+| Chế độ đề nghị | Eligibility / evidence trước lượt chạy | Ranh giới |
+| --- | --- | --- |
+| `resume` fulltrain | Chỉ NOT_ATTEMPTED trong đúng successor series/cohort; kiểm đủ ancestors, identity, reservations/partial raw và grant | SUCCESS/INVALID/consumed error không tự gọi lại. Không đổi recovery160 lịch sử. |
+| `repair` có mục tiêu | Chỉ INVALID/TECHNICAL_ERROR được khóa bằng outcome hash; diagnosis + root-cause evidence, fix SHA, regression receipt, identity diff, cap/stop và approval binding | Không retry ngầm. Raw/attempt mới append-only; phân biệt thay đổi vận hành với scientific replacement. Unknown cause hoặc partial consumption chưa đối soát → BLOCKED. |
+| `rerun` | Tất cả3763, series mới, attempts có giới hạn và grant mới; giữ liên kết reference cũ | Không completion từ series cũ; không so metric để quyết định giữ run nào. |
+
+Counts để lập kế hoạch, **không phải lịch thực thi đã duyệt**: Qwen223 pending
+và1 error; InternVL3603 ngoài pilot và25 INVALID; MiniCPM3603 ngoài pilot và5
+INVALID. `3539+1+223=3763`, `135+25+3603=3763`, `155+5+3603=3763`.
+Không cộng các model thành số ảnh độc lập hoặc suy coverage thành accuracy.
+
+Diagnosis cần phân biệt load/environment, OOM/resource, timeout/interrupted,
+raw-write/export/pipeline, token/parse alignment và hành vi sinh không đúng
+C1. Hiện **không đủ chứng từ công khai để kết luận nguyên nhân từng ca lỗi**;
+nhất là25/5 INVALID không được coi mặc định là parser bug. Custodian cung cấp
+projection chẩn đoán theo quyền; lưu FAIL và negative regression. MiniCPM HNLO
+null đã được chấp nhận label-only, không phải target repair để ép có score.
+
+Thay prompt/parser/generation/processor/preprocessing/model/revision/weights,
+precision/numerical implementation phải có identity/version/series mới và O2
+comparability trước dùng chung; không dùng parser lax/bóc fence hay GT chữa
+nhãn. Sửa môi trường/storage hoặc source/runtime dù dự kiến giữ semantics
+vẫn cần identity diff, regression, review và G0–G6/O6 đúng release; hash đổi
+không được giả là runtime cũ. Theo contract #167, identity đổi không tiếp nối
+cùng series. Không có tolerance, equivalence threshold hay quyền run được
+suy từ sửa lỗi kỹ thuật.
+
+### S3. Qwen legacy và ma trận thẩm quyền hiện hành
+
+Đề nghị representation Qwen: giữ `series_id=null` và
+`standalone_effective_configuration_sha256=null`, kèm lý do UNKNOWN và exact
+authority bytes SHA đã có. Định danh source bằng tuple bốn immutable
+run/attempt/archive/report/planned-manifest bindings ở T4. Có thể tạo **ID
+ledger successor mới sau duyệt**, nhưng không gọi ID đó là series lịch sử;
+không bịa historical parent. Custodian cần xác nhận field có tồn tại trong
+nguồn được phép hay không và ký projection binding; O2 phải chấp nhận rõ
+representation legacy và giới hạn. Không lấy `a1`, ngày hoặc hash archive
+làm series. Nếu contract native cần field không chứng minh được: BLOCKED
+bridge, trình rerun series mới; không thay lock V4 hoặc nhập code legacy.
+
+| Quyết định | Trạng thái / bằng chứng | Người có thẩm quyền và điều kiện GO | Blockers liên quan |
+| --- | --- | --- | --- |
+| O1 — hướng/đóng góp | **OWNER_DIRECTION_ACCEPTED**, [01/11](DECISIONS.md#dec-20261101-t1-owner-false-safe-direction), [full TRAIN02/11](DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair). Học vụ/negative route **PENDING**. | Owner quyết phạm vi dự án; giảng viên/người duyệt học vụ phải xác nhận đóng góp/endpoint/negative route. Không coi Owner là chữ ký học vụ. | B5; không mở L1 từ hướng đã chọn. |
+| O2 — source/series/comparability và phương pháp | **PENDING/BLOCKED**; T4-v1 và v2 đều đề nghị. Issue169/merge168 chỉ cho hồ sơ/engineering. | Owner/Research Lead trong thẩm quyền được chứng minh duyệt exact version/hash, Qwen legacy, riêng InternVL RECOVERY, FP32 INITIAL label-only, inheritance/repair và phạm vi. Protocol/ranking/estimand cần phê duyệt riêng; không đóng toàn O2 bằng lựa chọn nguồn. | L1–L4, B5/B6. |
+| O3 — final roles/qualification | **PENDING**; Qwen focal có điều kiện + hai peers ứng viên, dừng tuyển thứ tư đã có quyết định. | Owner/Research Lead chốt exact roles sau evidence quality/coverage/utility/cost có quyền; nếu Qwen không đạt thì STOP và trình lại, peer không đạt thì trình giảm scope. Không tự chọn roster. | L3/L4, B6; B5 về khả thi. |
+| O4 — rights/custody/nguồn/GT | **PENDING/BLOCKED cho successor access và V/T**; TRAIN H/D đã phơi nhiễm, T1 rights/source audit kế thừa. | Chủ dữ liệu/người được ủy quyền cấp đúng processing/cloud/export; custodian seal mapping/exposure; chuyên gia/người có quyền nhãn xác nhận rubric/GT. Owner không cấp thay quyền bên thứ ba. | L2–L4; B1–B4. |
+| O5 — ngân sách/stop/precision | **PENDING**; T1 §5 là quy trình chọn giá trị, không approval. | Owner và người duyệt khoa học chốt caps/time/resources/retries/stop, review K/b, gain/severe margin, events/sources/uncertainty từ evidence khả thi. Không lấy caps160 hoặc fixture #167 làm quyền3763. | B5, B2/B3/B4 cho precision; L1 cho repair selection. |
+| O6 — từng run | **BLOCKED/NOT_GRANTED** trong Issue169. Grant V4/TRAIN160 không chuyển sang fulltrain. | Người có quyền dữ liệu/tài nguyên cấp exact source/runtime/notebook/Input/model/config/cohort/run/attempt/expiry/limits sau O2–O5 và release checks; ChatGPT review/audit/merge riêng không thay grant. | B1/B6, L1–L4; G0–G6 chưa final live verification. |
+
+Đây là ma trận O1–O6 dùng cho successor này; bảng four-peer cũ trong kế hoạch
+là snapshot đề xuất đã bị thay ở phạm vi hướng, **không được dùng mở lại bốn
+model ngang hàng**. Không sửa M1/M2, không suy O7 reviewer/user-study đã duyệt.
+
+| Gate | Hiện tại và chứng từ còn thiếu để đóng | Phạm vi bị chặn |
+| --- | --- | --- |
+| L1 | PENDING: quyết định exact v2/hash/ref/time và người duyệt hợp lệ; bao gồm riêng InternVL RECOVERY, Qwen legacy, rule repair | Selection thật; direction/merge không đóng L1. |
+| L2 | BLOCKED: custodian xác nhận Qwen series/config representation và archive→authority→report binding; O2 chấp nhận giới hạn | Native legacy bridge/kế thừa; không bịa field. |
+| L3 | BLOCKED: report-member name/SHA cho từng peer, selected execution→source/config/implementation/manifest binding; InternVL ordered ancestor graph + snapshot hashes, không predictions từ ancestors | Kế thừa hai peers. Receipt #165 bổ sung MiniCPM runtime/env nhưng không đóng toàn gate. |
+| L4 | BLOCKED: paired160 ledger vẫn thiếu; successor cần exact3763 projection/order/hash chung,160 subset mapping, row provenance, access receipt và ngoại lệ/missing counts | Join/analysis full TRAIN. Không sửa yêu cầu160 cũ thành giả chứng từ3763 đã có. |
+| B1 | BLOCKED cho phạm vi mới: release/rights/custody đúng dữ liệu, cloud, storage/export/retention và người cấp; license kế thừa không là chứng nhận mới | Access/run successor; không mở private vì thấy đường dẫn. |
+| B2 | BLOCKED: source owner/site/video/session registry, duplicate/dependence certificate và unknown coverage | Xác nhận độc lập/CI theo nguồn; không cấm lập hồ sơ H/D metadata đang được cấp. |
+| B3 | BLOCKED: exposure ledger, independent V/T seals/custodian/access và overlap certificate | V/T; TRAIN chia lại không thành holdout, TEST tiếp tục đóng. |
+| B4 | BLOCKED: quyền/rubric nhãn tương thích, blinded experts/adjudication/uncertainty plan đã duyệt cho nguồn mới | GT/annotation xác nhận; không sửa nhãn InspecSafe hay dùng VLM làm GT. |
+| B5 | BLOCKED: O2/O5 version/numerical register, nguồn lực examiner/compute và học vụ/negative route | Protocol freeze, precision và claim hiệu quả; không có giá trị mặc định. |
+| B6 | BLOCKED: exact release/model qualification, selection/paired outputs/cost/coverage và grant | Full native execution và scientific qualification; technical160 không chứng minh3763. |
+
+B2–B4 chưa khép không ngăn hoàn thành **hồ sơ metadata** #169. Muốn phân tích
+H/D hoặc chạy TRAIN cần scope/task/rights riêng; xác nhận trên V/T cần toàn bộ
+chứng từ độc lập tương ứng. Không yêu cầu mở TEST để gỡ bất kỳ blocker nào.
+
+### S4. False-safe và câu hỏi O2 để quyết định
+
+Giữ [T0 §§6–10](T0_FALSE_SAFE_DESIGN_20261101.md): false-safe là focal sinh
+Level04 hợp lệ trong khi GT Level01–03; severe là GT Level01. Planned P chung,
+C focal-Normal không dùng GT, F false-safe trong C có GT hợp lệ; F không đổi
+theo missing peers. `found=|F∩R|`, capture=found/|F| với cùng K giữa arms;
+F rỗng → undefined. INVALID/missing không là Normal/hazard; GT unresolved vẫn
+ở workload. Mandatory/overload và null HNLO giữ riêng, không điền score0.
+Đưa ca vào queue chỉ là **capture-at-review**, không tự sửa nhãn, tăng
+Accuracy/Macro-F1, giảm tai nạn hoặc xác nhận độc lập. Không tính bảng thật
+trong #169; primary endpoint/ranking cụ thể vẫn O2 PENDING.
+
+E1 baseline cùng planned/focal outputs/F/K và cost; E2 bỏ HNLO/từng peer,
+learned arm chỉ nếu được cấp; E3 shared error/missing/overload/shift; E4 ca tốt
+hơn/tệ hơn/không đổi; E5 exact provenance, raw-before-parse và mọi failure.
+Đây là yêu cầu thiết kế, chưa kết quả E1–E5. Bảng original và successor có thể
+có focal outputs/F khác sau repair: không so capture giữa hai bảng rồi gọi
+là cùng estimand, không chọn bảng tốt hơn. O2 phải khóa focal snapshot cho
+mỗi comparison trước phân tích; không học/chọn policy trên V/T đã xem.
+20% review,10 điểm phần trăm gain,CI95%,power80% **chưa được duyệt**; không
+đặt giá trị thay thế. Full TRAIN là H/D, không đáp ứng độc lập chỉ nhờ đủ3763.
+
+**Câu hỏi trình Owner/Research Lead:** Có chấp thuận có điều kiện
+`T4-O2-FULLTRAIN-SELECTION-REPAIR-v2` làm quy tắc nguồn cho H/D full TRAIN:
+chỉ bốn Qwen V4 ORIGINAL, đúng InternVL RECOVERY và MiniCPM FP32 INITIAL
+label-only ở §3, giữ legacy fields UNKNOWN theo S3, inheritance/repair theo S2,
+không pooling/best-run; chỉ kích hoạt sau L1–L4, comparability, O3–O6 và release
+gates phù hợp — hay từ chối? Quyết định phải ghi ref, người/vai trò/thẩm quyền,
+ngày/timezone, exact dossier version/SHA và điều kiện; mọi ô approval hiện
+**PENDING**, không tự điền signer. Có thể quyết định **nguyên tắc nguồn có điều
+kiện** từ hồ sơ này, chưa thể duyệt unconditional bridge/run khi còn thiếu seal.
+Nếu từ chối, giữ negative decision, dừng và trình lại scope, không đổi nguồn.
+
+Docs/metadata DONE FOR DRAFT REVIEW khác science/authority PASS. Dừng đúng
+một Draft PR cho Issue #169 để ChatGPT review GitHub và quyết định audit Antigravity
+độc lập trước merge được cấp riêng. Sau decisions/chứng từ đầy đủ mới giao
+task native fulltrain/history bridge/final-source preflight riêng; không mở
+task đó hoặc chạy Kaggle trong hồ sơ này.
+
 ## Owner successor scope — full TRAIN 3.763, 02/11/2026
 
 Theo [Issue #167](https://github.com/tantdna2/SafeShift/issues/167) và [quyết định mới](DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair), mỗi mô hình cuối cùng phải được đánh giá trên **cùng đủ 3.763 TRAIN IDs**, có cơ chế xử lý INVALID/error/pending, phấn đấu nhãn hợp lệ thật. **T4-O2-SELECTION-v1 dưới đây là hồ sơ PROPOSED về lựa chọn nguồn gốc đã lưu và TRAIN160**, không phải phê duyệt triển khai full TRAIN, không cho quyền ghép/rerun series, không chứng minh phương pháp đã hiệu quả trên toàn TRAIN. Giữ các số và lineage lịch sử nguyên vẹn. Cần quyết định successor về lựa chọn series/repair và O2/O3/O4/O5/O6 trước thí nghiệm; MiniCPM vẫn label-only và HNLO=0/155.
