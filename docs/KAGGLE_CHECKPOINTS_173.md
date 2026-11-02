@@ -275,3 +275,28 @@ It admits the sealed v3 zero-peer history as well as v1/v2. Only if real gates
 pass can the two remaining peer calls occur; Qwen remains blocked at dispatch.
 A persistent driver failure remains BLOCKED, not READY or a need for blanket
 Owner permission. No automatic/infinite retry is implemented.
+
+## Measured loader isolation and scoped driver binding — 03/11/2026
+
+[V4 evidence](research/evidence/issue173/nvml-loader-v4.json): kernel physical
+driver PASS (two T4s,580.178.04), while the isolated worker's nvidia-smi exits12.
+The same mounted `/usr/local/nvidia/lib64/libnvidia-ml.so.1` exists in both.
+Kernel LD_LIBRARY_PATH includes that directory; the clean worker has no loader
+path and find_library returns null. The utility's captured output confirms NVML
+cannot be found. Thus the issue is loader isolation, not a missing checkpoint or
+a need to lower a hardware gate. V4 sealed28 members, SHA256
+`2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee`;
+zero peer reservations/loads/calls. Qwen's single v2 call remains untouched.
+
+V5 binds the existing fixed host `libcuda.so.1` explicitly in the pinned worker
+before importing Torch, with ELF/path/hash/size evidence and a retained handle.
+It changes no Python LD_LIBRARY_PATH. For nvidia-smi only, the subprocess receives
+the fixed mounted NVIDIA directory. `environment.hardware` gains an optional
+utility_env argument; its default behavior and all original strict checks are
+unchanged. No LD path is added globally or passed to Torch, no driver is installed,
+and no model/library pin, precision, parser/HNLO, image or metric changes.
+Software/compiled ABI, NVML driver/count/memory and actual same-worker CUDA FP16
+must all pass again before a load reservation. The binding is explicitly
+identified as issue173-explicit-host-cuda-driver-v1, not hidden as unchanged
+execution. V5 also requires the sealed zero-call v4 lineage. Only two peer calls
+remain; this is a technical source revision, never scientific adoption/pooling.

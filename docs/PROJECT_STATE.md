@@ -34,7 +34,11 @@ predictions are inherited by this technical ledger. V3 fixed the setup-log
 collision and passed peer software/RAM/storage, then nvidia-smi returned12
 (NVML not found/loaded) before CUDA/load/call. A bounded v4 diagnostic preserves
 kernel/worker driver evidence and can use only the two remaining peer calls
-if real gates pass. It does not bypass the driver check or reload Qwen.
+if real gates pass. V4 identified kernel/worker loader isolation: the mounted
+NVML library is present but the clean worker lost the host driver search path.
+V5 scopes that directory to nvidia-smi only and explicitly binds host libcuda
+without changing Python's loader path; all original ABI/driver/CUDA/RAM gates
+remain required. It admits every zero-peer history and never reloads Qwen.
 No inference PASS is inferred from CPU/tensor/checkpoint results. Existing model/source/config/parser/HNLO locks,
 production fences and scientific decisions remain unchanged. O2–O6/full TRAIN,
 TEST, scientific selection/pooling and independent review/audit remain separate.

@@ -69,10 +69,10 @@ def resources(key, budgets, scratch, output):
             "requested_reserves_bytes": wanted, "model_fit": "NOT_ESTABLISHED"}
 
 
-def hardware(key, budgets):
+def hardware(key, budgets, *, utility_env=None):
     policy(key, budgets)
     result = subprocess.run(["nvidia-smi", "--query-gpu=index,name,memory.free,driver_version",
-        "--format=csv,noheader,nounits"], capture_output=True, text=True, check=True, timeout=5)
+        "--format=csv,noheader,nounits"], capture_output=True, text=True, check=True, timeout=5, env=utility_env)
     rows = [line.split(",") for line in result.stdout.strip().splitlines()]
     require(len(rows) == 2 and all(len(r) == 4 for r in rows), "EXACT_TWO_PHYSICAL_T4")
     observed = []

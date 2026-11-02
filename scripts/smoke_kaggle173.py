@@ -33,7 +33,9 @@ ACTIVE_KEYS=('internvl35','minicpm4')
 SOFTWARE_SHA='b068aeb381cb3cff2b0978e7b5a398e009cb44dc4a43e6410083a766a252308f'
 SOFTWARE_MARKER='f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc'
 SLUGS=dict(zip(KEYS,('safeshift-qwen3-m1-model-provision-kaggle','safeshift-prepare-internvl35','safeshift-prepare-minicpm4')))
-RUN_ID='issue173-smoke-20261102-v4'
+RUN_ID='issue173-smoke-20261102-v5'
+NVIDIA_DRIVER_DIR=Path('/usr/local/nvidia/lib64')
+_DRIVER_HANDLE=None
 
 
 def admit_proof(root, expected):
@@ -96,8 +98,13 @@ def driver_check(key,policy,out,phase):
         'loader_environment':{n:os.environ.get(n) for n in ('LD_LIBRARY_PATH','LD_PRELOAD','NVIDIA_VISIBLE_DEVICES','NVIDIA_DRIVER_CAPABILITIES')},
         'nvml_paths':{p:Path(p).exists() for p in ('/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1',
             '/usr/local/nvidia/lib64/libnvidia-ml.so.1','/usr/lib64/libnvidia-ml.so.1')}}
+    utility_env=None
+    if phase=='worker':
+        require((NVIDIA_DRIVER_DIR/'libnvidia-ml.so.1').is_file(),'SYSTEM_NVML_DRIVER_MOUNT_REQUIRED')
+        utility_env={**os.environ,'LD_LIBRARY_PATH':str(NVIDIA_DRIVER_DIR)}
+        probe['utility_only_loader_override']={'LD_LIBRARY_PATH':str(NVIDIA_DRIVER_DIR)}
     try:
-        result=environment.hardware(key,policy)
+        result=environment.hardware(key,policy,utility_env=utility_env)
         probe.update(status='PASS',hardware=result)
         return result
     except subprocess.CalledProcessError as error:
@@ -108,12 +115,25 @@ def driver_check(key,policy,out,phase):
         write(Path(out)/(phase+'-driver-diagnostic.json'),probe)
 
 
+def bind_cuda_driver(out):
+    """Load only the mounted host CUDA driver, without changing Python LD paths."""
+    global _DRIVER_HANDLE
+    library=NVIDIA_DRIVER_DIR/'libcuda.so.1'
+    require(library.is_file(),'SYSTEM_CUDA_DRIVER_MOUNT_REQUIRED')
+    with library.open('rb') as stream: require(stream.read(4)==b'\x7fELF','SYSTEM_CUDA_DRIVER_ELF')
+    _DRIVER_HANDLE=ctypes.CDLL(str(library),mode=ctypes.RTLD_GLOBAL)
+    write(Path(out)/'driver-library-binding.json',{'implementation':'issue173-explicit-host-cuda-driver-v1',
+        'library':str(library),'library_sha256':sha(library),'library_bytes':library.stat().st_size,
+        'python_ld_library_path_changed':False,'nvml_utility_loader_scoped_to_subprocess':True,
+        'cuda_initialized':False,'model_calls':0})
+
+
 def scope(inputs='/kaggle/input'):
     """Re-derive the sole allowed row; direct child CLI cannot inject an image."""
     from safeshift.candidates.fulltrain import cohort
     from safeshift.fulltrain.contract import source_manifest
     pin=read(ROOT/'configs/issue173/real_smoke.json')
-    require(pin['schema']=='issue173-single-smoke-release-v4' and pin['directive']==DIRECTIVE,'SMOKE_RELEASE_IDENTITY')
+    require(pin['schema']=='issue173-single-smoke-release-v5' and pin['directive']==DIRECTIVE,'SMOKE_RELEASE_IDENTITY')
     require(sha(Path(__file__))==pin['smoke_script_sha256'] and
         digest(source_manifest())==pin['source_inventory_sha256'],'EXACT_SMOKE_SOURCE_PIN')
     proof_root=safe(unique_mount(inputs,'safeshift-issue173-existing-bytes'),pin['byte_run_id'])
@@ -131,6 +151,14 @@ def scope(inputs='/kaggle/input'):
     with zipfile.ZipFile(zero) as bundle: old=json.loads(bundle.read('summary.json'))
     require(old['source_commit']==pin['prior_zero_peer_source_commit'] and old['model_calls']==0
         and old['prior_native_calls']==1,'PRIOR_ZERO_PEER_ACCOUNTING')
+    zero=safe(unique_mount(inputs,'safeshift-issue173-native-smoke-v4'),'issue173-smoke-20261102-v4.zip')
+    require(sha(zero)==pin['prior_driver_diagnostic_sha256'],'PRIOR_DRIVER_DIAGNOSTIC_PIN')
+    members=verify_archive(zero)
+    require(not any(n.endswith(('native_call.json','model-load-reservation.json','loaded-environment.json')) for n in members),
+        'PRIOR_DIAGNOSTIC_CONSUMPTION_NO_RETRY')
+    with zipfile.ZipFile(zero) as bundle: old=json.loads(bundle.read('summary.json'))
+    require(old['model_calls']==0 and old['prior_native_calls']==1 and old['source_commit']==pin['prior_driver_source_commit'],
+        'PRIOR_DRIVER_DIAGNOSTIC_ACCOUNTING')
     master=discover(inputs,'master_manifest.json')
     raw=master.read_bytes(); projection=cohort(raw)
     first=projection['samples'][0]
@@ -310,6 +338,7 @@ def worker(key,stage,request,out,scratch):
         reclaim_setup_cache(scratch.parent,out,phase='post-call')
         return
     require(stage=='native','ONE_NATIVE_STAGE')
+    bind_cuda_driver(out)
     write(out/'software.json',environment.software(key,ROOT,request.get('runtime_lock')))
     row=request['row']
     require(sha(row['image'])==row['image_sha256'],'FIRST_ORIGINAL_IMAGE_HASH')

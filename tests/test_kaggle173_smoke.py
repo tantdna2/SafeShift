@@ -90,11 +90,24 @@ class SmokeJournalTests(unittest.TestCase):
 
     def test_driver_exit12_is_preserved_and_remains_blocked(self):
         error=subprocess.CalledProcessError(12,['nvidia-smi'],output='SYNTHETIC_STDOUT',stderr='SYNTHETIC_NVML_FAILURE')
-        with patch.object(smoke.environment,'hardware',side_effect=error),patch.object(smoke.ctypes.util,'find_library',return_value=None):
+        (self.out/'libnvidia-ml.so.1').write_bytes(b'SYNTHETIC_NVML')
+        prior=os.environ.get('LD_LIBRARY_PATH')
+        with patch.object(smoke,'NVIDIA_DRIVER_DIR',self.out),patch.object(smoke.environment,'hardware',side_effect=error) as hardware,patch.object(smoke.ctypes.util,'find_library',return_value=None):
             with self.assertRaises(subprocess.CalledProcessError): smoke.driver_check('internvl35',{},self.out,'worker')
+        self.assertEqual(hardware.call_args.kwargs['utility_env']['LD_LIBRARY_PATH'],str(self.out))
+        self.assertEqual(os.environ.get('LD_LIBRARY_PATH'),prior)
         receipt=read(self.out/'worker-driver-diagnostic.json')
         self.assertEqual(receipt['status'],'BLOCKED'); self.assertEqual(receipt['returncode'],12)
         self.assertEqual(receipt['stderr'],'SYNTHETIC_NVML_FAILURE')
+
+    def test_cuda_binding_uses_fixed_host_library_without_python_loader_change(self):
+        library=self.out/'libcuda.so.1'; library.write_bytes(b'\x7fELFSYNTHETIC_NOT_EXECUTED')
+        prior=os.environ.get('LD_LIBRARY_PATH')
+        with patch.object(smoke,'NVIDIA_DRIVER_DIR',self.out),patch.object(smoke.ctypes,'CDLL',return_value=object()) as load:
+            smoke.bind_cuda_driver(self.out)
+        load.assert_called_once_with(str(library),mode=smoke.ctypes.RTLD_GLOBAL)
+        self.assertEqual(os.environ.get('LD_LIBRARY_PATH'),prior)
+        self.assertFalse(read(self.out/'driver-library-binding.json')['python_ld_library_path_changed'])
 
     @unittest.skipUnless(sys.platform=='linux','real Linux process supervisor')
     def test_supervised_setup_does_not_collide_with_runtime_exclusive_log(self):

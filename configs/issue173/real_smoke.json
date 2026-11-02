@@ -1,5 +1,5 @@
 {
-  "schema": "issue173-single-smoke-release-v4",
+  "schema": "issue173-single-smoke-release-v5",
   "directive": "https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922",
   "byte_run_id": "issue173-bytes-95144ec82dbb4dea986d18053099c7da",
   "byte_source_commit": "964ee5e9e348f0c5ccedf79b37f4a8131e5216d6",
@@ -10,8 +10,10 @@
   "prior_qwen_source_commit": "ae5b488e379bf526b0509802ce9837b03b0f7885",
   "prior_zero_peer_archive_sha256": "4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5",
   "prior_zero_peer_source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1",
-  "smoke_script_sha256": "c54cc466042505a9161af2275324212946c6437e9d0448e88d7b0240035103cf",
-  "source_inventory_sha256": "0ea303b003265ef57b0dd418d2e74508599d5e1faad25cb5bfe9f7b86e251972",
+  "prior_driver_diagnostic_sha256": "2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee",
+  "prior_driver_source_commit": "f4bf4d756fb4b0094988e2db5894414fc6cdee8f",
+  "smoke_script_sha256": "43b1b9afc8fe6679ab7af5a3a21aa3c8308c2ac15957f5588547f77c152b6f10",
+  "source_inventory_sha256": "6eb4fe85d007ecb3ef8f728d6c192515e34f868f4e6cd92fab3429d1b0752ef9",
   "resource_policy": {
     "review_mode": "EXTERNAL",
     "driver_versions": [
