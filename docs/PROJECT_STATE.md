@@ -17,8 +17,12 @@ hoặc legacy Qwen mapping/import thật. G0/O2/O3/O4/O5/O6 còn thiếu; G2/G4/
 chưa có bằng chứng final runtime. MiniCPM label-only, không mở HNLO. Không thay
 dataset/split/nhãn/metric/protocol/final roster hoặc claim3763 SUCCESS.
 
-23 tests mới đã PASS ở lượt focused đầu; final tests/notebook/HEAD/receipts
-được cập nhật trong cùng Draft PR. Không chạy Kaggle/GPU/inference/TEST hoặc
+27 tests mới PASS (24 planner/journal/preflight +3 notebook/CLI).
+Windows focused54:50 PASS/4 SKIP. Linux snapshot cố định542:500 PASS/41 SKIP,
+1 lỗi setup do test Phi cần thư mục ignored trống; đúng test đó chạy lại PASS
+trên cùng source. Không gọi full invocation là PASS. [Receipt, hashes và giới
+hạn](research/evidence/issue167_cpu_validation.md) ghi cả các lượt FAIL/harness.
+Không chạy Kaggle/GPU/inference/TEST hoặc
 private data. Một Draft PR cho ChatGPT kiểm GitHub và audit độc lập trước
 merge được cấp quyền riêng; không tự gọi audit PASS hay merge.
 
