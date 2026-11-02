@@ -1,5 +1,20 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT - Issue #171: fresh full TRAIN, 02/11/2026
+
+**OWNER_FRESH_FULLTRAIN_ONLY; ENGINEERING IN PROGRESS; EXECUTION BLOCKED.**
+[Issue #171](https://github.com/tantdna2/SafeShift/issues/171), branch
+`feat/issue171-fresh-fulltrain`, BASE `1acb3ef7c0deadbbde7da0b1c63b71296e3950e5`.
+First commit: documents only. [Decision](research/DECISIONS.md#dec-20261102-owner-fresh-fulltrain-only)
+requires one new series per candidate on the same 3,763 TRAIN IDs/order/image
+SHA, without historical predictions/completions. 11,289 planned initial calls
+have not been executed. O2 comparability/science, O3 final roster, O4 custody/
+rights, O5 caps and O6 grant remain PENDING/BLOCKED. CPU/notebook preparation
+is authorized; GPU/inference/TEST/private raw are not. ChatGPT review and
+independent Antigravity audit precede separately authorized merge.
+The Issue169 section below is preserved as a historical snapshot.
+
+
 ## CURRENT — Issue #169: hồ sơ nguồn full TRAIN, 02/11/2026
 
 **DOCUMENTATION DONE FOR DRAFT REVIEW; SCIENCE/AUTHORITY PENDING; EXECUTION BLOCKED.**
