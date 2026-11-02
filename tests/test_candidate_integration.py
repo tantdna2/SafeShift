@@ -76,7 +76,17 @@ class CandidateIntegrationTests(unittest.TestCase):
                 historical = subprocess.check_output(["git", "show", "bbbd351e19e404f1108413578c7ed024f92e814d:" + filename], cwd=ROOT)
                 self.assertEqual(hashlib.sha256(historical).hexdigest(), checksum)
                 document_first = subprocess.check_output(["git", "show", "ff64958c22684e8713b428b439521f8f3cb1222a:" + filename], cwd=ROOT)
-                self.assertEqual((ROOT/filename).read_bytes(), document_first)
+                # Issue171 authorizes a new directive before the Issue167 text.
+                # Preserve the old lock and every historical byte, and pin the
+                # new directive to its documents-only commit (not mutable HEAD).
+                fresh_decision = subprocess.check_output(["git", "show", "8fdfc8dd95f3f25229f40605c14275840709330e:" + filename], cwd=ROOT)
+                self.assertEqual((ROOT/filename).read_bytes(), fresh_decision)
+                title, old_body = document_first.split(b"\n\n", 1)
+                self.assertTrue(fresh_decision.startswith(title + b"\n\n"))
+                self.assertTrue(fresh_decision.endswith(old_body))
+                directive = fresh_decision[len(title) + 2:-len(old_body)]
+                self.assertIn(b"issues/171", directive)
+                self.assertIn(b"No historical", directive)
                 continue
             self.assertEqual(sha(ROOT/filename), checksum, filename)
         self.assertEqual(sha(ROOT/"configs/pilot/classification_c1.txt"), PROMPT_SHA)
