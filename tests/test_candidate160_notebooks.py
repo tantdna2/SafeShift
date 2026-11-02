@@ -66,7 +66,9 @@ class Candidate160NotebookTests(unittest.TestCase):
             self.assertIn('candidate160_action = "technical_smoke"', code)
             self.assertIn("exist_ok=True", code)
         self.assertEqual(payloads[0], payloads[1])
-        self.assertEqual(source_digest(ROOT), "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884")
+        # Issue167 extends execute with explicit transport/HNLO hooks; defaults
+        # stay compatible. New embedded bytes are a new, unqualified release.
+        self.assertEqual(source_digest(ROOT), "eb7af80db2cf3eca08c2b0e4f1c3dc973edfa52664071dc054746db602fcd468")
 
     def test_execute_every_cell_cpu_without_grant_produces_verified_blocked_archive(self):
         for key in KEYS:

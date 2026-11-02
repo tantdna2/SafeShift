@@ -37,7 +37,8 @@ def identity(key, plan, rows, source_hash, run_id):
             "inputs": [{"sample_id": r["sample_id"], "sha256": r["image_sha256"]} for r in rows]}
 
 
-def execute(store, rows, backend_factory, grant, key, plan, time_budget=None):
+def execute(store, rows, backend_factory, grant, key, plan, time_budget=None,
+            *, transport=None, hnlo_replay=replay):
     """Dependency injection exists for CPU tests; production always NativeBackend."""
     results, pending = {}, []
     for i, row in enumerate(rows):
@@ -46,7 +47,7 @@ def execute(store, rows, backend_factory, grant, key, plan, time_budget=None):
             if previous["status"] == "SUCCESS":
                 raw = read(store.parent / f"samples/{i:06d}/raw.json")
                 if (parse_label(raw["response"]) != previous["label"]
-                        or replay(raw, previous["label"]) != previous["hnlo"]):
+                        or hnlo_replay(raw, previous["label"]) != previous["hnlo"]):
                     raise ValueError("RESUME_CLASSIFICATION_OR_HNLO_REPLAY_MISMATCH")
                 store.retain(i)
                 results[row["sample_id"]] = previous
@@ -85,12 +86,14 @@ def execute(store, rows, backend_factory, grant, key, plan, time_budget=None):
             sample_start = time.monotonic()
             value = backend.generate(row["image"], store.root / f"samples/{i:06d}")
             value["identity"] = {"sample_id": row["sample_id"], "run_id": grant["run_id"],
-                                 "input_sha256": row["image_sha256"], "model": MODELS[key],
-                                 "config_sha256": digest(settings(key)), "manifest_sha256": digest(plan)}
+                                 "input_sha256": row["image_sha256"],
+                                 "model": MODELS[key] if transport is None else transport["model"],
+                                 "config_sha256": digest(settings(key)) if transport is None else transport["config_sha256"],
+                                 "manifest_sha256": digest(plan)}
             raw_hash = store.raw(i, value)  # durable before parse/HNLO/report
             label = parse_label(value["response"])
             try:
-                h = replay(value, label)
+                h = hnlo_replay(value, label)
             except Exception as error:
                 h = {"status": "HNLO_TECHNICAL_FAILURE", "hnlo": None,
                      "reason": error_record(error, "hnlo_replay"), "replay_status": "FAIL"}

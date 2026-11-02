@@ -1,5 +1,17 @@
 # Kiến trúc Foundation V1
 
+## Issue167 full TRAIN CPU readiness/repair — 02/11/2026
+
+Định tuyến: `candidates/fulltrain.py` (exact3763 cohort/identity/lineage/action),
+`fulltrain_run.py` (synthetic controller dùng engine/Store/archive/lease cũ),
+`fulltrain_preflight.py` (receipt admission/preparation-only notebook),
+`scripts/prepare_fulltrain.py`, builder `--fulltrain-prep-only`,
+`tests/test_fulltrain.py`, `tests/test_fulltrain_notebooks.py` và
+[runbook](FULLTRAIN_REPAIR_167.md). Không đọc historical private raw/GT/TEST.
+Runtime thật/O2–O6 bị fence, không nhận arbitrary `approved` flags.
+Repair khác resume; thay identity buộc series mới, không chọn/gộp kết quả.
+MiniCPM label-only, defaults Candidate160/strict C1/HNLO cũ giữ nguyên.
+
 ## T3 synthetic provenance adapter — 01/11/2026
 
 `evaluation/triage_adapter.py` nối fixture kết quả đã phân loại vào API T2:

@@ -179,7 +179,15 @@ Runtime `{ref}`, source SHA256 `{source_hash(repo)}`.
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-ref", required=True)
+    parser.add_argument("--fulltrain-prep-only", action="store_true")
     args = parser.parse_args()
+    if args.fulltrain_prep_only:
+        for key in ("qwen3", "internvl35", "minicpm4"):
+            path = ROOT / f"notebooks/SafeShift_FULLTRAIN_PREP_{key}.ipynb"
+            path.write_text(json.dumps(fulltrain_notebook(key, args.runtime_ref), indent=1, ensure_ascii=False)+"\n",
+                            encoding="utf-8", newline="\n")
+            print(path.relative_to(ROOT))
+        return
     for key in KEYS:
         path = ROOT / f"notebooks/SafeShift_CANDIDATE160_{key}.ipynb"
         path.write_text(json.dumps(notebook(key, args.runtime_ref), indent=1, ensure_ascii=False)+"\n",
@@ -309,6 +317,53 @@ Runtime `{ref}`; source `{source_hash(repo)}`.
         nb["metadata"]["safeshift"]["effective_implementation"] = descriptor()
         nb["metadata"]["safeshift"]["official_numerical_approval"] = binding(key, implementation)
         nb["metadata"]["safeshift"]["official_fp32_scientific_gate"] = "OWNER_ADOPTED_REVIEW_AUDIT_MERGE_REQUIRED"
+    return nb
+
+
+def fulltrain_notebook(key, ref, repo=ROOT):
+    """Reuse the existing exact-ref payload/bootstrap; no real launch is reachable."""
+    from safeshift.candidates.fulltrain import MODELS, release_report
+    require(key in MODELS, "FULLTRAIN_MODEL_KEY")
+    nb = notebook("internvl35", ref, repo)
+    code = "".join(nb["cells"][1]["source"])
+    code = code.replace("candidate160_code", "fulltrain_prep_code").replace("candidate160_bootstrap", "fulltrain_prep_bootstrap")
+    code = code.replace("from safeshift.candidates.train_runtime import launch_owner as launch",
+                        "from safeshift.candidates.fulltrain_preflight import prepare_notebook as launch")
+    code = code.replace(f"launch('internvl35', expected_source_sha256, root, {ref!r}, owner_start=True, action=candidate160_action)",
+                        f"launch({key!r}, expected_source_sha256, root, {ref!r})")
+    code = code.replace('    candidate160_action = "technical_smoke"  # after review/merge Owner selects "resume" or "rerun"\n', "")
+    require("launch_owner" not in code and "candidate160_action" not in code, "NO_PRODUCTION_ACTIVATION_IN_PREP")
+    compile(code, "fulltrain-preparation", "exec")
+    nb["cells"][1]["source"] = code.splitlines(True)
+    nb["cells"][1]["id"] = "fulltrain-preparation"
+    nb["cells"][0]["source"] = f"""# SafeShift full TRAIN preparation — {key}
+
+Issue #167: CPU SYNTHETIC ENGINEERING ONLY. BLOCKED for Kaggle/GPU/inference.
+This notebook exports the release/preflight requirements and missing evidence.
+It does not inspect Input, install packages, allocate scratch, reserve an Owner
+slot, download/load weights or call a model. Do not upload/run on Kaggle in this task.
+
+All candidates must use one original 3763-ID TRAIN manifest/order/checksum.
+Resume skips consumed INVALID; repair explicitly targets failed outcome hashes
+after a documented fix/regression; rerun creates a separate series. No pooling,
+GT rescue, lax parser, fourth-model recruitment or claim of 3763 SUCCESS.
+MiniCPM is label-only. See docs/FULLTRAIN_REPAIR_167.md for the CPU API/runbook.
+
+O2 exact selection/comparability, O3 roster, O4 rights, O5 budget/stop and O6 run
+grant remain PENDING. Final-runtime G0–G6 evidence and independent review/audit
+are required; old TRAIN160/preflight/smoke receipts do not release this notebook.
+Later authorized preflight must measure the exact Input/checkpoint/Python/pins,
+disk/allocation/RAM/GPU/driver/CUDA child path listed in the exported receipt.
+No measured Kaggle/GPU/model-fit evidence is claimed here.
+
+Side effects when rehearsed locally: materialize hash-checked embedded sources
+and write a fresh private preparation ZIP/SHA256 under data/processed/.
+Repeated preparation never overwrites a previous receipt. No execution grant is
+accepted by this notebook; fulltrain.launch fails closed before any private I/O.
+""".splitlines(True)
+    nb["metadata"]["safeshift"] = {"mode": "FULLTRAIN_PREPARATION_ONLY", "status": "BLOCKED",
+        "model_key": key, "runtime_ref": ref, "source_sha256": source_hash(repo), "planned_ids": 3763,
+        "release": release_report(key)}
     return nb
 
 
