@@ -1,5 +1,15 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT OWNER SCOPE — Khóa luận: full TRAIN 3.763 và sửa lỗi (02/11/2026)
+
+[Issue #167](https://github.com/tantdna2/SafeShift/issues/167) và [DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR](research/DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair) ghi quyết định Owner. **GHI TÀI LIỆU TRƯỚC TRIỂN KHAI; CODE CHƯA THỰC HIỆN tại commit này.** Mỗi mô hình được chọn phải chuẩn bị xử lý cùng 3.763 TRAIN IDs; pilot160 chỉ kiểm kỹ thuật. Phấn đấu 3.763 nhãn hợp lệ, không hứa 100% hoặc loại các trường hợp lỗi khỏi kết quả. INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED phải được điều tra và có kế hoạch sửa/chạy bổ sung an toàn theo quyền mới.
+
+**Trạng thái gốc:** Qwen3 V4 3539 SUCCESS + 1 TECHNICAL_ERROR + 223 NOT_ATTEMPTED trên 3763; InternVL3.5 135 SUCCESS/25 INVALID trên 160, còn3603 ngoài pilot; MiniCPM FP32 155 SUCCESS/5 INVALID, còn3603 ngoài pilot, label-only, HNLO 0/155. Không tự gộp Qwen Recovery224/peers nhiều series hoặc sửa dữ liệu gốc. Đã có quyết định 01/11 tạm dừng tuyển model thứ tư; final roster vẫn O3 PENDING.
+
+**Tiếp theo:** Codex **session mới** tiếp tục branch `thesis/fulltrain-3763-repair-20261102`, hoàn thành code CPU synthetic readiness/repair/resume, notebooks/preflight, tests và cập nhật PROJECT_STATE trong cùng task/PR; không mở PR tài liệu riêng. O2/O3/O4/O5/O6 và học vụ riêng còn chờ, **không chạy Kaggle/GPU/model forward/TEST hoặc đọc dữ liệu private ngoài grant**. TRAIN chỉ development/thăm dò; không đánh đồng số lượng output với accuracy hay kết quả xác nhận.
+
+**Hậu merge trước:** PR #166 `MERGED` và hậu merge PASS, main `0295172783dcf82426923d1af621dde9db8ed42c`; Issue #165 CLOSED, kết luận HNLO 0/155. Phần snapshot #166 bên dưới giữ nguyên văn bản tiền merge, không còn trạng thái hoạt động.
+
 ## Issue #165 / Draft PR #166 — quyết định Owner hiện hành, 02/11/2026
 
 Theo [quyết định Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211)

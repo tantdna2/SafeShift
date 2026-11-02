@@ -454,3 +454,18 @@ inference/training/ranker hoặc phân tích hiệu quả mới; không sửa T2
 không cần. O2 phần còn lại, O3 final roster, O4/O5, quyền dữ liệu/học vụ vẫn
 riêng. Không đặt thresholds hoặc giả authority ID. Cập nhật PROJECT_STATE
 cùng đúng một Draft PR, dừng để ChatGPT kiểm GitHub, không merge/Antigravity.
+
+## DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR
+
+**Ngày:** 02/11/2026, Asia/Ho_Chi_Minh. **Người quyết định:** Owner trong phạm vi dự án, nguồn [Issue #167](https://github.com/tantdna2/SafeShift/issues/167); main lúc ghi `0295172783dcf82426923d1af621dde9db8ed42c`. **Trạng thái:** `OWNER_SCOPE_DIRECTION_RECORDED; IMPLEMENTATION_PENDING`. Không là phê duyệt học vụ/O2–O6 hoặc quyền chạy.
+
+**Đích phân tích TRAIN:** mọi mô hình được lựa chọn chính thức phải dùng chung **3.763 ảnh InspecSafe TRAIN** với cùng ID/manifest và 3.763 trạng thái đầy đủ. Mục tiêu kỹ thuật: cố gắng đạt **3.763 nhãn Level01–04 hợp lệ/model**; không dùng pilot160 như kết quả full TRAIN; không bảo đảm 100% SUCCESS nếu mô hình không thể được sửa hợp lệ. TRAIN đã phơi nhiễm chỉ cho phân tích development/thăm dò được phép; không thay thế V/T độc lập.
+
+**Xử lý INVALID/lỗi/chưa chạy:** yêu cầu phân loại và sửa nguyên nhân (load/môi trường, GPU/OOM, timeout, pipeline, tokenizer/parser, định dạng sinh, hành vi mô hình); kiểm thử trước và sau sửa, lập kế hoạch chạy lại có kiểm soát cho đúng ảnh còn lỗi/chưa chạy sau quyền O6. Không gán nhãn bằng ground truth, không biến INVALID thành SUCCESS bằng suy đoán, không bỏ hoặc giấu trường hợp không sửa được; ghi NO-GO/blocked và xin quyết định scope khi cần. Quy tắc Candidate160 lịch sử coi INVALID có raw là durable vẫn đúng cho **resume cũ**; campaign sửa lỗi full TRAIN phải có cơ chế `repair` phân biệt với `resume`, không âm thầm đổi cách chọn kết quả.
+
+**Hiện trạng kế thừa, không tự trộn:** Qwen3 V4 ORIGINAL: `3763=3539 SUCCESS+1 TECHNICAL_ERROR+223 NOT_ATTEMPTED`; InternVL3.5 TRAIN160: `135 SUCCESS+25 INVALID`, `3603` ngoài pilot; MiniCPM-V-4 FP32 TRAIN160: `155 SUCCESS+5 INVALID`, `3603` ngoài pilot, **label-only**, HNLO Method A 0/155. Mọi source/revision/config/raw/series/attempt gốc giữ nguyên. Không tự gộp Qwen Recovery224/composite, InternVL RECOVERY với lịch sử khác, MiniCPM smoke/rerun. Nếu sửa prompt/parser/model/generation ảnh hưởng semantics, phải version và đánh giá comparability; có thể cần series mới toàn cohort, không backfill từ lần chạy khác.
+
+**Roster và khoa học:** ba mô hình trên là ứng viên, chưa là final O3; quyết định Owner ngày 01/11 tạm dừng tuyển model thứ tư còn hiệu lực. Không đổi dữ liệu/split/nhãn/metric/protocol/HNLO đã khóa hoặc tự duyệt bốn peers, H1/quorum/O2/O5. Thiếu phê duyệt thì ghi PENDING, không giả quyết định của Research Lead/giảng viên/data custodian.
+
+**Thực hiện:** tài liệu quyết định được ghi **trước code** trong một branch; Codex tiếp tục cùng branch với CPU synthetic full-TRAIN readiness/repair/resume, notebook/preflight G0–G6, tests/runbook và PROJECT_STATE; tạo **duy nhất một Draft PR** rồi dừng. ChatGPT review GitHub thật; vì có đường thay đổi inference/selection phải xét audit Antigravity độc lập. **Không cấp** quyền Kaggle/GPU/full-TRAIN inference, TEST, ảnh/raw/GT ngoài quyền hiện hành; cần approval O2 exact-series, O3 roster, O4 dữ liệu, O5 budget/stop, O6 grant từng run trước chạy thật.
+

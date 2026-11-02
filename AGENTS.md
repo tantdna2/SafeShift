@@ -1,5 +1,11 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner 02/11/2026 — Khóa luận full TRAIN 3.763 / sửa lỗi có kiểm soát
+
+[Issue #167](https://github.com/tantdna2/SafeShift/issues/167), [DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR](docs/research/DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair): đích nghiên cứu TRAIN là **cùng 3.763 IDs với mọi model đã được chọn**, không dùng TRAIN160 pilot làm full. Phấn đấu nhãn Level01–04 hợp lệ trên toàn planned; INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED phải phân tích nguyên nhân và chuẩn bị sửa/rerun có kiểm soát, **không** bắt buộc bịa 100% SUCCESS, không chữa bằng GT, parser lax hoặc loại ca lỗi.
+
+Giữ bản ghi raw/attempt/series gốc, không ghép Recovery224/composite/peers các series hay đổi khoa học; nếu sửa prompt/parser/generation/model ảnh hưởng semantics phải version/series và phê duyệt comparability. Quy tắc `resume` Candidate160 lịch sử không tự đổi thành `repair` và không mở quyền full TRAIN. **Tài liệu trước, CPU synthetic/code/test/notebook preflight G0–G6 sau, đúng một branch/PR; chưa cấp Kaggle/GPU/TEST/private raw/full inference.** Ba model hiện chỉ là ứng viên; quyết định 01/11 dừng tuyển model thứ tư còn hiệu lực, O2–O6/học vụ tiếp tục PENDING.
+
 ## Phạm vi hiện tại
 
 - Đọc `AGENTS.md`, `README.md` và `docs/ROADMAP.md` trước mỗi task; task liên quan

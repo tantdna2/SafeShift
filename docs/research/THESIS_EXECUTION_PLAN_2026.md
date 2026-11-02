@@ -1,5 +1,13 @@
 # SafeShift — Kế hoạch thực thi Khóa luận tốt nghiệp 2026
 
+## OWNER SCOPE UPDATE — 02/11/2026: full TRAIN completeness & controlled repair
+
+[Issue #167](https://github.com/tantdna2/SafeShift/issues/167) / [DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR](DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair) bổ sung mục tiêu **phân loại trên cùng toàn bộ 3.763 InspecSafe TRAIN ảnh mỗi mô hình được O3 lựa chọn**, thay vì xem TRAIN160 pilot như kết quả full TRAIN. Mọi planned ID cần một trạng thái; phấn đấu 100% nhãn hợp lệ với sửa lỗi kỹ thuật đúng nguyên nhân, có regression tests và lượt chạy bù được cấp quyền. Không ép nhãn/GT, không bỏ INVALID, không giả 100% khi bất khả thi. Các bước T0–T6 và phương pháp bốn peers/metric/quorum bên dưới còn PROPOSED theo phạm vi chưa duyệt.
+
+**Baseline cần bảo toàn:** Qwen3 ORIGINAL 3539/3763 SUCCESS,1 TECHNICAL_ERROR,223 NOT_ATTEMPTED; InternVL3.5 135/160 SUCCESS,25 INVALID+3603 ngoài pilot; MiniCPM FP32 155/160 SUCCESS,5 INVALID+3603 ngoài pilot, HNLO Method A 0/155, **label-only**. Ba mô hình chỉ là ứng viên; quyết định 01/11 tạm dừng model thứ tư còn hiệu lực, không tự chốt final roster. TRAIN không phải independent TEST.
+
+**Engineering gate:** ghi quyết định/tài liệu ở commit đầu → Codex cùng branch bổ sung code, notebook và synthetic tests cho exact full cohort, classifying invalid/root cause, repair riêng với resume và kiểm soát version/series/provenance/raw immutability, checkpoint và preflight G0–G6. Thay đổi prompt/parser/generation/weights/config có thể buộc phải tạo series riêng; không tự pooling. **Không có grant** để chạy Kaggle/full TRAIN/GPU hay mở TEST/GT; O2 (exact selection), O3 (final roster), O4 (quyền dữ liệu), O5 (budget/stopping), O6 (run authority) vẫn PENDING. Cần approval trước mọi inference thực tế. Hồ sơ T4-O2 cũ chỉ về exact saved artifacts/TRAIN160, không là quyết định dùng full 3763 hoặc thêm attempt mới.
+
 Cập nhật thiết kế: **29/10/2026, Asia/Bangkok**; snapshot lịch sử 27/10 giữ nguồn riêng. Trạng thái: **PROPOSED — PENDING OWNER APPROVAL**.
 Repository: [tantdna2/SafeShift](https://github.com/tantdna2/SafeShift).
 BASE_SHA/merge-base sau tích hợp: `67fc1ffc9519e068072644e0f891932fed28f463`; BASE gốc `28fdf82512577f2ed0fb435fb2c12b88e82baf2f`; branch: `docs/thesis-execution-plan-20261027`.

@@ -1,5 +1,9 @@
 # T4 — hồ sơ quyết định lựa chọn kết quả O2
 
+## Owner successor scope — full TRAIN 3.763, 02/11/2026
+
+Theo [Issue #167](https://github.com/tantdna2/SafeShift/issues/167) và [quyết định mới](DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair), mỗi mô hình cuối cùng phải được đánh giá trên **cùng đủ 3.763 TRAIN IDs**, có cơ chế xử lý INVALID/error/pending, phấn đấu nhãn hợp lệ thật. **T4-O2-SELECTION-v1 dưới đây là hồ sơ PROPOSED về lựa chọn nguồn gốc đã lưu và TRAIN160**, không phải phê duyệt triển khai full TRAIN, không cho quyền ghép/rerun series, không chứng minh phương pháp đã hiệu quả trên toàn TRAIN. Giữ các số và lineage lịch sử nguyên vẹn. Cần quyết định successor về lựa chọn series/repair và O2/O3/O4/O5/O6 trước thí nghiệm; MiniCPM vẫn label-only và HNLO=0/155.
+
 Ngày 01/11/2026, Asia/Bangkok. **T4-O2-SELECTION-v1: PROPOSED; kích hoạt phân
 tích BLOCKED; O2 chưa được phê duyệt.** BASE/main kiểm trực tiếp GitHub:
 `f10bac7dea054c8e199a807dadd768517579e164`. Đây là task/nhánh T4 mới sau T3.
