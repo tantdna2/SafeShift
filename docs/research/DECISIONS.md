@@ -536,3 +536,21 @@ notebooks, CPU synthetic tests/receipts/runbook and PROJECT_STATE in one
 Draft PR. No Kaggle/GPU/real model load/inference, private raw/GT/images or
 TEST. Live G0-G6 remain BLOCKED/NOT_VERIFIED. Stop for direct ChatGPT review
 and independent Antigravity audit; merging requires separate authorization.
+## DEC-20261102-ISSUE173-BOUNDED-KAGGLE-VERIFICATION
+
+Source: [Owner Issue #173](https://github.com/tantdna2/SafeShift/issues/173)
+and direct task, 02/11/2026 (Asia/Bangkok). Base main:
+`50d0c910319a6e93354a3d27887418aeb320709f`.
+Owner authorizes live Kaggle environment observation and exact pinned public
+software preparation. This supersedes Issue171's no-Kaggle task restriction
+only for this technical verification; production `contract.authorize()` stays
+closed. No dataset is attached/read until rights, cloud purpose, original TRAIN
+membership/custody, checkpoint identity and resource gates are verified.
+
+Conditional smoke ceiling is one TRAIN image per model, three native calls
+total, with independent run/attempt identities outside all `fresh171-*` series.
+Consumed calls cannot be retried without applicable authority and remaining
+budget. No full TRAIN, TEST, GT rescue, scientific qualification or O2–O6 approval.
+Keep Qwen pins/semantics, peers' strict C1 and MiniCPM FP32 resampler/label-only.
+One branch and one Draft PR; ChatGPT review and independent Antigravity audit,
+no merge. Actual measurements and blockers belong in `KAGGLE_PREFLIGHT_173.md`.
