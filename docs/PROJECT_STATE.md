@@ -2,8 +2,8 @@
 
 ## CURRENT — Issue #173 continuation: actual TRAIN/checkpoint bytes, updated03/11/2026
 
-**RIGHTS VERIFIED FOR BOUNDED PRIVATE TRAIN SCOPE; TRAIN3763 AND ALL EIGHT
-CHECKPOINT SHARDS PASS; QWEN ACTUAL INFERENCE PASS, 1/3 CALLS CONSUMED.** New session/worktree from
+**DRAFT REVIEW HANDOFF: RIGHTS/TRAIN3763/ALL8 SHARDS VERIFIED; QWEN INFERENCE
+PASS, INTERNVL INFERENCE VERIFIED WITH INVALID, MINICPM RAM BLOCKED; 2/3 CALLS.** New session/worktree from
 verified main `33e9f3cc4daf00c37a31b2347c143444d6add0bb` (PR174 merged).
 [Owner continuation](https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922),
 one branch `verify/issue173-real-checkpoints`, one Draft PR, no merge.
@@ -18,28 +18,27 @@ Public CC BY4.0 declaration rechecked at the exact original dataset revision,
 combined with historical rights evidence and Owner's current confirmation;
 no redundant blanket confirmation requested. Private projection/seal remains
 outside Git. PR174 pinned software evidence and offline Qwen archive are reused.
-Dedicated smoke is separate from fresh171; cap1 image/model,3 calls total.
-First GPU notebook exported a sealed failure: Qwen pinned setup/CPU and original
-image decode PASS, then16 GiB available-RAM gate FAIL; no load reservation,
-verified load or native call. Peers NOT_ATTEMPTED. [Controlled pre-load repair](KAGGLE_CHECKPOINTS_173.md#preserved-first-smoke-failure-and-controlled-pre-load-repair)
-reclaims owned public setup caches and records actual before/after RAM while
-keeping the original floor, runtime files and all Inputs/history intact. V2
-reclaimed measured RAM, loaded actual Qwen weights and completed exactly1
-original-image inference (strict SUCCESS, HNLO_VALIDATED). Its sealed65-member
-archive remains separate. InternVL hit an exclusive-log filename collision
-before load/call; MiniCPM was not attempted. The v3 correction uses distinct
-supervisor logs and admits both immutable histories: **Qwen cannot be reloaded
-or called**, only two peer calls remain. No scientific series/completion or
-predictions are inherited by this technical ledger. V3 fixed the setup-log
-collision and passed peer software/RAM/storage, then nvidia-smi returned12
-(NVML not found/loaded) before CUDA/load/call. A bounded v4 diagnostic preserves
-kernel/worker driver evidence and can use only the two remaining peer calls
-if real gates pass. V4 identified kernel/worker loader isolation: the mounted
-NVML library is present but the clean worker lost the host driver search path.
-V5 scopes that directory to nvidia-smi only and explicitly binds host libcuda
-without changing Python's loader path; all original ABI/driver/CUDA/RAM gates
-remain required. It admits every zero-peer history and never reloads Qwen.
-No inference PASS is inferred from CPU/tensor/checkpoint results. Existing model/source/config/parser/HNLO locks,
+Dedicated smoke is separate from fresh171. All5 attempt ZIPs/sidecars/CRC/member
+hashes checked; no model called twice. Qwen v2/sourceae5b488: actual weights,
+one native call, strict SUCCESS, HNLO_VALIDATED. InternVL v5/source1e744d9:
+actual weights, one native call, strict INVALID preserved, HNLO unavailable
+(NO_VALID_GENERATED_LABEL). MiniCPM: checkpoint PASS, pinned setup/software/decode
+PASS, then available-RAM gate BLOCKED before load/CUDA/call; last measured
+13,950,664,704 bytes versus unchanged17,179,869,184-byte floor. Advisory scan
+reached its50,000-file bound; no full-reclamation claim. Exact value at the
+later failing imported worker is unrecorded. No MiniCPM inference PASS/fit claim.
+
+The same branch fixes owned setup-cache retention, exclusive-log collision,
+and actual NVML loader isolation. Original shared runtime files and six PREP
+notebooks remain byte-identical to BASE. Final isolated driver binding is
+smoke-local, with no Python LD path change and all ABI/driver/CUDA/RAM gates
+retained. All failures/INVALID and private source/image/raw custody remain.
+Final runtime1e744d9: Linux39/39 Issue173 +55/55 fulltrain tests PASS; earlier
+FAIL/partial receipts retained. [Final per-model evidence](research/evidence/issue173/final-native-evidence.json).
+All Kaggle jobs terminal, GPU reserved0; no additional job is running.
+MiniCPM remains BLOCKED and needs separately reviewed resource-lifecycle or
+single-model-VM verification before its unused call can be considered. No
+further automatic attempts or full TRAIN authorized. Existing model/source/config/parser/HNLO locks,
 production fences and scientific decisions remain unchanged. O2–O6/full TRAIN,
 TEST, scientific selection/pooling and independent review/audit remain separate.
 

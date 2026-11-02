@@ -6,6 +6,69 @@ Authority: [Owner's continuation](https://github.com/tantdna2/SafeShift/issues/1
 and the direct task in this session. One branch `verify/issue173-real-checkpoints`,
 one Draft PR, no merge. Historical fresh171 production fences remain intact.
 
+## Final handoff — 03/11/2026
+
+**Actual TRAIN bytes and all8 checkpoint shards verified. Two native calls total;
+no call replay; MiniCPM remains BLOCKED.**
+
+| Model | Actual weights verification | Load/inference | Classification / HNLO |
+| --- | --- | --- | --- |
+| Qwen3 | PASS,4 shards/index/source/marker | PASS, one call in v2/sourceae5b488 | Strict SUCCESS; HNLO_VALIDATED |
+| InternVL3.5 | PASS,2 shards/index/source/marker | PASS, one call in v5/source1e744d9 | Strict INVALID preserved; raw logits unaligned, no numeric HNLO |
+| MiniCPM-V-4 | PASS,2 shards/index/source/marker | BLOCKED before load/call: HOST_OR_CGROUP_RAM | NOT_ATTEMPTED; label-only policy unchanged |
+
+[Final receipt](research/evidence/issue173/final-native-evidence.json) independently
+checks all5 attempts, outer sidecars/CRC/member hashes, actual native markers,
+loaded environments, raw/result checksum, strict parser replay and independent
+decoder evidence. All calls use the same original first TRAIN image; per-image
+identities/hashes/raw remain private. All5 jobs are terminal and GPU reservation0.
+No checkpoint weights or images were downloaded/copied in the verification campaign.
+
+V5 source `1e744d991613f48d81ccf0046bc35c5fdab9d1e2`, private Kaggle
+`safeshift-issue173-native-smoke-v5/1` (kernel142340475), exported78 members:
+SHA256 `035c4d9b0216378e23ecc812e1221d68fe451ec25a9cbc3fd8977b5794690619`.
+The scoped NVML utility path and explicit mounted CUDA driver binding passed
+real driver/T4x2/CUDA FP16/isolated pinned-runtime checks for InternVL. It loaded
+actual weights and produced14 tokens; its strict INVALID is durable, with no
+parser relaxation, prompt change, label rescue or rerun. InternVL HNLO remains
+RAW_LOGITS_AVAILABLE_BUT_UNALIGNED/NO_VALID_GENERATED_LABEL.
+
+MiniCPM setup/software and original image decode passed. Its subsequent RAM
+gate blocked before a load reservation or native call. Last measured available
+RAM after advisory cache reclamation:13,950,664,704 bytes (about12.99 GiB), below
+the unchanged16 GiB floor; the exact later imported-worker value was not
+captured. Advisory scanning reached50,000 files and records partial coverage;
+it does not prove all cache was reclaimed. No absent model-load/inference/fit
+evidence is inferred. A future separately reviewed continuation should isolate
+MiniCPM in a fresh single-model VM or establish a bounded, measured resource
+lifecycle, retain all prior attempts, and use only its unused one-call budget.
+Do not rerun Qwen/InternVL or restart this submitted notebook. No more jobs are
+launched in this handoff; production/full TRAIN/TEST remain blocked.
+
+Final runtime CPU checks on immutable1e744d9: **39/39 Issue173 +55/55 fulltrain
+PASS**, no skips/errors, including Linux process/log tests and all six historical
+PREP notebook payloads. Receipts retain the earlier proposed source's payload
+FAIL and interrupted broad Windows invocation; neither is relabeled PASS.
+Reporting-only regeneration against all private ZIPs reproduces the final
+public JSON exactly. Source cell bytes of all submitted notebooks match their
+staged versions despite Kaggle JSON normalization.
+
+Reproduce sanitized evidence without exposing raw payload:
+
+```console
+python -B -m scripts.report_kaggle173_evidence --artifact-root data/processed/issue173-verification --output data/processed/issue173-verification/new-review-receipt.json
+```
+
+The artifact root must contain the five original `smoke-output-v1` through
+`smoke-output-v5` directories with ZIPs and sidecars. Do not commit those files.
+The complete private attempts are not pooled into scientific outputs; the
+technical summary only accounts for their distinct calls and failures.
+
+One Draft PR for ChatGPT's direct review and decision on Antigravity audit.
+No merge, audit PASS, READY FOR OWNER, full-cohort qualification or scientific
+result selection is claimed. The remaining sections preserve the implementation
+and failed-attempt history supporting these final outcomes.
+
 ## Rights and reused evidence
 
 **RIGHTS_VERIFIED_FOR_THIS_SCOPE**: private, noncommercial SafeShift TRAIN
