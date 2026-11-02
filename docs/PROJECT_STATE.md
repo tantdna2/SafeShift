@@ -17,9 +17,10 @@ tensor stages on source `e192fea82c02061dc6dbd1ae0f7ca59b9f1ae2f1`:
 Qwen offline 48-wheel install, pip check, exact installed/source/native ABI and
 28/28 tokenizer cases with the actual processor PASS, CUDA12.8 on both T4s.
 Both peers passed again on isolated CPython3.11.9/cu124, eight synthetic shapes
-and GPU0 tensors. Verified evidence ZIP/SHA256 and the 4.21 GB public-software
-bundle seal are recorded; remote bundle publication/terminal status is still
-being checked. Linux CPU snapshot: 604 run, 563 PASS/41 SKIP; Issue173 focused8/8.
+and GPU0 tensors. Kaggle version 2 is **COMPLETE**. Evidence ZIP/SHA256 and the
+4.21 GB public-software bundle were downloaded and verified locally: exact
+51 members, all 48 wheels, both build sources and marker hashes match.
+Linux CPU snapshot: 604 run, 563 PASS/41 SKIP; Issue173 focused 8/8 PASS.
 
 These checks load no checkpoint or real image and perform no model inference:
 **0/3 calls consumed**. Existing model/config/source locks, strict C1, MiniCPM

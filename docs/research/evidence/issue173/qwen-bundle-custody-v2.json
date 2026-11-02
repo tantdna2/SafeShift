@@ -1,0 +1,12 @@
+{
+  "schema": "issue173-public-software-custody-v1",
+  "status": "LOCAL_OUTER_AND_ALL_MEMBERS_VERIFIED",
+  "archive_sha256": "b068aeb381cb3cff2b0978e7b5a398e009cb44dc4a43e6410083a766a252308f",
+  "archive_bytes": 4209365519,
+  "marker_sha256": "f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc",
+  "wheels": 48,
+  "exact_members": 51,
+  "scope": "PUBLIC_SOFTWARE_ONLY_NO_MODEL_WEIGHTS",
+  "model_calls": 0,
+  "retention": "ignored data/processed/issue173/software-bundle-complete plus private Kaggle Output version2"
+}

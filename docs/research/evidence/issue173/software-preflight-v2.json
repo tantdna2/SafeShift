@@ -1,7 +1,7 @@
 {
   "schema": "issue173-software-summary-v2",
   "kaggle_version": 2,
-  "kaggle_status": "OUTPUT_AVAILABLE_TERMINAL_STATUS_PENDING",
+  "kaggle_status": "COMPLETE",
   "submitted_notebook_sha256": "d3403f046e1c539b5ec578217f0040259cf56062968027d3730029d40b5b6724",
   "archive_sha256": "2bb89b3dca1ac8e9c2142bd31364da0e80cca6acd0a1892a98574e1708195cad",
   "archive_members_verified": 118,

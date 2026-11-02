@@ -195,8 +195,26 @@ Public offline software archive: 4,209,365,519 bytes,
 SHA256 `b068aeb381cb3cff2b0978e7b5a398e009cb44dc4a43e6410083a766a252308f`;
 software marker SHA256 `f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc`;
 runtime lock canonical SHA256 `83539f68b589cda7bcc097264cca37d087e41996d313ba0c9c53055d98e15bad`.
-The large archive was sealed on Kaggle; local download/publication verification
-is tracked separately, because its sidecar can appear before the large object.
+The large archive was published after the smaller sidecar/evidence files.
+Kaggle version 2 is now **COMPLETE**. The original 4.21 GB archive was downloaded
+to ignored local storage and verified against its outer SHA/size, exact 51-member
+inventory, marker hash and every one of the 48 wheel/two source hashes and sizes.
+Reading each ZIP member also checked its CRC. See
+[bundle custody](research/evidence/issue173/qwen-bundle-custody-v2.json) and
+[terminal/quota receipt](research/evidence/issue173/kaggle-terminal-v2.json).
+Final account quota observation: 7,630.908/108,000 GPU seconds used, zero reserved;
+this is account-level accounting, not exclusive per-job GPU-time attribution.
+
+While publication was pending, a bounded direct acquisition from the same public
+URLs/hashes began as an additional retention route. It was stopped once the
+original Kaggle archive became available; five wheels had passed SHA checks.
+Partial files are retained under ignored `offline-software-local/` and are not a
+complete bundle. The verified original archive is under
+`data/processed/issue173/software-bundle-complete/`; no large files enter Git.
+
+No further runtime/source change followed the successful Kaggle version 2.
+Later commits add tests, receipts and documentation only. This handoff stops at
+Draft PR #174 for ChatGPT review and independent Antigravity audit, without merge.
 
 These results qualify the measured software/processor/tensor paths only.
 No checkpoint hash/load, model forward/generation, real-image behavior,
