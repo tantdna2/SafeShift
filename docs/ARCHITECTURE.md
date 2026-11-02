@@ -2,7 +2,7 @@
 
 ## Issue173 — existing TRAIN/checkpoints and bounded native smoke
 
-Route: `fulltrain/verification173.py` streams actual pinned shard/image bytes,
+Route: `verification173.py` streams actual pinned shard/image bytes,
 checks exact indices and bounded safetensors headers without importing a model.
 `scripts/verify_kaggle173_inputs.py` checks existing read-only Kaggle Inputs and
 exports a private original-TRAIN seal separately from sanitized receipts.

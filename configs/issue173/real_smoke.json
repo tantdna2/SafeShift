@@ -12,8 +12,8 @@
   "prior_zero_peer_source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1",
   "prior_driver_diagnostic_sha256": "2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee",
   "prior_driver_source_commit": "f4bf4d756fb4b0094988e2db5894414fc6cdee8f",
-  "smoke_script_sha256": "43b1b9afc8fe6679ab7af5a3a21aa3c8308c2ac15957f5588547f77c152b6f10",
-  "source_inventory_sha256": "6eb4fe85d007ecb3ef8f728d6c192515e34f868f4e6cd92fab3429d1b0752ef9",
+  "smoke_script_sha256": "8a90b067f806a1b1031c9156c8338029c5c051c43e32c4152d938391a098f867",
+  "source_inventory_sha256": "7282c5c6e0f8b771b71ea3d0d4d5bd6f88815bdf6155b17c18767ddeea8079c6",
   "resource_policy": {
     "review_mode": "EXTERNAL",
     "driver_versions": [

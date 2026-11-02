@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch, Mock
 
-from safeshift.fulltrain import verification173 as v
+from safeshift import verification173 as v
 from safeshift.candidates.fulltrain_run import synthetic_cohort
 from safeshift.candidates.fulltrain import validate_cohort
 from safeshift.pilot.contract import digest

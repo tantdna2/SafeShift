@@ -92,9 +92,9 @@ class SmokeJournalTests(unittest.TestCase):
         error=subprocess.CalledProcessError(12,['nvidia-smi'],output='SYNTHETIC_STDOUT',stderr='SYNTHETIC_NVML_FAILURE')
         (self.out/'libnvidia-ml.so.1').write_bytes(b'SYNTHETIC_NVML')
         prior=os.environ.get('LD_LIBRARY_PATH')
-        with patch.object(smoke,'NVIDIA_DRIVER_DIR',self.out),patch.object(smoke.environment,'hardware',side_effect=error) as hardware,patch.object(smoke.ctypes.util,'find_library',return_value=None):
+        with patch.object(smoke,'NVIDIA_DRIVER_DIR',self.out),patch.object(smoke,'utility_hardware',side_effect=error) as hardware,patch.object(smoke.ctypes.util,'find_library',return_value=None):
             with self.assertRaises(subprocess.CalledProcessError): smoke.driver_check('internvl35',{},self.out,'worker')
-        self.assertEqual(hardware.call_args.kwargs['utility_env']['LD_LIBRARY_PATH'],str(self.out))
+        self.assertEqual(hardware.call_args.args[2]['LD_LIBRARY_PATH'],str(self.out))
         self.assertEqual(os.environ.get('LD_LIBRARY_PATH'),prior)
         receipt=read(self.out/'worker-driver-diagnostic.json')
         self.assertEqual(receipt['status'],'BLOCKED'); self.assertEqual(receipt['returncode'],12)
@@ -108,6 +108,18 @@ class SmokeJournalTests(unittest.TestCase):
         load.assert_called_once_with(str(library),mode=smoke.ctypes.RTLD_GLOBAL)
         self.assertEqual(os.environ.get('LD_LIBRARY_PATH'),prior)
         self.assertFalse(read(self.out/'driver-library-binding.json')['python_ld_library_path_changed'])
+
+    def test_scoped_utility_keeps_driver_count_and_memory_gates(self):
+        policy={'driver_versions':['580.178.04'],'free_mib_per_gpu':[13000,13000]}
+        good='0, Tesla T4, 14912, 580.178.04\n1, Tesla T4, 14912, 580.178.04\n'
+        for text,ok in ((good,True),(good.splitlines()[0],False),
+                        (good.replace('580.178.04','999.0'),False),(good.replace('14912','100'),False)):
+            with self.subTest(text=text),patch.object(smoke.environment,'policy'),\
+                    patch.object(smoke.subprocess,'run',return_value=Mock(stdout=text)) as run:
+                if ok: self.assertEqual(len(smoke.utility_hardware('internvl35',policy,{'LD_LIBRARY_PATH':'fixed'})['physical_gpus']),2)
+                else:
+                    with self.assertRaises(ValueError): smoke.utility_hardware('internvl35',policy,{'LD_LIBRARY_PATH':'fixed'})
+                self.assertEqual(run.call_args.kwargs['env'],{'LD_LIBRARY_PATH':'fixed'})
 
     @unittest.skipUnless(sys.platform=='linux','real Linux process supervisor')
     def test_supervised_setup_does_not_collide_with_runtime_exclusive_log(self):

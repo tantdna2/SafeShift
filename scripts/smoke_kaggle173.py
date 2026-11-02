@@ -24,7 +24,7 @@ from safeshift.candidates.train_inputs import discover
 from safeshift.pilot.artifacts import read, safe, sha, write, write_bytes, export, verify_archive
 from safeshift.pilot.contract import digest, parse_label, PROMPT_SHA
 from safeshift.fulltrain import provision, supervision, environment
-from safeshift.fulltrain.verification173 import verify_qwen, storage_budget
+from safeshift.verification173 import verify_qwen, storage_budget
 from scripts.verify_kaggle173_inputs import unique_mount
 
 DIRECTIVE='https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922'
@@ -92,6 +92,24 @@ def supervisor_log(out,stage):
     return Path(out)/(stage+'-supervisor.log')  # runtime exclusively owns setup.log
 
 
+def utility_hardware(key,budgets,utility_env):
+    """Smoke-local NVML check, same original driver/count/memory validation."""
+    environment.policy(key,budgets)
+    result=subprocess.run(['nvidia-smi','--query-gpu=index,name,memory.free,driver_version',
+        '--format=csv,noheader,nounits'],capture_output=True,text=True,check=True,timeout=5,env=utility_env)
+    rows=[line.split(',') for line in result.stdout.strip().splitlines()]
+    require(len(rows)==2 and all(len(r)==4 for r in rows),'EXACT_TWO_PHYSICAL_T4')
+    observed=[]
+    for i,row in enumerate(rows):
+        index,name,free,driver=[s.strip() for s in row]
+        require(index==str(i) and name in ('Tesla T4','NVIDIA T4'),'ORDERED_T4_IDENTITIES')
+        require(driver in budgets['driver_versions'],'UNAPPROVED_DRIVER')
+        require(tuple(map(int,driver.split('.')))>=(525,60,13),'CUDA12_DRIVER_FLOOR')
+        require(int(free)>=budgets['free_mib_per_gpu'][i],'INDIVIDUAL_GPU_HEADROOM')
+        observed.append({'index':i,'name':name,'free_mib':int(free),'driver':driver})
+    return {'physical_gpus':observed,'cuda_initialized':False,'model_fit':'NOT_ESTABLISHED'}
+
+
 def driver_check(key,policy,out,phase):
     """Preserve the actual failing subprocess streams; never bypass its gate."""
     probe={'phase':phase,'binary':shutil.which('nvidia-smi'),'nvml_find_library':ctypes.util.find_library('nvidia-ml'),
@@ -104,7 +122,7 @@ def driver_check(key,policy,out,phase):
         utility_env={**os.environ,'LD_LIBRARY_PATH':str(NVIDIA_DRIVER_DIR)}
         probe['utility_only_loader_override']={'LD_LIBRARY_PATH':str(NVIDIA_DRIVER_DIR)}
     try:
-        result=environment.hardware(key,policy,utility_env=utility_env)
+        result=utility_hardware(key,policy,utility_env) if phase=='worker' else environment.hardware(key,policy)
         probe.update(status='PASS',hardware=result)
         return result
     except subprocess.CalledProcessError as error:
@@ -314,7 +332,7 @@ def worker(key,stage,request,out,scratch):
     request=read(request)
     require(request['directive']==DIRECTIVE and request['max_native_calls']==1 and request['ordinal']==0,'SMOKE_ONLY_SCOPE')
     pin,row=scope()
-    from safeshift.fulltrain.verification173 import checkpoint_spec
+    from safeshift.verification173 import checkpoint_spec
     require(request['model_key']==key and request['row']==row
         and request['checkpoint_root']==str(unique_mount('/kaggle/input',SLUGS[key]))
         and request['model_revision']==checkpoint_spec(key)['model']['revision']
@@ -368,7 +386,7 @@ def worker(key,stage,request,out,scratch):
 
 
 def launch(inputs,output,scratch,ref):
-    from safeshift.fulltrain.verification173 import checkpoint_spec
+    from safeshift.verification173 import checkpoint_spec
     from safeshift.fulltrain.contract import source_manifest
     require(inputs=='/kaggle/input' and output=='/kaggle/working' and scratch=='/kaggle/temp','FIXED_KAGGLE_ROOTS')
     require(len(ref)==40 and all(c in '0123456789abcdef' for c in ref),'EXACT_SOURCE_COMMIT')

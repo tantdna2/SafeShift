@@ -15,7 +15,7 @@ def build(ref, *, smoke=False):
     if len(ref)!=40 or any(c not in '0123456789abcdef' for c in ref):
         raise ValueError('EXACT_COMMITTED_SOURCE_REQUIRED')
     payload={}
-    names=sources(ROOT)+['scripts/verify_kaggle173_inputs.py']
+    names=sources(ROOT)+['scripts/verify_kaggle173_inputs.py','safeshift/verification173.py']
     if smoke:
         names+=['scripts/smoke_kaggle173.py','configs/issue173/real_smoke.json']
     for name in names:

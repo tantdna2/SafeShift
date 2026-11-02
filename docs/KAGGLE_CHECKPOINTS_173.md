@@ -291,12 +291,19 @@ zero peer reservations/loads/calls. Qwen's single v2 call remains untouched.
 V5 binds the existing fixed host `libcuda.so.1` explicitly in the pinned worker
 before importing Torch, with ELF/path/hash/size evidence and a retained handle.
 It changes no Python LD_LIBRARY_PATH. For nvidia-smi only, the subprocess receives
-the fixed mounted NVIDIA directory. `environment.hardware` gains an optional
-utility_env argument; its default behavior and all original strict checks are
-unchanged. No LD path is added globally or passed to Torch, no driver is installed,
+the fixed mounted NVIDIA directory. The final implementation keeps
+`environment.py` byte-identical to BASE and uses an explicitly identified
+smoke-local utility check with the same original validation. No LD path is added globally or passed to Torch, no driver is installed,
 and no model/library pin, precision, parser/HNLO, image or metric changes.
 Software/compiled ABI, NVML driver/count/memory and actual same-worker CUDA FP16
 must all pass again before a load reservation. The binding is explicitly
 identified as issue173-explicit-host-cuda-driver-v1, not hidden as unchanged
 execution. V5 also requires the sealed zero-call v4 lineage. Only two peer calls
 remain; this is a technical source revision, never scientific adoption/pooling.
+
+Final integration keeps `safeshift/verification173.py` outside the historical
+fulltrain source glob. The earlier proposed optional utility environment change
+caused the six historical PREP payload integrity checks to fail (55 tests,
+one test with six subcase errors); that failed receipt is retained. The shared
+environment file was restored exactly to BASE; no old notebook or source lock
+is rewritten. The #173 builder explicitly embeds the separate verifier.

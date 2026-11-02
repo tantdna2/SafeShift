@@ -11,7 +11,7 @@ import uuid
 
 from safeshift.candidates.source import ROOT, require
 from safeshift.candidates.train_inputs import mounts, discover
-from safeshift.fulltrain.verification173 import verify_peer, verify_qwen, verify_train, storage_budget
+from safeshift.verification173 import verify_peer, verify_qwen, verify_train, storage_budget
 from safeshift.pilot.artifacts import read, safe, sha, write, write_bytes, export
 from safeshift.pilot.contract import digest
 
@@ -36,7 +36,7 @@ def run(inputs, output, source_commit):
     public, private = root/'public', root/'private'
     public.mkdir(parents=True, exist_ok=False)
     private.mkdir()
-    source_files = ['scripts/verify_kaggle173_inputs.py', 'safeshift/fulltrain/verification173.py',
+    source_files = ['scripts/verify_kaggle173_inputs.py', 'safeshift/verification173.py',
                     'configs/fulltrain/qwen3.json', 'configs/cpu_g2_g3/checkpoint_metadata_lock.json',
                     'configs/cpu_g2_g3/public_source_lock.json']
     result = {'schema':'issue173-existing-input-byte-verification-v1', 'source_commit':source_commit,
