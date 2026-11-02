@@ -63,7 +63,7 @@ def storage_probe(scratch, output, *, scratch_bytes, output_bytes):
             "scope": "OBSERVED_ALLOCATION_ONLY_NOT_O5_APPROVAL"}
 
 
-def cpu_native_checks(key, snapshot, repo=ROOT):
+def cpu_native_checks(key, snapshot, repo=ROOT, *, wheel_lock=None):
     """Explicit opt-in in an already pinned public-source CPU environment.
 
     Uses the production loader on empty/meta weights and synthetic images.
@@ -73,8 +73,21 @@ def cpu_native_checks(key, snapshot, repo=ROOT):
     from safeshift.candidates.train_preflight import native_cpu
     from safeshift.candidates import minicpm_resampler_fp32 as numerical
     from safeshift.candidates.source import verify_snapshot
-    require(key in ("internvl35", "minicpm4"), "QWEN_NATIVE_CPU_CONTRACT_REQUIRED")
     require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_PREFLIGHT_REQUIRES_HIDDEN_CUDA")
+    if key == "qwen3":
+        from . import environment, qwen
+        versions = environment.software(key, repo, wheel_lock)
+        processor, tokenizer, probe = qwen.native_setup(snapshot, repo)
+        # No meta model or forward needed to validate the actual native processor.
+        from PIL import Image
+        prompt = (Path(repo) / "configs/pilot/classification_c1.txt").read_text(encoding="utf-8")
+        with Image.new("RGB", (448, 448), (128, 128, 128)) as image:
+            result = processor.apply_chat_template([{"role": "user", "content": [
+                {"type": "image", "image": image}, {"type": "text", "text": prompt}]}], tokenize=True,
+                add_generation_prompt=True, return_dict=True, return_tensors="pt")
+        require(len(result["input_ids"]) == 1 and all(v.device.type == "cpu" for v in result.values()), "QWEN_CPU_PROCESSOR_OUTPUT")
+        return {"software": versions, "tokenizer_t1": probe, "shapes": {k: list(v.shape) for k, v in result.items()},
+                "weights_loaded": False, "model_calls": 0, "source": "PUBLIC_PINNED_NATIVE_PROCESSOR"}
     verify_snapshot(snapshot, key)
     versions = software(key)
     native = native_cpu(key, snapshot, repo, implementation=numerical.ID if key == "minicpm4" else None)
@@ -92,6 +105,8 @@ def admit_receipts(key, binding, receipts, hashes):
 def live_preflight(*args, **kwargs):
     # Real Input/provision/GPU diagnostics have not been authorized in this PR.
     contract.authorize()
+    from .admission import launch_prepared
+    return launch_prepared(*args, diagnostic=True, **kwargs)
 
 
 def prepare(key, expected_source_sha256, repo, runtime_ref, *, work=None, kind="PREPARATION"):
@@ -111,9 +126,9 @@ def prepare(key, expected_source_sha256, repo, runtime_ref, *, work=None, kind="
         observed = environment_observation()
         # Shared observation records candidate worker REQUIREMENTS, not observations.
         if key == "qwen3":
-            observed["worker"] = {"status": "BLOCKED_QWEN_RUNTIME_CONTRACT"}
-            observed["physical_gpu_count_required"] = None
-            observed["worker_cuda_visible_devices_required"] = None
+            observed["worker"] = {"status": "NOT_MEASURED", "python_required": "3.12.13", "zlib_required": "1.2.11"}
+            observed["physical_gpu_count_required"] = 2
+            observed["worker_cuda_visible_devices_required"] = "0,1"
         report["measured_checks"]["environment"] = {"status": "PASS", "evidence": observed}
         report["levels"]["ENVIRONMENT_OBSERVED"] = "PASS"
         report["measured_checks"]["source_binding"] = {"status": "PASS", "source_sha256": expected_source_sha256}

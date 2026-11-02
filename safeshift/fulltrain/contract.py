@@ -23,7 +23,8 @@ QWEN = {"id": "Qwen/Qwen3-VL-8B-Instruct",
 def sources(repo=ROOT):
     repo = Path(repo)
     return sorted(set(candidate_sources(repo) + [
-        p.relative_to(repo).as_posix() for p in (repo / "safeshift/fulltrain").glob("*.py")]))
+        p.relative_to(repo).as_posix() for folder, pattern in (("safeshift/fulltrain", "*.py"),
+            ("configs/fulltrain", "*.json")) for p in (repo / folder).glob(pattern)]))
 
 
 def source_manifest(repo=ROOT):
@@ -33,19 +34,20 @@ def source_manifest(repo=ROOT):
 def descriptor(key):
     require(key in planning.MODELS, "FULLTRAIN_MODEL_KEY")
     if key == "qwen3":
-        # A model ID/revision in tracked metadata is not a native release lock.
-        return {"model": dict(QWEN), "status": "BLOCKED_NATIVE_CONTRACT",
-                "historical_reference_only": {
-                    "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
-                    "path": "notes/hnlo_train_v4_20261019.md",
-                    "python": "3.12.13", "torch": "2.10.0+cu128", "transformers": "4.57.1",
-                    "dtype": "float16", "attention": "sdpa", "max_new_tokens": 32,
-                    "placement": "CPU embedding; visual GPU1; layers0-20 GPU0,21-35 GPU1; norm/head GPU1",
-                    "transfer_authority": False},
-                "missing": ["reviewed_fresh_source_and_checkpoint_allowlist",
-                            "effective_generation_preprocessing_precision_and_placement",
-                            "pinned_worker_dependencies", "native_raw_and_HNLO_alignment"],
-                "historical_predictions_required": False}
+        from .qwen import reference, DEVICE_MAP, CAPTURE
+        lock = reference()
+        effective = {"model": lock["model"], "python": lock["software"]["python"], "cuda_build": "12.8",
+            "requirements_sha256": digest(lock["software"]), "checkpoint_lock_sha256": digest(lock["snapshot_files"]),
+            "generation": {"do_sample": False, "max_new_tokens": 32, "prompt_sha256": lock["prompt_sha256"], **CAPTURE},
+            "preprocessing": lock["preprocessing"], "device_map": DEVICE_MAP, "dtype": "float16", "attention": "sdpa",
+            "parser": "p21-strict-classification-v1", "logits": {"boundary": "qwen_native_returned_raw_and_processed_v4"}}
+        return {"schema": "safeshift-fresh-native-config-v1", "model": dict(QWEN),
+            "status": "PREPARED_NOT_NATIVE_VERIFIED", "effective_candidate": effective,
+            "hnlo_policy": "LOCKED_EXISTING_METHOD", "source_reference_sha256": digest(lock),
+            "selection": {"split": "TRAIN", "count": planning.COUNT, "direction": DIRECTION, "prediction_inheritance": False},
+            "external_prerequisites": ["CPython3.12.13_zlib1.2.11_build_and_closed_cp312_wheelhouse",
+                "pinned_native_processor_T1_and_compiled_ABI_measurements", "real_checkpoint_bytes_and_T4x2_fit",
+                "original_projection_custody_O2_O6_G0_G6"], "historical_predictions_required": False}
     old = config(key, implementation=numerical.ID if key == "minicpm4" else None)
     effective = deepcopy(old["effective_candidate"])
     historical_selection = effective.pop("selection")
@@ -67,7 +69,7 @@ def native_identity(key, repo=ROOT):
         "model_revision": d["model"]["revision"], "hnlo_policy": d["hnlo_policy"],
         "implementation_sha256": digest(source_manifest(repo)), "configuration_sha256": digest(d),
         "prompt_sha256": e["generation"]["prompt_sha256"],
-        "parser_sha256": sha(Path(repo) / "safeshift/pilot/contract.py"),
+        "parser_sha256": sha(Path(repo) / ("safeshift/fulltrain/qwen_semantics.py" if key == "qwen3" else "safeshift/pilot/contract.py")),
         "generation_sha256": digest(e["generation"]), "preprocessing_sha256": digest(e["preprocessing"]),
         "checkpoint_sha256": e["checkpoint_lock_sha256"],
         "runtime_sha256": digest({n: e[n] for n in ("python", "cuda_build", "requirements_sha256")})})

@@ -68,8 +68,13 @@ an explicit repair case with cause evidence, failed outcome, fix and regression
 hashes and authority/caps. Semantic/config changes open another series. Retain
 every raw/partial/failed attempt and sealed archive. No GT rescue, lax parser,
 pooling, metric changes, final roster claim or guarantee of all SUCCESS.
-MiniCPM stays FP32-resampler/FP16-weights/eager and label-only. Qwen's fresh
-native contract is BLOCKED, not released by historical V4 source/grants.
+MiniCPM stays FP32-resampler/FP16-weights/eager and label-only. Qwen now has a
+prepared offline native adapter with exact public revision/source/processor,
+FP16/SDPA/two-T4 placement and original V4 P2.1/raw HNLO semantics. Its pinned
+CPython3.12.13/zlib1.2.11 build and closed cp312 wheelhouse remain unverified.
+Internal admission/setup/CPU/GPU/native stages use process-group hard deadlines
+and parent-death cleanup. These CPU-tested mechanisms do not open public run
+authority or establish Kaggle/model-fit PASS. No historical grant is reused.
 
 O2-O6 and live G0-G6 remain separate. Download all evidence including failures.
 Do not upload or execute this preparation on Kaggle in Issue171. Stop at one

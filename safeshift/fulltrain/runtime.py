@@ -28,7 +28,11 @@ def _native_factory(key, snapshot, weights, *, repo=ROOT):
     from safeshift.pilot.contract import PROMPT_SHA
     from safeshift.candidates.backend import CandidateBackend
     from safeshift.candidates import minicpm_resampler_fp32 as numerical
-    require(key in ("internvl35", "minicpm4"), "QWEN_FRESH_NATIVE_CONTRACT_REQUIRED")
+    if key == "qwen3":
+        from .qwen import QwenBackend
+        require(Path(snapshot) == Path(weights), "QWEN_ONE_SEALED_SNAPSHOT")
+        return QwenBackend(snapshot, repo=repo)
+    require(key in ("internvl35", "minicpm4"), "NATIVE_MODEL_KEY")
     prompt = Path(repo) / "configs/pilot/classification_c1.txt"
     require(sha(prompt) == PROMPT_SHA, "FROZEN_C1_SHA")
     verify_snapshot(snapshot, key)
@@ -47,6 +51,9 @@ class NativeStore(journal.BoundStore):
 
 
 def validate_native_raw(sample, record, spec):
+    if spec["model_key"] == "qwen3":
+        from .qwen import validate_raw
+        return validate_raw(sample, record, spec)
     from safeshift.candidates.train_run import native_custody, validate_native_configuration
     native_custody(sample, record)
     d = contract.descriptor(spec["model_key"])
@@ -76,7 +83,13 @@ def recover(root, cohort, plan_sha):
     must also verify; otherwise recovery blocks and preserves all original bytes.
     """
     root = Path(root)
-    h = journal.recover(root, cohort, plan_sha)
+    spec = read(root / "plan.json")["identity"]
+    if spec["model_key"] == "qwen3" and not spec["model_id"].startswith("synthetic/"):
+        from .engine import recover as qwen_recover
+        from .qwen import parser
+        h = qwen_recover(root, cohort, plan_sha, label_parser=parser)
+    else:
+        h = journal.recover(root, cohort, plan_sha)
     p, campaign = read(root / "plan.json"), read(root / "campaign.json")
     require(p == contract.plan(campaign, cohort, p["identity"], read(root / "history.json"),
         action=p["action"], run_id=p["run_id"], attempt_id=p["attempt_id"],
@@ -112,22 +125,45 @@ def _worker(request, *, repo=ROOT):
     from safeshift.pilot.hnlo import replay
     required = {"model_key", "source_sha256", "inputs", "marker_sha256", "projection_sha256",
                 "campaign", "plan", "history", "work", "scratch", "resource_policy", "repair_case"}
-    require(type(request) is dict and set(request) == required, "EXACT_NATIVE_REQUEST")
+    from .admission import REQUEST_FIELDS, checkpoint_binding
+    require(type(request) is dict and set(request) in (required, REQUEST_FIELDS), "EXACT_NATIVE_REQUEST")
     key = request["model_key"]
+    require(key != "qwen3" or set(request) == REQUEST_FIELDS, "QWEN_SUPERVISED_REQUEST_REQUIRED")
     require(digest(contract.source_manifest(repo)) == request["source_sha256"], "FINAL_NATIVE_SOURCE")
     require(request["plan"]["identity"] == contract.native_identity(key, repo), "PINNED_NATIVE_IDENTITY")
     bundle, cohort, rows = admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
     verify_image_bytes(bundle, cohort, rows)
-    _, snapshot, weights = checkpoint(request["inputs"], key)
-    verify_snapshot(snapshot, key)
-    verify_weights(weights, key)
-    software(key)  # actual isolated Python/pins/compiled ABI, no kernel fallback
+    if key == "qwen3":
+        from . import qwen, environment
+        from .admission import checkpoint_binding
+        _, snapshot, weights, _ = checkpoint_binding(request, repo)
+        environment.software(key, repo, request["runtime_lock"])
+        qwen.native_setup(snapshot, repo)
+        replay = qwen.replay
+    else:
+        if set(request) == REQUEST_FIELDS:
+            _, snapshot, weights, _ = checkpoint_binding(request, repo)
+        else:
+            _, snapshot, weights = checkpoint(request["inputs"], key)
+        verify_snapshot(snapshot, key)
+        verify_weights(weights, key)
+        software(key)  # actual isolated Python/pins/compiled ABI, no kernel fallback
     verify_images(bundle, rows)
     policy = request["resource_policy"]
     require(policy.get("review_mode") == "EXTERNAL", "NO_CANDIDATE160_OWNER_CAP_INHERITANCE")
-    worker_cuda(policy)
+    if key == "qwen3":
+        environment.hardware(key, policy)
+        environment.cuda(key, policy)
+    else:
+        worker_cuda(policy)
     def check_resources():
-        resources(policy, request["scratch"], request["work"], gpu=True)
+        if set(request) == REQUEST_FIELDS:
+            from . import environment
+            environment.resources(key, policy, request["scratch"], request["work"])
+            environment.hardware(key, policy)
+            environment.cuda(key, policy)
+        else:
+            resources(policy, request["scratch"], request["work"], gpu=True)
     check_resources()
     return _execute(request["work"], bundle, cohort, request["campaign"], request["plan"], request["history"],
         lambda: _native_factory(key, snapshot, weights, repo=repo),
@@ -137,6 +173,8 @@ def _worker(request, *, repo=ROOT):
 
 def launch(*args, **kwargs):
     contract.authorize()
+    from .admission import launch_prepared
+    return launch_prepared(*args, **kwargs)
 
 
 def worker_command(python, request, output):
@@ -217,10 +255,15 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                         write(root / "model_load.json", {"load_attempts": 1})
                         backend = factory()
                     return backend
-                result, blocked = execute(store, [row], cached,
+                engine, options = execute, {}
+                if p["identity"]["model_key"] == "qwen3" and not p["identity"]["model_id"].startswith("synthetic/"):
+                    from .engine import execute as engine
+                    from .qwen import parser
+                    options["label_parser"] = parser
+                result, blocked = engine(store, [row], cached,
                     {"run_id": p["run_id"], "attempt_id": p["attempt_id"]}, p["identity"]["model_key"], cohort,
                     time_budget=max(0, deadline - clock()), transport=journal._identity(p, row)["transport"],
-                    hnlo_replay=evaluator)
+                    hnlo_replay=evaluator, **options)
                 count += result[row["sample_id"]]["native_calls"]
                 require(count <= p["max_calls"], "CALL_CAP")
                 write(root / f"checkpoints/{i:06d}.json", {"result_sha256": digest(result), "native_calls": count})

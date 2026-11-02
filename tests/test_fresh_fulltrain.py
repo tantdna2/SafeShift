@@ -90,8 +90,8 @@ class FreshTests(unittest.TestCase):
             self.assertEqual(d["effective_candidate"]["dtype"], "float16")
             self.assertNotIn("selection", d["effective_candidate"])
         self.assertEqual(c.native_identity("minicpm4")["hnlo_policy"], "LABEL_ONLY")
-        with self.assertRaisesRegex(ValueError, "QWEN_FRESH_NATIVE"):
-            c.native_identity("qwen3")
+        self.assertEqual(c.native_identity("qwen3")["model_id"], c.QWEN["id"])
+        self.assertEqual(c.descriptor("qwen3")["effective_candidate"]["generation"]["max_new_tokens"], 32)
 
     def test_no_public_entrypoint_reads_paths_or_accepts_approved(self):
         class Poison:
