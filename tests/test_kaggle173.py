@@ -13,6 +13,21 @@ from scripts import observe_kaggle173 as o
 
 
 class ObservationTests(unittest.TestCase):
+    def test_official_wheel_cdn_and_nvidia_reject_spoofed_hosts(self):
+        from scripts.qualify_kaggle173_software import wheel_location
+        rows=[('torch','https://download-r2.pytorch.org/whl/cu128/torch-2.whl'),
+              ('jinja2','https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl'),
+              ('nvidia-cublas-cu12','https://pypi.nvidia.com/nvidia-cublas-cu12/nvidia.whl')]
+        for name,url in rows:
+            self.assertEqual(wheel_location({'name':name,'url':url,'sha256':'a'*64})[0],name)
+        for url in ('http://download.pytorch.org/whl/torch.whl',
+                    'https://download-r2.pytorch.org.evil.invalid/whl/torch.whl',
+                    'https://user:password@download.pytorch.org/whl/torch.whl',
+                    'https://download.pytorch.org/whl/%2Ftorch.whl',
+                    'https://pypi.nvidia.com/torch/torch.whl'):
+            with self.assertRaises(ValueError):
+                wheel_location({'name':'torch','url':url,'sha256':'a'*64})
+
     def test_software_bundle_all_paths_committed_and_cells_compile(self):
         from scripts.build_kaggle173_notebook import build_software, ROOT
         ref=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()

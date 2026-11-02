@@ -51,7 +51,8 @@ def build_software(ref):
     if len(ref) != 40 or any(c not in '0123456789abcdef' for c in ref):
         raise ValueError('EXACT_SOURCE_COMMIT_REQUIRED')
     names = sources(ROOT) + ['scripts/observe_kaggle173.py',
-        'scripts/prepare_qwen173_software.py', 'scripts/qualify_kaggle173_software.py']
+        'scripts/prepare_qwen173_software.py', 'scripts/qualify_kaggle173_software.py',
+        'configs/issue173/qwen_linux_cp312_wheels.json']
     payload = {}
     for name in names:
         data = subprocess.check_output(['git','show',ref+':'+name],cwd=ROOT)
@@ -83,13 +84,13 @@ print(launch('/kaggle/working', '/kaggle/temp', {ref!r}))
         {'cell_type':'markdown','id':'scope','metadata':{},'source':[
             '# Issue173 public software preflight\n',
             'Private; Internet ON; T4x2; attach NO Inputs. No dataset, weights or model inference.\n',
-            'Build exact CPython/zlib, resolve and seal public Qwen wheels on Linux cp312, ',
+            'Build exact CPython/zlib, acquire the sealed Linux cp312 Qwen wheel candidate, ',
             'install offline, then run pinned public processors with synthetic images and tiny CUDA tensors.\n',
             'Peers retain their existing pinned software, strict C1, MiniCPM FP32 resampler and label-only policy.\n',
             'Side effects: public downloads/builds/venvs in scratch, bounded logs/receipts/ZIP in Output. ',
             'Up to 16 GiB Qwen wheels; GPU/job time ceiling 3600 seconds, child deadline 3300 seconds. ',
             'Zero production slots/calls. No checkpoint/model-fit/scientific PASS.\n',
-            'Scratch software is retained for this VM only; download receipts and ZIP/SHA256. ',
+            'The Qwen offline software Input is exported as a separate public-software ZIP/SHA256. ',
             'Every rerun has a unique directory and never resumes a model call.\n']},
         {'cell_type':'code','id':'qualify','metadata':{},'execution_count':None,'outputs':[],
          'source':code.splitlines(True)}]}

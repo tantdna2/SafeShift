@@ -14,6 +14,8 @@ import sys
 import time
 import traceback
 import uuid
+import shutil
+import zipfile
 from urllib.parse import unquote, urlparse
 
 from scripts.prepare_qwen173_software import download
@@ -21,6 +23,25 @@ from safeshift.candidates.source import ROOT, require, verify_snapshot
 from safeshift.pilot.artifacts import read, write, sha, export
 from safeshift.pilot.contract import digest
 from safeshift.fulltrain import contract, provision, supervision
+
+
+def wheel_location(item):
+    """Exact official index/CDN hosts; keep per-artifact SHA admission mandatory."""
+    url = item['url']
+    parsed = urlparse(url)
+    package = item['name'].lower().replace('_','-').replace('.','-')
+    require(parsed.scheme == 'https' and not parsed.username and not parsed.password
+            and parsed.port is None and not parsed.query and not parsed.fragment, 'PUBLIC_WHEEL_URL')
+    allowed = parsed.hostname == 'files.pythonhosted.org'
+    if parsed.hostname in ('download.pytorch.org','download-r2.pytorch.org'):
+        allowed = package in ('torch','torchvision','triton','jinja2') and parsed.path.startswith('/whl/')
+    if parsed.hostname == 'pypi.nvidia.com':
+        allowed = package.startswith('nvidia-') and parsed.path.startswith('/'+package+'/')
+    require(allowed,'PUBLIC_WHEEL_HOST')
+    name = unquote(parsed.path.rsplit('/',1)[1])
+    require('/' not in name and '\\' not in name and ':' not in name and name.endswith('.whl'), 'WHEEL_BASENAME')
+    require(len(item['sha256'])==64 and all(c in '0123456789abcdef' for c in item['sha256']), 'WHEEL_SHA256')
+    return package,name
 
 
 def invoke(argv, cwd, env, output, name, deadline):
@@ -32,8 +53,8 @@ def invoke(argv, cwd, env, output, name, deadline):
 def qwen_runtime(scratch, output, env, deadline):
     """Same build flags/bootstrap/offline install as fulltrain.provision.prepare.
 
-    First acquisition resolves on the actual Linux cp312 interpreter, seals
-    every wheel, then installs exclusively from that closure without resolution.
+    The candidate was resolved on the actual Linux cp312 interpreter in v1;
+    acquire every exact wheel, then install that closure without resolution.
     Subsequent production provisioning accepts this sealed software Input only.
     """
     require(platform.system() == 'Linux' and platform.machine() == 'x86_64', 'LINUX_X86_64_REQUIRED')
@@ -69,21 +90,20 @@ def qwen_runtime(scratch, output, env, deadline):
     code = "import runpy,sys; sys.path.insert(0,sys.argv.pop(1)); runpy.run_module('pip',run_name='__main__')"
     invoke([python,'-I','-B','-c',code,pip_wheel,'install','--no-index','--no-deps',pip_wheel], ROOT, env, output, 'pip-bootstrap', deadline)
     pip = [python,'-I','-B','-m','pip','--isolated','--disable-pip-version-check']
-    req = [n+'=='+v for n,v in ref['software'].items() if n not in ('python','zlib')] + ['pip==25.0.1']
-    invoke(pip+['install','--dry-run','--ignore-installed','--only-binary=:all:',
-        '--index-url','https://pypi.org/simple','--extra-index-url','https://download.pytorch.org/whl/cu128',
-        '--timeout','20','--retries','0','--report',output/'resolver.json',*req], ROOT, env, output, 'resolver', deadline)
-    resolved = read(output/'resolver.json')['install']
+    candidate = read(ROOT/'configs/issue173/qwen_linux_cp312_wheels.json')
+    require(candidate['environment']['python_full_version']=='3.12.13'
+            and candidate['environment']['sys_platform']=='linux'
+            and candidate['environment']['platform_machine']=='x86_64', 'RESOLVER_NATIVE_TARGET')
+    # Version1 already resolved on the actual target interpreter. Reuse its
+    # immutable URLs/hashes, never re-resolve a different closure on a rerun.
+    write(output/'resolver-candidate.json',candidate)
+    resolved = candidate['packages']
     require(1 <= len(resolved) <= 256, 'WHEEL_COUNT_BOUND')
     lock = {'versions':{}, 'wheels':[]}
     provenance, total = [], 0
     for item in resolved:
-        url = item['download_info']['url']
-        require(urlparse(url).scheme == 'https' and urlparse(url).hostname in
-                ('files.pythonhosted.org','download.pytorch.org'), 'PUBLIC_WHEEL_HOST')
-        name = unquote(urlparse(url).path.rsplit('/',1)[1])
-        require('/' not in name and '\\' not in name and name.endswith('.whl'), 'WHEEL_BASENAME')
-        checksum = item['download_info']['archive_info']['hashes']['sha256']
+        package,name = wheel_location(item)
+        url,checksum = item['url'],item['sha256']
         target = software/'wheels'/name
         if target == pip_wheel:
             require(sha(target) == checksum, 'PIP_RESOLVER_HASH')
@@ -91,12 +111,12 @@ def qwen_runtime(scratch, output, env, deadline):
             download(url, target, checksum, max_bytes=min(4*2**30,16*2**30-total), seconds=240)
         total += target.stat().st_size
         require(total <= 16*2**30, 'TOTAL_WHEEL_BYTES')
-        package = item['metadata']['name'].lower().replace('_','-').replace('.','-')
         require(package not in lock['versions'], 'DUPLICATE_DISTRIBUTION')
-        version = item['metadata']['version']
+        version = item['version']
         lock['versions'][package] = version
         lock['wheels'].append({'file':name,'name':package,'version':version,'size':target.stat().st_size,'sha256':checksum})
         provenance.append({'file':name,'url':url,'sha256':checksum})
+        write(output/('wheel-'+str(len(provenance)).zfill(3)+'.json'),lock['wheels'][-1])
     marker = software/'fresh_qwen_software.json'
     write(marker, {'schema':'fresh-qwen-software-v1','runtime_lock':lock,**sources})
     provision.software_input(software,sha(marker),lock,ROOT)
@@ -108,6 +128,21 @@ def qwen_runtime(scratch, output, env, deadline):
     invoke(pip+['install','--no-index','--no-deps',*[software/'wheels'/r['file'] for r in lock['wheels']]],
            ROOT,env,output,'offline-install',deadline)
     invoke(pip+['check'],ROOT,env,output,'pip-check',deadline)
+    # Retain the actual public offline Input beyond the scratch VM. No venv,
+    # checkpoints, images or model raw are members of this separate archive.
+    archive = output.parent.parent/(output.parent.name+'-qwen-software.zip')
+    require(shutil.disk_usage(archive.parent).free > total+256*2**20,'SOFTWARE_EXPORT_CAPACITY')
+    with zipfile.ZipFile(archive,'x',compression=zipfile.ZIP_STORED) as bundle:
+        for path in sorted(software.iterdir()):
+            if path.name == 'wheels':
+                for row in lock['wheels']:
+                    bundle.write(path/row['file'],'wheels/'+row['file'])
+            else:
+                bundle.write(path,path.name)
+    seal={'sha256':sha(archive),'size':archive.stat().st_size,'scope':'PUBLIC_OFFLINE_SOFTWARE_NO_WEIGHTS',
+          'software_marker_sha256':sha(marker)}
+    write(Path(str(archive)+'.sha256.json'),seal)
+    write(output/'software-archive.json',seal)
     env.update(SAFESHIFT_WORKER_PYTHON=str(python),SAFESHIFT_RUNTIME_ROOT=str(venv),PYTORCH_ALLOC_CONF='expandable_segments:True')
     return python, env
 
@@ -193,6 +228,7 @@ def launch(parent, scratch_parent, ref):
             python = sys.executable
             for stage in ('setup','cpu','gpu'):
                 model['stage'] = stage
+                print(key,stage,'started',flush=True)
                 if stage != 'setup':
                     spec = read(out/'worker.json')
                     python,env = spec['python'],spec['env']
@@ -202,6 +238,7 @@ def launch(parent, scratch_parent, ref):
                     '--key',key,'--output',str(out),'--scratch',str(temp)],cwd=ROOT,env=env,deadline=cap,
                     log=out/(stage+'-supervisor.log'),receipt=out/(stage+'-supervisor.json'),
                     max_log_bytes=16*2**20,watch_log_root=out)
+                print(key,stage,'finished',flush=True)
             model.update(status='CPU_SOFTWARE_AND_PINNED_GPU_TENSOR_PASS',stage='complete')
         except Exception as exc:
             model['error'] = type(exc).__name__+':'+str(exc)
