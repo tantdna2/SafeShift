@@ -10,10 +10,16 @@ root=Path(a.artifact_root); repo=ROOT
 from safeshift.pilot.artifacts import sha,verify_archive
 from safeshift.pilot.contract import parse_label
 from safeshift.fulltrain.qwen import parser as qwen_parser
+EXPECTED_ARCHIVES={
+    1:'a296d13984e179a2087acc25a6f45c58f4e15eeb4e32a4efdc46ce8b2a8fac17',
+    2:'f1f4fefabff4a6fc80f8863bcc314a13949c53815f9b535170cceda1ccd7117d',
+    3:'4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5',
+    4:'2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee',
+    5:'035c4d9b0216378e23ecc812e1221d68fe451ec25a9cbc3fd8977b5794690619'}
 
 def archive(attempt):
     p=root/f'smoke-output-v{attempt}'/f'issue173-smoke-20261102-v{attempt}.zip'
-    assert sha(p)==json.loads(Path(str(p)+'.sha256.json').read_bytes())['sha256']
+    assert sha(p)==json.loads(Path(str(p)+'.sha256.json').read_bytes())['sha256']==EXPECTED_ARCHIVES[attempt]
     members=verify_archive(p)
     return p,zipfile.ZipFile(p),members
 
@@ -60,6 +66,7 @@ for attempt in (1,2,3,4,5):
     reports.append(report)
 assert sum(calls.values())<=3
 assert len(private_image_bindings)==1,'ALL_CONSUMED_SMOKE_CALLS_MUST_USE_THE_SAME_ORIGINAL_IMAGE'
+assert calls=={'qwen3':1,'internvl35':1,'minicpm4':0},'EXACT_CLOSED_HANDOFF_CALL_ACCOUNTING'
 for key in calls:
     model_results.setdefault(key,{'status':'BLOCKED_OR_NOT_ATTEMPTED','weights_loaded':False,'native_calls':0,
         'reason':'SEE_FINAL_ATTEMPT_DIAGNOSTICS'})
