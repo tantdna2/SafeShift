@@ -50,7 +50,7 @@ def build_software(ref):
     from safeshift.fulltrain.contract import sources
     if len(ref) != 40 or any(c not in '0123456789abcdef' for c in ref):
         raise ValueError('EXACT_SOURCE_COMMIT_REQUIRED')
-    names = sources(ROOT) + ['scripts/__init__.py', 'scripts/observe_kaggle173.py',
+    names = sources(ROOT) + ['scripts/observe_kaggle173.py',
         'scripts/prepare_qwen173_software.py', 'scripts/qualify_kaggle173_software.py']
     payload = {}
     for name in names:
@@ -102,4 +102,4 @@ if __name__ == '__main__':
     p.add_argument('--software', action='store_true')
     a = p.parse_args()
     value = build_software(a.source_commit) if a.software else build(a.source_commit)
-    Path(a.output).write_text(json.dumps(value, indent=1) + '\n', encoding='utf-8')
+    Path(a.output).write_bytes((json.dumps(value, indent=1) + '\n').encode('utf-8'))

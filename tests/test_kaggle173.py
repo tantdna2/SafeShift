@@ -7,11 +7,23 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+import subprocess
 
 from scripts import observe_kaggle173 as o
 
 
 class ObservationTests(unittest.TestCase):
+    def test_software_bundle_all_paths_committed_and_cells_compile(self):
+        from scripts.build_kaggle173_notebook import build_software, ROOT
+        ref=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+        nb=build_software(ref)
+        self.assertEqual(nb['metadata']['safeshift']['source_commit'],ref)
+        self.assertEqual(nb['metadata']['safeshift']['inputs'],[])
+        for cell in nb['cells']:
+            if cell['cell_type']=='code':
+                compile(''.join(cell['source']),'<notebook>','exec')
+                self.assertEqual(cell['outputs'],[])
+
     def test_mutable_notebook_ref_rejected(self):
         from scripts.build_kaggle173_notebook import build, build_software
         for builder in (build, build_software):
