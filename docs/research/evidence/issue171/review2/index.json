@@ -1,0 +1,121 @@
+{
+  "schema": "safeshift-issue171-review2-evidence-v1",
+  "base": "1acb3ef7c0deadbbde7da0b1c63b71296e3950e5",
+  "reviewed_head": "542e4dd620a1fb40874b7707dbcd8ef16893d180",
+  "tested_snapshot": "a3264770138525d2d3e4acd760bd516df9f21d6c",
+  "runtime_ref": "70825d24ad4e18877321f7134f773e592e051ff8",
+  "source_sha256": "7282c5c6e0f8b771b71ea3d0d4d5bd6f88815bdf6155b17c18767ddeea8079c6",
+  "branch": "feat/issue171-fresh-fulltrain",
+  "pr": "https://github.com/tantdna2/SafeShift/pull/172",
+  "review_request": "https://github.com/tantdna2/SafeShift/pull/172#issuecomment-6572757952",
+  "checks": {
+    "windows-review-final-01": {
+      "snapshot": {
+        "commit": "a3264770138525d2d3e4acd760bd516df9f21d6c",
+        "archive_sha256": "3f084fc2c814da85687a76f634698dfcecf0b296b68aad70872a58d72bdd633f",
+        "pattern": "test_fresh_fulltrain*.py",
+        "exit_code": 0,
+        "source": "git archive; no untracked/local inputs",
+        "harness_sha256": "af2c1f8bab388963efc7b5e4886d1d19367710b0d66ce3a5e290159f71f6329c"
+      },
+      "local_receipt_sha256": "a1793a024845a2f6a23cb452c56dfb5ed143372319f7a6004f4f81b652577863",
+      "local_log": "data/processed/issue171/windows-review-final-01/unittest.log",
+      "receipt_sha256": "fc0778cf0918afa2f91283c976570b1cbd0ea6ab8e663b3792c684745c24eab7"
+    },
+    "linux-review-final-01": {
+      "snapshot": {
+        "commit": "a3264770138525d2d3e4acd760bd516df9f21d6c",
+        "archive_sha256": "3f084fc2c814da85687a76f634698dfcecf0b296b68aad70872a58d72bdd633f",
+        "pattern": "test*.py",
+        "exit_code": 0,
+        "source": "git archive; no untracked/local inputs",
+        "harness_sha256": "af2c1f8bab388963efc7b5e4886d1d19367710b0d66ce3a5e290159f71f6329c"
+      },
+      "local_receipt_sha256": "b2e9c37e35fa1bd9926f1a82651b359bfe652603805d95d5c0226c3e68cf1b57",
+      "local_log": "data/processed/issue171/linux-review-final-01/unittest.log",
+      "receipt_sha256": "b2e9c37e35fa1bd9926f1a82651b359bfe652603805d95d5c0226c3e68cf1b57"
+    }
+  },
+  "notebook_sha256": {
+    "notebooks/SafeShift_FRESH_FULLTRAIN_DIAGNOSTIC_internvl35.ipynb": "d59da67e2049b24ddab06ccef8d14344e901b52e0d613cc423dbe661841b87ac",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_DIAGNOSTIC_minicpm4.ipynb": "df657d1c52b07f19135594196f59fdd2775ef62dbbadd13e791aa1b8f385f5cd",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_DIAGNOSTIC_qwen3.ipynb": "5c428ba8e186ee35a8b4f237588847ec09e045b6a90c9b27050d32c1d06a3c3f",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_PREP_internvl35.ipynb": "96a76c3a4d412d99bac20071cfa7257cb3f3d70b906fd777a095c796edcaa308",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_PREP_minicpm4.ipynb": "0547985fb8b7256399e99ec107ff15d88bde45398eeb6e90aff469674a7a6fe1",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_PREP_qwen3.ipynb": "a1dbff29bf6d71bf1bb8e38c6d64f9b4573b3f723399c5c36ace8c6f41c9e898"
+  },
+  "public_qwen_tokenizer": {
+    "receipt_sha256": "d3a47540f8e789c1bf8d375167ee8ff4b04dc7e0f3a55fe4fc5294c6aa086ef8",
+    "cases": 28,
+    "local_original_sha256": "b3e103155520a52d4eeffd094a8bd93a7608b092b7cab64c18a4e97f08e223cd",
+    "status": "PASS",
+    "weights_loaded": false,
+    "native_processor": "NOT_RUN",
+    "check_script_sha256": "3976d9b4b732e9a0535a5be02bb2764513bcf4b8f6a609f281b7eab9843fcccb"
+  },
+  "public_qwen_source_check_sha256": "0d02b1f8a201a5f549d66ea7855cc03b80eeab4fcdfe607bbb0c47f461bee598",
+  "prior_evidence_preservation": {
+    "docs/research/evidence/issue171/index.json": {
+      "reviewed_sha256": "ad8c871ddd2ea76efe963b6598154527f17418616f1c719d4e4fd14d3ba0c704",
+      "original_bytes_retained": true
+    },
+    "docs/research/evidence/issue171/linux-final-01.json": {
+      "reviewed_sha256": "99bcb243800dfc537b5219bf61567bcb5b263601755fed1f2b7722a6906b62b9",
+      "original_bytes_retained": true
+    },
+    "docs/research/evidence/issue171/linux-regression-02.json": {
+      "reviewed_sha256": "8eb37a3eaf21b4acec6850d132248025738bdce4fe167b475345f73f84eb294a",
+      "original_bytes_retained": true
+    },
+    "docs/research/evidence/issue171/README.md": {
+      "reviewed_sha256": "1c42a0db103fceaa8eddae6bae3b4901f57b6554de5ad6cf9ba367d09a00295c",
+      "original_bytes_retained": true
+    },
+    "docs/research/evidence/issue171/windows-final-01.json": {
+      "reviewed_sha256": "6cf07a5f4389c77a272430b886e0b4f57fa2f879d63dd99ecdc812052f607e3b",
+      "original_bytes_retained": true
+    }
+  },
+  "development_checks": {
+    "linux-revision-development-01": {
+      "status": "PASS",
+      "tests_run": 23,
+      "passed": 23,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 31.685273523999996,
+      "source_commit": "542e4dd620a1fb40874b7707dbcd8ef16893d180",
+      "log_sha256": "57164c27af0f7771f1725d3e461750d1e34845d368d5adb546883bd1d6d97d2f",
+      "skips": 0,
+      "snapshot_scope": "working-tree development, not immutable HEAD validation"
+    },
+    "windows-revision-development-02": {
+      "status": "PASS",
+      "tests_run": 27,
+      "passed": 22,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 12.077999999979511,
+      "source_commit": "542e4dd620a1fb40874b7707dbcd8ef16893d180",
+      "log_sha256": "1076ff3181bb9566b67122342d7eea1e0a4c587bbd8f958c4c41c697b4be5baa",
+      "skips": 5,
+      "snapshot_scope": "working-tree development, not immutable HEAD validation"
+    }
+  },
+  "development_failure": {
+    "status": "RETAINED_IN_SESSION_TOOL_OUTPUT",
+    "details": "A Windows 27-test development invocation had 1 ERROR and 5 SKIP: the missing-package/image test fixture returned a MagicMock in software.json. Fixture changed to an empty dict; subsequent development and final immutable checks reran. No persisted receipt was created for that console invocation."
+  },
+  "scope": "CPU_SYNTHETIC_AND_PUBLIC_SOURCE_TOKENIZER_ONLY",
+  "release": "BLOCKED",
+  "gpu_calls": 0,
+  "real_inference": "NOT_RUN",
+  "test_access": false,
+  "external_prerequisites": [
+    "Sealed complete Qwen cp312 Linux wheel closure and actual CPython3.12.13/zlib1.2.11 build/ABI checks",
+    "Real original 3763 Input/projection/image custody/rights and checkpoint byte seals",
+    "Native processors and pinned isolated software stacks on target hardware",
+    "Measured Kaggle filesystem/quota/RAM/driver/CUDA/two-T4 fit and bounded native load/inference/export",
+    "O2-O6/G0-G6 exact release authority, ChatGPT review, independent Antigravity audit and separate merge permission"
+  ]
+}

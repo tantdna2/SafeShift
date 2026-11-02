@@ -1,0 +1,1212 @@
+{
+  "schema": "fresh-qwen-tokenizer-cpu-v1",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "tokenizers": "0.22.2",
+  "tokenizer_sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+  "checks": {
+    "bare_label_ids": {
+      "Level01": [
+        4449,
+        15,
+        16
+      ],
+      "Level02": [
+        4449,
+        15,
+        17
+      ],
+      "Level03": [
+        4449,
+        15,
+        18
+      ],
+      "Level04": [
+        4449,
+        15,
+        19
+      ]
+    },
+    "checks": [
+      {
+        "text": "{\"safety_level\":\"Level01\"}",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          16,
+          9207
+        ],
+        "generated_label": "Level01",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\"safety_level\":\"Level02\"}",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          17,
+          9207
+        ],
+        "generated_label": "Level02",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\"safety_level\":\"Level03\"}",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          18,
+          9207
+        ],
+        "generated_label": "Level03",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\"safety_level\":\"Level04\"}",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          19,
+          9207
+        ],
+        "generated_label": "Level04",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": " {\"safety_level\":\"Level01\"}\n",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707
+        ],
+        "response_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          16,
+          16707
+        ],
+        "generated_label": "Level01",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": " {\"safety_level\":\"Level02\"}\n",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707
+        ],
+        "response_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          17,
+          16707
+        ],
+        "generated_label": "Level02",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": " {\"safety_level\":\"Level03\"}\n",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707
+        ],
+        "response_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          18,
+          16707
+        ],
+        "generated_label": "Level03",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": " {\"safety_level\":\"Level04\"}\n",
+        "step": 7,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707
+        ],
+        "response_ids": [
+          5212,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          19,
+          16707
+        ],
+        "generated_label": "Level04",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\"safety_level\": \"Level01\"}",
+        "step": 8,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15,
+          16,
+          9207
+        ],
+        "generated_label": "Level01",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\"safety_level\": \"Level02\"}",
+        "step": 8,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15,
+          17,
+          9207
+        ],
+        "generated_label": "Level02",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\"safety_level\": \"Level03\"}",
+        "step": 8,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15,
+          18,
+          9207
+        ],
+        "generated_label": "Level03",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\"safety_level\": \"Level04\"}",
+        "step": 8,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          9207
+        ],
+        "response_ids": [
+          4913,
+          82,
+          38618,
+          8274,
+          788,
+          330,
+          4449,
+          15,
+          19,
+          9207
+        ],
+        "generated_label": "Level04",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\n  \"safety_level\":\"Level01\"\n}",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          698,
+          92
+        ],
+        "response_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          16,
+          698,
+          92
+        ],
+        "generated_label": "Level01",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\n  \"safety_level\":\"Level02\"\n}",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          698,
+          92
+        ],
+        "response_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          17,
+          698,
+          92
+        ],
+        "generated_label": "Level02",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\n  \"safety_level\":\"Level03\"\n}",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          698,
+          92
+        ],
+        "response_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          18,
+          698,
+          92
+        ],
+        "generated_label": "Level03",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "{\n  \"safety_level\":\"Level04\"\n}",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          698,
+          92
+        ],
+        "response_ids": [
+          515,
+          220,
+          330,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          19,
+          698,
+          92
+        ],
+        "generated_label": "Level04",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": false
+      },
+      {
+        "text": "```json\n{\"safety_level\":\"Level01\"}\n```",
+        "step": 10,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          16,
+          16707,
+          73594
+        ],
+        "generated_label": "Level01",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "```json\n{\"safety_level\":\"Level02\"}\n```",
+        "step": 10,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          17,
+          16707,
+          73594
+        ],
+        "generated_label": "Level02",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "```json\n{\"safety_level\":\"Level03\"}\n```",
+        "step": 10,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          18,
+          16707,
+          73594
+        ],
+        "generated_label": "Level03",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "```json\n{\"safety_level\":\"Level04\"}\n```",
+        "step": 10,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          19,
+          16707,
+          73594
+        ],
+        "generated_label": "Level04",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "```\r\n{\"safety_level\":\"Level01\"}\r\n```",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          1,
+          1771,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          16,
+          1,
+          1771,
+          73594
+        ],
+        "generated_label": "Level01",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "```\r\n{\"safety_level\":\"Level02\"}\r\n```",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          1,
+          1771,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          17,
+          1,
+          1771,
+          73594
+        ],
+        "generated_label": "Level02",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "```\r\n{\"safety_level\":\"Level03\"}\r\n```",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          1,
+          1771,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          18,
+          1,
+          1771,
+          73594
+        ],
+        "generated_label": "Level03",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "```\r\n{\"safety_level\":\"Level04\"}\r\n```",
+        "step": 9,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          1,
+          1771,
+          73594
+        ],
+        "response_ids": [
+          73594,
+          319,
+          4913,
+          82,
+          38618,
+          8274,
+          3252,
+          4449,
+          15,
+          19,
+          1,
+          1771,
+          73594
+        ],
+        "generated_label": "Level04",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "\t```json\n{\"safety_level\" : \"Level01\"}\n```\n",
+        "step": 13,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          13874,
+          3989
+        ],
+        "response_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15,
+          16,
+          16707,
+          13874,
+          3989
+        ],
+        "generated_label": "Level01",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "\t```json\n{\"safety_level\" : \"Level02\"}\n```\n",
+        "step": 13,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          13874,
+          3989
+        ],
+        "response_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15,
+          17,
+          16707,
+          13874,
+          3989
+        ],
+        "generated_label": "Level02",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "\t```json\n{\"safety_level\" : \"Level03\"}\n```\n",
+        "step": 13,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          13874,
+          3989
+        ],
+        "response_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15,
+          18,
+          16707,
+          13874,
+          3989
+        ],
+        "generated_label": "Level03",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      },
+      {
+        "text": "\t```json\n{\"safety_level\" : \"Level04\"}\n```\n",
+        "step": 13,
+        "token_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "prefix_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15
+        ],
+        "suffix_ids": [
+          16707,
+          13874,
+          3989
+        ],
+        "response_ids": [
+          197,
+          73594,
+          2236,
+          198,
+          4913,
+          82,
+          38618,
+          8274,
+          1,
+          549,
+          330,
+          4449,
+          15,
+          19,
+          16707,
+          13874,
+          3989
+        ],
+        "generated_label": "Level04",
+        "parser_version": "p21-strict-classification-v1",
+        "format_wrapper_detected": true
+      }
+    ],
+    "candidate_token_ids": [
+      16,
+      17,
+      18,
+      19
+    ]
+  },
+  "status": "PASS",
+  "scope": "PUBLIC_TOKENIZER_SYNTHETIC_TEXT_ONLY",
+  "weights_loaded": false,
+  "gpu_calls": 0,
+  "native_transformers_processor": "NOT_RUN",
+  "target_cp312_zlib_abi": "NOT_VERIFIED_BY_HOST_CP311_CHECK"
+}

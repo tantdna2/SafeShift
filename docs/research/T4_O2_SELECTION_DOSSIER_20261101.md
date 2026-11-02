@@ -1,5 +1,19 @@
 # T4 — hồ sơ quyết định lựa chọn kết quả O2
 
+## Issue171 override - OWNER_FRESH_FULLTRAIN_ONLY
+
+[Issue #171](https://github.com/tantdna2/SafeShift/issues/171) and the
+[new decision](DECISIONS.md#dec-20261102-owner-fresh-fulltrain-only), 02/11/2026,
+supersede v2 prediction inheritance for this fresh full TRAIN campaign.
+Qwen3, InternVL3.5 and MiniCPM FP32 label-only each start a new series with
+the same 3,763 IDs/order/image SHA and no historical prediction imports.
+Issue169 and T4-v1 below remain historical snapshots, not fresh-campaign
+policy. Legacy representation/report seals are relevant to separately
+authorized historical analysis, not a prerequisite to new initial calls.
+New source/checkpoint/cohort custody, O2 comparability/selection, O3 final
+roster, O4-O6 and G0-G6 remain open. No academic approval or method freeze.
+
+
 ## Issue169 successor full TRAIN
 
 Ngày **02/11/2026, Asia/Bangkok**. `T4-O2-FULLTRAIN-SELECTION-REPAIR-v2`:

@@ -1,0 +1,198 @@
+{
+  "schema": "fresh-qwen-native-reference-v1",
+  "model": {
+    "id": "Qwen/Qwen3-VL-8B-Instruct",
+    "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"
+  },
+  "historical_reference": {
+    "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+    "files": {
+      "configs/diagnostics/hnlo_one_click_build.v1.json": "9dbf188c7692e027a0b49bb64105c5ab2b400db6512a892dbb1b67c2ba128d9f",
+      "configs/pre_freeze/production_classification_policy.d9r23.v1.json": "a0aeba174be9ae85f0cf3264ffcbbd97039f3088319084f9cd7f7caf852796ab"
+    }
+  },
+  "public_metadata": {
+    "url": "https://huggingface.co/api/models/Qwen/Qwen3-VL-8B-Instruct/revision/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b?blobs=true",
+    "sha256": "3348c57487e06ba503fbf8a12dfe47a7307b55cc4ba27bb4f2327fa7e6d23d6f",
+    "weight_bytes_downloaded": false
+  },
+  "snapshot_files": [
+    {
+      "path": ".gitattributes",
+      "size_bytes": 1519,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "a6344aac8c09253b3b630fb776ae94478aa0275b",
+      "sha256": "11ad7efa24975ee4b0c3c3a38ed18737f0658a5f75a0a96787b576a78a023361"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 7133,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "06fb2c8220b4fb51ccca87dd694ef9d240c36745",
+      "sha256": "6d5d06e0c3f069097002445d30dce9ee107db3afaf15563f09e6df49b8dcb4d7"
+    },
+    {
+      "path": "chat_template.json",
+      "size_bytes": 5499,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "1081bacf1af7c7c6de4a585ce02cd0fd34e382da",
+      "sha256": "5c72a170d2a4a1a3bc5adad2e689ae28138a9700e5b8c96c0266331e86c0acce"
+    },
+    {
+      "path": "config.json",
+      "size_bytes": 1474,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "0e2df614c5fe1ad2b6b540c8625bebf2d7ec43ca",
+      "sha256": "5cd452860dc1e9c29dd71cc3cef7f39b338b7a40793f7a260655c2d3568f3661"
+    },
+    {
+      "path": "generation_config.json",
+      "size_bytes": 269,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "e116347d7ef42621c7a5957f82c015c38d939c1f",
+      "sha256": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44"
+    },
+    {
+      "path": "merges.txt",
+      "size_bytes": 1671839,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+      "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+    },
+    {
+      "path": "model-00001-of-00004.safetensors",
+      "size_bytes": 4902275944,
+      "hash_algorithm": "sha256",
+      "expected_hash": "d5d0aef0eb170fc7453a296c43c0849a56f510555d3588e4fd662bb35490aefa"
+    },
+    {
+      "path": "model-00002-of-00004.safetensors",
+      "size_bytes": 4915962496,
+      "hash_algorithm": "sha256",
+      "expected_hash": "8be88fb5501e4d5719a6d4cc212e6a13480330e74f3e8c77daa1a68f199106b5"
+    },
+    {
+      "path": "model-00003-of-00004.safetensors",
+      "size_bytes": 4999831048,
+      "hash_algorithm": "sha256",
+      "expected_hash": "83de00eafe6e0d57ccd009dbcf71c9974d74df2f016c27afb7e95aafd16b2192"
+    },
+    {
+      "path": "model-00004-of-00004.safetensors",
+      "size_bytes": 2716270024,
+      "hash_algorithm": "sha256",
+      "expected_hash": "0a88b98e9f96270973f567e6a2c103ede6ccdf915ca3075e21c755604d0377a5"
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "size_bytes": 67759,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "5857ec62530eb589b1876034dd5386f1d98131a6",
+      "sha256": "520b2e05079402e9468a8701d03d1154d14b2599593afb6effa7fb60c1bff070"
+    },
+    {
+      "path": "preprocessor_config.json",
+      "size_bytes": 390,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64",
+      "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516"
+    },
+    {
+      "path": "tokenizer.json",
+      "size_bytes": 7032403,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "c6cc1014128b19d1fc46b1d30a23e3b1d35db421",
+      "sha256": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "size_bytes": 10868,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "d3d3763207692c78780f4bf42d4dadf49a5c8012",
+      "sha256": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399"
+    },
+    {
+      "path": "video_preprocessor_config.json",
+      "size_bytes": 385,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe",
+      "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13"
+    },
+    {
+      "path": "vocab.json",
+      "size_bytes": 2776833,
+      "hash_algorithm": "git_blob_sha1",
+      "expected_hash": "4783fe10ac3adce15ac8f358ef5462739852c569",
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    }
+  ],
+  "transformers_sources": {
+    "generation/utils.py": {
+      "sha256": "a20024b1e82ed5361a524d238d2197be5407abc91297dd9888c57e8284d63fef",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/generation/utils.py"
+    },
+    "generation/logits_process.py": {
+      "sha256": "6481506629ff6f021157e893fc64c4e7b5b06a72072771809d679387cb54a4b1",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/generation/logits_process.py"
+    },
+    "models/qwen3_vl/modeling_qwen3_vl.py": {
+      "sha256": "dd63ed3b124232735b3dca1bfa28f9d6b0d3f7182afcb75dde8f3e724b2b22da",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/qwen3_vl/modeling_qwen3_vl.py"
+    },
+    "models/qwen3_vl/processing_qwen3_vl.py": {
+      "sha256": "efd8d64aaf608aad1ffb3e6d503d6a99e5227d007df95c1d9fa905d998cda4a9",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/qwen3_vl/processing_qwen3_vl.py"
+    },
+    "models/qwen3_vl/configuration_qwen3_vl.py": {
+      "sha256": "177fd0a4dc1b08307c08ca72cf26b8d7dc028ab6ab5975bf650fc14ab8132a83",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/qwen3_vl/configuration_qwen3_vl.py"
+    },
+    "models/qwen2_vl/image_processing_qwen2_vl.py": {
+      "sha256": "7820a0fcca107e75605e08d9b774285ca2b0316f857bc0225c779794705ecf4f",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/qwen2_vl/image_processing_qwen2_vl.py"
+    },
+    "models/qwen2_vl/image_processing_qwen2_vl_fast.py": {
+      "sha256": "09bfa9b17df7c3f0c6159bc34008ee50f21d2472cd5bae7e5c21ba1ca13a423c",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/qwen2_vl/image_processing_qwen2_vl_fast.py"
+    },
+    "models/qwen2/tokenization_qwen2_fast.py": {
+      "sha256": "1025a3b86526283bd86a447f0fe2d991d09775b32d3fdcc233c9e447b0611049",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/models/qwen2/tokenization_qwen2_fast.py"
+    },
+    "tokenization_utils_fast.py": {
+      "sha256": "558e454ee6850e90e8bc5d1782e35878dfda1da9bfdf997ae113fa7ff771a0f3",
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/v4.57.1/src/transformers/tokenization_utils_fast.py"
+    }
+  },
+  "python_source": {
+    "url": "https://www.python.org/ftp/python/3.12.13/Python-3.12.13.tar.xz",
+    "sha256": "c08bc65a81971c1dd5783182826503369466c7e67374d1646519adf05207b684"
+  },
+  "zlib_source": {
+    "url": "https://zlib.net/fossils/zlib-1.2.11.tar.gz",
+    "sha256": "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
+  },
+  "software": {
+    "python": "3.12.13",
+    "torch": "2.10.0+cu128",
+    "transformers": "4.57.1",
+    "accelerate": "1.11.0",
+    "huggingface_hub": "0.36.0",
+    "safetensors": "0.6.2",
+    "pillow": "11.3.0",
+    "zlib": "1.2.11",
+    "tokenizers": "0.22.2",
+    "torchvision": "0.25.0+cu128",
+    "numpy": "1.26.4"
+  },
+  "preprocessing": {
+    "mode": "official_processor"
+  },
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 32
+  },
+  "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+  "authority_inherited": false,
+  "dependency_closure": "REQUIRES_HASH_PINNED_WHEELHOUSE_FOR_EXACT_CP312_LINUX_X86_64"
+}

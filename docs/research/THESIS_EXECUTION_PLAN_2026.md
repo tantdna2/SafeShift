@@ -1,5 +1,20 @@
 # SafeShift — Kế hoạch thực thi Khóa luận tốt nghiệp 2026
 
+## OWNER UPDATE - 02/11/2026: fresh full TRAIN only
+
+[Issue #171](https://github.com/tantdna2/SafeShift/issues/171) /
+[decision](DECISIONS.md#dec-20261102-owner-fresh-fulltrain-only): start over
+for Qwen3, InternVL3.5 and MiniCPM FP32 label-only, one new series per model
+on the same original 3,763 TRAIN IDs/order/image SHA. No historical
+predictions/SUCCESS/INVALID inheritance or completion union. Initial plans
+all 3,763/model; resume only pending in the new series; repair needs cause,
+fix/regression/outcome hashes and authority/caps. No guarantee of all SUCCESS.
+Baseline counts below are historical references. O2-O6/academic approval
+remain separate; false-safe/E1-E5, three candidates and no fourth remain.
+One branch/Draft PR for docs/code/notebooks/CPU synthetic only; no GPU,
+inference or TEST. Live verification/release remain BLOCKED.
+
+
 ## OWNER SCOPE UPDATE — 02/11/2026: full TRAIN completeness & controlled repair
 
 [Issue #167](https://github.com/tantdna2/SafeShift/issues/167) / [DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR](DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair) bổ sung mục tiêu **phân loại trên cùng toàn bộ 3.763 InspecSafe TRAIN ảnh mỗi mô hình được O3 lựa chọn**, thay vì xem TRAIN160 pilot như kết quả full TRAIN. Mọi planned ID cần một trạng thái; phấn đấu 100% nhãn hợp lệ với sửa lỗi kỹ thuật đúng nguyên nhân, có regression tests và lượt chạy bù được cấp quyền. Không ép nhãn/GT, không bỏ INVALID, không giả 100% khi bất khả thi. Các bước T0–T6 và phương pháp bốn peers/metric/quorum bên dưới còn PROPOSED theo phạm vi chưa duyệt.

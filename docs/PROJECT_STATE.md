@@ -1,5 +1,55 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT - Issue #171: fresh full TRAIN, 02/11/2026
+
+**OWNER_FRESH_FULLTRAIN_ONLY; REVISED CPU CHECKS PASS; LIVE RELEASE BLOCKED.**
+[Issue #171](https://github.com/tantdna2/SafeShift/issues/171), branch
+`feat/issue171-fresh-fulltrain`, BASE `1acb3ef7c0deadbbde7da0b1c63b71296e3950e5`.
+First commit: documents only. [Decision](research/DECISIONS.md#dec-20261102-owner-fresh-fulltrain-only)
+requires one new series per candidate on the same 3,763 TRAIN IDs/order/image
+SHA, without historical predictions/completions. 11,289 planned initial calls
+have not been executed. O2 comparability/science, O3 final roster, O4 custody/
+rights, O5 caps and O6 grant remain PENDING/BLOCKED. CPU/notebook preparation
+is authorized; GPU/inference/TEST/private raw are not. ChatGPT review and
+independent Antigravity audit precede separately authorized merge.
+The Issue169 section below is preserved as a historical snapshot.
+
+Fresh implementation/release matrix: [Issue171 runbook](FRESH_FULLTRAIN_171.md).
+The separate source package reuses planner/controller/native peer adapters and
+raw custody, adds three fresh series, rejects foreign history/unreconciled
+reservations, and prepares six exact-source notebooks. The follow-up to
+[ChatGPT FAIL review6572757952](https://github.com/tantdna2/SafeShift/pull/172#issuecomment-6572757952)
+adds an offline Qwen native adapter, exact public source/checkpoint inventory,
+original V4 P2.1/raw HNLO function bodies and CPU tokenizer28-case evidence.
+Qwen retains two-GPU/max32/SDPA; peer strict C1 and MiniCPM label-only are unchanged.
+The fresh admission/setup/CPU/GPU/native composition now has isolated provisioning
+and Linux process-group deadlines/parent-death control. All public routes remain
+fenced. Pinned-native/live execution is not verified. Original
+private3763 projection and image custody are NOT_VERIFIED. O2–O6/B1–B6/G0–G6
+are explicitly listed in the runbook. [Draft PR #172](https://github.com/tantdna2/SafeShift/pull/172)
+contains [revised CPU evidence and limits](research/evidence/issue171/review2/README.md).
+Full Linux and focused Windows checks both ran from immutable final source/
+notebook/test snapshot `a3264770138525d2d3e4acd760bd516df9f21d6c`:
+Linux 597 run, 556 PASS / 41 SKIP / 0 FAIL / 0 ERROR;
+Windows 55 run, 50 PASS / 5 SKIP / 0 FAIL / 0 ERROR.
+All five Linux process-control tests ran there; Windows skips them. Native
+opt-ins remain disabled and their skips explicit. Public Qwen tokenizer T1 is
+28/28 PASS on host CPU, not a target processor/runtime qualification.
+The [first submission's evidence](research/evidence/issue171/README.md), including
+the old Linux full FAIL and 7/7 targeted correction, remains intact. New receipts
+record a separate complete rerun, not a relabeling. Runtime payload is
+`70825d24ad4e18877321f7134f773e592e051ff8`; subsequent evidence/docs do not alter
+the tested code/notebooks. The six notebooks are non-consuming preparation/
+diagnostic artifacts, not production-ready notebooks. Qwen's complete sealed
+cp312 wheelhouse is not supplied; CPython/zlib build, pinned native ABI/processor
+checks, original private custody, actual Kaggle/model-fit/load/inference/export
+and release authority remain BLOCKED/NOT_VERIFIED for the reasons in the runbook.
+ChatGPT's review FAIL at `542e4dd` is historical; only fresh external review can
+change it. No Antigravity audit or merge permission is claimed. No historical
+notebooks, parser/HNLO, source/checkpoint or science contracts were changed.
+No inference, GPU, TEST or private artifacts accessed.
+
+
 ## CURRENT — Issue #169: hồ sơ nguồn full TRAIN, 02/11/2026
 
 **DOCUMENTATION DONE FOR DRAFT REVIEW; SCIENCE/AUTHORITY PENDING; EXECUTION BLOCKED.**

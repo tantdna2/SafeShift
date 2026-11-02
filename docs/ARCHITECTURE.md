@@ -1,5 +1,24 @@
 # Kiến trúc Foundation V1
 
+## Issue171 fresh full TRAIN preparation — 02/11/2026
+
+Route: `safeshift/fulltrain/contract.py` (fresh campaign, three series, exact
+cohort and separate source inventory), `inputs.py` (original-master projection
+and opaque mapping), `runtime.py` (shared native/controller preparation, strict
+fresh recovery/import and release fence), `preflight.py` (bounded storage,
+CPU-native composition, structural receipt admission and stdlib notebook prep).
+Reuses existing `candidates/fulltrain*`, peer adapters/numerics and pilot
+execute/Store/archive/lease without changing their bytes or historical authority.
+Follow-up to ChatGPT review6572757952 adds `qwen.py` and provenance-checked
+`qwen_semantics.py` (Qwen V4 P2.1/raw HNLO only), `engine.py` (same controller
+with explicit parser injection), `admission.py` (source/Input/history/checkpoint
+stages), `provision.py` (isolated peer setup and offline Qwen build/wheelhouse),
+`environment.py` (explicit RAM/disk/driver/CUDA policy) and `supervision.py`
+(Linux process groups, hard deadlines and parent-death guardian). No native
+weights or Kaggle environment have been verified. All public routes stay fenced.
+Tests: `test_fresh_fulltrain*.py`; builders/preparation/receipt commands and
+release gaps: [Issue171 runbook](FRESH_FULLTRAIN_171.md).
+
 ## Issue167 full TRAIN CPU readiness/repair — 02/11/2026
 
 Định tuyến: `candidates/fulltrain.py` (exact3763 cohort/identity/lineage/action),

@@ -500,3 +500,39 @@ thật. Dừng ở một Draft PR; ChatGPT review, quyết định audit độc 
 và merge được cấp riêng. Native integration/history bridge/preflight phải
 được giao task riêng sau decisions/chứng từ; hồ sơ này không mở task/run đó.
 
+
+## DEC-20261102-OWNER-FRESH-FULLTRAIN-ONLY
+
+Date: **02/11/2026, Asia/Bangkok**. Source: [Issue #171](https://github.com/tantdna2/SafeShift/issues/171)
+and the direct Owner task. BASE `1acb3ef7c0deadbbde7da0b1c63b71296e3950e5`.
+**OWNER_FRESH_FULLTRAIN_ONLY / OWNER_DIRECTION_ACCEPTED**: start over for
+Qwen3-VL-8B-Instruct, InternVL3.5-4B-HF and MiniCPM-V-4 with the exact FP32
+resampler, label-only. Each candidate starts a separate new series on the
+same original 3,763 TRAIN IDs/order/image SHA: 11,289 planned initial calls,
+before repair. This is neither an executed result nor a promise of all SUCCESS.
+
+This supersedes prediction inheritance proposed in
+T4-O2-FULLTRAIN-SELECTION-REPAIR-v2 for this fresh campaign only. Preserve the
+proposal and all historical evidence. No SUCCESS/INVALID/prediction imports
+from Qwen V4, Recovery224/composite, InternVL RECOVERY, MiniCPM INITIAL or
+smoke runs. Historical prediction bridges are not needed for new initial;
+new source/checkpoint/native path and cohort projection custody remain required.
+
+Initial plans all 3,763/model, allowing bounded attempts under approved caps.
+Resume schedules only NOT_ATTEMPTED within the explicitly selected new series
+with unchanged identity. Repair targets only INVALID/TECHNICAL_ERROR with
+outcome hash, cause evidence, fix/regression and specific authority/caps.
+Semantic/configuration changes need another series and comparability review.
+No completion union, backfill or favorable-output selection. Preserve strict
+C1/parser/HNLO/labels/metrics, raw-before-parse and immutable attempts/history.
+MiniCPM keeps FP16 weights/eager and only resampler attention FP32; historical
+HNLO 0/155 remains label-only, without reopening the score investigation.
+
+This is Owner project direction, not academic approval, final O3 roster,
+O2 science/comparability, O4 rights/custody, O5 numerical caps or O6 per-run
+grant. False-safe/E1-E5 and the pause on recruiting a fourth model remain.
+One new branch, first commit documents only, then native preparation,
+notebooks, CPU synthetic tests/receipts/runbook and PROJECT_STATE in one
+Draft PR. No Kaggle/GPU/real model load/inference, private raw/GT/images or
+TEST. Live G0-G6 remain BLOCKED/NOT_VERIFIED. Stop for direct ChatGPT review
+and independent Antigravity audit; merging requires separate authorization.

@@ -1,0 +1,128 @@
+{
+  "schema": "safeshift-issue171-cpu-evidence-v1",
+  "base": "1acb3ef7c0deadbbde7da0b1c63b71296e3950e5",
+  "document_first_commit": "8fdfc8dd95f3f25229f40605c14275840709330e",
+  "pr": "https://github.com/tantdna2/SafeShift/pull/172",
+  "branch": "feat/issue171-fresh-fulltrain",
+  "runtime_ref": "d12dc2d0796c22e077dfad7e6cd009710d422151",
+  "checks": {
+    "windows-final-01": {
+      "receipt_sha256": "6cf07a5f4389c77a272430b886e0b4f57fa2f879d63dd99ecdc812052f607e3b",
+      "snapshot": {
+        "commit": "be2e2207a3bac1dafc59e3cb7de0a63cc514c06c",
+        "archive_sha256": "4461a25bba2dc60bb0fb6ff16a5867a0ed6d912f561c3349bc21abfc337cc18a",
+        "pattern": "test_fresh_fulltrain*.py",
+        "exit_code": 0,
+        "source": "git archive; no untracked/local inputs",
+        "harness_sha256": "af2c1f8bab388963efc7b5e4886d1d19367710b0d66ce3a5e290159f71f6329c"
+      },
+      "local_log": "data/processed/issue171/windows-final-01/unittest.log",
+      "local_receipt_sha256": "8fefa5c6de8ff9882efd80f13883b305979c7a0f93f1a9602d3e5522be29601b"
+    },
+    "linux-final-01": {
+      "receipt_sha256": "99bcb243800dfc537b5219bf61567bcb5b263601755fed1f2b7722a6906b62b9",
+      "snapshot": {
+        "commit": "be2e2207a3bac1dafc59e3cb7de0a63cc514c06c",
+        "archive_sha256": "4461a25bba2dc60bb0fb6ff16a5867a0ed6d912f561c3349bc21abfc337cc18a",
+        "pattern": "test*.py",
+        "exit_code": 1,
+        "source": "git archive; no untracked/local inputs",
+        "harness_sha256": "af2c1f8bab388963efc7b5e4886d1d19367710b0d66ce3a5e290159f71f6329c"
+      },
+      "local_log": "data/processed/issue171/linux-final-01/unittest.log",
+      "local_receipt_sha256": "99bcb243800dfc537b5219bf61567bcb5b263601755fed1f2b7722a6906b62b9"
+    },
+    "linux-regression-02": {
+      "receipt_sha256": "8eb37a3eaf21b4acec6850d132248025738bdce4fe167b475345f73f84eb294a",
+      "snapshot": {
+        "commit": "585779791b38495cfbe10a53e0154b7bc30ea4b8",
+        "archive_sha256": "d340efb3223b765109c361401e74fb3fc279ead812750bea115f23d2e58d222c",
+        "pattern": "test_candidate_integration.py",
+        "exit_code": 0,
+        "source": "git archive; no untracked/local inputs",
+        "harness_sha256": "af2c1f8bab388963efc7b5e4886d1d19367710b0d66ce3a5e290159f71f6329c"
+      },
+      "local_log": "data/processed/issue171/linux-regression-02/unittest.log",
+      "local_receipt_sha256": "8eb37a3eaf21b4acec6850d132248025738bdce4fe167b475345f73f84eb294a"
+    }
+  },
+  "notebook_sha256": {
+    "notebooks/SafeShift_FRESH_FULLTRAIN_DIAGNOSTIC_internvl35.ipynb": "3bf1eedea4107d676aff3c7a06326578bb298951c2fbfa09de7159900d396428",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_DIAGNOSTIC_minicpm4.ipynb": "afd67e0b67e14d518cdfcd1127aebe36cc5313782ce6333839c914cfd2571fbb",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_DIAGNOSTIC_qwen3.ipynb": "07b5958b504dd4d2162d9eef4e0f70fc3d7484d5ba55c565729b1c6ddc3a87cc",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_PREP_internvl35.ipynb": "a0af7d85ee16f45b7c8b4cc16398a89bc6195d27f7fb4f34f8d75fbcb2763a0c",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_PREP_minicpm4.ipynb": "b4df4efd65d4fe301b33fc7d18522d8918677b62283d1c247a76abc3a61c6b96",
+    "notebooks/SafeShift_FRESH_FULLTRAIN_PREP_qwen3.ipynb": "926efa5e8694dce00fdd7e7de8039e2b09dbfb529da5c87e0d1c08b217365a69"
+  },
+  "development_checks": {
+    "windows-development-01": {
+      "status": "PASS",
+      "tests_run": 23,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 29.766000000061467,
+      "source_commit": "8fdfc8dd95f3f25229f40605c14275840709330e",
+      "log_sha256": "5fe09a43a761ac8b2af5990b3a247f5a2f9f0122b4539c2c1aaa088da2b68347"
+    },
+    "windows-notebooks-01": {
+      "status": "FAIL",
+      "tests_run": 4,
+      "failures": 6,
+      "errors": 0,
+      "seconds": 35.93700000003446,
+      "source_commit": "d12dc2d0796c22e077dfad7e6cd009710d422151",
+      "log_sha256": "e98f2a6954d388e78306aa3d2789b9167c670058ae8122244459a9d009c12408",
+      "cause": "Six notebook byte subtests found Windows CRLF; changed builder to write UTF-8/LF bytes. Original receipt passed=-2 is an erroneous subtest counter; corrected subsequent checker counts parent tests. Original log/receipt retained unchanged."
+    }
+  },
+  "history_preservation": {
+    "document_first_files": [
+      "docs/PROJECT_STATE.md",
+      "docs/research/DECISIONS.md",
+      "docs/research/T4_O2_SELECTION_DOSSIER_20261101.md",
+      "docs/research/THESIS_EXECUTION_PLAN_2026.md"
+    ],
+    "preservation": {
+      "docs/research/DECISIONS.md": {
+        "base_sha256": "fc0f20dbf06f0f2f3e4a581dceb193af08ed9031d503bc591c3fee7cc0e39f2c",
+        "historical_text_preserved": true
+      },
+      "docs/research/T4_O2_SELECTION_DOSSIER_20261101.md": {
+        "base_sha256": "c803c8c1932f7327dd83a6019c3dbd065df84cabbad203958adc7c6411758fff",
+        "historical_text_preserved": true
+      },
+      "docs/research/THESIS_EXECUTION_PLAN_2026.md": {
+        "base_sha256": "032316e538a7872e21c02242f9b99ab1ee59d86983835e8f666ea3223fcacd66",
+        "historical_text_preserved": true
+      },
+      "docs/PROJECT_STATE.md": {
+        "base_sha256": "0964eec8deb748cd4d317c9b5ea102c8f49655672887415c5ece743ee4e22b87",
+        "historical_text_preserved": true
+      }
+    },
+    "tracked_worktree_clean": true
+  },
+  "regression_correction": {
+    "commit": "585779791b38495cfbe10a53e0154b7bc30ea4b8",
+    "file": "tests/test_candidate_integration.py",
+    "cause": "Old thesis whole-file assertion rejected the authorized Issue171 directive. Pin new document-first bytes and assert exact historical title/body retention; do not change source locks.",
+    "full_invocation_status": "FAIL retained; targeted module rerun recorded separately"
+  },
+  "synthetic_preparation": {
+    "planned_initial_calls": 11289,
+    "model_calls": 0,
+    "archive_sha256": "7fc2ed012fa3f5d9f720d571339325ca241fe1d8a3b39856e8ef0790cf45f332",
+    "local_path": "data/processed/issue171/preparation-final-01.zip"
+  },
+  "release_status": "BLOCKED",
+  "native_qwen": "BLOCKED_NATIVE_CONTRACT",
+  "peer_native": "SCRIPTED_CPU_WIRING_ONLY_NOT_REAL_NATIVE",
+  "limitations": [
+    "No private master/projection/image/GT/raw access",
+    "No weights or real model inference",
+    "No Kaggle/GPU/TEST; no new O2-O6 approval",
+    "Pinned native CPU stacks not verified in this task",
+    "Fresh provisioning/hard-deadline supervisor activation remains release work",
+    "Independent ChatGPT review and Antigravity audit required; no merge authorization"
+  ]
+}
