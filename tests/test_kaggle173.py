@@ -13,6 +13,27 @@ from scripts import observe_kaggle173 as o
 
 
 class ObservationTests(unittest.TestCase):
+    def test_software_setup_failure_seals_evidence_and_never_reaches_cpu_gpu(self):
+        from scripts import qualify_kaggle173_software as q
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            with patch.object(q.supervision,'run',side_effect=RuntimeError('synthetic setup failure')) as run:
+                out=q.launch(root/'out',root/'scratch','a'*40)
+            self.assertEqual(run.call_count,3)
+            for call in run.call_args_list:
+                argv=call.args[0]
+                self.assertEqual(argv[argv.index('--worker')+1],'setup')
+                self.assertEqual(call.kwargs['env']['CUDA_VISIBLE_DEVICES'],'')
+            result=json.loads((out/'result.json').read_text())
+            self.assertEqual(result['model_calls'],0)
+            self.assertFalse(result['inputs_attached'])
+            self.assertTrue(all(v['stage']=='setup' and v['status']=='BLOCKED' for v in result['models'].values()))
+            from safeshift.pilot.artifacts import verify_archive
+            names=verify_archive(Path(str(out)+'.zip'))
+            self.assertIn('qwen3/failure.json',names)
+            self.assertNotIn('qwen3/cpu.json',names)
+            self.assertFalse(any('attempt' in n or 'consumption' in n for n in names))
+
     def test_official_wheel_cdn_and_nvidia_reject_spoofed_hosts(self):
         from scripts.qualify_kaggle173_software import wheel_location
         rows=[('torch','https://download-r2.pytorch.org/whl/cu128/torch-2.whl'),
