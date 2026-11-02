@@ -1,6 +1,9 @@
 """Synthetic single-call journal tests, no model imports or live execution."""
 from pathlib import Path
 import subprocess
+import sys
+import os
+import time
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
@@ -79,6 +82,20 @@ class SmokeJournalTests(unittest.TestCase):
         with patch.object(smoke,'read',return_value=request),patch.object(smoke,'scope',return_value=(pin,self.row)):
             with self.assertRaisesRegex(ValueError,'WORKER_EXACT_ORIGINAL_SCOPE'):
                 smoke.worker('internvl35','native','unused',self.out,self.out)
+
+    def test_consumed_qwen_direct_cli_cannot_load_or_read_private_inputs(self):
+        with patch.object(smoke,'read',side_effect=AssertionError('NO_PRIVATE_READ')):
+            with self.assertRaisesRegex(ValueError,'ALREADY_CONSUMED'):
+                smoke.worker('qwen3','native','unused',self.out,self.out)
+
+    @unittest.skipUnless(sys.platform=='linux','real Linux process supervisor')
+    def test_supervised_setup_does_not_collide_with_runtime_exclusive_log(self):
+        code="from pathlib import Path; import sys; p=Path(sys.argv[1])/'setup.log'; p.open('x').write('SYNTHETIC_SETUP')"
+        smoke.supervision.run([sys.executable,'-B','-c',code,str(self.out)],cwd=self.out,env=os.environ.copy(),
+            deadline=time.monotonic()+20,log=smoke.supervisor_log(self.out,'setup'),
+            receipt=self.out/'synthetic-supervisor.json',max_log_bytes=2**20)
+        self.assertEqual((self.out/'setup.log').read_text(),'SYNTHETIC_SETUP')
+        self.assertTrue(smoke.supervisor_log(self.out,'setup').is_file())
 
     def test_previous_zero_summary_cannot_hide_call_or_load_reservation(self):
         for marker in (None,'qwen3/sample/native_call.json','qwen3/model-load-reservation.json'):

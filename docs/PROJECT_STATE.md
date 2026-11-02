@@ -3,7 +3,7 @@
 ## CURRENT — Issue #173 continuation: actual TRAIN/checkpoint bytes, 02/11/2026
 
 **RIGHTS VERIFIED FOR BOUNDED PRIVATE TRAIN SCOPE; TRAIN3763 AND ALL EIGHT
-CHECKPOINT SHARDS PASS; FIRST SMOKE BLOCKED BEFORE LOAD, 0/3 CALLS.** New session/worktree from
+CHECKPOINT SHARDS PASS; QWEN ACTUAL INFERENCE PASS, 1/3 CALLS CONSUMED.** New session/worktree from
 verified main `33e9f3cc4daf00c37a31b2347c143444d6add0bb` (PR174 merged).
 [Owner continuation](https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922),
 one branch `verify/issue173-real-checkpoints`, one Draft PR, no merge.
@@ -23,8 +23,14 @@ First GPU notebook exported a sealed failure: Qwen pinned setup/CPU and original
 image decode PASS, then16 GiB available-RAM gate FAIL; no load reservation,
 verified load or native call. Peers NOT_ATTEMPTED. [Controlled pre-load repair](KAGGLE_CHECKPOINTS_173.md#preserved-first-smoke-failure-and-controlled-pre-load-repair)
 reclaims owned public setup caches and records actual before/after RAM while
-keeping the original floor, runtime files and all Inputs/history intact. New v2
-identity must admit the sealed zero-consumption failure before dispatch.
+keeping the original floor, runtime files and all Inputs/history intact. V2
+reclaimed measured RAM, loaded actual Qwen weights and completed exactly1
+original-image inference (strict SUCCESS, HNLO_VALIDATED). Its sealed65-member
+archive remains separate. InternVL hit an exclusive-log filename collision
+before load/call; MiniCPM was not attempted. The v3 correction uses distinct
+supervisor logs and admits both immutable histories: **Qwen cannot be reloaded
+or called**, only two peer calls remain. No scientific series/completion or
+predictions are inherited by this technical ledger.
 No inference PASS is inferred from CPU/tensor/checkpoint results. Existing model/source/config/parser/HNLO locks,
 production fences and scientific decisions remain unchanged. O2–O6/full TRAIN,
 TEST, scientific selection/pooling and independent review/audit remain separate.

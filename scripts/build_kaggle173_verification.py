@@ -44,6 +44,7 @@ sys.path.insert(0,str(root))
     compile(code,'<verification-notebook>','exec')
     scope=[
         '# Issue173: bounded native smoke\n',
+        'Continuation: Qwen already consumed one verified call in v2; execute InternVL3.5 and MiniCPM only (two remaining calls).\n',
         'Private; T4x2; Internet ON for pinned peer software only. Reuse existing checkpoints, original TRAIN and Qwen offline software Input.\n',
         'Hard ceiling 1 original image/model (ordinal0), 3 calls total, 3300s internal/3600s job. One load/model; no retries or production history.\n',
         'All calls have independent smoke identities. Raw/errors/INVALID and ZIP seals stay private; no scientific results or fresh171 import.\n',
@@ -57,7 +58,8 @@ sys.path.insert(0,str(root))
         'No production reservation/history, smoke grant or scientific qualification. A byte PASS does not prove GPU fit.\n']
     return {'nbformat':4,'nbformat_minor':5,'metadata':{
         'kernelspec':{'name':'python3','display_name':'Python 3','language':'python'},
-        'safeshift':{'issue':173,'source_commit':ref,'payload_sha256':hashlib.sha256(raw).hexdigest(),'max_model_calls':3 if smoke else 0}},
+        'safeshift':{'issue':173,'source_commit':ref,'payload_sha256':hashlib.sha256(raw).hexdigest(),
+            'max_model_calls':3 if smoke else 0,'remaining_model_calls':2 if smoke else 0}},
         'cells':[{'cell_type':'markdown','id':'scope','metadata':{},'source':scope},
             {'cell_type':'code','id':'verify','metadata':{},'execution_count':None,'outputs':[],'source':code.splitlines(True)}]}
 

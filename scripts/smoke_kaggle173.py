@@ -27,10 +27,11 @@ from scripts.verify_kaggle173_inputs import unique_mount
 
 DIRECTIVE='https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922'
 KEYS=('qwen3','internvl35','minicpm4')
+ACTIVE_KEYS=('internvl35','minicpm4')
 SOFTWARE_SHA='b068aeb381cb3cff2b0978e7b5a398e009cb44dc4a43e6410083a766a252308f'
 SOFTWARE_MARKER='f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc'
 SLUGS=dict(zip(KEYS,('safeshift-qwen3-m1-model-provision-kaggle','safeshift-prepare-internvl35','safeshift-prepare-minicpm4')))
-RUN_ID='issue173-smoke-20261102-v2'
+RUN_ID='issue173-smoke-20261102-v3'
 
 
 def admit_proof(root, expected):
@@ -64,12 +65,35 @@ def previous_preload_failure(archive,pin):
     return old
 
 
+def previous_completed_qwen(archive,pin):
+    require(sha(archive)==pin['prior_qwen_archive_sha256'],'PRIOR_QWEN_ARCHIVE_PIN')
+    members=verify_archive(archive)
+    with zipfile.ZipFile(archive) as bundle:
+        old=json.loads(bundle.read('summary.json'))
+        raw=json.loads(bundle.read('qwen3/sample/raw.json'))
+        result=json.loads(bundle.read('qwen3/sample/result.json'))
+    require(old['source_commit']==pin['prior_qwen_source_commit'] and old['model_calls']==1
+        and old['models']['qwen3']['native_calls']==1 and old['models']['qwen3']['weights_loaded'] is True
+        and all(old['models'][k]['native_calls']==0 for k in ACTIVE_KEYS),'PRIOR_MODEL_CALL_ACCOUNTING')
+    require({n for n in members if n.endswith('/native_call.json')}=={'qwen3/sample/native_call.json'}
+        and {n for n in members if n.endswith('/model-load-reservation.json')}=={'qwen3/model-load-reservation.json'}
+        and {n for n in members if n.endswith('/loaded-environment.json')}=={'qwen3/loaded-environment.json'},
+        'PRIOR_UNKNOWN_OR_PEER_LOAD_NO_RETRY')
+    require(raw['raw_nonfinite'] is False and result['raw_sha256']==members['qwen3/sample/raw.json']
+        and raw['smoke_identity']['model_key']=='qwen3','PRIOR_QWEN_RAW_CUSTODY')
+    return raw['smoke_identity']
+
+
+def supervisor_log(out,stage):
+    return Path(out)/(stage+'-supervisor.log')  # runtime exclusively owns setup.log
+
+
 def scope(inputs='/kaggle/input'):
     """Re-derive the sole allowed row; direct child CLI cannot inject an image."""
     from safeshift.candidates.fulltrain import cohort
     from safeshift.fulltrain.contract import source_manifest
     pin=read(ROOT/'configs/issue173/real_smoke.json')
-    require(pin['schema']=='issue173-single-smoke-release-v2' and pin['directive']==DIRECTIVE,'SMOKE_RELEASE_IDENTITY')
+    require(pin['schema']=='issue173-single-smoke-release-v3' and pin['directive']==DIRECTIVE,'SMOKE_RELEASE_IDENTITY')
     require(sha(Path(__file__))==pin['smoke_script_sha256'] and
         digest(source_manifest())==pin['source_inventory_sha256'],'EXACT_SMOKE_SOURCE_PIN')
     proof_root=safe(unique_mount(inputs,'safeshift-issue173-existing-bytes'),pin['byte_run_id'])
@@ -77,6 +101,8 @@ def scope(inputs='/kaggle/input'):
     require(proof['source_commit']==pin['byte_source_commit'],'BYTE_SOURCE_PIN')
     prior=safe(unique_mount(inputs,'safeshift-issue173-native-smoke'),'issue173-smoke-20261102-v1.zip')
     previous_preload_failure(prior,pin)
+    completed=safe(unique_mount(inputs,'safeshift-issue173-native-smoke-v2'),'issue173-smoke-20261102-v2.zip')
+    previous=previous_completed_qwen(completed,pin)
     master=discover(inputs,'master_manifest.json')
     raw=master.read_bytes(); projection=cohort(raw)
     first=projection['samples'][0]
@@ -85,10 +111,12 @@ def scope(inputs='/kaggle/input'):
         'InspecSafe-V1-Kaggle/train/'+original['image_locator'])
     row={**first,'image':str(image)}
     require(sha(image)==row['image_sha256'],'FIRST_ORIGINAL_IMAGE_HASH')
+    require(previous['sample_id']==row['sample_id'] and previous['image_sha256']==row['image_sha256']
+        and previous['ordinal']==0,'EXACT_SAME_ORIGINAL_SMOKE_IMAGE')
     return pin,row
 
 
-def reclaim_setup_cache(root,out,*,minimum_bytes=8*2**20):
+def reclaim_setup_cache(root,out,*,minimum_bytes=8*2**20,phase='setup'):
     """Delete only this attempt's redundant public install/build cache.
 
     Advise eviction of large regular files in the retained OWN runtime only;
@@ -109,12 +137,15 @@ def reclaim_setup_cache(root,out,*,minimum_bytes=8*2**20):
             shutil.rmtree(path)
             removed.append(name)
     advised=advised_bytes=visited=0
+    bounded=False
     errors=[]
     for directory,dirs,files in os.walk(root,followlinks=False):
         dirs[:]=[n for n in dirs if not (Path(directory)/n).is_symlink()]
         for name in files:
             visited+=1
-            require(visited<=50000,'CACHE_FILE_BOUND')
+            if visited>50000:
+                bounded=True
+                break
             path=Path(directory)/name
             info=path.lstat()
             if not stat.S_ISREG(info.st_mode) or info.st_nlink!=1 or info.st_size<minimum_bytes: continue
@@ -126,11 +157,12 @@ def reclaim_setup_cache(root,out,*,minimum_bytes=8*2**20):
                 advised+=1; advised_bytes+=info.st_size
             except (OSError,AttributeError) as error:
                 errors.append(type(error).__name__)
+        if bounded: break
     value={'schema':'issue173-owned-cache-reclamation-v1','before':before,'after':environment.host_memory(),
         'removed_owned_cache_directories':removed,'advised_regular_files':advised,'advised_file_bytes':advised_bytes,
-        'advice_errors':errors,'weights_or_inputs_modified':False,'runtime_files_retained':True,
+        'advice_errors':errors,'scan_limit_reached':bounded,'weights_or_inputs_modified':False,'runtime_files_retained':True,
         'ram_floor_mib_unchanged':16384,'proof':'ADVISORY_ONLY_SUBSEQUENT_RAM_GATE_REQUIRED'}
-    write(Path(out)/'setup-cache-reclamation.json',value)
+    write(Path(out)/(phase+'-cache-reclamation.json'),value)
     return value
 
 
@@ -222,6 +254,7 @@ def once(output,row,factory,key):
 
 
 def worker(key,stage,request,out,scratch):
+    require(key in ACTIVE_KEYS,'MODEL_ALREADY_CONSUMED_NO_LOAD_OR_CALL')
     request=read(request)
     require(request['directive']==DIRECTIVE and request['max_native_calls']==1 and request['ordinal']==0,'SMOKE_ONLY_SCOPE')
     pin,row=scope()
@@ -239,9 +272,14 @@ def worker(key,stage,request,out,scratch):
         provision.prepare(request,ROOT,out,time.monotonic()+(1800 if key=='qwen3' else 600))
         return
     if stage=='reclaim':
-        require(key=='qwen3' and (out/'runtime.json').is_file()
+        require((out/'runtime.json').is_file()
             and not (out/'model-load-reservation.json').exists(),'RECLAIM_ONLY_AFTER_SETUP_BEFORE_LOAD')
         reclaim_setup_cache(scratch.parent,out)
+        return
+    if stage=='release':
+        require((out/'sample/result.json').is_file() and (out/'sample/native_call.json').is_file(),
+            'POST_CALL_RECLAMATION_REQUIRES_DURABLE_RESULT')
+        reclaim_setup_cache(scratch.parent,out,phase='post-call')
         return
     require(stage=='native','ONE_NATIVE_STAGE')
     write(out/'software.json',environment.software(key,ROOT,request.get('runtime_lock')))
@@ -285,28 +323,34 @@ def launch(inputs,output,scratch,ref):
         'smoke_script_sha256':sha(Path(__file__)),'max_calls_total':3,'max_calls_per_model':1,
         'series':RUN_ID,'fresh171_import':False,'metrics_excluded':True,
         'global_exactly_once':'NOT_CLAIMED_EXTERNAL_SINGLE_SUBMISSION_CHECK_REQUIRED'})
-    summary={'source_commit':ref,'run_id':run_id,'models':{},'model_calls':0,'production_authorized':False}
+    summary={'source_commit':ref,'run_id':run_id,'models':{'qwen3':{
+        'status':'PRIOR_SMOKE_CONSUMED_NOT_REPLAYED','native_calls':0,'prior_native_calls':1,'weights_loaded':False}},
+        'model_calls':0,'prior_native_calls':1,'production_authorized':False}
     deadline=time.monotonic()+3300
     try:
-        software,lock=software_archive(inputs,scratch)
-        for key,slug in SLUGS.items():
+        for key in ACTIVE_KEYS:
+            slug=SLUGS[key]
             out,temp=root/key,scratch/key; out.mkdir(); temp.mkdir()
             request={'model_key':key,'scratch':str(temp),'directive':DIRECTIVE,'max_native_calls':1,'ordinal':0,
                 'row':row,'checkpoint_root':str(unique_mount(inputs,slug)),
                 'model_revision':checkpoint_spec(key)['model']['revision'],'resource_policy':pin['resource_policy']}
-            if key=='qwen3': request.update(software_input=str(software),software_marker_sha256=SOFTWARE_MARKER,runtime_lock=lock)
             write(out/'request.json',request)
             env=provision.clean_env(ROOT,temp)
-            for stage in (('setup','reclaim','native') if key=='qwen3' else ('setup','native')):
+            for stage in ('setup','reclaim','native','release'):
                 python=sys.executable
                 if stage=='native':
                     runtime=read(out/'runtime.json'); python,env=runtime['python'],runtime['env']
                     env['CUDA_VISIBLE_DEVICES']='0,1' if key=='qwen3' else '0'
+                else:
+                    env=provision.clean_env(ROOT,temp)
                 command=[str(python),'-B','-m','scripts.smoke_kaggle173','--worker',stage,'--key',key,
                     '--request',str(out/'request.json'),'--output',str(out),'--scratch',str(temp)]
-                cap=1800 if key=='qwen3' and stage=='setup' else (300 if stage=='reclaim' else 600)
+                cap=300 if stage in ('reclaim','release') else 600
                 supervision.run(command,cwd=ROOT,env=env,deadline=min(deadline,time.monotonic()+cap),
-                    log=out/(stage+'.log'),receipt=out/(stage+'-supervisor.json'),max_log_bytes=16*2**20,watch_log_root=out)
+                    log=supervisor_log(out,stage),receipt=out/(stage+'-supervisor.json'),max_log_bytes=16*2**20,watch_log_root=out)
+                if stage=='native':
+                    summary['models'][key]={'status':'INFERENCE_VERIFIED','native_calls':1,'weights_loaded':True,
+                        'classification':read(out/'sample/result.json')['status']}
             summary['models'][key]={'status':'INFERENCE_VERIFIED','native_calls':1,'weights_loaded':True,
                 'classification':read(out/'sample/result.json')['status']}
     except Exception as error:
@@ -319,7 +363,7 @@ def launch(inputs,output,scratch,ref):
             summary['model_calls']+=calls
             summary['models'].setdefault(key,{'status':'BLOCKED' if (root/key).exists() else 'NOT_ATTEMPTED','native_calls':calls,
                 'weights_loaded':(root/key/'loaded-environment.json').is_file()})
-        require(summary['model_calls']<=3,'GLOBAL_THREE_CALL_CAP')
+        require(summary['model_calls']<=2 and summary['prior_native_calls']+summary['model_calls']<=3,'GLOBAL_THREE_CALL_CAP')
         write(root/'summary.json',summary)
         export(root,Path(str(root)+'.zip'))
     return summary
@@ -327,7 +371,7 @@ def launch(inputs,output,scratch,ref):
 
 if __name__=='__main__':
     import json
-    p=argparse.ArgumentParser(); p.add_argument('--worker',choices=('setup','reclaim','native')); p.add_argument('--key',choices=KEYS)
+    p=argparse.ArgumentParser(); p.add_argument('--worker',choices=('setup','reclaim','native','release')); p.add_argument('--key',choices=KEYS)
     p.add_argument('--request'); p.add_argument('--output',required=True); p.add_argument('--scratch',required=True)
     p.add_argument('--source-commit'); p.add_argument('--inputs',default='/kaggle/input'); a=p.parse_args()
     if a.worker: worker(a.key,a.worker,a.request,Path(a.output),Path(a.scratch))

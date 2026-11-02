@@ -213,3 +213,42 @@ payloads, raw-before-parse, durable INVALID, no-retry reservations, forged direc
 worker requests and preserved HNLO failures. New repair regressions cover exact
 owned cleanup/runtime retention, unchanged RAM floor, and refusal to reinterpret
 a zero summary containing a prior call/load reservation.
+
+## Qwen actual inference PASS; remaining peer continuation
+
+[Attempt v2](research/evidence/issue173/native-smoke-v2-result.json), private
+`safeshift-issue173-native-smoke-v2/1` (kernel142325818), source `ae5b488`,
+exported65 verified ZIP members, SHA256
+`f1f4fefabff4a6fc80f8863bcc314a13949c53815f9b535170cceda1ccd7117d`.
+Qwen loaded the actual four pinned shards and completed exactly **one native
+TRAIN image call**, strict classification SUCCESS and native HNLO status
+HNLO_VALIDATED. Raw/result/trace/request/native marker and loaded environment
+remain private. This is technical inference evidence, not a scientific result.
+
+The repair is now measured: cgroup-constrained available RAM4,555,481,088 bytes
+before and18,531,954,688 after cleanup/advice;45 retained runtime files totaling
+7,185,237,076 bytes advised, no advice errors. The unchanged16 GiB gate passed;
+Qwen setup305.38s, reclaim2.28s, native198.58s. Actual isolated cu128/T4x2 and
+resource/software receipts are included. No weight/Input/history bytes changed.
+
+InternVL then failed **before a load reservation or call**: the new supervisor
+opened setup.log, while the unchanged peer provisioner requires the same filename
+with exclusive creation. MiniCPM was not attempted. Distinct *-supervisor.log
+files correct the collision, matching the successful PR174 diagnostic. A real
+Linux child integration regression opens its own exclusive setup.log under the
+supervisor. No protected provisioner changed.
+
+Continuation v3 is **peer-only**: two calls remain. It requires both previous
+sealed archives, reconciles Qwen's sole marker/load/raw and rejects any peer
+reservation or unknown consumption. Parent/direct worker reject Qwen before
+private reads/load. Current-run Qwen status is PRIOR_SMOKE_CONSUMED_NOT_REPLAYED;
+its PASS remains attributed to v2/sourceae5b488, not copied into v3 as a new call
+or imported into scientific series. The original image identity must match.
+Peer runtime caches are advised before/after calls under the same owned-root
+and unchanged measured RAM rules. A bounded advisory scan is recorded as partial
+if its limit is reached; it cannot substitute for the actual RAM gate.
+
+The first v2 save request was rejected409 because the staging title still
+resolved to v1's slug. Inventory, unchanged v1/current-version1 and zero GPU
+reservation proved no v2 job was created. The corrected title/slug was submitted
+once, with identical source. Both intents/reconciliation remain private.

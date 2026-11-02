@@ -1,5 +1,24 @@
 # Kiến trúc Foundation V1
 
+## Issue173 — existing TRAIN/checkpoints and bounded native smoke
+
+Route: `fulltrain/verification173.py` streams actual pinned shard/image bytes,
+checks exact indices and bounded safetensors headers without importing a model.
+`scripts/verify_kaggle173_inputs.py` checks existing read-only Kaggle Inputs and
+exports a private original-TRAIN seal separately from sanitized receipts.
+`scripts/smoke_kaggle173.py` is an independent, source/proof-bound technical route:
+one original image/model, three calls total, exclusive reservations, raw before
+strict parser/HNLO, isolated pinned workers and process-group deadlines. It never
+calls the fenced production worker/factory internals or enrolls fresh171.
+After the first zero-load/zero-call RAM failure, v2 requires that sealed history,
+reclaims only owned public setup caches and keeps the RAM floor unchanged.
+Existing native source/config/parser/HNLO and numerical contracts stay locked.
+Builder: `scripts/build_kaggle173_verification.py`; regression:
+`test_kaggle173_verification.py`, `test_kaggle173_smoke.py`. Actual file proofs,
+failure preservation, bounds, source identities and live limitations:
+[Issue173 runbook](KAGGLE_CHECKPOINTS_173.md). Byte PASS is not inference or
+scientific qualification; scientific release/TEST remain separate.
+
 ## Issue171 fresh full TRAIN preparation — 02/11/2026
 
 Route: `safeshift/fulltrain/contract.py` (fresh campaign, three series, exact
