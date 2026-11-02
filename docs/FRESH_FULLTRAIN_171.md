@@ -3,7 +3,7 @@
 Source: [Issue #171](https://github.com/tantdna2/SafeShift/issues/171),
 [Owner decision](research/DECISIONS.md#dec-20261102-owner-fresh-fulltrain-only).
 BASE `1acb3ef7c0deadbbde7da0b1c63b71296e3950e5`; document-first commit
-`8fdfc8d`; one branch `feat/issue171-fresh-fulltrain`, one Draft PR.
+`8fdfc8d`; one branch `feat/issue171-fresh-fulltrain`, one [Draft PR #172](https://github.com/tantdna2/SafeShift/pull/172).
 Date: 02/11/2026, Asia/Bangkok. No GPU, real inference, private images/GT/raw
 or TEST accessed. Existing local handoff/download tabs are outside this task.
 
@@ -195,6 +195,11 @@ new science thresholds. Academic approval, measured fresh results and all-SUCCES
 claims are not supplied by software tests; planned count is exactly3763/model.
 
 ## Reproduce and review
+
+[Exact CPU receipts, failures, rerun and source hashes](research/evidence/issue171/README.md)
+are included in this Draft. They establish preparation behavior only; the native
+and live release gaps above remain open. Do not close Issue171 as fully native
+qualified on the strength of these tests.
 
 From repository root, Python3.11+, no additional dependencies:
 

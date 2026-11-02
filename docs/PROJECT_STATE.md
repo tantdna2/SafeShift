@@ -2,7 +2,7 @@
 
 ## CURRENT - Issue #171: fresh full TRAIN, 02/11/2026
 
-**OWNER_FRESH_FULLTRAIN_ONLY; ENGINEERING IN PROGRESS; EXECUTION BLOCKED.**
+**OWNER_FRESH_FULLTRAIN_ONLY; PREPARATION IMPLEMENTED FOR DRAFT REVIEW; NATIVE RELEASE INCOMPLETE / BLOCKED.**
 [Issue #171](https://github.com/tantdna2/SafeShift/issues/171), branch
 `feat/issue171-fresh-fulltrain`, BASE `1acb3ef7c0deadbbde7da0b1c63b71296e3950e5`.
 First commit: documents only. [Decision](research/DECISIONS.md#dec-20261102-owner-fresh-fulltrain-only)
@@ -21,8 +21,16 @@ reservations, and prepares six exact-source notebooks. Qwen native contract
 remains BLOCKED (historical two-GPU/max32/SDPA runtime differs from peers).
 Peer native composition is prepared, not pinned-native/live verified. Original
 private3763 projection and image custody are NOT_VERIFIED. O2–O6/B1–B6/G0–G6
-are explicitly listed in the runbook; final CPU evidence will be appended in
-this PR. No historical notebooks, parser/HNLO, source/checkpoint or science
+are explicitly listed in the runbook. [Draft PR #172](https://github.com/tantdna2/SafeShift/pull/172)
+contains [CPU evidence and limits](research/evidence/issue171/README.md): Windows
+27/27 PASS; Linux full snapshot 569 tests, 527 PASS / 41 SKIP / 1 FAIL from the
+old whole-file thesis assertion. The corrected history-preservation module
+then passed 7/7 on an immutable snapshot; the full FAIL receipt is retained,
+not relabeled PASS. Runtime/notebook bytes are unchanged by that test correction.
+The six notebooks are non-consuming preparation/diagnostic artifacts, not
+production-ready notebooks. Qwen native integration, peer pinned-native checks,
+fresh provisioning/hard-deadline supervision, real custody and release authority
+remain required. No historical notebooks, parser/HNLO, source/checkpoint or science
 contracts were changed. No inference, GPU, TEST or private artifacts accessed.
 
 
