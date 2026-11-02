@@ -1,5 +1,104 @@
 # SafeShift — PROJECT STATE
 
+## Issue #165 / Draft PR #166 — quyết định Owner hiện hành, 02/11/2026
+
+Theo [quyết định Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211)
+và [yêu cầu đối chiếu của ChatGPT](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6568226996),
+**Owner đã quyết định dừng tìm HNLO cho MiniCPM-V-4; cuộc điều tra đã kết thúc
+với kết quả âm theo Method A: 0/155 HNLO hợp lệ.** Giữ MiniCPM-V-4 làm
+**mô hình chỉ dùng nhãn (label-only peer candidate) cho Khóa luận**.
+Mục tiêu thu numeric HNLO không đạt; không tiếp tục ép tạo điểm hoặc đổi phương pháp.
+
+**AUDIT_HOLD=NO; INDEPENDENT_AUDIT_REQUESTED=YES; đang chờ kiểm toán cuối.**
+**MERGE_AUTHORIZED=NO** cho đến khi ChatGPT kiểm trực tiếp HEAD cuối và cấp quyền.
+Báo cáo audit trước còn phải đối chiếu theo comment6568226996; chưa ghi audit PASS.
+Antigravity cần kiểm lại phần thay đổi chỉ gồm tài liệu trong cùng phiên audit,
+gắn với code basis `0bc6535d3735484ade77ef54bfc93f9d2939c721` và custody đã có.
+
+O2/T4 exact-source selection và các gate L1–L4 vẫn chờ phê duyệt riêng; quyết định
+label-only không duyệt lựa chọn nguồn hoặc nâng trạng thái khoa học. Sau khi PR #166
+được audit, merge có phép và xác minh hậu merge mới tiếp tục kế hoạch Khóa luận hiện có.
+Giữ nguyên công thức HNLO, receipt, quyết định lịch sử và 160 kết quả gốc
+(155 SUCCESS/5 INVALID). Không thay mã nguồn hoặc chạy lại dữ liệu thật trong cập nhật này.
+
+Các mục dưới là **snapshot lịch sử trước quyết định Owner hiện hành**; những trường
+`AUDIT_HOLD=YES` và chỉ thị chờ trước audit trong đó đã được quyết định trên thay thế.
+
+## Issue #165 / Draft PR #166 — điều tra tiếp nối, 02/11/2026
+
+**HARD_BLOCKED_EXISTING_ARCHIVE; VALID_HNLO=0/155; numeric goal chưa hoàn thành.**
+[Chỉ thị Owner](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6561913353)
+thay bàn giao audit trước đó: **AUDIT_HOLD=YES; MERGE_AUTHORIZED=NO**.
+Tiếp tục đúng branch `verify/minicpm-hnlo-165`, đúng Draft PR #166; không task/PR mới.
+[Bằng chứng và điều kiện gỡ chặn](MINICPM_HNLO_NATIVE_INVESTIGATION_165.md),
+[receipt tiếp nối](research/evidence/issue165_hnlo/continuation_receipt.json).
+
+- Source MiniCPM đúng revision/hash tạo Llama LM head toàn vocabulary và gọi
+  native greedy generation; BPE encoder không giới hạn miền output. Hai ID mỗi
+  nhãn đều non-special, không phải EOS, không bị processor/suppression loại bỏ.
+- 155/155 fresh full-input/incremental-prefix/EOS witnesses, hai decoder độc lập,
+  packet dựng lại từ archive gốc khớp proof exhaustive trước. Đây là chứng minh
+  hai ứng viên tại actual prefix, không khẳng định suffix phản thực sẽ được sinh.
+- 1.760 bước có đúng bốn sparse coordinates; bốn alias còn lại không lưu.
+  Inventory lịch sử 4.297 output phân loại đầy đủ:4.211 members của archive,
+  55 source,25 bytecode,4 marker,ZIP+sidecar. Bản extract có đúng4.211 files cùng
+  checksum, không vector bổ sung. Không dùng logit khác prefix/run để điền thiếu.
+- Ngay cả full-vocabulary logits cũng không giải quyết tính duy nhất của Method A
+  cho các path này. Muốn thay cách định nghĩa token-event phải có quyết định khoa
+  học riêng; thu thêm logits/inference tự nó không cấp quyền đổi mapping/metric.
+  Không tự chạy acquisition, teacher forcing, Kaggle/GPU hoặc thay phương pháp.
+- 160 kết quả gốc và archive bất biến. Method A, parser, HNLO, bridge và generation
+  không đổi ở lần tiếp nối. Chỉ thêm diagnostic CPU có thể tái lập,7 synthetic
+  adversarial tests và tài liệu. **140/140 focused tests PASS**; final-HEAD receipt
+  và test-log hash ghi tại PR. Không nhận CI/full-suite mới hoặc audit PASS.
+
+Chờ **ChatGPT kiểm trực tiếp GitHub và quyết định bước tiếp theo**, chưa chuyển
+Antigravity. Các mục dưới là snapshot trước chỉ thị mới, không phải current approval.
+
+## Issue #165 — MiniCPM official160 saved HNLO, 02/11/2026
+
+**RESULT: KHÔNG — 0/155 SUCCESS; 0/160 planned**, theo Method A hiện hành.
+[Báo cáo kiểm thật](MINICPM_SAVED_HNLO_165.md) và
+[public receipt](research/evidence/issue165_hnlo/public_receipt.json).
+Đây là kết luận kỹ thuật Codex, **PENDING_CHATGPT_REVIEW_AND_INDEPENDENT_AUDIT**;
+không tự chấp nhận khoa học, merge hoặc đổi O2/L1–L4/selection/T2/T3.
+
+- [Issue165](https://github.com/tantdna2/SafeShift/issues/165) cấp quyền đọc đúng
+  official FP32 INITIAL. BASE/main đã kiểm GitHub
+  `41e25fe4de37f2049e81ce978710ad80e682e740`; không Kaggle/GPU/inference/weights,
+  không ảnh/GT/TEST thật hay raw model khác.
+- Archive đúng SHA `46a41359c3ab2978b9ee4ac010518e49a74141641d9334c29035bdc0c8eac877`;
+  đủ4.210 payload checksum, exact run/series/attempt/config/source/runtime.
+  Cả155 SUCCESS qua custody/parser/native alignment,73.448 vocabulary IDs
+  đối chiếu Rust0.21.1 và Python decoder độc lập;1.760 native steps kiểm bản riêng.
+- Cả155 có hai token cho mỗi label tại cùng decision step. Independent full
+  vocabulary/context/EOS enumeration xác nhận `AMBIGUOUS_TOKEN_BRANCH`155/155.
+  Sparse logits không có các alias thay thế; không chọn nhánh theo logit sẵn có.
+  Bốn tọa độ đã lưu qua3 công thức số học155/155, nhưng không đủ proof duy nhất;
+  numeric HNLO hợp lệ0. Không missing custody/resource bound/technical FAIL.
+- Toàn160 gốc giữ nguyên:155 SUCCESS/5 INVALID, original HNLO0. Derived packets,
+  negative proofs, per-member SHA và null results riêng ở
+  `data/processed/issue165/run03/`; private-record SHA
+  `fa544e077faf8048029060946636f8d028977eea69ac79e913f23bb14e15684c`.
+  Không backfill/pooling/metric analysis hoặc cứu5 INVALID.
+- Chỉ thêm CPU archive bridge/CLI, exact structural cache và independent
+  negative verifier. Giữ MAX_TRIALS2.000.000, original parser/HNLO/generation.
+  Cache không bỏ kiểm custody/steps/logits/arithmetic từng record;8 searches
+  độc lập cho4 exact path/context signatures,302 structural cache hits.
+
+Windows CPython3.11.9/tokenizers0.21.1: **133/133 tests PASS** (34 Method A,
+20 bridge/cache/decoder/privacy tests,8 HNLO cũ,71 T2/T3). Fixture viết tay,
+không raw thật commit. Lệnh: `PYTHONPATH=tests` tương ứng shell đang dùng,
+`python -B -m unittest test_hnlo_method_a test_minicpm_saved_hnlo
+test_pilot.HNLOTests test_triage test_triage_adapter -v`; thêm local pinned
+tokenizers path theo runbook để chạy cả Rust/Python synthetic comparison.
+Full Linux và kiểm final HEAD được ghi trong Draft PR. Log/receipt ignored
+tại `data/processed/issue165/`; hash proof-source được public receipt khóa.
+
+**Bàn giao:** đúng một Draft PR cho ChatGPT kiểm GitHub và tổ chức Antigravity
+audit độc lập. Không merge hoặc gọi kết quả khoa học VERIFIED. Các mục cũ bên
+dưới giữ nguyên như snapshot lịch sử, bao gồm task163 chỉ CPU synthetic.
+
 ## Issue #163 — HNLO Method A, CPU synthetic engineering
 
 [Owner authorization](https://github.com/tantdna2/SafeShift/issues/163#issuecomment-6555995581)
