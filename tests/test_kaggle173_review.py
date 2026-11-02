@@ -82,6 +82,10 @@ class ReviewTests(unittest.TestCase):
         self.assertNotIn('base64',code); self.assertNotIn('launch',code)
         with self.assertRaisesRegex(PermissionError,'V5_TERMINAL'): exec(compile(code,'<new-vm>','exec'),{})
         self.assertEqual(notebook['metadata']['safeshift']['max_model_calls'],0)
+        published=json.loads((smoke.ROOT/'notebooks/SafeShift_ISSUE173_SMOKE.ipynb').read_bytes())
+        self.assertEqual(published['metadata']['safeshift']['state'],'TERMINAL_ARCHIVE')
+        code=''.join(next(c for c in published['cells'] if c['cell_type']=='code')['source'])
+        with self.assertRaisesRegex(PermissionError,'V5_TERMINAL'): exec(compile(code,'<published-new-vm>','exec'),{})
 
     def test_direct_cli_refuses_on_empty_cwd_without_native_imports(self):
         env=os.environ.copy(); env['PYTHONPATH']=str(smoke.ROOT)
@@ -142,6 +146,36 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(outside.read_bytes(),b'SYNTHETIC_CHECKPOINT_UNCHANGED')
         self.assertEqual(raw.read_bytes(),b'SYNTHETIC_RAW_UNCHANGED')
         with self.assertRaisesRegex(ValueError,'OWNED_PREFLIGHT_ROOT'): mini.advise_owned_runtime(self.root)
+
+    def test_no_inference_preflight_setup_failure_exports_blocked_without_attempt(self):
+        weights=self.root/'weights'; weights.mkdir()
+        index=weights/'index.json'; index.write_bytes(b'{}')
+        synthetic={'files':{'index.json':{'size':2,'sha256':sha(index)}},'index':'index.json'}
+        h={'consumed':{'qwen3':1,'internvl35':1,'minicpm4':0},'attempts':[{}]*5}
+        out=self.root/'out'; out.mkdir(); scratch=self.root/'scratch'; scratch.mkdir()
+        with patch.object(mini,'paths_from_mounts',return_value=[]),patch.object(mini,'inspect_history',return_value=h),\
+                patch.object(mini,'checkpoint',return_value=(self.root/'marker',self.root/'source',weights)),\
+                patch.object(mini,'verify_snapshot'),patch('safeshift.verification173.checkpoint_spec',return_value=synthetic),\
+                patch.object(mini,'memory',return_value={'available_bytes':20*2**30}),\
+                patch.object(mini.supervision,'run',side_effect=RuntimeError('SYNTHETIC_SETUP_FAIL')) as run:
+            result=mini.launch('unused',out,scratch,'a'*40)
+        self.assertEqual(result['status'],'BLOCKED'); self.assertEqual(result['model_calls'],0)
+        self.assertFalse(result['weights_loaded']); self.assertFalse(result['consumption_created'])
+        self.assertEqual(run.call_count,1)
+        command=run.call_args.args[0]; self.assertEqual(command[command.index('--worker')+1],'setup')
+        from safeshift.pilot.artifacts import verify_archive
+        names=verify_archive(next(out.glob('*.zip')))
+        self.assertFalse(any(n.endswith(('native_call.json','model-load-reservation.json','consumption.json')) for n in names))
+
+    def test_mini_preflight_builder_compiles_exact_zero_call_payload(self):
+        from scripts.build_minicpm173_preflight import build as mini_build
+        ref=subprocess.check_output(['git','rev-parse','HEAD'],cwd=smoke.ROOT,text=True).strip()
+        notebook=mini_build(ref)
+        self.assertEqual(notebook['metadata']['safeshift']['max_model_calls'],0)
+        self.assertFalse(notebook['metadata']['safeshift']['weights_loaded'])
+        for cell in notebook['cells']:
+            if cell['cell_type']=='code':
+                compile(''.join(cell['source']),'<mini-preflight>','exec'); self.assertEqual(cell['outputs'],[])
 
 
 if __name__=='__main__': unittest.main()
