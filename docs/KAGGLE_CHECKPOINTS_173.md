@@ -4,7 +4,8 @@ Date: 02/11/2026 (Asia/Bangkok). BASE/main:
 `33e9f3cc4daf00c37a31b2347c143444d6add0bb` (PR174 merged).
 Authority: [Owner's continuation](https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922)
 and the direct task in this session. One branch `verify/issue173-real-checkpoints`,
-one Draft PR, no merge. Historical fresh171 production fences remain intact.
+[Draft PR #175](https://github.com/tantdna2/SafeShift/pull/175), no merge.
+Historical fresh171 production fences remain intact.
 
 ## Final handoff — 03/11/2026
 

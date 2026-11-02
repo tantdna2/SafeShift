@@ -6,7 +6,7 @@
 PASS, INTERNVL INFERENCE VERIFIED WITH INVALID, MINICPM RAM BLOCKED; 2/3 CALLS.** New session/worktree from
 verified main `33e9f3cc4daf00c37a31b2347c143444d6add0bb` (PR174 merged).
 [Owner continuation](https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922),
-one branch `verify/issue173-real-checkpoints`, one Draft PR, no merge.
+one branch `verify/issue173-real-checkpoints`, [Draft PR #175](https://github.com/tantdna2/SafeShift/pull/175), no merge.
 [Runbook and actual evidence](KAGGLE_CHECKPOINTS_173.md): original master SHA,
 all3763 original TRAIN JPG hashes/order/mapping,0 missing/changed/duplicate;
 Qwen4, InternVL2, MiniCPM2 shards with streamed size/SHA256, exact source/marker/
