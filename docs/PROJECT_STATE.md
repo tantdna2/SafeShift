@@ -1,5 +1,30 @@
 # SafeShift — PROJECT STATE
 
+## Issue #167 — CPU full TRAIN readiness/repair implementation, 02/11/2026
+
+Cùng branch `thesis/fulltrain-3763-repair-20261102`, kế thừa commit tài liệu
+`ff64958c22684e8713b428b439521f8f3cb1222a` trên BASE
+`0295172783dcf82426923d1af621dde9db8ed42c`.
+[Runbook/API](FULLTRAIN_REPAIR_167.md): kiểm exact3763 IDs/order/hash chung,
+phân loại lỗi và repair theo outcome/fix/regression hashes, resume/rerun riêng,
+version/series fence, append-only raw/attempt/checkpoint/ZIP và history custody.
+Tái dùng engine/Store/parser/archive/lease; không đổi recovery160 cũ.
+
+**CPU synthetic implementation; REAL EXECUTION BLOCKED, NOT VERIFIED.**
+Controller chỉ nhận synthetic byte fixtures; notebook preparation xuất release
+receipt BLOCKED, không đọc Input/provision/GPU. Chưa mở fulltrain native release
+hoặc legacy Qwen mapping/import thật. G0/O2/O3/O4/O5/O6 còn thiếu; G2/G4/G5/G6
+chưa có bằng chứng final runtime. MiniCPM label-only, không mở HNLO. Không thay
+dataset/split/nhãn/metric/protocol/final roster hoặc claim3763 SUCCESS.
+
+23 tests mới đã PASS ở lượt focused đầu; final tests/notebook/HEAD/receipts
+được cập nhật trong cùng Draft PR. Không chạy Kaggle/GPU/inference/TEST hoặc
+private data. Một Draft PR cho ChatGPT kiểm GitHub và audit độc lập trước
+merge được cấp quyền riêng; không tự gọi audit PASS hay merge.
+
+Mục CURRENT OWNER SCOPE bên dưới là snapshot document-first, đã được phần
+implementation này nối tiếp; không còn là chỉ thị mở task/branch tài liệu mới.
+
 ## CURRENT OWNER SCOPE — Khóa luận: full TRAIN 3.763 và sửa lỗi (02/11/2026)
 
 [Issue #167](https://github.com/tantdna2/SafeShift/issues/167) và [DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR](research/DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair) ghi quyết định Owner. **GHI TÀI LIỆU TRƯỚC TRIỂN KHAI; CODE CHƯA THỰC HIỆN tại commit này.** Mỗi mô hình được chọn phải chuẩn bị xử lý cùng 3.763 TRAIN IDs; pilot160 chỉ kiểm kỹ thuật. Phấn đấu 3.763 nhãn hợp lệ, không hứa 100% hoặc loại các trường hợp lỗi khỏi kết quả. INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED phải được điều tra và có kế hoạch sửa/chạy bổ sung an toàn theo quyền mới.

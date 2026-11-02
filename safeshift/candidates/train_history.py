@@ -13,7 +13,7 @@ import tempfile
 import zipfile
 
 from safeshift.pilot.artifacts import read, safe, sha, write, write_bytes, verify_archive
-from safeshift.pilot.contract import digest, parse_label
+from safeshift.pilot.contract import digest, parse_label, require_hash
 from .source import require
 from . import train_contract as c, train_owner as owner
 from . import train_route as route
@@ -26,12 +26,19 @@ MAX_BYTES = 8 * 2**30
 
 @contextmanager
 def lease(work, key):
+    with lease_key(work, owner.slot(key)) as options:
+        yield options
+
+
+@contextmanager
+def lease_key(work, lock_key):
     """Kernel lock, released on process death; the file is never deleted.
 
 Linux children inherit the descriptor, keeping exclusion if the supervisor dies
 while its worker still runs. Separate Kaggle VMs need Owner serialization.
 """
-    path = safe(work, "attempts/active_" + owner.slot(key) + ".lock")
+    require_hash(lock_key)
+    path = safe(work, "attempts/active_" + lock_key + ".lock")
     path.parent.mkdir(exist_ok=True)
     fd = os.open(path, os.O_RDWR | os.O_CREAT, 0o600)
     acquired = False
