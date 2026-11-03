@@ -66,7 +66,7 @@ an authenticated review record, not a fabricated digital signature.
 After that one exact review, the local invocation is:
 
 ```console
-python -B -m scripts.submit_minicpm173_once --approval-comment <new-owner-comment-id> --notebook notebooks/SafeShift_ISSUE173_MINI_TRAIN_ONCE.ipynb --history-inputs <existing-local-history-mounts> --stage data/processed/issue173-verification/<new-submit-directory>
+python -B -m scripts.submit_minicpm173_once --approval-comment <new-owner-comment-id> --notebook notebooks/SafeShift_ISSUE173_MINI_TRAIN_ONCE.ipynb --history-inputs data/processed/issue173-minicpm-once-history --stage data/processed/issue173-verification/mini-once-approved-submit
 ```
 
 Use the existing authenticated official Kaggle Python environment and `gh` on
@@ -119,6 +119,51 @@ verify every member before recording final counts. Public ledger files contain
 only nonprivate source/job/nonce/count/hash information. After live execution,
 fast-forward this branch to its own ledger commits before adding sanitized result
 evidence; never overwrite those commits. All raw/real IDs/images/weights stay private.
+
+### Final Mini implementation evidence — no live execution
+
+[Review evidence directory](research/evidence/issue173/mini-once/) contains six
+sanitized receipts. Code snapshot **40a7b400825cb28e01fbce601373cada32078770**:
+Linux **90/90 Issue173 PASS**, including34 Mini-only regressions, no skips/errors.
+Linux fulltrain **55/55 PASS** at `40fcf820052b042e637bac2287b8889c874df937`;
+its complete shared source manifest still matches the final tree byte-for-byte.
+CPU Python3.14 is a control-flow test environment, not the pinned native worker
+qualification. No additional native inference or software qualification was run.
+
+Embedded runtime: **bf6fbe210a9b92348cec9bef1850aaa7a798f690**;82 source files,
+all compiled and matched against the deterministic builder and current files.
+Notebook SHA256:
+`232ba33cfc1e289eb472bd871b988043753e44a4164e5509eaba6e6b5abc783f`.
+Executable-cell SHA256:
+`ac6efc40baebbb6ec5c6cac7567b369094b29908e0481e86a244d9df0ebc52a9`.
+Manifest SHA256:
+`5ff163b22d5a79872e0b23b97066862caa08acf925a0c69c4bffca638fd561c2`.
+An isolated CPU process imports the exact embedded files and stops at missing
+remote review/submission before data/model I/O; only scratch location and the
+offline absent-record reader are substituted in that check. The positive
+CLI→parent→setup/native→load→call→raw→parser→ZIP path uses explicitly synthetic
+model/hardware/process mocks; real Linux timeout/group kill and log relay also pass.
+
+Remote inventory exhausted **157 owned jobs**, confirms all11 required Inputs/
+Outputs at version1 COMPLETE and the proposed job absent. At observation
+1793696301 Unix seconds, GPU quota used11,339/reserved0/total108,000 seconds.
+This is an observation, not a quota reservation or future environment guarantee.
+The initial100-row no-cursor response was superseded after checking numbered
+pages; its incomplete intermediate receipt is retained privately and not used.
+An initial WSL receipt invocation stopped before tests due to Windows `.git`
+paths; only Linux `GIT_DIR`/`GIT_WORK_TREE` were corrected before passing suites.
+
+All five original archives/sidecars and four diagnostic archives revalidated
+with exact seals. Smoke counts remain Qwen1/InternVL1/Mini0; diagnostics remain
+4loads/5calls. The ignored local custody directory in the command above is now
+prepared and validated:18 ZIP/sidecar files,820,969 copied bytes, no images or
+weights. No remote dispatch record has been created and no job submitted.
+
+**Handoff is for exact source review, not READY FOR OWNER/full TRAIN.** The only
+next release step is ChatGPT's explicit approval for the containing reviewed HEAD,
+the runtime/notebook identities above and fixed job/version1/one Mini ordinal0
+load/call. Live challenge/permit transport and TRAIN outcome remain **NOT_RUN**;
+failure there must retain custody and stop. Whole-PR audit and merge are separate.
 
 ## Final format recommendation — 03/11/2026
 

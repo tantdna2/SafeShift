@@ -35,6 +35,13 @@ last TRAIN outcome remain NOT_RUN. No model calls occur merely by publishing it.
 Independent audit/merge remain separate. InternVL grammar work starts only in a
 future session after Mini completion and authorized, verified PR175 merge.
 
+Validation: **90/90 Linux Issue173 PASS** at code snapshot
+`40a7b400825cb28e01fbce601373cada32078770` (34 Mini-only tests);
+**55/55 Linux fulltrain PASS** at40fcf82 with identical shared source manifest.
+No skips/errors. Exact embedded runtimebf6fbe2; deterministic notebook +82-file
+source/compile checks and isolated CPU missing-review gate PASS. Full positive
+flow is CPU synthetic, not real TRAIN inference. [Six receipts and hashes](research/evidence/issue173/mini-once/).
+
 ## HISTORICAL — PR175 final InternVL format recommendation, 03/11/2026
 
 [Final Owner/ChatGPT directive6598354864](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598354864),
