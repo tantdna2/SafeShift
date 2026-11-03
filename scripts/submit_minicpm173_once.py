@@ -27,6 +27,21 @@ def kernel_sources():
     ] + ['nguynanhtn/' + row['kernel_slug'] for row in lock['attempts']]
 
 
+def authenticated_github_get(path, *, missing=False):
+    """Local gh session only. No token retrieval, notebook secret or read retry."""
+    require(path.startswith('/') and not path.startswith('//'), 'GITHUB_RELATIVE_API_PATH')
+    result = subprocess.run(['gh', 'api', '--include', 'repos/' + control.REPO + path],
+                            capture_output=True, text=True, timeout=30)
+    header, separator, body = result.stdout.replace('\r\n', '\n').partition('\n\n')
+    require(separator and header.startswith('HTTP/'), 'AUTHENTICATED_GITHUB_RESPONSE_UNKNOWN')
+    status = int(header.splitlines()[0].split()[1])
+    if status == 404 and missing:
+        return None
+    require(status == 200 and result.returncode == 0, 'AUTHENTICATED_GITHUB_READ_HTTP_' + str(status))
+    require(len(body.encode()) <= 2**20, 'REMOTE_RESPONSE_BOUND')
+    return json.loads(body)
+
+
 def get_kernel(api, ref):
     from kagglesdk.kernels.types.kernels_api_service import ApiGetKernelRequest
     request = ApiGetKernelRequest()
@@ -421,6 +436,6 @@ if __name__ == '__main__':
     parser.add_argument('--predecessor-outputs', type=Path, required=True)
     args = parser.parse_args()
     from kaggle import api
-    with bounded_http():
+    with bounded_http(), patch.object(control, 'public_get', authenticated_github_get):
         print(json.dumps(submit(api, args.approval_comment, args.notebook, args.history_inputs, args.stage,
                                 args.predecessor_outputs)))

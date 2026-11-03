@@ -146,6 +146,22 @@ class TransportTests(unittest.TestCase):
             s.predecessor_history(self.api, Path('unused'))
         self.api.kernels_status.assert_not_called()
 
+    def test_local_authenticated_reads_distinguish_absence_rate_limit_and_unknown(self):
+        for status, code in ((200, 0), (404, 1), (403, 1), (429, 1)):
+            reply = Mock(returncode=code, stdout='HTTP/2.0 %d status\nContent-Type: application/json\n\n{}' % status)
+            with patch.object(s.subprocess, 'run', return_value=reply) as invoke:
+                if status == 200:
+                    self.assertEqual(s.authenticated_github_get('/synthetic'), {})
+                elif status == 404:
+                    self.assertIsNone(s.authenticated_github_get('/synthetic', missing=True))
+                else:
+                    with self.assertRaisesRegex(ValueError, 'READ_HTTP'):
+                        s.authenticated_github_get('/synthetic', missing=True)
+                self.assertEqual(invoke.call_count, 1)
+                self.assertNotIn('token', str(invoke.call_args))
+        with patch.object(s.subprocess, 'run', return_value=Mock(stdout='', returncode=1)), self.assertRaisesRegex(ValueError, 'UNKNOWN'):
+            s.authenticated_github_get('/synthetic', missing=True)
+
     def test_actual_installed_sdk_sse_parser_short_event_and_heartbeat(self):
         # Exercise the official parser without authentication/network if installed.
         import importlib.util
