@@ -143,6 +143,45 @@ def coordinate(api, grant, seconds):
     raise TimeoutError('COORDINATOR_DEADLINE_NO_RETRY')
 
 
+def verify_result(archive, grant):
+    """Bind local summary to actual archive members, source and strict raw parse."""
+    import zipfile
+    from safeshift.pilot.contract import parse_label
+    require(sha(archive) == read(Path(str(archive) + '.sha256.json'))['sha256'], 'FINAL_EXPORT_SEAL')
+    members = verify_archive(archive)
+    with zipfile.ZipFile(archive) as bundle:
+        summary = json.loads(bundle.read('summary.json'))
+        source = json.loads(bundle.read('source.json'))
+        release = json.loads(bundle.read('release.json'))
+        require(source['runtime_commit'] == grant['runtime_commit']
+                and digest(source['manifest']) == grant['manifest_sha256']
+                and release['grant'] == grant and release['binding'] == digest(grant), 'FINAL_RELEASE_CUSTODY')
+        counts = {'load_reservations': int('load-reservation.json' in members),
+            'call_reservations': int('sample/reservation.json' in members),
+            'native_call_markers': int('sample/native_call.json' in members)}
+        require(summary['identity'] == control.IDENTITY and summary['limits'] == control.LIMITS
+                and all(summary[k] == v for k, v in counts.items())
+                and summary['weights_loaded'] == ('loaded.json' in members)
+                and summary['original_smoke_counts'] == {'qwen3': 1, 'internvl35': 1,
+                    'minicpm4': counts['native_call_markers']}, 'FINAL_CALL_BUDGET')
+        require(summary['status'] in ('SUCCESS', 'INVALID', 'TECHNICAL_ERROR')
+                and summary['scientific_results_excluded'] is True and summary['automatic_retry'] is False,
+                'FINAL_STATUS_POLICY')
+        if summary['status'] in ('SUCCESS', 'INVALID'):
+            result = json.loads(bundle.read('sample/result.json'))
+            raw = json.loads(bundle.read('sample/raw.json'))
+            require(all(v == 1 for v in counts.values()) and summary['weights_loaded']
+                    and summary['consumption'] == 'COMPLETED'
+                    and result['raw_sha256'] == members['sample/raw.json'], 'FINAL_RAW_CUSTODY')
+            label = parse_label(raw['response'])
+            require(result['label'] == label and result['status'] == summary['status'] ==
+                    ('SUCCESS' if label else 'INVALID') and result['hnlo'] is None
+                    and result['hnlo_status'] == 'LABEL_ONLY_OWNER_DECISION'
+                    and raw['cpu_tokenizer_replay']['status'] == 'PASS' and not raw['raw_nonfinite'],
+                    'FINAL_STRICT_LABEL_ONLY_REPLAY')
+    return summary, members
+
+
 def submit(api, comment_id, notebook, history_inputs, stage):
     grant = control.read_grant(comment_id)
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
@@ -185,18 +224,19 @@ def submit(api, comment_id, notebook, history_inputs, stage):
         'binding': digest(grant)})
     report = coordinate(api, grant, max(1, 1800 - (time.monotonic() - start)))
     write(stage / 'coordinator.json', report)
+    while True:
+        state = str(api.kernels_status(control.JOB + '/1').status).split('.')[-1]
+        if state in ('COMPLETE', 'ERROR', 'CANCELLED'):
+            break
+        require(state in ('RUNNING', 'QUEUED') and time.monotonic() - start < 1800,
+                'TERMINAL_JOB_STATUS_UNKNOWN_NO_RETRY')
+        time.sleep(min(15, max(0, 1800 - (time.monotonic() - start))))
     # No re-submit on missing output. Download only this exact version's small evidence.
     output = stage / 'output'
     output.mkdir(exist_ok=False)
     api.kernels_output(control.JOB + '/1', str(output), file_pattern=r'\.zip(?:\.sha256\.json)?$', quiet=True)
     archive = safe(output, control.IDENTITY + '.zip')
-    require(sha(archive) == read(Path(str(archive) + '.sha256.json'))['sha256'], 'FINAL_EXPORT_SEAL')
-    members = verify_archive(archive)
-    import zipfile
-    with zipfile.ZipFile(archive) as bundle:
-        summary = json.loads(bundle.read('summary.json'))
-    require(summary['identity'] == control.IDENTITY and summary['native_call_markers'] <= 1
-            and summary['load_reservations'] <= 1, 'FINAL_CALL_BUDGET')
+    summary, members = verify_result(archive, grant)
     control.create_record('finished', {'binding': digest(grant), 'archive_sha256': sha(archive),
         'status': summary['status'], 'original_smoke_counts': summary['original_smoke_counts'],
         'consumption': summary['consumption'], 'members': len(members) + 1})

@@ -130,7 +130,15 @@ def summarize(out, error=None):
     result_path = out / 'sample/result.json'
     calls = int((out / 'sample/native_call.json').exists())
     reservations = int((out / 'sample/reservation.json').exists())
-    status = read(result_path)['status'] if result_path.exists() and error is None else 'TECHNICAL_ERROR'
+    status = 'TECHNICAL_ERROR'
+    if result_path.exists() and error is None:
+        try:
+            result = read(result_path)
+            require(result['status'] in ('SUCCESS', 'INVALID') and calls == reservations == 1
+                    and sha(out / 'sample/raw.json') == result['raw_sha256'], 'RESULT_CUSTODY_OR_COUNT')
+            status = result['status']
+        except Exception as failure:
+            error = {'type': type(failure).__name__, 'message': 'TORN_OR_INVALID_RESULT_NO_RETRY'}
     return {'identity': control.IDENTITY, 'status': status, 'error': error,
         'load_reservations': int((out / 'load-reservation.json').exists()),
         'weights_loaded': (out / 'loaded.json').exists(), 'call_reservations': reservations,

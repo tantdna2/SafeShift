@@ -126,6 +126,8 @@ class MiniOnceTests(unittest.TestCase):
         image = self.root / 'synthetic-image.bin'
         image.write_bytes(b'SYNTHETIC_NOT_AN_ACTUAL_IMAGE')
         spec = {'runtime_commit': '2' * 40, 'manifest': {'synthetic': '3' * 64}}
+        self.grant['manifest_sha256'] = digest(spec['manifest'])
+        self.ctx['binding'] = digest(self.grant)
         spec_file = self.root / 'spec.json'; write(spec_file, spec)
         row = {'ordinal': 0, 'sample_id': 'SYNTHETIC', 'image_sha256': sha(image), 'image': str(image)}
         counts = {'loads': 0, 'calls': 0, 'stages': []}
@@ -199,6 +201,8 @@ class MiniOnceTests(unittest.TestCase):
             out = output / c.IDENTITY
             summary = read(out / 'summary.json')
             members = verify_archive(Path(str(out) + '.zip'))
+            verified, _ = submitter.verify_result(Path(str(out) + '.zip'), self.grant)
+            self.assertEqual(verified, summary)
             self.assertEqual(sha(Path(str(out) + '.zip')), read(Path(str(out) + '.zip.sha256.json'))['sha256'])
             # New output/scratch roots still cannot run again, even after SUCCESS/INVALID/error.
             fresh = self.root / 'fresh'; fresh.mkdir()
@@ -214,6 +218,20 @@ class MiniOnceTests(unittest.TestCase):
         self.assertEqual(result['original_smoke_counts'], {'qwen3': 1, 'internvl35': 1, 'minicpm4': 1})
         self.assertEqual(counts, {'loads': 1, 'calls': 1, 'stages': ['setup', 'native']})
         self.assertTrue({'sample/raw.json', 'sample/result.json', 'load-reservation.json'} <= set(members))
+
+    def test_self_consistent_zip_cannot_hide_consumption_or_forge_status(self):
+        from safeshift.pilot.artifacts import import_archive, export
+        self.exercise()
+        original = self.root / 'output' / (c.IDENTITY + '.zip')
+        altered = import_archive(original, self.root / 'synthetic-altered')
+        summary = read(altered / 'summary.json')
+        summary['native_call_markers'] = 0
+        # Synthetic re-seal deliberately has valid ZIP hashes but contradictory accounting.
+        (altered / 'summary.json').write_text(json.dumps(summary))
+        archive = self.root / 'synthetic-altered.zip'
+        export(altered, archive)
+        with self.assertRaisesRegex(ValueError, 'FINAL_CALL_BUDGET'):
+            submitter.verify_result(archive, self.grant)
 
     def test_invalid_is_terminal_and_raw_is_not_cleaned(self):
         code, result, members, counts = self.exercise(response='```json\n{"safety_level":"Level03"}\n```')
@@ -317,6 +335,19 @@ class MiniOnceTests(unittest.TestCase):
             (self.root / 'fixture.py').write_text('SYNTHETIC')
             with self.assertRaisesRegex(ValueError, 'SOURCE_DRIFT'):
                 c.source_check({'runtime_commit': '1' * 40, 'manifest': {'fixture.py': '0' * 64}})
+
+    def test_torn_result_does_not_prevent_partial_archive(self):
+        from safeshift.pilot.artifacts import export
+        out = self.root / 'partial'
+        write(out / 'sample/reservation.json', {'synthetic': True})
+        write(out / 'sample/native_call.json', {'synthetic': True})
+        (out / 'sample/result.json').write_bytes(b'{"status":')
+        summary = run.summarize(out)
+        self.assertEqual(summary['status'], 'TECHNICAL_ERROR')
+        self.assertEqual(summary['consumption'], 'UNKNOWN_NO_RETRY')
+        write(out / 'summary.json', summary)
+        export(out, self.root / 'partial.zip')
+        self.assertIn('sample/result.json', verify_archive(self.root / 'partial.zip'))
 
     def test_remote_job_already_exists_or_status_unknown_blocks_submission(self):
         api = Mock()
