@@ -1,5 +1,19 @@
 # Issue173 — reuse original TRAIN and real checkpoint verification
 
+## Current continuation: separate synthetic diagnostics, original TRAIN held
+
+See [model diagnostic runbook](ISSUE173_DIAGNOSTICS.md) and
+[exact diagnostic custody ledger](../configs/issue173/diagnostic_custody.json).
+InternVL native JSON/PROPOSED grammar and MiniCPM real load/native canonical
+label are verified on synthetic inputs. All completed diagnostic artifacts
+are now terminal. Do not run their historical executable copies as new grants.
+For original MiniCPM TRAIN, review `scripts/minicpm173_train_review.py` and
+`notebooks/SafeShift_ISSUE173_MINI_TRAIN_REVIEW.ipynb`: all entries remain held.
+Attach all five original Outputs plus all four sealed diagnostic Outputs at a
+future reviewed activation; only exact ordinal0, one load/call, separate identity.
+A new VM must repeat admission. Diagnostic PASS never opens this gate.
+
+
 Date: 02/11/2026 (Asia/Bangkok). BASE/main:
 `33e9f3cc4daf00c37a31b2347c143444d6add0bb` (PR174 merged).
 Authority: [Owner's continuation](https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922)

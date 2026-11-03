@@ -1,5 +1,36 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT ? PR175 model diagnostics completed, 03/11/2026
+
+[Owner/ChatGPT directive6592812806](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6592812806),
+same session/branch/Draft PR175. [Complete dossier](ISSUE173_DIAGNOSTICS.md),
+[sealed cumulative ledger](../configs/issue173/diagnostic_custody.json).
+
+**InternVL: real native strict JSON demonstrated.** Unchanged C1 baseline and
+PROPOSED reminder both pass on synthetic gray (no causal improvement claim).
+A separate canonical JSON grammar passes real pinned native generation on a
+procedural scene, with actual PrefixConstrainedLogitsProcessor and no response
+cleanup/prefill. Grammar changes generation: scientific adoption remains
+**BLOCKED_REQUIRES_SCIENTIFIC_DECISION**. Original v5 INVALID/raw/unavailable HNLO
+is unchanged; no historical TRAIN call repeated.
+
+**MiniCPM: actual pinned weights load and inference PASS on synthetic scene.**
+Original C1/greedy/FP16/eager/FP32 resampler/label-only preserved. Earlier gray
+input produced a descriptive noncanonical value: INVALID preserved, no OOM or
+capture error. Fresh scene job loads once/calls once and generates valid canonical
+JSON; pre-load RAM24,335,233,024B exceeds unchanged16GiB floor; peak allocated
+VRAM8,391,736,320B. This proves technical execution, not TRAIN-wide validity.
+
+Four diagnostic jobs COMPLETE,4loads/5calls, zero original TRAIN calls; all raw,
+failures and five original ZIPs preserved. Original smoke still Qwen1/InternVL1/
+Mini0 =2/3. All four diagnostic current notebooks/CLI/worker/builder terminal;
+exact historical executable source/notebooks remain immutable. Production and
+fresh171 fences/scientific contracts untouched. Prepared Mini-only original
+ordinal0 TRAIN code and notebook remain **REVIEW HOLD before I/O**; direct ChatGPT
+review of exact dispatch/cumulative ledger is required before the final call.
+No merge, no Antigravity audit claim. Earlier sections below are historical.
+
+
 ## CURRENT — PR175 review repair, 03/11/2026
 
 [ChatGPT CHANGES_REQUIRED6584783261](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6584783261),

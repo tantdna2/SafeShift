@@ -1,0 +1,45 @@
+{
+  "schema": "issue173-five-attempt-terminal-history-v1",
+  "attempts": [
+    {
+      "attempt": 1,
+      "archive_sha256": "a296d13984e179a2087acc25a6f45c58f4e15eeb4e32a4efdc46ce8b2a8fac17",
+      "members": 22
+    },
+    {
+      "attempt": 2,
+      "archive_sha256": "f1f4fefabff4a6fc80f8863bcc314a13949c53815f9b535170cceda1ccd7117d",
+      "members": 65
+    },
+    {
+      "attempt": 3,
+      "archive_sha256": "4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5",
+      "members": 26
+    },
+    {
+      "attempt": 4,
+      "archive_sha256": "2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee",
+      "members": 28
+    },
+    {
+      "attempt": 5,
+      "archive_sha256": "035c4d9b0216378e23ecc812e1221d68fe451ec25a9cbc3fd8977b5794690619",
+      "members": 78
+    }
+  ],
+  "consumed": {
+    "qwen3": 1,
+    "internvl35": 1,
+    "minicpm4": 0
+  },
+  "consumed_total": 2,
+  "remaining": {
+    "qwen3": 0,
+    "internvl35": 0,
+    "minicpm4": 1
+  },
+  "max_one_call_per_model": true,
+  "continuation": "issue173-minicpm-only-review-hold-20261103-v1",
+  "native_dispatch": "BLOCKED_PENDING_REVIEW",
+  "evidence_type": "EXACT_SHA256_CUSTODY_NOT_A_SIGNATURE_OR_AUTHORIZATION"
+}

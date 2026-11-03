@@ -468,3 +468,14 @@ preflight vẫn chỉ chạy CPU; CUDA FP16 thật được kiểm trong worker 
 Worker kiểm lại `sys.executable`, `sys.prefix`, version và mọi site-packages để
 ngăn rò thư viện kernel. Không candidate hợp lệ thì lưu BLOCKED receipt, không
 fallback 3.13 hoặc tự build/download Python.
+
+## Issue173 diagnostic continuation routing
+
+`docs/ISSUE173_DIAGNOSTICS.md` records the four bounded synthetic jobs and
+scientific limits. `scripts/diagnostic173.py` is retired at launch/worker/CLI;
+`safeshift/diagnostic173_grammar.py` is a PROPOSED diagnostic helper only.
+`report_diagnostic173.py` replays sealed status/custody without exporting raw.
+`minicpm173_train_review.py` prepares exact remaining ordinal0 under an explicit
+review hold. `tests/test_kaggle173_diagnostic.py` covers strict INVALID, grammar
+language, unknown consumption, empty-VM replay and published notebook fences.
+Original candidates/fulltrain/pilot adapters and locks are unchanged.
