@@ -99,9 +99,22 @@ def worker(stage,request_path,out,scratch):
     from safeshift.candidates.train_runtime import memory as gpu_memory
     from safeshift.candidates import minicpm_resampler_fp32 as numerical
     from PIL import Image
+    prompt=(ROOT/'configs/pilot/classification_c1.txt').read_text(encoding='utf8')
+    # Native CPU packing/template checks precede any load reservation.
+    from safeshift.candidates.loading import native_setup
+    evidence={}
+    processor,tokenizer,config,cls=native_setup(source,key,evidence)
+    write(out/'processor-source.json',evidence)
+    write(out/'processor-memory.json',memory())
+    with Image.new('RGB',(448,448),(128,128,128)) as synthetic:
+        for variant in plan['variants']:
+            prepare=adapter.prepare_inputs if variant=='frozen-c1' else variant_inputs(adapter.prepare_inputs,variant)
+            rendered,values=prepare(processor,key,prompt,synthetic)
+            detail=adapter.validate_inputs(processor,key,config,rendered,values,prompt)
+            write(out/('cpu-template-'+variant+'.json'),{'variant':variant,'detail':detail,'model_calls':0})
+    del processor,tokenizer,config,cls,values
     before=memory(); write(out/'before-load-memory.json',before); ram_gate(before)
     write(out/'before-load-vram.json',gpu_memory(True))
-    prompt=(ROOT/'configs/pilot/classification_c1.txt').read_text(encoding='utf8')
     write(out/'load-reservation.json',{'loads':1,'identity':request['identity'],'key':key})
     backend=(numerical.backend(key,source,weights,prompt,device='cuda:0') if key=='minicpm4'
              else adapter.CandidateBackend(key,source,weights,prompt,device='cuda:0'))
