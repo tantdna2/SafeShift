@@ -294,7 +294,7 @@ class MiniOnceTests(unittest.TestCase):
         compile(code, '<synthetic-builder>', 'exec')
         self.assertIn('scripts.minicpm173_train_once import main', code)
         self.assertEqual(notebook['metadata']['safeshift']['limits'], c.LIMITS)
-        self.assertEqual(notebook['metadata']['safeshift']['release'], 'EXTERNAL_EXACT_REVIEW_REQUIRED_NO_APPROVAL_EMBEDDED')
+        self.assertEqual(notebook['metadata']['safeshift']['release'], 'OWNER_BOUNDED_DELEGATION_EXTERNAL_SEALED_SOURCE')
         self.assertNotIn('approval_comment', code)
         self.assertNotIn('kaggle.json', code)
 
@@ -391,6 +391,7 @@ class MiniOnceTests(unittest.TestCase):
         text = ''.join('timestamp ' + c.PREFIX + json.dumps(v) + '\n' for v in challenges + challenges[-1:])
         api = Mock()
         api.kernels_logs_stream.return_value = iter([{'data': text[:53]}, {'data': text[53:]}])
+        api.kernels_status.return_value.status = 'COMPLETE'
         with patch.object(submitter, 'live_identity', return_value=123), patch.object(c, 'create_record', side_effect=self.create):
             result = submitter.coordinate(api, self.grant, 5)
         self.assertEqual(result['permits'], ['launch', 'load', 'call'])
@@ -415,6 +416,7 @@ class MiniOnceTests(unittest.TestCase):
                      'nonce': 'c' * 64, 'parent_nonce': ''}
         api = Mock()
         api.kernels_logs_stream.return_value = iter([{'data': c.PREFIX + json.dumps(challenge)}])
+        api.kernels_status.return_value.status = 'COMPLETE'
         with patch.object(submitter, 'live_identity', return_value=123), patch.object(c, 'create_record', side_effect=self.create):
             result = submitter.coordinate(api, self.grant, 5)
         self.assertEqual(result['permits'], ['launch'])
@@ -426,11 +428,12 @@ class MiniOnceTests(unittest.TestCase):
             adapters = {'https': Mock(max_retries=Mock(total=0))}
             def send(self, request, **kwargs):
                 calls.append(kwargs)
+                return Mock()
         fake = types.SimpleNamespace(Session=Session)
         with patch.dict('sys.modules', {'requests': fake}), submitter.bounded_http():
             Session().send(Mock(url='https://api.kaggle.com/api/v1/kernels/logs/stream/owner/slug'))
             Session().send(Mock(url='https://api.kaggle.com/v1/kernels.KernelsApiService/SaveKernel'))
-        self.assertEqual([v['timeout'] for v in calls], [(10, 1800), (10, 30)])
+        self.assertEqual([v['timeout'] for v in calls], [(10, 90), (10, 30)])
         self.assertTrue(all(v['allow_redirects'] is False for v in calls))
 
     def test_submission_timeout_burns_remote_slot_before_push(self):
@@ -446,9 +449,14 @@ class MiniOnceTests(unittest.TestCase):
             raise TimeoutError('SYNTHETIC_PUSH_RESPONSE_UNKNOWN')
         api.kernels_push.side_effect = push
         with ExitStack() as stack:
-            stack.enter_context(patch.object(c, 'read_grant', return_value=self.grant))
+            stack.enter_context(patch.object(submitter, 'make_grant', return_value=self.grant))
+            stack.enter_context(patch.object(submitter, 'ROOT', self.root))
+            stack.enter_context(patch.object(submitter, 'kernel_sources', return_value=['synthetic/history']))
+            from scripts import build_minicpm173_once as builder
+            stack.enter_context(patch.object(builder, 'build', return_value=nb))
+            stack.enter_context(patch.object(submitter, 'predecessor_history', return_value=[]))
             stack.enter_context(patch.object(submitter.subprocess, 'check_output', side_effect=lambda args, **kw:
-                self.grant['reviewed_head'] if 'rev-parse' in args else b''))
+                self.grant['reviewed_head'] if 'rev-parse' in args else notebook.read_bytes() if 'show' in args else b''))
             stack.enter_context(patch.object(c, 'public_get', return_value={'head': {'sha': self.grant['reviewed_head'],
                 'ref': c.BRANCH}, 'draft': True, 'merged': False}))
             stack.enter_context(patch.object(c, 'remote_record', side_effect=self.ledger.get))

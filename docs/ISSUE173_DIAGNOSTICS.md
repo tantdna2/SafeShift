@@ -1,5 +1,30 @@
 # Issue173 bounded model diagnostics — 2026-11-03
 
+## Mini transport repair and bounded delegation — 03/11/2026
+
+[Owner6602848993](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6602848993)
+and [new-session handoff6603028889](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6603028889)
+supersede the historical exact-review/no-new-job stops below. Same branch/PR175;
+at most three new private jobs v3/v4/v5, one original ordinal0 native call total,
+one load per job, 1800 wall seconds and 3600 physical GPU-seconds per job.
+No model/science change, v2 restart, full TRAIN, TEST, merge or grammar work.
+
+The new contract verifies the exact Owner comment bodies and self-seals a clean
+committed source/notebook identity before submission. This is delegated technical
+execution, not a claim that ChatGPT reviewed the new HEAD. Per-job create-only
+records and a campaign-wide call reservation prevent replay across jobs. A later
+job needs terminal sealed predecessor evidence affirmatively proving zero calls;
+unknown submission/consumption stops. v2 remains immutable.
+
+SDK2.2.5 yields dictionaries with data/stream_name/time; its CLI explicitly handles
+idle SSE disconnects by reconnecting read-only. The old coordinator discarded
+the queued exception type and did not reconnect. Its original exception was not
+saved, so the precise historical network/SDK cause cannot be reconstructed.
+Repair will retain sanitized exception chains and bound read-only reconnections
+within the same job/deadline; it never repeats submission, load or inference.
+Tests cover SDK event shapes, heartbeat/partial/delayed/replayed chunks, disconnect,
+timeout, wrong identity/version/nonce/phase and uncertain writes before execution.
+
 Authority: [Owner/ChatGPT directive6592812806](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6592812806).
 Same session, branch and Draft PR175. Original smoke stays Qwen1/InternVL1/Mini0.
 Five archives and all terminal fences remain unchanged. No TEST, GT, TRAIN image,

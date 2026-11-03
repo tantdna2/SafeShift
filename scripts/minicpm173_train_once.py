@@ -157,7 +157,8 @@ def launch(spec, output=Path('/kaggle/working'), scratch_parent=Path('/kaggle/te
     out.mkdir(exist_ok=False)
     scratch = Path(scratch_parent) / ('issue173-minicpm-ram-' + control.IDENTITY)
     error = None
-    deadline = time.monotonic() + 1750
+    deadline = min(time.monotonic() + 1750,
+                   time.monotonic() + ctx['grant']['expires_unix'] - time.time() - 30)
     write(out / 'source.json', spec)
     write(out / 'release.json', ctx)
     try:

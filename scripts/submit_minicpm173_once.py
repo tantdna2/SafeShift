@@ -1,5 +1,6 @@
 """Local official Kaggle submitter + create-only remote coordinator. Never retry."""
 import argparse
+import hashlib
 from contextlib import contextmanager
 import json
 from pathlib import Path
@@ -7,6 +8,7 @@ import queue
 import subprocess
 import threading
 import time
+import traceback
 from unittest.mock import patch
 
 from safeshift import minicpm173_once as control
@@ -56,6 +58,8 @@ def inventory(api):
         raise ValueError('OWNED_INVENTORY_BOUND_INCOMPLETE')
     require(set(kernel_sources()) <= owned, 'OWNED_INVENTORY_MISSING_KNOWN_PRIVATE_JOBS')
     require(control.JOB not in owned, 'TARGET_ALREADY_EXISTS_NO_RESUBMISSION')
+    require(not any('nguynanhtn/safeshift-issue173-minicpm-original-train-once-v' + str(n) in owned
+                    for n in range(control.JOB_NUMBER, 6)), 'CAMPAIGN_LATER_JOB_EXISTS')
     try:
         get_kernel(api, control.JOB)
     except Exception as failure:
@@ -88,10 +92,20 @@ def bounded_http():
     def send(session, request, **kwargs):
         require(all(a.max_retries.total == 0 for a in session.adapters.values()), 'SDK_RETRIES_FORBIDDEN')
         # Setup can be silent for minutes. Only the background SSE reader gets
-        # the job-sized read timeout; coordinator wall deadline still caps work.
-        kwargs['timeout'] = (10, 1800 if '/kernels/logs/stream/' in request.url else 30)
+        # a finite idle read timeout; coordinator wall deadline still caps work.
+        kwargs['timeout'] = (10, 90 if '/kernels/logs/stream/' in request.url else 30)
         kwargs['allow_redirects'] = False
-        return original(session, request, **kwargs)
+        response = original(session, request, **kwargs)
+        if '/kernels/logs/stream/' in request.url:
+            response.encoding = 'utf-8'
+            # requests defaults to 512B buffering. A short challenge must reach
+            # the coordinator without waiting for the next permitted phase.
+            lines = response.iter_lines
+            def immediate_lines(*args, **options):
+                options['chunk_size'] = 1
+                return lines(*args, **options)
+            response.iter_lines = immediate_lines
+        return response
     with patch.object(requests.Session, 'send', send):
         yield
 
@@ -104,55 +118,123 @@ def live_identity(api, grant):
     return value.metadata.id
 
 
-def coordinate(api, grant, seconds):
+def sanitized_failure(failure):
+    """No URL, response body, credentials or raw stdout in public error records."""
+    chain, seen = [], set()
+    while failure is not None and id(failure) not in seen and len(chain) < 5:
+        seen.add(id(failure))
+        response = getattr(failure, 'response', None)
+        chain.append({'type': type(failure).__name__, 'module': type(failure).__module__,
+            'message_sha256': hashlib.sha256(str(failure).encode()).hexdigest(),
+            'http_status': getattr(response, 'status_code', None),
+            'frames': [{'file': Path(f.filename).name, 'line': f.lineno, 'function': f.name}
+                       for f in traceback.extract_tb(failure.__traceback__)[-8:]]})
+        failure = failure.__cause__ or failure.__context__
+    return {'exception_chain': chain, 'message_policy': 'HASH_ONLY_NO_PRIVATE_TEXT'}
+
+
+def coordinate(api, grant, seconds, evidence=None):
     coordinator = control.Coordinator(grant)
     events = queue.Queue(maxsize=128)
-    def stream():
-        try:
-            for item in api.kernels_logs_stream(control.JOB + '/1'):
-                events.put(('data', item['data']), timeout=5)
-            events.put(('end', None), timeout=5)
-        except BaseException as failure:
+    stop = threading.Event()
+    def put(kind, value):
+        while not stop.is_set():
             try:
-                events.put(('error', type(failure).__name__), timeout=1)
+                events.put((kind, value), timeout=.2)
+                return
             except queue.Full:
-                pass
+                continue
+    def stream():
+        # Only re-open the read-only stream. Never restart the coordinator,
+        # re-submit a notebook, repeat a permit write or repeat a model call.
+        for connection in range(4):
+            if stop.is_set():
+                return
+            put('connection', connection)
+            try:
+                for item in api.kernels_logs_stream(control.JOB + '/1'):
+                    if stop.is_set():
+                        return
+                    require(isinstance(item, dict), 'LIVE_EVENT_SHAPE')
+                    data = item.get('data')
+                    if data is None:  # SDK heartbeat/control event, no stdout.
+                        continue
+                    require(isinstance(data, str), 'LIVE_LOG_TYPE')
+                    put('data', data)
+                state = str(api.kernels_status(control.JOB + '/1').status).split('.')[-1]
+                if state in ('COMPLETE', 'ERROR', 'CANCELLED'):
+                    put('end', state)
+                    return
+                require(state in ('RUNNING', 'QUEUED'), 'LIVE_STATUS_UNKNOWN')
+                put('disconnect', {'reason': 'EOF_BEFORE_TERMINAL', 'connection': connection})
+            except Exception as failure:
+                detail = sanitized_failure(failure)
+                detail['connection'] = connection
+                put('disconnect', detail)
+                # Schema/auth failures are not transient connection failures.
+                from requests.exceptions import ConnectionError, Timeout, ChunkedEncodingError
+                if not isinstance(failure, (ConnectionError, Timeout, ChunkedEncodingError)):
+                    put('error', detail)
+                    return
+            if stop.wait(1):
+                return
+        put('error', {'reason': 'READ_ONLY_RECONNECT_BUDGET_EXHAUSTED'})
     thread = threading.Thread(target=stream, daemon=True)
     thread.start()
     deadline, pending, total = time.monotonic() + seconds, '', 0
-    while time.monotonic() < deadline:
-        try:
-            kind, value = events.get(timeout=min(5, max(.01, deadline - time.monotonic())))
-        except queue.Empty:
-            continue
-        require(kind != 'error', 'LIVE_LOG_TRANSPORT_ERROR_NO_RETRY')
-        if kind == 'end':
-            return {'permits': list(coordinator.accepted), 'log_stream': 'ENDED'}
-        require(isinstance(value, str), 'LIVE_LOG_TYPE')
-        total += len(value.encode())
-        require(total <= 16 * 2**20, 'LIVE_LOG_LIMIT')
-        pending += value
-        lines = pending.split('\n')
-        pending = lines.pop()
-        require(len(pending) <= 2**20, 'LIVE_LOG_LINE_LIMIT')
-        # Official SDK events may be complete stdout lines without a newline;
-        # do not wait until the next process phase to acknowledge this one.
-        if control.PREFIX in pending:
+    observations = []
+    def observe(value):
+        observations.append(value)
+        if evidence is not None:
+            write(Path(evidence) / ('transport-%03d.json' % len(observations)), value)
+    try:
+        while time.monotonic() < deadline:
             try:
-                json.loads(pending.split(control.PREFIX, 1)[1])
-            except json.JSONDecodeError:
-                pass  # Bounded partial chunk; never guess or repair JSON.
-            else:
-                lines.append(pending)
-                pending = ''
-        for line in lines:
-            if control.PREFIX not in line:
+                kind, value = events.get(timeout=min(5, max(.01, deadline - time.monotonic())))
+            except queue.Empty:
                 continue
-            # Kaggle may prefix stdout with a timestamp; the payload has no raw.
-            challenge = json.loads(line.split(control.PREFIX, 1)[1])
-            live_identity(api, grant)
-            coordinator.accept(challenge)
-    raise TimeoutError('COORDINATOR_DEADLINE_NO_RETRY')
+            if kind in ('connection', 'disconnect', 'error'):
+                observe({'kind': kind, 'detail': value, 'permits': list(coordinator.accepted)})
+            require(kind != 'error', 'LIVE_LOG_TRANSPORT_ERROR_NO_RETRY')
+            if kind == 'connection':
+                pending = ''  # Reopened SDK stream replays from beginning.
+                continue
+            if kind == 'disconnect':
+                continue
+            if kind == 'end':
+                return {'permits': list(coordinator.accepted), 'log_stream': 'ENDED',
+                        'terminal': value, 'transport': observations}
+            require(isinstance(value, str), 'LIVE_LOG_TYPE')
+            total += len(value.encode())
+            require(total <= 16 * 2**20, 'LIVE_LOG_LIMIT')
+            pending += value
+            lines = pending.split('\n')
+            pending = lines.pop()
+            require(len(pending) <= 2**20, 'LIVE_LOG_LINE_LIMIT')
+            # Official SDK events may be complete stdout lines without a newline;
+            # do not wait until the next process phase to acknowledge this one.
+            if control.PREFIX in pending:
+                try:
+                    json.loads(pending.split(control.PREFIX, 1)[1])
+                except json.JSONDecodeError:
+                    pass  # Bounded partial chunk; never guess or repair JSON.
+                else:
+                    lines.append(pending)
+                    pending = ''
+            for line in lines:
+                if control.PREFIX not in line:
+                    continue
+                # Kaggle may prefix stdout with a timestamp; the payload has no raw.
+                challenge = json.loads(line.split(control.PREFIX, 1)[1])
+                live_identity(api, grant)
+                coordinator.accept(challenge)
+        raise TimeoutError('COORDINATOR_DEADLINE_NO_RETRY')
+    except BaseException as failure:
+        observe({'kind': 'coordinator-failure', **sanitized_failure(failure),
+                 'permits': list(coordinator.accepted)})
+        raise
+    finally:
+        stop.set()
 
 
 def verify_result(archive, grant):
@@ -171,7 +253,7 @@ def verify_result(archive, grant):
         counts = {'load_reservations': int('load-reservation.json' in members),
             'call_reservations': int('sample/reservation.json' in members),
             'native_call_markers': int('sample/native_call.json' in members)}
-        require(summary['identity'] == control.IDENTITY and summary['limits'] == control.LIMITS
+        require(summary['identity'] == grant['identity'] and summary['limits'] == control.LIMITS
                 and all(summary[k] == v for k, v in counts.items())
                 and summary['weights_loaded'] == ('loaded.json' in members)
                 and summary['original_smoke_counts'] == {'qwen3': 1, 'internvl35': 1,
@@ -194,11 +276,71 @@ def verify_result(archive, grant):
     return summary, members
 
 
-def submit(api, comment_id, notebook, history_inputs, stage):
-    grant = control.read_grant(comment_id)
+def predecessor_history(api, root):
+    """Cross-job budget: require sealed, terminal, affirmative zero-call proof."""
+    import zipfile
+    require(control.remote_record('campaign-call') is None, 'CAMPAIGN_CALL_ALREADY_RESERVED')
+    receipts = []
+    require(3 <= control.JOB_NUMBER <= 5, 'NEW_JOB_BUDGET')
+    for n in range(2, 6):
+        identity = 'issue173-minicpm-original-train-once-v' + str(n)
+        records = {name: control.remote_record(name, identity) for name in
+                   ('submission', 'submitted', *control.PHASES, 'finished')}
+        if n >= control.JOB_NUMBER:
+            require(not any(records.values()), 'NEW_OR_LATER_JOB_ALREADY_RESERVED')
+            continue
+        require(all(records[k] is not None for k in ('submission', 'submitted', 'launch')),
+                'PREDECESSOR_CUSTODY_INCOMPLETE')
+        grant = records['submission']['grant']
+        require(grant['identity'] == identity and grant['job'] == 'nguynanhtn/safeshift-' + identity
+                and grant['version'] == 1, 'PREDECESSOR_GRANT_IDENTITY')
+        value = get_kernel(api, grant['job'])
+        state = str(api.kernels_status(grant['job'] + '/1').status).split('.')[-1]
+        require(state in ('COMPLETE', 'ERROR', 'CANCELLED') and value.metadata.is_private is True
+                and value.metadata.id == records['submitted']['kernel_id']
+                and value.metadata.current_version_number == 1
+                and control.code_hash(json.loads(value.blob.source)) == grant['notebook_code_sha256'],
+                'PREDECESSOR_NOT_TERMINAL_OR_IDENTITY')
+        archive = Path(root) / (identity + '.zip')
+        summary, members = verify_result(archive, grant)
+        if n == 2:
+            require(sha(archive) == '06ed278b2e9973c6186695c6a8327d4522fa9e02b010baac2cd90484b100e03e',
+                    'IMMUTABLE_V2_SEAL')
+        require(records['call'] is None and summary['native_call_markers'] == 0
+                and summary['call_reservations'] == 0 and summary['consumption'] == 'NO_CALL_OBSERVED_NO_AUTO_RETRY',
+                'PREDECESSOR_CALL_OR_UNCERTAIN')
+        # Absence of a marker alone is insufficient: require normal child exit
+        # with a retained pre-call error, followed by supervisor export.
+        with zipfile.ZipFile(archive) as bundle:
+            supervisor = json.loads(bundle.read('native-supervisor.json'))
+            require(supervisor['status'] == 'CHILD_FAILURE' and supervisor['returncode'] == 1,
+                    'PREDECESSOR_NATIVE_TERMINATION_UNPROVEN')
+            logs = [name for name in members if name.endswith('.log') and 'native' in name]
+            require(len(logs) == 1 and b'REMOTE_PERMIT_TIMEOUT_NO_RETRY' in bundle.read(logs[0]),
+                    'PREDECESSOR_PRECALL_FAILURE_UNPROVEN')
+        receipts.append({'identity': identity, 'state': state, 'archive_sha256': sha(archive),
+            'native_calls': 0, 'load_reservations': summary['load_reservations'],
+            'records_sha256': digest(records)})
+    return receipts
+
+
+def make_grant(comment_id, notebook, head):
+    require(comment_id == 6602848993, 'DELEGATED_AUTHORITY_REQUIRED')
+    nb = read(notebook)
+    spec = nb['metadata']['safeshift']
+    now = int(time.time())
+    return control.delegated_grant({'identity': control.IDENTITY, 'source_head': head,
+        'runtime_commit': spec['runtime_commit'], 'manifest_sha256': spec['manifest_sha256'],
+        'notebook_sha256': sha(notebook), 'notebook_code_sha256': control.code_hash(nb),
+        'job': control.JOB, 'version': 1, 'limits': control.LIMITS,
+        'issued_unix': now, 'expires_unix': now + 1800, 'authority': control.authority(),
+        'authorization_kind': 'OWNER_BOUNDED_DELEGATION_NOT_HEAD_REVIEW'})
+
+
+def submit(api, comment_id, notebook, history_inputs, stage, predecessor_outputs=None):
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-    require(head == grant['reviewed_head'], 'REVIEWED_HEAD_REQUIRED')
     require(not subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT), 'CLEAN_REVIEWED_TREE_REQUIRED')
+    grant = make_grant(comment_id, notebook, head)
     pr = control.public_get('/pulls/175')
     require(pr['head']['sha'] == head and pr['head']['ref'] == control.BRANCH
             and pr['draft'] and not pr['merged'], 'REMOTE_REVIEWED_DRAFT_HEAD')
@@ -208,15 +350,25 @@ def submit(api, comment_id, notebook, history_inputs, stage):
     require(spec['identity'] == control.IDENTITY and spec['runtime_commit'] == grant['runtime_commit']
             and spec['manifest_sha256'] == grant['manifest_sha256'] and spec['limits'] == control.LIMITS
             and control.code_hash(nb) == grant['notebook_code_sha256'], 'NOTEBOOK_RELEASE_BINDING')
+    # The notebook must be tracked in the clean source HEAD, not an arbitrary
+    # ignored file supplied with self-consistent hashes.
+    relative = Path(notebook).resolve().relative_to(ROOT.resolve()).as_posix()
+    require(subprocess.check_output(['git', 'show', head + ':' + relative], cwd=ROOT) == Path(notebook).read_bytes(),
+            'NOTEBOOK_NOT_COMMITTED')
+    from scripts.build_minicpm173_once import build
+    require(build(grant['runtime_commit']) == nb, 'COMMITTED_NOTEBOOK_REPRODUCTION')
     require(all(control.remote_record(n) is None for n in ('submission', 'submitted', *control.PHASES, 'finished')),
             'REMOTE_HISTORY_NONEMPTY_NO_RESUBMISSION')
     history = inspect_history(paths_from_mounts(history_inputs))
     diagnostics = diagnostic_history(history_inputs)
+    predecessors = predecessor_history(api, predecessor_outputs)
     observed = inventory(api)
     stage = Path(stage)
     stage.mkdir(parents=True, exist_ok=False)
     write(stage / 'inventory.json', observed)
-    metadata = {'id': control.JOB, 'title': 'SafeShift issue173 minicpm original train once v2',
+    write(stage / 'predecessors.json', predecessors)
+    write(stage / 'grant.json', grant)
+    metadata = {'id': control.JOB, 'title': 'SafeShift issue173 minicpm original train once v' + str(control.JOB_NUMBER),
         'code_file': 'mini.ipynb', 'language': 'python', 'kernel_type': 'notebook', 'is_private': True,
         'enable_gpu': True, 'enable_tpu': False, 'enable_internet': True,
         'dataset_sources': ['nguynanhtn/inspecsafe-v1-kaggle', 'nguynanhtn/safeshift-pilot-input'],
@@ -227,15 +379,20 @@ def submit(api, comment_id, notebook, history_inputs, stage):
     # Before first POST to Kaggle: durable across machines, no TTL/reclaim/reset.
     control.create_record('submission', {'grant': grant, 'approval_comment': comment_id,
         'original_counts': history['consumed'], 'diagnostic_calls': sum(d['calls'] for d in diagnostics),
-        'inventory_sha256': digest(observed)})
+        'inventory_sha256': digest(observed), 'predecessors': predecessors})
     start = time.monotonic()
     result = api.kernels_push(str(stage), timeout='1800', acc='NvidiaTeslaT4')
     write(stage / 'submit-return.json', result.to_dict())
     kernel_id = live_identity(api, grant)
     control.create_record('submitted', {'job': control.JOB, 'kernel_id': kernel_id, 'version': 1,
         'binding': digest(grant)})
-    report = coordinate(api, grant, max(1, 1800 - (time.monotonic() - start)))
-    write(stage / 'coordinator.json', report)
+    try:
+        report = coordinate(api, grant, max(1, grant['expires_unix'] - time.time()), stage)
+        write(stage / 'coordinator.json', report)
+    except Exception as failure:
+        write(stage / 'coordinator-error.json', sanitized_failure(failure))
+        # Never restart dispatch. Continue read-only terminal reconciliation so
+        # a failed transport still yields the actual sealed failure evidence.
     while True:
         state = str(api.kernels_status(control.JOB + '/1').status).split('.')[-1]
         if state in ('COMPLETE', 'ERROR', 'CANCELLED'):
@@ -261,7 +418,9 @@ if __name__ == '__main__':
     parser.add_argument('--notebook', type=Path, required=True)
     parser.add_argument('--history-inputs', type=Path, required=True)
     parser.add_argument('--stage', type=Path, required=True)
+    parser.add_argument('--predecessor-outputs', type=Path, required=True)
     args = parser.parse_args()
     from kaggle import api
     with bounded_http():
-        print(json.dumps(submit(api, args.approval_comment, args.notebook, args.history_inputs, args.stage)))
+        print(json.dumps(submit(api, args.approval_comment, args.notebook, args.history_inputs, args.stage,
+                                args.predecessor_outputs)))

@@ -47,10 +47,10 @@ if result: raise RuntimeError('MINICPM173_TERMINAL_ERROR_SEE_SEALED_OUTPUT')
         'metadata': {'kernelspec': {'name': 'python3', 'display_name': 'Python 3', 'language': 'python'},
             'safeshift': {'identity': IDENTITY, 'job': JOB, 'version': 1, 'runtime_commit': ref,
                 'manifest_sha256': digest(manifest), 'limits': LIMITS,
-                'release': 'EXTERNAL_EXACT_REVIEW_REQUIRED_NO_APPROVAL_EMBEDDED'}},
+                'release': 'OWNER_BOUNDED_DELEGATION_EXTERNAL_SEALED_SOURCE'}},
         'cells': [{'cell_type': 'markdown', 'id': 'scope', 'metadata': {}, 'source': [
-            '# MiniCPM original TRAIN ordinal0 — one-shot executable, review required\n',
-            'Use only the reviewed local submission coordinator. Missing remote grant stops before data access.\n',
+            '# MiniCPM original TRAIN ordinal0 — bounded delegated execution\n',
+            'Use only the source-sealed local coordinator under Owner6602848993/6603028889. Missing remote grant stops before data access.\n',
             'Five original smoke Outputs, four diagnostic Outputs, original data/master/byte proof and Mini weights are required.\n',
             'One load/one call, private T4x2 (GPU0 only), 1800 seconds; unchanged C1/FP16/eager/FP32 resampler/label-only.\n',
             'No retry, Qwen/InternVL call, TEST, scientific metric or fresh171 enrollment.\n',
