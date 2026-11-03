@@ -50,3 +50,28 @@ request/launch/worker remain REVIEW HOLD regardless of diagnostic success.
 No final original-TRAIN call before direct ChatGPT review of exact dispatch and
 cumulative ledger. Scientific adoption of InternVL variants requires a separate
 comparability decision. Results and receipts will be appended after execution.
+
+## Additional MiniCPM hypothesis/budget declared after v1 evidence
+
+v1 sealed ZIP `5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512`
+proves one successful real weight load and one finite native call, exact decoder
+replay and active FP32 resampler. On uniform gray, the model generated a JSON
+value using the descriptive normal-category phrase rather than the canonical
+vocabulary. Strict INVALID is correct; no technical corruption or RAM failure.
+
+Predeclare `issue173-diag-mini-scene-v2`: one new fresh-VM load, at most two
+native calls, 1800s wall (3600 allocated T4-seconds), same RAM/VRAM/storage and
+all original MiniCPM science/model/runtime settings. Two fixed, procedural,
+unannotated 448x448 factory schematics (fire/smoke shapes, then machinery/boxes)
+contain no text/class code/GT. Hypothesis: the blank image is outside the visual
+task and this descriptive response does not establish a universal canonical
+format failure. Test relevant visual structure without changing C1, generation,
+preprocessing, parser or resampler. Stop after the first strict native SUCCESS;
+retain every INVALID. This is an engineering existence test, not a rate/accuracy
+estimate or dataset/cohort selection. No additional attempt is automatically
+scheduled. Cumulative ceiling across the three declared jobs: three loads,
+six calls, 5400s wall /10800 allocated T4-seconds. v1 remains consumed and sealed.
+
+Existing official160 evidence also reports155 strict valid outputs under the
+same FP32 descriptor, but is historical, separately scoped and not substituted
+for this new diagnostic result or permission for another TRAIN call.

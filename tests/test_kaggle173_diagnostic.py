@@ -14,7 +14,7 @@ class DiagnosticTests(unittest.TestCase):
             with self.assertRaises(ValueError): d.admit(value)
 
     def test_declared_budgets(self):
-        self.assertEqual(sum(len(p['variants']) for p in d.PLANS.values()),4)
+        self.assertEqual(sum(len(p['variants']) for p in d.PLANS.values()),6)
         self.assertEqual(d.admit('issue173-diag-mini-synthetic-v1')['variants'],['frozen-c1'])
 
     def test_fences_not_rescued(self):
@@ -39,6 +39,16 @@ class DiagnosticTests(unittest.TestCase):
         for fn in (launch,worker):
             with self.assertRaisesRegex(PermissionError,'REVIEW'):
                 fn({'status':'NATIVE_FORMAT_PASS','weights_loaded':True,'approved':True})
+
+    def test_prepared_train_dispatch_all_entries_hold_before_io(self):
+        from scripts import minicpm173_train_review as train
+        with tempfile.TemporaryDirectory() as temp,patch.object(train,'bind_original') as inputs:
+            for fn,args in ((train.once,(temp,Path(temp))),
+                (train.worker,('native',temp,Path(temp),Path(temp))),
+                (train.launch,(temp,temp,temp,'1'*40,{}))):
+                with self.assertRaisesRegex(PermissionError,'REVIEW'): fn(*args)
+            inputs.assert_not_called()
+            self.assertEqual(list(Path(temp).iterdir()),[])
 
     def test_manifest_required_and_bad_path(self):
         for manifest in ({},{'../outside':'0'*64},{'C:/outside':'0'*64}):
@@ -66,6 +76,39 @@ class DiagnosticTests(unittest.TestCase):
         self.assertEqual(rendered.replace(d.REMINDER,''),'HEAD'+prompt+'TAIL')
         fake_torch.equal.assert_called_once_with(pixels,pixels)
         self.assertEqual(proc.apply_chat_template.call_args.kwargs,{'tokenize':False,'add_generation_prompt':True})
+
+    def test_uncertain_native_completion_is_sealed_and_never_retried(self):
+        from safeshift.pilot.artifacts import write,verify_archive
+        identity='issue173-diag-mini-synthetic-v1'
+        with tempfile.TemporaryDirectory() as temp:
+            output=Path(temp)/'output'; output.mkdir()
+            scratch=Path(temp)/'scratch'; scratch.mkdir()
+            out=output/identity
+            calls=[]
+            def run(command,**kwargs):
+                stage=command[command.index('--worker')+1]; calls.append(stage)
+                if stage=='setup':
+                    write(out/'runtime.json',{'python':'NOT_EXECUTED','env':{}})
+                else:
+                    write(out/'load-reservation.json',{'loads':1})
+                    sample=out/'calls/frozen-c1'; sample.mkdir(parents=True)
+                    write(sample/'reservation.json',{'max_calls':1})
+                    write(sample/'native_call.json',{'invocation':1})
+                    raise TimeoutError('SYNTHETIC_UNKNOWN_AFTER_CALL')
+            history={'consumed':{'qwen3':1,'internvl35':1,'minicpm4':0}}
+            with patch.object(d,'source_check'),patch.object(d,'paths_from_mounts',return_value=[]),\
+                 patch.object(d,'inspect_history',return_value=history),patch.object(d,'memory',return_value={}),\
+                 patch.object(d.environment,'resources',return_value={}),patch.object(d.provision,'clean_env',return_value={}),\
+                 patch.object(d,'advise_owned_runtime',return_value={}),patch.object(d.supervision,'run',side_effect=run):
+                result=d.launch(identity,'unused',output,scratch,'1'*40,{'synthetic':'2'*64})
+                self.assertEqual(result['status'],'BLOCKED')
+                self.assertEqual(result['native_call_markers'],1)
+                self.assertEqual(result['call_reservations'],1)
+                self.assertEqual(calls,['setup','native'])
+                with self.assertRaises(FileExistsError):
+                    d.launch(identity,'unused',output,scratch,'1'*40,{'synthetic':'2'*64})
+            self.assertIn('calls/frozen-c1/native_call.json',verify_archive(Path(str(out)+'.zip')))
+            self.assertFalse((out/'native-result.json').exists())
 
 
 if __name__=='__main__': unittest.main()

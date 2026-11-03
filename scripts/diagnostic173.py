@@ -19,19 +19,63 @@ from safeshift.pilot.contract import parse_label, PROMPT_SHA
 from safeshift.smoke173_history import inspect_history
 from scripts.minicpm173_preflight import memory, ram_gate, advise_owned_runtime, paths_from_mounts, POLICY
 from scripts.smoke_kaggle173 import driver_check, bind_cuda_driver, supervisor_log
+from scripts.verify_kaggle173_inputs import unique_mount
 
 DIRECTIVE='https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6592812806'
 PLANS={
     'issue173-diag-mini-synthetic-v1': {'key':'minicpm4','variants':['frozen-c1']},
     'issue173-diag-intern-format-v1': {'key':'internvl35','variants':['frozen-c1','reminder-v1','prefill-v1']},
+    'issue173-diag-mini-scene-v2': {'key':'minicpm4','variants':['frozen-c1-fire','frozen-c1-workshop']},
 }
 REMINDER='\nFormatting requirement: Begin your reply immediately with the character { and end with }. Write the JSON object directly, without Markdown or backticks.'
 PREFIX='{"safety_level":"'
 
 
+def synthetic_image(variant):
+    """Procedural, unannotated images. No words, class codes or GT in pixels."""
+    from PIL import Image,ImageDraw
+    image=Image.new('RGB',(448,448),(128,128,128))
+    if variant not in ('frozen-c1-fire','frozen-c1-workshop'): return image
+    draw=ImageDraw.Draw(image)
+    draw.rectangle((0,0,447,290),fill=(181,188,194))
+    draw.polygon([(0,290),(447,290),(447,447),(0,447)],fill=(94,101,108))
+    for x in (30,206,404): draw.rectangle((x,20,x+12,330),fill=(68,77,88))
+    draw.rectangle((0,42,447,61),fill=(79,87,94))
+    draw.rectangle((44,157,180,310),fill=(79,113,128),outline=(28,41,52),width=5)
+    draw.rectangle((60,175,160,217),fill=(45,60,72))
+    draw.ellipse((86,239,131,284),fill=(164,176,180),outline=(20,29,35),width=4)
+    draw.line([(180,197),(266,197),(266,90),(384,90)],fill=(68,76,83),width=18)
+    draw.rectangle((320,207,395,330),fill=(112,127,137),outline=(35,43,50),width=5)
+    draw.ellipse((320,194,395,220),fill=(141,156,165),outline=(35,43,50),width=4)
+    if variant=='frozen-c1-fire':
+        for x,y,r in ((267,235,31),(259,195,40),(291,150,47),(271,98,53)):
+            draw.ellipse((x-r,y-r,x+r,y+r),fill=(57,55,54))
+        draw.polygon([(208,349),(211,306),(231,318),(239,260),(258,291),(281,247),
+                      (281,301),(306,283),(317,349)],fill=(235,76,15))
+        draw.polygon([(230,347),(245,300),(258,324),(278,288),(295,347)],fill=(255,199,36))
+    else:
+        draw.rectangle((205,270,291,346),fill=(140,109,69),outline=(57,48,35),width=4)
+        draw.rectangle((224,251,280,269),fill=(162,133,89),outline=(57,48,35),width=3)
+    return image
+
+
 def admit(identity):
     require(identity in PLANS,'DECLARED_SYNTHETIC_DIAGNOSTIC_ONLY')
     return PLANS[identity]
+
+
+def predecessor(identity,inputs):
+    if identity!='issue173-diag-mini-scene-v2': return {'prior_diagnostic_calls':0}
+    from safeshift.pilot.artifacts import safe,verify_archive
+    import zipfile
+    archive=safe(unique_mount(inputs,'safeshift-issue173-diag-mini-synthetic-v1'),'issue173-diag-mini-synthetic-v1.zip')
+    require(sha(archive)=='5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512','EXACT_MINI_V1_PREDECESSOR')
+    members=verify_archive(archive)
+    with zipfile.ZipFile(archive) as bundle: result=json.loads(bundle.read('result.json'))
+    require(result['status']=='NATIVE_FORMAT_INVALID' and result['weights_loaded']
+        and result['call_reservations']==result['native_call_markers']==1
+        and 'calls/frozen-c1/raw.json' in members,'KNOWN_PRIOR_MINI_CALL_NO_RETRY')
+    return {'prior_diagnostic_calls':1,'archive_sha256':sha(archive),'prior_result_preserved':'INVALID'}
 
 
 def source_check(manifest):
@@ -72,7 +116,7 @@ def evaluate(raw,variant):
         'assistant_message_status':'SUCCESS' if parse_label(assembled) else 'INVALID',
         'native_response_sha256':hashlib.sha256(raw['response'].encode()).hexdigest(),
         'assistant_prefix':PREFIX if variant=='prefill-v1' else '',
-        'scientific_status':'FROZEN_CONFIGURATION_SYNTHETIC_ONLY' if variant=='frozen-c1' else 'PROPOSED_NON_EQUIVALENT',
+        'scientific_status':'FROZEN_CONFIGURATION_SYNTHETIC_ONLY' if variant.startswith('frozen-c1') else 'PROPOSED_NON_EQUIVALENT',
         'hnlo':'NOT_COMPUTED_DIAGNOSTIC_LABEL_ONLY','posthoc_cleanup':False}
 
 
@@ -81,6 +125,7 @@ def worker(stage,request_path,out,scratch):
     require(stage in ('setup','native'),'DECLARED_STAGE')
     source_check(request['source_manifest'])
     history=inspect_history(paths_from_mounts('/kaggle/input'))
+    predecessor(request['identity'],'/kaggle/input')
     require(history['consumed']=={'qwen3':1,'internvl35':1,'minicpm4':0},'ORIGINAL_HISTORY')
     # Re-discover, never accept a caller-supplied model, image or dataset path.
     marker,source,weights=checkpoint('/kaggle/input',key)
@@ -106,9 +151,9 @@ def worker(stage,request_path,out,scratch):
     processor,tokenizer,config,cls=native_setup(source,key,evidence)
     write(out/'processor-source.json',evidence)
     write(out/'processor-memory.json',memory())
-    with Image.new('RGB',(448,448),(128,128,128)) as synthetic:
-        for variant in plan['variants']:
-            prepare=adapter.prepare_inputs if variant=='frozen-c1' else variant_inputs(adapter.prepare_inputs,variant)
+    for variant in plan['variants']:
+        with synthetic_image(variant) as synthetic:
+            prepare=adapter.prepare_inputs if variant.startswith('frozen-c1') else variant_inputs(adapter.prepare_inputs,variant)
             rendered,values=prepare(processor,key,prompt,synthetic)
             detail=adapter.validate_inputs(processor,key,config,rendered,values,prompt)
             write(out/('cpu-template-'+variant+'.json'),{'variant':variant,'detail':detail,'model_calls':0})
@@ -120,26 +165,27 @@ def worker(stage,request_path,out,scratch):
              else adapter.CandidateBackend(key,source,weights,prompt,device='cuda:0'))
     write(out/'loaded.json',backend.environment)
     write(out/'after-load-memory.json',memory()); write(out/'after-load-vram.json',gpu_memory(False))
-    image_path=out/'synthetic-gray.png'
-    with Image.new('RGB',(448,448),(128,128,128)) as image: image.save(image_path)
-    image_hash=sha(image_path)
-    write(out/'input.json',{'scope':'SYNTHETIC_ONLY_NO_GROUND_TRUTH','recipe':'PIL RGB 448x448 constant (128,128,128)',
-        'sha256':image_hash,'model_revision':backend.environment['model'],'source_commit':request['source_commit']})
     results=[]
     for variant in plan['variants']:
+        image_path=out/('synthetic-'+variant+'.png')
+        with synthetic_image(variant) as image: image.save(image_path)
+        image_hash=sha(image_path)
+        write(out/('input-'+variant+'.json'),{'scope':'SYNTHETIC_ONLY_NO_GROUND_TRUTH','recipe':variant,
+            'recipe_source_sha256':sha(__file__),'sha256':image_hash,'size':[448,448],
+            'model_revision':backend.environment['model'],'source_commit':request['source_commit']})
         require(sha(image_path)==image_hash,'SYNTHETIC_INPUT_CHANGED')
         sample=out/'calls'/variant; sample.mkdir(parents=True,exist_ok=False)
         write(sample/'reservation.json',{'identity':request['identity'],'variant':variant,'max_calls':1,
             'input_sha256':image_hash,'source_commit':request['source_commit'],'directive':DIRECTIVE})
-        context=(nullcontext() if variant=='frozen-c1' else
+        context=(nullcontext() if variant.startswith('frozen-c1') else
             patch.object(adapter,'prepare_inputs',variant_inputs(adapter.prepare_inputs,variant)))
         with context: raw=backend.generate(image_path,sample)
         # The raw response and tokens are durable before parsing/format evaluation.
         write(sample/'raw.json',raw)
+        require(raw['cpu_tokenizer_replay']['status']=='PASS' and not raw['raw_nonfinite'],'FINITE_NATIVE_DECODE_REQUIRED')
         result=evaluate(raw,variant); result.update(variant=variant,raw_sha256=sha(sample/'raw.json'))
         write(sample/'result.json',result); results.append(result)
         write(sample/'memory.json',memory()); write(sample/'vram.json',gpu_memory(False))
-        require(not raw['raw_nonfinite'],'NONFINITE_DIAGNOSTIC_STOP')
         if result['native_status']=='SUCCESS' and (key=='minicpm4' or variant!='frozen-c1'): break
     write(out/'native-result.json',{'weights_loaded':True,'calls':len(results),'results':results,
         'status':'NATIVE_FORMAT_PASS' if any(r['native_status']=='SUCCESS' for r in results) else 'NATIVE_FORMAT_INVALID',
@@ -150,11 +196,13 @@ def launch(identity,inputs,output,scratch_parent,ref,manifest):
     plan=admit(identity); source_check(manifest)
     require(len(ref)==40 and all(c in '0123456789abcdef' for c in ref),'EXACT_SOURCE_COMMIT')
     history=inspect_history(paths_from_mounts(inputs))
+    previous=predecessor(identity,inputs)
     out=Path(output)/identity; out.mkdir(exist_ok=False)
     # The existing advice implementation can only touch this newly owned tree.
     scratch=Path(scratch_parent)/('issue173-minicpm-ram-'+identity); scratch.mkdir(exist_ok=False)
     request={'identity':identity,'source_commit':ref,'source_manifest':manifest,'scope':'SYNTHETIC_ONLY'}
     write(out/'request.json',request); write(out/'history.json',history)
+    write(out/'diagnostic-predecessor.json',previous)
     write(out/'budget.json',{'max_loads':1,'max_calls':len(plan['variants']),'job_seconds':1800,
         'visible_t4':1,'allocated_t4':2,'ram_floor_bytes':16384*2**20,'policy':POLICY,
         'original_train_calls':0,'directive':DIRECTIVE})
