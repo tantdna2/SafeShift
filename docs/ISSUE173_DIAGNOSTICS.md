@@ -5,6 +5,68 @@ Same session, branch and Draft PR175. Original smoke stays Qwen1/InternVL1/Mini0
 Five archives and all terminal fences remain unchanged. No TEST, GT, TRAIN image,
 fresh171 campaign or scientific score is used by these diagnostics.
 
+## Approved Mini execution6600633032 — terminal transport failure, 03/11/2026
+
+This section supersedes earlier pending-execution instructions. Under
+[exact approval6600633032](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6600633032),
+the prescribed command was invoked once at clean reviewed HEAD
+`ff749ec7b61b59f909e2380455e012bec84f30ec`. Pre-submit source/notebook/history,
+owned-job inventory, prior Input versions and quota gates passed. The private
+[Kaggle job](https://www.kaggle.com/code/nguynanhtn/safeshift-issue173-minicpm-original-train-once-v2)
+was actually submitted: kernel142487590/version1, matching reviewed code cells.
+Its final status is **ERROR**; the sealed summary is **TECHNICAL_ERROR**.
+
+Observed failure chain:
+
+1. Durable submission/submitted/launch records were created on this PR branch.
+   Setup completed with exit0 in144.208 seconds.
+2. The local coordinator raised `LIVE_LOG_TRANSPORT_ERROR_NO_RETRY` at line128.
+   Its streaming thread catches an exception, queues its type, then the consumer
+   discards that detail in a generic guard. The original exception/message was
+   not persisted; network/service/SDK root cause is therefore **UNKNOWN**.
+3. The native worker completed software/CUDA/resource admission and emitted its
+   fresh load challenge, but no load permit was issued. After150 seconds it
+   raised `REMOTE_PERMIT_TIMEOUT_NO_RETRY`, before load reservation/backend.
+   Native supervisor recorded exit1 after159.347 seconds and group cleanup.
+4. Parent exported the partial ZIP/SHA256 with `SUPERVISED_CHILD_FAILURE`.
+   Read-only terminal reconciliation and artifact download followed; the
+   coordinator was not restarted and no replacement job/permit was issued.
+
+**Zero loads, zero call reservations, zero native calls; raw/parser NOT_RUN.**
+Original smoke is still Qwen1/InternVL1/Mini0; the four diagnostics remain separate.
+Original ordinal0 binding and all nine historical seals passed. Full checkpoint
+validation/model fitting was not reached in this job; prior checkpoint evidence
+is retained, without claiming new model-load success.
+
+Available RAM: startup31,760,297,984B, before load permit24,405,426,176B,
+final24,733,450,240B; unchanged floor17,179,869,184B. Cgroup limit32,212,254,720B,
+OOM/kill counts0, final direct children empty. Two physical T4 GPUs were present;
+worker saw GPU0 only, CUDA FP16 probe passed, free VRAM15,526,068,224B. These are
+environment measurements, not model-fit or inference proof. Scratch/output free
+space at admission was1,032,166,440,960B /20,939,841,536B. Final quota reserved0;
+used11,688.906 of108,000 platform seconds (delta349.906, not inference duration).
+
+[Sanitized terminal evidence](research/evidence/issue173/mini-once/execution-6600633032.json)
+records the grant, source, resource snapshots and exact payload checksums.
+Private ZIP `issue173-minicpm-original-train-once-v2.zip`:28,201B,35 members
+(34 payloads plus checksum manifest), SHA256
+`06ed278b2e9973c6186695c6a8327d4522fa9e02b010baac2cd90484b100e03e`.
+Existing `verify_result`/`verify_archive` passed the sidecar, all payload hashes,
+source/release binding and zero-call accounting. Private logs/archive/image
+identity remain outside GitHub. No raw model output exists for this job.
+
+**Operational stop:** preserve submission/submitted/launch records at84a3b02;
+load/call/finished are absent, not invented. Do not rerun the historical command,
+delete the stage/remote reservation, restart the coordinator or grant a load
+manually. Even known zero calls do not override the explicit no-retry-after-push
+instruction. A future repair would need to retain transport exception evidence
+and prove reliable live challenge delivery before any separately authorized
+execution; no such repair, job or approval is claimed here. ChatGPT reviews this
+actual failure and decides the next scope. Draft PR175 stays open and unmerged.
+
+No executable/config/notebook changes in this reporting update. Earlier CPU
+receipts retain their exact snapshots; no redundant qualification was run.
+
 ## Approved Mini invocation6599953246 — pre-submission error, 03/11/2026
 
 [Owner/ChatGPT grant6599953246](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6599953246)

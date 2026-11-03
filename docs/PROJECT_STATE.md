@@ -1,6 +1,42 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — approved Mini invocation failed before submission, 03/11/2026
+## CURRENT — approved Mini Kaggle job failed before model load, 03/11/2026
+
+[Release6600633032](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6600633032)
+was executed once at approved clean HEAD
+`ff749ec7b61b59f909e2380455e012bec84f30ec`. The real private Kaggle job
+`nguynanhtn/safeshift-issue173-minicpm-original-train-once-v2`, kernel142487590,
+version1, was submitted and terminated **ERROR / TECHNICAL_ERROR**. This is
+an actual job result, but **TRAIN inference NOT_RUN: zero loads and zero calls**.
+
+The local coordinator stopped with `LIVE_LOG_TRANSPORT_ERROR_NO_RETRY` after
+issuing the launch permit. Its stream exception details were not retained, so
+the underlying transport cause remains UNKNOWN. The native worker passed its
+environment gates, then timed out after150 seconds waiting for the load permit
+(`REMOTE_PERMIT_TIMEOUT_NO_RETRY`). No load reservation or model backend was
+reached. Pre-load available RAM24,405,426,176B exceeded the unchanged17,179,869,184B
+floor; no OOM was recorded. This is not evidence of a RAM/checkpoint/model defect.
+
+[Verified terminal receipt](research/evidence/issue173/mini-once/execution-6600633032.json)
+binds the exact source/grant, archive, all34 payload hashes, resources and counters.
+ZIP SHA256 `06ed278b2e9973c6186695c6a8327d4522fa9e02b010baac2cd90484b100e03e`.
+The ZIP and logs remain private; no model raw exists because no model was called.
+Submission/submitted/launch records remain immutable; load/call/finished records
+are absent. No coordinator restart, second push or manual permit was performed.
+
+Original smoke remains **Qwen1/InternVL1/Mini0 =2/3**; all five old attempts and
+four diagnostic archives (4loads/5calls) are preserved. GPU quota observed delta
+349.906 platform seconds, final reserved0. No fresh171/TEST/scientific change.
+The unused model call does **not** authorize another submission: the explicit
+post-submission no-retry rule applies. Stop at Draft PR175 for ChatGPT review;
+no successful TRAIN inference, independent audit or merge is claimed.
+
+This update changes only documentation/evidence. ZIP/sidecar/member checksums,
+source/grant bindings, submitted code equality and terminal ledger reconciliation
+PASS. Prior Linux90/90 Issue173,55/55 fulltrain and34/34 stage-fix receipts retain
+their recorded source snapshots; no redundant CPU or model tests were rerun.
+
+## HISTORICAL — approved Mini invocation failed before submission, 03/11/2026
 
 [Exact release6599953246](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6599953246)
 was invoked **once** at approved clean HEADf983fdb. All pre-submit admission

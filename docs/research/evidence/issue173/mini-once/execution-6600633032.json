@@ -1,0 +1,368 @@
+{
+  "approval_comment": 6600633032,
+  "archive": {
+    "basename": "issue173-minicpm-original-train-once-v2.zip",
+    "bytes": 28201,
+    "member_sha256": {
+      "before-load-memory.json": "395568262ea74865e4211594d53f3eccd1566142f141005f357e202e515c5f6c",
+      "budget.json": "e6d8a1d33930c9b67619dcf87f336e4be4532f40cb3abfe4223afae0e284d8de",
+      "cache-advice.json": "e3941cdfdd2aa84e117d0797a4ded5d61372be45583b8bd864fa4c6d188ea952",
+      "cuda.json": "2c959fb701473357d2e16bcd4e6f55676e2e2bff0e8902fb3fca78c122422a67",
+      "diagnostic-history.json": "8a7be4107791cd33aeb3abc06fcc3bfbad256558181a5d067c900a773742d1dd",
+      "driver-library-binding.json": "377375574cce930f2adc46e132c70400bac03da077278a24e8aec277557cf144",
+      "final-gpu-memory.json": "8c5ac5ef38ec4df4d96ba69e2cf7a627b82772ac4343bcce299ef1fddf1efb4d",
+      "final-memory.json": "38aa5b46e3c14d08c5084d48a9e85e09b686395813ae3ec1171496ca39f3d999",
+      "freeze.txt": "4f50267e8ba5362fbb482000e967090614fe64a11fc55ecb6d1817674c1c7135",
+      "hardware.json": "9cb832ae7e1c4fae0fed1c9ae12eb43146768f7ff437201cc46112e486bb3f91",
+      "history.json": "93907c0782c58bb30dc0eb7654638cf4027aef61227c4bfb7d4a066238290ddd",
+      "initial-memory.json": "6ce8a9aaf5511b78fa7e085c1e2372903f27d556ecdfe9ffa46b2ed90ab22bdd",
+      "initial-resources.json": "2b698abae0ca63cffa98286740ef8474cbc6bfb93cfe4621a9b8dcbd2ef5c416",
+      "interpreters.json": "3d341757f33aa8efde6955d1afa26324edea4751526607f1b0c19feb91533e09",
+      "native-supervisor.json": "c7812a07968747a46a1728da8bde9dc0de11ccad44811394b335b9c3dd94312e",
+      "native-supervisor.log": "fc0817a31a0aef1a17bc5d327c817b02cf71d5dc498bc51ffc503d4aeed88a6e",
+      "original-image.json": "d06630eaa0be8ffa9f45ff5f33f89e67f79e548373e7286c7049e2ce98e17d4b",
+      "pip_bootstrap.json": "e92aca8c45d03b02fbdbed17f1ee973bb1a2a306f33879c70053db9c9509567a",
+      "pip_controller.json": "16b447e619303c4afaed3672ab75a997de7374c5f6e30089231508b01ab22002",
+      "python_provider.json": "ce0cfb742503a967a6dc1d5a0a23040f6af63db0e5131e5bf749c790cba41e99",
+      "python_venv_library.json": "ba6ac8ba4f5f4088674c29b91360fdb859547c689e26f5cff4cfa0c1e7be3fb9",
+      "release.json": "223be71bd020fb7a385095c91e84228dfc0873379f7ac43a09fd503229bdbd4c",
+      "request.json": "6f51e6470233397d53b9388e0e2bba17482b1819823c150a0337f47f0bad3cf3",
+      "resources.json": "eb923d69498f5a6e7f436977937387c02640ac3c5c15dc65ecabf2a1441e27ec",
+      "runtime.json": "2b8fda9a50d88de7aa8cf82a75088c2d583c5cb755b44ea5163e7094ef54b36f",
+      "setup-supervisor.json": "1165352c3d894c7de9f4574074ae5a263a8d1c999d664326bdf448eb4d8e93dd",
+      "setup-supervisor.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "setup.log": "25c55efbd936b24841a4d184a771391598190fc90882b5baa2e76fa2c9d60f7f",
+      "software.json": "3438e5f0cca21d7e6b3d240e9d9b587313b2571f21b137a1dc44ee937755b5a7",
+      "source.json": "906899d152780d77092a8d0148b46168d6c2f03ffa6d8c0d95610af9539d2b9f",
+      "summary.json": "c5d037359a9a83c7583b6cdfcb708b4ccd0047ecf212f43a0724b6bb394574a2",
+      "venv_interpreter.json": "041a2d8d30c0c259bfc420c7c3d2e9d81e86aa8cf479a7446aac8c09437d51fd",
+      "worker-driver-diagnostic.json": "1bafcdc67646e96bf42a8b7ccdcf2de75a58fa2e5977a006b08987bb197437f3",
+      "worker_pip.json": "774b18ef9b0cf5db17c2e4479190ec02fd42e56075615f2500c7de84d57b45cf"
+    },
+    "payload_members_verified": 34,
+    "sha256": "06ed278b2e9973c6186695c6a8327d4522fa9e02b010baac2cd90484b100e03e",
+    "sidecar_sha256": "4f4821d526989c96adbcb9aebcf9cd8d8dc7404c3f75536d4eba44dc1552f6f0",
+    "total_members": 35,
+    "verification": "PASS_existing_verify_result_and_verify_archive"
+  },
+  "coordinator_restarted": false,
+  "custody": {
+    "checkpoint": "prior_exact_byte_proof_reused; new_worker_full_weight_validation_NOT_REACHED",
+    "diagnostic_four": [
+      {
+        "calls": 1,
+        "identity": "issue173-diag-mini-synthetic-v1",
+        "sha256": "5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512"
+      },
+      {
+        "calls": 2,
+        "identity": "issue173-diag-intern-format-v1",
+        "sha256": "05ed72478ba15585ad3cc13df4479f8ee15bcec98651b7fab093b222c19a82e3"
+      },
+      {
+        "calls": 1,
+        "identity": "issue173-diag-mini-scene-v2",
+        "sha256": "e3bfef0467b82a3b19b13fa52041a241e1f58c5815975f9b30e90445f0658991"
+      },
+      {
+        "calls": 1,
+        "identity": "issue173-diag-intern-grammar-v2",
+        "sha256": "2b4593439e76a47035a322a2842c720e5edea98feb1dcd85794ffb8f71378dac"
+      }
+    ],
+    "original_five": {
+      "attempts": [
+        {
+          "archive_sha256": "a296d13984e179a2087acc25a6f45c58f4e15eeb4e32a4efdc46ce8b2a8fac17",
+          "attempt": 1,
+          "members": 22
+        },
+        {
+          "archive_sha256": "f1f4fefabff4a6fc80f8863bcc314a13949c53815f9b535170cceda1ccd7117d",
+          "attempt": 2,
+          "members": 65
+        },
+        {
+          "archive_sha256": "4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5",
+          "attempt": 3,
+          "members": 26
+        },
+        {
+          "archive_sha256": "2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee",
+          "attempt": 4,
+          "members": 28
+        },
+        {
+          "archive_sha256": "035c4d9b0216378e23ecc812e1221d68fe451ec25a9cbc3fd8977b5794690619",
+          "attempt": 5,
+          "members": 78
+        }
+      ],
+      "consumed": {
+        "internvl35": 1,
+        "minicpm4": 0,
+        "qwen3": 1
+      },
+      "consumed_total": 2,
+      "continuation": "issue173-minicpm-only-review-hold-20261103-v1",
+      "evidence_type": "EXACT_SHA256_CUSTODY_NOT_A_SIGNATURE_OR_AUTHORIZATION",
+      "max_one_call_per_model": true,
+      "native_dispatch": "BLOCKED_PENDING_REVIEW",
+      "remaining": {
+        "internvl35": 0,
+        "minicpm4": 1,
+        "qwen3": 0
+      },
+      "schema": "issue173-five-attempt-terminal-history-v1"
+    },
+    "original_image_binding": "PASSED_bind_original_before_child_execution",
+    "original_ordinal": 0,
+    "private_sample_identity_and_image_digest": "WITHHELD"
+  },
+  "dispatch_records_preserved_at": "84a3b02ce2d9f67905552cc7efe23e95a49ee822",
+  "failure": {
+    "coordinator": {
+      "coordinator_restarted": false,
+      "kaggle_resubmitted": false,
+      "location": "scripts/submit_minicpm173_once.py:128",
+      "message": "LIVE_LOG_TRANSPORT_ERROR_NO_RETRY",
+      "transport_exception_detail": "NOT_RETAINED_BY_CURRENT_COORDINATOR",
+      "type": "ValueError"
+    },
+    "failed_phase": "load permit before load reservation or model backend",
+    "ram_or_checkpoint_failure_observed": false,
+    "underlying_log_transport_cause": "UNKNOWN_EXCEPTION_DETAIL_NOT_RETAINED",
+    "worker_error": "REMOTE_PERMIT_TIMEOUT_NO_RETRY",
+    "worker_wait_seconds": 150
+  },
+  "grant": {
+    "expires_unix": 1793957400,
+    "identity": "issue173-minicpm-original-train-once-v2",
+    "job": "nguynanhtn/safeshift-issue173-minicpm-original-train-once-v2",
+    "limits": {
+      "max_calls": 1,
+      "max_loads": 1,
+      "max_physical_gpu_seconds": 3600,
+      "max_seconds": 1800,
+      "model_key": "minicpm4",
+      "ordinal": 0
+    },
+    "manifest_sha256": "5ff163b22d5a79872e0b23b97066862caa08acf925a0c69c4bffca638fd561c2",
+    "notebook_code_sha256": "ac6efc40baebbb6ec5c6cac7567b369094b29908e0481e86a244d9df0ebc52a9",
+    "notebook_sha256": "232ba33cfc1e289eb472bd871b988043753e44a4164e5509eaba6e6b5abc783f",
+    "reviewed_head": "ff749ec7b61b59f909e2380455e012bec84f30ec",
+    "runtime_commit": "bf6fbe210a9b92348cec9bef1850aaa7a798f690",
+    "version": 1
+  },
+  "job": {
+    "code_cells_match_reviewed": true,
+    "kernel_id": 142487590,
+    "observed_unix": 1793700838,
+    "private": true,
+    "ref": "nguynanhtn/safeshift-issue173-minicpm-original-train-once-v2",
+    "terminal_status": {
+      "failureMessage": "",
+      "status": "ERROR"
+    },
+    "version": 1
+  },
+  "kaggle_resubmitted": false,
+  "kaggle_submissions": 1,
+  "operator_invocations": 1,
+  "private_artifact_sha256": {
+    "final-service-reconciliation.json": "0943ff3c1c88d46d4710f5fc0e9599f00052c11342434b29357ceb1ba3a3e24e",
+    "local-coordinator-error.json": "7dee588af8475eaf9e968e30972be618b95370eb7da7df82bbd2d28aee616515",
+    "terminal-output/safeshift-issue173-minicpm-original-train-once-v2.log": "997aaef11d015042cb9115ce85551f6aad322ebc96a9cabbaf35b5ae27a43471"
+  },
+  "quota": {
+    "after": {
+      "reserved_seconds": 0.0,
+      "total_seconds": 108000.0,
+      "used_seconds": 11688.906
+    },
+    "before": {
+      "reserved_seconds": 0,
+      "total_seconds": 108000,
+      "used_seconds": 11339
+    },
+    "delta_is_not_model_inference_time": true,
+    "observed_platform_used_delta_seconds": 349.906
+  },
+  "remote_records": {
+    "call": false,
+    "finished": false,
+    "launch": true,
+    "load": false,
+    "submission": true,
+    "submitted": true
+  },
+  "resources": {
+    "cuda": {
+      "fp16": "MEASURED",
+      "gpus": [
+        {
+          "free_bytes": 15526068224,
+          "index": 0,
+          "total_bytes": 15636037632
+        }
+      ],
+      "model_fit": "NOT_ESTABLISHED",
+      "weights_loaded": false
+    },
+    "disk_before_load": {
+      "devices": [
+        76,
+        1794
+      ],
+      "free_bytes": [
+        1032166440960,
+        20939841536
+      ],
+      "memory": {
+        "available_bytes": 24405426176,
+        "cgroup_remaining_bytes": [
+          24405426176
+        ]
+      },
+      "model_fit": "NOT_ESTABLISHED",
+      "requested_reserves_bytes": [
+        25769803776,
+        1073741824
+      ]
+    },
+    "final_gpu": {
+      "gpu0_allocated": 0,
+      "gpu0_free": 15507193856,
+      "gpu0_peak_allocated": 1024,
+      "gpu0_peak_reserved": 2097152,
+      "gpu0_reserved": 2097152,
+      "gpu0_total": 15636037632,
+      "gpu1_inference": "UNUSED"
+    },
+    "hardware": {
+      "cuda_initialized": false,
+      "model_fit": "NOT_ESTABLISHED",
+      "physical_gpus": [
+        {
+          "driver": "580.178.04",
+          "free_mib": 14912,
+          "index": 0,
+          "name": "Tesla T4"
+        },
+        {
+          "driver": "580.178.04",
+          "free_mib": 14912,
+          "index": 1,
+          "name": "Tesla T4"
+        }
+      ]
+    },
+    "memory": {
+      "before_load_permit": {
+        "available_bytes": 24405426176,
+        "direct_children": [],
+        "memory.events": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "memory.max": "32212254720"
+      },
+      "final": {
+        "available_bytes": 24733450240,
+        "direct_children": [],
+        "memory.events": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "memory.max": "32212254720"
+      },
+      "initial": {
+        "available_bytes": 31760297984,
+        "direct_children": [],
+        "memory.events": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "memory.max": "32212254720"
+      }
+    },
+    "unchanged_ram_floor_bytes": 17179869184
+  },
+  "result_classification": {
+    "hnlo": "N/A_LABEL_ONLY_NO_CALL",
+    "next_execution": "BLOCKED_NO_RETRY_AFTER_SUBMISSION",
+    "raw_model_output": "NOT_CREATED_NO_MODEL_CALL",
+    "real_job_executed": true,
+    "review": "ChatGPT_review_and_independent_audit_pending; merge_not_authorized",
+    "scientific_results_excluded": true,
+    "strict_parser": "NOT_RUN",
+    "train_inference": "NOT_RUN",
+    "weights_loaded": false
+  },
+  "schema": "issue173-mini-once-terminal-observation-v1",
+  "summary": {
+    "automatic_retry": false,
+    "call_reservations": 0,
+    "consumption": "NO_CALL_OBSERVED_NO_AUTO_RETRY",
+    "diagnostic_calls_separate": 5,
+    "error": {
+      "message": "SUPERVISED_CHILD_FAILURE",
+      "type": "RuntimeError"
+    },
+    "identity": "issue173-minicpm-original-train-once-v2",
+    "limits": {
+      "max_calls": 1,
+      "max_loads": 1,
+      "max_physical_gpu_seconds": 3600,
+      "max_seconds": 1800,
+      "model_key": "minicpm4",
+      "ordinal": 0
+    },
+    "load_reservations": 0,
+    "native_call_markers": 0,
+    "original_smoke_counts": {
+      "internvl35": 1,
+      "minicpm4": 0,
+      "qwen3": 1
+    },
+    "scientific_results_excluded": true,
+    "status": "TECHNICAL_ERROR",
+    "weights_loaded": false
+  },
+  "supervision": {
+    "native": {
+      "automatic_retry": false,
+      "group_kill_sent": true,
+      "log_bytes": 1519,
+      "model_fit": "NOT_ESTABLISHED",
+      "retention": "ALL_PARTIAL_FILES_RETAINED",
+      "returncode": 1,
+      "schema": "fresh-process-supervision-v1",
+      "seconds": 159.34660897000003,
+      "status": "CHILD_FAILURE"
+    },
+    "setup": {
+      "automatic_retry": false,
+      "group_kill_sent": true,
+      "log_bytes": 0,
+      "model_fit": "NOT_ESTABLISHED",
+      "retention": "ALL_PARTIAL_FILES_RETAINED",
+      "returncode": 0,
+      "schema": "fresh-process-supervision-v1",
+      "seconds": 144.20776305900003,
+      "status": "EXITED"
+    }
+  }
+}
