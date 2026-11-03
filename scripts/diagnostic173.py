@@ -26,6 +26,7 @@ PLANS={
     'issue173-diag-mini-synthetic-v1': {'key':'minicpm4','variants':['frozen-c1']},
     'issue173-diag-intern-format-v1': {'key':'internvl35','variants':['frozen-c1','reminder-v1','prefill-v1']},
     'issue173-diag-mini-scene-v2': {'key':'minicpm4','variants':['frozen-c1-fire','frozen-c1-workshop']},
+    'issue173-diag-intern-grammar-v2': {'key':'internvl35','variants':['grammar-v1']},
 }
 REMINDER='\nFormatting requirement: Begin your reply immediately with the character { and end with }. Write the JSON object directly, without Markdown or backticks.'
 PREFIX='{"safety_level":"'
@@ -34,6 +35,7 @@ PREFIX='{"safety_level":"'
 def synthetic_image(variant):
     """Procedural, unannotated images. No words, class codes or GT in pixels."""
     from PIL import Image,ImageDraw
+    if variant=='grammar-v1': variant='frozen-c1-fire'
     image=Image.new('RGB',(448,448),(128,128,128))
     if variant not in ('frozen-c1-fire','frozen-c1-workshop'): return image
     draw=ImageDraw.Draw(image)
@@ -65,17 +67,20 @@ def admit(identity):
 
 
 def predecessor(identity,inputs):
-    if identity!='issue173-diag-mini-scene-v2': return {'prior_diagnostic_calls':0}
+    if identity not in ('issue173-diag-mini-scene-v2','issue173-diag-intern-grammar-v2'): return {'prior_diagnostic_calls':0}
     from safeshift.pilot.artifacts import safe,verify_archive
     import zipfile
-    archive=safe(unique_mount(inputs,'safeshift-issue173-diag-mini-synthetic-v1'),'issue173-diag-mini-synthetic-v1.zip')
-    require(sha(archive)=='5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512','EXACT_MINI_V1_PREDECESSOR')
+    mini=identity=='issue173-diag-mini-scene-v2'
+    previous='issue173-diag-mini-synthetic-v1' if mini else 'issue173-diag-intern-format-v1'
+    expected='5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512' if mini else '05ed72478ba15585ad3cc13df4479f8ee15bcec98651b7fab093b222c19a82e3'
+    archive=safe(unique_mount(inputs,'safeshift-'+previous),previous+'.zip')
+    require(sha(archive)==expected,'EXACT_DIAGNOSTIC_V1_PREDECESSOR')
     members=verify_archive(archive)
     with zipfile.ZipFile(archive) as bundle: result=json.loads(bundle.read('result.json'))
-    require(result['status']=='NATIVE_FORMAT_INVALID' and result['weights_loaded']
-        and result['call_reservations']==result['native_call_markers']==1
+    require(result['status']==('NATIVE_FORMAT_INVALID' if mini else 'NATIVE_FORMAT_PASS') and result['weights_loaded']
+        and result['call_reservations']==result['native_call_markers']==(1 if mini else 2)
         and 'calls/frozen-c1/raw.json' in members,'KNOWN_PRIOR_MINI_CALL_NO_RETRY')
-    return {'prior_diagnostic_calls':1,'archive_sha256':sha(archive),'prior_result_preserved':'INVALID'}
+    return {'prior_diagnostic_calls':result['native_call_markers'],'archive_sha256':sha(archive),'prior_result_preserved':result['status']}
 
 
 def source_check(manifest):
@@ -153,10 +158,14 @@ def worker(stage,request_path,out,scratch):
     write(out/'processor-memory.json',memory())
     for variant in plan['variants']:
         with synthetic_image(variant) as synthetic:
-            prepare=adapter.prepare_inputs if variant.startswith('frozen-c1') else variant_inputs(adapter.prepare_inputs,variant)
+            prepare=adapter.prepare_inputs if variant.startswith('frozen-c1') or variant=='grammar-v1' else variant_inputs(adapter.prepare_inputs,variant)
             rendered,values=prepare(processor,key,prompt,synthetic)
             detail=adapter.validate_inputs(processor,key,config,rendered,values,prompt)
             write(out/('cpu-template-'+variant+'.json'),{'variant':variant,'detail':detail,'model_calls':0})
+            if variant=='grammar-v1':
+                from safeshift.diagnostic173_grammar import CanonicalJSONGrammar
+                grammar=CanonicalJSONGrammar(tokenizer,read(source/'generation_config.json')['eos_token_id'])
+                write(out/'cpu-grammar.json',grammar.receipt())
     del processor,tokenizer,config,cls,values
     before=memory(); write(out/'before-load-memory.json',before); ram_gate(before)
     write(out/'before-load-vram.json',gpu_memory(True))
@@ -177,8 +186,18 @@ def worker(stage,request_path,out,scratch):
         sample=out/'calls'/variant; sample.mkdir(parents=True,exist_ok=False)
         write(sample/'reservation.json',{'identity':request['identity'],'variant':variant,'max_calls':1,
             'input_sha256':image_hash,'source_commit':request['source_commit'],'directive':DIRECTIVE})
-        context=(nullcontext() if variant.startswith('frozen-c1') else
+        context=(nullcontext() if variant.startswith('frozen-c1') or variant=='grammar-v1' else
             patch.object(adapter,'prepare_inputs',variant_inputs(adapter.prepare_inputs,variant)))
+        if variant=='grammar-v1':
+            from safeshift.diagnostic173_grammar import CanonicalJSONGrammar
+            grammar=CanonicalJSONGrammar(backend.tokenizer,backend.generation.eos_token_id)
+            write(sample/'grammar.json',grammar.receipt())
+            native_generate=backend.model.generate
+            def constrained(*args,**kwargs):
+                require(not args and 'prefix_allowed_tokens_fn' not in kwargs,'EXPLICIT_GRAMMAR_KWARGS')
+                prefix=kwargs['input_ids'][0].tolist()
+                return native_generate(**kwargs,prefix_allowed_tokens_fn=grammar.callback(prefix))
+            context=patch.object(backend.model,'generate',constrained)
         with context: raw=backend.generate(image_path,sample)
         # The raw response and tokens are durable before parsing/format evaluation.
         write(sample/'raw.json',raw)

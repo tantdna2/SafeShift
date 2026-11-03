@@ -14,7 +14,7 @@ from scripts.diagnostic173 import admit
 def build(ref,identity):
     plan=admit(identity)
     if len(ref)!=40 or any(c not in '0123456789abcdef' for c in ref): raise ValueError('EXACT_COMMIT')
-    names=sorted(set(sources()+['safeshift/verification173.py','safeshift/smoke173_history.py',
+    names=sorted(set(sources()+['safeshift/verification173.py','safeshift/smoke173_history.py','safeshift/diagnostic173_grammar.py',
         'scripts/verify_kaggle173_inputs.py','scripts/smoke_kaggle173.py','scripts/minicpm173_preflight.py',
         'scripts/diagnostic173.py','configs/issue173/real_smoke.json']))
     payload={}

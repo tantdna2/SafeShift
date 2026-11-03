@@ -9,12 +9,36 @@ from safeshift.smoke173_history import launch,worker
 
 
 class DiagnosticTests(unittest.TestCase):
+    def test_grammar_exact_four_paths_no_fences_or_label_rescue(self):
+        from safeshift.diagnostic173_grammar import CanonicalJSONGrammar
+        class Tokenizer:
+            def __len__(self): return 256
+            def encode(self,text,**kwargs): return list(text.encode())
+            def decode(self,ids,**kwargs): return bytes(ids).decode()
+        grammar=CanonicalJSONGrammar(Tokenizer(),0)
+        self.assertEqual(len(set(grammar.paths)),4)
+        terminal=set(); pending=[()]
+        while pending:
+            prefix=pending.pop()
+            for token in grammar.allowed(prefix):
+                if token==0: terminal.add(prefix)
+                else: pending.append(prefix+(token,))
+        self.assertEqual(terminal,set(grammar.paths))
+        for path in terminal:
+            self.assertEqual(grammar.allowed(path),[0])
+        for bad in ((ord('`'),),(ord('x'),),grammar.paths[0]+(ord(' '),)):
+            with self.assertRaisesRegex(ValueError,'OUTSIDE_LANGUAGE'): grammar.allowed(bad)
+        ids=Mock(); ids.tolist.return_value=[245,246]
+        self.assertEqual(grammar.callback([245,246])(0,ids),[ord('{')])
+        with self.assertRaises(ValueError): grammar.callback([244,246])(0,ids)
+        with self.assertRaises(ValueError): grammar.callback([245,246])(1,ids)
+
     def test_original_id_and_qwen_cannot_dispatch(self):
         for value in ('issue173-smoke-20261102-v5','qwen3','fresh171','minicpm4',''):
             with self.assertRaises(ValueError): d.admit(value)
 
     def test_declared_budgets(self):
-        self.assertEqual(sum(len(p['variants']) for p in d.PLANS.values()),6)
+        self.assertEqual(sum(len(p['variants']) for p in d.PLANS.values()),7)
         self.assertEqual(d.admit('issue173-diag-mini-synthetic-v1')['variants'],['frozen-c1'])
 
     def test_fences_not_rescued(self):
