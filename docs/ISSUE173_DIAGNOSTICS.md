@@ -31,6 +31,11 @@ fixed code reaches the mocked single push, preserves the remote reservation on
 a lost response and rejects the second submission. No parser, model, notebook,
 embedded runtime or resource change is involved. No remote record was written.
 
+Linux regression at sourcef21e7c5: **34/34 Mini-only tests PASS**, no skips/errors,
+[receipt and changed-file hashes](research/evidence/issue173/mini-once/cpu-linux-submit-stage-fix.json).
+Earlier broad test receipts retain their exact snapshot identities; no extra
+model/runtime qualification or repeated real submission was performed.
+
 **No retry:** this grant expressly requires invoking the exact source-controlled
 submitter once and forbids executing a new HEAD. The corrected program is handed
 back in the same PR175 for a new exact release; the prior approval is not changed

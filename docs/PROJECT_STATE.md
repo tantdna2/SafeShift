@@ -23,6 +23,11 @@ The grant specified one invocation at exact HEADf983fdb; execution of the revise
 HEAD requires a new exact Owner/ChatGPT release. Stop at the same Draft PR175;
 no merge or future grammar work.
 
+Fix verification: **34/34 Mini-only Linux CPU tests PASS**, zero skips/errors,
+at sourcef21e7c5; [receipt](research/evidence/issue173/mini-once/cpu-linux-submit-stage-fix.json).
+The earlier90/90 Issue173 and55/55 fulltrain receipts remain historical; unchanged
+model/runtime code was not requalified. No native or Kaggle retry was performed.
+
 ## HISTORICAL — PR175 Mini-only executable prepared for exact source review, 03/11/2026
 
 [Owner/ChatGPT directive6598989252](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598989252).
