@@ -2,6 +2,17 @@
 
 ## Issue173 — existing TRAIN/checkpoints and bounded native smoke
 
+Current Mini-only continuation: `minicpm173_once.py` verifies exact external
+review and public process permits; `scripts/submit_minicpm173_once.py` reconciles
+remote job/version/custody and creates durable, exclusive submission/phase records
+on the same PR branch. `scripts/minicpm173_train_once.py` runs the unchanged
+Mini numerical adapter on original ordinal0 with supervised setup/native children,
+raw-before-parse and partial ZIP/SHA export. Builder: `build_minicpm173_once.py`;
+regression: `test_kaggle173_minicpm_once.py`. No grant or native execution in this
+implementation pass. [Exact review/run contract](ISSUE173_DIAGNOSTICS.md#mini-only-operator-contract-for-the-exact-review).
+The historical v5, diagnostic and earlier review-only entrypoints below remain
+terminal. The new path requires its own exact HEAD/job review and remote permits.
+
 Post-v5 review repair: current `scripts/smoke_kaggle173.py` and its published
 notebook are TERMINAL, with no model-load/generation bodies. Historical refs and
 private submissions remain immutable. `smoke173_history.py` admits all five exact

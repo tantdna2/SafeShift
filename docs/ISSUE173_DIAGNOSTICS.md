@@ -5,6 +5,121 @@ Same session, branch and Draft PR175. Original smoke stays Qwen1/InternVL1/Mini0
 Five archives and all terminal fences remain unchanged. No TEST, GT, TRAIN image,
 fresh171 campaign or scientific score is used by these diagnostics.
 
+## Mini final TRAIN implementation — review pending, 03/11/2026
+
+[Directive6598989252](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598989252)
+authorizes completing a new versioned Mini-only route, then stopping for exact
+HEAD/job review before the remaining original TRAIN load/call. No live job is
+authorized in this implementation pass. The earlier terminal routes stay closed.
+
+Implementation contract: reuse the five original seals and four diagnostic seals,
+the exact master/ordinal0 image, Mini checkpoint and frozen numerical adapter.
+Routine admission checks on the actual mounted files and current VM remain;
+there is no new RAM/software/checkpoint survey or redundant model download.
+One private job, one load/one call, 1800 seconds maximum, T4x2 allocation with
+only GPU0 used, unchanged RAM/VRAM/disk floors. Raw precedes strict parsing;
+INVALID and partial/error evidence are sealed and retained without retry.
+
+Remote exclusion will use one create-only public custody record per submission,
+launch, load and call, on this same PR branch. Records contain only public job/
+source identities and random execution nonces, never data, raw or credentials.
+The authenticated local coordinator reads the exact Kaggle version's live log
+and acknowledges each new process nonce once through GitHub's Contents API.
+VMs only read these records; no credential is uploaded to Kaggle. Replayed logs
+cannot issue another permit, and a new VM/process generates a different nonce.
+Unknown write/submission status stops; no lock expiry, takeover, overwrite or
+automatic resubmission. This is exclusion for the reviewed execution path,
+not protection against a repository administrator deliberately rewriting code
+or custody. Live transport remains unverified until the separately approved job.
+
+The coordinator requires an explicit future Owner/ChatGPT approval comment bound
+to the reviewed HEAD, runtime source, notebook, fixed job/version and finite
+budget. This task does not manufacture that approval. The one review handoff
+will include executable notebook/builder, parent/setup/native CLI, synthetic
+positive/failure tests, receipt and exact invocation. Future InternVL grammar
+work is deferred until PR175 completion, authorized merge and verification.
+
+### Mini-only operator contract for the exact review
+
+Executable: `notebooks/SafeShift_ISSUE173_MINI_TRAIN_ONCE.ipynb`, built by
+`scripts/build_minicpm173_once.py` from an immutable runtime commit. Parent and
+setup/native CLI: `scripts/minicpm173_train_once.py`. Coordinator:
+`scripts/submit_minicpm173_once.py`; remote admission:
+`safeshift/minicpm173_once.py`. Existing review/v5/diagnostic notebook bytes and
+their terminal entrypoints are retained, not reopened. The notebook embeds all
+runtime files and their hashes; the reviewed HEAD also binds the local submitter,
+builder and notebook. Runtime commit and containing review HEAD are distinct
+because a notebook cannot embed its own containing Git commit without a cycle.
+
+The coordinator accepts only a **new** Owner-transmitted approval comment on
+PR175 with one `MINICPM173_RELEASE_V1` marker followed by a fenced JSON object.
+The object must contain exactly: `identity`, `reviewed_head`, `runtime_commit`,
+`manifest_sha256`, `notebook_sha256`, `notebook_code_sha256`, `job`, `version`,
+`expires_unix`, `limits`. The first six identities/hashes come from the exact
+reviewed tree and published notebook; `version=1`, `job=nguynanhtn/safeshift-issue173-minicpm-original-train-once-v2`.
+Limits are exactly `model_key=minicpm4`, `ordinal=0`, `max_loads=1`, `max_calls=1`,
+`max_seconds=1800`, `max_physical_gpu_seconds=3600`. Owner/ChatGPT supplies the
+expiry and approval; a template, this directive or local `approved=True` is not
+accepted. HTTPS verifies the comment's repository/issue/Owner account. This is
+an authenticated review record, not a fabricated digital signature.
+
+After that one exact review, the local invocation is:
+
+```console
+python -B -m scripts.submit_minicpm173_once --approval-comment <new-owner-comment-id> --notebook notebooks/SafeShift_ISSUE173_MINI_TRAIN_ONCE.ipynb --history-inputs <existing-local-history-mounts> --stage data/processed/issue173-verification/<new-submit-directory>
+```
+
+Use the existing authenticated official Kaggle Python environment and `gh` on
+the local coordinator. `history-inputs` contains the existing five ZIPs and
+sidecars plus four diagnostic ZIPs under their Kaggle mount basenames. It is
+custody metadata only; no image/weight copy. The job attaches existing Inputs:
+Mini checkpoint, original master/data, existing-byte proof and all nine Outputs.
+No checkpoint download or copy; new VM installation of the pinned worker is
+the necessary runtime setup, not another standalone qualification experiment.
+
+Before any Kaggle submission the coordinator checks clean approved local/remote
+HEAD, exact notebook, complete local custody, all owned Kaggle pages, exact old
+job versions/status, target absence and unreserved quota. Kaggle returns403 for
+an absent private slug: **403 alone is not absence proof**. The authenticated
+owner inventory must be exhausted, including numbered pages when a full100-row
+page has no cursor; timeout, duplicate pages or missing known jobs block.
+
+It then creates `submission.json` in the fixed public ledger directory on the
+same branch, using GitHub Contents API **without an update SHA**. A conflict or
+lost response stops. After one `kernels_push`, it confirms exact private job ID,
+version and executable cell hash, then streams that version's official logs.
+Only matching, sequential random launch/load/call challenges can create the
+corresponding fixed permit file. The native child's public challenge lines are
+relayed by the supervised parent; other native logs/raw stay private. Repeated
+identical log events are no-ops; a second process nonce conflicts. New VM/worker
+invocations cannot choose/reuse a nonce. No VM holds GitHub or Kaggle credentials.
+The local coordinator must remain connected for the bounded job. Missing permit,
+HTTP error/rate limit, log loss or deadline means fail closed, not resubmission.
+
+GitHub create-only semantics: [official Contents API](https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents).
+Kaggle versioned log interface: [official CLI reference](https://github.com/Kaggle/kaggle-cli/blob/main/skills/references/kernels.md).
+The installed official SDK's `kernels_logs_stream` implementation was inspected;
+its live transport on this new job is **NOT_RUN**, not claimed PASS from mocks.
+Any manual mutation/deletion of remote custody or executable code is outside
+the reviewed route's exclusion guarantee; there is no global exactly-once claim
+against a hostile administrator. No new branch/PR, service or credential is needed.
+
+Parent/setup/native deadlines are bounded; native guards retain the existing
+Linux process-group kill/reap behavior. RAM/VRAM/disk/driver gates still run on
+the actual VM, including RAM/VRAM immediately after the load permit. The unchanged
+loader checks source/index/weight SHA, FP16/eager and FP32 resampler before use.
+Every load/call reservation, native marker, raw/token/step file and error is kept.
+Strict parsing reads the durable raw after its checksum verifies. SUCCESS and
+INVALID both terminate the slot; partial calls remain UNKNOWN_NO_RETRY.
+
+The parent exports per-file checksums and ZIP/SHA256 even after handled errors;
+whole-VM termination or export failure can leave incomplete output, which is
+UNKNOWN and never permission to retry. Download the exact version's archive and
+verify every member before recording final counts. Public ledger files contain
+only nonprivate source/job/nonce/count/hash information. After live execution,
+fast-forward this branch to its own ledger commits before adding sanitized result
+evidence; never overwrite those commits. All raw/real IDs/images/weights stay private.
+
 ## Final format recommendation — 03/11/2026
 
 [Final directive6598354864](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598354864)
