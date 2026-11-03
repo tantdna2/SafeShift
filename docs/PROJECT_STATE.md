@@ -1,6 +1,37 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT ? PR175 model diagnostics completed, 03/11/2026
+## CURRENT — PR175 final InternVL format recommendation, 03/11/2026
+
+[Final Owner/ChatGPT directive6598354864](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598354864),
+same branch/session/Draft PR175. [Decision and sources](ISSUE173_DIAGNOSTICS.md#final-format-recommendation--03112026).
+
+**KHUYẾN NGHỊ: KHÔNG NÊN ÁP DỤNG thay đổi sang P2.1 hoặc grammar lúc này.**
+**PHƯƠNG ÁN ĐƯỢC CHỌN: giữ C1 / parser JSON thuần đã khóa cho InternVL3.5.**
+Historical P2.1 is a strict, versioned shared acceptance policy for historical
+InternVL3-2B-hf, not proof of current InternVL3.5 HNLO equivalence or authority
+for fresh171. It avoids changing generation but changes INVALID/support, and
+accepting fences alone cannot align current HNLO's complete bare-JSON token
+continuations. Grammar changes generation and fails the existing no-processor
+HNLO contract. Neither has sufficient scientific evidence for adoption now.
+
+HNLO remains qualified only per existing replay rules; v5 INVALID/HNLO unavailable
+is preserved. MiniCPM remains label-only/HNLO N/A. Current Qwen already retains
+its historical P2.1 exception: keeping C1 does not imply identical acceptance or
+validated three-model score comparability. No scientific improvement is inferred
+from synthetic format SUCCESS or projected onto the same3,763 TRAIN images.
+
+One bounded CPU synthetic suite **5/5 PASS**, zero model calls; no Kaggle, private
+raw, TEST or additional inference in this decision pass. Only docs/test/receipt
+added; official parser/prompt/generation/HNLO/source locks unchanged. No historical
+result revised and no remaining MiniCPM TRAIN call consumed. Smoke remains2/3.
+
+**Next action:** ChatGPT reviews the recommendation to retain the frozen method
+in PR175. Any later P2.1/grammar adoption requires explicit versioned scientific
+approval, comparability and HNLO terms; no further generic investigation requested.
+Full TRAIN, MiniCPM's remaining call, audit and merge are not released. Earlier
+sections below are historical snapshots, not new execution instructions.
+
+## HISTORICAL — PR175 model diagnostics completed, 03/11/2026
 
 [Owner/ChatGPT directive6592812806](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6592812806),
 same session/branch/Draft PR175. [Complete dossier](ISSUE173_DIAGNOSTICS.md),

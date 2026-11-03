@@ -5,6 +5,118 @@ Same session, branch and Draft PR175. Original smoke stays Qwen1/InternVL1/Mini0
 Five archives and all terminal fences remain unchanged. No TEST, GT, TRAIN image,
 fresh171 campaign or scientific score is used by these diagnostics.
 
+## Final format recommendation — 03/11/2026
+
+[Final directive6598354864](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598354864)
+supersedes further diagnostic investigation. This decision pass reads only
+relevant public evidence/source and runs one CPU synthetic suite. No Kaggle,
+private raw, model/image access or inference. Earlier sections remain historical.
+
+**KHUYẾN NGHỊ: KHÔNG NÊN ÁP DỤNG thay đổi sang P2.1 hoặc grammar lúc này.**
+**PHƯƠNG ÁN ĐƯỢC CHỌN: A — giữ C1 và parser JSON thuần đã khóa cho InternVL3.5.**
+This is a recommendation to preserve the existing method, not a claim that C1
+prevents format failures or that a full TRAIN campaign is released. Existing
+evidence does not establish a scientifically comparable replacement with valid
+InternVL HNLO. No further generic investigation is requested.
+
+| Exactly three alternatives | Benefit and cost | Decision |
+| --- | --- | --- |
+| A: current C1, bare JSON | Preserves prompt, generation, acceptance and existing token/logit contract. Native synthetic baseline already demonstrated valid JSON. Fenced responses still remain INVALID and can reduce support; no reliability rate for 3,763 images is established. | **Selected: keep frozen InternVL configuration.** |
+| B: historical P2.1, bare JSON or one valid whole-response fence, common to all models | Does not alter native generation/logits and is less invasive than grammar. Strict schema still rejects malformed JSON, duplicate/extra keys, noncanonical labels and extra prose. However, changing acceptance changes INVALID/support and may change downstream results; current InternVL HNLO does not support fenced continuations. Historical authority and validation do not transfer to this checkpoint/campaign. | Do not adopt now; a changed scientific version would require approval. |
+| C: four-label constrained grammar | Produces complete canonical JSON through native constrained decoding; one actual diagnostic succeeded. It changes generation, including possible prefixes and label probabilities, suppresses off-language behavior and violates current HNLO's no-processor condition. That one input also matched unconstrained raw argmax, so no causal improvement or classification benefit was demonstrated. | Do not adopt; remains PROPOSED, scientifically non-equivalent. |
+
+### What historical P2.1 actually established
+
+At immutable ref `31a04e6f7175cca818c63b4de0153246b3f3ecdb`, the
+[amendment](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/notes/w2_p21_protocol_amendment.md)
+records an Owner/Research Lead supplied observation: historical InternVL shard0
+had 1,254 INVALID / zero SUCCESS due to fenced JSON. This is reported historical
+evidence, not an independent raw audit performed in this task. P2.1 was an
+explicit protocol amendment after observing outputs, not a decoder bug fix.
+It preserved old P2 results, required new run/protocol identities, unchanged raw
+bytes, a common acceptance policy and complete relevant cohort comparisons.
+Selective repair of favorable INVALID cases was not the lesson.
+
+The [frozen amendment](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/configs/frozen/p21_protocol_amendment.v1.json)
+is marked draft implementation pending audit/standard merge, with exact historical
+run authority. Its model is **OpenGVLab/InternVL3-2B-hf**, revision
+`cb57a075cb75a2e6d1b668b128d48bb00ae321d2`, not current
+**OpenGVLab/InternVL3_5-4B-HF**, revision
+`6bd4487402110ef9889ba50eb7aefeb302526fed`.
+The relevant records do not substantiate a separate InternVL2.5 run:
+`internvl2_5` is a custom conversation-template name in
+[candidate screening](research/THESIS_VLM_CANDIDATE_SCREENING_20261029.md).
+Neither historical authorization nor historical cohort size authorizes fresh171.
+
+The archived [parser](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/safeshift/protocol/p21_schema.py),
+[shared adapter](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/safeshift/runners/p21_classification.py)
+and [tests](https://github.com/tantdna2/SafeShift/blob/31a04e6f7175cca818c63b4de0153246b3f3ecdb/tests/test_p21_classification.py)
+accept exactly bare JSON or one complete fence (unlabelled or lowercase `json`,
+separate fence lines, LF/CRLF), retaining strict fields/values and original raw.
+This is a defined alternative contract, not arbitrary Markdown stripping.
+
+### HNLO and fairness: acceptance alone is insufficient
+
+Current [peer HNLO replay](../safeshift/pilot/hnlo.py) requires proven input
+boundary, independent decode replay, raw greedy alignment, no logits processors,
+four complete candidate continuations with one differing token and a common
+prefix/suffix. It then checks C1 validity and exact whole generated IDs/text
+against three **bare JSON** surfaces. The score is
+`logsumexp(z01,z02,z03) - z04` at the proven decision position.
+
+Thus a P2.1 label for a fenced response still fails `NO_VALID_GENERATED_LABEL`;
+even a synthetic substitution of that acceptance check fails
+`ACTUAL_OUTPUT_NOT_ONE_OF_PROVEN_NATIVE_CONTINUATIONS`. Removing fences from a
+text view cannot remove generated tokens or realign recorded logits. Grammar
+fails `NONEMPTY_OR_UNKNOWN_PROCESSORS`, even when raw argmax happens to agree.
+Capturing raw logits before constraints does not by itself restore comparability:
+forced earlier tokens can change later contexts and logits. The present evidence
+does not qualify a wrapper-aware or constrained InternVL HNLO method.
+
+**HNLO verdict: preserve the existing qualification contract, not universal score
+availability or three-model comparability.** InternVL v5 remains INVALID with
+HNLO unavailable; its saved diagnosis reports native fence generation and exact
+decode/token capture, not an implementation fault to fix. Validity of future
+scores still requires per-record replay. MiniCPM remains label-only, HNLO N/A.
+
+There is an existing asymmetry: [Qwen semantics](../safeshift/fulltrain/qwen_semantics.py)
+retain historical P2.1 parsing and validate decision candidates against the full
+original response, including any wrapper. [Fresh171](FRESH_FULLTRAIN_171.md)
+explicitly limits that exception to Qwen; the peers retain C1. Keeping C1 does
+**not** make acceptance identical across all three models. Common P2.1 would
+improve symmetry of syntax acceptance, but Qwen's model-specific token proof
+does not qualify InternVL, and identical parsing alone is not scientific
+comparability. Grammar would require a common, versioned generation policy as
+well. Current evidence supports no accuracy or HNLO-quality superiority claim
+for any alternative; valid JSON is not evidence of a correct classification.
+
+For the same 3,763 TRAIN IDs/order/images/labels, a future approved method change
+must define a separate complete comparative series and treatment of every
+affected model, including full-series rerun where required. Do not selectively
+rerun fenced failures, relabel historical INVALID as SUCCESS or pool versions.
+Adaptation after observed failures must be disclosed. Retaining frozen C1 now
+avoids silently altering this scientific contract; it does not release full TRAIN.
+
+### One bounded CPU check and the next decision
+
+[Five CPU tests](../tests/test_issue173_format_decision.py), **5/5 PASS**, one
+Windows/Python3.11.9 invocation, zero model calls:
+[receipt](research/evidence/issue173/diagnostics/format-decision-cpu.json).
+They compare the archived parser function AST to the already-preserved Qwen
+implementation, exercise canonical/fenced/malformed cases, keep strict INVALID
+and synthetic raw unchanged, and distinguish acceptance from HNLO alignment and
+grammar qualification. Character-token fixtures prove contract mechanics only;
+they do not validate native checkpoint HNLO or scientific improvement. Reproducing
+the archive comparison requires the exact historical Git object. Earlier Linux
+results below apply to their recorded snapshots; they were not rerun in this pass.
+
+**QUYỀN KHOA HỌC:** retaining the frozen method does not require approval of a new
+method; adopting P2.1 or grammar would require explicit versioned scientific
+approval covering comparability and HNLO. **One next action:** ChatGPT reviews
+this recommendation in PR175 and decides whether to retain the locked method.
+No additional diagnostic round is proposed. All old results/attempts, smoke2/3,
+MiniCPM final TRAIN review hold and merge/audit gates remain unchanged.
+
 ## Declared initial budget and hypotheses (before submission)
 
 At most two initial jobs, one model per fresh VM, one weight load per job;
