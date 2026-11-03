@@ -31,7 +31,7 @@ def authenticated_github_get(path, *, missing=False):
     """Local gh session only. No token retrieval, notebook secret or read retry."""
     require(path.startswith('/') and not path.startswith('//'), 'GITHUB_RELATIVE_API_PATH')
     result = subprocess.run(['gh', 'api', '--include', 'repos/' + control.REPO + path],
-                            capture_output=True, text=True, timeout=30)
+                            capture_output=True, text=True, encoding='utf-8', timeout=30)
     header, separator, body = result.stdout.replace('\r\n', '\n').partition('\n\n')
     require(separator and header.startswith('HTTP/'), 'AUTHENTICATED_GITHUB_RESPONSE_UNKNOWN')
     status = int(header.splitlines()[0].split()[1])

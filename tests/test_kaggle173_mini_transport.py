@@ -158,9 +158,21 @@ class TransportTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, 'READ_HTTP'):
                         s.authenticated_github_get('/synthetic', missing=True)
                 self.assertEqual(invoke.call_count, 1)
+                self.assertEqual(invoke.call_args.kwargs['encoding'], 'utf-8')
                 self.assertNotIn('token', str(invoke.call_args))
         with patch.object(s.subprocess, 'run', return_value=Mock(stdout='', returncode=1)), self.assertRaisesRegex(ValueError, 'UNKNOWN'):
             s.authenticated_github_get('/synthetic', missing=True)
+
+    def test_owner_unicode_body_is_decoded_as_utf8_by_actual_subprocess(self):
+        import subprocess
+        import sys
+        body = {'body': 'Owner tiếng Việt “ủy quyền”'}
+        wire = ('HTTP/2.0 200 OK\n\n' + json.dumps(body, ensure_ascii=False)).encode('utf8')
+        original = subprocess.run
+        def child(args, **kwargs):
+            return original([sys.executable, '-c', 'import sys; sys.stdout.buffer.write(' + repr(wire) + ')'], **kwargs)
+        with patch.object(s.subprocess, 'run', side_effect=child):
+            self.assertEqual(s.authenticated_github_get('/synthetic'), body)
 
     def test_actual_installed_sdk_sse_parser_short_event_and_heartbeat(self):
         # Exercise the official parser without authentication/network if installed.
