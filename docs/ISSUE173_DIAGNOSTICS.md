@@ -5,7 +5,39 @@ Same session, branch and Draft PR175. Original smoke stays Qwen1/InternVL1/Mini0
 Five archives and all terminal fences remain unchanged. No TEST, GT, TRAIN image,
 fresh171 campaign or scientific score is used by these diagnostics.
 
-## Mini final TRAIN implementation — review pending, 03/11/2026
+## Approved Mini invocation6599953246 — pre-submission error, 03/11/2026
+
+[Owner/ChatGPT grant6599953246](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6599953246)
+was invoked exactly once with the prescribed arguments, using the existing
+authenticated local Python environment and approved clean HEAD
+`f983fdb2f3f6c4e81d954740676ee0b8d427127b`. It stopped at submitter line217:
+`stage.mkdir(exist_ok=False)` raised `FileNotFoundError` because
+`data/processed/issue173-verification` did not yet exist inside this worktree.
+The earlier positive test had a preexisting parent and missed this case.
+
+This happened after the grant/source/notebook/history/inventory checks but
+**before** remote `submission.json` creation and `api.kernels_push`.
+[Post-error receipt](research/evidence/issue173/mini-once/operator-6599953246-pre-submit-error.json)
+confirms zero submissions/loads/calls, the target absent in157 owned jobs,
+all required old versions COMPLETE, all six remote records absent, and GPU
+used11,339/reserved0/total108,000 seconds. The nine prior archives remain intact;
+original smoke is still Qwen1/InternVL1/Mini0. There is no Kaggle result ZIP for
+this invocation. The failure is confirmed pre-submission, not uncertain inference.
+
+Bounded fix: `stage.mkdir(parents=True, exist_ok=False)` creates the required
+parent while still refusing an existing final stage. The synthetic regression
+now starts with a missing parent: original code reproduced the exact failure;
+fixed code reaches the mocked single push, preserves the remote reservation on
+a lost response and rejects the second submission. No parser, model, notebook,
+embedded runtime or resource change is involved. No remote record was written.
+
+**No retry:** this grant expressly requires invoking the exact source-controlled
+submitter once and forbids executing a new HEAD. The corrected program is handed
+back in the same PR175 for a new exact release; the prior approval is not changed
+or reused. This preserves the still-unused Mini model call, but does not grant
+permission for another operator invocation. Audit/merge remain separate.
+
+## Mini final TRAIN implementation — historical review handoff, 03/11/2026
 
 [Directive6598989252](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598989252)
 authorizes completing a new versioned Mini-only route, then stopping for exact

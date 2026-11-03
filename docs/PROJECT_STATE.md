@@ -1,6 +1,29 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR175 Mini-only executable prepared for exact source review, 03/11/2026
+## CURRENT — approved Mini invocation failed before submission, 03/11/2026
+
+[Exact release6599953246](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6599953246)
+was invoked **once** at approved clean HEADf983fdb. All pre-submit admission
+checks passed, then `stage.mkdir(exist_ok=False)` raised `FileNotFoundError`
+because the prescribed stage's parent directory was absent. This is an operator
+program defect, not a model, checkpoint, data or RAM failure.
+
+**Kaggle submissions0 / loads0 / native calls0.** Read-only reconciliation after
+the failure confirms target job absent across157 owned jobs, all11 existing
+Input/Output jobs COMPLETE/version1, all six remote dispatch records absent,
+quota reserved0. Original smoke remains Qwen1/InternVL1/Mini0 =2/3. No job output
+ZIP exists because no job started. [Failure receipt](research/evidence/issue173/mini-once/operator-6599953246-pre-submit-error.json).
+
+The local submitter now creates missing parent directories while preserving
+exclusive creation of the final stage (`parents=True, exist_ok=False`). The
+regression reproduces the original failure, then checks successful staging and
+no resubmission after an uncertain push. Embedded runtime/notebook and every
+scientific/model/history lock remain unchanged. **No automatic retry occurred.**
+The grant specified one invocation at exact HEADf983fdb; execution of the revised
+HEAD requires a new exact Owner/ChatGPT release. Stop at the same Draft PR175;
+no merge or future grammar work.
+
+## HISTORICAL — PR175 Mini-only executable prepared for exact source review, 03/11/2026
 
 [Owner/ChatGPT directive6598989252](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598989252).
 Same session, branch `verify/issue173-real-checkpoints`, Draft PR175; no new PR.

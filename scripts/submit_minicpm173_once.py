@@ -214,7 +214,7 @@ def submit(api, comment_id, notebook, history_inputs, stage):
     diagnostics = diagnostic_history(history_inputs)
     observed = inventory(api)
     stage = Path(stage)
-    stage.mkdir(exist_ok=False)
+    stage.mkdir(parents=True, exist_ok=False)
     write(stage / 'inventory.json', observed)
     metadata = {'id': control.JOB, 'title': 'SafeShift issue173 minicpm original train once v2',
         'code_file': 'mini.ipynb', 'language': 'python', 'kernel_type': 'notebook', 'is_private': True,

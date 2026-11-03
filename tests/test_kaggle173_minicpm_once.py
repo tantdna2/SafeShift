@@ -457,8 +457,11 @@ class MiniOnceTests(unittest.TestCase):
             stack.enter_context(patch.object(submitter, 'inspect_history', return_value={'consumed': {'qwen3': 1, 'internvl35': 1, 'minicpm4': 0}}))
             stack.enter_context(patch.object(submitter, 'diagnostic_history', return_value=[{'calls': 5}]))
             stack.enter_context(patch.object(submitter, 'inventory', return_value={'synthetic': True}))
+            first_stage = self.root / 'absent-parent' / 'first'
+            self.assertFalse(first_stage.parent.exists())
             with self.assertRaises(TimeoutError):
-                submitter.submit(api, 7000000000, notebook, self.root, self.root / 'first')
+                submitter.submit(api, 7000000000, notebook, self.root, first_stage)
+            self.assertTrue((first_stage / 'kernel-metadata.json').is_file())
             with self.assertRaisesRegex(ValueError, 'REMOTE_HISTORY_NONEMPTY'):
                 submitter.submit(api, 7000000000, notebook, self.root, self.root / 'new-machine')
         api.kernels_push.assert_called_once()
