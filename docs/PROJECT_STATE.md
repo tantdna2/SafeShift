@@ -1,6 +1,41 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR175 final InternVL format recommendation, 03/11/2026
+## CURRENT — PR175 Mini-only executable prepared for exact source review, 03/11/2026
+
+[Owner/ChatGPT directive6598989252](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598989252).
+Same session, branch `verify/issue173-real-checkpoints`, Draft PR175; no new PR.
+[Executable/run contract](ISSUE173_DIAGNOSTICS.md#mini-only-operator-contract-for-the-exact-review).
+
+New `minicpm173_train_once.py` + builder/notebook + local submission coordinator
+implement the remaining original ordinal0 path. The unchanged Mini adapter owns
+real weight loading, C1/FP16/eager/FP32 resampler and raw generation; the new
+parent/children enforce bounded setup/native stages, resources, original custody,
+one load/call, raw-before-strict-parser and error/partial ZIP/SHA export. Mini
+remains label-only; no fresh171 enrollment or scientific result pooling.
+
+Replay exclusion uses durable create-only submission/launch/load/call records
+on the same PR branch, issued by the local coordinator for fresh process nonces
+observed in the exact private Kaggle version's logs. VM readers hold no uploaded
+credentials. Duplicate/unknown submission, new VM/process, conflicting nonce,
+missing history or transport failure cannot automatically retry. Old Qwen,
+InternVL, v5, diagnostic and review-only routes remain closed and unchanged.
+
+Read-only reconciliation: five exact original archives preserved, consumed
+**Qwen1/InternVL1/Mini0 = 2/3**; four diagnostics remain4loads/5calls, separate.
+Existing Kaggle Inputs/Outputs are COMPLETE/version1, new job absent, quota
+reserved0 at the recorded check. No new Kaggle job, model load or inference in
+this implementation pass. Earlier RAM/weights/data/software PASS evidence is
+reused; actual next-VM admission gates remain mandatory.
+
+**STOP FOR EXACT REVIEW:** execution requires a new Owner/ChatGPT PR175 approval
+bound to reviewed HEAD, embedded runtime, notebook hash, fixed Mini job/version,
+expiry and max1 load/call. No approval exists yet. The prepared path is CPU
+validated, **not live TRAIN verified**. Live log/remote-permit integration and the
+last TRAIN outcome remain NOT_RUN. No model calls occur merely by publishing it.
+Independent audit/merge remain separate. InternVL grammar work starts only in a
+future session after Mini completion and authorized, verified PR175 merge.
+
+## HISTORICAL — PR175 final InternVL format recommendation, 03/11/2026
 
 [Final Owner/ChatGPT directive6598354864](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598354864),
 same branch/session/Draft PR175. [Decision and sources](ISSUE173_DIAGNOSTICS.md#final-format-recommendation--03112026).

@@ -410,6 +410,29 @@ class MiniOnceTests(unittest.TestCase):
         create.assert_not_called()
         api.kernels_logs_stream.assert_called_once()
 
+    def test_complete_log_event_without_newline_is_acknowledged(self):
+        challenge = {'identity': c.IDENTITY, 'binding': digest(self.grant), 'phase': 'launch',
+                     'nonce': 'c' * 64, 'parent_nonce': ''}
+        api = Mock()
+        api.kernels_logs_stream.return_value = iter([{'data': c.PREFIX + json.dumps(challenge)}])
+        with patch.object(submitter, 'live_identity', return_value=123), patch.object(c, 'create_record', side_effect=self.create):
+            result = submitter.coordinate(api, self.grant, 5)
+        self.assertEqual(result['permits'], ['launch'])
+
+    def test_only_live_log_transport_allows_silent_setup_without_retry(self):
+        import types
+        calls = []
+        class Session:
+            adapters = {'https': Mock(max_retries=Mock(total=0))}
+            def send(self, request, **kwargs):
+                calls.append(kwargs)
+        fake = types.SimpleNamespace(Session=Session)
+        with patch.dict('sys.modules', {'requests': fake}), submitter.bounded_http():
+            Session().send(Mock(url='https://api.kaggle.com/api/v1/kernels/logs/stream/owner/slug'))
+            Session().send(Mock(url='https://api.kaggle.com/v1/kernels.KernelsApiService/SaveKernel'))
+        self.assertEqual([v['timeout'] for v in calls], [(10, 1800), (10, 30)])
+        self.assertTrue(all(v['allow_redirects'] is False for v in calls))
+
     def test_submission_timeout_burns_remote_slot_before_push(self):
         nb = {'metadata': {'safeshift': {'identity': c.IDENTITY, 'runtime_commit': self.grant['runtime_commit'],
               'manifest_sha256': self.grant['manifest_sha256'], 'limits': c.LIMITS}},

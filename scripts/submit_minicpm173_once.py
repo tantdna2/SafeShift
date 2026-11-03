@@ -87,7 +87,9 @@ def bounded_http():
     original = requests.Session.send
     def send(session, request, **kwargs):
         require(all(a.max_retries.total == 0 for a in session.adapters.values()), 'SDK_RETRIES_FORBIDDEN')
-        kwargs['timeout'] = (10, 30)
+        # Setup can be silent for minutes. Only the background SSE reader gets
+        # the job-sized read timeout; coordinator wall deadline still caps work.
+        kwargs['timeout'] = (10, 1800 if '/kernels/logs/stream/' in request.url else 30)
         kwargs['allow_redirects'] = False
         return original(session, request, **kwargs)
     with patch.object(requests.Session, 'send', send):
@@ -133,6 +135,16 @@ def coordinate(api, grant, seconds):
         lines = pending.split('\n')
         pending = lines.pop()
         require(len(pending) <= 2**20, 'LIVE_LOG_LINE_LIMIT')
+        # Official SDK events may be complete stdout lines without a newline;
+        # do not wait until the next process phase to acknowledge this one.
+        if control.PREFIX in pending:
+            try:
+                json.loads(pending.split(control.PREFIX, 1)[1])
+            except json.JSONDecodeError:
+                pass  # Bounded partial chunk; never guess or repair JSON.
+            else:
+                lines.append(pending)
+                pending = ''
         for line in lines:
             if control.PREFIX not in line:
                 continue
