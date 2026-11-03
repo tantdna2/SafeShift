@@ -32,6 +32,10 @@ REMINDER='\nFormatting requirement: Begin your reply immediately with the charac
 PREFIX='{"safety_level":"'
 
 
+def execution_boundary():
+    raise PermissionError('ISSUE173_DIAGNOSTIC_CAMPAIGN_TERMINAL_NO_REPLAY')
+
+
 def synthetic_image(variant):
     """Procedural, unannotated images. No words, class codes or GT in pixels."""
     from PIL import Image,ImageDraw
@@ -126,6 +130,7 @@ def evaluate(raw,variant):
 
 
 def worker(stage,request_path,out,scratch):
+    execution_boundary()
     request=read(request_path); plan=admit(request['identity']); key=plan['key']
     require(stage in ('setup','native'),'DECLARED_STAGE')
     source_check(request['source_manifest'])
@@ -212,6 +217,7 @@ def worker(stage,request_path,out,scratch):
 
 
 def launch(identity,inputs,output,scratch_parent,ref,manifest):
+    execution_boundary()
     plan=admit(identity); source_check(manifest)
     require(len(ref)==40 and all(c in '0123456789abcdef' for c in ref),'EXACT_SOURCE_COMMIT')
     history=inspect_history(paths_from_mounts(inputs))
@@ -262,6 +268,7 @@ def launch(identity,inputs,output,scratch_parent,ref,manifest):
 
 
 if __name__=='__main__':
+    execution_boundary()
     p=argparse.ArgumentParser(); p.add_argument('--worker',required=True,choices=('setup','native'))
     p.add_argument('--request',required=True); p.add_argument('--output',required=True); p.add_argument('--scratch',required=True)
     a=p.parse_args(); worker(a.worker,a.request,Path(a.output),Path(a.scratch))

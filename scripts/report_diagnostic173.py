@@ -37,6 +37,14 @@ def report(archive,expected):
                     row.update(calculated)
             num=prefix+'/effective_numerics.json'
             if num in members: row['effective_numerics']=get(num)
+            if prefix+'/vram.json' in members: row['vram']=get(prefix+'/vram.json')
+            if prefix+'/grammar.json' in members: row['grammar']=get(prefix+'/grammar.json')
+            if raw_name in members:
+                raw=get(raw_name)
+                row['native_matches_unprocessed_argmax_steps']=sum(
+                    int(i==s['argmax']) for i,s in zip(raw['generated_ids'],raw['steps']))
+                row['finite_steps']=sum(int(s['all_finite']) for s in raw['steps'])
+                row['generated_token_steps']=len(raw['steps'])
             calls.append(row)
         stages={}
         for name in members:
@@ -46,6 +54,9 @@ def report(archive,expected):
                     'cgroup_current':value['memory.current'],'cgroup_max':value['memory.max'],
                     'cgroup_events':value['memory.events'],'cgroup_anon':value['memory.stat'].get('anon'),
                     'cgroup_file':value['memory.stat'].get('file'),'direct_children':len(value['direct_children'])}
+        software=get('software.json') if 'software.json' in members else None
+        if software:
+            software={k:v for k,v in software.items() if k!='identity'}
         public={
             'schema':'issue173-synthetic-diagnostic-evidence-v1','archive_sha256':expected,'members':len(members)+1,
             'result':result,'budget':budget,'history':history,'calls':calls,'memory':stages,
@@ -54,6 +65,8 @@ def report(archive,expected):
             'vram':{n:get(n) for n in members if n.endswith('-vram.json')},
             'configuration':get('loaded.json') if 'loaded.json' in members else None,
             'processor':get('processor-source.json') if 'processor-source.json' in members else None,
+            'software':software,'executed_source_manifest':get('request.json')['source_manifest'],
+            'inputs':{n:get(n) for n in members if n=='input.json' or n.startswith('input-') and n.endswith('.json')},
             'original_train_smoke':'BLOCKED_PENDING_CHATGPT_REVIEW',
             'scientific_results_excluded':True,'no_raw_response_or_token_ids_exported':True}
         # Summary results contain only hashes/status/prefix, never native text.

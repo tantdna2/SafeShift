@@ -80,7 +80,7 @@ class DiagnosticTests(unittest.TestCase):
 
     def test_worker_rejects_undeclared_before_input_reads(self):
         with patch.object(d,'read',return_value={'identity':'original-train'}),patch.object(d,'inspect_history') as history:
-            with self.assertRaises(ValueError): d.worker('native','unused',Path('unused'),Path('unused'))
+            with self.assertRaises(PermissionError): d.worker('native','unused',Path('unused'),Path('unused'))
             history.assert_not_called()
 
     def test_empty_vm_terminal_routes_still_block(self):
@@ -120,7 +120,7 @@ class DiagnosticTests(unittest.TestCase):
                     write(sample/'native_call.json',{'invocation':1})
                     raise TimeoutError('SYNTHETIC_UNKNOWN_AFTER_CALL')
             history={'consumed':{'qwen3':1,'internvl35':1,'minicpm4':0}}
-            with patch.object(d,'source_check'),patch.object(d,'paths_from_mounts',return_value=[]),\
+            with patch.object(d,'execution_boundary'),patch.object(d,'source_check'),patch.object(d,'paths_from_mounts',return_value=[]),\
                  patch.object(d,'inspect_history',return_value=history),patch.object(d,'memory',return_value={}),\
                  patch.object(d.environment,'resources',return_value={}),patch.object(d.provision,'clean_env',return_value={}),\
                  patch.object(d,'advise_owned_runtime',return_value={}),patch.object(d.supervision,'run',side_effect=run):
@@ -133,6 +133,28 @@ class DiagnosticTests(unittest.TestCase):
                     d.launch(identity,'unused',output,scratch,'1'*40,{'synthetic':'2'*64})
             self.assertIn('calls/frozen-c1/native_call.json',verify_archive(Path(str(out)+'.zip')))
             self.assertFalse((out/'native-result.json').exists())
+
+    def test_retired_diagnostics_block_in_empty_vm(self):
+        with tempfile.TemporaryDirectory() as temp,patch.object(d,'source_check') as source:
+            for identity in d.PLANS:
+                with self.assertRaisesRegex(PermissionError,'TERMINAL_NO_REPLAY'):
+                    d.launch(identity,temp,temp,temp,'1'*40,{'approved':True})
+            source.assert_not_called()
+            self.assertEqual(list(Path(temp).iterdir()),[])
+
+    def test_published_diagnostic_and_train_notebooks_cannot_replay(self):
+        from scripts.build_diagnostic173 import build
+        notebooks=list((d.ROOT/'notebooks').glob('SafeShift_ISSUE173_*DIAGNOSTIC.ipynb'))
+        notebooks.append(d.ROOT/'notebooks/SafeShift_ISSUE173_MINI_TRAIN_REVIEW.ipynb')
+        self.assertEqual(len(notebooks),5)
+        for path in notebooks:
+            notebook=json.loads(path.read_bytes())
+            self.assertEqual(notebook['metadata']['safeshift']['max_model_calls'],0)
+            code=''.join(''.join(c['source']) for c in notebook['cells'] if c['cell_type']=='code')
+            with self.assertRaises(PermissionError): exec(compile(code,'<terminal-notebook>','exec'),{})
+        for identity in d.PLANS:
+            notebook=build('1'*40,identity)
+            self.assertEqual(notebook['metadata']['safeshift']['max_model_calls'],0)
 
 
 if __name__=='__main__': unittest.main()

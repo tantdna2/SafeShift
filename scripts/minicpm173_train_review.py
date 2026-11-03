@@ -50,7 +50,7 @@ def bind_original(inputs):
 def diagnostic_history(inputs):
     """Exact completed diagnostic seals must be supplied at future activation."""
     lock=read(ROOT/'configs/issue173/diagnostic_custody.json')
-    receipts=[]
+    receipts=[]; mini_proven=False
     for item in lock['attempts']:
         archive=safe(unique_mount(inputs,item['kernel_slug']),item['identity']+'.zip')
         require(sha(archive)==item['archive_sha256'],'DIAGNOSTIC_CUMULATIVE_CUSTODY')
@@ -62,10 +62,11 @@ def diagnostic_history(inputs):
         require(result['call_reservations']==result['native_call_markers']==item['native_calls']
             and sum(n.endswith('/raw.json') for n in members)==item['native_calls'],
             'NO_UNCERTAIN_DIAGNOSTIC_CONSUMPTION')
-        if item['model_key']=='minicpm4':
-            require(result['weights_loaded'] and result['status']=='NATIVE_FORMAT_PASS','MINICPM_ACTUAL_DIAGNOSTIC_REQUIRED')
+        if item['model_key']=='minicpm4' and result['weights_loaded'] and result['status']=='NATIVE_FORMAT_PASS':
+            mini_proven=True
         receipts.append({'identity':item['identity'],'sha256':item['archive_sha256'],'calls':item['native_calls']})
     require(bool(receipts) and sum(r['calls'] for r in receipts)==lock['total_native_calls'],'COMPLETE_DIAGNOSTIC_LEDGER')
+    require(mini_proven,'MINICPM_ACTUAL_DIAGNOSTIC_REQUIRED')
     return receipts
 
 
