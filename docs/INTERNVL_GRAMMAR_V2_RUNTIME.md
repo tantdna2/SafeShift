@@ -1,5 +1,16 @@
 # InternVL3.5 grammar V2 native integration
 
+**Current PR177 continuation:** [exact-release campaign runbook](INTERNVL_V2_CAMPAIGN.md)
+supersedes the initial scope/authorization/notebook statements below. Native
+execution now requires an externally reviewed/audited HEAD and job-specific
+release plus GitHub create-only process/load/call permits. The current task
+stops before Kaggle at the new HEAD review boundary. Capture/grammar/parser
+semantics remain as described here. The remainder preserves the initial
+`00dae6a` CPU preparation snapshot and its evidence; it is not the active
+submission procedure or permission to run.
+
+## Initial CPU preparation snapshot (superseded operational scope)
+
 Scope: implementation and CPU synthetic verification only, based on merged
 PR #176 (`4578c175e0011783c3573d0003fc5341eaf3ef72`) and its
 [post-merge handoff](https://github.com/tantdna2/SafeShift/pull/176#issuecomment-6621575815).

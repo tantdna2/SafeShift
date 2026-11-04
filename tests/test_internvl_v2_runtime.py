@@ -402,17 +402,26 @@ class NativeCaptureTests(unittest.TestCase):
         source = Path(os.environ["SAFESHIFT_V2_SOURCE"])
         processor, tokenizer, config, _ = native_setup(source, "internvl35", {})
         from tokenizers import Tokenizer
-        with tempfile.TemporaryDirectory() as d, patch.object(runtime, "authorize"):
+        from safeshift import internvl_v2_campaign as campaign
+        from test_internvl_v2_campaign import grant, challenge
+        g = grant(2, "native")
+        ctx = {"grant": g, "binding": digest(g)}
+        permission = challenge(g, "worker", "b" * 64)
+        with tempfile.TemporaryDirectory() as d, patch.object(campaign, "_capability", None), \
+                patch.object(campaign, "remote_record", return_value=permission), \
+                patch.object(campaign, "permit", side_effect=lambda ctx, phase, parent: challenge(g, phase, parent)) as permits:
             root = Path(d); out = root / "out"; out.mkdir()
             with Image.new("RGB", (17, 1), (40, 80, 120)) as image:
                 image.save(root / "synthetic.png")
             spec = runtime.source_spec(); r = request(spec, sha(root / "synthetic.png"))
+            campaign.activate_worker(ctx, spec, permission, out)
             scripted = self.backend(3, tokenizer=tokenizer, width=config.text_config.vocab_size)
             scripted.processor, scripted.config = processor, config
             scripted.prompt = (ROOT / "configs/pilot/classification_c1.txt").read_text(encoding="utf8")
             scripted.dtype, scripted.device = self.torch.float16, "cpu"
             scripted.cpu_tokenizer = Tokenizer.from_file(str(source / "tokenizer.json"))
             def factory(*unused):
+                runtime.authorize("load")
                 result = runtime.NativeBackend.__new__(runtime.NativeBackend)
                 result.backend = scripted
                 result.environment = {"scope": "SCRIPTED_NO_WEIGHTS", "weights_loaded": False}
@@ -422,6 +431,9 @@ class NativeCaptureTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 runtime.execute_attempt(spec, r, root, out, source, root, time.monotonic() + 60, factory=factory)
             self.assertEqual(runtime.summary(out)["native_call_markers"], 1)
+            self.assertEqual([call.args[1] for call in permits.call_args_list], ["load", "call"])
+            with self.assertRaisesRegex(ValueError, "ALREADY_USED"):
+                runtime.authorize("call")
             archive = root / "synthetic.zip"; export(out, archive)
             self.assertIn("sample/steps/000.f32", verify_archive(archive))
 

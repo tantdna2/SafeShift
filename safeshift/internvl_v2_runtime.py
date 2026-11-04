@@ -1,8 +1,4 @@
-"""Fenced V2 native capture and one-call qualification controller.
-
-No caller-supplied approval can enable this release. Tests replace the fence and
-inject scripted models; the production CLI has no synthetic backend or bypass.
-"""
+"""V2 native capture; exact external campaign permits guard real load/generate."""
 import hashlib
 import math
 from pathlib import Path
@@ -27,8 +23,8 @@ FROZEN = {
 
 
 def authorize(*args, **kwargs):
-    """Code fence, including direct worker/loader/generate calls. No env override."""
-    raise PermissionError("V2_EXECUTION_NOT_AUTHORIZED_EXACT_RUN_RELEASE_REQUIRED")
+    from safeshift.internvl_v2_campaign import authorize as gate
+    return gate(*args, **kwargs)
 
 
 def runtime_sources(repo=ROOT):
@@ -39,6 +35,7 @@ def runtime_sources(repo=ROOT):
         "scripts/internvl_v2.py", "scripts/smoke_kaggle173.py",
         "safeshift/verification173.py", "scripts/verify_kaggle173_inputs.py",
         "configs/grammar/internvl35_v2_runtime.json",
+        "safeshift/internvl_v2_campaign.py", "scripts/internvl_v2_campaign.py",
     ]))
 
 
@@ -244,6 +241,8 @@ def generate_prepared(backend, inputs, sample, binding, deadline):
         with patch.object(backend.model, "_get_logits_processor",
                           lambda *a, **k: capture.processors(original, *a, **k)), torch.inference_mode():
             capture.check_time()
+            authorize("call")  # Durable cross-VM campaign permit immediately before generate.
+            capture.check_time()
             write(sample / "native_call.json", {"identity": IDENTITY, "invocation": 1,
                                                 "binding": binding, "limits": LIMITS})
             result = backend.model.generate(**inputs, generation_config=backend.generation,
@@ -286,7 +285,7 @@ def generate_prepared(backend, inputs, sample, binding, deadline):
 
 class NativeBackend:
     def __init__(self, source, weights):
-        authorize()
+        authorize("load")
         from safeshift.candidates.backend import CandidateBackend
         prompt = (ROOT / "configs/pilot/classification_c1.txt").read_text(encoding="utf8")
         self.backend = CandidateBackend("internvl35", source, weights, prompt, device="cuda:0")

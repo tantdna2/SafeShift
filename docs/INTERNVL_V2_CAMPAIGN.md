@@ -40,3 +40,122 @@ and exact response are persisted before parsing. HNLO stays null with
 Public receipts contain hashes, counts and sanitized errors only. Native raw,
 request, paths and logs stay in private output archives. Final trial status must
 be SUCCESS, INVALID or TECHNICAL_ERROR; CPU tests cannot establish GPU/model PASS.
+
+## Review and release protocol
+
+`scripts/prepare_internvl_v2_request.py` produces the reviewable request using
+only the local original master (hash checked before JSON parsing) and the exact
+already-downloaded v5 archive. Only original identity fields are projected; no
+historical label/score/prediction enters the new run. It does not read an image.
+
+```console
+python -B -m scripts.prepare_internvl_v2_request --master <local-master_manifest.json> --original-archive <original-v5.zip> --output <new-request.json>
+```
+
+The public request contains canonical digests of sample ID and locator, image
+file SHA256, original master/archive hashes and the complete runtime source
+digest. It contains no filename, sample ID, embedded data or personal path.
+Canonical `digest()` includes sorted compact JSON and its final newline; it is
+distinct from SHA256 of an indented file. Both are recorded in the handoff.
+Changing runtime bytes changes this request and invalidates earlier review.
+
+ChatGPT review and Antigravity independent audit must each be recorded by Owner
+on PR177, in distinct comments, with the following machine-readable block
+(replace role with `ANTIGRAVITY` for the independently obtained audit):
+
+````text
+INTERNVL_V2_REVIEW_V1
+```json
+{"role":"CHATGPT","head":"<final HEAD>","request_sha256":"<canonical request digest>","verdict":"PASS"}
+```
+````
+
+These are external attestations of actual review, never emitted by the runner.
+The parser requires Owner `tantdna2`, PR177 and a comment newer than the scope
+directive. The source directive alone is never an execution grant. The separate
+Owner release must contain exactly these fields in a fenced JSON block headed
+`INTERNVL_V2_RELEASE_V1`:
+
+| Field | Required value |
+| --- | --- |
+| `campaign` | `internvl-v2-6622148168` |
+| `reviewed_head` | Final pushed/clean PR177 HEAD, still OPEN/DRAFT |
+| `runtime_commit`, `manifest_sha256` | Notebook metadata; bytes reproduce from Git |
+| `notebook_sha256`, `notebook_code_sha256` | File SHA256 and normalized code-cell digest |
+| `request`, `request_sha256` | Entire sanitized request object and canonical digest |
+| `slot`, `mode`, `job`, `version` | Integer1–3, `preflight`/`native`, `nguynanhtn/safeshift-internvl-v2-6622148168-j<N>`, integer1 |
+| `issued_unix`, `expires_unix` | Explicit integer UTC epoch seconds; window at most1800s, currently valid |
+| `limits` | `{"jobs":3,"loads":1,"calls":1,"seconds":1800,"physical_gpu_seconds":3600}` |
+| `chatgpt_review_comment`, `antigravity_audit_comment` | Distinct actual review/audit record IDs |
+| `predecessors` | Ordered canonical digests of every previous slot's `finished` record, empty for slot1 |
+
+No timestamp or approval ID is invented in the committed artifact. Issue173
+delegation, notebook flags, environment variables and a local JSON grant do not
+activate this route. The public getter checks current PR HEAD before permitting
+each phase; a source commit or notebook edit invalidates the prior release.
+
+## Submission after the separate release
+
+Use the existing local official authentication. Never put credentials in a
+notebook, prompt, command argument, repository, receipt or Output. The local SDK
+is pinned to `kaggle==2.2.5`, `kagglesdk==0.1.38`, `requests==2.34.2`; the worker
+still uses the unchanged InternVL software pins. Verify exact local/remote HEAD
+and notebook before importing Kaggle or making an SDK request. Untracked user
+files outside the runtime are ignored; any tracked edit blocks submission.
+
+```console
+python -B -m scripts.submit_internvl_v2 --approval-comment <exact-release-comment> --notebook notebooks/SafeShift_INTERNVL35_GRAMMAR_V2.ipynb --stage data/processed/internvl-v2-job<N>-new --predecessor-directory <private-prior-sealed-outputs>
+```
+
+This command is **not to be run at the current review checkpoint**. It checks
+the Owner's fully paginated private notebook inventory, source Output version1
+and COMPLETE status, available quota and no reserved GPU time. It attaches only
+the known Inputs, writes private metadata and a durable submission tag, then
+calls `kernels_push` once (private, T4, Internet for pinned software,1800s).
+Job1 should be preflight; a native job requires a prior sealed PASS for the same
+runtime/request. Preflight reads master/prior identity metadata and checkpoint
+bytes and exercises synthetic processor/CUDA, without opening TRAIN/TEST images
+or loading weights. Native adds the original image dataset, rechecks all gates,
+verifies original ordinal0 file SHA, and obtains separate load/call permits.
+
+The SDK stream allows four read-only reconnects, handles split/repeated log
+chunks and terminal EOF, with finite HTTP waits and a16MiB log bound. A new
+connection never restarts the coordinator or repeats a permit write. Only nonce
+challenges are relayed from the supervised child. Credentials are excluded by
+the worker environment allowlist. Real logs and raw remain in private archives.
+
+## Ledger, failures and evidence export
+
+GitHub refs: `refs/tags/internvl-v2-6622148168/j<N>/{submission,submitted,launch,setup,worker,load,call,finished}`;
+global `.../{load,call}`. Each ref points to an annotated JSON tag tied to the
+reviewed commit. Creation uses POST, never update/delete/force/reclaim. The
+atomic ref conflict excludes two coordinators. Tags do not alter the reviewed
+branch HEAD. This protects cooperating reviewed runners, not a malicious actor
+with repository write rights who deletes refs or changes code outside the runner.
+
+The implementation conservatively reserves one **load attempt**, not merely one
+successful load. Even a failed load permit stops further native dispatch. This
+is within the one-successful-load ceiling and avoids treating an interrupted
+deserialization as proven unused. The spare job can repair confirmed pre-load
+infrastructure failure under a fresh release; there is no automatic retry.
+
+Each private output root `safeshift-internvl-v2-6622148168-j<N>` records the exact
+release/source, initial and final positive campaign ledgers, permits, subprocess
+receipts/logs, original identity binding, all environment checks and native
+capture/parse artifacts. Output is sealed as `<root>.zip` plus `.sha256.json`,
+with member checksums/CRC verified before publishing sanitized status. Preserve
+TECHNICAL_ERROR, INVALID, raw/partial files and failed exports. No overwrite.
+
+For a next job, require exact prior private ZIP+sidecar+logs, live terminal
+version1 status, matching create-only `finished` record and explicit zero-call
+ledger. Missing ZIP, missing start/end/child log, unknown SDK submission,
+unfinished worker, call permit or ambiguous count means STOP. Do not delete a
+tag, change slug/version or infer zero from absence of `native_call.json`.
+An SDK failure may still be reconciled read-only; it never triggers another push.
+If reconciliation cannot complete before expiry, preserve local evidence and
+stop for review. Never re-run the submitter to recover a consumed slot.
+
+Scientific method remains fixed. No inference outcome, live resource fit or
+READY FOR OWNER claim is available at the current checkpoint. ChatGPT review,
+independent audit, exact release and later actual trial are distinct steps;
+merge and full TRAIN remain unauthorized.

@@ -1,20 +1,27 @@
 # Kiến trúc Foundation V1
 
-## InternVL3.5 grammar V2 native preparation — 04/11/2026
+## InternVL3.5 grammar V2 exact-release campaign — 04/11/2026
 
 `internvl_v2_runtime.py` wraps the unchanged offline candidate loader/input
 preparation with the approved V2 callback. Full output-head vectors (including
 padding outside tokenizer vocabulary) are persisted/fsynced before the native
 prefix processor; masked vectors, processor list, returned IDs and exact decoded
 response precede strict parsing and independent replay. HNLO is always N/A.
-`scripts/internvl_v2.py` provides isolated setup/preflight/native stages and the
-bounded controller; every native entrypoint is code-fenced pending a new exact
-execution release. No caller flag or historical grant opens it. Native tests
-replace only the fence/external weight boundary with synthetic scripted forwards.
+`scripts/internvl_v2.py` supplies isolated setup/preflight/native stages.
+`internvl_v2_campaign.py` validates external PR177 HEAD/request/notebook review
+and audit, and gates process launch/setup/worker/load/call with fresh nonce
+permits. Create-only GitHub annotated tag refs enforce three jobs and one native
+load/call across VMs without advancing the reviewed branch HEAD. The matching
+campaign script supervises children and seals partial/terminal ledgers and ZIPs.
+`scripts/submit_internvl_v2.py` checks an exact release before importing the
+official SDK, reserves before its single push and reconciles terminal private
+ZIP/log evidence. Unknown counts block; prior grants cannot activate this route.
 `scripts/build_internvl_v2.py` packages committed source into an unsubmitted
-notebook. Tests: `test_internvl_v2_runtime.py`, `test_internvl_v2_notebook.py`;
+notebook. Tests: `test_internvl_v2_runtime.py`, `test_internvl_v2_campaign.py`,
+`test_internvl_v2_notebook.py`;
 reproduce with `scripts.qualify_internvl_v2_runtime`.
-[Runbook, custody and limits](INTERNVL_GRAMMAR_V2_RUNTIME.md). This is a distinct
+[Exact release/runbook](INTERNVL_V2_CAMPAIGN.md),
+[native capture and initial CPU evidence](INTERNVL_GRAMMAR_V2_RUNTIME.md). This is a distinct
 technical series, not enrollment or qualification of full TRAIN3763.
 
 ## Issue173 — existing TRAIN/checkpoints and bounded native smoke

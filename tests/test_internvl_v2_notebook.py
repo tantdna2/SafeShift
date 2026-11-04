@@ -58,7 +58,8 @@ class NotebookTests(unittest.TestCase):
         self.assertNotIn("kaggle.json", code)
         self.assertNotIn("kernels_push", code)
         self.assertNotIn("os.environ", code)
-        self.assertIn("MODE = 'preflight'", code)
+        self.assertIn("from scripts.internvl_v2_campaign import launch", code)
+        self.assertIn("runtime_commit=", code)
 
     def test_embedded_execute_cli_fenced_in_empty_offline_process(self):
         _, _, _, payload, _ = self.unpack()
@@ -75,6 +76,13 @@ for args in (['--mode','execute'], ['--worker','native']):
     try: main(['--spec','does-not-exist',*args])
     except PermissionError as error: assert 'NOT_AUTHORIZED' in str(error)
     else: raise AssertionError('NATIVE_FENCE_BYPASS')
+from safeshift import internvl_v2_campaign as control
+from safeshift.internvl_v2_runtime import source_spec
+from scripts.internvl_v2_campaign import launch
+control.remote_record = lambda *a, **k: None
+try: launch(source_spec(), '0' * 40)
+except ValueError as error: assert 'REVIEW_HOLD' in str(error)
+else: raise AssertionError('CAMPAIGN_FENCE_BYPASS')
 print('EMPTY_VM_NATIVE_FENCE_PASS')
 """
             result = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", code, str(root)],

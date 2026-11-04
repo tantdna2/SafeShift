@@ -1,6 +1,30 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — grammar V2 native integration, CPU-only review, 04/11/2026
+## CURRENT — PR177 exact-release preparation, STOP before Kaggle, 04/11/2026
+
+[Owner/ChatGPT directive 6622148168](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622148168)
+authorizes preparation of a separate one-image V2 technical campaign on the
+existing `feat/internvl-grammar-v2-native` branch / Draft PR177. The next boundary
+is **new committed HEAD review + independent Antigravity audit + a separate
+exact job-specific release**. No Kaggle activity is authorized before that gate.
+`REVIEWED_EXECUTION_GRANT=NOT_YET`; real preflight/weights/inference remain
+**NOT_RUN / NOT VERIFIED**, scientific qualification false. No merge/full TRAIN/TEST.
+
+Implemented: external HEAD/notebook/request/review binding; create-only GitHub
+campaign/phase tag ledger; local official-SDK coordinator, bounded private
+dispatch and terminal ZIP/log reconciliation. Three jobs total, 1800 seconds/job,
+one cumulative load/call reservation, original TRAIN ordinal0 only. Explicit
+zero-call sealed evidence and terminal ledger are required before any next job;
+missing/ambiguous evidence never grants replay. Original metadata identity is
+projected locally from the checksum-pinned master and prior InternVL sealed
+archive without image access or importing predictions. C1/checkpoint/FP16/eager,
+strict parser, grammar bytes, four labels and HNLO N/A remain unchanged.
+
+[Current runbook and release schema](INTERNVL_V2_CAMPAIGN.md). CPU/notebook
+receipts for this continuation are recorded separately from the initial PR177
+snapshot below; neither is live Kaggle evidence or an independent audit.
+
+## Historical PR177 snapshot — initial CPU-only implementation
 
 PR #176 **MERGED / hậu merge PASS**, main/base
 `4578c175e0011783c3573d0003fc5341eaf3ef72`, đã đối chiếu GitHub live với

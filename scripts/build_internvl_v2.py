@@ -1,4 +1,4 @@
-"""Reproducible, source-bound V2 notebook. Build only; no submission API."""
+"""Reproducible PR177 campaign notebook; no grant/credentials or submission API."""
 import argparse
 import base64
 import hashlib
@@ -25,7 +25,6 @@ def build(ref):
     spec = {"identity": IDENTITY, "manifest": manifest}
     code = f'''import base64, hashlib, json, sys, uuid, zlib
 from pathlib import Path
-MODE = 'preflight'  # 'execute' remains code-fenced, including direct worker use.
 packed = zlib.decompress(base64.b64decode({base64.b64encode(zlib.compress(packed, 9)).decode()!r}))
 assert hashlib.sha256(packed).hexdigest() == {hashlib.sha256(packed).hexdigest()!r}
 spec = {spec!r}
@@ -41,8 +40,8 @@ for name, content in payload.items():
     with target.open('xb') as stream:
         stream.write(content.encode())
 sys.path.insert(0, str(root))
-from scripts.internvl_v2 import launch
-result = launch(spec, mode=MODE)
+from scripts.internvl_v2_campaign import launch
+result = launch(spec, runtime_commit={ref!r})
 print(json.dumps(result, sort_keys=True))
 if result['status'] not in ('LIVE_GPU_PREFLIGHT_PASS', 'SUCCESS', 'INVALID'):
     raise RuntimeError('V2_BLOCKED_SEE_PRIVATE_SEALED_OUTPUT')
@@ -53,14 +52,15 @@ if result['status'] not in ('LIVE_GPU_PREFLIGHT_PASS', 'SUCCESS', 'INVALID'):
             "safeshift": {"identity": IDENTITY, "runtime_commit": ref, "manifest_sha256": digest(manifest),
                 "limits": LIMITS, "execution_authority": None, "live_verification": "NOT_RUN"}},
         "cells": [{"cell_type": "markdown", "id": "scope", "metadata": {}, "source": [
-            "# InternVL3.5 grammar V2 — preflight and fenced native runtime\n",
-            "Implementation/CPU review artifact. Do not submit in the current task. No execution grant is embedded.\n",
-            "Later authorized preflight: attach the unchanged InternVL source/checkpoint Input with its unique marker; no TRAIN/TEST images needed.\n",
+            "# InternVL3.5 grammar V2 — exact-release campaign\n",
+            "STOP for ChatGPT review and independent Antigravity audit at the committed HEAD. No execution grant is embedded.\n",
+            "Only scripts.submit_internvl_v2 may dispatch after a separate exact release; mode/job/request come from the create-only GitHub submission ledger. Manual runs and replay cannot obtain fresh load/call permits.\n",
+            "Preflight attaches pinned checkpoint, original master metadata and original sealed smoke identity; no TRAIN/TEST image Input. Native attaches original TRAIN only under its own release.\n",
             "Side effects: pinned Python/package provisioning under /kaggle/temp, bounded scratch allocation/fsync/cleanup, CUDA FP16 probe. No weights load or model call.\n",
             "Uses two physical T4s, only GPU0 visible to the worker. Limits: 1800 seconds overall, setup900/preflight600; 16GiB host RAM, existing per-GPU floors.\n",
-            "Private evidence: /kaggle/working/internvl35-grammar-v2-native-qualification-v1-preflight-<id> and ZIP/SHA256. Preserve failures and partial files.\n",
-            "No tokens, credentials, remote log relay or submission code. Preflight consumes no Owner execution slot.\n",
-            "G0 remains BLOCKED; weights/inference/quality NOT VERIFIED. A new exact-run source release and external anti-replay custody are required before native activation.\n",
+            "Private evidence: /kaggle/working/safeshift-internvl-v2-6622148168-j<N> and ZIP/SHA256. Preserve failures and partial files.\n",
+            "No tokens or credentials in the VM. Only nonce challenges are relayed; raw/log archives stay private. Preflight consumes one of three campaign jobs, zero native slots.\n",
+            "One load and one generation permit cumulatively across all VMs. A failed or unknown call never permits another call. Missing evidence is not zero-call proof.\n",
             "HNLO is always N/A. No historical completion import, full TRAIN dispatch, scientific pooling or retry.\n"]},
             {"cell_type": "code", "id": "preflight", "metadata": {}, "outputs": [],
              "execution_count": None, "source": code.splitlines(True)}]}
