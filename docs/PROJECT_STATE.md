@@ -1,8 +1,15 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — InternVL3.5 grammar V2 science proposal, 04/11/2026
+## CURRENT — Owner phê duyệt khoa học grammar V2; PR #176 chờ merge, 04/11/2026
 
-**ĐỀ XUẤT ÁP DỤNG (chờ phê duyệt khoa học): grammar V2 label-only, HNLO N/A.**
+**OWNER_PROJECT_METHOD_APPROVED:** Owner đã duyệt grammar V2 cho InternVL3.5
+như một phương pháp **label-only có series riêng, HNLO N/A**, đồng thời chấp
+nhận phân tích nhãn giữa ba hệ thống có chính sách sinh khác nhau (không coi
+HNLO tương đương). Nguồn [quyết định Owner trên PR #176](https://github.com/tantdna2/SafeShift/pull/176#issuecomment-6621440702)
+và mục append-only
+[DEC-20261104-OWNER-APPROVE-INTERNVL-GRAMMAR-V2-LABEL-ONLY](research/DECISIONS.md#dec-20261104-owner-approve-internvl-grammar-v2-label-only).
+Phê duyệt này chỉ ở phạm vi phương pháp khoa học của dự án, **không cấp quyền
+Kaggle/GPU/inference/full TRAIN/TEST hoặc activation production**.
 [Scientific dossier](research/INTERNVL_GRAMMAR_SCIENCE_V1.md) and
 [versioned descriptor](../configs/grammar/internvl35_v2.json) define the exact
 four-label JSON method, proof/counterexample for HNLO, evidence limits and
@@ -24,10 +31,12 @@ comparison is available under the proposal. Future label comparisons require
 exact new series on the same3763 IDs, full status accounting and O2–O6 approval;
 no selected-INVALID repair or pooling of old successes with grammar outputs.
 
-Stop at one new Draft PR for ChatGPT direct review, mandatory independent audit
-of the proposed generation/scientific change, then Owner/Research Lead decision
-and separate merge authorization. V2 is not an official method or a live-ready
-release. If comparable InternVL HNLO is mandatory, reject V2 and retain C1.
+PR #176 đã được ChatGPT review trực tiếp và Antigravity audit PASS cho phạm vi
+đề xuất; Owner tiếp đó phê duyệt phương pháp qua quyết định dẫn ở trên.
+Chỉ phần hồ sơ quyết định/trạng thái được bổ sung sau audit, không đổi mã,
+config hoặc tests đã kiểm. PR vẫn **OPEN/DRAFT cho đến khi merge được cấp quyền
+riêng và hậu merge xác minh**. Grammar V2 chưa tích hợp production, chưa chạy
+mô hình V2 thật; các cổng O2–O6, GT/TEST và full TRAIN tiếp tục đóng.
 
 Verification at implementation `cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702`:
 **58/58 CPU tests PASS** on Windows and Linux, zero skips/errors; pinned native
