@@ -53,6 +53,14 @@ class MemoryTests(unittest.TestCase):
             gate.assert_not_called()
             self.assertEqual(read(root / "preload-memory-failure.json")["failure_type"], "ValueError")
 
+    def test_empty_or_malformed_required_fields_cannot_report_observed(self):
+        for name, content in (("memory.stat", ""), ("memory.stat", "anon wrong\nfile 123\n"),
+                              ("memory.stat", "anon -1\nfile 123\n")):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as d:
+                proc, cg = self.fixture(Path(d))
+                (cg / name).write_text(content)
+                self.assertEqual(memory.snapshot(proc, cg)["status"], "INCOMPLETE")
+
     def test_exact_16gib_floor_unchanged_failure_snapshot_and_boundary(self):
         from types import SimpleNamespace as NS
         for available in (16 * 2**30 - 1, 16 * 2**30):

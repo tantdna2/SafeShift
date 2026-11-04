@@ -47,6 +47,12 @@ def snapshot(proc=Path("/proc"), cgroup=Path("/sys/fs/cgroup")):
         observed["process"][name] = {k: int(rest.split()[0]) * 1024
             for line in value.splitlines() if ":" in line for k, rest in [line.split(":", 1)]
             if rest.strip().endswith("kB") and rest.split()[0].isdigit()}
+    cg = observed["cgroup"]
+    stats = cg.get("memory.stat", {})
+    if (not all(k in cg for k in ("memory.current", "memory.max", "memory.peak", "memory.events"))
+            or not all(type(stats.get(k)) is int and stats[k] >= 0 for k in ("anon", "file"))
+            or type(observed["process"]["status"].get("VmRSS")) is not int):
+        observed["errors"].append({"file": "required_fields", "type": "MISSING_OR_INVALID_MEMORY_FIELDS"})
     observed["status"] = "OBSERVED" if not observed["errors"] else "INCOMPLETE"
     return observed
 
