@@ -584,3 +584,47 @@ or new model calls. Frozen prompt/parser/HNLO and historical evidence remain
 unchanged. One branch/one Draft PR, ChatGPT direct review, mandatory independent
 audit for this proposed scientific/generation change, then scientific decision
 and separately authorized merge. This entry does not supersede frozen science.
+
+## DEC-20261104-OWNER-APPROVE-INTERNVL-GRAMMAR-V2-LABEL-ONLY
+
+- **Ngày / nguồn:** 04/11/2026 (Asia/Ho_Chi_Minh); Owner dự án SafeShift
+  tuyên bố phê duyệt trực tiếp trong hội thoại và ghi nhận bằng
+  [PR #176 comment #6621440702](https://github.com/tantdna2/SafeShift/pull/176#issuecomment-6621440702).
+- **Người quyết định:** SafeShift Owner/Research Lead trong phạm vi dự án;
+  không mạo nhận phê duyệt học vụ, bên cung cấp dữ liệu hoặc bên thứ ba.
+- **Trạng thái:** `OWNER_PROJECT_METHOD_APPROVED`; hiệu lực trong repository
+  sau khi PR #176 được merge và ChatGPT xác minh hậu merge.
+- **Phạm vi được phê duyệt:**
+  1. `internvl35-canonical-json-grammar-v2` dùng cho InternVL3.5-4B-HF
+     như **một phương pháp label-only có phiên bản riêng**; giữ C1 text và
+     strict parser hiện có, chỉ chấp nhận bốn chuỗi JSON chuẩn và EOS;
+     không gọi phương pháp mới tương đương generation chưa ràng buộc.
+  2. `hnlo=null`, `hnlo_status=HNLO_NA_GRAMMAR_POLICY_V2` cho mọi kết quả
+     grammar V2; không áp dụng phép so sánh HNLO giữa cả ba mô hình,
+     không điền giả điểm và không thay bộ tính HNLO đã khóa.
+  3. **Chấp nhận so sánh nhãn ở mức hệ thống dị thể** của Qwen3 (chính
+     sách gốc), InternVL3.5 (grammar V2) và MiniCPM-V-4 (resampler FP32,
+     label-only) trên cùng tập ID; phải báo rõ chính sách sinh, tỷ lệ
+     đầu ra hợp lệ và mẫu số, không quy khác biệt cho riêng checkpoint.
+  4. Khi có quyền thực thi riêng, InternVL grammar V2 phải khởi tạo một
+     series mới cho **toàn bộ 3.763 TRAIN IDs gốc cùng order/source hashes**;
+     ghi đầy đủ SUCCESS/INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED; không ghép
+     135 SUCCESS/25 INVALID lịch sử, không hồi tố sửa raw, không backfill
+     từ smoke, recovery hay series khác; không sử dụng GT/TEST để cứu nhãn.
+- **Mã/version đóng băng trong quyết định:** PR #176 reviewed/audited HEAD
+  `fd2493c00b65c3a191f5627a29bbe5a0fb4fc94c`; implementation commit
+  `cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702`. Descriptor
+  `configs/grammar/internvl35_v2.json` SHA256
+  `f6e66ee753bc9c3447aa5b33d52838c226f428b87bafbd8a070bf95edce7e99e`;
+  implementation `safeshift/internvl_grammar.py` SHA256
+  `a3cde12d4dbe463acc9d87bcc36c440492636d7479024876c04ef1c1645c69ca`
+  (theo receipt CPU đã đối chiếu). Bản ghi duyệt không sửa byte của hai tệp này.
+- **Không cấp quyền:** Kaggle/GPU, nạp trọng số hay inference mô hình thật,
+  fresh/full TRAIN 3.763, TEST, quyền dữ liệu ngoài Owner, O2–O6,
+  phê duyệt học vụ, thay số liệu khoa học, activation chính thức trên
+  production, hoặc merge bỏ qua kiểm soát. Grammar V2 mới được audit ở
+  phạm vi đề xuất/CPU synthetic, chưa có đánh giá độ chính xác/false-safe thật.
+- **Quy trình merge:** Phê duyệt khoa học **khác** quyền merge.
+  Sau kiểm tra GitHub trên HEAD đã bổ sung quyết định, ChatGPT cấp quyền
+  merge riêng cho Antigravity trong session audit PR #176; hậu merge
+  ChatGPT xác minh main/parents/tree và cập nhật task handoff.
