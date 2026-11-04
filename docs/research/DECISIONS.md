@@ -646,3 +646,9 @@ and separately authorized merge. This entry does not supersede frozen science.
   verified real original-image native result, then ChatGPT/Antigravity review on
   existing Draft PR177. No merge, scientific method changes, TEST/full TRAIN,
   label rescue or pooling. [Detailed contract](INTERNVL_V2_CONTINUOUS_TECHNICAL_20261104.md).
+
+Append-only encoding correction: the authoritative Owner6626498951 UTF-8 body
+SHA256 is `60090d0a0073861906e09dfc7cf3d43f0845488005aafe6c4ba855a6889b025d`.
+The03407e… hash above identifies a local ASCII-substituted PowerShell rendering,
+not the actual GitHub text. Exact-authority authentication rejected unused
+release6626931045 before any job/ledger reservation. No Owner scope changed.

@@ -1,5 +1,13 @@
 # Owner continuous technical retry — PR177
 
+Encoding correction before any submission: authoritative UTF-8 body SHA256 is
+`60090d0a0073861906e09dfc7cf3d43f0845488005aafe6c4ba855a6889b025d`.
+The initial hash below was computed after Windows PowerShell replaced Unicode
+with ASCII `?`; reproducing that conversion yields the erroneous03407e… value.
+The authenticated release gate correctly rejected release6626931045, before
+Kaggle submission/ledger reservation. Preserve that unused release; a fresh
+source-bound release must use the exact Unicode body. Owner text did not change.
+
 Authority: [Owner comment6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951),
 authenticated as `tantdna2`; UTF-8 body SHA256
 `03407e1981f90a7b03f7ddcd0baacdec32b0f204d7a2afaf040bb17fae76240b`.
