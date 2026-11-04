@@ -266,9 +266,9 @@ class NativeCaptureTests(unittest.TestCase):
                 inner.steps += 1
                 return tr.modeling_outputs.CausalLMOutputWithPast(logits=logits)
         model = Scripted().eval()
-        generation = tr.GenerationConfig(do_sample=False, num_beams=1, max_new_tokens=64,
-            return_dict_in_generate=True, output_scores=False, output_logits=False,
-            eos_token_id=tokens[-1], pad_token_id=tokens[-1], use_cache=False)
+        model.generation_config = tr.GenerationConfig(eos_token_id=tokens[-1], pad_token_id=tokens[-1])
+        from safeshift.candidates.backend import generation_config
+        generation = generation_config(model, t, "internvl35")
         return NS(key="internvl35", tokenizer=t, cpu_tokenizer=t, model=model,
                   generation=generation, logit_width=width, evidence_kind="SYNTHETIC")
 
@@ -399,7 +399,6 @@ class NativeCaptureTests(unittest.TestCase):
     def test_controller_to_native_generation_synthetic_image(self):
         from PIL import Image
         from safeshift.candidates.loading import native_setup
-        from safeshift.candidates.backend import generation_config
         source = Path(os.environ["SAFESHIFT_V2_SOURCE"])
         processor, tokenizer, config, _ = native_setup(source, "internvl35", {})
         from tokenizers import Tokenizer
