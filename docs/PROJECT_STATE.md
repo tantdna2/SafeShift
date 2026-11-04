@@ -29,6 +29,13 @@ of the proposed generation/scientific change, then Owner/Research Lead decision
 and separate merge authorization. V2 is not an official method or a live-ready
 release. If comparable InternVL HNLO is mandatory, reject V2 and retain C1.
 
+Verification at implementation `cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702`:
+**58/58 CPU tests PASS** on Windows and Linux, zero skips/errors; pinned native
+tokenizer/Transformers processor **8/8 scripted traces (80 steps) PASS** plus tie
+rule. Four9-token paths match PR175's digest; decision position7 has four distinct
+tokens, followed by canonical suffix/EOS. This is CPU software evidence, not
+V2 live-model verification. [Receipts and reproduction](research/INTERNVL_GRAMMAR_SCIENCE_V1.md#reproduction-and-audit).
+
 ## HISTORICAL — Mini original TRAIN smoke SUCCESS; handoff 04/11/2026
 
 Under [Owner6602848993](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6602848993)

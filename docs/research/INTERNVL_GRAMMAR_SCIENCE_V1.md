@@ -156,6 +156,60 @@ C1. No claim of READY FOR OWNER or full-cohort scientific qualification.
 
 ## Reproduction and audit
 
-Commands, source hashes, environment, test counts and receipt are added after
-CPU verification in this same PR. All new fixture tokens/logits are handwritten
-synthetic data. No model raw, images, dataset or credentials are committed.
+At implementation commit `cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702`:
+
+- **58/58 PASS, zero skips/failures/errors** on Windows Python3.11.9 and Linux
+  Python3.14.4. Thirty new tests, plus five archived P2.1/format decision tests,
+  eight existing HNLO tests and fifteen diagnostic regressions.
+- Native CPU software check **8/8 complete traces /80 token steps PASS**, plus
+  native tie rule. Actual `Qwen2TokenizerFast`, independent Rust decoder and
+  Transformers4.55.4 prefix processor; torch2.6.0+cpu, tokenizers0.21.4. Exact
+  public revision/files rehashed against the existing source lock. Four native
+  paths have9 tokens, common decision position7 with IDs16/17/18/19, EOS151645;
+  path digest exactly matches PR175. These are public tokenizer mappings, not
+  token IDs extracted from private model outputs.
+- All four labels tested with scripted raw logits both aligned and deliberately
+  preferring an off-language initial token. Actual processor results match the
+  independent full-vocabulary mask oracle; raw fixtures are saved/fsynced before
+  readback/verification. Every output explicitly has HNLO N/A. No image processor,
+  model weights/forward, generation loop/cache, GPU or real input was tested by
+  this CPU check. Frozen native integration evidence still belongs only to V1.
+
+[Native CPU receipt](evidence/internvl_grammar_v2/native-cpu.json) and
+[Linux receipt](evidence/internvl_grammar_v2/linux-cpu.json) bind commands,
+environment/dependency versions, source/descriptor/fixture hashes and counts.
+[A second offline process](evidence/internvl_grammar_v2/reproducibility.json)
+reproduced all8 complete fixture-file hashes and8 verified trace digests exactly.
+[Preservation checks](evidence/internvl_grammar_v2/preservation.json) confirm
+unchanged frozen code/config/notebooks and PR175 evidence against the verified
+base; DECISIONS is append-only. This is local verification, not an independent
+audit or a new private-archive rehash.
+The optional whole-repository suite was interrupted during slow, unrelated
+Candidate160 persistence tests (62 and45 completed test lines in two attempts);
+it has **no full-suite PASS**. Partial logs/hashes are retained in the
+[broad-check limits receipt](evidence/internvl_grammar_v2/broad-check-limits.json).
+The completed58-test qualification above is the evidence for this change.
+All new fixture logits are handwritten synthetic data; no model raw, images,
+dataset or credentials are committed. Full synthetic vectors/logs remain in
+ignored `data/processed/internvl_grammar_v2/`, reproducible from the script.
+
+From repository root, standard library only:
+
+```console
+python -B -m scripts.qualify_internvl_grammar --output data/processed/grammar-check-new
+```
+
+Optional native CPU check in an isolated environment with the receipt's versions
+(torch2.6.0+cpu, transformers4.55.4, tokenizers0.21.4 and recorded dependencies):
+
+```console
+python -B -m scripts.qualify_internvl_grammar --output data/processed/grammar-native-new --native-source data/processed/internvl_grammar_v2/public-tokenizer --fetch-public-tokenizer
+```
+
+`--packages` can point to an isolated dependency target. The opt-in fetch is
+limited to seven named public tokenizer/config text files, each at most16MiB
+and checked against the pre-existing revision/SHA lock; no weights or dataset.
+Omit `--fetch-public-tokenizer` for fully offline replay. Output directories must
+be new; old PASS/FAIL/partial artifacts are never overwritten. No randomness is
+used. Stable trace digests are reproducible for the same implementation and
+bindings; test-log timing/platform fields need not be byte-identical.
