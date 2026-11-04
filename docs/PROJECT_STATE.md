@@ -24,6 +24,15 @@ strict parser, grammar bytes, four labels and HNLO N/A remain unchanged.
 receipts for this continuation are recorded separately from the initial PR177
 snapshot below; neither is live Kaggle evidence or an independent audit.
 
+Final CPU evidence at runtime/test commit `7a890a9e96ebffdd04793159197bb90803340f3c`:
+Windows117 selected =114 PASS/3 Linux-only SKIP; Linux117 =107 PASS/10 native-only
+SKIP; notebook4/4 PASS. All121 distinct selected tests covered; no final failures
+or errors. [Review packet and exact request](research/evidence/internvl_v2_campaign/review-packet.json)
+and [validation/file hashes](research/evidence/internvl_v2_campaign/validation.json)
+are sanitized. No Kaggle API/job or remote ledger mutation occurred. The next
+release must name the final pushed PR HEAD; the embedded runtime commit alone
+is not an execution approval.
+
 ## Historical PR177 snapshot — initial CPU-only implementation
 
 PR #176 **MERGED / hậu merge PASS**, main/base

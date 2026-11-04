@@ -159,3 +159,40 @@ Scientific method remains fixed. No inference outcome, live resource fit or
 READY FOR OWNER claim is available at the current checkpoint. ChatGPT review,
 independent audit, exact release and later actual trial are distinct steps;
 merge and full TRAIN remain unauthorized.
+
+## Current CPU review checkpoint
+
+Runtime/test source commit: `7a890a9e96ebffdd04793159197bb90803340f3c`.
+The notebook embeds exactly those committed runtime bytes. Subsequent packaging
+and evidence commits do not change the runtime. The final PR HEAD, rather than
+this embedded runtime commit, must be used for external review and release.
+
+| Verification | Result |
+| --- | --- |
+| Windows native CPU, exact public tokenizer, actual Transformers generate/prefix processor, synthetic logits/images | 117 selected:114 PASS,3 Linux-only SKIP |
+| Linux CPU, actual process-group timeout/log/child-failure supervision | 117 selected:107 PASS,10 native-only SKIP |
+| Notebook reproducibility, embedded source hashes, credential patterns, empty outputs, empty-VM direct-native/campaign denial | 4 PASS |
+| Preservation against main `4578c175e0011783c3573d0003fc5341eaf3ef72` | Approved grammar/descriptor/C1/parser/loader/inputs/backend/scientific decisions unchanged |
+| Kaggle API/job, real weights/image inference, independent audit of new HEAD | NOT_RUN / PENDING |
+
+All121 distinct selected tests executed PASS in at least one environment; no
+failed/error test in final runs. Skips are not PASS. This is focused validation,
+not a full-repository test claim. The26 campaign tests cover exact release,
+source/request/HEAD drift, cross-VM conflict/replay/order, preflight isolation,
+SDK timeout/partial logs/replay/transport bound, permanent reservation on unknown
+push, positive zero-call export, corruption/missing evidence and CLI paths.
+The synthetic native integration exercises the real campaign load/call gate
+with only its remote transport and external weight boundary replaced.
+
+[Review packet](research/evidence/internvl_v2_campaign/review-packet.json),
+[request](research/evidence/internvl_v2_campaign/request.json),
+[validation and file hashes](research/evidence/internvl_v2_campaign/validation.json),
+[native CPU](research/evidence/internvl_v2_campaign/native-cpu.json),
+[Linux CPU](research/evidence/internvl_v2_campaign/linux-cpu.json),
+[notebook](research/evidence/internvl_v2_campaign/notebook.json),
+[preservation](research/evidence/internvl_v2_campaign/preservation.json).
+
+Request digest: `caa989058d9ea45e9037e180ef7f057309157688c5bd61a2e204789e1be8468a`.
+Notebook SHA256: `aa87c3bd2ba0a63009c0c9eb8902a21fe5c2609f2a3ca2155a8f045fab028ea7`.
+`REVIEWED_EXECUTION_GRANT=NOT_YET`. No campaign ledger tag or Kaggle job was
+created in this implementation pass. Stop for review/audit and exact release.
