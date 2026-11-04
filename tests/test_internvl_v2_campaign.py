@@ -1,6 +1,7 @@
 """Offline synthetic campaign integration; no Kaggle/GitHub/model/data access."""
 from contextlib import ExitStack
 import copy
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -199,12 +200,12 @@ class CampaignTests(unittest.TestCase):
 
     def test_context_missing_multiple_or_changed_source_never_activates(self):
         spec = runtime.source_spec()
-        with patch.object(c, "remote_record", return_value=None), self.assertRaisesRegex(ValueError, "REVIEW_HOLD"):
+        with patch.object(c, "active_submissions", return_value=[]), self.assertRaisesRegex(ValueError, "REVIEW_HOLD"):
             c.context(spec, "e" * 40)
         g = grant()
         def record(name, slot=None):
             return {"grant": g, "approval_comment": 6622148400} if name == "submission" and slot == 1 else None
-        with patch.object(c, "remote_record", side_effect=record), patch.object(c, "read_grant", return_value=g):
+        with patch.object(c, "active_submissions", return_value=[(1,record("submission",1))]), patch.object(c, "read_grant", return_value=g):
             self.assertEqual(c.context(spec, "e" * 40)["binding"], digest(g))
             with self.assertRaisesRegex(ValueError, "SOURCE_RELEASE"):
                 c.context(spec, "0" * 40)
@@ -457,6 +458,9 @@ class ReviewBlockerTests(unittest.TestCase):
             "summary.json": {"campaign": c.CAMPAIGN, "slot": g["slot"], "binding": digest(g), "mode": g["mode"],
                 "status": "LIVE_GPU_PREFLIGHT_PASS", "error": None, "native_call_markers": 0,
                 "call_reservations": 0, "weights_loaded": False}})
+        if g.get("authorization_mode") == c.DELEGATED_MODE:
+            files["summary.json"].update(authorization_mode=c.DELEGATED_MODE, independent_audit="PENDING_POST_TRIAL",
+                                         research_scientific_qualification="NOT_ESTABLISHED")
         ledger = {("submission", g["slot"]): {"grant": g, "gpu_budget": submit.gpu_budget(g)}}
         for phase in ("launch", "setup", "worker"):
             ledger[phase, g["slot"]] = copy.deepcopy(files[phase + "-permit.json"])
@@ -630,6 +634,97 @@ class ReviewBlockerTests(unittest.TestCase):
                 self.assertEqual(api.kernels_push.call_count, 1)
                 self.assertEqual(api.kernels_push.call_args.kwargs, {"timeout": "600", "acc": "NvidiaTeslaT4"})
                 self.assertEqual(records["submission", slot]["gpu_budget"]["cumulative_reserved_physical_gpu_seconds"], slot * 1200)
+
+
+class DelegatedTrialTests(unittest.TestCase):
+    """Separate Owner authority mode; never an invented review/audit PASS."""
+    def setUp(self):
+        self.stack = ExitStack(); self.addCleanup(self.stack.close)
+        self.body = "SYNTHETIC_OWNER_DELEGATION_ONLY_FOR_AUTHENTICATION_TEST"
+        self.stack.enter_context(patch.object(c, "DELEGATION_SHA256", hashlib.sha256(self.body.encode()).hexdigest()))
+        self.g = grant(2)
+        self.g.pop("chatgpt_review_comment"); self.g.pop("antigravity_audit_comment")
+        self.g.update(authorization_mode=c.DELEGATED_MODE, authority_comment=c.DELEGATION_COMMENT,
+            authority_sha256=c.DELEGATION_SHA256, independent_audit="PENDING_POST_TRIAL",
+            research_scientific_qualification="NOT_ESTABLISHED")
+        self.authority = {"user": {"login": "tantdna2"}, "issue_url": c.API + "/issues/177", "body": self.body}
+        self.first = read(runtime.ROOT / "docs/research/evidence/internvl_v2_execution_6624359404/verified-result.json")
+        def comment(number, marker):
+            if marker == "INTERNVL_V2_RELEASE_V1":
+                raise ValueError("EXACT_MACHINE_READABLE_RECORD_REQUIRED")
+            self.assertEqual(marker, "INTERNVL_V2_DELEGATED_RELEASE_V1")
+            return self.g
+        self.stack.enter_context(patch.object(c, "comment_record", side_effect=comment))
+        self.stack.enter_context(patch.object(c, "public_get", side_effect=lambda path: self.authority))
+        self.stack.enter_context(patch.object(c, "remote_record", side_effect=lambda name, slot=None: self.first))
+        self.head = self.stack.enter_context(patch.object(c, "check_head"))
+
+    def test_exact_owner_mode_accepts_only_remaining_slot2_preflight_slot3_native(self):
+        self.assertEqual(c.read_grant(c.DELEGATION_COMMENT + 100), self.g)
+        self.assertNotIn("antigravity_audit_comment", self.g)
+        self.assertEqual(self.g["independent_audit"], "PENDING_POST_TRIAL")
+        self.g.update(slot=3, mode="native", job=c.job(3), predecessors=["9" * 64] * 2)
+        self.assertEqual(c.read_grant(c.DELEGATION_COMMENT + 101), self.g)
+        self.assertEqual(self.head.call_count, 2)
+
+    def test_authority_wrong_owner_pr_or_edited_body_fails_closed(self):
+        for changed in ({**self.authority, "user": {"login": "other"}},
+            {**self.authority, "issue_url": c.API + "/issues/175"}, {**self.authority, "body": self.body + "edited"}):
+            with patch.object(c, "public_get", return_value=changed), self.assertRaisesRegex(ValueError, "OWNER_DELEGATION"):
+                c.read_grant(c.DELEGATION_COMMENT + 100)
+
+    def test_no_audit_fabrication_extra_calls_slot_reuse_or_scope_upgrade(self):
+        for key, value in (("independent_audit", "PASS"), ("research_scientific_qualification", "ESTABLISHED"),
+            ("authority_sha256", "0" * 64), ("authority_comment", 6625040124),
+            ("authorization_mode", "GENERAL_BYPASS"), ("slot", 1), ("mode", "native"),
+            ("limits", {**c.LIMITS, "calls": 2}), ("expires_unix", 1), ("antigravity_audit_comment", 1)):
+            prior = copy.deepcopy(self.g)
+            self.g[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                c.read_grant(c.DELEGATION_COMMENT + 100)
+            self.g.clear(); self.g.update(prior)
+
+    def test_missing_changed_or_nonzero_job1_never_admits_new_slot(self):
+        for first in (None, {**self.first, "calls": 1}, {**self.first, "weights_loaded": True},
+                      {**self.first, "proof": "UNKNOWN"}, {**self.first, "archive_sha256": "0" * 64}):
+            with patch.object(c, "remote_record", return_value=first), self.assertRaisesRegex(ValueError, "JOB1_ZERO_CALL"):
+                c.read_grant(c.DELEGATION_COMMENT + 100)
+
+    def test_auth_transport_and_head_errors_never_fall_back_to_approval(self):
+        with patch.object(c, "public_get", side_effect=TimeoutError("SYNTHETIC")), self.assertRaises(TimeoutError):
+            c.read_grant(c.DELEGATION_COMMENT + 100)
+        with patch.object(c, "check_head", side_effect=ValueError("HEAD_CHANGED")), self.assertRaisesRegex(ValueError, "HEAD_CHANGED"):
+            c.read_grant(c.DELEGATION_COMMENT + 100)
+        with self.assertRaisesRegex(ValueError, "DELEGATION"):
+            c.read_grant(c.DELEGATION_COMMENT - 1)
+
+    def test_active_snapshot_reads_only_active_tag_and_rejects_orphans(self):
+        prefix = "refs/tags/" + c.CAMPAIGN
+        def row(name):
+            return {"ref": prefix + name, "object": {"type": "tag", "sha": "a" * 40}}
+        rows = [row("/j1/submission"), row("/j1/finished"), row("/j2/submission")]
+        tag = {"tag": c.record_name("submission",2), "object": {"type":"commit","sha":"b"*40},
+            "message":json.dumps({"campaign":c.CAMPAIGN,"name":c.record_name("submission",2),
+                "head":"b"*40,"value":{"grant":self.g}})}
+        with patch.object(c,"public_get",side_effect=[rows,tag]) as get:
+            self.assertEqual(c.active_submissions(),[(2,{"grant":self.g})])
+            self.assertEqual(get.call_count,2)
+        with patch.object(c,"public_get",return_value=[row("/j2/finished")]), self.assertRaisesRegex(ValueError,"ORPHAN"):
+            c.active_submissions()
+
+    def test_delegated_result_never_claims_audit_pass_or_scientific_qualification(self):
+        for audit in ("PENDING_POST_TRIAL", "PASS"):
+            with self.subTest(audit=audit), tempfile.TemporaryDirectory() as d:
+                archive,ledger=ReviewBlockerTests().archive(Path(d),self.g,
+                    mutate=lambda files:files["summary.json"].update(independent_audit=audit))
+                with patch.object(c,"remote_record",side_effect=lambda name,slot=None:ledger.get((name,slot))):
+                    if audit=="PASS":
+                        with self.assertRaisesRegex(ValueError,"DELEGATED_RESULT_SCOPE"):
+                            submit.verify_result(archive,self.g,"COMPLETE")
+                    else:
+                        result=submit.verify_result(archive,self.g,"COMPLETE")
+                        self.assertEqual(result["independent_audit"],"PENDING_POST_TRIAL")
+                        self.assertEqual(result["research_scientific_qualification"],"NOT_ESTABLISHED")
 
 
 if __name__ == "__main__":

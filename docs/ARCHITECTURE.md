@@ -15,11 +15,16 @@ RSS before/after diagnostics and on failure, and confines optional clean-page
 advice to the current scratch venv libraries. Advice never establishes RAM PASS;
 the unchanged resource gate still applies. Positive worker evidence requires
 the child termination/log and memory receipts. Job1's failure remains immutable.
-`internvl_v2_campaign.py` validates external PR177 HEAD/request/notebook review
-and audit, and gates process launch/setup/worker/load/call with fresh nonce
+`internvl_v2_campaign.py` validates exact PR177 HEAD/request/notebook releases,
+and gates process launch/setup/worker/load/call with fresh nonce
 permits. Create-only GitHub annotated tag refs enforce three jobs and one native
 load/call across VMs without advancing the reviewed branch HEAD. The matching
 campaign script supervises children and seals partial/terminal ledgers and ZIPs.
+Owner directive6625594194 adds the separate `OWNER_PREAUDIT_TECHNICAL_TRIAL_V1`
+authorization for remaining slots2/preflight and3/native only. It pins the
+authentic Owner comment/body SHA and original job1 zero-call finished digest;
+receipts state audit PENDING_POST_TRIAL and science NOT_ESTABLISHED. Legacy
+review/audit-based grants are preserved for history; no fake PASS is generated.
 `scripts/submit_internvl_v2.py` checks an exact release before importing the
 official SDK, reserves before its single push and reconciles terminal private
 ZIP/log evidence. Unknown counts block; prior grants cannot activate this route.

@@ -4,6 +4,7 @@ Only the local authenticated coordinator writes GitHub. No credential enters a V
 No historical Issue173 permission is accepted. Unknown state always stops.
 """
 import json
+import hashlib
 import re
 import secrets
 import subprocess
@@ -22,6 +23,10 @@ PREFIX = "SAFESHIFT_INTERNVL_V2_CHALLENGE "
 LIMITS = {"jobs": 3, "loads": 1, "calls": 1, "seconds": 1800, "physical_gpu_seconds": 3600}
 ORIGINAL_ARCHIVE = "035c4d9b0216378e23ecc812e1221d68fe451ec25a9cbc3fd8977b5794690619"
 PHASES = ("launch", "setup", "worker", "load", "call")
+DELEGATION_COMMENT = 6625594194
+DELEGATION_SHA256 = "52422be8930f419edb046eb709728429628f215853c41b0006a39b4e42baf77b"
+DELEGATED_MODE = "OWNER_PREAUDIT_TECHNICAL_TRIAL_V1"
+JOB1_FINISHED_DIGEST = "a319f767c07809e21d42367bcf158763b9c3ec380a3ccc9c739a1b8c374d829b"
 _capability = None
 
 
@@ -60,6 +65,10 @@ def remote_record(name, slot=None):
     if ref is None:
         return None
     require(ref["ref"] == "refs/tags/" + key and ref["object"]["type"] == "tag", "LEDGER_REF_TYPE")
+    return tag_record(ref, key)
+
+
+def tag_record(ref, key):
     tag = public_get("/git/tags/" + ref["object"]["sha"])
     require(tag["tag"] == key and tag["object"]["type"] == "commit", "LEDGER_TAG_TYPE")
     record = json.loads(tag["message"])
@@ -67,6 +76,29 @@ def remote_record(name, slot=None):
             and record["campaign"] == CAMPAIGN and record["name"] == key
             and record["head"] == tag["object"]["sha"], "LEDGER_OBJECT_BINDING")
     return record["value"]
+
+
+def active_submissions():
+    """One bounded ref snapshot; avoid re-fetching terminal history every child.
+
+    The original job1 proof is still verified separately against its exact digest.
+    Immutable tags cannot be updated by this runner. Head checks remain live.
+    """
+    rows = public_get("/git/matching-refs/tags/" + CAMPAIGN + "/?cache=" + str(time.time_ns()))
+    require(type(rows) is list and len(rows) <= 32, "LEDGER_REF_SNAPSHOT_BOUND")
+    refs = {}
+    for row in rows:
+        require(row["ref"] not in refs and row["object"]["type"] == "tag", "LEDGER_REF_SNAPSHOT_TYPE")
+        refs[row["ref"]] = row
+    active = []
+    for slot in range(1, 4):
+        name = record_name("submission", slot)
+        ref = refs.get("refs/tags/" + name)
+        finished = "refs/tags/" + record_name("finished", slot) in refs
+        require(not finished or ref is not None, "ORPHAN_FINISHED_LEDGER")
+        if ref is not None and not finished:
+            active.append((slot, tag_record(ref, name)))
+    return active
 
 
 def github_post(path, payload):
@@ -122,11 +154,20 @@ def validate_request(request):
 
 
 def read_grant(number):
-    grant = comment_record(number, "INTERNVL_V2_RELEASE_V1")
-    require(set(grant) == {"campaign", "reviewed_head", "runtime_commit", "manifest_sha256",
+    delegated = False
+    try:
+        grant = comment_record(number, "INTERNVL_V2_RELEASE_V1")
+    except ValueError as error:
+        if str(error) != "EXACT_MACHINE_READABLE_RECORD_REQUIRED":
+            raise
+        grant = comment_record(number, "INTERNVL_V2_DELEGATED_RELEASE_V1")
+        delegated = True
+    common = {"campaign", "reviewed_head", "runtime_commit", "manifest_sha256",
         "notebook_sha256", "notebook_code_sha256", "request", "request_sha256", "slot", "mode",
-        "job", "version", "issued_unix", "expires_unix", "limits", "chatgpt_review_comment",
-        "antigravity_audit_comment", "predecessors"}, "EXACT_RELEASE_FIELDS")
+        "job", "version", "issued_unix", "expires_unix", "limits", "predecessors"}
+    extra = {"authorization_mode", "authority_comment", "authority_sha256", "independent_audit",
+             "research_scientific_qualification"} if delegated else {"chatgpt_review_comment", "antigravity_audit_comment"}
+    require(set(grant) == common | extra, "EXACT_RELEASE_FIELDS")
     require(grant["campaign"] == CAMPAIGN and grant["job"] == job(grant["slot"])
             and grant["mode"] in ("preflight", "native") and type(grant["version"]) is int
             and grant["version"] == 1 and grant["limits"] == LIMITS
@@ -139,11 +180,29 @@ def read_grant(number):
     require(type(grant["issued_unix"]) is int and type(grant["expires_unix"]) is int
             and 0 < grant["expires_unix"] - grant["issued_unix"] <= 1800
             and grant["issued_unix"] <= time.time() < grant["expires_unix"], "RELEASE_EXPIRED_OR_TOO_LONG")
-    require(grant["chatgpt_review_comment"] != grant["antigravity_audit_comment"], "INDEPENDENT_AUDIT_REQUIRED")
-    for role, key in (("CHATGPT", "chatgpt_review_comment"), ("ANTIGRAVITY", "antigravity_audit_comment")):
-        review = comment_record(grant[key], "INTERNVL_V2_REVIEW_V1")
-        require(review == {"role": role, "head": grant["reviewed_head"],
-            "request_sha256": grant["request_sha256"], "verdict": "PASS"}, "EXACT_REVIEW_AUDIT_REQUIRED")
+    if delegated:
+        require(type(number) is int and number > DELEGATION_COMMENT
+                and grant["authorization_mode"] == DELEGATED_MODE
+                and grant["authority_comment"] == DELEGATION_COMMENT
+                and grant["authority_sha256"] == DELEGATION_SHA256
+                and grant["independent_audit"] == "PENDING_POST_TRIAL"
+                and grant["research_scientific_qualification"] == "NOT_ESTABLISHED"
+                and (grant["slot"], grant["mode"]) in ((2, "preflight"), (3, "native")), "EXACT_OWNER_TECHNICAL_DELEGATION")
+        authority = public_get("/issues/comments/" + str(DELEGATION_COMMENT))
+        require(authority["user"]["login"] == "tantdna2" and authority["issue_url"] == API + "/issues/177"
+                and hashlib.sha256(authority["body"].encode()).hexdigest() == DELEGATION_SHA256,
+                "OWNER_DELEGATION_CHANGED_OR_WRONG_AUTHOR")
+        first = remote_record("finished", 1)
+        require(first is not None and digest(first) == JOB1_FINISHED_DIGEST
+                and first["terminal"] == "ERROR" and first["proof"] == "ZERO_CALL_CONFIRMED"
+                and first["calls"] == 0 and first["weights_loaded"] is False,
+                "IMMUTABLE_JOB1_ZERO_CALL_PROOF_REQUIRED")
+    else:
+        require(grant["chatgpt_review_comment"] != grant["antigravity_audit_comment"], "INDEPENDENT_AUDIT_REQUIRED")
+        for role, key in (("CHATGPT", "chatgpt_review_comment"), ("ANTIGRAVITY", "antigravity_audit_comment")):
+            review = comment_record(grant[key], "INTERNVL_V2_REVIEW_V1")
+            require(review == {"role": role, "head": grant["reviewed_head"],
+                "request_sha256": grant["request_sha256"], "verdict": "PASS"}, "EXACT_REVIEW_AUDIT_REQUIRED")
     check_head(grant)
     require(type(grant["predecessors"]) is list and len(grant["predecessors"]) == grant["slot"] - 1,
             "COMPLETE_PREDECESSOR_RELEASE")
@@ -161,8 +220,7 @@ def check_head(grant):
 def context(spec, runtime_commit, slot=None):
     from safeshift.internvl_v2_runtime import check_source
     check_source(spec)
-    active = [(i, remote_record("submission", i)) for i in range(1, 4)]
-    active = [(i, r) for i, r in active if r is not None and remote_record("finished", i) is None]
+    active = active_submissions()
     require(len(active) == 1, "REVIEW_HOLD_EXACTLY_ONE_ACTIVE_SUBMISSION")
     number, submission = active[0]
     require(slot is None or number == slot, "ACTIVE_JOB_MISMATCH")

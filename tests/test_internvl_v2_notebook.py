@@ -79,7 +79,7 @@ for args in (['--mode','execute'], ['--worker','native']):
 from safeshift import internvl_v2_campaign as control
 from safeshift.internvl_v2_runtime import source_spec
 from scripts.internvl_v2_campaign import launch
-control.remote_record = lambda *a, **k: None
+control.active_submissions = lambda: []
 try: launch(source_spec(), '0' * 40)
 except ValueError as error: assert 'REVIEW_HOLD' in str(error)
 else: raise AssertionError('CAMPAIGN_FENCE_BYPASS')

@@ -248,7 +248,7 @@ def coordinate(api, grant, seconds, evidence=None):
     def stream():
         # Only re-open the read-only stream. Never restart the coordinator,
         # re-submit a notebook, repeat a permit write or repeat a model call.
-        for connection in range(4):
+        for connection in range(8):
             if stop.is_set():
                 return
             put('connection', connection)
@@ -460,13 +460,20 @@ def verify_result(archive, grant, state):
                 "calls": 0, "owner_slots_consumed": 0, "native_execution": "BLOCKED"}, "PREFLIGHT_RESULT_CONTRADICTION")
         else:
             require(summary["status"] == "TECHNICAL_ERROR", "UNKNOWN_RESULT_STATUS")
-    return {"binding": digest(grant), "slot": grant["slot"], "terminal": state,
+    result = {"binding": digest(grant), "slot": grant["slot"], "terminal": state,
         "status": summary["status"] if state == "COMPLETE" else "TECHNICAL_ERROR",
         "internal_status": summary["status"], "mode": grant["mode"], "archive_sha256": sha(archive),
         "logs_sha256": digest(logs), "request_sha256": grant["request_sha256"],
         "manifest_sha256": grant["manifest_sha256"], "calls": markers,
         "weights_loaded": summary["weights_loaded"], "proof": "ZERO_CALL_CONFIRMED" if zero else "CONSUMED_OR_UNKNOWN",
         "members": len(members) + 1, "gpu_budget": budget}
+    if grant.get("authorization_mode") == control.DELEGATED_MODE:
+        require(summary["independent_audit"] == "PENDING_POST_TRIAL"
+                and summary["research_scientific_qualification"] == "NOT_ESTABLISHED"
+                and summary["authorization_mode"] == control.DELEGATED_MODE, "DELEGATED_RESULT_SCOPE")
+        result.update(authorization_mode=control.DELEGATED_MODE, independent_audit="PENDING_POST_TRIAL",
+                      research_scientific_qualification="NOT_ESTABLISHED")
+    return result
 
 
 def predecessors(api, grant, directory):

@@ -61,6 +61,15 @@ class MemoryTests(unittest.TestCase):
                 (cg / name).write_text(content)
                 self.assertEqual(memory.snapshot(proc, cg)["status"], "INCOMPLETE")
 
+    def test_optional_kernel_peak_absence_is_explicit_not_missing_required_ram(self):
+        with tempfile.TemporaryDirectory() as d:
+            proc, cg = self.fixture(Path(d))
+            (cg / "memory.peak").unlink()
+            value = memory.snapshot(proc, cg)
+            self.assertEqual(value["status"], "OBSERVED")
+            self.assertEqual(value["optional_unavailable"], ["memory.peak"])
+            self.assertEqual(value["gate_memory"]["available_bytes"], 28 * 2**30)
+
     def test_exact_16gib_floor_unchanged_failure_snapshot_and_boundary(self):
         from types import SimpleNamespace as NS
         for available in (16 * 2**30 - 1, 16 * 2**30):

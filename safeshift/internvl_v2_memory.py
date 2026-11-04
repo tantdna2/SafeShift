@@ -31,6 +31,9 @@ def snapshot(proc=Path("/proc"), cgroup=Path("/sys/fs/cgroup")):
         observed["errors"].append({"file": "gate_memory", "type": type(error).__name__})
     observed["cgroup"] = {}
     for name in ("memory.current", "memory.max", "memory.peak", "memory.stat", "memory.events"):
+        if name == "memory.peak" and not (cgroup / name).is_file():
+            observed["optional_unavailable"] = [name]
+            continue
         value = text(cgroup / name)
         if not value:
             continue
@@ -49,7 +52,7 @@ def snapshot(proc=Path("/proc"), cgroup=Path("/sys/fs/cgroup")):
             if rest.strip().endswith("kB") and rest.split()[0].isdigit()}
     cg = observed["cgroup"]
     stats = cg.get("memory.stat", {})
-    if (not all(k in cg for k in ("memory.current", "memory.max", "memory.peak", "memory.events"))
+    if (not all(k in cg for k in ("memory.current", "memory.max", "memory.events"))
             or not all(type(stats.get(k)) is int and stats[k] >= 0 for k in ("anon", "file"))
             or type(observed["process"]["status"].get("VmRSS")) is not int):
         observed["errors"].append({"file": "required_fields", "type": "MISSING_OR_INVALID_MEMORY_FIELDS"})

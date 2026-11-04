@@ -154,6 +154,9 @@ def launch(spec, runtime_commit, *, output=Path("/kaggle/working"), scratch_pare
         "load_reservations": 0, "weights_loaded": False, "call_reservations": 0, "native_call_markers": 0}
     result.update(campaign=control.CAMPAIGN, slot=grant["slot"], binding=ctx["binding"],
                   mode=grant["mode"], scientific_qualified=False, automatic_retry=False)
+    if grant.get("authorization_mode") == control.DELEGATED_MODE:
+        result.update(authorization_mode=control.DELEGATED_MODE, independent_audit="PENDING_POST_TRIAL",
+                      research_scientific_qualification="NOT_ESTABLISHED")
     write(out / "summary.json", result)
     # Explicit final ledger, even on a caught failure. Hard kill/failed export is UNKNOWN.
     write(out / "campaign-end.json", {"binding": ctx["binding"], "native_call_markers": result["native_call_markers"],

@@ -1,5 +1,26 @@
 # PR177: exact-release technical campaign
 
+## Effective Owner directive6625594194 — audit after the technical outcome
+
+[Owner instruction](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194)
+explicitly replaces the pre-run review/audit stop for this technical campaign.
+Implement `OWNER_PREAUDIT_TECHNICAL_TRIAL_V1` as a separate release version;
+authenticate the exact Owner comment/body digest and a fresh Owner-authored
+PR177 release for slot2/preflight or slot3/native only. Never invent or inherit
+an audit PASS. Receipts must say `PENDING_POST_TRIAL` and `NOT_ESTABLISHED` for
+independent audit and scientific qualification respectively. Existing audited
+release parsing remains available for historical custody; exact HEAD/notebook/
+manifest/request, expiry, nonce, three-job budget and global one-load/call remain.
+The original job1 finished digest/archive/positive zero-call proof are mandatory
+and immutable. Job2 must COMPLETE with positive verified memory/environment
+before job3. Final review and independent audit are required before merge/use.
+
+Job1 exhausted four90s idle log connections before reconciliation. The same
+read-only coordinator will permit eight bounded stream connections (no new push,
+permit replay or model call) so silent setup/load can span the600s server budget.
+Memory peak is recorded when available; kernel support for `memory.peak` is not
+required for anon/file/current/max/RSS observations or the unchanged16GiB gate.
+
 ## Current repair directive6625040124: remaining slots preserved
 
 [Owner directive](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625040124)

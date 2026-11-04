@@ -1,6 +1,22 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR177 source-bound RAM repair, fresh review/audit required
+## CURRENT — Owner delegates technical execution before final audit
+
+[Owner directive6625594194](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194)
+supersedes the pre-run source-review/Antigravity stop for this bounded technical
+campaign. The separate versioned `OWNER_PREAUDIT_TECHNICAL_TRIAL_V1` mode verifies
+the authentic Owner comment/body digest and fresh exact-source grant, plus the
+immutable job1 finished zero-call digest. Only slot2/preflight and slot3/native
+are eligible. Receipts explicitly retain INDEPENDENT_AUDIT=PENDING_POST_TRIAL and
+RESEARCH_SCIENTIFIC_QUALIFICATION=NOT_ESTABLISHED; no earlier audit PASS is reused.
+Final review/audit remain required before merge or scientific use.
+
+Job1 remains ERROR/zero calls/1200 reserved seconds spent. Current work tests and
+packages the delegated mode, then runs job2 and, only after verified COMPLETE
+preflight, job3. RAM16GiB, exact grammar/checkpoint/C1/parser/HNLO/ordinal0 and
+three-job/3600-reservation/one-load/one-generate ceilings remain unchanged.
+
+## Historical — RAM repair and now-superseded pre-run audit gate
 
 [Owner directive6625040124](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625040124)
 authorizes the same session/branch/PR to diagnose, repair and test the RAM issue,
