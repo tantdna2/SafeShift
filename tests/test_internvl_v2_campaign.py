@@ -36,6 +36,50 @@ def challenge(g, phase, parent="", nonce="a"):
             "phase": phase, "parent_nonce": parent, "nonce": nonce * 64}
 
 
+def positive_files(g):
+    """Small synthetic receipts with the actual production field contracts."""
+    from safeshift.candidates.train_runtime import pins
+    from scripts.internvl_v2 import policy
+    b = policy()
+    resources = {"memory": {"available_bytes": 32 * 2**30}, "devices": [1, 1],
+        "free_bytes": [40 * 2**30] * 2, "requested_reserves_bytes": [b[k] * 2**20 for k in ("free_scratch_mib", "free_output_mib")]}
+    descriptor = read(runtime.ROOT / "configs/grammar/internvl35_v2_runtime.json")
+    values = {"original-binding.json": g["request"],
+        "checkpoint.json": {"status": "ACTUAL_BYTES_VERIFIED", "weights_loaded": False,
+            "model": descriptor["checkpoint"], "revision": descriptor["revision"]},
+        "processor.json": {"status": "CPU_SOFTWARE_PASS", "scope": "SYNTHETIC_PROCESSOR_NO_MODEL_FORWARD",
+            "loads": 0, "calls": 0, "mask_steps": 40, "logit_width": 151936, "tokenizer_size": 151679},
+        "software.json": {"versions": pins("internvl35"), "cuda_build": "12.4", "compiled_cpu_nms": "PASS"},
+        "hardware.json": {"physical_gpus": [{"index": i, "name": "Tesla T4", "driver": b["driver_versions"][0],
+            "free_mib": 15000} for i in range(2)]},
+        "cuda.json": {"fp16": "MEASURED", "weights_loaded": False, "gpus": [{"index": 0, "free_bytes": 15 * 2**30}]},
+        "allocation.json": {"cleanup_verified": True, "allocations": [{"requested_bytes": 2**20,
+            "written_bytes": 2**20, "allocated_bytes": 2**20, "fsync": True} for _ in range(2)]},
+        "preflight.json": {"status": "LIVE_GPU_PREFLIGHT_PASS", "weights_loaded": False, "inference_verified": False,
+            "scientific_qualified": False, "loads": 0, "calls": 0, "owner_slots_consumed": 0, "native_execution": "BLOCKED"}}
+    for name in ("initial-resources.json", "resources.json", "preload-resources.json"):
+        values[name] = copy.deepcopy(resources)
+    parent = ""
+    for i, phase in enumerate(("launch", "setup", "worker")):
+        values[phase + "-permit.json"] = challenge(g, phase, parent, str(i))
+        parent = str(i) * 64
+    for stage in ("setup", "worker"):
+        values[stage + "-supervisor.json"] = {"schema": "fresh-process-supervision-v1", "status": "EXITED",
+            "returncode": 0, "group_kill_sent": True, "automatic_retry": False, "seconds": 1.0, "log_bytes": 19}
+    return values
+
+
+def remote(g, values=None):
+    values = positive_files(g) if values is None else values
+    def record(name, slot=None):
+        if name == "submission" and slot == g["slot"]:
+            return {"grant": g, "gpu_budget": submit.gpu_budget(g)}
+        if name in ("launch", "setup", "worker") and slot == g["slot"]:
+            return values[name + "-permit.json"]
+        return None
+    return record
+
+
 class CampaignTests(unittest.TestCase):
     def setUp(self):
         self.stack = ExitStack()
@@ -229,7 +273,7 @@ class CampaignTests(unittest.TestCase):
                 from safeshift.pilot.artifacts import verify_archive
                 self.assertIn("campaign-end.json", verify_archive(archives[0]))
                 # No logs: deliberately cannot claim positive zero-call remotely.
-                with patch.object(c, "remote_record", return_value=None), self.assertRaisesRegex(ValueError, "LOG_CUSTODY"):
+                with patch.object(c, "remote_record", side_effect=remote(g)), self.assertRaisesRegex(ValueError, "LOG_CUSTODY"):
                     submit.verify_result(archives[0], g, "ERROR")
 
     def test_submit_timeout_burns_slot_and_no_second_post_even_unknown(self):
@@ -251,6 +295,8 @@ class CampaignTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "NONEMPTY_LEDGER"):
                 submit.submit(api, g, 6622148400, notebook, Path(d) / "second", Path(d))
             self.assertEqual(api.kernels_push.call_count, 1)
+            self.assertEqual(api.kernels_push.call_args.kwargs["timeout"], "600")
+            self.assertEqual(records[("submission", 1)]["gpu_budget"]["reserved_physical_gpu_seconds"], 1200)
             self.assertNotIn("SECRET_URL", (Path(d) / "first/dispatch-error.json").read_text())
 
     def test_missing_grant_blocks_before_kaggle_import(self):
@@ -331,25 +377,27 @@ class CampaignTests(unittest.TestCase):
 
     def test_successful_preflight_controller_archive_and_tampering(self):
         g = grant(); ctx = {"grant": g, "binding": digest(g)}
+        values = positive_files(g)
         def supervised(command, **kw):
             out = kw["receipt"].parent
             kw["log"].write_bytes(b"SYNTHETIC_LOG_ONLY\n")
-            write(kw["receipt"], {"schema": "fresh-process-supervision-v1", "status": "EXITED", "automatic_retry": False})
+            write(kw["receipt"], values[kw["receipt"].name])
             if command[command.index("--worker")+1] == "setup":
                 write(out / "runtime.json", {"python": "synthetic-python", "env": {}})
+                write(out / "setup-permit.json", values["setup-permit.json"])
             else:
-                write(out / "original-binding.json", g["request"])
-                for name in ("checkpoint.json", "processor.json", "cuda.json", "preload-resources.json", "preflight.json"):
-                    write(out / name, {"scope": "SYNTHETIC"})
+                for name, value in values.items():
+                    if not (out / name).exists():
+                        write(out / name, value)
         with tempfile.TemporaryDirectory() as d, patch.object(c, "context", return_value=ctx), \
-                patch.object(c, "permit", return_value={}), patch.object(c, "remote_record", return_value=None), \
-                patch.object(run.environment, "resources", return_value={}), patch.object(run.supervision, "run", side_effect=supervised):
+                patch.object(c, "permit", return_value=values["launch-permit.json"]), patch.object(c, "remote_record", side_effect=remote(g, values)), \
+                patch.object(run.environment, "resources", return_value=values["initial-resources.json"]), patch.object(run.supervision, "run", side_effect=supervised):
             result = run.launch(runtime.source_spec(), "e" * 40, output=Path(d) / "out", scratch_parent=Path(d) / "scratch")
             archive = next((Path(d) / "out").glob("*.zip"))
             verified = submit.verify_result(archive, g, "COMPLETE")
             self.assertEqual(verified["proof"], "ZERO_CALL_CONFIRMED")
             self.assertEqual(result["status"], "LIVE_GPU_PREFLIGHT_PASS")
-            with patch.object(c, "remote_record", return_value={}), self.assertRaises(ValueError):
+            with patch.object(c, "remote_record", side_effect=lambda name, slot=None: {} if name in ("load", "call") else remote(g, values)(name, slot)), self.assertRaises(ValueError):
                 submit.verify_result(archive, g, "COMPLETE")
             with self.assertRaisesRegex(ValueError, "NOT_TERMINAL"):
                 submit.verify_result(archive, g, "RUNNING")
@@ -379,6 +427,192 @@ class CampaignTests(unittest.TestCase):
                 patch.object(c, "permit", side_effect=TimeoutError), patch.object(run, "export", side_effect=OSError("DISK_FULL")), \
                 self.assertRaises(OSError):
             run.launch(runtime.source_spec(), "e" * 40, output=Path(d) / "out", scratch_parent=Path(d) / "scratch")
+
+
+class ReviewBlockerTests(unittest.TestCase):
+    def setUp(self):
+        self.stack = ExitStack()
+        self.addCleanup(self.stack.close)
+        self.stack.enter_context(patch.object(c, "public_get", side_effect=AssertionError("NO_NETWORK")))
+        self.stack.enter_context(patch.object(c, "github_post", side_effect=AssertionError("NO_NETWORK")))
+
+    def archive(self, root, g, *, mutate=None, native_status=None):
+        files = positive_files(g)
+        files.update({"release.json": {"grant": g}, "source.json": runtime.source_spec(),
+            "campaign-start.json": {"binding": digest(g), "slot": g["slot"], "mode": g["mode"],
+                "native_calls_at_start": 0, "loads_at_start": 0},
+            "campaign-end.json": {"binding": digest(g), "native_call_markers": 0, "call_reservations": 0,
+                "weights_loaded": False, "load_permit": False, "call_permit": False},
+            "summary.json": {"campaign": c.CAMPAIGN, "slot": g["slot"], "binding": digest(g), "mode": g["mode"],
+                "status": "LIVE_GPU_PREFLIGHT_PASS", "error": None, "native_call_markers": 0,
+                "call_reservations": 0, "weights_loaded": False}})
+        ledger = {("submission", g["slot"]): {"grant": g, "gpu_budget": submit.gpu_budget(g)}}
+        for phase in ("launch", "setup", "worker"):
+            ledger[phase, g["slot"]] = copy.deepcopy(files[phase + "-permit.json"])
+        if native_status:
+            from test_internvl_v2_runtime import request
+            r = request(runtime.source_spec(), g["request"]["image_sha256"])
+            # Synthetic identity must match the release even in archive-only tests.
+            r["sample_id"] = "SYNTHETIC"
+            self.assertEqual(digest(r["sample_id"]), g["request"]["sample_id_sha256"])
+            files["execution-request.json"] = r
+            files["loaded.json"] = {"scope": "SYNTHETIC"}
+            for name in ("sample/native_call.json", "sample/reservation.json", "sample/native.json",
+                         "sample/processors.json", "sample/grammar.json"):
+                files[name] = {"scope": "SYNTHETIC"}
+            files["sample/raw.json"] = {"hnlo": None, "hnlo_status": runtime.HNLO_STATUS,
+                "binding": {"input_sha256": r["image_sha256"]}}
+            files["sample/result.json"] = {"status": native_status, "hnlo": None, "hnlo_status": runtime.HNLO_STATUS,
+                "raw_sha256": digest(files["sample/raw.json"])}
+            files["summary.json"].update(status=native_status, native_call_markers=1, call_reservations=1, weights_loaded=True)
+            files["campaign-end.json"].update(native_call_markers=1, call_reservations=1, weights_loaded=True,
+                                               load_permit=True, call_permit=True)
+            for phase in ("load", "call"):
+                event = challenge(g, phase)
+                files[phase + "-permit.json"] = event
+                ledger[phase, None] = ledger[phase, g["slot"]] = event
+        if mutate:
+            mutate(files)
+        out = root / "output"
+        out.mkdir()
+        for name, value in files.items():
+            if value is not None:
+                write(out / name, value)
+        for stage in ("setup", "worker"):
+            if files.get(stage + "-supervisor.log", True) is not None:
+                (out / (stage + "-supervisor.log")).write_bytes(b"SYNTHETIC_LOG_ONLY\n")
+        archive = root / (g["job"].split("/")[1] + ".zip")
+        export(out, archive)
+        return archive, ledger
+
+    def test_failed_kaggle_job_never_preflight_pass_complete_is_pass(self):
+        for state in ("COMPLETE", "ERROR", "CANCELLED"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as d:
+                g = grant()
+                archive, ledger = self.archive(Path(d), g)
+                with patch.object(c, "remote_record", side_effect=lambda name, slot=None: ledger.get((name, slot))):
+                    result = submit.verify_result(archive, g, state)
+                self.assertEqual(result["internal_status"], "LIVE_GPU_PREFLIGHT_PASS")
+                self.assertEqual(result["status"], "LIVE_GPU_PREFLIGHT_PASS" if state == "COMPLETE" else "TECHNICAL_ERROR")
+                self.assertEqual(result["gpu_budget"]["reserved_physical_gpu_seconds"], 1200)
+                self.assertEqual(result["proof"], "ZERO_CALL_CONFIRMED")
+
+    def test_missing_logs_worker_receipts_and_conflicting_environment_fail_closed(self):
+        mutations = []
+        for name in ("setup-supervisor.log", "worker-supervisor.log", "worker-supervisor.json", "setup-supervisor.json",
+                     "worker-permit.json", "preflight.json", "hardware.json", "software.json", "allocation.json"):
+            mutations.append(lambda f, name=name: f.update({name: None}))
+        for name, field, value in (("worker-supervisor.json", "status", "CHILD_FAILURE"),
+            ("worker-supervisor.json", "returncode", 1), ("worker-supervisor.json", "seconds", -1),
+            ("worker-supervisor.json", "group_kill_sent", False), ("preflight.json", "status", "BLOCKED"),
+            ("preflight.json", "calls", 1), ("processor.json", "status", "FAIL"),
+            ("cuda.json", "fp16", "NOT_RUN"), ("checkpoint.json", "revision", "0" * 40),
+            ("summary.json", "slot", 3), ("summary.json", "error", {"type": "Error"}),
+            ("worker-permit.json", "parent_nonce", "f" * 64)):
+            mutations.append(lambda f, name=name, field=field, value=value: f[name].update({field: value}))
+        for i, mutate in enumerate(mutations):
+            with self.subTest(case=i), tempfile.TemporaryDirectory() as d:
+                g = grant(); archive, ledger = self.archive(Path(d), g, mutate=mutate)
+                with patch.object(c, "remote_record", side_effect=lambda name, slot=None: ledger.get((name, slot))), \
+                        self.assertRaises((ValueError, KeyError)):
+                    submit.verify_result(archive, g, "COMPLETE")
+
+    def test_native_success_invalid_also_require_complete_no_second_call(self):
+        for internal in ("SUCCESS", "INVALID", "TECHNICAL_ERROR"):
+            for state in ("COMPLETE", "ERROR", "CANCELLED"):
+                with self.subTest(internal=internal, state=state), tempfile.TemporaryDirectory() as d:
+                    g = grant(2, "native")
+                    g["request"]["sample_id_sha256"] = digest("SYNTHETIC")
+                    g["request_sha256"] = digest(g["request"])
+                    archive, ledger = self.archive(Path(d), g, native_status=internal)
+                    with patch.object(c, "remote_record", side_effect=lambda name, slot=None: ledger.get((name, slot))):
+                        result = submit.verify_result(archive, g, state)
+                        self.assertEqual(result["status"], internal if state == "COMPLETE" else "TECHNICAL_ERROR")
+                        with self.assertRaisesRegex(ValueError, "NATIVE_ALREADY_RESERVED"):
+                            submit.predecessors(Mock(), grant(3, "native"), Path(d))
+
+    def test_predecessor_complete_required_to_unlock_native(self):
+        for state in ("COMPLETE", "ERROR", "CANCELLED"):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as d:
+                prior = grant()
+                archive, ledger = self.archive(Path(d), prior)
+                reader = lambda name, slot=None: ledger.get((name, slot))
+                with patch.object(c, "remote_record", side_effect=reader), patch.object(submit, "live_identity"):
+                    finished = submit.verify_result(archive, prior, state)
+                    ledger["finished", 1] = finished
+                    next_grant = grant(2, "native")
+                    next_grant["predecessors"] = [digest(finished)]
+                    api = Mock(); api.kernels_status.return_value = NS(status=state)
+                    if state == "COMPLETE":
+                        self.assertEqual(submit.predecessors(api, next_grant, Path(d)), [finished])
+                    else:
+                        with self.assertRaisesRegex(ValueError, "PREFLIGHT_REQUIRED"):
+                            submit.predecessors(api, next_grant, Path(d))
+                        # Failed zero-call job can still be a preflight repair predecessor.
+                        next_grant["mode"] = "preflight"
+                        self.assertEqual(submit.predecessors(api, next_grant, Path(d)), [finished])
+
+    def test_one_two_three_jobs_never_exceed_cumulative_physical_budget(self):
+        history = []
+        for slot, state in enumerate(("COMPLETE", "ERROR", "CANCELLED"), 1):
+            g = grant(slot)
+            budget = submit.cumulative_budget(g, history)
+            self.assertEqual(budget["cumulative_reserved_physical_gpu_seconds"], slot * 1200)
+            self.assertEqual(budget["server_timeout_seconds"], 600)
+            self.assertIsNone(budget["measured_usage"])
+            history.append({"slot": slot, "terminal": state, "gpu_budget": budget})
+        with self.assertRaisesRegex(ValueError, "THREE_JOB_BUDGET"):
+            submit.gpu_budget({**g, "slot": 4})
+        with patch.object(submit, "JOB_SECONDS", 601), self.assertRaisesRegex(ValueError, "EXHAUSTED"):
+            submit.gpu_budget(grant(3))
+
+    def test_missing_invalid_timing_cannot_refund_or_unlock_budget(self):
+        g = grant()
+        good = submit.gpu_budget(g)
+        for bad in (None, {}, {**good, "server_timeout_seconds": -1}, {**good, "server_timeout_seconds": True},
+            {**good, "server_timeout_seconds": 600.0}, {**good, "reserved_physical_gpu_seconds": 0},
+            {**good, "physical_gpus": 1}, {**good, "binding": "f" * 64},
+            {**good, "measured_usage": 1}, {**good, "cumulative_reserved_physical_gpu_seconds": 3601}):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                submit.check_budget(bad, g)
+        for prior in ([], [{"slot": 1, "terminal": "RUNNING", "gpu_budget": good}],
+            [{"slot": 1, "terminal": "ERROR", "gpu_budget": {**good, "reserved_physical_gpu_seconds": 0}}]):
+            with self.assertRaises(ValueError):
+                submit.cumulative_budget(grant(2), prior)
+
+    def test_old_or_missing_submission_budget_blocks_even_valid_zip(self):
+        with tempfile.TemporaryDirectory() as d:
+            g = grant(); archive, ledger = self.archive(Path(d), g)
+            for value in (None, {"grant": g}, {"grant": g, "gpu_budget": {}}):
+                ledger["submission", 1] = value
+                with patch.object(c, "remote_record", side_effect=lambda name, slot=None: ledger.get((name, slot))), \
+                        self.assertRaises(ValueError):
+                    submit.verify_result(archive, g, "COMPLETE")
+
+    def test_each_slot_sends_only_reserved_server_cap_and_failure_never_refunds(self):
+        for slot in (1, 2, 3):
+            with self.subTest(slot=slot), tempfile.TemporaryDirectory() as d:
+                g = grant(slot)
+                prior = [{"slot": i, "terminal": "ERROR", "gpu_budget": submit.gpu_budget(grant(i))}
+                         for i in range(1, slot)]
+                records = {}
+                def create(name, value, head, slot=None):
+                    self.assertNotIn((name, slot), records)
+                    records[name, slot] = value
+                api = Mock(); api.kernels_push.side_effect = TimeoutError("unknown")
+                api.kernels_status.return_value = NS(status="UNKNOWN")
+                notebook = Path(d) / "synthetic.ipynb"; notebook.write_text("{}")
+                with patch.object(submit, "validate_local_release", return_value=g), patch.object(c, "check_head"), \
+                    patch.object(c, "remote_record", side_effect=lambda name, slot=None: records.get((name, slot))), \
+                    patch.object(c, "create_record", side_effect=create), patch.object(submit, "predecessors", return_value=prior), \
+                    patch.object(submit, "inventory", return_value={}):
+                    with self.assertRaisesRegex(ValueError, "UNKNOWN_JOB"):
+                        submit.submit(api, g, 6622148400, notebook, Path(d) / "stage", Path(d))
+                    with self.assertRaisesRegex(ValueError, "NONEMPTY_LEDGER"):
+                        submit.submit(api, g, 6622148400, notebook, Path(d) / "again", Path(d))
+                self.assertEqual(api.kernels_push.call_count, 1)
+                self.assertEqual(api.kernels_push.call_args.kwargs, {"timeout": "600", "acc": "NvidiaTeslaT4"})
+                self.assertEqual(records["submission", slot]["gpu_budget"]["cumulative_reserved_physical_gpu_seconds"], slot * 1200)
 
 
 if __name__ == "__main__":

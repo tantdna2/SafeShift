@@ -2,6 +2,19 @@
 
 ## CURRENT — PR177 exact-release preparation, STOP before Kaggle, 04/11/2026
 
+[Direct ChatGPT review6622648900](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622648900)
+rejected `dc6b67a93c89072a8adeed9a3d455b1f897736c5`: failed Kaggle jobs could
+supply a preflight PASS, and cumulative GPU seconds were not enforced.
+The same PR now repairs both gates. Positive outcomes require COMPLETE and
+consistent successful worker/environment receipts; ERROR/CANCELLED retain the
+internal status but are technical failure. GPU scheduling reserves600 wall
+seconds x2 physical T4s per job, no refund, total1200/2400/3600 for slots1/2/3.
+Missing or inconsistent budget/history evidence blocks. This is a conservative
+server-timeout bound, not measured provider usage or a quota-delta estimate.
+Runtime/notebook/scientific bytes are unchanged in this repair; only local
+dispatch/reconciliation, tests and documentation change. New final HEAD must be
+reviewed again, then independently audited, before any execution release.
+
 [Owner/ChatGPT directive 6622148168](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622148168)
 authorizes preparation of a separate one-image V2 technical campaign on the
 existing `feat/internvl-grammar-v2-native` branch / Draft PR177. The next boundary
@@ -12,7 +25,8 @@ exact job-specific release**. No Kaggle activity is authorized before that gate.
 
 Implemented: external HEAD/notebook/request/review binding; create-only GitHub
 campaign/phase tag ledger; local official-SDK coordinator, bounded private
-dispatch and terminal ZIP/log reconciliation. Three jobs total, 1800 seconds/job,
+dispatch and terminal ZIP/log reconciliation. Three jobs total,600 server seconds/job
+(within the1800s grant ceiling),
 one cumulative load/call reservation, original TRAIN ordinal0 only. Explicit
 zero-call sealed evidence and terminal ledger are required before any next job;
 missing/ambiguous evidence never grants replay. Original metadata identity is
@@ -24,7 +38,7 @@ strict parser, grammar bytes, four labels and HNLO N/A remain unchanged.
 receipts for this continuation are recorded separately from the initial PR177
 snapshot below; neither is live Kaggle evidence or an independent audit.
 
-Final CPU evidence at runtime/test commit `7a890a9e96ebffdd04793159197bb90803340f3c`:
+Historical CPU evidence preceding the two rejected gates, runtime/test commit `7a890a9e96ebffdd04793159197bb90803340f3c`:
 Windows117 selected =114 PASS/3 Linux-only SKIP; Linux117 =107 PASS/10 native-only
 SKIP; notebook4/4 PASS. All121 distinct selected tests covered; no final failures
 or errors. [Review packet and exact request](research/evidence/internvl_v2_campaign/review-packet.json)

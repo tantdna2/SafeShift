@@ -16,6 +16,11 @@ campaign script supervises children and seals partial/terminal ledgers and ZIPs.
 `scripts/submit_internvl_v2.py` checks an exact release before importing the
 official SDK, reserves before its single push and reconciles terminal private
 ZIP/log evidence. Unknown counts block; prior grants cannot activate this route.
+Positive preflight/native status also requires live Kaggle COMPLETE and matching
+successful stage/environment receipts. The coordinator reserves1200 physical-GPU
+seconds per slot (two T4s x600s provider timeout), without refunds; all three slots
+sum to3600. Missing source-bound budget records block. This upper bound is separate
+from observed account quota and is not a measurement of actual provider billing.
 `scripts/build_internvl_v2.py` packages committed source into an unsubmitted
 notebook. Tests: `test_internvl_v2_runtime.py`, `test_internvl_v2_campaign.py`,
 `test_internvl_v2_notebook.py`;

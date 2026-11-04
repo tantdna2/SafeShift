@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import hashlib
 import importlib.metadata
 import json
+import math
 from pathlib import Path
 import queue
 import subprocess
@@ -18,6 +19,120 @@ from safeshift.pilot.artifacts import read, write, sha, safe, verify_archive
 from safeshift.pilot.contract import digest
 
 SDK_PINS = {"kaggle": "2.2.5", "kagglesdk": "0.1.38", "requests": "2.34.2"}
+# Conservative reservation, not measured usage: two physical T4s, all three slots.
+# Failed/short jobs never refund their server-enforced maximum allocation.
+JOB_SECONDS = 600
+PHYSICAL_GPUS = 2
+
+
+def gpu_budget(grant):
+    slot = grant["slot"]
+    control.job(slot)
+    require(grant["limits"] == control.LIMITS, "GPU_LIMITS_CHANGED")
+    charged = PHYSICAL_GPUS * JOB_SECONDS
+    require(slot * charged <= control.LIMITS["physical_gpu_seconds"], "CAMPAIGN_GPU_BUDGET_EXHAUSTED")
+    return {"schema": "internvl-v2-gpu-upper-bound-v1", "binding": digest(grant),
+        "reviewed_head": grant["reviewed_head"], "slot": slot,
+        "accounting": "CONSERVATIVE_SERVER_TIMEOUT_NO_REFUND", "measured_usage": None,
+        "machine_shape": "NvidiaTeslaT4", "physical_gpus": PHYSICAL_GPUS,
+        "server_timeout_seconds": JOB_SECONDS, "reserved_physical_gpu_seconds": charged,
+        "cumulative_reserved_physical_gpu_seconds": slot * charged,
+        "campaign_limit_physical_gpu_seconds": control.LIMITS["physical_gpu_seconds"]}
+
+
+def check_budget(record, grant):
+    # Canonical digest also rejects bool/float substitutions for integer seconds.
+    require(type(record) is dict and digest(record) == digest(gpu_budget(grant)),
+            "MISSING_OR_INVALID_GPU_BUDGET_EVIDENCE")
+    return record
+
+
+def cumulative_budget(grant, prior):
+    require(len(prior) == grant["slot"] - 1, "GPU_HISTORY_INCOMPLETE")
+    total = 0
+    for slot, row in enumerate(prior, 1):
+        require(row["slot"] == slot and row["terminal"] in ("COMPLETE", "ERROR", "CANCELLED"),
+                "GPU_HISTORY_NOT_SEQUENTIAL_TERMINAL")
+        budget = row["gpu_budget"]
+        # Each predecessor budget was checked against its original immutable grant.
+        require(type(budget["reserved_physical_gpu_seconds"]) is int
+                and budget["reserved_physical_gpu_seconds"] == PHYSICAL_GPUS * JOB_SECONDS
+                and type(budget["cumulative_reserved_physical_gpu_seconds"]) is int
+                and budget["cumulative_reserved_physical_gpu_seconds"] == slot * PHYSICAL_GPUS * JOB_SECONDS,
+                "GPU_HISTORY_USAGE_UNKNOWN")
+        total += budget["reserved_physical_gpu_seconds"]
+    budget = gpu_budget(grant)
+    require(total + budget["reserved_physical_gpu_seconds"] == budget["cumulative_reserved_physical_gpu_seconds"]
+            <= control.LIMITS["physical_gpu_seconds"], "CAMPAIGN_GPU_BUDGET_EXHAUSTED")
+    return budget
+
+
+def positive_worker_evidence(get, members, grant):
+    """Validate successful stages and environment, not mere receipt existence."""
+    from scripts.internvl_v2 import policy
+    from safeshift.candidates.train_runtime import pins
+    budgets = policy()
+    for stage in ("setup", "worker"):
+        require(stage + "-supervisor.log" in members, "SUCCESS_STAGE_LOG_REQUIRED")
+        row = get(stage + "-supervisor.json")
+        require(row["schema"] == "fresh-process-supervision-v1" and row["status"] == "EXITED"
+                and type(row["returncode"]) is int and row["returncode"] == 0
+                and row["group_kill_sent"] is True and row["automatic_retry"] is False
+                and type(row["seconds"]) in (int, float) and math.isfinite(row["seconds"])
+                and 0 <= row["seconds"] <= JOB_SECONDS
+                and type(row["log_bytes"]) is int and 0 <= row["log_bytes"] <= budgets["max_log_bytes"],
+                "SUCCESS_STAGE_TERMINATION_REQUIRED")
+    parent = ""
+    for phase in ("launch", "setup", "worker"):
+        permit = get(phase + "-permit.json")
+        require(permit == control.remote_record(phase, grant["slot"])
+                and permit["campaign"] == control.CAMPAIGN and permit["slot"] == grant["slot"]
+                and permit["binding"] == digest(grant) and permit["phase"] == phase
+                and permit["parent_nonce"] == parent, "SUCCESS_WORKER_PERMIT_BINDING")
+        parent = permit["nonce"]
+    checkpoint = get("checkpoint.json")
+    descriptor = read(ROOT / "configs/grammar/internvl35_v2_runtime.json")
+    require(checkpoint["status"] == "ACTUAL_BYTES_VERIFIED" and checkpoint["weights_loaded"] is False
+            and checkpoint["model"] == descriptor["checkpoint"] and checkpoint["revision"] == descriptor["revision"],
+            "SUCCESS_CHECKPOINT_EVIDENCE")
+    processor = get("processor.json")
+    require(processor["status"] == "CPU_SOFTWARE_PASS" and processor["scope"] == "SYNTHETIC_PROCESSOR_NO_MODEL_FORWARD"
+            and processor["loads"] == processor["calls"] == 0 and processor["mask_steps"] == 40
+            and processor["logit_width"] == 151936 and processor["tokenizer_size"] == 151679,
+            "SUCCESS_PROCESSOR_EVIDENCE")
+    software = get("software.json")
+    require(software["versions"] == pins("internvl35") and software["cuda_build"] == "12.4"
+            and software["compiled_cpu_nms"] == "PASS", "SUCCESS_SOFTWARE_EVIDENCE")
+    hardware = get("hardware.json")["physical_gpus"]
+    require(len(hardware) == PHYSICAL_GPUS, "SUCCESS_PHYSICAL_GPU_COUNT")
+    for i, gpu in enumerate(hardware):
+        require(gpu["index"] == i and gpu["name"] in ("Tesla T4", "NVIDIA T4")
+                and gpu["driver"] in budgets["driver_versions"]
+                and type(gpu["free_mib"]) is int and gpu["free_mib"] >= budgets["free_mib_per_gpu"][i],
+                "SUCCESS_GPU_EVIDENCE")
+    cuda = get("cuda.json")
+    require(cuda["fp16"] == "MEASURED" and cuda["weights_loaded"] is False and len(cuda["gpus"]) == 1
+            and cuda["gpus"][0]["index"] == 0
+            and type(cuda["gpus"][0]["free_bytes"]) is int
+            and cuda["gpus"][0]["free_bytes"] >= budgets["free_gpu0_runtime_mib"] * 2**20,
+            "SUCCESS_CUDA_EVIDENCE")
+    for name in ("initial-resources.json", "resources.json", "preload-resources.json"):
+        resources = get(name)
+        require(type(resources["memory"]["available_bytes"]) is int
+                and resources["memory"]["available_bytes"] >= budgets["free_ram_mib"] * 2**20,
+                "SUCCESS_RAM_EVIDENCE")
+        wanted = [budgets[k] * 2**20 for k in ("free_scratch_mib", "free_output_mib")]
+        free, devices = resources["free_bytes"], resources["devices"]
+        require(len(free) == len(devices) == 2 and all(type(n) is int and n >= 0 for n in free)
+                and resources["requested_reserves_bytes"] == wanted
+                and (min(free) >= sum(wanted) if devices[0] == devices[1] else all(f >= w for f, w in zip(free, wanted))),
+                "SUCCESS_STORAGE_EVIDENCE")
+    allocation = get("allocation.json")
+    require(allocation["cleanup_verified"] is True and len(allocation["allocations"]) == 2,
+            "SUCCESS_ALLOCATION_EVIDENCE")
+    for row, size in zip(allocation["allocations"], (budgets["scratch_probe_bytes"], budgets["output_probe_bytes"])):
+        require(row["fsync"] is True and row["written_bytes"] == row["requested_bytes"] == size
+                and type(row["allocated_bytes"]) is int and row["allocated_bytes"] >= size, "SUCCESS_ALLOCATION_BYTES")
 
 
 def check_sdk():
@@ -79,6 +194,7 @@ def live_identity(api, grant):
     require(value.metadata.ref == grant["job"] and value.metadata.current_version_number == grant['version']
             and value.metadata.is_private is True, 'LIVE_JOB_VERSION_PRIVACY')
     require(control.code_hash(json.loads(value.blob.source)) == grant['notebook_code_sha256'], 'LIVE_JOB_CODE_DRIFT')
+    require(value.metadata.machine_shape == "NvidiaTeslaT4", "LIVE_GPU_SHAPE_BUDGET_UNKNOWN")
     return value.metadata.id
 
 
@@ -237,13 +353,18 @@ def inventory(api, grant):
     quota = api.quota_view().gpu_quota
     q = {name: int(getattr(quota, field).total_seconds()) for name, field in (
         ("used", "time_used"), ("reserved", "time_reserved"), ("total", "total_time_allowed"))}
-    require(q["reserved"] == 0 and q["total"] - q["used"] >= 3600, "GPU_QUOTA_OR_CONCURRENT_JOB")
+    require(0 <= q["used"] <= q["total"] and q["reserved"] == 0
+            and q["total"] - q["used"] >= gpu_budget(grant)["reserved_physical_gpu_seconds"],
+            "GPU_QUOTA_OR_CONCURRENT_JOB")
     return {"owned_count": len(owned), "owned_sha256": digest(sorted(owned)), "inputs": inputs,
             "quota_seconds": q, "observed_unix": int(time.time())}
 
 
 def verify_result(archive, grant, state):
     require(state in ("COMPLETE", "ERROR", "CANCELLED"), "JOB_NOT_TERMINAL")
+    submission = control.remote_record("submission", grant["slot"])
+    require(submission is not None and submission["grant"] == grant, "GPU_SUBMISSION_EVIDENCE_REQUIRED")
+    budget = check_budget(submission.get("gpu_budget"), grant)
     require(sha(archive) == read(Path(str(archive) + ".sha256.json"))["sha256"], "ARCHIVE_SIDECAR")
     members = verify_archive(archive)
     with zipfile.ZipFile(archive) as bundle:
@@ -258,6 +379,8 @@ def verify_result(archive, grant, state):
         require(all(v["binding"] == digest(grant) for v in (start, end, summary)), "ARCHIVE_BINDING")
         require(start["native_calls_at_start"] == start["loads_at_start"] == 0
                 and start["slot"] == grant["slot"] and start["mode"] == grant["mode"], "POSITIVE_START_LEDGER")
+        require(summary["campaign"] == control.CAMPAIGN and summary["slot"] == grant["slot"]
+                and summary["mode"] == grant["mode"], "SUMMARY_JOB_IDENTITY")
         call = control.remote_record("call")
         load = control.remote_record("load")
         markers = int("sample/native_call.json" in members)
@@ -282,7 +405,11 @@ def verify_result(archive, grant, state):
                             "LOG_BUDGET_EXCEEDED", "SUPERVISOR_EXCEPTION")
                         and supervised["automatic_retry"] is False, "SUPERVISION_CUSTODY")
         zero = (markers == reservations == 0 and call is None and not end["call_permit"])
+        if summary["status"] in ("SUCCESS", "INVALID", "LIVE_GPU_PREFLIGHT_PASS"):
+            require(summary["error"] is None, "POSITIVE_SUMMARY_WITH_ERROR")
+            positive_worker_evidence(get, members, grant)
         if summary["status"] in ("SUCCESS", "INVALID"):
+            require(grant["mode"] == "native", "NATIVE_STATUS_MODE")
             result = get("sample/result.json")
             raw = get("sample/raw.json")
             require(markers == reservations == 1 and call is not None and load is not None
@@ -307,14 +434,18 @@ def verify_result(archive, grant, state):
             for name in ("checkpoint.json", "processor.json", "cuda.json", "preload-resources.json", "preflight.json"):
                 get(name)
             require(get("original-binding.json") == grant["request"], "PREFLIGHT_ORIGINAL_REQUEST")
+            require(get("preflight.json") == {"status": "LIVE_GPU_PREFLIGHT_PASS", "weights_loaded": False,
+                "inference_verified": False, "scientific_qualified": False, "loads": 0,
+                "calls": 0, "owner_slots_consumed": 0, "native_execution": "BLOCKED"}, "PREFLIGHT_RESULT_CONTRADICTION")
         else:
             require(summary["status"] == "TECHNICAL_ERROR", "UNKNOWN_RESULT_STATUS")
     return {"binding": digest(grant), "slot": grant["slot"], "terminal": state,
-        "status": summary["status"], "mode": grant["mode"], "archive_sha256": sha(archive),
+        "status": summary["status"] if state == "COMPLETE" else "TECHNICAL_ERROR",
+        "internal_status": summary["status"], "mode": grant["mode"], "archive_sha256": sha(archive),
         "logs_sha256": digest(logs), "request_sha256": grant["request_sha256"],
         "manifest_sha256": grant["manifest_sha256"], "calls": markers,
         "weights_loaded": summary["weights_loaded"], "proof": "ZERO_CALL_CONFIRMED" if zero else "CONSUMED_OR_UNKNOWN",
-        "members": len(members) + 1}
+        "members": len(members) + 1, "gpu_budget": budget}
 
 
 def predecessors(api, grant, directory):
@@ -326,6 +457,8 @@ def predecessors(api, grant, directory):
         finished = control.remote_record("finished", slot)
         require(submission is not None and finished is not None, "MISSING_TERMINAL_PREDECESSOR")
         prior = submission["grant"]
+        check_budget(submission.get("gpu_budget"), prior)
+        check_budget(finished.get("gpu_budget"), prior)
         require(prior["slot"] == slot and prior["job"] == control.job(slot), "PREDECESSOR_IDENTITY")
         state = str(api.kernels_status(control.job(slot) + "/1").status).split(".")[-1]
         live_identity(api, prior)
@@ -336,10 +469,11 @@ def predecessors(api, grant, directory):
                 "ZERO_CALL_REPAIR_NOT_PROVEN")
         records.append(finished)
     if grant["mode"] == "native":
-        require(any(r["status"] == "LIVE_GPU_PREFLIGHT_PASS"
+        require(any(r["status"] == "LIVE_GPU_PREFLIGHT_PASS" and r["terminal"] == "COMPLETE"
                     and r["request_sha256"] == grant["request_sha256"]
                     and r["manifest_sha256"] == grant["manifest_sha256"] for r in records),
                 "SAME_SOURCE_REQUEST_LIVE_PREFLIGHT_REQUIRED")
+    cumulative_budget(grant, records)
     return records
 
 
@@ -371,11 +505,13 @@ def submit(api, grant, comment_id, notebook, stage, predecessor_directory):
     require(all(control.remote_record(n, slot) is None for slot in range(grant["slot"], 4)
                 for n in ("submission", "submitted", *control.PHASES, "finished")), "NONEMPTY_LEDGER_NO_RESUBMISSION")
     prior = predecessors(api, grant, predecessor_directory)
+    budget = cumulative_budget(grant, prior)
     observed = inventory(api, grant)
     stage = Path(stage)
     stage.mkdir(parents=True, exist_ok=False)
     write(stage / "inventory.json", observed)
     write(stage / "grant.json", grant)
+    write(stage / "gpu-budget.json", budget)
     datasets, kernels = input_sources(grant["mode"])
     write(stage / "kernel-metadata.json", {"id": grant["job"], "title": "SafeShift " + control.CAMPAIGN + " j" + str(grant["slot"]),
         "code_file": "internvl.ipynb", "language": "python", "kernel_type": "notebook", "is_private": True,
@@ -387,9 +523,9 @@ def submit(api, grant, comment_id, notebook, stage, predecessor_directory):
     require(time.time() < grant["expires_unix"], "RELEASE_EXPIRED")
     # Exactly one push site. Even an SDK timeout leaves a permanent reservation.
     control.create_record("submission", {"grant": grant, "approval_comment": comment_id,
-        "inventory_sha256": digest(observed), "predecessors": prior}, grant["reviewed_head"], grant["slot"])
+        "inventory_sha256": digest(observed), "predecessors": prior, "gpu_budget": budget}, grant["reviewed_head"], grant["slot"])
     try:
-        response = api.kernels_push(str(stage), timeout="1800", acc="NvidiaTeslaT4")
+        response = api.kernels_push(str(stage), timeout=str(budget["server_timeout_seconds"]), acc=budget["machine_shape"])
         write(stage / "submit-return.json", response.to_dict())
         kernel_id = live_identity(api, grant)
         control.create_record("submitted", {"binding": digest(grant), "kernel_id": kernel_id},

@@ -1,5 +1,34 @@
 # PR177: exact-release technical campaign
 
+## Repair contract after direct review 6622648900
+
+[ChatGPT review](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622648900)
+rejected HEAD `dc6b67a93c89072a8adeed9a3d455b1f897736c5` on two execution gates.
+This continuation repairs both on the same branch/PR, CPU only. No Kaggle,
+weights, TRAIN/TEST image access or campaign ledger mutation is authorized.
+
+Positive preflight/native outcomes require actual Kaggle COMPLETE, successful
+setup and worker process-group receipts/logs and consistent environment/native
+evidence. ERROR/CANCELLED preserve internal claims and counts as terminal failure;
+they never provide a successful preflight prerequisite. Missing/malformed or
+contradictory worker evidence blocks rather than being repaired into PASS.
+
+The GPU budget will use a conservative scheduling bound, not an estimate from
+account quota deltas or worker timers: each private T4 job gets a provider
+session timeout of **600 wall seconds**, charged as **2 physical GPUs x600 =1200
+physical-GPU seconds** before submission. Three sequential jobs therefore reserve
+at most3600 total. Early exits and failed/cancelled jobs receive no refund.
+Every prior immutable submission and finished record must carry the matching
+source/release-bound budget record; missing/ambiguous records block. Account
+quota is only an availability observation, not authoritative campaign usage.
+Provider enforcement of the requested server timeout remains a live constraint;
+the pinned SDK request and local coordinator must use that exact timeout, with
+no hidden retries or alternative submission path. This lowers the operational
+per-job cap within the existing1800s ceiling; it does not raise any limit.
+
+Implementation, regression receipts and updated checkpoint follow below. The
+previous review packet remains historical and grants no execution permission.
+
 Authority: [Owner/ChatGPT 6622148168](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622148168).
 This supersedes the earlier CPU-only task only for this new campaign. Issue173
 remains closed. Implementation stays on `feat/internvl-grammar-v2-native`, PR177.
@@ -11,7 +40,7 @@ bind that HEAD, committed notebook, runtime manifest, request and job before
 preflight. This document is a design contract, not that release.
 
 Limits: three private jobs cumulatively (including preflight), sequential,
-1800 seconds/job, one planned weight load and **one native generation call for
+600 server wall seconds/job (within the1800s grant ceiling), one planned weight load and **one native generation call for
 the entire campaign**. Preflight has zero image reads, loads and calls. Original
 master TRAIN ordinal0 is the only native target. Its master checksum and original
 InternVL smoke archive checksum establish identity; the private request also pins
@@ -111,7 +140,7 @@ This command is **not to be run at the current review checkpoint**. It checks
 the Owner's fully paginated private notebook inventory, source Output version1
 and COMPLETE status, available quota and no reserved GPU time. It attaches only
 the known Inputs, writes private metadata and a durable submission tag, then
-calls `kernels_push` once (private, T4, Internet for pinned software,1800s).
+calls `kernels_push` once (private, T4, Internet for pinned software,600s).
 Job1 should be preflight; a native job requires a prior sealed PASS for the same
 runtime/request. Preflight reads master/prior identity metadata and checkpoint
 bytes and exercises synthetic processor/CUDA, without opening TRAIN/TEST images
@@ -139,12 +168,34 @@ is within the one-successful-load ceiling and avoids treating an interrupted
 deserialization as proven unused. The spare job can repair confirmed pre-load
 infrastructure failure under a fresh release; there is no automatic retry.
 
+Each local submission and immutable `finished` ledger now also carries
+`gpu_budget` with schema `internvl-v2-gpu-upper-bound-v1`, release digest,
+reviewed HEAD, exact slot/shape/server timeout, reserved1200 physical-GPU seconds
+and cumulative1200/2400/3600. Local `gpu-budget.json` preserves the same record.
+This is a source-bound upper bound, explicitly `measured_usage=null`; a fast
+job, account quota change, failed load or ERROR/CANCELLED cannot reduce it.
+Legacy records without this evidence are not upgraded or accepted. The live
+SDK metadata must also confirm `NvidiaTeslaT4`; another/unknown shape blocks.
+The outer worker's1800s design ceiling does not expand the600s server limit.
+Provisioning may now time out before finishing; preserve that failure, never
+increase the cap or launch another job without all predecessor gates. Provider
+billing/setup/teardown telemetry is not claimed measured; quota is availability
+only, and live provider timeout enforcement still needs independent scrutiny.
+
 Each private output root `safeshift-internvl-v2-6622148168-j<N>` records the exact
 release/source, initial and final positive campaign ledgers, permits, subprocess
 receipts/logs, original identity binding, all environment checks and native
 capture/parse artifacts. Output is sealed as `<root>.zip` plus `.sha256.json`,
 with member checksums/CRC verified before publishing sanitized status. Preserve
 TECHNICAL_ERROR, INVALID, raw/partial files and failed exports. No overwrite.
+
+Successful prerequisites require Kaggle COMPLETE, explicit internal PASS,
+both supervisor stages EXITED/returncode0/group reaped, matching per-process
+permits, checkpoint revision, pinned software/ABI, physical T4s/driver, measured
+FP16 CUDA, RAM/storage/allocation and processor evidence. Mere JSON existence
+does not qualify. ERROR/CANCELLED preserves `internal_status` but is recorded as
+TECHNICAL_ERROR even if all internal PASS receipts survived. `predecessors`
+independently requires COMPLETE for the matching preflight.
 
 For a next job, require exact prior private ZIP+sidecar+logs, live terminal
 version1 status, matching create-only `finished` record and explicit zero-call
@@ -160,7 +211,7 @@ READY FOR OWNER claim is available at the current checkpoint. ChatGPT review,
 independent audit, exact release and later actual trial are distinct steps;
 merge and full TRAIN remain unauthorized.
 
-## Current CPU review checkpoint
+## Historical CPU checkpoint dc6b67a (rejected by review; see repair above)
 
 Runtime/test source commit: `7a890a9e96ebffdd04793159197bb90803340f3c`.
 The notebook embeds exactly those committed runtime bytes. Subsequent packaging
