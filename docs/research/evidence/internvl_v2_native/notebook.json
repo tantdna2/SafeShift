@@ -1,0 +1,27 @@
+{
+  "command": [
+    "python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-p",
+    "test_internvl_v2_notebook.py",
+    "-v"
+  ],
+  "errors": 0,
+  "failures": 0,
+  "kaggle_submissions": 0,
+  "log_sha256": "b99da0b2bcb1ce6a481660801c750dbfe2199a3ab6928d994531772b3c9b4d7e",
+  "notebook_sha256": "4e946462ba1ab3b4eef3a7c2a7bd78ec8824429aa45e39cc32fe52bfcfef2975",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "scope": "OFFLINE_PAYLOAD_AND_NATIVE_FENCE_ONLY",
+  "skips": 0,
+  "source_commit": "110ec3f08bdfbe7ca880bff7cc038dcef0ad9a5a",
+  "status": "PASS",
+  "test_sha256": "af16f52b51d297b65ed14231cadce2933939c78656737c9db753b8d19bb3ccb1",
+  "tests_run": 4
+}

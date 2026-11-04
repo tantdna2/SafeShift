@@ -158,3 +158,38 @@ quality/false-safe, full3763 duration and all scientific/O2–O6 permissions.
 Review/independent audit/merge remain separate; no claim that CPU PASS completes
 the AGENTS live-notebook requirement. The explicit current Owner task forbids
 Kaggle/model execution and assigns real-model verification to a later task.
+
+## Verification and handoff
+
+Tested implementation/test HEAD: `110ec3f08bdfbe7ca880bff7cc038dcef0ad9a5a`.
+Notebook embedded runtime: `01256505ecf4597d1eea4dd4d97325e98ee766cf`; all runtime
+bytes match tested source. Later receipt/docs commits do not change those bytes.
+
+| Check | Result | Receipt |
+| --- | --- | --- |
+| Windows CPython3.11.9, native CPU stack | 91 selected:88 PASS,3 Linux-only SKIP; all10 native integration tests PASS | [native-cpu.json](research/evidence/internvl_v2_native/native-cpu.json) |
+| Linux CPython3.14.4 stdlib | 91 selected:81 PASS,10 native-only SKIP; all3 real process supervision tests PASS | [linux-cpu.json](research/evidence/internvl_v2_native/linux-cpu.json) |
+| Notebook rebuild/hash/credential patterns/empty-VM native fence | 4/4 PASS, no skips; no notebook preflight executed | [notebook.json](research/evidence/internvl_v2_native/notebook.json) |
+| Frozen method/science/legacy source/notebooks | Unchanged against verified main | [preservation.json](research/evidence/internvl_v2_native/preservation.json) |
+
+95 distinct selected tests are covered across these environments. No failure or
+error in final runs; skipped tests are not counted as PASS. No full-repository
+suite or independent CI/audit result is claimed. The earlier CPU timeout and
+scripted-fixture signature failure remain in ignored local logs, with hashes and
+root-cause resolution in [validation.json](research/evidence/internvl_v2_native/validation.json).
+Native synthetic tests use the unchanged generation-config constructor including
+cache policy. Actual checkpoint forward/KV behavior still needs live validation.
+
+Changed-file inventory for this one PR:
+
+| Files | Purpose |
+| --- | --- |
+| `safeshift/internvl_v2_runtime.py` | Native adapter, capture/replay, identity, manifest, code fence, exclusive attempt/call accounting |
+| `scripts/internvl_v2.py` | Worker/controller/preflight/CLI and sealed failure export |
+| `scripts/build_internvl_v2.py` | Reproducible committed-source notebook builder |
+| `scripts/qualify_internvl_v2_runtime.py` | CPU qualification and machine-readable receipts |
+| `configs/grammar/internvl35_v2_runtime.json` | Separate runtime descriptor and explicit engineering limits |
+| `notebooks/SafeShift_INTERNVL35_GRAMMAR_V2.ipynb` | Unsubmitted executable preflight with native execution fenced |
+| `tests/test_internvl_v2_runtime.py`, `tests/test_internvl_v2_notebook.py` | Synthetic native/controller/error and notebook regressions |
+| `docs/PROJECT_STATE.md`, `docs/ARCHITECTURE.md`, `docs/INTERNVL_GRAMMAR_V2_RUNTIME.md` | Current status, corrected PR176 merge snapshot, routing and runbook |
+| `docs/research/evidence/internvl_v2_native/{native-cpu,linux-cpu,notebook,preservation,validation}.json` | Five sanitized receipts, no raw/model/private data |

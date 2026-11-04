@@ -13,6 +13,17 @@ series kỹ thuật riêng, không import kết quả InternVL lịch sử. Nati
 vẫn code-fenced; không flag/JSON approval nào tự mở quyền. Không Kaggle/GPU,
 weights, ảnh TRAIN/TEST hoặc private raw trong task này.
 
+CPU nghiệm thu tại `110ec3f08bdfbe7ca880bff7cc038dcef0ad9a5a`:
+Windows native **88 PASS/3 Linux-only SKIP**, Linux stdlib **81 PASS/10 native-only
+SKIP** (91 tests mỗi môi trường); notebook **4/4 PASS**. Tổng95 test khác nhau
+đều được thực thi PASS trên ít nhất một môi trường, không failure/error; không
+claim full-repository suite hoặc CI/audit độc lập. Notebook nhúng runtime
+`01256505ecf4597d1eea4dd4d97325e98ee766cf`, bytes bằng runtime đã kiểm.
+[Receipts](research/evidence/internvl_v2_native/validation.json) giữ source/test/
+notebook hashes, command/environment và các lần CPU lỗi trước sửa. Native
+processor/image packing/generation dùng ảnh và logits tổng hợp; weights thật,
+Kaggle preflight, inference/quality vẫn **NOT_RUN / NOT VERIFIED**.
+
 ## APPROVED METHOD — Owner phê duyệt khoa học grammar V2, PR #176 merged
 
 **OWNER_PROJECT_METHOD_APPROVED:** Owner đã duyệt grammar V2 cho InternVL3.5
