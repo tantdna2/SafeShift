@@ -1,5 +1,295 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT — Mini original TRAIN smoke SUCCESS; handoff 04/11/2026
+
+Under [Owner6602848993](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6602848993)
+and [new-session handoff6603028889](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6603028889),
+the remaining MiniCPM-V-4 original TRAIN ordinal0 smoke completed **SUCCESS**.
+[Private Kaggle v3](https://www.kaggle.com/code/nguynanhtn/safeshift-issue173-minicpm-original-train-once-v3),
+kernel142510493/version1, is **COMPLETE**: **one new job, one model load, one native
+TRAIN call**. The shared campaign call slot is consumed; no v4/v5 submission.
+Original smoke accounting is now Qwen1/InternVL1/Mini1. InternVL's historical
+INVALID remains unchanged; this is execution coverage, not three valid labels.
+
+Executed clean source HEAD `140f6d895a4f9acdf5a83f8c60391441c59f2ac2`;
+embedded runtime `171b1b1d369368232d29eeb1aa49750ac8bc6292`.
+[Terminal verification](research/evidence/issue173/mini-once/execution-v3.json)
+binds source, notebook, all seven dispatch/campaign records, raw/parser and
+resources. ZIP SHA256
+`d3174b858e734e8de748cacb15ae7ef6fb43365cc34b3f52b6fb1f1d99f6d6da`;
+59 members, 58 payload hashes, sidecar and CRC verified. Private raw SHA256
+`b72a21a2c30b9ac2716fd697ed8e101d2214b87ce8c00db6b02e13236323e123`.
+Raw was saved before strict parsing; all11 captured steps were finite and matched
+native greedy IDs. Recorded worker tokenizer replay PASS. HNLO remains **N/A,
+LABEL_ONLY_OWNER_DECISION**. No scientific quality or accuracy claim.
+
+Transport now retains sanitized exceptions, handles short/partial/heartbeat/log
+replay events, and allows at most four read-only connections in one coordinator.
+V3 actually recovered three idle read timeouts and issued launch/load/call once.
+After the final EOF preceded Kaggle's terminal-status update, the stream budget
+was exhausted; that error is retained. The existing read-only terminal fallback
+then confirmed COMPLETE, downloaded and verified the SUCCESS archive, and created
+the finished record. No coordinator restart, manual permit or resubmission.
+V2's missing original exception remains UNKNOWN, not retroactively inferred.
+
+Pre-load available RAM24,390,733,824B; peak GPU0 allocation9,736,494,592B;
+two physical T4s, GPU1 unused for inference, final reserved quota0. Actual native
+generation3.425s; setup192.244s/native child140.750s include preparation and waits.
+C1/checkpoint/revision/FP16/eager/FP32 resampler/ordinal0 and strict parser remain
+locked. All v2 records and nine historical smoke/diagnostic archives are retained.
+
+Final Linux CPU suite:102 PASS/1 SDK-only skip out of103; official SDK parser
+separately passed in the installed Windows environment. UTF-8 subprocess and
+terminal EOF/status-race regressions pass. [CPU receipt](research/evidence/issue173/mini-once/transport-v3-final-cpu.json).
+Two earlier local admission failures (HTTP403 and Windows UTF-8 decoding) occurred
+before any reservation/submission; their receipts remain alongside v3 evidence.
+
+**Engineering outcome complete; stop at the same OPEN/DRAFT PR175.** ChatGPT's
+direct GitHub review, independent Antigravity audit and separate merge permission
+remain pending. No more Mini calls, full TRAIN, TEST or InternVL grammar work.
+
+## HISTORICAL — approved Mini Kaggle job failed before model load, 03/11/2026
+
+[Release6600633032](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6600633032)
+was executed once at approved clean HEAD
+`ff749ec7b61b59f909e2380455e012bec84f30ec`. The real private Kaggle job
+`nguynanhtn/safeshift-issue173-minicpm-original-train-once-v2`, kernel142487590,
+version1, was submitted and terminated **ERROR / TECHNICAL_ERROR**. This is
+an actual job result, but **TRAIN inference NOT_RUN: zero loads and zero calls**.
+
+The local coordinator stopped with `LIVE_LOG_TRANSPORT_ERROR_NO_RETRY` after
+issuing the launch permit. Its stream exception details were not retained, so
+the underlying transport cause remains UNKNOWN. The native worker passed its
+environment gates, then timed out after150 seconds waiting for the load permit
+(`REMOTE_PERMIT_TIMEOUT_NO_RETRY`). No load reservation or model backend was
+reached. Pre-load available RAM24,405,426,176B exceeded the unchanged17,179,869,184B
+floor; no OOM was recorded. This is not evidence of a RAM/checkpoint/model defect.
+
+[Verified terminal receipt](research/evidence/issue173/mini-once/execution-6600633032.json)
+binds the exact source/grant, archive, all34 payload hashes, resources and counters.
+ZIP SHA256 `06ed278b2e9973c6186695c6a8327d4522fa9e02b010baac2cd90484b100e03e`.
+The ZIP and logs remain private; no model raw exists because no model was called.
+Submission/submitted/launch records remain immutable; load/call/finished records
+are absent. No coordinator restart, second push or manual permit was performed.
+
+Original smoke remains **Qwen1/InternVL1/Mini0 =2/3**; all five old attempts and
+four diagnostic archives (4loads/5calls) are preserved. GPU quota observed delta
+349.906 platform seconds, final reserved0. No fresh171/TEST/scientific change.
+The unused model call does **not** authorize another submission: the explicit
+post-submission no-retry rule applies. Stop at Draft PR175 for ChatGPT review;
+no successful TRAIN inference, independent audit or merge is claimed.
+
+This update changes only documentation/evidence. ZIP/sidecar/member checksums,
+source/grant bindings, submitted code equality and terminal ledger reconciliation
+PASS. Prior Linux90/90 Issue173,55/55 fulltrain and34/34 stage-fix receipts retain
+their recorded source snapshots; no redundant CPU or model tests were rerun.
+
+## HISTORICAL — approved Mini invocation failed before submission, 03/11/2026
+
+[Exact release6599953246](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6599953246)
+was invoked **once** at approved clean HEADf983fdb. All pre-submit admission
+checks passed, then `stage.mkdir(exist_ok=False)` raised `FileNotFoundError`
+because the prescribed stage's parent directory was absent. This is an operator
+program defect, not a model, checkpoint, data or RAM failure.
+
+**Kaggle submissions0 / loads0 / native calls0.** Read-only reconciliation after
+the failure confirms target job absent across157 owned jobs, all11 existing
+Input/Output jobs COMPLETE/version1, all six remote dispatch records absent,
+quota reserved0. Original smoke remains Qwen1/InternVL1/Mini0 =2/3. No job output
+ZIP exists because no job started. [Failure receipt](research/evidence/issue173/mini-once/operator-6599953246-pre-submit-error.json).
+
+The local submitter now creates missing parent directories while preserving
+exclusive creation of the final stage (`parents=True, exist_ok=False`). The
+regression reproduces the original failure, then checks successful staging and
+no resubmission after an uncertain push. Embedded runtime/notebook and every
+scientific/model/history lock remain unchanged. **No automatic retry occurred.**
+The grant specified one invocation at exact HEADf983fdb; execution of the revised
+HEAD requires a new exact Owner/ChatGPT release. Stop at the same Draft PR175;
+no merge or future grammar work.
+
+Fix verification: **34/34 Mini-only Linux CPU tests PASS**, zero skips/errors,
+at sourcef21e7c5; [receipt](research/evidence/issue173/mini-once/cpu-linux-submit-stage-fix.json).
+The earlier90/90 Issue173 and55/55 fulltrain receipts remain historical; unchanged
+model/runtime code was not requalified. No native or Kaggle retry was performed.
+
+## HISTORICAL — PR175 Mini-only executable prepared for exact source review, 03/11/2026
+
+[Owner/ChatGPT directive6598989252](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598989252).
+Same session, branch `verify/issue173-real-checkpoints`, Draft PR175; no new PR.
+[Executable/run contract](ISSUE173_DIAGNOSTICS.md#mini-only-operator-contract-for-the-exact-review).
+
+New `minicpm173_train_once.py` + builder/notebook + local submission coordinator
+implement the remaining original ordinal0 path. The unchanged Mini adapter owns
+real weight loading, C1/FP16/eager/FP32 resampler and raw generation; the new
+parent/children enforce bounded setup/native stages, resources, original custody,
+one load/call, raw-before-strict-parser and error/partial ZIP/SHA export. Mini
+remains label-only; no fresh171 enrollment or scientific result pooling.
+
+Replay exclusion uses durable create-only submission/launch/load/call records
+on the same PR branch, issued by the local coordinator for fresh process nonces
+observed in the exact private Kaggle version's logs. VM readers hold no uploaded
+credentials. Duplicate/unknown submission, new VM/process, conflicting nonce,
+missing history or transport failure cannot automatically retry. Old Qwen,
+InternVL, v5, diagnostic and review-only routes remain closed and unchanged.
+
+Read-only reconciliation: five exact original archives preserved, consumed
+**Qwen1/InternVL1/Mini0 = 2/3**; four diagnostics remain4loads/5calls, separate.
+Existing Kaggle Inputs/Outputs are COMPLETE/version1, new job absent, quota
+reserved0 at the recorded check. No new Kaggle job, model load or inference in
+this implementation pass. Earlier RAM/weights/data/software PASS evidence is
+reused; actual next-VM admission gates remain mandatory.
+
+**STOP FOR EXACT REVIEW:** execution requires a new Owner/ChatGPT PR175 approval
+bound to reviewed HEAD, embedded runtime, notebook hash, fixed Mini job/version,
+expiry and max1 load/call. No approval exists yet. The prepared path is CPU
+validated, **not live TRAIN verified**. Live log/remote-permit integration and the
+last TRAIN outcome remain NOT_RUN. No model calls occur merely by publishing it.
+Independent audit/merge remain separate. InternVL grammar work starts only in a
+future session after Mini completion and authorized, verified PR175 merge.
+
+Validation: **90/90 Linux Issue173 PASS** at code snapshot
+`40a7b400825cb28e01fbce601373cada32078770` (34 Mini-only tests);
+**55/55 Linux fulltrain PASS** at40fcf82 with identical shared source manifest.
+No skips/errors. Exact embedded runtimebf6fbe2; deterministic notebook +82-file
+source/compile checks and isolated CPU missing-review gate PASS. Full positive
+flow is CPU synthetic, not real TRAIN inference. [Six receipts and hashes](research/evidence/issue173/mini-once/).
+
+## HISTORICAL — PR175 final InternVL format recommendation, 03/11/2026
+
+[Final Owner/ChatGPT directive6598354864](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6598354864),
+same branch/session/Draft PR175. [Decision and sources](ISSUE173_DIAGNOSTICS.md#final-format-recommendation--03112026).
+
+**KHUYẾN NGHỊ: KHÔNG NÊN ÁP DỤNG thay đổi sang P2.1 hoặc grammar lúc này.**
+**PHƯƠNG ÁN ĐƯỢC CHỌN: giữ C1 / parser JSON thuần đã khóa cho InternVL3.5.**
+Historical P2.1 is a strict, versioned shared acceptance policy for historical
+InternVL3-2B-hf, not proof of current InternVL3.5 HNLO equivalence or authority
+for fresh171. It avoids changing generation but changes INVALID/support, and
+accepting fences alone cannot align current HNLO's complete bare-JSON token
+continuations. Grammar changes generation and fails the existing no-processor
+HNLO contract. Neither has sufficient scientific evidence for adoption now.
+
+HNLO remains qualified only per existing replay rules; v5 INVALID/HNLO unavailable
+is preserved. MiniCPM remains label-only/HNLO N/A. Current Qwen already retains
+its historical P2.1 exception: keeping C1 does not imply identical acceptance or
+validated three-model score comparability. No scientific improvement is inferred
+from synthetic format SUCCESS or projected onto the same3,763 TRAIN images.
+
+One bounded CPU synthetic suite **5/5 PASS**, zero model calls; no Kaggle, private
+raw, TEST or additional inference in this decision pass. Only docs/test/receipt
+added; official parser/prompt/generation/HNLO/source locks unchanged. No historical
+result revised and no remaining MiniCPM TRAIN call consumed. Smoke remains2/3.
+
+**Next action:** ChatGPT reviews the recommendation to retain the frozen method
+in PR175. Any later P2.1/grammar adoption requires explicit versioned scientific
+approval, comparability and HNLO terms; no further generic investigation requested.
+Full TRAIN, MiniCPM's remaining call, audit and merge are not released. Earlier
+sections below are historical snapshots, not new execution instructions.
+
+## HISTORICAL — PR175 model diagnostics completed, 03/11/2026
+
+[Owner/ChatGPT directive6592812806](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6592812806),
+same session/branch/Draft PR175. [Complete dossier](ISSUE173_DIAGNOSTICS.md),
+[sealed cumulative ledger](../configs/issue173/diagnostic_custody.json).
+
+**InternVL: real native strict JSON demonstrated.** Unchanged C1 baseline and
+PROPOSED reminder both pass on synthetic gray (no causal improvement claim).
+A separate canonical JSON grammar passes real pinned native generation on a
+procedural scene, with actual PrefixConstrainedLogitsProcessor and no response
+cleanup/prefill. Grammar changes generation: scientific adoption remains
+**BLOCKED_REQUIRES_SCIENTIFIC_DECISION**. Original v5 INVALID/raw/unavailable HNLO
+is unchanged; no historical TRAIN call repeated.
+
+**MiniCPM: actual pinned weights load and inference PASS on synthetic scene.**
+Original C1/greedy/FP16/eager/FP32 resampler/label-only preserved. Earlier gray
+input produced a descriptive noncanonical value: INVALID preserved, no OOM or
+capture error. Fresh scene job loads once/calls once and generates valid canonical
+JSON; pre-load RAM24,335,233,024B exceeds unchanged16GiB floor; peak allocated
+VRAM8,391,736,320B. This proves technical execution, not TRAIN-wide validity.
+
+Four diagnostic jobs COMPLETE,4loads/5calls, zero original TRAIN calls; all raw,
+failures and five original ZIPs preserved. Original smoke still Qwen1/InternVL1/
+Mini0 =2/3. All four diagnostic current notebooks/CLI/worker/builder terminal;
+exact historical executable source/notebooks remain immutable. Production and
+fresh171 fences/scientific contracts untouched. Prepared Mini-only original
+ordinal0 TRAIN code and notebook remain **REVIEW HOLD before I/O**; direct ChatGPT
+review of exact dispatch/cumulative ledger is required before the final call.
+No merge, no Antigravity audit claim. Earlier sections below are historical.
+
+
+## CURRENT — PR175 review repair, 03/11/2026
+
+[ChatGPT CHANGES_REQUIRED6584783261](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6584783261),
+same session/branch `verify/issue173-real-checkpoints` and Draft PR175.
+[Review repair dossier](ISSUE173_REVIEW_REPAIR.md): current smoke notebook/code
+are permanently terminal after v5, including direct launch/worker/factory/CLI
+on empty fresh-VM paths. Original v5 source/notebook hashes and all five attempts
+remain immutable; Qwen/InternVL consumed1 each, MiniCPM0. No replay has occurred.
+
+Saved InternVL diagnosis proves the output fence was generated natively, not
+introduced by decode/template/capture;14 argmax IDs/EOS, exact C1/config/source
+and independent decode match. Strict INVALID and HNLO unavailable are preserved;
+no prompt/parser/generation/preprocessing change or InternVL rerun is authorized.
+
+MiniCPM has a separate mini-only review-hold identity and complete five-attempt
+custody admission. Native launch/worker remain hard BLOCKED_PENDING_CHATGPT_REVIEW.
+Fresh MiniCPM-only no-inference Kaggle preflight COMPLETE/PASS, source3fd0b8a:
+actual pinned software/processor/synthetic packing/CUDA FP16, complete31,776-file
+owned scan, no deletions, no surviving child. Before weights24,321,982,464 bytes
+available versus unchanged17,179,869,184-byte floor. Named cgroup file/anon/RSS
+stages and555 observations in [new RAM evidence](research/evidence/issue173/review/minicpm-only-ram-preflight.json).
+Weights/load/inference NOT_RUN;0 new calls; total remains2/3. The unused MiniCPM
+call remains hard BLOCKED until ChatGPT's direct anti-replay/resource review.
+Linux snapshot1c40ff8: Issue17341/41 +fulltrain55/55 PASS, no skips/errors.
+All five original attempts and v5 submitted notebook bytes rehashed unchanged.
+No unused call will be consumed before direct review. Merge/audit remain unapproved. Prior handoff below is a
+historical snapshot; its active v5 executable route is superseded by the terminal
+fence, not by deletion or rewriting of the actual historical evidence.
+
+## CURRENT — Issue #173 continuation: actual TRAIN/checkpoint bytes, updated03/11/2026
+
+**DRAFT REVIEW HANDOFF: RIGHTS/TRAIN3763/ALL8 SHARDS VERIFIED; QWEN INFERENCE
+PASS, INTERNVL INFERENCE VERIFIED WITH INVALID, MINICPM RAM BLOCKED; 2/3 CALLS.** New session/worktree from
+verified main `33e9f3cc4daf00c37a31b2347c143444d6add0bb` (PR174 merged).
+[Owner continuation](https://github.com/tantdna2/SafeShift/issues/173#issuecomment-6580770922),
+one branch `verify/issue173-real-checkpoints`, [Draft PR #175](https://github.com/tantdna2/SafeShift/pull/175), no merge.
+[Runbook and actual evidence](KAGGLE_CHECKPOINTS_173.md): original master SHA,
+all3763 original TRAIN JPG hashes/order/mapping,0 missing/changed/duplicate;
+Qwen4, InternVL2, MiniCPM2 shards with streamed size/SHA256, exact source/marker/
+index and bounded safetensors header/tensor checks on existing Kaggle Inputs.
+CPU notebook version1 COMPLETE; ZIP/sidecars/CRC/member hashes verified locally.
+No dataset/weights downloaded or copied; no GPU/model load/inference in that job.
+
+Public CC BY4.0 declaration rechecked at the exact original dataset revision,
+combined with historical rights evidence and Owner's current confirmation;
+no redundant blanket confirmation requested. Private projection/seal remains
+outside Git. PR174 pinned software evidence and offline Qwen archive are reused.
+Dedicated smoke is separate from fresh171. All5 attempt ZIPs/sidecars/CRC/member
+hashes checked; no model called twice. Qwen v2/sourceae5b488: actual weights,
+one native call, strict SUCCESS, HNLO_VALIDATED. InternVL v5/source1e744d9:
+actual weights, one native call, strict INVALID preserved, HNLO unavailable
+(NO_VALID_GENERATED_LABEL). MiniCPM: checkpoint PASS, pinned setup/software/decode
+PASS, then available-RAM gate BLOCKED before load/CUDA/call; last measured
+13,950,664,704 bytes versus unchanged17,179,869,184-byte floor. Advisory scan
+reached its50,000-file bound; no full-reclamation claim. Exact value at the
+later failing imported worker is unrecorded. No MiniCPM inference PASS/fit claim.
+
+The same branch fixes owned setup-cache retention, exclusive-log collision,
+and actual NVML loader isolation. Original shared runtime files and six PREP
+notebooks remain byte-identical to BASE. Final isolated driver binding is
+smoke-local, with no Python LD path change and all ABI/driver/CUDA/RAM gates
+retained. All failures/INVALID and private source/image/raw custody remain.
+Final runtime1e744d9: Linux39/39 Issue173 +55/55 fulltrain tests PASS; earlier
+FAIL/partial receipts retained. [Final per-model evidence](research/evidence/issue173/final-native-evidence.json).
+All Kaggle jobs terminal, GPU reserved0; no additional job is running.
+MiniCPM remains BLOCKED and needs separately reviewed resource-lifecycle or
+single-model-VM verification before its unused call can be considered. No
+further automatic attempts or full TRAIN authorized. Existing model/source/config/parser/HNLO locks,
+production fences and scientific decisions remain unchanged. O2–O6/full TRAIN,
+TEST, scientific selection/pooling and independent review/audit remain separate.
+
+The following PR174 section is preserved as the earlier snapshot; its outstanding
+TRAIN/checkpoint byte verification is superseded only by this bounded evidence.
+
 ## CURRENT — Issue #173: bounded live Kaggle verification, 02/11/2026
 
 **KAGGLE CONNECTED; THREE PINNED SOFTWARE/PROCESSOR AND CUDA TENSOR CHECKS PASS;

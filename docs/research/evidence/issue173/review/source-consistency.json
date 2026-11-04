@@ -1,0 +1,12 @@
+{
+  "schema": "issue173-review-published-source-consistency-v1",
+  "runtime_source": "3fd0b8a1c2beba386c4ede0577284045ae0e6394",
+  "cpu_snapshot": "1c40ff8ae31b53967f0df415f2b58609026df30a",
+  "preflight_published_equals_generated_equals_executed": true,
+  "preflight_notebook_sha256": "2c14cd203bc5c24f14532a503c0e32d33b06162f02d5db5e21d0eb6773060cdc",
+  "published_smoke_is_terminal": true,
+  "published_smoke_sha256": "ec3f3ac9a429e0c39aba15bd0bd5fbeac517b3d88abd8c44c747895171dd08b3",
+  "runtime_code_changed_after_cpu_snapshot": false,
+  "original_execution_source_not_reattributed": true,
+  "full_HEAD_CI_claimed": false
+}

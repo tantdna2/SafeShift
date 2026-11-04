@@ -1,5 +1,46 @@
 # Kiến trúc Foundation V1
 
+## Issue173 — existing TRAIN/checkpoints and bounded native smoke
+
+Current Mini-only continuation: `minicpm173_once.py` verifies exact external
+review and public process permits; `scripts/submit_minicpm173_once.py` reconciles
+remote job/version/custody and creates durable, exclusive submission/phase records
+on the same PR branch. `scripts/minicpm173_train_once.py` runs the unchanged
+Mini numerical adapter on original ordinal0 with supervised setup/native children,
+raw-before-parse and partial ZIP/SHA export. Builder: `build_minicpm173_once.py`;
+regression: `test_kaggle173_minicpm_once.py`. No grant or native execution in this
+implementation pass. [Exact review/run contract](ISSUE173_DIAGNOSTICS.md#mini-only-operator-contract-for-the-exact-review).
+The historical v5, diagnostic and earlier review-only entrypoints below remain
+terminal. The new path requires its own exact HEAD/job review and remote permits.
+
+Post-v5 review repair: current `scripts/smoke_kaggle173.py` and its published
+notebook are TERMINAL, with no model-load/generation bodies. Historical refs and
+private submissions remain immutable. `smoke173_history.py` admits all five exact
+seals and prepares a MiniCPM-only request under permanent native REVIEW HOLD.
+`scripts/minicpm173_preflight.py`/builder measure fresh single-model RAM/processor/
+CUDA with zero native calls; `scripts/diagnose_internvl173.py` checks the saved
+generated-fence INVALID without rescue. Tests: `test_kaggle173_review.py` plus
+existing Issue173/fulltrain suites. [Current dossier](ISSUE173_REVIEW_REPAIR.md).
+The adapter/source description below records the original historical execution,
+not current permission to dispatch another smoke call.
+
+Route: `verification173.py` streams actual pinned shard/image bytes,
+checks exact indices and bounded safetensors headers without importing a model.
+`scripts/verify_kaggle173_inputs.py` checks existing read-only Kaggle Inputs and
+exports a private original-TRAIN seal separately from sanitized receipts.
+`scripts/smoke_kaggle173.py` is an independent, source/proof-bound technical route:
+one original image/model, three calls total, exclusive reservations, raw before
+strict parser/HNLO, isolated pinned workers and process-group deadlines. It never
+calls the fenced production worker/factory internals or enrolls fresh171.
+After the first zero-load/zero-call RAM failure, v2 requires that sealed history,
+reclaims only owned public setup caches and keeps the RAM floor unchanged.
+Existing native source/config/parser/HNLO and numerical contracts stay locked.
+Builder: `scripts/build_kaggle173_verification.py`; regression:
+`test_kaggle173_verification.py`, `test_kaggle173_smoke.py`. Actual file proofs,
+failure preservation, bounds, source identities and live limitations:
+[Issue173 runbook](KAGGLE_CHECKPOINTS_173.md). Byte PASS is not inference or
+scientific qualification; scientific release/TEST remain separate.
+
 ## Issue171 fresh full TRAIN preparation — 02/11/2026
 
 Route: `safeshift/fulltrain/contract.py` (fresh campaign, three series, exact
@@ -438,3 +479,14 @@ preflight vẫn chỉ chạy CPU; CUDA FP16 thật được kiểm trong worker 
 Worker kiểm lại `sys.executable`, `sys.prefix`, version và mọi site-packages để
 ngăn rò thư viện kernel. Không candidate hợp lệ thì lưu BLOCKED receipt, không
 fallback 3.13 hoặc tự build/download Python.
+
+## Issue173 diagnostic continuation routing
+
+`docs/ISSUE173_DIAGNOSTICS.md` records the four bounded synthetic jobs and
+scientific limits. `scripts/diagnostic173.py` is retired at launch/worker/CLI;
+`safeshift/diagnostic173_grammar.py` is a PROPOSED diagnostic helper only.
+`report_diagnostic173.py` replays sealed status/custody without exporting raw.
+`minicpm173_train_review.py` prepares exact remaining ordinal0 under an explicit
+review hold. `tests/test_kaggle173_diagnostic.py` covers strict INVALID, grammar
+language, unknown consumption, empty-VM replay and published notebook fences.
+Original candidates/fulltrain/pilot adapters and locks are unchanged.
