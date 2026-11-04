@@ -39,3 +39,122 @@ Kaggle readiness, real model fit, inference quality or scientific qualification.
 
 Stop at one Draft PR for ChatGPT review. No Kaggle submission, GPU/model load,
 TRAIN/TEST image access, full3763 inference or merge in this task.
+
+## Implemented route and evidence format
+
+`scripts/internvl_v2.py` → `worker(setup)` → isolated CPython3.11.9 with the
+existing InternVL pins → `worker(preflight)` or fenced `worker(native)`.
+Native: exact request/source/checkpoint admission → exclusive attempt/load
+reservation → unchanged `CandidateBackend` loader → unchanged C1 image
+preprocessing → V2 `generate_prepared` → native Transformers4.55.4 generation.
+There is no model downloader, submission client, remote log relay or cohort loop.
+The controller supervises the entire child process group, including hanging
+loads; its 1800-second ceiling and stage limits are engineering bounds only.
+
+Capture writes `steps/NNN.f32` as little-endian float32 full output-head logits,
+then a forward receipt. The processor observer saves the actual class list and
+requires exactly the approved native prefix processor. It verifies scores equal
+the saved forward vector, runs that processor, and saves prefix/masked scores
+(`null` represents minus infinity). Disallowed padded head columns remain in
+both vectors. The pinned model has151936 output columns versus151679 tokenizer
+IDs; a read-only vocabulary view extends only the verifier's numeric domain.
+The four paths, EOS, receipt and allowed-token sets are identical to the approved
+grammar; no token resize, extra path or grammar source modification occurs.
+
+Returned IDs are stored before decode in `native.json`. `raw.json` stores exact
+response, token IDs, binding and vector hashes before `parse_label`. No fences
+are stripped. `replay_saved` checks vector sizes/hashes and the unchanged V2
+verifier with an independent Rust tokenizer. Invalid JSON is durable INVALID;
+valid JSON with failed trace is TECHNICAL_ERROR. NaN/Inf bytes, partial files,
+load/call reservations and failure receipts remain preserved. Errors never
+authorize retry. No numerical HNLO or scientific metrics are calculated.
+
+The technical request fixes ordinal0, TRAIN, one opaque sample ID/image hash,
+source digest, identity/series/attempt and exact call/time limits. Its schema
+rejects extra approval/history fields, TEST, cohort loops and other series.
+Hashes establish byte identity, not permission or a trusted dataset projection.
+The next execution task must externally bind this request to the original master
+and approved image; this release cannot admit any real request. Local exclusive
+reservations exclude replay in one workspace. They do **not** establish global
+exactly-once across fresh Kaggle VMs: remote submission/process permits and
+custody must be added/reviewed under the next exact-run authority before opening
+the permanent fence. Neither an empty VM nor edited notebook mode enables native
+execution today. A future full3763 series remains separate from this technical
+qualification and must cover the original whole cohort without backfill.
+
+## Notebook and preflight
+
+`notebooks/SafeShift_INTERNVL35_GRAMMAR_V2.ipynb` embeds only committed code,
+public configuration and SHA256 bindings. Builder rejects uncommitted runtime
+bytes. All outputs/execution counts are empty. **Do not submit this notebook in
+the current task.** It is executable preparation, not READY FOR OWNER or a grant.
+
+For a later authorized preflight, attach the existing InternVL checkpoint Input
+with unique `candidate_checkpoint_internvl35.json`, `source/<locked-revision>`
+and flat `weights/` allowlists. No real image or historical prediction Output is
+needed. Default mode is `preflight`; `execute` and direct native worker/loader
+calls fail before Input access. No Kaggle/HF token is requested or embedded.
+
+Preflight provisions pinned public software in isolated scratch, checks actual
+source/checkpoint SHA256 before model loading, and measures package/compiled ABI,
+driver/T4 counts, child CUDA/FP16/visibility, RAM/cgroup, shared/separate storage
+reserves and actual fsynced allocation/cleanup. It exercises native processor,
+tokenizer and all four grammar paths with a generated grey image and scripted
+scores, without model construction/weights/forward. Existing Issue173 resource
+floors and driver580.178.04 are retained explicitly; another driver blocks until
+review, never silently falls back. Repeated preflights use distinct directories
+and consume no Owner slot/attempt/call.
+
+G0 always remains BLOCKED for native authority; G1 records Input/hash admission,
+G2 pinned software/ABI, G3 synthetic native grammar/processor, G4 measured
+resources/driver/CUDA; G5 weights/inference stays NOT_RUN. G6 is successful only
+after ZIP/member hashes and sidecar export verify. CPU mocks cannot certify any
+live gate. Missing Python/package, duplicate marker, bad bytes, RAM/quota/GPU,
+timeout, unknown child output or log/write error stops the following stages.
+
+Side effects when later authorized: pinned Python/package downloads, scratch
+venv/cache, 1MiB fsynced probes on scratch/output (then removal of those exact
+probe files), GPU FP16 tensor probe; no weight download/load. Evidence roots and
+ZIP/SHA256 live under `/kaggle/working/<identity>-preflight-<id>`; runtime under
+`/kaggle/temp`. Keep archives private: they may contain runtime paths and, after
+a future authorized native call, raw/tokens/logits and sample identifiers. Only
+sanitized status/hash receipts belong in Git or public review. Never publish full
+private logs. Export failure leaves the original directory/partial archive and
+does not report PASS; preserve them for diagnosis without repeating inference.
+
+## CPU reproduction
+
+From repository root (new output directory each time):
+
+```console
+python -B -m scripts.qualify_internvl_v2_runtime --output data/processed/v2-stdlib-new
+```
+
+For native scripted generation, use an isolated CPU stack (torch2.6.0+cpu,
+torchvision0.21.0+cpu, transformers4.55.4, tokenizers0.21.4). The exact observed
+versions are in the receipt. No install or network is required by default:
+
+```console
+python -B -m scripts.qualify_internvl_v2_runtime --output data/processed/v2-native-new --native-source data/processed/internvl_v2_native/public-source --packages data/processed/internvl_grammar_v2/packages --packages data/processed/internvl_v2_native/deps
+```
+
+`--fetch-public-source` optionally fetches only the13 bounded public text files
+in the existing source lock and verifies every SHA. No weights or private data.
+Linux stdlib tests also exercise real child process-group timeout/log failure.
+Synthetic model forwards supply handwritten logits; the actual native image
+processor, Transformers generation loop/prefix processor and decoder are used.
+This is software integration evidence, not checkpoint inference or model fit.
+
+Rebuild the notebook using its metadata `runtime_commit`:
+
+```console
+python -B -m scripts.build_internvl_v2 --source-commit <runtime_commit> --output data/processed/v2-notebook-rebuild.ipynb
+python -B -m unittest discover -s tests -p test_internvl_v2_notebook.py -v
+```
+
+Live constraints still unverified: actual Kaggle provisioning/Input mount,
+weight deserialization, GPU/peak memory, final native forward/capture, response
+quality/false-safe, full3763 duration and all scientific/O2–O6 permissions.
+Review/independent audit/merge remain separate; no claim that CPU PASS completes
+the AGENTS live-notebook requirement. The explicit current Owner task forbids
+Kaggle/model execution and assigns real-model verification to a later task.

@@ -1,5 +1,22 @@
 # Kiến trúc Foundation V1
 
+## InternVL3.5 grammar V2 native preparation — 04/11/2026
+
+`internvl_v2_runtime.py` wraps the unchanged offline candidate loader/input
+preparation with the approved V2 callback. Full output-head vectors (including
+padding outside tokenizer vocabulary) are persisted/fsynced before the native
+prefix processor; masked vectors, processor list, returned IDs and exact decoded
+response precede strict parsing and independent replay. HNLO is always N/A.
+`scripts/internvl_v2.py` provides isolated setup/preflight/native stages and the
+bounded controller; every native entrypoint is code-fenced pending a new exact
+execution release. No caller flag or historical grant opens it. Native tests
+replace only the fence/external weight boundary with synthetic scripted forwards.
+`scripts/build_internvl_v2.py` packages committed source into an unsubmitted
+notebook. Tests: `test_internvl_v2_runtime.py`, `test_internvl_v2_notebook.py`;
+reproduce with `scripts.qualify_internvl_v2_runtime`.
+[Runbook, custody and limits](INTERNVL_GRAMMAR_V2_RUNTIME.md). This is a distinct
+technical series, not enrollment or qualification of full TRAIN3763.
+
 ## Issue173 — existing TRAIN/checkpoints and bounded native smoke
 
 Current Mini-only continuation: `minicpm173_once.py` verifies exact external

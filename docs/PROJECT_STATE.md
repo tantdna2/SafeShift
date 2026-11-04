@@ -1,6 +1,19 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Owner phê duyệt khoa học grammar V2; PR #176 chờ merge, 04/11/2026
+## CURRENT — grammar V2 native integration, CPU-only review, 04/11/2026
+
+PR #176 **MERGED / hậu merge PASS**, main/base
+`4578c175e0011783c3573d0003fc5341eaf3ef72`, đã đối chiếu GitHub live với
+[bàn giao ChatGPT](https://github.com/tantdna2/SafeShift/pull/176#issuecomment-6621575815).
+Nhánh mới `feat/internvl-grammar-v2-native` triển khai native capture/controller,
+preflight và notebook trong **một Draft PR**; chưa audit hoặc được phép merge.
+[Runbook V2](INTERNVL_GRAMMAR_V2_RUNTIME.md) ghi lệnh tái lập, receipts và giới hạn.
+Descriptor/grammar #176 giữ nguyên bytes đã duyệt. Đường mới label-only/HNLO N/A,
+series kỹ thuật riêng, không import kết quả InternVL lịch sử. Native entrypoints
+vẫn code-fenced; không flag/JSON approval nào tự mở quyền. Không Kaggle/GPU,
+weights, ảnh TRAIN/TEST hoặc private raw trong task này.
+
+## APPROVED METHOD — Owner phê duyệt khoa học grammar V2, PR #176 merged
 
 **OWNER_PROJECT_METHOD_APPROVED:** Owner đã duyệt grammar V2 cho InternVL3.5
 như một phương pháp **label-only có series riêng, HNLO N/A**, đồng thời chấp
@@ -34,9 +47,10 @@ no selected-INVALID repair or pooling of old successes with grammar outputs.
 PR #176 đã được ChatGPT review trực tiếp và Antigravity audit PASS cho phạm vi
 đề xuất; Owner tiếp đó phê duyệt phương pháp qua quyết định dẫn ở trên.
 Chỉ phần hồ sơ quyết định/trạng thái được bổ sung sau audit, không đổi mã,
-config hoặc tests đã kiểm. PR vẫn **OPEN/DRAFT cho đến khi merge được cấp quyền
-riêng và hậu merge xác minh**. Grammar V2 chưa tích hợp production, chưa chạy
-mô hình V2 thật; các cổng O2–O6, GT/TEST và full TRAIN tiếp tục đóng.
+config hoặc tests đã kiểm. PR #176 đã **MERGED và được ChatGPT xác minh hậu merge**
+tại SHA dẫn trên; ghi chú OPEN/DRAFT trước đây đã hết hiệu lực. Phần tích hợp V2
+đang được kiểm trong PR mới, chưa activation production hoặc chạy mô hình V2 thật;
+các cổng O2–O6, GT/TEST và full TRAIN tiếp tục đóng.
 
 Verification at implementation `cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702`:
 **58/58 CPU tests PASS** on Windows and Linux, zero skips/errors; pinned native
