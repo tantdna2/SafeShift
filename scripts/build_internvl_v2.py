@@ -13,7 +13,7 @@ from safeshift.pilot.artifacts import write_bytes
 from safeshift.pilot.contract import digest
 
 
-def build(ref):
+def build(ref, *, continuous=False):
     require(len(ref) == 40 and all(c in "0123456789abcdef" for c in ref), "COMMITTED_SOURCE_REQUIRED")
     payload = {}
     for name in runtime_sources():
@@ -41,13 +41,14 @@ for name, content in payload.items():
         stream.write(content.encode())
 sys.path.insert(0, str(root))
 from scripts.internvl_v2_campaign import launch
+{"from safeshift.internvl_v2_campaign import select_continuous; select_continuous()" if continuous else "# Historical campaign policy"}
 result = launch(spec, runtime_commit={ref!r})
 print(json.dumps(result, sort_keys=True))
 if result['status'] not in ('LIVE_GPU_PREFLIGHT_PASS', 'SUCCESS', 'INVALID'):
     raise RuntimeError('V2_BLOCKED_SEE_PRIVATE_SEALED_OUTPUT')
 '''
     compile(code, "<internvl-v2-notebook>", "exec")
-    return {"nbformat": 4, "nbformat_minor": 5,
+    notebook = {"nbformat": 4, "nbformat_minor": 5,
         "metadata": {"kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"},
             "safeshift": {"identity": IDENTITY, "runtime_commit": ref, "manifest_sha256": digest(manifest),
                 "limits": LIMITS, "execution_authority": None, "live_verification": "NOT_RUN"}},
@@ -66,11 +67,25 @@ if result['status'] not in ('LIVE_GPU_PREFLIGHT_PASS', 'SUCCESS', 'INVALID'):
             "HNLO is always N/A. No historical completion import, full TRAIN dispatch, scientific pooling or retry.\n"]},
             {"cell_type": "code", "id": "preflight", "metadata": {}, "outputs": [],
              "execution_count": None, "source": code.splitlines(True)}]}
+    if continuous:
+        notebook["metadata"]["safeshift"]["operational_campaign"] = "internvl-v2-6626498951"
+        notebook["cells"][0]["source"] = [
+            "# InternVL grammar V2 — continuous technical attempt\n",
+            "Owner6626498951 authorizes private sequential attempts; independent audit PENDING_POST_RESULT, scientific qualification NOT_ESTABLISHED. No credential or execution release is embedded.\n",
+            "Exact clean HEAD/notebook/request and authenticated create-only nonce permits required. One load and one call per attempt; no replay, overwrite or parallel job. Historical j1/j2 remain failed and immutable.\n",
+            "First complete environment/CPU/checkpoint/CUDA/allocation checks and unchanged16GiB RAM floor, then persist internal preflight PASS before original TRAIN ordinal0 image read or load.\n",
+            "Every checkpoint byte is SHA256 verified in bounded reads with descriptor-local clean page advice, repeated at loader boundary. No Input mutation/global cache drop or assumed reclaimed memory.\n",
+            "Per-job1800s server timeout; two physical T4s reserve3600 GPU-seconds without refund, GPU0 visible to native. Setup900s; isolated CPU processor180s; hard parent deadline includes export margin. Actual provider quota checked before submit.\n",
+            "Side effects: pinned Python/package provisioning in owned scratch, allocation/fsync/cleanup probes, CUDA FP16, actual weights and one original-image inference after positive gates.\n",
+            "Private raw-before-parse, full-vocab logits, tokens, logs, RAM and ZIP/SHA256 under /kaggle/working/safeshift-internvl-v2-6626498951-j<N>. Only nonce challenges relayed publicly.\n",
+            "Model/revision/FP16/eager/C1/grammarV2/strict parser unchanged; HNLO N/A. No GT, TEST/full TRAIN, result pooling or merge. Stop on verified success; reconcile terminal custody before a new versioned attempt.\n"]
+    return notebook
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--source-commit", required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--continuous", action="store_true")
     args = p.parse_args()
-    write_bytes(args.output, (json.dumps(build(args.source_commit), indent=1) + "\n").encode())
+    write_bytes(args.output, (json.dumps(build(args.source_commit, continuous=args.continuous), indent=1) + "\n").encode())

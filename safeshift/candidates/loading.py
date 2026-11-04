@@ -19,7 +19,7 @@ def checkpoint_index(path, key):
     return index
 
 
-def verify_weights(path, key):
+def verify_weights(path, key, *, hash_reader=sha):
     """Offline only. Metadata hashes are public LFS identities, not downloaded weights."""
     path = Path(path)
     locked = read(LOCK.with_name("checkpoint_metadata_lock.json"))[key]
@@ -29,12 +29,12 @@ def verify_weights(path, key):
     checkpoint_index(path / locked["index"]["filename"], key)
     for name, entry in locked["weights"].items():
         snapshot_stat(path / name)
-        require((path / name).stat().st_size == entry["size"] and sha(path / name) == entry["sha256"],
+        require((path / name).stat().st_size == entry["size"] and hash_reader(path / name) == entry["sha256"],
                 "WEIGHT_CHECKSUM:" + name)
     return locked
 
 
-def load_weight_model(snapshot, key, config, model_class, weights, device):
+def load_weight_model(snapshot, key, config, model_class, weights, device, *, weight_verifier=None):
     """Prepared offline runtime loader. Caller must hold a separate reviewed grant.
 
     No downloader, quantization, AutoModel re-import or attention fallback.
@@ -43,7 +43,7 @@ def load_weight_model(snapshot, key, config, model_class, weights, device):
     import torch
     from transformers import GenerationConfig
     verify_snapshot(snapshot, key)
-    verify_weights(weights, key)
+    (weight_verifier or verify_weights)(weights, key)
     explicit_eager(config)
     model = model_class.from_pretrained(str(weights), config=config, local_files_only=True,
         torch_dtype=torch.float16, attn_implementation="eager", use_safetensors=True,

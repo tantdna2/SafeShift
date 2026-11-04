@@ -1,5 +1,40 @@
 # PR177: exact-release technical campaign
 
+## Current: continuous technical attempts under Owner6626498951
+
+The [new operational decision](research/INTERNVL_V2_CONTINUOUS_TECHNICAL_20261104.md)
+supersedes old caps/pre-result audit only for `internvl-v2-6626498951`.
+The sections below preserve historical outcomes and grants; they do not limit
+new authorized attempts. Select `--continuous` in request preparation, notebook
+builder and submit CLI; source-bound notebook explicitly selects the same policy.
+Default historical code paths retain their old three-job/global-call contract.
+
+Build from committed runtime, commit the resulting notebook, push the same branch,
+then create an authenticated `INTERNVL_V2_CONTINUOUS_RELEASE_V1` on PR177 binding
+that clean HEAD/notebook/source/request, fresh slot, version1, predecessor digests,
+Owner6626498951 body hash and optional quota cap. Release validity≤3600s includes
+queue/reconciliation; server job≤1800s, setup≤900s, CPU processor≤180s, overall
+supervisor≤1750s with export margin. Two physical T4s reserve3600 seconds per job
+without refund. Check provider available quota and zero concurrent reservation.
+Never replay an existing/ambiguous submission or restart its permit coordinator.
+
+The same job performs environment and native phases in order. It saves positive
+`internal-preflight.json` and its evidence hashes before original-image access.
+Checkpoint streaming reads every locked byte using≤8MiB buffers, then advises
+only consumed clean file pages; records SHA256/count/time and actual cgroup/RSS.
+The loader repeats this exact-byte verification and fresh16GiB resource check.
+No cache advice success is taken as proof of reclaimed RAM. Unsupported advice,
+aliases, file changes, hash mismatch or RAM failure stop before weights.
+
+`scripts.submit_internvl_v2 --continuous` retains official SDK pins/private
+Inputs, exclusive create-only GitHub submission/phase/finished records and sealed
+ZIP/sidecar/CRC/member verification. New load/call refs are attempt-specific.
+Before another attempt, reconcile all prior terminal jobs and actual possible
+consumption; successful native result stops the campaign. New failure requires
+changed tested technical hypothesis, distinct request/notebook/source release.
+Full logs/raw/logits stay private; only summaries/hashes enter Git. Final source
+and result require ChatGPT review and independent Antigravity audit before merge.
+
 ## Final delegated technical outcome: Job2 ERROR, native prerequisite blocked
 
 The pre-audit mode was actually used under authentic Owner directive6625594194

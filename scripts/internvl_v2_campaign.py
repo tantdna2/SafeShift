@@ -48,7 +48,7 @@ def original_recipe(master, archive, spec):
     return recipe, first, locator
 
 
-def native_request(inputs, spec, recipe):
+def native_request(inputs, spec, recipe, slot=None):
     observed, first, locator = original_metadata(inputs, spec)
     require(observed == recipe, "EXACT_ORIGINAL_REQUEST")
     image = safe(unique_mount(inputs, "inspecsafe-v1-kaggle"), "InspecSafe-V1-Kaggle/train/" + locator)
@@ -56,6 +56,9 @@ def native_request(inputs, spec, recipe):
     request = {"schema": runtime.IDENTITY + "-request", "identity": runtime.IDENTITY,
         "series_id": runtime.SERIES, "attempt_id": "attempt-0001", "split": "TRAIN", **first,
         "image": image.relative_to(Path(inputs)).as_posix(), "source_sha256": digest(spec), "limits": runtime.LIMITS}
+    if control.CONTINUOUS:
+        control.job(slot)
+        request.update(series_id=control.CAMPAIGN + "-technical-only", attempt_id="attempt-" + str(slot))
     runtime.request_binding(spec, request)
     return request
 
@@ -81,6 +84,8 @@ def relay(path, stop):
 
 def worker(stage, packet, out, scratch, inputs, deadline):
     value = read(packet)
+    if value.get("continuous"):
+        control.select_continuous()
     spec = value["spec"]
     ctx = control.context(spec, value["runtime_commit"], value["slot"])
     previous = "launch" if stage == "setup" else "setup"
@@ -94,6 +99,15 @@ def worker(stage, packet, out, scratch, inputs, deadline):
     require(recipe == ctx["grant"]["request"], "REVIEWED_ORIGINAL_METADATA")
     write(out / "original-binding.json", recipe)
     if ctx["grant"]["mode"] == "native":
+        if control.CONTINUOUS:
+            control.activate_worker(ctx, spec, permission, out)
+            def deferred_request():
+                require(read(out / "internal-preflight.json")["status"] == "LIVE_GPU_PREFLIGHT_PASS",
+                        "INTERNAL_PREFLIGHT_BEFORE_IMAGE")
+                request = native_request(inputs, spec, recipe, value["slot"])
+                write(out / "execution-request.json", request)
+                return out / "execution-request.json"
+            return engine.worker("native", spec, out, scratch, inputs, deferred_request, deadline)
         request = native_request(inputs, spec, recipe)
         write(out / "execution-request.json", request)
         control.activate_worker(ctx, spec, permission, out)
@@ -122,7 +136,8 @@ def launch(spec, runtime_commit, *, output=Path("/kaggle/working"), scratch_pare
         budgets = engine.policy()
         write(out / "initial-resources.json", environment.resources("internvl35", budgets, scratch, out))
         packet = out / "packet.json"
-        write(packet, {"spec": spec, "runtime_commit": runtime_commit, "slot": grant["slot"]})
+        write(packet, {"spec": spec, "runtime_commit": runtime_commit, "slot": grant["slot"],
+                       "continuous": control.CONTINUOUS})
         env = provision.clean_env(ROOT, scratch)
         for stage in ("setup", "worker"):
             python = sys.executable
@@ -138,8 +153,9 @@ def launch(spec, runtime_commit, *, output=Path("/kaggle/working"), scratch_pare
                 supervision.run([str(python), "-B", "-m", "scripts.internvl_v2_campaign",
                     "--worker", stage, "--packet", str(packet), "--output", str(out),
                     "--scratch", str(scratch), "--inputs", str(inputs), "--deadline", str(deadline)],
-                    cwd=ROOT, env=env, deadline=min(deadline, time.monotonic() + budgets[
-                        "setup_seconds" if stage == "setup" else "diagnostic_seconds"]),
+                    cwd=ROOT, env=env, deadline=min(deadline, time.monotonic() + (
+                        1700 if control.CONTINUOUS and stage == "worker" else budgets[
+                        "setup_seconds" if stage == "setup" else "diagnostic_seconds"])),
                     log=log, receipt=out / (stage + "-supervisor.json"),
                     max_log_bytes=budgets["max_log_bytes"], watch_log_root=out)
             finally:
@@ -157,6 +173,10 @@ def launch(spec, runtime_commit, *, output=Path("/kaggle/working"), scratch_pare
     if grant.get("authorization_mode") == control.DELEGATED_MODE:
         result.update(authorization_mode=control.DELEGATED_MODE, independent_audit="PENDING_POST_TRIAL",
                       research_scientific_qualification="NOT_ESTABLISHED")
+    if control.CONTINUOUS:
+        result.update(authorization_mode="OWNER_CONTINUOUS_TECHNICAL_V1", independent_audit="PENDING_POST_RESULT",
+                      research_scientific_qualification="NOT_ESTABLISHED", series_id=control.CAMPAIGN + "-technical-only",
+                      attempt_id="attempt-" + str(grant["slot"]))
     write(out / "summary.json", result)
     # Explicit final ledger, even on a caught failure. Hard kill/failed export is UNKNOWN.
     write(out / "campaign-end.json", {"binding": ctx["binding"], "native_call_markers": result["native_call_markers"],

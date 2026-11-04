@@ -66,8 +66,13 @@ def request_binding(spec, request):
         "schema", "identity", "series_id", "attempt_id", "split", "ordinal",
         "sample_id", "image", "image_sha256", "source_sha256", "limits",
     }, "V2_EXACT_REQUEST_FIELDS")
+    from safeshift import internvl_v2_campaign as control
+    import re
+    new_identity = (control.CONTINUOUS and request["series_id"] == control.CAMPAIGN + "-technical-only"
+                    and isinstance(request["attempt_id"], str) and re.fullmatch(r"attempt-[1-9][0-9]*", request["attempt_id"]))
     require(request["schema"] == IDENTITY + "-request" and request["identity"] == IDENTITY
-            and request["series_id"] == SERIES and request["attempt_id"] == "attempt-0001",
+            and (new_identity or (not control.CONTINUOUS and request["series_id"] == SERIES
+                                  and request["attempt_id"] == "attempt-0001")),
             "V2_SEPARATE_SERIES_ATTEMPT")
     require(request["split"] == "TRAIN" and type(request["ordinal"]) is int
             and request["ordinal"] == 0, "V2_TECHNICAL_ORIGINAL_ORDINAL0_ONLY")
@@ -90,7 +95,7 @@ def trace_binding(spec, request, tokenizer_sha):
         "model_revision_sha256": digest(descriptor["model_revision"]),
         "input_sha256": request["image_sha256"], "prompt_sha256": PROMPT_SHA,
         "generation_sha256": digest(POLICY),
-        "series_sha256": digest({"series": SERIES, "request": request})}
+        "series_sha256": digest({"series": request["series_id"], "request": request})}
 
 
 def native_grammar(tokenizer, eos, input_ids, logit_width):
@@ -288,8 +293,25 @@ class NativeBackend:
     def __init__(self, source, weights):
         authorize("load")
         from safeshift.candidates.backend import CandidateBackend
+        from safeshift import internvl_v2_campaign as control, internvl_v2_memory as memory
         prompt = (ROOT / "configs/pilot/classification_c1.txt").read_text(encoding="utf8")
-        self.backend = CandidateBackend("internvl35", source, weights, prompt, device="cuda:0")
+        options = {}
+        if control.CONTINUOUS:
+            capability = control._capability
+            out = capability["out"]
+            deadline = time.monotonic() + max(0, capability["ctx"]["grant"]["expires_unix"] - time.time())
+            def verifier(path, key):
+                result = memory.verify_checkpoint(path, key, out, "loader-checkpoint-stream", deadline)
+                # The repeated loader verification must not silently refill cache.
+                from scripts.internvl_v2 import policy
+                scratch = Path(__import__('sys').prefix).parent
+                write(out / "loader-resources.json", memory.resource_check(out, "loader-resources", policy(), scratch))
+                return result
+            options["weight_verifier"] = verifier
+        self.backend = CandidateBackend("internvl35", source, weights, prompt, device="cuda:0", **options)
+        if control.CONTINUOUS:
+            write(out / "loaded-memory.json", memory.snapshot())
+            write(out / "loaded-gpu.json", gpu_observation())
         self.backend.logit_width = self.backend.config.text_config.vocab_size
         self.backend.evidence_kind = "NATIVE"
         self.environment = self.backend.environment
@@ -310,7 +332,22 @@ class NativeBackend:
             "input_ids": inputs["input_ids"][0].tolist(), "input_detail": detail,
             "generation": b.generation.to_dict(), "binding": binding})
         inputs = transfer_inputs(inputs, b.device, b.dtype)
-        return generate_prepared(b, inputs, sample, binding, deadline)
+        try:
+            return generate_prepared(b, inputs, sample, binding, deadline)
+        finally:
+            from safeshift import internvl_v2_campaign as control, internvl_v2_memory as memory
+            if control.CONTINUOUS:
+                write(Path(sample) / "generation-gpu.json", gpu_observation())
+                write(Path(sample) / "generation-memory.json", memory.snapshot())
+
+
+def gpu_observation():
+    import torch
+    free, total = torch.cuda.mem_get_info(0)
+    return {"device": 0, "name": torch.cuda.get_device_name(0), "free_bytes": free,
+        "total_bytes": total, "allocated_bytes": torch.cuda.memory_allocated(0),
+        "reserved_bytes": torch.cuda.memory_reserved(0), "peak_allocated_bytes": torch.cuda.max_memory_allocated(0),
+        "peak_reserved_bytes": torch.cuda.max_memory_reserved(0), "monotonic": time.monotonic()}
 
 
 def execute_attempt(spec, request, inputs_root, out, source, weights, deadline, *, factory=NativeBackend):

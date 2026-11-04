@@ -25,19 +25,28 @@ JOB_SECONDS = 600
 PHYSICAL_GPUS = 2
 
 
+def job_seconds():
+    return 1800 if control.CONTINUOUS else JOB_SECONDS
+
+
+def unused_slots(grant):
+    return (grant["slot"],) if control.CONTINUOUS else range(grant["slot"], 4)
+
+
 def gpu_budget(grant):
     slot = grant["slot"]
     control.job(slot)
     require(grant["limits"] == control.LIMITS, "GPU_LIMITS_CHANGED")
-    charged = PHYSICAL_GPUS * JOB_SECONDS
-    require(slot * charged <= control.LIMITS["physical_gpu_seconds"], "CAMPAIGN_GPU_BUDGET_EXHAUSTED")
+    charged = PHYSICAL_GPUS * job_seconds()
+    cap = grant.get("quota_cap_gpu_seconds") if control.CONTINUOUS else control.LIMITS["physical_gpu_seconds"]
+    require(cap is None or slot * charged <= cap, "CAMPAIGN_GPU_BUDGET_EXHAUSTED")
     return {"schema": "internvl-v2-gpu-upper-bound-v1", "binding": digest(grant),
         "reviewed_head": grant["reviewed_head"], "slot": slot,
         "accounting": "CONSERVATIVE_SERVER_TIMEOUT_NO_REFUND", "measured_usage": None,
         "machine_shape": "NvidiaTeslaT4", "physical_gpus": PHYSICAL_GPUS,
-        "server_timeout_seconds": JOB_SECONDS, "reserved_physical_gpu_seconds": charged,
+        "server_timeout_seconds": job_seconds(), "reserved_physical_gpu_seconds": charged,
         "cumulative_reserved_physical_gpu_seconds": slot * charged,
-        "campaign_limit_physical_gpu_seconds": control.LIMITS["physical_gpu_seconds"]}
+        "campaign_limit_physical_gpu_seconds": cap}
 
 
 def check_budget(record, grant):
@@ -56,14 +65,14 @@ def cumulative_budget(grant, prior):
         budget = row["gpu_budget"]
         # Each predecessor budget was checked against its original immutable grant.
         require(type(budget["reserved_physical_gpu_seconds"]) is int
-                and budget["reserved_physical_gpu_seconds"] == PHYSICAL_GPUS * JOB_SECONDS
+                and budget["reserved_physical_gpu_seconds"] == PHYSICAL_GPUS * job_seconds()
                 and type(budget["cumulative_reserved_physical_gpu_seconds"]) is int
-                and budget["cumulative_reserved_physical_gpu_seconds"] == slot * PHYSICAL_GPUS * JOB_SECONDS,
+                and budget["cumulative_reserved_physical_gpu_seconds"] == slot * PHYSICAL_GPUS * job_seconds(),
                 "GPU_HISTORY_USAGE_UNKNOWN")
         total += budget["reserved_physical_gpu_seconds"]
     budget = gpu_budget(grant)
-    require(total + budget["reserved_physical_gpu_seconds"] == budget["cumulative_reserved_physical_gpu_seconds"]
-            <= control.LIMITS["physical_gpu_seconds"], "CAMPAIGN_GPU_BUDGET_EXHAUSTED")
+    require(total + budget["reserved_physical_gpu_seconds"] == budget["cumulative_reserved_physical_gpu_seconds"],
+            "CAMPAIGN_GPU_BUDGET_EXHAUSTED")
     return budget
 
 
@@ -79,7 +88,7 @@ def positive_worker_evidence(get, members, grant):
                 and type(row["returncode"]) is int and row["returncode"] == 0
                 and row["group_kill_sent"] is True and row["automatic_retry"] is False
                 and type(row["seconds"]) in (int, float) and math.isfinite(row["seconds"])
-                and 0 <= row["seconds"] <= JOB_SECONDS
+                and 0 <= row["seconds"] <= job_seconds()
                 and type(row["log_bytes"]) is int and 0 <= row["log_bytes"] <= budgets["max_log_bytes"],
                 "SUCCESS_STAGE_TERMINATION_REQUIRED")
     for name in ("resources-memory-before.json", "preload-resources-memory-before.json",
@@ -248,7 +257,7 @@ def coordinate(api, grant, seconds, evidence=None):
     def stream():
         # Only re-open the read-only stream. Never restart the coordinator,
         # re-submit a notebook, repeat a permit write or repeat a model call.
-        for connection in range(8):
+        for connection in range(32 if control.CONTINUOUS else 8):
             if stop.is_set():
                 return
             put('connection', connection)
@@ -363,7 +372,7 @@ def inventory(api, grant):
             tokens.add(token)
     else:
         raise ValueError("INCOMPLETE_INVENTORY")
-    require(all(control.job(n) not in owned for n in range(grant["slot"], 4)), "JOB_EXISTS_NO_SUBMISSION")
+    require(all(control.job(n) not in owned for n in unused_slots(grant)), "JOB_EXISTS_NO_SUBMISSION")
     inputs = []
     for ref in input_sources(grant["mode"])[1]:
         require(ref in owned, "MISSING_PRIVATE_INPUT")
@@ -402,8 +411,8 @@ def verify_result(archive, grant, state):
                 and start["slot"] == grant["slot"] and start["mode"] == grant["mode"], "POSITIVE_START_LEDGER")
         require(summary["campaign"] == control.CAMPAIGN and summary["slot"] == grant["slot"]
                 and summary["mode"] == grant["mode"], "SUMMARY_JOB_IDENTITY")
-        call = control.remote_record("call")
-        load = control.remote_record("load")
+        call = control.remote_record("call", grant["slot"]) if control.CONTINUOUS else control.remote_record("call")
+        load = control.remote_record("load", grant["slot"]) if control.CONTINUOUS else control.remote_record("load")
         markers = int("sample/native_call.json" in members)
         reservations = int("sample/reservation.json" in members)
         require(markers == end["native_call_markers"] == summary["native_call_markers"]
@@ -440,6 +449,20 @@ def verify_result(archive, grant, state):
             from safeshift import internvl_v2_runtime as runtime
             request = get("execution-request.json")
             runtime.request_binding(spec, request)
+            if control.CONTINUOUS:
+                require(request["series_id"] == control.CAMPAIGN + "-technical-only"
+                        and request["attempt_id"] == "attempt-" + str(grant["slot"]), "ATTEMPT_RESULT_IDENTITY")
+                preflight = get("internal-preflight.json")
+                require(preflight["status"] == "LIVE_GPU_PREFLIGHT_PASS" and preflight["weights_loaded"] is False
+                        and preflight["original_image_read"] is False and preflight["calls"] == preflight["loads"] == 0
+                        and preflight["source_sha256"] == digest(spec)
+                        and all(members.get(k) == v for k, v in preflight["evidence"].items()), "INTERNAL_PREFLIGHT_CUSTODY")
+                for name in ("checkpoint-stream.json", "loader-checkpoint-stream.json"):
+                    streamed = get(name)
+                    lock = get("checkpoint.json")["checkpoint_lock"]["weights"]
+                    require(streamed["status"] == "ACTUAL_BYTES_VERIFIED" and streamed["error"] is None
+                            and {r["file"]: (r["sha256"], r["bytes_hashed"]) for r in streamed["files"]} ==
+                            {k: (v["sha256"], v["size"]) for k, v in lock.items()}, "STREAMED_CHECKPOINT_CUSTODY")
             require(get("original-binding.json") == grant["request"]
                     and digest(request["sample_id"]) == grant["request"]["sample_id_sha256"]
                     and request["image_sha256"] == grant["request"]["image_sha256"]
@@ -473,13 +496,30 @@ def verify_result(archive, grant, state):
                 and summary["authorization_mode"] == control.DELEGATED_MODE, "DELEGATED_RESULT_SCOPE")
         result.update(authorization_mode=control.DELEGATED_MODE, independent_audit="PENDING_POST_TRIAL",
                       research_scientific_qualification="NOT_ESTABLISHED")
+    if control.CONTINUOUS:
+        require(summary["independent_audit"] == "PENDING_POST_RESULT"
+                and summary["research_scientific_qualification"] == "NOT_ESTABLISHED"
+                and summary["authorization_mode"] == "OWNER_CONTINUOUS_TECHNICAL_V1", "CONTINUOUS_RESULT_SCOPE")
+        require((load is None) == (not end["load_permit"]) and (call is None) == (not end["call_permit"]),
+                "AMBIGUOUS_EXTERNAL_CONSUMPTION")
+        require(call is None or markers == reservations == 1, "AMBIGUOUS_CALL_CONSUMPTION")
+        result.update(authorization_mode="OWNER_CONTINUOUS_TECHNICAL_V1", independent_audit="PENDING_POST_RESULT",
+                      research_scientific_qualification="NOT_ESTABLISHED", load_permits=int(load is not None),
+                      call_permits=int(call is not None), consumption_reconciled=True)
     return result
 
 
 def predecessors(api, grant, directory):
     records = []
-    require(control.remote_record("call") is None and control.remote_record("load") is None,
-            "CAMPAIGN_NATIVE_ALREADY_RESERVED")
+    if control.CONTINUOUS:
+        require(not control.active_submissions(), "PRIOR_JOB_STILL_ACTIVE_OR_UNKNOWN")
+        control.historical_preserved()
+        for slot in (1, 2):
+            ref = "nguynanhtn/safeshift-internvl-v2-6622148168-j" + str(slot) + "/1"
+            require(str(api.kernels_status(ref).status).split(".")[-1] == "ERROR", "HISTORICAL_JOB_STATE_CHANGED")
+    else:
+        require(control.remote_record("call") is None and control.remote_record("load") is None,
+                "CAMPAIGN_NATIVE_ALREADY_RESERVED")
     for slot in range(1, grant["slot"]):
         submission = control.remote_record("submission", slot)
         finished = control.remote_record("finished", slot)
@@ -493,10 +533,12 @@ def predecessors(api, grant, directory):
         archive = safe(directory, control.job(slot).split("/")[1] + ".zip")
         observed = verify_result(archive, prior, state)
         require(observed == finished and digest(finished) == grant["predecessors"][slot-1]
-                and finished["proof"] == "ZERO_CALL_CONFIRMED" and not finished["weights_loaded"],
+                and ((control.CONTINUOUS and finished.get("consumption_reconciled") is True
+                      and finished["status"] != "SUCCESS") or (not control.CONTINUOUS
+                      and finished["proof"] == "ZERO_CALL_CONFIRMED" and not finished["weights_loaded"])),
                 "ZERO_CALL_REPAIR_NOT_PROVEN")
         records.append(finished)
-    if grant["mode"] == "native":
+    if grant["mode"] == "native" and not control.CONTINUOUS:
         require(any(r["status"] == "LIVE_GPU_PREFLIGHT_PASS" and r["terminal"] == "COMPLETE"
                     and r["request_sha256"] == grant["request_sha256"]
                     and r["manifest_sha256"] == grant["manifest_sha256"] for r in records),
@@ -518,7 +560,7 @@ def validate_local_release(comment_id, notebook):
     nb = read(notebook)
     from scripts.build_internvl_v2 import build
     require(sha(notebook) == grant["notebook_sha256"] and control.code_hash(nb) == grant["notebook_code_sha256"]
-            and build(grant["runtime_commit"]) == nb, "EXACT_REVIEWED_NOTEBOOK")
+            and build(grant["runtime_commit"], continuous=control.CONTINUOUS) == nb, "EXACT_REVIEWED_NOTEBOOK")
     from safeshift.internvl_v2_runtime import source_spec, check_source
     spec = source_spec()
     check_source(spec)
@@ -530,7 +572,7 @@ def validate_local_release(comment_id, notebook):
 def submit(api, grant, comment_id, notebook, stage, predecessor_directory):
     require(validate_local_release(comment_id, notebook) == grant, "SUBMIT_EXACT_RELEASE")
     control.check_head(grant)
-    require(all(control.remote_record(n, slot) is None for slot in range(grant["slot"], 4)
+    require(all(control.remote_record(n, slot) is None for slot in unused_slots(grant)
                 for n in ("submission", "submitted", *control.PHASES, "finished")), "NONEMPTY_LEDGER_NO_RESUBMISSION")
     prior = predecessors(api, grant, predecessor_directory)
     budget = cumulative_budget(grant, prior)
@@ -588,7 +630,10 @@ def main(argv=None):
     p.add_argument("--notebook", type=Path, required=True)
     p.add_argument("--stage", type=Path, required=True)
     p.add_argument("--predecessor-directory", type=Path, required=True)
+    p.add_argument("--continuous", action="store_true")
     a = p.parse_args(argv)
+    if a.continuous:
+        control.select_continuous()
     with patch.object(control, "public_get", authenticated_github_get):
         grant = validate_local_release(a.approval_comment, a.notebook)
         check_sdk()

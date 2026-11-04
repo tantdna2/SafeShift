@@ -28,6 +28,82 @@ DELEGATION_SHA256 = "52422be8930f419edb046eb709728429628f215853c41b0006a39b4e42b
 DELEGATED_MODE = "OWNER_PREAUDIT_TECHNICAL_TRIAL_V1"
 JOB1_FINISHED_DIGEST = "a319f767c07809e21d42367bcf158763b9c3ec380a3ccc9c739a1b8c374d829b"
 _capability = None
+CONTINUOUS = False
+CONTINUOUS_CAMPAIGN = "internvl-v2-6626498951"
+CONTINUOUS_AUTHORITY_SHA = "03407e1981f90a7b03f7ddcd0baacdec32b0f204d7a2afaf040bb17fae76240b"
+HISTORICAL_REFS = {
+    "j1/finished": "608c53efd43220e0c787efa61a6072912a201e55",
+    "j1/launch": "9d716edc8420bcc6c2ee0f044df5a758f10fd81f",
+    "j1/setup": "efc1e984e1e72c43ebc953f49efcf8f34101ba6c",
+    "j1/submission": "85257bcded45c958e481cb7e119bdfc90e41a1c4",
+    "j1/submitted": "3e8e6ef8395f587ed43c433a40928b859ce8bc16",
+    "j1/worker": "0b1aa7127351ab8a88edaf3e42371c227d7b2878",
+    "j2/finished": "3b348cea54d50796dbe888089d71d76fa6a1aff2",
+    "j2/launch": "b1c4d1b976867d366a1876d007331357d5e9c0ab",
+    "j2/setup": "567ab3c4d84710c699e9ce6e1bc6f6d1ddea7595",
+    "j2/submission": "83109a50b532bb763da434bf3683ef8196b37a17",
+    "j2/submitted": "22c21af137cbf9bc7ee40f1bf29c1742d1e05ae7",
+    "j2/worker": "47dfc8f87e8c5c09d66fb765e08b8cd2c9e8c6c5",
+}
+
+
+def select_continuous():
+    """Select a source-bound operational protocol, never confer authorization.
+
+    Must be explicit at each process entrypoint. Historical defaults stay intact.
+    There is deliberately no switch back while any capability could be active.
+    """
+    global CONTINUOUS, CAMPAIGN, LIMITS
+    require(_capability is None, "POLICY_CHANGE_AFTER_ACTIVATION")
+    CONTINUOUS = True
+    CAMPAIGN = CONTINUOUS_CAMPAIGN
+    LIMITS = {"jobs": None, "loads": 1, "calls": 1, "seconds": 1800, "physical_gpu_seconds": None}
+
+
+def historical_preserved():
+    prefix = "refs/tags/internvl-v2-6622148168/"
+    rows = public_get("/git/matching-refs/tags/internvl-v2-6622148168/?cache=" + str(time.time_ns()))
+    require(len(rows) == len(HISTORICAL_REFS) and
+            {r["ref"]: r["object"]["sha"] for r in rows if r["object"]["type"] == "tag"} ==
+            {prefix + k: v for k, v in HISTORICAL_REFS.items()}, "HISTORICAL_LEDGER_CHANGED")
+    return digest(HISTORICAL_REFS)
+
+
+def continuous_grant(number):
+    grant = comment_record(number, "INTERNVL_V2_CONTINUOUS_RELEASE_V1")
+    fields = {"campaign", "reviewed_head", "runtime_commit", "manifest_sha256", "notebook_sha256",
+        "notebook_code_sha256", "request", "request_sha256", "slot", "mode", "job", "version",
+        "issued_unix", "expires_unix", "limits", "predecessors", "authorization_mode", "authority_comment",
+        "authority_sha256", "independent_audit", "research_scientific_qualification", "quota_cap_gpu_seconds"}
+    require(set(grant) == fields and number > 6626498951, "CONTINUOUS_RELEASE_FIELDS")
+    require(grant["campaign"] == CAMPAIGN and grant["job"] == job(grant["slot"])
+            and grant["mode"] == "native" and type(grant["version"]) is int and grant["version"] == 1
+            and digest(grant["limits"]) == digest(LIMITS), "CONTINUOUS_RELEASE_IDENTITY")
+    require(grant["authorization_mode"] == "OWNER_CONTINUOUS_TECHNICAL_V1"
+            and grant["authority_comment"] == 6626498951 and grant["authority_sha256"] == CONTINUOUS_AUTHORITY_SHA
+            and grant["independent_audit"] == "PENDING_POST_RESULT"
+            and grant["research_scientific_qualification"] == "NOT_ESTABLISHED", "CONTINUOUS_OWNER_SCOPE")
+    authority = public_get("/issues/comments/6626498951")
+    require(authority["user"]["login"] == "tantdna2" and authority["issue_url"] == API + "/issues/177"
+            and hashlib.sha256(authority["body"].encode()).hexdigest() == CONTINUOUS_AUTHORITY_SHA,
+            "CONTINUOUS_OWNER_AUTHENTICATION")
+    require(grant["request_sha256"] == validate_request(grant["request"]), "RELEASE_REQUEST_HASH")
+    for key in ("reviewed_head", "runtime_commit"):
+        require(isinstance(grant[key], str) and re.fullmatch("[0-9a-f]{40}", grant[key]), "RELEASE_HEAD")
+    for key in ("manifest_sha256", "notebook_sha256", "notebook_code_sha256"):
+        require_hash(grant[key])
+    require(type(grant["issued_unix"]) is int and type(grant["expires_unix"]) is int
+            and 0 < grant["expires_unix"] - grant["issued_unix"] <= 3600
+            and grant["issued_unix"] <= time.time() < grant["expires_unix"], "RELEASE_EXPIRED_OR_TOO_LONG")
+    cap = grant["quota_cap_gpu_seconds"]
+    require(cap is None or (type(cap) is int and cap >= grant["slot"] * 3600), "OPTIONAL_QUOTA_CAP")
+    require(type(grant["predecessors"]) is list and len(grant["predecessors"]) == grant["slot"] - 1,
+            "COMPLETE_PREDECESSOR_RELEASE")
+    for value in grant["predecessors"]:
+        require_hash(value)
+    historical_preserved()
+    check_head(grant)
+    return grant
 
 
 def public_get(path, *, missing=False):
@@ -46,12 +122,13 @@ def public_get(path, *, missing=False):
 
 
 def job(slot):
-    require(type(slot) is int and 1 <= slot <= 3, "THREE_JOB_BUDGET")
+    require(type(slot) is int and slot >= 1 and (CONTINUOUS or slot <= 3), "THREE_JOB_BUDGET")
     return "nguynanhtn/safeshift-" + CAMPAIGN + "-j" + str(slot)
 
 
 def record_name(name, slot=None):
     if slot is None:
+        require(not CONTINUOUS, "CONTINUOUS_REQUIRES_ATTEMPT_SPECIFIC_RECORD")
         require(name in ("load", "call"), "CAMPAIGN_RECORD")
         return CAMPAIGN + "/" + name
     job(slot)
@@ -85,13 +162,18 @@ def active_submissions():
     Immutable tags cannot be updated by this runner. Head checks remain live.
     """
     rows = public_get("/git/matching-refs/tags/" + CAMPAIGN + "/?cache=" + str(time.time_ns()))
-    require(type(rows) is list and len(rows) <= 32, "LEDGER_REF_SNAPSHOT_BOUND")
+    require(type(rows) is list and (CONTINUOUS or len(rows) <= 32), "LEDGER_REF_SNAPSHOT_BOUND")
     refs = {}
     for row in rows:
         require(row["ref"] not in refs and row["object"]["type"] == "tag", "LEDGER_REF_SNAPSHOT_TYPE")
         refs[row["ref"]] = row
     active = []
-    for slot in range(1, 4):
+    slots = range(1, 4)
+    if CONTINUOUS:
+        slots = sorted({int(re.fullmatch(re.escape("refs/tags/" + CAMPAIGN) +
+            r"/j([1-9][0-9]*)/(?:submission|submitted|finished|launch|setup|worker|load|call)", name).group(1)) for name in refs})
+        require(slots == list(range(1, len(slots) + 1)), "CONTINUOUS_LEDGER_GAP")
+    for slot in slots:
         name = record_name("submission", slot)
         ref = refs.get("refs/tags/" + name)
         finished = "refs/tags/" + record_name("finished", slot) in refs
@@ -154,6 +236,8 @@ def validate_request(request):
 
 
 def read_grant(number):
+    if CONTINUOUS:
+        return continuous_grant(number)
     delegated = False
     try:
         grant = comment_record(number, "INTERNVL_V2_RELEASE_V1")
@@ -245,7 +329,7 @@ def permit(ctx, phase, parent_nonce, *, emit=print):
         record = remote_record(phase, grant["slot"])
         if record is not None:
             require(record == challenge, "NONCE_MISMATCH_NO_REPLAY")
-            if phase in ("load", "call"):
+            if phase in ("load", "call") and not CONTINUOUS:
                 require(remote_record(phase) == challenge, "GLOBAL_CAMPAIGN_PERMIT")
             check_head(grant)
             require(time.time() < grant["expires_unix"], "RELEASE_EXPIRED")
@@ -274,7 +358,7 @@ class Coordinator:
         require(challenge["parent_nonce"] == parent, "PHASE_PARENT_NONCE")
         require(time.time() < g["expires_unix"], "RELEASE_EXPIRED")
         check_head(g)
-        if phase in ("load", "call"):
+        if phase in ("load", "call") and not CONTINUOUS:
             create_record(phase, challenge, g["reviewed_head"])
         create_record(phase, challenge, g["reviewed_head"], g["slot"])
         self.accepted[phase] = challenge
@@ -298,6 +382,14 @@ def authorize(action=None):
     require(time.time() < g["expires_unix"], "RELEASE_EXPIRED")
     check_source(c["spec"])
     if action is not None:
+        if CONTINUOUS:
+            from safeshift.pilot.artifacts import read, sha
+            preflight = read(c["out"] / "internal-preflight.json")
+            require(preflight["status"] == "LIVE_GPU_PREFLIGHT_PASS"
+                    and preflight["source_sha256"] == digest(c["spec"])
+                    and preflight["weights_loaded"] is False and preflight["original_image_read"] is False
+                    and all(sha(c["out"] / k) == v for k, v in preflight["evidence"].items()),
+                    "POSITIVE_INTERNAL_PREFLIGHT_BEFORE_NATIVE")
         require(action in ("load", "call") and action not in c["used"], "NATIVE_ACTION_ALREADY_USED")
         require(action != "call" or "load" in c["used"], "CALL_WITHOUT_LOAD")
         c["used"].add(action)  # An exception never restores local permission.

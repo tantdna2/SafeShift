@@ -25,5 +25,9 @@ if __name__ == "__main__":
     p.add_argument("--master", type=Path, required=True)
     p.add_argument("--original-archive", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--continuous", action="store_true")
     a = p.parse_args()
+    if a.continuous:
+        from safeshift.internvl_v2_campaign import select_continuous
+        select_continuous()
     print(json.dumps(prepare(a.master, a.original_archive, a.output), sort_keys=True))

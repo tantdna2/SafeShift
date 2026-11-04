@@ -33,7 +33,8 @@ class NotebookTests(unittest.TestCase):
 
     def test_committed_source_builder_reproducibility_and_empty_outputs(self):
         nb, code, packed, payload, spec = self.unpack()
-        self.assertEqual(build(nb["metadata"]["safeshift"]["runtime_commit"]), nb)
+        self.assertEqual(build(nb["metadata"]["safeshift"]["runtime_commit"],
+            continuous=nb["metadata"]["safeshift"].get("operational_campaign") == "internvl-v2-6626498951"), nb)
         self.assertEqual(spec["identity"], IDENTITY)
         self.assertEqual(set(payload), set(runtime_sources()))
         self.assertEqual({n: hashlib.sha256(s.encode()).hexdigest() for n, s in payload.items()}, spec["manifest"])

@@ -3,6 +3,7 @@
 No shared-cache deletion, GC, threshold change or experimental authority.
 """
 import os
+import hashlib
 from pathlib import Path
 import stat
 import time
@@ -10,6 +11,82 @@ import time
 from safeshift.candidates.source import require
 from safeshift.fulltrain import environment
 from safeshift.pilot.artifacts import write, safe
+
+
+def stream_checkpoint_file(path, *, expected_size, deadline, observations, chunk_bytes=8 * 2**20):
+    """Hash actual bytes once, advising only already-read ranges on this RO fd.
+
+    No Input write/fsync, mmap, global cache control, hash substitution or RAM
+    accounting adjustment. The final unchanged resource gate proves headroom.
+    """
+    from safeshift.candidates.source import snapshot_stat
+    require(hasattr(os, "posix_fadvise"), "CHECKPOINT_ADVICE_REQUIRES_POSIX")
+    require(type(expected_size) is int and 0 < expected_size <= 16 * 2**30, "CHECKPOINT_SIZE_BOUND")
+    page = os.sysconf("SC_PAGESIZE")
+    require(type(chunk_bytes) is int and page <= chunk_bytes <= 8 * 2**20
+            and chunk_bytes % page == 0, "CHECKPOINT_CHUNK_BOUND")
+    path = Path(path)
+    for parent in (path.parent, *path.parent.parents):
+        snapshot_stat(parent, directory=True)
+    before = snapshot_stat(path)
+    require(before.st_size == expected_size, "CHECKPOINT_EXPECTED_SIZE")
+    def identity(info):
+        return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns, info.st_nlink)
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    count, advised, chunks, hashed = 0, 0, 0, hashlib.sha256()
+    started = time.monotonic()
+    try:
+        require(identity(os.fstat(fd)) == identity(before), "CHECKPOINT_OPEN_CHANGED")
+        # Disables readahead on this descriptor; contiguous bounded reads remain.
+        os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_RANDOM)
+        while count < expected_size:
+            require(time.monotonic() < deadline, "CHECKPOINT_HASH_DEADLINE")
+            block = os.read(fd, min(chunk_bytes, expected_size - count))
+            require(bool(block), "CHECKPOINT_SHORT_READ")
+            hashed.update(block)
+            count += len(block)
+            chunks += 1
+            # Short reads are legal. Only release fully consumed aligned pages.
+            end = count - count % page
+            if end > advised:
+                os.posix_fadvise(fd, advised, end - advised, os.POSIX_FADV_DONTNEED)
+                advised = end
+        require(os.read(fd, 1) == b"", "CHECKPOINT_GREW")
+        require(identity(os.fstat(fd)) == identity(before)
+                and identity(snapshot_stat(path)) == identity(before), "CHECKPOINT_CHANGED_DURING_HASH")
+        os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+        checksum = hashed.hexdigest()
+        observations.append({"file": path.name, "bytes_hashed": count, "sha256": checksum,
+            "chunks": chunks, "chunk_bound": chunk_bytes, "advised_aligned_bytes": advised,
+            "seconds": time.monotonic() - started, "descriptor_identity_unchanged": True,
+            "method": "READONLY_SHA256_RANDOM_DONTNEED", "effect": "ADVISORY_NOT_RAM_PROOF"})
+        return checksum
+    finally:
+        os.close(fd)
+
+
+def verify_checkpoint(weights, key, out, name, deadline):
+    from safeshift.candidates.loading import verify_weights
+    from safeshift.candidates.source import LOCK
+    from safeshift.pilot.artifacts import read
+    require(key == "internvl35", "V2_CHECKPOINT_MODEL_ONLY")
+    locked = read(LOCK.with_name("checkpoint_metadata_lock.json"))[key]
+    rows = []
+    write(out / (name + "-memory-before.json"), snapshot())
+    error = None
+    try:
+        def reader(path):
+            return stream_checkpoint_file(path, expected_size=locked["weights"][path.name]["size"],
+                deadline=deadline, observations=rows)
+        return verify_weights(weights, key, hash_reader=reader)
+    except BaseException as failure:
+        error = type(failure).__name__
+        raise
+    finally:
+        write(out / (name + ".json"), {"files": rows, "error": error,
+            "status": "ACTUAL_BYTES_VERIFIED" if error is None else "FAIL",
+            "weights_modified": False, "ram_floor_changed": False})
+        write(out / (name + "-memory-after.json"), snapshot())
 
 
 def snapshot(proc=Path("/proc"), cgroup=Path("/sys/fs/cgroup")):

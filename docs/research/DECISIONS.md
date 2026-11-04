@@ -628,3 +628,21 @@ and separately authorized merge. This entry does not supersede frozen science.
   Sau kiểm tra GitHub trên HEAD đã bổ sung quyết định, ChatGPT cấp quyền
   merge riêng cho Antigravity trong session audit PR #176; hậu merge
   ChatGPT xác minh main/parents/tree và cập nhật task handoff.
+
+## DEC-20261104-INTERNVL-V2-CONTINUOUS-TECHNICAL-RETRY
+
+- Authority: [Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951),
+  authenticated body SHA256 `03407e1981f90a7b03f7ddcd0baacdec32b0f204d7a2afaf040bb17fae76240b`.
+- New operational namespace `internvl-v2-6626498951` has sequential separately
+  released attempts without a fixed total count. Historical j1/j2 namespace,
+  failures, charges and immutable ledger remain unchanged. No old extra slot.
+- New per-job1800s timeout,3600 conservative physical GPU-seconds reservation,
+  actual provider quota, exclusive submission and terminal custody reconciliation.
+  Optional user quota cap; one load/call per attempt, no ambiguous replay.
+- Same-job positive preflight before original TRAIN ordinal0 image read/load is
+  authorized. Exact checkpoint SHA256 remains mandatory; bounded read-only cache
+  advice may repair file-cache pressure, unchanged16GiB floor decides admission.
+- Audit PENDING_POST_RESULT; scientific qualification NOT_ESTABLISHED. Stop on
+  verified real original-image native result, then ChatGPT/Antigravity review on
+  existing Draft PR177. No merge, scientific method changes, TEST/full TRAIN,
+  label rescue or pooling. [Detailed contract](INTERNVL_V2_CONTINUOUS_TECHNICAL_20261104.md).

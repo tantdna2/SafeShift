@@ -23,11 +23,13 @@ def policy():
     return environment.policy("internvl35", value["resource_policy"])
 
 
-def check_checkpoint(inputs, out):
+def check_checkpoint(inputs, out, deadline=None):
     from safeshift.candidates.loading import verify_weights
     marker, source, weights = checkpoint(inputs, "internvl35")
     spec = verify_snapshot(source, "internvl35")
-    locked = verify_weights(weights, "internvl35")
+    from safeshift import internvl_v2_campaign as control
+    locked = (memory.verify_checkpoint(weights, "internvl35", out, "checkpoint-stream", deadline)
+              if control.CONTINUOUS else verify_weights(weights, "internvl35"))
     write(out / "checkpoint.json", {"marker_sha256": sha(marker),
         "model": spec["id"], "revision": spec["revision"],
         "source_hashes": spec["files"], "checkpoint_lock": locked,
@@ -144,13 +146,23 @@ def worker(stage, spec, out, scratch, inputs, request=None, deadline=None):
     write(out / "hardware.json", driver_check("internvl35", budgets, out, "worker"))
     write(out / "cuda.json", environment.cuda("internvl35", budgets))
     write(out / "before-checkpoint-memory.json", memory.snapshot())
-    source, weights = check_checkpoint(inputs, out)
+    source, weights = check_checkpoint(inputs, out, deadline)
     write(out / "after-checkpoint-memory.json", memory.snapshot())
     run_processor_check(spec, out, scratch, inputs, budgets, deadline)
     reclaim_owned(scratch, out)
     write(out / "preload-resources.json", memory.resource_check(out, "preload-resources", budgets, scratch))
     if stage == "native":
         require(request is not None and deadline is not None, "V2_EXACT_REQUEST_DEADLINE")
+        from safeshift import internvl_v2_campaign as control
+        if control.CONTINUOUS:
+            write(out / "internal-preflight.json", {"status": "LIVE_GPU_PREFLIGHT_PASS",
+                "weights_loaded": False, "original_image_read": False, "calls": 0, "loads": 0,
+                "source_sha256": runtime.check_source(spec), "monotonic": time.monotonic(),
+                "evidence": {p.name: sha(p) for p in [out / name for name in (
+                    "checkpoint.json", "checkpoint-stream.json", "processor.json", "processor-supervisor.json",
+                    "software.json", "cuda.json", "hardware.json", "allocation.json", "preload-resources.json")]}})
+            require(callable(request), "DEFERRED_ORIGINAL_IMAGE_REQUIRED")
+            request = request()
         runtime.execute_attempt(spec, read(request), inputs, out, source, weights, deadline)
     else:
         write(out / "preflight.json", {"status": "LIVE_GPU_PREFLIGHT_PASS", "weights_loaded": False,

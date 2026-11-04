@@ -1,6 +1,21 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Job2 real preflight failed16GiB gate; native not admitted
+## CURRENT — Owner continuous technical repair on the same Draft PR177
+
+[Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951)
+supersedes the old three-job ceiling only for new namespace
+`internvl-v2-6626498951`; [operational decision](research/INTERNVL_V2_CONTINUOUS_TECHNICAL_20261104.md).
+Read-only streamed checkpoint SHA256 with descriptor-local clean-page advice,
+repeated at loader boundary; original16GiB floor retained. One job completes
+preflight before original ordinal0 image read/load, then at most one native call.
+Each new attempt has source-bound Owner release, create-only permits,1800s server
+timeout,3600 conservative reserved GPU-seconds and live quota checks.
+Historical twelve j1/j2 refs and failed private archives remain immutable.
+CPU/Linux regression underway; actual repaired RAM/model fit/inference NOT_VERIFIED.
+INDEPENDENT_AUDIT=PENDING_POST_RESULT; SCIENTIFIC_QUALIFICATION=NOT_ESTABLISHED.
+No TEST/full TRAIN/science change/new PR/merge.
+
+## Historical — Job2 real preflight failed16GiB gate; native not admitted
 
 Under [Owner directive6625594194](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194),
 the session implemented and tested the distinct authenticated pre-audit trial

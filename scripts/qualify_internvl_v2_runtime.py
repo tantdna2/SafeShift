@@ -60,7 +60,7 @@ def main():
                           SAFESHIFT_V2_TOKENIZER=str(args.native_source.resolve()))
         dependencies = {name: importlib.metadata.version(name) for name in
                         ("torch", "torchvision", "transformers", "tokenizers", "numpy", "Pillow")}
-    names = ["test_internvl_v2_runtime", "test_internvl_v2_campaign", "test_internvl_v2_memory", "test_internvl_grammar", "test_issue173_format_decision",
+    names = ["test_internvl_v2_runtime", "test_internvl_v2_campaign", "test_internvl_v2_memory", "test_internvl_v2_continuous", "test_internvl_grammar", "test_issue173_format_decision",
              "test_pilot.HNLOTests", "test_kaggle173_diagnostic",
              "test_fresh_fulltrain.FreshTests.test_storage_simultaneous_cleanup_repeat_and_quota_failure",
              "test_fresh_fulltrain_revision.RevisionTests.test_cgroup_ram_and_shared_distinct_disk_reserves",
