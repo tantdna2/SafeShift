@@ -21,6 +21,44 @@ never a claim of successful reclaim: the original resource gate still decides.
 CPU evidence can validate process lifetime and fail-closed logic; actual Kaggle
 memory improvement remains unverified until an audited job2 can run.
 
+Implementation/test source: `ab61368af74f60cd06659973969aa7645f93413e`.
+Windows138 selected:131 PASS/7 Linux-only SKIP; Linux138 selected:128 PASS/10
+native-only SKIP; notebook4/4 PASS. All142 distinct selected tests executed PASS
+in at least one environment; no final failures/errors. Thirteen memory tests cover
+anon/file/RSS observations, missing/oversized evidence, exact16GiB boundary,
+owned-prefix/alias/hardlink refusal, scan bounds, failure retention, real Linux
+child address-space release and hard timeout, and refusal to enter native if RAM
+is still low after isolation. Existing call-once/terminal/quota regressions PASS.
+
+Actual Windows CPU public-tokenizer synthetic processor measurement: child peak
+working set486,920,192 bytes, post-check355,078,144 bytes; parent working set
+16,080,896→16,293,888 bytes, growth212,992 bytes. Child completed40 mask steps and
+exited with zero weights/model calls. This demonstrates the CPU process boundary,
+not Kaggle memory headroom or the cause of job1's missing failure-time observation.
+Linux tests separately allocate192MiB anonymous memory in a real supervised child
+and verify its address space disappears, including a bounded timeout path.
+
+The new source manifest and notebook are rebuilt from the committed runtime.
+Request digest `0bf4d66ef3d95a2f65d9ced3e8527ea5ed251ff0e2414aa5066870be1b5a8a60`
+changes only its source binding; original master/archive/ordinal/sample/locator/
+image identity fields remain exact. The current verifier replays the private
+job1 ERROR archive against its original saved ledger, reproducing exactly the
+immutable ZERO_CALL_CONFIRMED finished record and1200 budget charge. No history
+upgrade, hash rewrite, old-release reuse or new campaign/tag occurred.
+
+[Complete review packet](research/evidence/internvl_v2_ram_6625040124/review-packet.json),
+[validation](research/evidence/internvl_v2_ram_6625040124/validation.json),
+[actual CPU memory](research/evidence/internvl_v2_ram_6625040124/cpu-memory.json),
+[Job1 replay](research/evidence/internvl_v2_ram_6625040124/history-replay.json),
+[audit access](research/evidence/internvl_v2_ram_6625040124/audit-availability.json).
+The available tools expose no supported independent Antigravity audit invocation;
+installed desktop package2.29.0 has no CLI `bin` entry and `antigravity` is absent
+from PATH. No desktop agent/language-server undocumented RPC was invoked, no
+self-audit was substituted, and the old audit is not applied to changed source.
+The exact final pushed HEAD must receive fresh direct source review and actual
+independent audit PASS before a new job2 permit. This mandatory inaccessible gate
+is the current execution blocker, expressly recognized by directive6625040124.
+
 ## Latest execution: delegated job1 failed the final RAM gate
 
 [Owner directive6624359404](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624359404)

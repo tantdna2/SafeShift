@@ -21,6 +21,24 @@ or connected audit tool. Codex CPU validation is not an independent audit.
 Complete review packet and exact availability evidence are recorded below when
 finalized; no self-issued audit or inherited PASS is allowed.
 
+RAM repair source/test commit `ab61368af74f60cd06659973969aa7645f93413e`:
+Windows138 selected =131 PASS/7 Linux-only SKIP; Linux138 =128 PASS/10 native-only
+SKIP; notebook4/4 PASS. All142 distinct selected tests covered, no final errors.
+Actual CPU public-tokenizer processor child peaked486,920,192 bytes and exited;
+parent RSS grew only212,992 bytes. This is CPU lifetime evidence, not Kaggle RAM
+PASS. New request digest `0bf4d66ef3d95a2f65d9ced3e8527ea5ed251ff0e2414aa5066870be1b5a8a60`
+binds changed runtime bytes while preserving exact original image identity.
+
+[Review packet](research/evidence/internvl_v2_ram_6625040124/review-packet.json),
+[validation](research/evidence/internvl_v2_ram_6625040124/validation.json),
+[memory measurements](research/evidence/internvl_v2_ram_6625040124/cpu-memory.json),
+[Job1 immutable-history replay](research/evidence/internvl_v2_ram_6625040124/history-replay.json),
+[independent-audit access blocker](research/evidence/internvl_v2_ram_6625040124/audit-availability.json).
+No Kaggle job/permit was issued in this repair; remaining budget2 jobs/2400
+reserved physical-GPU seconds/one load/one generate remains intact. New source
+review and independent audit are PENDING for the final HEAD. Inference remains
+NOT_RUN, technical one-image SUCCESS has not been achieved.
+
 ## Historical — PR177 live job1 TECHNICAL_ERROR, zero native calls, 04/11/2026
 
 [Owner autonomous delegation6624359404](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624359404)
