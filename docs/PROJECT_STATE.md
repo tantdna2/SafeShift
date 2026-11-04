@@ -1,6 +1,35 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Mini original TRAIN smoke SUCCESS; handoff 04/11/2026
+## CURRENT — InternVL3.5 grammar V2 science proposal, 04/11/2026
+
+**ĐỀ XUẤT ÁP DỤNG (chờ phê duyệt khoa học): grammar V2 label-only, HNLO N/A.**
+[Scientific dossier](research/INTERNVL_GRAMMAR_SCIENCE_V1.md) and
+[versioned descriptor](../configs/grammar/internvl35_v2.json) define the exact
+four-label JSON method, proof/counterexample for HNLO, evidence limits and
+three-model comparison. Same-prefix mask cancellation does not establish
+equivalence after a forced prefix. No replacement numeric score is activated.
+
+PR #175 is **MERGED / technical Issue173 COMPLETE**, merge/main verified at
+`5ff62212434034f29123e266377f041641c09302`; see
+[ChatGPT post-merge verification and task handoff](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6620752693).
+Its previous OPEN/DRAFT/audit-pending statements below are historical snapshots.
+Original smoke Qwen1/InternVL1/Mini1 is execution coverage; InternVL v5 remains
+INVALID, Mini stays label-only. No more original smoke calls are authorized.
+
+The new branch `feat/internvl-grammar-science-v1` implements an isolated proposed
+callback/CPU trace verifier, with synthetic tests and inherited receipt checks.
+C1/parser/HNLO/production adapters, old raw/attempts and notebooks remain unchanged.
+No new Kaggle/model calls, TRAIN/TEST or private raw reads. No three-model HNLO
+comparison is available under the proposal. Future label comparisons require
+exact new series on the same3763 IDs, full status accounting and O2–O6 approval;
+no selected-INVALID repair or pooling of old successes with grammar outputs.
+
+Stop at one new Draft PR for ChatGPT direct review, mandatory independent audit
+of the proposed generation/scientific change, then Owner/Research Lead decision
+and separate merge authorization. V2 is not an official method or a live-ready
+release. If comparable InternVL HNLO is mandatory, reject V2 and retain C1.
+
+## HISTORICAL — Mini original TRAIN smoke SUCCESS; handoff 04/11/2026
 
 Under [Owner6602848993](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6602848993)
 and [new-session handoff6603028889](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6603028889),
@@ -44,9 +73,10 @@ terminal EOF/status-race regressions pass. [CPU receipt](research/evidence/issue
 Two earlier local admission failures (HTTP403 and Windows UTF-8 decoding) occurred
 before any reservation/submission; their receipts remain alongside v3 evidence.
 
-**Engineering outcome complete; stop at the same OPEN/DRAFT PR175.** ChatGPT's
-direct GitHub review, independent Antigravity audit and separate merge permission
-remain pending. No more Mini calls, full TRAIN, TEST or InternVL grammar work.
+**Engineering outcome complete; PR175 subsequently MERGED and verified.**
+The original pre-merge review/audit hold was superseded by the linked04/11
+post-merge handoff. No more Mini calls, full TRAIN or TEST. The separate grammar
+science task is now authorized only within the CURRENT scope above.
 
 ## HISTORICAL — approved Mini Kaggle job failed before model load, 03/11/2026
 

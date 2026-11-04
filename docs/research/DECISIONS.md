@@ -554,3 +554,33 @@ budget. No full TRAIN, TEST, GT rescue, scientific qualification or O2–O6 appr
 Keep Qwen pins/semantics, peers' strict C1 and MiniCPM FP32 resampler/label-only.
 One branch and one Draft PR; ChatGPT review and independent Antigravity audit,
 no merge. Actual measurements and blockers belong in `KAGGLE_PREFLIGHT_173.md`.
+
+## PROPOSAL-20261104-INTERNVL-GRAMMAR-V2-LABEL-ONLY
+
+Date:04/11/2026, Asia/Bangkok. Authority for the work: direct Owner task and
+[PR175 post-merge handoff](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6620752693).
+Base `5ff62212434034f29123e266377f041641c09302`.
+**PROPOSED; SCIENTIFIC_ADOPTION_PENDING; NO_EXECUTION_AUTHORITY.**
+
+Codex recommends **ĐỀ XUẤT ÁP DỤNG (chờ phê duyệt khoa học)**
+`internvl35-canonical-json-grammar-v2` as a new **label-only** method with
+`HNLO_NA_GRAMMAR_POLICY_V2`, never HNLO-equivalent. The
+[dossier](INTERNVL_GRAMMAR_SCIENCE_V1.md) gives the fixed-prefix cancellation
+proof, changed-prefix counterexample, tested four-label method and limitations.
+This is Codex's proposal, not an Owner/Research Lead approval or a metric change.
+Signer/approval reference remains absent. If comparable InternVL HNLO is a
+required endpoint, reject this policy and retain official C1.
+
+Any later activation requires the descriptor/implementation hashes, explicit
+acceptance of HNLO N/A and heterogeneous three-system label comparison, and
+new complete-cohort InternVL series on the same3763 original IDs. No mixing
+grammar repairs with old successes, prediction inheritance or favorable-output
+selection. Qwen's existing score eligibility and Mini's label-only decision
+remain separate. O2–O6, academic and third-party authority remain unresolved.
+
+Current work is CPU synthetic/native tokenizer software checks and reuse of
+existing Kaggle receipts only. No real images/GT/private raw/TEST/weights/GPU
+or new model calls. Frozen prompt/parser/HNLO and historical evidence remain
+unchanged. One branch/one Draft PR, ChatGPT direct review, mandatory independent
+audit for this proposed scientific/generation change, then scientific decision
+and separately authorized merge. This entry does not supersede frozen science.

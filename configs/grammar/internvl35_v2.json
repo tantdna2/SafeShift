@@ -1,0 +1,39 @@
+{
+  "schema": "safeshift-proposed-generation-method-v1",
+  "id": "internvl35-canonical-json-grammar-v2",
+  "predecessor": "issue173-internvl-canonical-json-trie-v1",
+  "status": "PROPOSED_PENDING_SCIENTIFIC_APPROVAL",
+  "recommendation": "ADOPT_LABEL_ONLY_CONDITIONALLY",
+  "model_id": "OpenGVLab/InternVL3_5-4B-HF",
+  "model_revision": "6bd4487402110ef9889ba50eb7aefeb302526fed",
+  "implementation": "safeshift/internvl_grammar.py",
+  "policy": {
+    "do_sample": false,
+    "num_beams": 1,
+    "num_return_sequences": 1,
+    "max_new_tokens": 64,
+    "batch_size": 1
+  },
+  "language": [
+    "{\"safety_level\":\"Level01\"}",
+    "{\"safety_level\":\"Level02\"}",
+    "{\"safety_level\":\"Level03\"}",
+    "{\"safety_level\":\"Level04\"}"
+  ],
+  "decision": "one_common_branch_four_distinct_tokens_common_suffix",
+  "tie_rule": "lowest_token_id",
+  "eos": "one_native_eos_only_after_complete_json",
+  "actual_logits_processors_required": [
+    "transformers.generation.logits_process.PrefixConstrainedLogitsProcessor"
+  ],
+  "prompt": "configs/pilot/classification_c1.txt",
+  "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+  "parser": "unchanged_safeshift.pilot.contract.parse_label",
+  "hnlo": null,
+  "hnlo_status": "HNLO_NA_GRAMMAR_POLICY_V2",
+  "scientific_equivalence": "NOT_ESTABLISHED",
+  "series_policy": "new_complete_3763_id_series_no_historical_backfill",
+  "production_activation": false,
+  "execution_authority": null,
+  "scientific_approval": null
+}
