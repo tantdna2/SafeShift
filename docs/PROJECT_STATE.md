@@ -1,19 +1,48 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Owner continuous technical repair on the same Draft PR177
+## CURRENT — Original TRAIN ordinal0 native inference VERIFIED; stop at Draft PR177
 
-[Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951)
-supersedes the old three-job ceiling only for new namespace
-`internvl-v2-6626498951`; [operational decision](research/INTERNVL_V2_CONTINUOUS_TECHNICAL_20261104.md).
-Read-only streamed checkpoint SHA256 with descriptor-local clean-page advice,
-repeated at loader boundary; original16GiB floor retained. One job completes
-preflight before original ordinal0 image read/load, then at most one native call.
-Each new attempt has source-bound Owner release, create-only permits,1800s server
-timeout,3600 conservative reserved GPU-seconds and live quota checks.
-Historical twelve j1/j2 refs and failed private archives remain immutable.
-CPU/Linux regression underway; actual repaired RAM/model fit/inference NOT_VERIFIED.
-INDEPENDENT_AUDIT=PENDING_POST_RESULT; SCIENTIFIC_QUALIFICATION=NOT_ESTABLISHED.
-No TEST/full TRAIN/science change/new PR/merge.
+Under [Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951)
+and [exact release6626992475](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626992475),
+private [new campaign j1](https://www.kaggle.com/code/nguynanhtn/safeshift-internvl-v2-6626498951-j1)
+version1 is **COMPLETE / SUCCESS**: one real load, one native generation on the
+original TRAIN ordinal0, strict parser **Level02**, HNLO N/A. Actual raw was saved
+before parse; ten full-vocabulary PRE-grammar vectors and ten masked vectors
+(151,936 entries each) replayed locally **PASS / TRACE_CONSISTENT**. No new
+inference was used for replay. This establishes technical execution for this
+one image, not GT correctness, full-cohort fit or scientific qualification.
+
+Runtime commit `0553fe56c884eac9b0031e4a96e7a14568606f4f`; dispatched clean HEAD
+`c67d41ab424fa6a4eb3baf61056a8e4e5b77ac66`. Final evidence-only handoff commits
+leave executed runtime and notebook bytes unchanged. Source manifest and original
+image identities match the release. ZIP SHA256
+`79c7901108b92a17cf458fb6085565ca6befce1ce38ba75b84803f0cd06509e9`,
+107 members, CRC/member hashes/sidecar PASS; full private raw/logits/logs retained.
+
+The streamed checkpoint repair kept every SHA256 check and unchanged16GiB floor.
+Preload headroom **22.4346GiB**, repeated loader gate **22.2359GiB**. First hash
+file-accounting growth523,272,192 bytes versus historical Job2 growth9,552,867,328;
+loader hash growth16,384 bytes. Two physical T4s, onlyGPU0 native; peak allocated
+13.1642GiB, reserved13.5586GiB. Setup268.407s, worker370.185s, each EXITED0.
+One1800s job reserves3600 physical-GPU seconds without refund; observed account
+quota delta677.143s is separate telemetry, not physical GPU-time proof.
+
+All164 distinct focused CPU/notebook checks covered PASS across Windows/Linux;
+authority UTF-8 pin correction additionally passed50/55 tests (5 Linux-only skips)
+and4 notebook checks. Unused release6626931045 failed authentication before any
+submission because a local PowerShell pipe substituted Unicode; exact UTF-8 hash
+was corrected with append-only provenance. No science/config relaxation.
+
+[Consolidated report](INTERNVL_V2_VERIFIED_ORDINAL0_20261104.md),
+[summary](research/evidence/internvl_v2_continuous_6626498951/summary.json),
+[custody](research/evidence/internvl_v2_continuous_6626498951/custody.json),
+[resources](research/evidence/internvl_v2_continuous_6626498951/resources.json),
+[replay](research/evidence/internvl_v2_continuous_6626498951/replay.json),
+[ledger](research/evidence/internvl_v2_continuous_6626498951/ledger.json).
+No active submission; no j2 in the new namespace. Historical twelve j1/j2 refs,
+failed ZIPs and2400 reserved seconds remain unchanged. **STOP SUBMITTING** after
+success. ChatGPT direct GitHub review and independent Antigravity audit remain
+PENDING_POST_RESULT before any merge/use. No TEST/full TRAIN/new PR/merge.
 
 ## Historical — Job2 real preflight failed16GiB gate; native not admitted
 

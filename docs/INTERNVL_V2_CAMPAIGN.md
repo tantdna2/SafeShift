@@ -1,5 +1,16 @@
 # PR177: exact-release technical campaign
 
+## Verified terminal result — new campaign j1/version1
+
+**COMPLETE / SUCCESS**, strict parser Level02 on original TRAIN ordinal0, exactly
+one real load/call. [Consolidated handoff](INTERNVL_V2_VERIFIED_ORDINAL0_20261104.md)
+contains source/notebook/image/checkpoint/ZIP hashes, resource observations,
+local full-logit replay and limitations. Final runtime `0553fe56c884eac9b0031e4a96e7a14568606f4f`,
+dispatch HEAD `c67d41ab424fa6a4eb3baf61056a8e4e5b77ac66`.
+Stop submissions: the requested one-image technical objective is achieved.
+The instructions below describe the executed operational mechanism, not a new
+permission to run another image/job after success. Audit remains PENDING_POST_RESULT.
+
 ## Current: continuous technical attempts under Owner6626498951
 
 The [new operational decision](research/INTERNVL_V2_CONTINUOUS_TECHNICAL_20261104.md)
