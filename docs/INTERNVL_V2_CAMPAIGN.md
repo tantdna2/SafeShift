@@ -1,5 +1,57 @@
 # PR177: exact-release technical campaign
 
+## Final delegated technical outcome: Job2 ERROR, native prerequisite blocked
+
+The pre-audit mode was actually used under authentic Owner directive6625594194
+and fresh release6625863523. Dispatch HEAD `bc2b4224608739e596a5a84756478bb784b28f00`,
+runtime `542edfebc973fecf443e442c7d4684d873d2debb`, request digest
+`d3559d0643d7542d26d6230f9ee640e5a46c8bc0d0f480c356b707fe90058dfd`.
+No audit PASS was invented or reused; audit is PENDING_POST_TRIAL and scientific
+qualification NOT_ESTABLISHED. Final CPU validation:146 selected, Windows139
+PASS/7 SKIP, Linux136 PASS/10 SKIP; notebook4 PASS. All150 distinct selected
+tests covered across environments, no final failure/error; not a full repo run.
+
+Private job2/version1 finished ERROR / TECHNICAL_ERROR, below600s. Setup323.956s,
+worker129.879s; processor subprocess11.749s and EXITED0. Its lifetime isolation
+worked: parent anon accounting returned to601,464,832 bytes (about574MiB), but
+the final16GiB gate failed. Near-gate observations both recorded14,597,996,544
+available bytes, against17,179,869,184 required. They are near-sampled evidence,
+not an invented exact read inside the unchanged gate.
+
+Checkpoint verification coincided with file-accounting growth9,552,867,328 bytes
+and only2,211,840 anon growth. Advisory reads under the owned venv reached30
+regular files/5,293,504,871 bytes, deleted nothing, and improved headroom by
+4,972,584,960 bytes. Final cgroup memory.current17,614,258,176 and file16,661,553,152
+against limit32,212,254,720 explain why the conservative16GiB headroom check
+still rejected admission. No shared cache was deleted, no inactive-file bytes
+were silently subtracted from memory.current and no RAM threshold was lowered.
+
+Both job1 and job2 have matching sealed positive zero-call ledgers and live
+terminal ERROR. Global load/call refs remain absent. The current native admission
+function was exercised read-only with both private archives and refused job3:
+`SAME_SOURCE_REQUEST_LIVE_PREFLIGHT_REQUIRED`. No job3 release/tag/push was made.
+One slot remains, while a new genuine preflight and a separate native trial
+would need two. Therefore the current campaign cannot reach native safely under
+the retained rules, even though its single model call is still unused.
+
+Job2 ZIP SHA256
+`ab379d6b24eba8db3f7b58a3844b7356500f73aff1bcca549a73733baf1913c4`,42,944 bytes,
+49 members, CRC/member checksums/sidecar PASS. Full logs/ZIP remain private in
+Kaggle job2 Outputs and the ignored local custody path. Real raw/tokens/logits/
+parser output was never created. Reserved GPU budget2400/3600, no refund;
+account delta489.244s observed for job2, not independently measured physical
+allocation. No model weights were loaded or TRAIN/TEST images read.
+
+[Final outcome](research/evidence/internvl_v2_job2_6625594194/summary.json),
+[memory observations/analysis](research/evidence/internvl_v2_job2_6625594194/memory-analysis.json),
+[admission block](research/evidence/internvl_v2_job2_6625594194/native-admission-block.json),
+[custody hashes](research/evidence/internvl_v2_job2_6625594194/custody.json),
+[ledger](research/evidence/internvl_v2_job2_6625594194/ledger.json),
+[quota](research/evidence/internvl_v2_job2_6625594194/quota.json).
+The final HEAD/result evidence is now handed off for ChatGPT inspection and
+independent post-result audit before merge/use. No inference SUCCESS, GT accuracy
+or scientific adoption is claimed. No extra campaign/job4/merge is authorized.
+
 ## Effective Owner directive6625594194 — audit after the technical outcome
 
 [Owner instruction](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194)

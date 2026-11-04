@@ -1,6 +1,60 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Owner delegates technical execution before final audit
+## CURRENT — Job2 real preflight failed16GiB gate; native not admitted
+
+Under [Owner directive6625594194](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194),
+the session implemented and tested the distinct authenticated pre-audit trial
+mode, then actually dispatched private job2/version1 on exact clean HEAD
+`bc2b4224608739e596a5a84756478bb784b28f00` with fresh Owner release6625863523.
+No pre-run audit handoff occurred. INDEPENDENT_AUDIT=PENDING_POST_TRIAL;
+RESEARCH_SCIENTIFIC_QUALIFICATION=NOT_ESTABLISHED. Notebook runtime/source is
+`542edfebc973fecf443e442c7d4684d873d2debb`. CPU146 selected: Windows139 PASS/7
+Linux-only SKIP, Linux136 PASS/10 native-only SKIP; notebook4/4 PASS.
+
+Private [job2](https://www.kaggle.com/code/nguynanhtn/safeshift-internvl-v2-6622148168-j2)
+is terminal **ERROR / TECHNICAL_ERROR**. Setup EXITED0 in323.956s; worker failed
+in129.879s. The isolated processor child EXITED0 in11.749s. CPU/ABI/checkpoint/
+CUDA/grammar checks produced receipts, but final RAM remained below16GiB.
+Real before/after failure observations agree at14,597,996,544 available bytes
+(13.5954GiB), short by2,581,872,640 bytes. The gate's separate internal read is
+not fabricated. Cgroup limit32,212,254,720 bytes, current17,614,258,176 bytes,
+anon605,327,360 bytes and file16,661,553,152 bytes were observed near the gate.
+Across checkpoint verification, file accounting grew9,552,867,328 bytes while
+anon grew only2,211,840 bytes. The processor child released its anonymous memory;
+owned-library advice covered30 files/5,293,504,871 bytes with no deletion and
+improved headroom by4,972,584,960 bytes, still insufficient. No threshold or
+available-memory formula was loosened and no shared-cache deletion was attempted.
+
+Job2 ZIP CRC/member hashes/sidecar and live external `finished` ledger reconcile
+exactly: **ZERO_CALL_CONFIRMED, zero load reservations, zero model calls, no image
+dataset attached/read**. SHA256
+`ab379d6b24eba8db3f7b58a3844b7356500f73aff1bcca549a73733baf1913c4`,49 members.
+Full ZIP/logs remain private in job2 Outputs and ignored local custody. No real
+raw response/logits/tokens/parser result exists. Job1 artifacts remain immutable.
+
+Budget: two submitted jobs,2400/3600 physical-GPU seconds reserved, no refund;
+one slot/1200 reservation capacity remains. Job2 account quota delta489.244s
+settled at12945.311 used seconds; this is account telemetry, not physical-
+allocation proof. A read-only native admission check replayed both terminal
+archives and correctly raised `SAME_SOURCE_REQUEST_LIVE_PREFLIGHT_REQUIRED`.
+Job3 was not released, reserved or submitted. With no COMPLETE preflight, the
+required new-preflight-then-native sequence needs two slots and cannot fit the
+one remaining slot. This is the terminal resource/prerequisite limit under the
+current scope. No job4, second campaign, fake preflight PASS or native call.
+
+[Consolidated outcome](research/evidence/internvl_v2_job2_6625594194/summary.json),
+[actual RAM analysis](research/evidence/internvl_v2_job2_6625594194/memory-analysis.json),
+[native admission block](research/evidence/internvl_v2_job2_6625594194/native-admission-block.json),
+[custody](research/evidence/internvl_v2_job2_6625594194/custody.json),
+[ledger](research/evidence/internvl_v2_job2_6625594194/ledger.json),
+[quota](research/evidence/internvl_v2_job2_6625594194/quota.json).
+Real inference remains NOT_RUN, technical SUCCESS not achieved, science not
+established. Final source/result review and independent post-result audit now
+remain pending before merge or scientific use. Same Draft PR177; no merge/TEST/
+full TRAIN. Docs/receipt HEAD moves only after terminal reconciliation, invalidating
+old grants for further dispatch.
+
+## Historical — Owner delegates technical execution before final audit
 
 [Owner directive6625594194](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194)
 supersedes the pre-run source-review/Antigravity stop for this bounded technical
