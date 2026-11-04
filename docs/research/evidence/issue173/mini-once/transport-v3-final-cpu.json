@@ -1,0 +1,31 @@
+{
+  "full_repository_suite": "NOT_RUN; targeted Issue173 suite and prior fulltrain receipts retain their scopes",
+  "kaggle_calls_from_tests": 0,
+  "linux": {
+    "command": "python3 -B -m unittest discover -s tests -p 'test_kaggle173*.py' -v",
+    "log_sha256": "9e86455bcc23943dcdce67feee9b0af4783031cb468f11da880ccf9c37bdc011",
+    "passed": 102,
+    "python": "3.14.4",
+    "skip": "official Kaggle SDK absent in Linux CPU interpreter",
+    "skipped": 1,
+    "tests": 103
+  },
+  "private_terminal_verifier_sha256": "413100545a78ab2cb8580639b0e28217c280f4bbf906d03ff9009a687cc9c1b0",
+  "runtime_changes_after_live_execution": false,
+  "schema": "issue173-mini-final-cpu-v1",
+  "source_sha256": {
+    "safeshift/minicpm173_once.py": "5e5bf20739027f56079da9a2410d7f9608472d6d0e42bc1356d61dedf8165c44",
+    "scripts/minicpm173_train_once.py": "b7a7f74a19bbdf2c0a209bf45798e62be8e98705c2cb30f4655c9f1024806574",
+    "scripts/submit_minicpm173_once.py": "300acfe1df6a9f91068e0af2adb46bb8a6068ab100fddbe23cc5155b38b45f9a",
+    "tests/test_kaggle173_mini_transport.py": "f8a0ad7528735ad1fddf404850c22fb6938bddc35f771123e7c55069b092c42f",
+    "tests/test_kaggle173_minicpm_once.py": "18aaf0d1dea5711c340884bb4ff596d57c294d9d188150ca66ce0a6a96124910"
+  },
+  "verified_live_runtime": "171b1b1d369368232d29eeb1aa49750ac8bc6292",
+  "verified_live_source_head": "140f6d895a4f9acdf5a83f8c60391441c59f2ac2",
+  "windows": {
+    "authenticated_reads_suite": "11/11 PASS before final Unicode test addition",
+    "official_sdk_parser": "PASS in recorded transport-v3-cpu.json (Kaggle2.2.5/kagglesdk0.1.38)",
+    "terminal_eof_status_race": "1/1 PASS; also included in final Linux suite",
+    "unicode_subprocess_and_http_status_tests": "2/2 PASS"
+  }
+}

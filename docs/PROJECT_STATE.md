@@ -1,6 +1,54 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — approved Mini Kaggle job failed before model load, 03/11/2026
+## CURRENT — Mini original TRAIN smoke SUCCESS; handoff 04/11/2026
+
+Under [Owner6602848993](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6602848993)
+and [new-session handoff6603028889](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6603028889),
+the remaining MiniCPM-V-4 original TRAIN ordinal0 smoke completed **SUCCESS**.
+[Private Kaggle v3](https://www.kaggle.com/code/nguynanhtn/safeshift-issue173-minicpm-original-train-once-v3),
+kernel142510493/version1, is **COMPLETE**: **one new job, one model load, one native
+TRAIN call**. The shared campaign call slot is consumed; no v4/v5 submission.
+Original smoke accounting is now Qwen1/InternVL1/Mini1. InternVL's historical
+INVALID remains unchanged; this is execution coverage, not three valid labels.
+
+Executed clean source HEAD `140f6d895a4f9acdf5a83f8c60391441c59f2ac2`;
+embedded runtime `171b1b1d369368232d29eeb1aa49750ac8bc6292`.
+[Terminal verification](research/evidence/issue173/mini-once/execution-v3.json)
+binds source, notebook, all seven dispatch/campaign records, raw/parser and
+resources. ZIP SHA256
+`d3174b858e734e8de748cacb15ae7ef6fb43365cc34b3f52b6fb1f1d99f6d6da`;
+59 members, 58 payload hashes, sidecar and CRC verified. Private raw SHA256
+`b72a21a2c30b9ac2716fd697ed8e101d2214b87ce8c00db6b02e13236323e123`.
+Raw was saved before strict parsing; all11 captured steps were finite and matched
+native greedy IDs. Recorded worker tokenizer replay PASS. HNLO remains **N/A,
+LABEL_ONLY_OWNER_DECISION**. No scientific quality or accuracy claim.
+
+Transport now retains sanitized exceptions, handles short/partial/heartbeat/log
+replay events, and allows at most four read-only connections in one coordinator.
+V3 actually recovered three idle read timeouts and issued launch/load/call once.
+After the final EOF preceded Kaggle's terminal-status update, the stream budget
+was exhausted; that error is retained. The existing read-only terminal fallback
+then confirmed COMPLETE, downloaded and verified the SUCCESS archive, and created
+the finished record. No coordinator restart, manual permit or resubmission.
+V2's missing original exception remains UNKNOWN, not retroactively inferred.
+
+Pre-load available RAM24,390,733,824B; peak GPU0 allocation9,736,494,592B;
+two physical T4s, GPU1 unused for inference, final reserved quota0. Actual native
+generation3.425s; setup192.244s/native child140.750s include preparation and waits.
+C1/checkpoint/revision/FP16/eager/FP32 resampler/ordinal0 and strict parser remain
+locked. All v2 records and nine historical smoke/diagnostic archives are retained.
+
+Final Linux CPU suite:102 PASS/1 SDK-only skip out of103; official SDK parser
+separately passed in the installed Windows environment. UTF-8 subprocess and
+terminal EOF/status-race regressions pass. [CPU receipt](research/evidence/issue173/mini-once/transport-v3-final-cpu.json).
+Two earlier local admission failures (HTTP403 and Windows UTF-8 decoding) occurred
+before any reservation/submission; their receipts remain alongside v3 evidence.
+
+**Engineering outcome complete; stop at the same OPEN/DRAFT PR175.** ChatGPT's
+direct GitHub review, independent Antigravity audit and separate merge permission
+remain pending. No more Mini calls, full TRAIN, TEST or InternVL grammar work.
+
+## HISTORICAL — approved Mini Kaggle job failed before model load, 03/11/2026
 
 [Release6600633032](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6600633032)
 was executed once at approved clean HEAD

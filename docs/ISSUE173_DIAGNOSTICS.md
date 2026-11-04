@@ -1,5 +1,70 @@
 # Issue173 bounded model diagnostics — 2026-11-03
 
+## Mini v3 terminal result — handoff 04/11/2026
+
+**SUCCESS, one new job / one load / one original TRAIN ordinal0 native call.**
+Kaggle `nguynanhtn/safeshift-issue173-minicpm-original-train-once-v3`,
+kernel142510493/version1 PRIVATE, terminal COMPLETE. V4/v5 were not submitted;
+the campaign call reservation is consumed, so no additional inference is allowed.
+The old v2 remains ERROR with zero loads/calls and its original immutable seal.
+
+Executed source HEAD `140f6d895a4f9acdf5a83f8c60391441c59f2ac2`, embedded runtime
+`171b1b1d369368232d29eeb1aa49750ac8bc6292`, notebook
+`notebooks/SafeShift_ISSUE173_MINI_TRAIN_ONCE_V3.ipynb` SHA256
+`dfe0f16d681b3543bd3483b790d48f10861574ba3a86c1dbc36893dfca864ee2`.
+The original v2 notebook was not overwritten. New source binding is delegated
+under the two Owner comments below; it does not claim a new ChatGPT HEAD review.
+
+[Public terminal receipt](research/evidence/issue173/mini-once/execution-v3.json)
+contains all58 payload hashes, resource measurements, grant and transport errors.
+Private ZIP SHA256 `d3174b858e734e8de748cacb15ae7ef6fb43365cc34b3f52b6fb1f1d99f6d6da`.
+Raw SHA256 `b72a21a2c30b9ac2716fd697ed8e101d2214b87ce8c00db6b02e13236323e123`;
+strict parser result SHA256 `344ab641a9add12c8dde7f9793bd746fcc51fb680177fab0a8d835b71e66df8d`.
+All11 native steps finite/greedy-aligned; saved worker tokenizer replay PASS.
+Exact sample ID/image SHA were compared privately against original ordinal0.
+FP16 parameters/eager and FP32 resampler counters verified; output restored FP16.
+HNLO N/A label-only, no scientific qualification, pooling or quality estimate.
+
+The live log experienced three requests ConnectionError → urllib3 ReadTimeoutError
+chains. Four bounded read connections recovered launch/load/call without duplicate
+writes. Final EOF arrived before Kaggle's status became terminal; the stream's
+connection budget exhausted after the call permit. Its sanitized error remains
+intact. The submitter's read-only terminal reconciliation then downloaded and
+verified SUCCESS before creating finished.json. This is not a claim of an
+uninterrupted stream or recovery from every possible disconnect. A synthetic
+regression now covers this exact terminal fallback without a second submission.
+
+Local failures before submission are separately retained: unauthenticated GitHub
+HTTP403, then cp1252 decoding of UTF-8 Owner comments. Local reads now use the
+existing authenticated gh session with explicit UTF-8; notebook reads remain
+credential-free. Both failures occurred before stage/reservation/Kaggle push,
+so neither consumed a new job. Historical v2's original stream exception was
+discarded and cannot be reconstructed; the v3 observed timeout is new evidence.
+
+Final CPU verification: Linux102 PASS/1 SDK-only skip of103, Windows official SDK
+parser PASS, actual UTF-8 subprocess and terminal-fallback regressions PASS.
+[Final receipt](research/evidence/issue173/mini-once/transport-v3-final-cpu.json).
+No executable/runtime/notebook changes after the verified real v3 execution;
+only regression/evidence/documentation closure. Audit is deferred, not waived.
+
+Private artifact root, relative to this PR worktree:
+`data/processed/issue173-verification/mini-once-v3-submit/`.
+It contains the exact staged notebook/grant, transport records, terminal-service
+and terminal-log receipts, output ZIP/sidecar, and private verification.
+`data/processed/issue173-verification/verify_mini_v3.py` records the additional
+read-only native/source/numerical checks. The ZIP contains intact raw/result.
+
+For read-only custody replay from this worktree (no network/model execution):
+
+```console
+python -B -c "from pathlib import Path; from safeshift.pilot.artifacts import read; from scripts.submit_minicpm173_once import verify_result; p=Path('data/processed/issue173-verification/mini-once-v3-submit'); print(verify_result(p/'output/issue173-minicpm-original-train-once-v3.zip', read(p/'grant.json'))[0])"
+python -B -m unittest discover -s tests -p 'test_kaggle173*.py' -v
+```
+
+Do not rerun the consumed submit command/notebook. Review the same Draft PR175
+on its final reporting HEAD; ChatGPT direct verification precedes independent
+Antigravity audit and separately authorized merge. Full TRAIN/TEST remain closed.
+
 ## Mini transport repair and bounded delegation — 03/11/2026
 
 [Owner6602848993](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6602848993)

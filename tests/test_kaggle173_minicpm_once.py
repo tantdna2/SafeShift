@@ -474,6 +474,67 @@ class MiniOnceTests(unittest.TestCase):
                 submitter.submit(api, 7000000000, notebook, self.root, self.root / 'new-machine')
         api.kernels_push.assert_called_once()
 
+    def test_stream_eof_status_race_reconciles_sealed_success_without_resubmit(self):
+        """Actual v3: all permits issued, EOF precedes Kaggle terminal status."""
+        from safeshift.pilot.artifacts import export
+        from scripts import build_minicpm173_once as builder
+        import shutil
+        nb = {'metadata': {'safeshift': {'identity': c.IDENTITY, 'runtime_commit': self.grant['runtime_commit'],
+              'manifest_sha256': self.grant['manifest_sha256'], 'limits': c.LIMITS}},
+              'cells': [{'cell_type': 'code', 'source': ['# SYNTHETIC\n']}]}
+        notebook = self.root / 'synthetic.ipynb'; write(notebook, nb)
+        self.grant.update(notebook_sha256=sha(notebook), notebook_code_sha256=c.code_hash(nb))
+        source = {'runtime_commit': self.grant['runtime_commit'], 'manifest': {'synthetic': 'f' * 64}}
+        self.grant['manifest_sha256'] = digest(source['manifest'])
+        nb['metadata']['safeshift']['manifest_sha256'] = self.grant['manifest_sha256']
+        # Final notebook is written once at a new fixture path.
+        notebook = self.root / 'final-synthetic.ipynb'; write(notebook, nb)
+        self.grant['notebook_sha256'] = sha(notebook)
+        fixture = self.root / 'payload'
+        write(fixture / 'source.json', source)
+        write(fixture / 'release.json', {'grant': self.grant, 'binding': digest(self.grant)})
+        for name in ('load-reservation.json', 'loaded.json', 'sample/reservation.json', 'sample/native_call.json'):
+            write(fixture / name, {'synthetic': True})
+        raw_hash = write(fixture / 'sample/raw.json', {'response': '{"safety_level":"Level03"}',
+            'cpu_tokenizer_replay': {'status': 'PASS'}, 'raw_nonfinite': False})
+        write(fixture / 'sample/result.json', {'status': 'SUCCESS', 'label': 'Level03', 'raw_sha256': raw_hash,
+            'hnlo': None, 'hnlo_status': 'LABEL_ONLY_OWNER_DECISION'})
+        write(fixture / 'summary.json', run.summarize(fixture))
+        archive = self.root / 'synthetic.zip'; export(fixture, archive)
+        api = Mock(); api.kernels_push.return_value.to_dict.return_value = {'synthetic': True}
+        api.kernels_status.return_value.status = 'COMPLETE'
+        def download(ref, output, **kwargs):
+            destination = Path(output) / (c.IDENTITY + '.zip')
+            shutil.copyfile(archive, destination)
+            shutil.copyfile(str(archive) + '.sha256.json', str(destination) + '.sha256.json')
+        api.kernels_output.side_effect = download
+        stage = self.root / 'stage'
+        with ExitStack() as stack:
+            for target, name, value in ((submitter, 'ROOT', self.root),):
+                stack.enter_context(patch.object(target, name, value))
+            stack.enter_context(patch.object(submitter, 'make_grant', return_value=self.grant))
+            stack.enter_context(patch.object(builder, 'build', return_value=nb))
+            stack.enter_context(patch.object(submitter.subprocess, 'check_output', side_effect=lambda args, **kw:
+                self.grant['reviewed_head'] if 'rev-parse' in args else notebook.read_bytes() if 'show' in args else b''))
+            stack.enter_context(patch.object(c, 'public_get', return_value={'head': {'sha': self.grant['reviewed_head'],
+                'ref': c.BRANCH}, 'draft': True, 'merged': False}))
+            stack.enter_context(patch.object(c, 'remote_record', side_effect=self.ledger.get))
+            stack.enter_context(patch.object(c, 'create_record', side_effect=self.create))
+            stack.enter_context(patch.object(submitter, 'kernel_sources', return_value=['synthetic']))
+            stack.enter_context(patch.object(submitter, 'paths_from_mounts', return_value=[]))
+            stack.enter_context(patch.object(submitter, 'inspect_history', return_value={'consumed': {}}))
+            stack.enter_context(patch.object(submitter, 'diagnostic_history', return_value=[]))
+            stack.enter_context(patch.object(submitter, 'predecessor_history', return_value=[]))
+            stack.enter_context(patch.object(submitter, 'inventory', return_value={}))
+            stack.enter_context(patch.object(submitter, 'live_identity', return_value=123))
+            stack.enter_context(patch.object(submitter, 'coordinate', side_effect=ValueError('LIVE_LOG_TRANSPORT_ERROR_NO_RETRY')))
+            result = submitter.submit(api, 6602848993, notebook, self.root, stage)
+        self.assertEqual(result['status'], 'SUCCESS')
+        self.assertTrue((stage / 'coordinator-error.json').exists())
+        self.assertEqual(self.ledger['finished']['status'], 'SUCCESS')
+        api.kernels_push.assert_called_once()
+        api.kernels_output.assert_called_once()
+
     @unittest.skipUnless(sys.platform == 'linux', 'real supervised stdout relay')
     def test_child_challenge_is_relayed_without_private_lines(self):
         import threading
