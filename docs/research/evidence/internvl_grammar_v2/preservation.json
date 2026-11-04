@@ -1,0 +1,22 @@
+{
+  "schema": "internvl-grammar-v2-preservation-v1",
+  "base": "5ff62212434034f29123e266377f041641c09302",
+  "implementation_commit": "cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702",
+  "protected_paths": [
+    "safeshift/pilot",
+    "safeshift/candidates",
+    "safeshift/fulltrain",
+    "safeshift/diagnostic173_grammar.py",
+    "configs/pilot",
+    "configs/candidate160",
+    "configs/issue173",
+    "notebooks",
+    "docs/research/evidence/issue173"
+  ],
+  "changed_protected_paths": [],
+  "decisions_append_only": true,
+  "private_raw_rehash": "NOT_RUN",
+  "old_kaggle_receipts": "UNCHANGED_TRACKED_BYTES",
+  "new_model_calls": 0,
+  "scope": "LOCAL_DIFF_CHECK_NOT_INDEPENDENT_AUDIT"
+}

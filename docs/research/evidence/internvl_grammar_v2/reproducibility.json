@@ -1,0 +1,62 @@
+{
+  "schema": "internvl-grammar-v2-cpu-reproducibility-v1",
+  "implementation_commit": "cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702",
+  "scope": "SYNTHETIC_NATIVE_TOKENIZER_PROCESSOR_ONLY",
+  "status": "PASS",
+  "matched_complete_trace_pairs": 8,
+  "receipt_sha256": [
+    "1783c142e0cd84179348df8924d73a4f27379382b123d5a83eb265a3f54760a1",
+    "041cbebf6b1ab3d3b35685fb46c70f92b48a18f45ff58f75316645dc07233d88"
+  ],
+  "source_manifest": {
+    "configs/cpu_g2_g3/public_source_lock.json": "7a4840f6ffc0834cbe73e44ddcf4dc593dfaf1a37a98d412a20fab9cd6bd4ae7",
+    "configs/grammar/internvl35_v2.json": "f6e66ee753bc9c3447aa5b33d52838c226f428b87bafbd8a070bf95edce7e99e",
+    "configs/issue173/diagnostic_custody.json": "ba27c48a1aeeef6d14e2616fa4adca88597e58bb6747e45c73b747655f6a2f8d",
+    "configs/pilot/classification_c1.txt": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "docs/research/evidence/issue173/diagnostics/issue173-diag-intern-grammar-v2.json": "b48441e250328919633746379a86d1da006397d3fdd3f751061063d9d3ea28a0",
+    "safeshift/diagnostic173_grammar.py": "a345d30f5d36b6142aaab1292c16e4ba31e08cd425e180a794fd8c3040ab4dfc",
+    "safeshift/internvl_grammar.py": "a3cde12d4dbe463acc9d87bcc36c440492636d7479024876c04ef1c1645c69ca",
+    "safeshift/pilot/contract.py": "23c5440c6f9890be32a6715cc40cfdc0ac248cd168f9742669c20e1f9f09fc19",
+    "safeshift/pilot/hnlo.py": "0b5ee6d3eb73b90343cdc3f6e81767c218c906e9ba7cafc562898d9caed35546",
+    "scripts/qualify_internvl_grammar.py": "d0111cd509f62295f4983b1969c669c91e98e1197e976c85821a0710656a4003",
+    "tests/test_internvl_grammar.py": "0e509ab7f1176adbaf485afa9f843b6cb7113bfc3651e7718e30ee7df33a21a1",
+    "tests/test_issue173_format_decision.py": "d5baff5506cd7ea5028b7f4cde0dbcc14d5803ed05ddfebfa919d85a98f5177b",
+    "tests/test_kaggle173_diagnostic.py": "2d37dedb0a9a7b5e6dd2f3e78159ba9a5fd17289908d7e00887badf7acfb11ba",
+    "tests/test_pilot.py": "2bb43f075e0c5379aa223b7da38302822d7b8778eb6dd4ee5c1ec2c393ea1a4d"
+  },
+  "fixture_and_trace_hashes": [
+    [
+      "55d03fcaf89d37256517738b481d0a9fe21b1dbd5de4c242f9e45b37a56a5d6d",
+      "fd9a2732171868f16861ea6c8e932ca8153be9ca155e8d1cebb3fb934e2231e1"
+    ],
+    [
+      "7558183be51ae72f0c87a33a8e18121d919dfa5215207952082d977dc94b5457",
+      "b22beb5ee2c5aa4b63a8a11f7a16b6de83d0b719913b90212379e204e0403106"
+    ],
+    [
+      "3e5ec537ff0ecdcbbd7a5c684d87a38ae456e6ea45542c99aa3f02a58a16ef6e",
+      "30fa6f5aa2e6c8d7790a278cb61fd0318ffe38b12cdeaa4653da766f59ec0497"
+    ],
+    [
+      "9a7febce316aa8725140d332b5d84d8bdeaa25e8d2d33d2662f42139fe90a6d3",
+      "f07ee1aaaef2a820e80784b2b76b39f37a95f136cbe71836892389b55175093c"
+    ],
+    [
+      "0ce5d096916d0e66b41246687982cccf81d11f1b75ce5669f2bcdd6fe5d1f06e",
+      "10a97a5f48eed0d32e55a4d52ab4cbfc89b4b313203b6d5766591abb3a92f4b9"
+    ],
+    [
+      "049aa56dc3978e78b9d53ebab4521c5eca03771f316307ec22fc6d4044fa7146",
+      "ecda1c426ff0ad579017cf2dcdb38c9c2daf4f846810b295b572336f78cffb0f"
+    ],
+    [
+      "2ed120b6797a24528f2d8566a505512fd7c7fc2b1941f4e16bc69e41ce4e8cbf",
+      "2145b84b9a11c44063ae7b06d2bf68bcc2675e9e8b3568b53152803b17dadec5"
+    ],
+    [
+      "860b26942a7aff3b3ae117cd516be5176b18cc145cdc430e67c54a1a327f455b",
+      "1e6e8446bf68f1545c6a76b9e3148abc8ec6530ea05cb0962f59230f1309b8b6"
+    ]
+  ],
+  "new_model_calls": 0
+}

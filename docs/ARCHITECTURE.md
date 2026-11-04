@@ -490,3 +490,15 @@ scientific limits. `scripts/diagnostic173.py` is retired at launch/worker/CLI;
 review hold. `tests/test_kaggle173_diagnostic.py` covers strict INVALID, grammar
 language, unknown consumption, empty-VM replay and published notebook fences.
 Original candidates/fulltrain/pilot adapters and locks are unchanged.
+
+## InternVL grammar V2 science qualification — 04/11/2026
+
+`safeshift/internvl_grammar.py` develops the diagnostic trie as an isolated,
+PROPOSED label-only method. It adds native token/context admission and CPU
+full-vocabulary pre/post mask trace verification; it never computes HNLO or
+registers with a production runner. `configs/grammar/internvl35_v2.json` describes
+the proposed identity, not an execution grant. `scripts/qualify_internvl_grammar.py`
+runs synthetic tests and optionally hash-locked public tokenizer/native processor
+CPU checks without model weights. Tests live in `tests/test_internvl_grammar.py`.
+Read [the science dossier](research/INTERNVL_GRAMMAR_SCIENCE_V1.md) for HNLO N/A,
+same-prefix versus changed-prefix proof, custody and exact-series comparison.
