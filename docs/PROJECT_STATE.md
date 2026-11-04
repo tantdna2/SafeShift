@@ -1,6 +1,57 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR177 exact-release preparation, STOP before Kaggle, 04/11/2026
+## CURRENT — PR177 live preflight TECHNICAL_ERROR, zero native calls, 04/11/2026
+
+[Owner autonomous delegation6624359404](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624359404)
+replaced the per-step human release workflow. Existing Codex session dispatched
+the unchanged audited HEAD `cf54dc487deb87a937e5d2e700d695a2d461faad` using fresh
+[mechanical job1 release6624618714](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624618714),
+after verifying ChatGPT review6622971708 and independent audit attestation6623259455.
+
+Private [Kaggle job1](https://www.kaggle.com/code/nguynanhtn/safeshift-internvl-v2-6622148168-j1),
+version1, is conclusively **ERROR / TECHNICAL_ERROR**. Setup EXITED0 in243.218s;
+worker CHILD_FAILURE1 in106.370s. Checkpoint/source bytes, original ordinal0
+metadata binding, pinned software/compiled ABI, physical2xT4/driver580.178.04,
+GPU0 CUDA FP16 and synthetic tokenizer/grammar40 mask steps produced receipts.
+The final pre-load RAM gate failed `HOST_OR_CGROUP_RAM` after processor checks.
+Exact available RAM at failure was not recorded; it must not be invented.
+Initial cgroup headroom was31,772,712,960 bytes, before worker checks19,979,001,856;
+the required floor remains17,179,869,184 bytes (16GiB).
+
+**One job submitted, zero load reservations, zero weights loaded, zero native
+calls, zero TRAIN/TEST image reads.** Positive sealed start/end/log ledgers and
+immutable GitHub `finished` record reconcile exactly. Global load/call permits
+remain absent. ZIP CRC/member SHA256/sidecar PASS; archive SHA256
+`52371fb757e2152e08da471d618b77817f11c269feb0ae5cc770c381a2c64bd3`.
+The private archive/logs are preserved locally and in job1 Outputs; only
+sanitized receipts are committed. No raw/tokens/logits/parser result exists
+because no native call was made. HNLO remains null/N/A.
+
+Budget charges1200 reserved physical-GPU seconds, no refund; slots2/3 were not
+submitted. Account used quota was12074 whole seconds before dispatch and
+12456.067 seconds after, stable in two terminal observations; before value was
+floored by the audited inventory, so the difference has <1s quantization.
+No contradiction was observed, but actual physical allocation and full provider
+timeout overhead remain unverified. Read-only log reconnect budget exhausted
+during silence; terminal reconciliation still completed and sealed zero-call
+evidence. No duplicate push or permit write occurred.
+
+**BLOCKED:** no demonstrated environmental correction can be applied through
+the unchanged reviewed entrypoint. Speculatively repeating the same RAM failure
+would spend another slot without a proven remedy. RAM diagnostics/reclamation
+would require a runtime change, which this delegation expressly does not allow.
+No source was patched and no second release/job was issued. Any future repair
+must preserve the16GiB floor, all consumed ledger records and require appropriate
+source review; this report does not grant another call or reset the campaign.
+
+[Final verified report](research/evidence/internvl_v2_execution_6624359404/summary.json),
+[environment](research/evidence/internvl_v2_execution_6624359404/environment.json),
+[private custody hashes](research/evidence/internvl_v2_execution_6624359404/custody.json),
+[quota observations](research/evidence/internvl_v2_execution_6624359404/quota.json).
+This evidence/doc update moves PR HEAD after execution; old permits must never
+be reused on the new HEAD. Draft PR177 remains open; no merge/full TRAIN/TEST.
+
+## Historical — PR177 exact-release preparation before delegated job1
 
 [Direct ChatGPT review6622648900](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622648900)
 rejected `dc6b67a93c89072a8adeed9a3d455b1f897736c5`: failed Kaggle jobs could

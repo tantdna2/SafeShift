@@ -1,5 +1,54 @@
 # PR177: exact-release technical campaign
 
+## Latest execution: delegated job1 failed the final RAM gate
+
+[Owner directive6624359404](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624359404)
+delegated fresh mechanical release comments and end-to-end execution without
+asking for human approval between safe steps. It superseded the older per-job
+human sign-off procedure below, while retaining audited executable bytes and
+all exact release/nonce/ledger/budget/data guards. The session verified source
+review6622971708 and audit attestation6623259455, then created fresh job1
+release6624618714 under authenticated Owner identity. Expired release6623297805
+was not reused. No executable source or notebook was edited for the live run.
+
+Audited dispatch HEAD: `cf54dc487deb87a937e5d2e700d695a2d461faad`.
+Private job `nguynanhtn/safeshift-internvl-v2-6622148168-j1`, version1,
+terminal **ERROR / TECHNICAL_ERROR**. Setup succeeded; final post-processor
+`environment.resources()` rejected RAM with `HOST_OR_CGROUP_RAM` before any
+load/call. Checkpoint bytes, exact original metadata binding, software/ABI,
+driver/T4/CUDA and processor checks have receipts, but overall preflight is
+**FAIL**, never a native prerequisite. Exact failure-time RAM/cache/allocator
+breakdown is absent. File-cache or allocator pressure is a hypothesis only.
+
+The coordinator exhausted four read-only log connections during silent work;
+it did not restart submission/permit writing. Its subsequent terminal download
+and cryptographic reconciliation succeeded. Private ZIP and sidecar, child
+logs and positive campaign ledgers prove zero loads/calls and match the external
+create-only `finished` record. No image dataset was attached. Preserve the ZIP:
+SHA256 `52371fb757e2152e08da471d618b77817f11c269feb0ae5cc770c381a2c64bd3`.
+It stays in private job1 Outputs and the ignored local directory documented in
+the custody receipt. No model raw/tokens/logits/parser output was produced.
+
+One1200 physical-GPU-second reservation is charged without refund. Read-only
+account quota observations settled at12456.067s used from a pre-dispatch whole
+second baseline12074s; they do not establish physical allocation semantics or
+the provider's maximum timeout behavior. Jobs2/3 and native call remain unused.
+No new slot was spent: the reviewed entrypoint offers no tested environmental
+remedy for its final RAM gate, and current delegation excludes runtime changes.
+Do not lower the16GiB floor, invoke a reclamation helper by injecting notebook
+code, edit source locks, delete ledger refs or speculatively repeat job1.
+
+[Consolidated result](research/evidence/internvl_v2_execution_6624359404/summary.json),
+[verified zero-call result](research/evidence/internvl_v2_execution_6624359404/verified-result.json),
+[environment](research/evidence/internvl_v2_execution_6624359404/environment.json),
+[ledger snapshot](research/evidence/internvl_v2_execution_6624359404/ledger.json),
+[quota](research/evidence/internvl_v2_execution_6624359404/quota.json),
+[custody](research/evidence/internvl_v2_execution_6624359404/custody.json),
+[source preservation](research/evidence/internvl_v2_execution_6624359404/preservation.json).
+Real model fit/inference/quality remain NOT VERIFIED; scientific qualification
+false. Docs/receipts are committed only after terminal reconciliation, so the
+reviewed execution HEAD changes afterwards and its releases cannot be reused.
+
 ## Repair contract after direct review 6622648900
 
 [ChatGPT review](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622648900)
