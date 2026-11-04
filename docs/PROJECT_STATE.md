@@ -1,6 +1,290 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Owner phê duyệt khoa học grammar V2; PR #176 chờ merge, 04/11/2026
+## CURRENT — Original TRAIN ordinal0 native inference VERIFIED; stop at Draft PR177
+
+Under [Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951)
+and [exact release6626992475](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626992475),
+private [new campaign j1](https://www.kaggle.com/code/nguynanhtn/safeshift-internvl-v2-6626498951-j1)
+version1 is **COMPLETE / SUCCESS**: one real load, one native generation on the
+original TRAIN ordinal0, strict parser **Level02**, HNLO N/A. Actual raw was saved
+before parse; ten full-vocabulary PRE-grammar vectors and ten masked vectors
+(151,936 entries each) replayed locally **PASS / TRACE_CONSISTENT**. No new
+inference was used for replay. This establishes technical execution for this
+one image, not GT correctness, full-cohort fit or scientific qualification.
+
+Runtime commit `0553fe56c884eac9b0031e4a96e7a14568606f4f`; dispatched clean HEAD
+`c67d41ab424fa6a4eb3baf61056a8e4e5b77ac66`. Final evidence-only handoff commits
+leave executed runtime and notebook bytes unchanged. Source manifest and original
+image identities match the release. ZIP SHA256
+`79c7901108b92a17cf458fb6085565ca6befce1ce38ba75b84803f0cd06509e9`,
+107 members, CRC/member hashes/sidecar PASS; full private raw/logits/logs retained.
+
+The streamed checkpoint repair kept every SHA256 check and unchanged16GiB floor.
+Preload headroom **22.4346GiB**, repeated loader gate **22.2359GiB**. First hash
+file-accounting growth523,272,192 bytes versus historical Job2 growth9,552,867,328;
+loader hash growth16,384 bytes. Two physical T4s, onlyGPU0 native; peak allocated
+13.1642GiB, reserved13.5586GiB. Setup268.407s, worker370.185s, each EXITED0.
+One1800s job reserves3600 physical-GPU seconds without refund; observed account
+quota delta677.143s is separate telemetry, not physical GPU-time proof.
+
+All164 distinct focused CPU/notebook checks covered PASS across Windows/Linux;
+authority UTF-8 pin correction additionally passed50/55 tests (5 Linux-only skips)
+and4 notebook checks. Unused release6626931045 failed authentication before any
+submission because a local PowerShell pipe substituted Unicode; exact UTF-8 hash
+was corrected with append-only provenance. No science/config relaxation.
+
+[Consolidated report](INTERNVL_V2_VERIFIED_ORDINAL0_20261104.md),
+[summary](research/evidence/internvl_v2_continuous_6626498951/summary.json),
+[custody](research/evidence/internvl_v2_continuous_6626498951/custody.json),
+[resources](research/evidence/internvl_v2_continuous_6626498951/resources.json),
+[replay](research/evidence/internvl_v2_continuous_6626498951/replay.json),
+[ledger](research/evidence/internvl_v2_continuous_6626498951/ledger.json).
+No active submission; no j2 in the new namespace. Historical twelve j1/j2 refs,
+failed ZIPs and2400 reserved seconds remain unchanged. **STOP SUBMITTING** after
+success. ChatGPT direct GitHub review and independent Antigravity audit remain
+PENDING_POST_RESULT before any merge/use. No TEST/full TRAIN/new PR/merge.
+
+## Historical — Job2 real preflight failed16GiB gate; native not admitted
+
+Under [Owner directive6625594194](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194),
+the session implemented and tested the distinct authenticated pre-audit trial
+mode, then actually dispatched private job2/version1 on exact clean HEAD
+`bc2b4224608739e596a5a84756478bb784b28f00` with fresh Owner release6625863523.
+No pre-run audit handoff occurred. INDEPENDENT_AUDIT=PENDING_POST_TRIAL;
+RESEARCH_SCIENTIFIC_QUALIFICATION=NOT_ESTABLISHED. Notebook runtime/source is
+`542edfebc973fecf443e442c7d4684d873d2debb`. CPU146 selected: Windows139 PASS/7
+Linux-only SKIP, Linux136 PASS/10 native-only SKIP; notebook4/4 PASS.
+
+Private [job2](https://www.kaggle.com/code/nguynanhtn/safeshift-internvl-v2-6622148168-j2)
+is terminal **ERROR / TECHNICAL_ERROR**. Setup EXITED0 in323.956s; worker failed
+in129.879s. The isolated processor child EXITED0 in11.749s. CPU/ABI/checkpoint/
+CUDA/grammar checks produced receipts, but final RAM remained below16GiB.
+Real before/after failure observations agree at14,597,996,544 available bytes
+(13.5954GiB), short by2,581,872,640 bytes. The gate's separate internal read is
+not fabricated. Cgroup limit32,212,254,720 bytes, current17,614,258,176 bytes,
+anon605,327,360 bytes and file16,661,553,152 bytes were observed near the gate.
+Across checkpoint verification, file accounting grew9,552,867,328 bytes while
+anon grew only2,211,840 bytes. The processor child released its anonymous memory;
+owned-library advice covered30 files/5,293,504,871 bytes with no deletion and
+improved headroom by4,972,584,960 bytes, still insufficient. No threshold or
+available-memory formula was loosened and no shared-cache deletion was attempted.
+
+Job2 ZIP CRC/member hashes/sidecar and live external `finished` ledger reconcile
+exactly: **ZERO_CALL_CONFIRMED, zero load reservations, zero model calls, no image
+dataset attached/read**. SHA256
+`ab379d6b24eba8db3f7b58a3844b7356500f73aff1bcca549a73733baf1913c4`,49 members.
+Full ZIP/logs remain private in job2 Outputs and ignored local custody. No real
+raw response/logits/tokens/parser result exists. Job1 artifacts remain immutable.
+
+Budget: two submitted jobs,2400/3600 physical-GPU seconds reserved, no refund;
+one slot/1200 reservation capacity remains. Job2 account quota delta489.244s
+settled at12945.311 used seconds; this is account telemetry, not physical-
+allocation proof. A read-only native admission check replayed both terminal
+archives and correctly raised `SAME_SOURCE_REQUEST_LIVE_PREFLIGHT_REQUIRED`.
+Job3 was not released, reserved or submitted. With no COMPLETE preflight, the
+required new-preflight-then-native sequence needs two slots and cannot fit the
+one remaining slot. This is the terminal resource/prerequisite limit under the
+current scope. No job4, second campaign, fake preflight PASS or native call.
+
+[Consolidated outcome](research/evidence/internvl_v2_job2_6625594194/summary.json),
+[actual RAM analysis](research/evidence/internvl_v2_job2_6625594194/memory-analysis.json),
+[native admission block](research/evidence/internvl_v2_job2_6625594194/native-admission-block.json),
+[custody](research/evidence/internvl_v2_job2_6625594194/custody.json),
+[ledger](research/evidence/internvl_v2_job2_6625594194/ledger.json),
+[quota](research/evidence/internvl_v2_job2_6625594194/quota.json).
+Real inference remains NOT_RUN, technical SUCCESS not achieved, science not
+established. Final source/result review and independent post-result audit now
+remain pending before merge or scientific use. Same Draft PR177; no merge/TEST/
+full TRAIN. Docs/receipt HEAD moves only after terminal reconciliation, invalidating
+old grants for further dispatch.
+
+## Historical — Owner delegates technical execution before final audit
+
+[Owner directive6625594194](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625594194)
+supersedes the pre-run source-review/Antigravity stop for this bounded technical
+campaign. The separate versioned `OWNER_PREAUDIT_TECHNICAL_TRIAL_V1` mode verifies
+the authentic Owner comment/body digest and fresh exact-source grant, plus the
+immutable job1 finished zero-call digest. Only slot2/preflight and slot3/native
+are eligible. Receipts explicitly retain INDEPENDENT_AUDIT=PENDING_POST_TRIAL and
+RESEARCH_SCIENTIFIC_QUALIFICATION=NOT_ESTABLISHED; no earlier audit PASS is reused.
+Final review/audit remain required before merge or scientific use.
+
+Job1 remains ERROR/zero calls/1200 reserved seconds spent. Current work tests and
+packages the delegated mode, then runs job2 and, only after verified COMPLETE
+preflight, job3. RAM16GiB, exact grammar/checkpoint/C1/parser/HNLO/ordinal0 and
+three-job/3600-reservation/one-load/one-generate ceilings remain unchanged.
+
+## Historical — RAM repair and now-superseded pre-run audit gate
+
+[Owner directive6625040124](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625040124)
+authorizes the same session/branch/PR to diagnose, repair and test the RAM issue,
+refresh notebook/source hashes and seek one fresh source review + independent
+audit gate before remaining jobs. Implementation isolates the synthetic processor
+in a bounded CPU subprocess, observes cgroup/host/RSS before/after each relevant
+stage and on failure, and restricts advisory clean-page reclaim to this scratch's
+owned venv libraries. No global cache deletion, GC assumption or16GiB relaxation.
+The final resource gate remains mandatory; low/missing evidence blocks native.
+
+Job1 evidence, terminal zero-call ledger and1200 budget charge remain immutable.
+No Job2/3, new execution permit, load or model call is created by this repair.
+The next exact request/source/notebook hashes differ; prior HEAD review/audit
+cannot authorize execution. Direct source review and independent audit must PASS
+for the new HEAD. Tool discovery currently has no supported Antigravity audit
+API/CLI: the installed desktop package has no documented headless audit command
+or connected audit tool. Codex CPU validation is not an independent audit.
+Complete review packet and exact availability evidence are recorded below when
+finalized; no self-issued audit or inherited PASS is allowed.
+
+RAM repair source/test commit `ab61368af74f60cd06659973969aa7645f93413e`:
+Windows138 selected =131 PASS/7 Linux-only SKIP; Linux138 =128 PASS/10 native-only
+SKIP; notebook4/4 PASS. All142 distinct selected tests covered, no final errors.
+Actual CPU public-tokenizer processor child peaked486,920,192 bytes and exited;
+parent RSS grew only212,992 bytes. This is CPU lifetime evidence, not Kaggle RAM
+PASS. New request digest `0bf4d66ef3d95a2f65d9ced3e8527ea5ed251ff0e2414aa5066870be1b5a8a60`
+binds changed runtime bytes while preserving exact original image identity.
+
+[Review packet](research/evidence/internvl_v2_ram_6625040124/review-packet.json),
+[validation](research/evidence/internvl_v2_ram_6625040124/validation.json),
+[memory measurements](research/evidence/internvl_v2_ram_6625040124/cpu-memory.json),
+[Job1 immutable-history replay](research/evidence/internvl_v2_ram_6625040124/history-replay.json),
+[independent-audit access blocker](research/evidence/internvl_v2_ram_6625040124/audit-availability.json).
+No Kaggle job/permit was issued in this repair; remaining budget2 jobs/2400
+reserved physical-GPU seconds/one load/one generate remains intact. New source
+review and independent audit are PENDING for the final HEAD. Inference remains
+NOT_RUN, technical one-image SUCCESS has not been achieved.
+
+## Historical — PR177 live job1 TECHNICAL_ERROR, zero native calls, 04/11/2026
+
+[Owner autonomous delegation6624359404](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624359404)
+replaced the per-step human release workflow. Existing Codex session dispatched
+the unchanged audited HEAD `cf54dc487deb87a937e5d2e700d695a2d461faad` using fresh
+[mechanical job1 release6624618714](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624618714),
+after verifying ChatGPT review6622971708 and independent audit attestation6623259455.
+
+Private [Kaggle job1](https://www.kaggle.com/code/nguynanhtn/safeshift-internvl-v2-6622148168-j1),
+version1, is conclusively **ERROR / TECHNICAL_ERROR**. Setup EXITED0 in243.218s;
+worker CHILD_FAILURE1 in106.370s. Checkpoint/source bytes, original ordinal0
+metadata binding, pinned software/compiled ABI, physical2xT4/driver580.178.04,
+GPU0 CUDA FP16 and synthetic tokenizer/grammar40 mask steps produced receipts.
+The final pre-load RAM gate failed `HOST_OR_CGROUP_RAM` after processor checks.
+Exact available RAM at failure was not recorded; it must not be invented.
+Initial cgroup headroom was31,772,712,960 bytes, before worker checks19,979,001,856;
+the required floor remains17,179,869,184 bytes (16GiB).
+
+**One job submitted, zero load reservations, zero weights loaded, zero native
+calls, zero TRAIN/TEST image reads.** Positive sealed start/end/log ledgers and
+immutable GitHub `finished` record reconcile exactly. Global load/call permits
+remain absent. ZIP CRC/member SHA256/sidecar PASS; archive SHA256
+`52371fb757e2152e08da471d618b77817f11c269feb0ae5cc770c381a2c64bd3`.
+The private archive/logs are preserved locally and in job1 Outputs; only
+sanitized receipts are committed. No raw/tokens/logits/parser result exists
+because no native call was made. HNLO remains null/N/A.
+
+Budget charges1200 reserved physical-GPU seconds, no refund; slots2/3 were not
+submitted. Account used quota was12074 whole seconds before dispatch and
+12456.067 seconds after, stable in two terminal observations; before value was
+floored by the audited inventory, so the difference has <1s quantization.
+No contradiction was observed, but actual physical allocation and full provider
+timeout overhead remain unverified. Read-only log reconnect budget exhausted
+during silence; terminal reconciliation still completed and sealed zero-call
+evidence. No duplicate push or permit write occurred.
+
+**BLOCKED:** no demonstrated environmental correction can be applied through
+the unchanged reviewed entrypoint. Speculatively repeating the same RAM failure
+would spend another slot without a proven remedy. RAM diagnostics/reclamation
+would require a runtime change, which this delegation expressly does not allow.
+No source was patched and no second release/job was issued. Any future repair
+must preserve the16GiB floor, all consumed ledger records and require appropriate
+source review; this report does not grant another call or reset the campaign.
+
+[Final verified report](research/evidence/internvl_v2_execution_6624359404/summary.json),
+[environment](research/evidence/internvl_v2_execution_6624359404/environment.json),
+[private custody hashes](research/evidence/internvl_v2_execution_6624359404/custody.json),
+[quota observations](research/evidence/internvl_v2_execution_6624359404/quota.json).
+This evidence/doc update moves PR HEAD after execution; old permits must never
+be reused on the new HEAD. Draft PR177 remains open; no merge/full TRAIN/TEST.
+
+## Historical — PR177 exact-release preparation before delegated job1
+
+[Direct ChatGPT review6622648900](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622648900)
+rejected `dc6b67a93c89072a8adeed9a3d455b1f897736c5`: failed Kaggle jobs could
+supply a preflight PASS, and cumulative GPU seconds were not enforced.
+The same PR now repairs both gates. Positive outcomes require COMPLETE and
+consistent successful worker/environment receipts; ERROR/CANCELLED retain the
+internal status but are technical failure. GPU scheduling reserves600 wall
+seconds x2 physical T4s per job, no refund, total1200/2400/3600 for slots1/2/3.
+Missing or inconsistent budget/history evidence blocks. This is a conservative
+server-timeout bound, not measured provider usage or a quota-delta estimate.
+Runtime/notebook/scientific bytes are unchanged in this repair; only local
+dispatch/reconciliation, tests and documentation change. New final HEAD must be
+reviewed again, then independently audited, before any execution release.
+
+Repair verification at `03a115dd6bc8a75193908d4718be1ed0f19fff3e`:
+Windows125 =122 PASS/3 Linux-only SKIP; Linux125 =115 PASS/10 native-only SKIP;
+notebook4/4 PASS. All129 distinct selected tests covered; eight new blocker
+regressions PASS within34 campaign tests. No failures/errors, no full-repository
+suite claim. [Blocker evidence](research/evidence/internvl_v2_repair_6622648900/blockers.json)
+and [new review packet](research/evidence/internvl_v2_repair_6622648900/review-packet.json)
+supersede the rejected checkpoint operationally. No runtime/notebook/request
+hash change, Kaggle activity, weights, real image or private metadata access.
+
+[Owner/ChatGPT directive 6622148168](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622148168)
+authorizes preparation of a separate one-image V2 technical campaign on the
+existing `feat/internvl-grammar-v2-native` branch / Draft PR177. The next boundary
+is **new committed HEAD review + independent Antigravity audit + a separate
+exact job-specific release**. No Kaggle activity is authorized before that gate.
+`REVIEWED_EXECUTION_GRANT=NOT_YET`; real preflight/weights/inference remain
+**NOT_RUN / NOT VERIFIED**, scientific qualification false. No merge/full TRAIN/TEST.
+
+Implemented: external HEAD/notebook/request/review binding; create-only GitHub
+campaign/phase tag ledger; local official-SDK coordinator, bounded private
+dispatch and terminal ZIP/log reconciliation. Three jobs total,600 server seconds/job
+(within the1800s grant ceiling),
+one cumulative load/call reservation, original TRAIN ordinal0 only. Explicit
+zero-call sealed evidence and terminal ledger are required before any next job;
+missing/ambiguous evidence never grants replay. Original metadata identity is
+projected locally from the checksum-pinned master and prior InternVL sealed
+archive without image access or importing predictions. C1/checkpoint/FP16/eager,
+strict parser, grammar bytes, four labels and HNLO N/A remain unchanged.
+
+[Current runbook and release schema](INTERNVL_V2_CAMPAIGN.md). CPU/notebook
+receipts for this continuation are recorded separately from the initial PR177
+snapshot below; neither is live Kaggle evidence or an independent audit.
+
+Historical CPU evidence preceding the two rejected gates, runtime/test commit `7a890a9e96ebffdd04793159197bb90803340f3c`:
+Windows117 selected =114 PASS/3 Linux-only SKIP; Linux117 =107 PASS/10 native-only
+SKIP; notebook4/4 PASS. All121 distinct selected tests covered; no final failures
+or errors. [Review packet and exact request](research/evidence/internvl_v2_campaign/review-packet.json)
+and [validation/file hashes](research/evidence/internvl_v2_campaign/validation.json)
+are sanitized. No Kaggle API/job or remote ledger mutation occurred. The next
+release must name the final pushed PR HEAD; the embedded runtime commit alone
+is not an execution approval.
+
+## Historical PR177 snapshot — initial CPU-only implementation
+
+PR #176 **MERGED / hậu merge PASS**, main/base
+`4578c175e0011783c3573d0003fc5341eaf3ef72`, đã đối chiếu GitHub live với
+[bàn giao ChatGPT](https://github.com/tantdna2/SafeShift/pull/176#issuecomment-6621575815).
+Nhánh mới `feat/internvl-grammar-v2-native` triển khai native capture/controller,
+preflight và notebook trong **một Draft PR**; chưa audit hoặc được phép merge.
+[Runbook V2](INTERNVL_GRAMMAR_V2_RUNTIME.md) ghi lệnh tái lập, receipts và giới hạn.
+Descriptor/grammar #176 giữ nguyên bytes đã duyệt. Đường mới label-only/HNLO N/A,
+series kỹ thuật riêng, không import kết quả InternVL lịch sử. Native entrypoints
+vẫn code-fenced; không flag/JSON approval nào tự mở quyền. Không Kaggle/GPU,
+weights, ảnh TRAIN/TEST hoặc private raw trong task này.
+
+CPU nghiệm thu tại `110ec3f08bdfbe7ca880bff7cc038dcef0ad9a5a`:
+Windows native **88 PASS/3 Linux-only SKIP**, Linux stdlib **81 PASS/10 native-only
+SKIP** (91 tests mỗi môi trường); notebook **4/4 PASS**. Tổng95 test khác nhau
+đều được thực thi PASS trên ít nhất một môi trường, không failure/error; không
+claim full-repository suite hoặc CI/audit độc lập. Notebook nhúng runtime
+`01256505ecf4597d1eea4dd4d97325e98ee766cf`, bytes bằng runtime đã kiểm.
+[Receipts](research/evidence/internvl_v2_native/validation.json) giữ source/test/
+notebook hashes, command/environment và các lần CPU lỗi trước sửa. Native
+processor/image packing/generation dùng ảnh và logits tổng hợp; weights thật,
+Kaggle preflight, inference/quality vẫn **NOT_RUN / NOT VERIFIED**.
+
+## APPROVED METHOD — Owner phê duyệt khoa học grammar V2, PR #176 merged
 
 **OWNER_PROJECT_METHOD_APPROVED:** Owner đã duyệt grammar V2 cho InternVL3.5
 như một phương pháp **label-only có series riêng, HNLO N/A**, đồng thời chấp
@@ -34,9 +318,10 @@ no selected-INVALID repair or pooling of old successes with grammar outputs.
 PR #176 đã được ChatGPT review trực tiếp và Antigravity audit PASS cho phạm vi
 đề xuất; Owner tiếp đó phê duyệt phương pháp qua quyết định dẫn ở trên.
 Chỉ phần hồ sơ quyết định/trạng thái được bổ sung sau audit, không đổi mã,
-config hoặc tests đã kiểm. PR vẫn **OPEN/DRAFT cho đến khi merge được cấp quyền
-riêng và hậu merge xác minh**. Grammar V2 chưa tích hợp production, chưa chạy
-mô hình V2 thật; các cổng O2–O6, GT/TEST và full TRAIN tiếp tục đóng.
+config hoặc tests đã kiểm. PR #176 đã **MERGED và được ChatGPT xác minh hậu merge**
+tại SHA dẫn trên; ghi chú OPEN/DRAFT trước đây đã hết hiệu lực. Phần tích hợp V2
+đang được kiểm trong PR mới, chưa activation production hoặc chạy mô hình V2 thật;
+các cổng O2–O6, GT/TEST và full TRAIN tiếp tục đóng.
 
 Verification at implementation `cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702`:
 **58/58 CPU tests PASS** on Windows and Linux, zero skips/errors; pinned native

@@ -1,5 +1,46 @@
 # Kiến trúc Foundation V1
 
+## InternVL3.5 grammar V2 exact-release campaign — 04/11/2026
+
+`internvl_v2_runtime.py` wraps the unchanged offline candidate loader/input
+preparation with the approved V2 callback. Full output-head vectors (including
+padding outside tokenizer vocabulary) are persisted/fsynced before the native
+prefix processor; masked vectors, processor list, returned IDs and exact decoded
+response precede strict parsing and independent replay. HNLO is always N/A.
+`scripts/internvl_v2.py` supplies isolated setup/preflight/native stages.
+Its synthetic processor stage now runs in a supervised CPU-only subprocess and
+must exit successfully before the native worker's final16GiB resource check.
+`internvl_v2_memory.py` records host/cgroup anon/file/current/limit and process
+RSS before/after diagnostics and on failure, and confines optional clean-page
+advice to the current scratch venv libraries. Advice never establishes RAM PASS;
+the unchanged resource gate still applies. Positive worker evidence requires
+the child termination/log and memory receipts. Job1's failure remains immutable.
+`internvl_v2_campaign.py` validates exact PR177 HEAD/request/notebook releases,
+and gates process launch/setup/worker/load/call with fresh nonce
+permits. Create-only GitHub annotated tag refs enforce three jobs and one native
+load/call across VMs without advancing the reviewed branch HEAD. The matching
+campaign script supervises children and seals partial/terminal ledgers and ZIPs.
+Owner directive6625594194 adds the separate `OWNER_PREAUDIT_TECHNICAL_TRIAL_V1`
+authorization for remaining slots2/preflight and3/native only. It pins the
+authentic Owner comment/body SHA and original job1 zero-call finished digest;
+receipts state audit PENDING_POST_TRIAL and science NOT_ESTABLISHED. Legacy
+review/audit-based grants are preserved for history; no fake PASS is generated.
+`scripts/submit_internvl_v2.py` checks an exact release before importing the
+official SDK, reserves before its single push and reconciles terminal private
+ZIP/log evidence. Unknown counts block; prior grants cannot activate this route.
+Positive preflight/native status also requires live Kaggle COMPLETE and matching
+successful stage/environment receipts. The coordinator reserves1200 physical-GPU
+seconds per slot (two T4s x600s provider timeout), without refunds; all three slots
+sum to3600. Missing source-bound budget records block. This upper bound is separate
+from observed account quota and is not a measurement of actual provider billing.
+`scripts/build_internvl_v2.py` packages committed source into an unsubmitted
+notebook. Tests: `test_internvl_v2_runtime.py`, `test_internvl_v2_campaign.py`,
+`test_internvl_v2_notebook.py`;
+reproduce with `scripts.qualify_internvl_v2_runtime`.
+[Exact release/runbook](INTERNVL_V2_CAMPAIGN.md),
+[native capture and initial CPU evidence](INTERNVL_GRAMMAR_V2_RUNTIME.md). This is a distinct
+technical series, not enrollment or qualification of full TRAIN3763.
+
 ## Issue173 — existing TRAIN/checkpoints and bounded native smoke
 
 Current Mini-only continuation: `minicpm173_once.py` verifies exact external

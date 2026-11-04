@@ -66,13 +66,14 @@ def persist_ids(result, inputs, key, path):
 
 class CandidateBackend:
     """Offline integration API. Production runner enrollment requires a new release."""
-    def __init__(self, key, snapshot, weights, prompt, *, device="cuda:0"):
+    def __init__(self, key, snapshot, weights, prompt, *, device="cuda:0", weight_verifier=None):
         require(hashlib.sha256(prompt.encode()).hexdigest() == PROMPT_SHA, "FROZEN_C1_SHA")
         self.key, self.prompt, self.device = key, prompt, device
         self.stage = "model_load"
         evidence = {}
         self.processor, self.tokenizer, self.config, cls = native_setup(Path(snapshot), key, evidence)
-        self.model, attention = load_weight_model(snapshot, key, self.config, cls, weights, device)
+        options = {} if weight_verifier is None else {"weight_verifier": weight_verifier}
+        self.model, attention = load_weight_model(snapshot, key, self.config, cls, weights, device, **options)
         self.configure()
         self.environment = {"model": {k: read(LOCK)[key][k] for k in ("id", "revision")},
                             "native": evidence, "attention": attention,

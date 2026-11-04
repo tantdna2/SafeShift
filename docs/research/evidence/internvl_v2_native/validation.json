@@ -1,0 +1,52 @@
+{
+  "full_repository_suite": "NOT_RUN; focused affected path and existing contract/environment regressions selected",
+  "independent_audit": "NOT_PERFORMED",
+  "linux_stdlib": {
+    "passed": 81,
+    "skip_scope": "Opt-in native CPU tests; all separately passed on Windows",
+    "skipped": 10,
+    "tests": 91
+  },
+  "live_kaggle": "NOT_RUN_NOT_AUTHORIZED",
+  "native_weights_inference": "NOT_RUN_NOT_AUTHORIZED",
+  "native_windows": {
+    "passed": 88,
+    "skip_scope": "Linux process-group tests; separately passed on Linux",
+    "skipped": 3,
+    "tests": 91
+  },
+  "notebook": {
+    "passed": 4,
+    "skipped": 0,
+    "tests": 4
+  },
+  "prior_cpu_failures_retained": [
+    {
+      "artifact_directory": "data/processed/internvl_v2_native/native-02",
+      "cause_and_resolution": "Repeated native tokenizer length queries exhausted synthetic call deadline; fixed by caching length, with regression.",
+      "errors": 1,
+      "log_sha256": "2499cadc53fc3967e010e3d1a4aad9f0475ec5086b743b2ec5e3a9f119779662",
+      "receipt_sha256": "b4dd13a5662c9daab459327386df29b69940b9689c3f73e391a49fa046e3a760",
+      "status": "FAIL",
+      "tests_run": 80
+    },
+    {
+      "artifact_directory": "data/processed/internvl_v2_native/native-03",
+      "cause_and_resolution": "Scripted test forward omitted explicit pixel_values argument; fixed fixture signature; production input path unchanged.",
+      "errors": 1,
+      "log_sha256": "ef6bad93d5787e8c27aef45514eeeed627db9351e9d11796d7ee7aebe690bd88",
+      "receipt_sha256": "922fd72901ebf37747ac400e32af4e6f708916b05b5cc764651abb489afb9519",
+      "status": "FAIL",
+      "tests_run": 89
+    }
+  ],
+  "public_source_fetch_initial_failure": "Text-extension allowlist initially omitted README.md; source-only fetch corrected, no model or private data accessed.",
+  "receipt_files": {
+    "linux-cpu.json": "a31906fe174b2fa15f3eb44c10388712fc69dabcc5e4d3585b1af370cfd70e6a",
+    "native-cpu.json": "c33e53292d1f470d262e319af56c25e53720d035cc5d4e93fdd2770ef407cc0b",
+    "notebook.json": "d2a45d5bde4b6b7bc2fd6d07b6283eef907c13cfad3ace132bc0a1076ae1adf6",
+    "preservation.json": "81ed84bab03b187e92fab3e3466f03a78ce4fb4398ccbd6f0cb61e9940acac0a"
+  },
+  "status": "CPU_SOFTWARE_PASS",
+  "union_distinct_tests_covered": 95
+}
