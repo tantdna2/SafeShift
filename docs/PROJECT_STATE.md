@@ -15,6 +15,15 @@ Runtime/notebook/scientific bytes are unchanged in this repair; only local
 dispatch/reconciliation, tests and documentation change. New final HEAD must be
 reviewed again, then independently audited, before any execution release.
 
+Repair verification at `03a115dd6bc8a75193908d4718be1ed0f19fff3e`:
+Windows125 =122 PASS/3 Linux-only SKIP; Linux125 =115 PASS/10 native-only SKIP;
+notebook4/4 PASS. All129 distinct selected tests covered; eight new blocker
+regressions PASS within34 campaign tests. No failures/errors, no full-repository
+suite claim. [Blocker evidence](research/evidence/internvl_v2_repair_6622648900/blockers.json)
+and [new review packet](research/evidence/internvl_v2_repair_6622648900/review-packet.json)
+supersede the rejected checkpoint operationally. No runtime/notebook/request
+hash change, Kaggle activity, weights, real image or private metadata access.
+
 [Owner/ChatGPT directive 6622148168](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622148168)
 authorizes preparation of a separate one-image V2 technical campaign on the
 existing `feat/internvl-grammar-v2-native` branch / Draft PR177. The next boundary

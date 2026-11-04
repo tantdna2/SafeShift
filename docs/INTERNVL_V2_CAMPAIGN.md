@@ -29,6 +29,25 @@ per-job cap within the existing1800s ceiling; it does not raise any limit.
 Implementation, regression receipts and updated checkpoint follow below. The
 previous review packet remains historical and grants no execution permission.
 
+Repair code/test commit: `03a115dd6bc8a75193908d4718be1ed0f19fff3e`.
+Final CPU verification: Windows125 selected =122 PASS/3 Linux-only SKIP;
+Linux125 =115 PASS/10 native-only SKIP; notebook4/4 PASS. All129 distinct
+selected tests covered across environments, no failures/errors. The34 campaign
+tests include eight new blocker regressions covering failed terminal+PASS,
+missing/conflicting evidence, native SUCCESS/INVALID terminal downgrade, actual
+predecessor admission, all three GPU reservations, exhausted/invalid/missing
+budgets, SDK cap at every slot and refusal to push or call again.
+
+[Repair evidence](research/evidence/internvl_v2_repair_6622648900/blockers.json),
+[validation](research/evidence/internvl_v2_repair_6622648900/validation.json),
+[new review packet](research/evidence/internvl_v2_repair_6622648900/review-packet.json).
+Runtime source, notebook, manifest, original request and scientific files are
+unchanged byte-for-byte; the notebook still embeds runtime `7a890a9`. Only the
+local coordinator and tests changed, so no notebook/request regeneration or
+private metadata/image access was needed. Prior receipts remain immutable.
+Use the final pushed PR HEAD for fresh review/audit/release, not the code/test
+commit above. No Kaggle or campaign tag was created; execution is still closed.
+
 Authority: [Owner/ChatGPT 6622148168](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6622148168).
 This supersedes the earlier CPU-only task only for this new campaign. Issue173
 remains closed. Implementation stays on `feat/internvl-grammar-v2-native`, PR177.
