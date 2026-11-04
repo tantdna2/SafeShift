@@ -182,9 +182,11 @@ class ContractTests(unittest.TestCase):
                 stack.enter_context(patch.object(runtime, "check_source"))
                 funcs = {"software": (cli.environment, "software"), "resources": (cli.environment, "resources"),
                          "cuda": (cli.environment, "cuda"), "checkpoint": (cli, "check_checkpoint"),
-                         "processor": (cli, "processor_check"), "allocation": (preflight, "storage_probe"),
+                         "processor": (cli, "run_processor_check"), "allocation": (preflight, "storage_probe"),
                          "driver": (smoke, "driver_check")}
                 stack.enter_context(patch.object(smoke, "bind_cuda_driver"))
+                stack.enter_context(patch.object(cli.memory, "snapshot", return_value={"status": "OBSERVED"}))
+                stack.enter_context(patch.object(cli, "reclaim_owned"))
                 load = stack.enter_context(patch.object(runtime, "NativeBackend", side_effect=AssertionError("NO_LOAD")))
                 for key, (module, name) in funcs.items():
                     stack.enter_context(patch.object(module, name, side_effect=ValueError("SYNTHETIC_" + key)

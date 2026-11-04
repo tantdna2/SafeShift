@@ -36,6 +36,7 @@ def runtime_sources(repo=ROOT):
         "safeshift/verification173.py", "scripts/verify_kaggle173_inputs.py",
         "configs/grammar/internvl35_v2_runtime.json",
         "safeshift/internvl_v2_campaign.py", "scripts/internvl_v2_campaign.py",
+        "safeshift/internvl_v2_memory.py",
     ]))
 
 

@@ -63,9 +63,19 @@ def positive_files(g):
     for i, phase in enumerate(("launch", "setup", "worker")):
         values[phase + "-permit.json"] = challenge(g, phase, parent, str(i))
         parent = str(i) * 64
-    for stage in ("setup", "worker"):
+    for stage in ("setup", "worker", "processor"):
         values[stage + "-supervisor.json"] = {"schema": "fresh-process-supervision-v1", "status": "EXITED",
             "returncode": 0, "group_kill_sent": True, "automatic_retry": False, "seconds": 1.0, "log_bytes": 19}
+    for name in ("resources-memory-before.json", "preload-resources-memory-before.json",
+                 "processor-parent-memory-before.json", "processor-parent-memory-after.json",
+                 "processor-memory-before.json", "processor-memory-after.json",
+                 "owned-advice-memory-before.json", "owned-advice-memory-after.json",
+                 "before-checkpoint-memory.json", "after-checkpoint-memory.json"):
+        values[name] = {"schema": "internvl-v2-memory-v1", "status": "OBSERVED", "errors": [],
+            "pid": 2 if name.startswith("processor-memory") else 1, "cuda_visible_devices": "",
+            "process": {"status": {"VmRSS": 100}}, "gate_memory": {"available_bytes": 20 * 2**30},
+            "cgroup": {"memory.stat": {"anon": 100, "file": 100}}}
+    values["owned-venv-advice.json"] = {"method": "SKIPPED_NO_FILE_PAGES", "deleted_files": 0, "scan_complete": True}
     return values
 
 
@@ -389,6 +399,7 @@ class CampaignTests(unittest.TestCase):
                 for name, value in values.items():
                     if not (out / name).exists():
                         write(out / name, value)
+                (out / "processor-supervisor.log").write_bytes(b"SYNTHETIC_LOG_ONLY\n")
         with tempfile.TemporaryDirectory() as d, patch.object(c, "context", return_value=ctx), \
                 patch.object(c, "permit", return_value=values["launch-permit.json"]), patch.object(c, "remote_record", side_effect=remote(g, values)), \
                 patch.object(run.environment, "resources", return_value=values["initial-resources.json"]), patch.object(run.supervision, "run", side_effect=supervised):
@@ -478,7 +489,7 @@ class ReviewBlockerTests(unittest.TestCase):
         for name, value in files.items():
             if value is not None:
                 write(out / name, value)
-        for stage in ("setup", "worker"):
+        for stage in ("setup", "worker", "processor"):
             if files.get(stage + "-supervisor.log", True) is not None:
                 (out / (stage + "-supervisor.log")).write_bytes(b"SYNTHETIC_LOG_ONLY\n")
         archive = root / (g["job"].split("/")[1] + ".zip")
@@ -502,13 +513,19 @@ class ReviewBlockerTests(unittest.TestCase):
         for name in ("setup-supervisor.log", "worker-supervisor.log", "worker-supervisor.json", "setup-supervisor.json",
                      "worker-permit.json", "preflight.json", "hardware.json", "software.json", "allocation.json"):
             mutations.append(lambda f, name=name: f.update({name: None}))
+        for name in ("processor-supervisor.json", "processor-supervisor.log", "processor-memory-after.json",
+                     "preload-resources-memory-before.json", "owned-venv-advice.json"):
+            mutations.append(lambda f, name=name: f.update({name: None}))
         for name, field, value in (("worker-supervisor.json", "status", "CHILD_FAILURE"),
             ("worker-supervisor.json", "returncode", 1), ("worker-supervisor.json", "seconds", -1),
             ("worker-supervisor.json", "group_kill_sent", False), ("preflight.json", "status", "BLOCKED"),
             ("preflight.json", "calls", 1), ("processor.json", "status", "FAIL"),
             ("cuda.json", "fp16", "NOT_RUN"), ("checkpoint.json", "revision", "0" * 40),
             ("summary.json", "slot", 3), ("summary.json", "error", {"type": "Error"}),
-            ("worker-permit.json", "parent_nonce", "f" * 64)):
+            ("worker-permit.json", "parent_nonce", "f" * 64),
+            ("processor-memory-after.json", "pid", 1), ("processor-memory-after.json", "cuda_visible_devices", "0"),
+            ("processor-memory-after.json", "status", "INCOMPLETE"),
+            ("owned-venv-advice.json", "deleted_files", 1)):
             mutations.append(lambda f, name=name, field=field, value=value: f[name].update({field: value}))
         for i, mutate in enumerate(mutations):
             with self.subTest(case=i), tempfile.TemporaryDirectory() as d:

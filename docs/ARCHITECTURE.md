@@ -8,6 +8,13 @@ padding outside tokenizer vocabulary) are persisted/fsynced before the native
 prefix processor; masked vectors, processor list, returned IDs and exact decoded
 response precede strict parsing and independent replay. HNLO is always N/A.
 `scripts/internvl_v2.py` supplies isolated setup/preflight/native stages.
+Its synthetic processor stage now runs in a supervised CPU-only subprocess and
+must exit successfully before the native worker's final16GiB resource check.
+`internvl_v2_memory.py` records host/cgroup anon/file/current/limit and process
+RSS before/after diagnostics and on failure, and confines optional clean-page
+advice to the current scratch venv libraries. Advice never establishes RAM PASS;
+the unchanged resource gate still applies. Positive worker evidence requires
+the child termination/log and memory receipts. Job1's failure remains immutable.
 `internvl_v2_campaign.py` validates external PR177 HEAD/request/notebook review
 and audit, and gates process launch/setup/worker/load/call with fresh nonce
 permits. Create-only GitHub annotated tag refs enforce three jobs and one native

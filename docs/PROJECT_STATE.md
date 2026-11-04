@@ -1,6 +1,27 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR177 live preflight TECHNICAL_ERROR, zero native calls, 04/11/2026
+## CURRENT — PR177 source-bound RAM repair, fresh review/audit required
+
+[Owner directive6625040124](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625040124)
+authorizes the same session/branch/PR to diagnose, repair and test the RAM issue,
+refresh notebook/source hashes and seek one fresh source review + independent
+audit gate before remaining jobs. Implementation isolates the synthetic processor
+in a bounded CPU subprocess, observes cgroup/host/RSS before/after each relevant
+stage and on failure, and restricts advisory clean-page reclaim to this scratch's
+owned venv libraries. No global cache deletion, GC assumption or16GiB relaxation.
+The final resource gate remains mandatory; low/missing evidence blocks native.
+
+Job1 evidence, terminal zero-call ledger and1200 budget charge remain immutable.
+No Job2/3, new execution permit, load or model call is created by this repair.
+The next exact request/source/notebook hashes differ; prior HEAD review/audit
+cannot authorize execution. Direct source review and independent audit must PASS
+for the new HEAD. Tool discovery currently has no supported Antigravity audit
+API/CLI: the installed desktop package has no documented headless audit command
+or connected audit tool. Codex CPU validation is not an independent audit.
+Complete review packet and exact availability evidence are recorded below when
+finalized; no self-issued audit or inherited PASS is allowed.
+
+## Historical — PR177 live job1 TECHNICAL_ERROR, zero native calls, 04/11/2026
 
 [Owner autonomous delegation6624359404](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624359404)
 replaced the per-step human release workflow. Existing Codex session dispatched

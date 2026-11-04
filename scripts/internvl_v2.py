@@ -1,6 +1,7 @@
 """V2 bounded preflight/controller CLI. Native execution is release-fenced."""
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 import time
@@ -11,6 +12,7 @@ from safeshift.candidates.source import ROOT, require, verify_snapshot
 from safeshift.candidates.train_inputs import checkpoint
 from safeshift.pilot.artifacts import read, write, sha, export
 from safeshift.fulltrain import environment, provision, supervision
+from safeshift import internvl_v2_memory as memory
 
 
 def policy():
@@ -72,13 +74,58 @@ def processor_check(source, out):
     return result
 
 
+def run_processor_check(spec, out, scratch, inputs, budgets, deadline):
+    write(out / "processor-parent-memory-before.json", memory.snapshot())
+    try:
+        supervision.run(worker_command(sys.executable, "processor", out / "source.json", out, scratch,
+                                       inputs, None, None), cwd=ROOT,
+            env={**os.environ, "CUDA_VISIBLE_DEVICES": ""},
+            deadline=min(deadline or time.monotonic() + 180, time.monotonic() + 180),
+            log=out / "processor-supervisor.log", receipt=out / "processor-supervisor.json",
+            max_log_bytes=budgets["max_log_bytes"], watch_log_root=out)
+    finally:
+        write(out / "processor-parent-memory-after.json", memory.snapshot())
+    require(read(out / "processor.json")["status"] == "CPU_SOFTWARE_PASS", "PROCESSOR_CHILD_POSITIVE_RECEIPT")
+
+
+def reclaim_owned(scratch, out):
+    before = memory.snapshot()
+    write(out / "owned-advice-memory-before.json", before)
+    try:
+        require(before["status"] == "OBSERVED", "MEMORY_DIAGNOSTICS_INCOMPLETE")
+        # File-accounted pages are observed; they do not prove the failure cause.
+        if before["cgroup"]["memory.stat"].get("file", 0) > 0:
+            result = memory.advise_owned_venv(scratch, sys.prefix)
+        else:
+            result = {"method": "SKIPPED_NO_FILE_PAGES", "deleted_files": 0,
+                      "effect": "NO_ADVICE_NO_RAM_PROOF", "scan_complete": True}
+        write(out / "owned-venv-advice.json", result)
+    except BaseException as error:
+        write(out / "owned-venv-advice-error.json", {"type": type(error).__name__})
+        raise
+    finally:
+        write(out / "owned-advice-memory-after.json", memory.snapshot())
+
+
 def worker(stage, spec, out, scratch, inputs, request=None, deadline=None):
-    require(stage in ("setup", "preflight", "native"), "V2_WORKER_STAGE")
+    require(stage in ("setup", "preflight", "native", "processor"), "V2_WORKER_STAGE")
     if stage == "native":
         runtime.authorize()  # Before source, private request or Input access.
     runtime.check_source(spec)
     out, scratch, inputs = Path(out), Path(scratch), Path(inputs)
     budgets = policy()
+    if stage == "processor":
+        before = memory.snapshot()
+        write(out / "processor-memory-before.json", before)
+        try:
+            require(before["status"] == "OBSERVED", "MEMORY_DIAGNOSTICS_INCOMPLETE")
+            require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "PROCESSOR_CHILD_CPU_ONLY")
+            _, source, _ = checkpoint(inputs, "internvl35")
+            return processor_check(source, out)
+        finally:
+            after = memory.snapshot()
+            write(out / "processor-memory-after.json", after)
+            require(after["status"] == "OBSERVED", "MEMORY_DIAGNOSTICS_INCOMPLETE")
     if stage == "setup":
         from safeshift.candidates.train_runtime import prepare_runtime
         env = provision.clean_env(ROOT, scratch)
@@ -89,16 +136,19 @@ def worker(stage, spec, out, scratch, inputs, request=None, deadline=None):
         return
     from scripts.smoke_kaggle173 import bind_cuda_driver, driver_check
     from safeshift.fulltrain.preflight import storage_probe
-    write(out / "resources.json", environment.resources("internvl35", budgets, scratch, out))
+    write(out / "resources.json", memory.resource_check(out, "resources", budgets, scratch))
     write(out / "allocation.json", storage_probe(scratch, out,
         scratch_bytes=budgets["scratch_probe_bytes"], output_bytes=budgets["output_probe_bytes"]))
     bind_cuda_driver(out)
     write(out / "software.json", environment.software("internvl35"))
     write(out / "hardware.json", driver_check("internvl35", budgets, out, "worker"))
     write(out / "cuda.json", environment.cuda("internvl35", budgets))
+    write(out / "before-checkpoint-memory.json", memory.snapshot())
     source, weights = check_checkpoint(inputs, out)
-    processor_check(source, out)
-    write(out / "preload-resources.json", environment.resources("internvl35", budgets, scratch, out))
+    write(out / "after-checkpoint-memory.json", memory.snapshot())
+    run_processor_check(spec, out, scratch, inputs, budgets, deadline)
+    reclaim_owned(scratch, out)
+    write(out / "preload-resources.json", memory.resource_check(out, "preload-resources", budgets, scratch))
     if stage == "native":
         require(request is not None and deadline is not None, "V2_EXACT_REQUEST_DEADLINE")
         runtime.execute_attempt(spec, read(request), inputs, out, source, weights, deadline)
@@ -187,7 +237,7 @@ def main(argv=None):
     parser.add_argument("--spec", type=Path, required=True)
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--mode", choices=("preflight", "execute"), default="preflight")
-    modes.add_argument("--worker", choices=("setup", "preflight", "native"))
+    modes.add_argument("--worker", choices=("setup", "preflight", "native", "processor"))
     parser.add_argument("--inputs", type=Path, default=Path("/kaggle/input"))
     parser.add_argument("--output", type=Path, default=Path("/kaggle/working"))
     parser.add_argument("--scratch", type=Path, default=Path("/kaggle/temp"))

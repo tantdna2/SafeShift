@@ -72,7 +72,7 @@ def positive_worker_evidence(get, members, grant):
     from scripts.internvl_v2 import policy
     from safeshift.candidates.train_runtime import pins
     budgets = policy()
-    for stage in ("setup", "worker"):
+    for stage in ("setup", "worker", "processor"):
         require(stage + "-supervisor.log" in members, "SUCCESS_STAGE_LOG_REQUIRED")
         row = get(stage + "-supervisor.json")
         require(row["schema"] == "fresh-process-supervision-v1" and row["status"] == "EXITED"
@@ -82,6 +82,27 @@ def positive_worker_evidence(get, members, grant):
                 and 0 <= row["seconds"] <= JOB_SECONDS
                 and type(row["log_bytes"]) is int and 0 <= row["log_bytes"] <= budgets["max_log_bytes"],
                 "SUCCESS_STAGE_TERMINATION_REQUIRED")
+    for name in ("resources-memory-before.json", "preload-resources-memory-before.json",
+                 "processor-parent-memory-before.json", "processor-parent-memory-after.json",
+                 "processor-memory-before.json", "processor-memory-after.json",
+                 "owned-advice-memory-before.json", "owned-advice-memory-after.json",
+                 "before-checkpoint-memory.json", "after-checkpoint-memory.json"):
+        observed = get(name)
+        require(observed["schema"] == "internvl-v2-memory-v1" and observed["status"] == "OBSERVED"
+                and observed["errors"] == [] and type(observed["pid"]) is int and observed["pid"] > 0
+                and observed["process"]["status"]["VmRSS"] >= 0
+                and all(type(observed["cgroup"]["memory.stat"][k]) is int
+                        and observed["cgroup"]["memory.stat"][k] >= 0 for k in ("anon", "file")),
+                "SUCCESS_MEMORY_DIAGNOSTICS")
+    child = get("processor-memory-after.json")
+    parent = get("processor-parent-memory-after.json")
+    require(child["pid"] != parent["pid"] and child["cuda_visible_devices"] == "", "PROCESSOR_LIFETIME_CPU_ISOLATION")
+    require(get("preload-resources-memory-before.json")["gate_memory"]["available_bytes"] >= 16 * 2**30,
+            "SUCCESS_MEMORY_FLOOR")
+    advice = get("owned-venv-advice.json")
+    require(advice["deleted_files"] == 0 and advice["scan_complete"] is True
+            and advice["method"] in ("POSIX_FADV_DONTNEED_OWNED_VENV_LIB_ONLY", "SKIPPED_NO_FILE_PAGES"),
+            "SUCCESS_OWNED_ADVICE_CUSTODY")
     parent = ""
     for phase in ("launch", "setup", "worker"):
         permit = get(phase + "-permit.json")

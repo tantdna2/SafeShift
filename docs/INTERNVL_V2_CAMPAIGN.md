@@ -1,5 +1,26 @@
 # PR177: exact-release technical campaign
 
+## Current repair directive6625040124: remaining slots preserved
+
+[Owner directive](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6625040124)
+authorizes source-bound RAM engineering, CPU tests and notebook/source refresh
+on the same PR. Job1 remains immutable ERROR/zero-call,1200 seconds charged.
+The remaining plan is job2 preflight then job3 native, only after fresh direct
+source review and independent audit PASS for the changed executable HEAD.
+No old audit/release can authorize changed bytes. No job4 or second native call.
+
+Job1 recorded31,772,712,960 bytes initial cgroup headroom,19,979,001,856 before
+checks, then failed the post-processor16GiB gate without recording failure-time
+anon/file/RSS. These prove the gate failure, not its exact allocator/cache cause.
+The repair isolates the synthetic processor in a supervised process, records
+bounded Linux host/cgroup anon/file/process-RSS snapshots before/after relevant
+stages and on failure, and may advise clean installed-library pages only under
+the current owned venv. No shared cache deletion, global cache drop, garbage-
+collector speculation or threshold relaxation. Advice is a measured attempt,
+never a claim of successful reclaim: the original resource gate still decides.
+CPU evidence can validate process lifetime and fail-closed logic; actual Kaggle
+memory improvement remains unverified until an audited job2 can run.
+
 ## Latest execution: delegated job1 failed the final RAM gate
 
 [Owner directive6624359404](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6624359404)
