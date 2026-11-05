@@ -522,7 +522,7 @@ class CampaignStagingTests(unittest.TestCase):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes((runtime.ROOT/name).read_bytes())
             write(root/"fixture.json", {"request": request, "comments": comments})
-            code = """import sys, json, socket
+            code = """import sys, json, socket, ssl
 sys.path.insert(0,sys.argv[1])
 socket.socket=lambda *a,**k: (_ for _ in ()).throw(AssertionError('NO_NETWORK'))
 from safeshift import internvl3763_campaign as c
