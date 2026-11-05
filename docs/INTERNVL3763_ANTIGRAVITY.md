@@ -1,5 +1,12 @@
 # InternVL grammar V2 TRAIN3763 preparation and Antigravity operations
 
+PR178 is MERGED at `1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`.
+The new execution-candidate task is specified in
+[INTERNVL3763_EXECUTION.md](INTERNVL3763_EXECUTION.md); that document supersedes
+the PREP-only implementation status below for the new candidate route.
+This file retains PR178's design, operational lifecycle and historical evidence.
+Neither PR178 nor its merge grants a new Kaggle submission or native call.
+
 Owner task 05/11/2026, Asia/Bangkok. Base main
 `7633dca168f7bb9fdff84f38a3d374cdbaff5b5a` (PR177 merged).
 This is one new task/branch/Draft PR. PR177 and its successful ordinal0

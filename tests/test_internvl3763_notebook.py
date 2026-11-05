@@ -39,6 +39,27 @@ class NotebookTests(unittest.TestCase):
                 self.assertRaisesRegex(ValueError, "UNCOMMITTED_RUNTIME"):
             build("a"*40)
 
+    def test_execution_candidate_rebuild_preserves_source_and_requires_separate_authority(self):
+        path = runtime.ROOT / "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb"
+        notebook = read(path)
+        metadata = notebook["metadata"]["safeshift"]
+        self.assertEqual(build(metadata["runtime_commit"], execute=True), notebook)
+        self.assertEqual(metadata["status"], "BLOCKED_PENDING_EXACT_EXECUTION_RELEASE")
+        self.assertIsNone(metadata["execution_authority"])
+        cell = notebook["cells"][1]
+        self.assertEqual(cell["outputs"], [])
+        self.assertIsNone(cell["execution_count"])
+        code = "".join(cell["source"])
+        compile(code, "<execute>", "exec")
+        self.assertIn("safeshift_train3763_execution.json", code)
+        self.assertIn("launch(path)", code)
+        self.assertNotIn("kernels_push", code)
+        expression = ast.parse(code).body[2].value
+        encoded = ast.literal_eval(expression.args[0].args[0])
+        payload = json.loads(zlib.decompress(base64.b64decode(encoded)))
+        self.assertEqual({name: hashlib.sha256(text.encode()).hexdigest() for name, text in payload.items()},
+            runtime.source_spec()["manifest"])
+
 
 if __name__ == "__main__":
     unittest.main()

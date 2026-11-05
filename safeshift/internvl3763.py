@@ -18,20 +18,24 @@ from safeshift import internvl_v2_runtime as capture
 from safeshift.pilot.artifacts import read, write, sha, safe, export, verify_archive
 from safeshift.pilot.contract import digest, parse_label, PROMPT_SHA
 
-IDENTITY = "internvl35-grammar-v2-train3763-prep-v1"
+IDENTITY = "internvl35-grammar-v2-train3763-execution-candidate-v1"
 SERIES = "train3763-internvl35-grammar-v2-v1"
 OWN = ["safeshift/internvl3763.py", "scripts/internvl3763.py"]
 
 
-def authorize(*args, **kwargs):
-    raise PermissionError("TRAIN3763_PREPARATION_ONLY: NEW_EXECUTION_RELEASE_O2_O6_REQUIRED")
+def authorize(stage="worker", **kwargs):
+    from safeshift.internvl3763_release import authorize as check
+    try:
+        return check(stage, **kwargs)
+    except ValueError as error:
+        raise PermissionError(str(error)) from error
 
 
 def source_spec():
     inherited = capture.source_spec()
     capture.check_source(inherited)
     return {"identity": IDENTITY, "manifest": {**inherited["manifest"],
-        **{p: sha(ROOT / p) for p in OWN}}}
+        **{p: sha(ROOT / p) for p in [*OWN, "safeshift/internvl3763_release.py", "safeshift/kaggle_handoff.py"]}}}
 
 
 def check_source(spec):
@@ -77,12 +81,12 @@ def trace_binding(spec, p, row, tokenizer_sha, plan_sha=None):
             "series": p["series_id"], "plan": digest(p) if plan_sha is None else plan_sha, "ordinal": row["ordinal"]})}
 
 
-def generate_prepared(backend, inputs, sample, binding, deadline):
+def generate_prepared(backend, inputs, sample, binding, deadline, *, ordinal=None):
     """Same approved V2 capture/grammar/replay, with separate closed authority.
 
     No patch of the old campaign's authorization or qualification identity.
     """
-    authorize("call")
+    authorize("worker")
     import torch
     from unittest.mock import patch
     from safeshift.candidates.backend import persist_ids
@@ -100,6 +104,10 @@ def generate_prepared(backend, inputs, sample, binding, deadline):
         with patch.object(backend.model, "_get_logits_processor",
                 lambda *a, **k: observer.processors(original, *a, **k)), torch.inference_mode():
             observer.check_time()
+            write(sample / "call-reservation.json", {"binding": binding, "outcome": "UNKNOWN_UNTIL_CLAIM_RETURN"})
+            claim = authorize("call", ordinal=ordinal)
+            write(sample / "call-claim.json", claim)
+            observer.check_time()  # a slow/ambiguous remote claim never extends the call window
             write(sample / "native_call.json", {"identity": IDENTITY, "binding": binding, "calls": 1})
             generated = backend.model.generate(**inputs, generation_config=backend.generation,
                 prefix_allowed_tokens_fn=grammar.callback())
@@ -133,7 +141,8 @@ def generate_prepared(backend, inputs, sample, binding, deadline):
 
 class NativeBackend:
     def __init__(self, source, weights, out, deadline):
-        authorize("load")
+        claim = authorize("load")
+        write(Path(out) / "load-claim.json", claim)
         from safeshift.candidates.backend import CandidateBackend
         from safeshift import internvl_v2_memory as memory
         from scripts.internvl_v2 import policy
@@ -143,6 +152,7 @@ class NativeBackend:
             write(Path(out) / "loader-resources.json", memory.resource_check(out,
                 "loader-resources", policy(), Path(sys.prefix).parent))
             return receipt
+        require(time.monotonic() < deadline, "DEADLINE_BEFORE_MODEL_LOAD")
         self.backend = CandidateBackend("internvl35", source, weights,
             (ROOT / "configs/pilot/classification_c1.txt").read_text(encoding="utf8"),
             device="cuda:0", weight_verifier=verifier)
@@ -151,7 +161,7 @@ class NativeBackend:
         self.environment = self.backend.environment
 
     def generate(self, image, sample, binding, deadline):
-        authorize("call")
+        authorize("worker")
         from PIL import Image
         from safeshift.candidates.inputs import prepare_inputs, validate_inputs
         from safeshift.candidates.backend import transfer_inputs
@@ -165,7 +175,8 @@ class NativeBackend:
         write(Path(sample) / "request.json", {"prompt": b.prompt, "rendered_prompt": rendered,
             "input_ids": inputs["input_ids"][0].tolist(), "input_detail": detail,
             "generation": b.generation.to_dict(), "binding": binding})
-        return generate_prepared(b, transfer_inputs(inputs, b.device, b.dtype), sample, binding, deadline)
+        return generate_prepared(b, transfer_inputs(inputs, b.device, b.dtype), sample, binding, deadline,
+            ordinal=int(Path(sample).name))
 
 
 def capture_budget(vocab=200000, steps=64):
@@ -180,7 +191,8 @@ def capture_budget(vocab=200000, steps=64):
         "basis": "CONSERVATIVE_ENGINEERING_BOUND_NOT_MEASURED_THROUGHPUT"}
 
 
-def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clock=time.monotonic):
+def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clock=time.monotonic,
+             archive_limit_bytes=7 * 2**30):
     """Bounded shared controller. Public entrypoints gate before reaching here."""
     rows = planning.validate_cohort(cohort, digest(cohort))
     plan_sha = digest(p)
@@ -211,7 +223,7 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             if shutil.disk_usage(out).free < retained + capture_budget()["sample_and_export_bytes"] + 2**30:
                 write(out / "stop.json", {"reason": "CAPTURE_AND_EXPORT_SPACE_NOT_AVAILABLE"})
                 break
-            if retained + capture_budget()["per_sample_bytes"] > 7 * 2**30:
+            if retained + capture_budget()["per_sample_bytes"] > archive_limit_bytes:
                 write(out / "stop.json", {"reason": "ARCHIVE_VERIFIER_8GIB_BOUND_EXPORT_MARGIN"})
                 break
             row = rows[ordinal]
@@ -273,10 +285,67 @@ def rehearse(out, archive, cohort, p, history, factory, **kwargs):
     return _execute(out, archive, cohort, p, factory, **kwargs)
 
 
+def interrupted_summary(output, request, failure):
+    """Supervisor-only conservative accounting after setup failure/child death.
+
+    Preserve every byte. Unfinished started samples are consumed technical errors,
+    even with a raw response; no implicit recovery to SUCCESS or another call.
+    """
+    out = Path(output) / "run"
+    out.mkdir(exist_ok=True)
+    if (out / "summary.json").exists():
+        return read(out / "summary.json")
+    p, cohort, spec = request["plan"], request["cohort"], request["source"]
+    for name, value in (("source", spec), ("plan", p), ("cohort", cohort), ("configuration", configuration())):
+        path = out / (name + ".json")
+        if not path.exists():
+            write(path, value)
+        else:
+            require(read(path) == value, "INTERRUPTED_RUNTIME_DRIFT")
+    rows = planning.validate_cohort(cohort, digest(cohort))
+    records = []
+    for row in rows:
+        sample = safe(out, f"samples/{row['ordinal']:06d}")
+        started = (sample / "started.json").exists()
+        native = (sample / "native_call.json").exists()
+        durable = sample / "result.json"
+        if durable.exists():
+            try:
+                value = read(durable)
+                require(started and all(value[k] == v for k, v in row.items())
+                    and value["attempts"] == 1 and value["native_calls"] == int(native)
+                    and value["status"] in ("SUCCESS", "INVALID", "TECHNICAL_ERROR"), "DURABLE_RESULT_BINDING")
+                if value["status"] in ("SUCCESS", "INVALID"):
+                    require(native and sha(sample / "raw.json") == value["raw_sha256"]
+                        and parse_label(read(sample / "raw.json")["response"]) == value["label"]
+                        and ((value["status"] == "SUCCESS") == (value["label"] is not None)), "DURABLE_RAW_RESULT")
+                records.append(value)  # already committed result; no reparse rescue
+                continue
+            except (ValueError, KeyError, OSError):
+                pass  # torn/contradictory files survive; conservative error below
+        records.append({**row, "status": "TECHNICAL_ERROR" if started else "NOT_ATTEMPTED",
+            "label": None, "attempts": int(started), "native_calls": int(native),
+            "hnlo": None, "hnlo_status": HNLO_STATUS,
+            "reason": "INTERRUPTED_OR_TORN_EVIDENCE" if started else "WORKER_STOPPED_BEFORE_SAMPLE"})
+    result = {"schema": IDENTITY + "-result", "plan_sha256": digest(p), "source_sha256": digest(spec),
+        "series_id": SERIES, "run_id": p["run_id"], "attempt_id": p["attempt_id"],
+        "status": "FAIL", "failure": failure, "model_calls": sum(r["native_calls"] for r in records),
+        "planned": planning.COUNT, "counts": dict(Counter(r["status"] for r in records)),
+        "records": records, "hnlo": None, "hnlo_status": HNLO_STATUS, "scope": cohort["scope"],
+        "scientific_selection": "PENDING", "scientific_qualified": False,
+        "accounting": "THIS_ATTEMPT_ONLY_NOT_A_SERIES_COMPLETION_UNION",
+        "cohort_complete_this_attempt": all(r["status"] != "NOT_ATTEMPTED" for r in records)}
+    write(out / "summary.json", result)
+    return result
+
+
 def validate_execution_request(request):
+    from safeshift.pilot.contract import require_hash
+    from safeshift.pilot.artifacts import relative
     require(set(request) == {"source", "cohort", "history", "history_archives", "plan", "input_marker_sha256",
         "projection_sha256"}, "EXECUTION_REQUEST_FIELDS")
     check_source(request["source"])
+    require_hash(request["input_marker_sha256"])
     require(request["cohort"]["scope"] == "PRIVATE_TRAIN_METADATA", "PRIVATE_ORIGINAL_PROJECTION_REQUIRED")
     p = request["plan"]
     require(p["max_seconds"] > 60, "EXPORT_MARGIN_REQUIRES_MORE_THAN_60_SECONDS")
@@ -285,6 +354,12 @@ def validate_execution_request(request):
     require(request["projection_sha256"] == digest(request["cohort"]), "ORIGINAL_PROJECTION_BINDING")
     require(type(request["history_archives"]) is list
         and len(request["history_archives"]) == len(request["history"]), "SEALED_HISTORY_ARCHIVES_REQUIRED")
+    for ancestor, custody in zip(request["history"], request["history_archives"]):
+        require(type(custody) is dict and set(custody) == {"archive", "sha256", "plan"}, "HISTORY_ARCHIVE_CUSTODY_FIELDS")
+        relative(custody["archive"])
+        require(custody["sha256"] == ancestor["evidence_sha256"]
+            and custody["plan"]["run_id"] == ancestor["run_id"]
+            and custody["plan"]["attempt_id"] == ancestor["attempt_id"], "HISTORY_ARCHIVE_PLAN_BINDING")
     return p
 
 
@@ -312,6 +387,7 @@ def preflight(spec, out, scratch, inputs, deadline):
     actual = memory.verify_checkpoint(weights, "internvl35", out, "checkpoint-stream", deadline)
     write(out / "checkpoint.json", {"marker_sha256": sha(marker), "source": native,
         "weights": actual, "weights_loaded": False})
+    write(out / "source.json", capture.source_spec())  # exact legacy CPU child --spec path
     old.run_processor_check(capture.source_spec(), out, scratch, inputs, budgets, deadline)
     old.reclaim_owned(scratch, out)
     write(out / "preload-resources.json", memory.resource_check(out, "preload-resources", budgets, scratch))
@@ -321,9 +397,14 @@ def preflight(spec, out, scratch, inputs, deadline):
 
 
 def worker(request_path=None, *, output=None, scratch=None, inputs=None, deadline=None):
+    if request_path is None:
+        authorize()
+    from safeshift import internvl3763_release as authority
+    handoff = read(request_path)
+    grant = authority.activate(handoff, "worker")
     authorize()
     from safeshift.fulltrain.inputs import admit, verify_image_bytes
-    request = read(request_path)
+    request = authority.bind(grant, handoff)
     p = validate_execution_request(request)
     # A structurally valid caller-authored history alone is insufficient.
     # Reconcile each exact sealed ancestor before any environment/load work.
@@ -333,6 +414,7 @@ def worker(request_path=None, *, output=None, scratch=None, inputs=None, deadlin
             "HISTORY_ARCHIVE_ANCESTOR_MISMATCH")
     environment_out = Path(output) / "environment"
     environment_out.mkdir(exist_ok=False)
+    write(environment_out / "worker-claim.json", authority.activation_claim())
     source, weights = preflight(request["source"], environment_out, scratch, inputs, deadline)
     root, cohort, rows = admit(inputs, request["input_marker_sha256"], request["projection_sha256"])
     require(cohort == request["cohort"], "ORIGINAL_MASTER_CUSTODY")
@@ -340,7 +422,7 @@ def worker(request_path=None, *, output=None, scratch=None, inputs=None, deadlin
     return _execute(Path(output) / "run", None, cohort, p,
         lambda end: NativeBackend(source, weights, Path(output) / "run", min(end, deadline)),
         image_path=lambda row: safe(root, rows[row["ordinal"]]["image"]),
-        tokenizer_sha=sha(source / "tokenizer.json"))
+        tokenizer_sha=sha(source / "tokenizer.json"), archive_limit_bytes=grant["caps"]["archive_bytes"])
 
 
 def verify_bundle(archive, expected_sha, expected_plan):
@@ -377,7 +459,7 @@ def verify_bundle(archive, expected_sha, expected_plan):
         for name in members:
             local = name[len(prefix):] if name.startswith(prefix) else name
             if local.startswith("samples/"):
-                match = re.fullmatch(r"samples/([0-9]{6})/(started\.json|native_call\.json|raw\.json|result\.json|grammar\.json|request\.json|native\.json|processors\.json|trace-verification\.json|trace-failure\.json|steps/([0-9]{3})\.(f32|forward\.json|masked\.json))", local)
+                match = re.fullmatch(r"samples/([0-9]{6})/(started\.json|native_call\.json|call-reservation\.json|call-claim\.json|raw\.json|result\.json|grammar\.json|request\.json|native\.json|processors\.json|trace-verification\.json|trace-failure\.json|steps/([0-9]{3})\.(f32|forward\.json|masked\.json))", local)
                 require(match is not None and int(match[1]) in expected_plan["scheduled_ordinals"]
                     and (match[3] is None or int(match[3]) < 64), "UNEXPECTED_SAMPLE_ARCHIVE_MEMBER")
         require(result["plan_sha256"] == plan_sha and result["source_sha256"] == digest(spec)
@@ -424,12 +506,52 @@ def verify_bundle(archive, expected_sha, expected_plan):
                         trace = get(sample + "trace-verification.json")
                         require(trace["status"] == "TRACE_CONSISTENT" and trace["evidence_kind"] == "NATIVE"
                             and trace["label"] == label and trace["binding"] == expected_binding, "POSITIVE_NATIVE_TRACE")
+                        verify_numeric_members(z, prefix + sample, raw, members)
         require(calls == result["model_calls"] <= expected_plan["max_calls"]
             and result["counts"] == dict(Counter(r["status"] for r in result["records"])), "COUNTS")
         require(not result["counts"].get("TECHNICAL_ERROR") or result["status"] == "FAIL", "TECHNICAL_ERROR_CANNOT_PASS")
     return {"status": result["status"], "archive_sha256": expected_sha, "members": len(members) + 1,
         "model_calls": calls, "counts": result["counts"], "scope": result["scope"],
         "scientific_qualified": False}
+
+
+def verify_numeric_members(archive, prefix, raw, members):
+    """Stdlib full-vector readback; no model/tokenizer, label repair or HNLO.
+
+    Worker already performed approved tokenizer/independent decoder replay. This
+    separately verifies every retained vector/hash/prefix/mask/greedy choice.
+    """
+    import json
+    import math
+    import struct
+    from safeshift.internvl_grammar import PROCESSOR, greedy_token
+    ids, width = raw["generated_ids"], raw["logit_width"]
+    require(type(width) is int and 0 < width <= 200000 and 1 <= len(ids) <= 64
+        and len(ids) == len(raw["raw_vector_hashes"]) == len(raw["masked_vector_hashes"])
+        and raw["actual_logits_processors"] == [PROCESSOR] and raw["policy"] == POLICY,
+        "NATIVE_TRACE_DIMENSION_POLICY")
+    for index, token in enumerate(ids):
+        stem = prefix + f"steps/{index:03d}"
+        require(members.get(stem + ".f32") == raw["raw_vector_hashes"][index]
+            and members.get(stem + ".masked.json") == raw["masked_vector_hashes"][index],
+            "NATIVE_VECTOR_MEMBER_HASH")
+        binary = archive.read(stem + ".f32")
+        require(len(binary) == width * 4, "FULL_VOCAB_BINARY_SIZE")
+        vector = struct.unpack("<" + "f" * width, binary)
+        require(all(math.isfinite(x) for x in vector), "NONFINITE_NATIVE_RAW")
+        masked = json.loads(archive.read(stem + ".masked.json"))
+        forward = json.loads(archive.read(stem + ".forward.json"))
+        require(masked["step"] == index and masked["prefix_ids"] == raw["input_ids"] + ids[:index]
+            and masked["raw_sha256"] == raw["raw_vector_hashes"][index]
+            and forward["step"] == index and forward["raw_sha256"] == raw["raw_vector_hashes"][index]
+            and forward["vocab"] == width and forward["origin"] == "forward_before_processors"
+            and forward["encoding"] == "float32-little-endian" and forward["all_finite"] is True,
+            "NATIVE_VECTOR_STEP_CUSTODY")
+        scores = masked["masked_logits"]
+        require(len(scores) == width and all(x is None or (type(x) in (int, float)
+            and math.isfinite(x) and x == vector[i]) for i, x in enumerate(scores))
+            and sum(x is not None for x in scores) <= 4 and greedy_token(scores) == token,
+            "NATIVE_MASK_OR_GREEDY_DRIFT")
 
 
 def sealed_history(archive, expected_sha, expected_plan):

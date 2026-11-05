@@ -1,6 +1,53 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — TRAIN3763 grammar V2 preparation and Antigravity handoff — 05/11/2026
+## CURRENT — TRAIN3763 execution candidate after PR178 MERGED — 05/11/2026
+
+GitHub verified PR178 **MERGED**, merge/main BASE
+`1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`. New isolated branch
+`feat/internvl3763-execution`; no continuation of the PR178 implementation session.
+PR177/178 source, grants, evidence and unrelated local files remain historical.
+
+**Kaggle read-only connectivity: PASS, supplied verified evidence from Antigravity**
+on Windows: account `nguynanhtn`, historical private job
+`nguynanhtn/safeshift-internvl-v2-6626498951-j1`, version1 COMPLETE;
+metadata/log/ZIP/SHA256 retrieval verified, no submit/GPU consumption.
+Owner reports Python3.13/kagglesdk0.1.23/kagglehub1.0.1 and no kaggle.exe in PATH.
+These checks were not repeated. This Codex shell independently has Python3.11.9;
+an isolated operator venv installs unchanged approved Kaggle2.2.5/SDK0.1.38/
+requests2.34.2. Pin/software checks are separate from account connectivity.
+
+[Execution design/runbook](INTERNVL3763_EXECUTION.md): candidate notebook uses
+the supervised controller with exact authentic new-release admission and remote
+permanent submit/launch/worker/load/call claims. A separately deployed durable
+HTTPS witness is required for cross-machine exclusion; its hosting/TLS/storage
+is **NOT PROVISIONED / BLOCKED**. No local flag opens `authorize()`.
+Resource caps, versioned Inputs, original cohort custody and separate approvals
+must be bound by the Owner's new exact release; none is issued by this task.
+Source-bound attempts preserve all3763 statuses, raw and sealed history; no
+automatic next attempt, consumed-ID retry, scientific union or label rescue.
+Antigravity retains the PR178 conversation/report lifecycle and <=15-minute
+initial monitor; later collection verifies actual terminal/version/source,
+ZIP/SHA/CRC/full raw vector members/sample accounting and remote consumption.
+
+Current work is CPU synthetic implementation/verification in one unified Draft
+PR. **READY_FOR_CODE_REVIEW_ONLY**; exact execution approval, O2–O6 evidence,
+live final-source environment/weights/inference/export and scientific qualification
+remain **BLOCKED / NOT_RUN / NOT_VERIFIED**. No new Kaggle job, real inference,
+full TRAIN or TEST is run. ChatGPT direct GitHub review, audit decision and
+separately authorized merge remain pending. Final runtime/source commit
+`c07121c6a33539fdf4bbb098ba66e3aa999eb28b`: **118/118 CPU synthetic tests PASS,
+zero skips/failures/errors**, including actual native GenerationMixin with scripted
+logits and installed official-SDK request serialization; notebook3/3 and
+PowerShell syntax2/2 PASS. All84 inherited runtime files match BASE. Candidate
+notebook SHA256 `1e206b5599ec75c38a861118567013a673464a72a25f79f7ccf9c862b35f76c1`.
+Actual agy1.5.0 on final source: one simulated submission, two AI turns, explicit
+same-conversation resume, RUNNING_UNVERIFIED -> process exit -> simulated COMPLETE
+-> ZIP/log/SHA256/CRC/members/bindings PASS, zero denied_actions. No background AI
+between turns, no Kaggle/model/image call. [Sanitized receipt](research/evidence/internvl3763_execution_20261105/summary.json).
+Full repository suite was not run in this task; PR178's historical NOT_GREEN
+record remains unchanged. Operational rehearsal is not independent audit.
+
+## Historical snapshot — PR178 preparation and Antigravity handoff (now MERGED)
 
 Direct Owner task starts a new branch from main
 `7633dca168f7bb9fdff84f38a3d374cdbaff5b5a`, after PR177 merged. The old worktree,

@@ -1,5 +1,9 @@
 # SafeShift
 
+TRAIN3763 execution candidate after PR178 merge: see
+[source scope, PowerShell operations and BLOCKED live gates](docs/INTERNVL3763_EXECUTION.md).
+Current task is CPU preparation/source review only; no new Kaggle job or inference.
+
 SafeShift nghiên cứu độ tin cậy của mô hình thị giác–ngôn ngữ (VLM) khi đánh giá
 ảnh an toàn công nghiệp: mô hình phân loại sai ở đâu, lỗi nguy hiểm tập trung
 ở nhóm nào, và bất đồng giữa các mô hình có giúp nhận diện quyết định thiếu

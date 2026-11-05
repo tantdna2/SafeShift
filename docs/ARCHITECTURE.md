@@ -1,5 +1,26 @@
 # Kiến trúc Foundation V1
 
+## TRAIN3763 execution candidate after PR178 merge
+
+Read [execution design](INTERNVL3763_EXECUTION.md) before the historical PREP
+section below. `internvl3763_release.py` authenticates new Owner GitHub authority,
+separate approval attestations, exact merged source/Input/limits and permanent
+remote claims. `internvl3763_witness.py` implements one durable SQLite authority;
+TLS hosting/storage/endpoint deployment remains separately BLOCKED.
+`internvl3763_operator.py` checks approved SDK pins, clean merged notebook,
+sealed ancestors, versioned Input availability/account/quota and makes exactly
+one SDK push after atomic remote reservation. Worker/source/grammar identities
+remain separate from the historical PR177 capability and tags.
+
+`build_internvl3763 --execute` packages the same supervised entrypoint with no
+grant. A unique private execution Input and authentic release are required before
+provisioning/load/calls. Sample claims precede native calls; raw precedes parse.
+Supervisor interruption retains conservative all3763 accounting. Collection
+checks remote claim snapshot and numeric full-vector members alongside ZIP/raw/
+sample custody. No ordinary resume repairs consumed IDs or pools results.
+Tests: `test_internvl3763_execution.py`, existing controller/handoff/grammar suites
+and PREP/execution notebook tests. CPU evidence is not final-source live PASS.
+
 ## TRAIN3763 grammar V2 and Antigravity handoff — 05/11/2026
 
 Read [scope/operator instructions](INTERNVL3763_ANTIGRAVITY.md), then
