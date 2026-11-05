@@ -409,6 +409,33 @@ class ExecutionTests(unittest.TestCase):
         self.assertEqual(result["records"][0], durable)
         self.assertEqual(result["counts"], {"INVALID": 1, "NOT_ATTEMPTED": 3762})
 
+    def test_supervised_launch_timeout_cannot_promote_existing_summary_to_pass(self):
+        from scripts.internvl3763 import launch
+        from safeshift.fulltrain import provision, supervision
+        execution = self.request["bindings"]["runtime"]["execution_request"]
+        package = self.root/"handoff.json"
+        write(package, self.request)
+        def supervised(command, **kwargs):
+            receipt = kwargs["receipt"]
+            if receipt.name == "setup-supervisor.json":
+                write(receipt, {"status": "EXITED", "returncode": 0})
+                write(receipt.parent/"runtime.json", {"python": sys.executable, "env": {}})
+                return
+            write(receipt, {"status": "TIMEOUT", "returncode": -1})
+            write(receipt.parent/"run/summary.json", {"status": "PASS", "scope": "SYNTHETIC_SUPERVISOR_FIXTURE"})
+            raise TimeoutError("SYNTHETIC_AFTER_SUMMARY_BEFORE_CHILD_EXIT")
+        with patch.object(auth, "activate", return_value=self.grant), patch.object(auth, "bind", return_value=execution), \
+                patch.object(auth, "activation_claim", return_value={"scope": "SYNTHETIC"}), \
+                patch.object(runtime, "authorize"), patch.object(provision, "clean_env", return_value={}), \
+                patch.object(supervision, "run", side_effect=supervised):
+            result = launch(package, output=self.root/"output", scratch=self.root/"scratch", inputs=self.root/"input")
+        self.assertEqual(result["status"], "FAIL")
+        archive = next((self.root/"output").glob("*.zip"))
+        with zipfile.ZipFile(archive) as z:
+            terminal = json.loads(z.read("terminal.json"))
+            self.assertEqual(terminal["status"], "FAIL")
+            self.assertEqual(terminal["error"]["type"], "TimeoutError")
+
     def test_remote_parent_missing_or_corrupt_receipt_cannot_create_capability(self):
         response = {"created": True, "claim_sha256": "0"*64, "release_sha256": digest(self.grant)}
         with self.assertRaisesRegex(ValueError, "UNCONFIRMED"):

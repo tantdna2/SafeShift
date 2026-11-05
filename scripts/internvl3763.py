@@ -64,9 +64,10 @@ def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggl
     except BaseException as failure:
         error = {"type": type(failure).__name__, "consumption": "RECONCILE_MARKERS_NO_RETRY"}
         result = runtime.interrupted_summary(out, request, error)
-    write(out / "terminal.json", {"status": result["status"], "error": error})
+    status = "FAIL" if error is not None else result["status"]
+    write(out / "terminal.json", {"status": status, "error": error})
     checksum = export(out, Path(str(out) + ".zip"))
-    return {"status": result["status"], "archive_sha256": checksum, "scientific_qualified": False}
+    return {"status": status, "archive_sha256": checksum, "scientific_qualified": False}
 
 
 def main(argv=None):
