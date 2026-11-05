@@ -10,6 +10,7 @@ import traceback
 from types import SimpleNamespace as NS
 import unittest
 from unittest.mock import Mock, patch
+from urllib.parse import urlsplit
 import zipfile
 
 from safeshift import internvl3763_operator as op
@@ -28,6 +29,7 @@ except ImportError:
 @unittest.skipUnless(KaggleClient is not None, "requires existing pinned operator venv (no install/network)")
 class CapsuleTransportTests(unittest.TestCase):
     def setUp(self):
+        op.check_sdk()
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         self.request, self.grant, self.comments = fixture(self.root/"ledger")
@@ -35,7 +37,10 @@ class CapsuleTransportTests(unittest.TestCase):
         self.payload = json_bytes({"request": self.request, "campaign_intent": self.intent})
         self.name = "safeshift_train3763_execution.json"
         self.download = "https://api.kaggle.com/v1/datasets.DatasetApiService/DownloadDataset"
-        self.storage = "https://storage.googleapis.com/kaggle-data-sets/synthetic/capsule?X-Goog-Signature=SIGNED_SECRET"
+        self.storage = ("https://storage.googleapis.com:443/kaggle-data-sets/synthetic/capsule"
+            "?X-Goog-Algorithm=GOOG4-RSA-SHA256"
+            "&X-Goog-Credential=SYNTHETIC%2F20261106%2Fauto%2Fstorage%2Fgoog4_request"
+            "&X-Goog-Expires=300&X-Goog-Signature=SIGNED_SECRET")
         self.calls = []
         self.download_status = 302
         self.storage_status = 200
@@ -69,7 +74,7 @@ class CapsuleTransportTests(unittest.TestCase):
             response.status_code = self.download_status
             response.headers["Location"] = self.storage
             body = b"" if response.status_code == 302 else self.body
-        elif request.url.startswith("https://storage.googleapis.com/"):
+        elif urlsplit(request.url).netloc in ("storage.googleapis.com", "storage.googleapis.com:443"):
             self.assertEqual(request.method, "GET")
             self.assertIsNone(request.body)
             self.assertEqual(dict(request.headers), {"Accept-Encoding": "identity"})
@@ -92,23 +97,52 @@ class CapsuleTransportTests(unittest.TestCase):
     def verify(self, path="proof"):
         return op.verify_execution_input(self.client, self.request, self.intent, self.root/path)
 
-    def test_real_sdk_302_anonymous_get_streams_exact_file_without_secrets(self):
+    def assert_sdk_signed_download(self):
+        # Cross several 64KiB reads with synthetic capsule bytes, never image data.
+        self.intent["notice"] = "SYNTHETIC_ONLY" * 12000
+        self.payload = json_bytes({"request": self.request, "campaign_intent": self.intent})
+        self.body = self.payload
+        sessions = []
         # Poison ambient auth and the session defaults; storage must not inherit them.
         with patch.dict("os.environ", {"HTTP_PROXY": "http://proxy.invalid", "HTTPS_PROXY": "http://proxy.invalid",
-                "NETRC": "nonexistent-synthetic-netrc"}), patch("sys.stdout", new_callable=io.StringIO) as out:
+                "NETRC": "nonexistent-synthetic-netrc", "REQUESTS_CA_BUNDLE": "nonexistent-synthetic-ca"}), \
+                patch.object(requests.Session, "__enter__", lambda session: sessions.append(session) or session), \
+                patch("sys.stdout", new_callable=io.StringIO) as out:
             proof = self.verify()
         self.assertEqual(out.getvalue(), "")
         self.assertEqual(proof["sha256"], hashlib.sha256(self.payload).hexdigest())
         self.assertEqual((self.root/"proof/download.part").read_bytes(), self.payload)
+        self.assertGreater(len(self.payload), 2*64*1024)
+        self.assertEqual(proof["bytes"], len(self.payload))
+        self.assertEqual(proof["request_sha256"], digest(self.request))
+        self.assertEqual(proof["intent_sha256"], digest(self.intent))
+        self.assertEqual(json.loads((self.root/"input-proof.json").read_bytes()), proof)
+        self.assertFalse(sessions[-1].trust_env)
+        self.assertEqual(sessions[-1].cookies.get_dict(), {})
         self.assertEqual([r.method for r, _ in self.calls], ["POST", "POST", "GET"])
+        self.assertEqual(self.calls[-1][0].url, self.storage)
         self.assertEqual(self.calls[1][0].headers["Authorization"], "Bearer KAGGLE_SECRET")
         self.assertNotIn("SECRET", json.dumps(proof))
         self.client.kernels_push.assert_not_called()
 
+    def test_real_sdk_302_explicit_https443_streams_exact_file_without_secrets(self):
+        self.assert_sdk_signed_download()
+
+    def test_real_sdk_302_no_port_streams_exact_file_without_secrets(self):
+        self.storage = self.storage.replace("storage.googleapis.com:443/", "storage.googleapis.com/")
+        self.assert_sdk_signed_download()
+
     def test_unsafe_host_scheme_userinfo_port_fragment_and_empty_signature_block(self):
         for location in ("http://storage.googleapis.com/a?sig=x", "https://evil.invalid/a?sig=x",
                 "https://storage.googleapis.com.evil.invalid/a?sig=x", "https://storage.googleapis.com@evil.invalid/a?sig=x",
-                "https://user:pass@storage.googleapis.com/a?sig=x", "https://storage.googleapis.com:443/a?sig=x",
+                "https://user:pass@storage.googleapis.com/a?sig=x", "https://user@storage.googleapis.com:443/a?sig=x",
+                "https://storage.googleapis.com:80/a?sig=x", "https://storage.googleapis.com:444/a?sig=x",
+                "https://storage.googleapis.com:0443/a?sig=x", "https://storage.googleapis.com:/a?sig=x",
+                "https://storage.googleapis.com:443.evil.invalid/a?sig=x", "https://storage.googleapis.com./a?sig=x",
+                "https://storage.googleapis.com:443@evil.invalid/a?sig=x", "https://storage.googleapis.com:443:443/a?sig=x",
+                "https://storage.googleapis.com:443/?sig=x", "https://storage.googleapis.com:443?sig=x",
+                "https://storage.googleapis.com:443/a?", "https://storage.googleapis.com:443/a?sig=x#secret",
+                "https://storage.googleapis.com:443/a\\b?sig=x", "https://storage.googleapis.com:443/a?sig=\x7fsecret",
                 "https://storage.googleapis.com/a?sig=x#secret", "https://storage.googleapis.com/a",
                 "/relative?sig=x", "https://storage.googleapis.com/a?sig=\nsecret"):
             with self.subTest(location=location):
@@ -117,7 +151,7 @@ class CapsuleTransportTests(unittest.TestCase):
                     self.verify("bad-"+str(len(list(self.root.iterdir()))))
                 self.assertEqual(len(self.calls), 2)
 
-    def test_storage_chain_and_initial_other_redirect_codes_are_never_followed(self):
+    def assert_redirect_chain_blocked(self):
         for status in (301, 302, 303, 307, 308, 403):
             self.storage_status = status; self.calls.clear()
             with self.assertRaises(ValueError):
@@ -129,6 +163,13 @@ class CapsuleTransportTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.verify("initial-"+str(status))
             self.assertEqual(len(self.calls), 2)
+
+    def test_explicit_https443_chain_and_other_redirect_codes_are_never_followed(self):
+        self.assert_redirect_chain_blocked()
+
+    def test_no_port_chain_and_other_redirect_codes_are_never_followed(self):
+        self.storage = self.storage.replace("storage.googleapis.com:443/", "storage.googleapis.com/")
+        self.assert_redirect_chain_blocked()
 
     def test_timeout_connect_failure_zero_retry_and_sanitized_traceback(self):
         for failure in (requests.ReadTimeout, requests.ConnectTimeout, requests.ConnectionError):
@@ -207,7 +248,21 @@ class CapsuleTransportTests(unittest.TestCase):
                 response.close()
         self.assertEqual(len(self.calls), 3)
 
-    def test_actual_submit_pushes_once_only_after_download_and_exact_byte_proof(self):
+    def test_download_rpc_cannot_repeat_inside_single_capsule_transport(self):
+        from scripts.submit_internvl_v2 import bounded_http
+        from kagglesdk.datasets.types.dataset_api_service import ApiDownloadDatasetRequest
+        query = ApiDownloadDatasetRequest()
+        query.owner_slug, query.dataset_slug = "nguynanhtn", "synthetic-capsule"
+        query.file_name, query.dataset_version_number = self.name, 1
+        with bounded_http(), op.capsule_http(query), self.client.build_kaggle_client() as remote:
+            with remote.datasets.dataset_api_client.download_dataset(query) as response:
+                self.assertEqual(response.content, self.payload)
+            with self.assertRaisesRegex(ValueError, "EXACT_CAPSULE_DOWNLOAD_RPC_ONLY"):
+                remote.datasets.dataset_api_client.download_dataset(query)
+        self.assertEqual(len(self.calls), 2)
+        self.client.kernels_push.assert_not_called()
+
+    def assert_submit_after_proof(self):
         from safeshift import internvl3763_release as old
         with patch.object(old, "get", side_effect=lambda path: deepcopy(self.comments[path])):
             ledger = c.Ledger.create(self.root/"ledger", self.root/"mirror", self.grant, "synthetic-machine")
@@ -216,20 +271,40 @@ class CapsuleTransportTests(unittest.TestCase):
         self.body = self.payload
         execution = self.request["bindings"]["runtime"]["execution_request"]
         handoff = self.root/"handoff"; handoff.mkdir()
+        guard = ledger.root.parent/(".train3763-"+self.grant["campaign_id"]+".initialized.json")
+        guard_bytes = guard.read_bytes()
         notebook = self.root/"synthetic.ipynb"; write(notebook, {"cells": []})
+        adapter = self.adapter
+        def before_push(http_adapter, request, **kwargs):
+            self.assertEqual([x["kind"] for x in ledger.events()], ["INTENT"])
+            self.client.kernels_push.assert_not_called()
+            self.assertFalse((handoff/"submission/input-proof.json").exists())
+            self.assertEqual(guard.read_bytes(), guard_bytes)
+            return adapter(request, **kwargs)
         def push(*args, **kwargs):
             self.assertEqual((handoff/"submission/input-proof/download.part").read_bytes(), self.payload)
             self.assertTrue((handoff/"submission/input-proof.json").is_file())
+            proof = json.loads((handoff/"submission/input-proof.json").read_bytes())
+            self.assertEqual(proof["sha256"], hashlib.sha256(self.payload).hexdigest())
+            self.assertEqual(proof["intent_sha256"], digest(self.intent))
             self.assertEqual([x["kind"] for x in ledger.events()], ["INTENT", "PUSH_INTENT"])
             return NS(to_dict=lambda: {"notice": "SYNTHETIC_ONLY"})
         self.client.kernels_push.side_effect = push
         with patch.object(op, "campaign_ledger", return_value=ledger), \
                 patch.object(op, "admit_campaign", return_value=(self.grant, execution)), patch.object(op, "safe", return_value=notebook), \
-                patch.object(op, "api", return_value=self.client), patch.object(op, "campaign_inventory", return_value={}):
+                patch.object(op, "api", return_value=self.client), patch.object(op, "campaign_inventory", return_value={}), \
+                patch.object(requests.adapters.HTTPAdapter, "send", before_push):
             result = op.submit_campaign(self.request, self.grant, execution, handoff)
         self.assertEqual(result, {"job_id": self.request["job"], "version": 1})
         self.client.kernels_push.assert_called_once()
         self.assertEqual([x["kind"] for x in ledger.events()], ["INTENT", "PUSH_INTENT", "SUBMITTED"])
+
+    def test_actual_submit_explicit_https443_pushes_once_only_after_exact_byte_proof(self):
+        self.assert_submit_after_proof()
+
+    def test_actual_submit_no_port_pushes_once_only_after_exact_byte_proof(self):
+        self.storage = self.storage.replace("storage.googleapis.com:443/", "storage.googleapis.com/")
+        self.assert_submit_after_proof()
 
     def test_retry_adapter_and_download_deadline_rejected(self):
         from scripts.submit_internvl_v2 import bounded_http
@@ -246,7 +321,7 @@ class CapsuleTransportTests(unittest.TestCase):
     def test_read_failure_preserves_partial_and_never_retries_or_leaks_signed_url(self):
         real_iter = requests.Response.iter_content
         def interrupted(response, *args, **kwargs):
-            if response.url.startswith("https://storage.googleapis.com/"):
+            if urlsplit(response.url).hostname == "storage.googleapis.com":
                 yield b"partial"
                 raise requests.ConnectionError("SIGNED_SECRET " + response.url)
             else:
@@ -287,27 +362,54 @@ class CapsuleTransportTests(unittest.TestCase):
             self.assertEqual(result["provider"]["job"], self.request["job"])
             self.assertIsNone(ledger.open_intent())
 
-    def test_actual_submit_waits_for_verified_bytes_failure_preserves_intent_and_stage(self):
+    def assert_failed_submit_preserved(self, reason):
         from safeshift import internvl3763_release as old
         with patch.object(old, "get", side_effect=lambda path: deepcopy(self.comments[path])):
             ledger = c.Ledger.create(self.root/"ledger", self.root/"mirror", self.grant, "synthetic-machine")
             intent = ledger.reserve(self.request)
         self.intent = intent; self.payload = json_bytes({"request": self.request, "campaign_intent": intent})
-        self.body = b"x"*len(self.payload)
+        self.body = b"x"*len(self.payload) if reason == "corrupt" else self.payload
+        if reason == "unsafe":
+            self.storage = "https://storage.googleapis.com:444/a?sig=SIGNED_SECRET"
+        elif reason == "chain":
+            self.storage_status = 302
+        elif reason == "timeout":
+            self.failure = requests.ReadTimeout
         execution = self.request["bindings"]["runtime"]["execution_request"]
         handoff = self.root/"handoff"; handoff.mkdir()
+        guard = ledger.root.parent/(".train3763-"+self.grant["campaign_id"]+".initialized.json")
+        guard_bytes = guard.read_bytes()
         with patch.object(op, "campaign_ledger", return_value=ledger), \
                 patch.object(op, "admit_campaign", return_value=(self.grant, execution)), \
                 patch.object(op, "api", return_value=self.client), patch.object(op, "campaign_inventory", return_value={}):
-            with self.assertRaisesRegex(ValueError, "STALE_OR_WRONG"):
+            before = {p.relative_to(self.root).as_posix(): p.read_bytes()
+                for directory in (ledger.root, ledger.mirror) for p in directory.rglob("*") if p.is_file()}
+            with self.assertRaisesRegex(ValueError, "STALE_OR_WRONG|NO_RETRY"):
                 op.submit_campaign(self.request, self.grant, execution, handoff)
             self.assertEqual([x["kind"] for x in ledger.events()], ["INTENT"])
             self.client.kernels_push.assert_not_called()
+            self.assertFalse((handoff/"submission/input-proof.json").exists())
+            self.assertEqual(guard.read_bytes(), guard_bytes)
+            self.assertEqual(before, {p.relative_to(self.root).as_posix(): p.read_bytes()
+                for directory in (ledger.root, ledger.mirror) for p in directory.rglob("*") if p.is_file()})
             retained = {p.relative_to(handoff).as_posix(): p.read_bytes() for p in handoff.rglob("*") if p.is_file()}
             with self.assertRaisesRegex(ValueError, "STALE_SUBMISSION_PRESERVED"):
                 op.submit_campaign(self.request, self.grant, execution, handoff)
             self.assertEqual(retained, {p.relative_to(handoff).as_posix(): p.read_bytes() for p in handoff.rglob("*") if p.is_file()})
             self.assertEqual(ledger.open_intent(), intent)
+            self.client.kernels_push.assert_not_called()
+
+    def test_actual_submit_corrupt_bytes_preserves_intent_and_stage(self):
+        self.assert_failed_submit_preserved("corrupt")
+
+    def test_actual_submit_unsafe_redirect_preserves_intent_and_stage(self):
+        self.assert_failed_submit_preserved("unsafe")
+
+    def test_actual_submit_redirect_chain_preserves_intent_and_stage(self):
+        self.assert_failed_submit_preserved("chain")
+
+    def test_actual_submit_timeout_preserves_intent_and_stage(self):
+        self.assert_failed_submit_preserved("timeout")
 
 
 if __name__ == "__main__":

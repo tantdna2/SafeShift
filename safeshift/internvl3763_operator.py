@@ -129,7 +129,7 @@ def capsule_http(query):
         # Keep the signed URL opaque; only inspect its authority, not its query.
         try:
             target = urlsplit(location)
-            valid = (target.scheme == "https" and target.netloc == "storage.googleapis.com"
+            valid = (target.scheme == "https" and target.netloc in ("storage.googleapis.com", "storage.googleapis.com:443")
                 and target.path.startswith("/") and target.path != "/" and target.query
                 and not target.fragment and not any(ord(c) <= 32 or ord(c) == 127 for c in location)
                 and "\\" not in location)
