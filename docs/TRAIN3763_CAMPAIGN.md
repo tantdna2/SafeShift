@@ -31,7 +31,7 @@ provider observation:
 | 2 | INTENT; private capsule `nguynanhtn/safeshift-capsule-ivl35-attempt2/1`; no PUSH_INTENT or kernel submit reported | cumulative 2 calls / 2 jobs / 7200 physical GPU-s |
 | 3 | NOT_CREATED; conditional after the gates below | cumulative 3 calls / 3 jobs / 10800 physical GPU-s |
 
-Reported actual GPU consumption is0; reservations are not measured billing.
+Reported actual GPU consumption is 0; reservations are not measured billing.
 Preserve the original PR181 grant/O2-O6, initialization guard, both journals,
 all old capsules/versions, request/context/stage, errors, partials and reports.
 No refund, ledger reset or source/capsule reuse. A merged fix does not make
@@ -132,6 +132,19 @@ commands, test counts and limitations are recorded in the
 Final-source live-provider/GPU verification, direct review, independent audit,
 merge and actual Attempt2/Attempt3 operations remain NOT_RUN/PENDING here.
 
+Final offline acceptance on clean tested commit
+`8803a5583d62d06760fb9bc5e9fb19e453d8ab4f`: **213/213 CPU/SDK PASS, notebooks3/3
+PASS**, no skips/failures/errors, including20 capsule tests. Runtime commit
+`e51211cbeda58a2ed4bea65c700adf36b743b973`, source SHA256
+`95857891faf5e8da623ea408f580c899430e4bc464665d128f086575cea76f37`.
+All84 inherited files and all89 other manifest files match BASE; each rebuilt
+notebook changes only the operator inside its payload. The new PowerShell block
+parses, and its embedded Python passes synthetic installed-SDK/adapter rehearsal
+with sockets forbidden, no journal mutation and no push. Published sanitized
+logs/receipt bind the commands, dependencies and identities. Full-repository
+smoke/CI and real-provider PASS are not claimed. Later publication changes only
+documentation/evidence; source/notebooks remain those tested.
+
 ## Historical pinned GetKernel HTTP404 repair
 
 [06/11/2026 task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6664802285),
@@ -218,7 +231,7 @@ Attempt2 workflow below. Any provider/version/history ambiguity means STOP.
 No final-source Kaggle, GPU/model, scientific qualification or TEST PASS is
 inferred from the offline tests.
 
-## Current capsule HTTP302 repair and Attempt1 recovery
+## Historical capsule HTTP302 repair and Attempt1 recovery
 
 [Owner task / ChatGPT diagnosis](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6662845867)
 starts at BASE `2484095e7b29c3c1d5ad79f18523cfa8dd6a0cac` (PR181 merged).

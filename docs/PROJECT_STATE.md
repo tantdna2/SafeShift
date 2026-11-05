@@ -46,6 +46,16 @@ this same PR. Final-source live verification, direct ChatGPT GitHub review,
 independent audit, merge and real Attempt2/Attempt3 operations remain pending.
 Academic/final scientific selection stays PENDING; no new qualification claimed.
 
+**CPU acceptance:213/213 PASS, notebooks3/3 PASS, zero skips/failures/errors** on
+clean tested commit `8803a5583d62d06760fb9bc5e9fb19e453d8ab4f`, including20 capsule
+transport tests. Runtime `e51211cbeda58a2ed4bea65c700adf36b743b973`, source SHA256
+`95857891faf5e8da623ea408f580c899430e4bc464665d128f086575cea76f37`.
+All84 inherited files and all89 other manifest files match BASE. Both notebook
+payloads differ only in the operator module. New runbook PowerShell parsing and
+its embedded Python synthetic SDK rehearsal PASS, without journal mutation/push.
+Subsequent receipt publication changes only documentation/evidence. No whole-repo
+smoke or CI PASS is claimed; the linked receipt preserves scope and limitations.
+
 ## Historical — TRAIN3763 pinned GetKernel HTTP404 repair — 06/11/2026
 
 BASE `bce8725047753415aa65ed28fc79ef04131fe366` (PR182 merged), branch
@@ -93,7 +103,7 @@ BASE `2484095e7b29c3c1d5ad79f18523cfa8dd6a0cac` (PR181 merged), branch
 requires one Draft PR, code/CPU tests only, no Kaggle/provider probe/upload/submit,
 GPU, real model/image inference or TEST. Unrelated local files are preserved.
 
-[Updated contract/recovery runbook](TRAIN3763_CAMPAIGN.md#current-capsule-http302-repair-and-attempt1-recovery):
+[Historical contract/recovery runbook](TRAIN3763_CAMPAIGN.md#historical-capsule-http302-repair-and-attempt1-recovery):
 one exact SDK capsule-download302 may become one anonymous TLS storage GET.
 The shared no-redirect transport is unchanged. Zero retry, finite timeout/byte/
 elapsed bounds, exact version/private owner/file/bytes/ZIP/SHA checks remain before
