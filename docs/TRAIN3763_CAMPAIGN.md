@@ -1,5 +1,138 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
+## Current capsule HTTP302 repair and Attempt1 recovery
+
+[Owner task / ChatGPT diagnosis](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6662845867)
+starts at BASE `2484095e7b29c3c1d5ad79f18523cfa8dd6a0cac` (PR181 merged).
+The original [Owner O2–O6 scoped decision](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6657871236)
+and authentic PR181 campaign grant remain the execution authority inside their
+unchanged science/rights/caps/deadline. This repair issues no authority and runs
+no Kaggle operation, including read-only provider probes, uploads or smoke.
+The earlier no-grant/CPU acceptance paragraphs below are historical PR181 snapshots.
+
+### Transport contract
+
+`bounded_http()` is unchanged: metadata, auth, logs, POST/kernel submission and
+legacy traffic never gain automatic redirects. Only `verify_execution_input`
+wraps the pinned SDK `DownloadDataset` RPC for the exact owner/slug/version/file.
+Its POST body is checked against the SDK serialization; an HTTP302 may produce
+exactly one **new GET** to `https://storage.googleapis.com` with a nonempty query.
+No POST body, Kaggle Authorization/cookies/headers, netrc, proxy credentials or
+client certificates reach storage. Other schemes/hosts/ports/userinfo/fragments,
+relative URLs, control characters, further redirects and non200 storage responses
+fail closed. A new storage host requires a reviewed explicit allowlist change.
+TLS verification stays enabled. The signed URL is used opaquely and is never
+recorded; download exceptions are replaced without a chained sensitive traceback.
+
+Both requests retain zero adapter retries and10s connect/30s read timeouts.
+The writer has no retry/resume loop, caps streamed bytes at64MiB and checks a90s
+monotonic budget before every64KiB write and after completion. A blocked read is
+additionally bounded by its30s timeout; the90s check is not a hard subprocess kill.
+It fsyncs the create-only `download.part` and preserves it on failure. File type
+is detected from bytes, never an untrusted URL/filename. Plain JSON must match
+the exact size/bytes; a ZIP must have exactly the named capsule, exact uncompressed
+size and valid CRC. SHA256 and exact request/intent proof precede PUSH_INTENT and
+the only `kernels_push`. The SDK's separate default five-retry file writer is
+not called. SDK verbose logging is forbidden during this download.
+
+### Preserve, reconcile, then stage separately
+
+Read-only local inspection in this task found matching root/mirror/guard and one
+INTENT, no PUSH_INTENT: job `safeshift-train3763-ivl35-train3763-1`, source
+`b571c356361f428eb69278c569bf52a90f362f562b7a3837937dad76f77c1e9c`,
+intent `15528ad3f88997fa19416a8dfc8e214eb04a887ff93aaa5c536de287aae8f8f6`.
+Attempt1 reserves1 call,1 job and3600 physical GPU-seconds. Its local capsule is
+5,630,833 bytes. These are local custody observations, **not provider job absence**.
+Nothing in the actual campaign ledger, guard, grant, context or capsule was changed.
+
+Keep the same Antigravity operations session and canonical ledger/mirror paths
+from its existing registration. Preserve every existing `submission/`, download
+partial, handoff event, report, original private capsule/version and all journals.
+An existing submission directory now stops with an explicit preservation error;
+never delete/rename it to make an old attempt runnable. `plan` also rejects an
+existing handoff before reserving budget. Every attempt requires a new capsule
+dataset slug; neither an old capsule nor its newer version can replace Attempt1.
+
+This patch changes operator/campaign source SHA and therefore requires a new
+committed runtime, rebuilt PREP/execution notebooks, notebook/code hashes and
+technical revision on **this repair PR**. The exact merged HEAD check and source
+checks remain enforced. After real ChatGPT review, independent Antigravity audit,
+separately authorized merge and verification, retain the PR181 grant locator and
+obtain authentic `SAFESHIFT_TRAIN3763_AUDIT_V1` / `TECHNICAL_V1` records for this
+new source/regression/runtime/notebook identity. Synthetic test attestations are
+not operational evidence. Old Attempt1/context/technical attestations stay frozen.
+Science SHA must still equal
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+
+Only after those technical gates may Antigravity run the existing CLI below.
+`abort-pre-submit` now authenticates the original grant and checks complete owned
+provider inventory, exact absence of the old job, all prior campaign jobs and
+zero GPU reservation **under the ledger lock**, before appending mirrored
+ABORTED_PRE_SUBMIT with the hash-bound inventory proof. Timeout, existing/unknown
+job, pagination/history drift, nonterminal prior job, unknown consumption or any
+PUSH_INTENT stops read-only; no abort/refund/new intent follows. It checks the old
+request for custody without pretending its source is valid at the new HEAD.
+
+```powershell
+# AFTER review/audit/authorized merge only; uses existing operator/session/paths.
+$OperatorPython = './data/processed/operator-venv/Scripts/python.exe'
+$Ledger = 'data/processed/train3763-campaign/ledger'
+& $OperatorPython -B -m scripts.train3763_campaign abort-pre-submit --directory $Ledger
+# Success is a new ABORTED_PRE_SUBMIT; original INTENT and all charges remain.
+# Prepare context-attempt2.json separately with authentic new technical_revision
+# and a unique private capsule slug/version. Keep the original context untouched.
+& $OperatorPython -B -m scripts.train3763_campaign plan --directory $Ledger --grant data/processed/train3763-campaign/grant-locator.json --template data/processed/train3763-campaign/context-attempt2.json --cohort data/processed/train3763-campaign/cohort.json --handoff data/processed/train3763-campaign/attempt-2 --mode initial --calls 1 --seconds 1800
+```
+
+With no native job/history, Attempt2 is initial qualification on ordinal0, not
+repair of a consumed image. Both attempts retain3763 IDs/order and immutable
+lineage; combined reservation is2 calls,2 jobs,7200 GPU-s, with no refund for
+Attempt1. Full shards remain blocked until new-source native measurements.
+No renewed Owner grant is needed for this technical fix inside existing caps.
+This task does not execute either command or close the real Attempt1: provider
+absence, final-source live verification and real technical attestations remain
+BLOCKED / NOT_RUN pending the permitted operations workflow.
+
+### Checkpoint discrepancy
+
+Attempt1's stored request, the frozen runtime descriptor and #173's saved marker
+all identify `OpenGVLab/InternVL3_5-4B-HF`, revision
+`6bd4487402110ef9889ba50eb7aefeb302526fed`, mounted from
+`nguynanhtn/safeshift-prepare-internvl35/1`. The approved lock and
+[actual historical byte receipt](research/evidence/issue173/checkpoint-bytes-v1.json)
+agree on both shards: `337d6d5bea97956480a1560c3a88e4e6c4455c3954b94ed468c367cf4b500f20`
+(4,954,007,064 bytes) and `343234927f41c7d3a4aa8a2280864f477b1f77795463feb6b26910fa2e4921d3`
+(4,511,078,400 bytes); index `4f5f24a16dc7fcba6edeb8df8482f633b369c284685f92c6e3d6069ee3b323e1`.
+There is no `InternVL-Chat-V1-5` configuration in this campaign. The reported old
+name conflicts with the stored request and verified historical bytes. A current
+exact private provider source snapshot is not available in this task, so calling
+it a proven report typo would overstate the evidence. Antigravity must reconcile
+that label against retained exact source/version/marker/shards before submit;
+unresolved identity or different bytes means STOP, never silently change model.
+
+### Repair validation
+
+The regression suite uses installed official SDK0.1.38/requests2.34.2 with a
+requests HTTP adapter stub and actual file/ZIP streaming. Sockets are prohibited.
+Run it in the existing operator environment, then the campaign/controller/
+execution/handoff suites and deterministic notebook rebuild tests. The updated
+`scripts.qualify_internvl3763` includes `test_internvl3763_capsule`; a skipped SDK
+suite is not HTTP302 proof. [New repair receipt and logs](research/evidence/train3763_capsule302_20261105/summary.json)
+record189/189 CPU tests PASS, zero skips/failures/errors, including13 transport
+tests; notebook3/3 PASS. Clean tested HEAD is
+`d961d3c04f0b36f110ff5954f23e60e9ee021829`, runtime
+`216e94bc1a57d7a6715183300ed8088496868417`, source
+`649102f0a4c2a13d87044f3a4c9a7316d9b6d9dee71ebc3ddbacfd196c816934`.
+All84 inherited runtime files and shared transport match BASE. Repo-wide smoke
+is incomplete (600s stop requested, sandbox denial delayed verified process stop
+to about703s); official-FP329 tests with1 failure/9 errors and Candidate160-
+notebook4 tests with1 failure/1 error reproduce identically on pristine BASE and
+this branch. No whole-repo or CI PASS: GitHub Actions has0 configured workflows.
+PR181's historical receipt remains unchanged. Live recovery/source qualification,
+independent audit and authorized merge remain separate pending gates.
+
+## Historical PR181 implementation contract and acceptance
+
 Design recorded before implementation. BASE: `300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2`.
 This PR authorizes code and synthetic CPU checks only. No live Kaggle, GPU,
 private raw, TEST, campaign grant or numerical execution budget is issued here.

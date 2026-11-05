@@ -11,6 +11,7 @@ from safeshift.pilot.contract import digest
 
 
 def stage(ledger, locator, template, cohort, *, directory, calls, seconds, action, repair=None):
+    require(not Path(directory).exists(), "EXISTING_HANDOFF_PRESERVED_USE_NEW_ATTEMPT_DIRECTORY")
     grant = campaign.load(locator)
     require(grant == ledger.grant and ledger.open_intent() is None, "CAMPAIGN_BUSY_OR_GRANT_DRIFT")
     history, custody = ledger.histories()

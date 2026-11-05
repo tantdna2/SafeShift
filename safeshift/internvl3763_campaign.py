@@ -346,6 +346,9 @@ class Ledger:
             require(request["handoff_id"] == execution["plan"]["run_id"] == self.grant["campaign_id"]+"-"+str(len(intents)+1)
                 and execution["plan"]["attempt_id"] == "attempt-"+str(len(intents)+1), "MONOTONIC_RUN_ATTEMPT_ID")
             require(not any(x["request"]["handoff_id"] == request["handoff_id"] for x in intents), "DUPLICATE_HANDOFF")
+            capsule = request["bindings"]["runtime"]["execution_input"]["ref"]
+            require(not any(x["request"]["bindings"]["runtime"]["execution_input"]["ref"].rsplit("/", 1)[0]
+                == capsule.rsplit("/", 1)[0] for x in intents), "NEW_ATTEMPT_REQUIRES_NEW_CAPSULE")
             calls, seconds = execution["plan"]["max_calls"], execution["plan"]["max_seconds"]
             require(len(intents) < caps["total_jobs"] and sum(x["reserved_calls"] for x in intents)+calls <= caps["total_calls"]
                 and sum(x["reserved_gpu_seconds"] for x in intents)+seconds*caps["physical_gpus"] <= caps["total_gpu_seconds"],
@@ -371,7 +374,11 @@ class Ledger:
             intent = self.open_intent()
             require(intent is not None and not any(x["kind"] == "PUSH_INTENT" and x["intent_sha256"] == digest(intent)
                 for x in self.events()), "POSSIBLE_SUBMIT_READ_ONLY_RECONCILIATION_ONLY")
-            return self.append("ABORTED_PRE_SUBMIT", intent_sha256=digest(intent), refund=False)
+            from safeshift.internvl3763_operator import pre_submit_inventory
+            proof = pre_submit_inventory(self, intent)
+            require(proof["job_absent"] is True and proof["job"] == intent["request"]["job"]
+                and proof["intent_sha256"] == digest(intent), "EXACT_PROVIDER_ABSENCE_REQUIRED")
+            return self.append("ABORTED_PRE_SUBMIT", intent_sha256=digest(intent), refund=False, provider=proof)
 
     def submitted(self, intent, result):
         from safeshift.kaggle_handoff import lock

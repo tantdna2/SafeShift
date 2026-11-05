@@ -1,6 +1,58 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Issue180 campaign implementation after PR179 MERGED — 05/11/2026
+## CURRENT — TRAIN3763 capsule HTTP302 repair — 05/11/2026
+
+BASE `2484095e7b29c3c1d5ad79f18523cfa8dd6a0cac` (PR181 merged), branch
+`fix/train3763-capsule-302-recovery`. [Official task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6662845867)
+requires one Draft PR, code/CPU tests only, no Kaggle/provider probe/upload/submit,
+GPU, real model/image inference or TEST. Unrelated local files are preserved.
+
+[Updated contract/recovery runbook](TRAIN3763_CAMPAIGN.md#current-capsule-http302-repair-and-attempt1-recovery):
+one exact SDK capsule-download302 may become one anonymous TLS storage GET.
+The shared no-redirect transport is unchanged. Zero retry, finite timeout/byte/
+elapsed bounds, exact version/private owner/file/bytes/ZIP/SHA checks remain before
+PUSH_INTENT. Existing staging directories/partials are retained; new attempt/new
+capsule required. Pre-submit abort now requires fresh complete read-only provider
+absence evidence under lock and preserves every reservation without refund.
+
+Local original root/mirror/guard verified intact: one INTENT, no PUSH_INTENT,
+reserved1 call/1 job/3600 GPU-s; capsule5,630,833 bytes. Actual ledger/context/
+grant/capsule remain untouched. Provider absence is **NOT VERIFIED** in this
+no-Kaggle task, so actual Attempt1 abort and Attempt2 staging remain BLOCKED.
+The PR181 campaign grant remains the authority within its unchanged finite caps;
+no renewed Owner grant for this diagnosed technical fix. New technical review/
+independent audit/authorized merge/attestations on the repair PR are mandatory.
+The new source cannot reuse Attempt1's source/capsule/technical revision.
+
+Science SHA remains `ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`;
+source/runtime/notebooks must acquire new identities through the committed-source
+builder, with exact merged source admission intact. No prompt/parser/grammarV2/
+checkpoint/data/metric change. O2/O3 academic/final selection remain PENDING;
+Owner's [scoped engineering O2–O6 decision](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6657871236)
+does not grant external/academic authority or scientific qualification.
+
+Checkpoint lock, Attempt1 request and historical #173 byte receipt agree on
+InternVL3_5-4B-HF revision6bd4487 and both approved shards. The report's
+InternVL-Chat-V1-5 label contradicts those records; a current exact private
+provider source snapshot was not read here, so typo versus provider drift remains
+an explicit reconciliation gate before any later submit. No model substitution.
+
+**CPU acceptance:189/189 PASS, zero skips/failures/errors; notebooks3/3 PASS**
+on clean tested HEAD `d961d3c04f0b36f110ff5954f23e60e9ee021829`.
+Runtime `216e94bc1a57d7a6715183300ed8088496868417`, new source SHA256
+`649102f0a4c2a13d87044f3a4c9a7316d9b6d9dee71ebc3ddbacfd196c816934`.
+[Repair receipt and logs](research/evidence/train3763_capsule302_20261105/summary.json)
+bind exact dependencies/commands/test/notebook identities. Full repository smoke
+is incomplete:600s requested stop, initial sandbox denial, verified test process
+terminated at about703s. Official-FP329 tests (1 failure/9 errors) and historical
+Candidate160-notebook4 tests (1 failure/1 error) reproduce identically on pristine
+exact BASE and this branch. Old scientific/source/notebook locks are preserved.
+No whole-repository green; GitHub Actions has0 configured workflows, no CI PASS.
+Real provider
+recovery, final-source live verification, ChatGPT review, independent audit and
+merge are NOT_RUN / PENDING. Historical snapshots below are not current authority.
+
+## Historical — Issue180 campaign implementation after PR179 MERGED — 05/11/2026
 
 BASE/main `300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2` includes merged PR178/179.
 New isolated branch `feat/train3763-campaign-180`; unrelated local files and

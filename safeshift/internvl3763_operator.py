@@ -6,6 +6,9 @@ from pathlib import Path
 import re
 import subprocess
 import time
+from contextlib import contextmanager, ExitStack
+from urllib.parse import urlsplit
+from unittest.mock import patch
 
 from safeshift.candidates.source import ROOT, require
 from safeshift.pilot.artifacts import read, write, write_bytes, safe, sha
@@ -86,6 +89,100 @@ def campaign_revision_code(grant, request):
     return revision(grant, request)["notebook_code_sha256"]
 
 
+def pre_submit_inventory(ledger, intent):
+    """Read-only provider proof; deliberately does not admit the old source at HEAD."""
+    from safeshift import internvl3763_campaign as campaign
+    require(campaign.load(intent["request"]["execution_release"], collection=True) == ledger.grant,
+        "RECOVERY_CAMPAIGN_GRANT_DRIFT")
+    observed = campaign_inventory(api(), intent["request"], ledger.grant, ledger)
+    return {"job": intent["request"]["job"], "intent_sha256": digest(intent),
+        "job_absent": True, "inventory": observed}
+
+
+@contextmanager
+def capsule_http(query):
+    """One exact SDK download RPC may turn a 302 into one anonymous storage GET.
+
+    Nested inside bounded_http; ordinary metadata/submit/legacy traffic retains
+    its no-redirect policy. Never delegate to the SDK's retrying file writer.
+    """
+    import requests
+    bounded_send = requests.Session.send
+    endpoint = "https://api.kaggle.com/v1/datasets.DatasetApiService/DownloadDataset"
+    used = False
+    stack = ExitStack()
+
+    def send(session, request, **kwargs):
+        nonlocal used
+        if request.url != endpoint:
+            return bounded_send(session, request, **kwargs)
+        require(not used and request.method == "POST"
+            and json.loads(request.body) == query.to_dict(), "EXACT_CAPSULE_DOWNLOAD_RPC_ONLY")
+        used = True
+        response = bounded_send(session, request, **{**kwargs, "stream": True})
+        if response.status_code != 302:
+            response.headers["Content-Type"] = "application/octet-stream"
+            return response
+        location = response.headers.get("Location", "")
+        response.close()
+        # Only Kaggle's GCS object-download host, never suffix/wildcard matching.
+        # Keep the signed URL opaque; only inspect its authority, not its query.
+        try:
+            target = urlsplit(location)
+            valid = (target.scheme == "https" and target.netloc == "storage.googleapis.com"
+                and target.path.startswith("/") and target.path != "/" and target.query
+                and not target.fragment and not any(ord(c) <= 32 or ord(c) == 127 for c in location)
+                and "\\" not in location)
+            require(valid, "UNSAFE_CAPSULE_REDIRECT")
+            storage = stack.enter_context(requests.Session())
+            storage.trust_env = False  # no netrc, proxy credentials or environment CA bypass
+            anonymous = requests.Request("GET", location, headers={"Accept-Encoding": "identity"}).prepare()
+            result = bounded_send(storage, anonymous, stream=True, verify=True, cert=None, proxies={})
+            if result.status_code != 200:
+                result.close()
+                raise ValueError("CAPSULE_STORAGE_STATUS_OR_REDIRECT_CHAIN")
+            # SDK otherwise tries JSON decoding before our streaming byte cap.
+            result.headers["Content-Type"] = "application/octet-stream"
+            return result
+        except Exception:
+            # requests exceptions contain signed URLs. Never persist them in a
+            # handoff traceback, chained exception, receipt or console message.
+            raise ValueError("CAPSULE_STORAGE_DOWNLOAD_FAILED_NO_RETRY") from None
+
+    with stack, patch.object(requests.Session, "send", send):
+        yield
+    require(used, "CAPSULE_DOWNLOAD_TRANSPORT_NOT_OBSERVED")
+
+
+def download_capsule(client, owner, slug, version, name, destination):
+    """Pinned official SDK serialization/auth, bounded streaming, no retry/resume."""
+    import os
+    from kagglesdk.datasets.types.dataset_api_service import ApiDownloadDatasetRequest
+    query = ApiDownloadDatasetRequest()
+    query.owner_slug, query.dataset_slug = owner, slug
+    query.dataset_version_number, query.file_name = int(version), name
+    started = time.monotonic()
+    try:
+        with client.build_kaggle_client() as remote, capsule_http(query):
+            require(remote.http_client()._verbose is False, "CAPSULE_SDK_VERBOSE_FORBIDDEN")
+            with remote.datasets.dataset_api_client.download_dataset(query) as response:
+                require(response.status_code == 200, "CAPSULE_HTTP_STATUS")
+                # Detect wrappers from bytes below, never from an untrusted URL.
+                path = destination / "download.part"
+                total = 0
+                with path.open("xb") as stream:
+                    for chunk in response.iter_content(64*1024):
+                        total += len(chunk)
+                        require(total <= 64*2**20 and time.monotonic()-started <= 90, "CAPSULE_DOWNLOAD_BOUND")
+                        stream.write(chunk)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                require(time.monotonic()-started <= 90, "CAPSULE_DOWNLOAD_DEADLINE")
+                return path
+    except Exception:
+        raise ValueError("CAPSULE_DOWNLOAD_FAILED_NO_RETRY_PARTIAL_PRESERVED") from None
+
+
 def verify_execution_input(client, request, intent, destination):
     """Read the exact small capsule version BEFORE push, preventing stale replay.
 
@@ -114,15 +211,15 @@ def verify_execution_input(client, request, intent, destination):
         files = client.dataset_list_files(capsule["ref"], page_size=16)
         require(not files.error_message and not files.next_page_token and len(files.files) == 1
             and files.files[0].name == name and files.files[0].total_bytes == len(expected), "CAPSULE_EXACT_FILE_SIZE")
-        client.dataset_download_file(capsule["ref"], name, path=str(destination), force=False, quiet=True, unzip=False)
+        download_capsule(client, owner, slug, version, name, destination)
     paths = list(destination.iterdir())
     require(len(paths) == 1, "ONE_DOWNLOADED_CAPSULE_FILE")
     path = paths[0]
-    if path.name == name:
+    if not zipfile.is_zipfile(path):
         require(path.stat().st_size == len(expected), "CAPSULE_DOWNLOAD_BOUND")
         payload = path.read_bytes()
     else:
-        require(path.name == name+".zip" and path.stat().st_size <= 64*2**20, "CAPSULE_WRAPPER_BOUND")
+        require(path.stat().st_size <= 64*2**20, "CAPSULE_WRAPPER_BOUND")
         with zipfile.ZipFile(path) as bundle:
             entries = bundle.infolist()
             require(len(entries) == 1 and entries[0].filename == name and entries[0].file_size == len(expected)
@@ -146,6 +243,7 @@ def submit_campaign(request, grant, execution, root):
         observed = campaign_inventory(client, request, grant, ledger)
         intent = ledger.open_intent()
         stage = Path(root) / "submission"
+        require(not stage.exists(), "STALE_SUBMISSION_PRESERVED_ABORT_AND_STAGE_NEW_ATTEMPT")
         stage.mkdir(exist_ok=False)
         write(stage / "inventory.json", observed)
         write(stage / "release.json", grant)

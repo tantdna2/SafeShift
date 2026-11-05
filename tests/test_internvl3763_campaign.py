@@ -88,6 +88,10 @@ class CampaignTests(unittest.TestCase):
         self.patch = patch.object(old, "get", side_effect=self.reader)
         self.patch.start(); self.addCleanup(self.patch.stop)
         self.ledger = c.Ledger.create(self.root/"ledger", self.root/"mirror", self.grant, "synthetic-machine")
+        absence = patch.object(op, "pre_submit_inventory", side_effect=lambda ledger, intent: {
+            "job": intent["request"]["job"], "intent_sha256": digest(intent), "job_absent": True,
+            "inventory": {"notice": "SYNTHETIC_PROVIDER_ABSENCE_ONLY"}})
+        self.absence = absence.start(); self.addCleanup(absence.stop)
 
     def test_one_authentic_campaign_grant_and_no_per_job_release(self):
         self.assertEqual(c.load(self.request["execution_release"]), self.grant)
@@ -194,11 +198,89 @@ class CampaignTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "POSSIBLE_SUBMIT"):
             reopened.abort_pre_submit()
 
-    def test_pre_submit_abort_never_refunds_and_does_not_touch_provider(self):
+    def test_pre_submit_abort_never_refunds_and_requires_provider_proof(self):
         self.ledger.reserve(self.request)
         self.ledger.abort_pre_submit()
         self.assertIsNone(self.ledger.open_intent())
         self.assertEqual(self.ledger.summary()["reserved_calls"], 1)
+        self.absence.assert_called_once()
+
+    def test_unknown_provider_or_existing_job_preserves_both_original_journals(self):
+        self.ledger.reserve(self.request)
+        before = {p.name: p.read_bytes() for p in self.ledger.root.glob("journal-*.json")}
+        for failure in (TimeoutError("SYNTHETIC_PROVIDER_UNKNOWN"), ValueError("JOB_EXISTS_NO_NEW_VERSION_OR_RETRY")):
+            self.absence.side_effect = failure
+            with self.assertRaises(type(failure)):
+                self.ledger.abort_pre_submit()
+            self.assertEqual(before, {p.name: p.read_bytes() for p in self.ledger.root.glob("journal-*.json")})
+            self.assertEqual(before, {p.name: p.read_bytes() for p in self.ledger.mirror.glob("journal-*.json")})
+            self.assertIsNotNone(self.ledger.open_intent())
+
+    def test_recovery_preserves_attempt1_then_binds_new_source_capsule_and_review_for_attempt2(self):
+        first = self.ledger.reserve(self.request)
+        original = (self.ledger.root/"journal-000001.json").read_bytes()
+        closed = self.ledger.abort_pre_submit()
+        self.assertFalse(closed["refund"])
+        self.assertEqual(closed["provider"]["intent_sha256"], digest(first))
+        next_request = self.next_request([])
+        prior_source = runtime.source_spec()
+        changed = deepcopy(prior_source)
+        changed["manifest"]["safeshift/internvl3763_operator.py"] = "9"*64
+        new_merge, new_runtime = "b"*40, "c"*40
+        with patch.object(runtime, "source_spec", return_value=changed):
+            execution = next_request["bindings"]["runtime"]["execution_request"]
+            execution["source"] = changed
+            execution["plan"]["runtime_source"] = changed
+            next_request["bindings"]["source"] = changed
+            next_request["plan"] = execution["plan"]
+            next_request["plan_sha256"] = digest(next_request["plan"])
+            next_request["bindings"]["dataset"]["execution_request_sha256"] = digest(execution)
+            # An operational change still cannot reuse old technical attestations.
+            with self.assertRaisesRegex(ValueError, "TECHNICAL_SOURCE_BINDING"):
+                c.bind(self.grant, next_request)
+            technical = json.loads(self.comments["/issues/comments/2002"]["body"].split("```json\n")[1].split("\n```")[0])
+            technical.update(implementation_pr=182, merged_sha=new_merge, runtime_commit=new_runtime,
+                source_sha256=digest(changed), notebook_sha256="8"*64, notebook_code_sha256="7"*64)
+            next_request.update(commit_sha=new_merge, runtime_commit=new_runtime, notebook_sha256="8"*64)
+            self.comments["/pulls/182"] = {"merged": True, "head": {"sha": "a"*40}, "merge_commit_sha": new_merge, "base": {"ref": "main"}}
+            for number, marker, value in ((2001, "SAFESHIFT_TRAIN3763_AUDIT_V1", {
+                    "campaign_sha256": digest(self.grant), "reviewed_head": "a"*40, "source_sha256": digest(changed),
+                    "regression_sha256": "e"*64, "status": "PASS", "independent": True}),
+                    (2002, "SAFESHIFT_TRAIN3763_TECHNICAL_V1", technical)):
+                if number == 2002:
+                    value["audit"]["body_sha256"] = hashlib.sha256(self.comments["/issues/comments/2001"]["body"].encode()).hexdigest()
+                comment = self.comments[f"/issues/comments/{number}"]
+                comment.update(issue_url=old.API+"/issues/182", body=marker+"\n```json\n"+json.dumps(value)+"\n```")
+            next_request["bindings"]["runtime"]["technical_revision"]["body_sha256"] = hashlib.sha256(
+                self.comments["/issues/comments/2002"]["body"].encode()).hexdigest()
+            second = self.ledger.reserve(next_request)
+            self.assertEqual(second["request"]["execution_release"], first["request"]["execution_release"])
+            self.assertNotEqual(digest(changed), digest(prior_source))
+            self.assertEqual(next_request["plan"]["science_sha256"], self.grant["science_sha256"])
+            self.assertEqual(next_request["plan"]["scheduled_ordinals"], [0])
+            self.assertEqual(execution["cohort"], self.request["bindings"]["runtime"]["execution_request"]["cohort"])
+            self.assertEqual(execution["history"], [])
+        self.assertEqual(original, (self.ledger.root/"journal-000001.json").read_bytes())
+        self.assertEqual(original, (self.ledger.mirror/"journal-000001.json").read_bytes())
+        summary = self.ledger.summary()
+        self.assertEqual((summary["jobs"], summary["reserved_calls"], summary["reserved_gpu_seconds"]), (2, 2, 7200))
+
+    def test_reused_capsule_or_existing_handoff_does_not_reserve_attempt2(self):
+        from scripts.train3763_campaign import stage
+        self.ledger.reserve(self.request); self.ledger.abort_pre_submit()
+        second = self.next_request([])
+        previous = self.request["bindings"]["runtime"]["execution_input"]["ref"]
+        current = second["bindings"]["runtime"]["execution_input"]["ref"]
+        second["bindings"]["runtime"]["execution_input"]["ref"] = previous
+        sources = second["bindings"]["dataset"]["dataset_sources"]
+        sources[sources.index(current)] = previous
+        with self.assertRaisesRegex(ValueError, "NEW_CAPSULE"):
+            self.ledger.reserve(second)
+        handoff = self.root/"existing"; handoff.mkdir(); write(handoff/"evidence.json", {"preserve": True})
+        with self.assertRaisesRegex(ValueError, "EXISTING_HANDOFF_PRESERVED"):
+            stage(self.ledger, {}, {}, {}, directory=handoff, calls=1, seconds=1800, action="initial")
+        self.assertEqual(len(self.ledger.intents()), 1)
+        self.assertTrue(read(handoff/"evidence.json")["preserve"])
 
     def test_host_change_never_silently_takes_over(self):
         with patch.object(c, "host_identity", return_value="0"*64), self.assertRaisesRegex(ValueError, "TAKEOVER"):
@@ -358,6 +440,11 @@ class CampaignTests(unittest.TestCase):
 
     def next_request(self, history, number=2, *, calls=1):
         request = deepcopy(self.request)
+        previous = request["bindings"]["runtime"]["execution_input"]["ref"]
+        capsule = f"nguynanhtn/synthetic-capsule-attempt{number}/1"
+        request["bindings"]["runtime"]["execution_input"]["ref"] = capsule
+        sources = request["bindings"]["dataset"]["dataset_sources"]
+        sources[sources.index(previous)] = capsule
         execution = request["bindings"]["runtime"]["execution_request"]
         p = c.plan(execution["cohort"], history, action="resume" if history else "initial",
             run_id=f"synthetic180-{number}", attempt_id=f"attempt-{number}", max_calls=calls, max_seconds=1800)
@@ -538,6 +625,16 @@ class CampaignLineageTests(unittest.TestCase):
 
 
 class CampaignStagingTests(unittest.TestCase):
+    def test_frozen_science_and_checkpoint_match_exact_2484095_base(self):
+        self.assertEqual(digest(c.science()), "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50")
+        locked = read(runtime.ROOT/"configs/cpu_g2_g3/checkpoint_metadata_lock.json")["internvl35"]
+        evidence = read(runtime.ROOT/"docs/research/evidence/issue173/checkpoint-bytes-v1.json")["result"]["models"]["internvl35"]
+        self.assertEqual(runtime.configuration()["model"], locked["id"])
+        self.assertEqual(runtime.configuration()["revision"], locked["revision"])
+        self.assertEqual(evidence["model"], {"id": locked["id"], "revision": locked["revision"]})
+        for name, expected in locked["weights"].items():
+            self.assertEqual(evidence["files"][name], {"sha256": expected["sha256"], "size_bytes": expected["size"]})
+
     def test_existing_original_mounts_reuse_issue173_verifier_without_new_image_bundle(self):
         from safeshift import verification173
         with tempfile.TemporaryDirectory() as temporary:
@@ -642,8 +739,10 @@ class CampaignSdkTests(unittest.TestCase):
             def download(ref, file_name, **kwargs):
                 downloaded.append((ref, file_name))
                 (Path(kwargs["path"])/file_name).write_bytes(raw)
-            client.dataset_download_file = download
-            with patch("socket.socket", side_effect=AssertionError("NO_KAGGLE_NETWORK")):
+            def download_capsule(client, owner, slug, version, file_name, destination):
+                return download(owner+"/"+slug+"/"+version, file_name, path=destination)
+            with patch("socket.socket", side_effect=AssertionError("NO_KAGGLE_NETWORK")), \
+                    patch.object(op, "download_capsule", side_effect=download_capsule):
                 proof = op.verify_execution_input(client, request, intent, root/"good")
                 self.assertEqual(proof["ref"], "nguynanhtn/synthetic-capsule/1")
                 self.assertEqual(proof["sha256"], hashlib.sha256(raw).hexdigest())
