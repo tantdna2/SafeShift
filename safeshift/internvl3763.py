@@ -35,7 +35,8 @@ def source_spec():
     inherited = capture.source_spec()
     capture.check_source(inherited)
     return {"identity": IDENTITY, "manifest": {**inherited["manifest"],
-        **{p: sha(ROOT / p) for p in [*OWN, "safeshift/internvl3763_release.py", "safeshift/kaggle_handoff.py"]}}}
+        **{p: sha(ROOT / p) for p in [*OWN, "safeshift/internvl3763_release.py", "safeshift/kaggle_handoff.py",
+            "safeshift/internvl3763_campaign.py", "safeshift/internvl3763_operator.py"]}}}
 
 
 def check_source(spec):
@@ -196,7 +197,9 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
     """Bounded shared controller. Public entrypoints gate before reaching here."""
     rows = planning.validate_cohort(cohort, digest(cohort))
     plan_sha = digest(p)
-    require(p["identity"] == identity() and p["cohort_sha256"] == digest(cohort)
+    from safeshift import internvl3763_campaign as campaign
+    expected_identity = campaign.identity() if p["schema"] == campaign.PLAN else identity()
+    require(p["identity"] == expected_identity and p["cohort_sha256"] == digest(cohort)
             and p["series_id"] == SERIES, "EXACT_PLAN_IDENTITY")
     out = Path(out)
     out.mkdir(parents=True, exist_ok=False)
@@ -205,7 +208,9 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
     write(out / "plan.json", p)
     write(out / "configuration.json", configuration())
     write(out / "cohort.json", cohort)
-    deadline = clock() + p["max_seconds"]
+    begun = clock()
+    deadline = begun + p["max_seconds"]
+    telemetry = {"evidence_kind": "UNVERIFIED", "load_seconds": 0, "samples": []}
     records = [{**r, "status": "NOT_ATTEMPTED", "label": None, "attempts": 0, "native_calls": 0,
                 "hnlo": None, "hnlo_status": HNLO_STATUS} for r in rows]
     failure, calls, backend = None, 0, None
@@ -214,6 +219,7 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             write(out / "load-reservation.json", {"loads": 1, "plan_sha256": plan_sha})
             backend = factory(deadline)
             write(out / "loaded.json", backend.environment)
+            telemetry["load_seconds"] = clock() - begun
         retained = sum(path.stat().st_size for path in out.rglob("*") if path.is_file())
         for ordinal in p["scheduled_ordinals"]:
             require(calls < p["max_calls"], "CALL_CAP")
@@ -232,6 +238,7 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             sample = safe(out, f"samples/{ordinal:06d}")
             write(sample / "started.json", {"row": row, "plan_sha256": plan_sha})
             binding = trace_binding(spec, p, row, tokenizer_sha, plan_sha)
+            sample_started = clock()
             try:
                 value = backend.generate(image, sample, binding, deadline)
                 marker = read(sample / "native_call.json")
@@ -258,12 +265,22 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             finally:
                 calls += int((sample / "native_call.json").exists())
                 retained += sum(path.stat().st_size for path in sample.rglob("*") if path.is_file())
+                telemetry["samples"].append({"ordinal": ordinal, "seconds": clock()-sample_started,
+                    "bytes": sum(path.stat().st_size for path in sample.rglob("*") if path.is_file())})
     except BaseException as error:
         failure = {"type": type(error).__name__, "cause": "SEE_PRIVATE_STAGE_EVIDENCE",
             "message_sha256": hashlib.sha256(str(error).encode()).hexdigest(),
             "frames": [{"file": Path(frame.filename).name, "line": frame.lineno, "function": frame.name}
                 for frame in traceback.extract_tb(error.__traceback__)[-8:]]}
         write(out / "failure.json", failure)
+    telemetry["elapsed_seconds"] = clock()-begun
+    if isinstance(backend, NativeBackend):
+        import torch
+        from safeshift.internvl_v2_memory import snapshot
+        telemetry.update(evidence_kind="NATIVE", memory=snapshot(),
+            gpu_peak_allocated_bytes=torch.cuda.max_memory_allocated(0),
+            gpu_peak_reserved_bytes=torch.cuda.max_memory_reserved(0))
+    write(out / "telemetry.json", telemetry)
     summary = {"schema": IDENTITY + "-result", "plan_sha256": plan_sha, "source_sha256": digest(spec),
         "series_id": SERIES, "run_id": p["run_id"], "attempt_id": p["attempt_id"],
         "status": "FAIL" if failure else "PASS", "failure": failure, "model_calls": calls,
@@ -280,8 +297,11 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
 
 def rehearse(out, archive, cohort, p, history, factory, **kwargs):
     require(cohort["scope"] == "SYNTHETIC_ONLY", "SYNTHETIC_ONLY")
-    require(p == plan(cohort, history, action=p["action"], run_id=p["run_id"],
-        attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"]), "PLAN_DRIFT")
+    from safeshift import internvl3763_campaign as campaign
+    planner = campaign.plan if p["schema"] == campaign.PLAN else plan
+    options = {"repair": p["repair"]} if p["schema"] == campaign.PLAN else {}
+    require(p == planner(cohort, history, action=p["action"], run_id=p["run_id"],
+        attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"], **options), "PLAN_DRIFT")
     return _execute(out, archive, cohort, p, factory, **kwargs)
 
 
@@ -349,8 +369,11 @@ def validate_execution_request(request):
     require(request["cohort"]["scope"] == "PRIVATE_TRAIN_METADATA", "PRIVATE_ORIGINAL_PROJECTION_REQUIRED")
     p = request["plan"]
     require(p["max_seconds"] > 60, "EXPORT_MARGIN_REQUIRES_MORE_THAN_60_SECONDS")
-    require(p == plan(request["cohort"], request["history"], action=p["action"], run_id=p["run_id"],
-        attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"]), "EXACT_EXECUTION_PLAN")
+    from safeshift import internvl3763_campaign as campaign
+    planner = campaign.plan if p["schema"] == campaign.PLAN else plan
+    options = {"repair": p["repair"]} if p["schema"] == campaign.PLAN else {}
+    require(p == planner(request["cohort"], request["history"], action=p["action"], run_id=p["run_id"],
+        attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"], **options), "EXACT_EXECUTION_PLAN")
     require(request["projection_sha256"] == digest(request["cohort"]), "ORIGINAL_PROJECTION_BINDING")
     require(type(request["history_archives"]) is list
         and len(request["history_archives"]) == len(request["history"]), "SEALED_HISTORY_ARCHIVES_REQUIRED")
@@ -401,7 +424,10 @@ def worker(request_path=None, *, output=None, scratch=None, inputs=None, deadlin
         authorize()
     from safeshift import internvl3763_release as authority
     handoff = read(request_path)
-    grant = authority.activate(handoff, "worker")
+    if handoff["scope"] == "TRAIN3763_CAMPAIGN":
+        grant = authority.activate(handoff, "worker", intent=read(Path(request_path).parent / "campaign-intent.json"))
+    else:
+        grant = authority.activate(handoff, "worker")
     authorize()
     from safeshift.fulltrain.inputs import admit, verify_image_bytes
     request = authority.bind(grant, handoff)
@@ -410,6 +436,11 @@ def worker(request_path=None, *, output=None, scratch=None, inputs=None, deadlin
     # Reconcile each exact sealed ancestor before any environment/load work.
     for ancestor, custody in zip(request["history"], request["history_archives"]):
         require(set(custody) == {"archive", "sha256", "plan"}, "HISTORY_ARCHIVE_CUSTODY_FIELDS")
+        if handoff["scope"] == "TRAIN3763_CAMPAIGN":
+            # The authenticated campaign delegates custody admission to the
+            # sole operator. Its durable intent binds the full checked lineage.
+            # Reuploading every previous raw ZIP is neither needed nor implied.
+            continue
         require(sealed_history(safe(inputs, custody["archive"]), custody["sha256"], custody["plan"]) == ancestor,
             "HISTORY_ARCHIVE_ANCESTOR_MISMATCH")
     environment_out = Path(output) / "environment"
@@ -437,7 +468,14 @@ def verify_bundle(archive, expected_sha, expected_plan):
         get = lambda name: json.loads(z.read(prefix + name))
         require(get("plan.json") == expected_plan, "ARCHIVE_PLAN_BINDING")
         result, cohort, spec = get("summary.json"), get("cohort.json"), get("source.json")
-        check_source(spec)
+        from safeshift import internvl3763_campaign as campaign
+        if expected_plan["schema"] == campaign.PLAN:
+            require(spec == expected_plan["runtime_source"] and expected_plan["science_sha256"] == digest(campaign.science())
+                and get("configuration.json") == configuration(), "HISTORICAL_CAMPAIGN_SOURCE_SCIENCE")
+            inherited = capture.source_spec()["manifest"]
+            require(all(spec["manifest"].get(k) == v for k, v in inherited.items()), "FROZEN_NATIVE_HISTORY_DRIFT")
+        else:
+            check_source(spec)
         if cohort["scope"] != "SYNTHETIC_ONLY":
             require(prefix == "run/", "SUPERVISED_NATIVE_ARCHIVE_REQUIRED")
             outer = lambda name: json.loads(z.read(name))
@@ -565,7 +603,14 @@ def sealed_history(archive, expected_sha, expected_plan):
     with zipfile.ZipFile(archive) as z:
         name = "summary.json" if "summary.json" in z.namelist() else "run/summary.json"
         result = json.loads(z.read(name))
+    from safeshift.internvl3763_campaign import PLAN as CAMPAIGN_PLAN
+    records = result["records"]
+    if expected_plan["schema"] == CAMPAIGN_PLAN:
+        # Archived summary always contains3763 rows. The checked scheduling
+        # projection retains only consumed records, avoiding repeated pending
+        # rows in every later Input; absence means NOT_ATTEMPTED, never dropped GT.
+        records = [row for row in records if row["status"] != "NOT_ATTEMPTED"]
     return {"run_id": expected_plan["run_id"], "attempt_id": expected_plan["attempt_id"],
         "series_id": SERIES, "identity": expected_plan["identity"], "cohort_sha256": expected_plan["cohort_sha256"],
         "parent_history_sha256": expected_plan["history_sha256"], "action": expected_plan["action"],
-        "records": result["records"], "evidence_sha256": expected_sha, "repair": None}
+        "records": records, "evidence_sha256": expected_sha, "repair": expected_plan["repair"]}

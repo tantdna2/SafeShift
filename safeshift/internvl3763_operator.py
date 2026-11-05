@@ -1,5 +1,7 @@
 """Exact-release official SDK submit, separate from historical PR177 campaigns."""
 import importlib.metadata
+import hashlib
+import json
 from pathlib import Path
 import re
 import subprocess
@@ -11,6 +13,159 @@ from safeshift.pilot.contract import digest
 from safeshift import internvl3763_release as authority
 
 SDK_PINS = {"kaggle": "2.2.5", "kagglesdk": "0.1.38", "requests": "2.34.2"}
+
+
+def campaign_ledger(request):
+    from safeshift.internvl3763_campaign import Ledger
+    from safeshift.kaggle_handoff import private_root
+    path = private_root(safe(ROOT, request["bindings"]["runtime"]["campaign_ledger"]))
+    return Ledger(path)
+
+
+def admit_campaign(request):
+    from safeshift import internvl3763_campaign as campaign
+    grant = campaign.load(request.get("execution_release"))  # before any SDK/private Input
+    require(time.time()+request["plan"]["max_seconds"]+120 < grant["expires_unix"], "FULL_CAMPAIGN_JOB_WINDOW")
+    execution = campaign.bind(grant, request)
+    ledger = campaign_ledger(request)
+    require(ledger.grant == grant, "CAMPAIGN_LEDGER_GRANT_DRIFT")
+    require(ledger.registration["operator_id"] == grant["operator_id"]
+        and str(ledger.root.resolve()) == ledger.registration["root"], "CROSS_MACHINE_TAKEOVER_BLOCKED")
+    intent = ledger.open_intent()
+    require(intent is not None and intent["request"] == request, "STAGED_CAMPAIGN_INTENT_REQUIRED")
+    require(not any(x["kind"] == "PUSH_INTENT" and x["intent_sha256"] == digest(intent) for x in ledger.events()),
+        "POSSIBLE_SUBMIT_NO_RETRY")
+    revision = campaign.revision(grant, request)
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    require(head == revision["merged_sha"] and not subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT), "CLEAN_REVIEWED_CAMPAIGN_SOURCE")
+    notebook = safe(ROOT, request["notebook"])
+    require(sha(notebook) == revision["notebook_sha256"] and code_hash(read(notebook)) == revision["notebook_code_sha256"]
+        and notebook.read_bytes() == subprocess.check_output(["git", "show", head+":"+request["notebook"]], cwd=ROOT),
+        "CAMPAIGN_COMMITTED_NOTEBOOK")
+    from scripts.build_internvl3763 import build
+    require(read(notebook) == build(request["runtime_commit"], execute=True, campaign=True), "CAMPAIGN_NOTEBOOK_REPRODUCIBILITY")
+    history, custody = ledger.histories()
+    require(execution["history"] == history, "CAMPAIGN_COMPLETE_SEALED_HISTORY")
+    for ancestor, item in zip(history, custody):
+        require(ancestor["evidence_sha256"] == item["sha256"], "CAMPAIGN_HISTORY_CUSTODY")
+    check_sdk()
+    return grant, execution
+
+
+def campaign_inventory(client, request, grant, ledger):
+    """Reuse pinned inventory/Input/quota checks, then inspect every campaign job.
+
+    No prior output success or account quota counter alone proves terminal state.
+    """
+    caps = grant["caps"]
+    pushed = {x["intent_sha256"] for x in ledger.events() if x["kind"] == "PUSH_INTENT"}
+    known = {x["request"]["job"] for x in ledger.intents() if digest(x) in pushed}
+    observed = inventory(client, request, {"caps": {"attempt_gpu_seconds": request["plan"]["max_seconds"]*caps["physical_gpus"]},
+        "predecessors": []}, campaign_prefix="nguynanhtn/safeshift-train3763-"+grant["campaign_id"]+"-", known_jobs=known)
+    from scripts.submit_internvl_v2 import bounded_http, get_kernel
+    for previous in ledger.intents():
+        old = previous["request"]
+        if old == request:
+            continue
+        aborted = any(x["kind"] == "ABORTED_PRE_SUBMIT" and x["intent_sha256"] == digest(previous) for x in ledger.events())
+        if aborted:
+            continue
+        with bounded_http():
+            state = str(client.kernels_status(old["job"]+"/1").status).split(".")[-1]
+            remote = get_kernel(client, old["job"])
+        require(state in ("COMPLETE", "ERROR", "CANCELLED") and remote.metadata.ref == old["job"]
+            and remote.metadata.is_private is True and remote.metadata.current_version_number == 1
+            and code_hash(json.loads(remote.blob.source)) ==
+                campaign_revision_code(ledger.grant, old), "PREVIOUS_JOB_RUNNING_UNKNOWN_OR_CHANGED")
+    return observed
+
+
+def campaign_revision_code(grant, request):
+    from safeshift.internvl3763_campaign import revision
+    return revision(grant, request)["notebook_code_sha256"]
+
+
+def verify_execution_input(client, request, intent, destination):
+    """Read the exact small capsule version BEFORE push, preventing stale replay.
+
+    Existence alone is insufficient: an old, otherwise valid campaign capsule
+    could run already-consumed images on a fresh VM. No images/raw/weights download.
+    """
+    import zipfile
+    from safeshift.pilot.contract import json_bytes
+    from scripts.submit_internvl_v2 import bounded_http
+    from kagglesdk.datasets.types.dataset_api_service import ApiGetDatasetMetadataRequest
+    capsule = request["bindings"]["runtime"]["execution_input"]
+    require(capsule["kind"] == "dataset_sources", "DATASET_CAPSULE_ONLY")
+    owner, slug, version = capsule["ref"].split("/")
+    expected = json_bytes({"request": request, "campaign_intent": intent})
+    require(len(expected) <= 64*2**20, "CAPSULE_SIZE_BOUND")
+    destination = Path(destination)
+    destination.mkdir(exist_ok=False)
+    name = "safeshift_train3763_execution.json"
+    with bounded_http():
+        query = ApiGetDatasetMetadataRequest()
+        query.owner_slug, query.dataset_slug = owner, slug
+        with client.build_kaggle_client() as remote:
+            metadata = remote.datasets.dataset_api_client.get_dataset_metadata(query)
+        require(not metadata.error_message and metadata.info.is_private is True
+            and metadata.info.owner_user == owner and metadata.info.dataset_slug == slug, "CAPSULE_PRIVATE_OWNER_IDENTITY")
+        files = client.dataset_list_files(capsule["ref"], page_size=16)
+        require(not files.error_message and not files.next_page_token and len(files.files) == 1
+            and files.files[0].name == name and files.files[0].total_bytes == len(expected), "CAPSULE_EXACT_FILE_SIZE")
+        client.dataset_download_file(capsule["ref"], name, path=str(destination), force=False, quiet=True, unzip=False)
+    paths = list(destination.iterdir())
+    require(len(paths) == 1, "ONE_DOWNLOADED_CAPSULE_FILE")
+    path = paths[0]
+    if path.name == name:
+        require(path.stat().st_size == len(expected), "CAPSULE_DOWNLOAD_BOUND")
+        payload = path.read_bytes()
+    else:
+        require(path.name == name+".zip" and path.stat().st_size <= 64*2**20, "CAPSULE_WRAPPER_BOUND")
+        with zipfile.ZipFile(path) as bundle:
+            entries = bundle.infolist()
+            require(len(entries) == 1 and entries[0].filename == name and entries[0].file_size == len(expected)
+                and bundle.testzip() is None, "CAPSULE_WRAPPER_INTEGRITY")
+            payload = bundle.read(name)
+    require(payload == expected, "STALE_OR_WRONG_CAPSULE_NO_GPU_SUBMIT")
+    proof = {"ref": capsule["ref"], "version": int(version), "sha256": hashlib.sha256(payload).hexdigest(),
+        "bytes": len(payload), "request_sha256": digest(request), "intent_sha256": digest(intent)}
+    write(destination.parent / "input-proof.json", proof)
+    return proof
+
+
+def submit_campaign(request, grant, execution, root):
+    from safeshift.kaggle_handoff import lock
+    ledger = campaign_ledger(request)
+    # Campaign lock is held across the only external POST. The durable push
+    # intent survives a hard kill/ambiguous return; a second handoff cannot push.
+    with lock(ledger.root):
+        require(admit_campaign(request) == (grant, execution), "CAMPAIGN_SUBMIT_SOURCE_DRIFT")
+        client = api()
+        observed = campaign_inventory(client, request, grant, ledger)
+        intent = ledger.open_intent()
+        stage = Path(root) / "submission"
+        stage.mkdir(exist_ok=False)
+        write(stage / "inventory.json", observed)
+        write(stage / "release.json", grant)
+        write(stage / "campaign-intent.json", intent)
+        verify_execution_input(client, request, intent, stage / "input-proof")
+        sources = input_sources(request)
+        write(stage / "kernel-metadata.json", {"id": request["job"], "title": request["job"].split("/")[1],
+            "code_file": "internvl.ipynb", "language": "python", "kernel_type": "notebook", "is_private": True,
+            "enable_gpu": True, "enable_tpu": False, "enable_internet": True,
+            "dataset_sources": sources["dataset_sources"], "kernel_sources": sources["kernel_sources"],
+            "competition_sources": [], "model_sources": []})
+        write_bytes(stage / "internvl.ipynb", safe(ROOT, request["notebook"]).read_bytes())
+        ledger.append("PUSH_INTENT", intent_sha256=digest(intent), inventory_sha256=digest(observed))
+        from scripts.submit_internvl_v2 import bounded_http
+        with bounded_http():
+            response = client.kernels_push(str(stage), timeout=str(request["plan"]["max_seconds"]), acc=grant["caps"]["machine_shape"])
+        write(stage / "submit-return.json", response.to_dict())
+        result = {"job_id": request["job"], "version": 1}
+        ledger.append("SUBMITTED", intent_sha256=digest(intent), result=result)
+        return result
 
 
 def check_sdk():
@@ -48,6 +203,8 @@ def code_hash(notebook):
 
 
 def admit(request):
+    if request["scope"] == "TRAIN3763_CAMPAIGN":
+        return admit_campaign(request)
     require(request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE", "EXACT_EXECUTION_CANDIDATE_REQUIRED")
     grant = authority.load(request.get("execution_release"))  # BEFORE SDK/credentials/private Inputs
     execution = authority.bind(grant, request)
@@ -77,7 +234,7 @@ def admit(request):
     return grant, execution
 
 
-def inventory(client, request, grant):
+def inventory(client, request, grant, *, campaign_prefix=None, known_jobs=None):
     from scripts.submit_internvl_v2 import bounded_http
     from kagglesdk.kernels.types.kernels_api_service import ApiGetKernelRequest
     with bounded_http():
@@ -98,6 +255,9 @@ def inventory(client, request, grant):
         else:
             raise ValueError("INCOMPLETE_ACCOUNT_INVENTORY")
         require(request["job"] not in owned, "JOB_EXISTS_NO_NEW_VERSION_OR_RETRY")
+        if campaign_prefix is not None:
+            require({ref for ref in owned if ref.startswith(campaign_prefix)} == known_jobs,
+                "PROVIDER_CAMPAIGN_HISTORY_MISSING_OR_LEDGER_ROLLBACK_STOP")
         for index, expected in enumerate(grant["predecessors"], 1):
             snapshot = authority.http(grant["witness"] + "/v1/" + grant["series"] + "/" + str(index) + "/snapshot", None)
             require(snapshot["witness_id"] == grant["witness_id"], "PREDECESSOR_AUTHORITY_DATABASE_DRIFT")
@@ -138,6 +298,8 @@ def inventory(client, request, grant):
 
 
 def submit(request, grant, execution, root):
+    if request["scope"] == "TRAIN3763_CAMPAIGN":
+        return submit_campaign(request, grant, execution, root)
     # Re-admission prevents a changed release/source between preflight and POST.
     require(admit(request) == (grant, execution), "SUBMIT_RELEASE_DRIFT")
     client = api()
@@ -164,8 +326,18 @@ def submit(request, grant, execution, root):
     return {"job_id": request["job"], "version": request["version"]}
 
 
-def verify_remote_custody(request, archive):
+def verify_remote_custody(request, archive, *, provider=None):
     """Read-only reconciliation is allowed after the execution window expires."""
+    if request["scope"] == "TRAIN3763_CAMPAIGN":
+        ledger = campaign_ledger(request)
+        # Idempotent read-only recollection of a closed attempt never consumes.
+        existing = [x for x in ledger.events() if x["kind"] == "COLLECTED" and x["plan"] == request["plan"]]
+        if existing:
+            require(len(existing) == 1 and existing[0]["sha256"] == sha(archive), "COLLECTED_ARCHIVE_DRIFT")
+            return {"status": "RECONCILED", "automatic_retry": False, "scientific_pooling": False}
+        require(provider is not None, "LIVE_TERMINAL_IDENTITY_REQUIRED")
+        ledger.collect(request, archive, provider)
+        return {"status": "RECONCILED", "automatic_retry": False, "scientific_pooling": False}
     import json
     import zipfile
     grant = authority.load(request["execution_release"], for_collection=True)

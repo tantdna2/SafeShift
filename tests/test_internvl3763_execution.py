@@ -360,7 +360,7 @@ class ExecutionTests(unittest.TestCase):
             max_calls=3, max_seconds=10)
         backend = NS(environment={"scope": "SYNTHETIC"}, generate=Mock(side_effect=AssertionError("NO_NATIVE_CALL")))
         for case in ("time", "archive"):
-            kwargs = {"clock": iter([0, 10]).__next__} if case == "time" else {"archive_limit_bytes": 1}
+            kwargs = {"clock": iter([0] + [10]*8).__next__} if case == "time" else {"archive_limit_bytes": 1}
             result = runtime.rehearse(self.root/case, None, cohort, plan, [], lambda _: backend,
                 image_path=Mock(side_effect=AssertionError("NO_IMAGE_READ")), tokenizer_sha="a"*64, **kwargs)
             self.assertEqual(result["counts"], {"NOT_ATTEMPTED": 3763})

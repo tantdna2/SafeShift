@@ -28,7 +28,9 @@ def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggl
     from safeshift.fulltrain import provision, supervision
     from scripts import internvl_v2 as old
     handoff = read(request_path)
-    grant = authority.activate(handoff, "launch")
+    campaign_mode = handoff["scope"] == "TRAIN3763_CAMPAIGN"
+    intent = read(Path(request_path).parent / "campaign-intent.json") if campaign_mode else None
+    grant = authority.activate(handoff, "launch", intent=intent) if campaign_mode else authority.activate(handoff, "launch")
     runtime.authorize("execute")  # before Input/provisioning/GPU
     request = authority.bind(grant, handoff)
     p = runtime.validate_execution_request(request)
@@ -39,6 +41,8 @@ def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggl
     write(out / "execution-request.json", request)
     write(out / "handoff.json", handoff)
     write(out / "release.json", grant)
+    if campaign_mode:
+        write(out / "campaign-intent.json", intent)
     write(out / "launch-claim.json", authority.activation_claim())
     setup = out / "setup"
     setup.mkdir()

@@ -143,6 +143,9 @@ def load(locator, *, reader=None, now=None, for_collection=False):
 
 
 def bind(grant, request):
+    if request.get("scope") == "TRAIN3763_CAMPAIGN":
+        from safeshift.internvl3763_campaign import bind as campaign_bind
+        return campaign_bind(grant, request)
     from safeshift import internvl3763 as runtime
     from safeshift.kaggle_handoff import validate_request
     validate_request(request)
@@ -194,10 +197,26 @@ _active = None
 _activation_claim = None
 
 
-def activate(request, stage):
+def activate(request, stage, *, intent=None):
     global _active, _activation_claim
     require(_active is None, "CAPABILITY_ALREADY_ACTIVE")
     require(stage in ("launch", "worker"), "EXACT_ACTIVATION_PHASE_REQUIRED")
+    if request.get("scope") == "TRAIN3763_CAMPAIGN":
+        from safeshift import internvl3763_campaign as campaign
+        from pathlib import Path
+        grant = campaign.load(request.get("execution_release"))
+        campaign.bind(grant, request)
+        require(type(intent) is dict and intent.get("kind") == "INTENT" and intent.get("request") == request
+            and intent.get("campaign_sha256") == digest(grant)
+            and intent.get("reserved_calls") == request["plan"]["max_calls"]
+            and intent.get("reserved_gpu_seconds") == request["plan"]["max_seconds"]*grant["caps"]["physical_gpus"],
+            "CAMPAIGN_DURABLE_INTENT_REQUIRED")
+        # Fixed across notebook re-extractions in this VM. Never UUID/TTL/reclaim.
+        claims = campaign.NativeClaims(Path('/kaggle/working/train3763-claims') / grant["campaign_id"] /
+            request["plan"]["attempt_id"], request, intent, grant)
+        _activation_claim = claims.claim(stage)
+        _active = (grant, claims, request, stage)
+        return grant
     grant = load(request.get("execution_release"))
     bind(grant, request)
     witness = Witness(grant, request["execution_release"])
@@ -220,6 +239,9 @@ def authorize(stage="worker", *, ordinal=None):
     if stage in ("load", "call"):
         if stage == "call":
             require(type(ordinal) is int and ordinal in request["plan"]["scheduled_ordinals"], "AUTHORIZED_CALL_ORDINAL")
-        return witness.claim("load" if stage == "load" else f"call-{ordinal:06d}", request)
+        kind = "load" if stage == "load" else f"call-{ordinal:06d}"
+        if request.get("scope") == "TRAIN3763_CAMPAIGN":
+            return witness.claim(kind)
+        return witness.claim(kind, request)
     require(stage in ("worker", "preflight", "execute"), "NATIVE_AUTHORIZATION_STAGE")
     return grant

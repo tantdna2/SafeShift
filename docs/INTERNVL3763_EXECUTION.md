@@ -1,5 +1,24 @@
 # TRAIN3763 execution candidate — 05/11/2026
 
+## Current admission — Issue180 after merged PR179
+
+Use [TRAIN3763_CAMPAIGN.md](TRAIN3763_CAMPAIGN.md) for current notebook admission
+and PowerShell operations. BASE `300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2`.
+The current notebook uses `TRAIN3763_CAMPAIGN`: one authentic finite Owner grant,
+reviewed technical revisions, serial mirrored local ledger and create-only intent.
+It does not require an HTTPS witness or Owner comment for every job/fix/shard.
+Native launch/worker/load/calls have create-only claims in a fixed VM directory;
+the sole operator admits all historical ZIPs before scheduling and verifies exact
+provider terminal/custody after each job. Ambiguity blocks further submission.
+
+The implementation PR runs synthetic CPU checks only. No grant, budget, live
+qualification, independent audit or merge is implied. The per-attempt release,
+HTTPS deployment requirements and receipts below are preserved **historical PR179
+route documentation**; they apply only to that compatibility route and are not
+new campaign prerequisites. Existing grants/results cannot be transferred.
+
+## Historical PR179 design and verification
+
 Design recorded before code. BASE is merged PR178,
 `1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`; this is a new branch/session.
 The current task permits CPU synthetic development and one Draft PR only.

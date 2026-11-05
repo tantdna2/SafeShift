@@ -1,5 +1,31 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner05/11/2026 — Issue180 campaign admission after PR179 MERGED
+
+[Issue180](https://github.com/tantdna2/SafeShift/issues/180), BASE
+`300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2`: one new branch and one Draft PR
+implements a serial TRAIN3763 campaign. [Current contract/runbook](docs/TRAIN3763_CAMPAIGN.md)
+supersedes per-attempt Owner release and mandatory HTTPS witness **only on the
+new campaign route**. One authentic campaign grant binds original science/rights,
+operator/history, finite calls/jobs/GPU-time/deadline and stop rules. No renewed
+Owner permission for each shard, continuation or diagnosed technical fix inside
+that grant. Source fixes still require tests, technical review/audit/merge and
+provenance; changing science/data/TEST or exceeding caps requires a new decision.
+Resume only NOT_ATTEMPTED; exact-target repair preserves all errors/raw/attempts.
+One local operator/mirrored create-only ledger; ambiguous submit/history/provider/
+ZIP STOP for read-only reconciliation. No automatic cross-machine takeover or
+global exactly-once claim. Historical grants/witness claims/results stay immutable.
+
+This implementation task explicitly prohibits actual Kaggle submit, GPU, real
+model/image inference and TEST, including smoke. No campaign grant or budget
+exists yet; O2–O6 remain PENDING where evidence is missing. Reuse verified existing
+Inputs/checkpoints/SDK and PR177 evidence without reupload or new live probing.
+Antigravity monitors <=15 minutes, checkpoints and exits; resume the same session
+for terminal collection on the next user message. Codex fixes code; operations
+do not replace the required independent Antigravity audit. Stop at the single
+Draft PR for ChatGPT direct GitHub review, independent audit and separately
+authorized merge. No self-issued approval, merge or scientific qualification.
+
 ## Owner05/11/2026 — execution candidate after PR178 MERGED
 
 New task starts from exact merged main `1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`.
