@@ -23,17 +23,23 @@ def preparation():
 
 def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggle/temp"),
            inputs=Path("/kaggle/input")):
-    runtime.authorize()  # before request/Input/credentials/provisioning
+    from safeshift import internvl3763_release as authority
     from safeshift.pilot.artifacts import read, export
     from safeshift.fulltrain import provision, supervision
     from scripts import internvl_v2 as old
-    request = read(request_path)
+    handoff = read(request_path)
+    grant = authority.activate(handoff, "launch")
+    runtime.authorize("execute")  # before Input/provisioning/GPU
+    request = authority.bind(grant, handoff)
     p = runtime.validate_execution_request(request)
     name = p["run_id"] + "-" + uuid.uuid4().hex
     out, temporary = Path(output) / name, Path(scratch) / name
     out.mkdir(parents=True, exist_ok=False)
     temporary.mkdir(parents=True, exist_ok=False)
     write(out / "execution-request.json", request)
+    write(out / "handoff.json", handoff)
+    write(out / "release.json", grant)
+    write(out / "launch-claim.json", authority.activation_claim())
     setup = out / "setup"
     setup.mkdir()
     spec = setup / "source.json"
@@ -50,14 +56,14 @@ def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggl
         observed = read(setup / "runtime.json")
         observed["env"]["CUDA_VISIBLE_DEVICES"] = "0"
         supervision.run([observed["python"], "-B", "-m", "scripts.internvl3763", "--mode", "worker",
-            "--request", str(out / "execution-request.json"), "--output", str(out),
+            "--request", str(out / "handoff.json"), "--output", str(out),
             "--scratch", str(temporary), "--inputs", str(inputs), "--deadline", str(deadline - 60)],
             cwd=runtime.ROOT, env=observed["env"], deadline=deadline - 60,
             log=out / "worker.log", receipt=out / "worker-supervisor.json", max_log_bytes=budgets["max_log_bytes"])
         result = read(out / "run/summary.json")
     except BaseException as failure:
         error = {"type": type(failure).__name__, "consumption": "RECONCILE_MARKERS_NO_RETRY"}
-        result = {"status": "FAIL", "error": error}
+        result = runtime.interrupted_summary(out, request, error)
     write(out / "terminal.json", {"status": result["status"], "error": error})
     checksum = export(out, Path(str(out) + ".zip"))
     return {"status": result["status"], "archive_sha256": checksum, "scientific_qualified": False}
@@ -73,7 +79,8 @@ def main(argv=None):
     p.add_argument("--deadline", type=float)
     a = p.parse_args(argv)
     if a.mode != "prepare":
-        runtime.authorize()  # before input/output/credential/GPU access
+        if a.request is None:
+            runtime.authorize()  # absent authority fails before any other IO
         if a.mode == "worker":
             runtime.worker(a.request, output=a.output, scratch=a.scratch, inputs=a.inputs, deadline=a.deadline)
             return 0

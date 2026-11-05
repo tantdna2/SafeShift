@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import time
 import uuid
 
@@ -67,7 +68,7 @@ def validate_request(request):
         "version", "commit_sha", "runtime_commit", "notebook", "notebook_sha256", "bindings",
         "limits", "coordinator_required", "execution_release", "plan", "plan_sha256"}, "HANDOFF_FIELDS")
     require(request["schema"] == SCHEMA and re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", request["handoff_id"]), "HANDOFF_ID")
-    require(request["scope"] in ("SYNTHETIC_ONLY", "TRAIN3763_PREPARATION"), "NO_TEST_OR_IMPLICIT_AUTHORITY")
+    require(request["scope"] in ("SYNTHETIC_ONLY", "TRAIN3763_PREPARATION", "TRAIN3763_EXECUTION_CANDIDATE"), "NO_TEST_OR_IMPLICIT_AUTHORITY")
     require(re.fullmatch(r"[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+", request["job"]), "EXACT_JOB_REFERENCE")
     require(type(request["version"]) is int and request["version"] >= 1, "EXACT_JOB_VERSION")
     for key in ("commit_sha", "runtime_commit"):
@@ -87,8 +88,12 @@ def validate_request(request):
         and type(limits["job_seconds"]) is int and 1 <= limits["job_seconds"] <= 43200, "JOB_LIMITS")
     require(request["coordinator_required"] is False, "CANNOT_DETACH_LIVE_PERMIT_COORDINATOR")
     require(digest(request["plan"]) == request["plan_sha256"], "PLAN_BINDING")
-    if request["scope"] != "SYNTHETIC_ONLY":
+    if request["scope"] == "TRAIN3763_PREPARATION":
         require(request["execution_release"] is None, "PREPARATION_CANNOT_SELF_GRANT")
+    if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+        require(request["execution_release"] is None or (type(request["execution_release"]) is dict
+            and set(request["execution_release"]) == {"comment_id", "body_sha256"}), "EXACT_RELEASE_LOCATOR_ONLY")
+    if request["scope"] != "SYNTHETIC_ONLY":
         require(600 <= limits["monitor_seconds"] <= 900, "LIVE_MONITOR_10_TO_15_MINUTES")
     return request
 
@@ -159,6 +164,8 @@ def operate(session, operator, action, *, clock=time.monotonic, sleep=time.sleep
     with lock(session.root):
         try:
             request = session.request
+            if hasattr(operator, "local_root"):
+                operator.local_root = session.root
             if action == "start":
                 require(not any(e["status"] == "SUBMISSION_INTENT" for e in session.events()),
                         "SUBMISSION_ALREADY_RESERVED_NO_RETRY")
@@ -182,8 +189,9 @@ def operate(session, operator, action, *, clock=time.monotonic, sleep=time.sleep
                     break
                 require(state in ("QUEUED", "RUNNING"), "UNKNOWN_JOB_STATE_NO_RETRY")
                 # Two sequential bounded SDK reads can take60s. Stop polling
-                # with65s headroom so no request extends the15-minute window.
-                if clock() >= deadline - 65:
+                # with75s headroom (including the next10s sleep), so a new
+                # pair of reads cannot extend the15-minute window.
+                if clock() >= deadline - 75:
                     return session.report("RUNNING_UNVERIFIED", terminal=state, collection="NOT_ATTEMPTED",
                         kernel_id=identity.get("kernel_id"),
                         job_cancelled=False, automatic_retry=False)
@@ -215,12 +223,21 @@ class Train3763Operator:
     Read-only SDK collection is present for future exact-release integration;
     the current preparation cannot produce a submission intent for this adapter.
     """
+    local_root = None
+
     def preflight(self, request):
-        from safeshift.internvl3763 import authorize
-        authorize()  # before SDK import/auth, local notebook or private Input access
+        if request["scope"] != "TRAIN3763_EXECUTION_CANDIDATE":
+            from safeshift.internvl3763 import authorize
+            authorize()
+        from safeshift.internvl3763_operator import admit
+        self.grant, self.execution = admit(request)
 
     def submit(self, request):
-        self.preflight(request)
+        if not hasattr(self, "grant"):
+            self.preflight(request)
+        from safeshift.internvl3763_operator import submit
+        require(self.local_root is not None, "DURABLE_HANDOFF_SESSION_REQUIRED")
+        return submit(request, self.grant, self.execution, self.local_root)
 
     def _api(self):
         from scripts.submit_internvl_v2 import check_sdk
@@ -238,6 +255,13 @@ class Train3763Operator:
         notebook = safe(ROOT, request["notebook"])
         require(sha(notebook) == request["notebook_sha256"]
             and code_hash(json.loads(value.blob.source)) == code_hash(read(notebook)), "KAGGLE_SOURCE_DRIFT")
+        if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+            from safeshift.internvl3763_operator import input_sources
+            sources = input_sources(request)
+            require(value.metadata.machine_shape == "NvidiaTeslaT4"
+                and sorted(value.metadata.dataset_data_sources) == sorted(sources["dataset_sources"])
+                and sorted(value.metadata.kernel_data_sources) == sorted(sources["kernel_sources"]),
+                "REMOTE_ACCELERATOR_OR_INPUT_DRIFT")
         return {"job_id": request["job"], "version": value.metadata.current_version_number,
             "kernel_id": value.metadata.id, "notebook_sha256": request["notebook_sha256"]}
 
@@ -250,15 +274,22 @@ class Train3763Operator:
         from scripts.submit_internvl_v2 import bounded_http
         with bounded_http():
             self._api().kernels_output(request["job"] + "/" + str(request["version"]),
-                str(destination), quiet=True)  # ZIP, sidecar, exported full logs and all receipts
+                str(destination), quiet=True, file_pattern=r"\.zip(?:\.sha256\.json)?$")
+            # SDK also exports the version-specific provider log. All worker/raw
+            # receipts live inside the one contract ZIP, avoiding a second copy.
 
     def verify(self, request, destination, state):
         from safeshift.internvl3763 import verify_bundle
         bundles = list(destination.glob("*.zip"))
         require(len(bundles) == 1, "EXACTLY_ONE_CONTRACT_ARCHIVE")
         archive = bundles[0]
+        if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+            require(list(destination.glob("*.log")), "PROVIDER_LOG_REQUIRED")
         result = verify_bundle(archive, read(str(archive) + ".sha256.json")["sha256"], request["plan"])
         require(result["scope"] == "PRIVATE_TRAIN_METADATA", "NO_SYNTHETIC_PRODUCTION_PASS")
+        if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+            from safeshift.internvl3763_operator import verify_remote_custody
+            result["remote_custody"] = verify_remote_custody(request, archive)
         return result
 
 
@@ -283,7 +314,13 @@ def _invoke_agy(session, *, resume=False, recover=False, agy="agy", run=subproce
         phase = "collect" if resume else "start"
         root = session.root.relative_to(ROOT).as_posix()
         require(re.fullmatch(r"[A-Za-z0-9_./-]+", root), "SHELL_SAFE_RELATIVE_HANDOFF_DIRECTORY")
-        step_command = "python -B -m scripts.kaggle_handoff step --directory " + root + " --action " + phase
+        step_python = "python"
+        if session.request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+            executable = Path(sys.executable).resolve()
+            require(executable.is_relative_to(ROOT.resolve()), "ISOLATED_OPERATOR_PYTHON_REQUIRED")
+            step_python = "./" + executable.relative_to(ROOT.resolve()).as_posix()
+            require(re.fullmatch(r"[A-Za-z0-9_./-]+", step_python), "SHELL_SAFE_OPERATOR_PYTHON_REQUIRED")
+        step_command = step_python + " -B -m scripts.kaggle_handoff step --directory " + root + " --action " + phase
         if session.request["scope"] == "SYNTHETIC_ONLY":
             step_command += " --synthetic"
         # Per-turn, exact-command permission only. Preserve configured deny/ask
@@ -311,7 +348,8 @@ def _invoke_agy(session, *, resume=False, recover=False, agy="agy", run=subproce
             "Download all contract evidence only after terminal; verify ZIP/SHA/CRC/member/source/runtime/"
             "call/raw/status bindings. Preserve failures/partials privately. Report PASS/FAIL/BLOCKED and paths. "
             "If blocked, diagnose from the existing evidence only, never launch a new experiment. "
-            "The TRAIN3763 route is preparation-only and must remain BLOCKED. "
+            "TRAIN3763_PREPARATION stays BLOCKED. TRAIN3763_EXECUTION_CANDIDATE needs a new authentic "
+            "Owner release, exact source/SDK/Inputs/caps and permanent remote claims; never create authority yourself. "
             "For a SYNTHETIC_ONLY request the command already includes --synthetic; this is an operations rehearsal "
             "with no dataset, GPU or model calls. Do not edit the simulated provider state. "
             + ("This is read-only recovery; never submit even if the old conversation is unavailable. " if resume else "")

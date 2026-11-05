@@ -180,8 +180,8 @@ class NativeCaptureTests(unittest.TestCase):
             {"series_id": r.SERIES}, {"ordinal": 0, "image_sha256": "a"*64}, "b"*64)}
         inputs = {"input_ids": self.torch.tensor([[8]]),
             "attention_mask": self.torch.ones((1, 1), dtype=self.torch.long)}
-        with patch.object(r, "authorize"):
-            return r.generate_prepared(backend, inputs, folder, binding, time.monotonic() + 30)
+        with patch.object(r, "authorize", return_value={"scope": "SYNTHETIC_CLAIM_ONLY"}):
+            return r.generate_prepared(backend, inputs, folder, binding, time.monotonic() + 30, ordinal=0)
 
     def test_actual_native_generate_all_labels_full_capture_and_raw_precedes_parse(self):
         for level in range(4):

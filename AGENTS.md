@@ -1,5 +1,18 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner05/11/2026 — execution candidate after PR178 MERGED
+
+New task starts from exact merged main `1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`.
+See [execution candidate](docs/INTERNVL3763_EXECUTION.md). One new branch/Draft PR
+prepares notebook/runner/SDK isolation/exact authority/cross-machine claims and
+Antigravity operations. **No new Kaggle submit or real model/image inference**
+in this task, including live smoke. Preserve PR177/178 history; do not reuse grants.
+Antigravity's supplied read-only account/connectivity PASS need not be repeated.
+Actual execution remains BLOCKED until separately authorized source/release,
+numerical caps/Inputs/rights and reviewed durable remote-witness deployment.
+Codex owns code/tests/PR; Antigravity operates separately authorized jobs;
+ChatGPT reviews GitHub and decides audit/merge. Never self-issue those approvals.
+
 ## Owner 05/11/2026 — TRAIN3763 grammar V2 và Antigravity CLI
 
 Task mới sau PR177 đã merge: một branch mới từ main và một Draft PR thống nhất
