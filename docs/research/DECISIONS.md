@@ -652,3 +652,30 @@ SHA256 is `60090d0a0073861906e09dfc7cf3d43f0845488005aafe6c4ba855a6889b025d`.
 The03407e… hash above identifies a local ASCII-substituted PowerShell rendering,
 not the actual GitHub text. Exact-authority authentication rejected unused
 release6626931045 before any job/ledger reservation. No Owner scope changed.
+
+## DEC-20261105-OWNER-INTERNVL3763-AGY-PREPARATION
+
+Source: direct Owner task05/11/2026, Asia/Bangkok, after PR177 merged at
+`7633dca168f7bb9fdff84f38a3d374cdbaff5b5a`. One new branch/Draft PR combines
+InternVL3.5 grammar V2 full original TRAIN3763 preparation and Antigravity CLI
+delegation. First commit documents the scope; then CPU synthetic implementation,
+tests/notebook preparation and durable local CLI rehearsal. This is an
+operational/preparation directive, not a new scientific-method adoption.
+
+Codex owns code, tests, fixes and Draft PR. Antigravity CLI1.5.0 owns Kaggle
+operations only under a separately granted exact execution scope: submit once,
+observe at most15 minutes, persist RUNNING_UNVERIFIED/job/version/conversation
+and exit without cancelling the job. The user's later completion message
+triggers same-session or read-only recovery, live terminal confirmation,
+private evidence download/integrity/contract checks and PASS/FAIL/BLOCKED report.
+Codex consumes the bound report/evidence; operations do not replace independent
+audit. Unknown submission/calls never allow an automatic retry or duplicate job.
+
+The new series covers all original3763 IDs/order/image hashes with no historical
+predictions or smoke backfill. Keep approved V2/strict C1/parser/FP16/eager/
+checkpoint and HNLO null/N/A. Ordinary resume excludes consumed INVALID/errors;
+repair/comparability, per-attempt caps, rights/custody and execution release stay
+separate. No full TRAIN3763, TEST, real Kaggle job or new model call is authorized
+by this task. No historical ref/source lock/decision is changed. Final-source
+live gates remain NOT_RUN/BLOCKED. Stop at the unified Draft PR for direct
+ChatGPT GitHub review, then independent audit and separately authorized merge.

@@ -113,6 +113,13 @@ không cần cài package để chạy tests/demo từ repository root.
 Theo dõi phần thiếu và điều kiện phê duyệt ở [ROADMAP](docs/ROADMAP.md).
 Code dùng lại nằm trong package, chỉ thêm thư mục khi có chức năng cụ thể.
 
+[TRAIN3763 grammar V2 và Antigravity CLI](docs/INTERNVL3763_ANTIGRAVITY.md)
+chuẩn bị series InternVL riêng trên toàn bộ IDs gốc và bàn giao vận hành bền
+vững qua `agy --conversation`: theo dõi tối đa15 phút, dừng AI khi RUNNING,
+tiếp tục thu/kiểm chứng từ khi người dùng báo xong. Có rehearsal local không
+Kaggle và wrapper PowerShell. Native/submit vẫn BLOCKED chờ quyền/release riêng;
+CPU/CLI PASS không xác nhận final-source Kaggle hoặc full-cohort readiness.
+
 ## Kaggle TRAIN pilot ba VLM — PREP
 
 [Issue #145: Smol readiness và Gemma gate](docs/SMOL_KAGGLE_READINESS_145.md)

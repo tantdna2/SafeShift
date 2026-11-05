@@ -1,6 +1,61 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Original TRAIN ordinal0 native inference VERIFIED; stop at Draft PR177
+## CURRENT — TRAIN3763 grammar V2 preparation and Antigravity handoff — 05/11/2026
+
+Direct Owner task starts a new branch from main
+`7633dca168f7bb9fdff84f38a3d374cdbaff5b5a`, after PR177 merged. The old worktree,
+branch and unrelated local files remain untouched. One unified Draft PR; no
+reuse of PR177's execution grant or its completed technical series.
+
+[Design and operator instructions](INTERNVL3763_ANTIGRAVITY.md) were committed
+before implementation. `internvl3763.py` prepares a distinct complete-cohort
+3763-ID/order/hash plan, bounded controller, separate native adapter using the
+approved V2 capture/replay, immutable attempt/status records and sealed ZIPs.
+HNLO stays null/N/A; strict C1/parser/FP16/eager/checkpoint/grammar bytes remain.
+Resume schedules only NOT_ATTEMPTED in that exact series; no historical/smoke
+backfill, favorable selection or completion union. Repair remains a separate
+scientific/execution decision. Public worker/load/call/submit/preflight paths
+are fenced before private Input/GPU/credentials. Caps and execution release
+remain absent. Full-vocabulary capture/storage/export require bounded attempts;
+one-image success does not prove full-cohort storage/time/quality.
+
+`kaggle_handoff.py` persists immutable hash-linked requests/events/reports,
+OS process locks, exact job/version/source bindings and explicit `--conversation`.
+Antigravity runs one narrowly allowed deterministic operation per turn;
+monitoring ends at RUNNING_UNVERIFIED without cancelling the job, then terminal
+collection resumes after the user's message. A submit intent precedes external
+submission; unknown states cannot trigger another submit. Recovery is read-only.
+Reports check ZIP/SHA256/CRC/members, source/plan/runtime and sample/call custody;
+Codex rehashes the returned evidence without repeating routine download/replay.
+
+Synthetic controller and CLI/provider tests plus real agy1.5.0 conversation
+continuation/collection have been exercised. All simulated jobs are local;
+no Kaggle submission, model inference, real TRAIN/GT/private raw or TEST access.
+Headless agy can emit SUCCESS with denied_actions: those turns are BLOCKED,
+and both reports and history are retained. Per-turn exact-command permissions
+preserve configured deny/ask; no skip-permissions or global settings edits.
+Validation counts/hashes and final notebook identity are recorded in the same
+PR's final receipt. Live final-source G0–G6 remain BLOCKED/NOT_VERIFIED. This is
+PREP / READY_FOR_CODE_REVIEW_ONLY, never READY_FOR_KAGGLE or scientific PASS.
+
+Stop for ChatGPT's direct GitHub review. Independent Antigravity audit has not
+been performed by these operational turns; audit and separate merge authority
+are still required. No full3763/TEST execution authority is granted here.
+
+Final runtime `8bff3f3d7f2dff326091e62954e5e81e83716685`; PREP notebook SHA256
+`69e2bb152608a3451ef84ae844761f45f297b0e7ed4391fdd0dbb27c36fa2bd6`.
+Focused CPU87 (84 PASS/3 native skips), pinned CPU-native87/87 PASS, notebook2/2
+PASS; overlapping old V2 regression160 (138 PASS/22 skips), no selected errors.
+Real agy/PowerShell v5 rehearsal: RUNNING_UNVERIFIED -> process exit -> same
+conversation resume -> simulated COMPLETE -> ZIP/log/SHA/CRC PASS. No Kaggle
+job, real data/model call or audit. All84 inherited runtime files match main.
+Broad smoke is NOT_GREEN/incomplete; the Candidate160 official-FP329-test suite
+has the same1 failure/9 errors on pristine main and this branch (fixed config
+digest drift), preserved without changing historical locks. See
+[machine receipt](research/evidence/internvl3763_agy_20261105/summary.json) and
+[verification details](INTERNVL3763_ANTIGRAVITY.md#final-source-verification--05112026).
+
+## Historical snapshot — Original TRAIN ordinal0 native inference VERIFIED (PR177 now merged)
 
 Under [Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951)
 and [exact release6626992475](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626992475),
