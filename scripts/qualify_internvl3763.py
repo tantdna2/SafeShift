@@ -28,7 +28,7 @@ def main(argv=None):
     if a.native:
         dependencies = {name: importlib.metadata.version(name) for name in
             ("torch", "torchvision", "transformers", "tokenizers", "numpy", "Pillow")}
-    names = ["test_internvl3763", "test_internvl3763_execution", "test_internvl3763_campaign", "test_internvl3763_capsule", "test_kaggle_handoff", "test_fulltrain", "test_internvl_grammar", "test_kaggle173_verification"]
+    names = ["test_internvl3763", "test_internvl3763_execution", "test_internvl3763_campaign", "test_internvl3763_capsule", "test_internvl3763_versions", "test_kaggle_handoff", "test_fulltrain", "test_internvl_grammar", "test_kaggle173_verification"]
     suite = unittest.defaultTestLoader.loadTestsFromNames(names)
     with (a.output / "tests.log").open("x", encoding="utf8") as log:
         result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
@@ -42,7 +42,7 @@ def main(argv=None):
         "dependencies": dependencies, "log_sha256": sha(a.output / "tests.log"),
         "tests_sha256": {name: sha(runtime.ROOT / name) for name in
             ("tests/test_internvl3763.py", "tests/test_internvl3763_execution.py", "tests/test_internvl3763_campaign.py",
-             "tests/test_internvl3763_capsule.py", "tests/test_internvl3763_notebook.py", "tests/test_kaggle_handoff.py", "scripts/qualify_internvl3763.py")},
+             "tests/test_internvl3763_capsule.py", "tests/test_internvl3763_versions.py", "tests/test_internvl3763_notebook.py", "tests/test_kaggle_handoff.py", "scripts/qualify_internvl3763.py")},
         "seed": None, "randomness": "NONE", "scope": "CPU_SYNTHETIC_ONLY",
         "command": ["python", "-B", "-m", "scripts.qualify_internvl3763", "--output", "<new-output>"]
             + (["--native", "--packages", "<local-pinned-public-software>"] if a.native else []),

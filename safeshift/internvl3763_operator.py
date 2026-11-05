@@ -332,6 +332,13 @@ def admit(request):
     return grant, execution
 
 
+def kernel_version_label(version):
+    """GetKernel uses vN; Input/status references keep their numeric /N suffix."""
+    require(type(version) in (int, str) and re.fullmatch(r"[1-9][0-9]*", str(version)),
+        "POSITIVE_PINNED_KERNEL_VERSION_REQUIRED")
+    return "v" + str(version)
+
+
 def inventory(client, request, grant, *, campaign_prefix=None, known_jobs=None):
     from scripts.submit_internvl_v2 import bounded_http
     from kagglesdk.kernels.types.kernels_api_service import ApiGetKernelRequest
@@ -367,11 +374,11 @@ def inventory(client, request, grant, *, campaign_prefix=None, known_jobs=None):
                 "PREVIOUS_JOB_RUNNING_OR_UNKNOWN_NO_SUBMIT")
             query = ApiGetKernelRequest()
             query.user_name, query.kernel_slug = previous["job"].split("/")
-            query.version_label = str(previous["version"])
+            query.version_label = kernel_version_label(previous["version"])
             with client.build_kaggle_client() as remote:
                 value = remote.kernels.kernels_api_client.get_kernel(query)
             import json
-            require(value.metadata.ref == previous["job"] and value.metadata.is_private is True
+            require(value.metadata is not None and value.metadata.ref == previous["job"] and value.metadata.is_private is True
                 and value.metadata.current_version_number == previous["version"]
                 and code_hash(json.loads(value.blob.source)) == previous["notebook_code_sha256"],
                 "PREVIOUS_JOB_IDENTITY_DRIFT")
@@ -379,10 +386,11 @@ def inventory(client, request, grant, *, campaign_prefix=None, known_jobs=None):
         for ref in sources["kernel_sources"]:
             user, slug, version = ref.split("/")
             query = ApiGetKernelRequest()
-            query.user_name, query.kernel_slug, query.version_label = user, slug, version
+            query.user_name, query.kernel_slug, query.version_label = user, slug, kernel_version_label(version)
             with client.build_kaggle_client() as remote:
                 metadata = remote.kernels.kernels_api_client.get_kernel(query).metadata
-            require(metadata.ref == user + "/" + slug and str(metadata.current_version_number) == version
+            require(metadata is not None and metadata.ref == user + "/" + slug and metadata.is_private is True
+                and metadata.current_version_number == int(version)
                 and str(client.kernels_status(ref).status).split(".")[-1] == "COMPLETE", "MISSING_OR_INCOMPLETE_VERSIONED_INPUT")
         for ref in sources["dataset_sources"]:
             require(client.dataset_list_files(ref, page_size=1).files, "MISSING_DATASET_INPUT")
