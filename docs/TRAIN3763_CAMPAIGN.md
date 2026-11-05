@@ -25,6 +25,9 @@ They contain no numeric `version_label` assignment and are not a fallback for
 pinned calls. Those legacy/shared implementations and the no-redirect/zero-retry
 transport are unchanged. The new next-job regression retains the version2 drift
 guard and rejects missing provider history before scheduling.
+Installed Kaggle2.2.5 `kernels_status` and `kernels_output` both call their own
+`_kernel_version_label` helper; source inspection and actual helper outputs1->v1,
+12->v12 are recorded in the receipt. Those SDK routes need no source change.
 
 `test_internvl3763_versions` uses installed Kaggle2.2.5/kagglesdk0.1.38/
 requests2.34.2, real request serialization and an offline HTTP adapter with
@@ -50,6 +53,18 @@ bind exact tested commit, SDK/environment, commands, notebook/code/source hashes
 unchanged science and local custody. Full-repository smoke is not repeated:
 PR182 already documents unrelated historical baseline failures/incomplete smoke;
 this PR makes no whole-repository or CI PASS claim.
+
+Final acceptance on clean tested commit `39c5d231bc5a8f72879229e4a3cc2c401e1ba244`:
+206/206 CPU/SDK tests PASS (17 new version tests, including15 installed-SDK
+transport tests), notebook3/3 PASS, no skips/failures/errors. Runtime commit is
+`734be541899e1ac59738efef196e5e858ec5b1ea`; source SHA256 is
+`ed3b696b8fd76c542df4424e382fc35ac43c5f7b5581c10394a3ea4c584d4667`.
+Only the operator file changes in the runtime manifest; all84 inherited files
+match BASE. The17 actual campaign metadata files retain identical before/after
+aggregate SHA256, including grant, mirror/guard, Attempt1 and capsule. The
+preliminary206-test run had one exact-source error while source was being
+finalized; its log is preserved, excluded from acceptance and superseded by the
+clean final run. Subsequent changes publish only these documents/test receipts.
 
 The committed-source builder is unchanged: commit runtime source first, build
 both notebooks from that exact40-character commit with `build_internvl3763`

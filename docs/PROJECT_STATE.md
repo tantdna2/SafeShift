@@ -25,6 +25,15 @@ identities change; exact clean merged-HEAD admission is retained.
 
 Acceptance results and identities are recorded in the
 [HTTP404 receipt](research/evidence/train3763_versionlabel404_20261106/summary.json).
+**206/206 focused CPU/SDK tests PASS, zero skips/failures/errors; notebook3/3 PASS**
+on clean tested commit `39c5d231bc5a8f72879229e4a3cc2c401e1ba244`. This includes
+17 version regressions (15 installed-SDK transport,2 pure serializer). Runtime
+`734be541899e1ac59738efef196e5e858ec5b1ea`, source SHA256
+`ed3b696b8fd76c542df4424e382fc35ac43c5f7b5581c10394a3ea4c584d4667`.
+All84 inherited manifest files match BASE. The17 original campaign metadata
+files have identical before/after aggregate SHA256; Attempt1 remains INTENT-only.
+A preliminary run's one exact-source error during source editing is preserved
+and excluded from acceptance; the final run used fixed committed source.
 No repository-wide/CI or live-provider PASS is claimed. Final-source live
 verification and checkpoint/provider reconciliation are NOT_RUN; direct ChatGPT
 GitHub review, independent Antigravity audit, separately authorized merge and
