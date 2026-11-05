@@ -379,6 +379,7 @@ def inventory(client, request, grant, *, campaign_prefix=None, known_jobs=None):
                 value = remote.kernels.kernels_api_client.get_kernel(query)
             import json
             require(value.metadata is not None and value.metadata.ref == previous["job"] and value.metadata.is_private is True
+                and type(value.metadata.current_version_number) is int
                 and value.metadata.current_version_number == previous["version"]
                 and code_hash(json.loads(value.blob.source)) == previous["notebook_code_sha256"],
                 "PREVIOUS_JOB_IDENTITY_DRIFT")
@@ -390,7 +391,7 @@ def inventory(client, request, grant, *, campaign_prefix=None, known_jobs=None):
             with client.build_kaggle_client() as remote:
                 metadata = remote.kernels.kernels_api_client.get_kernel(query).metadata
             require(metadata is not None and metadata.ref == user + "/" + slug and metadata.is_private is True
-                and metadata.current_version_number == int(version)
+                and type(metadata.current_version_number) is int and metadata.current_version_number == int(version)
                 and str(client.kernels_status(ref).status).split(".")[-1] == "COMPLETE", "MISSING_OR_INCOMPLETE_VERSIONED_INPUT")
         for ref in sources["dataset_sources"]:
             require(client.dataset_list_files(ref, page_size=1).files, "MISSING_DATASET_INPUT")

@@ -148,6 +148,7 @@ class InstalledSdkVersionTests(unittest.TestCase):
         original = deepcopy(self.metadata)
         for metadata in (None, {}, {**original, "ref": "other/wrong"},
                 {**original, "currentVersionNumber": 2}, {**original, "currentVersionNumber": None},
+                {**original, "currentVersionNumber": True},
                 {**original, "isPrivate": False}, {**original, "isPrivate": None}):
             with self.subTest(metadata=metadata):
                 self.metadata = metadata
@@ -283,7 +284,7 @@ class InstalledSdkVersionTests(unittest.TestCase):
         grant, previous = self.predecessor()
         original = deepcopy(self.metadata)
         with patch.object(authority, "http", return_value={"witness_id": grant["witness_id"], "claims": {"submit": previous}}):
-            for change in ({"currentVersionNumber": 2}, {"currentVersionNumber": None},
+            for change in ({"currentVersionNumber": 2}, {"currentVersionNumber": None}, {"currentVersionNumber": True},
                     {"ref": "nguynanhtn/wrong"}, {"isPrivate": False}):
                 self.metadata = {**original, **change}
                 with self.subTest(change=change), self.assertRaisesRegex(ValueError, "PREVIOUS_JOB_IDENTITY"):
