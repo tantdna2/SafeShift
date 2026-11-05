@@ -151,6 +151,42 @@ class ExecutionTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 auth.bind(self.grant, value)
 
+    def test_even_owner_hashed_divergent_outer_plan_and_bad_marker_block(self):
+        # An exact release still cannot bind two different execution plans.
+        value = copy.deepcopy(self.request)
+        value["plan"] = copy.deepcopy(value["plan"])
+        value["plan"]["run_id"] = "different-outer-run"
+        value["plan_sha256"] = digest(value["plan"])
+        grant = copy.deepcopy(self.grant)
+        grant["request_sha256"] = auth.request_hash(value)
+        with self.assertRaisesRegex(ValueError, "BINDING"):
+            auth.bind(grant, value)
+        execution = copy.deepcopy(self.request["bindings"]["runtime"]["execution_request"])
+        execution["input_marker_sha256"] = "bad"
+        with self.assertRaises(ValueError):
+            runtime.validate_execution_request(execution)
+
+    def test_collection_reconciles_remote_calls_and_blocks_missing_receipts(self):
+        claims = self.chain()
+        call = self.claim("call-000000")
+        snapshot = self.store.observe(runtime.SERIES, 1, "snapshot")
+        names = [("handoff.json", self.request), ("release.json", self.grant),
+            ("launch-claim.json", claims[1]), ("environment/worker-claim.json", claims[2]),
+            ("run/load-claim.json", claims[3]), ("run/samples/000000/call-claim.json", call),
+            ("run/summary.json", {"records": [{"status": "TECHNICAL_ERROR"}]+[{"status": "NOT_ATTEMPTED"}]*3762})]
+        archive = self.root/"custody.zip"
+        def bundle(omit=None):
+            with zipfile.ZipFile(archive, "w") as z:
+                for name, value in names:
+                    if name != omit:
+                        z.writestr(name, json.dumps(value))
+        with patch.object(auth, "load", return_value=self.grant), patch.object(auth, "http", return_value=snapshot):
+            bundle()
+            self.assertEqual(operator.verify_remote_custody(self.request, archive)["status"], "RECONCILED")
+            bundle("run/samples/000000/call-claim.json")
+            with self.assertRaisesRegex(ValueError, "UNKNOWN_CALL"):
+                operator.verify_remote_custody(self.request, archive)
+
     def test_missing_input_unversioned_input_and_content_mismatch(self):
         for datasets in ([], ["owner/no-version"]):
             value = copy.deepcopy(self.request)

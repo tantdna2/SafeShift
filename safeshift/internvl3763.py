@@ -340,9 +340,12 @@ def interrupted_summary(output, request, failure):
 
 
 def validate_execution_request(request):
+    from safeshift.pilot.contract import require_hash
+    from safeshift.pilot.artifacts import relative
     require(set(request) == {"source", "cohort", "history", "history_archives", "plan", "input_marker_sha256",
         "projection_sha256"}, "EXECUTION_REQUEST_FIELDS")
     check_source(request["source"])
+    require_hash(request["input_marker_sha256"])
     require(request["cohort"]["scope"] == "PRIVATE_TRAIN_METADATA", "PRIVATE_ORIGINAL_PROJECTION_REQUIRED")
     p = request["plan"]
     require(p["max_seconds"] > 60, "EXPORT_MARGIN_REQUIRES_MORE_THAN_60_SECONDS")
@@ -351,6 +354,12 @@ def validate_execution_request(request):
     require(request["projection_sha256"] == digest(request["cohort"]), "ORIGINAL_PROJECTION_BINDING")
     require(type(request["history_archives"]) is list
         and len(request["history_archives"]) == len(request["history"]), "SEALED_HISTORY_ARCHIVES_REQUIRED")
+    for ancestor, custody in zip(request["history"], request["history_archives"]):
+        require(type(custody) is dict and set(custody) == {"archive", "sha256", "plan"}, "HISTORY_ARCHIVE_CUSTODY_FIELDS")
+        relative(custody["archive"])
+        require(custody["sha256"] == ancestor["evidence_sha256"]
+            and custody["plan"]["run_id"] == ancestor["run_id"]
+            and custody["plan"]["attempt_id"] == ancestor["attempt_id"], "HISTORY_ARCHIVE_PLAN_BINDING")
     return p
 
 

@@ -149,6 +149,7 @@ def bind(grant, request):
     execution = request["bindings"]["runtime"]["execution_request"]
     p = runtime.validate_execution_request(execution)
     require(grant["request_sha256"] == request_hash(request)
+        and request["plan"] == p
         and grant["source_sha256"] == digest(execution["source"])
         and grant["execution_request_sha256"] == digest(execution)
         and grant["notebook_sha256"] == request["notebook_sha256"]
