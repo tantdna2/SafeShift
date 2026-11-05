@@ -12,7 +12,7 @@ from safeshift.pilot.artifacts import write_bytes
 from safeshift.pilot.contract import digest
 
 
-def build(ref, *, execute=False):
+def build(ref, *, execute=False, campaign=False):
     require(len(ref) == 40 and all(c in "0123456789abcdef" for c in ref), "COMMITTED_RUNTIME_REQUIRED")
     spec = runtime.source_spec()
     payload = {}
@@ -67,6 +67,22 @@ from scripts.internvl3763 import launch
 print(json.dumps(launch(path), sort_keys=True))
 '''
         compile(code, "<train3763-execute>", "exec")
+        if campaign:
+            start = code.index("require(set(package)")
+            end = code.index("from scripts.internvl3763 import launch", start)
+            code = code[:start] + '''require(set(package) == {'request', 'campaign_intent'}, 'CAMPAIGN_PACKAGE_FIELDS')
+handoff = package['request']
+require(handoff['scope'] == 'TRAIN3763_CAMPAIGN', 'CAMPAIGN_ONLY')
+from safeshift import internvl3763_campaign as campaign
+grant = campaign.load(handoff['execution_release'])
+campaign.bind(grant, handoff)
+intent = package['campaign_intent']
+require(intent['request'] == handoff and intent['campaign_sha256'] == campaign.digest(grant), 'PACKAGE_CAMPAIGN_INTENT')
+path = root / 'handoff-request.json'
+write(path, handoff)
+write(root / 'campaign-intent.json', intent)
+''' + code[end:]
+            compile(code, "<train3763-campaign>", "exec")
     notebook = {"nbformat": 4, "nbformat_minor": 5, "metadata": {
         "kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"},
         "safeshift": {"identity": runtime.IDENTITY, "runtime_commit": ref, "source_sha256": digest(spec),
@@ -96,6 +112,19 @@ print(json.dumps(launch(path), sort_keys=True))
             "Attempt call/time/GPU/storage caps are exact release fields. Stops before another call when storage/time is insufficient. All3763 statuses retained; resume only after sealed custody and a new release.\n",
             "Antigravity monitors at most15 minutes and exits without cancelling Kaggle. After Owner says complete, resume the saved conversation for real terminal check and evidence collection.\n",
             "Final-source Kaggle environment/weights/inference/export NOT_RUN in this preparation task.\n"]
+        if campaign:
+            notebook["metadata"]["safeshift"]["status"] = "BLOCKED_PENDING_CAMPAIGN_GRANT"
+            notebook["metadata"]["safeshift"]["admission"] = "SERIAL_CAMPAIGN_V1"
+            notebook["cells"][0]["source"] = [
+                "# InternVL grammar V2 — original TRAIN3763 serial campaign\n",
+                "READY_FOR_CODE_REVIEW_ONLY. Final-source Kaggle verification NOT_RUN. No grant or budget is embedded.\n",
+                "One authentic Owner campaign grant, reviewed merged technical revision/audit and mirrored durable intent are required before any Input/provision/GPU/native call. No per-job Owner approval or HTTPS witness.\n",
+                "Use exactly one operator machine and one private version1 job at a time. Unknown submit/history/ZIP stops scheduling for read-only reconciliation. Never replay this notebook manually or copy the ledger to another active machine.\n",
+                "Same original3763 IDs/order/image SHA, checkpoint/runtime, FP16/eager/C1/strict parser/grammarV2. HNLO N/A. No TEST, GT rescue, pooling or output selection.\n",
+                "Resume only NOT_ATTEMPTED. Diagnosed technical repair uses a separate exact-target plan/fix/regression and preserves every previous attempt. Source changes need technical review/audit, never renewed Owner execution approval inside campaign caps.\n",
+                "First authorized final-source run: ordinal0/one call. Measure time/VRAM/RAM/raw/ZIP before larger bounded shards. All3763 statuses stay in each archive.\n",
+                "Authorized side effects: source extraction, pinned isolated software, scratch allocation, bounded GPU/load/calls, create-only native claims in working, raw-before-parse/ZIP/SHA export. Preserve failures and partials.\n",
+                "Antigravity monitors <=15 minutes, checkpoints RUNNING_UNVERIFIED and exits while Kaggle continues; resume the same conversation for terminal collection after the next user message.\n"]
     return notebook
 
 
@@ -104,5 +133,6 @@ if __name__ == "__main__":
     p.add_argument("--source-commit", required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--execute", action="store_true", help="Build a candidate, never grant or submit execution")
+    p.add_argument("--campaign", action="store_true", help="Use campaign admission with --execute")
     a = p.parse_args()
-    write_bytes(a.output, (json.dumps(build(a.source_commit, execute=a.execute), indent=1) + "\n").encode())
+    write_bytes(a.output, (json.dumps(build(a.source_commit, execute=a.execute, campaign=a.campaign), indent=1) + "\n").encode())

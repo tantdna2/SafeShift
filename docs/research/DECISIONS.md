@@ -707,3 +707,40 @@ Separate O2–O6 evidence, exact execution release, numerical resource/Input bou
 durable remote witness deployment and final-source live verification remain
 BLOCKED/NOT_RUN. A candidate/code review or synthetic PASS does not open them.
 Stop at the single Draft PR; no self-issued audit or merge.
+
+## DEC-20261105-OWNER-TRAIN3763-CAMPAIGN-180
+
+Source: [Issue180](https://github.com/tantdna2/SafeShift/issues/180) and direct
+Owner task05/11/2026 (Asia/Bangkok), after PR179 merged at
+`300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2`. This append-only operational successor
+replaces per-attempt Owner permission and mandatory HTTPS witness only for the
+new serial campaign route. Prior decisions, grants, attempts and results remain.
+
+One future authentic Owner campaign grant binds original3763 IDs/order/SHA,
+InternVL3.5/checkpoint/grammarV2/FP16/eager/C1/parser/HNLO N/A, existing rights,
+Inputs, one operator, finite calls/jobs/physical-GPU seconds/deadline, history,
+stop rules and technical repair policy. No grant or numerical budget is issued
+by this code task. Missing O2–O6/third-party/scientific evidence remains PENDING;
+Owner attestation is not a fabricated academic or third-party signature.
+
+Within that grant, sequential shards, pending-only resume and diagnosed exact-
+target technical repair need no renewed Owner execution approval. Codex fixes
+code with tests, technical source review/independent audit/merge and provenance;
+Antigravity operates and collects evidence. Scientific method/data/TEST changes
+or budget exhaustion STOP for the appropriate new decision. Repair never
+overwrites prior errors or selects a favorable scientific output.
+
+Mirrored create-only local journal, global operator lock, intent before the sole
+provider push, exact provider terminal/source, archived raw/ZIP/checksums and
+lineage are the new admission controls. Unknown/ambiguous/lost history blocks
+submission; no refund, automatic retry or cross-machine takeover. This scoped
+single-writer design makes no global exactly-once claim. Full coordinated local
+rollback/lost custody requires independent provider reconciliation and fencing,
+not an empty new ledger. See [contract/runbook](../TRAIN3763_CAMPAIGN.md).
+
+One unified Draft PR only; CPU synthetic tests/notebook/runbook/receipts, no
+actual Kaggle submit/GPU/inference/private raw/TEST in this task. First authorized
+post-merge final-source qualification remains one original ordinal0 call, then
+measured resource limits before larger shards. PR177 PASS does not validate
+the new source. ChatGPT direct GitHub review, independent Antigravity audit and
+separately authorized merge remain required. No self-issued audit/merge/PASS.

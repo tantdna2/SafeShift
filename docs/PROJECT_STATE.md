@@ -1,6 +1,65 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — TRAIN3763 execution candidate after PR178 MERGED — 05/11/2026
+## CURRENT — Issue180 campaign implementation after PR179 MERGED — 05/11/2026
+
+BASE/main `300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2` includes merged PR178/179.
+New isolated branch `feat/train3763-campaign-180`; unrelated local files and
+historical PR177–179 records remain unchanged. [Issue180](https://github.com/tantdna2/SafeShift/issues/180)
+requests one cohesive implementation PR, no live Kaggle/GPU/TEST in this task.
+
+[Campaign contract/runbook](TRAIN3763_CAMPAIGN.md) replaces current notebook
+admission with one authentic finite campaign grant, reviewed technical source
+and serial local mirrored journal. No HTTPS witness deployment or per-job Owner
+approval is required on this route. The old release/witness remain compatibility
+code with their own tests and historical grants; none migrates into this campaign.
+Every intent reserves calls/jobs/physical-GPU seconds without refund before push;
+ambiguous submission, unknown provider state, active job, journal rollback/loss,
+missing custody or corrupt ZIP blocks scheduling. A second host is blocked.
+This is single-operator serial exclusion, not global exactly-once.
+
+Resume excludes every consumed SUCCESS/INVALID/TECHNICAL_ERROR. Separate repair
+binds exact failed record hashes, diagnosis, reviewed source fix and regression.
+All prior outcomes and each attempt's3763 statuses/raw remain in sealed custody.
+Technical revisions can continue under the same grant after source review/audit,
+without renewed Owner execution permission. Scientific identity freezes original
+3763 IDs/order/SHA, grammarV2, checkpoint/C1/parser/FP16/eager/HNLO N/A. Historical
+Qwen2.5/Qwen3/InternVL shards are engineering precedents, never imported predictions.
+Campaign Input admission reuses #173's original master and `inspecsafe-v1-kaggle`
+TRAIN locators via the unchanged byte verifier; no fresh3763-image bundle or
+dataset/checkpoint reupload is required. Master hash is checked before image
+access; no annotation sidecar/TEST enumeration or GT-dependent label rescue.
+
+Antigravity retains the existing SDK/conversation/report lifecycle and <=15-minute
+monitor. RUNNING_UNVERIFIED ends the AI turn while Kaggle continues; later same-
+conversation collection verifies exact terminal/version/source/log/ZIP/SHA/CRC/
+raw/lineage before closing the campaign intent. The next shard is staged explicitly
+inside remaining caps. Final-source ordinal0 qualification/measurement remains
+NOT_RUN; larger shards require measured time/VRAM/RAM/raw/ZIP evidence.
+
+**READY_FOR_CODE_REVIEW_ONLY after recorded CPU acceptance.** No campaign grant,
+finite budget or new execution release has been issued. Actual O2–O6/third-party
+evidence, review/independent audit/merge and final-source Kaggle G0–G6 remain
+PENDING / BLOCKED / NOT_RUN as applicable. Supplied Antigravity read-only account
+PASS and PR177 ordinal0 PASS remain historical evidence; no new connectivity
+probe, upload, submit, GPU/model call, private raw or TEST access was performed.
+Final test counts/hashes and limitations are recorded in this PR's acceptance
+receipt; the snapshots below describe previous tasks, not current readiness.
+
+**Final CPU acceptance:** runtime `8a0a26e103230946f24bc3b01e69c7d244f20bb5`,
+tested source/notebook HEAD `c7130768caecfae039b2323f2fd9fcac5879c6ee`,
+**172/172 PASS, zero skips/errors/
+failures** including installed native CPU GenerationMixin and official SDK
+serialization/capsule/private-version checks. Notebook3/3 PASS; PowerShell3
+scripts plus6 runbook blocks parse PASS and actual identity/report wrappers PASS
+on synthetic-only custody. All84 inherited files match BASE; native generation,
+backend/image preparation, trace binding and configuration AST are unchanged.
+[Acceptance receipt](research/evidence/internvl3763_campaign_20261105/summary.json)
+binds source/notebook/test/log hashes and limitations. Full repository smoke
+timed out at600s and is incomplete; the unchanged official-FP32 suite reproduces
+the same1 failure/9 errors in9 tests on pristine exact BASE and this branch.
+No whole-repository green, live GPU/inference, audit or scientific PASS is claimed.
+
+## Historical snapshot — TRAIN3763 execution candidate after PR178 MERGED
 
 GitHub verified PR178 **MERGED**, merge/main BASE
 `1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`. New isolated branch

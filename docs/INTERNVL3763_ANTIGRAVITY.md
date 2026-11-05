@@ -1,5 +1,28 @@
 # InternVL grammar V2 TRAIN3763 preparation and Antigravity operations
 
+## Current operations — Issue180 campaign route
+
+PR179 merged at `300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2`.
+[Campaign runbook](TRAIN3763_CAMPAIGN.md) now governs admission and technical
+continuation. One Owner grant, one serial operator, mirrored durable intents,
+reviewed source and finite budgets replace per-attempt Owner permission and the
+HTTPS requirement on this route. Resume only pending; repair is explicit and
+diagnosed. Existing SDK/connection and foreground conversation lifecycle are
+reused. No live Kaggle/GPU/TEST is authorized in the implementation PR.
+
+Use the saved handoff directory with `kaggle_handoff.ps1 -Action resume` after
+the next user message. Collection never launches another job. An intact FAIL
+archive can close an intent, preserving failed outcomes for Codex diagnosis;
+BLOCKED/corrupt/missing custody cannot. Initial monitoring <=15 minutes ends at
+RUNNING_UNVERIFIED with no AI background process and no provider cancellation.
+Include request/intent/source hashes, provider version/state, ZIP/SHA/log paths,
+counts/error stage and remaining caps in the Codex handoff. No private raw or
+credentials in GitHub. These operational reports are not independent audit.
+
+The remainder is historical PR178/179 preparation guidance. Per-attempt/new
+release requirements there do not apply to the campaign route; no old release
+or result can be reused as a campaign grant or new prediction.
+
 PR178 is MERGED at `1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`.
 The new execution-candidate task is specified in
 [INTERNVL3763_EXECUTION.md](INTERNVL3763_EXECUTION.md); that document supersedes

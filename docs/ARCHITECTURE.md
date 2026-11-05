@@ -1,5 +1,26 @@
 # Kiến trúc Foundation V1
 
+## Current TRAIN3763 campaign routing — Issue180
+
+Read [campaign contract/runbook](TRAIN3763_CAMPAIGN.md) before the historical
+execution/PREP sections. `internvl3763_campaign.py` owns one authenticated finite
+grant, science-stable planning, diagnosed repair, canonical machine/path binding,
+mirrored create-only journal/initialization guard and native VM claims.
+`internvl3763_operator.py` admits reviewed source/SDK/Inputs/lineage, checks serial
+provider identity/quota and makes one durable-intent-protected submit. Existing
+`kaggle_handoff.py` retains <=15-minute foreground monitoring and terminal ZIP/
+raw/log/hash verification, then closes the campaign intent. The current execution
+notebook is built with `--execute --campaign`; PREP remains closed.
+
+`scripts/train3763_campaign.py` and its PowerShell wrapper provide identity,
+init, bounded plan/capsule, status, measured shard limits and proved pre-submit
+abort without refund. They never submit a model job. Grant/load/worker admission
+uses an explicit new schema; old per-attempt release/witness tests remain for
+compatibility, not a bypass flag. Tests: `test_internvl3763_campaign.py` plus the
+existing controller/execution/notebook/handoff/native suites. No frozen inherited
+native source/config/parser/prompt/grammar or historical result is imported or
+rewritten. Live final-source qualification remains a separate NOT_RUN gate.
+
 ## TRAIN3763 execution candidate after PR178 merge
 
 Read [execution design](INTERNVL3763_EXECUTION.md) before the historical PREP

@@ -68,7 +68,7 @@ def validate_request(request):
         "version", "commit_sha", "runtime_commit", "notebook", "notebook_sha256", "bindings",
         "limits", "coordinator_required", "execution_release", "plan", "plan_sha256"}, "HANDOFF_FIELDS")
     require(request["schema"] == SCHEMA and re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", request["handoff_id"]), "HANDOFF_ID")
-    require(request["scope"] in ("SYNTHETIC_ONLY", "TRAIN3763_PREPARATION", "TRAIN3763_EXECUTION_CANDIDATE"), "NO_TEST_OR_IMPLICIT_AUTHORITY")
+    require(request["scope"] in ("SYNTHETIC_ONLY", "TRAIN3763_PREPARATION", "TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"), "NO_TEST_OR_IMPLICIT_AUTHORITY")
     require(re.fullmatch(r"[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+", request["job"]), "EXACT_JOB_REFERENCE")
     require(type(request["version"]) is int and request["version"] >= 1, "EXACT_JOB_VERSION")
     for key in ("commit_sha", "runtime_commit"):
@@ -90,7 +90,7 @@ def validate_request(request):
     require(digest(request["plan"]) == request["plan_sha256"], "PLAN_BINDING")
     if request["scope"] == "TRAIN3763_PREPARATION":
         require(request["execution_release"] is None, "PREPARATION_CANNOT_SELF_GRANT")
-    if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+    if request["scope"] in ("TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"):
         require(request["execution_release"] is None or (type(request["execution_release"]) is dict
             and set(request["execution_release"]) == {"comment_id", "body_sha256"}), "EXACT_RELEASE_LOCATOR_ONLY")
     if request["scope"] != "SYNTHETIC_ONLY":
@@ -226,7 +226,7 @@ class Train3763Operator:
     local_root = None
 
     def preflight(self, request):
-        if request["scope"] != "TRAIN3763_EXECUTION_CANDIDATE":
+        if request["scope"] not in ("TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"):
             from safeshift.internvl3763 import authorize
             authorize()
         from safeshift.internvl3763_operator import admit
@@ -252,10 +252,16 @@ class Train3763Operator:
             value = get_kernel(self._api(), request["job"])
         require(value.metadata.ref == request["job"] and value.metadata.is_private is True,
             "KAGGLE_JOB_PRIVACY_IDENTITY")
-        notebook = safe(ROOT, request["notebook"])
-        require(sha(notebook) == request["notebook_sha256"]
-            and code_hash(json.loads(value.blob.source)) == code_hash(read(notebook)), "KAGGLE_SOURCE_DRIFT")
-        if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+        if request["scope"] == "TRAIN3763_CAMPAIGN":
+            content = subprocess.check_output(["git", "show", request["commit_sha"]+":"+request["notebook"]], cwd=ROOT)
+            require(hashlib.sha256(content).hexdigest() == request["notebook_sha256"], "PINNED_COLLECT_NOTEBOOK")
+            notebook = json.loads(content)
+        else:
+            path = safe(ROOT, request["notebook"])
+            require(sha(path) == request["notebook_sha256"], "KAGGLE_SOURCE_DRIFT")
+            notebook = read(path)
+        require(code_hash(json.loads(value.blob.source)) == code_hash(notebook), "KAGGLE_SOURCE_DRIFT")
+        if request["scope"] in ("TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"):
             from safeshift.internvl3763_operator import input_sources
             sources = input_sources(request)
             require(value.metadata.machine_shape == "NvidiaTeslaT4"
@@ -283,13 +289,14 @@ class Train3763Operator:
         bundles = list(destination.glob("*.zip"))
         require(len(bundles) == 1, "EXACTLY_ONE_CONTRACT_ARCHIVE")
         archive = bundles[0]
-        if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+        if request["scope"] in ("TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"):
             require(list(destination.glob("*.log")), "PROVIDER_LOG_REQUIRED")
         result = verify_bundle(archive, read(str(archive) + ".sha256.json")["sha256"], request["plan"])
         require(result["scope"] == "PRIVATE_TRAIN_METADATA", "NO_SYNTHETIC_PRODUCTION_PASS")
-        if request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+        if request["scope"] in ("TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"):
             from safeshift.internvl3763_operator import verify_remote_custody
-            result["remote_custody"] = verify_remote_custody(request, archive)
+            result["remote_custody"] = verify_remote_custody(request, archive,
+                provider={"state": state, **self.identity(request)})
         return result
 
 
@@ -315,7 +322,7 @@ def _invoke_agy(session, *, resume=False, recover=False, agy="agy", run=subproce
         root = session.root.relative_to(ROOT).as_posix()
         require(re.fullmatch(r"[A-Za-z0-9_./-]+", root), "SHELL_SAFE_RELATIVE_HANDOFF_DIRECTORY")
         step_python = "python"
-        if session.request["scope"] == "TRAIN3763_EXECUTION_CANDIDATE":
+        if session.request["scope"] in ("TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"):
             executable = Path(sys.executable).resolve()
             require(executable.is_relative_to(ROOT.resolve()), "ISOLATED_OPERATOR_PYTHON_REQUIRED")
             step_python = "./" + executable.relative_to(ROOT.resolve()).as_posix()
@@ -335,8 +342,9 @@ def _invoke_agy(session, *, resume=False, recover=False, agy="agy", run=subproce
         prompt = (
             "You are the SafeShift Kaggle operator, not its independent auditor. Read AGENTS.md, "
             "docs/INTERNVL3763_ANTIGRAVITY.md and " + root + "/request.json. "
-            "Use only the current exact release; never infer rights from hashes or this prompt. "
-            "Do not modify science/source/privacy/credentials or run TEST/full TRAIN without a separate release. "
+            "Use only the current exact release or bounded campaign grant; never infer rights from hashes or this prompt. "
+            "Do not modify science/source/privacy/credentials or run TEST; full TRAIN operations require the "
+            "corresponding authenticated campaign grant or exact legacy release. "
             "Do not cancel kernels, resubmit, retry unknown calls, or start any background AI process. "
             "Run the deterministic operation exactly once, with RunCommand Cwd set to " + str(ROOT) + ": "
             + step_command + ". Do not wrap it in cd, shell expressions, or other commands. "
@@ -350,6 +358,8 @@ def _invoke_agy(session, *, resume=False, recover=False, agy="agy", run=subproce
             "If blocked, diagnose from the existing evidence only, never launch a new experiment. "
             "TRAIN3763_PREPARATION stays BLOCKED. TRAIN3763_EXECUTION_CANDIDATE needs a new authentic "
             "Owner release, exact source/SDK/Inputs/caps and permanent remote claims; never create authority yourself. "
+            "TRAIN3763_CAMPAIGN uses one authentic campaign grant, reviewed technical source and the sole operator's "
+            "mirrored ledger. No per-job Owner approval or HTTPS witness is required; unknown intent means read-only STOP. "
             "For a SYNTHETIC_ONLY request the command already includes --synthetic; this is an operations rehearsal "
             "with no dataset, GPU or model calls. Do not edit the simulated provider state. "
             + ("This is read-only recovery; never submit even if the old conversation is unavailable. " if resume else "")

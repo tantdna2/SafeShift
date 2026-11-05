@@ -43,8 +43,8 @@ class NotebookTests(unittest.TestCase):
         path = runtime.ROOT / "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb"
         notebook = read(path)
         metadata = notebook["metadata"]["safeshift"]
-        self.assertEqual(build(metadata["runtime_commit"], execute=True), notebook)
-        self.assertEqual(metadata["status"], "BLOCKED_PENDING_EXACT_EXECUTION_RELEASE")
+        self.assertEqual(build(metadata["runtime_commit"], execute=True, campaign=True), notebook)
+        self.assertEqual(metadata["status"], "BLOCKED_PENDING_CAMPAIGN_GRANT")
         self.assertIsNone(metadata["execution_authority"])
         cell = notebook["cells"][1]
         self.assertEqual(cell["outputs"], [])
