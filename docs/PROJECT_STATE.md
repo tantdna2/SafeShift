@@ -45,6 +45,20 @@ probe, upload, submit, GPU/model call, private raw or TEST access was performed.
 Final test counts/hashes and limitations are recorded in this PR's acceptance
 receipt; the snapshots below describe previous tasks, not current readiness.
 
+**Final CPU acceptance:** runtime `8a0a26e103230946f24bc3b01e69c7d244f20bb5`,
+tested source/notebook HEAD `c7130768caecfae039b2323f2fd9fcac5879c6ee`,
+**172/172 PASS, zero skips/errors/
+failures** including installed native CPU GenerationMixin and official SDK
+serialization/capsule/private-version checks. Notebook3/3 PASS; PowerShell3
+scripts plus6 runbook blocks parse PASS and actual identity/report wrappers PASS
+on synthetic-only custody. All84 inherited files match BASE; native generation,
+backend/image preparation, trace binding and configuration AST are unchanged.
+[Acceptance receipt](research/evidence/internvl3763_campaign_20261105/summary.json)
+binds source/notebook/test/log hashes and limitations. Full repository smoke
+timed out at600s and is incomplete; the unchanged official-FP32 suite reproduces
+the same1 failure/9 errors in9 tests on pristine exact BASE and this branch.
+No whole-repository green, live GPU/inference, audit or scientific PASS is claimed.
+
 ## Historical snapshot — TRAIN3763 execution candidate after PR178 MERGED
 
 GitHub verified PR178 **MERGED**, merge/main BASE

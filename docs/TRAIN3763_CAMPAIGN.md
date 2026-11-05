@@ -258,3 +258,28 @@ Do not represent a local hash chain as an external immutable witness.
 - Inherited84 runtime files, prompt/parser/grammar/model/config/checkpoint locks are compared with exact BASE. Current notebook and PREP rebuild deterministically from committed source with empty outputs.
 - CPU reproduction: `python -B -m scripts.qualify_internvl3763 --output data/processed/campaign-cpu-new`; notebook tests separately: `python -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v`. Optional native/SDK CPU checks use the already installed pinned environments, no network/weights/GPU.
 - Final sanitized receipt records exact tested source, environment, commands, counts, source/notebook/test/log hashes and baseline limitations. Live final-source Kaggle/Inputs/quota/weights/inference/export, independent audit and scientific qualification remain NOT_RUN/PENDING in this PR.
+
+## Final acceptance — 05/11/2026
+
+[Sanitized receipt](research/evidence/internvl3763_campaign_20261105/summary.json):
+**172/172 CPU tests PASS, zero skips/failures/errors**, including actual installed
+CPU GenerationMixin capture/replay and pinned official SDK serialization, private
+capsule version/bytes, ambiguous submit, duplicate/process exclusion, rollback/
+loss, quota, crash, ZIP/raw custody, original mounts, repair and source revision.
+Notebook3/3 deterministic rebuild/empty-output checks PASS. PowerShell5.1 parses
+all3 scripts and6 runbook blocks; actual identity and synthetic report wrappers
+PASS. No new actual Antigravity AI turn was run; subprocess/conversation behavior
+is covered by contract tests and prior actual CLI evidence remains historical.
+
+Runtime commit `8a0a26e103230946f24bc3b01e69c7d244f20bb5`; source-spec SHA256
+`b571c356361f428eb69278c569bf52a90f362f562b7a3837937dad76f77c1e9c`.
+All84 inherited runtime files match BASE; approved generation, native backend/
+image preparation, trace binding and configuration AST match BASE exactly.
+The full repository smoke was bounded to600s and remains incomplete, not PASS.
+Official-FP32's9-test suite independently reproduces identical1 failure/9 errors
+on pristine BASE and this branch. Historical locks/configuration remain unchanged.
+
+Only current implementation/code review is ready. No live Kaggle submit/upload,
+GPU, real model/image/private raw or TEST access occurred. Campaign grant/caps/
+genuinely missing rights, direct ChatGPT review, independent Antigravity audit,
+authorized merge and subsequent bounded final-source qualification remain open.

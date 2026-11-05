@@ -17,6 +17,11 @@ HTTPS deployment requirements and receipts below are preserved **historical PR17
 route documentation**; they apply only to that compatibility route and are not
 new campaign prerequisites. Existing grants/results cannot be transferred.
 
+Current CPU acceptance is172/172 PASS (zero skips/errors/failures), notebook3/3
+and PowerShell3 scripts/6 runbook blocks PASS. [Current receipt](research/evidence/internvl3763_campaign_20261105/summary.json)
+records exact source, inherited-byte checks and the separately reproduced
+historical full-suite limitations. No actual Kaggle/GPU/TEST/audit/merge occurred.
+
 ## Historical PR179 design and verification
 
 Design recorded before code. BASE is merged PR178,
