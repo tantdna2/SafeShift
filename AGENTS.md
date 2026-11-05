@@ -1,5 +1,28 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner 05/11/2026 — TRAIN3763 grammar V2 và Antigravity CLI
+
+Task mới sau PR177 đã merge: một branch mới từ main và một Draft PR thống nhất
+cho chuẩn bị InternVL3.5 grammar V2 trên toàn bộ3763 TRAIN IDs gốc và cơ chế
+ủy nhiệm vận hành. Xem [hợp đồng/hướng dẫn](docs/INTERNVL3763_ANTIGRAVITY.md).
+Codex viết/sửa code, kiểm thử và quản lý PR; Antigravity CLI1.5.0 nhận phần
+vận hành Kaggle **chỉ khi có exact execution scope/release riêng**. Lưu commit,
+runtime/notebook hash, Input/checkpoint/rights/caps, job/version/conversation ID
+và mọi report/evidence dưới Git-ignored `data/processed/`.
+
+Antigravity theo dõi ban đầu tối đa15 phút; RUNNING thì lưu RUNNING_UNVERIFIED,
+kết thúc lượt AI, không hủy kernel/job hoặc submit lại. Người dùng báo xong thì
+resume đúng conversation (hoặc recovery read-only từ file), kiểm terminal thật,
+thu ZIP/SHA/log/receipt và kiểm toàn vẹn/hợp đồng trước PASS/FAIL/BLOCKED.
+Unknown submission/calls chặn retry; không giữ AI nền trong lúc chờ người dùng.
+Notebook còn cần live permit coordinator không được detach bằng cơ chế này.
+
+Hiện chỉ cấp CPU synthetic/code/notebook preparation và rehearsal CLI local,
+không full TRAIN3763, TEST, Kaggle job hoặc scientific decision mới. Source/method
+đã duyệt và lịch sử #177 bất biến; final-source live verification còn NOT_RUN.
+Báo cáo vận hành không thay independent audit. Dừng Draft PR cho ChatGPT kiểm
+GitHub trước khi tổ chức audit độc lập; merge cần quyền riêng.
+
 ## Owner 02/11/2026 — Khóa luận full TRAIN 3.763 / sửa lỗi có kiểm soát
 
 [Issue #167](https://github.com/tantdna2/SafeShift/issues/167), [DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR](docs/research/DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair): đích nghiên cứu TRAIN là **cùng 3.763 IDs với mọi model đã được chọn**, không dùng TRAIN160 pilot làm full. Phấn đấu nhãn Level01–04 hợp lệ trên toàn planned; INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED phải phân tích nguyên nhân và chuẩn bị sửa/rerun có kiểm soát, **không** bắt buộc bịa 100% SUCCESS, không chữa bằng GT, parser lax hoặc loại ca lỗi.

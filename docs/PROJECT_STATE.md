@@ -1,6 +1,48 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Original TRAIN ordinal0 native inference VERIFIED; stop at Draft PR177
+## CURRENT — TRAIN3763 grammar V2 preparation and Antigravity handoff — 05/11/2026
+
+Direct Owner task starts a new branch from main
+`7633dca168f7bb9fdff84f38a3d374cdbaff5b5a`, after PR177 merged. The old worktree,
+branch and unrelated local files remain untouched. One unified Draft PR; no
+reuse of PR177's execution grant or its completed technical series.
+
+[Design and operator instructions](INTERNVL3763_ANTIGRAVITY.md) were committed
+before implementation. `internvl3763.py` prepares a distinct complete-cohort
+3763-ID/order/hash plan, bounded controller, separate native adapter using the
+approved V2 capture/replay, immutable attempt/status records and sealed ZIPs.
+HNLO stays null/N/A; strict C1/parser/FP16/eager/checkpoint/grammar bytes remain.
+Resume schedules only NOT_ATTEMPTED in that exact series; no historical/smoke
+backfill, favorable selection or completion union. Repair remains a separate
+scientific/execution decision. Public worker/load/call/submit/preflight paths
+are fenced before private Input/GPU/credentials. Caps and execution release
+remain absent. Full-vocabulary capture/storage/export require bounded attempts;
+one-image success does not prove full-cohort storage/time/quality.
+
+`kaggle_handoff.py` persists immutable hash-linked requests/events/reports,
+OS process locks, exact job/version/source bindings and explicit `--conversation`.
+Antigravity runs one narrowly allowed deterministic operation per turn;
+monitoring ends at RUNNING_UNVERIFIED without cancelling the job, then terminal
+collection resumes after the user's message. A submit intent precedes external
+submission; unknown states cannot trigger another submit. Recovery is read-only.
+Reports check ZIP/SHA256/CRC/members, source/plan/runtime and sample/call custody;
+Codex rehashes the returned evidence without repeating routine download/replay.
+
+Synthetic controller and CLI/provider tests plus real agy1.5.0 conversation
+continuation/collection have been exercised. All simulated jobs are local;
+no Kaggle submission, model inference, real TRAIN/GT/private raw or TEST access.
+Headless agy can emit SUCCESS with denied_actions: those turns are BLOCKED,
+and both reports and history are retained. Per-turn exact-command permissions
+preserve configured deny/ask; no skip-permissions or global settings edits.
+Validation counts/hashes and final notebook identity are recorded in the same
+PR's final receipt. Live final-source G0–G6 remain BLOCKED/NOT_VERIFIED. This is
+PREP / READY_FOR_CODE_REVIEW_ONLY, never READY_FOR_KAGGLE or scientific PASS.
+
+Stop for ChatGPT's direct GitHub review. Independent Antigravity audit has not
+been performed by these operational turns; audit and separate merge authority
+are still required. No full3763/TEST execution authority is granted here.
+
+## Historical snapshot — Original TRAIN ordinal0 native inference VERIFIED (PR177 now merged)
 
 Under [Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951)
 and [exact release6626992475](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626992475),

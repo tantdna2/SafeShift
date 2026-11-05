@@ -1,5 +1,20 @@
 # Kiến trúc Foundation V1
 
+## TRAIN3763 grammar V2 and Antigravity handoff — 05/11/2026
+
+Read [scope/operator instructions](INTERNVL3763_ANTIGRAVITY.md), then
+`safeshift/internvl3763.py` (new full-cohort identity/plan, guarded native adapter,
+controller/archive/history) and `safeshift/kaggle_handoff.py` (durable events,
+locks, bounded provider observation, collection and agy JSON/conversation).
+Entry points: `scripts/internvl3763.py`, `build_internvl3763.py`,
+`kaggle_handoff.py`/`.ps1`, `rehearse_kaggle_handoff.py`, `qualify_internvl3763.py`.
+Tests: `test_internvl3763.py`, `test_kaggle_handoff.py`; shared contracts are
+the unchanged V2 capture/grammar and original fulltrain cohort/planner/Inputs.
+No legacy campaign authorization is patched or inherited. Production authority
+is closed before SDK/private Input/GPU/weights. The packaged PREP notebook only
+exports BLOCKED readiness. Synthetic CLI tests are operational rehearsal, not
+an independent audit or live Kaggle/full3763 qualification.
+
 ## InternVL3.5 grammar V2 exact-release campaign — 04/11/2026
 
 `internvl_v2_runtime.py` wraps the unchanged offline candidate loader/input
