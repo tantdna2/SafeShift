@@ -679,3 +679,31 @@ separate. No full TRAIN3763, TEST, real Kaggle job or new model call is authoriz
 by this task. No historical ref/source lock/decision is changed. Final-source
 live gates remain NOT_RUN/BLOCKED. Stop at the unified Draft PR for direct
 ChatGPT GitHub review, then independent audit and separately authorized merge.
+
+## DEC-20261105-OWNER-TRAIN3763-EXECUTION-CANDIDATE
+
+Source: direct Owner task after PR178 MERGED at verified main
+`1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`; new branch/session and exactly one
+unified Draft PR. [Execution design](../INTERNVL3763_EXECUTION.md) records the
+design before implementation. This is software/notebook/CPU synthetic preparation,
+not a scientific-method change or authority to execute on Kaggle.
+
+Codex completes the supervised TRAIN3763 notebook/runner, exact new authority,
+isolated approved SDK, remote atomic permanent claims, resource/history bounds,
+Antigravity handoff and evidence verification. Antigravity owns separately
+authorized operations; ChatGPT directly reviews GitHub and decides audit/merge.
+Owner supplies Antigravity's already verified read-only private Kaggle connection;
+do not repeat authentication/connectivity without a new technical reason.
+
+Preserve original3763 IDs/order/SHA, V2 grammar, checkpoint/C1/strict parser,
+FP16/eager and HNLO null/N/A. Every bounded attempt retains all statuses and raw.
+Ordinary resume excludes consumed INVALID/errors and needs sealed ancestors plus
+a new exact release; no repair without diagnosis/authority, favorable selection,
+scientific pooling or automatic next job. PR177/178 evidence and permissions
+remain historical and cannot authorize this route.
+
+**NO NEW SUBMIT, REAL MODEL/IMAGE INFERENCE, FULL TRAIN OR TEST IN THIS TASK.**
+Separate O2–O6 evidence, exact execution release, numerical resource/Input bounds,
+durable remote witness deployment and final-source live verification remain
+BLOCKED/NOT_RUN. A candidate/code review or synthetic PASS does not open them.
+Stop at the single Draft PR; no self-issued audit or merge.
