@@ -26,8 +26,9 @@ from test_internvl3763_execution import fixture as legacy_fixture
 import test_internvl3763 as controller_fixtures
 
 
-def fixture(ledger_root, *, actual_source=False):
+def fixture(ledger_root, *, actual_source=False, kernel_sources=()):
     request, _, _ = legacy_fixture()
+    request["bindings"]["dataset"]["kernel_sources"] = list(kernel_sources)
     if actual_source:
         notebook = "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb"
         request.update(notebook=notebook, notebook_sha256=sha(runtime.ROOT/notebook),
@@ -39,7 +40,7 @@ def fixture(ledger_root, *, actual_source=False):
         "authorization": "GRANTED_FOR_BOUNDED_CAMPAIGN", "implementation_pr": 181,
         "reviewed_head": "a"*40, "merged_sha": request["commit_sha"], "science_sha256": digest(c.science()),
         "cohort_sha256": digest(cohort), "input_marker_sha256": MASTER_SHA,
-        "inputs": {"dataset_sources": ["nguynanhtn/synthetic-input/1"], "kernel_sources": []},
+        "inputs": {"dataset_sources": ["nguynanhtn/synthetic-input/1"], "kernel_sources": list(kernel_sources)},
         "rights": {key: {"status": "APPROVED", "ref": "https://evidence.invalid/synthetic/"+key,
             "sha256": "1"*64} for key in ("O2", "O3", "O4", "O5", "O6")},
         "review_logins": ["synthetic-reviewer"], "audit_logins": ["synthetic-auditor"],
