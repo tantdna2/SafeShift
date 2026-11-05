@@ -34,8 +34,18 @@ PR. **READY_FOR_CODE_REVIEW_ONLY**; exact execution approval, O2–O6 evidence,
 live final-source environment/weights/inference/export and scientific qualification
 remain **BLOCKED / NOT_RUN / NOT_VERIFIED**. No new Kaggle job, real inference,
 full TRAIN or TEST is run. ChatGPT direct GitHub review, audit decision and
-separately authorized merge remain pending. Validation receipt is finalized in
-the same PR; operational rehearsal never substitutes for independent audit.
+separately authorized merge remain pending. Final runtime/source commit
+`c07121c6a33539fdf4bbb098ba66e3aa999eb28b`: **118/118 CPU synthetic tests PASS,
+zero skips/failures/errors**, including actual native GenerationMixin with scripted
+logits and installed official-SDK request serialization; notebook3/3 and
+PowerShell syntax2/2 PASS. All84 inherited runtime files match BASE. Candidate
+notebook SHA256 `1e206b5599ec75c38a861118567013a673464a72a25f79f7ccf9c862b35f76c1`.
+Actual agy1.5.0 on final source: one simulated submission, two AI turns, explicit
+same-conversation resume, RUNNING_UNVERIFIED -> process exit -> simulated COMPLETE
+-> ZIP/log/SHA256/CRC/members/bindings PASS, zero denied_actions. No background AI
+between turns, no Kaggle/model/image call. [Sanitized receipt](research/evidence/internvl3763_execution_20261105/summary.json).
+Full repository suite was not run in this task; PR178's historical NOT_GREEN
+record remains unchanged. Operational rehearsal is not independent audit.
 
 ## Historical snapshot — PR178 preparation and Antigravity handoff (now MERGED)
 

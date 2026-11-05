@@ -209,3 +209,41 @@ SDK contract was checked against the installed approved source and the official
 The pinned implementation supports server timeout/accelerator arguments,
 versioned Inputs and version-specific log export; live behavior remains untested
 for this candidate. No historical source/hash/approval lock is relaxed.
+
+## Final source receipt
+
+Runtime commit `c07121c6a33539fdf4bbb098ba66e3aa999eb28b`; source-spec SHA256
+`6a5a7490cb81d0026e6e96e5c05b340f5331f2a2faf5040fdcd2c247bd97d694`.
+Candidate notebook SHA256
+`1e206b5599ec75c38a861118567013a673464a72a25f79f7ccf9c862b35f76c1`;
+PREP notebook SHA256
+`7cf9f84159aa700a57be11d9972a9bc702511cff6bc60bf9ba89ee0627dffe14`.
+All84 inherited runtime files match exact BASE; both notebooks rebuild from the
+committed source, compile and have empty outputs. Final **118/118 PASS, no skips**
+includes the synthetic native GenerationMixin/capture/replay, remote permanent
+claim HTTP/process/restart tests, authority/SDK/Input/quota/unknown/network gates,
+supervisor failure/durable INVALID accounting and corrupt evidence/collection.
+Notebook3/3 and PowerShell parse2/2 PASS. This is scoped validation, not a whole-
+repository suite claim; the earlier historical full-suite NOT_GREEN remains.
+
+Actual agy1.5.0 on this runtime completed one synthetic submission and two
+foreground AI turns: saved RUNNING_UNVERIFIED, process exit, explicit same
+conversation resume, simulated COMPLETE, ZIP/log/SHA/CRC/members/bindings PASS;
+no denied_actions and no AI running between turns. This exercises operational
+delegation only, never independent audit or Kaggle execution. Final receipt:
+[summary.json](research/evidence/internvl3763_execution_20261105/summary.json).
+Original CLI envelopes/conversation, all earlier failures/receipts, synthetic ZIPs,
+package environments and test logs are retained under ignored `data/processed/`.
+
+Full CPU reproduction (new output directory, installed CPU-only test environment):
+
+```powershell
+$env:SAFESHIFT3763_SDK_CPU = '1'
+./data/processed/native-cpu-venv/Scripts/python.exe -B -m scripts.qualify_internvl3763 --native --packages data/processed/operator-venv/Lib/site-packages --output data/processed/validation-reproduce-new
+python -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v
+```
+
+CPU test environment versions: torch2.6.0+cpu, torchvision0.21.0+cpu,
+transformers4.55.4, tokenizers0.21.4, numpy1.26.4, Pillow10.4.0. These are CPU
+software checks; they do not replace the unchanged production CUDA/runtime pins.
+All real deployment/execution/live/scientific blockers listed above remain open.
