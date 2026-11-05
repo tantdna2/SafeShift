@@ -117,8 +117,19 @@ requests HTTP adapter stub and actual file/ZIP streaming. Sockets are prohibited
 Run it in the existing operator environment, then the campaign/controller/
 execution/handoff suites and deterministic notebook rebuild tests. The updated
 `scripts.qualify_internvl3763` includes `test_internvl3763_capsule`; a skipped SDK
-suite is not HTTP302 proof. Current repair counts/hashes and CI status will be
-recorded in this PR's new receipt without changing PR181's historical receipt.
+suite is not HTTP302 proof. [New repair receipt and logs](research/evidence/train3763_capsule302_20261105/summary.json)
+record189/189 CPU tests PASS, zero skips/failures/errors, including13 transport
+tests; notebook3/3 PASS. Clean tested HEAD is
+`d961d3c04f0b36f110ff5954f23e60e9ee021829`, runtime
+`216e94bc1a57d7a6715183300ed8088496868417`, source
+`649102f0a4c2a13d87044f3a4c9a7316d9b6d9dee71ebc3ddbacfd196c816934`.
+All84 inherited runtime files and shared transport match BASE. Repo-wide smoke
+is incomplete (600s stop requested, sandbox denial delayed verified process stop
+to about703s); official-FP329 tests with1 failure/9 errors and Candidate160-
+notebook4 tests with1 failure/1 error reproduce identically on pristine BASE and
+this branch. No whole-repo or CI PASS: GitHub Actions has0 configured workflows.
+PR181's historical receipt remains unchanged. Live recovery/source qualification,
+independent audit and authorized merge remain separate pending gates.
 
 ## Historical PR181 implementation contract and acceptance
 

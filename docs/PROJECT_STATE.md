@@ -37,8 +37,18 @@ InternVL-Chat-V1-5 label contradicts those records; a current exact private
 provider source snapshot was not read here, so typo versus provider drift remains
 an explicit reconciliation gate before any later submit. No model substitution.
 
-Final CPU/notebook counts, source/runtime/notebook/test/log identities and CI
-limitations are recorded in the new repair receipt and Draft PR. Real provider
+**CPU acceptance:189/189 PASS, zero skips/failures/errors; notebooks3/3 PASS**
+on clean tested HEAD `d961d3c04f0b36f110ff5954f23e60e9ee021829`.
+Runtime `216e94bc1a57d7a6715183300ed8088496868417`, new source SHA256
+`649102f0a4c2a13d87044f3a4c9a7316d9b6d9dee71ebc3ddbacfd196c816934`.
+[Repair receipt and logs](research/evidence/train3763_capsule302_20261105/summary.json)
+bind exact dependencies/commands/test/notebook identities. Full repository smoke
+is incomplete:600s requested stop, initial sandbox denial, verified test process
+terminated at about703s. Official-FP329 tests (1 failure/9 errors) and historical
+Candidate160-notebook4 tests (1 failure/1 error) reproduce identically on pristine
+exact BASE and this branch. Old scientific/source/notebook locks are preserved.
+No whole-repository green; GitHub Actions has0 configured workflows, no CI PASS.
+Real provider
 recovery, final-source live verification, ChatGPT review, independent audit and
 merge are NOT_RUN / PENDING. Historical snapshots below are not current authority.
 
