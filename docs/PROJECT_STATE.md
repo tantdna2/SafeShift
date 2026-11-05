@@ -42,6 +42,19 @@ Stop for ChatGPT's direct GitHub review. Independent Antigravity audit has not
 been performed by these operational turns; audit and separate merge authority
 are still required. No full3763/TEST execution authority is granted here.
 
+Final runtime `8bff3f3d7f2dff326091e62954e5e81e83716685`; PREP notebook SHA256
+`69e2bb152608a3451ef84ae844761f45f297b0e7ed4391fdd0dbb27c36fa2bd6`.
+Focused CPU87 (84 PASS/3 native skips), pinned CPU-native87/87 PASS, notebook2/2
+PASS; overlapping old V2 regression160 (138 PASS/22 skips), no selected errors.
+Real agy/PowerShell v5 rehearsal: RUNNING_UNVERIFIED -> process exit -> same
+conversation resume -> simulated COMPLETE -> ZIP/log/SHA/CRC PASS. No Kaggle
+job, real data/model call or audit. All84 inherited runtime files match main.
+Broad smoke is NOT_GREEN/incomplete; the Candidate160 official-FP329-test suite
+has the same1 failure/9 errors on pristine main and this branch (fixed config
+digest drift), preserved without changing historical locks. See
+[machine receipt](research/evidence/internvl3763_agy_20261105/summary.json) and
+[verification details](INTERNVL3763_ANTIGRAVITY.md#final-source-verification--05112026).
+
 ## Historical snapshot — Original TRAIN ordinal0 native inference VERIFIED (PR177 now merged)
 
 Under [Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951)

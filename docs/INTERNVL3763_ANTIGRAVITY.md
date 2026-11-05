@@ -159,3 +159,33 @@ python -B -m scripts.internvl3763 --mode prepare --output data/processed/train37
 
 This preparation is ready for source review only. It is not a final-source
 Kaggle GPU/model-fit, full-cohort or scientific PASS.
+
+## Final source verification — 05/11/2026
+
+Runtime `8bff3f3d7f2dff326091e62954e5e81e83716685`; PREP notebook
+`notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb` SHA256
+`69e2bb152608a3451ef84ae844761f45f297b0e7ed4391fdd0dbb27c36fa2bd6`.
+Rebuild/compile/empty-output tests2/2 PASS. Source manifest's84 inherited files
+match exact base main; approved grammar/descriptor/C1 and old notebooks unchanged.
+
+Final focused stdlib87:84 PASS/3 optional native skips; pinned CPU-native87/87
+PASS, no skips (torch2.6.0+cpu, torchvision0.21.0+cpu, transformers4.55.4,
+tokenizers0.21.4). These overlap; do not add them as distinct cases. Additional
+old V2 regression160:138 PASS/22 optional/native/Linux skips. No failure/error
+in these selected checks. Final clean-source v5 ran through the PowerShell
+wrapper and real agy1.5.0: first turn RUNNING_UNVERIFIED, no live AI between
+turns, same conversation resumed, simulated COMPLETE checked, ZIP/log/sidecar
+collected and SHA/CRC/membership/bindings PASS, no denied_actions. One simulated
+submission, zero Kaggle submissions/model calls. Full evidence stays ignored.
+
+Broad repository smoke was interrupted after historical errors; it is not a
+full-suite PASS or a final-HEAD full-suite claim. Isolated
+`test_candidate160_official_fp32` reproduces identically on this branch and a
+pristine detached checkout of exact main:9 tests,1 failure/9 errors, including
+OFFICIAL_FP32_CONFIGURATION_DRIFT and an old fixed-digest assertion. Those
+sources/locks/tests were not changed. No historical gate was weakened.
+
+[Sanitized machine receipt](research/evidence/internvl3763_agy_20261105/summary.json)
+records source/notebook/log/CLI receipt hashes, dependencies, limits and remaining
+BLOCKED live/execution/audit gates. This is operational rehearsal plus code
+preparation, not independent audit or real Kaggle verification.
