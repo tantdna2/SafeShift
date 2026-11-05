@@ -1,6 +1,37 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — TRAIN3763 capsule HTTP302 repair — 05/11/2026
+## CURRENT — TRAIN3763 pinned GetKernel HTTP404 repair — 06/11/2026
+
+BASE `bce8725047753415aa65ed28fc79ef04131fe366` (PR182 merged), branch
+`fix/train3763-kaggle-version-label`. [Exact task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6664802285)
+permits one new Draft PR and offline CPU/installed-SDK tests only. No live
+Kaggle/provider probes, uploads, submit, GPU, model/image inference or TEST.
+
+Both explicit `ApiGetKernelRequest.version_label` assignments now use the same
+strict positive-integer serializer: `1` or `"1"` becomes `"v1"`. Versioned Input
+and status references remain `user/slug/1`; no field omission, latest fallback,
+404 suppression or retry. Wrong/missing version, ref, private metadata or terminal
+state remains blocking. The existing latest-version observations of prior
+campaign jobs/collection remain separate drift checks; an unexpected version2
+cannot masquerade as version1. [Current runbook](TRAIN3763_CAMPAIGN.md#current-pinned-getkernel-http404-repair)
+records the SDK tests, rebuilding and later operations gates in this same PR.
+
+The original PR181 grant/O2–O6, actual Attempt1 INTENT, mirrored ledger/guard,
+capsule and all reserved calls/jobs/3600 GPU-seconds are preserved. No actual
+abort, Attempt2 staging, refund or new grant. Science fingerprint must remain
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+Only operator source and derived committed-runtime/PREP/execution notebook
+identities change; exact clean merged-HEAD admission is retained.
+
+Acceptance results and identities are recorded in the
+[HTTP404 receipt](research/evidence/train3763_versionlabel404_20261106/summary.json).
+No repository-wide/CI or live-provider PASS is claimed. Final-source live
+verification and checkpoint/provider reconciliation are NOT_RUN; direct ChatGPT
+GitHub review, independent Antigravity audit, separately authorized merge and
+authentic new technical/audit attestations remain pending under the same grant.
+Later operations belong to the existing Antigravity operator session.
+
+## Historical — TRAIN3763 capsule HTTP302 repair — 05/11/2026
 
 BASE `2484095e7b29c3c1d5ad79f18523cfa8dd6a0cac` (PR181 merged), branch
 `fix/train3763-capsule-302-recovery`. [Official task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6662845867)

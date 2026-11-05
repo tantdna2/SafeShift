@@ -1,5 +1,76 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
+## Current pinned GetKernel HTTP404 repair
+
+[06/11/2026 task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6664802285),
+BASE `bce8725047753415aa65ed28fc79ef04131fe366` (PR182 merged), fixes only a
+diagnosed SDK version-label blocker. The capsule302 section below records the
+previous repair. No live Kaggle action is permitted in this PR, including
+read-only probes, uploads, aborting actual Attempt1 or staging Attempt2.
+
+`kernel_version_label()` accepts only canonical positive decimal integers or
+strings and produces `vN`. Both pinned `GetKernel` callsites use it: versioned
+`kernel_sources` (the existing `nguynanhtn/safeshift-prepare-internvl35/1`) and
+legacy witness predecessors. The SDK RPC receives `versionLabel: "v1"`, while
+Input locators and `kernels_status` keep `/1`. Missing, zero, boolean, fractional,
+negative, noncanonical or pre-prefixed versions are rejected. Never omit the
+field, catch404 as absence, substitute latest, or add an API retry.
+
+Returned metadata must match the exact ref, numeric version and private flag;
+the Input must be COMPLETE, and a predecessor must be terminal with exact code.
+Unknown/missing metadata/state remains blocking. Other related GetKernel calls
+in `campaign_inventory` and handoff collection deliberately observe latest to
+detect unexpected new job versions, then require the recorded version/identity.
+They contain no numeric `version_label` assignment and are not a fallback for
+pinned calls. Those legacy/shared implementations and the no-redirect/zero-retry
+transport are unchanged. The new next-job regression retains the version2 drift
+guard and rejects missing provider history before scheduling.
+
+`test_internvl3763_versions` uses installed Kaggle2.2.5/kagglesdk0.1.38/
+requests2.34.2, real request serialization and an offline HTTP adapter with
+sockets forbidden. Its synthetic endpoint returns404 for raw `"1"` or a missing
+label and200 for `"v1"`; success still requires version1 metadata. It covers the
+full `campaign_inventory`/`pre_submit_inventory` paths after provider absence,
+both original assignments, malformed versions, ref/private/code/version drift,
+nonterminal/unknown state, full pagination, unexpected/missing campaign jobs,
+quota, grant drift, timeout/no retry and PUSH_INTENT exclusion. Synthetic aborts
+append only after complete valid proof and never refund reservations. The
+actual campaign is not used as a test fixture. A skipped SDK suite is not proof.
+
+```powershell
+# Offline only; reuse the installed isolated operator SDK. No credentials needed.
+$OperatorPython = './data/processed/operator-venv/Scripts/python.exe'
+& $OperatorPython -B -m unittest discover -s tests -p test_internvl3763_versions.py -v
+& $OperatorPython -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v
+```
+
+The focused qualification runner now includes the version transport suite and
+its test hash. [Acceptance receipt and test logs](research/evidence/train3763_versionlabel404_20261106/summary.json)
+bind exact tested commit, SDK/environment, commands, notebook/code/source hashes,
+unchanged science and local custody. Full-repository smoke is not repeated:
+PR182 already documents unrelated historical baseline failures/incomplete smoke;
+this PR makes no whole-repository or CI PASS claim.
+
+The committed-source builder is unchanged: commit runtime source first, build
+both notebooks from that exact40-character commit with `build_internvl3763`
+(`--execute --campaign` for execution), then compare embedded manifest, empty
+outputs, notebook/code hashes and reproducibility. Never modify frozen inherited
+runtime/config/science locks. Exact clean merged-HEAD admission still rejects an
+unreviewed HEAD, changed notebook/source or stale technical revision. Science SHA
+remains `ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+
+Keep the authentic PR181 campaign grant and O2–O6 unchanged; keep Attempt1,
+capsule, ledger/mirror/guard, errors and all charged calls/jobs/GPU-seconds.
+This PR stops at one Draft for direct ChatGPT review, independent Antigravity
+audit and separate merge authorization. After verified merge, authentic new
+technical/audit records must identify this repair PR and exact merged code.
+Only the existing Antigravity operations session may then perform fresh live
+provider-absence, quota, pinned-version and checkpoint-byte reconciliation under
+the same grant before the separately gated no-refund abort/new unique capsule/
+Attempt2 workflow below. Any provider/version/history ambiguity means STOP.
+No final-source Kaggle, GPU/model, scientific qualification or TEST PASS is
+inferred from the offline tests.
+
 ## Current capsule HTTP302 repair and Attempt1 recovery
 
 [Owner task / ChatGPT diagnosis](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6662845867)
