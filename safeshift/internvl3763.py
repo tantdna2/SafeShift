@@ -447,9 +447,14 @@ def worker(request_path=None, *, output=None, scratch=None, inputs=None, deadlin
     environment_out.mkdir(exist_ok=False)
     write(environment_out / "worker-claim.json", authority.activation_claim())
     source, weights = preflight(request["source"], environment_out, scratch, inputs, deadline)
-    root, cohort, rows = admit(inputs, request["input_marker_sha256"], request["projection_sha256"])
+    if handoff["scope"] == "TRAIN3763_CAMPAIGN":
+        from safeshift.internvl3763_campaign import admit_inputs
+        root, cohort, rows, image_receipt = admit_inputs(inputs, request["input_marker_sha256"], request["projection_sha256"])
+    else:
+        root, cohort, rows = admit(inputs, request["input_marker_sha256"], request["projection_sha256"])
+        image_receipt = verify_image_bytes(root, cohort, rows)
     require(cohort == request["cohort"], "ORIGINAL_MASTER_CUSTODY")
-    write(environment_out / "image-bytes.json", verify_image_bytes(root, cohort, rows))
+    write(environment_out / "image-bytes.json", image_receipt)
     return _execute(Path(output) / "run", None, cohort, p,
         lambda end: NativeBackend(source, weights, Path(output) / "run", min(end, deadline)),
         image_path=lambda row: safe(root, rows[row["ordinal"]]["image"]),

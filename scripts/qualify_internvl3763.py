@@ -28,7 +28,7 @@ def main(argv=None):
     if a.native:
         dependencies = {name: importlib.metadata.version(name) for name in
             ("torch", "torchvision", "transformers", "tokenizers", "numpy", "Pillow")}
-    names = ["test_internvl3763", "test_internvl3763_execution", "test_internvl3763_campaign", "test_kaggle_handoff", "test_fulltrain", "test_internvl_grammar"]
+    names = ["test_internvl3763", "test_internvl3763_execution", "test_internvl3763_campaign", "test_kaggle_handoff", "test_fulltrain", "test_internvl_grammar", "test_kaggle173_verification"]
     suite = unittest.defaultTestLoader.loadTestsFromNames(names)
     with (a.output / "tests.log").open("x", encoding="utf8") as log:
         result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)

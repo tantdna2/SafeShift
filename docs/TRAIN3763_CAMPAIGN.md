@@ -57,7 +57,7 @@ schema is `safeshift-train3763-campaign-v1`:
 | campaign_id, operator_id, operator_root_sha256 | Safe IDs and hash of canonical ledger location plus machine identity. `identity` prints the hash without publishing personal paths. Another directory/host cannot initialize the same grant. |
 | authorization | `GRANTED_FOR_BOUNDED_CAMPAIGN`, issued by the Owner after real decisions. |
 | implementation_pr, reviewed_head, merged_sha | This merged PR, exact reviewed HEAD and actual merge SHA on main. No PR177–179 grant reuse. |
-| science_sha256, cohort_sha256, input_marker_sha256 | Frozen science fingerprint and exact original3763 projection/master marker. No labels/GT are embedded in plans. |
+| science_sha256, cohort_sha256, input_marker_sha256 | Frozen science fingerprint, original3763 projection and exact original `master_manifest.json` bytes SHA (the locked MASTER_SHA, not a newly invented fulltrain marker). No labels/GT are embedded in plans. |
 | inputs | Exact immutable `dataset_sources` and `kernel_sources`, including existing original data/master/checkpoint mounts. New small execution capsules may be added only under the existing Owner account. |
 | rights | O2–O6, each with actual `status`, HTTPS `ref`, content `sha256`. Accepted statuses are APPROVED or NOT_REQUIRED_WITH_BASIS. No automatic waiver or PENDING-to-approved conversion. A reference is an attestation, not a forged third-party signature. |
 | review_logins, audit_logins | Principals allowed to attest technical review and independent audit. These roles cannot issue more campaign budget. |
@@ -109,7 +109,16 @@ Antigravity first checks existing versioned `inspecsafe-v1-kaggle`,
 state/quota and local output custody. Reuse exact existing bytes/mounts; never
 reupload images/checkpoints merely to match a new slug. #173 and PR177 identify
 both checkpoint shard hashes and the successful runtime, not authority for this
-new source. Only already permitted original TRAIN metadata may supply `$Cohort`.
+new source. Reuse #173's private `ordered-projection.json` as `$Cohort` after
+checking its recorded SHA, rather than regenerate metadata from annotations.
+The campaign worker discovers the existing `master_manifest.json`, checks its
+locked original MASTER_SHA, then calls the unchanged #173 `verify_train` against
+`inspecsafe-v1-kaggle/InspecSafe-V1-Kaggle/train/DATA_PATH`. Only original
+master-listed `train/Annotations/*.jpg` locators are hashed/opened; TEST and
+annotation sidecars are never enumerated. This route needs no
+fresh_fulltrain_input.json, opaque images/ copy or new3763-image upload. The
+legacy candidate route retains its packed-Input contract. Only already permitted
+original TRAIN metadata may supply `$Cohort`.
 The one campaign grant is issued after the remaining real rights/budget/stop-rule
 questions are settled. Missing rights outside Owner authority require that actual
 authority; the runner cannot infer them. Save its authentic locator privately.
@@ -124,8 +133,9 @@ it is separate from all existing data and checkpoint Inputs.
 
 ```powershell
 # Once per campaign. Use the exact operator_id chosen in the authentic grant.
-& $OperatorPython -B -m scripts.train3763_campaign init --directory $Ledger --mirror $Mirror --grant $GrantLocator --operator-id $OperatorId
-$JobSeconds = $ApprovedCampaign.caps.job_seconds # from the authenticated campaign record
+$ApprovedCampaign = & $OperatorPython -B -c 'import json,sys; from safeshift.internvl3763_campaign import load; from safeshift.pilot.artifacts import read; print(json.dumps(load(read(sys.argv[1]))))' $GrantLocator | ConvertFrom-Json
+& $OperatorPython -B -m scripts.train3763_campaign init --directory $Ledger --mirror $Mirror --grant $GrantLocator --operator-id $ApprovedCampaign.operator_id
+$JobSeconds = $ApprovedCampaign.caps.job_seconds
 $Handoff = 'data/processed/train3763-campaign/attempt-1'
 & $OperatorPython -B -m scripts.train3763_campaign plan --directory $Ledger --grant $GrantLocator --template $Context --cohort $Cohort --handoff $Handoff --mode initial --calls 1 --seconds $JobSeconds
 ```
@@ -148,7 +158,7 @@ Owner-controlled capsule) in package/ and use the pinned official CLI:
 
 ```powershell
 # Default is private. Never add --public; never change existing dataset privacy.
-& $OperatorPython -m kaggle datasets create -p "$Handoff/package"
+& $OperatorPython -m kaggle datasets create -p "$Handoff/package" --keep-tabular
 # Inspect the actual version/files read-only; mismatch or ambiguous upload is NO-GO.
 ./scripts/kaggle_handoff.ps1 -Python $OperatorPython -Action handoff -Directory $Handoff
 ```

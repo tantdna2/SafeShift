@@ -24,6 +24,10 @@ Technical revisions can continue under the same grant after source review/audit,
 without renewed Owner execution permission. Scientific identity freezes original
 3763 IDs/order/SHA, grammarV2, checkpoint/C1/parser/FP16/eager/HNLO N/A. Historical
 Qwen2.5/Qwen3/InternVL shards are engineering precedents, never imported predictions.
+Campaign Input admission reuses #173's original master and `inspecsafe-v1-kaggle`
+TRAIN locators via the unchanged byte verifier; no fresh3763-image bundle or
+dataset/checkpoint reupload is required. Master hash is checked before image
+access; no annotation sidecar/TEST enumeration or GT-dependent label rescue.
 
 Antigravity retains the existing SDK/conversation/report lifecycle and <=15-minute
 monitor. RUNNING_UNVERIFIED ends the AI turn while Kaggle continues; later same-

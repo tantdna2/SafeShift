@@ -16,7 +16,7 @@ import time
 
 from safeshift.candidates.source import require
 from safeshift.pilot.artifacts import read, write, sha, safe
-from safeshift.pilot.contract import digest, require_hash
+from safeshift.pilot.contract import digest, require_hash, MASTER_SHA
 
 SCHEMA = "safeshift-train3763-campaign-v1"
 SCOPE = "TRAIN3763_CAMPAIGN"
@@ -86,6 +86,7 @@ def validate(grant, *, now=None, collection=False):
     for key in ("science_sha256", "cohort_sha256", "input_marker_sha256", "operator_root_sha256"):
         require_hash(grant[key])
     require(grant["science_sha256"] == digest(science()), "SCIENTIFIC_CHANGE_REQUIRES_NEW_DECISION")
+    require(grant["input_marker_sha256"] == MASTER_SHA, "ORIGINAL_EXISTING_MASTER_REQUIRED")
     require(type(grant["issued_unix"]) is int and type(grant["expires_unix"]) is int
         and 0 < grant["expires_unix"] - grant["issued_unix"] <= 366 * 86400
         and (collection or grant["issued_unix"] <= (time.time() if now is None else now) < grant["expires_unix"]),
@@ -180,7 +181,7 @@ def plan(cohort, history, *, action, run_id, attempt_id, max_calls, max_seconds,
     return {**value, "schema": PLAN, "science_sha256": digest(science()), "runtime_source": runtime.source_spec()}
 
 
-def bind(grant, request, *, check_revision=True, reader=None):
+def bind(grant, request, *, reader=None):
     from safeshift import internvl3763 as runtime
     from safeshift.kaggle_handoff import validate_request
     from safeshift.internvl3763_operator import input_sources
@@ -208,12 +209,37 @@ def bind(grant, request, *, check_revision=True, reader=None):
         and p["max_seconds"] >= 120 and request["version"] == 1
         and re.fullmatch(r"nguynanhtn/safeshift-train3763-" + re.escape(grant["campaign_id"]) + r"-[1-9][0-9]*", request["job"]),
         "CAMPAIGN_JOB_CAPS_IDENTITY")
-    if check_revision:
-        reviewed = revision(grant, request, reader=reader)
-        if p["action"] == "repair":
-            require(p["repair"]["fix_sha256"] == reviewed["source_sha256"]
-                and p["repair"]["regression_sha256"] == reviewed["regression_sha256"], "REPAIR_REVIEWED_FIX_REGRESSION")
+    reviewed = revision(grant, request, reader=reader)
+    if p["action"] == "repair":
+        require(p["repair"]["fix_sha256"] == reviewed["source_sha256"]
+            and p["repair"]["regression_sha256"] == reviewed["regression_sha256"], "REPAIR_REVIEWED_FIX_REGRESSION")
     return execution
+
+
+def admit_inputs(inputs, expected_master_sha, expected_projection):
+    """Reuse #173's original mounts/locators; no copied 3763-image bundle.
+
+    Only the hash-locked TRAIN master and its listed TRAIN JPGs are read. The
+    existing verifier does not enumerate TEST, annotations or image sidecars.
+    """
+    from safeshift.candidates.train_inputs import discover, mounts
+    from safeshift.candidates.source import snapshot_stat
+    from safeshift.verification173 import verify_train
+    master = discover(inputs, "master_manifest.json")
+    require(snapshot_stat(master).st_size <= 16*2**20
+        and sha(master) == expected_master_sha == MASTER_SHA, "ORIGINAL_EXISTING_MASTER_REQUIRED")
+    original = [path for path in mounts(inputs) if path.name == "inspecsafe-v1-kaggle"]
+    require(len(original) == 1, "UNIQUE_ORIGINAL_DATASET_MOUNT")
+    image_root = safe(original[0], "InspecSafe-V1-Kaggle/train/DATA_PATH")
+    require(image_root.is_dir(), "ORIGINAL_TRAIN_LAYOUT_REQUIRED")
+    checked, cohort, mapping = verify_train(master, image_root)
+    require(digest(cohort) == expected_projection and checked["verified_images"] == 3763
+        and checked["status"] == "TRAIN_BYTES_PASS", "ORIGINAL_3763_INPUT_CUSTODY")
+    rows = [{"ordinal": row["ordinal"], "sample_id": row["sample_id"], "image_sha256": row["image_sha256"],
+        "image": row["image_locator"].removeprefix("DATA_PATH/")} for row in mapping]
+    require(len(rows) == 3763 and all(row["image"].startswith("train/Annotations/") for row in rows), "TRAIN_LOCATORS_ONLY")
+    return image_root, cohort, rows, {**checked, "input_copy_bytes": 0, "download_bytes": 0,
+        "layout": "EXISTING_ISSUE173_ORIGINAL_MOUNTS", "labels_exported": False}
 
 
 def _sync_directory(path):

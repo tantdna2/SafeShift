@@ -21,7 +21,7 @@ from safeshift import internvl3763_release as old
 from safeshift.candidates.fulltrain_run import synthetic_cohort, synthetic_bytes
 from safeshift.kaggle_handoff import lock
 from safeshift.pilot.artifacts import write, read, sha, export
-from safeshift.pilot.contract import digest
+from safeshift.pilot.contract import digest, MASTER_SHA
 from test_internvl3763_execution import fixture as legacy_fixture
 import test_internvl3763 as controller_fixtures
 
@@ -38,7 +38,7 @@ def fixture(ledger_root, *, actual_source=False):
         "operator_root_sha256": c.operator_binding(ledger_root),
         "authorization": "GRANTED_FOR_BOUNDED_CAMPAIGN", "implementation_pr": 181,
         "reviewed_head": "a"*40, "merged_sha": request["commit_sha"], "science_sha256": digest(c.science()),
-        "cohort_sha256": digest(cohort), "input_marker_sha256": "a"*64,
+        "cohort_sha256": digest(cohort), "input_marker_sha256": MASTER_SHA,
         "inputs": {"dataset_sources": ["nguynanhtn/synthetic-input/1"], "kernel_sources": []},
         "rights": {key: {"status": "APPROVED", "ref": "https://evidence.invalid/synthetic/"+key,
             "sha256": "1"*64} for key in ("O2", "O3", "O4", "O5", "O6")},
@@ -52,7 +52,7 @@ def fixture(ledger_root, *, actual_source=False):
             "test": False, "scientific_selection": "PENDING", "pooling": False}}
     p = c.plan(cohort, [], action="initial", run_id="synthetic180-1", attempt_id="attempt-1", max_calls=1, max_seconds=1800)
     execution = request["bindings"]["runtime"]["execution_request"]
-    execution.update(plan=p, source=runtime.source_spec())
+    execution.update(plan=p, source=runtime.source_spec(), input_marker_sha256=MASTER_SHA)
     request.update(scope=c.SCOPE, handoff_id="synthetic180-1", job="nguynanhtn/safeshift-train3763-synthetic180-1", plan=p,
         plan_sha256=digest(p), limits={"monitor_seconds": 900, "job_seconds": 1800, "max_calls": 1})
     request["bindings"]["dataset"]["execution_request_sha256"] = digest(execution)
@@ -262,6 +262,32 @@ class CampaignTests(unittest.TestCase):
             self.assertTrue(old.authorize("call", ordinal=0)["created"])
             with self.assertRaisesRegex(ValueError, "REPLAY"):
                 old.authorize("call", ordinal=0)
+
+    def test_production_worker_routes_campaign_to_original_mounts_before_model_load(self):
+        from safeshift.fulltrain import inputs as packed
+        request_path = self.root/"worker-request.json"
+        write(request_path, self.request)
+        intent = self.ledger.reserve(self.request)
+        write(self.root/"campaign-intent.json", intent)
+        cohort = self.request["bindings"]["runtime"]["execution_request"]["cohort"]
+        out = self.root/"worker-output"; out.mkdir()
+        source = self.root/"checkpoint-source"; source.mkdir()
+        (source/"tokenizer.json").write_text("SYNTHETIC_TOKENIZER_BYTES", encoding="utf8")
+        rows = [{**row, "image": f"train/Annotations/synthetic-{row['ordinal']:06d}.jpg"} for row in cohort["samples"]]
+        self.addCleanup(setattr, old, "_active", None)
+        old._active = None
+        with patch.object(old, "activate", return_value=self.grant), \
+                patch.object(runtime, "authorize"), patch.object(old, "activation_claim", return_value={"scope": "SYNTHETIC"}), \
+                patch.object(runtime, "preflight", return_value=(source, self.root/"weights")), \
+                patch.object(packed, "admit", side_effect=AssertionError("NO_NEW_PACKED_3763_BUNDLE")), \
+                patch.object(packed, "verify_image_bytes", side_effect=AssertionError("NO_OPAQUE_COPY_VALIDATION")), \
+                patch.object(c, "admit_inputs", return_value=(self.root/"original", cohort, rows, {"input_copy_bytes": 0})) as admission, \
+                patch.object(runtime, "_execute", return_value={"scope": "SYNTHETIC_DISPATCH_CHECK"}) as execute:
+            result = runtime.worker(request_path, output=out, scratch=self.root/"scratch", inputs=self.root/"inputs", deadline=1000)
+        self.assertEqual(result["scope"], "SYNTHETIC_DISPATCH_CHECK")
+        admission.assert_called_once_with(self.root/"inputs", MASTER_SHA, digest(cohort))
+        self.assertEqual(execute.call_args.kwargs["image_path"](rows[0]), self.root/"original/train/Annotations/synthetic-000000.jpg")
+        self.assertEqual(read(out/"environment/image-bytes.json"), {"input_copy_bytes": 0})
 
     def test_duplicate_notebook_launch_survives_new_claim_object(self):
         intent = self.ledger.reserve(self.request)
@@ -512,6 +538,43 @@ class CampaignLineageTests(unittest.TestCase):
 
 
 class CampaignStagingTests(unittest.TestCase):
+    def test_existing_original_mounts_reuse_issue173_verifier_without_new_image_bundle(self):
+        from safeshift import verification173
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            master = root/"safeshift-pilot-input/master_manifest.json"
+            write(master, {"notice": "SYNTHETIC_MASTER_ADAPTER_FIXTURE"})
+            image_root = root/"inspecsafe-v1-kaggle/InspecSafe-V1-Kaggle/train/DATA_PATH"
+            image_root.mkdir(parents=True)
+            cohort = synthetic_cohort()
+            mapping = [{**row, "image_locator": f"DATA_PATH/train/Annotations/synthetic-{row['ordinal']:06d}.jpg"}
+                for row in cohort["samples"]]
+            receipt = {"status": "TRAIN_BYTES_PASS", "verified_images": 3763, "labels_exported": False}
+            with patch.object(c, "MASTER_SHA", sha(master)), patch.object(verification173, "verify_train", return_value=(receipt, cohort, mapping)) as verifier:
+                actual_root, actual, rows, checked = c.admit_inputs(root, sha(master), digest(cohort))
+                verifier.assert_called_once_with(master, image_root)
+                self.assertEqual(actual_root, image_root)
+                self.assertEqual(actual, cohort)
+                self.assertEqual(rows[0]["image"], "train/Annotations/synthetic-000000.jpg")
+                self.assertEqual(checked["input_copy_bytes"], 0)
+                self.assertFalse((root/"fresh_fulltrain_input.json").exists())
+                self.assertNotIn("level", rows[0])
+                self.assertNotIn("domain", rows[0])
+                with self.assertRaisesRegex(ValueError, "ORIGINAL_3763"):
+                    c.admit_inputs(root, sha(master), "0"*64)
+                write(root/"another-master/master_manifest.json", {"notice": "DUPLICATE_SYNTHETIC_MASTER"})
+                with self.assertRaisesRegex(ValueError, "FOUND_2"):
+                    c.admit_inputs(root, sha(master), digest(cohort))
+
+    def test_original_input_admission_rejects_wrong_master_before_image_bytes(self):
+        from safeshift import verification173
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write(root/"safeshift-pilot-input/master_manifest.json", {"notice": "SYNTHETIC_WRONG_MASTER"})
+            with patch.object(verification173, "verify_train", side_effect=AssertionError("NO_IMAGE_ACCESS")), \
+                    self.assertRaisesRegex(ValueError, "ORIGINAL_EXISTING_MASTER"):
+                c.admit_inputs(root, MASTER_SHA, "0"*64)
+
     def test_extracted_runtime_binds_campaign_without_repository_site_packages_or_network(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
