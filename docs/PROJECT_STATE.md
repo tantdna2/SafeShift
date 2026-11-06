@@ -1,6 +1,62 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — TRAIN3763 pinned GetKernel HTTP404 repair — 06/11/2026
+## CURRENT — TRAIN3763 signed capsule HTTPS443 repair — 06/11/2026
+
+BASE `46f0a318a2b822745e3e561869fa69570ac0c220` (PR183 merged), branch
+`fix/train3763-capsule-https443`. [Official task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6666341490)
+permits code/offline CPU/installed-SDK tests and one Draft PR only. No real Kaggle
+probe/upload/abort/staging/submit, GPU/model/image inference, TEST or science change.
+
+`capsule_http()` accepts only exact HTTPS authorities `storage.googleapis.com`
+and `storage.googleapis.com:443`. Other ports/hosts/userinfo, malformed Locations
+and chains remain blocked. One anonymous GET, no credential forwarding, TLS,
+timeouts/deadline/byte bounds, zero retry, SHA256/ZIP/exact Input proof before
+PUSH_INTENT and duplicate-submit protections remain intact. The old test's
+rejection of443 is replaced with installed pinned SDK/adapter positive coverage
+for both URL forms, including the actual submit boundary and preserved failures.
+These are offline synthetic tests, not real-provider proof.
+
+**Current operational state supplied by Antigravity via the official task:**
+Attempt1 ABORTED_PRE_SUBMIT, never submitted; Attempt2 INTENT with private capsule
+`nguynanhtn/safeshift-capsule-ivl35-attempt2/1`, no PUSH_INTENT or submit reported.
+Reserved2 calls/2 jobs/7200 physical GPU-s; reported actual GPU consumption0.
+Codex has not freshly queried provider or modified actual local campaign custody.
+Keep original PR181 grant/O2-O6, all attempts/raw/errors/context/capsules/journals;
+no reset, refund or reuse of Attempt2 under changed source.
+
+[Current recovery/preflight runbook](TRAIN3763_CAMPAIGN.md#current-signed-https443-capsule-repair-and-attempt2-recovery):
+after review/independent audit/authorized merge/postmerge verification and genuine
+new technical/audit attestations, the same Antigravity operations session must
+freshly prove Attempt2 has no PUSH_INTENT, expected job2 truly absent, no active
+job/quota/history ambiguity. Only then close Attempt2 without refund and stage
+a unique Attempt3/context/capsule with new source, original ordinal0,1 call/1800s,
+expected job `nguynanhtn/safeshift-train3763-ivl35-train3763-3`. Cumulative
+reservation becomes3 calls/3 jobs/10800 physical GPU-s inside the unchanged grant.
+Real-provider signed-download/full-byte proof must pass in a separate temporary
+proof directory immediately after new capsule staging/upload, before any job
+POST/PUSH_INTENT. Earlier possible read-only gates run before staging. Old
+Attempt2 cannot supply new-source capsule proof. Offline PASS is not this proof.
+
+Runtime and both notebooks acquire new identities through the unchanged
+committed-source builder; science SHA256 must remain
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+[Acceptance receipt](research/evidence/train3763_capsule443_20261106/summary.json)
+records exact tested source, hashes, commands, results and remaining gates in
+this same PR. Final-source live verification, direct ChatGPT GitHub review,
+independent audit, merge and real Attempt2/Attempt3 operations remain pending.
+Academic/final scientific selection stays PENDING; no new qualification claimed.
+
+**CPU acceptance:213/213 PASS, notebooks3/3 PASS, zero skips/failures/errors** on
+clean tested commit `8803a5583d62d06760fb9bc5e9fb19e453d8ab4f`, including20 capsule
+transport tests. Runtime `e51211cbeda58a2ed4bea65c700adf36b743b973`, source SHA256
+`95857891faf5e8da623ea408f580c899430e4bc464665d128f086575cea76f37`.
+All84 inherited files and all89 other manifest files match BASE. Both notebook
+payloads differ only in the operator module. New runbook PowerShell parsing and
+its embedded Python synthetic SDK rehearsal PASS, without journal mutation/push.
+Subsequent receipt publication changes only documentation/evidence. No whole-repo
+smoke or CI PASS is claimed; the linked receipt preserves scope and limitations.
+
+## Historical — TRAIN3763 pinned GetKernel HTTP404 repair — 06/11/2026
 
 BASE `bce8725047753415aa65ed28fc79ef04131fe366` (PR182 merged), branch
 `fix/train3763-kaggle-version-label`. [Exact task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6664802285)
@@ -13,7 +69,7 @@ and status references remain `user/slug/1`; no field omission, latest fallback,
 404 suppression or retry. Wrong/missing version, ref, private metadata or terminal
 state remains blocking. The existing latest-version observations of prior
 campaign jobs/collection remain separate drift checks; an unexpected version2
-cannot masquerade as version1. [Current runbook](TRAIN3763_CAMPAIGN.md#current-pinned-getkernel-http404-repair)
+cannot masquerade as version1. [Historical runbook](TRAIN3763_CAMPAIGN.md#historical-pinned-getkernel-http404-repair)
 records the SDK tests, rebuilding and later operations gates in this same PR.
 
 The original PR181 grant/O2–O6, actual Attempt1 INTENT, mirrored ledger/guard,
@@ -47,7 +103,7 @@ BASE `2484095e7b29c3c1d5ad79f18523cfa8dd6a0cac` (PR181 merged), branch
 requires one Draft PR, code/CPU tests only, no Kaggle/provider probe/upload/submit,
 GPU, real model/image inference or TEST. Unrelated local files are preserved.
 
-[Updated contract/recovery runbook](TRAIN3763_CAMPAIGN.md#current-capsule-http302-repair-and-attempt1-recovery):
+[Historical contract/recovery runbook](TRAIN3763_CAMPAIGN.md#historical-capsule-http302-repair-and-attempt1-recovery):
 one exact SDK capsule-download302 may become one anonymous TLS storage GET.
 The shared no-redirect transport is unchanged. Zero retry, finite timeout/byte/
 elapsed bounds, exact version/private owner/file/bytes/ZIP/SHA checks remain before

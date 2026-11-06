@@ -1,0 +1,172 @@
+{
+  "all_other_manifest_files_unchanged": 89,
+  "base": "46f0a318a2b822745e3e561869fa69570ac0c220",
+  "base_source_sha256": "ed3b696b8fd76c542df4424e382fc35ac43c5f7b5581c10394a3ea4c584d4667",
+  "changed_manifest_files": [
+    "safeshift/internvl3763_operator.py"
+  ],
+  "ci_pass_claimed": false,
+  "commands": [
+    "python -B -m scripts.build_internvl3763 --source-commit e51211cbeda58a2ed4bea65c700adf36b743b973 --output <new-prep.ipynb>",
+    "python -B -m scripts.build_internvl3763 --source-commit e51211cbeda58a2ed4bea65c700adf36b743b973 --output <new-execution.ipynb> --execute --campaign",
+    "SAFESHIFT3763_SDK_CPU=1 .venv/Scripts/python.exe -B -m scripts.qualify_internvl3763 --output data/processed/train3763-capsule443-20261106/focused --native --packages data/processed/internvl_grammar_v2/packages --packages data/processed/internvl_v2_native/deps --packages data/processed/operator-venv/Lib/site-packages",
+    "python -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v (installed operator SDK, local receipt runner)",
+    "Runbook PowerShell AST parse; embedded Python compile and synthetic installed-SDK/adapter execution (sockets forbidden)"
+  ],
+  "date": "2026-11-06",
+  "exact_clean_merged_head_admission_guards_unchanged": true,
+  "focused_cpu": {
+    "dependencies": {
+      "Pillow": "12.3.0",
+      "numpy": "2.4.6",
+      "tokenizers": "0.21.4",
+      "torch": "2.6.0+cpu",
+      "torchvision": "0.21.0+cpu",
+      "transformers": "4.55.4"
+    },
+    "errors": 0,
+    "failures": 0,
+    "log_sha256": "9ae683403e1975f379de5fedf82b8abb0380f093249d488ddebfca821adaf0e6",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "skips": 0,
+    "status": "PASS",
+    "test_suites": [
+      "test_internvl3763",
+      "test_internvl3763_execution",
+      "test_internvl3763_campaign",
+      "test_internvl3763_capsule",
+      "test_internvl3763_versions",
+      "test_kaggle_handoff",
+      "test_fulltrain",
+      "test_internvl_grammar",
+      "test_kaggle173_verification"
+    ],
+    "tests": 213,
+    "tests_sha256": {
+      "scripts/qualify_internvl3763.py": "1298945e3d74726051154296a7e71746ab6a88d208a5fc61c3806a97dc64ee4b",
+      "tests/test_internvl3763.py": "51e15783cad6fc86158faa3929fd1fe4e4a940fb6a5ddf50a5cda9cb23e0d7fe",
+      "tests/test_internvl3763_campaign.py": "102bc9323376a87dc6a251177c0717638fea3e63d18992ef16fff1396094dff8",
+      "tests/test_internvl3763_capsule.py": "a94b82a579f2f16a842aaa9c4c6616dcc98d8ebb7b2bd0d53fc1cd1f9b9e29a2",
+      "tests/test_internvl3763_execution.py": "ed24890f42747c14d40bd9de93599a21406fb9c1861b47592a25dfbc76e382c3",
+      "tests/test_internvl3763_notebook.py": "e843328f28cda5f8887ddfca976695cb8f2202fa636b3c8fc82319ec4a020633",
+      "tests/test_internvl3763_versions.py": "39025c3325e99b0defff8332baf5502ffde10e1b8d88ff43b5b3ed6fa55f4d0d",
+      "tests/test_kaggle_handoff.py": "8146d7988206142b1f1e03523c3c12b2a300a7c72c7084178ef0d5001a987313"
+    },
+    "tracked_dirty": false
+  },
+  "gpu_seconds_consumed_by_task": 0,
+  "independent_audit": "PENDING_NOT_SELF_ISSUED",
+  "inherited_runtime_files_unchanged": 84,
+  "kaggle_submissions": 0,
+  "kaggle_uploads": 0,
+  "live_final_source_verification": "NOT_RUN_PROHIBITED_BY_TASK",
+  "live_provider_probes": 0,
+  "merge": "NOT_AUTHORIZED",
+  "notebook_tests": {
+    "errors": 0,
+    "failures": 0,
+    "skips": 0,
+    "status": "PASS",
+    "tested_head": "8803a5583d62d06760fb9bc5e9fb19e453d8ab4f",
+    "tests": 3,
+    "tracked_dirty": false
+  },
+  "notebooks": {
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
+      "code_sha256": "197df50303709ae9dff8a156dcac6d98c84dc6a6ee5ba646451897021c824693",
+      "runtime_commit": "e51211cbeda58a2ed4bea65c700adf36b743b973",
+      "sha256": "28819461882300dd90d5e4c23420874e22d02cfb0b73ccf89e488da183e2881f",
+      "source_sha256": "95857891faf5e8da623ea408f580c899430e4bc464665d128f086575cea76f37"
+    },
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
+      "code_sha256": "f1b23531822a247ae95d0703e969bb17251ea6f8623d3d08b908053efd095529",
+      "runtime_commit": "e51211cbeda58a2ed4bea65c700adf36b743b973",
+      "sha256": "322d84f15ebca8d8fdad52d4f1367d342b241210de7c13fa1e32432b30f10e8c",
+      "source_sha256": "95857891faf5e8da623ea408f580c899430e4bc464665d128f086575cea76f37"
+    }
+  },
+  "operations_state": {
+    "actual_ledger_mutations_by_task": 0,
+    "attempt1": "ABORTED_PRE_SUBMIT",
+    "attempt2": "INTENT_NO_PUSH_INTENT_OR_SUBMIT_REPORTED",
+    "attempt2_capsule": "nguynanhtn/safeshift-capsule-ivl35-attempt2/1",
+    "attempt3": "NOT_CREATED",
+    "conditional_attempt3_totals": {
+      "calls": 3,
+      "jobs": 3,
+      "physical_gpu_seconds": 10800
+    },
+    "new_owner_grant": false,
+    "refund": false,
+    "reported_gpu_consumption": 0,
+    "reserved_calls": 2,
+    "reserved_jobs": 2,
+    "reserved_physical_gpu_seconds": 7200,
+    "source": "ANTIGRAVITY_REPORT_RELAYED_BY_OFFICIAL_TASK_NOT_FRESH_CODEX_PROVIDER_OBSERVATION"
+  },
+  "published_logs": {
+    "focused-tests.txt": {
+      "local_raw_sha256": "9ae683403e1975f379de5fedf82b8abb0380f093249d488ddebfca821adaf0e6",
+      "normalization": "CRLF_TO_LF_AND_REPO_ROOT_TO_PLACEHOLDER",
+      "sha256": "08def354ce1768de01b3627e79a90ab3f3ea53f3f20dd8f000337349ac4c31e7"
+    },
+    "notebook-tests.txt": {
+      "local_raw_sha256": "1620bff561d08fdf430b221753709db215a3126593e6e97f9862202212111baa",
+      "normalization": "CRLF_TO_LF_AND_REPO_ROOT_TO_PLACEHOLDER",
+      "sha256": "399a9c3934ac2f112f3e30fec63cf5c2fdeb3d3edbd3136a443bf70195e88e43"
+    }
+  },
+  "real_image_reads": 0,
+  "real_model_inference_calls": 0,
+  "regressions": {
+    "anonymous_get_tls_no_environment_credentials": "PASS",
+    "capsule_transport_tests": 20,
+    "failure_preserves_intent_mirror_guard_stage_no_push": "PASS",
+    "installed_sdk_serialization": true,
+    "multi_chunk_exact_bytes_and_sha256": "PASS",
+    "prepatch_https443": "Both explicit443 positive tests reproduced CAPSULE_DOWNLOAD_FAILED_NO_RETRY_PARTIAL_PRESERVED before the source fix",
+    "signed_authorities_pass": [
+      "storage.googleapis.com",
+      "storage.googleapis.com:443"
+    ],
+    "sockets_forbidden": true,
+    "submit_boundary_both_authorities": "PASS",
+    "unsafe_locations_redirect_chains_timeouts_no_retry": "PASS"
+  },
+  "remaining": [
+    "Direct ChatGPT GitHub review, independent Antigravity audit, separate authorized merge/postmerge verification",
+    "Genuine new source-bound audit/technical attestations on this PR under unchanged PR181 grant",
+    "Same existing Antigravity operator: fresh read-only provider absence/quota/history/version/checkpoint proof before no-refund Attempt2 abort",
+    "Unique Attempt3/source/context/capsule/ordinal0 within grant; real signed-download byte proof before PUSH_INTENT",
+    "Final-source terminal/raw/ZIP and resource measurement before larger shards; scientific selection stays PENDING"
+  ],
+  "repository_smoke": {
+    "prior_baseline_limitations": "docs/research/evidence/train3763_capsule302_20261105/summary.json",
+    "status": "NOT_REPEATED_SCOPED_TASK",
+    "whole_repository_green": false
+  },
+  "runbook_preflight_snippet": {
+    "kernels_push": 0,
+    "ledger_mutations": 0,
+    "real_provider": "NOT_RUN",
+    "scope": "SYNTHETIC_ONLY_SOCKETS_FORBIDDEN",
+    "status": "PASS"
+  },
+  "schema": "train3763-capsule-https443-acceptance-v1",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "science_unchanged": true,
+  "scientific_qualified": false,
+  "sdk": {
+    "kaggle": "2.2.5",
+    "kagglesdk": "0.1.38",
+    "requests": "2.34.2"
+  },
+  "shared_transport_file_unchanged": true,
+  "source_sha256": "95857891faf5e8da623ea408f580c899430e4bc464665d128f086575cea76f37",
+  "status": "CPU_SDK_PASS_READY_FOR_CODE_REVIEW_ONLY",
+  "task": "https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6666341490",
+  "test_split_reads": 0,
+  "tested_source_and_notebook_head": "8803a5583d62d06760fb9bc5e9fb19e453d8ab4f",
+  "timezone": "Asia/Bangkok"
+}

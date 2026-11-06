@@ -1,6 +1,151 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
-## Current pinned GetKernel HTTP404 repair
+## Current signed HTTPS443 capsule repair and Attempt2 recovery
+
+[Official task, 06/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6666341490),
+BASE `46f0a318a2b822745e3e561869fa69570ac0c220` (PR183 merged), permits one
+Draft PR for source, offline installed-SDK tests, rebuilt notebooks and this
+handoff. No real Kaggle probe/upload/abort/stage/submit, GPU/inference or TEST
+in this Codex task. Earlier repair sections are historical snapshots; their
+Attempt1/Attempt2 instructions do not authorize replay of either attempt.
+
+The pinned SDK's observed signed Location uses `https://storage.googleapis.com:443/...`.
+`capsule_http()` now admits exactly `storage.googleapis.com` or
+`storage.googleapis.com:443`, HTTPS only. The nonroot path/nonempty opaque query,
+no userinfo/fragment/control/backslash, one exact DownloadDataset POST followed
+by one isolated anonymous GET remain mandatory. All other ports/authorities,
+redirect chains and retries are blocked. `bounded_http()` is unchanged; TLS,
+`trust_env=False`, credentials isolation, finite time/byte bounds, create-only
+partials, ZIP/CRC/exact bytes/SHA256 and Input/private-version checks still
+precede any PUSH_INTENT or kernels_push. The synthetic signed URLs in tests
+exercise installed SDK serialization/requests streaming, not a live provider.
+
+### Reported operations state and mandatory transition
+
+The official task relays Antigravity's operational report, not a fresh Codex
+provider observation:
+
+| Attempt | Reported state | Reservation retained |
+| --- | --- | --- |
+| 1 | ABORTED_PRE_SUBMIT; never submitted | 1 call / 1 job / 3600 physical GPU-s |
+| 2 | INTENT; private capsule `nguynanhtn/safeshift-capsule-ivl35-attempt2/1`; no PUSH_INTENT or kernel submit reported | cumulative 2 calls / 2 jobs / 7200 physical GPU-s |
+| 3 | NOT_CREATED; conditional after the gates below | cumulative 3 calls / 3 jobs / 10800 physical GPU-s |
+
+Reported actual GPU consumption is 0; reservations are not measured billing.
+Preserve the original PR181 grant/O2-O6, initialization guard, both journals,
+all old capsules/versions, request/context/stage, errors, partials and reports.
+No refund, ledger reset or source/capsule reuse. A merged fix does not make
+Attempt2 runnable with new source. Science SHA256 remains
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+
+After direct ChatGPT GitHub review, independent Antigravity audit, separately
+authorized merge and verified postmerge, obtain genuine new AUDIT_V1 and
+TECHNICAL_V1 attestations for this PR/exact merged source/runtime/notebooks.
+Return operations to the same dedicated Antigravity Kaggle session and existing
+canonical ledger/mirror; no new Owner grant is required inside unchanged caps.
+
+1. Reconcile fresh authenticated read-only provider inventory, full pagination,
+   exact version/checkpoint/Input identity and quota. Confirm Attempt2 still has
+   no PUSH_INTENT, `nguynanhtn/safeshift-train3763-ivl35-train3763-2` is truly
+   absent, no unexpected/active campaign job or reserved GPU quota, and complete
+   matching journals/history. Any unknown submit/provider/history means STOP.
+2. Only with that proof, use the existing `abort-pre-submit` command under its
+   lock to close Attempt2 without refund. It repeats provider proof itself.
+   Preserve Attempt2's INTENT, capsule, old source/context and all failed stages.
+3. Prepare a separate `context-attempt3.json` using the authentic new technical
+   revision and a different unique private capsule dataset slug/version1. Use a
+   new `attempt-3` handoff. Never edit or reuse Attempt2's capsule or directory.
+   `plan --mode initial --calls 1 --seconds 1800` must produce original TRAIN
+   ordinal0 and job `nguynanhtn/safeshift-train3763-ivl35-train3763-3`. Confirm
+   cumulative reservation3 calls/3 jobs/10800 physical GPU-s remains within the
+   original grant/deadline. Upload only this new small private capsule through
+   the existing authorized operator procedure; do not reupload data/checkpoints.
+4. Perform the real signed-download preflight below before handoff. Submission
+   then repeats all gates and byte proof before its only PUSH_INTENT/push. An
+   unknown return stops for read-only reconciliation, never automatic retry.
+
+### Real-provider read-only preflight before any job POST
+
+Quota, SDK version and Input existence alone are insufficient. Check the exact
+clean reviewed merged HEAD, authentic technical revision/grant/rights/caps/time,
+complete mirrored intent/history/raw custody, provider absence/private pinned
+versions/checkpoint identity, serial jobs and quota. Also exercise the real
+DownloadDataset RPC -> signed HTTPS GCS Location (including explicit443) ->
+anonymous GET and full byte/SHA256 proof against the exact request AND intent.
+Retain only sanitized receipt/host/port/HTTP outcomes and proof hashes privately;
+never print/log a signed URL, token or cookie. No fake adapter PASS is real-provider
+evidence. This preflight makes metadata/download RPCs only, never SaveKernel or
+kernel submission, model load or inference.
+
+Boundary: a final Attempt3 request/intent and its capsule do not exist before
+staging, and Attempt2's request has old source. Therefore all read-only gates
+possible before staging must pass first; the exact new-capsule download proof
+must be repeated immediately after Attempt3 staging/private upload, before any
+PUSH_INTENT. The following block is **operator-only AFTER the preceding merge,
+attestation and recovery gates**, never part of this Codex task. It uses existing
+functions and a new temporary proof directory outside the preserved submission
+stage; it neither appends to nor resets the ledger. SDK auth remains local.
+
+```powershell
+$OperatorPython = './data/processed/operator-venv/Scripts/python.exe'
+$Handoff = 'data/processed/train3763-campaign/attempt-3'
+$ProofCode = @'
+import json, sys, tempfile
+from pathlib import Path
+from safeshift import internvl3763_operator as op
+from safeshift.kaggle_handoff import lock
+from safeshift.pilot.artifacts import read, write
+request = read(Path(sys.argv[1]) / 'request.json')
+ledger = op.campaign_ledger(request)
+with lock(ledger.root):
+    before = ledger.events()
+    grant, execution = op.admit_campaign(request)
+    client = op.api()
+    inventory = op.campaign_inventory(client, request, grant, ledger)
+    intent = ledger.open_intent()
+    proof_root = Path(tempfile.mkdtemp(prefix='capsule-readonly-', dir=Path(sys.argv[1]).parent))
+    proof = op.verify_execution_input(client, request, intent, proof_root / 'download')
+    assert ledger.events() == before
+    write(proof_root / 'inventory.json', inventory)
+    print(json.dumps({'status': 'READ_ONLY_CAPSULE_BYTE_PASS', 'proof': proof}, sort_keys=True))
+'@
+& $OperatorPython -B -c $ProofCode $Handoff
+if ($LASTEXITCODE -ne 0) { throw 'STOP: retain proof/partials; no PUSH_INTENT or retry' }
+```
+
+Retain each proof directory, including failures/partials, in ignored custody.
+The read-only preflight does not create submission/ or append PUSH_INTENT.
+Do not remove an existing submission/ to retry; diagnose and reconcile under
+the contract. Immediately before actual submission, the normal handoff still
+rechecks inventory and exact capsule bytes under the campaign lock. No larger
+shards before final-source ordinal0 terminal/raw/ZIP/time/VRAM/RAM evidence.
+Monitoring stays <=15 minutes, then RUNNING_UNVERIFIED and resume the same session.
+
+### Offline acceptance and immutable rebuild
+
+Commit the runtime change first, rebuild PREP and execution with the unchanged
+committed-source builder (`--execute --campaign`), then check empty outputs,
+embedded manifest and deterministic bytes. Do not relax exact clean merged-HEAD
+admission or edit inherited source/science/data locks. Acceptance identities,
+commands, test counts and limitations are recorded in the
+[HTTPS443 receipt](research/evidence/train3763_capsule443_20261106/summary.json).
+Final-source live-provider/GPU verification, direct review, independent audit,
+merge and actual Attempt2/Attempt3 operations remain NOT_RUN/PENDING here.
+
+Final offline acceptance on clean tested commit
+`8803a5583d62d06760fb9bc5e9fb19e453d8ab4f`: **213/213 CPU/SDK PASS, notebooks3/3
+PASS**, no skips/failures/errors, including20 capsule tests. Runtime commit
+`e51211cbeda58a2ed4bea65c700adf36b743b973`, source SHA256
+`95857891faf5e8da623ea408f580c899430e4bc464665d128f086575cea76f37`.
+All84 inherited files and all89 other manifest files match BASE; each rebuilt
+notebook changes only the operator inside its payload. The new PowerShell block
+parses, and its embedded Python passes synthetic installed-SDK/adapter rehearsal
+with sockets forbidden, no journal mutation and no push. Published sanitized
+logs/receipt bind the commands, dependencies and identities. Full-repository
+smoke/CI and real-provider PASS are not claimed. Later publication changes only
+documentation/evidence; source/notebooks remain those tested.
+
+## Historical pinned GetKernel HTTP404 repair
 
 [06/11/2026 task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6664802285),
 BASE `bce8725047753415aa65ed28fc79ef04131fe366` (PR182 merged), fixes only a
@@ -86,7 +231,7 @@ Attempt2 workflow below. Any provider/version/history ambiguity means STOP.
 No final-source Kaggle, GPU/model, scientific qualification or TEST PASS is
 inferred from the offline tests.
 
-## Current capsule HTTP302 repair and Attempt1 recovery
+## Historical capsule HTTP302 repair and Attempt1 recovery
 
 [Owner task / ChatGPT diagnosis](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6662845867)
 starts at BASE `2484095e7b29c3c1d5ad79f18523cfa8dd6a0cac` (PR181 merged).
