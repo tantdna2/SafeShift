@@ -429,8 +429,11 @@ class CampaignTests(unittest.TestCase):
         request = deepcopy(self.request)
         request["notebook_sha256"] = hashlib.sha256(content).hexdigest()
         inputs = request["bindings"]["dataset"]
+        unversioned_datasets = [ref.rsplit("/", 1)[0] for ref in inputs["dataset_sources"]]
+        unversioned_kernels = [ref.rsplit("/", 1)[0] for ref in inputs["kernel_sources"]]
         remote = NS(metadata=NS(ref=request["job"], is_private=True, current_version_number=1, id=123,
-            machine_shape="NvidiaTeslaT4", dataset_data_sources=inputs["dataset_sources"], kernel_data_sources=[]),
+            machine_shape="NvidiaTeslaT4", dataset_data_sources=unversioned_datasets,
+            kernel_data_sources=unversioned_kernels, competition_data_sources=[], model_data_sources=[]),
             blob=NS(source=json.dumps(notebook)))
         operator = Train3763Operator()
         with patch.object(operator, "_api", return_value=NS()), patch("scripts.submit_internvl_v2.get_kernel", return_value=remote), \
