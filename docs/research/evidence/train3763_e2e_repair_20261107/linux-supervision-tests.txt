@@ -1,0 +1,10 @@
+test_launch_composes_real_setup_worker_and_prepare_runtime_with_distinct_logs (test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_launch_composes_real_setup_worker_and_prepare_runtime_with_distinct_logs) ... ok
+test_linux_run_stage_deduplicates_supervisor_log_and_enforces_exact_budget_and_deadline (test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_linux_run_stage_deduplicates_supervisor_log_and_enforces_exact_budget_and_deadline) ... ok
+test_old_same_path_log_reproduces_exact_setup_log_file_exists_collision (test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_old_same_path_log_reproduces_exact_setup_log_file_exists_collision) ... ok
+test_setup_failure_preserves_partial_logs_receipts_and_exports_fail_bundle_without_retry (test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_setup_failure_preserves_partial_logs_receipts_and_exports_fail_bundle_without_retry) ... ok
+test_worker_inner_hard_deadline_stops_cleanly_before_supervisor_kill (test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_worker_inner_hard_deadline_stops_cleanly_before_supervisor_kill) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 110.636s
+
+OK

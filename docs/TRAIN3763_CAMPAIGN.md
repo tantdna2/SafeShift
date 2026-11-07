@@ -112,6 +112,30 @@ substitute for live Kaggle execution on:
   which remains `NOT_RUN` until 1-call Attempt4 completes and is `MEASURED`
   (even though all 84 inherited runtime/memory/grammar files match PR177 `04/11/2026`).
 
+### Offline acceptance and immutable rebuild
+
+Runtime changes were committed first at `f2346fae68022d0e032868b73e923458d8e55b2e`,
+and both `PREP` and execution notebooks were rebuilt deterministically via the
+unchanged committed-source builder (`build_internvl3763 --execute --campaign`),
+preserving empty cell outputs, exact 90-file manifest embedding and unchanged
+`science_sha256` (`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`).
+Exact tested identities, commands, sanitized logs and remaining gates are bound in
+the [PR177-parity E2E acceptance receipt](research/evidence/train3763_e2e_repair_20261107/summary.json).
+
+Final offline acceptance on clean tested commit
+`f98cb79a15197bd5bbf9be3f9882791457c7a7e8` (`tracked_dirty = false`):
+**224 focused CPU/SDK/native-CPU tests (`223` PASS, `0` failures, `0` errors, `1`
+Linux-only skip covered `5/5 PASS` with `0` skips by real WSL2 Linux process-group
+`LauncherSupervisorSetupCompositionTests`), `3/3` notebook tests PASS, and `100`
+distinct PR177 regression tests PASS (`88` Windows native-CPU + `22/22` WSL2 Linux
+process/memory/streaming tests covering all `12` Windows POSIX skips).** Runtime
+commit `f2346fae68022d0e032868b73e923458d8e55b2e`, `source_sha256`
+`deef3c26eb55e5fb7196cba96220a79a92a058f028cf957a390fad9e010d14ad`; all 84
+inherited PR177 files and 86 unchanged manifest files match BASE. All 3 PowerShell
+wrapper scripts and all 9 PowerShell fenced blocks in this runbook parse cleanly.
+Subsequent documentation/receipt publication changes only `docs/`, leaving tested
+runtime source and notebooks byte-identical.
+
 ## Historical signed HTTPS443 capsule repair and Attempt2 recovery
 
 [Official task, 06/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6666341490),
