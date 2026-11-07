@@ -165,6 +165,66 @@ class PreparedControllerTests(unittest.TestCase):
         self.assertEqual(receipt["model_calls"], 0)
         factory.assert_not_called()
 
+    def test_capture_budget_exact_10_vs_64_steps_and_strict_int_bounds(self):
+        b10 = r.capture_budget(vocab=151936, steps=10)
+        self.assertEqual(b10["per_sample_bytes"], 15378176)
+        self.assertEqual(b10["sample_and_export_bytes"], 30756352)
+        b64 = r.capture_budget(vocab=151936, steps=64)
+        self.assertEqual(b64["per_sample_bytes"], 92758016)
+        self.assertEqual(r.capture_budget()["per_sample_bytes"], 120442880)
+        for bad_vocab, bad_steps in ((0, 10), (200001, 10), (True, 10), (151936.0, 10), (151936, 0), (151936, 65), (151936, False)):
+            with self.subTest(vocab=bad_vocab, steps=bad_steps), self.assertRaisesRegex(ValueError, "CAPTURE_DIMENSION_BOUND"):
+                r.capture_budget(vocab=bad_vocab, steps=bad_steps)
+
+    def test_adaptive_deadline_stops_cleanly_before_risking_call_timeout(self):
+        p = r.plan(self.cohort, [], action="initial", run_id="adaptive-dl",
+            attempt_id="adaptive-a1", max_calls=2, max_seconds=100)
+        ticks = iter([0.0, 5.0, 5.0, 5.0, 25.0, 65.0, 65.0])
+        def image_path(row):
+            image = self.root / f"adaptive-img-{row['ordinal']}"
+            image.write_bytes(synthetic_bytes(row["ordinal"]))
+            return image
+        result = r.rehearse(self.root / "adaptive", self.root / "adaptive.zip", self.cohort,
+            p, [], lambda _: self.backend(), image_path=image_path, tokenizer_sha="a"*64,
+            clock=lambda: next(ticks, 65.0))
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["model_calls"], 1)
+        self.assertEqual(result["counts"], {"SUCCESS": 1, "NOT_ATTEMPTED": 3762})
+        self.assertEqual(read(self.root / "adaptive/stop.json"), {"reason": "DEADLINE_BEFORE_NEXT_CALL"})
+        self.assertFalse((self.root / "adaptive/samples/000001/started.json").exists())
+
+    def test_supervised_parent_bytes_and_archive_bounds_stop_cleanly(self):
+        p = r.plan(self.cohort, [], action="initial", run_id="sup-archive",
+            attempt_id="sup-a1", max_calls=2, max_seconds=30)
+        parent = self.root / "supervised_job"
+        write(parent / "handoff.json", {"scope": "SYNTHETIC_SUPERVISED"})
+        (parent / "outer-pad.bin").write_bytes(b"x" * (4 * 2**20))
+        def image_path(row):
+            image = self.root / f"sup-img-{row['ordinal']}"
+            image.write_bytes(synthetic_bytes(row["ordinal"]))
+            return image
+        per_sample = r.capture_budget()["per_sample_bytes"]
+        # Allow sample 0 (4 MiB outer + ~0.5 MiB plan/cohort + 120.44 MiB + 16 MiB margin < 145 MiB),
+        # then block sample 1 if sample 0 writes a large synthetic payload.
+        def fat_generate(image, sample, binding, deadline):
+            res = self.backend().generate(image, sample, binding, deadline)
+            (sample / "steps").mkdir(exist_ok=True)
+            (sample / "steps/000.f32").write_bytes(b"\x00" * (10 * 2**20))
+            return res
+        fat_backend = NS(environment={"scope": "SYNTHETIC_ONLY"}, generate=fat_generate)
+        tight_limit = 4 * 2**20 + per_sample + 16 * 2**20 + 2 * 2**20
+        result = r.rehearse(parent / "run", self.root / "sup.zip", self.cohort,
+            p, [], lambda _: fat_backend, image_path=image_path, tokenizer_sha="a"*64,
+            archive_limit_bytes=tight_limit)
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["model_calls"], 1)
+        self.assertEqual(result["counts"], {"SUCCESS": 1, "NOT_ATTEMPTED": 3762})
+        self.assertEqual(read(parent / "run/stop.json"), {"reason": "ARCHIVE_VERIFIER_8GIB_BOUND_EXPORT_MARGIN"})
+        for bad_limit in (0, -1, True, 1.5):
+            with self.assertRaisesRegex(ValueError, "ARCHIVE_LIMIT_BYTES"):
+                r._execute(self.root / f"bad-{bad_limit}", None, self.cohort, p, lambda _: fat_backend,
+                    image_path=image_path, tokenizer_sha="a"*64, archive_limit_bytes=bad_limit)
+
 
 @unittest.skipUnless(os.environ.get("SAFESHIFT3763_NATIVE_CPU") == "1", "opt-in CPU torch/transformers")
 class NativeCaptureTests(unittest.TestCase):
@@ -225,6 +285,15 @@ class NativeCaptureTests(unittest.TestCase):
             self.assertTrue((folder / "native_call.json").is_file())
             self.assertTrue((folder / "steps/000.f32").is_file())
             self.assertFalse(backend.model._forward_hooks)
+
+    def test_backend_capture_budget_uses_verified_grammar_required_steps(self):
+        backend = self.helper.backend()
+        derived = r._backend_capture_budget(backend)
+        from safeshift.diagnostic173_grammar import CanonicalJSONGrammar
+        grammar = CanonicalJSONGrammar(backend.tokenizer, backend.generation.eos_token_id)
+        expected_steps = max(len(path) for path in grammar.paths) + 1
+        self.assertEqual(derived, r.capture_budget(vocab=backend.logit_width, steps=expected_steps))
+        self.assertLess(derived["per_sample_bytes"], r.capture_budget()["per_sample_bytes"])
 
 
 if __name__ == "__main__":
