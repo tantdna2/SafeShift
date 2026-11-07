@@ -56,6 +56,7 @@ class HandoffTests(unittest.TestCase):
         self.assertEqual(result["status"], "FAIL")
         self.assertTrue(result["evidence"])
         self.assertEqual(result["terminal"], "ERROR")
+        self.assertEqual(h.accept_report(h.Session(self.root))["status"], "FAIL")
 
     def test_unknown_submit_crash_blocks_replay_but_allows_read_only_reconciliation(self):
         op = fixture.SyntheticOperator(self.root)
@@ -239,6 +240,16 @@ class HandoffTests(unittest.TestCase):
                 "conversation_id": "22222222-2222-2222-2222-222222222222"}).encode())
             return NS(returncode=0)
         self.assertEqual(h.invoke_agy(self.session, resume=True, recover=True, run=run)["status"], "PASS")
+        # Even if a prior conversation ID was recorded, explicit recover=True starts a fresh read-only collect turn.
+        def recover_turn(argv, **kwargs):
+            if "--version" in argv:
+                return NS(returncode=0, stdout="1.5.0")
+            self.assertNotIn("--conversation", argv)
+            self.operate("collect")
+            kwargs["stdout"].write(json.dumps({"status": "SUCCESS",
+                "conversation_id": "33333333-3333-3333-3333-333333333333"}).encode())
+            return NS(returncode=0)
+        self.assertEqual(h.invoke_agy(h.Session(self.root), resume=True, recover=True, run=recover_turn)["status"], "PASS")
 
     def test_per_turn_permission_is_exact_command_and_no_global_permission_bypass(self):
         h.invoke_agy(self.session, run=self.fake_agy)

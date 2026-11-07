@@ -1,6 +1,80 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — TRAIN3763 signed capsule HTTPS443 repair — 06/11/2026
+## CURRENT — TRAIN3763 PR177-parity end-to-end repair and Attempt3 FAIL collection — 07/11/2026
+
+BASE `9f86424d14507fcc2fa08c2bf4a2f9a56e7dd481` (PR184 merged), branch
+`fix/train3763-pr177-e2e-repair`. [Official task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686823873)
+(with verified root cause [#6686513890](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686513890))
+authorizes code repairs, end-to-end offline synthetic/SDK/native-CPU/Linux-process
+integration tests, rebuilt TRAIN3763 notebooks, runbook updates and one Draft PR
+only. Zero live Kaggle API calls/probes/downloads/uploads/submissions, zero GPU or
+real model/image inference, zero TEST access, zero Attempt4 creation and zero
+mutation of `data/processed/train3763*` occur in this task. PR177's 04/11/2026
+ordinal0 `Level02` `SUCCESS` (`nguynanhtn/safeshift-internvl-v2-6626498951-j1/1`,
+kernel `142669354`, dispatch HEAD `c67d41ab424fa6a4eb3baf61056a8e4e5b77ac66`,
+runtime `0553fe56c884eac9b0031e4a96e7a14568606f4f`) serves strictly as an
+engineering reference benchmark and is **never** imported or backfilled.
+
+**Root causes repaired and proactive end-to-end hardening:**
+1. **`setup.log` producer collision:** `scripts/internvl3763.py::launch()` wrote its
+   stage supervisor log to `setup/"setup.log"` (`"xb"`), colliding with child
+   `safeshift/candidates/train_runtime.py::prepare_runtime()` opening the same path
+   `"xb"`. `run_stage()` now writes `setup/"setup-supervisor.log"` (`"xb"`), monitors
+   stage `.log` files via `os.path.samestat` without double-counting, retains Linux
+   `PDEATHSIG`/`SIGKILL` group termination and enforces `stage_deadline = deadline - 60`
+   so archive export always retains margin.
+2. **`GetKernel` unversioned metadata slugs vs pinned `/N` refs:** Kaggle's
+   `GetKernel` metadata returns unversioned `owner/slug` lists in
+   `dataset_data_sources` and `kernel_data_sources`, which caused post-submit
+   `Train3763Operator.identity()` to fail with `REMOTE_ACCELERATOR_OR_INPUT_DRIFT`
+   when compared against `owner/slug/N`. `verify_kernel_metadata_inputs()` now checks
+   exact duplicate-free `owner/slug` bijection, empty `competition_data_sources` and
+   `model_data_sources`, `machine_shape == "NvidiaTeslaT4"`, `is_private is True`,
+   `type(current_version_number) is int and current_version_number == 1`, and exact
+   committed-notebook `code_hash`, without treating unversioned `GetKernel` metadata
+   as proof of `/1`; all `/N` version pins remain enforced at `input_sources()`,
+   `verify_private_inputs()`, `verify_execution_input()` and `kernel-metadata.json`.
+3. **Attempt3 terminal `FAIL` custody, worker deadline and recovery hardening:**
+   `launch()` passes `worker_deadline = deadline - 75` into `worker(..., deadline=...)`
+   so multi-call shards stop cleanly before supervisor `SIGKILL`; `verify_bundle()`
+   validates `terminal.json["status"] == result["status"]`, present supervisor
+   receipts (`automatic_retry is False`) and explicit failure diagnostics on `FAIL`;
+   `accept_report()` validates terminal `FAIL` reports without converting `FAIL` to
+   `PASS` or refunding budget; `_invoke_agy(..., resume=True, recover=True)` forces a
+   fresh read-only `collect` conversation when the saved conversation is unavailable.
+
+**Read-only operational custody state (`data/processed/train3763*` untouched — 76 files, aggregate SHA256 `23d65d299fb373c8d510c282ab3001093fe8b9b5d6e01aa5448f2c54126b4f5a`):**
+Attempts 1 and 2 are `ABORTED_PRE_SUBMIT`; Attempt3 (`nguynanhtn/safeshift-train3763-ivl35-train3763-3/1`,
+kernel `142976950`) has `PUSH_INTENT` + `SUBMITTED` (cumulative reservation `3`
+calls / `3` jobs / `10,800` physical GPU-s, zero refund), finished on Kaggle as
+`COMPLETE` with worker `FAIL` at `setup.log` (`FileExistsError`), `0` model calls,
+`3,763` `NOT_ATTEMPTED` and preserved archive
+`ivl35-train3763-3-e93478acca244e71a5194ddf1084d0f0.zip` (`2,070,012` bytes, SHA256
+`38bb2698d11e23de93c71405ecbf6283437b573c53a6b624f0d26220d66fc60b`, `17` members).
+Per [current runbook](TRAIN3763_CAMPAIGN.md#current-pr177-vs-train3763-end-to-end-repair-and-attempt3-fail-collection--07112026),
+after review/independent audit/authorized merge, the operator collects Attempt3 as
+terminal `FAIL` (`COLLECTED` in mirrored ledger, never `abort-pre-submit`), obtains
+authentic new `AUDIT_V1` + `TECHNICAL_V1` attestations on the merged PR, and stages
+Attempt4 with `--mode resume --calls 1 --seconds 1800` (neither `initial` nor
+`repair` is admissible once Attempt3's 0-call history entry is sealed).
+
+**Offline E2E & regression acceptance:** clean tested commit
+`f98cb79a15197bd5bbf9be3f9882791457c7a7e8` (`tracked_dirty = false`), runtime commit
+`f2346fae68022d0e032868b73e923458d8e55b2e`, `source_sha256`
+`deef3c26eb55e5fb7196cba96220a79a92a058f028cf957a390fad9e010d14ad`, unchanged
+`science_sha256` `ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`:
+**`224` focused CPU/SDK/native-CPU tests (`223` PASS, `0` failures, `0` errors, `1`
+Linux-only skip covered `5/5 PASS` with `0` skips in WSL2 Linux
+`LauncherSupervisorSetupCompositionTests`), `3/3` notebook tests PASS, and `100`
+distinct PR177 regression tests PASS (`88` Windows native-CPU + `22/22` WSL2 Linux
+process/memory/streaming tests).** All `84` inherited files and `86` unchanged
+manifest files match BASE; PowerShell AST parsing passes on all `3` wrapper scripts
+and `9` runbook blocks. [Acceptance receipt](research/evidence/train3763_e2e_repair_20261107/summary.json)
+binds exact hashes, logs and limitations. Direct ChatGPT GitHub review, independent
+Antigravity audit, separately authorized merge, Attempt3 post-merge collection,
+Attempt4 final-source live measurement and O2–O6/academic decisions remain PENDING.
+
+## Historical — TRAIN3763 signed capsule HTTPS443 repair — 06/11/2026
 
 BASE `46f0a318a2b822745e3e561869fa69570ac0c220` (PR183 merged), branch
 `fix/train3763-capsule-https443`. [Official task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6666341490)
@@ -24,7 +98,7 @@ Codex has not freshly queried provider or modified actual local campaign custody
 Keep original PR181 grant/O2-O6, all attempts/raw/errors/context/capsules/journals;
 no reset, refund or reuse of Attempt2 under changed source.
 
-[Current recovery/preflight runbook](TRAIN3763_CAMPAIGN.md#current-signed-https443-capsule-repair-and-attempt2-recovery):
+[Historical recovery/preflight runbook](TRAIN3763_CAMPAIGN.md#historical-signed-https443-capsule-repair-and-attempt2-recovery):
 after review/independent audit/authorized merge/postmerge verification and genuine
 new technical/audit attestations, the same Antigravity operations session must
 freshly prove Attempt2 has no PUSH_INTENT, expected job2 truly absent, no active

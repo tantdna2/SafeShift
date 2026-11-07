@@ -1,6 +1,142 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
-## Current signed HTTPS443 capsule repair and Attempt2 recovery
+## Current PR177-vs-TRAIN3763 end-to-end repair and Attempt3 FAIL collection — 07/11/2026
+
+[Official task, 07/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686823873)
+(consolidating diagnosed root cause [#6686513890](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686513890)),
+verified BASE `9f86424d14507fcc2fa08c2bf4a2f9a56e7dd481` (PR184 merged), authorizes
+one cohesive Draft PR containing all offline-detectable integration fixes,
+end-to-end synthetic tests, rebuilt TRAIN3763 notebooks, runbook updates and
+sanitized test receipts. Zero live Kaggle API calls, probes, downloads, uploads
+or submissions, zero GPU/weights/real-image inference, zero TEST access, zero
+Attempt4 creation and zero mutation of `data/processed/train3763*` occur in this
+implementation task. PR177's 04/11/2026 ordinal0 `Level02` `SUCCESS`
+(`nguynanhtn/safeshift-internvl-v2-6626498951-j1/1`, kernel `142669354`, dispatch
+HEAD `c67d41ab424fa6a4eb3baf61056a8e4e5b77ac66`, runtime
+`0553fe56c884eac9b0031e4a96e7a14568606f4f`) is used strictly as an engineering
+reference benchmark and is **never** imported or backfilled into TRAIN3763.
+
+### Stage-by-stage differential audit: PR177 (`j1/1`) vs TRAIN3763 (`ivl35-train3763`)
+
+All 84 inherited files in `safeshift/internvl_v2_runtime.py::source_spec()["manifest"]`
+and `science_sha256` (`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`)
+remain byte-for-byte identical to BASE and PR177. Every divergence on the
+6-file TRAIN3763 wrapper layer was audited end-to-end:
+
+| Stage | PR177 (`04/11/2026` `j1/1` PASS) | TRAIN3763 at BASE `9f86424` | Status / Repair in this PR |
+| --- | --- | --- | --- |
+| 1. Notebook & source admission | Embedded 84-file payload + per-job GitHub tag/release | Embedded 90-file payload (`build_internvl3763 --execute --campaign`) + Owner grant + `TECHNICAL_V1` + `AUDIT_V1` + `campaign-intent.json` | Verified intact; rebuilt deterministically from runtime commit `f2346fae68022d0e032868b73e923458d8e55b2e` |
+| 2. Operator SDK & capsule proof | Local `submit_internvl_v2.py` (`bounded_http`) | `internvl3763_operator.py` (`check_sdk`, `v1` `GetKernel`, `capsule_http` `302` to `storage.googleapis.com[:443]` anonymous GET, SHA256/CRC proof before `PUSH_INTENT`) | Verified intact; `input_sources()` additionally rejects duplicate `owner/slug` across different `/N` versions |
+| 3. `kernel-metadata.json` & push | Single `kernels_push`, private T4, `/N` pinned Input refs | Same single `kernels_push` after mirrored `PUSH_INTENT`, private T4, `/N` pinned Input refs | Verified intact |
+| 4. Launcher & stage supervisor | `scripts/internvl_v2.py::launch()` passed `log=setup / "setup-supervisor.log"` to `supervision.run` | **DEFECT A:** `scripts/internvl3763.py::launch()` passed `log=setup / "setup.log"` (`"xb"`), colliding with child `prepare_runtime()`; setup lacked 60s export margin | **FIXED:** `scripts/internvl3763.py::run_stage()` writes `setup / "setup-supervisor.log"` (`"xb"`), watches stage `.log` files via `os.path.samestat` without double-counting, keeps `PDEATHSIG`/`SIGKILL` group kill, and enforces `stage_deadline = deadline - 60` |
+| 5. Python 3.11/3.12 & offline wheel setup | `train_runtime.py::prepare_runtime()` writes `setup / "setup.log"` (`"xb"`) + `setup / "runtime.json"` | Identical frozen `train_runtime.py::prepare_runtime()` | Verified; `LauncherSupervisorSetupCompositionTests` exercises real `launch()` + `prepare_runtime()` on Windows & Linux process groups |
+| 6. Preflight, streamed checkpoint, 16 GiB RAM, CUDA & CPU processor child | `internvl_v2_memory.py` streamed 2-shard SHA256 (`9.465 GiB`), owned-venv page-cache advice, `>=16 GiB` floor (`22.24 GiB` observed), GPU0 FP16 probe, 40-step synthetic grammar check | Calls exact same frozen functions in `safeshift/internvl3763.py::preflight()` | Verified byte-identical to PR177 |
+| 7. Master & 3,763 TRAIN image admission | Ordinal 0 verified against `MASTER_SHA` | `admit_inputs()` reuses frozen `verification173.verify_train` over all 3,763 `train/Annotations/*.jpg` locators; zero TEST/annotation enumeration | Verified intact |
+| 8. Worker deadline & native FP16 load | Single-image 1800s budget | Multi-call shard loop in `_execute()` previously computed `begun + p["max_seconds"]`, ignoring elapsed setup/preflight time | **FIXED:** `launch()` passes `worker_deadline = deadline - 75` into `worker(..., deadline=...)` -> `_execute(..., hard_deadline=deadline)` so multi-call shards stop cleanly before supervisor `SIGKILL` |
+| 9. Grammar V2 capture, raw-before-parse & strict C1 parser | `Capture` forward hook `.f32` full-vocab vectors + `GrammarProcessor` + fsync `raw.json` before `parse_label` + `replay_saved` | Same frozen `Capture`/`GrammarProcessor`/`replay_saved` in `safeshift/internvl3763.py::generate_prepared()` | Verified via real `GenerationMixin` + `.f32` binary capture in `EndToEndOfflineCampaignPipelineTests` |
+| 10. Archive export & terminal receipts | `terminal.json` + `checksums.json` + `.zip` + `.zip.sha256.json` | `launch()` always exports `.zip` + `.sha256.json`, even when setup or worker fails | **HARDENED:** `verify_bundle()` now checks `terminal.json["status"] == result["status"]`, `fresh-process-supervision-v1` (`automatic_retry is False`) on present supervisor receipts, and explicit failure records on `FAIL` |
+| 11. Post-submit / collect `GetKernel` metadata check | Checked ref & privacy | **DEFECT B:** `Train3763Operator.identity()` compared `GetKernel`'s unversioned `owner/slug` lists against `owner/slug/N` strings, raising `REMOTE_ACCELERATOR_OR_INPUT_DRIFT` after Attempt3 `SUBMITTED` | **FIXED:** `verify_kernel_metadata_inputs()` checks `machine_shape == "NvidiaTeslaT4"`, empty `competition_data_sources`/`model_data_sources`, exact duplicate-free `owner/slug` bijection, `is_private is True`, `type(current_version_number) is int and current_version_number == 1`, and exact committed-notebook `code_hash` without treating unversioned `GetKernel` metadata as proof of `/1` |
+| 12. Handoff recovery & report acceptance | N/A | **DEFECT C:** `_invoke_agy(resume=True, recover=True)` reused stale `conversation_id` if one existed; `accept_report()` only validated `PASS` fields | **FIXED:** `recover=True` forces `conversation = None` (read-only `collect` only); `accept_report()` validates terminal `FAIL` (`terminal in TERMINAL`, `collection == "FINISHED"`, non-empty `evidence`, and `verification["status"] == "FAIL"` when `terminal == "COMPLETE"`) |
+| 13. Mirrored ledger `COLLECTED` reconciliation | GitHub tag `finished` | `verify_remote_custody()` validates ZIP/sidecar/CRC/claims/lineage and appends mirrored `COLLECTED` (idempotent on recollection; zero budget refund) | Verified on read-only Attempt3 bundle structure and full E2E suite |
+| 14. Telemetry measurement & next-attempt planning | Single-image campaign stopped after `j1` | `Ledger.measure()` requires `COLLECTED` `PASS` with `NATIVE` telemetry before `calls > 1`; 0-call collected `initial` `FAIL` leaves 1 history entry (`records=[]`) | Verified & documented below: Attempt4 after collecting Attempt3 MUST use `--mode resume --calls 1 --seconds 1800` |
+
+### Read-only operational state and post-merge Attempt3 -> Attempt4 runbook
+
+Read-only local inspection (zero files modified under `data/processed/train3763*`,
+76 files aggregate SHA256 `23d65d299fb373c8d510c282ab3001093fe8b9b5d6e01aa5448f2c54126b4f5a`
+unchanged before and after this task) confirms:
+
+| Attempt | Current ledger / custody state | Cumulative reservation (no refund) |
+| --- | --- | --- |
+| 1 | `ABORTED_PRE_SUBMIT` (never submitted) | 1 call / 1 job / 3,600 physical GPU-s |
+| 2 | `ABORTED_PRE_SUBMIT` (never submitted) | 2 calls / 2 jobs / 7,200 physical GPU-s |
+| 3 | `PUSH_INTENT` + `SUBMITTED` (`nguynanhtn/safeshift-train3763-ivl35-train3763-3/1`, kernel `142976950`); handoff `BLOCKED` post-submit on `REMOTE_ACCELERATOR_OR_INPUT_DRIFT`; Kaggle `COMPLETE` + worker `FAIL` at `setup.log` (`FileExistsError`), 0 model calls, 3,763 `NOT_ATTEMPTED`; preserved ZIP `ivl35-train3763-3-e93478acca244e71a5194ddf1084d0f0.zip` (`2,070,012` bytes, SHA256 `38bb2698d11e23de93c71405ecbf6283437b573c53a6b624f0d26220d66fc60b`, 17 members) | 3 calls / 3 jobs / 10,800 physical GPU-s |
+
+**Mandatory post-merge sequence (operator-only AFTER ChatGPT GitHub review, independent Antigravity audit, and separately authorized merge):**
+
+1. **Reconcile and collect Attempt3 as terminal `FAIL` (never `abort-pre-submit`, never `PASS`):**
+   Because `PUSH_INTENT` and `SUBMITTED` exist for Attempt3, `abort-pre-submit` is
+   strictly forbidden (`POSSIBLE_SUBMIT_READ_ONLY_RECONCILIATION_ONLY`). From the
+   clean merged `main` checkout, collect Attempt3 using its pinned historical
+   `commit_sha` (`9f86424d14507fcc2fa08c2bf4a2f9a56e7dd481` via `git show`):
+   ```powershell
+   $OperatorPython = './data/processed/operator-venv/Scripts/python.exe'
+   $Ledger = 'data/processed/train3763-campaign/ledger'
+   $Attempt3 = 'data/processed/train3763-campaign/attempt-3'
+   # Resume saved conversation cb8d4344-29c4-47d1-a255-01573fe975a8; add -Recover ONLY if that conversation is unavailable.
+   ./scripts/kaggle_handoff.ps1 -Python $OperatorPython -Action resume -Directory $Attempt3
+   ./scripts/kaggle_handoff.ps1 -Python $OperatorPython -Action report -Directory $Attempt3
+   ./scripts/train3763_campaign.ps1 -Python $OperatorPython -Action status -Directory $Ledger
+   ```
+   Expected result: handoff report `status = "FAIL"`, `terminal = "COMPLETE"`,
+   `collection = "FINISHED"`, `verification.status = "FAIL"`, `model_calls = 0`,
+   `counts = {"NOT_ATTEMPTED": 3763}`; mirrored ledger appends `COLLECTED` closing
+   Attempt3's open intent while keeping all 3 reserved calls, 3 jobs and 10,800
+   physical GPU-seconds without refund. Any corrupt ZIP, wrong sidecar, missing
+   provider log or identity mismatch stays `BLOCKED` with unchanged journals.
+2. **Record new technical & audit attestations for the merged PR:**
+   Obtain authentic `SAFESHIFT_TRAIN3763_AUDIT_V1` and `SAFESHIFT_TRAIN3763_TECHNICAL_V1`
+   comments on this merged repair PR binding `runtime_commit`
+   `f2346fae68022d0e032868b73e923458d8e55b2e`, `source_sha256`
+   `deef3c26eb55e5fb7196cba96220a79a92a058f028cf957a390fad9e010d14ad`, execution
+   notebook SHA256 `12fe3ca94e1e07b346d60a4581028a4cefa8ac9aa3b62d2ab00016cf18deb6e9`,
+   and execution code SHA256 `f6a9c6dcaef2d99d6f25944c465a316592c0c36421cf5a2a0a46a244511adc66`
+   under the unchanged PR181 campaign grant.
+3. **Stage Attempt4 with `--mode resume --calls 1 --seconds 1800` (NOT `initial` or `repair`):**
+   Once Attempt3 is `COLLECTED`, `ledger.histories()` has 1 sealed ancestor with
+   `records = []` (0 consumed/failed samples, 3,763 `NOT_ATTEMPTED`). Therefore
+   `--mode initial` is rejected (`NEW_SERIES_REQUIRED`), `--mode repair` is rejected
+   (no failed sample targets), and `--calls > 1` is rejected
+   (`FINAL_SOURCE_MEASUREMENTS_REQUIRED_BEFORE_SHARDS`). Prepare a fresh
+   `context-attempt4.json` pointing to the new `technical_revision` and a new unique
+   private capsule `nguynanhtn/<unique-attempt4-capsule>/1`, stage into a new
+   `attempt-4` directory (`plan --mode resume --calls 1 --seconds 1800`, scheduling
+   ordinal 0 and job `nguynanhtn/safeshift-train3763-ivl35-train3763-4`), upload the
+   private capsule, run the read-only signed-download byte preflight below, and hand
+   off only after `READ_ONLY_CAPSULE_BYTE_PASS`. Measure Attempt4's `PASS` archive
+   before planning multi-call shards.
+
+### Remaining live-only Kaggle risks and gates
+
+Offline unit, installed-SDK, native-CPU `GenerationMixin` and Linux process-group
+tests verify contract wiring, serialization and failure custody, but **cannot**
+substitute for live Kaggle execution on:
+
+- Live Kaggle container image/kernel updates, `/usr` or `/opt` Python binary paths,
+  NVIDIA driver ABI (`libcuda.so.1`) and physical dual-T4 GPU0 placement at job start.
+- Live Kaggle API / GCS signed-URL availability, network jitter, and server-side
+  timeout/quota enforcement.
+- Live T4x2 GPU FP16 weights load (`9.465 GiB`), cgroup page-cache reclaim above the
+  `16 GiB` pre-load RAM floor, real image preprocessing and per-sample runtime/archive
+  growth on the new `source_sha256` (`deef3c26eb55e5fb7196cba96220a79a92a058f028cf957a390fad9e010d14ad`),
+  which remains `NOT_RUN` until 1-call Attempt4 completes and is `MEASURED`
+  (even though all 84 inherited runtime/memory/grammar files match PR177 `04/11/2026`).
+
+### Offline acceptance and immutable rebuild
+
+Runtime changes were committed first at `f2346fae68022d0e032868b73e923458d8e55b2e`,
+and both `PREP` and execution notebooks were rebuilt deterministically via the
+unchanged committed-source builder (`build_internvl3763 --execute --campaign`),
+preserving empty cell outputs, exact 90-file manifest embedding and unchanged
+`science_sha256` (`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`).
+Exact tested identities, commands, sanitized logs and remaining gates are bound in
+the [PR177-parity E2E acceptance receipt](research/evidence/train3763_e2e_repair_20261107/summary.json).
+
+Final offline acceptance on clean tested commit
+`f98cb79a15197bd5bbf9be3f9882791457c7a7e8` (`tracked_dirty = false`):
+**224 focused CPU/SDK/native-CPU tests (`223` PASS, `0` failures, `0` errors, `1`
+Linux-only skip covered `5/5 PASS` with `0` skips by real WSL2 Linux process-group
+`LauncherSupervisorSetupCompositionTests`), `3/3` notebook tests PASS, and `100`
+distinct PR177 regression tests PASS (`88` Windows native-CPU + `22/22` WSL2 Linux
+process/memory/streaming tests covering all `12` Windows POSIX skips).** Runtime
+commit `f2346fae68022d0e032868b73e923458d8e55b2e`, `source_sha256`
+`deef3c26eb55e5fb7196cba96220a79a92a058f028cf957a390fad9e010d14ad`; all 84
+inherited PR177 files and 86 unchanged manifest files match BASE. All 3 PowerShell
+wrapper scripts and all 9 PowerShell fenced blocks in this runbook parse cleanly.
+Subsequent documentation/receipt publication changes only `docs/`, leaving tested
+runtime source and notebooks byte-identical.
+
+## Historical signed HTTPS443 capsule repair and Attempt2 recovery
 
 [Official task, 06/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6666341490),
 BASE `46f0a318a2b822745e3e561869fa69570ac0c220` (PR183 merged), permits one
