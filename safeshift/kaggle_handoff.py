@@ -250,8 +250,11 @@ class Train3763Operator:
         from safeshift.internvl_v2_campaign import code_hash
         with bounded_http():
             value = get_kernel(self._api(), request["job"])
-        require(value.metadata.ref == request["job"] and value.metadata.is_private is True,
+        require(value.metadata is not None and value.blob is not None
+            and value.metadata.ref == request["job"] and value.metadata.is_private is True,
             "KAGGLE_JOB_PRIVACY_IDENTITY")
+        require(type(value.metadata.current_version_number) is int
+            and value.metadata.current_version_number == request["version"], "REMOTE_VERSION_SOURCE_DRIFT")
         if request["scope"] == "TRAIN3763_CAMPAIGN":
             content = subprocess.check_output(["git", "show", request["commit_sha"]+":"+request["notebook"]], cwd=ROOT)
             require(hashlib.sha256(content).hexdigest() == request["notebook_sha256"], "PINNED_COLLECT_NOTEBOOK")
@@ -262,12 +265,8 @@ class Train3763Operator:
             notebook = read(path)
         require(code_hash(json.loads(value.blob.source)) == code_hash(notebook), "KAGGLE_SOURCE_DRIFT")
         if request["scope"] in ("TRAIN3763_EXECUTION_CANDIDATE", "TRAIN3763_CAMPAIGN"):
-            from safeshift.internvl3763_operator import input_sources
-            sources = input_sources(request)
-            require(value.metadata.machine_shape == "NvidiaTeslaT4"
-                and sorted(value.metadata.dataset_data_sources) == sorted(sources["dataset_sources"])
-                and sorted(value.metadata.kernel_data_sources) == sorted(sources["kernel_sources"]),
-                "REMOTE_ACCELERATOR_OR_INPUT_DRIFT")
+            from safeshift.internvl3763_operator import input_sources, verify_kernel_metadata_inputs
+            verify_kernel_metadata_inputs(value.metadata, input_sources(request))
         return {"job_id": request["job"], "version": value.metadata.current_version_number,
             "kernel_id": value.metadata.id, "notebook_sha256": request["notebook_sha256"]}
 
@@ -313,7 +312,7 @@ def _invoke_agy(session, *, resume=False, recover=False, agy="agy", run=subproce
         events = session.events()
         if not resume:
             require(not any(e["status"] == "AGY_INVOCATION_INTENT" for e in events), "NO_DUPLICATE_HANDOFF")
-        conversation = session.conversation() if resume else None
+        conversation = None if (not resume or recover) else session.conversation()
         require(not resume or conversation or recover, "CONVERSATION_MISSING_USE_READ_ONLY_RECOVERY")
         version = run([agy, "--version"], capture_output=True, text=True, timeout=10)
         require(version.returncode == 0 and version.stdout.strip() == "1.5.0", "AGY_1_5_0_REQUIRED")
@@ -418,4 +417,8 @@ def accept_report(session):
     if operation["status"] == "PASS":
         require(operation["terminal"] == "COMPLETE" and operation["collection"] == "FINISHED"
             and operation["verification"]["status"] == "PASS" and operation["evidence"], "PASS_WITHOUT_VERIFIED_COLLECTION")
+    if operation["status"] == "FAIL":
+        require(operation.get("terminal") in TERMINAL and operation.get("collection") == "FINISHED"
+            and (operation["terminal"] != "COMPLETE" or operation["verification"]["status"] == "FAIL")
+            and operation.get("evidence"), "FAIL_WITHOUT_VERIFIED_COLLECTION")
     return report

@@ -193,7 +193,7 @@ def capture_budget(vocab=200000, steps=64):
 
 
 def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clock=time.monotonic,
-             archive_limit_bytes=7 * 2**30):
+             archive_limit_bytes=7 * 2**30, hard_deadline=None):
     """Bounded shared controller. Public entrypoints gate before reaching here."""
     rows = planning.validate_cohort(cohort, digest(cohort))
     plan_sha = digest(p)
@@ -209,7 +209,7 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
     write(out / "configuration.json", configuration())
     write(out / "cohort.json", cohort)
     begun = clock()
-    deadline = begun + p["max_seconds"]
+    deadline = begun + p["max_seconds"] if hard_deadline is None else min(begun + p["max_seconds"], hard_deadline)
     telemetry = {"evidence_kind": "UNVERIFIED", "load_seconds": 0, "samples": []}
     records = [{**r, "status": "NOT_ATTEMPTED", "label": None, "attempts": 0, "native_calls": 0,
                 "hnlo": None, "hnlo_status": HNLO_STATUS} for r in rows]
@@ -458,7 +458,8 @@ def worker(request_path=None, *, output=None, scratch=None, inputs=None, deadlin
     return _execute(Path(output) / "run", None, cohort, p,
         lambda end: NativeBackend(source, weights, Path(output) / "run", min(end, deadline)),
         image_path=lambda row: safe(root, rows[row["ordinal"]]["image"]),
-        tokenizer_sha=sha(source / "tokenizer.json"), archive_limit_bytes=grant["caps"]["archive_bytes"])
+        tokenizer_sha=sha(source / "tokenizer.json"), archive_limit_bytes=grant["caps"]["archive_bytes"],
+        hard_deadline=deadline)
 
 
 def verify_bundle(archive, expected_sha, expected_plan):
@@ -486,6 +487,16 @@ def verify_bundle(archive, expected_sha, expected_plan):
             outer = lambda name: json.loads(z.read(name))
             require(outer("execution-request.json")["source"] == spec
                 and outer("execution-request.json")["plan"] == expected_plan, "OUTER_RUNTIME_BINDING")
+            require("terminal.json" in members and outer("terminal.json").get("status") == result["status"],
+                "TERMINAL_RECEIPT_STATUS_MISMATCH")
+            for name in ("setup/setup-supervisor.json", "worker-supervisor.json"):
+                if name in members:
+                    process = outer(name)
+                    require(process.get("schema") == "fresh-process-supervision-v1"
+                        and process.get("automatic_retry") is False, "SUPERVISOR_RECEIPT_CONTRACT")
+            if result["status"] == "FAIL":
+                require(outer("terminal.json").get("error") is not None or result["failure"] is not None,
+                    "TERMINAL_FAIL_REASON_REQUIRED")
             if result["status"] == "PASS":
                 for name in ("setup/setup-supervisor.json", "worker-supervisor.json"):
                     process = outer(name)

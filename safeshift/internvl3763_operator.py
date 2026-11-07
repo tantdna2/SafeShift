@@ -288,11 +288,34 @@ def input_sources(request):
     for key in ("dataset_sources", "kernel_sources"):
         refs = value[key]
         require(type(refs) is list and len(refs) <= 16 and len(refs) == len(set(refs)), "BOUNDED_UNIQUE_INPUT_SOURCES")
+        slugs = [ref.rsplit("/", 1)[0] for ref in refs if type(ref) is str and "/" in ref]
         for ref in refs:
             require(type(ref) is str and re.fullmatch(r"[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/[1-9][0-9]*", ref),
                 "VERSIONED_INPUT_REFERENCE_REQUIRED")
+        require(len(slugs) == len(set(slugs)), "BOUNDED_UNIQUE_INPUT_SOURCES")
     require(value["dataset_sources"] or value["kernel_sources"], "MISSING_INPUT")
     return value
+
+
+def verify_kernel_metadata_inputs(metadata, sources):
+    """Match GetKernel's unversioned owner/slug attachments without relaxing pins.
+
+    GetKernel exposes owner/slug attachments, never dataset/kernel input version
+    numbers. Pinned /N input versions remain enforced separately by grant/request
+    validation, pre-submit inventory/capsule checks, pushed kernel-metadata.json,
+    and worker-side master/image/checkpoint/capsule SHA256 verification.
+    """
+    require(metadata is not None and metadata.machine_shape == "NvidiaTeslaT4",
+        "REMOTE_ACCELERATOR_OR_INPUT_DRIFT")
+    for extra_attr in ("competition_data_sources", "model_data_sources"):
+        extra = getattr(metadata, extra_attr, None)
+        require(extra is None or (type(extra) is list and extra == []), "REMOTE_ACCELERATOR_OR_INPUT_DRIFT")
+    for attr, key in (("dataset_data_sources", "dataset_sources"), ("kernel_data_sources", "kernel_sources")):
+        expected = [ref.rsplit("/", 1)[0] for ref in sources[key]]
+        actual = getattr(metadata, attr, None)
+        require(len(expected) == len(set(expected)) and type(actual) is list and len(actual) == len(set(actual))
+            and all(type(item) is str and re.fullmatch(r"[A-Za-z0-9_-]+/[A-Za-z0-9_-]+", item) for item in actual)
+            and sorted(actual) == sorted(expected), "REMOTE_ACCELERATOR_OR_INPUT_DRIFT")
 
 
 def code_hash(notebook):
