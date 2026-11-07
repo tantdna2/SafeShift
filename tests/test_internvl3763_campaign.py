@@ -557,7 +557,7 @@ class CampaignTests(unittest.TestCase):
         with patch.object(runtime, "verify_bundle", return_value={"status": "PASS", "scope": "SYNTHETIC_FIXTURE"}):
             measured = self.ledger.measure(archive, job_seconds=1800)
             self.assertEqual(measured["safe_calls"], 4)
-            self.assertEqual(measured["minimum_seconds"], 166)
+            self.assertEqual(measured["minimum_seconds"], 305)
             self.assertEqual(measured["observed"]["raw_float32_bytes"], 16)
             self.assertEqual(measured["source_sha256"], digest(runtime.source_spec()))
             with self.assertRaisesRegex(ValueError, "TOO_SMALL"):
@@ -572,7 +572,7 @@ class CampaignLineageTests(unittest.TestCase):
 
     def attempt(self, history, action, number, *, response="invalid", fail=False, repair=None, calls=1):
         p = c.plan(self.cohort, history, action=action, run_id="synthetic-"+str(number), attempt_id="a-"+str(number),
-            max_calls=calls, max_seconds=120, repair=repair)
+            max_calls=calls, max_seconds=600, repair=repair)
         helper = controller_fixtures.PreparedControllerTests()
         backend = helper.backend(response, fail)
         def image(row):
@@ -596,11 +596,11 @@ class CampaignLineageTests(unittest.TestCase):
         self.assertEqual(first["records"][0]["status"], "INVALID")
         self.assertEqual(second["records"][1]["status"], "TECHNICAL_ERROR")
         self.assertEqual(third["counts"], {"SUCCESS": 2, "NOT_ATTEMPTED": 3761})
-        p4 = c.plan(self.cohort, [h1, h2, h3], action="resume", run_id="r4", attempt_id="a4", max_calls=3, max_seconds=120)
+        p4 = c.plan(self.cohort, [h1, h2, h3], action="resume", run_id="r4", attempt_id="a4", max_calls=3, max_seconds=600)
         self.assertEqual(p4["scheduled_ordinals"], [2, 3, 4])
         self.assertEqual(p4["scientific_selection"], "PENDING")
         with self.assertRaises(ValueError):
-            c.plan(self.cohort, [h1, h2, h3], action="repair", run_id="r5", attempt_id="a5", max_calls=1, max_seconds=120, repair=repair)
+            c.plan(self.cohort, [h1, h2, h3], action="repair", run_id="r5", attempt_id="a5", max_calls=1, max_seconds=600, repair=repair)
 
     def test_corrupt_zip_and_modified_sidecar_block_history(self):
         p, _, _ = self.attempt([], "initial", 1)
@@ -614,7 +614,7 @@ class CampaignLineageTests(unittest.TestCase):
         _, _, h = self.attempt([], "initial", 1)
         h["series_id"] = "legacy-qwen-recovery224"
         with self.assertRaises(ValueError):
-            c.plan(self.cohort, [h], action="resume", run_id="r2", attempt_id="a2", max_calls=1, max_seconds=120)
+            c.plan(self.cohort, [h], action="resume", run_id="r2", attempt_id="a2", max_calls=1, max_seconds=600)
 
     def test_reviewable_operational_source_revision_preserves_science_identity_and_history(self):
         _, _, h = self.attempt([], "initial", 1)
@@ -623,7 +623,7 @@ class CampaignLineageTests(unittest.TestCase):
         before = c.identity()
         with patch.object(runtime, "source_spec", return_value=changed):
             self.assertEqual(c.identity(), before)
-            p = c.plan(self.cohort, [h], action="resume", run_id="r2", attempt_id="a2", max_calls=1, max_seconds=120)
+            p = c.plan(self.cohort, [h], action="resume", run_id="r2", attempt_id="a2", max_calls=1, max_seconds=600)
             self.assertEqual(p["scheduled_ordinals"], [1])
             self.assertEqual(p["runtime_source"], changed)
 
@@ -790,6 +790,93 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
 
+    @staticmethod
+    def _grammar_v2_receipt(vocab, steps):
+        from safeshift.internvl_grammar import HNLO_STATUS, LEVELS, POLICY, PROCESSOR, VERSION
+        base = {
+            "id": VERSION,
+            "status": "PROPOSED_LABEL_ONLY",
+            "hnlo_status": HNLO_STATUS,
+            "hnlo": None,
+            "language": [f'{{"safety_level":"{lvl}"}}' for lvl in LEVELS],
+            "input_ids_sha256": "a" * 64,
+            "policy": dict(POLICY),
+            "actual_processors_required": [PROCESSOR],
+            "posthoc_cleanup": False,
+            "production_activation": False,
+        }
+        if vocab == c.LOCKED_INTERNVL35_VOCAB and steps == 10:
+            return {**base, **deepcopy(c.LOCKED_INTERNVL35_GRAMMAR_GEOMETRY)}
+        plen = steps - 1
+        return {
+            **base,
+            "eos": [vocab - 1],
+            "decision_step": plen - 2 if plen >= 2 else 0,
+            "decision_tokens": [1, 2, 3, 4],
+            "path_lengths": [plen, plen, plen, plen],
+            "required_tokens_including_eos": steps,
+            "paths_sha256": "f" * 64,
+        }
+
+    @classmethod
+    def _populate_native_sample_trace(cls, sample_dir, *, vocab, steps, label="Level02", invalid=False,
+                                      lump_f32_into_step0=False, tamper_grammar=None, tamper_raw=None):
+        from safeshift.internvl_grammar import HNLO_STATUS, POLICY, PROCESSOR, VERSION
+        grammar = cls._grammar_v2_receipt(vocab, steps)
+        if tamper_grammar is not None:
+            tamper_grammar(grammar)
+        eos_id = grammar["eos"][0]
+        dec_step = grammar["decision_step"]
+        dec_tok = grammar["decision_tokens"][1]
+        gen_ids = [10 + (i % 5) for i in range(steps)]
+        gen_ids[dec_step] = dec_tok
+        gen_ids[-1] = eos_id
+        steps_dir = sample_dir / "steps"
+        steps_dir.mkdir(parents=True, exist_ok=True)
+        raw_hashes = []
+        if lump_f32_into_step0:
+            p0 = steps_dir / "000.f32"
+            p0.write_bytes(b"\x00" * (steps * vocab * 4))
+            raw_hashes = [sha(p0)] + ["0" * 64] * (steps - 1)
+        else:
+            zero_vec = b"\x00" * (vocab * 4)
+            zero_sha = hashlib.sha256(zero_vec).hexdigest()
+            for idx in range(steps):
+                sf = steps_dir / f"{idx:03d}.f32"
+                sf.write_bytes(zero_vec)
+                raw_hashes.append(zero_sha)
+        tok_size = c.LOCKED_INTERNVL35_TOKENIZER_SIZE if vocab == c.LOCKED_INTERNVL35_VOCAB else vocab
+        resp = '```json\n{"safety_level":"Level02"}\n```' if invalid else f'{{"safety_level":"{label}"}}'
+        raw = {
+            "schema": VERSION + "-trace",
+            "grammar": deepcopy(grammar),
+            "policy": dict(POLICY),
+            "actual_logits_processors": [PROCESSOR],
+            "capture_origin": "forward_before_processors",
+            "evidence_kind": "NATIVE",
+            "logit_width": vocab,
+            "tokenizer_size": tok_size,
+            "generated_ids": gen_ids,
+            "raw_vector_hashes": raw_hashes,
+            "masked_vector_hashes": ["1" * 64] * len(gen_ids),
+            "response": resp,
+            "hnlo": None,
+            "hnlo_status": HNLO_STATUS,
+        }
+        if tamper_raw is not None:
+            tamper_raw(raw)
+        write(sample_dir / "grammar.json", grammar)
+        write(sample_dir / "raw.json", raw)
+        if invalid:
+            write(sample_dir / "trace-failure.json", {"status": "FAIL", "type": "ValueError"})
+        else:
+            write(sample_dir / "trace-verification.json", {
+                "status": "TRACE_CONSISTENT",
+                "evidence_kind": "NATIVE",
+                "steps": steps,
+                "label": label,
+            })
+
     def test_attempt4_baseline_scenarios_3762_remaining_and_o5_infeasibility(self):
         import io
         from contextlib import redirect_stdout
@@ -800,14 +887,25 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         self.assertFalse(proj["o5_caps_modified"])
         self.assertEqual(proj["inputs"]["caps"]["total_gpu_seconds"], 80000)
         self.assertEqual(proj["inputs"]["remaining_images"], 3762)
+        self.assertEqual(proj["inputs"]["pending_repair_images"], 0)
         self.assertEqual(proj["inputs"]["grant_remaining"],
             {"jobs": 96, "calls": 4496, "gpu_seconds": 65600, "max_wall_seconds_on_2xt4": 32800})
+        self.assertEqual(proj["envelope_constants"], {
+            "contract_minimum_job_seconds": 120,
+            "stage_export_reserve_seconds": 60,
+            "worker_exit_reserve_seconds": 15,
+            "launch_worker_headroom_seconds": 75,
+            "pre_call_reserve_seconds": 180,
+            "measured_time_margin_seconds": 255,
+            "export_reserve_bytes_per_second": 5242880,
+            "new_source_1call_measurement_job_seconds": 1800,
+        })
         env = proj["capture_envelope"]
         self.assertEqual(env["legacy_64step_200k_per_sample_bytes"], 120442880)
         self.assertEqual(env["legacy_archive_safe_calls"], 62)
         self.assertEqual(env["grammar_v2_proven_per_sample_bytes"], 15378176)
         self.assertEqual(env["proven_archive_safe_calls"], 264)
-        self.assertEqual(env["output_disk_safe_calls"], 643)
+        self.assertEqual(env["output_disk_safe_calls"], 352)
 
         leg = proj["scenarios"]["legacy_current_main"]
         self.assertEqual((leg["safe_calls_per_job"], leg["future_jobs"], leg["future_reserved_gpu_seconds"]), (62, 61, 302072))
@@ -818,28 +916,40 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         self.assertEqual(leg["unattempted_images_left_under_current_o5"], 2956)
 
         opt = proj["scenarios"]["optimized_safe_current_job_cap"]
-        self.assertEqual((opt["safe_calls_per_job"], opt["overhead_seconds"], opt["per_call_seconds"]), (198, 1839, 27))
+        self.assertEqual((opt["safe_calls_per_job"], opt["overhead_seconds"], opt["per_call_seconds"]), (174, 1974, 30))
         self.assertTrue(opt["requires_new_source_1call_measurement"])
-        self.assertEqual((opt["future_jobs"], opt["future_calls"], opt["future_reserved_gpu_seconds"]), (20, 3762, 276576))
-        self.assertEqual(opt["campaign_total_reserved_gpu_seconds"], 290976)
+        self.assertEqual((opt["future_jobs"], opt["future_calls"], opt["future_reserved_gpu_seconds"]), (23, 3762, 316116))
+        self.assertEqual((opt["tail_shard_calls"], opt["tail_shard_seconds"]), (107, 5184))
+        self.assertEqual(opt["campaign_total_reserved_gpu_seconds"], 330516)
         self.assertFalse(opt["feasible_under_current_o5"])
-        self.assertEqual(opt["shortfall_gpu_seconds"], 210976)
+        self.assertEqual(opt["shortfall_gpu_seconds"], 250516)
+        self.assertEqual(opt["max_completable_remaining_images_under_current_o5"], 705)
+        self.assertEqual(opt["unattempted_images_left_under_current_o5"], 3057)
         self.assertEqual(opt["weekly_quota_schedule"]["weeks_required"], 2)
+        self.assertEqual(opt["weekly_quota_schedule"]["basis"],
+            "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED")
 
         alt = proj["scenarios"]["optimized_safe_alt_job_cap"]
         self.assertEqual((alt["safe_calls_per_job"], alt["future_jobs"], alt["tail_shard_calls"], alt["tail_shard_seconds"]),
-            (264, 16, 65, 3594))
-        self.assertEqual(alt["campaign_total_reserved_gpu_seconds"], 276264)
+            (264, 16, 65, 3924))
+        self.assertEqual(alt["campaign_total_reserved_gpu_seconds"], 302880)
         self.assertFalse(alt["feasible_under_current_o5"])
-        self.assertEqual(alt["shortfall_gpu_seconds"], 196264)
+        self.assertEqual(alt["shortfall_gpu_seconds"], 222880)
 
         obs = proj["scenarios"]["observed_extrapolation_not_guarantee"]
-        self.assertEqual(obs["guarantee"], "ILLUSTRATIVE_SINGLE_IMAGE_EXTRAPOLATION_NOT_WORST_CASE_BOUND")
-        self.assertEqual(obs["inference_only_physical_gpu_seconds"], 100973)
-        self.assertGreater(obs["inference_only_physical_gpu_seconds"], 65600)
-        self.assertFalse(obs["feasible_under_current_o5"])
+        self.assertEqual(obs["basis"],
+            "ILLUSTRATIVE_SINGLE_IMAGE_EXTRAPOLATION_NOT_POPULATION_LOWER_BOUND_OR_GUARANTEE")
+        self.assertFalse(obs["proven_population_lower_bound"])
+        self.assertEqual(obs["inference_only_at_attempt4_rate_physical_gpu_seconds"], 100973)
+        self.assertGreater(obs["inference_only_at_attempt4_rate_physical_gpu_seconds"], 65600)
+        self.assertFalse(obs["within_current_o5_if_extrapolated"])
         self.assertFalse(proj["verdict"]["completable_under_current_o5"])
-        self.assertEqual(proj["verdict"]["primary_blocker"], "TOTAL_GPU_SECONDS_CAP_INSUFFICIENT")
+        self.assertFalse(proj["verdict"]["population_latency_distribution_verified"])
+        self.assertEqual(proj["verdict"]["primary_blocker"],
+            "TOTAL_GPU_SECONDS_CAP_INSUFFICIENT_UNDER_MODELED_SAFE_ENVELOPE")
+        self.assertEqual(proj["verdict"]["recommended_owner_o5_decision"]["proposed_total_gpu_seconds"], 430000)
+        self.assertEqual(proj["verdict"]["recommended_owner_o5_decision"]["status"],
+            "PROPOSED_PENDING_OWNER_DECISION_NOT_ACTIVE")
 
         # Read-only CLI forecast must match exact output and never touch network or files.
         buf = io.StringIO()
@@ -848,7 +958,7 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual(json.loads(buf.getvalue()), proj)
 
-    def test_small_vs_large_counts_zero_headroom_and_quota_thresholds(self):
+    def test_small_vs_large_counts_zero_headroom_pending_repairs_and_quota_thresholds(self):
         # 0 remaining images -> 0 future jobs/GPU-s, feasible under 80k
         p0 = c.project_campaign_budget(completed_images=3763)
         self.assertEqual(p0["scenarios"]["optimized_safe_current_job_cap"]["future_jobs"], 0)
@@ -860,22 +970,28 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         self.assertEqual((s1["future_jobs"], s1["future_calls"], s1["future_reserved_gpu_seconds"]), (1, 1, 3600))
         self.assertTrue(s1["feasible_under_current_o5"])
 
-        # 5 remaining images with source_changed=False -> 1 proportional shard of 4 calls? No, 5 calls: 1839 + 27*5 = 1974s -> 3948 GPU-s
+        # 5 remaining images with source_changed=False -> 1 proportional shard of 5 calls: 1974 + 30*5 = 2124s -> 4248 GPU-s
         p5 = c.project_campaign_budget(completed_images=3758, source_changed=False)
         s5 = p5["scenarios"]["optimized_safe_current_job_cap"]
         self.assertEqual((s5["future_jobs"], s5["tail_shard_calls"], s5["tail_shard_seconds"], s5["future_reserved_gpu_seconds"]),
-            (1, 5, 1974, 3948))
+            (1, 5, 2124, 4248))
 
-        # Exact zero headroom boundary on total_gpu_seconds (290,976 vs 290,975)
+        # Pending TECHNICAL_ERROR repairs schedule in a separate --mode repair job rather than merging into resume!
+        prep = c.project_campaign_budget(completed_images=3758, pending_repair_images=2, source_changed=False)
+        srep = prep["scenarios"]["optimized_safe_current_job_cap"]
+        # 1 resume tail job (5 calls -> 2124s) + 1 repair job (2 calls -> 1974 + 60 = 2034s) = 2 jobs, 7 calls, 4158 wall-s -> 8316 GPU-s
+        self.assertEqual((srep["future_jobs"], srep["future_calls"], srep["future_reserved_gpu_seconds"]), (2, 7, 8316))
+
+        # Exact zero headroom boundary on total_gpu_seconds (330,516 vs 330,515)
         caps_exact = deepcopy(c.ATTEMPT4_PUBLIC_BASELINE["caps"])
-        caps_exact["total_gpu_seconds"] = 290976
+        caps_exact["total_gpu_seconds"] = 330516
         exact = c.project_campaign_budget(caps=caps_exact)
         self.assertTrue(exact["verdict"]["completable_under_current_o5"])
         self.assertEqual(exact["scenarios"]["optimized_safe_current_job_cap"]["headroom_gpu_seconds"], 0)
         self.assertEqual(exact["scenarios"]["optimized_safe_current_job_cap"]["shortfall_gpu_seconds"], 0)
 
         caps_minus1 = deepcopy(caps_exact)
-        caps_minus1["total_gpu_seconds"] = 290975
+        caps_minus1["total_gpu_seconds"] = 330515
         short1 = c.project_campaign_budget(caps=caps_minus1)
         self.assertFalse(short1["verdict"]["completable_under_current_o5"])
         self.assertEqual(short1["scenarios"]["optimized_safe_current_job_cap"]["shortfall_gpu_seconds"], 1)
@@ -895,6 +1011,8 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             {"planned_total": True},
             {"completed_images": -1},
             {"completed_images": 3764},
+            {"pending_repair_images": -1},
+            {"pending_repair_images": 2},
             {"already_reserved_gpu_seconds": 10**13},
             {"setup_seconds": float("nan")},
             {"sample_seconds": float("inf")},
@@ -914,33 +1032,38 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             with self.subTest(calls=bad_calls), self.assertRaises(ValueError):
                 c.required_job_seconds(bad_measured, bad_calls)
 
-    def test_measure_10_vs_64_logit_steps_worker_supervisor_and_disk_cap(self):
+    def test_measure_10_vs_64_logit_steps_grammar_tampering_invalid_fallback_and_cgroup_bounds(self):
         request, grant, comments = fixture(self.root / "ledger")
         grant["caps"].update(job_calls=1000, job_seconds=7200, total_calls=4500, total_jobs=100, total_gpu_seconds=80000)
         grant["operator_root_sha256"] = c.operator_binding(self.root / "ledger")
         with patch.object(old, "get", side_effect=lambda p: deepcopy(comments[p])):
             ledger = c.Ledger.create(self.root / "ledger", self.root / "mirror", grant, "synthetic-machine")
 
-        def build_telemetry_zip(name, *, vocab, steps, worker_sec=None, free_output=None, corrupt_f32=False):
+        def build_telemetry_zip(name, *, vocab, steps, worker_sec=None, free_output=None, corrupt_f32=False,
+                                invalid=False, lump_f32=False, tamper_grammar=None, tamper_raw=None, cgroup=None):
             folder = self.root / name
             write(folder / "setup/setup-supervisor.json", {"seconds": 267.21})
             if worker_sec is not None:
                 write(folder / "worker-supervisor.json", {"seconds": worker_sec})
             if free_output is not None:
                 write(folder / "environment/preload-resources.json", {"free_bytes": [20 * 2**30, free_output]})
+            mem_obj = {"errors": []}
+            if cgroup is not None:
+                mem_obj["cgroup"] = cgroup
             write(folder / "run/telemetry.json", {
                 "evidence_kind": "NATIVE",
                 "samples": [{"ordinal": 0, "seconds": 13.42, "bytes": 14055278 if vocab == 151936 and steps == 10 else 100000}],
                 "load_seconds": 73.41,
                 "gpu_peak_allocated_bytes": 14134920704,
                 "gpu_peak_reserved_bytes": 14558429184,
-                "memory": {"errors": []},
+                "memory": mem_obj,
             })
-            write(folder / "run/samples/000000/grammar.json", {"required_tokens_including_eos": steps})
-            write(folder / "run/samples/000000/raw.json", {"logit_width": vocab, "generated_ids": list(range(steps))})
-            f32_bytes = steps * vocab * 4 - (4 if corrupt_f32 else 0)
-            (folder / "run/samples/000000/steps").mkdir(parents=True, exist_ok=True)
-            (folder / "run/samples/000000/steps/000.f32").write_bytes(b"\x00" * f32_bytes)
+            sample_dir = folder / "run/samples/000000"
+            self._populate_native_sample_trace(sample_dir, vocab=vocab, steps=steps, invalid=invalid,
+                lump_f32_into_step0=lump_f32, tamper_grammar=tamper_grammar, tamper_raw=tamper_raw)
+            if corrupt_f32:
+                last_f32 = sample_dir / f"steps/{steps - 1:03d}.f32"
+                last_f32.write_bytes(b"\x00" * (vocab * 4 - 4))
             arc = self.root / (name + ".zip")
             checksum = export(folder, arc)
             with lock(ledger.root):
@@ -952,20 +1075,26 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             arc10 = build_telemetry_zip("m10", vocab=151936, steps=10, worker_sec=605.567, free_output=20937965568)
             m10 = ledger.measure(arc10, job_seconds=7200)
             self.assertEqual(m10["capture_per_sample_bytes"], 15378176)
-            self.assertEqual(m10["overhead_seconds"], 1839)
-            self.assertEqual(m10["per_call_seconds"], 27)
-            self.assertEqual(m10["safe_calls"], 198)
-            self.assertEqual(m10["minimum_seconds"], 7185)
-            self.assertEqual(c.required_job_seconds(m10, 198), 7185)
-            self.assertEqual(c.required_job_seconds(m10, 1), 1866)
+            self.assertEqual(m10["overhead_seconds"], 1974)
+            self.assertEqual(m10["per_call_seconds"], 30)
+            self.assertEqual(m10["safe_calls"], 174)
+            self.assertEqual(m10["minimum_seconds"], 7194)
+            self.assertEqual(c.required_job_seconds(m10, 174), 7194)
+            self.assertEqual(c.required_job_seconds(m10, 1), 2004)
 
-            # 64-step trace uses 64-step bound -> much smaller archive cap than 10-step trace
-            arc64 = build_telemetry_zip("m64", vocab=2048, steps=64, worker_sec=100.0)
-            m64 = ledger.measure(arc64, job_seconds=7200)
-            self.assertEqual(m64["capture_per_sample_bytes"], runtime.capture_budget(vocab=2048, steps=64)["per_sample_bytes"])
-            self.assertGreater(m64["capture_per_sample_bytes"], runtime.capture_budget(vocab=2048, steps=10)["per_sample_bytes"])
+            # 64-step trace (within max_new_tokens=64 if policy matched; test 16-step <= 16 max_new_tokens vs 10-step)
+            arc16 = build_telemetry_zip("m16", vocab=2048, steps=16, worker_sec=100.0)
+            m16 = ledger.measure(arc16, job_seconds=7200)
+            self.assertEqual(m16["capture_per_sample_bytes"], runtime.capture_budget(vocab=2048, steps=16)["per_sample_bytes"])
+            self.assertGreater(m16["capture_per_sample_bytes"], runtime.capture_budget(vocab=2048, steps=10)["per_sample_bytes"])
 
-            # Tight output disk space clamps safe_calls via disk_cap; insufficient disk fails closed
+            # Valid INVALID native sample falls back conservatively to 200k x 64 bound instead of trusting 10 steps!
+            arc_inv = build_telemetry_zip("minv", vocab=151936, steps=10, worker_sec=605.567, invalid=True)
+            minv = ledger.measure(arc_inv, job_seconds=7200)
+            self.assertEqual(minv["capture_per_sample_bytes"], runtime.capture_budget()["per_sample_bytes"])
+            self.assertEqual(minv["safe_calls"], 61)
+
+            # Tight output disk space clamps safe_calls via 2 * effective_sample_bytes; insufficient disk fails closed
             per_disk = runtime.capture_budget(vocab=2048, steps=10)["sample_and_export_bytes"]
             tight_free = 2**30 + 64 * 2**20 + 3 * per_disk + 123
             arc_disk = build_telemetry_zip("mdisk", vocab=2048, steps=10, worker_sec=100.0, free_output=tight_free)
@@ -976,10 +1105,20 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "TOO_SMALL"):
                 ledger.measure(arc_nofree, job_seconds=7200)
 
-            # Truncated/mismatched .f32 bytes fail closed
-            arc_bad = build_telemetry_zip("mbad", vocab=2048, steps=10, worker_sec=100.0, corrupt_f32=True)
-            with self.assertRaisesRegex(ValueError, "F32_BYTES_MISMATCH"):
-                ledger.measure(arc_bad, job_seconds=7200)
+            # Negative checks: truncated .f32, lumped .f32 missing step files, forged grammar hash/steps, synthetic raw, cgroup OOM/low RAM
+            for idx, (label, kw, pattern) in enumerate((
+                ("corrupt_f32", {"vocab": 2048, "steps": 10, "corrupt_f32": True}, "F32_BYTES_MISMATCH"),
+                ("lumped_f32_missing_steps", {"vocab": 2048, "steps": 10, "lump_f32": True}, "F32_BYTES_MISMATCH"),
+                ("forged_151936_paths_sha", {"vocab": 151936, "steps": 10, "tamper_grammar": lambda g: g.update(paths_sha256="0"*64)}, "LOCKED_INTERNVL35_GRAMMAR_GEOMETRY_DRIFT"),
+                ("forged_unequal_branches", {"vocab": 2048, "steps": 10, "tamper_grammar": lambda g: g.update(path_lengths=[8, 9, 9, 9])}, "MEASURED_CAPTURE_TRACE_GEOMETRY"),
+                ("synthetic_raw_kind", {"vocab": 2048, "steps": 10, "tamper_raw": lambda r0: r0.update(evidence_kind="SYNTHETIC")}, "MEASURED_RAW_CAPTURE_CONTRACT"),
+                ("cgroup_oom_kill", {"vocab": 2048, "steps": 10, "cgroup": {"status": "OBSERVED", "memory.events": {"oom_kill": 1}}}, "CGROUP_OOM_OBSERVED"),
+                ("cgroup_low_headroom", {"vocab": 2048, "steps": 10, "cgroup": {"status": "OBSERVED", "memory.max": 8 * 2**30, "memory.current": 8 * 2**30 - 100 * 2**20}}, "CGROUP_MEMORY_HEADROOM_TOO_LOW"),
+            )):
+                with self.subTest(case=label):
+                    bad_arc = build_telemetry_zip(f"bad-{idx}", worker_sec=100.0, **kw)
+                    with self.assertRaisesRegex(ValueError, pattern):
+                        ledger.measure(bad_arc, job_seconds=7200)
 
     def test_historical_attempts_1_to_4_source_drift_ordinal1_remeasure_and_no_implicit_attempt5(self):
         from scripts import train3763_campaign as cli
@@ -987,7 +1126,6 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         grant["caps"].update(total_calls=4500, total_jobs=100, total_gpu_seconds=80000,
             job_calls=1000, job_seconds=7200)
         grant["operator_root_sha256"] = c.operator_binding(self.root / "ledger")
-        # Rebuild authentic mock Owner grant & initial technical revision for legacy_source
         current_spec = runtime.source_spec()
         legacy_spec = deepcopy(current_spec)
         legacy_spec["manifest"]["safeshift/internvl3763_campaign.py"] = "1" * 64
@@ -1080,10 +1218,8 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                     "memory": {"errors": []},
                 })
                 ord0 = records[0]["ordinal"]
-                write(folder / f"run/samples/{ord0:06d}/grammar.json", {"required_tokens_including_eos": 10})
-                write(folder / f"run/samples/{ord0:06d}/raw.json", {"logit_width": 151936, "generated_ids": list(range(10))})
-                (folder / f"run/samples/{ord0:06d}/steps").mkdir(parents=True, exist_ok=True)
-                (folder / f"run/samples/{ord0:06d}/steps/000.f32").write_bytes(b"\x00" * 6077440)
+                self._populate_native_sample_trace(folder / f"run/samples/{ord0:06d}",
+                    vocab=151936, steps=10, label=records[0].get("label") or "Level02")
             arc = self.root / f"archive-{num}.zip"
             checksum = export(folder, arc)
             p = req["plan"]
@@ -1116,13 +1252,11 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                 request["runtime_commit"], request["notebook_sha256"])
 
             with patch.object(runtime, "source_spec", return_value=legacy_spec):
-                # Attempt 1 & 2: ABORTED_PRE_SUBMIT (2 journals each -> 4 journals)
                 for n in (1, 2):
                     r_n = build_req(n, [], [], calls=1, seconds=1800, action="initial", spec=legacy_spec, rev_loc=rev_legacy)
                     ledger.reserve(r_n)
                     ledger.abort_pre_submit()
 
-                # Attempt 3: INTENT + PUSH_INTENT + SUBMITTED + COLLECTED terminal FAIL (0 calls -> journal 5..8)
                 r3 = build_req(3, [], [], calls=1, seconds=1800, action="initial", spec=legacy_spec, rev_loc=rev_legacy)
                 it3 = ledger.reserve(r3)
                 with lock(ledger.root):
@@ -1131,7 +1265,6 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                 arc3, _ = seal_collected_zip(3, r3, it3, [], status="FAIL")
                 ledger.collect(r3, arc3, {"state": "COMPLETE", "job_id": r3["job"], "version": 1, "notebook_sha256": r3["notebook_sha256"]})
 
-                # Attempt 4 on legacy_source: resume 1 call ordinal 0 -> PASS + legacy MEASURED (journal 9..13)
                 hist3, cust3 = ledger.histories()
                 r4 = build_req(4, hist3, cust3, calls=1, seconds=1800, action="resume", spec=legacy_spec, rev_loc=rev_legacy)
                 self.assertEqual(r4["plan"]["scheduled_ordinals"], [0])
@@ -1144,7 +1277,6 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                     "hnlo": None, "hnlo_status": runtime.HNLO_STATUS}
                 arc4, _ = seal_collected_zip(4, r4, it4, [row0], status="PASS", include_telemetry=True)
                 ledger.collect(r4, arc4, {"state": "COMPLETE", "job_id": r4["job"], "version": 1, "notebook_sha256": r4["notebook_sha256"]})
-                # Simulate legacy MEASURED entry (62 calls, minimum_seconds=2476, without decomposed fields)
                 with lock(ledger.root):
                     ledger.append("MEASURED", source_sha256=digest(legacy_spec), safe_calls=62, minimum_seconds=2476,
                         archive_sha256=sha(arc4), observed={"sample_bytes": 14055278},
@@ -1158,7 +1290,6 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             journal_snapshot_1_to_13 = {p.name: p.read_bytes() for p in ledger.root.glob("journal-*.json")}
             self.assertEqual(len(journal_snapshot_1_to_13), 13)
 
-            # Read-only CLI forecast against this ledger preserves all 13 journals and reports source_changed=True!
             import io
             from contextlib import redirect_stdout
             buf = io.StringIO()
@@ -1166,22 +1297,19 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                 self.assertEqual(cli.main(["forecast", "--directory", str(ledger.root)]), 0)
             f_out = json.loads(buf.getvalue())
             self.assertTrue(f_out["verdict"]["new_source_measurement_required"])
-            self.assertEqual(len(ledger.intents()), 4)  # No implicit Attempt 5 created!
+            self.assertEqual(len(ledger.intents()), 4)
 
-            # Attempt 5 without new technical revision is blocked on source binding
             hist4, cust4 = ledger.histories()
             r5_unrev = build_req(5, hist4, cust4, calls=1, seconds=1800, action="resume", spec=current_spec, rev_loc=rev_legacy)
             with self.assertRaisesRegex(ValueError, "TECHNICAL_SOURCE_BINDING"):
                 ledger.reserve(r5_unrev)
 
-            # With reviewed new source, multi-call shard (calls=2) is STILL blocked until 1-call measurement on new source!
             rev_new = set_tech_revision(digest(current_spec), 186, "c" * 40, "d" * 40, "9" * 64)
             r5_multi = build_req(5, hist4, cust4, calls=2, seconds=2500, action="resume", spec=current_spec,
                 rev_loc=rev_new, merge_sha="c" * 40, rt_commit="d" * 40, nb_sha="9" * 64)
             with self.assertRaisesRegex(ValueError, "FINAL_SOURCE_MEASUREMENTS_REQUIRED_BEFORE_SHARDS"):
                 ledger.reserve(r5_multi)
 
-            # Valid 1-call Attempt 5 on new source schedules ordinal 1 (preserving ordinal 0 SUCCESS and journals 1..13)
             r5 = build_req(5, hist4, cust4, calls=1, seconds=1800, action="resume", spec=current_spec,
                 rev_loc=rev_new, merge_sha="c" * 40, rt_commit="d" * 40, nb_sha="9" * 64)
             self.assertEqual(r5["plan"]["scheduled_ordinals"], [1])
@@ -1193,9 +1321,6 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             with lock(ledger.root):
                 ledger.append("PUSH_INTENT", intent_sha256=digest(it5))
             ledger.submitted(it5, {"job_id": r5["job"], "version": 1})
-            row1 = {**cohort["samples"][1], "status": "TECHNICAL_ERROR", "label": None, "attempts": 1,
-                "native_calls": 1, "hnlo": None, "hnlo_status": runtime.HNLO_STATUS}
-            # Wait: measurement requires PASS; make ordinal 1 SUCCESS and test repair separately on Attempt 6!
             row1_ok = {**cohort["samples"][1], "status": "SUCCESS", "label": "Level01", "attempts": 1,
                 "native_calls": 1, "raw_sha256": "c" * 64, "trace_verified": True,
                 "hnlo": None, "hnlo_status": runtime.HNLO_STATUS}
@@ -1203,23 +1328,23 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             ledger.collect(r5, arc5, {"state": "COMPLETE", "job_id": r5["job"], "version": 1, "notebook_sha256": r5["notebook_sha256"]})
             m5 = ledger.measure(arc5, job_seconds=7200)
             self.assertEqual((m5["safe_calls"], m5["overhead_seconds"], m5["per_call_seconds"], m5["minimum_seconds"]),
-                (198, 1839, 27, 7185))
+                (174, 1974, 30, 7194))
 
-            # Proportional reserve for small shard (calls=5 requires 1839 + 27*5 = 1974s, NOT 7185s; 1973s fails closed!)
+            # Proportional reserve for small shard (calls=5 requires 1974 + 30*5 = 2124s, NOT 7194s; 2123s fails closed!)
             hist5, cust5 = ledger.histories()
-            r6_low = build_req(6, hist5, cust5, calls=5, seconds=1973, action="resume", spec=current_spec,
+            r6_low = build_req(6, hist5, cust5, calls=5, seconds=2123, action="resume", spec=current_spec,
                 rev_loc=rev_new, merge_sha="c" * 40, rt_commit="d" * 40, nb_sha="9" * 64)
             with self.assertRaisesRegex(ValueError, "MEASURED_SHARD_LIMIT"):
                 ledger.reserve(r6_low)
-            r6_over = build_req(6, hist5, cust5, calls=199, seconds=7200, action="resume", spec=current_spec,
+            r6_over = build_req(6, hist5, cust5, calls=175, seconds=7200, action="resume", spec=current_spec,
                 rev_loc=rev_new, merge_sha="c" * 40, rt_commit="d" * 40, nb_sha="9" * 64)
             with self.assertRaisesRegex(ValueError, "MEASURED_SHARD_LIMIT"):
                 ledger.reserve(r6_over)
-            r6_ok = build_req(6, hist5, cust5, calls=5, seconds=1974, action="resume", spec=current_spec,
+            r6_ok = build_req(6, hist5, cust5, calls=5, seconds=2124, action="resume", spec=current_spec,
                 rev_loc=rev_new, merge_sha="c" * 40, rt_commit="d" * 40, nb_sha="9" * 64)
             self.assertEqual(r6_ok["plan"]["scheduled_ordinals"], [2, 3, 4, 5, 6])
             it6 = ledger.reserve(r6_ok)
-            self.assertEqual(it6["reserved_gpu_seconds"], 1974 * 2)
+            self.assertEqual(it6["reserved_gpu_seconds"], 2124 * 2)
             with lock(ledger.root):
                 ledger.append("PUSH_INTENT", intent_sha256=digest(it6))
             ledger.submitted(it6, {"job_id": r6_ok["job"], "version": 1})
@@ -1228,7 +1353,15 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             arc6, _ = seal_collected_zip(6, r6_ok, it6, [row2_err], status="FAIL")
             ledger.collect(r6_ok, arc6, {"state": "COMPLETE", "job_id": r6_ok["job"], "version": 1, "notebook_sha256": r6_ok["notebook_sha256"]})
 
-            # Exact-target 1-call repair reserves proportional 1866s (1839 + 27*1) instead of 7185s!
+            # CLI forecast after new-source MEASURED + 1 TECHNICAL_ERROR reflects source_changed=False and pending_repair_images=1!
+            buf2 = io.StringIO()
+            with patch.object(cli, "private_root", return_value=ledger.root), redirect_stdout(buf2):
+                self.assertEqual(cli.main(["forecast", "--directory", str(ledger.root)]), 0)
+            f_after = json.loads(buf2.getvalue())
+            self.assertFalse(f_after["verdict"]["new_source_measurement_required"])
+            self.assertEqual(f_after["inputs"]["pending_repair_images"], 1)
+
+            # Exact-target 1-call repair reserves proportional 2004s (1974 + 30*1) instead of 7194s!
             hist6, cust6 = ledger.histories()
             repair_spec = {
                 "targets": {row2_err["sample_id"]: digest(row2_err)},
@@ -1236,13 +1369,12 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                 "regression_sha256": "e" * 64,
                 "diagnosis": "SYNTHETIC single-image technical repair with proportional reservation",
             }
-            r7_rep = build_req(7, hist6, cust6, calls=1, seconds=1866, action="repair", repair=repair_spec,
+            r7_rep = build_req(7, hist6, cust6, calls=1, seconds=2004, action="repair", repair=repair_spec,
                 spec=current_spec, rev_loc=rev_new, merge_sha="c" * 40, rt_commit="d" * 40, nb_sha="9" * 64)
             self.assertEqual(r7_rep["plan"]["scheduled_ordinals"], [2])
             it7 = ledger.reserve(r7_rep)
-            self.assertEqual(it7["reserved_gpu_seconds"], 1866 * 2)
+            self.assertEqual(it7["reserved_gpu_seconds"], 2004 * 2)
 
-            # Corrupting a sealed collected archive fails closed on history reconciliation
             arc4_bytes = arc4.read_bytes()
             arc4.write_bytes(arc4_bytes[:64])
             with self.assertRaises(ValueError):
