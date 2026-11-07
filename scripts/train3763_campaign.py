@@ -65,8 +65,8 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("action", choices=("identity", "init", "plan", "status", "abort-pre-submit", "measure"))
-    p.add_argument("--directory", type=Path, required=True)
+    p.add_argument("action", choices=("identity", "init", "plan", "status", "abort-pre-submit", "measure", "forecast"))
+    p.add_argument("--directory", type=Path)
     p.add_argument("--mirror", type=Path)
     p.add_argument("--grant", type=Path)
     p.add_argument("--operator-id")
@@ -78,7 +78,30 @@ def main(argv=None):
     p.add_argument("--mode", choices=("initial", "resume", "repair"), default="resume")
     p.add_argument("--repair", type=Path)
     p.add_argument("--archive", type=Path)
+    p.add_argument("--weekly-remaining", type=int)
     args = p.parse_args(argv)
+    if args.action == "forecast":
+        kwargs = {}
+        if args.weekly_remaining is not None:
+            kwargs["weekly_quota_remaining_seconds"] = args.weekly_remaining
+        if args.directory is not None:
+            ledger = campaign.Ledger(private_root(args.directory))
+            state = ledger.summary()
+            current_source = digest(runtime.source_spec())
+            measured = [x for x in ledger.events() if x["kind"] == "MEASURED" and x["source_sha256"] == current_source]
+            kwargs.update(
+                caps=ledger.grant["caps"],
+                planned_total=state["planned"],
+                completed_images=state["planned"] - state["counts"].get("NOT_ATTEMPTED", 0),
+                already_reserved_calls=state["reserved_calls"],
+                already_reserved_jobs=state["jobs"],
+                already_reserved_gpu_seconds=state["reserved_gpu_seconds"],
+                source_changed=not bool(measured),
+            )
+        result = campaign.project_campaign_budget(**kwargs)
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    require(args.directory is not None, "DIRECTORY_REQUIRED")
     root = private_root(args.directory)
     if args.action == "identity":
         from safeshift.internvl3763_operator import code_hash

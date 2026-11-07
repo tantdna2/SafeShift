@@ -192,9 +192,26 @@ def capture_budget(vocab=200000, steps=64):
         "basis": "CONSERVATIVE_ENGINEERING_BOUND_NOT_MEASURED_THROUGHPUT"}
 
 
+def _backend_capture_budget(backend):
+    inner = getattr(backend, "backend", backend)
+    tokenizer = getattr(inner, "tokenizer", None)
+    generation = getattr(inner, "generation", None)
+    width = getattr(inner, "logit_width", None)
+    if tokenizer is not None and generation is not None and type(width) is int and 0 < width <= 200000:
+        eos = getattr(generation, "eos_token_id", None)
+        if eos is not None:
+            from safeshift.diagnostic173_grammar import CanonicalJSONGrammar
+            grammar = CanonicalJSONGrammar(tokenizer, eos)
+            steps = max(len(path) for path in grammar.paths) + 1
+            require(0 < steps <= 64, "CAPTURE_DIMENSION_BOUND")
+            return capture_budget(vocab=width, steps=steps)
+    return capture_budget()
+
+
 def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clock=time.monotonic,
              archive_limit_bytes=7 * 2**30, hard_deadline=None):
     """Bounded shared controller. Public entrypoints gate before reaching here."""
+    require(type(archive_limit_bytes) is int and archive_limit_bytes > 0, "ARCHIVE_LIMIT_BYTES")
     rows = planning.validate_cohort(cohort, digest(cohort))
     plan_sha = digest(p)
     from safeshift import internvl3763_campaign as campaign
@@ -220,16 +237,26 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             backend = factory(deadline)
             write(out / "loaded.json", backend.environment)
             telemetry["load_seconds"] = clock() - begun
-        retained = sum(path.stat().st_size for path in out.rglob("*") if path.is_file())
+        sample_budget = _backend_capture_budget(backend) if backend is not None else capture_budget()
+        export_root = out.parent if (out.parent / "handoff.json").is_file() else out
+        existing = [path for path in export_root.rglob("*") if path.is_file()]
+        retained = sum(path.stat().st_size for path in existing)
+        member_count = len(existing)
+        summary_margin = 16 * 2**20 if archive_limit_bytes > 64 * 2**20 else 0
+        effective_archive_limit = min(archive_limit_bytes, sample_budget["archive_verifier_limit_bytes"]) - summary_margin
         for ordinal in p["scheduled_ordinals"]:
             require(calls < p["max_calls"], "CALL_CAP")
-            if clock() >= deadline:
+            now = clock()
+            next_call_reserve = 2 * max((x["seconds"] for x in telemetry["samples"]), default=0)
+            if now >= deadline or (next_call_reserve > 0 and now + next_call_reserve >= deadline):
                 write(out / "stop.json", {"reason": "DEADLINE_BEFORE_NEXT_CALL"})
                 break
-            if shutil.disk_usage(out).free < retained + capture_budget()["sample_and_export_bytes"] + 2**30:
+            per_sample_bound = max(sample_budget["per_sample_bytes"],
+                max((x["bytes"] for x in telemetry["samples"]), default=0))
+            if shutil.disk_usage(out).free < retained + 2 * per_sample_bound + 2**30:
                 write(out / "stop.json", {"reason": "CAPTURE_AND_EXPORT_SPACE_NOT_AVAILABLE"})
                 break
-            if retained + capture_budget()["per_sample_bytes"] > archive_limit_bytes:
+            if retained + per_sample_bound > effective_archive_limit or member_count + 256 >= 1000000:
                 write(out / "stop.json", {"reason": "ARCHIVE_VERIFIER_8GIB_BOUND_EXPORT_MARGIN"})
                 break
             row = rows[ordinal]
@@ -263,10 +290,13 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
                     native_calls=int((sample / "native_call.json").exists()))
                 raise
             finally:
+                sample_files = [path for path in sample.rglob("*") if path.is_file()]
+                sample_bytes = sum(path.stat().st_size for path in sample_files)
                 calls += int((sample / "native_call.json").exists())
-                retained += sum(path.stat().st_size for path in sample.rglob("*") if path.is_file())
+                retained += sample_bytes
+                member_count += len(sample_files)
                 telemetry["samples"].append({"ordinal": ordinal, "seconds": clock()-sample_started,
-                    "bytes": sum(path.stat().st_size for path in sample.rglob("*") if path.is_file())})
+                    "bytes": sample_bytes})
     except BaseException as error:
         failure = {"type": type(error).__name__, "cause": "SEE_PRIVATE_STAGE_EVIDENCE",
             "message_sha256": hashlib.sha256(str(error).encode()).hexdigest(),
