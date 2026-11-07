@@ -1,0 +1,239 @@
+{
+  "capture_envelope": {
+    "base_archive_reserve_bytes": 67108864,
+    "effective_twofold_sample_bytes": 28110556,
+    "grammar_v2_proven_per_sample_bytes": 15378176,
+    "legacy_64step_200k_per_sample_bytes": 120442880,
+    "legacy_archive_safe_calls": 62,
+    "output_disk_safe_calls": 643,
+    "proven_archive_safe_calls": 264
+  },
+  "inputs": {
+    "already_reserved": {
+      "calls": 4,
+      "gpu_seconds": 14400,
+      "jobs": 4
+    },
+    "caps": {
+      "archive_bytes": 7516192768,
+      "job_calls": 1000,
+      "job_seconds": 7200,
+      "machine_shape": "NvidiaTeslaT4",
+      "max_repairs_per_image": 10,
+      "physical_gpus": 2,
+      "total_calls": 4500,
+      "total_gpu_seconds": 80000,
+      "total_jobs": 100
+    },
+    "completed_images": 1,
+    "grant_remaining": {
+      "calls": 4496,
+      "gpu_seconds": 65600,
+      "jobs": 96,
+      "max_wall_seconds_on_2xt4": 32800
+    },
+    "planned_total": 3763,
+    "remaining_images": 3762,
+    "weekly_quota": {
+      "remaining_seconds_week1": 20727,
+      "weekly_limit_seconds": 108000
+    }
+  },
+  "o5_caps_modified": false,
+  "scenarios": {
+    "legacy_current_main": {
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 65,
+      "campaign_total_reserved_gpu_seconds": 316472,
+      "estimated_observed_kaggle_quota_seconds": 102943,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 2476,
+      "future_calls": 3762,
+      "future_jobs": 61,
+      "future_reserved_gpu_seconds": 302072,
+      "future_reserved_wall_seconds": 151036,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 7200,
+      "max_completable_remaining_images_under_current_o5": 806,
+      "overhead_seconds": 802,
+      "per_call_seconds": 27,
+      "requires_new_source_1call_measurement": false,
+      "safe_calls_per_job": 62,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 236472,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 42,
+      "tail_shard_seconds": 2476,
+      "unattempted_images_left_under_current_o5": 2956,
+      "weekly_quota_schedule": {
+        "feasible": true,
+        "week1_images_completed": 744,
+        "weeks": [
+          {
+            "images": 744,
+            "jobs": 12,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 423,
+            "wall_seconds_used": 20304,
+            "week": 1
+          },
+          {
+            "images": 3018,
+            "jobs": 49,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 25361,
+            "wall_seconds_used": 82639,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    },
+    "observed_extrapolation_not_guarantee": {
+      "campaign_total_equivalent_physical_gpu_seconds": 149747,
+      "feasible_under_current_o5": false,
+      "guarantee": "ILLUSTRATIVE_SINGLE_IMAGE_EXTRAPOLATION_NOT_WORST_CASE_BOUND",
+      "inference_only_exceeds_remaining_o5_by_gpu_seconds": 35373,
+      "inference_only_physical_gpu_seconds": 100973,
+      "inference_only_wall_seconds": 50487,
+      "with_1x_shard_overhead_physical_gpu_seconds": 135347,
+      "with_1x_shard_overhead_wall_seconds": 67674
+    },
+    "optimized_safe_alt_job_cap": {
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 20,
+      "campaign_total_reserved_gpu_seconds": 276264,
+      "estimated_observed_kaggle_quota_seconds": 64247,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 8967,
+      "future_calls": 3762,
+      "future_jobs": 16,
+      "future_reserved_gpu_seconds": 261864,
+      "future_reserved_wall_seconds": 130932,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 10800,
+      "max_completable_remaining_images_under_current_o5": 876,
+      "overhead_seconds": 1839,
+      "per_call_seconds": 27,
+      "requires_new_source_1call_measurement": true,
+      "safe_calls_per_job": 264,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 196264,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 65,
+      "tail_shard_seconds": 3594,
+      "unattempted_images_left_under_current_o5": 2886,
+      "weekly_quota_schedule": {
+        "feasible": true,
+        "week1_images_completed": 1057,
+        "weeks": [
+          {
+            "images": 1057,
+            "jobs": 5,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 2242,
+            "wall_seconds_used": 18485,
+            "week": 1
+          },
+          {
+            "images": 2705,
+            "jobs": 11,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 62238,
+            "wall_seconds_used": 45762,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    },
+    "optimized_safe_current_job_cap": {
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 24,
+      "campaign_total_reserved_gpu_seconds": 290976,
+      "estimated_observed_kaggle_quota_seconds": 67683,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 7185,
+      "future_calls": 3762,
+      "future_jobs": 20,
+      "future_reserved_gpu_seconds": 276576,
+      "future_reserved_wall_seconds": 138288,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 7200,
+      "max_completable_remaining_images_under_current_o5": 808,
+      "overhead_seconds": 1839,
+      "per_call_seconds": 27,
+      "requires_new_source_1call_measurement": true,
+      "safe_calls_per_job": 198,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 210976,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 197,
+      "tail_shard_seconds": 7158,
+      "unattempted_images_left_under_current_o5": 2954,
+      "weekly_quota_schedule": {
+        "feasible": true,
+        "week1_images_completed": 991,
+        "weeks": [
+          {
+            "images": 991,
+            "jobs": 6,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 2269,
+            "wall_seconds_used": 18458,
+            "week": 1
+          },
+          {
+            "images": 2771,
+            "jobs": 14,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 58775,
+            "wall_seconds_used": 49225,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    }
+  },
+  "schema": "safeshift-train3763-budget-projection-v1",
+  "scientific_qualified": false,
+  "sensitivity": [
+    {
+      "latency_multiplier": "1.00",
+      "per_call_seconds": 27,
+      "safe_calls_at_current_job_cap": 198,
+      "with_contingency_campaign_gpu_seconds": 311088,
+      "zero_error_campaign_gpu_seconds": 290976
+    },
+    {
+      "latency_multiplier": "1.25",
+      "per_call_seconds": 34,
+      "safe_calls_at_current_job_cap": 157,
+      "with_contingency_campaign_gpu_seconds": 383532,
+      "zero_error_campaign_gpu_seconds": 362020
+    },
+    {
+      "latency_multiplier": "1.50",
+      "per_call_seconds": 41,
+      "safe_calls_at_current_job_cap": 130,
+      "with_contingency_campaign_gpu_seconds": 455976,
+      "zero_error_campaign_gpu_seconds": 433064
+    }
+  ],
+  "verdict": {
+    "completable_under_current_o5": false,
+    "minimum_zero_margin_o5_gpu_seconds_alt_job_cap": 276264,
+    "minimum_zero_margin_o5_gpu_seconds_current_job_cap": 290976,
+    "new_source_measurement_required": true,
+    "new_source_measurement_target": "ordinal_1_via_resume_1call_1800s_preserving_ordinal_0_success",
+    "primary_blocker": "TOTAL_GPU_SECONDS_CAP_INSUFFICIENT",
+    "recommended_owner_o5_decision": {
+      "optional_job_seconds_for_264_call_shards": 10800,
+      "proposed_total_calls": 4500,
+      "proposed_total_gpu_seconds": 390000,
+      "proposed_total_jobs": 100,
+      "requires_owner_authorization": true
+    }
+  }
+}

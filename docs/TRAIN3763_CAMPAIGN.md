@@ -1,6 +1,164 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
-## Current PR177-vs-TRAIN3763 end-to-end repair and Attempt3 FAIL collection — 07/11/2026
+## Current safe shard resource optimization and full-cohort O5 budget projection — 07/11/2026
+
+[Official task, 07/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6705546490),
+verified BASE `109be1ab33ef2c86a2604e1c1bc1a894464e17a2` (PR185 merged), uses the
+published Attempt4 `PASS` / `MEASURED` telemetry
+([#6703549766](https://github.com/tantdna2/SafeShift/pull/185#issuecomment-6703549766))
+and blocker audit ([#6703678087](https://github.com/tantdna2/SafeShift/pull/185#issuecomment-6703678087))
+to harden fail-closed shard resource accounting and evaluate whether all 3,763
+planned `TRAIN` images can be completed under the approved O5 campaign cap
+([#6657871236](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6657871236),
+grant [#6658142293](https://github.com/tantdna2/SafeShift/pull/181#issuecomment-6658142293)).
+Zero live Kaggle API calls, uploads or submissions, zero GPU/weights/real-image
+inference, zero `TEST` reads, zero Attempt5 creation, zero self-modification of O5
+or grant caps, and zero mutation of `data/processed/train3763*` occur in this task.
+
+### Baseline custody after Attempt4 PASS/MEASURED (`1,4400` physical GPU-s reserved, `3,762` images remaining)
+
+| Metric | Verified Attempt 1–4 Campaign State |
+| --- | --- |
+| Attempts 1–2 | `ABORTED_PRE_SUBMIT` (`2` calls / `2` jobs / `7,200` physical GPU-s retained, no refund) |
+| Attempt 3 | `COLLECTED` terminal `FAIL` (`0` model calls, `3,763` `NOT_ATTEMPTED`; cumulative `3` calls / `3` jobs / `10,800` physical GPU-s) |
+| Attempt 4 | `COLLECTED` `PASS` + `MEASURED` on `deef3c26eb55e5fb7196cba96220a79a92a058f028cf957a390fad9e010d14ad` (`nguynanhtn/safeshift-train3763-ivl35-train3763-4/1`, kernel `143003706`); ordinal `0` `SUCCESS` (`Level02`); cumulative `4` calls / `4` jobs / `14,400` physical GPU-s |
+| Remaining cohort | **`3,762` `NOT_ATTEMPTED` `TRAIN` images** (ordinals `1..3762`); ordinal `0` is durably complete and never re-executed under `resume` |
+| Approved O5 remaining | `4,496 / 4,500` calls, `96 / 100` jobs, **`65,600 / 80,000` physical GPU-seconds** (`32,800` wall-clock seconds on `NvidiaTeslaT4` `physical_gpus = 2`) |
+| Observed Attempt4 telemetry | `setup = 202.078s`, `worker_total = 670.699s` (`preflight + admit_inputs + load = 657.279s`, `sample_seconds = 13.42s`, `max_rss = 9,105,664 KiB`), `raw_float32_bytes = 6,077,440`, `observed_sample_bytes = 14,055,278`, archive `16,129,405` bytes (`29` members), Kaggle weekly GPU quota remaining `20,727s / 108,000s` |
+
+### Safe technical optimizations implemented (`science_sha256` unchanged)
+
+All 84 inherited files in `safeshift/internvl_v2_runtime.py::source_spec()["manifest"]`,
+model/weights/precision (`OpenGVLab/InternVL3_5-8B` FP16 GPU0), `TRAIN` 3,763 master
+manifest, canonical labels, Grammar V2 (`internvl35_v2.json`), strict C1 parser, full
+uncompressed `.f32` step logit capture (`raw-before-parse`) and replay verification
+remain byte-for-byte identical (`science_sha256` =
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`). Only
+`safeshift/internvl3763.py` and `safeshift/internvl3763_campaign.py` change in the
+90-file runtime manifest (`source_sha256` =
+`fe32132dc62fd1c5a85ba68dd505c086f99c87a6e504fedc711b73ceef0a300a`):
+
+1. **Proven uncompressed Grammar V2 capture upper bound (`15,378,176` B/sample vs legacy `120,442,880` B/sample):**
+   The legacy shard planner hard-coded `capture_budget(200_000, 64) = 120,442,880` B,
+   inflating hypothetical uncompressed sample volume `7.83x` above Grammar V2's
+   deterministic finite-state transducer (`required_tokens_including_eos = 10`,
+   `logit_width = 151,936`, exact `.f32` tensor payload `10 * 151,936 * 4 = 6,077,440` B,
+   strict upper bound `capture_budget(151_936, 10) = 10 * (9 * 151,936 + 65,536) + 2^20 = 15,378,176` B).
+   `safeshift/internvl3763.py::_backend_capture_budget()` binds the runtime bound to
+   verified integer `(logit_width, grammar_required_steps)` on native runs while keeping
+   the `200,000 x 64` fallback for synthetic mocks without grammar attributes.
+   `Ledger.measure()` cross-verifies `grammar.json`, `raw_float32_bytes` and `2x`
+   observed sample bytes (`2 * 14,055,278 = 28,110,556` B), and reserves `64 MiB`
+   (`67,108,864` B) for non-sample archive metadata before dividing `7 GiB`
+   (`7,516,192,768` B): uncompressed `archive_cap` rises safely from **`62` to `264`
+   calls/job**, and `disk_cap` (`>= 18 GiB` free after `2 GiB` reserve) allows **`643`
+   calls/job**.
+2. **Complete non-sample wall-clock overhead accounting (`worker-supervisor.json` + `setup-supervisor.json`):**
+   Legacy `Ledger.measure()` read only `setup-supervisor.json` (`202.078s`) + `load_seconds`
+   (`138.68s`), omitting `~518.6s` of `preflight()` (streamed `9.465 GiB` SHA256 + CPU
+   grammar subprocess) and `admit_inputs()` (`3,763`-image `verify_train`) recorded inside
+   `worker-supervisor.json` (`670.699s` total minus `13.42s` sample). `Ledger.measure()`
+   now incorporates `max(load_seconds, worker_wall - sample_sum)` so total non-sample
+   wall-clock (`202.078 + 657.279 = 859.357s`) receives the `2x + 120s` safety envelope:
+   `overhead_seconds = ceil(2 * 859.357) + 120 = 1,839s`, `per_call_seconds = ceil(2 * 13.42) = 27s`.
+   Under `job_seconds = 7,200`, `time_cap = floor((7,200 - 1,839) / 27) = 198` (`safe_calls = 198`,
+   `3.19x` higher than `62` while fixing the missing preflight overhead). Under an
+   Owner-authorized `job_seconds = 10,800`, `safe_calls` reaches the `264`-call archive bound.
+3. **Proportional per-job time reservation (`required_job_seconds`) with legacy fallback:**
+   `Ledger.reserve()` previously forced `seconds >= measured["minimum_seconds"]` (full-shard
+   duration) even on a smaller tail shard or a 1-image `repair`. `required_job_seconds(measured, calls)`
+   computes `min(job_seconds, max(1,800, overhead_seconds + per_call_seconds * calls))` when
+   `overhead_seconds` and `per_call_seconds` are present (and falls back to `minimum_seconds`
+   for historical `MEASURED` entries), avoiding wasted `physical_gpus * seconds` reservation
+   on tail shards and single-image repairs while preserving `>= 1,800s` floor and `<= job_seconds` ceiling.
+4. **Dynamic worker time/archive/disk stop-before-next-call guards:**
+   `safeshift/internvl3763.py::_execute()` now checks remaining worker time before each
+   sample against `max(STOP_MARGIN_SECONDS, 2 * max_observed_sample_seconds)`
+   (`DEADLINE_BEFORE_NEXT_CALL`), updates `per_sample_bound = max(budget, max_observed_sample_bytes)`
+   dynamically, checks free space on both `work` and `out.parent` when distinct, keeps a
+   `16 MiB` (`FINALIZE_ARCHIVE_MARGIN_BYTES`) reserve for `summary.json`/`checksums.json`/`terminal.json`
+   under `min(archive_limit_bytes, 8 GiB)` (`ARCHIVE_LIMIT_BEFORE_NEXT_CALL`), and enforces
+   `< 1,000,000` archive members (`MEMBER_LIMIT_BEFORE_NEXT_CALL`), leaving unfinished
+   ordinals cleanly `NOT_ATTEMPTED` for deterministic `resume`.
+5. **Read-only deterministic budget projection CLI (`forecast`):**
+   `python -B -m scripts.train3763_campaign forecast` (and
+   `./scripts/train3763_campaign.ps1 -Python $OperatorPython -Action forecast`) computes
+   reproducible multi-scenario O5 reservations, Kaggle weekly quota schedules and latency
+   sensitivities using exact `Decimal`/integer arithmetic with zero network or ledger I/O.
+
+### Quantitative O5 budget evaluation for all `3,762` remaining `TRAIN` images
+
+**Direct engineering finding:** **NO** — completing all `3,763` `TRAIN` images is
+**mathematically impossible** under the current `total_gpu_seconds = 80,000` O5 cap
+(`65,600` physical GPU-seconds = `32,800` wall-seconds remaining on `2xT4`). Even
+pure 1x observed inference time with **zero** setup/preflight/load overhead across all
+jobs (`3,762 * 13.42s * 2 GPUs = 100,973` physical GPU-s) exceeds the remaining
+`65,600` physical GPU-s by **`+35,373` physical GPU-seconds**. Full reproducible numbers
+are published in [`budget_projection.json`](research/evidence/train3763_gpu_budget_20261107/budget_projection.json):
+
+| Scenario (`14,400` GPU-s already reserved across Attempts 1–4) | `safe_calls` / job | Future jobs (Total jobs / `100`) | Future reserved GPU-s (Campaign total) | Shortfall vs `80,000` O5 cap | Max images completable under `80,000` (Left `NOT_ATTEMPTED`) | Est. actual Kaggle quota used (`Week 1` / `Week 2`) |
+| --- | --- | --- | --- | --- | --- | --- |
+| **1. Current `main` conservative** (`job_seconds=7200`, `64`-step bound, incomplete `802s` overhead, no source change) | `62` | `61` (`65`) | `302,072` (`316,472`) | **`-236,472` GPU-s** | `806` + ord0 = `807` (`2,956` left) | `102,943s` (`28.60h`): W1 `12` jobs / `744` imgs (`20,304s`), W2 `49` jobs / `3,018` imgs (`82,639s`) |
+| **2A. Optimized safe (`job_seconds=7200` unchanged)** — incl. mandatory 1-call Attempt5 measurement on ordinal `1` (`3,600` GPU-s) + `19` shards (`18x198 + 1x197`) | `198` | **`20` (`24`)** | `276,576` (**`290,976`**) | **`-210,976` GPU-s** | `808` + ord0 = `809` (`2,954` left) | **`67,683s` (`18.80h`, `-34.3%`)**: W1 `6` jobs / `991` imgs (`18,458s`), W2 `14` jobs / `2,771` imgs (`49,225s`) |
+| **2B. Optimized safe + Owner `job_seconds=10800`** — incl. 1-call Attempt5 (`3,600` GPU-s) + `15` shards (`14x264 + 1x65` proportional tail `3,594s`) | `264` | **`16` (`20`)** | `261,864` (**`276,264`**) | **`-196,264` GPU-s** | `876` + ord0 = `877` (`2,886` left) | **`64,247s` (`17.85h`, `-37.6%`)**: W1 `5` jobs / `1,057` imgs (`18,485s`), W2 `11` jobs / `2,705` imgs (`45,762s`) |
+| **3. Observed 1x single-image extrapolation** (*illustrative only — NOT a worst-case guarantee*) | `198` (illustrative) | `20` (`24`) | `100,973` inference-only; `135,347` w/ 1x overhead (`149,747` total) | **`-69,747` GPU-s** (`-35,373` inference-only) | Not admissible as safety gate | `67,683s` wall-clock (`135,366` physical GPU-s equivalent on `2xT4`) |
+
+**Latency sensitivity under `job_seconds = 7,200` (with contingency = `4` extra continuation jobs + `100` `repair` calls):**
+- `1.00x` Attempt4 sample latency (`per_call = 27s`, `safe_calls = 198`): `290,976` GPU-s zero-error / **`311,088` GPU-s** with contingency.
+- `1.25x` Attempt4 sample latency (`per_call = 34s`, `safe_calls = 157`): `362,020` GPU-s zero-error / **`383,532` GPU-s** with contingency.
+- `1.50x` Attempt4 sample latency (`per_call = 41s`, `safe_calls = 130`): `433,064` GPU-s zero-error / **`455,976` GPU-s** with contingency.
+
+### Required Owner O5 decision and post-merge runbook (source drift `deef3c26...` -> `fe32132d...`)
+
+1. **Owner O5 / campaign grant amendment required (never self-issued):**
+   - Existing `total_calls = 4,500`, `total_jobs = 100`, `archive_bytes = 7,516,192,768`,
+     `max_repairs_per_image = 10`, `machine_shape = "NvidiaTeslaT4"` and `physical_gpus = 2`
+     already suffice (`24` or `20` total jobs `<< 100`; `3,766` zero-error calls `<< 4,500`).
+   - To complete all `3,763` `TRAIN` images without mid-campaign exhaustion, Owner must
+     authorize raising `caps.total_gpu_seconds` from `80,000` to at least **`390,000`
+     physical GPU-seconds** (`195,000` wall-seconds = `54.17` wall-hours reserved ceiling
+     on `2xT4`, covering up to `+25%` higher mean sample latency plus `4` continuation jobs
+     and `100` `repair` calls; strict zero-margin 1.0x mathematical floor is `290,976`
+     at `job_seconds = 7,200` or `276,264` at `job_seconds = 10,800`), and optionally
+     raise `caps.job_seconds` from `7,200` to **`10,800`** to unlock `264`-call shards
+     (`20` total jobs instead of `24`).
+2. **Direct ChatGPT review, independent Antigravity audit, merge, and fresh attestations:**
+   After review, independent audit and separately authorized merge of this PR, publish
+   authentic `SAFESHIFT_TRAIN3763_AUDIT_V1` and `SAFESHIFT_TRAIN3763_TECHNICAL_V1`
+   attestations binding `runtime_commit` `db81464b0d508d689e31c6fe25424f9e24d26e62`,
+   `source_sha256` `fe32132dc62fd1c5a85ba68dd505c086f99c87a6e504fedc711b73ceef0a300a`,
+   execution notebook SHA256 `b99b35abe78ca37455ee4f520be3c8191b1ef09ce702744f1d4f93927b20abc0`
+   (`code_hash` `c2172894a03e2f934c13ba88d962e88b176ffb7bbafb48cd93f2199631fd11f0`),
+   and `PREP` notebook SHA256 `a36665239a9f61c1ff1437fe9944e91bd427c19022d08e978187197d05a1585c`
+   (`code_hash` `d92ab91d95a23a8280b1b5717676f374e9384faa6f8355ea7b0c6bec005b8778`).
+3. **Mandatory 1-call live re-measurement on ordinal `1` before multi-call shards:**
+   Because `source_sha256` changed (`deef3c26...` -> `fe32132d...`), Attempt4's `MEASURED`
+   entry does **not** certify the new source (`FINAL_SOURCE_MEASUREMENTS_REQUIRED_BEFORE_SHARDS`).
+   Attempt5 MUST be staged with `--mode resume --calls 1 --seconds 1800`, which
+   automatically preserves Attempt4's sealed ordinal `0` (`Level02` `SUCCESS`) and
+   executes + measures **ordinal `1`** on the new committed source:
+   ```powershell
+   $OperatorPython = './data/processed/operator-venv/Scripts/python.exe'
+   $Ledger = 'data/processed/train3763-campaign/ledger'
+   ./scripts/train3763_campaign.ps1 -Python $OperatorPython -Action forecast
+   ./scripts/train3763_campaign.ps1 -Python $OperatorPython -Action status -Directory $Ledger
+   # Only AFTER merge, Owner O5 grant update, and fresh AUDIT_V1 + TECHNICAL_V1:
+   # Stage Attempt 5 (--mode resume --calls 1 --seconds 1800 -> ordinal 1), verify capsule bytes,
+   # submit/collect PASS, then run `-Action measure` on Attempt 5 before `--calls 198` (or `264`) shards.
+   ```
+
+### Offline acceptance and immutable rebuild
+
+Runtime changes were committed first at `db81464b0d508d689e31c6fe25424f9e24d26e62`,
+and both `PREP` and execution notebooks were rebuilt deterministically at clean commit
+`795f88f10e5e008e3f7312803c599b943534c17b` (`tracked_dirty = false`): **`233` focused
+CPU/SDK/native-CPU tests (`232` PASS, `0` failures, `0` errors, `1` Windows skip covered
+`5/5 PASS` with `0` skips in WSL2 Linux `LauncherSupervisorSetupCompositionTests`),
+`3/3` notebook tests PASS, and `100` PR177 regression tests (`78` PASS, `0` failures,
+`0` errors, `22` POSIX/native skips on Windows operator-venv).** Exact hashes, commands
+and bounds are recorded in [`summary.json`](research/evidence/train3763_gpu_budget_20261107/summary.json).
+
+## Historical PR177-vs-TRAIN3763 end-to-end repair and Attempt3 FAIL collection — 07/11/2026
 
 [Official task, 07/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686823873)
 (consolidating diagnosed root cause [#6686513890](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686513890)),
