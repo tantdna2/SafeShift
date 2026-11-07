@@ -376,16 +376,16 @@ print("WORKER_STDOUT_OK", flush=True)
             max_calls=2, max_seconds=1800)
         helper = controller_fixtures.PreparedControllerTests()
         backend = helper.backend('{"safety_level":"Level02"}', False)
-        ticks = iter([100.0, 101.0, 112.0, 116.0, 117.0])
+        ticks = iter([100.0, 101.0, 112.0, 113.0, 125.0, 126.0, 127.0])
         def fake_clock():
-            return next(ticks, 117.0)
+            return next(ticks, 127.0)
         def img(row):
             path = self.root / f"img-{row['ordinal']}.jpg"
             path.write_bytes(synthetic_bytes(row["ordinal"]))
             return path
-        # Even though max_seconds=1800 (begun+1800=1900), hard_deadline=115 stops cleanly after ordinal 0!
+        # Even though max_seconds=1800 (begun+1800=1900), hard_deadline=300 stops cleanly at 126.0 (174s < 180s reserve)!
         summary = runtime._execute(self.root / "dl_run", self.root / "dl_run.zip", cohort, p,
-            lambda _: backend, image_path=img, tokenizer_sha="a" * 64, clock=fake_clock, hard_deadline=115.0)
+            lambda _: backend, image_path=img, tokenizer_sha="a" * 64, clock=fake_clock, hard_deadline=300.0)
         self.assertEqual(summary["status"], "PASS")
         self.assertEqual(summary["model_calls"], 1)
         self.assertEqual(summary["counts"], {"SUCCESS": 1, "NOT_ATTEMPTED": 3762})
@@ -1092,6 +1092,108 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
             pkg2 = read(root / "attempt-2/package/safeshift_train3763_execution.json")
             self.assertEqual(pkg2["request"]["plan"]["scheduled_ordinals"], [1, 2])
             self.assertEqual(pkg2["request"]["plan"]["counts"], {"SUCCESS": 1, "NOT_ATTEMPTED": 3762})
+
+    def test_multi_image_mixed_outcomes_mid_shard_fail_provider_ambiguity_and_tail_shard_e2e(self):
+        # End-to-end negative & mixed-outcome shard test:
+        # ordinal 0 -> SUCCESS, ordinal 1 -> INVALID (fenced JSON, retained .f32), ordinal 2 -> mid-shard TECHNICAL_ERROR,
+        # ordinal 3 -> NOT_ATTEMPTED; provider RUNNING / UNKNOWN / timeout block read-only; COMPLETE collects FAIL ZIP;
+        # next resume schedules ordinal 3+, while exact-target repair schedules only ordinal 2!
+        cohort = synthetic_cohort()
+        p = campaign.plan(cohort, [], action="initial", run_id="mixed-shard-1", attempt_id="attempt-1",
+            max_calls=4, max_seconds=1800)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            def img(row):
+                path = root / f"img-{row['ordinal']}.bin"
+                path.write_bytes(synthetic_bytes(row["ordinal"]))
+                return path
+            outcomes = {
+                0: ('{"safety_level":"Level01"}', False),
+                1: ('```json\n{"safety_level":"Level03"}\n```', False),
+                2: ('{"safety_level":"Level04"}', True),
+            }
+            def mixed_generate(image, sample, binding, deadline):
+                ord_num = int(Path(sample).name)
+                resp, should_fail = outcomes[ord_num]
+                write(Path(sample) / "native_call.json", {"binding": binding})
+                raw = {"binding": binding, "response": resp, "hnlo": None, "hnlo_status": runtime.HNLO_STATUS,
+                    "evidence_kind": "SYNTHETIC"}
+                raw_sha = write(Path(sample) / "raw.json", raw)
+                if should_fail:
+                    raise RuntimeError("SYNTHETIC_MID_SHARD_CRASH")
+                lbl = runtime.parse_label(resp)
+                if lbl:
+                    write(Path(sample) / "trace-verification.json", {"status": "SYNTHETIC_CONTROLLER_ONLY"})
+                else:
+                    write(Path(sample) / "trace-failure.json", {"status": "FAIL", "type": "ValueError"})
+                return {"status": "SUCCESS" if lbl else "INVALID", "label": lbl,
+                    "raw_sha256": raw_sha, "trace_verified": bool(lbl), "hnlo": None, "hnlo_status": runtime.HNLO_STATUS}
+
+            backend = NS(environment={"scope": "SYNTHETIC_ONLY"}, generate=mixed_generate)
+            arc = root / "mixed.zip"
+            res = runtime.rehearse(root / "mixed_out", arc, cohort, p, [], lambda _: backend,
+                image_path=img, tokenizer_sha="a" * 64)
+            self.assertEqual(res["status"], "FAIL")
+            self.assertEqual(res["model_calls"], 3)
+            self.assertEqual(res["counts"], {"SUCCESS": 1, "INVALID": 1, "TECHNICAL_ERROR": 1, "NOT_ATTEMPTED": 3760})
+            self.assertFalse((root / "mixed_out/samples/000003/started.json").exists())
+            self.assertTrue((root / "mixed_out/samples/000000/raw.json").is_file())
+            self.assertTrue((root / "mixed_out/samples/000001/raw.json").is_file())
+            self.assertTrue((root / "mixed_out/samples/000002/raw.json").is_file())
+            verified = runtime.verify_bundle(arc, sha(arc), p)
+            self.assertEqual(verified["status"], "FAIL")
+            h1 = runtime.sealed_history(arc, sha(arc), p)
+
+            # Resume only schedules NOT_ATTEMPTED ordinals [3, 4], preserving SUCCESS(0), INVALID(1), TECHNICAL_ERROR(2)
+            p_res = campaign.plan(cohort, [h1], action="resume", run_id="mixed-shard-2", attempt_id="attempt-2",
+                max_calls=2, max_seconds=1800)
+            self.assertEqual(p_res["scheduled_ordinals"], [3, 4])
+
+            # Repair only schedules explicitly targeted failed records; targeting SUCCESS(0), NOT_ATTEMPTED(3), or wrong digest fails closed!
+            rec0 = res["records"][0]
+            rec2 = res["records"][2]
+            rec3 = res["records"][3]
+            for bad_targets in (
+                {rec0["sample_id"]: digest(rec0)},
+                {rec3["sample_id"]: digest(rec3)},
+                {rec2["sample_id"]: "0" * 64},
+            ):
+                with self.assertRaises(ValueError):
+                    campaign.plan(cohort, [h1], action="repair", run_id="bad-rep", attempt_id="attempt-2",
+                        max_calls=1, max_seconds=1800, repair={
+                            "targets": bad_targets,
+                            "fix_sha256": digest(runtime.source_spec()), "regression_sha256": "e" * 64,
+                            "diagnosis": "non-repairable or wrong-digest target must fail closed",
+                        })
+            p_rep = campaign.plan(cohort, [h1], action="repair", run_id="good-rep", attempt_id="attempt-2",
+                max_calls=1, max_seconds=1800, repair={
+                    "targets": {rec2["sample_id"]: digest(rec2)},
+                    "fix_sha256": digest(runtime.source_spec()), "regression_sha256": "e" * 64,
+                    "diagnosis": "SYNTHETIC mid-shard error repair",
+                })
+            self.assertEqual(p_rep["scheduled_ordinals"], [2])
+
+            # Provider RUNNING, ambiguous status, and network timeout during collect all stop BLOCKED without ledger mutation
+            req_f, grant_f, comments_f = campaign_fixture(root / "ledger")
+            with patch.object(release, "get", side_effect=lambda k: deepcopy(comments_f[k])):
+                ledger = campaign.Ledger.create(root / "ledger", root / "mirror", grant_f, "synthetic-machine")
+                it = ledger.reserve(req_f)
+            with handoff.lock(ledger.root):
+                ledger.append("PUSH_INTENT", intent_sha256=digest(it))
+            with patch.object(handoff, "private_root", side_effect=lambda p: Path(p).resolve()):
+                sess = handoff.prepare(root / "sess", req_f)
+                before_events = ledger.events()
+                for bad_state in ("RUNNING", "QUEUED", "MYSTERY_PROVIDER_STATE", TimeoutError("PROVIDER_RPC_TIMEOUT")):
+                    fake_op = handoff.Train3763Operator()
+                    def fake_status(_req, _st=bad_state):
+                        if isinstance(_st, Exception):
+                            raise _st
+                        return _st
+                    with patch.object(fake_op, "status", side_effect=fake_status):
+                        rep = handoff.operate(sess, fake_op, "collect")
+                    self.assertEqual(rep["status"], "BLOCKED")
+                    self.assertEqual(ledger.events(), before_events)
+                    self.assertIsNotNone(ledger.open_intent())
 
 
 if __name__ == "__main__":
