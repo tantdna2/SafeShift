@@ -7,14 +7,17 @@
     "safeshift/internvl3763.py",
     "safeshift/internvl3763_campaign.py"
   ],
+  "chatgpt_review_addressed": "https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6708149603",
   "ci_pass_claimed": false,
   "commands": [
-    "python -B -m scripts.build_internvl3763 --source-commit db81464b0d508d689e31c6fe25424f9e24d26e62 --output notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb",
-    "python -B -m scripts.build_internvl3763 --source-commit db81464b0d508d689e31c6fe25424f9e24d26e62 --output notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb --execute --campaign",
+    "python -B -m scripts.build_internvl3763 --source-commit d7477f0b7715601a41eb835510a0a421215da858 --output notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb",
+    "python -B -m scripts.build_internvl3763 --source-commit d7477f0b7715601a41eb835510a0a421215da858 --output notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb --execute --campaign",
     "SAFESHIFT3763_SDK_CPU=1 <operator-python> -B -m scripts.qualify_internvl3763 --output <new-output> --native --packages <local-pinned-public-software>",
     "wsl -e bash -lc 'cd <repo-root> && python3 -B -m unittest tests.test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests -v'",
+    "wsl -e bash -lc 'cd <repo-root> && PYTHONPATH=tests python3 -B -m unittest -v test_internvl_v2_continuous.StreamingTests test_internvl_v2_memory.LinuxLifetimeTests test_internvl_v2_memory.MemoryTests test_internvl_v2_runtime.SupervisorTests'",
     "SAFESHIFT3763_SDK_CPU=1 <operator-python> -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v",
     "SAFESHIFT3763_SDK_CPU=1 <operator-python> -B -m unittest discover -s tests -p 'test_internvl_v2_*.py' -v",
+    "python -B -m unittest tests.test_smoke -v",
     "<operator-python> -B -m scripts.train3763_campaign forecast",
     "PowerShell AST parse across scripts/kaggle_handoff.ps1, scripts/train3763_campaign.ps1, scripts/prepare_train3763_operator.ps1, and all PowerShell fenced blocks in docs/TRAIN3763_CAMPAIGN.md"
   ],
@@ -31,7 +34,7 @@
     },
     "errors": 0,
     "failures": 0,
-    "log_sha256": "dd221a23f858aa726074f73c8271493f0ea8d8177f4a51c60b1013f758cbe007",
+    "log_sha256": "9b92890f72a34417bde92f566ee4d30f6559514b0c11c2dd22f821e8df696585",
     "platform": "Windows-10-10.0.26200-SP0",
     "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
     "skip_reasons": [
@@ -51,19 +54,27 @@
       "test_internvl_grammar",
       "test_kaggle173_verification"
     ],
-    "tests": 233,
+    "tests": 239,
     "tests_sha256": {
       "scripts/qualify_internvl3763.py": "e3eaa8a4ab7966e2d280c0b23dfdbe1a2697b972fa55e6d60d326239191f3dad",
-      "tests/test_internvl3763.py": "53f0de6815392452c2e8ffc97c5ed0e4790f648c16c23b516467e47d466291b6",
-      "tests/test_internvl3763_campaign.py": "68bf17117da6598c7b2c17a90c3b9dca4d617dc306cdc8fbcfaf953898d781ce",
+      "tests/test_internvl3763.py": "7df68f94f13b298de2cf84511b1b9de656388f41b54c82537b0aaa5526e68278",
+      "tests/test_internvl3763_campaign.py": "6c78ad173bec51af06fb81064aa31c246c46ac9d481edc53f008025d5463c32e",
       "tests/test_internvl3763_capsule.py": "a94b82a579f2f16a842aaa9c4c6616dcc98d8ebb7b2bd0d53fc1cd1f9b9e29a2",
-      "tests/test_internvl3763_e2e.py": "ca0451eb95fdad6b12c0facca68569c817a5f8be91f2485c8074547ceccf9ec2",
-      "tests/test_internvl3763_execution.py": "ed24890f42747c14d40bd9de93599a21406fb9c1861b47592a25dfbc76e382c3",
+      "tests/test_internvl3763_e2e.py": "0348cc0bc41cdf962986752596519de0087436cd569d56422a6e83b756cd4aa5",
+      "tests/test_internvl3763_execution.py": "305cc53d66f197a7bd18bc8f6cd21ac6f3890620e99b9cf558341e4621d4fbb1",
       "tests/test_internvl3763_notebook.py": "e843328f28cda5f8887ddfca976695cb8f2202fa636b3c8fc82319ec4a020633",
       "tests/test_internvl3763_versions.py": "39025c3325e99b0defff8332baf5502ffde10e1b8d88ff43b5b3ed6fa55f4d0d",
       "tests/test_kaggle_handoff.py": "5c67827a4ab0e1848f7dd9f2316eea4759119b4e6c3a0cf20f94f5f971c6599b"
     },
     "tracked_dirty": false
+  },
+  "foundation_smoke": {
+    "errors": 0,
+    "failures": 0,
+    "skips": 0,
+    "status": "PASS",
+    "suite": "tests.test_smoke",
+    "tests": 2
   },
   "gpu_seconds_consumed_by_task": 0,
   "independent_audit": "PENDING_NOT_SELF_ISSUED",
@@ -79,7 +90,7 @@
     "skips": 0,
     "status": "PASS",
     "suite": "test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests",
-    "tested_head": "795f88f10e5e008e3f7312803c599b943534c17b",
+    "tested_head": "587eb0cbdad469cca6a720b4be5ab10a618e5611",
     "tests": 5
   },
   "live_final_source_verification": "NOT_RUN_PROHIBITED_BY_TASK",
@@ -90,37 +101,40 @@
     "failures": 0,
     "skips": 0,
     "status": "PASS",
-    "tested_head": "795f88f10e5e008e3f7312803c599b943534c17b",
+    "tested_head": "587eb0cbdad469cca6a720b4be5ab10a618e5611",
     "tests": 3,
     "tracked_dirty": false
   },
   "notebooks": {
     "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
-      "code_sha256": "c2172894a03e2f934c13ba88d962e88b176ffb7bbafb48cd93f2199631fd11f0",
-      "runtime_commit": "db81464b0d508d689e31c6fe25424f9e24d26e62",
-      "sha256": "b99b35abe78ca37455ee4f520be3c8191b1ef09ce702744f1d4f93927b20abc0",
-      "source_sha256": "fe32132dc62fd1c5a85ba68dd505c086f99c87a6e504fedc711b73ceef0a300a"
+      "code_sha256": "89614792e248dec6b1cc1a791e4919815a1453a57feb4585961cf10b713f503f",
+      "runtime_commit": "d7477f0b7715601a41eb835510a0a421215da858",
+      "sha256": "d82cae828926194ad3d2ef4a45945050aa211f450e8f0b308d588d5a978c7c91",
+      "source_sha256": "dbb680ea2c321e0cff68d8bdbe2c1cad3770e2859d6549a571bf8310722f4b3a"
     },
     "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
-      "code_sha256": "d92ab91d95a23a8280b1b5717676f374e9384faa6f8355ea7b0c6bec005b8778",
-      "runtime_commit": "db81464b0d508d689e31c6fe25424f9e24d26e62",
-      "sha256": "a36665239a9f61c1ff1437fe9944e91bd427c19022d08e978187197d05a1585c",
-      "source_sha256": "fe32132dc62fd1c5a85ba68dd505c086f99c87a6e504fedc711b73ceef0a300a"
+      "code_sha256": "bc18438ee2dbbfa0d8a0dd5175433e93d78f78baff7f97238bc2c7c0b7f3bc37",
+      "runtime_commit": "d7477f0b7715601a41eb835510a0a421215da858",
+      "sha256": "a820ff2c3c09c0294a2c28974671ccaeb0e8fc1c7c208a7e687ac4db48cd365c",
+      "source_sha256": "dbb680ea2c321e0cff68d8bdbe2c1cad3770e2859d6549a571bf8310722f4b3a"
     }
   },
   "o5_budget_finding": {
     "already_reserved_gpu_seconds": 14400,
     "approved_o5_total_gpu_seconds": 80000,
     "completable_under_approved_o5": false,
+    "illustrative_attempt4_rate_inference_only_exceeds_remaining_o5_by_gpu_seconds": 35373,
     "legacy_main_shortfall_gpu_seconds": 236472,
     "legacy_main_total_gpu_seconds": 316472,
     "o5_caps_self_modified": false,
-    "observed_1x_inference_only_exceeds_remaining_o5_by_gpu_seconds": 35373,
-    "optimized_alt_10800s_shortfall_gpu_seconds": 196264,
-    "optimized_alt_10800s_total_gpu_seconds": 276264,
-    "optimized_current_7200s_shortfall_gpu_seconds": 210976,
-    "optimized_current_7200s_total_gpu_seconds": 290976,
-    "recommended_owner_total_gpu_seconds": 390000,
+    "optimized_alt_10800s_safe_calls": 264,
+    "optimized_alt_10800s_shortfall_gpu_seconds": 222880,
+    "optimized_alt_10800s_total_gpu_seconds": 302880,
+    "optimized_current_7200s_safe_calls": 174,
+    "optimized_current_7200s_shortfall_gpu_seconds": 250516,
+    "optimized_current_7200s_total_gpu_seconds": 330516,
+    "population_latency_distribution_verified": false,
+    "proposed_owner_total_gpu_seconds": 430000,
     "remaining_images": 3762,
     "remaining_o5_gpu_seconds": 65600
   },
@@ -129,8 +143,15 @@
     "attempt1_to_4_preserved_immutable": true,
     "attempt4_baseline_ref": "https://github.com/tantdna2/SafeShift/pull/185#issuecomment-6703549766",
     "attempt4_blocker_audit_ref": "https://github.com/tantdna2/SafeShift/pull/185#issuecomment-6703678087",
+    "attempt4_job_ref": "nguynanhtn/safeshift-train3763-ivl35-train3763-4/1",
+    "attempt4_kernel_id": 143188917,
     "attempt5_created_by_task": false,
     "attempt5_postmerge_remeasurement_mode": "--mode resume --calls 1 --seconds 1800 (ordinal 1; preserves Attempt 4 ordinal 0 SUCCESS)",
+    "custody_readonly_baseline": {
+      "aggregate_sha256": "eadd0c3adfe872c3dfddcf3eaf846326cf6338f198fa36af1804c46ca91c1fba",
+      "files": 213,
+      "unchanged_before_and_after": true
+    },
     "new_owner_grant": false,
     "refund": false,
     "reserved_calls": 4,
@@ -138,11 +159,13 @@
     "reserved_physical_gpu_seconds": 14400
   },
   "optimizations_verified": {
-    "dynamic_worker_deadline_and_archive_disk_guards": "PASS_VERIFIED",
-    "full_worker_supervisor_overhead_accounting": "PASS_VERIFIED",
-    "grammar_v2_tight_uncompressed_capture_budget_15378176b": "PASS_VERIFIED",
-    "offline_deterministic_budget_projection_cli": "PASS_VERIFIED",
-    "proportional_job_seconds_reservation_with_legacy_fallback": "PASS_VERIFIED",
+    "cgroup_memory_headroom_and_supervisor_log_soft_limit_guards": "PASS_VERIFIED",
+    "enforced_180s_pre_call_and_dynamic_5mib_per_s_zip_export_reserves": "PASS_VERIFIED",
+    "full_worker_supervisor_overhead_and_255s_margin_alignment": "PASS_VERIFIED",
+    "grammar_v2_10step_151936_qwen2_proof_with_invalid_fallback_and_retained_f32": "PASS_VERIFIED",
+    "offline_deterministic_budget_projection_cli_with_ledger_sync": "PASS_VERIFIED",
+    "proportional_job_seconds_reservation_with_120s_contract_floor": "PASS_VERIFIED",
+    "simultaneous_working_plus_zip_disk_and_archive_member_guards": "PASS_VERIFIED",
     "source_drift_blocks_stale_measured_and_remeasures_ordinal1": "PASS_VERIFIED"
   },
   "powershell_ast_parse": {
@@ -156,6 +179,14 @@
   },
   "pr177_regression": {
     "distinct_tests": 100,
+    "linux_wsl2_posix_process_memory_streaming": {
+      "covers_all_12_posix_linux_skips": true,
+      "errors": 0,
+      "failures": 0,
+      "skips": 0,
+      "status": "PASS",
+      "tests": 22
+    },
     "suites": [
       "test_internvl_v2_campaign",
       "test_internvl_v2_continuous",
@@ -175,8 +206,8 @@
   "real_model_inference_calls": 0,
   "remaining": [
     "Direct ChatGPT GitHub review, independent Antigravity audit, and separately authorized merge/post-merge verification",
-    "Owner O5 budget amendment / updated campaign grant raising total_gpu_seconds above the 290,976 (7200s cap) / 276,264 (10800s cap) mathematical zero-margin floor (recommended 390,000 physical GPU-seconds; optional job_seconds=10800)",
-    "Genuine new source-bound SAFESHIFT_TRAIN3763_AUDIT_V1 and SAFESHIFT_TRAIN3763_TECHNICAL_V1 attestations for runtime_commit db81464b0d508d689e31c6fe25424f9e24d26e62 and source_sha256 fe32132dc62fd1c5a85ba68dd505c086f99c87a6e504fedc711b73ceef0a300a",
+    "Owner O5 budget amendment / updated campaign grant raising total_gpu_seconds above the 330,516 (7200s cap) / 302,880 (10800s cap) mathematical zero-margin floor (proposed 430,000 physical GPU-seconds; optional job_seconds=10800)",
+    "Genuine new source-bound SAFESHIFT_TRAIN3763_AUDIT_V1 and SAFESHIFT_TRAIN3763_TECHNICAL_V1 attestations for runtime_commit d7477f0b7715601a41eb835510a0a421215da858 and source_sha256 dbb680ea2c321e0cff68d8bdbe2c1cad3770e2859d6549a571bf8310722f4b3a",
     "Post-merge Attempt 5 staged with --mode resume --calls 1 --seconds 1800 on ordinal 1 (preserving Attempt 4 ordinal 0 Level02 SUCCESS) and live MEASURED receipt on the new source_sha256 before multi-call shards",
     "O2-O6 academic/final scientific selection decisions remain PENDING"
   ],
@@ -185,7 +216,7 @@
     "status": "NOT_REPEATED_SCOPED_TASK",
     "whole_repository_green": false
   },
-  "runtime_commit": "db81464b0d508d689e31c6fe25424f9e24d26e62",
+  "runtime_commit": "d7477f0b7715601a41eb835510a0a421215da858",
   "schema": "train3763-gpu-budget-optimization-acceptance-v1",
   "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
   "science_unchanged": true,
@@ -195,10 +226,10 @@
     "kagglesdk": "0.1.38",
     "requests": "2.34.2"
   },
-  "source_sha256": "fe32132dc62fd1c5a85ba68dd505c086f99c87a6e504fedc711b73ceef0a300a",
+  "source_sha256": "dbb680ea2c321e0cff68d8bdbe2c1cad3770e2859d6549a571bf8310722f4b3a",
   "status": "CPU_SDK_BUDGET_OPTIMIZATION_PASS_BLOCKED_ON_O5_CAP_AND_REVIEW",
   "task": "https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6705546490",
   "test_split_reads": 0,
-  "tested_source_and_notebook_head": "795f88f10e5e008e3f7312803c599b943534c17b",
+  "tested_source_and_notebook_head": "587eb0cbdad469cca6a720b4be5ab10a618e5611",
   "timezone": "Asia/Bangkok"
 }
