@@ -93,11 +93,34 @@ def main(argv=None):
                 caps=ledger.grant["caps"],
                 planned_total=state["planned"],
                 completed_images=state["planned"] - state["counts"].get("NOT_ATTEMPTED", 0),
+                pending_repair_images=state["counts"].get("TECHNICAL_ERROR", 0),
                 already_reserved_calls=state["reserved_calls"],
                 already_reserved_jobs=state["jobs"],
                 already_reserved_gpu_seconds=state["reserved_gpu_seconds"],
                 source_changed=not bool(measured),
             )
+            if measured:
+                obs = measured[-1].get("observed") or {}
+                tel = obs.get("telemetry") or {}
+                samples_tel = tel.get("samples") or []
+                if samples_tel and "setup_seconds" in obs and "worker_non_sample_seconds" in obs and "raw_float32_bytes" in obs:
+                    from decimal import Decimal
+                    max_sample_dec = max(Decimal(str(x["seconds"])) for x in samples_tel)
+                    setup_dec = Decimal(str(obs["setup_seconds"]))
+                    load_dec = Decimal(str(tel.get("load_seconds", 0)))
+                    non_sample_dec = setup_dec + Decimal(str(obs["worker_non_sample_seconds"]))
+                    kwargs.update(
+                        setup_seconds=str(setup_dec),
+                        load_seconds=str(load_dec),
+                        sample_seconds=str(max_sample_dec),
+                        wall_clock_seconds=str(non_sample_dec + max_sample_dec),
+                        non_sample_seconds=str(non_sample_dec),
+                        sample_bytes=obs["sample_bytes"],
+                        raw_float32_bytes=obs["raw_float32_bytes"],
+                        zip_bytes=obs["zip_bytes"],
+                        output_free_bytes=obs.get("output_free_bytes"),
+                        verify_f32_geometry=False,
+                    )
         result = campaign.project_campaign_budget(**kwargs)
         print(json.dumps(result, sort_keys=True))
         return 0

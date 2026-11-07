@@ -21,6 +21,14 @@ from safeshift.pilot.contract import digest, parse_label, PROMPT_SHA
 IDENTITY = "internvl35-grammar-v2-train3763-execution-candidate-v1"
 SERIES = "train3763-internvl35-grammar-v2-v1"
 OWN = ["safeshift/internvl3763.py", "scripts/internvl3763.py"]
+MINIMUM_EXECUTION_SECONDS = 120
+STAGE_EXPORT_RESERVE_SECONDS = 60
+WORKER_EXIT_RESERVE_SECONDS = 15
+LAUNCH_WORKER_HEADROOM_SECONDS = STAGE_EXPORT_RESERVE_SECONDS + WORKER_EXIT_RESERVE_SECONDS
+PRE_CALL_RESERVE_SECONDS = 180
+EXPORT_RESERVE_BYTES_PER_SECOND = 5 * 2**20
+SUPERVISED_WORKER_LOG_SOFT_LIMIT_BYTES = 12 * 2**20
+CGROUP_MIN_FREE_BYTES = 512 * 2**20
 
 
 def authorize(stage="worker", **kwargs):
@@ -199,19 +207,57 @@ def _backend_capture_budget(backend):
     width = getattr(inner, "logit_width", None)
     if tokenizer is not None and generation is not None and type(width) is int and 0 < width <= 200000:
         eos = getattr(generation, "eos_token_id", None)
-        if eos is not None:
-            from safeshift.diagnostic173_grammar import CanonicalJSONGrammar
-            grammar = CanonicalJSONGrammar(tokenizer, eos)
-            steps = max(len(path) for path in grammar.paths) + 1
-            require(0 < steps <= 64, "CAPTURE_DIMENSION_BOUND")
-            return capture_budget(vocab=width, steps=steps)
+        if eos is not None and all(getattr(generation, k, None) == v for k, v in POLICY.items() if k != "batch_size"):
+            from safeshift.internvl_grammar import LEVELS, PROCESSOR, VERSION
+            grammar = capture.native_grammar(tokenizer, eos, [0], width)
+            receipt = grammar.receipt()
+            lengths = receipt["path_lengths"]
+            require(receipt["id"] == VERSION and receipt["policy"] == dict(POLICY)
+                and receipt["actual_processors_required"] == [PROCESSOR]
+                and receipt["language"] == [f'{{"safety_level":"{lv}"}}' for lv in LEVELS]
+                and len(lengths) == len(LEVELS) and len(set(lengths)) == 1
+                and receipt["required_tokens_including_eos"] == lengths[0] + 1
+                and 0 < grammar.required_tokens <= POLICY["max_new_tokens"] <= 64,
+                "CAPTURE_DIMENSION_BOUND")
+            return capture_budget(vocab=width, steps=grammar.required_tokens)
     return capture_budget()
 
 
+def _sample_files_and_bytes(sample):
+    files = [path for path in Path(sample).rglob("*") if path.is_file()]
+    return len(files), sum(path.stat().st_size for path in files)
+
+
+def _supervised_log_bytes(export_root):
+    total = 0
+    for folder in (export_root, export_root / "environment"):
+        if folder.is_dir():
+            for entry in folder.iterdir():
+                if entry.suffix == ".log" and not entry.is_symlink() and entry.is_file():
+                    total += entry.stat().st_size
+    return total
+
+
+def _cgroup_memory_low(backend):
+    if not isinstance(backend, NativeBackend) and not getattr(backend, "check_cgroup_memory", False):
+        return False
+    from safeshift.internvl_v2_memory import snapshot
+    cg = snapshot().get("cgroup") or {}
+    if cg.get("status") != "OBSERVED":
+        return False
+    events = cg.get("memory.events") or {}
+    if isinstance(events, dict) and events.get("oom_kill", 0) > 0:
+        return True
+    limit, current = cg.get("memory.max"), cg.get("memory.current")
+    return type(limit) is int and type(current) is int and limit - current < CGROUP_MIN_FREE_BYTES
+
+
 def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clock=time.monotonic,
-             archive_limit_bytes=7 * 2**30, hard_deadline=None):
+             archive_limit_bytes=7 * 2**30, hard_deadline=None, pre_call_reserve_seconds=PRE_CALL_RESERVE_SECONDS):
     """Bounded shared controller. Public entrypoints gate before reaching here."""
     require(type(archive_limit_bytes) is int and archive_limit_bytes > 0, "ARCHIVE_LIMIT_BYTES")
+    require(type(pre_call_reserve_seconds) is int and pre_call_reserve_seconds >= PRE_CALL_RESERVE_SECONDS,
+        "PRE_CALL_RESERVE_SECONDS")
     rows = planning.validate_cohort(cohort, digest(cohort))
     plan_sha = digest(p)
     from safeshift import internvl3763_campaign as campaign
@@ -238,7 +284,11 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             write(out / "loaded.json", backend.environment)
             telemetry["load_seconds"] = clock() - begun
         sample_budget = _backend_capture_budget(backend) if backend is not None else capture_budget()
-        export_root = out.parent if (out.parent / "handoff.json").is_file() else out
+        inner_backend = getattr(backend, "backend", backend) if backend is not None else None
+        raw_vocab = getattr(inner_backend, "logit_width", None)
+        fallback_vocab = raw_vocab if (type(raw_vocab) is int and 0 < raw_vocab <= 200000) else 200000
+        supervised = (out.parent / "handoff.json").is_file()
+        export_root = out.parent if supervised else out
         existing = [path for path in export_root.rglob("*") if path.is_file()]
         retained = sum(path.stat().st_size for path in existing)
         member_count = len(existing)
@@ -246,18 +296,35 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
         effective_archive_limit = min(archive_limit_bytes, sample_budget["archive_verifier_limit_bytes"]) - summary_margin
         for ordinal in p["scheduled_ordinals"]:
             require(calls < p["max_calls"], "CALL_CAP")
+            max_observed_bytes = max((x["bytes"] for x in telemetry["samples"]), default=0)
+            per_sample_bound = sample_budget["per_sample_bytes"]
+            if max_observed_bytes > per_sample_bound:
+                per_sample_bound = max(2 * max_observed_bytes,
+                    capture_budget(vocab=fallback_vocab, steps=64)["per_sample_bytes"])
+            written_sample_bytes = sum(x["bytes"] for x in telemetry["samples"])
+            extra_export_reserve = (max(0.0, (written_sample_bytes + per_sample_bound) / EXPORT_RESERVE_BYTES_PER_SECOND
+                - STAGE_EXPORT_RESERVE_SECONDS) if written_sample_bytes > 0 else 0.0)
             now = clock()
-            next_call_reserve = 2 * max((x["seconds"] for x in telemetry["samples"]), default=0)
-            if now >= deadline or (next_call_reserve > 0 and now + next_call_reserve >= deadline):
+            next_call_reserve = max(pre_call_reserve_seconds,
+                2 * max((x["seconds"] for x in telemetry["samples"]), default=0)) + extra_export_reserve
+            if now >= deadline or now + next_call_reserve >= deadline:
                 write(out / "stop.json", {"reason": "DEADLINE_BEFORE_NEXT_CALL"})
                 break
-            per_sample_bound = max(sample_budget["per_sample_bytes"],
-                max((x["bytes"] for x in telemetry["samples"]), default=0))
-            if shutil.disk_usage(out).free < retained + 2 * per_sample_bound + 2**30:
+            free_spaces = [shutil.disk_usage(export_root).free]
+            if archive is not None:
+                Path(archive).parent.mkdir(parents=True, exist_ok=True)
+                free_spaces.append(shutil.disk_usage(Path(archive).parent).free)
+            if min(free_spaces) < retained + 2 * per_sample_bound + 2**30:
                 write(out / "stop.json", {"reason": "CAPTURE_AND_EXPORT_SPACE_NOT_AVAILABLE"})
                 break
             if retained + per_sample_bound > effective_archive_limit or member_count + 256 >= 1000000:
                 write(out / "stop.json", {"reason": "ARCHIVE_VERIFIER_8GIB_BOUND_EXPORT_MARGIN"})
+                break
+            if supervised and _supervised_log_bytes(export_root) >= SUPERVISED_WORKER_LOG_SOFT_LIMIT_BYTES:
+                write(out / "stop.json", {"reason": "WORKER_LOG_BUDGET_MARGIN"})
+                break
+            if _cgroup_memory_low(backend):
+                write(out / "stop.json", {"reason": "CGROUP_MEMORY_HEADROOM_LOW"})
                 break
             row = rows[ordinal]
             image = Path(image_path(row))
@@ -290,11 +357,10 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
                     native_calls=int((sample / "native_call.json").exists()))
                 raise
             finally:
-                sample_files = [path for path in sample.rglob("*") if path.is_file()]
-                sample_bytes = sum(path.stat().st_size for path in sample_files)
+                sample_file_count, sample_bytes = _sample_files_and_bytes(sample)
                 calls += int((sample / "native_call.json").exists())
                 retained += sample_bytes
-                member_count += len(sample_files)
+                member_count += sample_file_count
                 telemetry["samples"].append({"ordinal": ordinal, "seconds": clock()-sample_started,
                     "bytes": sample_bytes})
     except BaseException as error:
@@ -398,7 +464,7 @@ def validate_execution_request(request):
     require_hash(request["input_marker_sha256"])
     require(request["cohort"]["scope"] == "PRIVATE_TRAIN_METADATA", "PRIVATE_ORIGINAL_PROJECTION_REQUIRED")
     p = request["plan"]
-    require(p["max_seconds"] > 60, "EXPORT_MARGIN_REQUIRES_MORE_THAN_60_SECONDS")
+    require(p["max_seconds"] >= MINIMUM_EXECUTION_SECONDS, "EXECUTION_MINIMUM_120_SECONDS")
     from safeshift import internvl3763_campaign as campaign
     planner = campaign.plan if p["schema"] == campaign.PLAN else plan
     options = {"repair": p["repair"]} if p["schema"] == campaign.PLAN else {}
@@ -591,12 +657,44 @@ def verify_bundle(archive, expected_sha, expected_plan):
                         require(trace["status"] == "TRACE_CONSISTENT" and trace["evidence_kind"] == "NATIVE"
                             and trace["label"] == label and trace["binding"] == expected_binding, "POSITIVE_NATIVE_TRACE")
                         verify_numeric_members(z, prefix + sample, raw, members)
+                    else:
+                        verify_retained_raw_vectors(z, prefix + sample, raw, members)
         require(calls == result["model_calls"] <= expected_plan["max_calls"]
             and result["counts"] == dict(Counter(r["status"] for r in result["records"])), "COUNTS")
         require(not result["counts"].get("TECHNICAL_ERROR") or result["status"] == "FAIL", "TECHNICAL_ERROR_CANNOT_PASS")
     return {"status": result["status"], "archive_sha256": expected_sha, "members": len(members) + 1,
         "model_calls": calls, "counts": result["counts"], "scope": result["scope"],
         "scientific_qualified": False}
+
+
+def verify_retained_raw_vectors(archive, prefix, raw, members):
+    """Verify full-vocab .f32/masked/forward custody even on INVALID native outputs."""
+    import json
+    import math
+    import struct
+    from safeshift.internvl_grammar import PROCESSOR
+    ids, width = raw["generated_ids"], raw["logit_width"]
+    raw_hashes, masked_hashes = raw.get("raw_vector_hashes"), raw.get("masked_vector_hashes")
+    require(type(width) is int and 0 < width <= 200000 and isinstance(ids, list)
+        and isinstance(raw_hashes, list) and isinstance(masked_hashes, list)
+        and 1 <= len(raw_hashes) == len(masked_hashes) <= 64 and len(ids) == len(raw_hashes)
+        and raw.get("actual_logits_processors") == [PROCESSOR] and raw.get("policy") == POLICY,
+        "NATIVE_INVALID_RAW_VECTOR_CUSTODY")
+    for index, (raw_sha, masked_sha) in enumerate(zip(raw_hashes, masked_hashes)):
+        stem = prefix + f"steps/{index:03d}"
+        require(members.get(stem + ".f32") == raw_sha and members.get(stem + ".masked.json") == masked_sha
+            and (stem + ".forward.json") in members, "NATIVE_INVALID_VECTOR_MEMBER_HASH")
+        binary = archive.read(stem + ".f32")
+        require(len(binary) == width * 4, "FULL_VOCAB_BINARY_SIZE")
+        vector = struct.unpack("<" + "f" * width, binary)
+        require(all(math.isfinite(x) for x in vector), "NONFINITE_NATIVE_RAW")
+        masked = json.loads(archive.read(stem + ".masked.json"))
+        forward = json.loads(archive.read(stem + ".forward.json"))
+        require(masked["step"] == index and masked["raw_sha256"] == raw_sha
+            and forward["step"] == index and forward["raw_sha256"] == raw_sha
+            and forward["vocab"] == width and forward["origin"] == "forward_before_processors"
+            and forward["encoding"] == "float32-little-endian" and forward["all_finite"] is True,
+            "NATIVE_INVALID_STEP_CUSTODY")
 
 
 def verify_numeric_members(archive, prefix, raw, members):

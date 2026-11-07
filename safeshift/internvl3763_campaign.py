@@ -23,6 +23,24 @@ SCOPE = "TRAIN3763_CAMPAIGN"
 MARKER = "SAFESHIFT_TRAIN3763_CAMPAIGN_V1"
 PLAN = "safeshift-train3763-campaign-plan-v1"
 TERMINAL = ("COMPLETE", "ERROR", "CANCELLED")
+MEASURED_TIME_MARGIN_SECONDS = 255
+LOCKED_INTERNVL35_VOCAB = 151936
+LOCKED_INTERNVL35_TOKENIZER_SIZE = 151679
+LOCKED_INTERNVL35_GRAMMAR_GEOMETRY = {
+    "id": "internvl35-canonical-json-grammar-v2",
+    "language": [
+        '{"safety_level":"Level01"}',
+        '{"safety_level":"Level02"}',
+        '{"safety_level":"Level03"}',
+        '{"safety_level":"Level04"}',
+    ],
+    "eos": [151645],
+    "decision_step": 7,
+    "decision_tokens": [16, 17, 18, 19],
+    "path_lengths": [9, 9, 9, 9],
+    "required_tokens_including_eos": 10,
+    "paths_sha256": "4c71a3235bec580cb95f78016e3138625528fccbf4b45df5d96cb39f59ff72e1",
+}
 
 
 def host_identity():
@@ -445,6 +463,13 @@ class Ledger:
                 require(telemetry["evidence_kind"] == "NATIVE" and telemetry["samples"]
                     and telemetry["gpu_peak_allocated_bytes"] > 0 and telemetry["gpu_peak_reserved_bytes"] > 0
                     and telemetry["memory"]["errors"] == [], "LIVE_GPU_RAM_TELEMETRY_REQUIRED")
+                cgroup = (telemetry.get("memory") or {}).get("cgroup")
+                if isinstance(cgroup, dict) and cgroup.get("status") == "OBSERVED":
+                    events = cgroup.get("memory.events") or {}
+                    require(not isinstance(events, dict) or events.get("oom_kill", 0) == 0, "CGROUP_OOM_OBSERVED")
+                    cg_max, cg_cur = cgroup.get("memory.max"), cgroup.get("memory.current")
+                    require(not (type(cg_max) is int and type(cg_cur) is int)
+                        or cg_max - cg_cur >= runtime.CGROUP_MIN_FREE_BYTES, "CGROUP_MEMORY_HEADROOM_TOO_LOW")
                 observed = [x["seconds"] for x in telemetry["samples"]]
                 require(all(type(x) in (int, float) and math.isfinite(x) and x > 0 for x in observed)
                     and type(telemetry["load_seconds"]) in (int, float)
@@ -453,7 +478,7 @@ class Ledger:
                 raw_float32_bytes = sum(x.file_size for x in bundle.infolist() if x.filename.endswith(".f32"))
                 require(type(sample_bytes) is int and sample_bytes > 0 and raw_float32_bytes > 0, "RAW_SIZE_MEASUREMENT_REQUIRED")
                 # Twofold latency reserve, full uncompressed conservative capture
-                # envelope, setup/worker non-sample bound and export margin. Never assume compression.
+                # envelope, setup/worker non-sample bound and launch(75s)+pre-call(180s) margin.
                 setup = json.loads(bundle.read("setup/setup-supervisor.json"))
                 require(type(setup.get("seconds")) in (int, float)
                     and math.isfinite(setup["seconds"]) and setup["seconds"] > 0, "SETUP_LATENCY_REQUIRED")
@@ -463,11 +488,11 @@ class Ledger:
                     require(type(worker_sup.get("seconds")) in (int, float)
                         and math.isfinite(worker_sup["seconds"]) and worker_sup["seconds"] > 0, "WORKER_LATENCY_REQUIRED")
                     worker_non_sample = max(telemetry["load_seconds"], worker_sup["seconds"] - sum(observed))
-                overhead = math.ceil(2*(setup["seconds"]+worker_non_sample)) + 120
-                per_seconds = max(1, math.ceil(2*max(observed)))
+                overhead = math.ceil(2*(setup["seconds"]+worker_non_sample)) + MEASURED_TIME_MARGIN_SECONDS
+                per_seconds = max(1, math.ceil(2*max(observed) + sample_bytes / runtime.EXPORT_RESERVE_BYTES_PER_SECOND))
                 sample_budget = _archive_capture_budget(bundle, raw_float32_bytes)
                 effective_sample_bytes = max(sample_bytes*2, sample_budget["per_sample_bytes"])
-                base_archive_reserve = 64*2**20 if self.grant["caps"]["archive_bytes"] > 128*2**20 else 2**20
+                base_archive_reserve = 64*2**20 if self.grant["caps"]["archive_bytes"] > 512*2**20 else 2**20
                 archive_limit = min(self.grant["caps"]["archive_bytes"], sample_budget["archive_verifier_limit_bytes"])
                 archive_cap = max(0, (archive_limit-base_archive_reserve)//effective_sample_bytes)
                 time_cap = max(0, (job_seconds-overhead)//per_seconds)
@@ -479,7 +504,7 @@ class Ledger:
                         if (isinstance(free_pair, list) and len(free_pair) == 2
                                 and all(type(v) is int and v >= 0 for v in free_pair)):
                             output_free_values.append(free_pair[1])
-                            per_sample_disk = max(sample_bytes*2, sample_budget["sample_and_export_bytes"])
+                            per_sample_disk = 2 * effective_sample_bytes
                             disk_caps.append(max(0, (free_pair[1]-2**30-base_archive_reserve)//per_sample_disk))
                 safe_calls = min(self.grant["caps"]["job_calls"], time_cap, archive_cap, *disk_caps)
                 require(safe_calls >= 1, "MEASURED_RESOURCE_ENVELOPE_TOO_SMALL")
@@ -489,7 +514,7 @@ class Ledger:
                     archive_sha256=sha(archive),
                     observed={"telemetry": telemetry, "raw_float32_bytes": raw_float32_bytes,
                         "zip_bytes": Path(archive).stat().st_size, "sample_bytes": sample_bytes,
-                        "worker_non_sample_seconds": worker_non_sample,
+                        "setup_seconds": setup["seconds"], "worker_non_sample_seconds": worker_non_sample,
                         "output_free_bytes": min(output_free_values) if output_free_values else None},
                     basis="ENGINEERING_ENVELOPE_NOT_WORST_CASE_OR_SCIENTIFIC_QUALIFICATION")
 
@@ -569,29 +594,88 @@ def required_job_seconds(measured, calls):
 
 def _archive_capture_budget(bundle, raw_float32_bytes):
     from safeshift import internvl3763 as runtime
+    from safeshift.internvl_grammar import HNLO_STATUS, LEVELS, POLICY, PROCESSOR, VERSION
+    descriptor_path = runtime.ROOT / "configs/grammar/internvl35_v2.json"
+    require(sha(descriptor_path) == runtime.capture.FROZEN["configs/grammar/internvl35_v2.json"],
+        "FROZEN_GRAMMAR_DESCRIPTOR_DRIFT")
+    descriptor = read(descriptor_path)
+    expected_language = [f'{{"safety_level":"{lvl}"}}' for lvl in LEVELS]
+    require(descriptor.get("schema") == "safeshift-proposed-generation-method-v1"
+        and descriptor.get("id") == VERSION and descriptor.get("policy") == dict(POLICY)
+        and descriptor.get("language") == expected_language
+        and descriptor.get("actual_logits_processors_required") == [PROCESSOR],
+        "FROZEN_GRAMMAR_DESCRIPTOR_CONTRACT")
     names = set(bundle.namelist())
     raw_members = sorted(name for name in names if re.fullmatch(r"(?:run/)?samples/[0-9]{6}/raw\.json", name))
     if not raw_members:
         return runtime.capture_budget()
-    widths, steps_list, expected_f32_bytes = set(), set(), 0
+    widths, steps_list, expected_f32_bytes, has_invalid = set(), set(), 0, False
     for raw_name in raw_members:
-        grammar_name = raw_name[:-len("raw.json")] + "grammar.json"
+        prefix_dir = raw_name[:-len("raw.json")]
+        grammar_name = prefix_dir + "grammar.json"
         if grammar_name not in names:
             return runtime.capture_budget()
         raw = json.loads(bundle.read(raw_name))
         grammar = json.loads(bundle.read(grammar_name))
         width = raw.get("logit_width")
+        tok_size = raw.get("tokenizer_size")
+        path_lengths = grammar.get("path_lengths")
+        eos_ids = grammar.get("eos")
+        decision_tokens = grammar.get("decision_tokens")
+        decision_step = grammar.get("decision_step")
         required_steps = grammar.get("required_tokens_including_eos")
+        require(grammar.get("id") == VERSION and grammar.get("language") == expected_language
+            and grammar.get("policy") == dict(POLICY)
+            and grammar.get("actual_processors_required") == [PROCESSOR]
+            and grammar.get("posthoc_cleanup") is False
+            and grammar.get("hnlo") is None and grammar.get("hnlo_status") == HNLO_STATUS,
+            "MEASURED_GRAMMAR_RECEIPT_CONTRACT")
+        require(type(width) is int and type(tok_size) is int
+            and 0 < tok_size <= width <= 200000
+            and isinstance(path_lengths, list) and len(path_lengths) == len(LEVELS)
+            and len(set(path_lengths)) == 1 and type(path_lengths[0]) is int and path_lengths[0] >= 1
+            and type(required_steps) is int and required_steps == path_lengths[0] + 1
+            and 0 < required_steps <= POLICY["max_new_tokens"] <= 64
+            and isinstance(decision_tokens, list) and len(decision_tokens) == len(LEVELS)
+            and len(set(decision_tokens)) == len(LEVELS)
+            and type(decision_step) is int and 0 <= decision_step < path_lengths[0]
+            and isinstance(eos_ids, list) and len(eos_ids) >= 1
+            and all(type(e) is int and 0 <= e < width for e in eos_ids)
+            and set(eos_ids).isdisjoint(decision_tokens), "MEASURED_CAPTURE_TRACE_GEOMETRY")
+        if width == LOCKED_INTERNVL35_VOCAB:
+            require(tok_size == LOCKED_INTERNVL35_TOKENIZER_SIZE
+                and all(grammar.get(k) == v for k, v in LOCKED_INTERNVL35_GRAMMAR_GEOMETRY.items()),
+                "LOCKED_INTERNVL35_GRAMMAR_GEOMETRY_DRIFT")
         generated = raw.get("generated_ids")
-        require(type(width) is int and 0 < width <= 200000
-            and type(required_steps) is int and 0 < required_steps <= 64
-            and isinstance(generated, list) and 0 < len(generated) <= required_steps,
-            "MEASURED_CAPTURE_TRACE_GEOMETRY")
+        raw_hashes = raw.get("raw_vector_hashes")
+        require(raw.get("grammar") == grammar and raw.get("policy") == dict(POLICY)
+            and raw.get("actual_logits_processors") == [PROCESSOR]
+            and raw.get("evidence_kind") == "NATIVE" and raw.get("capture_origin") == "forward_before_processors"
+            and isinstance(generated, list) and isinstance(raw_hashes, list)
+            and 0 < len(generated) == len(raw_hashes) <= 64, "MEASURED_RAW_CAPTURE_CONTRACT")
+        for step_idx in range(len(generated)):
+            step_f32 = f"{prefix_dir}steps/{step_idx:03d}.f32"
+            require(step_f32 in names and bundle.getinfo(step_f32).file_size == width * 4,
+                "MEASURED_F32_BYTES_MISMATCH")
+        expected_f32_bytes += len(generated) * width * 4
+        parsed = runtime.parse_label(raw.get("response", "")) if isinstance(raw.get("response"), str) else None
+        if parsed is None and (prefix_dir + "trace-failure.json") in names and (prefix_dir + "trace-verification.json") not in names:
+            has_invalid = True
+        else:
+            trace_name = prefix_dir + "trace-verification.json"
+            require(parsed in LEVELS and len(generated) == required_steps
+                and generated[-1] in eos_ids and generated[decision_step] in decision_tokens
+                and trace_name in names, "MEASURED_CAPTURE_TRACE_GEOMETRY")
+            trace = json.loads(bundle.read(trace_name))
+            require(trace.get("status") == "TRACE_CONSISTENT" and trace.get("evidence_kind") == "NATIVE"
+                and trace.get("steps") == required_steps and trace.get("label") == parsed,
+                "MEASURED_CAPTURE_TRACE_CONSISTENCY")
         widths.add(width)
         steps_list.add(required_steps)
-        expected_f32_bytes += len(generated) * width * 4
     require(len(widths) == 1 and len(steps_list) == 1 and expected_f32_bytes == raw_float32_bytes,
         "MEASURED_F32_BYTES_MISMATCH")
+    if has_invalid:
+        return runtime.capture_budget()
     return runtime.capture_budget(vocab=next(iter(widths)), steps=next(iter(steps_list)))
 
 
@@ -654,10 +738,11 @@ def _ceil_int(dec):
 
 
 def _weekly_quota_plan(job_wall_seconds, job_calls, week1_remaining, weekly_limit):
+    basis = "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED"
     if not job_wall_seconds:
-        return {"feasible": True, "weeks_required": 0, "week1_images_completed": 0, "weeks": []}
+        return {"feasible": True, "basis": basis, "weeks_required": 0, "week1_images_completed": 0, "weeks": []}
     if any(sec > weekly_limit for sec in job_wall_seconds):
-        return {"feasible": False, "reason": "SINGLE_JOB_EXCEEDS_WEEKLY_QUOTA",
+        return {"feasible": False, "basis": basis, "reason": "SINGLE_JOB_EXCEEDS_WEEKLY_QUOTA",
             "weeks_required": None, "week1_images_completed": 0, "weeks": []}
     weeks = []
     week_num = 1
@@ -677,10 +762,11 @@ def _weekly_quota_plan(job_wall_seconds, job_calls, week1_remaining, weekly_limi
         weeks.append({"week": week_num, "quota_available_seconds": available, "jobs": jobs_in_week,
             "images": images_in_week, "wall_seconds_used": used, "quota_remaining_seconds": available - used})
     week1_imgs = weeks[0]["images"] if weeks and weeks[0]["week"] == 1 else 0
-    return {"feasible": True, "weeks_required": weeks[-1]["week"], "week1_images_completed": week1_imgs, "weeks": weeks}
+    return {"feasible": True, "basis": basis, "weeks_required": weeks[-1]["week"],
+        "week1_images_completed": week1_imgs, "weeks": weeks}
 
 
-def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1,
+def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1, pending_repair_images=0,
         already_reserved_calls=4, already_reserved_jobs=4, already_reserved_gpu_seconds=14400,
         setup_seconds="267.21", load_seconds="73.41", sample_seconds="13.42", wall_clock_seconds="872.777",
         non_sample_seconds=None, sample_bytes=14055278, raw_float32_bytes=6077440, zip_bytes=5617751,
@@ -692,7 +778,8 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
 
     Read-only pure calculation: zero network/Kaggle/GPU calls, zero ledger mutation,
     and never modifies approved Grant/O5 caps. Distinguishes reserved 2xT4 physical
-    GPU-seconds from 1x observed Kaggle quota wall-clock consumption.
+    GPU-seconds from 1x modeled Kaggle quota wall-clock consumption, and never claims
+    single-image latency as a population-wide bound or calendar guarantee.
     """
     from decimal import Decimal
     from safeshift import internvl3763 as runtime
@@ -707,6 +794,7 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
     for name, val, low, high in (
         ("planned_total", planned_total, 1, 100000),
         ("completed_images", completed_images, 0, planned_total),
+        ("pending_repair_images", pending_repair_images, 0, completed_images),
         ("already_reserved_calls", already_reserved_calls, 0, 10**9),
         ("already_reserved_jobs", already_reserved_jobs, 0, 10**9),
         ("already_reserved_gpu_seconds", already_reserved_gpu_seconds, 0, 10**12),
@@ -739,6 +827,7 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
     require(non_sample_dec >= setup_dec + load_dec, "NON_SAMPLE_LESS_THAN_SETUP_LOAD")
 
     remaining_images = planned_total - completed_images
+    total_work_images = remaining_images + pending_repair_images
     gpus = caps["physical_gpus"]
     rem_calls_cap = caps["total_calls"] - already_reserved_calls
     rem_jobs_cap = caps["total_jobs"] - already_reserved_jobs
@@ -748,47 +837,61 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
     legacy_capture = runtime.capture_budget()
     proven_capture = runtime.capture_budget(vocab=logit_width, steps=grammar_steps)
     legacy_overhead = _ceil_int(Decimal(2) * (setup_dec + load_dec)) + 120
-    per_call_sec = max(1, _ceil_int(Decimal(2) * sample_dec))
+    legacy_per_call_sec = max(1, _ceil_int(Decimal(2) * sample_dec))
     legacy_archive_cap = max(0, (caps["archive_bytes"] - 2**20) // max(sample_bytes * 2, legacy_capture["per_sample_bytes"]))
-    legacy_time_cap = max(0, (caps["job_seconds"] - legacy_overhead) // per_call_sec)
+    legacy_time_cap = max(0, (caps["job_seconds"] - legacy_overhead) // legacy_per_call_sec)
     legacy_safe_calls = min(caps["job_calls"], legacy_time_cap, legacy_archive_cap)
     require(legacy_safe_calls >= 1, "LEGACY_ENVELOPE_ZERO")
-    legacy_min_sec = legacy_overhead + per_call_sec * legacy_safe_calls
+    legacy_min_sec = legacy_overhead + legacy_per_call_sec * legacy_safe_calls
 
-    base_archive_reserve = 64 * 2**20 if caps["archive_bytes"] > 128 * 2**20 else 2**20
+    export_sec_per_call = Decimal(sample_bytes) / Decimal(runtime.EXPORT_RESERVE_BYTES_PER_SECOND)
+    opt_per_call_sec = max(1, _ceil_int(Decimal(2) * sample_dec + export_sec_per_call))
+    base_archive_reserve = 64 * 2**20 if caps["archive_bytes"] > 512 * 2**20 else 2**20
     archive_limit = min(caps["archive_bytes"], proven_capture["archive_verifier_limit_bytes"])
     effective_sample_bytes = max(sample_bytes * 2, proven_capture["per_sample_bytes"])
     proven_archive_cap = max(0, (archive_limit - base_archive_reserve) // effective_sample_bytes)
     disk_cap = None
     if output_free_bytes is not None:
-        per_sample_disk = max(sample_bytes * 2, proven_capture["sample_and_export_bytes"])
+        per_sample_disk = 2 * effective_sample_bytes
         disk_cap = max(0, (output_free_bytes - 2**30 - base_archive_reserve) // per_sample_disk)
-    full_overhead = _ceil_int(Decimal(2) * non_sample_dec) + 120
+    full_overhead = _ceil_int(Decimal(2) * non_sample_dec) + MEASURED_TIME_MARGIN_SECONDS
 
-    def evaluate_envelope(label, *, job_sec_cap, safe_calls, overhead_sec, fixed_min_sec=None, needs_re_measure=False):
-        if remaining_images == 0:
-            job_calls_list, job_res_sec_list, job_obs_sec_list = [], [], []
-        else:
-            rem = remaining_images
-            job_calls_list, job_res_sec_list, job_obs_sec_list = [], [], []
-            if needs_re_measure:
-                job_calls_list.append(1)
-                job_res_sec_list.append(measurement_job_seconds)
-                job_obs_sec_list.append(_ceil_int(non_sample_dec + sample_dec))
-                rem -= 1
-            full_shards, tail_calls = divmod(rem, safe_calls)
-            for _ in range(full_shards):
-                sec = fixed_min_sec if fixed_min_sec is not None else (overhead_sec + per_call_sec * safe_calls)
-                require(sec <= job_sec_cap, "SHARD_SECONDS_EXCEED_JOB_CAP:" + label)
-                job_calls_list.append(safe_calls)
-                job_res_sec_list.append(sec)
-                job_obs_sec_list.append(_ceil_int(non_sample_dec + sample_dec * Decimal(safe_calls)))
-            if tail_calls:
-                sec = fixed_min_sec if fixed_min_sec is not None else (overhead_sec + per_call_sec * tail_calls)
-                require(sec <= job_sec_cap, "TAIL_SECONDS_EXCEED_JOB_CAP:" + label)
-                job_calls_list.append(tail_calls)
-                job_res_sec_list.append(sec)
-                job_obs_sec_list.append(_ceil_int(non_sample_dec + sample_dec * Decimal(tail_calls)))
+    def _append_batch_jobs(count, safe_calls, job_sec_cap, overhead_sec, per_call_s, fixed_min_sec, label,
+                           job_calls_list, job_res_sec_list, job_obs_sec_list):
+        full_shards, tail_calls = divmod(count, safe_calls)
+        for _ in range(full_shards):
+            sec = fixed_min_sec if fixed_min_sec is not None else max(120, overhead_sec + per_call_s * safe_calls)
+            require(sec <= job_sec_cap, "SHARD_SECONDS_EXCEED_JOB_CAP:" + label)
+            job_calls_list.append(safe_calls)
+            job_res_sec_list.append(sec)
+            job_obs_sec_list.append(_ceil_int(non_sample_dec + sample_dec * Decimal(safe_calls)))
+        if tail_calls:
+            sec = fixed_min_sec if fixed_min_sec is not None else max(120, overhead_sec + per_call_s * tail_calls)
+            require(sec <= job_sec_cap, "TAIL_SECONDS_EXCEED_JOB_CAP:" + label)
+            job_calls_list.append(tail_calls)
+            job_res_sec_list.append(sec)
+            job_obs_sec_list.append(_ceil_int(non_sample_dec + sample_dec * Decimal(tail_calls)))
+        return tail_calls
+
+    def evaluate_envelope(label, *, job_sec_cap, safe_calls, overhead_sec, per_call_s, fixed_min_sec=None, needs_re_measure=False):
+        job_calls_list, job_res_sec_list, job_obs_sec_list = [], [], []
+        rem_resume = remaining_images
+        rem_repair = pending_repair_images
+        measured_via_job = False
+        if (rem_resume + rem_repair) > 0 and needs_re_measure:
+            job_calls_list.append(1)
+            job_res_sec_list.append(measurement_job_seconds)
+            job_obs_sec_list.append(_ceil_int(non_sample_dec + sample_dec))
+            measured_via_job = True
+            if rem_resume > 0:
+                rem_resume -= 1
+            else:
+                rem_repair -= 1
+        resume_tail = _append_batch_jobs(rem_resume, safe_calls, job_sec_cap, overhead_sec, per_call_s, fixed_min_sec, label,
+            job_calls_list, job_res_sec_list, job_obs_sec_list) if rem_resume > 0 else 0
+        if rem_repair > 0:
+            _append_batch_jobs(rem_repair, safe_calls, job_sec_cap, overhead_sec, per_call_s, fixed_min_sec, label + "_repair",
+                job_calls_list, job_res_sec_list, job_obs_sec_list)
         fut_jobs = len(job_calls_list)
         fut_calls = sum(job_calls_list)
         fut_wall_res = sum(job_res_sec_list)
@@ -803,7 +906,7 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
         headroom_gpu = max(0, caps["total_gpu_seconds"] - tot_gpu_res)
         feasible = (shortfall_gpu == 0 and shortfall_calls == 0 and shortfall_jobs == 0)
 
-        # Max completable images under current remaining budget without changing caps
+        # Max completable remaining unattempted images under current remaining budget without changing caps
         avail_gpu = rem_gpu_sec_cap
         avail_jobs = rem_jobs_cap
         avail_calls = rem_calls_cap
@@ -817,7 +920,7 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
             else:
                 avail_jobs = 0
         if max_completable < remaining_images and avail_jobs > 0 and avail_calls > 0:
-            full_sec = (fixed_min_sec if fixed_min_sec is not None else (overhead_sec + per_call_sec * safe_calls)) * gpus
+            full_sec = (fixed_min_sec if fixed_min_sec is not None else max(120, overhead_sec + per_call_s * safe_calls)) * gpus
             n_full = min(avail_jobs, avail_calls // safe_calls, avail_gpu // full_sec,
                 (remaining_images - max_completable) // safe_calls)
             max_completable += n_full * safe_calls
@@ -830,21 +933,22 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
                     if avail_gpu >= fixed_min_sec * gpus:
                         max_completable += leftover
                 else:
-                    affordable = (avail_gpu // gpus - overhead_sec) // per_call_sec
+                    affordable = (avail_gpu // gpus - overhead_sec) // per_call_s
                     if affordable >= 1:
                         max_completable += min(leftover, affordable)
 
         weekly = _weekly_quota_plan(job_obs_sec_list, job_calls_list,
             weekly_quota_remaining_seconds, weekly_quota_limit_seconds)
+        tail_sec = (fixed_min_sec if fixed_min_sec is not None else max(120, overhead_sec + per_call_s * resume_tail)) if resume_tail else 0
         return {
             "job_seconds_cap": job_sec_cap,
             "safe_calls_per_job": safe_calls,
             "overhead_seconds": overhead_sec,
-            "per_call_seconds": per_call_sec,
-            "full_shard_seconds": fixed_min_sec if fixed_min_sec is not None else (overhead_sec + per_call_sec * safe_calls),
-            "tail_shard_calls": job_calls_list[-1] if job_calls_list and (not needs_re_measure or len(job_calls_list) > 1) and job_calls_list[-1] != safe_calls else 0,
-            "tail_shard_seconds": job_res_sec_list[-1] if job_calls_list and (not needs_re_measure or len(job_calls_list) > 1) and job_calls_list[-1] != safe_calls else 0,
-            "requires_new_source_1call_measurement": needs_re_measure and remaining_images > 0,
+            "per_call_seconds": per_call_s,
+            "full_shard_seconds": fixed_min_sec if fixed_min_sec is not None else max(120, overhead_sec + per_call_s * safe_calls),
+            "tail_shard_calls": resume_tail,
+            "tail_shard_seconds": tail_sec,
+            "requires_new_source_1call_measurement": measured_via_job,
             "future_jobs": fut_jobs,
             "future_calls": fut_calls,
             "future_reserved_wall_seconds": fut_wall_res,
@@ -863,53 +967,66 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
             "weekly_quota_schedule": weekly,
         }
 
-    opt_7200_time_cap = max(0, (caps["job_seconds"] - full_overhead) // per_call_sec)
+    opt_7200_time_cap = max(0, (caps["job_seconds"] - full_overhead) // opt_per_call_sec)
     opt_7200_caps = [caps["job_calls"], opt_7200_time_cap, proven_archive_cap] + ([disk_cap] if disk_cap is not None else [])
     opt_7200_safe_calls = min(opt_7200_caps)
     require(opt_7200_safe_calls >= 1, "OPTIMIZED_7200_ENVELOPE_ZERO")
 
-    opt_alt_time_cap = max(0, (alt_job_seconds - full_overhead) // per_call_sec)
+    opt_alt_time_cap = max(0, (alt_job_seconds - full_overhead) // opt_per_call_sec)
     opt_alt_caps = [caps["job_calls"], opt_alt_time_cap, proven_archive_cap] + ([disk_cap] if disk_cap is not None else [])
     opt_alt_safe_calls = min(opt_alt_caps)
     require(opt_alt_safe_calls >= 1, "OPTIMIZED_ALT_ENVELOPE_ZERO")
 
     scen_legacy = evaluate_envelope("legacy_current_main", job_sec_cap=caps["job_seconds"],
-        safe_calls=legacy_safe_calls, overhead_sec=legacy_overhead, fixed_min_sec=legacy_min_sec, needs_re_measure=False)
+        safe_calls=legacy_safe_calls, overhead_sec=legacy_overhead, per_call_s=legacy_per_call_sec,
+        fixed_min_sec=legacy_min_sec, needs_re_measure=False)
     scen_opt_7200 = evaluate_envelope("optimized_safe_current_job_cap", job_sec_cap=caps["job_seconds"],
-        safe_calls=opt_7200_safe_calls, overhead_sec=full_overhead, fixed_min_sec=None, needs_re_measure=source_changed)
+        safe_calls=opt_7200_safe_calls, overhead_sec=full_overhead, per_call_s=opt_per_call_sec,
+        fixed_min_sec=None, needs_re_measure=source_changed)
     scen_opt_alt = evaluate_envelope("optimized_safe_alt_job_cap", job_sec_cap=alt_job_seconds,
-        safe_calls=opt_alt_safe_calls, overhead_sec=full_overhead, fixed_min_sec=None, needs_re_measure=source_changed)
+        safe_calls=opt_alt_safe_calls, overhead_sec=full_overhead, per_call_s=opt_per_call_sec,
+        fixed_min_sec=None, needs_re_measure=source_changed)
 
-    obs_inf_wall = sample_dec * Decimal(remaining_images)
+    obs_inf_wall = sample_dec * Decimal(total_work_images)
     obs_inf_gpu = _ceil_int(obs_inf_wall * Decimal(gpus))
-    obs_with_20job_wall = Decimal(scen_opt_7200["future_jobs"]) * non_sample_dec + obs_inf_wall
-    obs_with_20job_gpu = _ceil_int(obs_with_20job_wall * Decimal(gpus))
+    obs_with_shard_wall = Decimal(scen_opt_7200["future_jobs"]) * non_sample_dec + obs_inf_wall
+    obs_with_shard_gpu = _ceil_int(obs_with_shard_wall * Decimal(gpus))
     scen_observed = {
-        "guarantee": "ILLUSTRATIVE_SINGLE_IMAGE_EXTRAPOLATION_NOT_WORST_CASE_BOUND",
-        "inference_only_wall_seconds": _ceil_int(obs_inf_wall),
-        "inference_only_physical_gpu_seconds": obs_inf_gpu,
-        "inference_only_exceeds_remaining_o5_by_gpu_seconds": max(0, obs_inf_gpu - rem_gpu_sec_cap),
-        "with_1x_shard_overhead_wall_seconds": _ceil_int(obs_with_20job_wall),
-        "with_1x_shard_overhead_physical_gpu_seconds": obs_with_20job_gpu,
-        "campaign_total_equivalent_physical_gpu_seconds": already_reserved_gpu_seconds + obs_with_20job_gpu,
-        "feasible_under_current_o5": (already_reserved_gpu_seconds + obs_inf_gpu) <= caps["total_gpu_seconds"],
+        "basis": "ILLUSTRATIVE_SINGLE_IMAGE_EXTRAPOLATION_NOT_POPULATION_LOWER_BOUND_OR_GUARANTEE",
+        "proven_population_lower_bound": False,
+        "inference_only_at_attempt4_rate_wall_seconds": _ceil_int(obs_inf_wall),
+        "inference_only_at_attempt4_rate_physical_gpu_seconds": obs_inf_gpu,
+        "inference_only_at_attempt4_rate_exceeds_remaining_o5_by_gpu_seconds": max(0, obs_inf_gpu - rem_gpu_sec_cap),
+        "with_1x_shard_overhead_wall_seconds": _ceil_int(obs_with_shard_wall),
+        "with_1x_shard_overhead_physical_gpu_seconds": obs_with_shard_gpu,
+        "campaign_total_equivalent_physical_gpu_seconds": already_reserved_gpu_seconds + obs_with_shard_gpu,
+        "within_current_o5_if_extrapolated": (already_reserved_gpu_seconds + obs_inf_gpu) <= caps["total_gpu_seconds"],
     }
 
     sensitivity_rows = []
     for mult_str in ("1.00", "1.25", "1.50"):
         mult = Decimal(mult_str)
-        adj_per_call = max(1, _ceil_int(Decimal(2) * sample_dec * mult))
+        adj_per_call = max(1, _ceil_int((Decimal(2) * sample_dec + export_sec_per_call) * mult))
         t_cap = max(0, (caps["job_seconds"] - full_overhead) // adj_per_call)
         s_calls = min([caps["job_calls"], t_cap, proven_archive_cap] + ([disk_cap] if disk_cap is not None else []))
         if s_calls < 1:
             sensitivity_rows.append({"latency_multiplier": mult_str, "per_call_seconds": adj_per_call, "safe_calls": 0, "feasible_job_cap": False})
             continue
-        rem_after_m = max(0, remaining_images - (1 if source_changed and remaining_images > 0 else 0))
-        f_shards, t_calls = divmod(rem_after_m, s_calls)
-        base_wall = (measurement_job_seconds if source_changed and remaining_images > 0 else 0)
-        base_wall += f_shards * (full_overhead + adj_per_call * s_calls)
-        if t_calls:
-            base_wall += full_overhead + adj_per_call * t_calls
+        rem_res_m = remaining_images
+        rem_rep_m = pending_repair_images
+        base_wall = 0
+        if source_changed and (rem_res_m + rem_rep_m) > 0:
+            base_wall += measurement_job_seconds
+            if rem_res_m > 0:
+                rem_res_m -= 1
+            else:
+                rem_rep_m -= 1
+        for batch_count in (rem_res_m, rem_rep_m):
+            if batch_count > 0:
+                f_shards, t_calls = divmod(batch_count, s_calls)
+                base_wall += f_shards * max(120, full_overhead + adj_per_call * s_calls)
+                if t_calls:
+                    base_wall += max(120, full_overhead + adj_per_call * t_calls)
         contingency_wall = contingency_extra_jobs * full_overhead + contingency_repair_calls * adj_per_call
         tot_gpu = already_reserved_gpu_seconds + (base_wall + contingency_wall) * gpus
         sensitivity_rows.append({
@@ -929,6 +1046,7 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
             "caps": caps,
             "planned_total": planned_total,
             "completed_images": completed_images,
+            "pending_repair_images": pending_repair_images,
             "remaining_images": remaining_images,
             "already_reserved": {
                 "jobs": already_reserved_jobs,
@@ -946,11 +1064,22 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
                 "weekly_limit_seconds": weekly_quota_limit_seconds,
             },
         },
+        "envelope_constants": {
+            "contract_minimum_job_seconds": 120,
+            "stage_export_reserve_seconds": 60,
+            "worker_exit_reserve_seconds": 15,
+            "launch_worker_headroom_seconds": 75,
+            "pre_call_reserve_seconds": 180,
+            "measured_time_margin_seconds": MEASURED_TIME_MARGIN_SECONDS,
+            "export_reserve_bytes_per_second": runtime.EXPORT_RESERVE_BYTES_PER_SECOND,
+            "new_source_1call_measurement_job_seconds": measurement_job_seconds,
+        },
         "capture_envelope": {
             "legacy_64step_200k_per_sample_bytes": legacy_capture["per_sample_bytes"],
             "legacy_archive_safe_calls": legacy_archive_cap,
             "grammar_v2_proven_per_sample_bytes": proven_capture["per_sample_bytes"],
             "effective_twofold_sample_bytes": effective_sample_bytes,
+            "effective_twofold_disk_bytes_per_sample": 2 * effective_sample_bytes,
             "base_archive_reserve_bytes": base_archive_reserve,
             "proven_archive_safe_calls": proven_archive_cap,
             "output_disk_safe_calls": disk_cap,
@@ -964,13 +1093,20 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
         "sensitivity": sensitivity_rows,
         "verdict": {
             "completable_under_current_o5": scen_opt_7200["feasible_under_current_o5"],
-            "primary_blocker": "NONE" if scen_opt_7200["feasible_under_current_o5"] else "TOTAL_GPU_SECONDS_CAP_INSUFFICIENT",
-            "new_source_measurement_required": source_changed and remaining_images > 0,
-            "new_source_measurement_target": "ordinal_1_via_resume_1call_1800s_preserving_ordinal_0_success" if completed_images == 1 and source_changed else ("ordinal_0_via_initial_1call" if completed_images == 0 else "none_or_next_pending_ordinal"),
+            "population_latency_distribution_verified": False,
+            "primary_blocker": "NONE" if scen_opt_7200["feasible_under_current_o5"] else "TOTAL_GPU_SECONDS_CAP_INSUFFICIENT_UNDER_MODELED_SAFE_ENVELOPE",
+            "new_source_measurement_required": source_changed and total_work_images > 0,
+            "new_source_measurement_target": (
+                "ordinal_1_via_resume_1call_1800s_preserving_ordinal_0_success"
+                if completed_images == 1 and pending_repair_images == 0 and source_changed
+                else ("ordinal_0_via_initial_1call" if completed_images == 0 and source_changed else "next_pending_ordinal_or_already_measured")
+            ),
             "minimum_zero_margin_o5_gpu_seconds_current_job_cap": scen_opt_7200["campaign_total_reserved_gpu_seconds"],
             "minimum_zero_margin_o5_gpu_seconds_alt_job_cap": scen_opt_alt["campaign_total_reserved_gpu_seconds"],
             "recommended_owner_o5_decision": {
+                "status": "PROPOSED_PENDING_OWNER_DECISION_NOT_ACTIVE" if not scen_opt_7200["feasible_under_current_o5"] else "NOT_REQUIRED",
                 "requires_owner_authorization": not scen_opt_7200["feasible_under_current_o5"],
+                "current_active_total_gpu_seconds": caps["total_gpu_seconds"],
                 "proposed_total_gpu_seconds": recommended_gpu_cap,
                 "proposed_total_calls": caps["total_calls"],
                 "proposed_total_jobs": caps["total_jobs"],
