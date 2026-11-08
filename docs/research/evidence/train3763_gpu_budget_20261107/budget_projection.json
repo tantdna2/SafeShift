@@ -37,11 +37,29 @@
       "total_jobs": 100
     },
     "completed_images": 1,
+    "contingency": {
+      "basis": "EXTRA_JOB_OVERHEAD_PLUS_REPAIR_CALL_TIME_NOT_FULL_JOB_TIMEOUTS",
+      "extra_jobs": 4,
+      "repair_calls": 100
+    },
     "grant_remaining": {
       "calls": 4496,
       "gpu_seconds": 65600,
       "jobs": 96,
       "max_wall_seconds_on_2xt4": 32800
+    },
+    "observation": {
+      "export_throughput_measured": false,
+      "load_seconds": "73.41",
+      "non_sample_seconds": "859.357",
+      "output_free_bytes": 20937965568,
+      "population_latency_distribution_verified": false,
+      "raw_float32_bytes": 6077440,
+      "sample_bytes": 14055278,
+      "sample_seconds": "13.42",
+      "setup_seconds": "267.21",
+      "wall_clock_seconds": "872.777",
+      "zip_bytes": 5617751
     },
     "pending_repair_images": 0,
     "planned_total": 3763,
@@ -54,10 +72,11 @@
   "o5_caps_modified": false,
   "scenarios": {
     "legacy_current_main": {
+      "attempt4_rate_pre_export_wall_seconds": 102943,
       "campaign_total_calls": 3766,
       "campaign_total_jobs": 65,
       "campaign_total_reserved_gpu_seconds": 316472,
-      "estimated_observed_kaggle_quota_seconds": 102943,
+      "estimated_observed_kaggle_quota_seconds": 113869,
       "feasible_under_current_o5": false,
       "full_shard_seconds": 2476,
       "future_calls": 3762,
@@ -67,8 +86,10 @@
       "headroom_gpu_seconds": 0,
       "job_seconds_cap": 7200,
       "max_completable_remaining_images_under_current_o5": 806,
+      "modeled_export_seconds": 10926,
       "overhead_seconds": 802,
       "per_call_seconds": 27,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
       "requires_new_source_1call_measurement": false,
       "safe_calls_per_job": 62,
       "shortfall_calls": 0,
@@ -80,22 +101,22 @@
       "weekly_quota_schedule": {
         "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
         "feasible": true,
-        "week1_images_completed": 744,
+        "week1_images_completed": 682,
         "weeks": [
           {
-            "images": 744,
-            "jobs": 12,
+            "images": 682,
+            "jobs": 11,
             "quota_available_seconds": 20727,
-            "quota_remaining_seconds": 423,
-            "wall_seconds_used": 20304,
+            "quota_remaining_seconds": 135,
+            "wall_seconds_used": 20592,
             "week": 1
           },
           {
-            "images": 3018,
-            "jobs": 49,
+            "images": 3080,
+            "jobs": 50,
             "quota_available_seconds": 108000,
-            "quota_remaining_seconds": 25361,
-            "wall_seconds_used": 82639,
+            "quota_remaining_seconds": 14723,
+            "wall_seconds_used": 93277,
             "week": 2
           }
         ],
@@ -114,10 +135,11 @@
       "within_current_o5_if_extrapolated": false
     },
     "optimized_safe_alt_job_cap": {
+      "attempt4_rate_pre_export_wall_seconds": 64247,
       "campaign_total_calls": 3766,
       "campaign_total_jobs": 20,
       "campaign_total_reserved_gpu_seconds": 302880,
-      "estimated_observed_kaggle_quota_seconds": 64247,
+      "estimated_observed_kaggle_quota_seconds": 74545,
       "feasible_under_current_o5": false,
       "full_shard_seconds": 9894,
       "future_calls": 3762,
@@ -127,8 +149,10 @@
       "headroom_gpu_seconds": 0,
       "job_seconds_cap": 10800,
       "max_completable_remaining_images_under_current_o5": 793,
+      "modeled_export_seconds": 10298,
       "overhead_seconds": 1974,
       "per_call_seconds": 30,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
       "requires_new_source_1call_measurement": true,
       "safe_calls_per_job": 264,
       "shortfall_calls": 0,
@@ -140,22 +164,22 @@
       "weekly_quota_schedule": {
         "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
         "feasible": true,
-        "week1_images_completed": 1057,
+        "week1_images_completed": 793,
         "weeks": [
           {
-            "images": 1057,
-            "jobs": 5,
+            "images": 793,
+            "jobs": 4,
             "quota_available_seconds": 20727,
-            "quota_remaining_seconds": 2242,
-            "wall_seconds_used": 18485,
+            "quota_remaining_seconds": 4466,
+            "wall_seconds_used": 16261,
             "week": 1
           },
           {
-            "images": 2705,
-            "jobs": 11,
+            "images": 2969,
+            "jobs": 12,
             "quota_available_seconds": 108000,
-            "quota_remaining_seconds": 62238,
-            "wall_seconds_used": 45762,
+            "quota_remaining_seconds": 49716,
+            "wall_seconds_used": 58284,
             "week": 2
           }
         ],
@@ -163,10 +187,11 @@
       }
     },
     "optimized_safe_current_job_cap": {
+      "attempt4_rate_pre_export_wall_seconds": 70264,
       "campaign_total_calls": 3766,
       "campaign_total_jobs": 27,
       "campaign_total_reserved_gpu_seconds": 330516,
-      "estimated_observed_kaggle_quota_seconds": 70264,
+      "estimated_observed_kaggle_quota_seconds": 80660,
       "feasible_under_current_o5": false,
       "full_shard_seconds": 7194,
       "future_calls": 3762,
@@ -176,8 +201,10 @@
       "headroom_gpu_seconds": 0,
       "job_seconds_cap": 7200,
       "max_completable_remaining_images_under_current_o5": 705,
+      "modeled_export_seconds": 10396,
       "overhead_seconds": 1974,
       "per_call_seconds": 30,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
       "requires_new_source_1call_measurement": true,
       "safe_calls_per_job": 174,
       "shortfall_calls": 0,
@@ -189,22 +216,22 @@
       "weekly_quota_schedule": {
         "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
         "feasible": true,
-        "week1_images_completed": 1045,
+        "week1_images_completed": 871,
         "weeks": [
           {
-            "images": 1045,
-            "jobs": 7,
+            "images": 871,
+            "jobs": 6,
             "quota_available_seconds": 20727,
-            "quota_remaining_seconds": 684,
-            "wall_seconds_used": 20043,
+            "quota_remaining_seconds": 1463,
+            "wall_seconds_used": 19264,
             "week": 1
           },
           {
-            "images": 2717,
-            "jobs": 16,
+            "images": 2891,
+            "jobs": 17,
             "quota_available_seconds": 108000,
-            "quota_remaining_seconds": 57779,
-            "wall_seconds_used": 50221,
+            "quota_remaining_seconds": 46604,
+            "wall_seconds_used": 61396,
             "week": 2
           }
         ],

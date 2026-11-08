@@ -1,6 +1,6 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
-## Current safe shard resource optimization and full-cohort O5 budget projection — 07/11/2026
+## Current safe shard resource optimization and full-cohort O5 budget projection — 08/11/2026
 
 [Official task, 07/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6705546490)
 and [direct ChatGPT PR186 review](https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6708149603),
@@ -39,8 +39,8 @@ C1 parser, full uncompressed `.f32` step logit capture (`raw-before-parse`) and 
 verification remain byte-for-byte identical (`science_sha256` =
 `ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`). Only
 `safeshift/internvl3763.py` and `safeshift/internvl3763_campaign.py` change in the
-90-file runtime manifest (`runtime_commit` = `d7477f0b7715601a41eb835510a0a421215da858`,
-`source_sha256` = `dbb680ea2c321e0cff68d8bdbe2c1cad3770e2859d6549a571bf8310722f4b3a`):
+90-file runtime manifest (`runtime_commit` = `855473d61c72e97d2837f34c201e47ba89408a5e`,
+`source_sha256` = `a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb`):
 
 1. **Enforced `180s` pre-call reserve and dynamic `5 MiB/s` ZIP export reserve (`DEADLINE_BEFORE_NEXT_CALL`):**
    `scripts/internvl3763.py::launch()` sets `worker_deadline = container_deadline - 75`
@@ -54,14 +54,14 @@ verification remain byte-for-byte identical (`science_sha256` =
    at a conservative `EXPORT_RESERVE_BYTES_PER_SECOND = 5 * 2^20` (`5 MiB/s`). On multi-call
    shards (`~2.45 GiB` observed uncompressed payload across `174` samples), this dynamically
    reserves hundreds of seconds for `artifacts.export()` (ZIP deflate + `SHA256` verification)
-   so the worker always writes `summary.json`, `checksums.json`, and `terminal.json` and
-   exits cleanly without losing completed raw outputs or hitting container `SIGKILL`.
+   to leave a modeled window for the worker to write `summary.json`, `checksums.json`, and `terminal.json` and
+   exit. This is a scheduling assumption, not proof of Kaggle compression/CRC throughput or immunity to container termination; preserve partial evidence on failure.
 2. **Audited Grammar V2 10-step & `151,936`-logit invariant with fail-closed `INVALID` fallback:**
    Direct audit against `configs/grammar/internvl35_v2.json`, real `Qwen2TokenizerFast`
    (`tokenizer_size = 151,679`, `eos_token_id = 151645` `<|im_end|>`, padded `lm_head`
    `logit_width = 151,936`), `GenerationConfig(max_new_tokens=64, eos_token_id=151645, do_sample=False)`,
    and `InternVLGrammarV2` proves that all four canonical completions
-   (`{"label":"Level01"}<|im_end|>` .. `{"label":"Level04"}<|im_end|>`) tokenize to **exact
+   (`{"safety_level":"Level01"}<|im_end|>` .. `{"safety_level":"Level04"}<|im_end|>`) tokenize to **exact
    length `10`** (`9` content tokens differing only at index `7` + `1` EOS `151645` at step
    `9`). At step `9`, Grammar V2 masks every token except `151645`, halting `GenerationMixin`
    immediately at `10` steps (`<= max_new_tokens = 64`), and any 11th call into the trie
@@ -77,7 +77,7 @@ verification remain byte-for-byte identical (`science_sha256` =
    and `64 MiB` (`67,108,864` B) base non-sample archive reserve under `7 GiB`
    (`7,516,192,768` B) yields **`archive_cap = 264` calls/job**; accounting for simultaneous
    uncompressed `work/samples` + compressed `out.zip` (`2 * 28,110,556 = 56,221,112` B/sample)
-   on `19.50 GiB` free disk after `2 GiB` reserve yields **`disk_cap = 352` calls/job**.
+   on `19.50 GiB` free disk after `1 GiB` disk reserve plus the `64 MiB` base allowance yields **`disk_cap = 352` calls/job**.
 3. **Unified timing constants and budget formulas across runtime, ledger, and `forecast`:**
 
    | Constant / Parameter | Value | Exact Role Across Code & Runbook |
@@ -94,16 +94,15 @@ verification remain byte-for-byte identical (`science_sha256` =
    `180s` pre-call, and `5 MiB/s` ZIP export margins). Under an Owner-authorized
    `job_seconds = 10,800`, `time_cap = 294` so `safe_calls` reaches **`264` calls/job**
    (`full_shard_seconds = 9,894s`). `required_job_seconds(measured, calls)` reserves
-   `min(job_seconds, max(120, overhead_seconds + per_call_seconds * calls))` proportionally
+   `max(120, overhead_seconds + per_call_seconds * calls)` proportionally
    for tail shards and targeted `repair` jobs (with legacy `minimum_seconds` fallback).
 4. **Additional storage, supervisor log, and Linux cgroup memory safeguards:**
    `_execute()` checks free space on both `export_root` and `Path(archive).parent`, keeps a
-   `16 MiB` (`FINALIZE_ARCHIVE_MARGIN_BYTES`) reserve under `min(archive_limit_bytes, 8 GiB)`
-   (`ARCHIVE_LIMIT_BEFORE_NEXT_CALL`), caps archive members `< 1,000,000`
-   (`MEMBER_LIMIT_BEFORE_NEXT_CALL`), stops cleanly at `12 MiB` supervisor stdout/stderr
-   before the `16 MiB` hard cap (`LOG_LIMIT_BEFORE_NEXT_CALL`), and enforces Linux cgroup
-   v1/v2 `>= 512 MiB` memory headroom and `oom_kill == 0` both pre-call and inside
-   `Ledger.measure()` (`CGROUP_MEMORY_PRESSURE_BEFORE_NEXT_CALL` / `CGROUP_OOM_OBSERVED`).
+   `16 MiB` summary/export allowance under `min(archive_limit_bytes, 8 GiB)`
+   (`ARCHIVE_VERIFIER_8GIB_BOUND_EXPORT_MARGIN`), caps archive members `< 1,000,000`
+   using the same stop reason, stops cleanly at `12 MiB` supervisor stdout/stderr
+   before the `16 MiB` hard cap (`WORKER_LOG_BUDGET_MARGIN`), and enforces Linux cgroup
+   v2 snapshots using top-level `status == OBSERVED`, empty top-level `errors`, numeric nested fields and events. Both pre-call and `Ledger.measure()` require at least `512 MiB` host/cgroup headroom and zero OOM events. `INCOMPLETE`, absent/malformed observations and cgroup-v1-only layouts stop with `CGROUP_MEMORY_UNOBSERVED`; cgroup v1 is not supported by this snapshot contract. `memory.max = max` is admitted only with observed host MemAvailable, current/stat/events and process fields. Missing optional `memory.peak` alone is allowed. Only explicit synthetic rehearsal bypasses the native gate.
 
 ### Three distinct GPU-time quantities & non-overclaiming boundary
 
@@ -129,7 +128,7 @@ estimates** assuming Attempt4-like throughput, **not** a calendar completion gua
 
 **Direct engineering finding:** **NO** — completing all `3,763` `TRAIN` images is
 **infeasible** under the current `total_gpu_seconds = 80,000` O5 cap (`65,600` physical
-GPU-seconds = `32,800` wall-seconds remaining on `2xT4`) under every safe reservation model
+GPU-seconds = `32,800` wall-seconds remaining on `2xT4`) under the modeled safe reservation scenarios below
 (`TOTAL_GPU_SECONDS_CAP_INSUFFICIENT_UNDER_MODELED_SAFE_ENVELOPE`), and even an illustrative
 extrapolation of Attempt4's `13.42s` rate with zero setup/preflight/load overhead
 (`3,762 * 13.42s * 2 GPUs = 100,973` physical GPU-s) would exceed the remaining `65,600`
@@ -139,14 +138,14 @@ physical GPU-s by **`+35,373` physical GPU-seconds**. Full reproducible numbers 
 
 | Scenario (`14,400` GPU-s already reserved across Attempts 1–4) | `safe_calls` / job | Future jobs (Total jobs / `100`) | Future reserved GPU-s (Campaign total) | Shortfall vs `80,000` O5 cap | Max remaining images under `80,000` (Left `NOT_ATTEMPTED`) | Conditional Kaggle quota estimate at Attempt4 rate (`Week 1` / `Week 2`) |
 | --- | --- | --- | --- | --- | --- | --- |
-| **1. Legacy `main`** (`job_seconds=7200`, `64`-step bound, incomplete `802s` overhead, no source change) | `62` | `61` (`65`) | `302,072` (`316,472`) | **`-236,472` GPU-s** | `806` + ord0 = `807` (`2,956` left) | `102,943s` (`28.60h`): W1 `12` jobs / `744` imgs (`20,304s`), W2 `49` jobs / `3,018` imgs (`82,639s`) |
-| **2A. Optimized safe (`job_seconds=7200` unchanged)** — incl. mandatory 1-call Attempt5 measurement on ordinal `1` (`3,600` GPU-s) + `22` shards (`21x174 + 1x107` proportional tail `5,184s`) | `174` | **`23` (`27`, `-62.3%` future jobs)** | `316,116` (**`330,516`**) | **`-250,516` GPU-s** | `705` + ord0 = `706` (`3,057` left) | **`70,264s` (`19.52h`, `-31.7%` wall quota)**: W1 `7` jobs / `1,045` imgs (`20,043s`), W2 `16` jobs / `2,717` imgs (`50,221s`) |
-| **2B. Optimized safe + Owner `job_seconds=10800`** — incl. 1-call Attempt5 (`3,600` GPU-s) + `15` shards (`14x264 + 1x65` proportional tail `3,924s`) | `264` | **`16` (`20`, `-73.8%` future jobs)** | `288,480` (**`302,880`**) | **`-222,880` GPU-s** | `793` + ord0 = `794` (`2,969` left) | **`64,247s` (`17.85h`, `-37.6%` wall quota)**: W1 `5` jobs / `1,057` imgs (`18,485s`), W2 `11` jobs / `2,705` imgs (`45,762s`) |
+| **1. Legacy `main`** (`job_seconds=7200`, `64`-step bound, incomplete `802s` overhead, no source change) | `62` | `61` (`65`) | `302,072` (`316,472`) | **`-236,472` GPU-s** | `806` + ord0 = `807` (`2,956` left) | `113,869s` (31.63h), incl. modeled export `10,926s`: W1 11 jobs / 682 imgs (20,592s); W2 50 jobs / 3,080 imgs (93,277s) |
+| **2A. Optimized safe (`job_seconds=7200` unchanged)** — incl. mandatory 1-call Attempt5 measurement on ordinal `1` (`3,600` GPU-s) + `22` shards (`21x174 + 1x107` proportional tail `5,184s`) | `174` | **`23` (`27`, `-62.3%` future jobs)** | `316,116` (**`330,516`**) | **`-250,516` GPU-s** | `705` + ord0 = `706` (`3,057` left) | `80,660s` (22.41h), incl. modeled export `10,396s`: W1 6 jobs / 871 imgs (19,264s); W2 17 jobs / 2,891 imgs (61,396s) |
+| **2B. Optimized safe + Owner `job_seconds=10800`** — incl. 1-call Attempt5 (`3,600` GPU-s) + `15` shards (`14x264 + 1x65` proportional tail `3,924s`) | `264` | **`16` (`20`, `-73.8%` future jobs)** | `288,480` (**`302,880`**) | **`-222,880` GPU-s** | `793` + ord0 = `794` (`2,969` left) | `74,545s` (20.71h), incl. modeled export `10,298s`: W1 4 jobs / 793 imgs (16,261s); W2 12 jobs / 2,969 imgs (58,284s) |
 | **3. Illustrative Attempt4 rate extrapolation** (*NOT a population lower bound or safety gate*) | `174` (illustrative) | `23` (`27`) | `100,973` inference-only; `140,503` w/ 1x overhead (`154,903` total) | **`-74,903` GPU-s** (`-35,373` inference-only) | Not admissible as safety gate | `70,252s` wall-clock (`140,503` physical GPU-s equivalent on `2xT4`) |
 
-*(Note: Scenario 2A's reserved GPU-s ceiling `330,516` is slightly higher than Scenario 1's `316,472` solely because Scenario 1 omitted `~592s` of preflight/input-verification overhead and ZIP export time, whereas Scenario 2A enforces the full `1,974s` 2x non-sample + `255s` margin and `30s/call` including `5 MiB/s` ZIP export while cutting future Kaggle jobs from `61` to `23` and saving `~9.08h` of actual GPU wall-time; Scenario 2B at `job_seconds = 10,800` reduces **both** reserved GPU-s to `302,880` and future jobs to `16`.)*
+*(Note: Scenario 2A's reserved GPU-s ceiling `330,516` is slightly higher than Scenario 1's `316,472` solely because Scenario 1 omitted `~592s` of preflight/input-verification overhead and ZIP export time, whereas Scenario 2A enforces the full `1,974s` 2x non-sample + `255s` margin and `30s/call` including `5 MiB/s` ZIP export while cutting future Kaggle jobs from `61` to `23` and saving a modeled `~9.22h` of session wall-time including export; Scenario 2B at `job_seconds = 10,800` reduces **both** reserved GPU-s to `302,880` and future jobs to `16`.)*
 
-**Latency sensitivity under `job_seconds = 7,200` (with contingency = `5` extra continuation jobs + `200` `repair` calls):**
+**Latency sensitivity under `job_seconds = 7,200` (with contingency = `4` extra continuation jobs + `100` `repair` calls):**
 - `1.00x` Attempt4 sample latency (`per_call = 30s`, `safe_calls = 174`): `330,516` GPU-s zero-error / **`352,308` GPU-s** with contingency.
 - `1.25x` Attempt4 sample latency (`per_call = 37s`, `safe_calls = 141`): `402,910` GPU-s zero-error / **`426,102` GPU-s** with contingency.
 - `1.50x` Attempt4 sample latency (`per_call = 45s`, `safe_calls = 116`): `486,774` GPU-s zero-error / **`511,566` GPU-s** with contingency.
@@ -159,7 +158,7 @@ physical GPU-s by **`+35,373` physical GPU-seconds**. Full reproducible numbers 
 - **Owner decision requested before full-cohort sharding:** authorize raising
   `caps.total_gpu_seconds` from `80,000` to **`430,000` physical GPU-seconds** (`215,000`
   wall-seconds = `59.72` wall-hours reserved ceiling on `2xT4`, covering `1.25x` mean sample
-  latency plus `5` continuation jobs and `200` `repair` calls = `426,102` GPU-s; mathematical
+  latency plus `4` continuation jobs and `100` `repair` calls = `426,102` GPU-s; mathematical
   zero-margin `1.00x` floor is `330,516` at `job_seconds = 7,200` or `302,880` at
   `job_seconds = 10,800`), and optionally raise `caps.job_seconds` from `7,200` to **`10,800`**
   to unlock `264`-call shards (`20` total jobs instead of `27`).
@@ -171,17 +170,17 @@ physical GPU-s by **`+35,373` physical GPU-seconds**. Full reproducible numbers 
 
 ### Kaggle Operator GO / NO-GO runbook for Attempt5 (`ordinal 1` re-measurement) and subsequent shards
 
-Because `source_sha256` changed (`deef3c26...` -> `dbb680ea...`), Attempt4's `MEASURED`
+Because `source_sha256` changed (`deef3c26...` -> `a4b21fd4...`), Attempt4's `MEASURED`
 record does **not** certify the new runtime (`FINAL_SOURCE_MEASUREMENTS_REQUIRED_BEFORE_SHARDS`).
 Execute the following sequence **only AFTER** direct ChatGPT GitHub review, independent
 Antigravity audit, separately authorized merge to `main`, and publication of authentic
 `SAFESHIFT_TRAIN3763_AUDIT_V1` + `SAFESHIFT_TRAIN3763_TECHNICAL_V1` comments binding
-`runtime_commit` `d7477f0b7715601a41eb835510a0a421215da858`, `source_sha256`
-`dbb680ea2c321e0cff68d8bdbe2c1cad3770e2859d6549a571bf8310722f4b3a`, execution notebook
-SHA256 `d82cae828926194ad3d2ef4a45945050aa211f450e8f0b308d588d5a978c7c91` (`code_sha256`
-`89614792e248dec6b1cc1a791e4919815a1453a57feb4585961cf10b713f503f`), and `PREP` notebook
-SHA256 `a820ff2c3c09c0294a2c28974671ccaeb0e8fc1c7c208a7e687ac4db48cd365c` (`code_sha256`
-`bc18438ee2dbbfa0d8a0dd5175433e93d78f78baff7f97238bc2c7c0b7f3bc37`).
+`runtime_commit` `855473d61c72e97d2837f34c201e47ba89408a5e`, `source_sha256`
+`a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb`, execution notebook
+SHA256 `310d023c944eca426673bcbe2493f9b25e3c2f961e8fa3edb98635352d93bd33` (`code_sha256`
+`bd337944b433edf12a74c94568ebff407992264ce3d02d5192e1032628bab7a2`), and `PREP` notebook
+SHA256 `026d48ad8d6fd4c49def698b0e88bf6f8aadfb23d59d083ee3ec4deb8aa58dc9` (`code_sha256`
+`9b8c556ecf51130543fdf7e226a5467f9439a689ad34b84edd89fb8e1bdc0b41`).
 
 **Pre-staging GO / NO-GO gate (`STOP` immediately if any check fails):**
 - **GO** only if: `git status --porcelain --untracked-files=no` is empty on exact merged `main`;
@@ -245,17 +244,31 @@ if ($LASTEXITCODE -ne 0) { throw 'NO-GO: retain proof/partials; do NOT push or d
 
 ### Offline acceptance and immutable rebuild
 
-Runtime changes were committed first at `d7477f0b7715601a41eb835510a0a421215da858`,
-and both `PREP` and execution notebooks were rebuilt deterministically at clean commit
-`587eb0cbdad469cca6a720b4be5ab10a618e5611` (`tracked_dirty = false`): **`239` focused
-CPU/SDK/native-CPU tests (`238` PASS, `0` failures, `0` errors, `1` Windows skip covered
-`5/5 PASS` with `0` skips in WSL2 Linux `LauncherSupervisorSetupCompositionTests`),
-`3/3` notebook tests PASS, `2/2` foundation smoke tests PASS, and `100` distinct PR177
-regression tests PASS (`78` PASS + `22` skips on Windows operator-venv; `22/22` POSIX/Linux
-process, memory, and streaming tests PASS with `0` skips on WSL2 Linux).** Live Kaggle kernel
-execution, real GPU/driver behavior, GCS signed-URL availability, and multi-image population
-latency remain `NOT_RUN` in this offline task. Exact hashes, commands and bounds are recorded
-in [`summary.json`](research/evidence/train3763_gpu_budget_20261107/summary.json).
+Runtime `855473d61c72e97d2837f34c201e47ba89408a5e` is embedded identically in both rebuilt notebooks. The final
+acceptance receipt and sanitized logs in [summary.json](research/evidence/train3763_gpu_budget_20261107/summary.json)
+bind the tested commit, exact source/science/manifests, notebooks, test files and logs.
+The inherited unpushed commits `7d8d4ec` and `893f5b6` were preserved and reviewed;
+the original GitHub head was `f87b2cc`. No tracked uncommitted work was present at takeover;
+unrelated untracked files were preserved. Final-source live verification is NOT_RUN.
+
+The default sensitivity values above are calculated with **4 extra job overheads + 100 repair calls**,
+not the previously advertised 5/200. At 5/200, totals are **362,256 / 437,450 / 524,514 GPU-s**
+for 1.00x / 1.25x / 1.50x. Thus the unapproved 430,000 proposal covers the modeled default
+1.25x case (426,102), but not the expanded case (437,450). These contingencies count
+extra startup overhead and repair-call time; they do not cover arbitrary full-timeout failed
+jobs. Owner must choose the contingency and cap before any corresponding execution.
+
+Quota tables now add `ceil((64 MiB + sample_bytes * calls) / 5 MiB/s)` per job for export;
+the old 70,264s / 64,247s figures excluded it. The observed-only extrapolation row explicitly
+retains its pre-export basis. All quota estimates use a historical quota snapshot, not live
+availability; 5 MiB/s includes an assumed compression/hash/CRC allowance and is **unmeasured**.
+Reservations remain 330,516 / 302,880 GPU-s under the modeled schedules. No minimum across
+all possible implementations or population latency distribution has been proved.
+
+After review, independent audit, separately authorized merge and authentic source-bound
+attestations, the next separately permitted live measurement must resume **ordinal 1**, one
+call / 1,800s. Preserve Attempt4 ordinal0 and every Attempt1–4 record; never reuse its MEASURED
+entry for this source. No staging, submission, Kaggle API call, GPU or TEST access occurs here.
 
 ## Historical PR177-vs-TRAIN3763 end-to-end repair and Attempt3 FAIL collection — 07/11/2026
 
