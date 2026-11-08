@@ -48,9 +48,14 @@ def synthetic_mount(inputs, members=None):
     synthetic_archive(archive, members)
     expected["lock"].update(size_bytes=archive.stat().st_size, sha256=sha(archive))
     write(folder / py.MARKER, expected)
+    real_statvfs = getattr(os, "statvfs", None)
+    def filesystem(path):
+        if Path(path).absolute().is_relative_to(Path(inputs).absolute()):
+            return NS(f_flag=1)
+        return real_statvfs(path)
     with patch.object(py, "manifest", return_value=expected), \
             patch.object(py, "binding", return_value=original_binding), \
-            patch.object(os, "statvfs", return_value=NS(f_flag=1), create=True), \
+            patch.object(os, "statvfs", side_effect=filesystem, create=True), \
             patch.object(os, "ST_RDONLY", 1, create=True):
         yield folder, expected
 
