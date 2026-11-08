@@ -65,8 +65,8 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("action", choices=("identity", "init", "plan", "status", "abort-pre-submit", "measure"))
-    p.add_argument("--directory", type=Path, required=True)
+    p.add_argument("action", choices=("identity", "init", "plan", "status", "abort-pre-submit", "measure", "forecast"))
+    p.add_argument("--directory", type=Path)
     p.add_argument("--mirror", type=Path)
     p.add_argument("--grant", type=Path)
     p.add_argument("--operator-id")
@@ -78,7 +78,54 @@ def main(argv=None):
     p.add_argument("--mode", choices=("initial", "resume", "repair"), default="resume")
     p.add_argument("--repair", type=Path)
     p.add_argument("--archive", type=Path)
+    p.add_argument("--weekly-remaining", type=int)
     args = p.parse_args(argv)
+    if args.action == "forecast":
+        kwargs = {}
+        if args.weekly_remaining is not None:
+            kwargs["weekly_quota_remaining_seconds"] = args.weekly_remaining
+        if args.directory is not None:
+            ledger = campaign.Ledger(private_root(args.directory))
+            state = ledger.summary()
+            current_source = digest(runtime.source_spec())
+            measured = [x for x in ledger.events() if x["kind"] == "MEASURED" and x["source_sha256"] == current_source]
+            kwargs.update(
+                caps=ledger.grant["caps"],
+                planned_total=state["planned"],
+                completed_images=state["planned"] - state["counts"].get("NOT_ATTEMPTED", 0),
+                pending_repair_images=state["counts"].get("TECHNICAL_ERROR", 0),
+                already_reserved_calls=state["reserved_calls"],
+                already_reserved_jobs=state["jobs"],
+                already_reserved_gpu_seconds=state["reserved_gpu_seconds"],
+                source_changed=not bool(measured),
+            )
+            if measured:
+                obs = measured[-1].get("observed") or {}
+                tel = obs.get("telemetry") or {}
+                samples_tel = tel.get("samples") or []
+                if samples_tel and "setup_seconds" in obs and "worker_non_sample_seconds" in obs and "raw_float32_bytes" in obs:
+                    from decimal import Decimal
+                    max_sample_dec = max(Decimal(str(x["seconds"])) for x in samples_tel)
+                    setup_dec = Decimal(str(obs["setup_seconds"]))
+                    load_dec = Decimal(str(tel.get("load_seconds", 0)))
+                    non_sample_dec = setup_dec + Decimal(str(obs["worker_non_sample_seconds"]))
+                    kwargs.update(
+                        setup_seconds=str(setup_dec),
+                        load_seconds=str(load_dec),
+                        sample_seconds=str(max_sample_dec),
+                        wall_clock_seconds=str(non_sample_dec + max_sample_dec),
+                        non_sample_seconds=str(non_sample_dec),
+                        sample_bytes=obs["sample_bytes"],
+                        raw_float32_bytes=obs["raw_float32_bytes"],
+                        zip_bytes=obs["zip_bytes"],
+                        capture_per_sample_bytes=measured[-1].get("capture_per_sample_bytes"),
+                        output_free_bytes=obs.get("output_free_bytes"),
+                        verify_f32_geometry=False,
+                    )
+        result = campaign.project_campaign_budget(**kwargs)
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    require(args.directory is not None, "DIRECTORY_REQUIRED")
     root = private_root(args.directory)
     if args.action == "identity":
         from safeshift.internvl3763_operator import code_hash

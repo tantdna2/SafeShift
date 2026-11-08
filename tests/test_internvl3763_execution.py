@@ -357,15 +357,25 @@ class ExecutionTests(unittest.TestCase):
     def test_controller_time_and_archive_bounds_stop_before_another_call(self):
         cohort = synthetic_cohort()
         plan = runtime.plan(cohort, [], action="initial", run_id="synthetic-bounds", attempt_id="bounds-1",
-            max_calls=3, max_seconds=10)
+            max_calls=3, max_seconds=600)
         backend = NS(environment={"scope": "SYNTHETIC"}, generate=Mock(side_effect=AssertionError("NO_NATIVE_CALL")))
         for case in ("time", "archive"):
-            kwargs = {"clock": iter([0] + [10]*8).__next__} if case == "time" else {"archive_limit_bytes": 1}
+            kwargs = {"clock": iter([0] + [600]*8).__next__} if case == "time" else {"archive_limit_bytes": 1}
             result = runtime.rehearse(self.root/case, None, cohort, plan, [], lambda _: backend,
                 image_path=Mock(side_effect=AssertionError("NO_IMAGE_READ")), tokenizer_sha="a"*64, **kwargs)
             self.assertEqual(result["counts"], {"NOT_ATTEMPTED": 3763})
             self.assertEqual(result["model_calls"], 0)
         backend.generate.assert_not_called()
+        for sec, ok in ((119, False), (120, True)):
+            execution = copy.deepcopy(self.request["bindings"]["runtime"]["execution_request"])
+            p_sec = runtime.plan(execution["cohort"], [], action="initial", run_id="sec-check",
+                attempt_id="sec-1", max_calls=1, max_seconds=sec)
+            execution["plan"] = p_sec
+            if ok:
+                self.assertEqual(runtime.validate_execution_request(execution), p_sec)
+            else:
+                with self.assertRaisesRegex(ValueError, "EXECUTION_MINIMUM_120_SECONDS"):
+                    runtime.validate_execution_request(execution)
 
     def test_same_processor_child_spec_path_exists_before_supervised_preflight(self):
         from scripts import internvl_v2 as old

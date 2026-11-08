@@ -122,7 +122,7 @@ write(root / 'campaign-intent.json', intent)
                 "Use exactly one operator machine and one private version1 job at a time. Unknown submit/history/ZIP stops scheduling for read-only reconciliation. Never replay this notebook manually or copy the ledger to another active machine.\n",
                 "Same original3763 IDs/order/image SHA, checkpoint/runtime, FP16/eager/C1/strict parser/grammarV2. HNLO N/A. No TEST, GT rescue, pooling or output selection.\n",
                 "Resume only NOT_ATTEMPTED. Diagnosed technical repair uses a separate exact-target plan/fix/regression and preserves every previous attempt. Source changes need technical review/audit, never renewed Owner execution approval inside campaign caps.\n",
-                "First authorized final-source run: ordinal0/one call. Measure time/VRAM/RAM/raw/ZIP before larger bounded shards. All3763 statuses stay in each archive.\n",
+                "First authorized final-source measurement: one next NOT_ATTEMPTED ordinal via resume (ordinal1 after Attempt4 ordinal0 SUCCESS); initial empty history starts at ordinal0. Source changes never inherit historical MEASURED certification. Measure time/VRAM/RAM/raw/ZIP before larger bounded shards. All3763 statuses stay in each archive.\n",
                 "Authorized side effects: source extraction, pinned isolated software, scratch allocation, bounded GPU/load/calls, create-only native claims in working, raw-before-parse/ZIP/SHA export. Preserve failures and partials.\n",
                 "Antigravity monitors <=15 minutes, checkpoints RUNNING_UNVERIFIED and exits while Kaggle continues; resume the same conversation for terminal collection after the next user message.\n"]
     return notebook

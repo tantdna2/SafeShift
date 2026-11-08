@@ -21,6 +21,14 @@ from safeshift.pilot.contract import digest, parse_label, PROMPT_SHA
 IDENTITY = "internvl35-grammar-v2-train3763-execution-candidate-v1"
 SERIES = "train3763-internvl35-grammar-v2-v1"
 OWN = ["safeshift/internvl3763.py", "scripts/internvl3763.py"]
+MINIMUM_EXECUTION_SECONDS = 120
+STAGE_EXPORT_RESERVE_SECONDS = 60
+WORKER_EXIT_RESERVE_SECONDS = 15
+LAUNCH_WORKER_HEADROOM_SECONDS = STAGE_EXPORT_RESERVE_SECONDS + WORKER_EXIT_RESERVE_SECONDS
+PRE_CALL_RESERVE_SECONDS = 180
+EXPORT_RESERVE_BYTES_PER_SECOND = 5 * 2**20
+SUPERVISED_WORKER_LOG_SOFT_LIMIT_BYTES = 12 * 2**20
+CGROUP_MIN_FREE_BYTES = 512 * 2**20
 
 
 def authorize(stage="worker", **kwargs):
@@ -192,9 +200,142 @@ def capture_budget(vocab=200000, steps=64):
         "basis": "CONSERVATIVE_ENGINEERING_BOUND_NOT_MEASURED_THROUGHPUT"}
 
 
+def _backend_capture_budget(backend):
+    inner = getattr(backend, "backend", backend)
+    tokenizer = getattr(inner, "tokenizer", None)
+    generation = getattr(inner, "generation", None)
+    width = getattr(inner, "logit_width", None)
+    if tokenizer is not None and generation is not None and type(width) is int and 0 < width <= 200000:
+        eos = getattr(generation, "eos_token_id", None)
+        if eos is not None and all(getattr(generation, k, None) == v for k, v in POLICY.items() if k != "batch_size"):
+            from safeshift.internvl_grammar import LEVELS, PROCESSOR, VERSION
+            grammar = capture.native_grammar(tokenizer, eos, [0], width)
+            receipt = grammar.receipt()
+            lengths = receipt["path_lengths"]
+            require(receipt["id"] == VERSION and receipt["policy"] == dict(POLICY)
+                and receipt["actual_processors_required"] == [PROCESSOR]
+                and receipt["language"] == [f'{{"safety_level":"{lv}"}}' for lv in LEVELS]
+                and len(lengths) == len(LEVELS) and len(set(lengths)) == 1
+                and receipt["required_tokens_including_eos"] == lengths[0] + 1
+                and 0 < grammar.required_tokens <= POLICY["max_new_tokens"] <= 64,
+                "CAPTURE_DIMENSION_BOUND")
+            return capture_budget(vocab=width, steps=grammar.required_tokens)
+    return capture_budget()
+
+
+def _sample_files_and_bytes(sample):
+    files = [path for path in Path(sample).rglob("*") if path.is_file()]
+    return len(files), sum(path.stat().st_size for path in files)
+
+
+def _supervised_log_bytes(export_root):
+    total = 0
+    for folder in (export_root, export_root / "environment"):
+        if folder.is_dir():
+            for entry in folder.iterdir():
+                if entry.suffix == ".log" and not entry.is_symlink() and entry.is_file():
+                    total += entry.stat().st_size
+    return total
+
+
+def _strict_json_loads(payload):
+    import json
+    def pairs(items):
+        obj = {}
+        for k, v in items:
+            if k in obj:
+                raise ValueError("DUPLICATE_JSON_KEY")
+            obj[k] = v
+        return obj
+    return json.loads(payload, object_pairs_hook=pairs,
+        parse_constant=lambda _: (_ for _ in ()).throw(ValueError("NONFINITE_JSON")))
+
+
+def inspect_memory_snapshot(snap, *, min_free_bytes=CGROUP_MIN_FREE_BYTES):
+    """Validate real internvl_v2_memory.snapshot() v2 schema; fail closed on any defect.
+
+    snapshot() observes Linux cgroup v2 files plus /proc host/process telemetry and sets
+    top-level status == 'OBSERVED' only when errors == [] and all required fields exist.
+    Missing, malformed, cgroup-v1-only ('INCOMPLETE'), OOM, or low-headroom states return
+    an explicit stop/rejection code instead of silently passing.
+    """
+    require(type(min_free_bytes) is int and min_free_bytes > 0, "CGROUP_MIN_FREE_BYTES")
+    if type(snap) is not dict:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if (snap.get("schema") != "internvl-v2-memory-v1"
+            or snap.get("status") != "OBSERVED"
+            or type(snap.get("errors")) is not list
+            or len(snap["errors"]) != 0):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    cg = snap.get("cgroup")
+    proc = snap.get("process")
+    gate = snap.get("gate_memory")
+    if type(cg) is not dict or type(proc) is not dict or type(gate) is not dict:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if not set(cg).issubset({"memory.current", "memory.max", "memory.peak", "memory.stat", "memory.events"}):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if set(gate) != {"available_bytes", "cgroup_remaining_bytes"}:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    proc_status = proc.get("status")
+    smaps = proc.get("smaps_rollup")
+    if (type(proc_status) is not dict
+            or type(proc_status.get("VmRSS")) is not int
+            or proc_status["VmRSS"] < 0
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in proc_status.items())
+            or type(smaps) is not dict
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in smaps.items())):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    stats = cg.get("memory.stat")
+    events = cg.get("memory.events")
+    if (type(stats) is not dict
+            or not all(k in stats for k in ("anon", "file"))
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in stats.items())
+            or type(events) is not dict
+            or "oom_kill" not in events
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in events.items())):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    current = cg.get("memory.current")
+    limit = cg.get("memory.max")
+    if type(current) is not int or current < 0:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if not (limit == "max" or (type(limit) is int and limit >= 0)):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if "memory.peak" in cg:
+        peak = cg["memory.peak"]
+        if not (peak == "max" or (type(peak) is int and peak >= 0)):
+            return "CGROUP_MEMORY_UNOBSERVED"
+    avail = gate.get("available_bytes")
+    cg_rem = gate.get("cgroup_remaining_bytes")
+    if (type(avail) is not int or avail < 0
+            or type(cg_rem) is not list
+            or not all(type(x) is int and x >= 0 for x in cg_rem)):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if any(events.get(k, 0) > 0 for k in ("oom", "oom_kill", "oom_group_kill")):
+        return "CGROUP_OOM_OBSERVED"
+    if type(limit) is int and limit - current < min_free_bytes:
+        return "CGROUP_MEMORY_HEADROOM_LOW"
+    if avail < min_free_bytes or any(x < min_free_bytes for x in cg_rem):
+        return "CGROUP_MEMORY_HEADROOM_LOW"
+    return None
+
+
+def _cgroup_memory_issue(backend):
+    if not isinstance(backend, NativeBackend) and not getattr(backend, "check_cgroup_memory", False):
+        return None
+    from safeshift.internvl_v2_memory import snapshot
+    return inspect_memory_snapshot(snapshot())
+
+
+def _cgroup_memory_low(backend):
+    return _cgroup_memory_issue(backend) is not None
+
+
 def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clock=time.monotonic,
-             archive_limit_bytes=7 * 2**30, hard_deadline=None):
+             archive_limit_bytes=7 * 2**30, hard_deadline=None, pre_call_reserve_seconds=PRE_CALL_RESERVE_SECONDS):
     """Bounded shared controller. Public entrypoints gate before reaching here."""
+    require(type(archive_limit_bytes) is int and archive_limit_bytes > 0, "ARCHIVE_LIMIT_BYTES")
+    require(type(pre_call_reserve_seconds) is int and pre_call_reserve_seconds >= PRE_CALL_RESERVE_SECONDS,
+        "PRE_CALL_RESERVE_SECONDS")
     rows = planning.validate_cohort(cohort, digest(cohort))
     plan_sha = digest(p)
     from safeshift import internvl3763_campaign as campaign
@@ -220,17 +361,54 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             backend = factory(deadline)
             write(out / "loaded.json", backend.environment)
             telemetry["load_seconds"] = clock() - begun
-        retained = sum(path.stat().st_size for path in out.rglob("*") if path.is_file())
+        sample_budget = _backend_capture_budget(backend) if backend is not None else capture_budget()
+        inner_backend = getattr(backend, "backend", backend) if backend is not None else None
+        raw_vocab = getattr(inner_backend, "logit_width", None)
+        fallback_vocab = raw_vocab if (type(raw_vocab) is int and 0 < raw_vocab <= 200000) else 200000
+        supervised = (out.parent / "handoff.json").is_file()
+        export_root = out.parent if supervised else out
+        existing = [path for path in export_root.rglob("*") if path.is_file()]
+        retained = sum(path.stat().st_size for path in existing)
+        member_count = len(existing)
+        summary_margin = 16 * 2**20 if archive_limit_bytes > 64 * 2**20 else 0
+        effective_archive_limit = min(archive_limit_bytes, sample_budget["archive_verifier_limit_bytes"]) - summary_margin
         for ordinal in p["scheduled_ordinals"]:
             require(calls < p["max_calls"], "CALL_CAP")
-            if clock() >= deadline:
+            max_observed_bytes = max((x["bytes"] for x in telemetry["samples"]), default=0)
+            per_sample_bound = sample_budget["per_sample_bytes"]
+            if max_observed_bytes > per_sample_bound:
+                per_sample_bound = max(2 * max_observed_bytes,
+                    capture_budget(vocab=fallback_vocab, steps=64)["per_sample_bytes"])
+            written_sample_bytes = sum(x["bytes"] for x in telemetry["samples"])
+            export_payload_bytes = (retained if written_sample_bytes == 0 else max(retained, written_sample_bytes)) + per_sample_bound
+            extra_export_reserve = (max(0.0, export_payload_bytes / EXPORT_RESERVE_BYTES_PER_SECOND
+                - STAGE_EXPORT_RESERVE_SECONDS)
+                if (written_sample_bytes > 0 or retained > STAGE_EXPORT_RESERVE_SECONDS * EXPORT_RESERVE_BYTES_PER_SECOND)
+                else 0.0)
+            now = clock()
+            next_call_reserve = max(pre_call_reserve_seconds,
+                2 * max((x["seconds"] for x in telemetry["samples"]), default=0)) + extra_export_reserve
+            if now >= deadline or now + next_call_reserve >= deadline:
                 write(out / "stop.json", {"reason": "DEADLINE_BEFORE_NEXT_CALL"})
                 break
-            if shutil.disk_usage(out).free < retained + capture_budget()["sample_and_export_bytes"] + 2**30:
+            free_spaces = [shutil.disk_usage(export_root).free]
+            if supervised:
+                free_spaces.append(shutil.disk_usage(export_root.parent).free)
+            if archive is not None:
+                Path(archive).parent.mkdir(parents=True, exist_ok=True)
+                free_spaces.append(shutil.disk_usage(Path(archive).parent).free)
+            if min(free_spaces) < retained + 2 * per_sample_bound + 2**30:
                 write(out / "stop.json", {"reason": "CAPTURE_AND_EXPORT_SPACE_NOT_AVAILABLE"})
                 break
-            if retained + capture_budget()["per_sample_bytes"] > archive_limit_bytes:
+            if retained + per_sample_bound > effective_archive_limit or member_count + 256 >= 1000000:
                 write(out / "stop.json", {"reason": "ARCHIVE_VERIFIER_8GIB_BOUND_EXPORT_MARGIN"})
+                break
+            if supervised and _supervised_log_bytes(export_root) >= SUPERVISED_WORKER_LOG_SOFT_LIMIT_BYTES:
+                write(out / "stop.json", {"reason": "WORKER_LOG_BUDGET_MARGIN"})
+                break
+            memory_issue = _cgroup_memory_issue(backend)
+            if memory_issue is not None:
+                write(out / "stop.json", {"reason": memory_issue})
                 break
             row = rows[ordinal]
             image = Path(image_path(row))
@@ -263,10 +441,12 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
                     native_calls=int((sample / "native_call.json").exists()))
                 raise
             finally:
+                sample_file_count, sample_bytes = _sample_files_and_bytes(sample)
                 calls += int((sample / "native_call.json").exists())
-                retained += sum(path.stat().st_size for path in sample.rglob("*") if path.is_file())
+                retained += sample_bytes
+                member_count += sample_file_count
                 telemetry["samples"].append({"ordinal": ordinal, "seconds": clock()-sample_started,
-                    "bytes": sum(path.stat().st_size for path in sample.rglob("*") if path.is_file())})
+                    "bytes": sample_bytes})
     except BaseException as error:
         failure = {"type": type(error).__name__, "cause": "SEE_PRIVATE_STAGE_EVIDENCE",
             "message_sha256": hashlib.sha256(str(error).encode()).hexdigest(),
@@ -368,7 +548,7 @@ def validate_execution_request(request):
     require_hash(request["input_marker_sha256"])
     require(request["cohort"]["scope"] == "PRIVATE_TRAIN_METADATA", "PRIVATE_ORIGINAL_PROJECTION_REQUIRED")
     p = request["plan"]
-    require(p["max_seconds"] > 60, "EXPORT_MARGIN_REQUIRES_MORE_THAN_60_SECONDS")
+    require(p["max_seconds"] >= MINIMUM_EXECUTION_SECONDS, "EXECUTION_MINIMUM_120_SECONDS")
     from safeshift import internvl3763_campaign as campaign
     planner = campaign.plan if p["schema"] == campaign.PLAN else plan
     options = {"repair": p["repair"]} if p["schema"] == campaign.PLAN else {}
@@ -469,9 +649,8 @@ def verify_bundle(archive, expected_sha, expected_plan):
     members = verify_archive(archive)  # membership, paths, bounds, all hashes and CRC
     with zipfile.ZipFile(archive) as z:
         require(z.testzip() is None, "ZIP_CRC")
-        import json
         prefix = "" if "summary.json" in members else "run/"
-        get = lambda name: json.loads(z.read(prefix + name))
+        get = lambda name: _strict_json_loads(z.read(prefix + name))
         require(get("plan.json") == expected_plan, "ARCHIVE_PLAN_BINDING")
         result, cohort, spec = get("summary.json"), get("cohort.json"), get("source.json")
         from safeshift import internvl3763_campaign as campaign
@@ -484,7 +663,7 @@ def verify_bundle(archive, expected_sha, expected_plan):
             check_source(spec)
         if cohort["scope"] != "SYNTHETIC_ONLY":
             require(prefix == "run/", "SUPERVISED_NATIVE_ARCHIVE_REQUIRED")
-            outer = lambda name: json.loads(z.read(name))
+            outer = lambda name: _strict_json_loads(z.read(name))
             require(outer("execution-request.json")["source"] == spec
                 and outer("execution-request.json")["plan"] == expected_plan, "OUTER_RUNTIME_BINDING")
             require("terminal.json" in members and outer("terminal.json").get("status") == result["status"],
@@ -561,6 +740,8 @@ def verify_bundle(archive, expected_sha, expected_plan):
                         require(trace["status"] == "TRACE_CONSISTENT" and trace["evidence_kind"] == "NATIVE"
                             and trace["label"] == label and trace["binding"] == expected_binding, "POSITIVE_NATIVE_TRACE")
                         verify_numeric_members(z, prefix + sample, raw, members)
+                    else:
+                        verify_retained_raw_vectors(z, prefix + sample, raw, members)
         require(calls == result["model_calls"] <= expected_plan["max_calls"]
             and result["counts"] == dict(Counter(r["status"] for r in result["records"])), "COUNTS")
         require(not result["counts"].get("TECHNICAL_ERROR") or result["status"] == "FAIL", "TECHNICAL_ERROR_CANNOT_PASS")
@@ -569,13 +750,42 @@ def verify_bundle(archive, expected_sha, expected_plan):
         "scientific_qualified": False}
 
 
+def verify_retained_raw_vectors(archive, prefix, raw, members):
+    """Verify full-vocab .f32/masked/forward custody even on INVALID native outputs."""
+    import json
+    import math
+    import struct
+    from safeshift.internvl_grammar import PROCESSOR
+    ids, width = raw["generated_ids"], raw["logit_width"]
+    raw_hashes, masked_hashes = raw.get("raw_vector_hashes"), raw.get("masked_vector_hashes")
+    require(type(width) is int and 0 < width <= 200000 and isinstance(ids, list)
+        and isinstance(raw_hashes, list) and isinstance(masked_hashes, list)
+        and 1 <= len(raw_hashes) == len(masked_hashes) <= 64 and len(ids) == len(raw_hashes)
+        and raw.get("actual_logits_processors") == [PROCESSOR] and raw.get("policy") == POLICY,
+        "NATIVE_INVALID_RAW_VECTOR_CUSTODY")
+    for index, (raw_sha, masked_sha) in enumerate(zip(raw_hashes, masked_hashes)):
+        stem = prefix + f"steps/{index:03d}"
+        require(members.get(stem + ".f32") == raw_sha and members.get(stem + ".masked.json") == masked_sha
+            and (stem + ".forward.json") in members, "NATIVE_INVALID_VECTOR_MEMBER_HASH")
+        binary = archive.read(stem + ".f32")
+        require(len(binary) == width * 4, "FULL_VOCAB_BINARY_SIZE")
+        vector = struct.unpack("<" + "f" * width, binary)
+        require(all(math.isfinite(x) for x in vector), "NONFINITE_NATIVE_RAW")
+        masked = _strict_json_loads(archive.read(stem + ".masked.json"))
+        forward = _strict_json_loads(archive.read(stem + ".forward.json"))
+        require(masked["step"] == index and masked["raw_sha256"] == raw_sha
+            and forward["step"] == index and forward["raw_sha256"] == raw_sha
+            and forward["vocab"] == width and forward["origin"] == "forward_before_processors"
+            and forward["encoding"] == "float32-little-endian" and forward["all_finite"] is True,
+            "NATIVE_INVALID_STEP_CUSTODY")
+
+
 def verify_numeric_members(archive, prefix, raw, members):
     """Stdlib full-vector readback; no model/tokenizer, label repair or HNLO.
 
     Worker already performed approved tokenizer/independent decoder replay. This
     separately verifies every retained vector/hash/prefix/mask/greedy choice.
     """
-    import json
     import math
     import struct
     from safeshift.internvl_grammar import PROCESSOR, greedy_token
@@ -593,8 +803,8 @@ def verify_numeric_members(archive, prefix, raw, members):
         require(len(binary) == width * 4, "FULL_VOCAB_BINARY_SIZE")
         vector = struct.unpack("<" + "f" * width, binary)
         require(all(math.isfinite(x) for x in vector), "NONFINITE_NATIVE_RAW")
-        masked = json.loads(archive.read(stem + ".masked.json"))
-        forward = json.loads(archive.read(stem + ".forward.json"))
+        masked = _strict_json_loads(archive.read(stem + ".masked.json"))
+        forward = _strict_json_loads(archive.read(stem + ".forward.json"))
         require(masked["step"] == index and masked["prefix_ids"] == raw["input_ids"] + ids[:index]
             and masked["raw_sha256"] == raw["raw_vector_hashes"][index]
             and forward["step"] == index and forward["raw_sha256"] == raw["raw_vector_hashes"][index]
@@ -614,11 +824,10 @@ def sealed_history(archive, expected_sha, expected_plan):
     This is custody, never result selection or permission to resume/repair.
     """
     import zipfile
-    import json
     verify_bundle(archive, expected_sha, expected_plan)
     with zipfile.ZipFile(archive) as z:
         name = "summary.json" if "summary.json" in z.namelist() else "run/summary.json"
-        result = json.loads(z.read(name))
+        result = _strict_json_loads(z.read(name))
     from safeshift.internvl3763_campaign import PLAN as CAMPAIGN_PLAN
     records = result["records"]
     if expected_plan["schema"] == CAMPAIGN_PLAN:

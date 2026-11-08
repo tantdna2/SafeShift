@@ -1,0 +1,285 @@
+{
+  "capture_envelope": {
+    "base_archive_reserve_bytes": 67108864,
+    "effective_twofold_disk_bytes_per_sample": 56221112,
+    "effective_twofold_sample_bytes": 28110556,
+    "grammar_v2_proven_per_sample_bytes": 15378176,
+    "legacy_64step_200k_per_sample_bytes": 120442880,
+    "legacy_archive_safe_calls": 62,
+    "output_disk_safe_calls": 352,
+    "proven_archive_safe_calls": 264
+  },
+  "envelope_constants": {
+    "contract_minimum_job_seconds": 120,
+    "export_reserve_bytes_per_second": 5242880,
+    "launch_worker_headroom_seconds": 75,
+    "measured_time_margin_seconds": 255,
+    "new_source_1call_measurement_job_seconds": 1800,
+    "pre_call_reserve_seconds": 180,
+    "stage_export_reserve_seconds": 60,
+    "worker_exit_reserve_seconds": 15
+  },
+  "inputs": {
+    "already_reserved": {
+      "calls": 4,
+      "gpu_seconds": 14400,
+      "jobs": 4
+    },
+    "caps": {
+      "archive_bytes": 7516192768,
+      "job_calls": 1000,
+      "job_seconds": 7200,
+      "machine_shape": "NvidiaTeslaT4",
+      "max_repairs_per_image": 10,
+      "physical_gpus": 2,
+      "total_calls": 4500,
+      "total_gpu_seconds": 80000,
+      "total_jobs": 100
+    },
+    "completed_images": 1,
+    "contingency": {
+      "basis": "EXTRA_JOB_OVERHEAD_PLUS_REPAIR_CALL_TIME_NOT_FULL_JOB_TIMEOUTS",
+      "extra_jobs": 4,
+      "repair_calls": 100
+    },
+    "grant_remaining": {
+      "calls": 4496,
+      "gpu_seconds": 65600,
+      "jobs": 96,
+      "max_wall_seconds_on_2xt4": 32800
+    },
+    "observation": {
+      "export_throughput_measured": false,
+      "load_seconds": "73.41",
+      "non_sample_seconds": "859.357",
+      "output_free_bytes": 20937965568,
+      "population_latency_distribution_verified": false,
+      "raw_float32_bytes": 6077440,
+      "sample_bytes": 14055278,
+      "sample_seconds": "13.42",
+      "setup_seconds": "267.21",
+      "wall_clock_seconds": "872.777",
+      "zip_bytes": 5617751
+    },
+    "pending_repair_images": 0,
+    "planned_total": 3763,
+    "remaining_images": 3762,
+    "weekly_quota": {
+      "remaining_seconds_week1": 20727,
+      "weekly_limit_seconds": 108000
+    }
+  },
+  "o5_caps_modified": false,
+  "scenarios": {
+    "legacy_current_main": {
+      "attempt4_rate_pre_export_wall_seconds": 102943,
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 65,
+      "campaign_total_reserved_gpu_seconds": 316472,
+      "estimated_observed_kaggle_quota_seconds": 113869,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 2476,
+      "future_calls": 3762,
+      "future_jobs": 61,
+      "future_reserved_gpu_seconds": 302072,
+      "future_reserved_wall_seconds": 151036,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 7200,
+      "max_completable_remaining_images_under_current_o5": 806,
+      "modeled_export_seconds": 10926,
+      "overhead_seconds": 802,
+      "per_call_seconds": 27,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
+      "requires_new_source_1call_measurement": false,
+      "safe_calls_per_job": 62,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 236472,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 42,
+      "tail_shard_seconds": 2476,
+      "unattempted_images_left_under_current_o5": 2956,
+      "weekly_quota_schedule": {
+        "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
+        "feasible": true,
+        "week1_images_completed": 682,
+        "weeks": [
+          {
+            "images": 682,
+            "jobs": 11,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 135,
+            "wall_seconds_used": 20592,
+            "week": 1
+          },
+          {
+            "images": 3080,
+            "jobs": 50,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 14723,
+            "wall_seconds_used": 93277,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    },
+    "observed_extrapolation_not_guarantee": {
+      "basis": "ILLUSTRATIVE_SINGLE_IMAGE_EXTRAPOLATION_NOT_POPULATION_LOWER_BOUND_OR_GUARANTEE",
+      "campaign_total_equivalent_physical_gpu_seconds": 154903,
+      "inference_only_at_attempt4_rate_exceeds_remaining_o5_by_gpu_seconds": 35373,
+      "inference_only_at_attempt4_rate_physical_gpu_seconds": 100973,
+      "inference_only_at_attempt4_rate_wall_seconds": 50487,
+      "proven_population_lower_bound": false,
+      "with_1x_shard_overhead_physical_gpu_seconds": 140503,
+      "with_1x_shard_overhead_wall_seconds": 70252,
+      "within_current_o5_if_extrapolated": false
+    },
+    "optimized_safe_alt_job_cap": {
+      "attempt4_rate_pre_export_wall_seconds": 64247,
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 20,
+      "campaign_total_reserved_gpu_seconds": 302880,
+      "estimated_observed_kaggle_quota_seconds": 74545,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 9894,
+      "future_calls": 3762,
+      "future_jobs": 16,
+      "future_reserved_gpu_seconds": 288480,
+      "future_reserved_wall_seconds": 144240,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 10800,
+      "max_completable_remaining_images_under_current_o5": 793,
+      "modeled_export_seconds": 10298,
+      "overhead_seconds": 1974,
+      "per_call_seconds": 30,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
+      "requires_new_source_1call_measurement": true,
+      "safe_calls_per_job": 264,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 222880,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 65,
+      "tail_shard_seconds": 3924,
+      "unattempted_images_left_under_current_o5": 2969,
+      "weekly_quota_schedule": {
+        "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
+        "feasible": true,
+        "week1_images_completed": 793,
+        "weeks": [
+          {
+            "images": 793,
+            "jobs": 4,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 4466,
+            "wall_seconds_used": 16261,
+            "week": 1
+          },
+          {
+            "images": 2969,
+            "jobs": 12,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 49716,
+            "wall_seconds_used": 58284,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    },
+    "optimized_safe_current_job_cap": {
+      "attempt4_rate_pre_export_wall_seconds": 70264,
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 27,
+      "campaign_total_reserved_gpu_seconds": 330516,
+      "estimated_observed_kaggle_quota_seconds": 80660,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 7194,
+      "future_calls": 3762,
+      "future_jobs": 23,
+      "future_reserved_gpu_seconds": 316116,
+      "future_reserved_wall_seconds": 158058,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 7200,
+      "max_completable_remaining_images_under_current_o5": 705,
+      "modeled_export_seconds": 10396,
+      "overhead_seconds": 1974,
+      "per_call_seconds": 30,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
+      "requires_new_source_1call_measurement": true,
+      "safe_calls_per_job": 174,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 250516,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 107,
+      "tail_shard_seconds": 5184,
+      "unattempted_images_left_under_current_o5": 3057,
+      "weekly_quota_schedule": {
+        "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
+        "feasible": true,
+        "week1_images_completed": 871,
+        "weeks": [
+          {
+            "images": 871,
+            "jobs": 6,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 1463,
+            "wall_seconds_used": 19264,
+            "week": 1
+          },
+          {
+            "images": 2891,
+            "jobs": 17,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 46604,
+            "wall_seconds_used": 61396,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    }
+  },
+  "schema": "safeshift-train3763-budget-projection-v1",
+  "scientific_qualified": false,
+  "sensitivity": [
+    {
+      "latency_multiplier": "1.00",
+      "per_call_seconds": 30,
+      "safe_calls_at_current_job_cap": 174,
+      "with_contingency_campaign_gpu_seconds": 352308,
+      "zero_error_campaign_gpu_seconds": 330516
+    },
+    {
+      "latency_multiplier": "1.25",
+      "per_call_seconds": 37,
+      "safe_calls_at_current_job_cap": 141,
+      "with_contingency_campaign_gpu_seconds": 426102,
+      "zero_error_campaign_gpu_seconds": 402910
+    },
+    {
+      "latency_multiplier": "1.50",
+      "per_call_seconds": 45,
+      "safe_calls_at_current_job_cap": 116,
+      "with_contingency_campaign_gpu_seconds": 511566,
+      "zero_error_campaign_gpu_seconds": 486774
+    }
+  ],
+  "verdict": {
+    "completable_under_current_o5": false,
+    "minimum_zero_margin_o5_gpu_seconds_alt_job_cap": 302880,
+    "minimum_zero_margin_o5_gpu_seconds_current_job_cap": 330516,
+    "new_source_measurement_required": true,
+    "new_source_measurement_target": "ordinal_1_via_resume_1call_1800s_preserving_ordinal_0_success",
+    "population_latency_distribution_verified": false,
+    "primary_blocker": "TOTAL_GPU_SECONDS_CAP_INSUFFICIENT_UNDER_MODELED_SAFE_ENVELOPE",
+    "recommended_owner_o5_decision": {
+      "current_active_total_gpu_seconds": 80000,
+      "optional_job_seconds_for_264_call_shards": 10800,
+      "proposed_total_calls": 4500,
+      "proposed_total_gpu_seconds": 430000,
+      "proposed_total_jobs": 100,
+      "requires_owner_authorization": true,
+      "status": "PROPOSED_PENDING_OWNER_DECISION_NOT_ACTIVE"
+    }
+  }
+}

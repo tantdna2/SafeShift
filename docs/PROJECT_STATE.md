@@ -1,6 +1,79 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — TRAIN3763 PR177-parity end-to-end repair and Attempt3 FAIL collection — 07/11/2026
+## CURRENT — PR186 takeover, real cgroup contract and final offline verification — 08/11/2026
+
+Draft [PR #186](https://github.com/tantdna2/SafeShift/pull/186), branch
+`feat/train3763-gpu-budget-optimization`, BASE `109be1ab33ef2c86a2604e1c1bc1a894464e17a2`.
+Codex continues the existing work and addresses the [latest direct review](https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6715482039).
+Takeover found GitHub at `f87b2cc`, local HEAD `893f5b6`, and two unpushed Argon commits
+(`7d8d4ec` memory/telemetry guards; `893f5b6` tests/notebooks). Both are retained. There
+were no tracked uncommitted changes; unrelated untracked work remains untouched.
+
+Both native memory consumers now share validation of the **real snapshot schema**:
+top-level status/errors, nested cgroup v2 numeric current/max/stat/events and host/process
+telemetry. At least 512 MiB must remain. Low RAM stops before another image; OOM prevents
+MEASURED admission. INCOMPLETE, missing/malformed fields and unsupported v1 stop safely.
+Unlimited v2 requires observed host headroom and valid events; missing optional peak alone
+is allowed. Tests call actual snapshot() against synthetic proc/cgroup trees and verify
+worker-to-ZIP-to-collection-to-ledger behavior. No cgroup-v1 support is claimed.
+
+The adjacent review retained the enforced 180s pre-call reserve, 75s launch headroom,
+modeled 5 MiB/s export allowance, 10-step / 151,936 full-logit capture, INVALID fallback,
+raw/trace/SHA/CRC preservation, disk/log guards and exact resume/repair custody. Inherited
+fixes also reject duplicate/nonfinite JSON and absent disk telemetry and preserve the
+conservative INVALID capture envelope in `forecast --directory`.
+
+Codex found two further accounting/reporting errors: the quoted 426,102 GPU-s contingency
+actually used **4 job overheads + 100 repair calls**, and weekly quota estimates omitted
+parent ZIP export. Both inputs and export assumptions are now explicit and regression tested.
+The rebuilt execution notebook describes ordinal1 remeasurement after Attempt4, never a
+rerun of completed ordinal0. No historical MEASURED certification applies to new source.
+
+Runtime commit `855473d61c72e97d2837f34c201e47ba89408a5e`; source SHA256
+`a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb`; immutable science SHA256
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+Only two of the 90 manifest files differ from BASE; all 84 inherited runtime files and
+all locked model/revision/FP16/C1/prompt/parser/grammar/data/labels/HNLO files match BASE.
+Notebook/source/code hashes and final test evidence are in
+[summary.json](research/evidence/train3763_gpu_budget_20261107/summary.json).
+
+| Modeled schedule for 3,762 remaining images | Images/job | Future jobs | Future / total reserved physical GPU-s | Shortfall vs active 80,000 | Conditional session quota incl. modeled ZIP |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Current 7,200s job cap, incl. one new-source measurement | 174 | 23 | 316,116 / 330,516 | 250,516 | 80,660s (22.41h) |
+| Optional **unapproved** 10,800s job cap | 264 | 16 | 288,480 / 302,880 | 222,880 | 74,545s (20.71h) |
+
+Active O5 remains **80,000 GPU-s**; Attempts1–4 retain **14,400 reserved GPU-s**, leaving
+65,600. The unapproved proposal **430,000** covers the default modeled 1.25x latency
+case with 4/100 contingency (**426,102**), but 5/200 requires **437,450**. At 1.00x / 1.50x,
+default totals with contingency are 352,308 / 511,566; expanded totals are 362,256 / 524,514.
+These are conditional projections from **one** observed ordinal0 at 13.42s, not measured
+whole-cohort performance, population bounds or assurance against arbitrary timeout failures.
+The 5 MiB/s ZIP allowance and weekly quota availability require future live verification.
+
+No live Kaggle API, upload, GPU, real inference, TRAIN alteration, TEST access, Attempt5
+staging/submission or actual campaign-ledger/mirror mutation occurred. Attempt1–4 history
+and all budgets remain immutable. Final offline checks are recorded in the acceptance
+receipt; they do not constitute Kaggle PASS or independent audit.
+
+Final acceptance: **241 focused tests (240 PASS, one Windows process-group SKIP covered
+on Linux), 3/3 notebook tests, 100 PR177 tests (88 PASS, 12 Windows platform SKIPs covered
+on Linux), 2/2 foundation smoke tests, and 27/27 Linux tests PASS**. All ten opt-in PR177
+native CPU tests actually ran. No final failures/errors remain. Test groups ran on clean
+tracked trees at `ac8793d8fea5110728315b5af29f6a1f4d86e989` and
+`bb9505de8421482f0bf4ef173fe694ddc7e03c9f`; only the affected E2E timestamp test changed
+between those commits and its entire suite was rerun at the latter. Runtime/notebooks
+and all group test-file hashes match final source. The sanitized
+[test transcript](research/evidence/train3763_gpu_budget_20261107/validation.txt) and
+receipt preserve the exact per-group identities and explain corrected validation failures.
+
+Remaining operational gates: ChatGPT direct GitHub review, independent Antigravity audit,
+separately authorized merge and source-bound AUDIT_V1/TECHNICAL_V1 attestations. Only after
+separate execution authorization may ordinal1 be measured (`resume`, one call, 1,800s)
+before multi-call shards. Full modeled completion requires an Owner O5 budget decision;
+430,000 is not active. O2–O6/academic/scientific selection remain PENDING where evidence
+is missing. See [current runbook](TRAIN3763_CAMPAIGN.md).
+
+## Historical — TRAIN3763 PR177-parity end-to-end repair and Attempt3 FAIL collection — 07/11/2026
 
 BASE `9f86424d14507fcc2fa08c2bf4a2f9a56e7dd481` (PR184 merged), branch
 `fix/train3763-pr177-e2e-repair`. [Official task](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686823873)
@@ -51,7 +124,7 @@ calls / `3` jobs / `10,800` physical GPU-s, zero refund), finished on Kaggle as
 `3,763` `NOT_ATTEMPTED` and preserved archive
 `ivl35-train3763-3-e93478acca244e71a5194ddf1084d0f0.zip` (`2,070,012` bytes, SHA256
 `38bb2698d11e23de93c71405ecbf6283437b573c53a6b624f0d26220d66fc60b`, `17` members).
-Per [current runbook](TRAIN3763_CAMPAIGN.md#current-pr177-vs-train3763-end-to-end-repair-and-attempt3-fail-collection--07112026),
+Per [historical runbook](TRAIN3763_CAMPAIGN.md#historical-pr177-vs-train3763-end-to-end-repair-and-attempt3-fail-collection--07112026),
 after review/independent audit/authorized merge, the operator collects Attempt3 as
 terminal `FAIL` (`COLLECTED` in mirrored ledger, never `abort-pre-submit`), obtains
 authentic new `AUDIT_V1` + `TECHNICAL_V1` attestations on the merged PR, and stages

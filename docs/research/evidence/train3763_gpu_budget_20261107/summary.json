@@ -1,0 +1,741 @@
+{
+  "all_other_manifest_files_unchanged": 88,
+  "base": "109be1ab33ef2c86a2604e1c1bc1a894464e17a2",
+  "branch": "feat/train3763-gpu-budget-optimization",
+  "changed_files": [
+    "docs/PROJECT_STATE.md",
+    "docs/TRAIN3763_CAMPAIGN.md",
+    "docs/research/evidence/train3763_gpu_budget_20261107/budget_projection.json",
+    "docs/research/evidence/train3763_gpu_budget_20261107/summary.json",
+    "docs/research/evidence/train3763_gpu_budget_20261107/validation.txt",
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb",
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb",
+    "safeshift/internvl3763.py",
+    "safeshift/internvl3763_campaign.py",
+    "scripts/build_internvl3763.py",
+    "scripts/train3763_campaign.ps1",
+    "scripts/train3763_campaign.py",
+    "tests/test_internvl3763.py",
+    "tests/test_internvl3763_campaign.py",
+    "tests/test_internvl3763_e2e.py",
+    "tests/test_internvl3763_execution.py"
+  ],
+  "changed_manifest_files": [
+    "safeshift/internvl3763.py",
+    "safeshift/internvl3763_campaign.py"
+  ],
+  "ci_pass_claimed": false,
+  "date": "2026-11-08",
+  "focused_cpu": {
+    "errors": 0,
+    "failures": 0,
+    "includes": "stdlib controller, native scripted CPU GenerationMixin, pinned SDK offline transport, E2E resource/error/custody regressions",
+    "passed": 240,
+    "skips": 1,
+    "tests": 241
+  },
+  "independent_audit": "PENDING_NOT_SELF_ISSUED",
+  "inherited_runtime_files_unchanged": 84,
+  "linux": {
+    "errors": 0,
+    "failures": 0,
+    "log_sha256": "090ff4b14b1129b69f2962e047dfb08018feccf7fb8f3a568f9ea3bb1c049eb6",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+    "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+    "skips": 0,
+    "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+    "status": "PASS",
+    "suites": [
+      "test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests",
+      "test_internvl_v2_continuous.StreamingTests",
+      "test_internvl_v2_memory.LinuxLifetimeTests",
+      "test_internvl_v2_memory.MemoryTests",
+      "test_internvl_v2_runtime.SupervisorTests"
+    ],
+    "tested_commit": "ac8793d8fea5110728315b5af29f6a1f4d86e989",
+    "tests": 27,
+    "tracked_dirty_at_end": false,
+    "tracked_dirty_at_start": false
+  },
+  "live_final_source_verification": "NOT_RUN_PROHIBITED_BY_TASK",
+  "merge": "NOT_AUTHORIZED",
+  "native_scientific_ast_identical_to_base": [
+    "configuration",
+    "generate_prepared",
+    "NativeBackend",
+    "trace_binding",
+    "source_spec",
+    "identity"
+  ],
+  "notebook_tests": {
+    "errors": 0,
+    "failures": 0,
+    "passed": 3,
+    "skips": 0,
+    "tests": 3
+  },
+  "notebooks": {
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
+      "admission": "SERIAL_CAMPAIGN_V1",
+      "code_sha256": "bd337944b433edf12a74c94568ebff407992264ce3d02d5192e1032628bab7a2",
+      "execution_authority": null,
+      "identity": "internvl35-grammar-v2-train3763-execution-candidate-v1",
+      "live_verification": "NOT_RUN_FINAL_SOURCE",
+      "model_calls": 0,
+      "runtime_commit": "855473d61c72e97d2837f34c201e47ba89408a5e",
+      "sha256": "310d023c944eca426673bcbe2493f9b25e3c2f961e8fa3edb98635352d93bd33",
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "BLOCKED_PENDING_CAMPAIGN_GRANT"
+    },
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
+      "code_sha256": "9b8c556ecf51130543fdf7e226a5467f9439a689ad34b84edd89fb8e1bdc0b41",
+      "execution_authority": null,
+      "identity": "internvl35-grammar-v2-train3763-execution-candidate-v1",
+      "live_verification": "NOT_RUN_FINAL_SOURCE",
+      "model_calls": 0,
+      "runtime_commit": "855473d61c72e97d2837f34c201e47ba89408a5e",
+      "sha256": "026d48ad8d6fd4c49def698b0e88bf6f8aadfb23d59d083ee3ec4deb8aa58dc9",
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "BLOCKED_PREPARATION_ONLY"
+    }
+  },
+  "o5_budget_finding": {
+    "active_total_gpu_seconds": 80000,
+    "already_reserved_gpu_seconds": 14400,
+    "caps_self_modified": false,
+    "default_contingency": {
+      "basis": "EXTRA_JOB_OVERHEAD_PLUS_REPAIR_CALL_TIME_NOT_FULL_JOB_TIMEOUTS",
+      "extra_jobs": 4,
+      "repair_calls": 100
+    },
+    "expanded_5job_200repair_sensitivity": [
+      {
+        "latency_multiplier": "1.00",
+        "per_call_seconds": 30,
+        "safe_calls_at_current_job_cap": 174,
+        "with_contingency_campaign_gpu_seconds": 362256,
+        "zero_error_campaign_gpu_seconds": 330516
+      },
+      {
+        "latency_multiplier": "1.25",
+        "per_call_seconds": 37,
+        "safe_calls_at_current_job_cap": 141,
+        "with_contingency_campaign_gpu_seconds": 437450,
+        "zero_error_campaign_gpu_seconds": 402910
+      },
+      {
+        "latency_multiplier": "1.50",
+        "per_call_seconds": 45,
+        "safe_calls_at_current_job_cap": 116,
+        "with_contingency_campaign_gpu_seconds": 524514,
+        "zero_error_campaign_gpu_seconds": 486774
+      }
+    ],
+    "optimized_current_job_cap": {
+      "attempt4_rate_pre_export_wall_seconds": 70264,
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 27,
+      "campaign_total_reserved_gpu_seconds": 330516,
+      "estimated_observed_kaggle_quota_seconds": 80660,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 7194,
+      "future_calls": 3762,
+      "future_jobs": 23,
+      "future_reserved_gpu_seconds": 316116,
+      "future_reserved_wall_seconds": 158058,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 7200,
+      "max_completable_remaining_images_under_current_o5": 705,
+      "modeled_export_seconds": 10396,
+      "overhead_seconds": 1974,
+      "per_call_seconds": 30,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
+      "requires_new_source_1call_measurement": true,
+      "safe_calls_per_job": 174,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 250516,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 107,
+      "tail_shard_seconds": 5184,
+      "unattempted_images_left_under_current_o5": 3057,
+      "weekly_quota_schedule": {
+        "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
+        "feasible": true,
+        "week1_images_completed": 871,
+        "weeks": [
+          {
+            "images": 871,
+            "jobs": 6,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 1463,
+            "wall_seconds_used": 19264,
+            "week": 1
+          },
+          {
+            "images": 2891,
+            "jobs": 17,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 46604,
+            "wall_seconds_used": 61396,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    },
+    "optional_unapproved_10800s": {
+      "attempt4_rate_pre_export_wall_seconds": 64247,
+      "campaign_total_calls": 3766,
+      "campaign_total_jobs": 20,
+      "campaign_total_reserved_gpu_seconds": 302880,
+      "estimated_observed_kaggle_quota_seconds": 74545,
+      "feasible_under_current_o5": false,
+      "full_shard_seconds": 9894,
+      "future_calls": 3762,
+      "future_jobs": 16,
+      "future_reserved_gpu_seconds": 288480,
+      "future_reserved_wall_seconds": 144240,
+      "headroom_gpu_seconds": 0,
+      "job_seconds_cap": 10800,
+      "max_completable_remaining_images_under_current_o5": 793,
+      "modeled_export_seconds": 10298,
+      "overhead_seconds": 1974,
+      "per_call_seconds": 30,
+      "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
+      "requires_new_source_1call_measurement": true,
+      "safe_calls_per_job": 264,
+      "shortfall_calls": 0,
+      "shortfall_gpu_seconds": 222880,
+      "shortfall_jobs": 0,
+      "tail_shard_calls": 65,
+      "tail_shard_seconds": 3924,
+      "unattempted_images_left_under_current_o5": 2969,
+      "weekly_quota_schedule": {
+        "basis": "CONDITIONAL_ON_ATTEMPT4_OBSERVED_RATE_AND_QUOTA_AVAILABILITY_NOT_GUARANTEED",
+        "feasible": true,
+        "week1_images_completed": 793,
+        "weeks": [
+          {
+            "images": 793,
+            "jobs": 4,
+            "quota_available_seconds": 20727,
+            "quota_remaining_seconds": 4466,
+            "wall_seconds_used": 16261,
+            "week": 1
+          },
+          {
+            "images": 2969,
+            "jobs": 12,
+            "quota_available_seconds": 108000,
+            "quota_remaining_seconds": 49716,
+            "wall_seconds_used": 58284,
+            "week": 2
+          }
+        ],
+        "weeks_required": 2
+      }
+    },
+    "projection_sha256": "3a9c19b930d48cc727fee08a4d737e7852924fdd1810910176fe8facd2c261e8",
+    "proposed_430000_status": "NOT_APPROVED_NOT_ACTIVE",
+    "quota_basis": "One observed image + unmeasured modeled ZIP export; historical provider quota; not a population or live quota guarantee.",
+    "remaining_gpu_seconds": 65600,
+    "remaining_images": 3762,
+    "sensitivity": [
+      {
+        "latency_multiplier": "1.00",
+        "per_call_seconds": 30,
+        "safe_calls_at_current_job_cap": 174,
+        "with_contingency_campaign_gpu_seconds": 352308,
+        "zero_error_campaign_gpu_seconds": 330516
+      },
+      {
+        "latency_multiplier": "1.25",
+        "per_call_seconds": 37,
+        "safe_calls_at_current_job_cap": 141,
+        "with_contingency_campaign_gpu_seconds": 426102,
+        "zero_error_campaign_gpu_seconds": 402910
+      },
+      {
+        "latency_multiplier": "1.50",
+        "per_call_seconds": 45,
+        "safe_calls_at_current_job_cap": 116,
+        "with_contingency_campaign_gpu_seconds": 511566,
+        "zero_error_campaign_gpu_seconds": 486774
+      }
+    ]
+  },
+  "operations": {
+    "actual_campaign_ledger_or_mirror_mutations": 0,
+    "attempt5_staged": false,
+    "attempts1_to_4_preserved": true,
+    "gpu_seconds_consumed": 0,
+    "live_kaggle_api_calls": 0,
+    "new_owner_grant": false,
+    "real_image_reads": 0,
+    "real_model_inference_calls": 0,
+    "refund": false,
+    "submissions": 0,
+    "test_split_reads": 0,
+    "uploads": 0
+  },
+  "powershell_ast_parse": {
+    "runbook_blocks": 10,
+    "scripts": 3,
+    "status": "PASS"
+  },
+  "pr": "https://github.com/tantdna2/SafeShift/pull/186",
+  "pr177_and_foundation": {
+    "all_ten_pr177_native_tests_enabled": true,
+    "errors": 0,
+    "failures": 0,
+    "foundation_smoke_tests": 2,
+    "passed": 90,
+    "pr177_distinct_tests": 100,
+    "skips": 12,
+    "tests": 102
+  },
+  "remaining": [
+    "ChatGPT direct GitHub review, independent Antigravity audit and separately authorized merge.",
+    "Authentic final-source-bound AUDIT_V1/TECHNICAL_V1 attestations and separately authorized execution.",
+    "One-call ordinal1 resume remeasurement on new source before shards; never inherit Attempt4 MEASURED.",
+    "Owner O5 decision before full modeled completion; 80000 remains active and 430000 unapproved.",
+    "Live Kaggle environment/driver/Inputs/quota/export throughput and all-TRAIN latency remain unverified; O2-O6/scientific selection PENDING."
+  ],
+  "reproduction": {
+    "environment": {
+      "CUDA_VISIBLE_DEVICES": "",
+      "HF_HUB_OFFLINE": "1",
+      "SAFESHIFT3763_SDK_CPU": "1",
+      "SAFESHIFT_V2_NATIVE_CPU": "1",
+      "SAFESHIFT_V2_SOURCE": "data/processed/internvl_v2_native/public-source",
+      "SAFESHIFT_V2_TOKENIZER": "data/processed/internvl_v2_native/public-source",
+      "TRANSFORMERS_OFFLINE": "1"
+    },
+    "focused_command": "python -B -m scripts.qualify_internvl3763 --output <new-ignored-output> --native --packages .venv/Lib/site-packages --packages data/processed/internvl_grammar_v2/packages --packages data/processed/internvl_v2_native/deps",
+    "forecast_command": "python -B -m scripts.train3763_campaign forecast",
+    "linux_suites": [
+      "test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests",
+      "test_internvl_v2_continuous.StreamingTests",
+      "test_internvl_v2_memory.LinuxLifetimeTests",
+      "test_internvl_v2_memory.MemoryTests",
+      "test_internvl_v2_runtime.SupervisorTests"
+    ],
+    "notebook_command": "python -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v",
+    "packages": [
+      ".venv/Lib/site-packages",
+      "data/processed/internvl_grammar_v2/packages",
+      "data/processed/internvl_v2_native/deps"
+    ],
+    "pr177_command": "PYTHONPATH=tests:<local-cpu-packages> python -B -m unittest test_internvl_v2_campaign test_internvl_v2_continuous test_internvl_v2_memory test_internvl_v2_notebook test_internvl_v2_runtime test_smoke -v"
+  },
+  "resolved_validation_failures": [
+    "Initial native invocation lacked local torch search path; reused existing CPU packages without downloads.",
+    "Expanded contingency oracle 436050 was incorrect; exact formula proves 437450 and final regression passes.",
+    "Inherited E2E compared separately sampled monotonic timestamps for equality; stable fields plus freshness assertion now pass.",
+    "PR177 opt-in run required SAFESHIFT_V2_SOURCE and SAFESHIFT_V2_TOKENIZER; pointed both to verified existing public-source metadata and reran all tests."
+  ],
+  "reviews_addressed": [
+    "https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6708149603",
+    "https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6715482039"
+  ],
+  "runtime_commit": "855473d61c72e97d2837f34c201e47ba89408a5e",
+  "schema": "train3763-gpu-budget-optimization-acceptance-v2",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "science_unchanged": true,
+  "scientific_qualified": false,
+  "skip_policy": "Windows platform skips only; matching Linux/process/streaming/memory suites execute with zero skips. No missing native opt-in coverage is represented as Linux coverage.",
+  "source_manifest": {
+    "configs/candidate160/internvl35.requirements.txt": "5d06ca3c76a9d0230ab1f9c418d7acf6ad63ac0aacb9003dcac989666bc6cee8",
+    "configs/candidate160/minicpm4.requirements.txt": "77f920b36bbf5d8396c23ed0ea28ded097cfeb3c4ba5761f3bf30269fe443c60",
+    "configs/candidate160/preparation.json": "c9112c32db31a7ab83d9056b089a572c8c0c4db19128bf3b9c94210e9089cbe3",
+    "configs/candidate160/python3119.json": "43fc11a647c315191c040cb574cd779e30f04e247c77d89dbb3ee7688ae1112a",
+    "configs/cpu_g2_g3/checkpoint_metadata_lock.json": "d43e48ca874da1d32a729110b0847d48f25f88a91195af7386c4e4efd74d03bc",
+    "configs/cpu_g2_g3/implementation_lock.json": "da4b923d2685e24b7223052b8d48ffb64077a7f81f1b936664b2a48e88c66ec9",
+    "configs/cpu_g2_g3/internvl35.requirements.txt": "991317e95a03a217ea4aba43bc8fc2e904fa5c581a37673481979eb1e80f5519",
+    "configs/cpu_g2_g3/minicpm4.requirements.txt": "5416ac49ef5a855d90256bdf4696903ea3fce95846646e0c6e30f3728e359dd6",
+    "configs/cpu_g2_g3/protected_source_lock.json": "8398266d9e1c3942d2f4ea9f391eddee350ef2460c21e06dc99f27977639e5e5",
+    "configs/cpu_g2_g3/public_source_lock.json": "7a4840f6ffc0834cbe73e44ddcf4dc593dfaf1a37a98d412a20fab9cd6bd4ae7",
+    "configs/fulltrain/qwen3.json": "b8b53365f11771300e6f4e39fc46a4f374a527ae40f81e15e16d8f2fc16c0d53",
+    "configs/fulltrain/qwen_semantics_provenance.json": "a454dd6f7db47f38c04ea01261a4ba43e9f7fdd2ebcb4fc798598642a4e2dac4",
+    "configs/grammar/internvl35_v2.json": "f6e66ee753bc9c3447aa5b33d52838c226f428b87bafbd8a070bf95edce7e99e",
+    "configs/grammar/internvl35_v2_runtime.json": "2252e83d43c55b8e91d50a45d298f92288a5c608fe117c1f4deaea8c748425dd",
+    "configs/pilot/authority_template.json": "1153a409fc3929e83eb8acbafd87c61e650902eb6c9a57a991946b172cac7742",
+    "configs/pilot/classification_c1.txt": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "configs/pilot/gemma.requirements.txt": "fc17c2ef5de2fb4224ff95c42b613c771b1da709642a9a7c49419fdc0909400c",
+    "configs/pilot/model_source_lock.json": "100be298d43ebdf42a752aa29191d6fab001b4a8f2d09fb8d46bad9d1c695448",
+    "configs/pilot/phi.requirements.txt": "080babcb92bccfd2c4f4fe6cf64dc3cee47b1d6b247778968b54cc82dfb0cbe9",
+    "configs/pilot/pip_bootstrap.json": "2c225a223c6dad842fdf24478a77bba09acf0ae775f901c3c885e4558e7e1edf",
+    "configs/pilot/pip_bootstrap.requirements.txt": "97431255127271b4a5c56d678330f15f176903b7adff6ecbf2c2ab30d04d1db2",
+    "configs/pilot/runtime_versions.json": "4dcc392e62092c8e6def10f6b3f0348ac9356f77b3c22aac502688ac3c64731e",
+    "configs/pilot/smol_checkpoint_metadata.json": "aa0753fda9ccff60f996b77501dd9fb8da2dab450c038c76f852db15b82367cd",
+    "configs/pilot/smolvlm2.requirements.txt": "16caf26145eb87efd2042a985e4fd4708cf718e69b6142f81c88cd8c183f5fd1",
+    "configs/pilot/tokenizer_cpu_evidence.json": "08e514993d444a9d2ef076c4eabae0c06b5375f706c112c12b68317320106063",
+    "safeshift/__init__.py": "a4907a14d8298c6bc8fbcdcea12fd34de3843ea30c65937d36874c7857574b44",
+    "safeshift/candidates/__init__.py": "fa80278ee7102864b3ffd8a808e8e6a7792a05b1857974691ee763126dab65fc",
+    "safeshift/candidates/backend.py": "a6a5b52510e794092be52ccd217b0f88a181fd8cb97ea1a72b0fc5076d898c4c",
+    "safeshift/candidates/fulltrain.py": "1ddbc1e95ff7c536eddd4e97f4b7cc09416d5545f38bcf7534c7be8836e35304",
+    "safeshift/candidates/fulltrain_preflight.py": "095be62e5edaa10d84777441889cc7e127122874736be9633200145ba0c1e2c4",
+    "safeshift/candidates/fulltrain_run.py": "6ad1948d707f1079436d482dc456c1de5957e4b57c0700a25dc9e400ac51ca8e",
+    "safeshift/candidates/inputs.py": "0f380ab4272e814fd46c9028345019118f58c39d6b628d95eef988a9fb4ba1eb",
+    "safeshift/candidates/loading.py": "8d05ca925c367f3e0c01cbed802c4ee114b040003152c59e7ce661089e005d79",
+    "safeshift/candidates/minicpm_image.py": "0956deb6d5816b9a8020e8a8f895e90c8d79234dc0ab8248e325d030c95b5632",
+    "safeshift/candidates/minicpm_resampler_fp32.py": "d467037d41b2e5c133a9532c12987f11b624531662a733713e67089631330bf5",
+    "safeshift/candidates/source.py": "103298751539d05dbe7399399f4f1f3338cd7480b2294e4b43a9e0e1e888926e",
+    "safeshift/candidates/train_contract.py": "3aa94e3eb04b3c501d533f1e8e1ba6c6e0dadf90977ec3f454a9d93b8ab7946e",
+    "safeshift/candidates/train_history.py": "e91229b8544ccfcb760add3396682cc096a7911c63ee344ba8d7d4fe27dbaef8",
+    "safeshift/candidates/train_incident.py": "9d798c5064b930f8adc4797efb4899b5a2e9271ff5efe60723a0796376f6bfef",
+    "safeshift/candidates/train_inputs.py": "f10bd8fe546d559cb094669047a558577aea9e0acc3a234da558a671cf450afb",
+    "safeshift/candidates/train_official.py": "d7cbcb7c0c25d88aa57e3a5bd069eedc8fd89ae6b1797f46320e1a82d324f26a",
+    "safeshift/candidates/train_owner.py": "a85b14431b02866e014747cae2349f9cc63421530c0762115d18547a8ff5816c",
+    "safeshift/candidates/train_preflight.py": "8cd4d7bb2fb656ec7e597ef15dff84a50192248eebf2d803a55ddd9fb4364797",
+    "safeshift/candidates/train_python.py": "4b01c9704dd6f23f4703a5b911616ece977aefb69ce7e3545a335c161170e209",
+    "safeshift/candidates/train_route.py": "b628aaae2d5726fc1a331911da605f41d4cb529c9602f5d7b5a31d0ddbc73d27",
+    "safeshift/candidates/train_run.py": "ba795e8ba67a7e4bcafbf37f59e847408160761a4177b5c002a58385f1c753a2",
+    "safeshift/candidates/train_runtime.py": "5f45ddcdc818c486241b0a0991cc5bfdb2f8d24c08b03431ecf06fed458d6a4a",
+    "safeshift/candidates/train_smoke.py": "d13df56e849e0a235bf551a54f6b1d8f97dfe4ffc80af710595cc86cc725bd93",
+    "safeshift/diagnostic173_grammar.py": "a345d30f5d36b6142aaab1292c16e4ba31e08cd425e180a794fd8c3040ab4dfc",
+    "safeshift/fulltrain/__init__.py": "d0fda4dba4ef1ebaad62025d3b4e6a744fd3ea342f07eaf4be9d956245c01ea8",
+    "safeshift/fulltrain/admission.py": "0db7c658c7e584ff7ae0a8dce22eff22e86609942925b8ffe06d42280ba36978",
+    "safeshift/fulltrain/contract.py": "520b4132d4b0b7e7ec3e01ff271d9647fadc785df1b8a666e8f72da4804221fb",
+    "safeshift/fulltrain/engine.py": "e835ab72cb43c6729a0587e49d9cf762fe5fa437c4f49746e3e9a2bc4000bd95",
+    "safeshift/fulltrain/environment.py": "0f373d607125a2b675f9e5184869bd33a24ff76f4b18a2ab6b5b5d5d19f31e5f",
+    "safeshift/fulltrain/inputs.py": "2890aced07759176055fbdb13bb1c1224ff68f61ef29f3e6e9b0836e23c89a0c",
+    "safeshift/fulltrain/preflight.py": "bfadac1a203367fc3b5ea50fad78e444bd65fcc15c9f7dacb694472586d8d4de",
+    "safeshift/fulltrain/provision.py": "8cd0a7d80b4a23ffd5f96c3df22987a49e6fa72c3d2c495040cf086904e0b4ea",
+    "safeshift/fulltrain/qwen.py": "aeae74fd46e572a74bc39aa706e2d1d2e79dd2c61129cd9c16980638cf2966ef",
+    "safeshift/fulltrain/qwen_semantics.py": "0853f21636e37cf18f78c178906e418b1730336971b0594ce572caffb17a35b7",
+    "safeshift/fulltrain/runtime.py": "f69e3d735ff5a6339ef1201a8643fce457669bbb132ca8f476320f14f238e107",
+    "safeshift/fulltrain/supervision.py": "a860db5a6489b91ef7fa2cb549e656dd21a731704d3941199a2f42d24df07193",
+    "safeshift/internvl3763.py": "db01d3033cfc3ec294190d69b67810de9eb564846227bef91ce7d5d9bf1141a2",
+    "safeshift/internvl3763_campaign.py": "413bec8f8489fdd439f57f6fe9acdb29daa03d13cad5dd2270fea288268c6dcb",
+    "safeshift/internvl3763_operator.py": "caf26b6f9471954d8372f6b154a680d5a7db91cc07e6a87948019fb7af0bd4d5",
+    "safeshift/internvl3763_release.py": "1ef4aadb88481fa5896a843cdcddb1b9fc859722f06e9d6bf869aa7dd3264c06",
+    "safeshift/internvl_grammar.py": "a3cde12d4dbe463acc9d87bcc36c440492636d7479024876c04ef1c1645c69ca",
+    "safeshift/internvl_v2_campaign.py": "87486daa79ae025fe0cb2129231b1e1d687acadbceaba70687bd6433b698a45b",
+    "safeshift/internvl_v2_memory.py": "705a21e27f20c5f7ef7beacbbc4007f17f2a1b9dc0c7c715cfe93288129aba12",
+    "safeshift/internvl_v2_runtime.py": "92bc865f64734230d785417bb3dd2eb1e66e6322e8ce1c32e526cf0dcc3ea737",
+    "safeshift/kaggle_handoff.py": "5c0b9b8e14b3f8d4b5c13144b75fb315ecdf677818a380d8472db3042a3e958a",
+    "safeshift/pilot/__init__.py": "2b545548d4f1b28c17e08616d1fd4ce58f259bd97e42b30508f2aff429a9e7b5",
+    "safeshift/pilot/artifacts.py": "1e2f3b41e4775941d0c255e744a415ced9bceabfe19203953447418977793b91",
+    "safeshift/pilot/backend.py": "07a4e5ce469e4e7c9ff51416fad306dabee048475ae5991fcf16989aa0fe9c1c",
+    "safeshift/pilot/bootstrap.py": "3602627b8fead693b9287caba92f8b96d7f4b531f87c00811ce9b3d7e0ea840c",
+    "safeshift/pilot/contract.py": "23c5440c6f9890be32a6715cc40cfdc0ac248cd168f9742669c20e1f9f09fc19",
+    "safeshift/pilot/diagnostics.py": "9dc47f91a680f8887dc628b7c176137ae519d3495d66534bfd8eaf485b53e65c",
+    "safeshift/pilot/hnlo.py": "0b5ee6d3eb73b90343cdc3f6e81767c218c906e9ba7cafc562898d9caed35546",
+    "safeshift/pilot/manifest.py": "574587b2f77fc140e154b3e5fb44bb9afa0cfb444171b8d5078bf5813cd59df0",
+    "safeshift/pilot/output_diagnostics.py": "d4e876cf71ab1c9b87fa0a87f7af5c03b9866002b1948cb55a27842e2d99794e",
+    "safeshift/pilot/phi_attention.py": "1d09a4b28d5631884ba3d23bf932483c9cafb0124db4e85d6bd01e9f7f63a837",
+    "safeshift/pilot/phi_inputs.py": "e24a609ef94e2a2156c1689bfac3ff06c30857db04cd27ed69099c66604b7ab6",
+    "safeshift/pilot/report.py": "765cb62c4cbd245c60499a17cb937c145b10fc25def74956c84c451cc2359926",
+    "safeshift/pilot/runner.py": "a2275fffb214c5530d438e960bad5883c5cd74a5632c05f03366744a0a5531e9",
+    "safeshift/pilot/smol.py": "72c23a98be1556b572b2dff4202a77d00b1bf7a1f02c29f492e46ebba61248b4",
+    "safeshift/verification173.py": "428926c9e283b68a1ea29a1b4f7fb33fc25facaa76ca3da4184d091f6f371548",
+    "scripts/internvl3763.py": "a82944c3521a617a98f71d95ef245450d2b7b5638859ef8bdefdfc56fc3180bd",
+    "scripts/internvl_v2.py": "8b5c54dc968501f970627956a501b9e1d6ab641207b55d0ffa025209512f876f",
+    "scripts/internvl_v2_campaign.py": "e7f8621d6a670a9af8cfc7a47c3d9d39d18d6c5667b6b50291b552ed8cbbe2ba",
+    "scripts/smoke_kaggle173.py": "c6c36ed3de6cddc2e3e3f95275887a5a7fb62858cfa4fb09e55808ac88437332",
+    "scripts/verify_kaggle173_inputs.py": "37fb72f183c1f0d4f74e5fafa46fc623f59b977a7bfe4d704d494dc9a1a2c369"
+  },
+  "source_manifest_files": 90,
+  "source_manifest_sha256": "913bda6cb92b3d52b19b78e48e8c024b6dcc7e4bbc5f5da6bb71dbe1b5b3238f",
+  "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+  "status": "OFFLINE_CODE_VALIDATION_PASS_LIVE_NOT_VERIFIED_PENDING_CHATGPT_REVIEW",
+  "takeover": {
+    "argon_existing_work": "Six pushed commits implementing envelope/timing/grammar/projections; two local cgroup/tests/notebook commits retained.",
+    "codex_completion": [
+      "Reviewed real snapshot consumer and negative tests; repaired volatile timestamp E2E oracle with separate freshness assertion.",
+      "Disclosed default 4-job/100-repair contingency; regression-tested expanded 5-job/200-repair arithmetic.",
+      "Added modeled ZIP/export phase to quota forecasts and explicit observation/provenance inputs.",
+      "Rebuilt final notebooks; fixed next NOT_ATTEMPTED ordinal1 measurement guidance.",
+      "Re-executed CPU/native CPU/SDK/E2E/notebook/PR177 and Linux process tests, including previously skipped PR177 native tests.",
+      "Updated current documentation and evidence without rewriting historical runbook/project-state sections."
+    ],
+    "github_head": "f87b2cc1bf479ebfff374d5553eb0346919acc77",
+    "local_head": "893f5b63d508e89b868baf46f1c85114ae2c1766",
+    "tracked_uncommitted_changes": false,
+    "unpushed_commits_preserved": [
+      "7d8d4ec68a12cc6841aa04658175b3ce00964ea9",
+      "893f5b63d508e89b868baf46f1c85114ae2c1766"
+    ],
+    "unrelated_untracked_work_preserved": true
+  },
+  "test_groups": {
+    "campaign": {
+      "dependencies": {
+        "Pillow": "12.3.0",
+        "kaggle": "2.2.5",
+        "kagglesdk": "0.1.38",
+        "numpy": "2.4.6",
+        "tokenizers": "0.21.4",
+        "torch": "2.6.0+cpu",
+        "torchvision": "0.21.0+cpu",
+        "transformers": "4.55.4"
+      },
+      "errors": 0,
+      "failures": 0,
+      "group": "campaign",
+      "log_sha256": "21d8d43c290ec388985b81d9ba1a6adf839e689a03e128368269ebccd7cb3a3a",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "runner_sha256": "6dac286b257fdb8b086e2e9a7550977e915ebbabbc42e8731635a046bd9ba05f",
+      "scope": "CPU_SYNTHETIC_OFFLINE_NO_GPU_WEIGHTS_IMAGES_TEST_OR_LIVE_PROVIDER",
+      "skip_reasons": [],
+      "skips": 0,
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "PASS",
+      "suites": [
+        "test_internvl3763_campaign"
+      ],
+      "test_sha256": {
+        "tests/test_internvl3763_campaign.py": "8339b06f7df258bd4ea00f80b0ff4abb2ea5533733c4893a993f23948936fce9"
+      },
+      "tested_commit": "ac8793d8fea5110728315b5af29f6a1f4d86e989",
+      "tests": 48,
+      "tracked_dirty_at_end": false,
+      "tracked_dirty_at_start": false
+    },
+    "controller": {
+      "dependencies": {
+        "Pillow": "12.3.0",
+        "kaggle": "2.2.5",
+        "kagglesdk": "0.1.38",
+        "numpy": "2.4.6",
+        "tokenizers": "0.21.4",
+        "torch": "2.6.0+cpu",
+        "torchvision": "0.21.0+cpu",
+        "transformers": "4.55.4"
+      },
+      "errors": 0,
+      "failures": 0,
+      "group": "controller",
+      "log_sha256": "553e624a0c9d12c18e524a87d965689ec5fa45a0e6b8e77c829aea3c7e492365",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "runner_sha256": "6417602774fddc0eaa66b0665d62262cf48c01b7a804a392b73cf7ce5f341d00",
+      "scope": "CPU_SYNTHETIC_OFFLINE_NO_GPU_WEIGHTS_IMAGES_TEST_OR_LIVE_PROVIDER",
+      "skip_reasons": [],
+      "skips": 0,
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "PASS",
+      "suites": [
+        "test_internvl3763",
+        "test_fulltrain",
+        "test_internvl_grammar"
+      ],
+      "test_sha256": {
+        "tests/test_fulltrain.py": "36d56884da9a83537fefe179927358a51e1707b6616d010d22b3969af0027850",
+        "tests/test_internvl3763.py": "90d0f01dc584930a48d08e00093e5f73ded079cb6bc4a47777f38a44c17a4abe",
+        "tests/test_internvl_grammar.py": "0e509ab7f1176adbaf485afa9f843b6cb7113bfc3651e7718e30ee7df33a21a1"
+      },
+      "tested_commit": "ac8793d8fea5110728315b5af29f6a1f4d86e989",
+      "tests": 78,
+      "tracked_dirty_at_end": false,
+      "tracked_dirty_at_start": false
+    },
+    "e2e_final": {
+      "dependencies": {
+        "Pillow": "12.3.0",
+        "kaggle": "2.2.5",
+        "kagglesdk": "0.1.38",
+        "numpy": "2.4.6",
+        "tokenizers": "0.21.4",
+        "torch": "2.6.0+cpu",
+        "torchvision": "0.21.0+cpu",
+        "transformers": "4.55.4"
+      },
+      "errors": 0,
+      "failures": 0,
+      "group": "e2e_final",
+      "log_sha256": "67879b36e472041fca8821e15dd96b5498f4a5743907393c0ae7de654d75c9cd",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "runner_sha256": "6dac286b257fdb8b086e2e9a7550977e915ebbabbc42e8731635a046bd9ba05f",
+      "scope": "CPU_SYNTHETIC_OFFLINE_NO_GPU_WEIGHTS_IMAGES_TEST_OR_LIVE_PROVIDER",
+      "skip_reasons": [
+        {
+          "reason": "real Linux process-group supervision check",
+          "test": "test_linux_run_stage_deduplicates_supervisor_log_and_enforces_exact_budget_and_deadline (test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_linux_run_stage_deduplicates_supervisor_log_and_enforces_exact_budget_and_deadline)"
+        }
+      ],
+      "skips": 1,
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "PASS",
+      "suites": [
+        "test_internvl3763_e2e",
+        "test_internvl3763_notebook"
+      ],
+      "test_sha256": {
+        "tests/test_internvl3763_e2e.py": "6bd50bd437ff506b7ff1a42b6636789979f85d6b67a8e456891564c890da6d3d",
+        "tests/test_internvl3763_notebook.py": "e843328f28cda5f8887ddfca976695cb8f2202fa636b3c8fc82319ec4a020633"
+      },
+      "tested_commit": "bb9505de8421482f0bf4ef173fe694ddc7e03c9f",
+      "tests": 16,
+      "tracked_dirty_at_end": false,
+      "tracked_dirty_at_start": false
+    },
+    "execution_sdk": {
+      "dependencies": {
+        "Pillow": "12.3.0",
+        "kaggle": "2.2.5",
+        "kagglesdk": "0.1.38",
+        "numpy": "2.4.6",
+        "tokenizers": "0.21.4",
+        "torch": "2.6.0+cpu",
+        "torchvision": "0.21.0+cpu",
+        "transformers": "4.55.4"
+      },
+      "errors": 0,
+      "failures": 0,
+      "group": "execution_sdk",
+      "log_sha256": "a979cabd0c473a8280b8813a4d32484cc3f57dbef2bdb9170eb4227b275f8ba3",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "runner_sha256": "6dac286b257fdb8b086e2e9a7550977e915ebbabbc42e8731635a046bd9ba05f",
+      "scope": "CPU_SYNTHETIC_OFFLINE_NO_GPU_WEIGHTS_IMAGES_TEST_OR_LIVE_PROVIDER",
+      "skip_reasons": [],
+      "skips": 0,
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "PASS",
+      "suites": [
+        "test_internvl3763_execution",
+        "test_internvl3763_capsule",
+        "test_internvl3763_versions",
+        "test_kaggle_handoff",
+        "test_kaggle173_verification"
+      ],
+      "test_sha256": {
+        "tests/test_internvl3763_capsule.py": "a94b82a579f2f16a842aaa9c4c6616dcc98d8ebb7b2bd0d53fc1cd1f9b9e29a2",
+        "tests/test_internvl3763_execution.py": "305cc53d66f197a7bd18bc8f6cd21ac6f3890620e99b9cf558341e4621d4fbb1",
+        "tests/test_internvl3763_versions.py": "39025c3325e99b0defff8332baf5502ffde10e1b8d88ff43b5b3ed6fa55f4d0d",
+        "tests/test_kaggle173_verification.py": "9b6f2ec0912429042d181b2183ce04a5ae9dc12537001d5c39140a80d274f2a2",
+        "tests/test_kaggle_handoff.py": "5c67827a4ab0e1848f7dd9f2316eea4759119b4e6c3a0cf20f94f5f971c6599b"
+      },
+      "tested_commit": "ac8793d8fea5110728315b5af29f6a1f4d86e989",
+      "tests": 102,
+      "tracked_dirty_at_end": false,
+      "tracked_dirty_at_start": false
+    },
+    "linux": {
+      "errors": 0,
+      "failures": 0,
+      "log_sha256": "090ff4b14b1129b69f2962e047dfb08018feccf7fb8f3a568f9ea3bb1c049eb6",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+      "skips": 0,
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "PASS",
+      "suites": [
+        "test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests",
+        "test_internvl_v2_continuous.StreamingTests",
+        "test_internvl_v2_memory.LinuxLifetimeTests",
+        "test_internvl_v2_memory.MemoryTests",
+        "test_internvl_v2_runtime.SupervisorTests"
+      ],
+      "tested_commit": "ac8793d8fea5110728315b5af29f6a1f4d86e989",
+      "tests": 27,
+      "tracked_dirty_at_end": false,
+      "tracked_dirty_at_start": false
+    },
+    "pr177_final": {
+      "dependencies": {
+        "Pillow": "12.3.0",
+        "kaggle": "2.2.5",
+        "kagglesdk": "0.1.38",
+        "numpy": "2.4.6",
+        "tokenizers": "0.21.4",
+        "torch": "2.6.0+cpu",
+        "torchvision": "0.21.0+cpu",
+        "transformers": "4.55.4"
+      },
+      "errors": 0,
+      "failures": 0,
+      "group": "pr177_final",
+      "log_sha256": "8c1f6ebb174384cf535d9c778db578c3a4e6f547329806090bdd6c706909fb7a",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "runner_sha256": "6dac286b257fdb8b086e2e9a7550977e915ebbabbc42e8731635a046bd9ba05f",
+      "scope": "CPU_SYNTHETIC_OFFLINE_NO_GPU_WEIGHTS_IMAGES_TEST_OR_LIVE_PROVIDER",
+      "skip_reasons": [
+        {
+          "reason": "Linux readonly checkpoint cache advice",
+          "test": "test_advice_error_deadline_size_and_chunk_fail_closed (test_internvl_v2_continuous.StreamingTests.test_advice_error_deadline_size_and_chunk_fail_closed)"
+        },
+        {
+          "reason": "Linux readonly checkpoint cache advice",
+          "test": "test_alias_hardlink_and_truncation_rejected (test_internvl_v2_continuous.StreamingTests.test_alias_hardlink_and_truncation_rejected)"
+        },
+        {
+          "reason": "Linux readonly checkpoint cache advice",
+          "test": "test_exact_full_hash_and_only_aligned_consumed_ranges (test_internvl_v2_continuous.StreamingTests.test_exact_full_hash_and_only_aligned_consumed_ranges)"
+        },
+        {
+          "reason": "Linux readonly checkpoint cache advice",
+          "test": "test_sha_mismatch_is_not_a_verified_checkpoint (test_internvl_v2_continuous.StreamingTests.test_sha_mismatch_is_not_a_verified_checkpoint)"
+        },
+        {
+          "reason": "Linux readonly checkpoint cache advice",
+          "test": "test_short_reads_still_hash_every_byte (test_internvl_v2_continuous.StreamingTests.test_short_reads_still_hash_every_byte)"
+        },
+        {
+          "reason": "Linux actual process lifetime and cgroup observations",
+          "test": "test_actual_timeout_kills_processor_child_and_retains_partial_memory (test_internvl_v2_memory.LinuxLifetimeTests.test_actual_timeout_kills_processor_child_and_retains_partial_memory)"
+        },
+        {
+          "reason": "Linux actual process lifetime and cgroup observations",
+          "test": "test_large_anonymous_allocation_dies_with_supervised_child (test_internvl_v2_memory.LinuxLifetimeTests.test_large_anonymous_allocation_dies_with_supervised_child)"
+        },
+        {
+          "reason": "POSIX owned-file advice",
+          "test": "test_advice_preserves_bytes_and_refuses_aliases_and_shared_hardlinks (test_internvl_v2_memory.MemoryTests.test_advice_preserves_bytes_and_refuses_aliases_and_shared_hardlinks)"
+        },
+        {
+          "reason": "POSIX advice scan bounds",
+          "test": "test_advice_scan_limit_stops_and_does_not_delete (test_internvl_v2_memory.MemoryTests.test_advice_scan_limit_stops_and_does_not_delete)"
+        },
+        {
+          "reason": "Linux process-group supervisor",
+          "test": "test_child_failure_receipt (test_internvl_v2_runtime.SupervisorTests.test_child_failure_receipt)"
+        },
+        {
+          "reason": "Linux process-group supervisor",
+          "test": "test_hard_timeout_kills_hanging_load (test_internvl_v2_runtime.SupervisorTests.test_hard_timeout_kills_hanging_load)"
+        },
+        {
+          "reason": "Linux process-group supervisor",
+          "test": "test_log_transport_budget_failure_no_retry (test_internvl_v2_runtime.SupervisorTests.test_log_transport_budget_failure_no_retry)"
+        }
+      ],
+      "skips": 12,
+      "source_sha256": "a4b21fd409b418d314a59ff881f5bf33cab1ab18a44782faaceecb4e59ee89cb",
+      "status": "PASS",
+      "suites": [
+        "test_internvl_v2_campaign",
+        "test_internvl_v2_continuous",
+        "test_internvl_v2_memory",
+        "test_internvl_v2_notebook",
+        "test_internvl_v2_runtime",
+        "test_smoke"
+      ],
+      "test_sha256": {
+        "tests/test_internvl_v2_campaign.py": "8f9a959d1a38e491b9f87f7a16c64a981376ebd6fed08b51ef47920b970cffdb",
+        "tests/test_internvl_v2_continuous.py": "eea0a9ab6855c93cdff2ec47644dca860f9a91fc98e9f51b46a75eda9a97d5c2",
+        "tests/test_internvl_v2_memory.py": "0fc4a399cdb7b1ea0d24f594f5a6a2c89dfbba79f48168dae9689c527ae5ce1d",
+        "tests/test_internvl_v2_notebook.py": "551171f82a90ba8693511da6d8f63b7959327dedea7770ebd1e925abadc3dffa",
+        "tests/test_internvl_v2_runtime.py": "e8753464e739f52f8f06d8f395d76192919f4acb2f04fa113250afaa920f8952",
+        "tests/test_smoke.py": "52322327be7bb6e0e2d64ad821eb865b130942e2b1a5a48112a5f78617fd5d13"
+      },
+      "tested_commit": "bb9505de8421482f0bf4ef173fe694ddc7e03c9f",
+      "tests": 102,
+      "tracked_dirty_at_end": false,
+      "tracked_dirty_at_start": false
+    }
+  },
+  "tested_commit_scope": "Group receipts identify exact commits. Only the E2E timestamp test changed after ac8793d; the affected suite was rerun at bb9505d. Runtime/notebooks match all group receipts.",
+  "tested_source_and_notebook_head": "bb9505de8421482f0bf4ef173fe694ddc7e03c9f",
+  "timezone": "Asia/Bangkok",
+  "validation_log": {
+    "path": "docs/research/evidence/train3763_gpu_budget_20261107/validation.txt",
+    "sha256": "3d7692e1713dfafd5d3d3b1f9a258de354a1760e58c16a0604715203faaaa47e"
+  },
+  "whole_repository_green_claimed": false
+}
