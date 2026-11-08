@@ -1405,9 +1405,12 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
                     stop_obj = json.loads(zf.read("run/stop.json"))
                     tel_obj = json.loads(zf.read("run/telemetry.json"))
                 self.assertEqual(stop_obj, {"reason": expected_reason})
+                # snapshot() timestamps each fresh observation. Compare the
+                # stable proc/cgroup fields and independently prove freshness.
+                self.assertGreaterEqual(tel_obj["memory"]["monotonic"], bad_snap["monotonic"])
                 self.assertEqual(
-                    {k: v for k, v in tel_obj["memory"].items() if k != "cuda_visible_devices"},
-                    {k: v for k, v in bad_snap.items() if k != "cuda_visible_devices"},
+                    {k: v for k, v in tel_obj["memory"].items() if k not in ("cuda_visible_devices", "monotonic")},
+                    {k: v for k, v in bad_snap.items() if k not in ("cuda_visible_devices", "monotonic")},
                 )
                 self.assertEqual(runtime.inspect_memory_snapshot(tel_obj["memory"]), expected_reason)
 
