@@ -17,6 +17,7 @@ import zipfile
 from safeshift import internvl3763 as runtime
 from safeshift import internvl3763_campaign as c
 from safeshift import internvl3763_operator as op
+from safeshift import internvl3763_python as py
 from safeshift import internvl3763_release as old
 from safeshift.candidates.fulltrain_run import synthetic_cohort, synthetic_bytes
 from safeshift.kaggle_handoff import lock
@@ -76,6 +77,8 @@ def fixture(ledger_root, *, actual_source=False, kernel_sources=()):
     request["bindings"]["runtime"].update(technical_revision=reviewed, campaign_ledger="data/processed/synthetic-ledger",
         execution_input={"kind": "dataset_sources", "ref": "nguynanhtn/synthetic-capsule/1"})
     request["bindings"]["dataset"]["dataset_sources"].append("nguynanhtn/synthetic-capsule/1")
+    request["bindings"]["runtime"]["python_input"] = py.binding()
+    request["bindings"]["dataset"]["dataset_sources"].append(py.REF)
     return request, grant, comments
 
 
@@ -391,6 +394,7 @@ class CampaignTests(unittest.TestCase):
         with patch.object(op, "campaign_ledger", return_value=self.ledger), \
                 patch.object(op, "admit_campaign", return_value=(self.grant, self.request["bindings"]["runtime"]["execution_request"])), \
                 patch.object(op, "api", return_value=client), patch.object(op, "campaign_inventory", return_value={"scope": "SYNTHETIC"}), \
+                patch.object(op, "verify_python_input", return_value={"scope": "SYNTHETIC_PYTHON_PROOF"}), \
                 patch.object(op, "verify_execution_input", return_value={"scope": "SYNTHETIC_INPUT_PROOF"}), \
                 patch.object(op, "safe", return_value=notebook), self.assertRaises(TimeoutError):
             op.submit_campaign(self.request, self.grant, self.request["bindings"]["runtime"]["execution_request"], root)
@@ -416,6 +420,7 @@ class CampaignTests(unittest.TestCase):
         with patch.object(op, "campaign_ledger", return_value=self.ledger), \
                 patch.object(op, "admit_campaign", return_value=(self.grant, execution)), \
                 patch.object(op, "api", return_value=client), patch.object(op, "campaign_inventory", return_value={}), \
+                patch.object(op, "verify_python_input", return_value={"scope": "SYNTHETIC_PYTHON_PROOF"}), \
                 patch.object(op, "verify_execution_input", side_effect=ValueError("STALE_OR_WRONG_CAPSULE_NO_GPU_SUBMIT")), \
                 self.assertRaisesRegex(ValueError, "STALE_OR_WRONG"):
             op.submit_campaign(self.request, self.grant, execution, root)
@@ -711,10 +716,11 @@ print('PACKAGED_CAMPAIGN_BIND_PASS')
             root = Path(temporary)
             request, grant, comments = fixture(root/"ledger", actual_source=True)
             ledger = c.Ledger.create(root/"ledger", root/"mirror", grant, "synthetic-machine")
-            context = {"technical_revision": request["bindings"]["runtime"]["technical_revision"],
+            context = {"python_input": py.binding(), "technical_revision": request["bindings"]["runtime"]["technical_revision"],
                 "execution_input": {"kind": "dataset_sources", "ref": "nguynanhtn/synthetic-capsule/1"}}
             with patch.object(old, "get", side_effect=lambda path: deepcopy(comments[path])), \
-                    patch.object(op, "api", side_effect=AssertionError("NO_KAGGLE")):
+                    patch.object(op, "api", return_value=Mock()), \
+                    patch.object(op, "verify_python_input", return_value={"scope": "SYNTHETIC_PYTHON_PROOF"}):
                 result = stage(ledger, request["execution_release"], context,
                     request["bindings"]["runtime"]["execution_request"]["cohort"],
                     directory=root/"handoff", calls=1, seconds=1800, action="initial")

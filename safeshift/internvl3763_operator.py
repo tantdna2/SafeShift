@@ -248,6 +248,7 @@ def submit_campaign(request, grant, execution, root):
         write(stage / "inventory.json", observed)
         write(stage / "release.json", grant)
         write(stage / "campaign-intent.json", intent)
+        verify_python_input(client, request, stage / "python-proof")
         verify_execution_input(client, request, intent, stage / "input-proof")
         sources = input_sources(request)
         write(stage / "kernel-metadata.json", {"id": request["job"], "title": request["job"].split("/")[1],
@@ -295,6 +296,74 @@ def input_sources(request):
         require(len(slugs) == len(set(slugs)), "BOUNDED_UNIQUE_INPUT_SOURCES")
     require(value["dataset_sources"] or value["kernel_sources"], "MISSING_INPUT")
     return value
+
+
+def verify_python_input(client, request, destination):
+    """Actual private provider metadata AND independently downloaded v1 bytes.
+
+    The approved SDK transport bounds redirects/time/bytes and preserves partials.
+    Filenames/metadata/uploader hashes alone never constitute byte verification.
+    """
+    import os
+    import stat
+    import zipfile
+    from safeshift import internvl3763_python as py
+    from safeshift.pilot.contract import json_bytes
+    from scripts.submit_internvl_v2 import bounded_http
+    from kagglesdk.datasets.types.dataset_api_service import ApiGetDatasetMetadataRequest
+    py.validate_binding(request)
+    destination = Path(destination)
+    destination.mkdir(parents=True, exist_ok=False)
+    expected = py.manifest()
+    owner, slug, version = py.REF.split("/")
+    sizes = {py.MARKER: len(json_bytes(expected)), expected["filename"]: expected["lock"]["size_bytes"]}
+    receipt = {"schema": "train3763-python-provider-v1", "status": "BLOCKED", "ref": py.REF}
+    try:
+        with bounded_http():
+            query = ApiGetDatasetMetadataRequest()
+            query.owner_slug, query.dataset_slug = owner, slug
+            with client.build_kaggle_client() as remote:
+                metadata = remote.datasets.dataset_api_client.get_dataset_metadata(query)
+            require(not metadata.error_message and metadata.info.is_private is True
+                and metadata.info.owner_user == owner and metadata.info.dataset_slug == slug,
+                "PYTHON_PRIVATE_OWNER_IDENTITY")
+            listing = client.dataset_list_files(py.REF, page_size=16)
+            require(not listing.error_message and not listing.next_page_token and len(listing.files) == 2
+                and {f.name: f.total_bytes for f in listing.files} == sizes, "PYTHON_PROVIDER_EXACT_FILES")
+            verified = destination / "verified"
+            verified.mkdir()
+            for index, (name, size) in enumerate(sizes.items()):
+                folder = destination / str(index)
+                folder.mkdir()
+                path = download_capsule(client, owner, slug, version, name, folder)
+                target = verified / name
+                if zipfile.is_zipfile(path):
+                    with zipfile.ZipFile(path) as bundle:
+                        entries = bundle.infolist()
+                        require(len(entries) == 1 and entries[0].filename == name
+                            and entries[0].file_size == size and not entries[0].flag_bits & 1
+                            and stat.S_IFMT(entries[0].external_attr >> 16) in (0, stat.S_IFREG),
+                            "PYTHON_DOWNLOAD_WRAPPER")
+                        with bundle.open(entries[0]) as source, target.open("xb") as stream:
+                            total = 0
+                            while chunk := source.read(65536):
+                                total += len(chunk)
+                                require(total <= size, "PYTHON_DOWNLOAD_WRAPPER_BOUND")
+                                stream.write(chunk)
+                            stream.flush(); os.fsync(stream.fileno())
+                else:
+                    require(path.stat().st_size == size, "PYTHON_DOWNLOAD_SIZE")
+                    import shutil
+                    shutil.copyfile(path, target)
+        _, proof = py.verify_directory(verified)
+        receipt.update(status="PASS", private=True, manifest_sha256=digest(expected), **proof)
+        return receipt
+    except Exception as error:
+        # Provider exceptions may include signed URLs or credentials.
+        receipt["error"] = {"type": type(error).__name__, "code": "PYTHON_PROVIDER_FAILED_NO_RETRY"}
+        raise ValueError("PYTHON_PROVIDER_FAILED_NO_RETRY") from None
+    finally:
+        write(destination / "receipt.json", receipt)
 
 
 def verify_kernel_metadata_inputs(metadata, sources):

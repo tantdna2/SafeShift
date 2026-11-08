@@ -33,6 +33,7 @@ from test_internvl3763_campaign import fixture as campaign_fixture, synthetic_by
 from safeshift import internvl3763 as runtime
 from safeshift import internvl3763_campaign as campaign
 from safeshift import internvl3763_operator as op
+from safeshift import internvl3763_python as py
 from safeshift import internvl3763_release as release
 from safeshift import kaggle_handoff as handoff
 from safeshift.pilot.artifacts import export, read, sha, write
@@ -100,6 +101,9 @@ sys.path.insert(0, {str(runtime.ROOT)!r})
 from safeshift.pilot import bootstrap as boot
 from safeshift.pilot.artifacts import write
 from scripts import internvl_v2
+sys.path.insert(0, str(pathlib.Path({str(runtime.ROOT)!r}) / "tests"))
+from safeshift import internvl3763_python as py
+from test_internvl3763_python import synthetic_mount
 
 fail_setup = {bool(fail_during_setup)!r}
 print("SETUP_SUPERVISOR_STREAM_HEADER", flush=True)
@@ -107,8 +111,8 @@ print("SETUP_SUPERVISOR_STREAM_HEADER", flush=True)
 def fake_probe(candidate, env):
     p = pathlib.Path(candidate)
     if "venv3119" in p.as_posix():
-        return {{"path": str(p), "eligible": True, "version": [3, 11, 9], "prefix": str(p.parent.parent)}}
-    return {{"path": str(p), "eligible": True, "version": [3, 11, 9], "prefix": str(p.parent)}}
+        return {{"path": str(p), "eligible": True, "version": [3, 11, 9], "prefix": str(p.parent.parent), "executable": str(p)}}
+    return {{"path": str(p), "eligible": True, "version": [3, 11, 9], "prefix": str(p.parent), "executable": str(p)}}
 
 def fake_run(argv, *, env=None, stdout=None, stderr=None, check=False, timeout=None, **kwargs):
     line = "OFFLINE_SETUP_STEP:" + " ".join(map(str, argv[:4])) + "\\n"
@@ -139,6 +143,14 @@ with patch.object(boot, "interpreter_candidates", return_value=[pathlib.Path({st
         patch.object(boot, "inspect_worker_pip", return_value={{"version": "25.0.1"}}), \\
         patch("safeshift.candidates.train_runtime.subprocess.run", side_effect=fake_run), \\
         patch("safeshift.candidates.train_runtime.subprocess.check_output", return_value=b"pip==25.0.1\\ntorch==2.6.0+cu124\\n"):
+    if "--request" in sys.argv and sys.argv[sys.argv.index("--request")+1] != "None":
+        args = sys.argv
+        inputs = pathlib.Path(args[args.index("--inputs")+1])
+        with synthetic_mount(inputs), patch.object(py.train_python, "urlopen", side_effect=AssertionError("NO_PYTHON_DOWNLOAD")) as network:
+            py.setup(args[args.index("--request")+1], args[args.index("--output")+1],
+                args[args.index("--scratch")+1], inputs, __import__("time").monotonic()+60)
+            network.assert_not_called()
+        raise SystemExit(0)
     raise SystemExit(internvl_v2.main(sys.argv[1:]))
 """,
         encoding="utf8",
@@ -218,7 +230,7 @@ print("WORKER_STDOUT_OK", flush=True)
 
         def setup_cmd(python, stage, spec_path, out, scratch, inputs, req, deadline):
             return [sys.executable, "-B", str(shim), "--worker", stage, "--spec", str(spec_path),
-                    "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs)]
+                    "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs), "--request", str(req)]
 
         real_read = read
 
@@ -235,7 +247,7 @@ print("WORKER_STDOUT_OK", flush=True)
                 patch.object(release, "bind", return_value=request["bindings"]["runtime"]["execution_request"]), \
                 patch.object(release, "activation_claim", return_value={"kind": "launch"}), \
                 patch.object(runtime, "authorize"), \
-                patch.object(old_v2, "worker_command", side_effect=setup_cmd), \
+                patch.object(launcher, "setup_command", side_effect=setup_cmd), \
                 patch("safeshift.pilot.artifacts.read", side_effect=intercepted_read), \
                 cross_platform_stage_runner():
             stage_fn = launcher.run_stage
@@ -287,7 +299,7 @@ print("WORKER_STDOUT_OK", flush=True)
         def setup_cmd(python, stage, spec_path, out, scratch, inputs, req, deadline):
             invocations.append(stage)
             return [sys.executable, "-B", str(shim), "--worker", stage, "--spec", str(spec_path),
-                    "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs)]
+                    "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs), "--request", str(req)]
 
         self.addCleanup(setattr, release, "_active", None)
         release._active = None
@@ -296,7 +308,7 @@ print("WORKER_STDOUT_OK", flush=True)
                 patch.object(release, "bind", return_value=request["bindings"]["runtime"]["execution_request"]), \
                 patch.object(release, "activation_claim", return_value=campaign.native_receipt("launch", request, intent, grant)), \
                 patch.object(runtime, "authorize"), \
-                patch.object(old_v2, "worker_command", side_effect=setup_cmd), \
+                patch.object(launcher, "setup_command", side_effect=setup_cmd), \
                 cross_platform_stage_runner():
             result = launcher.launch(capsule_dir / "request.json",
                 output=self.root / "working", scratch=self.root / "temp", inputs=self.root / "input")
@@ -815,11 +827,13 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
             comments[f"/issues/comments/{tech_cid}"]["body"] = tech_body
             req_fixture["bindings"]["runtime"]["technical_revision"]["body_sha256"] = hashlib.sha256(tech_body.encode()).hexdigest()
 
-            with patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])):
+            with patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])), \
+                    patch.object(op, "api", return_value=Mock()), \
+                    patch.object(op, "verify_python_input", return_value={"scope": "SYNTHETIC_PYTHON_PROOF"}):
                 ledger = campaign.Ledger.create(root / "ledger", root / "mirror", grant, "synthetic-machine")
                 staged1 = stage(
                     ledger, req_fixture["execution_release"],
-                    {"technical_revision": req_fixture["bindings"]["runtime"]["technical_revision"],
+                    {"python_input": py.binding(), "technical_revision": req_fixture["bindings"]["runtime"]["technical_revision"],
                      "execution_input": {"kind": "dataset_sources", "ref": "nguynanhtn/synthetic-capsule-1/1"}},
                     cohort_img, directory=root / "attempt-1", calls=1, seconds=1800, action="initial",
                 )
@@ -938,6 +952,7 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
                     patch.object(requests.adapters.HTTPAdapter, "send", fake_adapter_send), \
                     patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])), \
                     patch.object(op, "api", return_value=fake_kaggle_api), \
+                    patch.object(op, "verify_python_input", return_value={"scope": "SYNTHETIC_PYTHON_PROOF"}), \
                     patch.object(operator, "_api", return_value=fake_kaggle_api), \
                     patch.object(op, "check_sdk", return_value=op.SDK_PINS), \
                     patch("scripts.submit_internvl_v2.check_sdk", return_value=op.SDK_PINS), \
@@ -1004,7 +1019,7 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
 
             def setup_cmd(python, stage_name, spec_path, out, scratch, inputs, req, deadline):
                 return [sys.executable, "-B", str(shim), "--worker", stage_name, "--spec", str(spec_path),
-                        "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs)]
+                        "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs), "--request", str(req)]
 
             stage_errors = []
 
@@ -1068,7 +1083,7 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
                     patch.object(campaign, "NativeClaims",
                         side_effect=lambda _, r, it, gr: real_claims(root / "vm_claims" / gr["campaign_id"] / r["plan"]["attempt_id"], r, it, gr)), \
                     patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])), \
-                    patch.object(old_v2, "worker_command", side_effect=setup_cmd), \
+                    patch.object(launcher, "setup_command", side_effect=setup_cmd), \
                     patch.object(launcher, "run_stage", side_effect=in_process_stage):
                 vm_result = launcher.launch(vm_capsule / "request.json",
                     output=root / "vm_working", scratch=root / "vm_temp", inputs=inputs_mount)
@@ -1101,10 +1116,12 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
             collected_arc = Path([e for e in ledger.events() if e["kind"] == "COLLECTED"][0]["archive"])
             measured = ledger.measure(collected_arc, job_seconds=1800)
             self.assertGreaterEqual(measured["safe_calls"], 2)
-            with patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])):
+            with patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])), \
+                    patch.object(op, "api", return_value=Mock()), \
+                    patch.object(op, "verify_python_input", return_value={"scope": "SYNTHETIC_PYTHON_PROOF"}):
                 staged2 = stage(
                     ledger, req_fixture["execution_release"],
-                    {"technical_revision": req_fixture["bindings"]["runtime"]["technical_revision"],
+                    {"python_input": py.binding(), "technical_revision": req_fixture["bindings"]["runtime"]["technical_revision"],
                      "execution_input": {"kind": "dataset_sources", "ref": "nguynanhtn/synthetic-capsule-2/1"}},
                     cohort_img, directory=root / "attempt-2", calls=2, seconds=1800, action="resume",
                 )
@@ -1337,7 +1354,7 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
 
                 def setup_cmd(python, stage_name, spec_path, out, scratch, inputs, req, deadline):
                     return [sys.executable, "-B", str(shim), "--worker", stage_name, "--spec", str(spec_path),
-                            "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs)]
+                            "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs), "--request", str(req)]
 
                 stage_errors = []
 
@@ -1392,7 +1409,7 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
                         patch.object(campaign, "NativeClaims",
                             side_effect=lambda _, r, it, gr: real_claims(root / "vm_claims", r, it, gr)), \
                         patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])), \
-                        patch.object(old_v2, "worker_command", side_effect=setup_cmd), \
+                        patch.object(launcher, "setup_command", side_effect=setup_cmd), \
                         patch.object(launcher, "run_stage", side_effect=in_process_stage):
                     vm_result = launcher.launch(vm_capsule / "request.json",
                         output=root / "vm_working", scratch=root / "vm_temp", inputs=inputs_mount)
