@@ -180,6 +180,68 @@ class PythonInputTests(unittest.TestCase):
                     prepare_runtime(py.ROOT, "internvl35", self.scratch, self.out, {}, time.monotonic()+60)
         self.assertIs(py.train_python.provision, original)
 
+    def test_packaging_preserves_archive_and_checks_bytes_before_creating_upload_folder(self):
+        from scripts.train3763_python_input import prepare
+        with synthetic_mount(self.inputs) as (folder, expected):
+            archive = folder/expected["filename"]
+            prepare(archive, self.root/"package", "SYNTHETIC_LICENSE", "SYNTHETIC_REVIEW_ONLY")
+            self.assertEqual((self.root/"package/dataset"/expected["filename"]).read_bytes(), archive.read_bytes())
+            self.assertEqual(read(self.root/"package/dataset"/py.MARKER), expected)
+            self.assertEqual(read(self.root/"package/local-proof.json")["provider_verification"], "NOT_RUN")
+            archive.write_bytes(b"corrupt")
+            with self.assertRaises(ValueError):
+                prepare(archive, self.root/"bad-package", "SYNTHETIC_LICENSE", "SYNTHETIC_REVIEW_ONLY")
+            self.assertFalse((self.root/"bad-package").exists())
+
+    def test_real_setup_child_missing_input_exports_failure_without_reaching_worker(self):
+        from scripts import internvl3763 as launcher
+        from safeshift import internvl3763 as runtime, internvl3763_release as authority
+        from test_internvl3763_campaign import fixture
+        from test_internvl3763_e2e import cross_platform_stage_runner
+        request, grant, _ = fixture(self.root/"ledger")
+        write(self.root/"handoff.json", request)
+        write(self.root/"campaign-intent.json", {"notice": "SYNTHETIC"})
+        with patch.object(authority, "activate", return_value=grant), \
+                patch.object(authority, "bind", return_value=request["bindings"]["runtime"]["execution_request"]), \
+                patch.object(authority, "activation_claim", return_value={"notice": "SYNTHETIC"}), \
+                patch.object(runtime, "authorize"), cross_platform_stage_runner():
+            result = launcher.launch(self.root/"handoff.json", output=self.out, scratch=self.scratch, inputs=self.inputs)
+        self.assertEqual(result["status"], "FAIL")
+        archive = next(self.out.glob("*.zip"))
+        with zipfile.ZipFile(archive) as bundle:
+            receipt = json.loads(bundle.read("setup/python-input.json"))
+            self.assertEqual(receipt["status"], "BLOCKED")
+            self.assertEqual(receipt["python_downloads"], 0)
+            self.assertEqual(receipt["model_calls"], 0)
+            self.assertNotIn("worker-supervisor.json", bundle.namelist())
+
+    def test_real_interpreter_probe_rejects_corrupt_executable(self):
+        with synthetic_mount(self.inputs), self.assertRaisesRegex(ValueError, "PYTHON_INPUT_INTERPRETER"):
+            self.stage()  # real boot.probe_interpreter and OS subprocess, no mocked probe
+        self.assertFalse(read(self.out/"python-input.json")["probe"]["eligible"])
+
+    def test_python_provider_failure_prevents_push_intent_and_preserves_ledger(self):
+        from test_internvl3763_campaign import fixture
+        from safeshift import internvl3763_release as authority
+        request, grant, comments = fixture(self.root/"ledger")
+        ledger = campaign.Ledger.create(self.root/"ledger", self.root/"mirror", grant, "synthetic-machine")
+        with patch.object(authority, "get", side_effect=lambda key: comments[key]), \
+                patch.object(op, "pre_submit_inventory", return_value={"notice": "SYNTHETIC"}):
+            ledger.reserve(request)
+        before = ledger.events()
+        client = Mock()
+        execution = request["bindings"]["runtime"]["execution_request"]
+        with patch.object(op, "campaign_ledger", return_value=ledger), \
+                patch.object(op, "admit_campaign", return_value=(grant, execution)), \
+                patch.object(op, "api", return_value=client), \
+                patch.object(op, "campaign_inventory", return_value={"notice": "SYNTHETIC"}), \
+                patch.object(op, "verify_python_input", side_effect=ValueError("PYTHON_PROVIDER_FAILED_NO_RETRY")), \
+                patch.object(op, "verify_execution_input") as capsule, self.assertRaises(ValueError):
+            op.submit_campaign(request, grant, execution, self.root)
+        client.kernels_push.assert_not_called()
+        capsule.assert_not_called()
+        self.assertEqual(ledger.events(), before)
+
     def test_current_mount_layout_wrong_owner_and_symlink_alias(self):
         with synthetic_mount(self.inputs) as (folder, expected):
             nested = self.inputs/"datasets/nguynanhtn"; nested.mkdir(parents=True)
