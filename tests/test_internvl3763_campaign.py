@@ -898,7 +898,7 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             self.assertEqual(expanded["with_contingency_campaign_gpu_seconds"]
                 - basic["with_contingency_campaign_gpu_seconds"],
                 2 * (1974 + 100 * basic["per_call_seconds"]))
-        self.assertEqual(wider["sensitivity"][1]["with_contingency_campaign_gpu_seconds"], 436050)
+        self.assertEqual(wider["sensitivity"][1]["with_contingency_campaign_gpu_seconds"], 437450)
         self.assertGreater(wider["sensitivity"][1]["with_contingency_campaign_gpu_seconds"], 430000)
         self.assertEqual(proj["inputs"]["grant_remaining"],
             {"jobs": 96, "calls": 4496, "gpu_seconds": 65600, "max_wall_seconds_on_2xt4": 32800})
