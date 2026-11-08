@@ -238,18 +238,96 @@ def _supervised_log_bytes(export_root):
     return total
 
 
-def _cgroup_memory_low(backend):
+def _strict_json_loads(payload):
+    import json
+    def pairs(items):
+        obj = {}
+        for k, v in items:
+            if k in obj:
+                raise ValueError("DUPLICATE_JSON_KEY")
+            obj[k] = v
+        return obj
+    return json.loads(payload, object_pairs_hook=pairs,
+        parse_constant=lambda _: (_ for _ in ()).throw(ValueError("NONFINITE_JSON")))
+
+
+def inspect_memory_snapshot(snap, *, min_free_bytes=CGROUP_MIN_FREE_BYTES):
+    """Validate real internvl_v2_memory.snapshot() v2 schema; fail closed on any defect.
+
+    snapshot() observes Linux cgroup v2 files plus /proc host/process telemetry and sets
+    top-level status == 'OBSERVED' only when errors == [] and all required fields exist.
+    Missing, malformed, cgroup-v1-only ('INCOMPLETE'), OOM, or low-headroom states return
+    an explicit stop/rejection code instead of silently passing.
+    """
+    require(type(min_free_bytes) is int and min_free_bytes > 0, "CGROUP_MIN_FREE_BYTES")
+    if type(snap) is not dict:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if (snap.get("schema") != "internvl-v2-memory-v1"
+            or snap.get("status") != "OBSERVED"
+            or type(snap.get("errors")) is not list
+            or len(snap["errors"]) != 0):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    cg = snap.get("cgroup")
+    proc = snap.get("process")
+    gate = snap.get("gate_memory")
+    if type(cg) is not dict or type(proc) is not dict or type(gate) is not dict:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if not set(cg).issubset({"memory.current", "memory.max", "memory.peak", "memory.stat", "memory.events"}):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if set(gate) != {"available_bytes", "cgroup_remaining_bytes"}:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    proc_status = proc.get("status")
+    smaps = proc.get("smaps_rollup")
+    if (type(proc_status) is not dict
+            or type(proc_status.get("VmRSS")) is not int
+            or proc_status["VmRSS"] < 0
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in proc_status.items())
+            or type(smaps) is not dict
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in smaps.items())):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    stats = cg.get("memory.stat")
+    events = cg.get("memory.events")
+    if (type(stats) is not dict
+            or not all(k in stats for k in ("anon", "file"))
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in stats.items())
+            or type(events) is not dict
+            or "oom_kill" not in events
+            or not all(type(k) is str and type(v) is int and v >= 0 for k, v in events.items())):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    current = cg.get("memory.current")
+    limit = cg.get("memory.max")
+    if type(current) is not int or current < 0:
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if not (limit == "max" or (type(limit) is int and limit >= 0)):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if "memory.peak" in cg:
+        peak = cg["memory.peak"]
+        if not (peak == "max" or (type(peak) is int and peak >= 0)):
+            return "CGROUP_MEMORY_UNOBSERVED"
+    avail = gate.get("available_bytes")
+    cg_rem = gate.get("cgroup_remaining_bytes")
+    if (type(avail) is not int or avail < 0
+            or type(cg_rem) is not list
+            or not all(type(x) is int and x >= 0 for x in cg_rem)):
+        return "CGROUP_MEMORY_UNOBSERVED"
+    if any(events.get(k, 0) > 0 for k in ("oom", "oom_kill", "oom_group_kill")):
+        return "CGROUP_OOM_OBSERVED"
+    if type(limit) is int and limit - current < min_free_bytes:
+        return "CGROUP_MEMORY_HEADROOM_LOW"
+    if avail < min_free_bytes or any(x < min_free_bytes for x in cg_rem):
+        return "CGROUP_MEMORY_HEADROOM_LOW"
+    return None
+
+
+def _cgroup_memory_issue(backend):
     if not isinstance(backend, NativeBackend) and not getattr(backend, "check_cgroup_memory", False):
-        return False
+        return None
     from safeshift.internvl_v2_memory import snapshot
-    cg = snapshot().get("cgroup") or {}
-    if cg.get("status") != "OBSERVED":
-        return False
-    events = cg.get("memory.events") or {}
-    if isinstance(events, dict) and events.get("oom_kill", 0) > 0:
-        return True
-    limit, current = cg.get("memory.max"), cg.get("memory.current")
-    return type(limit) is int and type(current) is int and limit - current < CGROUP_MIN_FREE_BYTES
+    return inspect_memory_snapshot(snapshot())
+
+
+def _cgroup_memory_low(backend):
+    return _cgroup_memory_issue(backend) is not None
 
 
 def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clock=time.monotonic,
@@ -302,8 +380,11 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
                 per_sample_bound = max(2 * max_observed_bytes,
                     capture_budget(vocab=fallback_vocab, steps=64)["per_sample_bytes"])
             written_sample_bytes = sum(x["bytes"] for x in telemetry["samples"])
-            extra_export_reserve = (max(0.0, (written_sample_bytes + per_sample_bound) / EXPORT_RESERVE_BYTES_PER_SECOND
-                - STAGE_EXPORT_RESERVE_SECONDS) if written_sample_bytes > 0 else 0.0)
+            export_payload_bytes = (retained if written_sample_bytes == 0 else max(retained, written_sample_bytes)) + per_sample_bound
+            extra_export_reserve = (max(0.0, export_payload_bytes / EXPORT_RESERVE_BYTES_PER_SECOND
+                - STAGE_EXPORT_RESERVE_SECONDS)
+                if (written_sample_bytes > 0 or retained > STAGE_EXPORT_RESERVE_SECONDS * EXPORT_RESERVE_BYTES_PER_SECOND)
+                else 0.0)
             now = clock()
             next_call_reserve = max(pre_call_reserve_seconds,
                 2 * max((x["seconds"] for x in telemetry["samples"]), default=0)) + extra_export_reserve
@@ -311,6 +392,8 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
                 write(out / "stop.json", {"reason": "DEADLINE_BEFORE_NEXT_CALL"})
                 break
             free_spaces = [shutil.disk_usage(export_root).free]
+            if supervised:
+                free_spaces.append(shutil.disk_usage(export_root.parent).free)
             if archive is not None:
                 Path(archive).parent.mkdir(parents=True, exist_ok=True)
                 free_spaces.append(shutil.disk_usage(Path(archive).parent).free)
@@ -323,8 +406,9 @@ def _execute(out, archive, cohort, p, factory, *, image_path, tokenizer_sha, clo
             if supervised and _supervised_log_bytes(export_root) >= SUPERVISED_WORKER_LOG_SOFT_LIMIT_BYTES:
                 write(out / "stop.json", {"reason": "WORKER_LOG_BUDGET_MARGIN"})
                 break
-            if _cgroup_memory_low(backend):
-                write(out / "stop.json", {"reason": "CGROUP_MEMORY_HEADROOM_LOW"})
+            memory_issue = _cgroup_memory_issue(backend)
+            if memory_issue is not None:
+                write(out / "stop.json", {"reason": memory_issue})
                 break
             row = rows[ordinal]
             image = Path(image_path(row))
@@ -565,9 +649,8 @@ def verify_bundle(archive, expected_sha, expected_plan):
     members = verify_archive(archive)  # membership, paths, bounds, all hashes and CRC
     with zipfile.ZipFile(archive) as z:
         require(z.testzip() is None, "ZIP_CRC")
-        import json
         prefix = "" if "summary.json" in members else "run/"
-        get = lambda name: json.loads(z.read(prefix + name))
+        get = lambda name: _strict_json_loads(z.read(prefix + name))
         require(get("plan.json") == expected_plan, "ARCHIVE_PLAN_BINDING")
         result, cohort, spec = get("summary.json"), get("cohort.json"), get("source.json")
         from safeshift import internvl3763_campaign as campaign
@@ -580,7 +663,7 @@ def verify_bundle(archive, expected_sha, expected_plan):
             check_source(spec)
         if cohort["scope"] != "SYNTHETIC_ONLY":
             require(prefix == "run/", "SUPERVISED_NATIVE_ARCHIVE_REQUIRED")
-            outer = lambda name: json.loads(z.read(name))
+            outer = lambda name: _strict_json_loads(z.read(name))
             require(outer("execution-request.json")["source"] == spec
                 and outer("execution-request.json")["plan"] == expected_plan, "OUTER_RUNTIME_BINDING")
             require("terminal.json" in members and outer("terminal.json").get("status") == result["status"],
@@ -688,8 +771,8 @@ def verify_retained_raw_vectors(archive, prefix, raw, members):
         require(len(binary) == width * 4, "FULL_VOCAB_BINARY_SIZE")
         vector = struct.unpack("<" + "f" * width, binary)
         require(all(math.isfinite(x) for x in vector), "NONFINITE_NATIVE_RAW")
-        masked = json.loads(archive.read(stem + ".masked.json"))
-        forward = json.loads(archive.read(stem + ".forward.json"))
+        masked = _strict_json_loads(archive.read(stem + ".masked.json"))
+        forward = _strict_json_loads(archive.read(stem + ".forward.json"))
         require(masked["step"] == index and masked["raw_sha256"] == raw_sha
             and forward["step"] == index and forward["raw_sha256"] == raw_sha
             and forward["vocab"] == width and forward["origin"] == "forward_before_processors"
@@ -703,7 +786,6 @@ def verify_numeric_members(archive, prefix, raw, members):
     Worker already performed approved tokenizer/independent decoder replay. This
     separately verifies every retained vector/hash/prefix/mask/greedy choice.
     """
-    import json
     import math
     import struct
     from safeshift.internvl_grammar import PROCESSOR, greedy_token
@@ -721,8 +803,8 @@ def verify_numeric_members(archive, prefix, raw, members):
         require(len(binary) == width * 4, "FULL_VOCAB_BINARY_SIZE")
         vector = struct.unpack("<" + "f" * width, binary)
         require(all(math.isfinite(x) for x in vector), "NONFINITE_NATIVE_RAW")
-        masked = json.loads(archive.read(stem + ".masked.json"))
-        forward = json.loads(archive.read(stem + ".forward.json"))
+        masked = _strict_json_loads(archive.read(stem + ".masked.json"))
+        forward = _strict_json_loads(archive.read(stem + ".forward.json"))
         require(masked["step"] == index and masked["prefix_ids"] == raw["input_ids"] + ids[:index]
             and masked["raw_sha256"] == raw["raw_vector_hashes"][index]
             and forward["step"] == index and forward["raw_sha256"] == raw["raw_vector_hashes"][index]
@@ -742,11 +824,10 @@ def sealed_history(archive, expected_sha, expected_plan):
     This is custody, never result selection or permission to resume/repair.
     """
     import zipfile
-    import json
     verify_bundle(archive, expected_sha, expected_plan)
     with zipfile.ZipFile(archive) as z:
         name = "summary.json" if "summary.json" in z.namelist() else "run/summary.json"
-        result = json.loads(z.read(name))
+        result = _strict_json_loads(z.read(name))
     from safeshift.internvl3763_campaign import PLAN as CAMPAIGN_PLAN
     records = result["records"]
     if expected_plan["schema"] == CAMPAIGN_PLAN:

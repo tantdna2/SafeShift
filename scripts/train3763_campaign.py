@@ -118,6 +118,7 @@ def main(argv=None):
                         sample_bytes=obs["sample_bytes"],
                         raw_float32_bytes=obs["raw_float32_bytes"],
                         zip_bytes=obs["zip_bytes"],
+                        capture_per_sample_bytes=measured[-1].get("capture_per_sample_bytes"),
                         output_free_bytes=obs.get("output_free_bytes"),
                         verify_f32_geometry=False,
                     )

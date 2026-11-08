@@ -459,33 +459,38 @@ class Ledger:
             runtime.verify_bundle(archive, closed[0]["sha256"], closed[0]["plan"])
             with zipfile.ZipFile(archive) as bundle:
                 names = set(bundle.namelist())
-                telemetry = json.loads(bundle.read("run/telemetry.json"))
-                require(telemetry["evidence_kind"] == "NATIVE" and telemetry["samples"]
-                    and telemetry["gpu_peak_allocated_bytes"] > 0 and telemetry["gpu_peak_reserved_bytes"] > 0
-                    and telemetry["memory"]["errors"] == [], "LIVE_GPU_RAM_TELEMETRY_REQUIRED")
-                cgroup = (telemetry.get("memory") or {}).get("cgroup")
-                if isinstance(cgroup, dict) and cgroup.get("status") == "OBSERVED":
-                    events = cgroup.get("memory.events") or {}
-                    require(not isinstance(events, dict) or events.get("oom_kill", 0) == 0, "CGROUP_OOM_OBSERVED")
-                    cg_max, cg_cur = cgroup.get("memory.max"), cgroup.get("memory.current")
-                    require(not (type(cg_max) is int and type(cg_cur) is int)
-                        or cg_max - cg_cur >= runtime.CGROUP_MIN_FREE_BYTES, "CGROUP_MEMORY_HEADROOM_TOO_LOW")
-                observed = [x["seconds"] for x in telemetry["samples"]]
-                require(all(type(x) in (int, float) and math.isfinite(x) and x > 0 for x in observed)
-                    and type(telemetry["load_seconds"]) in (int, float)
+                if "run/stop.json" in names:
+                    stop_obj = runtime._strict_json_loads(bundle.read("run/stop.json"))
+                    reason = stop_obj.get("reason", "STOPPED") if type(stop_obj) is dict else "STOPPED"
+                    require(False, "MEASUREMENT_RUN_STOPPED_EARLY:" + str(reason))
+                telemetry = runtime._strict_json_loads(bundle.read("run/telemetry.json"))
+                require(type(telemetry) is dict and telemetry.get("evidence_kind") == "NATIVE"
+                    and type(telemetry.get("samples")) is list and len(telemetry["samples"]) >= 1
+                    and all(type(s) is dict for s in telemetry["samples"])
+                    and type(telemetry.get("gpu_peak_allocated_bytes")) is int and telemetry["gpu_peak_allocated_bytes"] > 0
+                    and type(telemetry.get("gpu_peak_reserved_bytes")) is int and telemetry["gpu_peak_reserved_bytes"] > 0,
+                    "LIVE_GPU_RAM_TELEMETRY_REQUIRED")
+                memory_issue = runtime.inspect_memory_snapshot(telemetry.get("memory"))
+                require(memory_issue is None, memory_issue or "CGROUP_MEMORY_UNOBSERVED")
+                require(all(type(x.get("seconds")) in (int, float) and math.isfinite(x["seconds"]) and x["seconds"] > 0
+                    and type(x.get("bytes")) is int and x["bytes"] > 0
+                    and (x.get("ordinal") is None or (type(x["ordinal"]) is int and 0 <= x["ordinal"] < 3763))
+                    for x in telemetry["samples"])
+                    and type(telemetry.get("load_seconds")) in (int, float)
                     and math.isfinite(telemetry["load_seconds"]) and telemetry["load_seconds"] >= 0, "FINITE_LIVE_LATENCY")
+                observed = [x["seconds"] for x in telemetry["samples"]]
                 sample_bytes = max(x["bytes"] for x in telemetry["samples"])
                 raw_float32_bytes = sum(x.file_size for x in bundle.infolist() if x.filename.endswith(".f32"))
                 require(type(sample_bytes) is int and sample_bytes > 0 and raw_float32_bytes > 0, "RAW_SIZE_MEASUREMENT_REQUIRED")
                 # Twofold latency reserve, full uncompressed conservative capture
                 # envelope, setup/worker non-sample bound and launch(75s)+pre-call(180s) margin.
-                setup = json.loads(bundle.read("setup/setup-supervisor.json"))
-                require(type(setup.get("seconds")) in (int, float)
+                setup = runtime._strict_json_loads(bundle.read("setup/setup-supervisor.json"))
+                require(type(setup) is dict and type(setup.get("seconds")) in (int, float)
                     and math.isfinite(setup["seconds"]) and setup["seconds"] > 0, "SETUP_LATENCY_REQUIRED")
                 worker_non_sample = telemetry["load_seconds"]
                 if "worker-supervisor.json" in names:
-                    worker_sup = json.loads(bundle.read("worker-supervisor.json"))
-                    require(type(worker_sup.get("seconds")) in (int, float)
+                    worker_sup = runtime._strict_json_loads(bundle.read("worker-supervisor.json"))
+                    require(type(worker_sup) is dict and type(worker_sup.get("seconds")) in (int, float)
                         and math.isfinite(worker_sup["seconds"]) and worker_sup["seconds"] > 0, "WORKER_LATENCY_REQUIRED")
                     worker_non_sample = max(telemetry["load_seconds"], worker_sup["seconds"] - sum(observed))
                 overhead = math.ceil(2*(setup["seconds"]+worker_non_sample)) + MEASURED_TIME_MARGIN_SECONDS
@@ -496,16 +501,19 @@ class Ledger:
                 archive_limit = min(self.grant["caps"]["archive_bytes"], sample_budget["archive_verifier_limit_bytes"])
                 archive_cap = max(0, (archive_limit-base_archive_reserve)//effective_sample_bytes)
                 time_cap = max(0, (job_seconds-overhead)//per_seconds)
+                require("environment/preload-resources.json" in names, "OUTPUT_DISK_TELEMETRY_REQUIRED")
                 disk_caps, output_free_values = [], []
                 for res_name in ("environment/preload-resources.json", "run/loader-resources.json", "environment/resources.json"):
                     if res_name in names:
-                        res_obj = json.loads(bundle.read(res_name))
-                        free_pair = res_obj.get("free_bytes") if isinstance(res_obj, dict) else None
-                        if (isinstance(free_pair, list) and len(free_pair) == 2
-                                and all(type(v) is int and v >= 0 for v in free_pair)):
-                            output_free_values.append(free_pair[1])
-                            per_sample_disk = 2 * effective_sample_bytes
-                            disk_caps.append(max(0, (free_pair[1]-2**30-base_archive_reserve)//per_sample_disk))
+                        res_obj = runtime._strict_json_loads(bundle.read(res_name))
+                        free_pair = res_obj.get("free_bytes") if type(res_obj) is dict else None
+                        require(type(free_pair) is list and len(free_pair) == 2
+                            and all(type(v) is int and v >= 0 for v in free_pair),
+                            "OUTPUT_DISK_TELEMETRY_REQUIRED")
+                        output_free_values.append(free_pair[1])
+                        per_sample_disk = 2 * effective_sample_bytes
+                        disk_caps.append(max(0, (free_pair[1]-2**30-base_archive_reserve)//per_sample_disk))
+                require(bool(disk_caps), "OUTPUT_DISK_TELEMETRY_REQUIRED")
                 safe_calls = min(self.grant["caps"]["job_calls"], time_cap, archive_cap, *disk_caps)
                 require(safe_calls >= 1, "MEASURED_RESOURCE_ENVELOPE_TOO_SMALL")
                 return self.append("MEASURED", source_sha256=digest(closed[0]["plan"]["runtime_source"]), safe_calls=safe_calls,
@@ -515,14 +523,15 @@ class Ledger:
                     observed={"telemetry": telemetry, "raw_float32_bytes": raw_float32_bytes,
                         "zip_bytes": Path(archive).stat().st_size, "sample_bytes": sample_bytes,
                         "setup_seconds": setup["seconds"], "worker_non_sample_seconds": worker_non_sample,
-                        "output_free_bytes": min(output_free_values) if output_free_values else None},
+                        "output_free_bytes": min(output_free_values)},
                     basis="ENGINEERING_ENVELOPE_NOT_WORST_CASE_OR_SCIENTIFIC_QUALIFICATION")
 
 
 def verify_native_custody(request, archive, intent, grant):
     import zipfile
+    from safeshift import internvl3763 as runtime
     with zipfile.ZipFile(archive) as bundle:
-        get = lambda name: json.loads(bundle.read(name))
+        get = lambda name: runtime._strict_json_loads(bundle.read(name))
         require(get("handoff.json") == request and get("release.json") == grant
             and get("campaign-intent.json") == intent, "SEALED_CAMPAIGN_INTENT_CUSTODY")
         members = bundle.namelist()
@@ -615,8 +624,8 @@ def _archive_capture_budget(bundle, raw_float32_bytes):
         grammar_name = prefix_dir + "grammar.json"
         if grammar_name not in names:
             return runtime.capture_budget()
-        raw = json.loads(bundle.read(raw_name))
-        grammar = json.loads(bundle.read(grammar_name))
+        raw = runtime._strict_json_loads(bundle.read(raw_name))
+        grammar = runtime._strict_json_loads(bundle.read(grammar_name))
         width = raw.get("logit_width")
         tok_size = raw.get("tokenizer_size")
         path_lengths = grammar.get("path_lengths")
@@ -666,7 +675,7 @@ def _archive_capture_budget(bundle, raw_float32_bytes):
             require(parsed in LEVELS and len(generated) == required_steps
                 and generated[-1] in eos_ids and generated[decision_step] in decision_tokens
                 and trace_name in names, "MEASURED_CAPTURE_TRACE_GEOMETRY")
-            trace = json.loads(bundle.read(trace_name))
+            trace = runtime._strict_json_loads(bundle.read(trace_name))
             require(trace.get("status") == "TRACE_CONSISTENT" and trace.get("evidence_kind") == "NATIVE"
                 and trace.get("steps") == required_steps and trace.get("label") == parsed,
                 "MEASURED_CAPTURE_TRACE_CONSISTENCY")
@@ -770,7 +779,7 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
         already_reserved_calls=4, already_reserved_jobs=4, already_reserved_gpu_seconds=14400,
         setup_seconds="267.21", load_seconds="73.41", sample_seconds="13.42", wall_clock_seconds="872.777",
         non_sample_seconds=None, sample_bytes=14055278, raw_float32_bytes=6077440, zip_bytes=5617751,
-        logit_width=151936, grammar_steps=10, output_free_bytes=20937965568,
+        logit_width=151936, grammar_steps=10, capture_per_sample_bytes=None, output_free_bytes=20937965568,
         weekly_quota_remaining_seconds=20727, weekly_quota_limit_seconds=108000,
         source_changed=True, measurement_job_seconds=1800, alt_job_seconds=10800,
         contingency_repair_calls=100, contingency_extra_jobs=4, verify_f32_geometry=True):
@@ -836,6 +845,13 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
 
     legacy_capture = runtime.capture_budget()
     proven_capture = runtime.capture_budget(vocab=logit_width, steps=grammar_steps)
+    if capture_per_sample_bytes is not None:
+        require(type(capture_per_sample_bytes) is int
+            and 1 <= capture_per_sample_bytes <= legacy_capture["per_sample_bytes"],
+            "BUDGET_INT_BOUND:capture_per_sample_bytes")
+        proven_capture = {**proven_capture, "per_sample_bytes": capture_per_sample_bytes,
+            "sample_and_export_bytes": 2 * capture_per_sample_bytes,
+            "all3763_uncompressed_bytes": capture_per_sample_bytes * planning_count if (planning_count := planned_total) else 0}
     legacy_overhead = _ceil_int(Decimal(2) * (setup_dec + load_dec)) + 120
     legacy_per_call_sec = max(1, _ceil_int(Decimal(2) * sample_dec))
     legacy_archive_cap = max(0, (caps["archive_bytes"] - 2**20) // max(sample_bytes * 2, legacy_capture["per_sample_bytes"]))
