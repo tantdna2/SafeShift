@@ -270,6 +270,26 @@ attestations, the next separately permitted live measurement must resume **ordin
 call / 1,800s. Preserve Attempt4 ordinal0 and every Attempt1–4 record; never reuse its MEASURED
 entry for this source. No staging, submission, Kaggle API call, GPU or TEST access occurs here.
 
+Final offline acceptance: **241 focused tests (240 PASS, one Windows SKIP), 3 notebook
+tests PASS, 100 PR177 tests (88 PASS, 12 Windows SKIPs), 2 foundation smoke tests PASS,
+27 Linux tests PASS with zero skips**. Linux covers all platform skips. All ten PR177
+native CPU tests were enabled and passed, rather than being counted as Linux coverage.
+Exact tested commits are `ac8793d8fea5110728315b5af29f6a1f4d86e989` and
+`bb9505de8421482f0bf4ef173fe694ddc7e03c9f`; the latter changes only the affected E2E
+timestamp oracle, whose full suite was rerun. No final failure/error remains. See the
+[sanitized transcript](research/evidence/train3763_gpu_budget_20261107/validation.txt)
+and per-group source/test/log hashes in the receipt. The inherited test compared two
+fresh `monotonic` values for equality; the correction compares stable memory fields and
+separately asserts freshness, retaining the worker/ZIP/collect/MEASURED rejection checks.
+
+For offline reproduction, use the existing local CPU packages listed in the receipt,
+`SAFESHIFT3763_SDK_CPU=1`, and `scripts.qualify_internvl3763 --native` with a new ignored
+output directory. PR177 additionally needs `SAFESHIFT_V2_NATIVE_CPU=1` and both
+`SAFESHIFT_V2_SOURCE` / `SAFESHIFT_V2_TOKENIZER` pointing to the verified existing
+`data/processed/internvl_v2_native/public-source` metadata. Keep CUDA visibility empty,
+HF/transformers offline, and `tests` plus those CPU packages on PYTHONPATH. The 1.25x/1.50x
+sensitivity multiplies the full per-call allowance (latency plus modeled export).
+
 ## Historical PR177-vs-TRAIN3763 end-to-end repair and Attempt3 FAIL collection — 07/11/2026
 
 [Official task, 07/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6686823873)

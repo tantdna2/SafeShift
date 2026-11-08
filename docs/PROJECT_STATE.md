@@ -55,6 +55,17 @@ staging/submission or actual campaign-ledger/mirror mutation occurred. Attempt1â
 and all budgets remain immutable. Final offline checks are recorded in the acceptance
 receipt; they do not constitute Kaggle PASS or independent audit.
 
+Final acceptance: **241 focused tests (240 PASS, one Windows process-group SKIP covered
+on Linux), 3/3 notebook tests, 100 PR177 tests (88 PASS, 12 Windows platform SKIPs covered
+on Linux), 2/2 foundation smoke tests, and 27/27 Linux tests PASS**. All ten opt-in PR177
+native CPU tests actually ran. No final failures/errors remain. Test groups ran on clean
+tracked trees at `ac8793d8fea5110728315b5af29f6a1f4d86e989` and
+`bb9505de8421482f0bf4ef173fe694ddc7e03c9f`; only the affected E2E timestamp test changed
+between those commits and its entire suite was rerun at the latter. Runtime/notebooks
+and all group test-file hashes match final source. The sanitized
+[test transcript](research/evidence/train3763_gpu_budget_20261107/validation.txt) and
+receipt preserve the exact per-group identities and explain corrected validation failures.
+
 Remaining operational gates: ChatGPT direct GitHub review, independent Antigravity audit,
 separately authorized merge and source-bound AUDIT_V1/TECHNICAL_V1 attestations. Only after
 separate execution authorization may ordinal1 be measured (`resume`, one call, 1,800s)
