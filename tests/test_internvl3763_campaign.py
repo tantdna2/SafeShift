@@ -890,6 +890,16 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         self.assertEqual(proj["inputs"]["caps"]["total_gpu_seconds"], 80000)
         self.assertEqual(proj["inputs"]["remaining_images"], 3762)
         self.assertEqual(proj["inputs"]["pending_repair_images"], 0)
+        self.assertEqual(proj["inputs"]["contingency"], {
+            "repair_calls": 100, "extra_jobs": 4,
+            "basis": "EXTRA_JOB_OVERHEAD_PLUS_REPAIR_CALL_TIME_NOT_FULL_JOB_TIMEOUTS"})
+        wider = c.project_campaign_budget(contingency_repair_calls=200, contingency_extra_jobs=5)
+        for basic, expanded in zip(proj["sensitivity"], wider["sensitivity"]):
+            self.assertEqual(expanded["with_contingency_campaign_gpu_seconds"]
+                - basic["with_contingency_campaign_gpu_seconds"],
+                2 * (1974 + 100 * basic["per_call_seconds"]))
+        self.assertEqual(wider["sensitivity"][1]["with_contingency_campaign_gpu_seconds"], 436050)
+        self.assertGreater(wider["sensitivity"][1]["with_contingency_campaign_gpu_seconds"], 430000)
         self.assertEqual(proj["inputs"]["grant_remaining"],
             {"jobs": 96, "calls": 4496, "gpu_seconds": 65600, "max_wall_seconds_on_2xt4": 32800})
         self.assertEqual(proj["envelope_constants"], {
@@ -925,6 +935,12 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         self.assertEqual(opt["campaign_total_reserved_gpu_seconds"], 330516)
         self.assertFalse(opt["feasible_under_current_o5"])
         self.assertEqual(opt["shortfall_gpu_seconds"], 250516)
+        self.assertEqual(opt["attempt4_rate_pre_export_wall_seconds"], 70264)
+        self.assertGreater(opt["modeled_export_seconds"], 0)
+        self.assertEqual(opt["estimated_observed_kaggle_quota_seconds"],
+            opt["attempt4_rate_pre_export_wall_seconds"] + opt["modeled_export_seconds"])
+        self.assertEqual(sum(w["wall_seconds_used"] for w in opt["weekly_quota_schedule"]["weeks"]),
+            opt["estimated_observed_kaggle_quota_seconds"])
         self.assertEqual(opt["max_completable_remaining_images_under_current_o5"], 705)
         self.assertEqual(opt["unattempted_images_left_under_current_o5"], 3057)
         self.assertEqual(opt["weekly_quota_schedule"]["weeks_required"], 2)

@@ -912,7 +912,14 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
         fut_calls = sum(job_calls_list)
         fut_wall_res = sum(job_res_sec_list)
         fut_gpu_res = fut_wall_res * gpus
-        fut_wall_obs = sum(job_obs_sec_list)
+        pre_export_wall_obs = sum(job_obs_sec_list)
+        # Attempt4's setup + worker clock excludes parent ZIP/export. Account
+        # for that phase explicitly; 5 MiB/s is an engineering assumption, not
+        # measured provider throughput or a bound on compression/CRC time.
+        export_seconds = [_ceil_int(Decimal(base_archive_reserve + sample_bytes * n)
+            / Decimal(runtime.EXPORT_RESERVE_BYTES_PER_SECOND)) for n in job_calls_list]
+        quota_seconds = [wall + sealing for wall, sealing in zip(job_obs_sec_list, export_seconds)]
+        fut_wall_obs = sum(quota_seconds)
         tot_jobs = already_reserved_jobs + fut_jobs
         tot_calls = already_reserved_calls + fut_calls
         tot_gpu_res = already_reserved_gpu_seconds + fut_gpu_res
@@ -953,7 +960,7 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
                     if affordable >= 1:
                         max_completable += min(leftover, affordable)
 
-        weekly = _weekly_quota_plan(job_obs_sec_list, job_calls_list,
+        weekly = _weekly_quota_plan(quota_seconds, job_calls_list,
             weekly_quota_remaining_seconds, weekly_quota_limit_seconds)
         tail_sec = (fixed_min_sec if fixed_min_sec is not None else max(120, overhead_sec + per_call_s * resume_tail)) if resume_tail else 0
         return {
@@ -980,6 +987,9 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
             "max_completable_remaining_images_under_current_o5": max_completable,
             "unattempted_images_left_under_current_o5": remaining_images - max_completable,
             "estimated_observed_kaggle_quota_seconds": fut_wall_obs,
+            "attempt4_rate_pre_export_wall_seconds": pre_export_wall_obs,
+            "modeled_export_seconds": sum(export_seconds),
+            "quota_estimate_basis": "ATTEMPT4_RATE_PLUS_MODELED_EXPORT_NOT_LIVE_QUOTA_OR_THROUGHPUT_PROOF",
             "weekly_quota_schedule": weekly,
         }
 
@@ -1064,6 +1074,20 @@ def project_campaign_budget(*, caps=None, planned_total=3763, completed_images=1
             "completed_images": completed_images,
             "pending_repair_images": pending_repair_images,
             "remaining_images": remaining_images,
+            "contingency": {
+                "repair_calls": contingency_repair_calls,
+                "extra_jobs": contingency_extra_jobs,
+                "basis": "EXTRA_JOB_OVERHEAD_PLUS_REPAIR_CALL_TIME_NOT_FULL_JOB_TIMEOUTS",
+            },
+            "observation": {
+                "setup_seconds": str(setup_dec), "load_seconds": str(load_dec),
+                "sample_seconds": str(sample_dec), "wall_clock_seconds": str(wall_dec),
+                "non_sample_seconds": str(non_sample_dec), "sample_bytes": sample_bytes,
+                "raw_float32_bytes": raw_float32_bytes, "zip_bytes": zip_bytes,
+                "output_free_bytes": output_free_bytes,
+                "population_latency_distribution_verified": False,
+                "export_throughput_measured": False,
+            },
             "already_reserved": {
                 "jobs": already_reserved_jobs,
                 "calls": already_reserved_calls,
