@@ -30,8 +30,14 @@ creation occurs here. The Owner comment supplies conditional Attempt7 accounting
 New runtime/notebook hashes need direct ChatGPT review, independent audit, separately
 authorized merge and new AUDIT_V1 + TECHNICAL_V1 before future operation.
 
-Final offline validation and notebook identities are recorded in this PR. The
-following PR186 section retains its original historical accounting.
+[Final acceptance](research/TRAIN3763_PYTHON_INPUT_ACCEPTANCE_20261109.md) and
+[machine-readable evidence](research/TRAIN3763_PYTHON_INPUT_ACCEPTANCE_20261109.json)
+record 252 broad tests (three initial regression failures corrected by three
+PASS reruns), 28 final E2E/Input tests (26 PASS, two OS skips covered on Linux),
+13 Linux Input PASS + five Linux setup PASS, and five notebook/smoke PASS.
+No unresolved failure remains; this is combined evidence, not a claim of one
+clean full-suite rerun. All 84 inherited files match BASE. The following PR186
+section retains its original historical accounting.
 
 ## HISTORICAL — PR186 takeover, real cgroup contract and final offline verification — 08/11/2026
 
