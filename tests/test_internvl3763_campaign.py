@@ -545,10 +545,12 @@ class CampaignTests(unittest.TestCase):
         # Scripted telemetry tests resource arithmetic only. Native qualification
         # is deliberately a verifier seam here, never a fake inference claim.
         root = self.root/"telemetry-fixture"
+        real_mem = controller_fixtures.make_real_memory_snapshot(self.root/"telemetry-mem")
         write(root/"setup/setup-supervisor.json", {"seconds": 10})
-        write(root/"run/telemetry.json", {"evidence_kind": "NATIVE", "samples": [{"seconds": 2, "bytes": 1000}],
+        write(root/"environment/preload-resources.json", {"free_bytes": [20 * 2**30, 20 * 2**30]})
+        write(root/"run/telemetry.json", {"evidence_kind": "NATIVE", "samples": [{"ordinal": 0, "seconds": 2, "bytes": 1000}],
             "load_seconds": 5, "gpu_peak_allocated_bytes": 100, "gpu_peak_reserved_bytes": 200,
-            "memory": {"errors": []}, "notice": "SYNTHETIC_RESOURCE_ARITHMETIC_ONLY"})
+            "memory": real_mem, "notice": "SYNTHETIC_RESOURCE_ARITHMETIC_ONLY"})
         (root/"run/scripted.f32").write_bytes(b"\x00"*16)
         archive = self.root/"telemetry-fixture.zip"; checksum = export(root, archive)
         with lock(self.ledger.root):
@@ -1039,22 +1041,31 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
         with patch.object(old, "get", side_effect=lambda p: deepcopy(comments[p])):
             ledger = c.Ledger.create(self.root / "ledger", self.root / "mirror", grant, "synthetic-machine")
 
-        def build_telemetry_zip(name, *, vocab, steps, worker_sec=None, free_output=None, corrupt_f32=False,
-                                invalid=False, lump_f32=False, tamper_grammar=None, tamper_raw=None, cgroup=None):
+        default_mem = controller_fixtures.make_real_memory_snapshot(self.root / "mem-default")
+        self.assertEqual(default_mem["status"], "OBSERVED")
+        self.assertNotIn("status", default_mem["cgroup"])
+
+        def build_telemetry_zip(name, *, vocab, steps, worker_sec=None, free_output=20937965568, omit_preload=False,
+                                preload_override=None, loader_override=None, corrupt_f32=False, invalid=False,
+                                lump_f32=False, tamper_grammar=None, tamper_raw=None, memory_override="DEFAULT",
+                                gpu_alloc=14134920704, stop_reason=None):
             folder = self.root / name
             write(folder / "setup/setup-supervisor.json", {"seconds": 267.21})
             if worker_sec is not None:
                 write(folder / "worker-supervisor.json", {"seconds": worker_sec})
-            if free_output is not None:
-                write(folder / "environment/preload-resources.json", {"free_bytes": [20 * 2**30, free_output]})
-            mem_obj = {"errors": []}
-            if cgroup is not None:
-                mem_obj["cgroup"] = cgroup
+            if not omit_preload:
+                write(folder / "environment/preload-resources.json",
+                    preload_override if preload_override is not None else {"free_bytes": [20 * 2**30, free_output]})
+            if loader_override is not None:
+                write(folder / "run/loader-resources.json", loader_override)
+            if stop_reason is not None:
+                write(folder / "run/stop.json", {"reason": stop_reason})
+            mem_obj = deepcopy(default_mem) if memory_override == "DEFAULT" else memory_override
             write(folder / "run/telemetry.json", {
                 "evidence_kind": "NATIVE",
                 "samples": [{"ordinal": 0, "seconds": 13.42, "bytes": 14055278 if vocab == 151936 and steps == 10 else 100000}],
                 "load_seconds": 73.41,
-                "gpu_peak_allocated_bytes": 14134920704,
+                "gpu_peak_allocated_bytes": gpu_alloc,
                 "gpu_peak_reserved_bytes": 14558429184,
                 "memory": mem_obj,
             })
@@ -1082,17 +1093,40 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             self.assertEqual(c.required_job_seconds(m10, 174), 7194)
             self.assertEqual(c.required_job_seconds(m10, 1), 2004)
 
-            # 64-step trace (within max_new_tokens=64 if policy matched; test 16-step <= 16 max_new_tokens vs 10-step)
+            # Real snapshot with memory.max == 'max' (unlimited cgroup, sufficient host MemAvailable) and absent optional memory.peak pass:
+            mem_unlim = controller_fixtures.make_real_memory_snapshot(self.root / "mem-unlim",
+                mem_max="max", mem_peak=None, mem_available_kb=16 * 1024 * 1024)
+            arc_unlim = build_telemetry_zip("munlim", vocab=151936, steps=10, worker_sec=605.567, memory_override=mem_unlim)
+            self.assertEqual(ledger.measure(arc_unlim, job_seconds=7200)["safe_calls"], 174)
+
+            # 16-step trace vs 10-step trace
             arc16 = build_telemetry_zip("m16", vocab=2048, steps=16, worker_sec=100.0)
             m16 = ledger.measure(arc16, job_seconds=7200)
             self.assertEqual(m16["capture_per_sample_bytes"], runtime.capture_budget(vocab=2048, steps=16)["per_sample_bytes"])
             self.assertGreater(m16["capture_per_sample_bytes"], runtime.capture_budget(vocab=2048, steps=10)["per_sample_bytes"])
 
-            # Valid INVALID native sample falls back conservatively to 200k x 64 bound instead of trusting 10 steps!
+            # Valid INVALID native sample falls back conservatively to 200k x 64 bound instead of trusting 10 steps,
+            # AND CLI forecast --directory preserves that exact 61-call fallback!
             arc_inv = build_telemetry_zip("minv", vocab=151936, steps=10, worker_sec=605.567, invalid=True)
             minv = ledger.measure(arc_inv, job_seconds=7200)
             self.assertEqual(minv["capture_per_sample_bytes"], runtime.capture_budget()["per_sample_bytes"])
             self.assertEqual(minv["safe_calls"], 61)
+            from scripts import train3763_campaign as cli_mod
+            import io
+            from contextlib import redirect_stdout
+            buf_inv = io.StringIO()
+            with patch.object(cli_mod, "private_root", return_value=ledger.root), \
+                    patch.object(runtime, "source_spec", return_value=request["plan"]["runtime_source"]), \
+                    patch.object(c.Ledger, "summary", return_value={
+                        "planned": 3763,
+                        "counts": {"INVALID": 1, "NOT_ATTEMPTED": 3762},
+                        "reserved_calls": 1,
+                        "reserved_gpu_seconds": 3600, "jobs": 1, "blocked_open_intent": False,
+                    }), redirect_stdout(buf_inv):
+                self.assertEqual(cli_mod.main(["forecast", "--directory", str(ledger.root)]), 0)
+            proj_inv = json.loads(buf_inv.getvalue())
+            self.assertEqual(proj_inv["scenarios"]["optimized_safe_current_job_cap"]["safe_calls_per_job"], 61)
+            self.assertEqual(proj_inv["capture_envelope"]["grammar_v2_proven_per_sample_bytes"], minv["capture_per_sample_bytes"])
 
             # Tight output disk space clamps safe_calls via 2 * effective_sample_bytes; insufficient disk fails closed
             per_disk = runtime.capture_budget(vocab=2048, steps=10)["sample_and_export_bytes"]
@@ -1105,20 +1139,64 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "TOO_SMALL"):
                 ledger.measure(arc_nofree, job_seconds=7200)
 
-            # Negative checks: truncated .f32, lumped .f32 missing step files, forged grammar hash/steps, synthetic raw, cgroup OOM/low RAM
+            mem_oom_kill = controller_fixtures.make_real_memory_snapshot(self.root / "mem-oomk",
+                mem_events="oom 0\noom_kill 1\noom_group_kill 0\n")
+            mem_oom_ev = controller_fixtures.make_real_memory_snapshot(self.root / "mem-oomev",
+                mem_events="oom 1\noom_kill 0\noom_group_kill 0\n")
+            mem_oom_grp = controller_fixtures.make_real_memory_snapshot(self.root / "mem-oomgrp",
+                mem_events="oom 0\noom_kill 0\noom_group_kill 1\n")
+            mem_low_cg = controller_fixtures.make_real_memory_snapshot(self.root / "mem-lowcg",
+                mem_max=str(8 * 2**30), mem_current=str(8 * 2**30 - 100 * 2**20))
+            mem_low_host = controller_fixtures.make_real_memory_snapshot(self.root / "mem-lowhost",
+                mem_max="max", mem_available_kb=200 * 1024)
+            mem_v1_incomp = controller_fixtures.make_real_memory_snapshot(self.root / "mem-v1", cgroup_v1_only=True)
+            mem_missing_stat = controller_fixtures.make_real_memory_snapshot(self.root / "mem-nostat", mem_stat=None)
+            legacy_fake_cg = {"cgroup": {"status": "OBSERVED", "memory.max": 8 * 2**30, "memory.current": 2**30, "memory.events": {"oom_kill": 0}}}
+
+            # Negative checks: real snapshot OOM/low-RAM/INCOMPLETE, legacy fake cgroup.status, bool types, missing/corrupt disk telemetry, early stop
             for idx, (label, kw, pattern) in enumerate((
                 ("corrupt_f32", {"vocab": 2048, "steps": 10, "corrupt_f32": True}, "F32_BYTES_MISMATCH"),
                 ("lumped_f32_missing_steps", {"vocab": 2048, "steps": 10, "lump_f32": True}, "F32_BYTES_MISMATCH"),
                 ("forged_151936_paths_sha", {"vocab": 151936, "steps": 10, "tamper_grammar": lambda g: g.update(paths_sha256="0"*64)}, "LOCKED_INTERNVL35_GRAMMAR_GEOMETRY_DRIFT"),
                 ("forged_unequal_branches", {"vocab": 2048, "steps": 10, "tamper_grammar": lambda g: g.update(path_lengths=[8, 9, 9, 9])}, "MEASURED_CAPTURE_TRACE_GEOMETRY"),
                 ("synthetic_raw_kind", {"vocab": 2048, "steps": 10, "tamper_raw": lambda r0: r0.update(evidence_kind="SYNTHETIC")}, "MEASURED_RAW_CAPTURE_CONTRACT"),
-                ("cgroup_oom_kill", {"vocab": 2048, "steps": 10, "cgroup": {"status": "OBSERVED", "memory.events": {"oom_kill": 1}}}, "CGROUP_OOM_OBSERVED"),
-                ("cgroup_low_headroom", {"vocab": 2048, "steps": 10, "cgroup": {"status": "OBSERVED", "memory.max": 8 * 2**30, "memory.current": 8 * 2**30 - 100 * 2**20}}, "CGROUP_MEMORY_HEADROOM_TOO_LOW"),
+                ("real_snapshot_oom_kill", {"vocab": 2048, "steps": 10, "memory_override": mem_oom_kill}, "CGROUP_OOM_OBSERVED"),
+                ("real_snapshot_oom_event", {"vocab": 2048, "steps": 10, "memory_override": mem_oom_ev}, "CGROUP_OOM_OBSERVED"),
+                ("real_snapshot_oom_group_kill", {"vocab": 2048, "steps": 10, "memory_override": mem_oom_grp}, "CGROUP_OOM_OBSERVED"),
+                ("real_snapshot_low_cgroup_headroom", {"vocab": 2048, "steps": 10, "memory_override": mem_low_cg}, "CGROUP_MEMORY_HEADROOM_LOW"),
+                ("real_snapshot_low_host_when_max", {"vocab": 2048, "steps": 10, "memory_override": mem_low_host}, "CGROUP_MEMORY_HEADROOM_LOW"),
+                ("real_snapshot_cgroup_v1_incomplete", {"vocab": 2048, "steps": 10, "memory_override": mem_v1_incomp}, "CGROUP_MEMORY_UNOBSERVED"),
+                ("real_snapshot_missing_stat_incomplete", {"vocab": 2048, "steps": 10, "memory_override": mem_missing_stat}, "CGROUP_MEMORY_UNOBSERVED"),
+                ("legacy_fake_cgroup_status_rejected", {"vocab": 2048, "steps": 10, "memory_override": legacy_fake_cg}, "CGROUP_MEMORY_UNOBSERVED"),
+                ("errors_only_memory_rejected", {"vocab": 2048, "steps": 10, "memory_override": {"errors": []}}, "CGROUP_MEMORY_UNOBSERVED"),
+                ("bool_gpu_peak_rejected", {"vocab": 2048, "steps": 10, "gpu_alloc": True}, "LIVE_GPU_RAM_TELEMETRY_REQUIRED"),
+                ("missing_preload_resources", {"vocab": 2048, "steps": 10, "omit_preload": True}, "OUTPUT_DISK_TELEMETRY_REQUIRED"),
+                ("bool_preload_free_bytes", {"vocab": 2048, "steps": 10, "preload_override": {"free_bytes": [True, 20 * 2**30]}}, "OUTPUT_DISK_TELEMETRY_REQUIRED"),
+                ("corrupt_loader_resources", {"vocab": 2048, "steps": 10, "loader_override": {"free_bytes": None}}, "OUTPUT_DISK_TELEMETRY_REQUIRED"),
+                ("early_stopped_run_rejected", {"vocab": 2048, "steps": 10, "stop_reason": "CGROUP_MEMORY_HEADROOM_LOW"}, "MEASUREMENT_RUN_STOPPED_EARLY"),
             )):
                 with self.subTest(case=label):
                     bad_arc = build_telemetry_zip(f"bad-{idx}", worker_sec=100.0, **kw)
                     with self.assertRaisesRegex(ValueError, pattern):
                         ledger.measure(bad_arc, job_seconds=7200)
+
+            # Duplicate JSON keys and NaN/Infinity in ZIP JSON members must fail closed via _strict_json_loads
+            for bad_tag, raw_setup_json, pattern in (
+                ("dup_key", '{"seconds": 267.21, "seconds": 1.0}', "DUPLICATE_JSON_KEY"),
+                ("nan_const", '{"seconds": NaN}', "NONFINITE_JSON"),
+            ):
+                with self.subTest(strict_json=bad_tag):
+                    dup_arc = build_telemetry_zip(f"strict-{bad_tag}", vocab=2048, steps=10, worker_sec=100.0)
+                    dup_dir = self.root / f"strict-{bad_tag}"
+                    (dup_dir / "checksums.json").unlink()
+                    (dup_dir / "setup/setup-supervisor.json").write_text(raw_setup_json, encoding="utf8")
+                    dup_arc2 = self.root / f"strict-{bad_tag}-repacked.zip"
+                    dup_sha = export(dup_dir, dup_arc2)
+                    with lock(ledger.root):
+                        ledger.append("COLLECTED", sha256=dup_sha, plan=request["plan"],
+                            provider={"state": "COMPLETE"}, verification={"status": "PASS", "scope": "SYNTHETIC_FIXTURE"})
+                    with self.assertRaisesRegex(ValueError, pattern):
+                        ledger.measure(dup_arc2, job_seconds=7200)
 
     def test_historical_attempts_1_to_4_source_drift_ordinal1_remeasure_and_no_implicit_attempt5(self):
         from scripts import train3763_campaign as cli
@@ -1215,7 +1293,7 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                     "load_seconds": 73.41,
                     "gpu_peak_allocated_bytes": 14134920704,
                     "gpu_peak_reserved_bytes": 14558429184,
-                    "memory": {"errors": []},
+                    "memory": controller_fixtures.make_real_memory_snapshot(self.root / f"mem-arc-{num}"),
                 })
                 ord0 = records[0]["ordinal"]
                 self._populate_native_sample_trace(folder / f"run/samples/{ord0:06d}",

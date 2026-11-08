@@ -16,6 +16,46 @@ from safeshift.pilot.artifacts import write, sha, read
 from safeshift.pilot.contract import digest
 
 
+def make_real_memory_snapshot(base_dir, *, mem_available_kb=33554432, vm_rss_kb=65536,
+                              mem_current=str(4 * 2**30), mem_max=str(32 * 2**30),
+                              mem_peak=str(5 * 2**30), mem_stat="anon 1073741824\nfile 3221225472\n",
+                              mem_events="high 0\nlow 0\nmax 0\noom 0\noom_group_kill 0\noom_kill 0\n",
+                              cgroup_v1_only=False):
+    from safeshift import internvl_v2_memory as mem
+    base = Path(base_dir)
+    proc, cg = base / "proc", base / "cgroup"
+    if proc.exists():
+        import shutil
+        shutil.rmtree(proc)
+    if cg.exists():
+        import shutil
+        shutil.rmtree(cg)
+    (proc / "self").mkdir(parents=True)
+    cg.mkdir(parents=True)
+    if mem_available_kb is not None:
+        (proc / "meminfo").write_text(f"MemAvailable: {mem_available_kb} kB\n", encoding="utf8")
+    if vm_rss_kb is not None:
+        (proc / "self/status").write_text(f"Name: synthetic\nVmRSS: {vm_rss_kb} kB\n", encoding="utf8")
+    else:
+        (proc / "self/status").write_text("Name: synthetic\n", encoding="utf8")
+    (proc / "self/smaps_rollup").write_text("Rss: 65536 kB\nAnonymous: 32768 kB\n", encoding="utf8")
+    if cgroup_v1_only:
+        (cg / "memory").mkdir()
+        (cg / "memory/memory.limit_in_bytes").write_text(str(32 * 2**30), encoding="utf8")
+        (cg / "memory/memory.usage_in_bytes").write_text(str(4 * 2**30), encoding="utf8")
+        return mem.snapshot(proc, cg)
+    for fname, content in (
+        ("memory.current", mem_current),
+        ("memory.max", mem_max),
+        ("memory.peak", mem_peak),
+        ("memory.stat", mem_stat),
+        ("memory.events", mem_events),
+    ):
+        if content is not None:
+            (cg / fname).write_text(str(content), encoding="utf8")
+    return mem.snapshot(proc, cg)
+
+
 class PreparedControllerTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -323,13 +363,17 @@ class PreparedControllerTests(unittest.TestCase):
         self.assertEqual(res_log["model_calls"], 1)
         self.assertEqual(read(sup_parent / "run/stop.json"), {"reason": "WORKER_LOG_BUDGET_MARGIN"})
 
-        # (c) Low cgroup memory headroom (< 512 MiB) stops cleanly before next call.
+        # (c) Low cgroup memory headroom (< 512 MiB) on real internvl_v2_memory.snapshot() schema stops cleanly before next call.
         mem_backend = self.backend()
         mem_backend.check_cgroup_memory = True
-        snapshots = iter([
-            {"cgroup": {"status": "OBSERVED", "memory.max": 8 * 2**30, "memory.current": 2 * 2**30, "memory.events": {"oom_kill": 0}}},
-            {"cgroup": {"status": "OBSERVED", "memory.max": 8 * 2**30, "memory.current": 8 * 2**30 - 256 * 2**20, "memory.events": {"oom_kill": 0}}},
-        ])
+        snap_ok = make_real_memory_snapshot(self.root / "snap-ok", mem_max=str(8 * 2**30), mem_current=str(2 * 2**30))
+        snap_low = make_real_memory_snapshot(self.root / "snap-low", mem_max=str(8 * 2**30),
+            mem_current=str(8 * 2**30 - 256 * 2**20))
+        self.assertEqual(snap_ok["status"], "OBSERVED")
+        self.assertNotIn("status", snap_ok["cgroup"])
+        self.assertEqual(snap_low["status"], "OBSERVED")
+        self.assertNotIn("status", snap_low["cgroup"])
+        snapshots = iter([snap_ok, snap_low])
         with patch("safeshift.internvl_v2_memory.snapshot", side_effect=lambda: next(snapshots)):
             res_mem = r.rehearse(self.root / "mem-stop", self.root / "mem-stop.zip", self.cohort, p, [],
                 lambda _: mem_backend, image_path=image_path, tokenizer_sha="a"*64)
@@ -381,6 +425,134 @@ class PreparedControllerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "ARCHIVE_LIMIT_BYTES"):
                 r._execute(self.root / f"bad-{bad_limit}", None, self.cohort, p, lambda _: fat_backend,
                     image_path=image_path, tokenizer_sha="a"*64, archive_limit_bytes=bad_limit)
+
+    def test_real_memory_snapshot_contract_healthy_low_ram_oom_incomplete_v1_invalid_and_native_scope(self):
+        def image_path(row):
+            image = self.root / f"memcontract-img-{row['ordinal']}"
+            image.write_bytes(synthetic_bytes(row["ordinal"]))
+            return image
+
+        # 1. Healthy OBSERVED variants from real internvl_v2_memory.snapshot(proc, cg):
+        healthy_default = make_real_memory_snapshot(self.root / "m-healthy")
+        healthy_no_peak = make_real_memory_snapshot(self.root / "m-nopeak", mem_peak=None)
+        healthy_unlimited = make_real_memory_snapshot(self.root / "m-unlim", mem_max="max", mem_available_kb=2 * 1024 * 1024)
+        healthy_exact_floor = make_real_memory_snapshot(self.root / "m-exact512",
+            mem_max=str(4 * 2**30), mem_current=str(4 * 2**30 - r.CGROUP_MIN_FREE_BYTES))
+        for label, snap in (
+            ("default", healthy_default),
+            ("no_optional_peak", healthy_no_peak),
+            ("max_unlimited", healthy_unlimited),
+            ("exact_512mib_floor", healthy_exact_floor),
+        ):
+            with self.subTest(healthy=label):
+                self.assertEqual(snap["status"], "OBSERVED")
+                self.assertNotIn("status", snap["cgroup"])
+                self.assertIsNone(r.inspect_memory_snapshot(snap))
+
+        # 2. Low RAM headroom variants (1 byte below 512 MiB on cgroup limit, and memory.max=='max' with low host MemAvailable):
+        low_1byte = make_real_memory_snapshot(self.root / "m-low1",
+            mem_max=str(4 * 2**30), mem_current=str(4 * 2**30 - r.CGROUP_MIN_FREE_BYTES + 1))
+        low_host_unlim = make_real_memory_snapshot(self.root / "m-lowhost",
+            mem_max="max", mem_available_kb=511 * 1024)
+        self.assertEqual(r.inspect_memory_snapshot(low_1byte), "CGROUP_MEMORY_HEADROOM_LOW")
+        self.assertEqual(r.inspect_memory_snapshot(low_host_unlim), "CGROUP_MEMORY_HEADROOM_LOW")
+
+        # 3. OOM observed variants (oom_kill, oom, oom_group_kill > 0 even when RAM is plentiful):
+        for oom_key in ("oom_kill", "oom", "oom_group_kill"):
+            snap_oom = make_real_memory_snapshot(self.root / f"m-{oom_key}",
+                mem_events=f"oom {1 if oom_key == 'oom' else 0}\noom_kill {1 if oom_key == 'oom_kill' else 0}\noom_group_kill {1 if oom_key == 'oom_group_kill' else 0}\n")
+            self.assertEqual(snap_oom["status"], "OBSERVED")
+            self.assertEqual(r.inspect_memory_snapshot(snap_oom), "CGROUP_OOM_OBSERVED")
+
+        # 4. Missing / INCOMPLETE / Linux cgroup-v1-only observations fail closed (never silently pass):
+        incomp_v1 = make_real_memory_snapshot(self.root / "m-v1", cgroup_v1_only=True)
+        incomp_no_stat = make_real_memory_snapshot(self.root / "m-nostat", mem_stat=None)
+        incomp_no_events = make_real_memory_snapshot(self.root / "m-noevents", mem_events=None)
+        incomp_no_rss = make_real_memory_snapshot(self.root / "m-norss", vm_rss_kb=None)
+        incomp_bad_stat = make_real_memory_snapshot(self.root / "m-badstat", mem_stat="anon -1\nfile 123\n")
+        for label, snap in (
+            ("cgroup_v1_only", incomp_v1),
+            ("missing_stat", incomp_no_stat),
+            ("missing_events", incomp_no_events),
+            ("missing_vmrss", incomp_no_rss),
+            ("negative_anon", incomp_bad_stat),
+        ):
+            with self.subTest(incomplete=label):
+                self.assertEqual(snap["status"], "INCOMPLETE")
+                self.assertEqual(r.inspect_memory_snapshot(snap), "CGROUP_MEMORY_UNOBSERVED")
+
+        # 5. Forged / malformed / legacy fake cgroup.status structures fail closed:
+        legacy_fake = {"cgroup": {"status": "OBSERVED", "memory.max": 8 * 2**30, "memory.current": 2**30, "memory.events": {"oom_kill": 0}}}
+        injected_cg_status = copy.deepcopy(healthy_default)
+        injected_cg_status["cgroup"]["status"] = "OBSERVED"
+        obs_with_err = copy.deepcopy(healthy_default)
+        obs_with_err["errors"] = [{"file": "memory.stat", "type": "OSError"}]
+        bool_cur = copy.deepcopy(healthy_default)
+        bool_cur["cgroup"]["memory.current"] = True
+        bool_max = copy.deepcopy(healthy_default)
+        bool_max["cgroup"]["memory.max"] = True
+        bool_oom = copy.deepcopy(healthy_default)
+        bool_oom["cgroup"]["memory.events"]["oom_kill"] = False
+        bool_avail = copy.deepcopy(healthy_default)
+        bool_avail["gate_memory"]["available_bytes"] = True
+        missing_oom_key = copy.deepcopy(healthy_default)
+        missing_oom_key["cgroup"]["memory.events"] = {"oom": 0}
+        weird_max = copy.deepcopy(healthy_default)
+        weird_max["cgroup"]["memory.max"] = "unlimited"
+        for label, bad_snap in (
+            ("none", None),
+            ("list", []),
+            ("empty_dict", {}),
+            ("errors_only", {"errors": []}),
+            ("legacy_fake_cgroup_status", legacy_fake),
+            ("injected_cgroup_status_key", injected_cg_status),
+            ("observed_with_nonempty_errors", obs_with_err),
+            ("bool_current", bool_cur),
+            ("bool_max", bool_max),
+            ("bool_oom_kill", bool_oom),
+            ("bool_available_bytes", bool_avail),
+            ("missing_oom_kill_counter", missing_oom_key),
+            ("invalid_max_string", weird_max),
+        ):
+            with self.subTest(malformed=label):
+                self.assertEqual(r.inspect_memory_snapshot(bad_snap), "CGROUP_MEMORY_UNOBSERVED")
+
+        # 6. Explicit NativeBackend vs synthetic bypass scope + real controller stop preservation:
+        synth_backend = self.backend()
+        native_inst = object.__new__(r.NativeBackend)
+        with patch("safeshift.internvl_v2_memory.snapshot", return_value=incomp_v1):
+            # Default synthetic rehearsal bypasses Linux /proc cgroup check on non-Linux hosts:
+            self.assertIsNone(r._cgroup_memory_issue(synth_backend))
+            self.assertFalse(r._cgroup_memory_low(synth_backend))
+            # Real NativeBackend instance ALWAYS enforces the gate without needing any test flag:
+            self.assertEqual(r._cgroup_memory_issue(native_inst), "CGROUP_MEMORY_UNOBSERVED")
+            self.assertTrue(r._cgroup_memory_low(native_inst))
+
+        # Controller stops cleanly on OOM, INCOMPLETE, and host-unlimited low RAM while preserving sample 0 raw output:
+        p2 = self.plan(max_calls=2, max_seconds=600)
+        snap_oom_kill = make_real_memory_snapshot(self.root / "m-stop-oom",
+            mem_events="oom 1\noom_kill 1\noom_group_kill 0\n")
+        for case_name, second_snap, expected_reason in (
+            ("oom", snap_oom_kill, "CGROUP_OOM_OBSERVED"),
+            ("incomplete", incomp_v1, "CGROUP_MEMORY_UNOBSERVED"),
+            ("host_low_unlimited", low_host_unlim, "CGROUP_MEMORY_HEADROOM_LOW"),
+        ):
+            with self.subTest(controller_stop=case_name):
+                b_gate = self.backend()
+                b_gate.check_cgroup_memory = True
+                seq = iter([healthy_default, second_snap])
+                out_case = self.root / f"stop-{case_name}"
+                arc_case = self.root / f"stop-{case_name}.zip"
+                with patch("safeshift.internvl_v2_memory.snapshot", side_effect=lambda: next(seq)):
+                    res_case = r.rehearse(out_case, arc_case, self.cohort, p2, [],
+                        lambda _: b_gate, image_path=image_path, tokenizer_sha="a"*64)
+                self.assertEqual(res_case["status"], "PASS")
+                self.assertEqual(res_case["model_calls"], 1)
+                self.assertEqual(res_case["counts"], {"SUCCESS": 1, "NOT_ATTEMPTED": 3762})
+                self.assertTrue((out_case / "samples/000000/raw.json").is_file())
+                self.assertFalse((out_case / "samples/000001/started.json").exists())
+                self.assertEqual(read(out_case / "stop.json"), {"reason": expected_reason})
+                self.assertEqual(r.verify_bundle(arc_case, sha(arc_case), p2)["status"], "PASS")
 
 
 @unittest.skipUnless(os.environ.get("SAFESHIFT3763_NATIVE_CPU") == "1", "opt-in CPU torch/transformers")

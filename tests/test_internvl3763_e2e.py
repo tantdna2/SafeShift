@@ -976,10 +976,24 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
                 }
                 return b
 
+            from safeshift import internvl_v2_memory as mem_lib
+            real_snapshot = mem_lib.snapshot
+            real_mem_snap = controller_fixtures.make_real_memory_snapshot(root / "vm_mem")
+            vm_proc = root / "vm_mem/proc"
+            vm_cg = root / "vm_mem/cgroup"
+            res_payload = {
+                "memory": real_mem_snap["gate_memory"],
+                "devices": [66, 1794],
+                "free_bytes": [20 * 2**30, 20 * 2**30],
+                "requested_reserves_bytes": [24 * 2**30, 2**30],
+                "model_fit": "NOT_ESTABLISHED",
+            }
+
             def fake_preflight(spec, env_out, scratch, inputs, deadline):
                 for name in ("software.json", "hardware.json", "cuda.json", "allocation.json",
-                             "checkpoint.json", "checkpoint-stream.json", "processor.json", "preload-resources.json"):
+                             "checkpoint.json", "checkpoint-stream.json", "processor.json"):
                     write(env_out / name, {"notice": "SYNTHETIC_PREFLIGHT"})
+                write(env_out / "preload-resources.json", res_payload)
                 write(env_out / "preflight.json", {"status": "LIVE_GPU_PREFLIGHT_PASS",
                     "source_sha256": digest(spec), "model_calls": 0, "weights_loaded": False, "owner_slots_consumed": 0})
                 return tok_dir, root / "weights"
@@ -1018,8 +1032,8 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
                             patch.object(verification173, "verify_train", return_value=(train_receipt, cohort_img, mapping)), \
                             patch("safeshift.candidates.backend.CandidateBackend", side_effect=fake_candidate_backend), \
                             patch("safeshift.internvl_v2_memory.verify_checkpoint", return_value={"status": "STREAM_VERIFIED"}), \
-                            patch("safeshift.internvl_v2_memory.resource_check", return_value={"available_bytes": 20 * 2**30}), \
-                            patch("safeshift.internvl_v2_memory.snapshot", return_value={"errors": []}), \
+                            patch("safeshift.internvl_v2_memory.resource_check", return_value=res_payload), \
+                            patch("safeshift.internvl_v2_memory.snapshot", side_effect=lambda *_: real_snapshot(vm_proc, vm_cg)), \
                             patch("safeshift.candidates.inputs.prepare_inputs", return_value=(
                                 "SYNTHETIC_RENDERED",
                                 {"input_ids": torch.tensor([[8]]), "attention_mask": torch.ones((1, 1), dtype=torch.long)},
@@ -1062,6 +1076,12 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
             self.assertEqual(vm_result["status"], "PASS", msg="\n".join(stage_errors) or str(vm_result))
             self.assertFalse((inputs_mount / "inspecsafe-v1-kaggle/InspecSafe-V1-Kaggle/test").exists())
             vm_archive = next((root / "vm_working").glob("*.zip"))
+            with zipfile.ZipFile(vm_archive) as zf:
+                vm_tel = json.loads(zf.read("run/telemetry.json"))
+            self.assertEqual(vm_tel["memory"]["schema"], "internvl-v2-memory-v1")
+            self.assertEqual(vm_tel["memory"]["status"], "OBSERVED")
+            self.assertEqual(vm_tel["memory"]["errors"], [])
+            self.assertNotIn("status", vm_tel["memory"]["cgroup"])
             kernel_state.update(status="COMPLETE", archive=vm_archive)
 
             # Operator terminal collection -> verify_bundle (including .f32 full-vocab trace!) -> mirrored Ledger COLLECTED.
@@ -1194,6 +1214,210 @@ class EndToEndOfflineCampaignPipelineTests(unittest.TestCase):
                     self.assertEqual(rep["status"], "BLOCKED")
                     self.assertEqual(ledger.events(), before_events)
                     self.assertIsNotNone(ledger.open_intent())
+
+    def test_native_backend_worker_graceful_stop_on_real_snapshot_hazards_and_blocks_measure(self):
+        import torch
+        from PIL import Image
+        import scripts.internvl3763 as launcher
+        from scripts import internvl_v2 as old_v2
+        from safeshift import internvl_v2_memory as mem_lib
+        from safeshift import verification173
+        from test_internvl_v2_runtime import NativeCaptureTests as V2Helper
+
+        real_snapshot = mem_lib.snapshot
+        V2Helper.setUpClass()
+        v2_helper = V2Helper("test_all_labels_actual_generate_full_raw_before_processor_and_parse")
+
+        hazards = (
+            ("cgroup_v1_incomplete", {"cgroup_v1_only": True}, "CGROUP_MEMORY_UNOBSERVED"),
+            ("oom_kill_observed", {"mem_events": "oom 0\noom_kill 1\noom_group_kill 0\n"}, "CGROUP_OOM_OBSERVED"),
+            ("low_cgroup_ram", {"mem_max": str(8 * 2**30), "mem_current": str(8 * 2**30 - 100 * 2**20)}, "CGROUP_MEMORY_HEADROOM_LOW"),
+            ("low_host_ram_unlimited_cgroup", {"mem_max": "max", "mem_available_kb": 100 * 1024}, "CGROUP_MEMORY_HEADROOM_LOW"),
+        )
+
+        parent = runtime.ROOT / "data/processed"
+        parent.mkdir(parents=True, exist_ok=True)
+        for hazard_name, mem_kwargs, expected_reason in hazards:
+            with self.subTest(hazard=hazard_name), tempfile.TemporaryDirectory(prefix="synthetic-mem-e2e-", dir=parent) as tmp:
+                root = Path(tmp)
+                req_fixture, grant, comments = campaign_fixture(
+                    root / "ledger", actual_source=True, kernel_sources=("nguynanhtn/safeshift-prepare-internvl35/1",),
+                )
+                inputs_mount = root / "kaggle_input"
+                master_file = inputs_mount / "safeshift-pilot-input/master_manifest.json"
+                write(master_file, {"notice": "SYNTHETIC_MASTER"})
+                image_root = inputs_mount / "inspecsafe-v1-kaggle/InspecSafe-V1-Kaggle/train/DATA_PATH"
+                img0 = image_root / "train/Annotations/synthetic-000000.jpg"
+                img0.parent.mkdir(parents=True, exist_ok=True)
+                Image.new("RGB", (8, 8), (12, 34, 56)).save(img0, format="JPEG")
+                cohort_img = deepcopy(req_fixture["bindings"]["runtime"]["execution_request"]["cohort"])
+                cohort_img["samples"][0]["image_sha256"] = sha(img0)
+                grant["cohort_sha256"] = digest(cohort_img)
+                req_fixture["bindings"]["runtime"]["execution_request"]["cohort"] = cohort_img
+                req_fixture["bindings"]["runtime"]["execution_request"]["projection_sha256"] = digest(cohort_img)
+                p0 = campaign.plan(cohort_img, [], action="initial", run_id="synthetic180-1",
+                    attempt_id="attempt-1", max_calls=1, max_seconds=1800)
+                req_fixture["plan"] = p0
+                req_fixture["plan_sha256"] = digest(p0)
+                req_fixture["bindings"]["runtime"]["execution_request"]["plan"] = p0
+                req_fixture["bindings"]["dataset"]["execution_request_sha256"] = digest(
+                    req_fixture["bindings"]["runtime"]["execution_request"]
+                )
+                grant_cid = req_fixture["execution_release"]["comment_id"]
+                grant_body = campaign.MARKER + "\n```json\n" + json.dumps(grant) + "\n```"
+                comments[f"/issues/comments/{grant_cid}"]["body"] = grant_body
+                req_fixture["execution_release"]["body_sha256"] = hashlib.sha256(grant_body.encode()).hexdigest()
+                tech_cid = req_fixture["bindings"]["runtime"]["technical_revision"]["comment_id"]
+                tech_obj = json.loads(comments[f"/issues/comments/{tech_cid}"]["body"].split("```json\n")[1].split("\n```")[0])
+                audit_cid = tech_obj["audit"]["comment_id"]
+                audit_obj = json.loads(comments[f"/issues/comments/{audit_cid}"]["body"].split("```json\n")[1].split("\n```")[0])
+                audit_obj["campaign_sha256"] = digest(grant)
+                audit_body = "SAFESHIFT_TRAIN3763_AUDIT_V1\n```json\n" + json.dumps(audit_obj) + "\n```"
+                comments[f"/issues/comments/{audit_cid}"]["body"] = audit_body
+                tech_obj["campaign_sha256"] = digest(grant)
+                tech_obj["audit"]["body_sha256"] = hashlib.sha256(audit_body.encode()).hexdigest()
+                tech_body = "SAFESHIFT_TRAIN3763_TECHNICAL_V1\n```json\n" + json.dumps(tech_obj) + "\n```"
+                comments[f"/issues/comments/{tech_cid}"]["body"] = tech_body
+                req_fixture["bindings"]["runtime"]["technical_revision"]["body_sha256"] = hashlib.sha256(tech_body.encode()).hexdigest()
+
+                with patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])):
+                    ledger = campaign.Ledger.create(root / "ledger", root / "mirror", grant, "synthetic-machine")
+                    intent = ledger.reserve(req_fixture)
+                with handoff.lock(ledger.root):
+                    ledger.append("PUSH_INTENT", intent_sha256=digest(intent))
+                ledger.submitted(intent, {"job_id": req_fixture["job"], "version": 1})
+
+                bad_snap = controller_fixtures.make_real_memory_snapshot(root / "bad_mem", **mem_kwargs)
+                bad_proc = root / "bad_mem/proc"
+                bad_cg = root / "bad_mem/cgroup"
+                res_payload = {
+                    "memory": {"available_bytes": 20 * 2**30, "cgroup_remaining_bytes": [20 * 2**30]},
+                    "devices": [66, 1794],
+                    "free_bytes": [20 * 2**30, 20 * 2**30],
+                    "requested_reserves_bytes": [24 * 2**30, 2**30],
+                    "model_fit": "NOT_ESTABLISHED",
+                }
+                tok_dir = root / "tok"
+                tok_dir.mkdir()
+                (tok_dir / "tokenizer.json").write_text('{"notice": "SYNTHETIC_TOKENIZER"}', encoding="utf8")
+                shim = write_setup_harness(root)
+                generate_invocations = []
+
+                def fake_candidate_backend(key, source, weights, prompt, *, device, weight_verifier):
+                    weight_verifier(weights, key)
+                    b = v2_helper.backend(label=1)
+                    orig_gen = b.model.generate
+                    def fail_if_called(*a, **kw):
+                        generate_invocations.append(1)
+                        return orig_gen(*a, **kw)
+                    b.model.generate = fail_if_called
+                    b.prompt = prompt
+                    b.processor = NS()
+                    b.config = NS(text_config=NS(vocab_size=b.logit_width))
+                    b.device = "cpu"
+                    b.dtype = torch.float32
+                    b.environment = {
+                        "model": {"id": runtime.configuration()["model"], "revision": runtime.configuration()["revision"]},
+                        "prompt_sha256": PROMPT_SHA,
+                    }
+                    return b
+
+                def fake_preflight(spec, env_out, scratch, inputs, deadline):
+                    for name in ("software.json", "hardware.json", "cuda.json", "allocation.json",
+                                 "checkpoint.json", "checkpoint-stream.json", "processor.json"):
+                        write(env_out / name, {"notice": "SYNTHETIC_PREFLIGHT"})
+                    write(env_out / "preload-resources.json", res_payload)
+                    write(env_out / "preflight.json", {"status": "LIVE_GPU_PREFLIGHT_PASS",
+                        "source_sha256": digest(spec), "model_calls": 0, "weights_loaded": False, "owner_slots_consumed": 0})
+                    return tok_dir, root / "weights"
+
+                mapping = [{**row, "image_locator": f"DATA_PATH/train/Annotations/synthetic-{row['ordinal']:06d}.jpg"}
+                           for row in cohort_img["samples"]]
+                train_receipt = {"status": "TRAIN_BYTES_PASS", "verified_images": 3763, "labels_exported": False}
+
+                def setup_cmd(python, stage_name, spec_path, out, scratch, inputs, req, deadline):
+                    return [sys.executable, "-B", str(shim), "--worker", stage_name, "--spec", str(spec_path),
+                            "--output", str(out), "--scratch", str(scratch), "--inputs", str(inputs)]
+
+                stage_errors = []
+
+                def in_process_stage(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_roots=()):
+                    try:
+                        log, receipt = Path(log), Path(receipt)
+                        if "offline_setup_harness.py" in " ".join(command):
+                            with log.open("xb") as stream:
+                                proc = subprocess.run(command, cwd=cwd, stdout=stream, stderr=subprocess.STDOUT, timeout=30)
+                            assert proc.returncode == 0, log.read_text(encoding="utf8", errors="replace")
+                            sz = log.stat().st_size + (Path(watch_log_roots[0]) / "setup.log").stat().st_size
+                            write(receipt, {"schema": "fresh-process-supervision-v1", "status": "EXITED",
+                                "returncode": 0, "seconds": 1.0, "log_bytes": sz, "group_kill_sent": True,
+                                "automatic_retry": False, "retention": "ALL_PARTIAL_FILES_RETAINED", "model_fit": "NOT_ESTABLISHED"})
+                            return {"status": "EXITED", "returncode": 0}
+                        with log.open("xb") as stream:
+                            stream.write(b"WORKER_IN_PROCESS\n")
+                        out_dir = Path(command[command.index("--output") + 1])
+                        req_path = Path(command[command.index("--request") + 1])
+                        release._active = None
+                        with patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])), \
+                                patch.object(runtime, "preflight", side_effect=fake_preflight), \
+                                patch.object(campaign, "sha", side_effect=lambda p: MASTER_SHA if Path(p) == master_file else sha(p)), \
+                                patch.object(verification173, "verify_train", return_value=(train_receipt, cohort_img, mapping)), \
+                                patch("safeshift.candidates.backend.CandidateBackend", side_effect=fake_candidate_backend), \
+                                patch("safeshift.internvl_v2_memory.verify_checkpoint", return_value={"status": "STREAM_VERIFIED"}), \
+                                patch("safeshift.internvl_v2_memory.resource_check", return_value=res_payload), \
+                                patch("safeshift.internvl_v2_memory.snapshot", side_effect=lambda *_: real_snapshot(bad_proc, bad_cg)), \
+                                patch("torch.cuda.max_memory_allocated", return_value=4096), \
+                                patch("torch.cuda.max_memory_reserved", return_value=8192):
+                            w_res = runtime.worker(req_path, output=out_dir, scratch=root / "vm_temp", inputs=inputs_mount,
+                                deadline=time.monotonic() + 600)
+                            self.assertEqual(w_res["status"], "PASS", msg=str(w_res.get("failure")))
+                            self.assertEqual(w_res["model_calls"], 0)
+                            self.assertEqual(w_res["counts"], {"NOT_ATTEMPTED": 3763})
+                        write(receipt, {"schema": "fresh-process-supervision-v1", "status": "EXITED",
+                            "returncode": 0, "seconds": 2.0, "log_bytes": log.stat().st_size, "group_kill_sent": True,
+                            "automatic_retry": False, "retention": "ALL_PARTIAL_FILES_RETAINED", "model_fit": "NOT_ESTABLISHED"})
+                        return {"status": "EXITED", "returncode": 0}
+                    except BaseException:
+                        import traceback
+                        stage_errors.append(traceback.format_exc())
+                        raise
+
+                vm_capsule = root / "vm_capsule"
+                vm_capsule.mkdir()
+                write(vm_capsule / "request.json", req_fixture)
+                write(vm_capsule / "campaign-intent.json", intent)
+                real_claims = campaign.NativeClaims
+                release._active = None
+                with patch("socket.socket", side_effect=AssertionError("NO_NETWORK")), \
+                        patch.object(campaign, "NativeClaims",
+                            side_effect=lambda _, r, it, gr: real_claims(root / "vm_claims", r, it, gr)), \
+                        patch.object(release, "get", side_effect=lambda p: deepcopy(comments[p])), \
+                        patch.object(old_v2, "worker_command", side_effect=setup_cmd), \
+                        patch.object(launcher, "run_stage", side_effect=in_process_stage):
+                    vm_result = launcher.launch(vm_capsule / "request.json",
+                        output=root / "vm_working", scratch=root / "vm_temp", inputs=inputs_mount)
+                release._active = None
+
+                self.assertEqual(vm_result["status"], "PASS", msg="\n".join(stage_errors) or str(vm_result))
+                self.assertEqual(generate_invocations, [])
+                vm_archive = next((root / "vm_working").glob("*.zip"))
+                with zipfile.ZipFile(vm_archive) as zf:
+                    stop_obj = json.loads(zf.read("run/stop.json"))
+                    tel_obj = json.loads(zf.read("run/telemetry.json"))
+                self.assertEqual(stop_obj, {"reason": expected_reason})
+                self.assertEqual(
+                    {k: v for k, v in tel_obj["memory"].items() if k != "cuda_visible_devices"},
+                    {k: v for k, v in bad_snap.items() if k != "cuda_visible_devices"},
+                )
+                self.assertEqual(runtime.inspect_memory_snapshot(tel_obj["memory"]), expected_reason)
+
+                # Bundle collects cleanly (0 calls, 3763 NOT_ATTEMPTED), and Ledger.measure() blocks it fail-closed!
+                ledger.collect(req_fixture, vm_archive, {
+                    "state": "COMPLETE", "job_id": req_fixture["job"], "version": 1,
+                    "notebook_sha256": req_fixture["notebook_sha256"],
+                })
+                with self.assertRaisesRegex(ValueError, "MEASUREMENT_RUN_STOPPED_EARLY"):
+                    ledger.measure(vm_archive, job_seconds=1800)
 
 
 if __name__ == "__main__":
