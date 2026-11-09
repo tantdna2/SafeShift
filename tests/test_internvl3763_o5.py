@@ -299,6 +299,12 @@ class O5Tests(unittest.TestCase):
             events.append(deepcopy(future))
             with self.subTest(dimension=dimension), self.assertRaisesRegex(ValueError, "BUDGET_EXCEEDED"):
                 self.ledger._budget(events)
+        events = self.ledger.events()[:24]
+        old_req = deepcopy(req); old_req["bindings"]["runtime"].pop("o5_extension")
+        for n in range(3): events.append({"kind": "INTENT", "request": old_req, "reserved_calls": 1, "reserved_gpu_seconds": 14400})
+        self.assertEqual(self.ledger._budget(events)["reserved_gpu_seconds"], 68400)
+        events.append(deepcopy(events[-1]))
+        with self.assertRaisesRegex(ValueError, "BUDGET_EXCEEDED"): self.ledger._budget(events)
 
     def test_fsync_failure_and_registration_byte_drift_cannot_retry_extension(self):
         with patch.object(c, "_sync_directory", side_effect=OSError("injected fsync failure")), self.assertRaises(OSError):
@@ -309,12 +315,6 @@ class O5Tests(unittest.TestCase):
         registration = self.ledger.root / "registration.json"
         registration.write_bytes(registration.read_bytes() + b"\n")
         with self.assertRaisesRegex(ValueError, "REGISTRATION_BYTES_DRIFT"): c.Ledger(self.ledger.root)
-        events = self.ledger.events()[:24]
-        old_req = deepcopy(req); old_req["bindings"]["runtime"].pop("o5_extension")
-        for n in range(3): events.append({"kind": "INTENT", "request": old_req, "reserved_calls": 1, "reserved_gpu_seconds": 14400})
-        self.assertEqual(self.ledger._budget(events)["reserved_gpu_seconds"], 68400)
-        events.append(deepcopy(events[-1]))
-        with self.assertRaisesRegex(ValueError, "BUDGET_EXCEEDED"): self.ledger._budget(events)
 
     def test_status_forecast_cli_use_effective_cap_without_network_or_mutation(self):
         from scripts import train3763_campaign as cli
@@ -375,6 +375,17 @@ class PublicO5IdentityTests(unittest.TestCase):
         self.assertEqual(value["original_campaign_sha256"], o5.ORIGINAL_SHA256)
         self.assertEqual(value["science_sha256"], digest(c.science()))
         self.assertEqual(value["limits_after"], {**value["limits_before"], "total_gpu_seconds": 430000})
+
+    def test_duplicate_keys_nonfinite_and_duplicate_markers_are_rejected(self):
+        for payload in ('{"x":1,"x":2}', '{"x":NaN}', '{"x":Infinity}'):
+            body = o5.MARKER + "\n```json\n" + payload + "\n```"
+            locator = {"comment_id": 1, "body_sha256": hashlib.sha256(body.encode()).hexdigest()}
+            with self.subTest(payload=payload), self.assertRaises(ValueError):
+                c.record(locator, o5.MARKER, lambda _: {"id": 1, "body": body})
+        body = (o5.MARKER + '\n```json\n{}\n```\n') * 2
+        with self.assertRaisesRegex(ValueError, "ONE_STRUCTURED"):
+            c.record({"comment_id": 1, "body_sha256": hashlib.sha256(body.encode()).hexdigest()},
+                o5.MARKER, lambda _: {"id": 1, "body": body})
 
 
 if __name__ == "__main__": unittest.main()
