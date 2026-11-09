@@ -2,6 +2,14 @@
 
 ## Current TRAIN3763 campaign routing — Issue180
 
+Owner UI collection uses the separately reviewed external
+`scripts/reconcile_train3763_manual.py`; read
+[manual reconciliation](TRAIN3763_MANUAL_RECONCILIATION.md). It is deliberately
+outside the runtime source manifest and imports the original clean approved
+checkout. It appends truthful COLLECTED/OWNER_UI_MANUAL through unchanged Ledger
+mirror/chain/fsync APIs; original histories/measure retain source-bound gating.
+Tests: `test_train3763_manual.py` (CPU synthetic, SDK HTTP doubles, no sockets).
+
 Read [campaign contract/runbook](TRAIN3763_CAMPAIGN.md) before the historical
 execution/PREP sections. `internvl3763_campaign.py` owns one authenticated finite
 grant, science-stable planning, diagnosed repair, canonical machine/path binding,
