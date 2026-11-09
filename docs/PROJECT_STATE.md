@@ -1,6 +1,34 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — private CPython Input implementation — 09/11/2026
+## CURRENT — opaque CPython transport preparation — 09/11/2026
+
+[Owner task6731108968](https://github.com/tantdna2/SafeShift/pull/187#issuecomment-6731108968)
+starts branch `fix/train3763-opaque-python-transport` from merged PR187/main
+`a89c8f7313328460368145cec96f26873fb29640`. One Draft PR replaces recognizable
+raw-tar publication with deterministic canonical Base64 `.bin` plus strict v2
+manifest. Original CPython3.11.9 archive length/SHA and notices stay unchanged.
+
+Local original archive SHA/length and case-colliding terminfo pairs were directly
+verified. Packaging/restore passed locally. Provider proof checks actual private
+v1 members and downloads, transport SHA/length and restored original SHA/length;
+worker repeats restore before frozen extraction/probe/isolated venv selection.
+Staging/submit gates remain before INTENT/PUSH_INTENT; Python network fallback
+remains forbidden. See [runbook](TRAIN3763_PYTHON_INPUT.md) and
+[acceptance](research/TRAIN3763_OPAQUE_PYTHON_ACCEPTANCE_20261109.md).
+
+**DATASET_BYTE_PASS / Kaggle preservation of Base64 remain NOT_VERIFIED.** No
+Kaggle operation/upload/create/version, Attempt7, GPU, inference or TEST occurs
+in this task. One-time publication exception is consumed; new publication needs
+fresh reconciliation and separate authorization after review. The operator stays
+STOP. This PR does not grant audit/merge/execution or scientific qualification.
+
+Science SHA remains `ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+Frozen inherited source, original data/IDs, ordinal0 success, Attempts1–6, O5 and
+all scientific decisions remain immutable. New runtime/notebook/manifest hashes
+require direct ChatGPT review, independent security/provenance audit, separately
+authorized merge, postmerge verification and technical requalification.
+
+## HISTORICAL — PR187 private CPython Input implementation — 09/11/2026
 
 [Owner task6720571990](https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6720571990)
 starts branch `feat/train3763-offline-python-input` from merged PR186/main
