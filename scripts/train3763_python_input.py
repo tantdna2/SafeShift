@@ -2,26 +2,37 @@
 import argparse
 import json
 from pathlib import Path
-import shutil
+import time
 from safeshift import internvl3763_python as py
 from safeshift.pilot.artifacts import write
 
 
 def prepare(archive, output, license_name, redistribution_ref):
-    proof = py.verify_archive(archive)  # BEFORE any upload folder is created
-    py.require(license_name and redistribution_ref.strip(), "OPERATOR_LICENSE_REVIEW_REQUIRED")
-    output = Path(output)
+    deadline = time.monotonic() + py.LOCAL_SECONDS
+    proof = py.verify_archive(archive, deadline)  # BEFORE any upload folder is created
+    py.require(license_name == "other" and redistribution_ref.strip(), "OPERATOR_LICENSE_REVIEW_REQUIRED")
+    output = py.no_alias(output)
     output.mkdir(parents=True, exist_ok=False)
     dataset = output / "dataset"
     dataset.mkdir()
-    shutil.copyfile(archive, dataset / py.manifest()["filename"])
+    transport = py.encode(archive, dataset / py.PAYLOAD, deadline)
     write(dataset / py.MARKER, py.manifest())
-    py.verify_directory(dataset)
+    py.verify_directory(dataset, deadline)
+    # Restoration proof stays OUTSIDE the upload directory. Original is retained.
+    restored = output / py.manifest()["filename"]
+    py.decode(dataset / py.PAYLOAD, restored, deadline)
     # Kaggle's CLI treats this file as upload metadata, not a dataset member.
     write(dataset / "dataset-metadata.json", {"id": py.REF.rsplit("/", 1)[0],
-        "title": "SafeShift CPython 3.11.9 20240726", "licenses": [{"name": license_name}]})
+        "title": "SafeShift CPython 3.11.9 20240726", "isPrivate": True,
+        "description": "Private TRAIN3763 software Input. Canonical Base64 transport of unchanged "
+            "CPython 3.11.9 (20240726) python-build-standalone archive, not encryption. "
+            "Bundled third-party licenses/notices remain in the original archive. "
+            "The 'other' category does not relicense upstream components; redistribution "
+            "requires the separately retained reviewed rights evidence.",
+        "licenses": [{"name": license_name}]})
     write(output / "local-proof.json", {"status": "LOCAL_BYTES_PASS_NOT_UPLOADED", **proof,
         "ref": py.REF, "license_name": license_name, "redistribution_review": redistribution_ref,
+        "transport_sha256": transport["sha256"], "transport_bytes": transport["bytes"],
         "provider_verification": "NOT_RUN", "gpu_calls": 0})
     return {"dataset": str(dataset), "status": "LOCAL_BYTES_PASS_NOT_UPLOADED"}
 

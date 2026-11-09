@@ -298,6 +298,26 @@ def input_sources(request):
     return value
 
 
+def bounded_python_zip(path):
+    """Bound central-directory allocation BEFORE zipfile parses untrusted entries.
+
+    Small, single-file non-ZIP64 provider wrappers only. No multi-disk ZIPs,
+    trailing data or huge metadata tables. Payload identity is checked separately.
+    """
+    import struct
+    length = path.stat().st_size
+    with path.open("rb") as stream:
+        stream.seek(max(0, length - 65557))
+        tail = stream.read(65557)
+    offset = tail.rfind(b"PK\x05\x06")
+    require(offset >= 0 and len(tail)-offset >= 22, "PYTHON_ZIP_DIRECTORY")
+    _, disk, start_disk, disk_entries, entries, size, start, comment = struct.unpack(
+        "<4s4H2LH", tail[offset:offset+22])
+    require(disk == start_disk == 0 and disk_entries == entries == 1 and size <= 4096
+        and start + size == length - len(tail) + offset and offset+22+comment == len(tail),
+        "PYTHON_ZIP_DIRECTORY_BOUND")
+
+
 def verify_python_input(client, request, destination):
     """Actual private provider metadata AND independently downloaded v1 bytes.
 
@@ -306,19 +326,27 @@ def verify_python_input(client, request, destination):
     """
     import os
     import stat
+    import shutil
     import zipfile
     from safeshift import internvl3763_python as py
     from safeshift.pilot.contract import json_bytes
     from scripts.submit_internvl_v2 import bounded_http
     from kagglesdk.datasets.types.dataset_api_service import ApiGetDatasetMetadataRequest
     py.validate_binding(request)
-    destination = Path(destination)
+    destination = py.no_alias(destination)
     destination.mkdir(parents=True, exist_ok=False)
     expected = py.manifest()
     owner, slug, version = py.REF.split("/")
-    sizes = {py.MARKER: len(json_bytes(expected)), expected["filename"]: expected["lock"]["size_bytes"]}
-    receipt = {"schema": "train3763-python-provider-v1", "status": "BLOCKED", "ref": py.REF}
+    sizes = {py.MARKER: len(json_bytes(expected)),
+        expected["transport"]["filename"]: expected["transport"]["size_bytes"]}
+    deadline = time.monotonic() + 240
+    receipt = {"schema": "train3763-python-provider-v2", "status": "BLOCKED", "ref": py.REF}
     try:
+        # Two downloaded files (possibly ZIP-wrapped), verified copies, original.
+        # No provider extraction, model, or Python execution takes place here.
+        require(shutil.disk_usage(destination).free >=
+            2 * sum(sizes.values()) + 2 * 2**20 + expected["lock"]["size_bytes"],
+            "PYTHON_PROVIDER_DISK_BOUND")
         with bounded_http():
             query = ApiGetDatasetMetadataRequest()
             query.owner_slug, query.dataset_slug = owner, slug
@@ -333,11 +361,14 @@ def verify_python_input(client, request, destination):
             verified = destination / "verified"
             verified.mkdir()
             for index, (name, size) in enumerate(sizes.items()):
+                require(time.monotonic() < deadline, "PYTHON_PROVIDER_DEADLINE")
                 folder = destination / str(index)
                 folder.mkdir()
                 path = download_capsule(client, owner, slug, version, name, folder)
+                require(path.stat().st_size <= size + 2**20, "PYTHON_DOWNLOAD_WRAPPER_BOUND")
                 target = verified / name
                 if zipfile.is_zipfile(path):
+                    bounded_python_zip(path)
                     with zipfile.ZipFile(path) as bundle:
                         entries = bundle.infolist()
                         require(len(entries) == 1 and entries[0].filename == name
@@ -347,15 +378,16 @@ def verify_python_input(client, request, destination):
                         with bundle.open(entries[0]) as source, target.open("xb") as stream:
                             total = 0
                             while chunk := source.read(65536):
+                                require(time.monotonic() < deadline, "PYTHON_PROVIDER_DEADLINE")
                                 total += len(chunk)
                                 require(total <= size, "PYTHON_DOWNLOAD_WRAPPER_BOUND")
                                 stream.write(chunk)
                             stream.flush(); os.fsync(stream.fileno())
                 else:
                     require(path.stat().st_size == size, "PYTHON_DOWNLOAD_SIZE")
-                    import shutil
                     shutil.copyfile(path, target)
-        _, proof = py.verify_directory(verified)
+        payload, proof = py.verify_directory(verified, deadline)
+        proof.update(py.decode(payload, destination / expected["filename"], deadline))
         receipt.update(status="PASS", private=True, manifest_sha256=digest(expected), **proof)
         return receipt
     except Exception as error:

@@ -2,14 +2,20 @@
 
 ## Current CPython Input route — 09/11/2026
 
-[Owner choice6720571990](https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6720571990)
+[Owner opaque-transport task6731108968](https://github.com/tantdna2/SafeShift/pull/187#issuecomment-6731108968)
 requires the [private CPython3.11.9 Input runbook](TRAIN3763_PYTHON_INPUT.md).
 Only this campaign route now requires exactly two extra dataset sources: the
 per-attempt private capsule and the fixed private Python Input v1. Older
 one-extra-capsule instructions below are historical. Do not modify the original
 grant or Attempts1–6. Python archive size/SHA/release and science hash are unchanged.
 No runtime Python download fallback is allowed; pip/package installation is unchanged.
-Dataset publication/real byte proof is NOT_VERIFIED; code/offline evidence is separate.
+The v2 manifest pins canonical Base64 `.bin` transport and original archive
+identities. Provider and worker restore and verify original bytes before extraction;
+no recognizable original tar is uploaded. Kaggle preservation/real byte proof is
+NOT_VERIFIED; local round-trip evidence is separate. The consumed publication
+exception grants no further create/version; new publication needs separate
+authorization after review and reconciliation. Historical raw-tar instructions
+are superseded only on this new campaign route.
 Stop at the new Draft PR for review/audit, with no Kaggle/GPU or Attempt7 in this task.
 
 The following PR186 resource/Attempt1–4 section is retained as historical evidence.

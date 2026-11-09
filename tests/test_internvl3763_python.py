@@ -2,6 +2,8 @@
 from contextlib import contextmanager, ExitStack
 from copy import deepcopy
 import io
+import base64
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -20,7 +22,7 @@ from safeshift import internvl3763_python as py
 from safeshift import internvl3763_operator as op
 from safeshift import internvl3763_campaign as campaign
 from safeshift.pilot.artifacts import write, read, sha
-from safeshift.pilot.contract import digest
+from safeshift.pilot.contract import digest, json_bytes
 
 
 def synthetic_archive(path, members=None):
@@ -44,9 +46,14 @@ def synthetic_mount(inputs, members=None):
     original_binding = py.binding()
     folder = Path(inputs) / py.REF.split("/")[1]
     folder.mkdir(parents=True, exist_ok=False)
-    archive = folder / expected["filename"]
-    synthetic_archive(archive, members)
-    expected["lock"].update(size_bytes=archive.stat().st_size, sha256=sha(archive))
+    # Original stays outside the Dataset; transport is the only binary member.
+    with tempfile.TemporaryDirectory() as temp:
+        archive = Path(temp) / expected["filename"]
+        synthetic_archive(archive, members)
+        expected["lock"].update(size_bytes=archive.stat().st_size, sha256=sha(archive))
+        payload = base64.b64encode(archive.read_bytes())
+    (folder / py.PAYLOAD).write_bytes(payload)
+    expected["transport"].update(size_bytes=len(payload), sha256=hashlib.sha256(payload).hexdigest())
     write(folder / py.MARKER, expected)
     real_statvfs = getattr(os, "statvfs", None)
     def filesystem(path):
@@ -96,7 +103,7 @@ class PythonInputTests(unittest.TestCase):
             with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temp:
                 inputs = Path(temp)/"input"
                 with synthetic_mount(inputs) as (folder, expected):
-                    archive = folder / expected["filename"]
+                    archive = folder / py.PAYLOAD
                     if fault == "bytes":
                         archive.write_bytes(b"x"*archive.stat().st_size)
                     elif fault == "size":
@@ -149,8 +156,10 @@ class PythonInputTests(unittest.TestCase):
                     probe.assert_not_called()
                     self.assertEqual(read(out/"python-input.json")["status"], "BLOCKED")
         with synthetic_mount(self.inputs) as (folder, expected):
-            archive = folder/expected["filename"]; archive.write_bytes(b"not a gzip tar")
-            expected["lock"].update(size_bytes=archive.stat().st_size, sha256=sha(archive))
+            raw = b"not a gzip tar"
+            archive = folder/py.PAYLOAD; archive.write_bytes(base64.b64encode(raw))
+            expected["lock"].update(size_bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+            expected["transport"].update(size_bytes=archive.stat().st_size, sha256=sha(archive))
             (folder/py.MARKER).write_text(__import__("json").dumps(expected))
             with self.assertRaises(tarfile.ReadError): self.stage()
 
@@ -183,14 +192,22 @@ class PythonInputTests(unittest.TestCase):
     def test_packaging_preserves_archive_and_checks_bytes_before_creating_upload_folder(self):
         from scripts.train3763_python_input import prepare
         with synthetic_mount(self.inputs) as (folder, expected):
-            archive = folder/expected["filename"]
-            prepare(archive, self.root/"package", "SYNTHETIC_LICENSE", "SYNTHETIC_REVIEW_ONLY")
-            self.assertEqual((self.root/"package/dataset"/expected["filename"]).read_bytes(), archive.read_bytes())
+            archive = self.root/expected["filename"]
+            archive.write_bytes(base64.b64decode((folder/py.PAYLOAD).read_bytes(), validate=True))
+            prepare(archive, self.root/"package", "other", "SYNTHETIC_REVIEW_ONLY")
+            dataset = self.root/"package/dataset"
+            self.assertEqual((dataset/py.PAYLOAD).read_bytes(), (folder/py.PAYLOAD).read_bytes())
+            self.assertFalse((dataset/expected["filename"]).exists())
+            self.assertEqual((self.root/"package"/expected["filename"]).read_bytes(), archive.read_bytes())
+            metadata = read(dataset/"dataset-metadata.json")
+            self.assertTrue(metadata["isPrivate"])
+            self.assertEqual(metadata["licenses"], [{"name": "other"}])
+            self.assertIn("third-party", metadata["description"])
             self.assertEqual(read(self.root/"package/dataset"/py.MARKER), expected)
             self.assertEqual(read(self.root/"package/local-proof.json")["provider_verification"], "NOT_RUN")
             archive.write_bytes(b"corrupt")
             with self.assertRaises(ValueError):
-                prepare(archive, self.root/"bad-package", "SYNTHETIC_LICENSE", "SYNTHETIC_REVIEW_ONLY")
+                prepare(archive, self.root/"bad-package", "other", "SYNTHETIC_REVIEW_ONLY")
             self.assertFalse((self.root/"bad-package").exists())
 
     def test_real_setup_child_missing_input_exports_failure_without_reaching_worker(self):
@@ -220,6 +237,130 @@ class PythonInputTests(unittest.TestCase):
             self.stage()  # real boot.probe_interpreter and OS subprocess, no mocked probe
         self.assertFalse(read(self.out/"python-input.json")["probe"]["eligible"])
 
+    def test_streaming_roundtrip_all_padding_boundaries_and_bounded_memory(self):
+        import tracemalloc
+        for size in (1, 2, 3, py.ENCODE_CHUNK-1, py.ENCODE_CHUNK, py.ENCODE_CHUNK+1, 4*2**20+1):
+            with self.subTest(size=size), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                raw = (bytes(range(256)) * (size//256+1))[:size]
+                encoded = base64.b64encode(raw)
+                expected = deepcopy(py.manifest())
+                expected["lock"].update(size_bytes=size, sha256=hashlib.sha256(raw).hexdigest())
+                expected["transport"].update(size_bytes=len(encoded), sha256=hashlib.sha256(encoded).hexdigest())
+                source = root/"original"; source.write_bytes(raw)
+                with patch.object(py, "manifest", return_value=expected):
+                    tracemalloc.start()
+                    try:
+                        py.encode(source, root/"payload.bin", time.monotonic()+60)
+                        py.decode(root/"payload.bin", root/"restored", time.monotonic()+60)
+                        peak = tracemalloc.get_traced_memory()[1]
+                    finally:
+                        tracemalloc.stop()
+                self.assertLess(peak, 1024*1024)  # no archive-sized Python buffer
+                self.assertEqual((root/"payload.bin").read_bytes(), encoded)
+                self.assertEqual((root/"restored").read_bytes(), raw)
+                self.assertEqual(source.read_bytes(), raw)
+
+    def test_invalid_truncated_noncanonical_and_wrong_original_fail_before_extract(self):
+        cases = [b"!AAA", b"YQ=", b"YQ==\n", b"YR==", b"YQ==Yg==", b"YWJj", b"YWJjZA=="]
+        for encoded in cases:
+            with self.subTest(encoded=encoded), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp); scratch=root/"scratch"; scratch.mkdir(); out=root/"out"; out.mkdir()
+                with synthetic_mount(root/"input") as (folder, expected):
+                    payload = folder/py.PAYLOAD; payload.write_bytes(encoded)
+                    expected["transport"].update(size_bytes=len(encoded), sha256=sha(payload))
+                    # Correct transport hash cannot bless malformed representation or wrong original.
+                    (folder/py.MARKER).write_text(json.dumps(expected))
+                    with patch.object(py.train_python, "extract") as extract, \
+                            patch.object(py.boot, "probe_interpreter") as probe, self.assertRaises(ValueError):
+                        py.stage(root/"input", self.request, scratch, out, {}, time.monotonic()+60)
+                    extract.assert_not_called(); probe.assert_not_called()
+
+    def test_duplicate_marker_keys_hardlink_alias_and_legacy_archive_are_rejected(self):
+        for fault in ("duplicate-key", "hardlink", "legacy"):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                with synthetic_mount(root/"input") as (folder, expected):
+                    marker = folder/py.MARKER
+                    if fault == "duplicate-key":
+                        text = marker.read_text()
+                        marker.write_text('{"private":true,' + text[1:])
+                    elif fault == "hardlink":
+                        payload = folder/py.PAYLOAD
+                        os.link(payload, root/"alias")
+                    else:
+                        (folder/py.PAYLOAD).rename(folder/expected["filename"])
+                    with self.assertRaises(ValueError): py.verify_directory(folder)
+
+    def test_decode_original_size_bounds_disk_full_and_deadline_preserve_partials(self):
+        for fault in ("short-original", "oversize-original", "disk", "write", "deadline"):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as temp:
+                root=Path(temp)
+                with synthetic_mount(root/"input") as (folder, expected), ExitStack() as stack:
+                    if fault == "short-original": expected["lock"]["size_bytes"] += 1
+                    if fault == "oversize-original": expected["lock"]["size_bytes"] -= 1
+                    if fault == "disk": stack.enter_context(patch.object(py.shutil, "disk_usage", return_value=NS(free=0)))
+                    if fault == "write": stack.enter_context(patch.object(py.os, "fsync", side_effect=OSError("DISK_FULL")))
+                    if fault == "deadline":
+                        # Expire during streaming, after initial verification and exclusive open.
+                        stack.enter_context(patch.object(py.time, "monotonic", side_effect=[0, 0, 999]))
+                    target = root/"restored"
+                    with self.assertRaises((ValueError, OSError)):
+                        py.decode(folder/py.PAYLOAD, target, 100 if fault=="deadline" else time.monotonic()+60)
+                    if fault in ("short-original", "oversize-original", "write", "deadline"):
+                        self.assertTrue(target.exists())
+
+    def test_casefold_collision_preserved_in_transport_and_never_overwritten(self):
+        members = [("python/bin/python3.11", "file", b"SYNTHETIC_EXECUTABLE"),
+            ("python/share/terminfo/2/2621A", "file", b"UPPER"),
+            ("python/share/terminfo/2/2621a", "file", b"lower"),
+            ("python/share/terminfo/h/hp2621A", "file", b"HP_UPPER"),
+            ("python/share/terminfo/h/hp2621a", "file", b"hp_lower")]
+        with synthetic_mount(self.inputs, members) as (folder, expected):
+            archive = self.root/"original.tar.gz"
+            py.decode(folder/py.PAYLOAD, archive, time.monotonic()+60)
+            with tarfile.open(archive, "r:gz") as tar:
+                self.assertEqual(tar.getnames(), [m[0] for m in members])
+                for member in members:
+                    self.assertEqual(tar.extractfile(member[0]).read(), member[2])
+            # Explicitly observe target filesystem semantics, not host OS guesses.
+            probe_path = self.scratch/"CaseProbe"; probe_path.write_bytes(b"x")
+            case_sensitive = not (self.scratch/"caseprobe").exists()
+            with patch.object(py.boot, "probe_interpreter", side_effect=lambda p, env:
+                    {"eligible": True, "version": [3,11,9], "executable": str(p)}) as probe:
+                if case_sensitive:
+                    self.stage()
+                    for name, _, raw in members:
+                        self.assertEqual((self.scratch/"input-cpython3119"/name).read_bytes(), raw)
+                else:
+                    with self.assertRaises(FileExistsError): self.stage()
+                    probe.assert_not_called()
+                    self.assertEqual((self.scratch/"input-cpython3119"/members[1][0]).read_bytes(), b"UPPER")
+
+    def test_python_provider_failure_prevents_staging_intent(self):
+        from scripts.train3763_campaign import stage
+        from test_internvl3763_campaign import fixture
+        from safeshift import internvl3763_release as authority
+        base = py.ROOT/"data/processed"
+        with tempfile.TemporaryDirectory(prefix="synthetic-python-stage-", dir=base) as temp:
+            root = Path(temp)
+            request, grant, comments = fixture(root/"ledger", actual_source=True)
+            ledger = campaign.Ledger.create(root/"ledger", root/"mirror", grant, "synthetic-machine")
+            before = {str(p.relative_to(root)): p.read_bytes() for r in (ledger.root, ledger.mirror)
+                for p in r.rglob("*") if p.is_file()}
+            context = {key: request["bindings"]["runtime"][key]
+                for key in ("technical_revision", "execution_input", "python_input")}
+            with patch.object(authority, "get", side_effect=lambda key: deepcopy(comments[key])), \
+                    patch.object(op, "api", return_value=Mock()), \
+                    patch.object(op, "verify_python_input", side_effect=ValueError("BAD_TRANSPORT")), \
+                    self.assertRaisesRegex(ValueError, "BAD_TRANSPORT"):
+                stage(ledger, request["execution_release"], context,
+                    request["bindings"]["runtime"]["execution_request"]["cohort"],
+                    directory=root/"handoff", calls=1, seconds=1800, action="initial")
+            self.assertEqual(before, {str(p.relative_to(root)): p.read_bytes() for r in (ledger.root, ledger.mirror)
+                for p in r.rglob("*") if p.is_file()})
+            self.assertFalse((root/"handoff").exists())
+
     def test_python_provider_failure_prevents_push_intent_and_preserves_ledger(self):
         from test_internvl3763_campaign import fixture
         from safeshift import internvl3763_release as authority
@@ -246,12 +387,12 @@ class PythonInputTests(unittest.TestCase):
         with synthetic_mount(self.inputs) as (folder, expected):
             nested = self.inputs/"datasets/nguynanhtn"; nested.mkdir(parents=True)
             moved = nested/folder.name; folder.rename(moved)
-            self.assertEqual(py.mounted(self.inputs, self.request)[0], moved/expected["filename"])
+            self.assertEqual(py.mounted(self.inputs, self.request)[0], moved/py.PAYLOAD)
             wrong = self.inputs/"datasets/attacker"; nested.rename(wrong)
             with self.assertRaisesRegex(ValueError, "IDENTITY"):
                 py.mounted(self.inputs, self.request)
             wrong.rename(nested)
-            archive = moved/expected["filename"]
+            archive = moved/py.PAYLOAD
             saved = self.root/"archive"; archive.rename(saved)
             try:
                 archive.symlink_to(saved)
@@ -367,8 +508,38 @@ class PythonProviderTests(unittest.TestCase):
             proof = op.verify_python_input(self.client, self.request, self.root/str(mode))
             self.assertEqual(proof["status"], "PASS")
             self.assertEqual(proof["sha256"], self.expected["lock"]["sha256"])
+            self.assertEqual(proof["transport_sha256"], self.expected["transport"]["sha256"])
+            restored = self.root/str(mode)/self.expected["filename"]
+            self.assertEqual(sha(restored), proof["sha256"])
             self.client.kernels_push.assert_not_called()
         self.assertEqual(len(self.calls), 10)  # metadata + two (RPC + signed GET), twice
+
+    def test_remote_original_mismatch_disk_deadline_and_zip_directory_bounds(self):
+        original_sha = self.expected["lock"]["sha256"]
+        for fault in ("original", "disk", "deadline", "directory"):
+            self.expected["lock"]["sha256"] = original_sha
+            (self.folder/py.MARKER).write_bytes(json_bytes(self.expected))
+            self.fault = "zip" if fault == "directory" else None
+            with self.subTest(fault=fault), ExitStack() as stack:
+                if fault == "original":
+                    self.expected["lock"]["sha256"] = "0"*64
+                    (self.folder/py.MARKER).write_bytes(json_bytes(self.expected))
+                if fault == "disk": stack.enter_context(patch.object(py.shutil, "disk_usage", return_value=NS(free=0)))
+                if fault == "deadline":
+                    stack.enter_context(patch.object(op.time, "monotonic", side_effect=[0, 999]))
+                if fault == "directory":
+                    original = op.bounded_python_zip
+                    def bad_directory(path):
+                        # Forge huge entry count; reject before ZipFile allocates table.
+                        data = bytearray(path.read_bytes()); offset=data.rfind(b"PK\x05\x06")
+                        data[offset+8:offset+12] = b"\xff"*4; path.write_bytes(data)
+                        original(path)
+                    stack.enter_context(patch.object(op, "bounded_python_zip", side_effect=bad_directory))
+                with self.assertRaisesRegex(ValueError, "PYTHON_PROVIDER_FAILED_NO_RETRY"):
+                    op.verify_python_input(self.client, self.request, self.root/fault)
+                if fault == "original":
+                    self.assertTrue((self.root/fault/self.expected["filename"]).exists())
+                self.client.kernels_push.assert_not_called()
 
     def test_provider_metadata_transport_wrong_bytes_and_poisoned_zip_stop(self):
         for fault in ("public", "owner", "slug", "listing", "pagination", "transport", "http",

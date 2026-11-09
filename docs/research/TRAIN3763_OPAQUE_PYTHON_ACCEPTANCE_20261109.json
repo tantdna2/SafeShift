@@ -1,0 +1,131 @@
+{
+  "schema": "train3763-opaque-python-acceptance-v1",
+  "date": "2026-11-09",
+  "timezone": "Asia/Bangkok",
+  "status": "FINAL_SOURCE_STABLE_CPU_PASS_LIVE_NOT_VERIFIED",
+  "base": "a89c8f7313328460368145cec96f26873fb29640",
+  "validated_code_commit": "30cfcafa51e41d44a31e1eb5527a94c34108afcc",
+  "runtime_commit": "fd67e7fc392991fba47055556d412f5e5cfad573",
+  "source_sha256": "7af690119660920f29465a45dbe20d40ac67ab5ceae90abdc7c420dc26ea2bf5",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "manifest_sha256": "c6a508803f4e435261da40e3d1c6a08d855ba3fc05af84bf8ecb6edc29ba6e77",
+  "inherited_files_unchanged": 84,
+  "runtime_manifest_files": 91,
+  "notebooks": {
+    "SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
+      "sha256": "0ac49ecd4329762b201e3bab0bf470971f771e505d6c22d7c7cbd0739d456d5f",
+      "code_sha256": "1cd11de3ebd6daa26ef71c6a05ec51f8796f8031117ecdd07d215a216714eec5"
+    },
+    "SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
+      "sha256": "f9da431381281c8240a2709a8d04d5711a9f8ae2a90561d656e699eac32ebd74",
+      "code_sha256": "012a91c88bf329be305c0132c3f8c4adbc4bf59e678744705fcb25092639e7fa"
+    }
+  },
+  "packaging_helper_sha256": "9a83299d9a32feb3d203845538a4ef49be5069462e83d7686066c896ca897da6",
+  "original": {
+    "bytes": 29713170,
+    "sha256": "f6e955dc9ddfcad74e77abe6f439dac48ebca14b101ed7c85a5bf3206ed2c53d"
+  },
+  "transport": {
+    "bytes": 39617560,
+    "sha256": "871cccab019cb6ef7417af6f3287233f3ba25e904fc007c429fdcb5e3a67b9f5"
+  },
+  "restored": {
+    "bytes": 29713170,
+    "sha256": "f6e955dc9ddfcad74e77abe6f439dac48ebca14b101ed7c85a5bf3206ed2c53d"
+  },
+  "actual_local_archive_members": 5192,
+  "case_collisions": [
+    "python/share/terminfo/2/2621A",
+    "python/share/terminfo/2/2621a",
+    "python/share/terminfo/h/hp2621A",
+    "python/share/terminfo/h/hp2621a"
+  ],
+  "notices_preserved": "UNCHANGED_ORIGINAL_ARCHIVE_HASH",
+  "groups": [
+    {
+      "name": "windows-broad-native-cpu-and-pinned-sdk",
+      "tests": 263,
+      "passed": 261,
+      "skipped": 2,
+      "failures": 0,
+      "errors": 0,
+      "tracked_dirty": false,
+      "log": "data/processed/python-opaque-validation-20261109/final-cpu/tests.log",
+      "log_sha256": "4f4a04befcd9a2b4308e8956b0a8e88d05ca1d278ce8a34082591beff1db1df9",
+      "receipt": "data/processed/python-opaque-validation-20261109/final-cpu/receipt.json",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "dependencies": {
+        "Pillow": "12.3.0",
+        "numpy": "2.4.6",
+        "tokenizers": "0.21.4",
+        "torch": "2.6.0+cpu",
+        "torchvision": "0.21.0+cpu",
+        "transformers": "4.55.4"
+      },
+      "seconds": 930.268
+    },
+    {
+      "name": "linux-input",
+      "tests": 22,
+      "passed": 19,
+      "skipped": 3,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 184.059,
+      "command": "python3 -B -m unittest discover -s tests -p test_internvl3763_python.py -v",
+      "evidence": "Final source-stable WSL terminal transcript",
+      "skipped_cases": "Pinned SDK cases covered by Windows broad group"
+    },
+    {
+      "name": "linux-setup-supervisor",
+      "tests": 5,
+      "passed": 5,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 86.052,
+      "log": "data/processed/python-opaque-validation-20261109/linux-setup.log",
+      "log_sha256": "df763102a8dde7e61f8f9e85c43377d63ba6535220b91a16c7d0de2db0da5a5c"
+    },
+    {
+      "name": "notebook-rebuild",
+      "tests": 3,
+      "passed": 3,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0
+    },
+    {
+      "name": "foundation-smoke",
+      "tests": 2,
+      "passed": 2,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0
+    }
+  ],
+  "groups_overlap": true,
+  "windows_os_skips_covered_on_linux": true,
+  "exploratory_failure": {
+    "scope": "Earlier Linux Input run during edits",
+    "test": "test_real_setup_child_missing_input_exports_failure_without_reaching_worker",
+    "error": "Expected setup/python-input.json absent in FAIL ZIP",
+    "final_status": "PASS_IN_FINAL_SOURCE_STABLE_COMPLETE_GROUP",
+    "root_cause": "NOT_ASSERTED"
+  },
+  "unresolved_failures": [],
+  "kaggle_operations": 0,
+  "kaggle_uploads": 0,
+  "kaggle_submissions": 0,
+  "attempt7_created": false,
+  "gpu_calls": 0,
+  "real_model_inference_calls": 0,
+  "real_image_reads": 0,
+  "test_split_reads": 0,
+  "dataset_byte_pass": "NOT_VERIFIED",
+  "kaggle_encoding_preservation": "NOT_VERIFIED",
+  "independent_audit": "NOT_PERFORMED",
+  "future_publication": "BLOCKED_PENDING_FRESH_RECONCILIATION_AND_SEPARATE_AUTHORIZATION"
+}
