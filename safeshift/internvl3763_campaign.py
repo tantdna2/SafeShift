@@ -232,6 +232,10 @@ def bind(grant, request, *, reader=None):
         and re.fullmatch(r"nguynanhtn/safeshift-train3763-" + re.escape(grant["campaign_id"]) + r"-[1-9][0-9]*", request["job"]),
         "CAMPAIGN_JOB_CAPS_IDENTITY")
     reviewed = revision(grant, request, reader=reader)
+    from safeshift import internvl3763_o5 as o5
+    if "o5_extension" in request["bindings"]["runtime"] or (
+            digest(grant) == o5.ORIGINAL_SHA256 and int(request["job"].rsplit("-", 1)[1]) >= 8):
+        o5.execution(grant, request, reviewed, reader=reader)
     if p["action"] == "repair":
         require(p["repair"]["fix_sha256"] == reviewed["source_sha256"]
             and p["repair"]["regression_sha256"] == reviewed["regression_sha256"], "REPAIR_REVIEWED_FIX_REGRESSION")
@@ -283,10 +287,13 @@ class Ledger:
         require(self.mirror.resolve() != self.root.resolve() and not self.mirror.resolve().is_relative_to(self.root.resolve())
             and not self.root.resolve().is_relative_to(self.mirror.resolve()), "INDEPENDENT_CUSTODY_DIRECTORY")
         require(read(self.mirror / "registration.json") == self.registration, "LEDGER_REGISTRATION_LOST_OR_ROLLED_BACK")
+        require((self.root / "registration.json").read_bytes() == (self.mirror / "registration.json").read_bytes(),
+            "LEDGER_REGISTRATION_BYTES_DRIFT")
         self.grant = self.registration["grant"]
         require(self.grant["operator_root_sha256"] == operator_binding(self.root), "CAMPAIGN_CANONICAL_OPERATOR_ROOT")
         guard = self.root.parent / (".train3763-"+self.grant["campaign_id"]+".initialized.json")
         require(read(guard) == self.registration, "CAMPAIGN_INITIALIZATION_GUARD_LOST")
+        require(guard.read_bytes() == (self.root / "registration.json").read_bytes(), "CAMPAIGN_GUARD_BYTES_DRIFT")
         self.events()
 
     @classmethod
@@ -320,13 +327,67 @@ class Ledger:
             event = read(path)
             require(event["previous"] == previous and event["campaign_sha256"] == digest(self.grant), "LEDGER_CHAIN")
             result.append(event); previous = digest(event)
+        self._budget(result)
         return result
+
+    def _budget(self, events):
+        from safeshift import internvl3763_o5 as o5
+        caps, extension = deepcopy(self.grant["caps"]), None
+        calls = gpu = jobs = 0
+        for index, event in enumerate(events):
+            if event["kind"] == o5.KIND:
+                require(extension is None, "O5_EXTENSION_REPLAY")
+                caps = o5.validate_extension(event, self.grant, events[:index], sha(self.root / "registration.json"))
+                extension = event
+            elif event["kind"] == "INTENT":
+                req = event["request"]
+                require(type(event["reserved_calls"]) is int and type(event["reserved_gpu_seconds"]) is int
+                    and type(req["plan"]["max_calls"]) is int
+                    and event["reserved_calls"] == req["plan"]["max_calls"] > 0
+                    and event["reserved_gpu_seconds"] == req["plan"]["max_seconds"] * caps["physical_gpus"] > 0
+                    and type(req["plan"]["max_seconds"]) is int
+                    and 120 <= req["plan"]["max_seconds"] <= caps["job_seconds"]
+                    and event["reserved_calls"] <= caps["job_calls"], "LEDGER_RESERVATION_DRIFT")
+                require(req["bindings"]["runtime"].get("o5_extension") == extension
+                    and event.get("o5_extension_sha256") == (digest(extension) if extension else None),
+                    "O5_INTENT_LINEAGE")
+                jobs += 1; calls += event["reserved_calls"]; gpu += event["reserved_gpu_seconds"]
+                require(jobs <= caps["total_jobs"] and calls <= caps["total_calls"]
+                    and gpu <= caps["total_gpu_seconds"], "LEDGER_BUDGET_EXCEEDED_NO_REFUND")
+        return {"caps": caps, "extension": extension, "reserved_calls": calls,
+            "reserved_gpu_seconds": gpu, "jobs": jobs}
+
+    def budget(self, *, authenticate=False):
+        from safeshift import internvl3763_o5 as o5
+        result = self._budget(self.events())
+        if authenticate and result["extension"]:
+            o5.authority(self.grant)
+            require(load(result["extension"]["original_locator"]) == self.grant, "O5_AUTHENTIC_ORIGINAL_GRANT")
+        return result
+
+    def extend_o5(self, original_locator):
+        from safeshift import internvl3763_o5 as o5
+        from safeshift.kaggle_handoff import lock
+        with lock(self.root):
+            require(self.budget()["extension"] is None, "O5_EXTENSION_REPLAY")
+            require(load(original_locator) == self.grant
+                and original_locator["comment_id"] == o5.ORIGINAL_COMMENT_ID, "O5_AUTHENTIC_ORIGINAL_GRANT")
+            _, evidence = o5.authority(self.grant)
+            self.histories()  # Verify real custody before appending any authority.
+            events = self.events()
+            values = {"authority": evidence, "original_locator": original_locator,
+                "registration_sha256": sha(self.root / "registration.json"), "historical_events": len(events)}
+            candidate = {"kind": o5.KIND, "unix": time.time(), "campaign_sha256": digest(self.grant),
+                "previous": digest(events[-1]) if events else None, **values}
+            o5.validate_extension(candidate, self.grant, events, sha(self.root / "registration.json"))
+            return self.append(o5.KIND, **values)
 
     def append(self, kind, **values):
         # Caller holds the campaign-wide OS lock, including all external writes.
         events = self.events()
         value = {"campaign_sha256": digest(self.grant), "previous": digest(events[-1]) if events else None,
             "kind": kind, "unix": time.time(), **values}
+        self._budget([*events, value])
         for destination in (self.root, self.mirror):
             write(destination / f"journal-{len(events)+1:06d}.json", value)
             _sync_directory(destination)
@@ -363,7 +424,10 @@ class Ledger:
             execution = bind(self.grant, request)
             history, _ = self.histories()
             require(execution["history"] == history, "COMPLETE_LEDGER_HISTORY_REQUIRED")
-            intents, caps = self.intents(), self.grant["caps"]
+            budget = self.budget(authenticate=True)
+            intents, caps = self.intents(), budget["caps"]
+            extension = budget["extension"]
+            require(request["bindings"]["runtime"].get("o5_extension") == extension, "O5_INTENT_LINEAGE")
             require(request["job"].endswith("-" + str(len(intents)+1)), "MONOTONIC_ATTEMPT_JOB")
             require(request["handoff_id"] == execution["plan"]["run_id"] == self.grant["campaign_id"]+"-"+str(len(intents)+1)
                 and execution["plan"]["attempt_id"] == "attempt-"+str(len(intents)+1), "MONOTONIC_RUN_ATTEMPT_ID")
@@ -389,7 +453,9 @@ class Ledger:
                 for sample in repair["targets"]:
                     count = sum(sample in (x["request"]["plan"].get("repair") or {}).get("targets", {}) for x in intents)
                     require(count < caps["max_repairs_per_image"], "IMAGE_REPAIR_CAP")
-            return self.append("INTENT", request=request, reserved_calls=calls, reserved_gpu_seconds=seconds*caps["physical_gpus"])
+            extra = {"o5_extension_sha256": digest(extension)} if extension else {}
+            return self.append("INTENT", request=request, reserved_calls=calls,
+                reserved_gpu_seconds=seconds*caps["physical_gpus"], **extra)
 
     def abort_pre_submit(self):
         from safeshift.kaggle_handoff import lock
@@ -438,7 +504,17 @@ class Ledger:
                     lineage[ordinal].append({"attempt_id": attempt["attempt_id"], "status": row["status"], "record_sha256": digest(row)})
                     statuses[ordinal] = row["status"]
         intents = self.intents()
+        budget = self.budget()
+        events = self.events()
         return {"planned": 3763, "counts": dict(Counter(statuses.values())), "lineage": lineage,
+            "campaign_sha256": digest(self.grant), "original_caps": deepcopy(self.grant["caps"]),
+            "effective_caps": budget["caps"],
+            "o5_extension_sha256": digest(budget["extension"]) if budget["extension"] else None,
+            "authority_verification": "PINNED_SNAPSHOT_OFFLINE_LIVE_AUTH_REQUIRED_FOR_MUTATION",
+            "remaining_gpu_seconds": budget["caps"]["total_gpu_seconds"] - budget["reserved_gpu_seconds"],
+            "remaining_calls": budget["caps"]["total_calls"] - budget["reserved_calls"],
+            "remaining_jobs": budget["caps"]["total_jobs"] - budget["jobs"],
+            "journal_events": len(events), "journal_head_sha256": digest(events[-1]) if events else None,
             "reserved_calls": sum(x["reserved_calls"] for x in intents),
             "reserved_gpu_seconds": sum(x["reserved_gpu_seconds"] for x in intents),
             "jobs": len(intents), "blocked_open_intent": self.open_intent() is not None,
@@ -457,6 +533,7 @@ class Ledger:
         from safeshift.kaggle_handoff import lock
         require(type(job_seconds) is int and 120 <= job_seconds <= self.grant["caps"]["job_seconds"], "MEASUREMENT_JOB_SECONDS")
         with lock(self.root):
+            self.budget(authenticate=True)
             closed = [x for x in self.events() if x["kind"] == "COLLECTED" and x["sha256"] == sha(archive)]
             require(len(closed) == 1 and closed[0]["provider"]["state"] == "COMPLETE"
                 and closed[0]["verification"]["status"] == "PASS", "VERIFIED_FINAL_SOURCE_MEASUREMENT_REQUIRED")

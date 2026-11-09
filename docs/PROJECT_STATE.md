@@ -1,6 +1,45 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — opaque CPython transport preparation — 09/11/2026
+## CURRENT — append-only O5 extension implementation — 09/11/2026
+
+BASE `ff8963aa1c4a2cfea2a813ff3d02e2aa4f583c2f`, new branch
+`feat/train3763-o5-extension`. [Owner decision6733033003](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6733033003)
+approves the aggregate reservation ceiling **80000 → 430000 physical GPU-seconds**,
+keeping **7200 wall seconds/job** and every other cap/rights/science constraint.
+One Draft PR implements exact pinned GitHub authority, one mirrored append-only
+`O5_EXTENSION` event, cumulative original+future accounting and source-bound
+separate execution release. See [runbook](TRAIN3763_O5_EXTENSION.md).
+
+Original grant SHA256 `1f672fb601006c7898be271e59f74fb341d7311fc60794a9ed6a332f430395c6`,
+24 journals, registration/host guard/mirror/history/archives and Attempts1–7 are
+preserved. Local pre-change custody fingerprint covers401 existing files:
+`8b90b6fa34ee65bd214342c028e7e2b78777eaaa4f4b0165deca6ca63708e66c`.
+Reported/verified ledger reservation is seven calls / seven jobs /25200 physical
+GPU-seconds. Ordinal0/1 SUCCESS leaves3761 NOT_ATTEMPTED. Production extension
+has **not** been applied: original80000 cap remains in that ledger;404800 is the
+expected remainder only after authenticated postmerge append.
+
+`status`/ledger-backed `forecast` inspect original/effective caps offline. Planning,
+measurement and operator submit reauthenticate extension authority; every future
+intent/request binds the extension. Resource approval alone cannot activate
+Attempt8. Original science SHA256 remains
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+Changed protected source/notebooks need fresh AUDIT_V1/TECHNICAL_V1, independent
+security/provenance audit, direct ChatGPT review, separately authorized exact-HEAD
+merge and postmerge verification, then separate O5_EXECUTION_V1 release. First
+authorized changed-source measurement resumes ordinal2, one call; historical
+safe_calls205 is not silently inherited. GPU, Kaggle operations, real inference,
+TEST and Attempt8 creation are **NOT_RUN** in this programming task. No new
+scientific qualification or result selection is claimed.
+
+[Final CPU acceptance](research/TRAIN3763_O5_ACCEPTANCE_20261109.md): clean native
+Windows qualifier280 tests (278 PASS, two OS skips covered on Linux); O5 alone17/17
+PASS on both OSes; Linux30 tests (24 PASS, six SDK/native skips covered on Windows)
+plus symlink1/1; notebook/smoke5/5 PASS. All84 inherited source files and401
+existing campaign files match BASE/pre-change checksums. No unresolved failure.
+The acceptance records final source/notebook hashes and retains production STOP.
+
+## HISTORICAL — opaque CPython transport preparation — 09/11/2026
 
 [Owner task6731108968](https://github.com/tantdna2/SafeShift/pull/187#issuecomment-6731108968)
 starts branch `fix/train3763-opaque-python-transport` from merged PR187/main

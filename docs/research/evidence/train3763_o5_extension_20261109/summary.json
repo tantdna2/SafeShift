@@ -1,0 +1,163 @@
+{
+  "schema": "safeshift-train3763-o5-cpu-acceptance-v1",
+  "scope": "CPU_SYNTHETIC_ONLY",
+  "baseline": "ff8963aa1c4a2cfea2a813ff3d02e2aa4f583c2f",
+  "qualified_commit": "eaf7377ae1064908c73525505fdf9447c61eb4cf",
+  "source_sha256": "f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "notebooks": {
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
+      "sha256": "c2e574c132c1305efccde569bac63c027eeafe8814285ebaf092701cb3f033e7",
+      "code_sha256": "a5e5583e8739092836fed1170f9105374dee6ebf4926adbc97013c9bd1fd1a65",
+      "runtime_commit": "e72720107c75197a7ca0617a7ea508d526481702"
+    },
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
+      "sha256": "2127c5d66d0a3c943dd78bc5c327dc590935c7337bb6c754df13d90ddf3620da",
+      "code_sha256": "3a3bde38b9d1b263fb464a706e34fbac9d0b42cbbe38f1c06c6c964fc96c9a79",
+      "runtime_commit": "e72720107c75197a7ca0617a7ea508d526481702"
+    }
+  },
+  "inherited_files_unchanged": 84,
+  "custody": {
+    "files": 401,
+    "before_sha256": "8b90b6fa34ee65bd214342c028e7e2b78777eaaa4f4b0165deca6ca63708e66c",
+    "after_sha256": "8b90b6fa34ee65bd214342c028e7e2b78777eaaa4f4b0165deca6ca63708e66c",
+    "unchanged": true,
+    "production_amendment_applied": false,
+    "historical_journals": 24,
+    "reserved_gpu_seconds": 25200
+  },
+  "native_cpu": {
+    "status": "PASS",
+    "tests": 280,
+    "failures": 0,
+    "errors": 0,
+    "skips": 2,
+    "skip_reasons": [
+      "real Linux process-group supervision check",
+      "host does not allow symlink creation; covered on Linux"
+    ],
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "dependencies": {
+      "Pillow": "12.3.0",
+      "numpy": "2.4.6",
+      "tokenizers": "0.21.4",
+      "torch": "2.6.0+cpu",
+      "torchvision": "0.21.0+cpu",
+      "transformers": "4.55.4"
+    },
+    "tracked_dirty": false,
+    "source_commit": "eaf7377ae1064908c73525505fdf9447c61eb4cf"
+  },
+  "other_cpu_runs": {
+    "windows-o5-clean": {
+      "label": "windows-o5-clean",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "patterns": [
+        "test_internvl3763_o5.py"
+      ],
+      "run": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [],
+      "pass": true
+    },
+    "windows-campaign-stable": {
+      "label": "windows-campaign-stable",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "patterns": [
+        "test_internvl3763_campaign.py",
+        "test_internvl3763_notebook.py"
+      ],
+      "run": 51,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [],
+      "pass": true
+    },
+    "windows-notebook-smoke": {
+      "label": "windows-notebook-smoke",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "patterns": [
+        "test_internvl3763_notebook.py",
+        "test_smoke.py"
+      ],
+      "run": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [],
+      "pass": true
+    },
+    "linux-o5-clean": {
+      "label": "linux-o5-clean",
+      "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "patterns": [
+        "test_internvl3763_o5.py",
+        "test_internvl3763_e2e.py"
+      ],
+      "run": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [
+        [
+          "test_multi_image_mixed_outcomes_mid_shard_fail_provider_ambiguity_and_tail_shard_e2e (test_internvl3763_e2e.EndToEndOfflineCampaignPipelineTests.test_multi_image_mixed_outcomes_mid_shard_fail_provider_ambiguity_and_tail_shard_e2e)",
+          "pinned kagglesdk + CPU torch/tokenizers required for full native-grammar E2E"
+        ],
+        [
+          "test_native_backend_worker_graceful_stop_on_real_snapshot_hazards_and_blocks_measure (test_internvl3763_e2e.EndToEndOfflineCampaignPipelineTests.test_native_backend_worker_graceful_stop_on_real_snapshot_hazards_and_blocks_measure)",
+          "pinned kagglesdk + CPU torch/tokenizers required for full native-grammar E2E"
+        ],
+        [
+          "test_stage_submit_launch_native_grammar_capture_collect_measure_and_resume_shard_end_to_end (test_internvl3763_e2e.EndToEndOfflineCampaignPipelineTests.test_stage_submit_launch_native_grammar_capture_collect_measure_and_resume_shard_end_to_end)",
+          "pinned kagglesdk + CPU torch/tokenizers required for full native-grammar E2E"
+        ],
+        [
+          "test_get_kernel_negative_matrix_fails_closed (test_internvl3763_e2e.InstalledSdkGetKernelMetadataTests.test_get_kernel_negative_matrix_fails_closed)",
+          "pinned kagglesdk required for real GetKernel serializer checks"
+        ],
+        [
+          "test_get_kernel_unversioned_slugs_pass_while_pinned_versions_remain_enforced (test_internvl3763_e2e.InstalledSdkGetKernelMetadataTests.test_get_kernel_unversioned_slugs_pass_while_pinned_versions_remain_enforced)",
+          "pinned kagglesdk required for real GetKernel serializer checks"
+        ],
+        [
+          "test_historical_attempt3_identity_verifies_against_historical_commit_after_head_advance (test_internvl3763_e2e.InstalledSdkGetKernelMetadataTests.test_historical_attempt3_identity_verifies_against_historical_commit_after_head_advance)",
+          "pinned kagglesdk required for real GetKernel serializer checks"
+        ]
+      ],
+      "pass": true
+    },
+    "linux-symlink": {
+      "label": "linux-symlink",
+      "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+      "patterns": [
+        "--names",
+        "test_internvl3763_python.PythonInputTests.test_current_mount_layout_wrong_owner_and_symlink_alias"
+      ],
+      "run": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": [],
+      "pass": true
+    }
+  },
+  "kaggle_operations": 0,
+  "gpu_jobs": 0,
+  "real_model_or_image_inference": 0,
+  "test_split_access": false,
+  "attempt8_created": false,
+  "independent_audit": "NOT_PERFORMED",
+  "scientific_qualified": false,
+  "evidence_sha256": {
+    "native-cpu.txt": "8467434894ed5a3b6b8b5e7ef768ac991d8e2af364d60ac87653af46137c74ea",
+    "windows-o5.txt": "d5b18940150d4e2c32e9ab2c2a101f7c7d60ea5232153b625cec1b42d13685d4",
+    "linux-o5.txt": "2213b236e990c1bd1e48c532d610d66f71e03d69a1202624cef410a3fdd61532",
+    "notebook-smoke.txt": "b81e62787917c87a371be61f7e17dbe6dde62c7fd105a57626c93bf945fec7db",
+    "qualification.json": "744ee9148d90323f09d3975a29aa36a57bbd5cb2bca185e0847a757d865833b0"
+  }
+}

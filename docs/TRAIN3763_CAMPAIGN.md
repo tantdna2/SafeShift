@@ -1,6 +1,23 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
-## Current CPython Input route — 09/11/2026
+## Current O5 extension implementation — 09/11/2026
+
+[Owner decision6733033003](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6733033003)
+approves an append-only resource amendment: total physical GPU-seconds 80000 →
+430000, every other cap/rights/science/history unchanged. See the
+[authority, failure handling and postmerge runbook](TRAIN3763_O5_EXTENSION.md).
+The original grant and 24 journals/registration/guard/mirror/Attempts1–7 remain
+immutable. This task does not apply the amendment to production or create Attempt8.
+
+`extend-o5` authenticates exact Owner GitHub body/identity and original grant,
+verifies existing history and appends one mirrored event. Status/forecast expose
+both original and effective caps; future requests/intents bind its exact digest.
+Serial resume starts at ordinal2 after separate source-bound ChatGPT execution
+release, review, independent Antigravity audit, authorized merge and postmerge
+verification. Changed source requires fresh technical qualification/measurement;
+historical safe_calls205 does not automatically qualify it. No GPU/TEST here.
+
+## CPython Input route — 09/11/2026
 
 [Owner opaque-transport task6731108968](https://github.com/tantdna2/SafeShift/pull/187#issuecomment-6731108968)
 requires the [private CPython3.11.9 Input runbook](TRAIN3763_PYTHON_INPUT.md).

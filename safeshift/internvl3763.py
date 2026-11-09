@@ -45,7 +45,7 @@ def source_spec():
     return {"identity": IDENTITY, "manifest": {**inherited["manifest"],
         **{p: sha(ROOT / p) for p in [*OWN, "safeshift/internvl3763_release.py", "safeshift/kaggle_handoff.py",
             "safeshift/internvl3763_campaign.py", "safeshift/internvl3763_operator.py",
-            "safeshift/internvl3763_python.py"]}}}
+            "safeshift/internvl3763_python.py", "safeshift/internvl3763_o5.py"]}}}
 
 
 def check_source(spec):

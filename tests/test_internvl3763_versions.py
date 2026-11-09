@@ -240,6 +240,7 @@ class InstalledSdkVersionTests(unittest.TestCase):
         self.latest_metadata = {"ref": self.latest_job, "currentVersionNumber": 1, "isPrivate": True}
         self.pages = [NS(kernels=[NS(ref=self.latest_job)], next_page_token=None)]
         ledger = NS(grant=self.grant, intents=lambda: [previous, self.intent],
+            budget=lambda **kwargs: {"caps": self.grant["caps"], "extension": None},
             events=lambda: [{"kind": "PUSH_INTENT", "intent_sha256": digest(previous)}])
         with patch.object(op, "campaign_revision_code", return_value=op.code_hash(self.notebook)):
             op.campaign_inventory(self.client, self.request, self.grant, ledger)

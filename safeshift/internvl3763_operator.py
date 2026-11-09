@@ -36,6 +36,8 @@ def admit_campaign(request):
         and str(ledger.root.resolve()) == ledger.registration["root"], "CROSS_MACHINE_TAKEOVER_BLOCKED")
     intent = ledger.open_intent()
     require(intent is not None and intent["request"] == request, "STAGED_CAMPAIGN_INTENT_REQUIRED")
+    budget = ledger.budget(authenticate=True)
+    require(request["bindings"]["runtime"].get("o5_extension") == budget["extension"], "O5_SUBMIT_LINEAGE")
     require(not any(x["kind"] == "PUSH_INTENT" and x["intent_sha256"] == digest(intent) for x in ledger.events()),
         "POSSIBLE_SUBMIT_NO_RETRY")
     revision = campaign.revision(grant, request)
@@ -61,7 +63,8 @@ def campaign_inventory(client, request, grant, ledger):
 
     No prior output success or account quota counter alone proves terminal state.
     """
-    caps = grant["caps"]
+    budget = ledger.budget(authenticate=True)
+    caps = budget["caps"]
     pushed = {x["intent_sha256"] for x in ledger.events() if x["kind"] == "PUSH_INTENT"}
     known = {x["request"]["job"] for x in ledger.intents() if digest(x) in pushed}
     observed = inventory(client, request, {"caps": {"attempt_gpu_seconds": request["plan"]["max_seconds"]*caps["physical_gpus"]},
