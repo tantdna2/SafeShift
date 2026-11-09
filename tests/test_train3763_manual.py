@@ -4,9 +4,12 @@ from copy import deepcopy
 import hashlib
 import io
 import json
+import logging
 from pathlib import Path
 import shutil
 import tempfile
+import threading
+import time
 from types import SimpleNamespace as NS
 import unittest
 from unittest.mock import Mock, patch
@@ -27,7 +30,7 @@ def output_fixture(archive, *, gcs=False):
     """Sanitized real /kf/run/token/name shape; no actual bearer token."""
     names = (archive.name, archive.name + ".sha256.json")
     base = ("https://storage.googleapis.com/kaggle-output/synthetic/" if gcs else
-        "https://www.kaggleusercontent.com/kf/367225876/SYNTHETIC_token-123/")
+        "https://www.kaggleusercontent.com/kf/367225876/SYNTHETIC_header..SYNTHETIC_iv.SYNTHETIC_ciphertext.SYNTHETIC_tag/")
     return {"files": [{"fileName": name, "url": base + name + ("?synthetic=1" if gcs else "")}
         for name in names], "log": "SYNTHETIC_PROVIDER_LOG", "nextPageToken": None}
 
@@ -43,11 +46,15 @@ class OutputTransport:
         self.status, self.error, self.headers, self.clock = 200, None, {}, None
         self.expected_timeout = None
         self.stream_error = False
+        self.diagnostics = False
+        self.on_get = None
 
     def send(self, request, **kwargs):
         response = requests.Response(); response.status_code = 200
         response.request, response.url = request, request.url
         if request.method == "POST":
+            if self.diagnostics:
+                logging.getLogger("kagglesdk").warning("SYNTHETIC_SECRET_URL %s", json.dumps(self.output))
             self.case.assertTrue(request.url.endswith("/ListKernelSessionOutput"))
             fields = json.loads(request.body); self.listings.append(fields)
             self.case.assertEqual(fields["versionLabel"], "v1")
@@ -60,11 +67,16 @@ class OutputTransport:
             self.case.assertNotIn("Cookie", request.headers)
             self.case.assertEqual(kwargs["proxies"], {})
             self.case.assertTrue(kwargs["stream"])
+            self.case.assertIs(kwargs["verify"], True)
             self.case.assertEqual(request.headers["Accept-Encoding"], "identity")
             self.case.assertTrue(all(0 < v <= cap for v, cap in zip(kwargs["timeout"], (10, 30))))
             if self.expected_timeout is not None:
                 self.case.assertEqual(kwargs["timeout"], self.expected_timeout)
             self.gets.append(request.url)
+            if self.diagnostics:
+                logging.getLogger("urllib3.connectionpool").warning("SYNTHETIC_SECRET_URL %s", request.url)
+            if self.on_get is not None:
+                self.on_get()
             if self.error:
                 raise self.error
             response.status_code = self.status
@@ -658,6 +670,21 @@ class ManualOutputUrlTests(unittest.TestCase):
             m.validate_output_url("https://www.kaggleusercontent.com/kf/367225876/SYNTHETIC_token-123/" + name, name)
             m.validate_output_url("https://storage.googleapis.com/bucket/output/" + name + "?X-Goog-Signature=SYNTHETIC%2F1", name)
 
+    def test_observed_five_part_token_with_empty_second_field_is_one_path_segment(self):
+        for name in ("synthetic.zip", "synthetic.zip.sha256.json"):
+            for token in ("SYNTHETIC_header..SYNTHETIC_iv.SYNTHETIC_ciphertext.SYNTHETIC_tag",
+                    "h"*47 + ".." + "i"*22 + "." + "c"*640 + "." + "t"*22):
+                m.validate_output_url("https://www.kaggleusercontent.com/kf/367225876/" + token + "/" + name, name)
+
+    def test_dotted_token_does_not_enable_traversal_escapes_or_arbitrary_punctuation(self):
+        base = "https://www.kaggleusercontent.com/kf/367225876/"
+        for token in (".", "..", "...", "header.iv.tag", "header.key.iv.cipher.tag", "header..iv.cipher.",
+                ".key.iv.cipher.tag", "header...cipher.tag", "header..iv..tag", "header..iv.cipher.tag.extra",
+                "header..iv.cipher.tag=", "header..iv.cipher.tag;", "header%2e%2eiv.cipher.tag",
+                "header..iv.cipher%2ftag", "header..iv.cipher%5ctag", "header..iv/../tag", "header..iv?cipher.tag"):
+            with self.subTest(token=token), self.assertRaisesRegex(ValueError, "^MANUAL_UNSAFE_OUTPUT_URL$"):
+                m.validate_output_url(base + token + "/synthetic.zip", "synthetic.zip")
+
     def test_rejects_ambiguous_or_unsafe_origins_paths_tokens_and_names(self):
         name = "synthetic.zip"
         valid = "https://www.kaggleusercontent.com/kf/367225876/SYNTHETIC_token-123/" + name
@@ -729,7 +756,8 @@ class ManualDownloadTests(unittest.TestCase):
             lambda o: o["files"].append(o["files"][0]),
             lambda o: o["files"].pop(),
             lambda o: o["files"].append({"fileName": "extra.zip", "url": "https://attacker.invalid"}),
-            lambda o: o.update(nextPageToken="more")]
+            lambda o: o.update(nextPageToken="more"), lambda o: o.update(log=""),
+            lambda o: o.update(log=None), lambda o: o.update(log="X" * (16*2**20 + 1))]
         for mutate in mutations:
             self.transport.output = deepcopy(original); mutate(self.transport.output)
             with self.assertRaises(ValueError): self.download()
@@ -757,10 +785,39 @@ class ManualDownloadTests(unittest.TestCase):
             with self.assertRaises(ValueError): self.download()
 
     def test_total_deadline_before_get_during_stream_eof_and_between_files(self):
-        for moments in ([0, 241], [0, 0, 0, 241], [0, 0, 0, 0, 241], [0, 0, 0, 0, 0, 241]):
+        # before GET, after headers, during chunk, EOF and before sidecar GET
+        for moments in ([0, 241], [0, 0, 0, 241], [0, 0, 0, 0, 241],
+                [0, 0, 0, 0, 0, 241], [0, 0, 0, 0, 0, 0, 0, 241]):
             with self.subTest(moments=moments), patch.object(m.time, "monotonic", side_effect=moments), \
                     self.assertRaisesRegex(ValueError, "DOWNLOAD_BOUND"):
                 self.download()
+
+    def test_verbose_sdk_and_transport_logs_never_print_tokens_and_logging_is_restored(self):
+        from contextlib import redirect_stdout, redirect_stderr
+        self.client.build_kaggle_client = lambda: KaggleClient(api_token="SYNTHETIC_ONLY", verbose=True)
+        self.transport.diagnostics = True
+        output = io.StringIO()
+        before = logging.root.manager.disable
+        with redirect_stdout(output), redirect_stderr(output):
+            self.download()
+        self.assertNotIn("SYNTHETIC_SECRET_URL", output.getvalue())
+        self.assertNotIn("SYNTHETIC_header", output.getvalue())
+        self.assertNotIn("Authorization", output.getvalue())
+        self.assertEqual(logging.root.manager.disable, before)
+        self.transport.error = requests.ReadTimeout("SYNTHETIC_SECRET_URL")
+        with self.assertRaises(requests.ReadTimeout): self.download()
+        self.assertEqual(logging.root.manager.disable, before)
+
+    def test_declared_length_must_equal_bytes_including_sidecar(self):
+        self.transport.headers = {"Content-Length": "1"}
+        with self.assertRaisesRegex(ValueError, "OUTPUT_LENGTH_MISMATCH"): self.download()
+
+    def test_disk_budget_failure_stops_before_listing_or_get(self):
+        with patch.object(m.shutil, "disk_usage", return_value=NS(free=0)), \
+                self.assertRaisesRegex(ValueError, "DOWNLOAD_DISK_BOUND"):
+            self.download()
+        self.assertEqual(self.transport.listings, [])
+        self.assertEqual(self.transport.gets, [])
 
     def test_late_get_uses_remaining_budget_and_create_only_files(self):
         clock = [0]
@@ -770,11 +827,68 @@ class ManualDownloadTests(unittest.TestCase):
         self.transport.expected_timeout = (1, 1)
         with patch.object(m.time, "monotonic", side_effect=now):
             destination, _ = self.download()
-        # Reuse the destination directly: provider.log and ZIP are create-only.
         with self.assertRaises(FileExistsError):
             DOWNLOAD_OUTPUTS(self.client, "nguynanhtn/synthetic-ui-result", 1,
                 self.archive, sha(self.archive), destination)
 
+
+@unittest.skipUnless(KaggleClient is not None, "requires existing pinned operator venv")
+class ManualDeadlineTests(unittest.TestCase):
+    def setUp(self):
+        self.guard = patch("socket.socket", side_effect=AssertionError("NO_NETWORK"))
+        self.guard.start(); self.addCleanup(self.guard.stop)
+
+    def test_watchdog_interrupts_registered_tls_socket_and_never_changes_global_pool_registry(self):
+        import socket
+        from urllib3.connection import HTTPSConnection
+        from urllib3.poolmanager import pool_classes_by_scheme
+        before = dict(pool_classes_by_scheme)
+        stopped = threading.Event()
+        sock = Mock(); sock.shutdown.side_effect = lambda _: stopped.set()
+        def connected(connection): connection.sock = sock
+        started = time.monotonic()
+        with patch.object(HTTPSConnection, "connect", connected), self.assertRaisesRegex(ValueError, "DOWNLOAD_BOUND"):
+            with m.anonymous_output_session(started + .05) as http:
+                pool = http.adapters["https://"].poolmanager.pool_classes_by_scheme["https"]
+                connection = pool.ConnectionCls("www.kaggleusercontent.com")
+                connection.connect()
+                self.assertEqual(connection.debuglevel, 0)
+                self.assertTrue(stopped.wait(2))
+        sock.shutdown.assert_called_once_with(socket.SHUT_RDWR)
+        self.assertEqual(pool_classes_by_scheme, before)
+        self.assertLess(time.monotonic() - started, 2)
+
+    def test_watchdog_cleanup_on_success_exception_and_timer_start_failure(self):
+        before = logging.root.manager.disable
+        for error in (None, ValueError("SYNTHETIC_BODY_FAILURE")):
+            timer = Mock()
+            with patch.object(m.threading, "Timer", return_value=timer):
+                if error:
+                    with self.assertRaisesRegex(ValueError, "SYNTHETIC_BODY_FAILURE"):
+                        with m.anonymous_output_session(time.monotonic() + 10): raise error
+                else:
+                    with m.anonymous_output_session(time.monotonic() + 10): pass
+            timer.cancel.assert_called_once(); timer.join.assert_called_once()
+            self.assertEqual(logging.root.manager.disable, before)
+        timer = Mock(); timer.start.side_effect = RuntimeError("SYNTHETIC_THREAD_UNAVAILABLE")
+        with patch.object(m.threading, "Timer", return_value=timer), self.assertRaises(RuntimeError):
+            with m.anonymous_output_session(time.monotonic() + 10): pass
+        timer.cancel.assert_called_once(); timer.join.assert_not_called()
+        self.assertEqual(logging.root.manager.disable, before)
+
+    def test_connection_completed_after_deadline_is_closed_without_admission(self):
+        from urllib3.connection import HTTPSConnection
+        sock = Mock()
+        def connected(connection): connection.sock = sock
+        clock = [0]
+        with patch.object(m.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(HTTPSConnection, "connect", connected), patch.object(m.threading, "Timer"), \
+                self.assertRaisesRegex(ValueError, "DOWNLOAD_BOUND"):
+            with m.anonymous_output_session(10) as http:
+                pool = http.adapters["https://"].poolmanager.pool_classes_by_scheme["https"]
+                clock[0] = 11
+                pool.ConnectionCls("www.kaggleusercontent.com").connect()
+        sock.shutdown.assert_called_once()
 
 if __name__ == "__main__":
     unittest.main()

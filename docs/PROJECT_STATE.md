@@ -1,6 +1,45 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Attempt8 CDN URL collection fix — 09/11/2026
+## CURRENT — PR191 real CDN token self-review — 10/11/2026
+
+Same branch `fix/manual-kaggle-cdn`, same [Draft PR191](https://github.com/tantdna2/SafeShift/pull/191),
+continuing the Owner's direct self-review instruction. Actual read-only v1 output
+listing shows a five-part dotted token with an empty second field; the earlier
+simple-token fixture/regex missed it. The companion now accepts exactly that
+observed shape alongside simple opaque tokens and signed GCS. Origin/path/name,
+no redirect/retry/ambient auth, byte/SHA, original authority and provenance gates
+remain strict. A TLS socket watchdog bounds slow response headers/body; SDK
+verbose/debug token leaks and Content-Length inconsistencies are also covered.
+
+The changed companion directly downloaded the existing ZIP **5646071 bytes**,
+sidecar **92 bytes** and provider log **2315 bytes** into a new private directory.
+ZIP SHA256 remains `3b30e0bcff7f5aa986b411c5a5d85798c7f63b7aa3e5302cc3a6d3c4867c7493`.
+Original bundle/raw/trace/native-custody/TRAIN3763/checkpoint/Python receipts PASS.
+These are read-only technical checks of saved results: no new inference, GPU,
+submit, production COLLECTED or MEASURED. Original imports/exact clean Operator
+HEAD `4407dc939e045d115f4147e2d1d49605ec8b2f7a`, authentic execution/grant/O5/Owner
+records and 26 journal + 26 mirror entries pass the read-only compatibility check.
+
+Runtime source SHA256 remains
+`f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d`;
+science SHA256 remains
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+No runtime/notebook, TRAIN IDs/data/split/labels, checkpoint, rights/caps or old
+BLOCKED/partial evidence changes. [Continuation acceptance and final hashes](research/TRAIN3763_MANUAL_CDN_REVIEW_20261110.md)
+record the final CPU/custody evidence. Stop at this Draft PR for direct ChatGPT
+review, a short independent security/provenance audit, separate merge permission
+and a new authentic tool release; the old PR190 locator cannot authorize new bytes.
+Deployment/production collection/measurement and scientific qualification remain
+PENDING. See [safe distinct rollout paths](TRAIN3763_MANUAL_RECONCILIATION.md).
+Final focused suite **44/44 PASS**, zero failures/errors/skips and zero sockets
+created during CPU tests. Broad qualifier with SDK CPU opt-in **324 cases: 313
+PASS, 11 native/OS skips, zero failures/errors**. Real ZIP/sidecar/log download
+and saved provenance replay PASS on companion SHA256
+`5df9d3ffae01a007e94521d322622473868b3b951189c0f1b7d96bbe40e787be`.
+All **519 original production/evidence files**, 92 runtime files and 37 notebooks
+remain byte-identical; no actual URL/token appears in the public diff.
+
+## HISTORICAL — Attempt8 CDN URL collection fix — 09/11/2026
 
 [Task6739558259](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6739558259),
 BASE `519cb16a8f0e66ab03d5a1b0f1ed3981261ca6f6` (PR190 MERGED), branch
