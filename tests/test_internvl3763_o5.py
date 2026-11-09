@@ -7,6 +7,7 @@ import io
 import json
 from pathlib import Path
 import tempfile
+import time
 import unittest
 from unittest.mock import patch, Mock
 import zipfile
@@ -36,7 +37,9 @@ class O5Tests(unittest.TestCase):
                 (c, "science", self.fixed_science), (c, "identity", self.fixed_identity)):
             p = patch.object(obj, name, return_value=deepcopy(value))
             p.start(); self.addCleanup(p.stop)
-        self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        base = runtime.ROOT / "data/processed"
+        base.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="synthetic-o5-", dir=base); self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         self.request, self.grant, self.comments = fixture(self.root / "ledger")
         self.grant["caps"].update(total_gpu_seconds=80000, job_seconds=7200,
@@ -64,15 +67,21 @@ class O5Tests(unittest.TestCase):
             return {"status": status, "scope": "SYNTHETIC_ONLY"}
         p = patch.object(runtime, "verify_bundle", side_effect=verify)
         p.start(); self.addCleanup(p.stop)
+        prefix = []
+        def historical(kind, **values):
+            event = {"kind": kind, "campaign_sha256": digest(self.grant), "unix": time.time(),
+                "previous": digest(prefix[-1]) if prefix else None, **values}
+            prefix.append(event)
+            return event
         for n in range(1, 8):
             request = self.next_request(n)
             with lock(self.ledger.root):
-                intent = self.ledger.append("INTENT", request=request, reserved_calls=1, reserved_gpu_seconds=3600)
+                intent = historical("INTENT", request=request, reserved_calls=1, reserved_gpu_seconds=3600)
                 if n in (1, 2, 5):
-                    self.ledger.append("ABORTED_PRE_SUBMIT", intent_sha256=digest(intent), refund=False)
+                    historical("ABORTED_PRE_SUBMIT", intent_sha256=digest(intent), refund=False)
                     continue
-                self.ledger.append("PUSH_INTENT", intent_sha256=digest(intent))
-                self.ledger.append("SUBMITTED", intent_sha256=digest(intent), result={"job_id": request["job"], "version": 1})
+                historical("PUSH_INTENT", intent_sha256=digest(intent))
+                historical("SUBMITTED", intent_sha256=digest(intent), result={"job_id": request["job"], "version": 1})
                 records = []
                 if n in (4, 7):
                     ordinal = 0 if n == 4 else 1
@@ -84,12 +93,15 @@ class O5Tests(unittest.TestCase):
                 archive = self.root / f"export-{n}.zip"; checksum = export(folder, archive)
                 history = runtime.sealed_history(archive, checksum, request["plan"])
                 self.history.append(history)
-                self.ledger.append("COLLECTED", intent_sha256=digest(intent), archive=str(archive), sha256=checksum,
+                historical("COLLECTED", intent_sha256=digest(intent), archive=str(archive), sha256=checksum,
                     plan=request["plan"], history=history, provider={"state": "COMPLETE"}, verification={"status": "PASS" if records else "FAIL"})
                 if n in (4, 7):
                     # Legacy source measurement cannot certify this changed runtime.
-                    self.ledger.append("MEASURED", source_sha256="0" * 64, safe_calls=205,
+                    historical("MEASURED", source_sha256="0" * 64, safe_calls=205,
                         overhead_seconds=640, per_call_seconds=32, minimum_seconds=7200)
+        for index, event in enumerate(prefix, 1):
+            for root in (self.ledger.root, self.ledger.mirror):
+                write(root / f"journal-{index:06d}.json", event)
         self.assertEqual(len(self.ledger.events()), 24)
         self.before = self.snapshot()
 
@@ -282,7 +294,7 @@ class O5Tests(unittest.TestCase):
                 "reserved_calls": cap_req["plan"]["max_calls"], "reserved_gpu_seconds": 240,
                 "o5_extension_sha256": extension_sha}
             n = 4 if dimension == "total_calls" else 93
-            events += [deepcopy(future) for _ in range(n)]
+            events += [future] * n
             self.ledger._budget(events)
             events.append(deepcopy(future))
             with self.subTest(dimension=dimension), self.assertRaisesRegex(ValueError, "BUDGET_EXCEEDED"):
