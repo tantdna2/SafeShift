@@ -1144,6 +1144,9 @@ class CampaignBudgetAndOptimizationTests(unittest.TestCase):
                         "counts": {"INVALID": 1, "NOT_ATTEMPTED": 3762},
                         "reserved_calls": 1,
                         "reserved_gpu_seconds": 3600, "jobs": 1, "blocked_open_intent": False,
+                        "campaign_sha256": digest(grant), "original_caps": grant["caps"],
+                        "effective_caps": grant["caps"], "o5_extension_sha256": None,
+                        "authority_verification": "SYNTHETIC_OFFLINE",
                     }), redirect_stdout(buf_inv):
                 self.assertEqual(cli_mod.main(["forecast", "--directory", str(ledger.root)]), 0)
             proj_inv = json.loads(buf_inv.getvalue())

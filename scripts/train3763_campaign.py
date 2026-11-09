@@ -15,6 +15,7 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
     directory = private_root(directory)
     grant = campaign.load(locator)
     require(grant == ledger.grant and ledger.open_intent() is None, "CAMPAIGN_BUSY_OR_GRANT_DRIFT")
+    budget = ledger.budget(authenticate=True)
     history, custody = ledger.histories()
     number = len(ledger.intents())+1
     name = grant["campaign_id"]+"-"+str(number)
@@ -22,7 +23,10 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
         max_calls=calls, max_seconds=seconds, repair=repair)
     require(p["scheduled_ordinals"], "NO_ELIGIBLE_IMAGES_NO_MODEL_LOAD")
     from safeshift import internvl3763_python as python_input
-    require(set(template) == {"technical_revision", "execution_input", "python_input"}, "CAMPAIGN_CONTEXT_FIELDS")
+    fields = {"technical_revision", "execution_input", "python_input"}
+    if budget["extension"]:
+        fields.add("o5_execution_release")
+    require(set(template) == fields, "CAMPAIGN_CONTEXT_FIELDS")
     require(template["python_input"] == python_input.binding(), "CAMPAIGN_PYTHON_CONTEXT")
     require(set(template["execution_input"]) == {"kind", "ref"}
         and template["execution_input"]["kind"] == "dataset_sources", "EXECUTION_INPUT_KIND")
@@ -53,6 +57,11 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
         campaign_ledger=ledger.root.resolve().relative_to(ROOT.resolve()).as_posix(),
         local_history=[])
     request["bindings"]["dataset"]["execution_request_sha256"] = digest(execution)
+    if budget["extension"]:
+        request["bindings"]["runtime"].update(o5_extension=budget["extension"],
+            o5_execution_release=template["o5_execution_release"])
+    # Fail missing execution release before any provider access or reservation.
+    campaign.bind(grant, request)
     from safeshift import internvl3763_operator as operator
     operator.verify_python_input(operator.api(), request, Path(str(directory) + "-python-proof"))
     campaign.bind(grant, request)
@@ -72,7 +81,7 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("action", choices=("identity", "init", "plan", "status", "abort-pre-submit", "measure", "forecast"))
+    p.add_argument("action", choices=("identity", "init", "plan", "status", "abort-pre-submit", "measure", "forecast", "extend-o5"))
     p.add_argument("--directory", type=Path)
     p.add_argument("--mirror", type=Path)
     p.add_argument("--grant", type=Path)
@@ -93,11 +102,12 @@ def main(argv=None):
             kwargs["weekly_quota_remaining_seconds"] = args.weekly_remaining
         if args.directory is not None:
             ledger = campaign.Ledger(private_root(args.directory))
-            state = ledger.summary()
-            current_source = digest(runtime.source_spec())
-            measured = [x for x in ledger.events() if x["kind"] == "MEASURED" and x["source_sha256"] == current_source]
+            with lock(ledger.root):
+                state = ledger.summary()
+                current_source = digest(runtime.source_spec())
+                measured = [x for x in ledger.events() if x["kind"] == "MEASURED" and x["source_sha256"] == current_source]
             kwargs.update(
-                caps=ledger.grant["caps"],
+                caps=state["effective_caps"],
                 planned_total=state["planned"],
                 completed_images=state["planned"] - state["counts"].get("NOT_ATTEMPTED", 0),
                 pending_repair_images=state["counts"].get("TECHNICAL_ERROR", 0),
@@ -130,6 +140,9 @@ def main(argv=None):
                         verify_f32_geometry=False,
                     )
         result = campaign.project_campaign_budget(**kwargs)
+        if args.directory is not None:
+            result["ledger_authority"] = {k: state[k] for k in ("campaign_sha256", "original_caps",
+                "effective_caps", "o5_extension_sha256", "authority_verification")}
         print(json.dumps(result, sort_keys=True))
         return 0
     require(args.directory is not None, "DIRECTORY_REQUIRED")
@@ -148,13 +161,19 @@ def main(argv=None):
         result = {"status": "INITIALIZED_NO_SUBMIT", "campaign_sha256": digest(grant)}
     else:
         ledger = campaign.Ledger(root)
-        if args.action == "plan":
+        if args.action == "extend-o5":
+            require(args.grant is not None, "ORIGINAL_GRANT_LOCATOR_REQUIRED")
+            event = ledger.extend_o5(read(args.grant))
+            result = {"status": "O5_EXTENSION_APPENDED_NO_EXECUTION", "extension_sha256": digest(event),
+                "campaign_sha256": digest(ledger.grant), "effective_caps": ledger.budget()["caps"]}
+        elif args.action == "plan":
             require(all(x is not None for x in (args.grant, args.template, args.cohort, args.handoff, args.calls, args.seconds)), "PLAN_ARGUMENTS")
             result = stage(ledger, read(args.grant), read(args.template), read(args.cohort), directory=args.handoff,
                 calls=args.calls, seconds=args.seconds, action=args.mode, repair=read(args.repair) if args.repair else None)
         elif args.action == "measure":
             require(args.archive is not None and args.seconds is not None, "MEASURE_ARGUMENTS")
             result = ledger.measure(args.archive, job_seconds=args.seconds)
+            result = {**result, "effective_caps": ledger.budget()["caps"]}
         elif args.action == "abort-pre-submit":
             result = ledger.abort_pre_submit()
         else:

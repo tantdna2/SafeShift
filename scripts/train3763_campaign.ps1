@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateSet('identity','init','plan','status','abort-pre-submit','measure','forecast')][string]$Action,
+    [ValidateSet('identity','init','plan','status','abort-pre-submit','measure','forecast','extend-o5')][string]$Action,
     [string]$Directory = '',
     [string]$Python = 'python',
     [Parameter(ValueFromRemainingArguments=$true)][string[]]$CampaignArguments
