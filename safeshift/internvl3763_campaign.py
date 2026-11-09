@@ -218,9 +218,13 @@ def bind(grant, request, *, reader=None):
         require(set(grant["inputs"][key]) <= set(sources[key]), "ORIGINAL_INPUT_REMOVED_OR_CHANGED")
         require(all(x in grant["inputs"][key] or x.startswith("nguynanhtn/") for x in sources[key]), "EXTRA_INPUT_OWNER")
     capsule = request["bindings"]["runtime"]["execution_input"]
+    from safeshift import internvl3763_python as python_input
+    python_input.validate_binding(request)
     extras = [(key, ref) for key in ("dataset_sources", "kernel_sources") for ref in sources[key] if ref not in grant["inputs"][key]]
     require(type(capsule) is dict and set(capsule) == {"kind", "ref"} and capsule["kind"] == "dataset_sources"
-        and extras == [(capsule["kind"], capsule["ref"])], "ONE_EXACT_PRIVATE_CAPSULE_INPUT")
+        and capsule["ref"] != python_input.REF and len(extras) == 2
+        and set(extras) == {("dataset_sources", python_input.REF), (capsule["kind"], capsule["ref"])},
+        "ONE_EXACT_PRIVATE_CAPSULE_AND_PYTHON_INPUT")
     caps = grant["caps"]
     require(request["limits"]["max_calls"] == p["max_calls"] <= caps["job_calls"]
         and request["limits"]["job_seconds"] == p["max_seconds"] <= caps["job_seconds"]

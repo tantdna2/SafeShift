@@ -1,6 +1,45 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR186 takeover, real cgroup contract and final offline verification — 08/11/2026
+## CURRENT — private CPython Input implementation — 09/11/2026
+
+[Owner task6720571990](https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6720571990)
+starts branch `feat/train3763-offline-python-input` from merged PR186/main
+`f88a152f481691bf678ad721ec6d2f25f95084bf`. One Draft PR prepares the complete
+TRAIN3763 private CPython3.11.9 Input route; see the
+[publication/verification runbook](TRAIN3763_PYTHON_INPUT.md).
+
+Campaign admission requires original pinned Inputs, one private Python Dataset v1
+and one private capsule. Operator checks real provider metadata and independently
+downloaded bytes before reservation and again before submit. The supervised setup
+child checks the read-only mount, manifest, size/SHA, bounded safe extraction and
+interpreter, then uses that Python through unchanged inherited venv/package setup.
+Historical Python download fallback is forbidden inside this child. Pinned
+pip/package downloads remain unchanged.
+
+The required `nguynanhtn/safeshift-cpython3119-20240726/1` is a proposed publication
+identity, **not an assertion that it exists**. Actual upload/license review/provider
+verification/worker execution remain **NOT_RUN / NOT_VERIFIED**. The Gemini3.8 Flash
+Operator handles publication after code/path review; offline PASS is separate.
+
+Science SHA remains `ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+Inherited science/locks, data, methods and Attempts1–6 ledger/mirror are unchanged.
+No Kaggle API/upload/submit, GPU, weights, real-image inference, TEST or Attempt7
+creation occurs here. The Owner comment supplies conditional Attempt7 accounting:
+1 image ordinal1 / 1800s adds 3600 physical GPU-s, reaching 25200/80000 reserved,
+54800 remaining. This is not a new ledger audit or resource allocation.
+New runtime/notebook hashes need direct ChatGPT review, independent audit, separately
+authorized merge and new AUDIT_V1 + TECHNICAL_V1 before future operation.
+
+[Final acceptance](research/TRAIN3763_PYTHON_INPUT_ACCEPTANCE_20261109.md) and
+[machine-readable evidence](research/TRAIN3763_PYTHON_INPUT_ACCEPTANCE_20261109.json)
+record 252 broad tests (three initial regression failures corrected by three
+PASS reruns), 28 final E2E/Input tests (26 PASS, two OS skips covered on Linux),
+13 Linux Input PASS + five Linux setup PASS, and five notebook/smoke PASS.
+No unresolved failure remains; this is combined evidence, not a claim of one
+clean full-suite rerun. All 84 inherited files match BASE. The following PR186
+section retains its original historical accounting.
+
+## HISTORICAL — PR186 takeover, real cgroup contract and final offline verification — 08/11/2026
 
 Draft [PR #186](https://github.com/tantdna2/SafeShift/pull/186), branch
 `feat/train3763-gpu-budget-optimization`, BASE `109be1ab33ef2c86a2604e1c1bc1a894464e17a2`.

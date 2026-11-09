@@ -44,7 +44,8 @@ def source_spec():
     capture.check_source(inherited)
     return {"identity": IDENTITY, "manifest": {**inherited["manifest"],
         **{p: sha(ROOT / p) for p in [*OWN, "safeshift/internvl3763_release.py", "safeshift/kaggle_handoff.py",
-            "safeshift/internvl3763_campaign.py", "safeshift/internvl3763_operator.py"]}}}
+            "safeshift/internvl3763_campaign.py", "safeshift/internvl3763_operator.py",
+            "safeshift/internvl3763_python.py"]}}}
 
 
 def check_source(spec):

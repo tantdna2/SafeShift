@@ -94,6 +94,13 @@ def run_stage(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch
     return {"status": reason, "returncode": code}
 
 
+def setup_command(python, stage, spec, output, scratch, inputs, request, deadline):
+    runtime.require(stage == "setup", "CAMPAIGN_SETUP_STAGE")
+    return [str(python), "-B", "-m", "scripts.internvl3763", "--mode", "setup",
+        "--request", str(request), "--output", str(output), "--scratch", str(scratch),
+        "--inputs", str(inputs), "--deadline", str(deadline)]
+
+
 def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggle/temp"),
            inputs=Path("/kaggle/input")):
     from safeshift import internvl3763_release as authority
@@ -128,8 +135,11 @@ def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggl
     error = None
     try:
         env = provision.clean_env(runtime.ROOT, temporary)
-        run_stage(old.worker_command(sys.executable, "setup", spec, setup, temporary,
-            inputs, None, stage_deadline), cwd=runtime.ROOT, env=env,
+        command = (setup_command(sys.executable, "setup", spec, setup, temporary,
+            inputs, out / "handoff.json", stage_deadline)
+            if campaign_mode else old.worker_command(sys.executable, "setup", spec, setup, temporary,
+                inputs, None, stage_deadline))
+        run_stage(command, cwd=runtime.ROOT, env=env,
             deadline=min(stage_deadline, time.monotonic() + budgets["setup_seconds"]),
             log=setup / "setup-supervisor.log", receipt=setup / "setup-supervisor.json",
             max_log_bytes=budgets["max_log_bytes"], watch_log_roots=(setup,))
@@ -153,13 +163,17 @@ def launch(request_path, *, output=Path("/kaggle/working"), scratch=Path("/kaggl
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--mode", choices=("prepare", "execute", "worker"), default="prepare")
+    p.add_argument("--mode", choices=("prepare", "execute", "worker", "setup"), default="prepare")
     p.add_argument("--output", type=Path)
     p.add_argument("--request", type=Path)
     p.add_argument("--scratch", type=Path, default=Path("/kaggle/temp"))
     p.add_argument("--inputs", type=Path, default=Path("/kaggle/input"))
     p.add_argument("--deadline", type=float)
     a = p.parse_args(argv)
+    if a.mode == "setup":
+        from safeshift.internvl3763_python import setup
+        setup(a.request, a.output, a.scratch, a.inputs, a.deadline)
+        return 0
     if a.mode != "prepare":
         if a.request is None:
             runtime.authorize()  # absent authority fails before any other IO

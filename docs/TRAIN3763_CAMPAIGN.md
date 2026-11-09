@@ -1,5 +1,19 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
+## Current CPython Input route — 09/11/2026
+
+[Owner choice6720571990](https://github.com/tantdna2/SafeShift/pull/186#issuecomment-6720571990)
+requires the [private CPython3.11.9 Input runbook](TRAIN3763_PYTHON_INPUT.md).
+Only this campaign route now requires exactly two extra dataset sources: the
+per-attempt private capsule and the fixed private Python Input v1. Older
+one-extra-capsule instructions below are historical. Do not modify the original
+grant or Attempts1–6. Python archive size/SHA/release and science hash are unchanged.
+No runtime Python download fallback is allowed; pip/package installation is unchanged.
+Dataset publication/real byte proof is NOT_VERIFIED; code/offline evidence is separate.
+Stop at the new Draft PR for review/audit, with no Kaggle/GPU or Attempt7 in this task.
+
+The following PR186 resource/Attempt1–4 section is retained as historical evidence.
+
 ## Current safe shard resource optimization and full-cohort O5 budget projection — 08/11/2026
 
 [Official task, 07/11/2026](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6705546490)

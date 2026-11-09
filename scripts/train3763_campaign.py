@@ -12,6 +12,7 @@ from safeshift.pilot.contract import digest
 
 def stage(ledger, locator, template, cohort, *, directory, calls, seconds, action, repair=None):
     require(not Path(directory).exists(), "EXISTING_HANDOFF_PRESERVED_USE_NEW_ATTEMPT_DIRECTORY")
+    directory = private_root(directory)
     grant = campaign.load(locator)
     require(grant == ledger.grant and ledger.open_intent() is None, "CAMPAIGN_BUSY_OR_GRANT_DRIFT")
     history, custody = ledger.histories()
@@ -20,7 +21,9 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
     p = campaign.plan(cohort, history, action=action, run_id=name, attempt_id="attempt-"+str(number),
         max_calls=calls, max_seconds=seconds, repair=repair)
     require(p["scheduled_ordinals"], "NO_ELIGIBLE_IMAGES_NO_MODEL_LOAD")
-    require(set(template) == {"technical_revision", "execution_input"}, "CAMPAIGN_CONTEXT_FIELDS")
+    from safeshift import internvl3763_python as python_input
+    require(set(template) == {"technical_revision", "execution_input", "python_input"}, "CAMPAIGN_CONTEXT_FIELDS")
+    require(template["python_input"] == python_input.binding(), "CAMPAIGN_PYTHON_CONTEXT")
     require(set(template["execution_input"]) == {"kind", "ref"}
         and template["execution_input"]["kind"] == "dataset_sources", "EXECUTION_INPUT_KIND")
     notebook = "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb"
@@ -28,6 +31,7 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
     metadata = read(ROOT / notebook)["metadata"]["safeshift"]
     sources = {key: list(value) for key, value in grant["inputs"].items()}
     sources[template["execution_input"]["kind"]].append(template["execution_input"]["ref"])
+    sources["dataset_sources"].append(python_input.REF)
     request = {"schema": HANDOFF_SCHEMA, "commit_sha": subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(), "runtime_commit": metadata["runtime_commit"],
         "notebook": notebook, "coordinator_required": False,
@@ -35,7 +39,8 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
                 "revision": runtime.configuration()["revision"], "sha256": campaign.identity()["checkpoint_sha256"]},
             "source": runtime.source_spec(), "rights": grant["rights"],
             "scientific_method": {"science_sha256": grant["science_sha256"]},
-            "runtime": {"technical_revision": template["technical_revision"], "execution_input": template["execution_input"]}}}
+            "runtime": {"technical_revision": template["technical_revision"], "execution_input": template["execution_input"],
+                "python_input": template["python_input"]}}}
     execution = {"source": runtime.source_spec(), "cohort": cohort, "history": history,
         "history_archives": [{"archive": "custody/"+item["sha256"]+".zip", "sha256": item["sha256"],
             "plan": {"run_id": item["plan"]["run_id"], "attempt_id": item["plan"]["attempt_id"]}}
@@ -48,6 +53,8 @@ def stage(ledger, locator, template, cohort, *, directory, calls, seconds, actio
         campaign_ledger=ledger.root.resolve().relative_to(ROOT.resolve()).as_posix(),
         local_history=[])
     request["bindings"]["dataset"]["execution_request_sha256"] = digest(execution)
+    from safeshift import internvl3763_operator as operator
+    operator.verify_python_input(operator.api(), request, Path(str(directory) + "-python-proof"))
     campaign.bind(grant, request)
     # reserve() independently holds the global campaign lock and revalidates
     # histories/caps. A racing stager cannot get a second intent.

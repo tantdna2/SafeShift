@@ -293,6 +293,7 @@ class CapsuleTransportTests(unittest.TestCase):
         with patch.object(op, "campaign_ledger", return_value=ledger), \
                 patch.object(op, "admit_campaign", return_value=(self.grant, execution)), patch.object(op, "safe", return_value=notebook), \
                 patch.object(op, "api", return_value=self.client), patch.object(op, "campaign_inventory", return_value={}), \
+                patch.object(op, "verify_python_input", return_value={"scope": "SYNTHETIC_PYTHON_PROOF"}), \
                 patch.object(requests.adapters.HTTPAdapter, "send", before_push):
             result = op.submit_campaign(self.request, self.grant, execution, handoff)
         self.assertEqual(result, {"job_id": self.request["job"], "version": 1})
