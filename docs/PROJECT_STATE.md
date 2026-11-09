@@ -1,6 +1,42 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Owner UI result reconciliation preparation — 09/11/2026
+## CURRENT — Attempt8 CDN URL collection fix — 09/11/2026
+
+[Task6739558259](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6739558259),
+BASE `519cb16a8f0e66ab03d5a1b0f1ed3981261ca6f6` (PR190 MERGED), branch
+`fix/manual-kaggle-cdn`. One Draft PR changes only the external collection
+companion, synthetic CPU tests and documents. It accepts the exact reported
+`www.kaggleusercontent.com/kf/<numeric-run>/<opaque-token>/<exact-filename>`
+route without query and retains signed GCS support, with strict origin/path/name,
+anonymous GET, redirect/timeout/byte/SHA gates. See [runbook and rollout gates](TRAIN3763_MANUAL_RECONCILIATION.md).
+
+The original Operator remains at `4407dc939e045d115f4147e2d1d49605ec8b2f7a`.
+All 92 runtime manifest files and 37 tracked notebooks match BASE. Runtime source
+SHA256 `f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d`
+and science SHA256 `ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`
+are unchanged. No TRAIN/science, O5 caps, old evidence or production journal is
+modified. Attempt8 collection/measurement remain pending; the reported CDN HTTP200
+and matching sidecar are Operator reports, not live verification by this task.
+
+The old PR190 release pins old script bytes. Activation requires direct ChatGPT
+GitHub review, focused independent Antigravity security/provenance audit,
+separate merge permission, postmerge SHA/parents/tree verification and a new
+authentic collection-tool release. Preserve old BLOCKED/partial evidence and
+collect into a fresh create-only directory only after those gates. Existing Owner
+factual attestation remains valid unless facts changed; never rerun ordinal2.
+No GPU, Kaggle submit, real inference, TEST, production COLLECTED/MEASURED,
+scientific qualification or 200-image release is performed or claimed.
+
+CPU acceptance and final hashes are recorded in
+[the CDN fix acceptance](research/TRAIN3763_MANUAL_CDN_ACCEPTANCE_20261109.md).
+Focused suite **36/36 PASS**, including the additional process-wide socket-guard
+run (zero socket attempts during tests). Broad CPU qualifier **316 cases: 301 PASS,
+15 native/opt-in/OS skips, zero failures/errors**. Final before/after inventory
+proves all **519 protected production/evidence files** unchanged, including old
+BLOCKED/partial evidence and both 26-journal copies. This is software evidence,
+not independent audit or accepted production collection/measurement.
+
+## HISTORICAL — Owner UI result reconciliation preparation — 09/11/2026
 
 BASE `4407dc939e045d115f4147e2d1d49605ec8b2f7a` (PR189 MERGED), branch
 `feat/train3763-owner-manual-reconciliation`. [Official directive6736965547](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6736965547)

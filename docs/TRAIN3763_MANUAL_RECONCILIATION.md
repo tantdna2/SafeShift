@@ -8,6 +8,30 @@ no execution release, audit PASS, merge permission or scientific qualification.
 
 ## Source and authority boundaries
 
+### CDN companion fix — 09/11/2026 (review/audit/merge pending)
+
+[Directive6739558259](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6739558259)
+starts one collection-only Draft PR from merged PR190/main
+`519cb16a8f0e66ab03d5a1b0f1ed3981261ca6f6`. Operator reports that the existing
+Attempt8 output listing returns the exact `www.kaggleusercontent.com` CDN route
+described below. This software task verifies sanitized CPU fixtures, not the live
+URL or provider; no submit, GPU, inference, production collection or measurement.
+
+The old [PR190 tool release6739152747](https://github.com/tantdna2/SafeShift/pull/190#issuecomment-6739152747)
+pins script SHA256 `9fa7259b51e7e4caabfd1dfbfdbadd51f3cd569c0fd9f58a70b334150fcc602b`.
+It cannot authorize this changed companion. Do not edit the approved Operator
+checkout or run new bytes against that old locator. Direct ChatGPT GitHub review,
+a focused independent Antigravity security/provenance audit of this network
+allowlist change, separately authorized merge and postmerge SHA/parents/tree
+verification must precede a **new authentic MANUAL_ADAPTER_V1 tool release**.
+Only then may Operator replace the standalone tool using its reviewed SHA.
+
+Keep the original `BLOCKED.json`, every partial and every prior evidence directory.
+Use a **fresh create-only evidence directory** for collection of the same saved
+Owner job/ZIP. Do not rerun ordinal2. The existing [Owner factual attestation6739339869](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6739339869)
+remains applicable unless its factual data changed. No new scientific decision,
+213-call official measurement or 200-image shard release follows from this fix.
+
 `scripts/reconcile_train3763_manual.py` is an external collection companion,
 deliberately outside `internvl3763.source_spec()`. No runtime manifest, native
 code, notebook, parser, prompt, HNLO, labels, TRAIN/TEST, roster, metric or science
@@ -145,10 +169,32 @@ never resubmit them automatically.
 The same ZIP and sidecar must be independently downloaded from the actual pinned
 provider job and match the Owner's existing ZIP. Official SDK listing is bounded
 to 256 outputs with no pagination ambiguity; the exact ZIP pair and provider log
-are required. Downloads use anonymous HTTPS to `storage.googleapis.com`, no
-redirect, credentials, retries or resume, at most the attested ZIP length/4096-byte
-sidecar and 240 seconds of streaming, with finite connection/read timeouts.
-Any other storage host is BLOCKED pending reviewed transport support. Originals,
+are required. Downloads accept exactly two HTTPS origins and canonical paths:
+
+- `https://www.kaggleusercontent.com/kf/<positive-decimal-run>/<opaque-token>/<exact-filename>`:
+  no query, token consists only of ASCII letters/digits/`_`/`-`, and the ZIP or
+  `.zip.sha256.json` filename exactly matches both the SDK listing and expected name.
+- `https://storage.googleapis.com/<canonical-output-path>/<exact-filename>?<signed-query>`:
+  existing exact GCS origin with a nonempty query; final filename is also exact.
+
+URLs are bounded to 16384 printable ASCII characters. No userinfo, ports (even
+443), apex/subdomain/suffix host variants, fragments (even empty), backslashes,
+path escapes/encoded separators, empty/dot/traversal path segments or parameters
+are accepted. Both URLs are validated before any output GET; no token/URL is
+stored in receipts or error messages. Other origins or shapes remain BLOCKED.
+
+GET uses a fresh anonymous session with `trust_env=False`, no Authorization,
+proxy/netrc credentials, redirects, retry or resume. Connect/read timeouts are
+explicitly at most 10/30 seconds and shrink to half the remaining shared budget
+when needed. The 240-second monotonic budget covers both file GETs and is checked
+before each GET, after headers, at each stream chunk and EOF; an overrun never
+passes verification. Requests socket timeouts bound individual blocking waits;
+the monotonic checks are acceptance gates, not OS-level hard cancellation of a
+blocked read. Identity content encoding is required. Declared and actual stream
+bytes are capped at the attested ZIP length/4096-byte sidecar. ZIP SHA256 must
+match the supplied archive, Owner attestation and downloaded sidecar. Downloads
+use exclusive `xb` and fsync retained partial bytes even on streaming failure.
+No failed download appends a journal. Originals,
 partial downloads and failures remain untouched. Identity/inventory are observed
 again before the single append; authority/source/handoff are also rechecked.
 
