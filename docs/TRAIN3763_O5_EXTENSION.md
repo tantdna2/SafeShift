@@ -146,3 +146,23 @@ Science SHA256 stays
 original 3763 TRAIN IDs, model checkpoint, FP16, prompt/parser/grammar/HNLO and
 TEST closure are unchanged. CPU synthetic acceptance is separate from final-source
 Kaggle verification, scientific qualification and O2–O6 evidence.
+
+## Reproduce CPU acceptance
+
+`scripts.qualify_internvl3763` includes `test_internvl3763_o5` and records its
+checksum with the existing controller/ledger/operator suites. Use a new ignored
+output path; the qualifier disables CUDA and Hub access. Native CPU checks use
+scripted logits/synthetic bytes and existing pinned public software, no weights.
+
+```powershell
+$env:SAFESHIFT3763_SDK_CPU = '1'
+& data/processed/operator-venv/Scripts/python.exe -B -m scripts.qualify_internvl3763 --output data/processed/<new-cpu-evidence> --native --packages .venv/Lib/site-packages --packages data/processed/internvl_grammar_v2/packages --packages data/processed/internvl_v2_native/deps
+python -B -m unittest discover -s tests -p test_internvl3763_o5.py -v
+python -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v
+python -B -m unittest discover -s tests -p test_smoke.py -v
+```
+
+Linux O5 tests use `python3 -B -m unittest discover -s tests -p
+test_internvl3763_o5.py -v`; no SDK/native dependencies are required for that
+suite. The temporary ledger/archives are explicitly synthetic and separate from
+`data/processed/train3763-campaign`. Production amendment/Attempt8 remains NOT_RUN.

@@ -6,6 +6,10 @@ Read [campaign contract/runbook](TRAIN3763_CAMPAIGN.md) before the historical
 execution/PREP sections. `internvl3763_campaign.py` owns one authenticated finite
 grant, science-stable planning, diagnosed repair, canonical machine/path binding,
 mirrored create-only journal/initialization guard and native VM claims.
+`internvl3763_o5.py` pins Owner decision6733033003 and validates the separate
+append-only O5 extension and source-bound execution release. The ledger keeps its
+original grant/hash and validates cumulative old+future reservations against the
+effective cap; see [O5 authority and operations](TRAIN3763_O5_EXTENSION.md).
 `internvl3763_operator.py` admits reviewed source/SDK/Inputs/lineage, checks serial
 provider identity/quota and makes one durable-intent-protected submit. Existing
 `kaggle_handoff.py` retains <=15-minute foreground monitoring and terminal ZIP/
