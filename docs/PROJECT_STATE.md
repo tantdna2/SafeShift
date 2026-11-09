@@ -32,6 +32,13 @@ safe_calls205 is not silently inherited. GPU, Kaggle operations, real inference,
 TEST and Attempt8 creation are **NOT_RUN** in this programming task. No new
 scientific qualification or result selection is claimed.
 
+[Final CPU acceptance](research/TRAIN3763_O5_ACCEPTANCE_20261109.md): clean native
+Windows qualifier280 tests (278 PASS, two OS skips covered on Linux); O5 alone17/17
+PASS on both OSes; Linux30 tests (24 PASS, six SDK/native skips covered on Windows)
+plus symlink1/1; notebook/smoke5/5 PASS. All84 inherited source files and401
+existing campaign files match BASE/pre-change checksums. No unresolved failure.
+The acceptance records final source/notebook hashes and retains production STOP.
+
 ## HISTORICAL — opaque CPython transport preparation — 09/11/2026
 
 [Owner task6731108968](https://github.com/tantdna2/SafeShift/pull/187#issuecomment-6731108968)

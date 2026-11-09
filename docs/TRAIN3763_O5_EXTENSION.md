@@ -149,6 +149,8 @@ Kaggle verification, scientific qualification and O2–O6 evidence.
 
 ## Reproduce CPU acceptance
 
+See [completed acceptance and source/custody evidence](research/TRAIN3763_O5_ACCEPTANCE_20261109.md).
+
 `scripts.qualify_internvl3763` includes `test_internvl3763_o5` and records its
 checksum with the existing controller/ledger/operator suites. Use a new ignored
 output path; the qualifier disables CUDA and Hub access. Native CPU checks use
