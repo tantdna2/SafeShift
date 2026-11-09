@@ -16,6 +16,11 @@ Staging/submit gates remain before INTENT/PUSH_INTENT; Python network fallback
 remains forbidden. See [runbook](TRAIN3763_PYTHON_INPUT.md) and
 [acceptance](research/TRAIN3763_OPAQUE_PYTHON_ACCEPTANCE_20261109.md).
 
+Final stable-source qualification: **263 broad CPU/SDK tests (261 PASS, two
+Windows OS skips covered on Linux)**; Linux Input19 PASS/three SDK skips covered
+on Windows, Linux setup5/5 PASS, notebook rebuild3/3 PASS, smoke2/2 PASS. No
+unresolved failures; exact commands, environment and hashes are in acceptance.
+
 **DATASET_BYTE_PASS / Kaggle preservation of Base64 remain NOT_VERIFIED.** No
 Kaggle operation/upload/create/version, Attempt7, GPU, inference or TEST occurs
 in this task. One-time publication exception is consumed; new publication needs
