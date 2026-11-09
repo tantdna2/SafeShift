@@ -1,5 +1,25 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner09/11/2026 — Owner UI Kaggle reconciliation, code-only
+
+[Official directive6736965547](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6736965547)
+requires one new branch/Draft PR for truthful manual-result collection. Follow
+[the reconciliation runbook](docs/TRAIN3763_MANUAL_RECONCILIATION.md).
+Antigravity prepares → Owner presses Run → Owner reports completion → Antigravity
+collects with provider/Owner/capsule/archive/raw/trace/intent/history checks. On
+GitHub API throttling, provide the exact Owner UI procedure; missing authentic
+authority remains BLOCKED. No invented PUSH_INTENT/SUBMITTED, refund, history
+rewrite, duplicate result or implicit source/release/200-call authority.
+Keep original runtime source/science hashes and exact clean approved operator
+commit; run the separately reviewed external companion without overlaying runtime.
+An accepted truthful COLLECTED may feed unchanged histories and Ledger.measure;
+ordinal2 cannot be skipped or repeated by editing history. Preserve all partials
+and BLOCKED handoff bytes; mirror divergence means STOP/read-only reconciliation.
+This task forbids GPU, Kaggle submit/live probing, real inference, TEST and
+production-ledger writes. Stop at one Draft PR for direct ChatGPT review, then
+mandatory independent Antigravity audit and separately authorized merge. No
+self-issued review/audit/merge or scientific qualification.
+
 ## Owner05/11/2026 — Issue180 campaign admission after PR179 MERGED
 
 [Issue180](https://github.com/tantdna2/SafeShift/issues/180), BASE

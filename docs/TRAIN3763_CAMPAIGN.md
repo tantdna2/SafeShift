@@ -1,5 +1,19 @@
 # TRAIN3763 campaign contract — Issue180, 05/11/2026
 
+## Current Owner UI collection route — 09/11/2026
+
+[Manual reconciliation runbook](TRAIN3763_MANUAL_RECONCILIATION.md) implements
+[directive6736965547](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6736965547):
+Antigravity prepares, Owner runs manually (including GitHub API-throttling UI
+fallback), Owner reports completion, Antigravity collects the actual private
+provider version. A separately reviewed companion preserves original runtime
+hashes and exact approved operator checkout. Truthful mirrored COLLECTED records
+OWNER_UI_MANUAL, never fabricated API submission events or refunds; unchanged
+histories/measure may consume it only after all evidence gates PASS. Attempt8
+remains uncollected in this code-only task. No GPU, submit, production ledger
+write or200-call release; stop at one Draft PR for ChatGPT review followed by
+mandatory independent Antigravity audit and separately authorized merge.
+
 ## Current O5 extension implementation — 09/11/2026
 
 [Owner decision6733033003](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6733033003)

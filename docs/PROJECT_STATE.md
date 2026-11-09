@@ -1,6 +1,46 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — append-only O5 extension implementation — 09/11/2026
+## CURRENT — Owner UI result reconciliation preparation — 09/11/2026
+
+BASE `4407dc939e045d115f4147e2d1d49605ec8b2f7a` (PR189 MERGED), branch
+`feat/train3763-owner-manual-reconciliation`. [Official directive6736965547](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6736965547)
+requires a single Draft PR, CPU-only, no Kaggle/GPU/inference/TEST or production
+ledger mutation. See [exact gates, commands and Owner UI workflow](TRAIN3763_MANUAL_RECONCILIATION.md).
+
+The external collection companion keeps every runtime manifest file/notebook
+unchanged. Runtime source SHA256 remains
+`f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d`;
+science SHA256 remains
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+Original operator HEAD must still equal 4407dc9, independently of source hash;
+the new tool's reviewed/audited merge is separate collection-only authority.
+
+Local read-only evidence confirms 26 journals with Attempt8 INTENT and an immutable
+BLOCKED handoff, no Attempt8 COLLECTED/MEASURED. Owner/operator reports actual
+`nguynanhtn/notebook4e07cfa2d0` v1, one ordinal2 SUCCESS and ZIP SHA256
+`3b30e0bcff7f5aa986b411c5a5d85798c7f63b7aa3e5302cc3a6d3c4867c7493`.
+This task does not promote that report into accepted history: live provider
+identity/absence/output proof and authentic Owner/tool attestations remain
+NOT_VERIFIED. The saved ZIP passed read-only CPU hash/CRC/raw/trace/native-claim
+verification (105 members, one SUCCESS on ordinal2); no production append or
+measurement occurred. All 512 existing campaign/supplied-output files are preserved.
+Attempts1–8 retain 28800 physical GPU-seconds reserved, 401200 remaining of 430000,
+conditional on the 26-event history; no refund or new reservation occurs here.
+
+After direct ChatGPT PR review, mandatory independent Antigravity audit,
+separately authorized merge and verified collection, a truthful mirrored
+COLLECTED with OWNER_UI_MANUAL provenance can feed original histories/measure.
+Only then may ordinal2 be retained and resume start ordinal3. The 213 estimate
+is provisional; a first 200-call notebook needs a new specific ChatGPT release.
+O2–O6/scientific/học vụ statuses are not upgraded by this software work.
+
+[CPU acceptance](research/TRAIN3763_MANUAL_ACCEPTANCE_20261109.md): final manual
+collection suite 26/26 PASS with real SDK HTTP doubles/no sockets; unchanged
+runtime regression 265 PASS/15 Windows or native/opt-in skips. Source/science and
+all 512 existing custody files remain byte-identical. Evidence is combined, not
+a claim of one final-source broad run or independent audit/provider PASS.
+
+## HISTORICAL — append-only O5 extension implementation — 09/11/2026
 
 BASE `ff8963aa1c4a2cfea2a813ff3d02e2aa4f583c2f`, new branch
 `feat/train3763-o5-extension`. [Owner decision6733033003](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6733033003)
