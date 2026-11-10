@@ -5,13 +5,16 @@ operator checkout. Keeping this companion outside source_spec is intentional:
 neither runtime bytes nor the exact execution commit are silently migrated.
 """
 import argparse
+from contextlib import contextmanager
 import hashlib
 import json
+import logging
 from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from urllib.parse import urlsplit
 import zipfile
@@ -207,45 +210,168 @@ def inventory(client, ledger, intent, manual_job):
         "original_job_absent": True, "predecessors": predecessors}
 
 
+def validate_output_url(url, name):
+    """Two exact provider origins, canonical paths; never echo bearer URLs."""
+    require(type(url) is str and 0 < len(url) <= 16384
+        and all(33 <= ord(c) < 127 for c in url) and "\\" not in url and "#" not in url,
+        "MANUAL_UNSAFE_OUTPUT_URL")
+    try:
+        target = urlsplit(url)
+    except ValueError:
+        raise ValueError("MANUAL_UNSAFE_OUTPUT_URL") from None
+    require(target.scheme == "https" and url.startswith("https://")
+        and target.netloc in ("storage.googleapis.com", "www.kaggleusercontent.com"),
+        "MANUAL_UNSAFE_OUTPUT_URL")
+    # No percent escapes, empty/dot path segments or path parameters. The SDK file
+    # name and literal last URL component must BOTH equal the expected name.
+    parts = target.path.split("/")
+    require(parts[0] == "" and parts[-1] == name and all(
+        re.fullmatch(r"[A-Za-z0-9_~.-]+", p) and p not in (".", "..") for p in parts[1:]),
+        "MANUAL_UNSAFE_OUTPUT_URL")
+    if target.netloc == "www.kaggleusercontent.com":
+        # Actual v1 output URLs use a compact JWE-style token: header, empty
+        # encrypted-key field, IV, ciphertext, tag. Dots are INSIDE one path
+        # segment; never decode it or publish it. Preserve simple opaque tokens.
+        token = parts[3] if len(parts) == 5 else ""
+        token_ok = re.fullmatch(r"[A-Za-z0-9_-]+", token) or re.fullmatch(
+            r"[A-Za-z0-9_-]+\.\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", token)
+        require("?" not in url and len(parts) == 5 and parts[1] == "kf"
+            and re.fullmatch(r"[1-9][0-9]*", parts[2])
+            and token_ok, "MANUAL_UNSAFE_OUTPUT_URL")
+    else:
+        require(bool(target.query), "MANUAL_UNSAFE_OUTPUT_URL")
+
+
+@contextmanager
+def private_transport_logs():
+    """Suppress SDK/requests diagnostics that can serialize signed URLs."""
+    previous = logging.root.manager.disable
+    logging.disable(max(previous, logging.CRITICAL))
+    try:
+        yield
+    finally:
+        logging.disable(previous)
+
+
+@contextmanager
+def anonymous_output_session(deadline):
+    """No ambient credentials/logged bearer paths; interrupt slow headers/body.
+
+    The pinned urllib3 HTTPS connection keeps normal certificate verification.
+    Only its connect hook is extended to register the TLS socket with a deadline
+    watchdog. Idle read timeouts alone cannot stop a peer sending single bytes.
+    """
+    import socket
+    import requests
+    from urllib3.connection import HTTPSConnection
+    from urllib3.connectionpool import HTTPSConnectionPool
+
+    sockets, mutex = [], threading.Lock()
+    expired = threading.Event()
+    def shutdown(sock):
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass  # socket may already have closed normally
+    def expire():
+        with mutex:
+            expired.set()
+            for sock in sockets:
+                shutdown(sock)
+    class DeadlineConnection(HTTPSConnection):
+        debuglevel = 0  # http.client debug prints bypass Python logging
+        def connect(self):
+            super().connect()
+            with mutex:
+                if expired.is_set() or time.monotonic() >= deadline:
+                    shutdown(self.sock)
+                    raise ValueError("MANUAL_DOWNLOAD_BOUND")
+                sockets.append(self.sock)
+    class DeadlinePool(HTTPSConnectionPool):
+        ConnectionCls = DeadlineConnection
+    class DeadlineAdapter(requests.adapters.HTTPAdapter):
+        def init_poolmanager(self, *args, **kwargs):
+            super().init_poolmanager(*args, **kwargs)
+            # PoolManager's default registry is shared: never mutate it globally.
+            self.poolmanager.pool_classes_by_scheme = {"https": DeadlinePool}
+
+    remaining = deadline - time.monotonic()
+    require(remaining > 0, "MANUAL_DOWNLOAD_BOUND")
+    timer = threading.Timer(remaining, expire)
+    timer.daemon = True
+    # urllib3 diagnostics can include signed paths even on a handled exception.
+    # This standalone, locked collector exposes only its sanitized failure code.
+    started = False
+    with private_transport_logs():
+        try:
+            timer.start()
+            started = True
+            with requests.Session() as http:
+                http.trust_env = False
+                http.mount("https://", DeadlineAdapter(max_retries=0))
+                http.resolve_redirects = lambda *args, **kwargs: iter(())
+                require(all(a.max_retries.total == 0 for a in http.adapters.values()), "MANUAL_RETRIES_FORBIDDEN")
+                yield http
+                require(not expired.is_set() and time.monotonic() < deadline, "MANUAL_DOWNLOAD_BOUND")
+        finally:
+            timer.cancel()
+            if started:
+                timer.join()  # no watchdog/socket work remains after return
+
+
 def download_outputs(client, job, version, archive, expected_sha, destination):
     """Pinned SDK listing + bounded anonymous GET, no SDK retry/resume downloader."""
     import os
-    import requests
     from kagglesdk.kernels.types.kernels_api_service import ApiListKernelSessionOutputRequest
     from scripts.submit_internvl_v2 import bounded_http
     require(re.fullmatch(r"[A-Za-z0-9_-]+\.zip", archive.name), "MANUAL_ARCHIVE_NAME")
+    require_hash(expected_sha)
     expected = {archive.name: archive.stat().st_size, archive.name + ".sha256.json": 4096}
     require(shutil.disk_usage(destination).free > sum(expected.values()) + 2**20, "MANUAL_DOWNLOAD_DISK_BOUND")
-    with bounded_http():
+    with private_transport_logs(), bounded_http():
         query = ApiListKernelSessionOutputRequest()
         query.user_name, query.kernel_slug = job.split("/")
         query.version_label, query.page_size = operator.kernel_version_label(version), 256
         with client.build_kaggle_client() as remote:
+            remote._http_client._verbose = False  # pinned SDK can print the response body
             result = remote.kernels.kernels_api_client.list_kernel_session_output(query)
         require(not result.next_page_token and len(result.files) <= 256
             and len({f.file_name for f in result.files}) == len(result.files), "MANUAL_OUTPUT_LIST_BOUND")
         selected = {f.file_name: f for f in result.files if f.file_name.endswith((".zip", ".zip.sha256.json"))}
         require(set(selected) == set(expected) and type(result.log) is str and 0 < len(result.log.encode()) <= 16*2**20,
             "MANUAL_EXACT_PROVIDER_OUTPUTS_AND_LOG")
-        write_bytes(destination / "provider.log", result.log.encode())
-        deadline = time.monotonic() + 240
-        for name, limit in expected.items():
-            url = selected[name].url
-            target = urlsplit(url)
-            require(target.scheme == "https" and target.netloc == "storage.googleapis.com"
-                and target.path.startswith("/") and target.query and not target.fragment
-                and not any(ord(c) <= 32 or ord(c) == 127 for c in url) and "\\" not in url,
-                "MANUAL_UNSAFE_OUTPUT_URL")
-            with requests.Session() as http:
-                http.trust_env = False
-                with http.get(url, stream=True, allow_redirects=False, headers={"Accept-Encoding": "identity"}) as response:
-                    require(response.status_code == 200, "MANUAL_OUTPUT_HTTP_STATUS")
-                    with (destination / name).open("xb") as stream:
-                        total = 0
+    # Validate the pair before ANY output GET. Keep SDK's timeout wrapper above
+    # separate: it replaces caller timeouts, including a shrinking GET budget.
+    for name in expected:
+        validate_output_url(selected[name].url, name)
+    write_bytes(destination / "provider.log", result.log.encode())
+    deadline = time.monotonic() + 240
+    for name, limit in expected.items():
+        remaining = deadline - time.monotonic()
+        require(remaining > 0, "MANUAL_DOWNLOAD_BOUND")
+        with anonymous_output_session(deadline) as http:
+            # Disabling resolve_redirects also prevents requests from reading a
+            # redirect body just to prepare Response.next with redirects disabled.
+            with http.get(selected[name].url, stream=True, allow_redirects=False,
+                    timeout=(min(10, remaining / 2), min(30, remaining / 2)),
+                    headers={"Accept-Encoding": "identity"}) as response:
+                require(response.status_code == 200, "MANUAL_OUTPUT_HTTP_STATUS")
+                require(time.monotonic() < deadline, "MANUAL_DOWNLOAD_BOUND")
+                require(response.headers.get("Content-Encoding", "identity") == "identity", "MANUAL_OUTPUT_ENCODING")
+                length = response.headers.get("Content-Length")
+                require(length is None or (re.fullmatch(r"[0-9]+", length)
+                    and int(length) <= limit), "MANUAL_DOWNLOAD_BOUND")
+                with (destination / name).open("xb") as stream:
+                    total = 0
+                    try:
                         for chunk in response.iter_content(65536):
                             total += len(chunk)
                             require(total <= limit and time.monotonic() < deadline, "MANUAL_DOWNLOAD_BOUND")
                             stream.write(chunk)
+                        require(time.monotonic() < deadline, "MANUAL_DOWNLOAD_BOUND")
+                        require(length is None or total == int(length), "MANUAL_OUTPUT_LENGTH_MISMATCH")
+                    finally:
+                        # Even a timeout leaves durable, create-only partials.
                         stream.flush(); os.fsync(stream.fileno())
     remote_archive = destination / archive.name
     require(sha(remote_archive) == expected_sha == read(str(remote_archive) + ".sha256.json")["sha256"],

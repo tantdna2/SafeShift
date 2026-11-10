@@ -8,6 +8,47 @@ no execution release, audit PASS, merge permission or scientific qualification.
 
 ## Source and authority boundaries
 
+### PR191 self-review continuation — 10/11/2026
+
+Owner's continuation keeps this same branch/Draft PR and authorizes bounded,
+read-only inspection/download of the existing Attempt8 v1 outputs. No job rerun,
+GPU, inference, submit or production append is authorized or performed. Unlike
+the initial CPU-only snapshot below, the current tool has directly downloaded
+the original ZIP/sidecar/provider log and replayed the saved provenance checks.
+See [final continuation evidence](research/TRAIN3763_MANUAL_CDN_REVIEW_20261110.md).
+
+The actual CDN token is one path segment with five dot-separated fields, the
+second empty: `<header>..<iv>.<ciphertext>.<tag>`. PR191's first regex incorrectly
+rejected it. The current validator supports that observed Base64url-style shape
+and the earlier simple opaque token form. It never decodes/trusts token claims;
+the exact origin/path/name and original archive SHA/authority gates remain.
+Other unobserved token shapes and punctuation remain BLOCKED, including escapes,
+`=`/`;`, slashes, traversal and noncanonical dot fields. Never publish real tokens.
+
+### CDN companion fix — 09/11/2026 (review/audit/merge pending)
+
+[Directive6739558259](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6739558259)
+starts one collection-only Draft PR from merged PR190/main
+`519cb16a8f0e66ab03d5a1b0f1ed3981261ca6f6`. Operator reports that the existing
+Attempt8 output listing returns the exact `www.kaggleusercontent.com` CDN route
+described below. This software task verifies sanitized CPU fixtures, not the live
+URL or provider; no submit, GPU, inference, production collection or measurement.
+
+The old [PR190 tool release6739152747](https://github.com/tantdna2/SafeShift/pull/190#issuecomment-6739152747)
+pins script SHA256 `9fa7259b51e7e4caabfd1dfbfdbadd51f3cd569c0fd9f58a70b334150fcc602b`.
+It cannot authorize this changed companion. Do not edit the approved Operator
+checkout or run new bytes against that old locator. Direct ChatGPT GitHub review,
+a focused independent Antigravity security/provenance audit of this network
+allowlist change, separately authorized merge and postmerge SHA/parents/tree
+verification must precede a **new authentic MANUAL_ADAPTER_V1 tool release**.
+Only then may Operator replace the standalone tool using its reviewed SHA.
+
+Keep the original `BLOCKED.json`, every partial and every prior evidence directory.
+Use a **fresh create-only evidence directory** for collection of the same saved
+Owner job/ZIP. Do not rerun ordinal2. The existing [Owner factual attestation6739339869](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6739339869)
+remains applicable unless its factual data changed. No new scientific decision,
+213-call official measurement or 200-image shard release follows from this fix.
+
 `scripts/reconcile_train3763_manual.py` is an external collection companion,
 deliberately outside `internvl3763.source_spec()`. No runtime manifest, native
 code, notebook, parser, prompt, HNLO, labels, TRAIN/TEST, roster, metric or science
@@ -145,10 +186,41 @@ never resubmit them automatically.
 The same ZIP and sidecar must be independently downloaded from the actual pinned
 provider job and match the Owner's existing ZIP. Official SDK listing is bounded
 to 256 outputs with no pagination ambiguity; the exact ZIP pair and provider log
-are required. Downloads use anonymous HTTPS to `storage.googleapis.com`, no
-redirect, credentials, retries or resume, at most the attested ZIP length/4096-byte
-sidecar and 240 seconds of streaming, with finite connection/read timeouts.
-Any other storage host is BLOCKED pending reviewed transport support. Originals,
+are required. Downloads accept exactly two HTTPS origins and canonical paths:
+
+- `https://www.kaggleusercontent.com/kf/<positive-decimal-run>/<opaque-token>/<exact-filename>`:
+  no query; token is either ASCII letters/digits/`_`/`-` or the observed five-part
+  `<header>..<iv>.<ciphertext>.<tag>` form, with each nonempty field using that same
+  alphabet. The ZIP or `.zip.sha256.json` filename exactly matches both the SDK
+  listing and expected name.
+- `https://storage.googleapis.com/<canonical-output-path>/<exact-filename>?<signed-query>`:
+  existing exact GCS origin with a nonempty query; final filename is also exact.
+
+URLs are bounded to 16384 printable ASCII characters. No userinfo, ports (even
+443), apex/subdomain/suffix host variants, fragments (even empty), backslashes,
+path escapes/encoded separators, empty/dot/traversal path segments or parameters
+are accepted. Both URLs are validated before any output GET; no token/URL is
+stored in receipts or error messages. Other origins or shapes remain BLOCKED.
+
+GET uses a fresh anonymous session with `trust_env=False`, no Authorization,
+proxy/netrc credentials, redirects, retry or resume. Connect/read timeouts are
+explicitly at most 10/30 seconds and shrink to half the remaining shared budget
+when needed. The 240-second monotonic budget covers both file GETs and is checked
+before each GET, after headers, at each stream chunk and EOF; an overrun never
+passes verification. A deadline watchdog shuts down registered TLS sockets during
+slow response headers/body, including byte-by-byte trickles that defeat an idle
+timeout. It is cancelled and joined on success/failure before return. Late
+connection completion is rejected. Normal TLS certificate verification remains
+enabled; no global urllib3 pool registry is changed. System DNS resolution remains
+OS-managed; this watchdog is not a process-level kill of a blocked resolver.
+SDK verbose response printing and stdlib transport diagnostics are suppressed
+while credentials/bearer paths could be present; logging state is restored.
+Identity content encoding is required. Declared and actual stream
+bytes are capped at the attested ZIP length/4096-byte sidecar. ZIP SHA256 must
+match the supplied archive, Owner attestation and downloaded sidecar. Declared
+Content-Length, when present, must equal received bytes. Downloads use exclusive
+`xb` and fsync retained partial bytes even on streaming failure.
+No failed download appends a journal. Originals,
 partial downloads and failures remain untouched. Identity/inventory are observed
 again before the single append; authority/source/handoff are also rechecked.
 
@@ -180,16 +252,23 @@ again before the single append; authority/source/handoff are also rechecked.
 
    ```powershell
    $repo = (Get-Location).Path
-   $tool = Join-Path $repo 'data/processed/reviewed-tools/reconcile_train3763_manual.py'
+   $tool = Join-Path $repo 'data/processed/reviewed-tools/pr191/reconcile_train3763_manual.py'
    & data/processed/operator-venv/Scripts/python.exe -B $tool `
      --approved-repo $repo `
      --ledger data/processed/train3763-campaign/ledger `
      --handoff data/processed/train3763-campaign/attempt-8 `
      --archive data/processed/manual-run-20261109-notebook4e07cfa2d0/ivl35-train3763-8-6123c4cb8b134abe98dbf857286ff4e1.zip `
      --owner-locator data/processed/manual-collection-owner-locator.json `
-     --tool-locator data/processed/manual-collection-tool-locator.json `
-     --evidence data/processed/manual-collection-attempt8-verified
+     --tool-locator data/processed/manual-collection-tool-pr191-locator.json `
+     --evidence data/processed/manual-collection-attempt8-pr191
    ```
+
+   The old `manual-collection-attempt8-verified` directory already contains BLOCKED
+   evidence. Do not reuse/delete/overwrite it, the old locator or old standalone
+   tool. The example uses distinct PR191 tool/locator/evidence paths, populated
+   only after the new authentic release. If the new evidence directory also
+   exists, preserve it and use another fresh name consistently in collection and
+   measurement; never clear a directory to retry.
 
 5. On PASS, `COLLECTED` contains actual Owner provenance and the verified provider
    ZIP path. Run the **unchanged** `Ledger.measure` on that exact ZIP from the
@@ -198,7 +277,7 @@ again before the single append; authority/source/handoff are also rechecked.
    ```powershell
    & data/processed/operator-venv/Scripts/python.exe -B -m scripts.train3763_campaign measure `
      --directory data/processed/train3763-campaign/ledger `
-     --archive data/processed/manual-collection-attempt8-verified/ivl35-train3763-8-6123c4cb8b134abe98dbf857286ff4e1.zip `
+     --archive data/processed/manual-collection-attempt8-pr191/ivl35-train3763-8-6123c4cb8b134abe98dbf857286ff4e1.zip `
      --seconds 7200
    ```
 
