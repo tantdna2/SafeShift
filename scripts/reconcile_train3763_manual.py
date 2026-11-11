@@ -43,6 +43,9 @@ DISTINCT_SLUG = "DISTINCT_SLUG_V1"
 SAME_SLUG = "SAME_SCHEDULED_SLUG_V2"
 SAME_TOOL_MARKER = "SAFESHIFT_TRAIN3763_MANUAL_ADAPTER_V2"
 SAME_OWNER_MARKER = "SAFESHIFT_TRAIN3763_OWNER_MANUAL_V2"
+OUTPUT_PAGE_SIZE = 256
+OUTPUT_MAX_PAGES = 64
+OUTPUT_MAX_FILES = 16384
 
 
 def collection_mode(mode):
@@ -402,20 +405,55 @@ def download_outputs(client, job, version, archive, expected_sha, destination):
     with private_transport_logs(), bounded_http():
         query = ApiListKernelSessionOutputRequest()
         query.user_name, query.kernel_slug = job.split("/")
-        query.version_label, query.page_size = operator.kernel_version_label(version), 256
-        with client.build_kaggle_client() as remote:
-            remote._http_client._verbose = False  # pinned SDK can print the response body
-            result = remote.kernels.kernels_api_client.list_kernel_session_output(query)
-        require(not result.next_page_token and len(result.files) <= 256
-            and len({f.file_name for f in result.files}) == len(result.files), "MANUAL_OUTPUT_LIST_BOUND")
-        selected = {f.file_name: f for f in result.files if f.file_name.endswith((".zip", ".zip.sha256.json"))}
-        require(set(selected) == set(expected) and type(result.log) is str and 0 < len(result.log.encode()) <= 16*2**20,
+        query.version_label, query.page_size = operator.kernel_version_label(version), OUTPUT_PAGE_SIZE
+        selected, names, tokens, provider_log = {}, set(), set(), None
+        for _ in range(OUTPUT_MAX_PAGES):
+            with client.build_kaggle_client() as remote:
+                remote._http_client._verbose = False  # pinned SDK can print the response body
+                result = remote.kernels.kernels_api_client.list_kernel_session_output(query)
+            require(type(result.files) is list and len(result.files) <= OUTPUT_PAGE_SIZE
+                and len(names) + len(result.files) <= OUTPUT_MAX_FILES, "MANUAL_OUTPUT_LIST_BOUND")
+            # SDK getters use `value or ""`, which would also hide counterfeit
+            # []/{} tokens/logs. Inspect the pinned optional storage first.
+            token = result._next_page_token
+            require(token is None or type(token) is str, "MANUAL_OUTPUT_PAGE_TOKEN")
+            token = token or ""
+            # The pinned SDK maps absent/null terminal tokens to "". Every
+            # continuation must be a bounded opaque printable token, never an
+            # empty page, whitespace, a repeated token or a cycle.
+            require(type(token) is str and len(token) <= 4096
+                and all(33 <= ord(c) < 127 for c in token)
+                and (not token or token not in tokens and bool(result.files)), "MANUAL_OUTPUT_PAGE_TOKEN")
+            require(bool(result.files), "MANUAL_OUTPUT_EMPTY_PAGE")
+            for output in result.files:
+                name = output.file_name
+                require(type(name) is str and 0 < len(name) <= 4096 and all(
+                    re.fullmatch(r"[A-Za-z0-9_~.-]+", part) and part not in (".", "..")
+                    for part in name.split("/")), "MANUAL_OUTPUT_FILE_NAME")
+                require(name not in names, "MANUAL_OUTPUT_DUPLICATE_FILE")
+                names.add(name)
+                if name.lower().endswith((".zip", ".zip.sha256.json")):
+                    selected[name] = output
+            log = result._log
+            require(log is None or type(log) is str, "MANUAL_OUTPUT_LOG_BOUND")
+            log = log or ""
+            require(type(log) is str and len(log.encode()) <= 16*2**20, "MANUAL_OUTPUT_LOG_BOUND")
+            if log:
+                require(provider_log is None or provider_log == log, "MANUAL_OUTPUT_LOG_CHANGED")
+                provider_log = log
+            if not token:
+                break
+            tokens.add(token)
+            query.page_token = token  # official kagglesdk==0.1.38 request field
+        else:
+            raise ValueError("MANUAL_OUTPUT_LIST_BOUND")
+        require(set(selected) == set(expected) and provider_log is not None,
             "MANUAL_EXACT_PROVIDER_OUTPUTS_AND_LOG")
     # Validate the pair before ANY output GET. Keep SDK's timeout wrapper above
     # separate: it replaces caller timeouts, including a shrinking GET budget.
     for name in expected:
         validate_output_url(selected[name].url, name)
-    write_bytes(destination / "provider.log", result.log.encode())
+    write_bytes(destination / "provider.log", provider_log.encode())
     deadline = time.monotonic() + 240
     for name, limit in expected.items():
         remaining = deadline - time.monotonic()
