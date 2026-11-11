@@ -41,7 +41,8 @@ class OutputTransport:
         self.case, self.archive = case, archive
         self.output = output_fixture(archive, gcs=gcs)
         self.payloads = {archive.name: archive.read_bytes(), archive.name + ".sha256.json":
-            json.dumps({"sha256": sha(archive)}).encode()}
+            Path(str(archive)+".sha256.json").read_bytes() if Path(str(archive)+".sha256.json").exists()
+            else json.dumps({"sha256": sha(archive)}).encode()}
         self.gets, self.listings = [], []
         self.status, self.error, self.headers, self.clock = 200, None, {}, None
         self.expected_timeout = None
@@ -108,7 +109,9 @@ except ImportError:
     KaggleClient = None
 
 
-class ManualCollectionTests(unittest.TestCase):
+class ManualFixture(unittest.TestCase):
+    handoff_submission_intent = True
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
@@ -121,7 +124,8 @@ class ManualCollectionTests(unittest.TestCase):
         self.ledger = c.Ledger.create(self.root / "ledger", self.root / "mirror", self.grant, "synthetic-machine")
         self.intent = self.ledger.reserve(self.request)
         self.session = handoff.prepare(self.root / "handoff", self.request)
-        self.session.event("SUBMISSION_INTENT")  # actual Attempt8 preflight sequence; NOT ledger PUSH_INTENT
+        if self.handoff_submission_intent:
+            self.session.event("SUBMISSION_INTENT")  # Attempt8 only: not ledger PUSH_INTENT
         self.session.report("BLOCKED", reason="SYNTHETIC_GITHUB_API_RATE_LIMIT")
         self.handoff_before = m.handoff_snapshot(self.session, self.request)
         self.original_journal = (self.ledger.root / "journal-000001.json").read_bytes()
@@ -204,6 +208,8 @@ class ManualCollectionTests(unittest.TestCase):
         self.assertEqual((self.ledger.root / "journal-000001.json").read_bytes(), self.original_journal)
         self.assertEqual(m.handoff_snapshot(self.session, self.request), self.handoff_before)
 
+
+class ManualCollectionTests(ManualFixture):
     def test_truthful_collection_existing_measure_and_resume_without_refund(self):
         event = self.run_collection()
         self.assertEqual([e["kind"] for e in self.ledger.events()], ["INTENT", "COLLECTED"])
@@ -419,7 +425,272 @@ class ManualCollectionTests(unittest.TestCase):
         self.client.kernels_push.assert_not_called()
 
 
+class SameSlugCollectionTests(ManualFixture):
+    handoff_submission_intent = False
+
+    def setUp(self):
+        super().setUp()
+        self.owner.pop("original_job_not_run")
+        self.owner.update(job=self.request["job"], mode=m.SAME_SLUG, ledger_events=1,
+            ledger_head_sha256=digest(self.intent), plan_sha256=digest(self.request["plan"]),
+            scheduled_ordinals=self.request["plan"]["scheduled_ordinals"], input_sources=op.input_sources(self.request),
+            no_api_submission=True, no_other_job_or_version=True)
+        self.owner_locator = self.comment(3100, m.SAME_OWNER_MARKER, self.owner, authority.OWNER, 180)
+        audit = self.comment(3101, m.SAME_TOOL_MARKER + "_AUDIT", {"reviewed_head": "c"*40,
+            "script_sha256": sha(m.__file__), "status": "PASS", "independent": True}, "synthetic-auditor", 192)
+        self.tool = {"implementation_pr": 192, "reviewed_head": "c"*40, "merged_sha": "d"*40,
+            "script_sha256": sha(m.__file__), "audit": audit, "scope": "SAME_SCHEDULED_SLUG_COLLECTION_ONLY",
+            "owner": self.owner_locator}
+        self.tool_locator = self.comment(3102, m.SAME_TOOL_MARKER, self.tool, "synthetic-reviewer", 192)
+        self.comments["/pulls/192"] = {"merged": True, "head": {"sha": "c"*40}, "merge_commit_sha": "d"*40,
+            "base": {"ref": "main"}}
+        self.provider["job_id"] = self.request["job"]
+        self.inventory.return_value = {"original_job_absent": False}
+
+    def run_collection(self, directory="evidence", *, check_only=False):
+        return m.reconcile(self.ledger, self.session, self.archive, self.owner_locator, self.tool_locator,
+            self.root / directory, mode=m.SAME_SLUG, check_only=check_only)
+
+    def test_same_slug_truthful_collection_original_histories_measure_and_no_fake_submit(self):
+        ManualCollectionTests.test_truthful_collection_existing_measure_and_resume_without_refund(self)
+        event = [e for e in self.ledger.events() if e["kind"] == "COLLECTED"][0]
+        self.assertEqual(event["manual"]["mode"], m.SAME_SLUG)
+        self.assertFalse(event["manual"]["inventory"]["original_job_absent"])
+        self.assertEqual(event["manual"]["owner_attestation"], self.owner)
+
+    def test_read_only_preflight_never_appends_and_append_repeats_every_gate(self):
+        result = self.run_collection("check", check_only=True)
+        self.assertEqual(result["status"], "READ_ONLY_VERIFIED")
+        self.assertFalse(result["ledger_appended"])
+        self.assertEqual(read(self.root/"check/verification.json")["collection"], "NOT_APPENDED_CHECK_ONLY")
+        self.assert_unchanged()
+        self.run_collection("collect")
+        self.assertEqual(self.download.call_count, 2)
+        self.assertEqual(self.observe.call_count, 4)
+        self.assertEqual([e["kind"] for e in self.ledger.events()], ["INTENT", "COLLECTED"])
+
+    def test_v1_owner_or_tool_record_cannot_authorize_same_slug(self):
+        for owner, tool in ((self.owner_locator, {"comment_id": 3002,
+                "body_sha256": hashlib.sha256(self.comments["/issues/comments/3002"]["body"].encode()).hexdigest()}),
+                ({"comment_id": 3000, "body_sha256": hashlib.sha256(
+                    self.comments["/issues/comments/3000"]["body"].encode()).hexdigest()}, self.tool_locator)):
+            with self.assertRaises(ValueError):
+                m.reconcile(self.ledger, self.session, self.archive, owner, tool, self.root/"unused", mode=m.SAME_SLUG)
+            self.assert_unchanged()
+        self.observe.assert_not_called()
+
+    def test_reviewer_release_must_pin_this_exact_owner_locator(self):
+        self.owner_locator = self.comment(3199, m.SAME_OWNER_MARKER, self.owner, authority.OWNER, 180)
+        with self.assertRaisesRegex(ValueError, "REVIEWER_EXACT_OWNER_RELEASE"): self.run_collection()
+        self.assert_unchanged(); self.observe.assert_not_called()
+
+    def test_wrong_parent_history_blocks_before_provider(self):
+        self.history["parent_history_sha256"] = "0"*64
+        with self.assertRaisesRegex(ValueError, "HISTORY_LINEAGE"): self.run_collection()
+        self.assert_unchanged(); self.observe.assert_not_called()
+
+    def test_forged_owner_facts_wrong_mode_slug_version_kernel_plan_inputs_and_ledger_stop(self):
+        original = deepcopy(self.owner)
+        for key, bad in (("campaign_sha256", "0"*64), ("intent_sha256", "0"*64), ("request_sha256", "0"*64),
+                ("job", "nguynanhtn/different"), ("version", 2), ("version", True), ("kernel_id", 0),
+                ("mode", m.DISTINCT_SLUG), ("ledger_events", 29), ("ledger_events", True),
+                ("ledger_head_sha256", "0"*64), ("plan_sha256", "0"*64), ("scheduled_ordinals", [1]),
+                ("scheduled_ordinals", [False]), ("input_sources", {}), ("no_api_submission", False),
+                ("no_other_job_or_version", False), ("archive_sha256", "0"*64), ("archive_bytes", 1)):
+            with self.subTest(key=key, bad=bad):
+                self.owner_locator = self.comment(3100, m.SAME_OWNER_MARKER, {**original, key: bad}, authority.OWNER, 180)
+                with self.assertRaises(ValueError): self.run_collection()
+                self.assert_unchanged()
+        for login, issue in (("attacker", 180), (authority.OWNER, 192)):
+            self.owner_locator = self.comment(3100, m.SAME_OWNER_MARKER, original, login, issue)
+            with self.assertRaisesRegex(ValueError, "AUTHENTIC_OWNER"): self.run_collection()
+        self.assert_unchanged(); self.observe.assert_not_called()
+
+    def test_edited_owner_comment_and_duplicate_json_key_fail_authentication(self):
+        comment = self.comments["/issues/comments/3100"]
+        comment["body"] += "edited"
+        with self.assertRaisesRegex(ValueError, "COMMENT_HASH_ID_DRIFT"): self.run_collection()
+        duplicate = m.SAME_OWNER_MARKER + '\n```json\n{"mode":"x","mode":"y"}\n```'
+        comment["body"] = duplicate
+        self.owner_locator = {"comment_id": 3100, "body_sha256": hashlib.sha256(duplicate.encode()).hexdigest()}
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_CAMPAIGN_KEY"): self.run_collection()
+        self.assert_unchanged()
+
+    def test_unmerged_stale_head_wrong_script_or_nonindependent_audit_stop(self):
+        pr = self.comments["/pulls/192"]
+        for key, bad in (("merged", False), ("head", {"sha": "e"*40}), ("merge_commit_sha", "e"*40)):
+            original = deepcopy(pr[key]); pr[key] = bad
+            with self.subTest(key=key), self.assertRaises(ValueError): self.run_collection()
+            pr[key] = original
+        for value in ({**self.tool, "scope": "MANUAL_COLLECTION_ONLY"}, {**self.tool, "script_sha256": "0"*64}):
+            self.tool_locator = self.comment(3102, m.SAME_TOOL_MARKER, value, "synthetic-reviewer", 192)
+            with self.assertRaises(ValueError): self.run_collection()
+        self.tool_locator = self.comment(3102, m.SAME_TOOL_MARKER, self.tool, "synthetic-reviewer", 192)
+        self.comments["/issues/comments/3101"]["user"]["login"] = "attacker"
+        with self.assertRaisesRegex(ValueError, "INDEPENDENT_AUDIT"): self.run_collection()
+        self.assert_unchanged()
+
+    def test_handoff_submission_intent_and_submission_directory_are_ambiguous(self):
+        (self.session.root/"submission").mkdir()
+        with self.assertRaisesRegex(ValueError, "AMBIGUOUS_SUBMISSION_FILES"): self.run_collection()
+        self.session.event("SUBMISSION_INTENT")
+        with self.assertRaisesRegex(ValueError, "AMBIGUOUS_HANDOFF"): self.run_collection()
+        self.assertEqual(len(self.ledger.events()), 1)
+        self.observe.assert_not_called()
+
+    def test_submitted_event_without_push_intent_also_blocks(self):
+        with lock(self.ledger.root):
+            self.ledger.append("SUBMITTED", intent_sha256=digest(self.intent), result={"job_id": self.request["job"], "version": 1})
+        with self.assertRaisesRegex(ValueError, "POSSIBLE_API_SUBMIT"): self.run_collection()
+        self.observe.assert_not_called()
+
+    def test_preserved_sidecar_bytes_cannot_be_replaced_by_semantically_similar_provider_bytes(self):
+        copy = self.download.side_effect
+        def altered(*args):
+            result = copy(*args)
+            sidecar = args[-1]/(self.archive.name+".sha256.json")
+            sidecar.write_bytes(sidecar.read_bytes()+b"\n")
+            return result
+        self.download.side_effect = altered
+        with self.assertRaisesRegex(ValueError, "PRESERVED_SIDECAR_BYTES"): self.run_collection()
+        self.assert_unchanged()
+        self.assertTrue((self.root/"evidence/BLOCKED.json").exists())
+
+    def test_authority_history_inventory_or_handoff_changed_before_append_stops(self):
+        for boundary, error in ((self.inventory, "MANUAL_INVENTORY_CHANGED"),):
+            boundary.side_effect = [{"original_job_absent": False}, {"original_job_absent": True}]
+            with self.assertRaisesRegex(ValueError, error): self.run_collection("inventory-changed")
+        self.assert_unchanged()
+        self.inventory.side_effect = None
+        copy = self.download.side_effect
+        def edited(*args):
+            result = copy(*args)
+            self.comments["/issues/comments/3100"]["body"] += "edited"
+            return result
+        self.download.side_effect = edited
+        with self.assertRaisesRegex(ValueError, "COMMENT_HASH_ID_DRIFT"): self.run_collection("owner-changed")
+        self.assert_unchanged()
+
+    # Exercise the existing failure/rollback/timeout paths in BOTH modes.
+    test_possible_api_submit = ManualCollectionTests.test_possible_api_submit_never_relabels_as_owner_manual
+    test_replay_and_concurrency = ManualCollectionTests.test_replay_and_concurrent_collector_do_not_append_or_download_twice
+    test_archive_and_native_custody = ManualCollectionTests.test_bad_sidecar_or_raw_hash_and_wrong_native_claim_stop
+    test_inputs_capsule_provider = ManualCollectionTests.test_wrong_inputs_capsule_provider_bytes_and_conflicting_status_leave_open_intent
+    test_future_provider_observation = ManualCollectionTests.test_provider_changes_during_collection_preserves_all_outputs_without_append
+    test_mirror_loss = ManualCollectionTests.test_lost_or_diverged_mirror_blocks_before_provider
+    test_torn_append = ManualCollectionTests.test_torn_collected_mirror_never_reports_success_or_allows_retry_measure_resume
+    test_real_sdk_same_slug_output = ManualCollectionTests.test_cdn_zip_sidecar_download_flows_through_original_collection
+    test_real_sdk_timeout_partial = ManualCollectionTests.test_download_failures_preserve_both_journals_handoff_partials_and_redact_urls
+
+
 class ManualSourceTests(unittest.TestCase):
+    def test_200_ordinals_3_to_202_replay_exact_completion_and_preserve_invalid(self):
+        from test_internvl3763 import PreparedControllerTests
+        helper = PreparedControllerTests("test_shared_controller_archive_raw_before_parse_and_full_denominator")
+        helper.setUp(); self.addCleanup(helper.doCleanups)
+        cohort, histories = helper.cohort, []
+        for ordinal in range(3):
+            p = c.plan(cohort, histories, action="initial" if ordinal == 0 else "resume",
+                run_id=f"synthetic200-{ordinal}", attempt_id=f"synthetic-{ordinal}", max_calls=1, max_seconds=1800)
+            histories.append({"run_id": p["run_id"], "attempt_id": p["attempt_id"], "series_id": p["series_id"],
+                "identity": p["identity"], "cohort_sha256": p["cohort_sha256"], "parent_history_sha256": p["history_sha256"],
+                "action": p["action"], "evidence_sha256": str(ordinal+1)*64, "repair": None,
+                "records": [{**cohort["samples"][ordinal], "status": "SUCCESS", "label": "Level02", "attempts": 1,
+                    "native_calls": 1, "raw_sha256": "f"*64, "hnlo": None, "hnlo_status": r.HNLO_STATUS}]})
+        p = c.plan(cohort, histories, action="resume", run_id="synthetic200-9", attempt_id="attempt-9",
+            max_calls=200, max_seconds=7200)
+        self.assertEqual(p["scheduled_ordinals"], list(range(3, 203)))
+        def image_path(row):
+            from safeshift.candidates.fulltrain_run import synthetic_bytes
+            path = helper.root/f"image-{row['ordinal']}"; path.write_bytes(synthetic_bytes(row["ordinal"]))
+            return path
+        good, invalid = helper.backend(), helper.backend("SYNTHETIC_INVALID")
+        def generate(image, sample, binding, deadline):
+            return (invalid if sample.name == "000103" else good).generate(image, sample, binding, deadline)
+        backend = NS(environment={"scope": "SYNTHETIC_ONLY"}, generate=generate)
+        archive = helper.root/"200.zip"
+        r.rehearse(helper.root/"200", archive, cohort, p, histories, lambda _: backend,
+            image_path=image_path, tokenizer_sha="a"*64)
+        result = r.verify_bundle(archive, sha(archive), p)
+        ancestor = r.sealed_history(archive, sha(archive), p)
+        self.assertEqual(result["model_calls"], 200, result)
+        self.assertEqual(len(ancestor["records"]), 200, result)
+        m.verify_scheduled_completion({"plan": p}, {"reserved_calls": 200}, result, ancestor)
+        self.assertEqual(result["counts"], {"NOT_ATTEMPTED": 3563, "SUCCESS": 199, "INVALID": 1})
+        self.assertEqual(len(ancestor["records"]), 200)
+        self.assertEqual(ancestor["parent_history_sha256"], digest(histories))
+        for change in (lambda a: a["records"].pop(), lambda a: a["records"].reverse(),
+                lambda a: a["records"][0].update(ordinal=2), lambda a: a["records"][0].update(ordinal=203),
+                lambda a: a["records"][1].update(ordinal=3), lambda a: a["records"][0].update(native_calls=0),
+                lambda a: a["records"][0].update(status="TECHNICAL_ERROR")):
+            changed = deepcopy(ancestor); change(changed)
+            with self.assertRaisesRegex(ValueError, "EXACT_SCHEDULED_COMPLETION"):
+                m.verify_scheduled_completion({"plan": p}, {"reserved_calls": 200}, result, changed)
+        with self.assertRaisesRegex(ValueError, "EXACT_SCHEDULED_COMPLETION"):
+            m.verify_scheduled_completion({"plan": p}, {"reserved_calls": 200}, {**result, "model_calls": 199}, ancestor)
+        # Re-sealing cannot turn a missing trace into valid completion.
+        import zipfile
+        folder = helper.root/"trace-tamper"
+        with zipfile.ZipFile(archive) as z: z.extractall(folder)  # synthetic files only
+        (folder/"checksums.json").unlink()
+        (folder/"samples/000003/trace-verification.json").unlink()
+        altered = helper.root/"missing-trace.zip"; checksum = export(folder, altered)
+        with self.assertRaisesRegex(ValueError, "TRACE_RECEIPT_REQUIRED"):
+            r.verify_bundle(altered, checksum, p)
+        wrong_plan = deepcopy(p); wrong_plan["scheduled_ordinals"][0] = 2
+        with self.assertRaisesRegex(ValueError, "ARCHIVE_PLAN_BINDING"):
+            r.verify_bundle(archive, sha(archive), wrong_plan)
+
+    def test_same_slug_inventory_rejects_missing_unknown_aborted_and_repeated_pages(self):
+        with tempfile.TemporaryDirectory() as d:
+            req, grant, _ = fixture(Path(d)/"ledger")
+            intent = {"kind": "INTENT", "request": req}
+            ledger = NS(grant=grant, events=lambda: [intent], intents=lambda: [intent])
+            response = NS(kernels=[NS(ref=req["job"])], next_page_token=None)
+            client = NS(kernels_list_with_response=Mock(return_value=response))
+            proof = m.inventory(client, ledger, intent, req["job"], mode=m.SAME_SLUG)
+            self.assertFalse(proof["original_job_absent"])
+            for refs in ([], [req["job"], req["job"]], [req["job"], req["job"][:-1]+"99"]):
+                response.kernels = [NS(ref=ref) for ref in refs]
+                with self.subTest(refs=refs), self.assertRaises(ValueError):
+                    m.inventory(client, ledger, intent, req["job"], mode=m.SAME_SLUG)
+            response.kernels, response.next_page_token = [], "SYNTHETIC_REPEATED_TOKEN"
+            with self.assertRaisesRegex(ValueError, "REPEATED_INVENTORY_PAGE"):
+                m.inventory(client, ledger, intent, req["job"], mode=m.SAME_SLUG)
+
+    def test_same_slug_inventory_verifies_actual_distinct_and_same_slug_predecessors(self):
+        with tempfile.TemporaryDirectory() as d:
+            req, grant, _ = fixture(Path(d)/"ledger")
+            first = {"kind": "INTENT", "request": req}
+            second = {"kind": "INTENT", "request": {**req, "job": req["job"][:-1]+"2"}}
+            current = {"kind": "INTENT", "request": {**req, "job": req["job"][:-1]+"3"}}
+            closed = [{"kind": "COLLECTED", "intent_sha256": digest(previous),
+                "provider": {"job_id": job, "state": "COMPLETE", "kernel_id": kernel}}
+                for previous, job, kernel in ((first, "nguynanhtn/synthetic-ui-result", 111),
+                    (second, second["request"]["job"], 222))]
+            events = [first, closed[0], second, closed[1], current]
+            ledger = NS(grant=grant, events=lambda: events, intents=lambda: [first, second, current])
+            response = NS(kernels=[NS(ref=job) for job in ("nguynanhtn/synthetic-ui-result",
+                second["request"]["job"], current["request"]["job"])], next_page_token=None)
+            client = NS(kernels_list_with_response=Mock(return_value=response))
+            content = b'{"cells":[]}'
+            for previous in (first, second): previous["request"]["notebook_sha256"] = hashlib.sha256(content).hexdigest()
+            for row, previous in zip(closed, (first, second)): row["intent_sha256"] = digest(previous)
+            with patch.object(m.subprocess, "check_output", return_value=content), \
+                    patch.object(m, "observe_kernel", return_value={"state": "COMPLETE"}) as observe:
+                proof = m.inventory(client, ledger, current, current["request"]["job"], mode=m.SAME_SLUG)
+                self.assertEqual(len(proof["predecessors"]), 2)
+                self.assertEqual([call.args[1] for call in observe.call_args_list],
+                    ["nguynanhtn/synthetic-ui-result", second["request"]["job"]])
+                observe.side_effect = ValueError("MANUAL_PROVIDER_IDENTITY_OR_VERSION")
+                with self.assertRaisesRegex(ValueError, "PROVIDER_IDENTITY_OR_VERSION"):
+                    m.inventory(client, ledger, current, current["request"]["job"], mode=m.SAME_SLUG)
+                observe.side_effect = None
+                closed[0]["kind"] = "ABORTED_PRE_SUBMIT"
+                response.kernels.append(NS(ref=first["request"]["job"]))
+                with self.assertRaises(ValueError):
+                    m.inventory(client, ledger, current, current["request"]["job"], mode=m.SAME_SLUG)
+
     def test_companion_is_outside_manifest_and_native_source_science_unchanged(self):
         self.assertNotIn("scripts/reconcile_train3763_manual.py", r.source_spec()["manifest"])
         self.assertEqual(digest(r.source_spec()), "f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d")
@@ -596,6 +867,30 @@ class ManualSdkTests(unittest.TestCase):
         self.assertEqual(self.observe()["kernel_id"], 123)
         self.assertEqual(self.calls[0]["versionLabel"], "v1")
         self.assertNotIn("versionLabel", self.calls[1])
+
+    def test_same_scheduled_slug_exact_five_inputs_and_latest_v1_are_required(self):
+        job = "nguynanhtn/safeshift-train3763-synthetic180-9"
+        self.meta.update(ref=job, datasetDataSources=["nguynanhtn/synthetic-"+str(n) for n in range(5)])
+        self.sources["dataset_sources"] = [ref+"/1" for ref in self.meta["datasetDataSources"]]
+        original = deepcopy(self.meta)
+        def observe():
+            with patch("socket.socket", side_effect=AssertionError("NO_NETWORK")), \
+                    patch.object(requests.adapters.HTTPAdapter, "send", self.send):
+                return m.observe_kernel(self.client, job, 1, self.notebook, self.sources, kernel_id=123)
+        self.assertEqual(observe()["job_id"], job)
+        for refs in (original["datasetDataSources"][:-1], original["datasetDataSources"]+["nguynanhtn/extra"],
+                original["datasetDataSources"]+[original["datasetDataSources"][0]]):
+            self.meta = {**original, "datasetDataSources": refs}
+            with self.subTest(refs=refs), self.assertRaisesRegex(ValueError, "INPUT_DRIFT"): observe()
+        self.meta = original
+        real_send = self.send
+        def future(adapter, request, **kwargs):
+            if "versionLabel" not in json.loads(request.body): self.meta["currentVersionNumber"] = 2
+            return real_send(request, **kwargs)
+        with patch("socket.socket", side_effect=AssertionError("NO_NETWORK")), \
+                patch.object(requests.adapters.HTTPAdapter, "send", future), \
+                self.assertRaisesRegex(ValueError, "IDENTITY_OR_VERSION"):
+            m.observe_kernel(self.client, job, 1, self.notebook, self.sources, kernel_id=123)
 
     def test_ui_metadata_omission_is_explicit_but_changed_retained_binding_stops(self):
         expected = deepcopy(self.notebook)

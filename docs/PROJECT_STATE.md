@@ -1,6 +1,93 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR191 real CDN token self-review — 10/11/2026
+## CURRENT — Attempt9 Owner UI same-slug collection preparation — 11/11/2026
+
+[Owner directive6789215420](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6789215420),
+BASE `4c68728cbcc26c0722520731d351cbe3fc23b6be` (PR191 MERGED), branch
+`fix/attempt9-same-slug-collection`. One new Draft PR extends only the external
+`scripts/reconcile_train3763_manual.py`, focused tests and documentation.
+The original approved Operator checkout stays clean at
+`4407dc939e045d115f4147e2d1d49605ec8b2f7a`; no protected runtime/source manifest,
+notebook, model/checkpoint/data/labels/parser/HNLO/metric or scientific decision changes.
+
+Explicit `SAME_SCHEDULED_SLUG_V2` requires the actual Owner-run job to equal the
+scheduled job. It authenticates a new exact Owner V2 factual record, original
+ledger head/count/request/plan/IDs/Input bindings and a separately merged/audited
+V2 tool release pinning both script bytes and that exact Owner locator. It rejects
+ledger PUSH_INTENT/SUBMITTED, ambiguous handoff SUBMISSION_INTENT/submission files,
+unknown provider activity/version, partial scheduled completion and attribution
+replay. All original bundle/raw/native/trace/Input/capsule/history gates remain.
+Inventory checks actual manual/API predecessors without fabricating submission
+events. Full scheduled SUCCESS/INVALID results are retained. Provider ZIP and
+preserved sidecar bytes must agree; original ZIP/sidecar/log are never overwritten.
+`--check-only` verifies into fresh isolated evidence without a ledger append;
+actual collection repeats every gate before one truthful mirrored COLLECTED.
+Default V1 preserves Attempt8 distinct-slug schemas/guards and historical records;
+prior tool releases continue to pin only their original script bytes.
+See [schemas, reconciliation gates and future operations](TRAIN3763_MANUAL_RECONCILIATION.md).
+
+**Operator-reported only:** Attempt9 kernel144292982/version1, PRIVATE COMPLETE,
+same scheduled `nguynanhtn/safeshift-train3763-ivl35-train3763-9`, 200 calls /
+SUCCESS on ordinals3..202, saved ZIP SHA256
+`e26dcec9b26cd12554bec208d49a74616fe4f8bb5af0ab145a3351de9092c895`, 705975856 bytes,
+8264 members. Canonical journal29 INTENT reportedly remains open, digest
+`ed136cc40da8b417399fee80bbfed6d1cf5e607f4f7898c99604c0c7ecbcf314`.
+These private facts/provider/capsule/custody have **not** been independently
+verified by this programming task. There are 3 formally collected successes;
+203 successful images / 3560 remaining remain conditional, not ledger counts or
+accuracy/scientific qualification.
+
+Runtime source SHA256 stays
+`f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d`;
+science SHA256 stays
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`;
+approved notebook SHA256 stays
+`c2e574c132c1305efccde569bac63c027eeafe8814285ebaf092701cb3f033e7`.
+
+Final focused CPU suite: **69/69 PASS**, zero errors/failures/skips, 330.584s.
+This includes all 44 original Attempt8 cases, same-slug orchestration and negative
+cases, real installed SDK HTTP doubles, and exact 200-ordinal synthetic controller
+replay retaining an INVALID. A process-wide guard records **zero socket
+construction attempts during tests**; one urllib3 import-time IPv6 capability
+probe was blocked separately. No real provider request or credential is used.
+The private evidence harness's initial SSL-import/loopback restrictions and the
+new fixture's HTTP callback/path collision were corrected; unsuccessful and
+interrupted local test logs remain preserved. These are author CPU checks, not
+the independent Antigravity audit.
+
+Environment: existing CPython3.11.9 / Windows, kaggle2.2.5, kagglesdk0.1.38,
+requests2.34.2, urllib3 2.8.0; no dependency changes. Final companion SHA256
+`c6fe00b1203ce6119d8083c03a9ea087a3720c4441bf8a66bf9e18f7d0412718`;
+focused test file SHA256
+`5e3ffedf442c4dc056ff7b35424ba3f4ee4c1a13b8489aa2502faf73abb81b91`.
+Both files remained byte-identical throughout the final suite. All **92 runtime
+manifest files and 37 notebooks** match BASE. Direct-file `--approved-repo` help
+imports from the original checkout without ledger access; `git diff --check` PASS.
+Receipts/logs are Git-ignored under `data/processed/attempt9-final-focused-r3/`.
+Reproduce: `python -B -m unittest discover -s tests -p test_train3763_manual.py -v`
+using the existing isolated Operator SDK interpreter from this tools checkout.
+
+The broader 13-suite TRAIN3763 CPU qualifier set with SDK opt-in completed
+**349 cases: 338 PASS, 11 skips, zero failures/errors**, 1190.225s. Skips:
+6 opt-in CPU torch/transformers, 3 missing CPU torch/tokenizers native-grammar
+E2E dependencies, 1 Linux process-group check and 1 Windows symlink permission.
+This broader harness allowed localhost witness HTTP while denying external
+socket connections; zero forbidden connection attempts occurred. Both final
+script/test hashes match the focused run. Receipts and complete logs are ignored
+under `data/processed/attempt9-final-broad-r3/`. The equivalent reproducible suite
+entrypoint is `scripts.qualify_internvl3763 --output <fresh-relative-directory>`
+with `SAFESHIFT3763_SDK_CPU=1`, using `python -B -m`; no native opt-in or weights.
+These are the 13 relevant qualifier suites, not all repository test modules.
+
+**Still PENDING / NOT_RUN:** direct ChatGPT exact-head review, independent
+Antigravity audit in a new session separate from `operator-asus-win`, separately
+authorized merge and postmerge verification, authentic new Owner/tool/audit
+records, actual provider reobservation and read-only check-only collection,
+production COLLECTED and subsequent unchanged Ledger.measure. Zero Kaggle
+submit/version/run, GPU, real model/image inference, TEST or production ledger
+write in this task. No Attempt10 or automatic next shard, no scientific upgrade.
+
+## HISTORICAL — PR191 real CDN token self-review — 10/11/2026
 
 Same branch `fix/manual-kaggle-cdn`, same [Draft PR191](https://github.com/tantdna2/SafeShift/pull/191),
 continuing the Owner's direct self-review instruction. Actual read-only v1 output

@@ -39,13 +39,27 @@ from safeshift.pilot.contract import digest, require_hash
 PROVENANCE = "OWNER_UI_MANUAL"
 TOOL_MARKER = "SAFESHIFT_TRAIN3763_MANUAL_ADAPTER_V1"
 OWNER_MARKER = "SAFESHIFT_TRAIN3763_OWNER_MANUAL_V1"
+DISTINCT_SLUG = "DISTINCT_SLUG_V1"
+SAME_SLUG = "SAME_SCHEDULED_SLUG_V2"
+SAME_TOOL_MARKER = "SAFESHIFT_TRAIN3763_MANUAL_ADAPTER_V2"
+SAME_OWNER_MARKER = "SAFESHIFT_TRAIN3763_OWNER_MANUAL_V2"
 
 
-def tool_release(locator, grant):
+def collection_mode(mode):
+    require(mode in (DISTINCT_SLUG, SAME_SLUG), "MANUAL_COLLECTION_MODE")
+    return mode == SAME_SLUG
+
+
+def tool_release(locator, grant, *, mode=DISTINCT_SLUG):
     """Separate audited COLLECTION authority, never a new runtime qualification."""
-    value, comment = campaign.record(locator, TOOL_MARKER, authority.get)
-    require(set(value) == {"implementation_pr", "reviewed_head", "merged_sha", "script_sha256", "audit",
-        "scope"} and value["scope"] == "MANUAL_COLLECTION_ONLY", "MANUAL_TOOL_RELEASE_FIELDS")
+    same = collection_mode(mode)
+    marker = SAME_TOOL_MARKER if same else TOOL_MARKER
+    scope = "SAME_SCHEDULED_SLUG_COLLECTION_ONLY" if same else "MANUAL_COLLECTION_ONLY"
+    value, comment = campaign.record(locator, marker, authority.get)
+    fields = {"implementation_pr", "reviewed_head", "merged_sha", "script_sha256", "audit", "scope"}
+    if same:
+        fields.add("owner")
+    require(set(value) == fields and value["scope"] == scope, "MANUAL_TOOL_RELEASE_FIELDS")
     require(type(value["implementation_pr"]) is int and value["implementation_pr"] > 189
         and comment["user"]["login"] in grant["review_logins"]
         and comment["issue_url"] == authority.API + "/issues/" + str(value["implementation_pr"]),
@@ -58,7 +72,7 @@ def tool_release(locator, grant):
         require(type(value[key]) is str and re.fullmatch(r"[a-f0-9]{40}", value[key]), "MANUAL_TOOL_COMMIT")
     require_hash(value["script_sha256"])
     require(sha(__file__) == value["script_sha256"], "MANUAL_TOOL_BYTES_DRIFT")
-    audit, auditor = campaign.record(value["audit"], TOOL_MARKER + "_AUDIT", authority.get)
+    audit, auditor = campaign.record(value["audit"], marker + "_AUDIT", authority.get)
     require(auditor["user"]["login"] in grant["audit_logins"] and auditor["id"] != comment["id"]
         and auditor["issue_url"] == comment["issue_url"]
         and audit == {"reviewed_head": value["reviewed_head"], "script_sha256": value["script_sha256"],
@@ -84,10 +98,14 @@ def approved_source(ledger, request):
     return notebook
 
 
-def handoff_snapshot(session, request):
+def handoff_snapshot(session, request, *, mode=DISTINCT_SLUG):
+    same = collection_mode(mode)
     require(session.request == request and session.latest_report() is not None
         and session.latest_report()["status"] == "BLOCKED", "MANUAL_IMMUTABLE_BLOCKED_HANDOFF_REQUIRED")
     events = session.events()
+    require(not same or not any(e["status"] == "SUBMISSION_INTENT" for e in events),
+        "MANUAL_AMBIGUOUS_HANDOFF_SUBMISSION_INTENT")
+    require(not same or not (session.root / "submission").exists(), "MANUAL_AMBIGUOUS_SUBMISSION_FILES")
     require(not any(e["status"] in ("SUBMITTED", "OBSERVED", "RUNNING_UNVERIFIED", "PASS", "FAIL")
         for e in events), "MANUAL_HANDOFF_POSSIBLE_SUBMIT")
     files = {}
@@ -100,17 +118,36 @@ def handoff_snapshot(session, request):
     return {"path": str(session.root.resolve()), "files": files, "head_sha256": digest(events[-1])}
 
 
-def owner_attestation(locator, ledger, intent, archive):
-    value, comment = campaign.record(locator, OWNER_MARKER, authority.get)
-    require(set(value) == {"campaign_sha256", "intent_sha256", "request_sha256", "job", "version", "kernel_id",
-        "archive_sha256", "archive_bytes", "operator", "original_job_not_run"}, "MANUAL_OWNER_FIELDS")
+def owner_attestation(locator, ledger, intent, archive, *, mode=DISTINCT_SLUG):
+    same = collection_mode(mode)
+    value, comment = campaign.record(locator, SAME_OWNER_MARKER if same else OWNER_MARKER, authority.get)
+    fields = {"campaign_sha256", "intent_sha256", "request_sha256", "job", "version", "kernel_id",
+        "archive_sha256", "archive_bytes", "operator"}
+    fields |= {"mode", "ledger_events", "ledger_head_sha256", "plan_sha256", "scheduled_ordinals",
+        "input_sources", "no_api_submission", "no_other_job_or_version"} if same else {"original_job_not_run"}
+    require(set(value) == fields, "MANUAL_OWNER_FIELDS")
     require(comment["user"]["login"] == authority.OWNER
         and comment["issue_url"] == authority.API + "/issues/180", "MANUAL_AUTHENTIC_OWNER_ATTESTATION")
     require(value["campaign_sha256"] == digest(ledger.grant) and value["intent_sha256"] == digest(intent)
-        and value["request_sha256"] == digest(intent["request"]) and value["operator"] == PROVENANCE
-        and value["original_job_not_run"] is True, "MANUAL_OWNER_INTENT_BINDING")
+        and value["request_sha256"] == digest(intent["request"]) and value["operator"] == PROVENANCE,
+        "MANUAL_OWNER_INTENT_BINDING")
+    if same:
+        events = ledger.events()
+        require(events and events[-1] == intent and value["mode"] == SAME_SLUG
+            and type(value["ledger_events"]) is int and value["ledger_events"] == len(events)
+            and value["ledger_head_sha256"] == digest(events[-1])
+            and value["plan_sha256"] == digest(intent["request"]["plan"])
+            and type(value["scheduled_ordinals"]) is list
+            and all(type(n) is int for n in value["scheduled_ordinals"])
+            and value["scheduled_ordinals"] == intent["request"]["plan"]["scheduled_ordinals"]
+            and value["input_sources"] == operator.input_sources(intent["request"])
+            and value["no_api_submission"] is True and value["no_other_job_or_version"] is True,
+            "MANUAL_SAME_SLUG_FACT_BINDING")
+    else:
+        require(value["original_job_not_run"] is True, "MANUAL_OWNER_INTENT_BINDING")
     require(type(value["job"]) is str and re.fullmatch(r"nguynanhtn/[a-z0-9][a-z0-9-]{0,100}", value["job"])
-        and value["job"] != intent["request"]["job"] and type(value["version"]) is int and value["version"] == 1
+        and (value["job"] == intent["request"]["job"]) == same
+        and type(value["version"]) is int and value["version"] == 1
         and type(value["kernel_id"]) is int and value["kernel_id"] > 0, "MANUAL_OWNER_PROVIDER_IDENTITY")
     require(value["archive_sha256"] == sha(archive) and type(value["archive_bytes"]) is int
         and value["archive_bytes"] == Path(archive).stat().st_size <= ledger.grant["caps"]["archive_bytes"],
@@ -155,12 +192,14 @@ def observe_kernel(client, job, version, notebook, sources, *, kernel_id=None, e
         "notebook_code_sha256": operator.code_hash(notebook), "failure_message": None}
 
 
-def inventory(client, ledger, intent, manual_job):
-    """Prove scheduled slug absent and every known campaign predecessor terminal.
+def inventory(client, ledger, intent, manual_job, *, mode=DISTINCT_SLUG):
+    """Prove exact scheduled-slug presence/absence and terminal predecessors.
 
     Manual predecessors keep their actual slug. No rewriting request['job'] or
     synthetic provider proxy to make the old API-submit inventory pass.
     """
+    same = collection_mode(mode)
+    require((manual_job == intent["request"]["job"]) == same, "MANUAL_INVENTORY_MODE_IDENTITY")
     from scripts.submit_internvl_v2 import bounded_http
     owned, tokens, token = set(), set(), None
     with bounded_http():
@@ -183,7 +222,11 @@ def inventory(client, ledger, intent, manual_job):
     pushed = {e["intent_sha256"] for e in events if e["kind"] == "PUSH_INTENT"}
     expected = {e["request"]["job"] for e in ledger.intents() if digest(e) in pushed}
     prefix = "nguynanhtn/safeshift-train3763-" + ledger.grant["campaign_id"] + "-"
-    require(intent["request"]["job"] not in owned and manual_job in owned
+    if same:
+        expected.add(manual_job)
+        expected.update(e["provider"]["job_id"] for e in events if e["kind"] == "COLLECTED"
+            and e["provider"]["job_id"].startswith(prefix))
+    require((intent["request"]["job"] in owned) == same and manual_job in owned
         and {ref for ref in owned if ref.startswith(prefix)} == expected, "MANUAL_ORIGINAL_JOB_ABSENCE_OR_HISTORY")
     predecessors = []
     for previous in ledger.intents():
@@ -207,7 +250,7 @@ def inventory(client, ledger, intent, manual_job):
             kernel_id=provider.get("kernel_id"), expected_state=provider["state"])
         predecessors.append({"intent_sha256": digest(previous), **proof})
     return {"owned_sha256": digest(sorted(owned)), "owned_count": len(owned),
-        "original_job_absent": True, "predecessors": predecessors}
+        "original_job_absent": not same, "predecessors": predecessors}
 
 
 def validate_output_url(url, name):
@@ -413,12 +456,26 @@ def verify_inputs_in_archive(archive, request):
             "MANUAL_PYTHON_INPUT_BYTES")
 
 
-def reconcile(ledger, session, archive, owner_locator, tool_locator, destination):
+def verify_scheduled_completion(request, intent, result, ancestor):
+    """Same-slug release admits the whole saved shard, never cherry-picked labels."""
+    scheduled = request["plan"]["scheduled_ordinals"]
+    records = ancestor["records"]
+    require(len(scheduled) > 0 and len(scheduled) == len(set(scheduled))
+        and result["model_calls"] == len(scheduled) == intent["reserved_calls"]
+        and [row["ordinal"] for row in records] == scheduled
+        and all(row["status"] in ("SUCCESS", "INVALID") and type(row["native_calls"]) is int
+            and row["native_calls"] == 1 for row in records), "MANUAL_EXACT_SCHEDULED_COMPLETION")
+
+
+def reconcile(ledger, session, archive, owner_locator, tool_locator, destination, *, mode=DISTINCT_SLUG,
+        check_only=False):
     """One truthful COLLECTED; old histories/measure consume it without patching.
 
     Deliberately no public injection of provider observations or verification
     verdicts. Test doubles replace only the network/authority boundary.
     """
+    same = collection_mode(mode)
+    require(type(check_only) is bool, "MANUAL_CHECK_ONLY_BOOLEAN")
     archive = Path(archive)
     with lock(ledger.root), lock(session.root):
         events = ledger.events()
@@ -429,14 +486,15 @@ def reconcile(ledger, session, archive, owner_locator, tool_locator, destination
         require(not any(e["kind"] in ("PUSH_INTENT", "SUBMITTED") and e["intent_sha256"] == intent_sha
             for e in events), "MANUAL_POSSIBLE_API_SUBMIT_STOP")
         require(not any(e["kind"] == "COLLECTED" and e["sha256"] == sha(archive) for e in events), "MANUAL_DUPLICATE_ARCHIVE")
-        tool = tool_release(tool_locator, ledger.grant)
+        tool = tool_release(tool_locator, ledger.grant, mode=mode)
         notebook = approved_source(ledger, request)
         budget = ledger.budget(authenticate=True)
         require(request["bindings"]["runtime"].get("o5_extension") == budget["extension"], "MANUAL_O5_AUTHORITY_DRIFT")
         history, _ = ledger.histories()
         require(request["bindings"]["runtime"]["execution_request"]["history"] == history, "MANUAL_ORIGINAL_HISTORY")
-        before = handoff_snapshot(session, request)
-        attestation = owner_attestation(owner_locator, ledger, intent, archive)
+        before = handoff_snapshot(session, request, mode=mode)
+        attestation = owner_attestation(owner_locator, ledger, intent, archive, mode=mode)
+        require(not same or tool["release"]["owner"] == owner_locator, "MANUAL_REVIEWER_EXACT_OWNER_RELEASE")
         require(not any(e["kind"] == "COLLECTED" and (e["provider"]["job_id"] == attestation["job"]
             or e["provider"].get("kernel_id") == attestation["kernel_id"]
             or e.get("manual", {}).get("owner_locator") == owner_locator) for e in events), "MANUAL_PROVIDER_REPLAY")
@@ -447,6 +505,8 @@ def reconcile(ledger, session, archive, owner_locator, tool_locator, destination
         verify_inputs_in_archive(archive, request)
         ancestor = runtime.sealed_history(archive, attestation["archive_sha256"], request["plan"])
         require(ancestor["parent_history_sha256"] == digest(history), "MANUAL_HISTORY_LINEAGE")
+        if same:
+            verify_scheduled_completion(request, intent, result, ancestor)
         destination = private_root(destination)
         for protected in (ledger.root, ledger.mirror, session.root):
             require(not destination.resolve().is_relative_to(protected.resolve())
@@ -457,16 +517,16 @@ def reconcile(ledger, session, archive, owner_locator, tool_locator, destination
             sources = operator.input_sources(request)
             args = (client, attestation["job"], 1, notebook, sources)
             provider = observe_kernel(*args, kernel_id=attestation["kernel_id"])
-            observed = inventory(client, ledger, intent, attestation["job"])
+            observed = inventory(client, ledger, intent, attestation["job"], mode=mode)
             capsule = operator.verify_execution_input(client, request, intent, destination / "capsule")
             output = download_outputs(client, attestation["job"], 1, archive, attestation["archive_sha256"], destination)
             require(observe_kernel(*args, kernel_id=attestation["kernel_id"]) == provider, "MANUAL_PROVIDER_CHANGED_DURING_COLLECTION")
-            require(inventory(client, ledger, intent, attestation["job"]) == observed, "MANUAL_INVENTORY_CHANGED")
-            require(handoff_snapshot(session, request) == before and ledger.events() == events, "MANUAL_LOCAL_CUSTODY_CHANGED")
+            require(inventory(client, ledger, intent, attestation["job"], mode=mode) == observed, "MANUAL_INVENTORY_CHANGED")
+            require(handoff_snapshot(session, request, mode=mode) == before and ledger.events() == events, "MANUAL_LOCAL_CUSTODY_CHANGED")
             require(sha(archive) == attestation["archive_sha256"], "MANUAL_ARCHIVE_CHANGED")
             require(approved_source(ledger, request) == notebook
-                and tool_release(tool_locator, ledger.grant) == tool
-                and owner_attestation(owner_locator, ledger, intent, archive) == attestation,
+                and tool_release(tool_locator, ledger.grant, mode=mode) == tool
+                and owner_attestation(owner_locator, ledger, intent, archive, mode=mode) == attestation,
                 "MANUAL_AUTHORITY_CHANGED_DURING_COLLECTION")
             # Keep the verified provider copy in independent create-only local
             # custody, instead of trusting an editable caller ZIP after checking.
@@ -480,7 +540,17 @@ def reconcile(ledger, session, archive, owner_locator, tool_locator, destination
                 "inventory": observed, "capsule": capsule, "output": output,
                 "original_job": request["job"], "source_sha256": digest(runtime.source_spec()),
                 "science_sha256": digest(campaign.science()), "execution_commit": request["commit_sha"]}
-            write(destination / "verification.json", {"provider": provider, "manual": manual, "verification": result})
+            if same:
+                manual["mode"] = mode
+                require(sha(str(collected) + ".sha256.json") == sha(str(archive) + ".sha256.json"),
+                    "MANUAL_PRESERVED_SIDECAR_BYTES")
+            require(ledger.histories()[0] == history and ledger.events() == events
+                and handoff_snapshot(session, request, mode=mode) == before, "MANUAL_FINAL_LOCAL_CUSTODY_CHANGED")
+            write(destination / "verification.json", {"provider": provider, "manual": manual, "verification": result,
+                "collection": "NOT_APPENDED_CHECK_ONLY" if check_only else "VERIFIED_BEFORE_APPEND"})
+            if check_only:
+                return {"status": "READ_ONLY_VERIFIED", "provider": provider, "manual": manual,
+                    "sha256": attestation["archive_sha256"], "ledger_appended": False}
             # Write through the existing mirror/fsync/chain mechanism. On a torn
             # second copy, the original Ledger rejects ALL further operations.
             row = ledger.append("COLLECTED", intent_sha256=intent_sha, provider=provider,
@@ -507,11 +577,14 @@ def main(argv=None):
     parser.add_argument("--owner-locator", type=Path, required=True)
     parser.add_argument("--tool-locator", type=Path, required=True)
     parser.add_argument("--evidence", type=Path, required=True)
+    parser.add_argument("--mode", choices=(DISTINCT_SLUG, SAME_SLUG), default=DISTINCT_SLUG)
+    parser.add_argument("--check-only", action="store_true", help="Verify into fresh evidence; do not append any ledger event")
     args = parser.parse_args(argv)
     require(args.approved_repo.resolve() == runtime.ROOT.resolve(), "MANUAL_IMPORT_ROOT_DRIFT")
     row = reconcile(campaign.Ledger(private_root(args.ledger)), Session(args.handoff), args.archive,
-        read(args.owner_locator), read(args.tool_locator), args.evidence)
-    print(json.dumps({"status": "COLLECTED", "provenance": PROVENANCE, "event_sha256": digest(row),
+        read(args.owner_locator), read(args.tool_locator), args.evidence, mode=args.mode, check_only=args.check_only)
+    print(json.dumps({"status": "READ_ONLY_VERIFIED" if args.check_only else "COLLECTED",
+        "provenance": PROVENANCE, "mode": args.mode, "event_sha256": None if args.check_only else digest(row),
         "archive_sha256": row["sha256"], "measurement": "NOT_RUN_USE_ORIGINAL_LEDGER_MEASURE"}))
     return 0
 
