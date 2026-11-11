@@ -1,5 +1,172 @@
 # Owner UI Kaggle collection — 09/11/2026
 
+## Current: Attempt9 same scheduled slug — 11/11/2026
+
+[Directive6789215420](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6789215420)
+authorizes one code-only Draft PR from BASE
+`4c68728cbcc26c0722520731d351cbe3fc23b6be`. It does **not** release collection.
+Keep the original Operator checkout clean at
+`4407dc939e045d115f4147e2d1d49605ec8b2f7a`, all 29 journals/mirrors, the original
+request/capsule/handoff and saved ZIP/sidecar/log. No rerun, new version, Attempt10,
+GPU, inference, TEST, production ledger append or measurement in this code task.
+
+The new explicit `--mode SAME_SCHEDULED_SLUG_V2` admits a truthful Owner UI run
+on `request.job`. Default `DISTINCT_SLUG_V1` retains Attempt8's V1 schemas and
+distinct-slug/original-job-absent requirements. Existing Owner/tool comments,
+locators and deployed files remain immutable; old releases cannot authorize the
+new script bytes or V2 mode. Historical Attempt8 operational snapshots below are
+not current campaign accounting or an Attempt9 release.
+
+For Attempt9, **operator-reported, not independently verified by this code task**:
+
+| Required reconciliation target | Reported identity |
+| --- | --- |
+| Original open INTENT | journal29; digest `ed136cc40da8b417399fee80bbfed6d1cf5e607f4f7898c99604c0c7ecbcf314` |
+| Scheduled and actual job | `nguynanhtn/safeshift-train3763-ivl35-train3763-9` |
+| Provider | kernel `144292982`, version1 and latest1, PRIVATE, COMPLETE, no failure, dual T4 |
+| Saved archive | `ivl35-train3763-9-9d5c43034e8c47e08ff9acfefb2a58d5.zip` |
+| ZIP bytes / SHA256 | `705975856` / `e26dcec9b26cd12554bec208d49a74616fe4f8bb5af0ab145a3351de9092c895` |
+| ZIP members / calls | `8264` / `200`; exact TRAIN ordinals3..202 |
+| Approved notebook executable code | `a5e5583e8739092836fed1170f9105374dee6ebf4926adbc97013c9bd1fd1a65` |
+| Input references | All **five original pinned versioned refs** from the unchanged request; no substitutions |
+
+The reported 200 SUCCESS are technical predictions, not accuracy. There are only
+3 formally collected successful images until this result is admitted. The
+reported 203 total / 3560 remaining are conditional; do not publish them as ledger
+counts. The collector preserves every scheduled SUCCESS **or INVALID**, without
+selecting by label correctness. Partial calls, TECHNICAL_ERROR or NOT_ATTEMPTED
+within the scheduled shard block V2; preserve them for read-only diagnosis.
+
+### V2 authentic Owner and reviewer records
+
+After schema review, Owner must publish a **new factual record** on Issue180,
+marker `SAFESHIFT_TRAIN3763_OWNER_MANUAL_V2` followed by exactly one fenced JSON
+object. This template is **not a posted assertion or release**. Replace every
+placeholder with original authenticated values; `scheduled_ordinals` must be the
+full JSON integer array `[3,4,...,202]`, never ellipsis or a string.
+
+```json
+{
+  "campaign_sha256": "ORIGINAL_GRANT_SHA256",
+  "intent_sha256": "ed136cc40da8b417399fee80bbfed6d1cf5e607f4f7898c99604c0c7ecbcf314",
+  "request_sha256": "ORIGINAL_REQUEST_SHA256",
+  "job": "nguynanhtn/safeshift-train3763-ivl35-train3763-9",
+  "version": 1,
+  "kernel_id": 144292982,
+  "archive_sha256": "e26dcec9b26cd12554bec208d49a74616fe4f8bb5af0ab145a3351de9092c895",
+  "archive_bytes": 705975856,
+  "operator": "OWNER_UI_MANUAL",
+  "mode": "SAME_SCHEDULED_SLUG_V2",
+  "ledger_events": 29,
+  "ledger_head_sha256": "ed136cc40da8b417399fee80bbfed6d1cf5e607f4f7898c99604c0c7ecbcf314",
+  "plan_sha256": "ORIGINAL_PLAN_SHA256",
+  "scheduled_ordinals": ["REPLACE_WITH_ALL_200_JSON_INTEGERS_3_THROUGH_202"],
+  "input_sources": {
+    "dataset_sources": ["ALL_ORIGINAL_VERSIONED_DATASET_REFS"],
+    "kernel_sources": ["ALL_ORIGINAL_VERSIONED_KERNEL_REFS_IF_ANY"],
+    "execution_request_sha256": "ORIGINAL_EXECUTION_REQUEST_SHA256"
+  },
+  "no_api_submission": true,
+  "no_other_job_or_version": true
+}
+```
+
+All fields are required; extra fields (including V1 `original_job_not_run`) fail.
+Use an empty array for original empty `kernel_sources`. The Owner's exact
+comment ID/body SHA locator authenticates the assertion. Request/plan/intent
+digests bind original source, notebook, capsule, 200 IDs, limits and history;
+the current last event must still be this INTENT. Never claim no API submission
+if ledger PUSH_INTENT/SUBMITTED or handoff SUBMISSION_INTENT/submission files exist.
+Any such ambiguity means STOP; do not delete events/files to obtain PASS.
+
+Following direct ChatGPT GitHub review, an independent Antigravity audit in a
+**new session separate from `operator-asus-win`**, separately authorized merge and
+postmerge verification, an authenticated reviewer publishes on the new PR:
+marker `SAFESHIFT_TRAIN3763_MANUAL_ADAPTER_V2` and exactly this schema:
+
+```json
+{
+  "implementation_pr": "REPLACE_WITH_JSON_INTEGER_NEW_PR",
+  "reviewed_head": "EXACT_40_HEX_REVIEWED_HEAD",
+  "merged_sha": "EXACT_40_HEX_AUTHORIZED_MERGE",
+  "script_sha256": "EXACT_MERGED_SCRIPT_SHA256",
+  "audit": {"comment_id": "JSON_INTEGER_AUDIT_ID", "body_sha256": "AUDIT_COMMENT_BODY_SHA256"},
+  "owner": {"comment_id": "JSON_INTEGER_NEW_OWNER_ID", "body_sha256": "NEW_OWNER_COMMENT_BODY_SHA256"},
+  "scope": "SAME_SCHEDULED_SLUG_COLLECTION_ONLY"
+}
+```
+
+The independent audit comment on the same PR uses marker
+`SAFESHIFT_TRAIN3763_MANUAL_ADAPTER_V2_AUDIT`, with exactly `reviewed_head`,
+`script_sha256`, `status: "PASS"`, `independent: true`. Reviewer/auditor logins
+must belong to the original grant's respective allowlists. Audit and release
+comments must differ; PR merge/head and local script hash must match. The V2
+reviewer additionally pins the **exact new Owner locator**, so another assertion
+cannot silently broaden the released collection. No such records are issued here.
+
+### V2 gates, read-only preflight and one append after release
+
+The collector holds original ledger/handoff locks across verification and
+append. Its bounded account inventory requires the scheduled slug **present**,
+all known campaign refs accounted for, prior actual manual/API jobs terminal,
+aborted slugs absent, and no unknown campaign job. Pinned-v1 and latest GetKernel
+must agree on exact kernel/ref/privacy/code/metadata/Input attachments; COMPLETE
+cannot have a failure message. Five pinned versions remain bound by the original
+request, Owner record, private capsule bytes and worker Input receipts.
+GetKernel's unversioned attachment list alone never proves versions.
+
+Unchanged `verify_bundle`, `verify_native_custody`, full raw/logit/trace/selection
+checks, Input byte receipts and sealed parent history all run. V2 additionally
+requires one native call for every scheduled record in exact order, with no
+missing/extra ordinal. Independent provider ZIP/sidecar/log download retains the
+existing HTTPS/origin/path/time/disk/byte caps and no redirects/retry. Both the ZIP
+SHA and **preserved sidecar bytes** must agree; a semantically similar replacement
+sidecar is BLOCKED. Provider/inventory/authority/source and local history/handoff
+are reobserved. Evidence is isolated and create-only. Known limits remain the
+trusted local operator/mirror model, remote metadata omissions explicitly recorded
+as before, OS-managed DNS and no global exactly-once or hardware attestation.
+
+Only after the authentic release, the **existing** Operator session runs the
+reviewed standalone script against the original checkout. First use a fresh
+evidence directory with `--check-only`; it performs the same authenticated gates
+and downloads but returns `READ_ONLY_VERIFIED`, `ledger_appended=false`, no event
+digest, and no measurement. This command is future operations guidance only:
+
+```powershell
+$repo = (Get-Location).Path
+$tool = Join-Path $repo 'data/processed/reviewed-tools/attempt9/reconcile_train3763_manual.py'
+& data/processed/operator-venv/Scripts/python.exe -B $tool `
+  --approved-repo $repo --mode SAME_SCHEDULED_SLUG_V2 --check-only `
+  --ledger data/processed/train3763-campaign/ledger `
+  --handoff data/processed/train3763-campaign/attempt-9 `
+  --archive '<relative-path-to-preserved-Attempt9-ZIP>' `
+  --owner-locator data/processed/attempt9-owner-v2-locator.json `
+  --tool-locator data/processed/attempt9-tool-v2-locator.json `
+  --evidence data/processed/attempt9-check-only-v2
+```
+
+On PASS, repeat **every gate**, without `--check-only`, into a different fresh
+directory such as `data/processed/attempt9-collection-v2`. There is no "promote
+receipt" bypass. Append exactly one mirrored `COLLECTED`, carrying
+`manual.provenance=OWNER_UI_MANUAL`, `manual.mode=SAME_SCHEDULED_SLUG_V2` and actual
+provider identity; no PUSH_INTENT/SUBMITTED/refund is synthesized. Existing
+`Ledger.measure` may then be invoked separately on the collected provider ZIP,
+using the reviewed original limits, after checking for an existing measurement.
+Do not assume MEASURED or automatically stage/run another shard.
+
+Any timeout, partial, changed authority/provider/history, wrong code/Input/capsule,
+duplicate attribution or mirror failure is STOP/BLOCKED. Keep originals, partials
+and sanitized failure receipts. Existing evidence directories cannot be reused;
+no automatic overwrite, retry or mirror repair. If an append is torn, read-only
+reconciliation must determine the true journal state before any further action.
+
+Tests remain in `tests/test_train3763_manual.py`, including V1 regression, both
+modes' orchestration/rollback/partial paths, real pinned SDK serializers with HTTP
+doubles, and 200-ordinal CPU controller/raw/trace replay. This is software
+evidence, not independent audit, live provider verification or scientific PASS.
+
+## Historical Attempt8 implementation and operational snapshots
+
 Authority: [ChatGPT directive6736965547](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6736965547).
 Implementation is **CPU SOFTWARE PREPARATION**, one Draft PR. ChatGPT must review
 the exact GitHub diff/tests, then authorize an independent Antigravity audit and
