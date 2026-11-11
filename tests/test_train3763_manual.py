@@ -111,6 +111,8 @@ except ImportError:
 
 class ManualFixture(unittest.TestCase):
     handoff_submission_intent = True
+    handoff_blocked_report = True
+    handoff_mode = m.DISTINCT_SLUG
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
@@ -126,8 +128,9 @@ class ManualFixture(unittest.TestCase):
         self.session = handoff.prepare(self.root / "handoff", self.request)
         if self.handoff_submission_intent:
             self.session.event("SUBMISSION_INTENT")  # Attempt8 only: not ledger PUSH_INTENT
-        self.session.report("BLOCKED", reason="SYNTHETIC_GITHUB_API_RATE_LIMIT")
-        self.handoff_before = m.handoff_snapshot(self.session, self.request)
+        if self.handoff_blocked_report:
+            self.session.report("BLOCKED", reason="SYNTHETIC_GITHUB_API_RATE_LIMIT")
+        self.handoff_before = self.snapshot()
         self.original_journal = (self.ledger.root / "journal-000001.json").read_bytes()
         self.notebook = {"cells": [{"cell_type": "code", "source": ["print('SYNTHETIC_ONLY')"]}],
             "metadata": {"safeshift": {"source_sha256": digest(r.source_spec())}}}
@@ -203,10 +206,13 @@ class ManualFixture(unittest.TestCase):
     def run_collection(self, directory="evidence"):
         return m.reconcile(self.ledger, self.session, self.archive, self.owner_locator, self.tool_locator, self.root / directory)
 
+    def snapshot(self):
+        return m.handoff_snapshot(self.session, self.request, mode=self.handoff_mode)
+
     def assert_unchanged(self):
         self.assertEqual(len(self.ledger.events()), 1)
         self.assertEqual((self.ledger.root / "journal-000001.json").read_bytes(), self.original_journal)
-        self.assertEqual(m.handoff_snapshot(self.session, self.request), self.handoff_before)
+        self.assertEqual(self.snapshot(), self.handoff_before)
 
 
 class ManualCollectionTests(ManualFixture):
@@ -229,7 +235,7 @@ class ManualCollectionTests(ManualFixture):
         next_plan = c.plan(cohort, history, action="resume", run_id="synthetic180-2", attempt_id="attempt-2",
             max_calls=2, max_seconds=1800)
         self.assertEqual(next_plan["scheduled_ordinals"], [1, 2])
-        self.assertEqual(m.handoff_snapshot(self.session, self.request), self.handoff_before)
+        self.assertEqual(self.snapshot(), self.handoff_before)
         self.client.kernels_push.assert_not_called()
 
     def test_replay_and_concurrent_collector_do_not_append_or_download_twice(self):
@@ -427,6 +433,7 @@ class ManualCollectionTests(ManualFixture):
 
 class SameSlugCollectionTests(ManualFixture):
     handoff_submission_intent = False
+    handoff_mode = m.SAME_SLUG
 
     def setUp(self):
         super().setUp()
@@ -581,6 +588,142 @@ class SameSlugCollectionTests(ManualFixture):
     test_torn_append = ManualCollectionTests.test_torn_collected_mirror_never_reports_success_or_allows_retry_measure_resume
     test_real_sdk_same_slug_output = ManualCollectionTests.test_cdn_zip_sidecar_download_flows_through_original_collection
     test_real_sdk_timeout_partial = ManualCollectionTests.test_download_failures_preserve_both_journals_handoff_partials_and_redact_urls
+
+
+class PreparedSameSlugCollectionTests(SameSlugCollectionTests):
+    """Repeat the V2 orchestration/adversarial suite with a genuine no-report handoff."""
+    handoff_blocked_report = False
+
+    def test_prepared_check_only_preserves_request_events_package_and_both_journals(self):
+        package = self.session.root/"package/safeshift_train3763_execution.json"
+        write(package, {"request": self.request, "campaign_intent": self.intent})
+        def fingerprint(root):
+            return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*")
+                if p.is_file() and p.name != "operator.lock"}
+        roots = (self.session.root, self.ledger.root, self.ledger.mirror)
+        before = [fingerprint(root) for root in roots]
+        with patch.object(self.session, "report", side_effect=AssertionError("NO_FAKE_BLOCKED_REPORT")), \
+                patch.object(self.session, "event", side_effect=AssertionError("NO_SYNTHETIC_EVENT")), \
+                patch.object(self.ledger, "append", side_effect=AssertionError("NO_CHECK_ONLY_APPEND")):
+            receipt = self.run_collection("prepared-check", check_only=True)
+        self.assertEqual(receipt["status"], "READ_ONLY_VERIFIED")
+        self.assertFalse(receipt["ledger_appended"])
+        self.assertEqual([fingerprint(root) for root in roots], before)
+        self.assertIsNone(self.session.latest_report())
+        self.assertEqual([e["status"] for e in self.session.events()], ["PREPARED"])
+        self.assertEqual(receipt["manual"]["handoff"]["head_sha256"], digest(self.session.events()[0]))
+        self.assertEqual(receipt["manual"]["handoff"]["files"][package.relative_to(self.session.root).as_posix()], sha(package))
+        with self.assertRaises(FileExistsError): self.run_collection("prepared-check", check_only=True)
+        self.assertEqual([fingerprint(root) for root in roots], before)
+
+    def test_genuine_blocked_event_appended_during_collection_is_preserved_and_stops_append(self):
+        copy = self.download.side_effect
+        def changed(*args):
+            result = copy(*args)
+            self.session.report("BLOCKED", reason="SYNTHETIC_CONCURRENT_OPERATOR_STOP")
+            return result
+        self.download.side_effect = changed
+        with self.assertRaisesRegex(ValueError, "LOCAL_CUSTODY_CHANGED"): self.run_collection()
+        self.assertEqual(len(self.ledger.events()), 1)
+        self.assertEqual((self.ledger.root/"journal-000001.json").read_bytes(), self.original_journal)
+        self.assertEqual(self.session.latest_report()["reason"], "SYNTHETIC_CONCURRENT_OPERATOR_STOP")
+        self.assertEqual([e["status"] for e in self.session.events()], ["PREPARED", "BLOCKED"])
+        self.assertTrue((self.root/"evidence/BLOCKED.json").exists())
+
+
+class HandoffSnapshotTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.request, _, _ = fixture(self.root/"ledger")
+        self.patch = patch.object(handoff, "private_root", side_effect=lambda p: Path(p))
+        self.patch.start(); self.addCleanup(self.patch.stop)
+        self.number = 0
+
+    def prepare(self):
+        self.number += 1
+        return handoff.prepare(self.root/f"handoff-{self.number}", self.request)
+
+    def test_original_prepared_is_v2_only_and_v1_keeps_historical_blocked_behavior(self):
+        session = self.prepare()
+        before = m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        self.assertEqual(set(before["files"]), {"request.json", "event-00001.json"})
+        with self.assertRaisesRegex(ValueError, "IMMUTABLE_BLOCKED_HANDOFF_REQUIRED"):
+            m.handoff_snapshot(session, self.request)
+        session.event("SUBMISSION_INTENT")
+        session.report("BLOCKED", reason="SYNTHETIC_HISTORICAL_PREFLIGHT_FAILURE")
+        v1 = m.handoff_snapshot(session, self.request)
+        self.assertEqual(v1["head_sha256"], digest(session.events()[-1]))
+        with self.assertRaisesRegex(ValueError, "AMBIGUOUS_HANDOFF_SUBMISSION_INTENT"):
+            m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+
+    def test_truthful_blocked_reports_are_verified_and_preserved_without_replacement(self):
+        session = self.prepare()
+        session.report("BLOCKED", reason="SYNTHETIC_EXISTING_STOP")
+        first = m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        session.report("BLOCKED", reason="SYNTHETIC_SECOND_READ_ONLY_STOP")
+        second = m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        self.assertTrue(first["files"].items() <= second["files"].items())
+        self.assertEqual(session.latest_report()["reason"], "SYNTHETIC_SECOND_READ_ONLY_STOP")
+        old = session.root/"report-00002.json"
+        old.write_bytes(old.read_bytes()+b" ")
+        with self.assertRaisesRegex(ValueError, "REPORT_HASH_DRIFT"):
+            m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+
+    def test_extra_events_and_fake_statuses_never_become_prepared_or_blocked(self):
+        for status in ("PREPARED", "BLOCKED", "UNKNOWN", "AGY_INVOCATION_INTENT", "SUBMISSION_INTENT",
+                "SUBMITTED", "OBSERVED", "RUNNING_UNVERIFIED", "PASS", "FAIL"):
+            for with_report in (False, True):
+                with self.subTest(status=status, with_report=with_report):
+                    session = self.prepare()
+                    session.event(status)
+                    if with_report: session.report("BLOCKED", reason="SYNTHETIC_FAKE_STATUS_COVER")
+                    with self.assertRaises(ValueError):
+                        m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        for status in ("PREPARED", "PASS", "UNKNOWN"):
+            session = self.prepare(); session.report(status)
+            with self.subTest(report_status=status), self.assertRaises(ValueError):
+                m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+
+    def test_missing_gapped_tampered_or_misbound_prepared_event_and_request_stop(self):
+        changes = ({"binding": "0"*64}, {"previous": "0"*64}, {"schema": "wrong"}, {"status": "BLOCKED"},
+            {"status": "UNKNOWN"}, {"utc": None}, {"report_sha256": "0"*64}, {"extra": True})
+        for change in changes:
+            session = self.prepare(); event = session.root/"event-00001.json"
+            event.write_text(json.dumps({**read(event), **change}), encoding="utf-8")
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        for action in (lambda p: p.unlink(), lambda p: p.rename(p.with_name("event-00002.json"))):
+            session = self.prepare(); action(session.root/"event-00001.json")
+            with self.assertRaises(ValueError): m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        session = self.prepare()
+        (session.root/"request.json").write_text(json.dumps({**self.request, "job": "nguynanhtn/wrong"}), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "ORIGINAL_HANDOFF_REQUEST_REQUIRED"):
+            m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        session = self.prepare()
+        with self.assertRaisesRegex(ValueError, "IMMUTABLE_BLOCKED_HANDOFF_REQUIRED"):
+            m.handoff_snapshot(session, {**self.request, "handoff_id": "wrong"}, mode=m.SAME_SLUG)
+
+    def test_submission_directory_and_orphan_reports_block_even_without_report_event(self):
+        for name in ("submission", "report-00002.json"):
+            session = self.prepare(); (session.root/name).mkdir()
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+        session = self.prepare()
+        write(session.root/"report-00002.json", {"status": "BLOCKED"})
+        with self.assertRaisesRegex(ValueError, "UNREFERENCED_HANDOFF_REPORT"):
+            m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
+
+    def test_resealed_blocked_report_with_false_binding_status_or_event_stops(self):
+        for key, bad in (("binding", "0"*64), ("status", "PREPARED"), ("schema", "wrong"),
+                ("job_id", "nguynanhtn/wrong"), ("notebook_sha256", "0"*64)):
+            session = self.prepare(); session.report("BLOCKED")
+            path = session.root/"report-00002.json"
+            path.write_text(json.dumps({**read(path), key: bad}), encoding="utf-8")
+            event = session.root/"event-00002.json"
+            event.write_text(json.dumps({**read(event), "report_sha256": sha(path)}), encoding="utf-8")
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, "BOUND_BLOCKED_REPORT_REQUIRED"):
+                m.handoff_snapshot(session, self.request, mode=m.SAME_SLUG)
 
 
 class ManualSourceTests(unittest.TestCase):
