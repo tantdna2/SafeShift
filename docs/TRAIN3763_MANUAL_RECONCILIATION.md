@@ -1,6 +1,98 @@
 # Owner UI Kaggle collection — 09/11/2026
 
-## Current: Attempt9 same scheduled slug — 11/11/2026
+## Current: one Attempt9 admission → Attempt10 Owner-run task — 11/11/2026
+
+[Directive6791205044](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6791205044)
+supersedes the narrower PR192 implementation assignment below. BASE is merged
+PR192/main `01130527c341fef9f01dbe383032da0b624593a5`; branch
+`fix/attempt9-prepared-handoff`. This is one integrated task, with at most one
+new code PR. Codex changes only the external collector's handoff admission,
+focused synthetic tests and these documents, then stops at that Draft PR.
+No Kaggle submit/GPU/inference/TEST, production collection or measurement is
+performed in the implementation phase. Original Operator HEAD stays at
+`4407dc939e045d115f4147e2d1d49605ec8b2f7a`.
+
+`SAME_SCHEDULED_SLUG_V2` now accepts an original **PREPARED-only handoff with no
+report**: unchanged persisted request, its bound correctly chained initial
+PREPARED event, exact event fields/schema, no later event, no orphan report and
+no submission directory. The request/package files remain in the immutable
+snapshot; original authority, Input/capsule, provider, archive/raw/trace,
+200-ordinal completion, ancestor/ledger/mirror and replay checks still run.
+PREPARED is a local preparation state, never a provider-completion verdict.
+Do not append a fake BLOCKED report to satisfy collection. The earlier workaround
+was [revoked6791113699](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6791113699).
+
+If genuine BLOCKED reports already exist, preserve them. V2 permits PREPARED
+followed by correctly chained BLOCKED report events only; each must reference
+its original numbered report with matching checksum, status and request/source
+bindings. Repeated genuine BLOCKED reports are retained and verified, including
+earlier reports. Unknown/extra events, unreported BLOCKED events, fake status,
+SUBMISSION_INTENT, submission files or unreferenced reports mean STOP. Do not
+delete any event/report to make admission pass. Default `DISTINCT_SLUG_V1`
+retains its existing BLOCKED requirement and historical preflight-failure
+SUBMISSION_INTENT behavior; PREPARED-only is not admitted on V1.
+
+The [authentic Owner V2 record6790846059](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6790846059),
+[PR192 audit6790628819](https://github.com/tantdna2/SafeShift/pull/192#issuecomment-6790628819)
+and [PR192 tool release6790859119](https://github.com/tantdna2/SafeShift/pull/192#issuecomment-6790859119)
+remain immutable. Do not request a replacement Owner factual record for this
+code correction. Changed factual evidence requires STOP and truthful reassessment.
+PR192's release cannot authorize changed script bytes. After direct ChatGPT
+review, one focused independent audit in a new Antigravity auditor session
+distinct from `operator-asus-win`, separately authorized ordinary two-parent
+merge and ChatGPT postmerge verification, ChatGPT must publish a **new exact V2
+tool release** binding this PR/merged script, its actual audit and the existing
+authentic Owner V2 locator. Audit/merge/release are not issued by Codex.
+
+### Same-task operational continuation after the review gate
+
+The original `operator-asus-win` session retrieves the reviewed tool separately
+under ignored reviewed-tools, checks its new release/hash, then rechecks original
+source/authority, single open journal29 INTENT and all 29 mirror-equal journals,
+no API/duplicate submission, PRIVATE v1/latest1 provider/code/five versioned
+Inputs/capsule, saved ZIP/sidecar/raw/trace and ancestors. Use the V2 command below
+with a **new** tool locator/path and fresh isolated `--check-only` evidence path.
+Send its actual `READ_ONLY_VERIFIED` receipt to ChatGPT for the admission verdict.
+Only after exact production authorization, repeat every gate in a distinct fresh
+directory for one mirrored COLLECTED (normally journal30), then separately run
+unchanged original `Ledger.measure` on that collected ZIP (normally journal31),
+after checking that no valid MEASURED already exists. Never promote a check-only
+receipt directly, fabricate submission events/measurement or rerun Attempt9.
+Verify closed INTENT, sealed lineage, journal/mirror bytes, actual summary/budget
+and measured `safe_calls`/`minimum_seconds`.
+
+After actual COLLECTED+MEASURED PASS, continue this **same task** with unchanged
+`scripts.train3763_campaign plan --mode resume`. Stage Attempt10 for original
+NOT_ATTEMPTED ordinals203..402 only when measured safe calls are at least200
+and seconds/caps/O5 quota/expiration/disk gates permit. Otherwise stage one maximal
+contiguous safe batch starting at203 and report its exact count/end and limit.
+Prepare one authentic new INTENT, fresh handoff, the actually created/verified
+private version1 capsule `nguynanhtn/safeshift-capsule-ivl35-attempt10`, four
+unchanged pinned Inputs plus that capsule, and the unchanged approved notebook.
+Do not assume the candidate Attempt10 URL exists or claim a capsule was uploaded
+without official pinned SDK evidence.
+
+Antigravity may prepare/publish a private notebook only if that operation does
+not execute GPU or create a completed version. Deliver its verified URL, or the
+actual ready Owner-importable `.ipynb` path if publishing would execute; include
+the verified capsule URL/version, all five exact Input refs, runtime Input and
+notebook SHA proofs. Settings: Private, Python, Internet On, GPU T4 x2, no Auto-run.
+Owner alone presses Run. Deliver these four Vietnamese UI steps with the actual
+verified artifacts once ready:
+
+1. Mở notebook Private đã xác minh, hoặc import file `.ipynb` đã bàn giao.
+2. Gắn đúng năm Input/version đã liệt kê, gồm capsule Attempt10 mới đã xác minh.
+3. Kiểm tra Private, Python, Internet On, GPU T4 x2 và giới hạn batch được giao.
+4. Chọn **Save Version > Save & Run All đúng một lần**, rồi gửi URL/version khi xong.
+
+On GitHub API403/rate-limit, provide the UI steps immediately; do not wait merely
+to explain them, pretend missing authority/journal/capsule is ready or GPU-submit
+as a substitute. **The integrated task is not DONE at code/Draft/merge:** actual
+Attempt9 admission+measurement and the valid Owner-run Attempt10 handoff remain
+required. A failed genuine gate means BLOCKED with evidence, no workaround or
+scientific upgrade.
+
+## Historical PR192 implementation scope and V2 contract
 
 [Directive6789215420](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6789215420)
 authorizes one code-only Draft PR from BASE
@@ -39,9 +131,10 @@ within the scheduled shard block V2; preserve them for read-only diagnosis.
 
 ### V2 authentic Owner and reviewer records
 
-After schema review, Owner must publish a **new factual record** on Issue180,
+PR192 introduced the following **factual record** schema on Issue180,
 marker `SAFESHIFT_TRAIN3763_OWNER_MANUAL_V2` followed by exactly one fenced JSON
-object. This template is **not a posted assertion or release**. Replace every
+object. The authentic existing record linked above is retained for the current
+task. This template is **not a posted assertion or release**. Replace every
 placeholder with original authenticated values; `scheduled_ordinals` must be the
 full JSON integer array `[3,4,...,202]`, never ellipsis or a string.
 
@@ -91,7 +184,7 @@ marker `SAFESHIFT_TRAIN3763_MANUAL_ADAPTER_V2` and exactly this schema:
   "merged_sha": "EXACT_40_HEX_AUTHORIZED_MERGE",
   "script_sha256": "EXACT_MERGED_SCRIPT_SHA256",
   "audit": {"comment_id": "JSON_INTEGER_AUDIT_ID", "body_sha256": "AUDIT_COMMENT_BODY_SHA256"},
-  "owner": {"comment_id": "JSON_INTEGER_NEW_OWNER_ID", "body_sha256": "NEW_OWNER_COMMENT_BODY_SHA256"},
+  "owner": {"comment_id": "JSON_INTEGER_EXISTING_OWNER_ID", "body_sha256": "EXISTING_OWNER_COMMENT_BODY_SHA256"},
   "scope": "SAME_SCHEDULED_SLUG_COLLECTION_ONLY"
 }
 ```
@@ -101,7 +194,7 @@ The independent audit comment on the same PR uses marker
 `script_sha256`, `status: "PASS"`, `independent: true`. Reviewer/auditor logins
 must belong to the original grant's respective allowlists. Audit and release
 comments must differ; PR merge/head and local script hash must match. The V2
-reviewer additionally pins the **exact new Owner locator**, so another assertion
+reviewer additionally pins the **exact existing Owner locator**, so another assertion
 cannot silently broaden the released collection. No such records are issued here.
 
 ### V2 gates, read-only preflight and one append after release
@@ -396,8 +489,9 @@ again before the single append; authority/source/handoff are also rechecked.
 1. Antigravity prepares the exact source-bound request, reserves the finite
    INTENT once, and prepares the private per-attempt capsule/notebook/Input
    checklist under the current release. Keep original Inputs and source pins.
-   Create a BLOCKED handoff report with reason `OWNER_UI_RUN_REQUIRED` for a
-   deliberate UI handoff; do not call `operate(..., "start")` or SDK push.
+   Keep the genuine PREPARED-only handoff for V2; do not create a fake BLOCKED
+   report, call `operate(..., "start")` or SDK push. V1's existing truthful
+   BLOCKED handoff remains historical evidence, never a template for fake status.
    After previous manual collection, ordinary planning uses the original Ledger;
    **do not use the old API-submit inventory**, which expects previous scheduled
    slugs to exist. The companion inventory understands actual manual predecessors.
@@ -411,7 +505,7 @@ again before the single append; authority/source/handoff are also rechecked.
 3. Owner operates Kaggle and reports actual slug/version and completion.
    Antigravity may monitor for <=15 minutes, persist RUNNING_UNVERIFIED in a
    separate operational report, and exit without cancellation/resubmit/background
-   AI. Keep the original handoff BLOCKED snapshot unchanged during collection.
+   AI. Keep the original PREPARED or truthful BLOCKED snapshot unchanged during collection.
    Resume the same conversation on Owner's next message for terminal collection.
 4. Antigravity collects and pins the Owner factual attestation, then runs the
    reviewed companion using the existing isolated official SDK. Example **only

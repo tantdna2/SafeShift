@@ -1,6 +1,67 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Attempt9 Owner UI same-slug collection preparation — 11/11/2026
+## CURRENT — Attempt9 PREPARED admission → Attempt10 Owner-run handoff — 11/11/2026
+
+[Single-task directive6791205044](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6791205044),
+BASE `01130527c341fef9f01dbe383032da0b624593a5` (PR192 MERGED), branch
+`fix/attempt9-prepared-handoff`. One integrated task and one new Draft PR only.
+Codex fixes `handoff_snapshot` and focused tests/docs, then stops for ChatGPT's
+direct GitHub review. The collector admits genuine PREPARED-only/no-report
+handoffs only on V2, verifies their original request and initial event, preserves
+and verifies genuine existing BLOCKED reports, and rejects ambiguous submission,
+extra events/orphan reports or fake status. V1 keeps its original behavior.
+All source/authority/provider/Input/capsule/archive/raw/trace/ordinal/ledger,
+anti-replay and fresh-directory/check-only gates remain; no frozen runtime or
+notebook/model/science/data/labels/metric change.
+
+Existing Owner V2 record6790846059 and PR192 audit/tool release are immutable.
+Changed tool bytes need direct review, a focused independent Antigravity audit
+in a new auditor session distinct from `operator-asus-win`, separately authorized
+two-parent merge, postmerge verification and a **new V2 tool release** binding the
+merged script/audit and existing Owner locator. No fake BLOCKED workaround;
+no new Owner factual record unless actual facts change (STOP for reassessment).
+See [current runbook and same-task continuation](TRAIN3763_MANUAL_RECONCILIATION.md).
+
+**Remaining phases of this same task, PENDING:** original `operator-asus-win`
+read-only V2 verification of journal29/29 mirrors and Attempt9's reported 200
+results; ChatGPT admission verdict/exact production authorization; one real
+COLLECTED and separate unchanged Ledger.measure without duplicates; then
+Attempt10 resume/INTENT/private capsule/five pinned Inputs and verified ready
+Owner-run notebook URL or importable file with simple Vietnamese UI steps.
+Ordinals203..402 are conditional on measured safe_calls>=200 and time/budget/O5/
+quota/expiration/disk gates; otherwise one maximal contiguous safe batch from203.
+No claim of actual 203 collected successes or a ready Attempt10 is made here.
+**The integrated task is not DONE when the code phase ends.** Owner alone runs
+Kaggle; Antigravity does not GPU-submit. Original Operator checkout stays at
+`4407dc939e045d115f4147e2d1d49605ec8b2f7a`.
+
+Final CPU validation: **117/117 PASS**, zero failures/errors/skips, 476.840s:
+102 manual-collector cases (all 69 existing plus 33 PREPARED/adversarial cases)
+and 15 handoff cases. Existing pinned SDK HTTP doubles and exact 200-ordinal
+synthetic raw/trace replay are included. The process-wide guard recorded zero
+socket construction attempts during tests. CPython3.11.9/Windows;
+kaggle2.2.5, kagglesdk0.1.38, requests2.34.2, urllib3 2.8.0; no new dependencies.
+Script/test bytes stayed identical before/after the suite and match this PR:
+
+- Collector SHA256: `900b2ff80d4120ba59ba72e9bbfb0df8c47ca88f72e346eff60780fba76f49a8`.
+- Test SHA256: `e40a2f5912fc8b79826193913a537f04d23383ec0ae69fc0c57ff01abbff63bc`.
+- Test log SHA256: `2e0ceca279a6eef38d5416802a0345d960d7cfc76b688b8f71c5631943f24b3f`.
+
+Local ignored evidence: `data/processed/prepared-handoff-validation/focused-r1/`
+and `static-proof.json` in the tools checkout. Reproduce with the existing SDK
+interpreter: `python -B -m unittest discover -s tests -p test_train3763_manual.py -v`
+and the same command with `-p test_kaggle_handoff.py`. AST comparison confirms
+only `handoff_snapshot` changes among collector definitions. All 92 runtime files
+and 37 notebooks match BASE byte-for-byte; source/science hashes remain
+`f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d` /
+`ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50`.
+Direct-file `--approved-repo` help/import compatibility and `git diff --check`
+PASS. These are author CPU checks, not independent audit or live verification;
+the broader qualifier/full repo suite was not rerun for this focused correction.
+No production journal/mirror/handoff, private result, Kaggle job/version,
+GPU/inference or TEST is modified in this phase.
+
+## HISTORICAL — PR192 Attempt9 same-slug implementation snapshot — 11/11/2026
 
 [Owner directive6789215420](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6789215420),
 BASE `4c68728cbcc26c0722520731d351cbe3fc23b6be` (PR191 MERGED), branch

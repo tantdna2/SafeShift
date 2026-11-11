@@ -32,7 +32,7 @@ from safeshift import internvl3763_campaign as campaign
 from safeshift import internvl3763_operator as operator
 from safeshift import internvl3763_release as authority
 from safeshift.candidates.source import require
-from safeshift.kaggle_handoff import Session, lock, private_root
+from safeshift.kaggle_handoff import Session, lock, private_root, SCHEMA as HANDOFF_SCHEMA
 from safeshift.pilot.artifacts import read, write, write_bytes, sha, safe
 from safeshift.pilot.contract import digest, require_hash
 
@@ -100,14 +100,42 @@ def approved_source(ledger, request):
 
 def handoff_snapshot(session, request, *, mode=DISTINCT_SLUG):
     same = collection_mode(mode)
-    require(session.request == request and session.latest_report() is not None
-        and session.latest_report()["status"] == "BLOCKED", "MANUAL_IMMUTABLE_BLOCKED_HANDOFF_REQUIRED")
+    report = session.latest_report()  # verifies the persisted report hash/chain
+    require(session.request == request and (same or report is not None and report["status"] == "BLOCKED"),
+        "MANUAL_IMMUTABLE_BLOCKED_HANDOFF_REQUIRED")
     events = session.events()
     require(not same or not any(e["status"] == "SUBMISSION_INTENT" for e in events),
         "MANUAL_AMBIGUOUS_HANDOFF_SUBMISSION_INTENT")
     require(not same or not (session.root / "submission").exists(), "MANUAL_AMBIGUOUS_SUBMISSION_FILES")
     require(not any(e["status"] in ("SUBMITTED", "OBSERVED", "RUNNING_UNVERIFIED", "PASS", "FAIL")
         for e in events), "MANUAL_HANDOFF_POSSIBLE_SUBMIT")
+    if same:
+        # UI preparation is not a failed API submission. Accept the original
+        # PREPARED event without manufacturing a BLOCKED report. V1 is unchanged.
+        require(read(session.root / "request.json") == request and session.binding == digest(request),
+            "MANUAL_ORIGINAL_HANDOFF_REQUEST_REQUIRED")
+        prepared_fields = {"schema", "binding", "previous", "utc", "status"}
+        require(events and set(events[0]) == prepared_fields and events[0]["schema"] == HANDOFF_SCHEMA
+            and events[0]["status"] == "PREPARED" and type(events[0]["utc"]) is str and events[0]["utc"],
+            "MANUAL_ORIGINAL_PREPARED_EVENT_REQUIRED")
+        reports = set()
+        for number, event in enumerate(events[1:], 2):
+            name = f"report-{number:05d}.json"
+            require(set(event) == prepared_fields | {"report_path", "report_sha256"}
+                and event["schema"] == HANDOFF_SCHEMA and event["status"] == "BLOCKED"
+                and event["report_path"] == name, "MANUAL_UNEXPECTED_HANDOFF_EVENT")
+            path = safe(session.root, name)
+            require(sha(path) == event["report_sha256"], "REPORT_HASH_DRIFT")
+            blocked = read(path)
+            require(all(blocked.get(k) == v for k, v in {
+                "schema": HANDOFF_SCHEMA + "-report", "status": "BLOCKED", "binding": session.binding,
+                "handoff_id": request["handoff_id"], "job_id": request["job"], "version": request["version"],
+                "commit_sha": request["commit_sha"], "runtime_commit": request["runtime_commit"],
+                "notebook_sha256": request["notebook_sha256"], "scope": request["scope"]}.items()),
+                "MANUAL_BOUND_BLOCKED_REPORT_REQUIRED")
+            reports.add(name)
+        require({p.name for p in session.root.glob("report-*.json")} == reports,
+            "MANUAL_UNREFERENCED_HANDOFF_REPORT")
     files = {}
     for path in session.root.rglob("*"):
         if path.is_file() and path.name != "operator.lock":
