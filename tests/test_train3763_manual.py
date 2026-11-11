@@ -35,6 +35,19 @@ def output_fixture(archive, *, gcs=False):
         for name in names], "log": "SYNTHETIC_PROVIDER_LOG", "nextPageToken": None}
 
 
+def output_pages(archive, *, total=8470, pair_page=0):
+    """34 pages / 8,470 metadata entries by default; only two downloadable files."""
+    pair = output_fixture(archive)
+    files = [{"fileName": f"data/processed/sample-{n:05d}.json",
+        "url": f"https://www.kaggleusercontent.com/kf/367225876/SYNTHETIC_token/data/processed/sample-{n:05d}.json"}
+        for n in range(total-2)]
+    position = min(pair_page*256, len(files))
+    files[position:position] = pair["files"]
+    return [{"files": files[start:start+256], "log": pair["log"] if start == 0 else "",
+        "nextPageToken": f"SYNTHETIC_PAGE_{start//256+2:04d}" if start+256 < total else None}
+        for start in range(0, total, 256)]
+
+
 class OutputTransport:
     """Real requests + SDK serialization, replaced only at HTTPAdapter.send."""
     def __init__(self, case, archive, *, gcs=False):
@@ -49,6 +62,8 @@ class OutputTransport:
         self.stream_error = False
         self.diagnostics = False
         self.on_get = None
+        self.pages = None
+        self.page_status = {}
 
     def send(self, request, **kwargs):
         response = requests.Response(); response.status_code = 200
@@ -59,10 +74,17 @@ class OutputTransport:
             self.case.assertTrue(request.url.endswith("/ListKernelSessionOutput"))
             fields = json.loads(request.body); self.listings.append(fields)
             self.case.assertEqual(fields["versionLabel"], "v1")
+            self.case.assertEqual(fields["pageSize"], 256)
             self.case.assertEqual(kwargs["timeout"], (10, 30))
-            response._content = json.dumps(self.output).encode()
+            output = self.output if self.pages is None else self.pages[len(self.listings)-1]
+            if isinstance(output, Exception):
+                raise output
+            response._content = output if isinstance(output, bytes) else json.dumps(output).encode()
             response.headers["Content-Type"] = "application/json"
+            response.status_code = self.page_status.get(len(self.listings), 200)
         else:
+            if self.pages is not None:
+                self.case.assertEqual(len(self.listings), len(self.pages))  # exhaust BEFORE either GET
             self.case.assertEqual(request.method, "GET")
             self.case.assertNotIn("Authorization", request.headers)
             self.case.assertNotIn("Cookie", request.headers)
@@ -475,6 +497,51 @@ class SameSlugCollectionTests(ManualFixture):
         self.assertEqual(self.download.call_count, 2)
         self.assertEqual(self.observe.call_count, 4)
         self.assertEqual([e["kind"] for e in self.ledger.events()], ["INTENT", "COLLECTED"])
+
+    @unittest.skipUnless(KaggleClient is not None, "requires existing pinned operator venv")
+    def test_34_page_check_only_and_late_failures_preserve_handoff_journals_and_receipts(self):
+        from contextlib import redirect_stdout, redirect_stderr
+        self.client.build_kaggle_client.side_effect = lambda: KaggleClient(api_token="SYNTHETIC_ONLY", verbose=True)
+        self.download.side_effect = DOWNLOAD_OUTPUTS
+        transport = OutputTransport(self, self.archive)
+        transport.install(self.stack)
+        transport.pages = output_pages(self.archive)
+        result = self.run_collection("paginated-check", check_only=True)
+        self.assertEqual(result["status"], "READ_ONLY_VERIFIED")
+        self.assertFalse(result["ledger_appended"])
+        self.assertEqual(len(transport.listings), 34)
+        self.assertEqual(len(transport.gets), 2)
+        self.assert_unchanged()
+        mirror = (self.ledger.mirror/"journal-000001.json").read_bytes()
+        for number, mode in enumerate(("zip", "token", "timeout", "partial", "url", "log")):
+            transport.pages = output_pages(self.archive, pair_page=33 if mode == "url" else 0)
+            transport.listings.clear(); transport.gets.clear()
+            if mode == "zip":
+                transport.pages[-1]["files"].append({"fileName": "conflict.zip", "url": "SYNTHETIC_SECRET_URL"})
+            elif mode == "token": transport.pages[-1]["nextPageToken"] = []
+            elif mode == "timeout": transport.pages[-1] = requests.ReadTimeout("SYNTHETIC_SECRET_TOKEN")
+            elif mode == "partial": transport.pages[-1] = b'{"files": ['
+            elif mode == "log": transport.pages[-1]["log"] = "SYNTHETIC_SECRET_TOKEN"
+            else:
+                next(f for f in transport.pages[-1]["files"] if f["fileName"] == self.archive.name)["url"] = (
+                    "https://attacker.invalid/SYNTHETIC_SECRET_URL")
+            directory = "page-failure-"+str(number)
+            transport.diagnostics = True
+            captured = io.StringIO()
+            with self.subTest(mode=mode), redirect_stdout(captured), redirect_stderr(captured):
+                with self.assertRaisesRegex(ValueError, "^MANUAL_COLLECTION_BLOCKED:") as error:
+                    self.run_collection(directory, check_only=bool(number % 2))
+            receipt = (self.root/directory/"BLOCKED.json").read_bytes()
+            for secret in ("SYNTHETIC_SECRET", "SYNTHETIC_header", "SYNTHETIC_PAGE", "https://", "Authorization"):
+                self.assertNotIn(secret, receipt.decode()+str(error.exception)+captured.getvalue())
+            self.assertEqual(transport.gets, [])
+            self.assertEqual(len(transport.listings), 34)
+            self.assertEqual({p.name for p in (self.root/directory).iterdir()}, {"BLOCKED.json"})
+            self.assert_unchanged()
+            self.assertEqual((self.ledger.mirror/"journal-000001.json").read_bytes(), mirror)
+            with self.assertRaises(FileExistsError): self.run_collection(directory)
+            self.assertEqual((self.root/directory/"BLOCKED.json").read_bytes(), receipt)
+        self.client.kernels_push.assert_not_called()
 
     def test_v1_owner_or_tool_record_cannot_authorize_same_slug(self):
         for owner, tool in ((self.owner_locator, {"comment_id": 3002,
@@ -1175,6 +1242,123 @@ class ManualDownloadTests(unittest.TestCase):
         proof = DOWNLOAD_OUTPUTS(self.client, "nguynanhtn/synthetic-ui-result", 1,
             self.archive, sha(self.archive), destination)
         return destination, proof
+
+    def assert_listing_rejected(self, pages, *, code=None):
+        self.transport.pages = pages
+        self.transport.listings.clear()
+        self.transport.gets.clear()
+        original = self.archive.read_bytes()
+        with self.assertRaises(Exception) as error:
+            self.download()
+        if code is not None:
+            self.assertIn(code, str(error.exception))
+        self.assertEqual(self.transport.gets, [])
+        self.assertEqual(list((self.root / str(self.counter)).iterdir()), [])
+        self.assertEqual(self.archive.read_bytes(), original)
+
+    def test_real_sdk_34_pages_8470_entries_exhaust_before_exact_two_gets(self):
+        for pair_page in (0, 33):
+            with self.subTest(pair_page=pair_page):
+                self.transport.pages = output_pages(self.archive, pair_page=pair_page)
+                # Later logs may be empty or repeat the first real log.
+                self.transport.pages[17]["log"] = "SYNTHETIC_PROVIDER_LOG"
+                self.transport.listings.clear(); self.transport.gets.clear()
+                destination, proof = self.download()
+                self.assertEqual(len(self.transport.listings), 34)
+                self.assertEqual(sum(len(p["files"]) for p in self.transport.pages), 8470)
+                self.assertNotIn("pageToken", self.transport.listings[0])
+                for index, fields in enumerate(self.transport.listings):
+                    self.assertEqual(fields, {"userName": "nguynanhtn", "kernelSlug": "synthetic-ui-result",
+                        "versionLabel": "v1", "pageSize": 256,
+                        **({"pageToken": self.transport.pages[index-1]["nextPageToken"]} if index else {})})
+                self.assertEqual(len(self.transport.gets), 2)
+                self.assertEqual({url.rsplit("/", 1)[-1] for url in self.transport.gets},
+                    {self.archive.name, self.archive.name+".sha256.json"})
+                self.assertEqual((destination/"provider.log").read_text(), "SYNTHETIC_PROVIDER_LOG")
+                self.assertEqual(proof["sha256"], sha(self.archive))
+
+    def test_last_page_extra_zip_sidecar_duplicate_and_conflicting_names_stop_before_get(self):
+        for name in ("unexpected.zip", "unexpected.zip.sha256.json", "UNEXPECTED.ZIP", self.archive.name,
+                "data/processed/sample-00001.json"):
+            pages = output_pages(self.archive)
+            pages[-1]["files"].append({"fileName": name, "url": "https://attacker.invalid/SYNTHETIC_SECRET_URL"})
+            with self.subTest(name=name):
+                self.assert_listing_rejected(pages)
+                self.assertEqual(len(self.transport.listings), 34)
+
+    def test_invalid_repeated_and_cyclic_tokens_stop_without_echoing_tokens(self):
+        for token in (" ", "\t", "\n", "with space", "é", "x"*4097, 123, False, {}, []):
+            pages = output_pages(self.archive, total=600)
+            pages[0]["nextPageToken"] = token
+            with self.subTest(token_type=type(token).__name__):
+                self.assert_listing_rejected(pages)
+        for cycle in (False, True):
+            pages = output_pages(self.archive, total=900)
+            index = 2 if cycle else 1
+            pages[index]["nextPageToken"] = pages[0]["nextPageToken"]
+            self.assert_listing_rejected(pages, code="MANUAL_OUTPUT_PAGE_TOKEN")
+            self.assertEqual(len(self.transport.listings), index+1)
+        pages = output_pages(self.archive, total=600)
+        pages[1]["files"] = []  # a continuation with no entries is not exhaustion
+        self.assert_listing_rejected(pages, code="MANUAL_OUTPUT_PAGE_TOKEN")
+
+    def test_exact_64_pages_16384_entries_pass_but_continuation_never_requests_page65(self):
+        self.transport.pages = output_pages(self.archive, total=16384)
+        self.download()
+        self.assertEqual(len(self.transport.listings), 64)
+        self.assertEqual(len(self.transport.gets), 2)
+        for total in (16385, 16384):
+            pages = output_pages(self.archive, total=total)
+            pages[63]["nextPageToken"] = "SYNTHETIC_PAGE_0065"
+            self.assert_listing_rejected(pages, code="MANUAL_OUTPUT_LIST_BOUND")
+            self.assertEqual(len(self.transport.listings), 64)
+        pages = output_pages(self.archive, total=16384)
+        pages[-1]["files"].append({"fileName": "over-cap.json"})
+        self.assert_listing_rejected(pages, code="MANUAL_OUTPUT_LIST_BOUND")
+
+    def test_oversized_empty_missing_or_partial_page_and_missing_pair_fail_closed(self):
+        for mutate in (lambda p: p[0]["files"].append({"fileName": "extra.json"}),
+                lambda p: p[-1].pop("files"), lambda p: p[-1].update(files=None),
+                lambda p: p[-1].update(files=[]), lambda p: p.__setitem__(-1, {}),
+                lambda p: p.__setitem__(-1, b'{"files": ['),
+                lambda p: p[0]["files"].pop(1)):
+            pages = output_pages(self.archive, total=600); mutate(pages)
+            self.assert_listing_rejected(pages)
+        for name in ("", "../sample.json", "/absolute", "a//b", "a/./b", "a/../b", "C:/file",
+                "a\\b", "name\n", "x"*4097, None, 123):
+            pages = output_pages(self.archive, total=600)
+            pages[-1]["files"][0]["fileName"] = name
+            self.assert_listing_rejected(pages)
+
+    def test_missing_changed_or_oversize_log_and_late_unsafe_selected_url_stop(self):
+        for mutate in (lambda p: p[0].update(log=""), lambda p: p[0].pop("log"),
+                lambda p: p[-1].update(log="SYNTHETIC_CHANGED_LOG"),
+                lambda p: p[-1].update(log="x"*(16*2**20+1)),
+                lambda p: p[-1].update(log={}), lambda p: p[-1].update(log=[]),
+                lambda p: next(f for f in p[-1]["files"] if f["fileName"].endswith(".sha256.json")).update(
+                    url="https://attacker.invalid/SYNTHETIC_SECRET_URL"),
+                lambda p: next(f for f in p[-1]["files"] if f["fileName"].endswith(".sha256.json")).update(url=None)):
+            pages = output_pages(self.archive, total=600, pair_page=2); mutate(pages)
+            self.assert_listing_rejected(pages)
+        self.transport.pages = output_pages(self.archive, total=600)
+        self.transport.listings.clear(); self.transport.gets.clear()
+        self.transport.pages[0]["log"] = ""
+        self.transport.pages[-1]["log"] = "SYNTHETIC_PROVIDER_LOG"  # first real log may arrive later
+        destination, _ = self.download()
+        self.assertEqual((destination/"provider.log").read_text(), "SYNTHETIC_PROVIDER_LOG")
+
+    def test_sdk_late_page_errors_timeouts_and_partial_body_never_download_or_retry(self):
+        for error in (requests.ConnectTimeout("SYNTHETIC_SECRET_TOKEN"),
+                requests.ReadTimeout("SYNTHETIC_SECRET_TOKEN"),
+                requests.ConnectionError("SYNTHETIC_SECRET_TOKEN"), b'{"files": ['):
+            pages = output_pages(self.archive, total=600)
+            pages[-1] = error
+            self.assert_listing_rejected(pages)
+            self.assertEqual(len(self.transport.listings), 3)
+        for status in (403, 429, 500):
+            self.transport.page_status = {3: status}
+            self.assert_listing_rejected(output_pages(self.archive, total=600))
+            self.assertEqual(len(self.transport.listings), 3)
 
     def test_cdn_and_gcs_download_zip_sidecar_byte_for_byte(self):
         for gcs in (False, True):

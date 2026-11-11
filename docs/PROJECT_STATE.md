@@ -1,6 +1,76 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Attempt9 PREPARED admission → Attempt10 Owner-run handoff — 11/11/2026
+## CURRENT — Attempt9 output pagination correction, same integrated task — 11/11/2026
+
+[Directive6792693343](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6792693343)
+continues the same Attempt9 collection/measurement → Attempt10 Owner-run task.
+PR193 is MERGED; exact BASE is `630fa486af8a418c644859b0c7280b56489be8ab`.
+One focused branch `fix/attempt9-output-pagination`, one Draft PR, then STOP for
+ChatGPT's direct GitHub review. Changes are limited to the external collector,
+its existing synthetic tests, this state file and the existing runbook.
+
+The collector now exhausts official `ApiListKernelSessionOutputRequest` pages
+with fixed `page_size=256` and returned `next_page_token` → `page_token`.
+Caps are 64 pages / 16,384 metadata entries, not a hardcoded 34-page limit.
+It checks every page's names, unique names across pages, nonempty page, bounded
+tokens without repeats/cycles, and bounded consistent provider log before any
+output GET. Only exactly the expected ZIP and sidecar may be selected; extra
+ZIPs/sidecars on late pages block. Both selected HTTPS URLs pass the existing
+allowlist before either download. SDK optional token/log storage is type-checked
+because its public getters can hide counterfeit falsy values. Later empty logs
+or identical repeated logs are allowed; a changed nonempty log blocks.
+Download/time/space/hash/sidecar/source/authority/Input/raw/native/trace/ordinal,
+lock/mirror/replay/create-only and check-only gates remain unchanged.
+
+**Evidence limits:** Operator reports 34 pages / 8,470 files for Attempt9, with
+the ZIP pair on page1 and 8,468 unpacked files. This code task does not retrieve
+the real provider inventory or independently verify those production facts.
+No notebook/runtime/model/science/data/labels/metric changes, GPU, Kaggle submit,
+production ledger append or measurement. Original Operator checkout and released
+reviewed-tools files remain untouched at their existing identities.
+
+Final focused CPU suite: **107/107 PASS**, zero failures/errors/skips,
+475.141s, process-wide **zero socket construction attempts during tests**.
+Existing CPython3.11.9 / Windows, kaggle2.2.5, kagglesdk0.1.38,
+requests2.34.2, urllib3 2.8.0; no dependency changes. Real SDK serialization/
+HTTP-adapter fixtures verify 34 pages/8,470 metadata entries and exactly two
+anonymous GETs, targets on page34, late extra/conflicting ZIPs/sidecars, exact
+64-page/16,384-entry boundary and rejection before page65, token/type/cycle/name/
+log/URL/page/timeout/partial failures, unchanged V1, V2 PREPARED/BLOCKED check-only
+and no append/overwrite on failure. Existing source/native200-ordinal/sidecar/
+authority/provider/mirror/replay regressions all pass. This is author CPU
+validation, not independent audit or real provider verification.
+
+Final companion SHA256
+`2fcc4a5bef27d7f5fce183511d21bc660b79912f47901fac26b6b7a1b4371d60`;
+test file SHA256
+`c59b47793de6bcf351b86228424682f17c9876567b0868fc5104330d2d5ddde7`.
+Both files were unchanged throughout the final run. All 92 runtime manifest files
+and 37 notebooks match BASE byte-for-byte; original Operator remains tracked-clean
+at `4407dc9`, and deployed PR193 script remains byte-identical to its released hash.
+Original-checkout direct-file CLI help/import and `git diff --check` PASS.
+Reproduce from the tools checkout with the existing pinned SDK interpreter:
+`python -B -m unittest discover -s tests -p test_train3763_manual.py -v`.
+Private full log/receipt, development-check summary and scope proof are ignored
+under `data/processed/attempt9-pagination-validation/`. The historical broader
+13-suite qualification below was not rerun for this external collector-only fix;
+no new full-repository, GPU, TEST or live-provider PASS is claimed.
+
+**Same-task gates remain PENDING:** direct ChatGPT review; new independent
+Antigravity audit session distinct from `operator-asus-win`; specifically
+authorized normal merge in that audit session; ChatGPT postmerge verification
+and a new exact V2 reviewer release tied to the authentic unchanged Owner V2
+record6790846059. PR193 release6792239710 is historical and cannot authorize the
+modified script. Then original `operator-asus-win` performs a fresh genuine V2
+check-only; actual READ_ONLY_VERIFIED/no ledger change precedes ChatGPT's separate
+exact production-admission authorization. Only then one COLLECTED plus unchanged
+Ledger.measure, immediately followed by genuine Attempt10 notebook/capsule/five
+Inputs for the maximal safe contiguous batch starting at203 (aim203..402 only
+if actual measured limits permit). Owner alone presses Save & Run All once.
+The integrated task is not DONE at Draft/merge. See the
+[current runbook](TRAIN3763_MANUAL_RECONCILIATION.md).
+
+## Historical PR193 — Attempt9 PREPARED admission → Attempt10 Owner-run handoff — 11/11/2026
 
 [Single-task directive6791205044](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6791205044),
 BASE `01130527c341fef9f01dbe383032da0b624593a5` (PR192 MERGED), branch

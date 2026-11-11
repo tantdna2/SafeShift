@@ -1,6 +1,89 @@
 # Owner UI Kaggle collection — 09/11/2026
 
-## Current: one Attempt9 admission → Attempt10 Owner-run task — 11/11/2026
+## Current: bounded complete output pagination, same Attempt9 → Attempt10 task
+
+[Directive6792693343](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6792693343)
+requires one focused corrective Draft PR after PR193 MERGED at
+`630fa486af8a418c644859b0c7280b56489be8ab`. The original Operator checkout stays
+at `4407dc939e045d115f4147e2d1d49605ec8b2f7a`; do not edit its source or any
+already released reviewed-tools file in place. Codex uses a separate branch/
+worktree, edits only the external collector/tests/current documents and stops
+for direct ChatGPT review. No production collection/measurement, GPU/submit,
+new notebook/runtime/Inputs or science change occurs in this code phase.
+
+The previous single-page guard `MANUAL_OUTPUT_LIST_BOUND` correctly stopped the
+Operator-reported 34-page / 8,470-file listing before provider ZIP download or
+ledger append. The reported listing has 8,468 unpacked files and one exact ZIP
+plus its SHA sidecar on page1. This is supplied operational evidence, not newly
+verified provider evidence from this programming session.
+
+### Listing contract before any output download
+
+- Use the existing pinned official `kagglesdk==0.1.38` request, fixed
+  `page_size=256`, exact owner/slug and constant `version_label="v1"` on every
+  page. Pass each returned token unmodified as the next request's `page_token`.
+- Exhaust the terminal response within **64 pages / 16,384 metadata entries**;
+  do not hardcode the observed 34 pages as a production maximum. A continuation
+  on page64 fails closed without requesting page65. Every page must contain
+  1..256 files. A missing/null/empty file list is ambiguous and blocks.
+- Continuation tokens must be strings of at most4096 printable ASCII characters
+  without whitespace, repeated tokens or cycles. Official absent/null/empty
+  terminal tokens mean exhaustion; empty intermediate pages are never accepted.
+  The pinned SDK getters use `value or ""`, so the collector validates the
+  underlying optional token/log storage before normalization; counterfeit
+  falsy nonstrings cannot silently become terminal tokens or empty logs.
+- File names are bounded to4096 characters and canonical relative slash paths
+  with `[A-Za-z0-9_~.-]+` segments; empty/dot/parent/absolute/Windows paths block.
+  All names must be unique across all pages, including unselected detail files.
+  Check all pages before choosing the exact expected ZIP and sidecar. Any extra
+  `.zip`/`.zip.sha256.json` (case-insensitive detection), duplicate or conflicting
+  name blocks, even when page1 already contains the expected pair.
+- Retain the first nonempty provider log, at most16MiB. Later absent/null/empty
+  logs or byte-identical repeated logs are valid; any different nonempty log or
+  wrong log type blocks. Missing nonempty log across the complete listing blocks.
+- Collect metadata only. Only the two selected URLs are used for downloads;
+  both pass the existing exact HTTPS origin/path/token/name allowlist before
+  **either** anonymous GET. Never download the thousands of unpacked detail
+  files. No provider log/output file is created until listing and URL checks pass.
+- SDK errors, partial/malformed response, page timeout or any bound/ambiguity
+  blocks without output GET or ledger append. Keep the existing sanitized
+  BLOCKED receipt in its fresh evidence directory. No overwrite, redirect,
+  ambient credentials or automatic retry. Existing per-request10/30-second
+  bounds, download240-second deadline, disk/byte/SHA/sidecar checks and immutable
+  raw/native/trace/ordinal/source/authority/provider/Input/capsule/ledger guards
+  remain unchanged. V1 Attempt8 single-page collection remains supported.
+
+### Required review/release and immediate operational continuation
+
+PR193's [V2 release6792239710](https://github.com/tantdna2/SafeShift/pull/193#issuecomment-6792239710)
+is immutable, pins script `900b2ff80d4120ba59ba72e9bbfb0df8c47ca88f72e346eff60780fba76f49a8`
+and **cannot authorize these modified bytes**. Use direct ChatGPT HEAD/diff/test
+review, a new independent Antigravity audit session separate from
+`operator-asus-win`, separately authorized normal merge in that audit session,
+then ChatGPT verification of main/parents/tree/files and a new exact V2 reviewer
+release tied to unchanged authentic Owner record6790846059. Codex does not issue
+audit/merge/release or production-admission authorization.
+
+Then original `operator-asus-win` deploys the newly released tool separately and
+runs a fresh genuine `SAME_SCHEDULED_SLUG_V2 --check-only` against the original
+Attempt9 ZIP/ledger/handoff/provider. After actual READ_ONLY_VERIFIED and proof
+that ledger bytes did not change, ChatGPT gives one separate exact production-
+admission authorization. Repeat all gates into a fresh directory for exactly
+one COLLECTED and separately unchanged `Ledger.measure`. Preserve all original
+29 journals/mirrors and evidence; never promote a check-only receipt or rerun9.
+
+Immediately continue within this same task to genuine Attempt10 plan/INTENT/
+private version1 capsule and untouched approved notebook, all five exact
+versioned Inputs, and verified private URL or actual ready-to-import `.ipynb`.
+Start at ordinal203; aim200 images through402 only if measured safe calls/time/
+quota/caps permit, otherwise the actual maximal contiguous safe batch. Deliver
+the four Vietnamese UI steps below with verified artifacts. Owner alone presses
+**Save Version > Save & Run All once**. Antigravity never GPU-submits. GitHub
+403/rate-limit means immediate simple Owner UI guidance, not needless waiting
+or invented readiness. Attempt9 COLLECTED+MEASURED and the real Attempt10 Owner-
+run handoff remain required for integrated DONE; no additional research task/PR.
+
+## Historical PR193: one Attempt9 admission → Attempt10 Owner-run task — 11/11/2026
 
 [Directive6791205044](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6791205044)
 supersedes the narrower PR192 implementation assignment below. BASE is merged
@@ -445,7 +528,8 @@ never resubmit them automatically.
 
 The same ZIP and sidecar must be independently downloaded from the actual pinned
 provider job and match the Owner's existing ZIP. Official SDK listing is bounded
-to 256 outputs with no pagination ambiguity; the exact ZIP pair and provider log
+to 256 outputs per page, with the current bounded complete-pagination contract
+above; the exact ZIP pair and provider log
 are required. Downloads accept exactly two HTTPS origins and canonical paths:
 
 - `https://www.kaggleusercontent.com/kf/<positive-decimal-run>/<opaque-token>/<exact-filename>`:
