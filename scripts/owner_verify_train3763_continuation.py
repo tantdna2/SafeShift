@@ -102,19 +102,7 @@ def verify(route, destination, *, owner_performs_network=False):
             "billing_gpu_seconds": "NOT_OBSERVED", "scientific_selection": "PENDING", "scientific_qualified": False}
         seen_kernels, seen_jobs = set(), set()
 
-        def resources(archive, intent):
-            with zipfile.ZipFile(archive) as bundle:
-                names = set(bundle.namelist())
-                get = lambda name: c.runtime._strict_json_loads(bundle.read(name)) if name in names else {}
-                summary = get("run/summary.json")
-                telemetry = get("run/telemetry.json")
-                setup, worker = get("setup/setup-supervisor.json"), get("worker-supervisor.json")
-            return {"setup_seconds": setup.get("seconds"), "worker_seconds": worker.get("seconds"),
-                "load_seconds": telemetry.get("load_seconds"), "gpu_peak_allocated_bytes": telemetry.get("gpu_peak_allocated_bytes"),
-                "gpu_peak_reserved_bytes": telemetry.get("gpu_peak_reserved_bytes"), "zip_bytes": Path(archive).stat().st_size,
-                "reserved_gpu_seconds": intent["reserved_gpu_seconds"], "reserved_calls": intent["reserved_calls"],
-                "actual_model_calls": summary.get("model_calls"), "status": summary.get("status"), "counts": summary.get("counts"),
-                "missing_telemetry": "NOT_OBSERVED" if not telemetry else None, "numerical_replay": "FULL_RUNTIME_VERIFIED"}
+        resources = c.result_tools().resources
 
         def verify_one(intent, archive, expected_sha, folder, expected_provider=None):
             request = intent["request"]

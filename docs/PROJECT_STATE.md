@@ -1,6 +1,45 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — deferred offline continuation implementation — 12/11/2026
+## CURRENT — PR196 R1 official downstream reader — 12/11/2026
+
+[ChatGPT direct review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)
+requested changes at HEAD1247511 because legacy consumption paths could not see
+the complete deferred campaign. Same branch/session/Draft PR196 now adds
+`train3763_results.py` and `train3763_continuation ... official-report`. It
+revalidates the actual final event, authentic account records/release, immutable
+ZIP/raw/history/capsule custody and exact resource proofs before returning the
+versioned authoritative handoff for all3763 observations and every Attempt.
+
+The reader independently adds actual original INTENT and deferred reservations.
+The full synthetic fixture proves28 jobs/3768 calls/316800 physical GPU-seconds
+reserved (17 new jobs), retains INVALID and all abort/FAIL histories, and leaves
+legacy summary/budget at their original323 results/528 calls/11 jobs/72000 GPU-s.
+Those are test values and a historical baseline, **not a claim that the real
+campaign has finished**. Before a valid final release, official output is BLOCKED.
+Operational `status` marks event presence unverified and directs consumers to
+`official-report`; it cannot promote provisional results by event kind alone.
+
+No legacy ledger/runtime/notebook/science changes or invented COLLECTED/MEASURED.
+Legacy readers are historical-only; old writers remain excluded from the new
+route. The official-results schema is the supported research observation handoff;
+direct legacy analysis adapters remain BLOCKED until separately reviewed for the
+same schema/protocol. No GT joins, metric calculations, scientific qualification
+or new permissions. Missing telemetry remains explicit; reservations are not
+measured provider billing. See [consumer contract](TRAIN3763_DEFERRED_RECONCILIATION.md).
+
+Current direct Owner task explicitly authorizes Codex's GitHub review read and
+push/update of PR196. Antigravity operations remain offline and Owner-assisted;
+no Kaggle API, job, GPU/inference, TEST or production mutation in this revision.
+Authenticated GitHub account authorship is not proof of who clicked `gh` or Run.
+Fresh ChatGPT review, independent Antigravity audit, authorized merge/postmerge
+verification and exact changed-tool release are still required. **NOT READY.**
+
+[R1 acceptance](research/TRAIN3763_DEFERRED_REVIEW_R1_20261112.md): official
+reader/provider11/11, continuation40/40 and inherited158/158 PASS with zero skips;
+targeted budget/full-handoff2/2 PASS after final output hardening. Code-only
+synthetic/mocked evidence, not a live campaign result or independent audit.
+
+## INITIAL DRAFT SNAPSHOT — deferred offline continuation — 12/11/2026
 
 Owner [6816197123](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6816197123)
 directs one Draft PR from `341ab626ff2af7ef79ced0d9c3119794eea4a820`, branch

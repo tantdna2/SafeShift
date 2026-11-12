@@ -138,6 +138,7 @@ class ContinuationTests(unittest.TestCase):
             return value
         self.stack.enter_context(patch.object(c.campaign, "plan", side_effect=small_plan))
         self.stack.enter_context(patch.object(c, "verify_local", side_effect=self.local_verifier))
+        self.stack.enter_context(patch.object(c, "archive_resources", return_value={"scope": "SYNTHETIC_NATIVE_VERIFIER_SEAM"}))
         self.stack.enter_context(patch.object(c, "original_handoff", return_value={"notice": "SYNTHETIC_PREPARED_HANDOFF"}))
         self.stack.enter_context(patch.object(c, "baseline_owner", return_value={"kernel_id": 11,
             "archive_sha256": hashlib.sha256(b"SYNTHETIC_OUTPUT_synthetic180-11").hexdigest()}))
@@ -206,6 +207,7 @@ class ContinuationTests(unittest.TestCase):
             self.route.stage()
         self.assert_originals()
         report = {"status": "ALL_ORIGINALS_VERIFIED", "manifest_sha256": digest(manifest), "tool_sha256": sha(online.__file__), "aborted": [],
+            "budget": manifest["budget"], "billing_gpu_seconds": "NOT_OBSERVED",
             "historical": [{"archive_sha256": a["sha256"], "provider_reverified": True} for a in manifest["base_custody"]],
             "attempts": [{"intent_sha256": digest(a["intent"]), "archive_sha256": a["receipt"]["sha256"],
                 "provider": {"job_id": a["intent"]["request"]["job"], "kernel_id": a["receipt"]["owner_receipt"]["kernel_id"],
@@ -235,7 +237,7 @@ class ContinuationTests(unittest.TestCase):
             row = self.route.reconcile(exports, owner, admission)
         self.assertEqual(row["kind"], c.RECONCILED)
         self.assertEqual(row["manifest"], manifest)
-        self.assertEqual(self.route.state()["formal_status"], "FORMALLY_RECONCILED_NEW_ROUTE")
+        self.assertEqual(self.route.state()["formal_status"], "FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT")
         self.assertEqual(self.ledger.open_intent(), self.ledger.events()[34])
         with self.assertRaisesRegex(ValueError, "DUPLICATE_FINAL"):
             self.route.reconcile(exports, owner, admission)
@@ -246,6 +248,7 @@ class ContinuationTests(unittest.TestCase):
             "sha256": digest({"request": request, "campaign_intent": intent}), "request_sha256": digest(request), "intent_sha256": digest(intent)}
         proof["output"] = {"sha256": sha(archive), "bytes": archive.stat().st_size,
             "sidecar_sha256": sha(str(archive)+".sha256.json"), "log_sha256": "f"*64}
+        proof["resources"] = {"scope": "SYNTHETIC_NATIVE_VERIFIER_SEAM"}
 
     def test_manifest_before_completion_is_blocked(self):
         with self.assertRaisesRegex(ValueError, "FULL_TRAIN"):
@@ -390,9 +393,9 @@ class ContinuationTests(unittest.TestCase):
     def test_final_ledger_mirror_error_never_reports_success(self):
         # Isolate final append transport: full end-to-end completion/admission
         # is exercised in test_full_remainder_forecast_and_final_order.
-        manifest = {"attempts": [], "base_custody": [], "historical_attempts": [], "counts": {"SUCCESS": 3763}}
+        manifest = {"attempts": [], "base_custody": [], "historical_attempts": [], "counts": {"SUCCESS": 3763}, "budget": {}}
         report = {"manifest_sha256": digest(manifest), "status": "ALL_ORIGINALS_VERIFIED", "tool_sha256": sha(online.__file__),
-            "attempts": [], "historical": [], "aborted": []}
+            "attempts": [], "historical": [], "aborted": [], "budget": {}, "billing_gpu_seconds": "NOT_OBSERVED"}
         owner = {"comment_id": 8000, "body_sha256": "a"*64}
         admission = {"comment_id": 8001, "body_sha256": "b"*64}
         def record(locator, marker, reader):

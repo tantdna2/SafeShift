@@ -46,9 +46,20 @@ ADMISSION = "OFFLINE_CONTINUATION_ADMISSION"
 RECONCILED = "OFFLINE_CONTINUATION_RECONCILED"
 
 
+def result_tools():
+    spec = importlib.util.spec_from_file_location("train3763_results", Path(__file__).with_name("train3763_results.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def tool_manifest():
     return {name: sha(Path(__file__).with_name(name)) for name in
-        ("train3763_continuation.py", "owner_verify_train3763_continuation.py", "reconcile_train3763_manual.py")}
+        ("train3763_continuation.py", "owner_verify_train3763_continuation.py", "reconcile_train3763_manual.py", "train3763_results.py")}
+
+
+def archive_resources(archive, intent):
+    return result_tools().resources(archive, intent)
 
 
 class Exports:
@@ -493,7 +504,7 @@ class Continuation:
             and len(rows) <= 3763 and all(r["status"] in ("SUCCESS", "INVALID") for r in rows), "COMPLETE_CONTIGUOUS_HISTORY_REQUIRED")
         return {"events": events, "history": history, "custody": custody, "budget": budget,
             "active": self._active(events), "next_ordinal": len(rows), "counts": dict(Counter(r["status"] for r in rows)),
-            "formal_status": "FORMALLY_RECONCILED_NEW_ROUTE" if len(self.ledger.events()) == self.registration["base_count"] + 2
+            "formal_status": "FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT" if len(self.ledger.events()) == self.registration["base_count"] + 2
                 else "PENDING_CAMPAIGN_RECONCILIATION"}
 
     def forecast(self):
@@ -665,6 +676,56 @@ class Continuation:
             "ordinals": list(range(3763)), "counts": state["counts"], "budget": state["budget"],
             "scientific_selection": "PENDING", "scientific_qualified": False}
 
+    def validate_reconciliation(self, manifest, exports, final_locator, admission_locator):
+        """Read-only validation shared by final admission and official readers."""
+        reader = Exports(exports)
+        authenticate(self.ledger.grant, self.registration["initial_intent"]["request"], exports, self.registration["release_locator"])
+        value, comment = campaign.record(final_locator, FINAL, reader)
+        require(comment["user"]["login"] == authority.OWNER and comment["user"]["id"] == 246929698
+            and comment["issue_url"] == authority.API + "/issues/180", "AUTHENTIC_AGGREGATE_OWNER_RECORD")
+        require(set(value) == {"manifest_sha256", "report", "status"}
+            and value["manifest_sha256"] == digest(manifest) and value["status"] == "APPROVED_FOR_AGGREGATE_ADMISSION", "EXACT_AGGREGATE_APPROVAL")
+        report = value["report"]
+        require(report["manifest_sha256"] == digest(manifest) and report["status"] == "ALL_ORIGINALS_VERIFIED"
+            and report["budget"] == manifest["budget"] and report["billing_gpu_seconds"] == "NOT_OBSERVED"
+            and report["tool_sha256"] == sha(Path(__file__).with_name("owner_verify_train3763_continuation.py"))
+            and len(report["attempts"]) == len(manifest["attempts"])
+            and len(report["historical"]) == len(manifest["base_custody"]), "EVERY_PROVIDER_ORIGINAL_REQUIRED")
+        aborted = [h for h in manifest["historical_attempts"] if h["outcome"]["kind"] == "ABORTED_PRE_SUBMIT"]
+        require(report["aborted"] == [{"intent_sha256": digest(h["intent"]), "job": h["intent"]["request"]["job"],
+            "original_abort_sha256": digest(h["outcome"]), "provider_absent_at_final": True,
+            "reserved_calls": h["intent"]["reserved_calls"], "reserved_gpu_seconds": h["intent"]["reserved_gpu_seconds"]}
+            for h in aborted], "ORIGINAL_ABORTED_RESERVATIONS_RETAINED")
+        for item, proof in zip(manifest["attempts"], report["attempts"]):
+            intent, receipt = item["intent"], item["receipt"]
+            actual = verify_local(intent, self.ledger.grant, safe(runtime.ROOT, item["archive"]), receipt["owner_receipt"])
+            require(actual == receipt and proof["intent_sha256"] == digest(intent)
+                and proof["archive_sha256"] == receipt["sha256"] and proof["provider"]["job_id"] == intent["request"]["job"]
+                and proof["provider"]["kernel_id"] == receipt["owner_receipt"]["kernel_id"]
+                and proof["provider"]["state"] == "COMPLETE" and proof["provider"]["version"] == 1
+                and proof["input_bytes_verified"] is True and proof["provider_copy_verified"] is True, "AGGREGATE_ATTEMPT_MISMATCH")
+            provider_proof(proof, intent, safe(runtime.ROOT, item["archive"]), job=intent["request"]["job"],
+                kernel_id=receipt["owner_receipt"]["kernel_id"])
+            require(proof["resources"] == archive_resources(safe(runtime.ROOT, item["archive"]), intent), "FINAL_RESOURCE_PROOF_DRIFT")
+        for item, proof in zip(manifest["base_custody"], report["historical"]):
+            require(proof["archive_sha256"] == item["sha256"] and proof["provider_reverified"] is True
+                and runtime.sealed_history(safe(runtime.ROOT, item["path"]), item["sha256"], item["plan"])
+                    in self.registration["base_history"], "ORIGINAL_HISTORY_RECONCILIATION")
+            base = self.ledger.events()[:self.registration["base_count"]]
+            collected = next(e for e in base if e["kind"] == "COLLECTED" and e["sha256"] == item["sha256"])
+            old_intent = next(e for e in base if e["kind"] == "INTENT" and digest(e) == collected["intent_sha256"])
+            provider_proof(proof, old_intent, safe(runtime.ROOT, item["path"]), job=collected["provider"]["job_id"],
+                kernel_id=collected["provider"].get("kernel_id"), state=collected["provider"]["state"])
+            require(proof["resources"] == archive_resources(safe(runtime.ROOT, item["path"]), old_intent), "FINAL_RESOURCE_PROOF_DRIFT")
+        admission, reviewer = campaign.record(admission_locator, FINAL + "_ADMISSION", reader)
+        require(reviewer["user"]["login"] in self.ledger.grant["review_logins"] and reviewer["id"] != comment["id"]
+            and admission == {"manifest_sha256": digest(manifest), "owner": final_locator,
+                "report_sha256": digest(report), "status": "RELEASED_FOR_AGGREGATE_ADMISSION"}, "ONE_AGGREGATE_REVIEWER_RELEASE_REQUIRED")
+        return report
+
+    def official_report(self):
+        return result_tools().official_report(self)
+
     def reconcile(self, exports, final_locator, admission_locator):
         """One aggregate approval; every attempt still has genuine provider proof.
 
@@ -675,46 +736,7 @@ class Continuation:
         with lock(self.ledger.root), lock(self.root):
             require(len(self.ledger.events()) == self.registration["base_count"] + 1, "NO_DUPLICATE_FINAL_APPEND")
             manifest = self.manifest()
-            reader = Exports(exports)
-            authenticate(self.ledger.grant, self.registration["initial_intent"]["request"], exports, self.registration["release_locator"])
-            value, comment = campaign.record(final_locator, FINAL, reader)
-            require(comment["user"]["login"] == authority.OWNER and comment["user"]["id"] == 246929698
-                and comment["issue_url"] == authority.API + "/issues/180", "AUTHENTIC_AGGREGATE_OWNER_RECORD")
-            require(set(value) == {"manifest_sha256", "report", "status"}
-                and value["manifest_sha256"] == digest(manifest) and value["status"] == "APPROVED_FOR_AGGREGATE_ADMISSION", "EXACT_AGGREGATE_APPROVAL")
-            report = value["report"]
-            require(report["manifest_sha256"] == digest(manifest) and report["status"] == "ALL_ORIGINALS_VERIFIED"
-                and report["tool_sha256"] == sha(Path(__file__).with_name("owner_verify_train3763_continuation.py"))
-                and len(report["attempts"]) == len(manifest["attempts"])
-                and len(report["historical"]) == len(manifest["base_custody"]), "EVERY_PROVIDER_ORIGINAL_REQUIRED")
-            aborted = [h for h in manifest["historical_attempts"] if h["outcome"]["kind"] == "ABORTED_PRE_SUBMIT"]
-            require(report["aborted"] == [{"intent_sha256": digest(h["intent"]), "job": h["intent"]["request"]["job"],
-                "original_abort_sha256": digest(h["outcome"]), "provider_absent_at_final": True,
-                "reserved_calls": h["intent"]["reserved_calls"], "reserved_gpu_seconds": h["intent"]["reserved_gpu_seconds"]}
-                for h in aborted], "ORIGINAL_ABORTED_RESERVATIONS_RETAINED")
-            for item, proof in zip(manifest["attempts"], report["attempts"]):
-                intent, receipt = item["intent"], item["receipt"]
-                actual = verify_local(intent, self.ledger.grant, safe(runtime.ROOT, item["archive"]), receipt["owner_receipt"])
-                require(actual == receipt and proof["intent_sha256"] == digest(intent)
-                    and proof["archive_sha256"] == receipt["sha256"] and proof["provider"]["job_id"] == intent["request"]["job"]
-                    and proof["provider"]["kernel_id"] == receipt["owner_receipt"]["kernel_id"]
-                    and proof["provider"]["state"] == "COMPLETE" and proof["provider"]["version"] == 1
-                    and proof["input_bytes_verified"] is True and proof["provider_copy_verified"] is True, "AGGREGATE_ATTEMPT_MISMATCH")
-                provider_proof(proof, intent, safe(runtime.ROOT, item["archive"]), job=intent["request"]["job"],
-                    kernel_id=receipt["owner_receipt"]["kernel_id"])
-            for item, proof in zip(manifest["base_custody"], report["historical"]):
-                require(proof["archive_sha256"] == item["sha256"] and proof["provider_reverified"] is True
-                    and runtime.sealed_history(safe(runtime.ROOT, item["path"]), item["sha256"], item["plan"])
-                        in self.registration["base_history"], "ORIGINAL_HISTORY_RECONCILIATION")
-                base = self.ledger.events()[:self.registration["base_count"]]
-                collected = next(e for e in base if e["kind"] == "COLLECTED" and e["sha256"] == item["sha256"])
-                old_intent = next(e for e in base if e["kind"] == "INTENT" and digest(e) == collected["intent_sha256"])
-                provider_proof(proof, old_intent, safe(runtime.ROOT, item["path"]), job=collected["provider"]["job_id"],
-                    kernel_id=collected["provider"].get("kernel_id"), state=collected["provider"]["state"])
-            admission, reviewer = campaign.record(admission_locator, FINAL + "_ADMISSION", reader)
-            require(reviewer["user"]["login"] in self.ledger.grant["review_logins"] and reviewer["id"] != comment["id"]
-                and admission == {"manifest_sha256": digest(manifest), "owner": final_locator,
-                    "report_sha256": digest(report), "status": "RELEASED_FOR_AGGREGATE_ADMISSION"}, "ONE_AGGREGATE_REVIEWER_RELEASE_REQUIRED")
+            report = self.validate_reconciliation(manifest, exports, final_locator, admission_locator)
             # Preserve original INTENT35 forever. Old tools still see it open and
             # cannot forget these separately accounted reservations. This event
             # is the formal new-route record, never invented legacy COLLECTED,
@@ -745,6 +767,8 @@ def main(argv=None):
     stage.add_argument("--seconds", type=int, default=7200)
     sub.add_parser("export-active")
     sub.add_parser("status")
+    official = sub.add_parser("official-report")
+    official.add_argument("--output", type=Path)
     sub.add_parser("forecast")
     inspect = sub.add_parser("inspect-baseline")
     inspect.add_argument("--archive", type=Path, required=True)
@@ -783,6 +807,12 @@ def main(argv=None):
             write(_private(args.output), result)
         elif args.command == "reconcile":
             result = route.reconcile(read(args.github_exports), read(args.final_locator), read(args.admission_locator))
+        elif args.command == "official-report":
+            result = route.official_report()
+            if args.output is not None:
+                checksum = write(_private(args.output), result)
+                write(_private(str(args.output) + ".sha256.json"), {"schema": result["schema"], "sha256": checksum,
+                    "certificate": result["certificate"]})
         elif args.command == "forecast":
             result = route.forecast()
         else:

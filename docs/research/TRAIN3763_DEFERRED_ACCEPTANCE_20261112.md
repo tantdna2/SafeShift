@@ -1,5 +1,9 @@
 # Deferred TRAIN3763 — CPU acceptance, 12/11/2026
 
+Historical initial-HEAD acceptance below is preserved. The PR196 review fix and
+new official reader are qualified separately in
+[R1 acceptance](TRAIN3763_DEFERRED_REVIEW_R1_20261112.md); use its current tool hashes.
+
 Author-run CPU evidence, **not independent Antigravity audit or live service
 qualification**. BASE `341ab626ff2af7ef79ced0d9c3119794eea4a820`; branch
 `feat/train3763-offline-continuation`. Stop at one Draft PR. Review, audit,

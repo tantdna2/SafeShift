@@ -1,5 +1,66 @@
 # TRAIN3763 — nối lượt offline và đối soát cuối chiến dịch
 
+## PR196 R1 — reader chính thức sau đối soát
+
+[Review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)
+yêu cầu đường đọc kết quả/ngân sách chính thức, thay vì chỉ có certificate cuối.
+`official-report` là đường đọc **authoritative cho route mới**, không sửa cách
+`Ledger.histories/summary/_budget` cũ diễn giải lịch sử. Nó không thay đổi
+quy trình upload/Run/thu ZIP/đối soát đã mô tả dưới đây.
+
+```powershell
+python -B "$tools/train3763_continuation.py" @common official-report --output data/processed/train3763-official-results.json
+```
+
+Chỉ dùng sau final reconciliation thật. Trước đó lệnh BLOCKED, không xuất kết quả
+official dù local receipts đã đủ3763. Sau đó reader kiểm lại registration,
+chain/mirror, final event duy nhất, Owner/reviewer records và exact locators/body
+hash, merged source/audit release, sealed manifest/report, từng ZIP/native/raw/
+history/Input/capsule proof và resources. Nó cộng reservation từ **từng INTENT
+gốc và RESERVED_OFFLINE mới**, không lấy forecast hoặc chỉ tin con số trong report.
+Mọi sai khác/thiếu proof/tamper/concurrent change chặn toàn bộ output. Không ghi
+ledger hoặc lock file; `--output` chỉ tạo file dẫn xuất mới cùng sidecar SHA256,
+không overwrite. Lỗi giữa hai write giữ partial, không phải export hoàn chỉnh.
+
+Contract output `safeshift-train3763-official-results-v1`:
+
+| Field | Hợp đồng cho consumer |
+| --- | --- |
+| `status` | Chỉ `OFFICIAL_RECONCILED_RESULTS` sau toàn bộ gate |
+| `records` | Chính xác3763 hàng theo ordinal0..3762; mỗi hàng giữ nguyên `record`, series/cohort và `lineage` |
+| `record` | Bản ghi đã xác minh: sample/image hash, status, label, raw hash, native calls và HNLO nguyên bản; INVALID có label=null, không lọc hoặc cứu parser |
+| `lineage` | Attempt/run/action, intent/record/archive/source/notebook hashes, source commit, checkpoint, actual provider/version và capsule |
+| `histories` | Đầy đủ sealed series lineage theo thứ tự; không chọn best/latest output |
+| `attempts` | Mọi reservation, kể cả aborted/FAIL; planned ordinals, calls/time/GPU reservation, original outcome digest/time, provider, archive và resources; lỗi gốc xem archive/terminal.json |
+| `budget` | Tổng/remaining caps, original/deferred reservations, không refund; `billing_gpu_seconds=NOT_OBSERVED` |
+| `observed_resources` | Tổng telemetry có thật kèm số attempt có/thiếu dữ liệu; missing không biến thành0, không đồng nhất với GPU billing |
+| `certificate` | Final event/journal, manifest/report digests và Owner/admission locators |
+| `analysis_handoff` | Official observations; phân tích/GT/metric vẫn cần đúng protocol và quyền đã áp dụng cho phân tích đó |
+
+Với fixture hoàn tất chuẩn: original11 jobs/528 calls/72000 GPU-s + deferred17
+jobs/3240 calls/244800 GPU-s =28 jobs/3768 calls/316800 GPU-s reserved. Đây là
+**kết quả mô phỏng**, chưa phải chiến dịch thật đã hoàn tất. Reader thực tế tính
+từ records, không hardcode những totals này. Scientific selection vẫn PENDING,
+scientific_qualified=false; không tính Accuracy/Macro-F1/AUROC, không join GT/TEST.
+
+| Công cụ | Cách sử dụng sau chuyển route |
+| --- | --- |
+| `train3763_continuation ... status` | Operational/provisional view; có final event chỉ báo `FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT`, không tự chứng nhận official |
+| `... official-report` | Nguồn chính thức cho status, budget và handoff phân tích của route mới |
+| Legacy `scripts.train3763_campaign status/forecast`, `Ledger.summary/histories/budget` | Chỉ phản ánh legacy COLLECTED/INTENT; số323/528/11/72000 không phải tổng chiến dịch sau continuation |
+| Legacy `plan`, reserve/submit, manual collector | Không dùng trên route mới; open INTENT35 và các exact-history gates cố ý giữ fence |
+| Legacy `measure`, abort và các writer cũ | Cấm dùng sau admission; không tuyên bố mọi writer đều có mechanical guard. Chúng không hiểu final aggregate mới |
+| Các analysis reader legacy khác | **BLOCKED_DIRECT_LEGACY_ANALYSIS_USE** cho route này đến khi có adapter được review đúng schema/protocol; không fallback sang legacy summary hoặc gộp với provisional |
+
+`Owner` trong evidence nghĩa là **authenticated GitHub account authorship** đã
+được platform trả về, không chứng minh ai là người bấm `gh`/Run. App được cấp quyền
+cũng có thể hành động bằng account đó. Offline JSON không tự chứng minh nguồn gốc
+bằng chữ ký; trust boundary vẫn là authenticated export/custody trên máy Owner và
+review độc lập từ originals trên GitHub/provider. Reader không có network fallback
+để biến unauthenticated snapshot thành proof; sai author/ID/body/merge/audit/binding
+bị chặn. Owner-only verifier vẫn phải lấy từng response thật, không dùng snapshot
+cache thay API. Các tests dùng mock transport không phải bằng chứng service thật.
+
 Owner [6816197123](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6816197123)
 chỉ giao triển khai. **Chưa READY, chưa kích hoạt**: cần ChatGPT review đúng HEAD,
 kiểm toán Antigravity độc lập, merge được cho phép riêng, xác minh hậu merge và
@@ -31,10 +92,10 @@ Sau baseline11 hợp lệ:3240 ảnh, 16×200 +40 =17 jobs; nếu reserve7200s m
 ## Ranh giới công cụ và trạng thái
 
 Chạy external companion [train3763_continuation.py](../scripts/train3763_continuation.py)
-và hai file cùng thư mục `owner_verify_train3763_continuation.py`,
-`reconcile_train3763_manual.py` từ tools checkout đã review. Imports runtime luôn
+và ba file cùng thư mục `owner_verify_train3763_continuation.py`,
+`reconcile_train3763_manual.py`, `train3763_results.py` từ tools checkout đã review. Imports runtime luôn
 từ `--approved-repo` gốc; **không overlay hoặc rebuild notebook/runtime**.
-`tool_manifest()` khóa cả ba file. Code/model/weights/prompt/grammar/parser/HNLO,
+`tool_manifest()` khóa cả bốn file. Code/model/weights/prompt/grammar/parser/HNLO,
 Input gốc và scientific selection giữ nguyên. Notebook được xuất là bản sao
 byte-for-byte của notebook đã duyệt; capsule mới chứa đúng request và intent.
 
@@ -73,7 +134,7 @@ campaign_sha256: original grant digest
 decision_body_sha256: 50e416ea2d77606bbbdad7e1bc660be36af4d979720d47234ac22e234c03d5f8
 implementation_pr, reviewed_head, merged_sha: PR/HEAD/merge thật
 script_sha256: SHA256 train3763_continuation.py
-tools_sha256: digest(tool_manifest()) của ba file đã review
+tools_sha256: digest(tool_manifest()) của bốn file đã review
 audit: {comment_id, body_sha256}
 source_sha256, notebook_sha256: source/notebook gốc của Attempt11
 scope: OFFLINE_SERIAL_DEFERRED_RECONCILIATION

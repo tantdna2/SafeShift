@@ -2,6 +2,19 @@
 
 ## Deferred offline campaign route — Owner12/11/2026
 
+PR196 R1 adds `scripts/train3763_results.py` and the read-only `official-report`
+command. It authenticates and replays the final certificate through the same
+`Continuation.validate_reconciliation` gate as admission, verifies immutable
+custody, reconstructs all3763 per-image records/lineages and every attempt, and
+independently sums original plus deferred reservations. Resource facts are read
+from each verified ZIP and compared to the authenticated report; missing telemetry
+and unobserved GPU billing remain explicit. Provisional `status` cannot claim
+official results from event presence alone. Legacy readers/writers remain
+unchanged and intentionally unsuitable for whole-campaign consumption; the new
+versioned official-results schema is the downstream handoff. No GT/metrics or
+new scientific authorization. Tests: `test_train3763_results.py` plus existing
+continuation, manual, campaign and notebook suites.
+
 Read [deferred reconciliation contract](TRAIN3763_DEFERRED_RECONCILIATION.md)
 before the historical per-attempt operator routes. The external companion
 `scripts/train3763_continuation.py` imports the untouched approved Operator

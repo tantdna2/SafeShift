@@ -1,5 +1,18 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner12/11/2026 — PR196 review fixes, same branch/session
+
+[Review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)
+requires a narrow read-only official results/status/budget bridge and regression
+coverage in the same Draft PR. Current direct Owner task authorizes Codex to read
+that review, update code/tests/evidence/docs and push the same branch/PR196.
+This code-administration permission does not authorize Kaggle, production ledger
+mutation, model inference, TEST, audit/merge or operations by Antigravity online.
+Original runtime/notebook/science/history remain immutable; use the versioned
+`official-report` handoff after verified final release, never fabricate legacy
+COLLECTED/MEASURED or treat provisional output as official. Stop at Draft PR for
+fresh ChatGPT review and mandatory independent Antigravity audit before merge.
+
 ## Owner12/11/2026 — offline continuation / deferred reconciliation
 
 [Directive6816197123](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6816197123)
