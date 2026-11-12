@@ -1,5 +1,19 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner12/11/2026 — offline continuation / deferred reconciliation
+
+[Directive6816197123](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6816197123)
+and [runbook](docs/TRAIN3763_DEFERRED_RECONCILIATION.md) define a distinct versioned
+route; this programming task is CPU-only and stops at one Draft PR. No production
+mutation, API/Kaggle/GPU/inference/TEST or activation. Keep the original Operator
+checkout and frozen runtime/notebook bytes unchanged. Antigravity does offline
+work only; Owner personally performs every external operation, at most three
+actionable steps per turn. Never run the Owner-only online verifier on their
+behalf. Preserve INTENT35 and all histories; provisional local completion never
+means COLLECTED. New source-bound route release, direct ChatGPT review, mandatory
+independent Antigravity audit, separately authorized merge and postmerge
+verification precede activation. No self-issued approvals or readiness claim.
+
 ## Owner09/11/2026 — Owner UI Kaggle reconciliation, code-only
 
 [Official directive6736965547](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6736965547)

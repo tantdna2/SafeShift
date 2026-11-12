@@ -1,5 +1,28 @@
 # Kiến trúc Foundation V1
 
+## Deferred offline campaign route — Owner12/11/2026
+
+Read [deferred reconciliation contract](TRAIN3763_DEFERRED_RECONCILIATION.md)
+before the historical per-attempt operator routes. The external companion
+`scripts/train3763_continuation.py` imports the untouched approved Operator
+checkout, authenticates one exact source-bound route release from Owner exports,
+and maintains a separate mirrored create-only journal. Initial admission requires
+exact INTENT35 and preserved Attempt11 facts; legacy INTENT35 remains open to
+fence old reserve/collector routes. No core runtime/source manifest changes.
+
+Quick local verification checks every archive byte/CRC/hash, exact original
+ordinals and raw/Input/checkpoint/native custody; independent numerical replay
+and provider verification remain deferred. New reservations precede capsule
+export, conserve all caps without refunds and permit only one active Owner-run
+job. Restart exports the same reserved capsule; partial/ambiguous histories stop.
+`scripts/owner_verify_train3763_continuation.py` is an explicit **Owner-only online
+command**, never called by the offline route. At campaign end it verifies every
+real provider job/version/code/Input/capsule/ZIP plus full raw numerical traces
+and original histories. One genuine Owner aggregate record and one reviewer
+admission release gate a new formal aggregate ledger event. No synthetic legacy
+COLLECTED/SUBMITTED/MEASURED or retrospective permissions. Tests:
+`test_train3763_continuation.py` and unchanged manual/campaign/notebook suites.
+
 ## Current TRAIN3763 campaign routing — Issue180
 
 Owner UI collection uses the separately reviewed external
