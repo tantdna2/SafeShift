@@ -20,6 +20,9 @@ O2–O6 where missing, final-source live verification, ChatGPT review, independe
 Antigravity audit and separately authorized merge/activation remain pending.
 No `operator-asus-win` session or production ledger was touched. CPU receipt and
 exact file hashes are linked from the review; CPU is not model READY or science PASS.
+Final focused acceptance: Windows core101 PASS/5 Linux-only SKIP, pinned native
+CPU19/19 PASS, Linux supervisor5/5 PASS; zero FAIL/ERROR. The five skips are covered
+on Linux. [Receipts/logs/source and notebook hashes](research/evidence/qwen_minicpm_20261112/summary.json).
 
 ## CURRENT — Attempt9 output pagination correction, same integrated task — 11/11/2026
 

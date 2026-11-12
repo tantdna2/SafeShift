@@ -179,3 +179,77 @@ Dataset-version bindings; O2–O6/rights/budgets where not evidenced; current pr
 history/quota; final-source target ABI/GPU/model-fit/load/inference/export evidence.
 Existing PR177/174/Issue173 evidence is retained; none is silently promoted to this
 new source or to scientific qualification. No live smoke is permitted by this task.
+
+## Final CPU acceptance and file inventory
+
+| Final run | PASS | FAIL / ERROR | SKIP | Time |
+| --- | ---: | ---: | ---: | ---: |
+| Windows stdlib/shared pipeline + notebook + original Inputs | 101 | 0 / 0 | 5 Linux-only | 123.597s |
+| Windows pinned MiniCPM native CPU processor/meta-loader/resampler | 19 | 0 / 0 | 0 | 170.073s |
+| Linux process-group/deadline/parent-death | 5 | 0 / 0 | 0 | 2.727s |
+
+130 test executions: **125 PASS, 0 FAIL, 0 ERROR, 5 SKIP**. The five Windows
+skips are the same five Linux tests that passed, giving125 distinct tests with a
+PASS. Each final run reports the same runtime source digest. Core was clean at
+test completion; only this review document changed while native testing finished.
+This is author-run CPU validation, not CI, independent audit or real model inference.
+Raw/log/ZIP/sidecar/replay/corrupted and incomplete history/duplicate reservation/
+strict parser/repair/no-TEST and resource failures are exercised through the shared
+controller and native boundary suites, not the discarded notebook's copied mocks.
+Original-mount membership admission is synthetic-tested with the immutable master
+gate deliberately rejecting synthetic bytes; no authentic private master was read.
+
+Notebook SHA256:
+`c51005857156df4d2e6e4b6fba267f7f6946ec98057dda7120c25ffe280a7af3`.
+Runtime inventory canonical SHA256:
+`0a495c55d5065efa7c535931258a2404fdb6b3e8290b63d0d9fc0ac8350e0ba5`.
+The [summary manifest](research/evidence/qwen_minicpm_20261112/summary.json)
+contains complete SHA256s for code, tests, requirements, config/source/checkpoint
+locks, notebook, all three receipt/log pairs and the three preserved original
+Antigravity files. Full logs: [core](research/evidence/qwen_minicpm_20261112/core-tests.txt),
+[native](research/evidence/qwen_minicpm_20261112/native-tests.txt),
+[Linux](research/evidence/qwen_minicpm_20261112/linux-tests.txt). No real raw outputs,
+image metadata, archive, checkpoints or credentials are committed.
+Git logs are canonical UTF-8/LF exports. Receipts retain the original log byte
+SHA; `summary.test_log_exports` records original line endings and exported SHA.
+Restoring CRLF for Windows logs exactly reconstructs the original receipt hash.
+
+Changed files (20):
+
+- `notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb`.
+- `safeshift/fulltrain/admission.py`, `runtime.py`, `minicpm_notebook.py`, `original_inputs.py`.
+- `scripts/generate_minicpm_fulltrain_notebook.py`, `qualify_qwen_minicpm_fulltrain.py`.
+- `tests/test_fresh_fulltrain.py`, `test_fulltrain_minicpm4_notebook.py`, `test_fulltrain_original_inputs.py`.
+- `docs/ARCHITECTURE.md`, `docs/PROJECT_STATE.md`, `docs/QWEN_MINICPM_FULLTRAIN_REVIEW.md`.
+- `docs/research/evidence/qwen_minicpm_20261112/{core.json,core-tests.txt,native.json,native-tests.txt,linux.json,linux-tests.txt,summary.json}`.
+
+Inherited candidate/pilot/native numerical/parser sources, requirements/config
+locks, decisions, historical notebooks/results, InternVL campaign/operator and
+legacy refs have no changes against BASE. Original workspace untracked files are
+preserved; the reviewed replacement is on the isolated PR branch/worktree.
+
+## Reproduce CPU validation
+
+```console
+python -B -m scripts.generate_minicpm_fulltrain_notebook --runtime-ref a57aa70f2b22a4565e3b4e7b74a79906ddf51ae6
+python -B -m scripts.qualify_qwen_minicpm_fulltrain --output data/processed/<new-core-output>
+<pinned-cpu-python> -B -m scripts.qualify_qwen_minicpm_fulltrain --component native --native-snapshot <existing-public-minicpm-source> --native-index <existing-locked-index-json> --output data/processed/<new-native-output>
+python3 -B -m scripts.qualify_qwen_minicpm_fulltrain --component supervision --output data/processed/<new-linux-output>
+```
+
+The native snapshot is public source/tokenizer/config only, not model weights;
+the index is checked against the unchanged checkpoint lock. Use the retained
+CPU environment torch2.6.0+cpu / torchvision0.21.0+cpu / Transformers4.51.3 /
+tokenizers0.21.1 / numpy1.26.4 / Pillow10.4.0. CUDA is hidden, networking is blocked,
+real model forwards are forbidden, and images/logits are synthetic. Linux
+supervision tests exercise only disposable fixture subprocesses, not operator jobs.
+When a Windows-created worktree is tested under WSL, set GIT_DIR and GIT_WORK_TREE
+to its corresponding Linux paths rather than editing the worktree's Git pointer.
+An initial WSL run lacked that mapping and failed the historical Git-object lookup;
+the Windows provenance comparison passed and the corrected Linux supervisor receipt
+is separate. This infrastructure error was not a model or source-science failure.
+
+Validation counts, complete per-file SHA256s and sanitized test logs are recorded
+under `research/evidence/qwen_minicpm_20261112/`. The generated notebook pins runtime
+`a57aa70f2b22a4565e3b4e7b74a79906ddf51ae6`; later delivery commits add only that
+notebook and review/evidence files. No final-source GPU/model/long-run PASS is claimed.
