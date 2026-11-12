@@ -45,7 +45,9 @@ Do not delete that gate or call internal functions to activate an experiment.
 Exact attachment/version/mount/hash table and remaining gates:
 `docs/QWEN_MINICPM_FULLTRAIN_REVIEW.md`. The pilot160 Input is not a full-TRAIN
 bundle. Existing checkpoint `nguynanhtn/safeshift-prepare-minicpm4/1` can be reused;
-the sealed fresh full-cohort Input/rights/release/caps still need admission.
+the original TRAIN/master mounts can be bound explicitly without copying images
+via the `original_inputs` request extension. Actual dataset versions, projection
+seal, rights/release/caps still need admission; no version is guessed here.
 No default 160-call shard or promised RAM/VRAM fit; limits must be explicitly
 authorized and measured with allocation, cgroup, driver/CUDA and export reserves.
 

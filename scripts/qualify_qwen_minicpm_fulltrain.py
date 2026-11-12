@@ -16,26 +16,28 @@ from safeshift.pilot.artifacts import sha, write
 from safeshift.pilot.contract import digest
 
 SUITES = ["test_fulltrain", "test_fresh_fulltrain", "test_fresh_fulltrain_revision",
-          "test_kaggle173_verification", "test_fulltrain_minicpm4_notebook"]
+          "test_kaggle173_verification", "test_fulltrain_minicpm4_notebook", "test_fulltrain_original_inputs"]
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", required=True, type=Path)
+    p.add_argument("--component", choices=("core", "native", "supervision"), default="core")
     p.add_argument("--native-snapshot", type=Path)
     p.add_argument("--native-index", type=Path)
     args = p.parse_args()
     if bool(args.native_snapshot) != bool(args.native_index): p.error("both native source snapshot and index required")
+    if (args.component == "native") != bool(args.native_snapshot): p.error("native component requires public snapshot and index")
     args.output.mkdir(parents=True, exist_ok=False)
     os.environ.update(CUDA_VISIBLE_DEVICES="", HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
                       HF_HUB_DISABLE_TELEMETRY="1", PYTHONDONTWRITEBYTECODE="1")
     sys.path.insert(0, str(ROOT / "tests"))
-    names = list(SUITES)
+    names = list(SUITES) if args.component == "core" else ["test_fresh_fulltrain_revision.SupervisionTests"]
     versions = {}
     if args.native_snapshot:
         os.environ.update(SAFESHIFT_CANDIDATE_KEY="minicpm4", SAFESHIFT_CANDIDATE_SNAPSHOT=str(args.native_snapshot),
                           SAFESHIFT_CANDIDATE_INDEX=str(args.native_index), SAFESHIFT_NUMERICS_SNAPSHOT=str(args.native_snapshot))
-        names += ["test_candidate_native.NativeCandidateTests", "test_minicpm_resampler_fp32.NativeResamplerTests"]
+        names = ["test_candidate_native.NativeCandidateTests", "test_minicpm_resampler_fp32.NativeResamplerTests"]
         versions = {n: importlib.metadata.version(n) for n in ("torch", "torchvision", "transformers", "tokenizers", "numpy", "Pillow")}
     network_attempts = []
     def blocked(*a, **kw):

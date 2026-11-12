@@ -1,5 +1,21 @@
 # Kiến trúc Foundation V1
 
+## MiniCPM / Qwen fresh full-TRAIN review — 12/11/2026
+
+Read [technical review/runbook](QWEN_MINICPM_FULLTRAIN_REVIEW.md).
+`fulltrain/minicpm_notebook.py` packages the existing supervised native pipeline
+without a second adapter/parser or default batch cap. Its request boundary and
+the existing fresh171 public entries remain release-fenced before private I/O.
+`fulltrain/original_inputs.py` adds an explicit MiniCPM-only request extension
+for the already verified original TRAIN/master mounts: exact refs/versions,
+unique bounded mounts, frozen original master/projection, all image hashes,
+pinned-child CPU decode, no image copy or prediction inheritance. It is dispatched
+by both admission and the native worker; the opaque fresh Input route is retained.
+Builder: `scripts/generate_minicpm_fulltrain_notebook.py`; focused CPU receipt:
+`scripts/qualify_qwen_minicpm_fulltrain.py`. Tests: new notebook/original-Input
+suites plus shared fresh controller/worker/history/archive/native-CPU suites.
+No InternVL operator/campaign changes, historical lock edits or live execution.
+
 ## Current TRAIN3763 campaign routing — Issue180
 
 Owner UI collection uses the separately reviewed external
