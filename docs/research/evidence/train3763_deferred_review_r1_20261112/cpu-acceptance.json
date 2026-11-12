@@ -1,0 +1,83 @@
+{
+  "scope": "CODEX_AUTHOR_CPU_NOT_INDEPENDENT_AUDIT",
+  "review_id": 6817877168,
+  "review_url": "https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168",
+  "review_author_login": "tantdna2",
+  "review_body_sha256": "6a3aa5483a2f18e786a22a5d7a016361b09429d3bacdc8a6c0730e063b38ba28",
+  "review_read": "LIVE_CONNECTED_GITHUB_EXPLICIT_OWNER_PR196_FIX_TASK",
+  "base_head": "12475113e3c0b65269ec2c6f6257da3fe62f32eb",
+  "branch": "feat/train3763-offline-continuation",
+  "pr": 196,
+  "files_sha256": {
+    "scripts/train3763_continuation.py": "eb294b55d103108b0b2ceab003b321f4d7529bdaeb67e235218b6069e0f2cda0",
+    "scripts/owner_verify_train3763_continuation.py": "bda596f5d273b0fc3f9a6ab4b76ee1db1c2ca13979f6dc639d71168c6150d58c",
+    "scripts/train3763_results.py": "932747d64df31b73bb0c334c6fbfdfe2cc59ea3c6ec6cd02c920b29454b56f73",
+    "tests/test_train3763_continuation.py": "781f79612326a711148bdbd8089325f5ecb19c8e9be57b411d4bc8a21c159e9d",
+    "tests/test_train3763_results.py": "bf9283f0cc318b1ced695f4a57a4e2f8020aa2409732ac2a39d3769b6e308aa2"
+  },
+  "tool_manifest": {
+    "train3763_continuation.py": "eb294b55d103108b0b2ceab003b321f4d7529bdaeb67e235218b6069e0f2cda0",
+    "owner_verify_train3763_continuation.py": "bda596f5d273b0fc3f9a6ab4b76ee1db1c2ca13979f6dc639d71168c6150d58c",
+    "reconcile_train3763_manual.py": "2fcc4a5bef27d7f5fce183511d21bc660b79912f47901fac26b6b7a1b4371d60",
+    "train3763_results.py": "932747d64df31b73bb0c334c6fbfdfe2cc59ea3c6ec6cd02c920b29454b56f73"
+  },
+  "tools_sha256": "260cd9be3b2e4e9b737ebe05fed7ef3ea408bb18a2ed444dc665c60ce5d5753a",
+  "runtime_sha256": "f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "runs": {
+    "results-r3": {
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 216.204
+    },
+    "continuation": {
+      "tests": 40,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 380.61
+    },
+    "inherited": {
+      "modules": [
+        "test_train3763_manual",
+        "test_internvl3763_campaign",
+        "test_internvl3763_notebook"
+      ],
+      "tests": 158,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 868.109,
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "packages": {
+        "kaggle": "2.2.5",
+        "kagglesdk": "0.1.38",
+        "requests": "2.34.2",
+        "urllib3": "2.8.0"
+      }
+    },
+    "final-budget": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 111.485
+    }
+  },
+  "log_sha256": {
+    "continuation.log": "1255f9a9ace85f3a38863a9fa457d098eb1e180da9b190ffe2fd00ad2d54b62b",
+    "final-budget.log": "169a480569352a29abf620b50664af7d5c5d827fa48f4edd7e9018a878e5de84",
+    "inherited.log": "c5f4abc69ff67a5fcd6ed4b5e67b717ee9a8f6569f7f37cc77f690ced5309547",
+    "reader-first.log": "ce5367bc12d71ab5cb0e0650cf00e7bcbc4f41bea1054d99110bd66bc23266d9",
+    "results-r2.log": "2112fd6e356665b7851d2d9fdd2e5399eddff46478883ff1d6c64ddda966b609",
+    "results-r3.log": "5e40c769dc4f9bd2a5a36107466518365b4b94d24ae1ecd58f5e098cdef58e26",
+    "results.log": "be552abee67dd66a455376412614bdcf26ef7e36842a6fc627aecdff74563e78"
+  },
+  "actual_kaggle_api_calls": 0,
+  "gpu_jobs": 0,
+  "real_inference": 0,
+  "production_ledger_mutations": 0,
+  "readiness": "NOT_READY_PENDING_CHATGPT_REVIEW_INDEPENDENT_AUDIT_MERGE_RELEASE"
+}

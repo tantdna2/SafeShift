@@ -1,6 +1,92 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Attempt9 output pagination correction, same integrated task — 11/11/2026
+## CURRENT — PR196 R1 official downstream reader — 12/11/2026
+
+[ChatGPT direct review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)
+requested changes at HEAD1247511 because legacy consumption paths could not see
+the complete deferred campaign. Same branch/session/Draft PR196 now adds
+`train3763_results.py` and `train3763_continuation ... official-report`. It
+revalidates the actual final event, authentic account records/release, immutable
+ZIP/raw/history/capsule custody and exact resource proofs before returning the
+versioned authoritative handoff for all3763 observations and every Attempt.
+
+The reader independently adds actual original INTENT and deferred reservations.
+The full synthetic fixture proves28 jobs/3768 calls/316800 physical GPU-seconds
+reserved (17 new jobs), retains INVALID and all abort/FAIL histories, and leaves
+legacy summary/budget at their original323 results/528 calls/11 jobs/72000 GPU-s.
+Those are test values and a historical baseline, **not a claim that the real
+campaign has finished**. Before a valid final release, official output is BLOCKED.
+Operational `status` marks event presence unverified and directs consumers to
+`official-report`; it cannot promote provisional results by event kind alone.
+
+No legacy ledger/runtime/notebook/science changes or invented COLLECTED/MEASURED.
+Legacy readers are historical-only; old writers remain excluded from the new
+route. The official-results schema is the supported research observation handoff;
+direct legacy analysis adapters remain BLOCKED until separately reviewed for the
+same schema/protocol. No GT joins, metric calculations, scientific qualification
+or new permissions. Missing telemetry remains explicit; reservations are not
+measured provider billing. See [consumer contract](TRAIN3763_DEFERRED_RECONCILIATION.md).
+
+Current direct Owner task explicitly authorizes Codex's GitHub review read and
+push/update of PR196. Antigravity operations remain offline and Owner-assisted;
+no Kaggle API, job, GPU/inference, TEST or production mutation in this revision.
+Authenticated GitHub account authorship is not proof of who clicked `gh` or Run.
+Fresh ChatGPT review, independent Antigravity audit, authorized merge/postmerge
+verification and exact changed-tool release are still required. **NOT READY.**
+
+[R1 acceptance](research/TRAIN3763_DEFERRED_REVIEW_R1_20261112.md): official
+reader/provider11/11, continuation40/40 and inherited158/158 PASS with zero skips;
+targeted budget/full-handoff2/2 PASS after final output hardening. Code-only
+synthetic/mocked evidence, not a live campaign result or independent audit.
+
+## INITIAL DRAFT SNAPSHOT — deferred offline continuation — 12/11/2026
+
+Owner [6816197123](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6816197123)
+directs one Draft PR from `341ab626ff2af7ef79ced0d9c3119794eea4a820`, branch
+`feat/train3763-offline-continuation`. [New runbook](TRAIN3763_DEFERRED_RECONCILIATION.md)
+defines a separate versioned mirrored custody/planning journal, provisional local
+completion, unchanged notebook/capsule export and one final authenticated aggregate
+verification/admission workflow. No per-shard Owner GitHub attestation, Tool Release,
+production COLLECTED or MEASURED cycle on the released new route.
+
+Read-only local inspection confirms **35 journals**, INTENT35 open, no36/37.
+Attempt11 ZIP SHA `a06f6714e4755a084af66312d06cf06fe7ea04456e807c71daaa875b07969ea0`:
+8264 members /200 calls /200 SUCCESS ordinal323..522; full CPU bundle/native custody/
+sealed lineage PASS, quick Input/checkpoint/Python/handoff checks PASS. Provider was
+**not queried** and no COLLECTED was appended. Ledger still formally incorporates
+323 images; remaining3240 is conditional on validated transition/baseline11.
+[Inspection receipt](research/evidence/train3763_deferred_20261112/baseline-inspection.json).
+
+Reservations remain528 calls /11 jobs /72000 physical GPU-s. Effective O5 cap430000
+leaves3972 calls /89 jobs /358000 GPU-s. Unchanged source MEASURED34 permits200 calls
+per7200s job. Conditional17-job remainder (16×200 +40) fits caps at316800 cumulative
+reserved GPU-s,3768 calls,28 jobs. Weekly quota/Input availability and time window
+remain Owner UI gates; this is not a population latency or completion guarantee.
+
+Migration appends a truthful admission after exact35 and keeps INTENT35 immutable
+and open as a fence against legacy staging. Future reservations and locally
+verified outputs remain in the distinct mirrored journal. Final aggregate event
+contains every original intent/attempt/proof in chronological order; it does not
+invent legacy SUBMITTED/COLLECTED/MEASURED events. Legacy status tools intentionally
+remain fenced and do not summarize the new route. Missing/partial/conflicting ZIP,
+job, source, history, authority, caps or mirror means STOP/read-only reconciliation.
+
+Antigravity performs offline work only. Owner personally performs all external
+operations, including the explicit online exporter/verifier; offline commands
+have no SDK/network fallback. Authenticated Owner export trust is documented;
+reviewers verify originals independently. No production mutation, activation,
+GPU/Kaggle API/submit/inference/TEST or scientific decision occurs in this task.
+Original operator checkout, frozen runtime/notebooks/science and historical bytes
+remain unchanged. Direct ChatGPT review, independent Antigravity audit, separately
+authorized merge, postmerge verification and exact new route release are still
+required. **NOT READY / NOT ACTIVATED.**
+
+[CPU acceptance](research/TRAIN3763_DEFERRED_ACCEPTANCE_20261112.md): new route40/40
+PASS; inherited158 run (156 PASS, two SDK opt-in skips covered by separate2/2
+PASS); targeted hardening10/10 and custody6/6 PASS. Combined author CPU evidence,
+no unresolved failure, not independent audit or live service verification.
+
+## HISTORICAL — Attempt9 output pagination correction, same integrated task — 11/11/2026
 
 [Directive6792693343](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6792693343)
 continues the same Attempt9 collection/measurement → Attempt10 Owner-run task.

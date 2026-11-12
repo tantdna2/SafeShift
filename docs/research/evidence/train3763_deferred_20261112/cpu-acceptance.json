@@ -1,0 +1,95 @@
+{
+  "base": "341ab626ff2af7ef79ced0d9c3119794eea4a820",
+  "branch": "feat/train3763-offline-continuation",
+  "date": "2026-11-12",
+  "evidence_kind": "CODEX_AUTHOR_CPU_NOT_INDEPENDENT_AUDIT",
+  "files_sha256": {
+    "scripts/train3763_continuation.py": "358940756d10d993316b92872e64fe959fc36a656a4ffbc7f169a0209892976e",
+    "scripts/owner_verify_train3763_continuation.py": "4480884f06350a6bca7d5a99924e4155a8cb316dedcdb3ea310d97cacde0a0ce",
+    "scripts/reconcile_train3763_manual.py": "2fcc4a5bef27d7f5fce183511d21bc660b79912f47901fac26b6b7a1b4371d60",
+    "tests/test_train3763_continuation.py": "4db19b2ca8e71ec80108ff9e1403a78212d9d7beedb0c0f08dd95d31742b6715"
+  },
+  "runtime_sha256": "f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d",
+  "runtime_manifest_files": 92,
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "runs": {
+    "acceptance-focused": {
+      "tests": 40,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 344.14,
+      "network": "socket.socket prohibited in every fixture",
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]"
+    },
+    "inherited": {
+      "modules": [
+        "test_train3763_manual",
+        "test_internvl3763_campaign",
+        "test_internvl3763_notebook"
+      ],
+      "tests": 158,
+      "failures": 0,
+      "errors": 0,
+      "skips": 2,
+      "seconds": 848.11,
+      "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+      "packages": {
+        "kaggle": "2.2.5",
+        "kagglesdk": "0.1.38",
+        "requests": "2.34.2",
+        "urllib3": "2.8.0"
+      }
+    },
+    "sdk-opt-in": {
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 8.203,
+      "scope": "pinned SDK synthetic CPU fixtures; socket.socket blocked"
+    },
+    "final-hardening": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 38.532
+    },
+    "final-custody": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 32.438
+    }
+  },
+  "live_kaggle_api": 0,
+  "gpu_jobs": 0,
+  "real_inference": 0,
+  "production_mutations": 0,
+  "readiness": "NOT_READY_PENDING_REVIEW_AUDIT_MERGE_RELEASE",
+  "logs": {
+    "acceptance-focused.log": "56ad24afec0190f91fcb72c271e93d700d90ed74a3868a1fd515707e7c416c1d",
+    "corrections.log": "bb3271f73850989a9fa0a849c425629ecbef964292371fbb199f76a1d40dfa7a",
+    "fast.log": "16c71ef694ad14b09754316a417e5710f46fe3cb064831284d5a7c6c9c6dec77",
+    "final-corrections.log": "119e3ce55a5e5b486db52f7c7c7ff14e04bafaae00fb4445653762d177c3aa8a",
+    "final-custody.log": "e725b26284c37e19a77f74be91dca01a5fafd1503e56120e400b233b07f359b8",
+    "final-focused.log": "2178bc77fb133e950a4b2f7348e9b8a063c504d2932cbe0467ca42664b204c45",
+    "final-hardening.log": "390f4f12f581e5cca87b92250f3a7f527bcfadc075aa05a1c9316f5079a110d2",
+    "final-provider-disconnect.log": "695517414668dc93c2b15efc50b33ed4f2396452c22f7dff65c5fd85e9ad451d",
+    "focused-r2.log": "973bb8b01aa8d431816e1a60768d4bef76b81db1ff131c1ab867b9242eb88a9d",
+    "focused-r3.log": "823d65ca27fb146f139bc097b30bfb993739fa95046a6f13f8eb5545672aabe1",
+    "focused.log": "6c19d47311290a9eae446c762a01ab94c30fb292cfc11eadaf50be2db3795ebb",
+    "inherited.log": "b4f36730ef299d5f19986e6ee4d043d34c8eeee7dda997779355ccd904f55ef4",
+    "owner-aggregator-rerun.log": "ffb0860f94f5982835a4de2f5335c476999a46e77611c32ed9c1425b239bb8a9",
+    "path-guard.log": "843674375f8ae81f137649670a35ec89646b008153e905a39254797fe567d72f",
+    "sdk-opt-in.log": "b330b635f4375cca47f25a11620473bd2a86389c91f5c43069d937b1ad1ca8d7",
+    "stable-focused.log": "0f4964585806decaeda3bdcdaaf5368de2473e1db58cdfc0a8e8ea4fee4be2a7"
+  },
+  "final_baseline_inspection_same": true,
+  "final_baseline_local_receipt_sha256": "800e46e4df864eb6e9408c714b4143e086f4044e844835f8b6ab154a99c86394",
+  "tools_sha256": "8580354534604a494fbbe20586d1d7fdb2cc78ac924905c800f6b34ece98e7c4",
+  "unchanged_notebook_sha256": "c2e574c132c1305efccde569bac63c027eeafe8814285ebaf092701cb3f033e7",
+  "unchanged_notebook_code_sha256": "a5e5583e8739092836fed1170f9105374dee6ebf4926adbc97013c9bd1fd1a65"
+}
