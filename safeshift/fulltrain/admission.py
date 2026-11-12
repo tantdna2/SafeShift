@@ -25,10 +25,11 @@ from . import contract, environment, supervision, provision, inputs, runtime
 REQUEST_FIELDS = {"model_key", "source_sha256", "inputs", "marker_sha256", "projection_sha256",
     "campaign", "plan", "history", "work", "scratch", "resource_policy", "repair_case",
     "checkpoint_marker_sha256", "runtime_lock", "runtime_lock_sha256", "software_input", "software_marker_sha256"}
+ORIGINAL_REQUEST_FIELDS = REQUEST_FIELDS | {"original_inputs"}
 
 
 def validate_request(request, repo=ROOT):
-    require(type(request) is dict and set(request) == REQUEST_FIELDS, "FRESH_SUPERVISED_REQUEST_FIELDS")
+    require(type(request) is dict and set(request) in (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS), "FRESH_SUPERVISED_REQUEST_FIELDS")
     key = request["model_key"]
     environment.policy(key, request["resource_policy"])
     require(request["source_sha256"] == digest(contract.source_manifest(repo)), "FRESH_FINAL_SOURCE")
@@ -38,6 +39,10 @@ def validate_request(request, repo=ROOT):
         require_hash(request[name])
     runtime.check_repair_case(request["plan"], request["repair_case"])
     require(request["campaign"]["cohort_sha256"] == request["projection_sha256"], "FRESH_PROJECTION_PIN")
+    if "original_inputs" in request:
+        require(key == "minicpm4", "ORIGINAL_MOUNTS_MINICPM_ONLY")
+        from .original_inputs import validate_binding
+        validate_binding(request["original_inputs"], request["marker_sha256"], request["projection_sha256"])
     for name in ("work", "scratch", "inputs"):
         path = Path(request[name])
         require(not any(p.is_symlink() or (hasattr(p, "is_junction") and p.is_junction())
@@ -75,12 +80,26 @@ def checkpoint_binding(request, repo=ROOT):
     return marker, snapshot, weights, {"source": source, "weights": weights_receipt}
 
 
+def input_binding(request):
+    if "original_inputs" in request:
+        from .original_inputs import admit as original
+        return original(request["inputs"], request["original_inputs"], request["marker_sha256"], request["projection_sha256"])
+    return inputs.admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
+
+
+def input_bytes(request, bundle, cohort, rows):
+    if "original_inputs" in request:
+        from .original_inputs import verify_bytes
+        return verify_bytes(bundle, cohort, rows)
+    return inputs.verify_image_bytes(bundle, cohort, rows)
+
+
 def admit(request, repo=ROOT):
     validate_request(request, repo)
     history_admission(request)
     if request["model_key"] == "qwen3":
         provision.software_input(request["software_input"], request["software_marker_sha256"], request["runtime_lock"], repo)
-    bundle, cohort, rows = inputs.admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
+    bundle, cohort, rows = input_binding(request)
     p = request["plan"]
     require(p == contract.plan(request["campaign"], cohort, p["identity"], request["history"], action=p["action"],
         run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"], repair=p["repair"]),
@@ -88,7 +107,7 @@ def admit(request, repo=ROOT):
     for old in request["history"]:
         root = safe(request["work"], old["run_id"])
         require(runtime.recover(root, cohort, digest(read(root / "plan.json"))) == old, "ADMISSION_HISTORY_CUSTODY")
-    inputs.verify_image_bytes(bundle, cohort, rows)
+    input_bytes(request, bundle, cohort, rows)
     marker, snapshot, weights, receipt = checkpoint_binding(request, repo)
     return bundle, cohort, rows, snapshot, weights, receipt
 
@@ -149,7 +168,11 @@ def stage(mode, request, repo, output, deadline):
                 pass  # bounded byte/hash/history admission before setup or no-op
             elif mode == "cpu":
                 require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
-                write(output / "images.json", verify_images(bundle, rows))
+                if "original_inputs" in request:
+                    from .original_inputs import verify_images as original_images
+                    write(output / "images.json", original_images(bundle, cohort, rows))
+                else:
+                    write(output / "images.json", verify_images(bundle, rows))
                 from .preflight import cpu_native_checks
                 write(output / "native_cpu.json", cpu_native_checks(request["model_key"], snapshot, repo,
                       wheel_lock=request["runtime_lock"]))

@@ -1,0 +1,25 @@
+test_candidate160_corrupt_image_before_native_generation (test_candidate_native.NativeCandidateTests.test_candidate160_corrupt_image_before_native_generation) ... ok
+test_candidate160_native_processor_tokens_raw_runner_and_archive (test_candidate_native.NativeCandidateTests.test_candidate160_native_processor_tokens_raw_runner_and_archive) ... ok
+test_decode_error_retains_exact_native_ids (test_candidate_native.NativeCandidateTests.test_decode_error_retains_exact_native_ids) ... ok
+test_existing_runner_raw_before_parse_failure_tail_and_archive (test_candidate_native.NativeCandidateTests.test_existing_runner_raw_before_parse_failure_tail_and_archive) ... ok
+test_four_labels_whitespace_and_existing_fifteen_raw_cases (test_candidate_native.NativeCandidateTests.test_four_labels_whitespace_and_existing_fifteen_raw_cases) ... ok
+test_input_faults_and_dtype_transfer (test_candidate_native.NativeCandidateTests.test_input_faults_and_dtype_transfer) ... ok
+test_invalid_repetition_and_max64_are_not_rescued (test_candidate_native.NativeCandidateTests.test_invalid_repetition_and_max64_are_not_rescued) ... ok
+test_malformed_sequences_persist_before_rejection (test_candidate_native.NativeCandidateTests.test_malformed_sequences_persist_before_rejection) ... ok
+test_meta_loader_inventory_and_attention_faults (test_candidate_native.NativeCandidateTests.test_meta_loader_inventory_and_attention_faults) ... ok
+test_native_empty_safetensors_path_loader_and_failure (test_candidate_native.NativeCandidateTests.test_native_empty_safetensors_path_loader_and_failure)
+Native file loader/config plumbing, NOT real checkpoint deserialization. ... ok
+test_native_generation_contract_raw_ids_logits_eos_and_decode_order (test_candidate_native.NativeCandidateTests.test_native_generation_contract_raw_ids_logits_eos_and_decode_order) ... ok
+test_real_native_embedding_glue_with_scripted_towers (test_candidate_native.NativeCandidateTests.test_real_native_embedding_glue_with_scripted_towers) ... ok
+test_sizes_spatial_native_parity_and_rgb_normalization (test_candidate_native.NativeCandidateTests.test_sizes_spatial_native_parity_and_rgb_normalization) ... ok
+test_weight_loader_failure_uses_exact_config_and_no_fallback (test_candidate_native.NativeCandidateTests.test_weight_loader_failure_uses_exact_config_and_no_fallback) ... ok
+test_write_failure_stops_before_decode_and_removes_hook (test_candidate_native.NativeCandidateTests.test_write_failure_stops_before_decode_and_removes_hook) ... ok
+test_changed_native_source_rejected_before_binding (test_minicpm_resampler_fp32.NativeResamplerTests.test_changed_native_source_rejected_before_binding) ... ok
+test_nonuniform_native_attention_matches_independent_scalar_oracle (test_minicpm_resampler_fp32.NativeResamplerTests.test_nonuniform_native_attention_matches_independent_scalar_oracle) ... ok
+test_original_overflows_and_effective_finite_matches_fp32_reference (test_minicpm_resampler_fp32.NativeResamplerTests.test_original_overflows_and_effective_finite_matches_fp32_reference) ... ok
+test_zero_mask_partial_mask_all_mask_and_unsupported_modes (test_minicpm_resampler_fp32.NativeResamplerTests.test_zero_mask_partial_mask_all_mask_and_unsupported_modes) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 170.073s
+
+OK

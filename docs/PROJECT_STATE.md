@@ -1,5 +1,29 @@
 # SafeShift — PROJECT STATE
 
+## Qwen3 / MiniCPM full-TRAIN technical candidate — 12/11/2026
+
+New isolated branch from GitHub-verified main
+`341ab626ff2af7ef79ced0d9c3119794eea4a820`; one Draft PR, no merge or submit.
+[Review, Inputs and runbook](QWEN_MINICPM_FULLTRAIN_REVIEW.md) records the supplied
+untracked Antigravity notebook's simulated FP32/parser/history/completion defects
+and its replacement with the reviewed shared native adapter/controller. The new
+MiniCPM notebook is **BLOCKED_NOT_LIVE_VERIFIED**, label-only/HNLO N/A. Explicit
+original-mount admission avoids image copying/reupload and preserves frozen
+3,763 TRAIN IDs/order/SHA. Dataset versions/projection/release/caps still need
+authenticated admission; no defaults or Owner-science approvals are fabricated.
+
+Qwen V4 ORIGINAL remains `3539 SUCCESS + 1 TECHNICAL_ERROR + 223 NOT_ATTEMPTED`;
+Recovery224 remains separate `224 SUCCESS`. No fresh-Qwen completion evidence was
+found in the reviewed tracked dossier. MiniCPM Candidate160 `155 SUCCESS + 5 INVALID`
+and Issue173 v3's single native SUCCESS remain historical, never fresh predictions.
+O2–O6 where missing, final-source live verification, ChatGPT review, independent
+Antigravity audit and separately authorized merge/activation remain pending.
+No `operator-asus-win` session or production ledger was touched. CPU receipt and
+exact file hashes are linked from the review; CPU is not model READY or science PASS.
+Final focused acceptance: Windows core101 PASS/5 Linux-only SKIP, pinned native
+CPU19/19 PASS, Linux supervisor5/5 PASS; zero FAIL/ERROR. The five skips are covered
+on Linux. [Receipts/logs/source and notebook hashes](research/evidence/qwen_minicpm_20261112/summary.json).
+
 ## CURRENT — Attempt9 output pagination correction, same integrated task — 11/11/2026
 
 [Directive6792693343](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6792693343)

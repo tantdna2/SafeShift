@@ -125,14 +125,21 @@ def _worker(request, *, repo=ROOT):
     from safeshift.pilot.hnlo import replay
     required = {"model_key", "source_sha256", "inputs", "marker_sha256", "projection_sha256",
                 "campaign", "plan", "history", "work", "scratch", "resource_policy", "repair_case"}
-    from .admission import REQUEST_FIELDS, checkpoint_binding
-    require(type(request) is dict and set(request) in (required, REQUEST_FIELDS), "EXACT_NATIVE_REQUEST")
+    from .admission import REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, checkpoint_binding, input_binding, input_bytes
+    require(type(request) is dict and set(request) in (required, REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS), "EXACT_NATIVE_REQUEST")
     key = request["model_key"]
     require(key != "qwen3" or set(request) == REQUEST_FIELDS, "QWEN_SUPERVISED_REQUEST_REQUIRED")
     require(digest(contract.source_manifest(repo)) == request["source_sha256"], "FINAL_NATIVE_SOURCE")
     require(request["plan"]["identity"] == contract.native_identity(key, repo), "PINNED_NATIVE_IDENTITY")
-    bundle, cohort, rows = admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
-    verify_image_bytes(bundle, cohort, rows)
+    if "original_inputs" in request:
+        # Direct internal entry must enforce the same binding/model validation.
+        from .admission import validate_request
+        validate_request(request, repo)
+        bundle, cohort, rows = input_binding(request)
+        input_bytes(request, bundle, cohort, rows)
+    else:
+        bundle, cohort, rows = admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
+        verify_image_bytes(bundle, cohort, rows)
     if key == "qwen3":
         from . import qwen, environment
         from .admission import checkpoint_binding
@@ -141,14 +148,18 @@ def _worker(request, *, repo=ROOT):
         qwen.native_setup(snapshot, repo)
         replay = qwen.replay
     else:
-        if set(request) == REQUEST_FIELDS:
+        if set(request) in (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS):
             _, snapshot, weights, _ = checkpoint_binding(request, repo)
         else:
             _, snapshot, weights = checkpoint(request["inputs"], key)
         verify_snapshot(snapshot, key)
         verify_weights(weights, key)
         software(key)  # actual isolated Python/pins/compiled ABI, no kernel fallback
-    verify_images(bundle, rows)
+    if "original_inputs" in request:
+        from .original_inputs import verify_images as original_images
+        original_images(bundle, cohort, rows)
+    else:
+        verify_images(bundle, rows)
     policy = request["resource_policy"]
     require(policy.get("review_mode") == "EXTERNAL", "NO_CANDIDATE160_OWNER_CAP_INHERITANCE")
     if key == "qwen3":
@@ -157,7 +168,7 @@ def _worker(request, *, repo=ROOT):
     else:
         worker_cuda(policy)
     def check_resources():
-        if set(request) == REQUEST_FIELDS:
+        if set(request) in (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS):
             from . import environment
             environment.resources(key, policy, request["scratch"], request["work"])
             environment.hardware(key, policy)
