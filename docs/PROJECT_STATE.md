@@ -33,6 +33,14 @@ Level03/cross-model limits remain explicit. No GPU, Kaggle, inference, TEST or
 production mutation. Direct ChatGPT review, mandatory independent Antigravity
 audit and separately authorized merge remain PENDING; stop at the single Draft PR.
 
+Final artifacts: `data/processed/qwen3-composite-v1/release-v1/`; manifest SHA256
+`7e7793073eb639a2d0bd22e84c11cd773be7fdb86e7e1f5f59e3baf0dd0c98de`.
+Source `67278dbae0a42774c74d0af16b97550220312e4e`; both sealed-reader validations
+PASS, second-build core JSON/CSV byte-identical, numerical oracle 980 checks PASS,
+71 relevant CPU tests PASS. Inherited notebook source/runtime failures were
+reproduced on untouched BASE (2 failed/6 errored subtests). Full discovery was
+interrupted during unrelated long-running synthetic batch tests; no full PASS.
+
 The following CURRENT headings are preserved historical snapshots of earlier
 work and do not override this scoped Owner composite decision.
 

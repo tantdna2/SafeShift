@@ -132,6 +132,24 @@ for final artifact seals, validation and reproduction evidence. Original V4's
 ledger remains3539 SUCCESS/1 TECHNICAL_ERROR/223 NOT_ATTEMPTED. Composite counts
 must never be substituted into that historical ledger.
 
+Final local artifact: `data/processed/qwen3-composite-v1/release-v1/`.
+Trusted `manifest.json` SHA256:
+`7e7793073eb639a2d0bd22e84c11cd773be7fdb86e7e1f5f59e3baf0dd0c98de`.
+Source commit: `67278dbae0a42774c74d0af16b97550220312e4e`, with no uncommitted
+tracked implementation changes at execution. A second build reproduced
+`composite.json`, `samples.csv`, `metrics.json` and `metrics.csv` byte for byte.
+Both products passed the sealed downstream reader. A separate numerical oracle
+passed 980 checks across 15 strata. All 71 relevant CPU tests passed, including
+23 composite tests and 625 exhaustive synthetic confusion combinations.
+
+The inherited notebook suite has two failed and six errored subtests, reproduced
+on untouched BASE `044b530`: frozen `candidates/backend.py`/`loading.py` assertions
+and six builder source/runtime mismatches. Those source files are unchanged by
+this task. Full repository discovery was started and interrupted during unrelated
+long-running synthetic batch tests; it has no completion or PASS claim. Exact
+logs/checksums and commands are retained in the acceptance receipt. These code
+and arithmetic checks do not replace the required independent audit.
+
 ## Separate HNLO compatibility gate
 
 Saved-score AUROC is recomputed with exact ties receiving half credit; empty or
