@@ -101,6 +101,20 @@ socket.create_connection = no_network
                 entry.run_request(Poison(), "invalid")
             launch.assert_not_called()
 
+    def test_owner_ui_variant_pins_capsule_and_fails_before_input_without_prep_archives(self):
+        nb = notebook(self.nb["metadata"]["safeshift"]["runtime_ref"], capsule_sha256="a"*64)
+        self.assertEqual(nb["metadata"]["safeshift"]["capsule_sha256"], "a"*64)
+        code = "\n".join("".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "code")
+        self.assertNotIn("REQUEST_FILE = None", code)
+        with tempfile.TemporaryDirectory() as tmp:
+            script = Path(tmp) / "owner-ui.py"; script.write_text(code, encoding="utf8")
+            child = subprocess.run([sys.executable, "-B", "-S", str(script)], cwd=tmp,
+                env={**os.environ, "PYTHONPATH": "", "CUDA_VISIBLE_DEVICES": ""},
+                capture_output=True, text=True, timeout=60)
+            self.assertNotEqual(child.returncode, 0)
+            self.assertIn("ISSUE171_NO_GPU", child.stderr)
+            self.assertEqual(list(Path(tmp).rglob("*.zip")), [])
+
     def test_future_request_boundary_calls_shared_pipeline_and_rejects_foreign_or_corrupt(self):
         # Only this test replaces the immutable release gate. No GPU/native code
         # is run: it verifies delegation, byte pin and JSON boundary ordering.

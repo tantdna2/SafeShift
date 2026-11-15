@@ -10,7 +10,7 @@ from scripts.build_fresh_fulltrain_notebooks import notebook as fresh_notebook
 OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
-def notebook(ref, repo=ROOT):
+def notebook(ref, repo=ROOT, *, capsule_sha256=None):
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
     old_import = "from safeshift.fulltrain.preflight import prepare as launch"
@@ -74,6 +74,21 @@ else:
         model_revision="6f69a8235885be89608f3a71ffd40695b379e1e7",
         implementation=ID, policy="LABEL_ONLY", planned_count=3763,
         execution_caps=None, final_source_live_verification="NOT_RUN")
+    if capsule_sha256 is not None:
+        from safeshift.pilot.contract import require_hash
+        require_hash(capsule_sha256)
+        bootstrap = "".join(nb["cells"][1]["source"])
+        prep = f"evidence = launch(expected_source_sha256, root, {ref!r})\nprint(\"Evidence directory:\", evidence)"
+        require(bootstrap.count(prep) == 1, "EXACT_MINICPM_PREPARATION_CALL")
+        nb["cells"][1]["source"] = bootstrap.replace(prep,
+            'print("Source verified; execution remains behind the release gate.")').splitlines(True)
+        nb["cells"][-1]["source"] = ("# Capsule prepared by Antigravity; Owner does not edit code.\n"
+            "from safeshift.fulltrain.minicpm_ui import run_capsule\n"
+            f"run_capsule('/kaggle/input', {capsule_sha256!r}, repo=root)\n").splitlines(True)
+        nb["metadata"]["safeshift"]["capsule_sha256"] = capsule_sha256
+        nb["cells"][0]["source"] += ["\nOwner UI: gắn đúng năm Input/version trong handoff, chọn Private, Internet On,\n",
+            "GPU T4 x2; Save Version > Save & Run All đúng một lần sau release.\n",
+            "Bản candidate này vẫn BLOCKED trước khi đọc capsule; không tự xóa khóa.\n"]
     return nb
 
 

@@ -16,7 +16,8 @@ from safeshift.pilot.artifacts import sha, write
 from safeshift.pilot.contract import digest
 
 SUITES = ["test_fulltrain", "test_fresh_fulltrain", "test_fresh_fulltrain_revision",
-          "test_kaggle173_verification", "test_fulltrain_minicpm4_notebook", "test_fulltrain_original_inputs"]
+          "test_kaggle173_verification", "test_fulltrain_minicpm4_notebook", "test_fulltrain_original_inputs",
+          "test_minicpm_fulltrain_ui"]
 
 
 def main():

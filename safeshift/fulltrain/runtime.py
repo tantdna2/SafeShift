@@ -125,8 +125,9 @@ def _worker(request, *, repo=ROOT):
     from safeshift.pilot.hnlo import replay
     required = {"model_key", "source_sha256", "inputs", "marker_sha256", "projection_sha256",
                 "campaign", "plan", "history", "work", "scratch", "resource_policy", "repair_case"}
-    from .admission import REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, checkpoint_binding, input_binding, input_bytes
-    require(type(request) is dict and set(request) in (required, REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS), "EXACT_NATIVE_REQUEST")
+    from .admission import REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS, checkpoint_binding, input_binding, input_bytes
+    supervised = (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS)
+    require(type(request) is dict and set(request) in (required, *supervised), "EXACT_NATIVE_REQUEST")
     key = request["model_key"]
     require(key != "qwen3" or set(request) == REQUEST_FIELDS, "QWEN_SUPERVISED_REQUEST_REQUIRED")
     require(digest(contract.source_manifest(repo)) == request["source_sha256"], "FINAL_NATIVE_SOURCE")
@@ -148,7 +149,7 @@ def _worker(request, *, repo=ROOT):
         qwen.native_setup(snapshot, repo)
         replay = qwen.replay
     else:
-        if set(request) in (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS):
+        if set(request) in supervised:
             _, snapshot, weights, _ = checkpoint_binding(request, repo)
         else:
             _, snapshot, weights = checkpoint(request["inputs"], key)
@@ -168,7 +169,7 @@ def _worker(request, *, repo=ROOT):
     else:
         worker_cuda(policy)
     def check_resources():
-        if set(request) in (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS):
+        if set(request) in supervised:
             from . import environment
             environment.resources(key, policy, request["scratch"], request["work"])
             environment.hardware(key, policy)
