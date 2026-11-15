@@ -309,3 +309,25 @@ Codex kiểm metadata/chứng từ được cung cấp và ghi phần thực s�
 thu thập ảnh, annotation, training, inference hoặc mở T trong task giấy tờ này.
 Có thể làm mà không giả nguồn V/T đã tồn tại; không mở T2 thực nghiệm khi gates
 chưa đạt. Dừng T1 tại một Draft PR cho ChatGPT kiểm GitHub và quyết định audit.
+
+## Amendment 15/11/2026 - approved Qwen3 TRAIN composite
+
+Owner [decision6889519264](https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264)
+now authorizes the separate derived label product
+[QWEN3_FULL_TRAIN_COMPOSITE_V1](QWEN3_FULL_TRAIN_COMPOSITE_V1.md): 3539 original V4
+SUCCESS plus exactly 224 Recovery224 SUCCESS, verified against all 3763 original
+TRAIN IDs, image SHA256, GT and source lineage. For this product's descriptive
+TRAIN label analyses only, this supersedes the preceding no-pooling restriction
+in the source table and NO-GO row. The original V4 series and Recovery series,
+their historical counts, failed attempts and evidence remain unchanged.
+
+Use the sealed versioned handoff and explicit full-TRAIN denominators; never
+select predictions by GT correctness or substitute composite counts into the
+V4 ledger. Composite HNLO AUROC remains N/A without independent cross-series
+scale/token/decision-alignment verification; retain source AUROCs separately.
+The [acceptance receipt](evidence/qwen3_composite_20261115/acceptance.json) records
+actual label/image-byte verification, arithmetic checks and test limitations.
+This does not make exposed TRAIN an independent target or approve a learned
+ranker, fresh uniform run, peer selection, TEST, resources or academic claims.
+All preceding T1 evidence/decisions remain historical and immutable. Direct
+ChatGPT review, independent Antigravity audit and authorized merge remain pending.

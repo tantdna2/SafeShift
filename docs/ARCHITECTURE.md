@@ -1,5 +1,19 @@
 # Kiến trúc Foundation V1
 
+
+## Qwen3 derived full-TRAIN label analysis ? 15/11/2026
+
+Read [the versioned composite contract](research/QWEN3_FULL_TRAIN_COMPOSITE_V1.md).
+scripts/build_qwen3_composite.py authenticates five historical report archives,
+exact original/recovery manifests, source/config/release and GT/hash lineage.
+safeshift/evaluation/qwen_composite.py selects the original-status complement
+and computes image-weighted four-level/binary metrics and source-specific AUC.
+The CLI exports sealed JSON/CSV and verifies them for downstream use via
+read_product(directory, trusted_manifest_sha256). Tests: test_qwen_composite.py.
+The separate config/amendment implements Owner decision6889519264 without
+changing old source locks, frozen analysis config or execution ledgers. No
+raw-logit replay, model/image inference, TEST or automatic HNLO score pooling.
+
 ## Deferred offline campaign route — Owner12/11/2026
 
 PR196 R1 adds `scripts/train3763_results.py` and the read-only `official-report`

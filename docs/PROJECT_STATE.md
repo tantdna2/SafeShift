@@ -1,5 +1,49 @@
 # SafeShift — PROJECT STATE
 
+
+## CURRENT - Qwen3 Full-TRAIN Composite V1 - 15/11/2026
+
+BASE 044b53059e7a9615d54f07a4ce8a44308b47e56a; one new branch
+feat/qwen3-full-train-composite-v1 and one Draft PR.
+[Owner decision6889519264](https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264)
+approves use of QWEN3_FULL_TRAIN_COMPOSITE_V1 for project TRAIN derived label
+analyses, narrowly superseding prior no-pooling directions for this product.
+
+Implemented CPU reader/CLI, full per-record provenance, original/recovery ledgers,
+sealed JSON/CSV, metrics and downstream verified consumer are documented in
+[the composite contract](research/QWEN3_FULL_TRAIN_COMPOSITE_V1.md). Actual local
+artifacts were found and verified: 3763 unique original TRAIN IDs,3539 V4 SUCCESS
+plus 224 Recovery SUCCESS, exact original GT/domain/image hashes and rehashed
+3763 local TRAIN image files. Original V4 status remains 3539/1/223. No GT-based
+selection or discarded errors. 44 exact-content pairs are retained (3719 SHA256).
+
+Actual recomputation: Accuracy 2932/3763; Macro-F1 0.45315720192557896; four-level
+Balanced Accuracy 0.6448991518858818; Hazard Recall 711/749; False-Safe 38/749;
+False-Alarm 443/3014; severe Level01 misses 14/490. Composite HNLO AUROC=N/A pending
+independent scale/token/decision compatibility evidence; saved-score V4-success
+0.9527927338600111 and Recovery 0.9545189504373177 are separately reproduced.
+Label analyses are authorized and verified independently of that HNLO limit.
+
+Private artifacts remain under data/processed/qwen3-composite-v1/. The
+[acceptance receipt](research/evidence/qwen3_composite_20261115/acceptance.json)
+records final output seal, tests, environment, commands and limits. The protocol
+gets an appended amendment; old frozen config, grants, ledgers and historical
+certificates remain unchanged. TRAIN exposure/source identity/duplicate-content/
+Level03/cross-model limits remain explicit. No GPU, Kaggle, inference, TEST or
+production mutation. Direct ChatGPT review, mandatory independent Antigravity
+audit and separately authorized merge remain PENDING; stop at the single Draft PR.
+
+Final artifacts: `data/processed/qwen3-composite-v1/release-v1/`; manifest SHA256
+`7e7793073eb639a2d0bd22e84c11cd773be7fdb86e7e1f5f59e3baf0dd0c98de`.
+Source `67278dbae0a42774c74d0af16b97550220312e4e`; both sealed-reader validations
+PASS, second-build core JSON/CSV byte-identical, numerical oracle 980 checks PASS,
+71 relevant CPU tests PASS. Inherited notebook source/runtime failures were
+reproduced on untouched BASE (2 failed/6 errored subtests). Full discovery was
+interrupted during unrelated long-running synthetic batch tests; no full PASS.
+
+The following CURRENT headings are preserved historical snapshots of earlier
+work and do not override this scoped Owner composite decision.
+
 ## CURRENT — PR196 R1 official downstream reader — 12/11/2026
 
 [ChatGPT direct review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)
