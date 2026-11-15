@@ -547,6 +547,13 @@ Nguồn tham khảo đã đọc ngày 24/10/2026, commit
 
 ## Định tuyến ngữ cảnh cho Codex/Antigravity
 
+MiniCPM Full-TRAIN Owner UI: read
+[the short Vietnamese handoff](MINICPM_FULLTRAIN_OWNER_UI.md),
+`fulltrain/minicpm_ui.py`, `scripts/minicpm_fulltrain_ui.py` and their synthetic
+tests. They package/verify the existing supervised fresh171 runtime; the source
+release fence remains closed. The explicit two-pair option in the shared
+`reconcile_train3763_manual.download_outputs` retains InternVL's default route.
+
 Đọc [AGENTS](../AGENTS.md), [README](../README.md), tài liệu này và
 [ROADMAP](ROADMAP.md) trước task code; dùng task description làm phạm vi hiện tại.
 Root `ROADMAP.md`/`TASKS.md` đã thuộc snapshot trước reset; xem [HISTORY](HISTORY.md)

@@ -1,5 +1,15 @@
 # Qwen3 / MiniCPM full TRAIN technical review — 12 November 2026
 
+Continuation15/11 on the same Draft PR195: see the
+[MiniCPM Owner UI package/runbook](MINICPM_FULLTRAIN_OWNER_UI.md) and
+[new CPU evidence](research/evidence/minicpm_owner_ui_20261115/README.md).
+The12/11 runtime/notebook hashes and counts below are historical. The continuation
+adds capsule/complete-history packaging, reuses InternVL's offline Python Input
+and extends its shared read-only output transport explicitly to two nested ZIP
+pairs. Local retained metadata now documents original TRAIN/master Dataset
+versions1 and checkpoint Output version1; current provider/rights/source-release/
+caps/live verification remain separate. No original result or approval changes.
+
 BASE: `341ab626ff2af7ef79ced0d9c3119794eea4a820`, verified against the GitHub
 main branch API and `git fetch origin main`. Scope: CPU synthetic engineering,
 one branch and one Draft PR. No Kaggle submit, GPU, real inference, TEST, private

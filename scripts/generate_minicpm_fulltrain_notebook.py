@@ -86,9 +86,20 @@ else:
             "from safeshift.fulltrain.minicpm_ui import run_capsule\n"
             f"run_capsule('/kaggle/input', {capsule_sha256!r}, repo=root)\n").splitlines(True)
         nb["metadata"]["safeshift"]["capsule_sha256"] = capsule_sha256
-        nb["cells"][0]["source"] += ["\nOwner UI: gắn đúng năm Input/version trong handoff, chọn Private, Internet On,\n",
-            "GPU T4 x2; Save Version > Save & Run All đúng một lần sau release.\n",
-            "Bản candidate này vẫn BLOCKED trước khi đọc capsule; không tự xóa khóa.\n"]
+        nb["cells"][0]["source"] = """# MiniCPM-V-4 Full-TRAIN — Owner UI
+
+**CANDIDATE / CHƯA PHÁT HÀNH.** Bản này giữ khóa quyền trước khi đọc Input.
+Chỉ làm ba bước dưới đây khi đã nhận đúng bản được phát hành sau review/audit.
+
+1. Gắn đúng năm Input/version trong handoff Antigravity bàn giao, gồm capsule riêng.
+2. Kiểm tra Private, Python, Internet On, GPU T4 x2 và giới hạn lượt được giao.
+3. Save Version > Save & Run All đúng một lần; gửi URL/version khi xong.
+
+Không sửa cell, capsule hoặc batch. Lỗi/BLOCKED: giữ mọi Output/log/ZIP/SHA,
+không chạy lại; Antigravity thu và đối soát trước lượt tiếp theo.
+Giữ nguyên3.763 TRAIN IDs, MiniCPM FP32 resampler/FP16 weights, strict C1,
+HNLO N/A. Capsule tự mang request và mọi history; không nhập dự đoán pilot/smoke.
+""".splitlines(True)
     return nb
 
 

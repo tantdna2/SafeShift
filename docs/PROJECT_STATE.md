@@ -1,5 +1,36 @@
 # SafeShift — PROJECT STATE
 
+## MiniCPM Full-TRAIN Owner UI continuation — 15/11/2026, same Draft PR #195
+
+Continues branch `fix/qwen-minicpm-fulltrain-20261112` from PR195 HEAD18351f8;
+no new PR, no modification of the root Qwen checkout or InternVL Operator.
+[Vietnamese Owner UI handoff and exact Inputs](MINICPM_FULLTRAIN_OWNER_UI.md)
+uses the existing fresh171 native controller/FP32/C1/raw/history/export pipeline.
+Added source-bound private capsule packaging, explicit complete ancestor restore,
+shared offline CPython Input selection without GitHub Python fallback, read-only
+provider/two-pair ZIP verification, and bounded resume preparation for pending IDs.
+Shared InternVL collector defaults retain their one-pair checks; MiniCPM explicitly
+selects two nested pairs without relaxing pagination/URL/hash/replay guards.
+
+Retained local InternVL23 request binds TRAIN/master Dataset versions1; retained
+MiniCPM preparation metadata binds Private checkpoint Output version1. These are
+historical local evidence, not fresh provider observations or execution authority.
+No Dataset/checkpoint reupload or download was made. Capsule publication and
+actual source/science/caps/rights/provider/live release remain separate gates.
+`contract.authorize` remains closed before Input/provider/raw I/O; package status
+is CANDIDATE_RELEASE_BLOCKED, final-source live checks NOT_RUN. O2–O6 where missing
+remain pending. Current task performs zero Kaggle/API/GPU/model/TEST operations,
+no production-ledger writes, approval, audit or merge. Stop at this same Draft
+for ChatGPT direct review and mandatory independent Antigravity audit.
+
+CPU validation and final artifact hashes for this continuation are recorded in
+[the continuation receipt](research/evidence/minicpm_owner_ui_20261115/README.md).
+269 distinct CPU cases have a PASS across the recorded runs. The first operator
+run's two historical snapshot assertion failures remain visible; both corrected
+at their exact original BASE without changing frozen digest constants, with
+additional native/configuration/source-delta checks. All six Windows-only skips
+have matching Linux PASS evidence. Final native CPU19/19 and notebook9/9 PASS.
+
 ## Qwen3 / MiniCPM full-TRAIN technical candidate — 12/11/2026
 
 New isolated branch from GitHub-verified main

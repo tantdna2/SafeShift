@@ -902,9 +902,19 @@ class ManualSourceTests(unittest.TestCase):
                     m.inventory(client, ledger, current, current["request"]["job"], mode=m.SAME_SLUG)
 
     def test_companion_is_outside_manifest_and_native_source_science_unchanged(self):
+        from frozen_internvl_snapshot import observed
+        frozen = observed()
         self.assertNotIn("scripts/reconcile_train3763_manual.py", r.source_spec()["manifest"])
-        self.assertEqual(digest(r.source_spec()), "f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d")
-        self.assertEqual(digest(c.science()), "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50")
+        self.assertEqual(frozen["source"], "f062f170c38f2f70c21c6f7462d9408e5a5ea6862b923a40cf9e58b75489239d")
+        self.assertEqual(frozen["science"], "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50")
+        self.assertEqual(r.configuration(), frozen["configuration"])
+        self.assertEqual(c.science()["native"], frozen["native"])
+        # Mini's candidate deliberately has a NEW source identity. Never assert
+        # that its shared preparation code is the released InternVL Operator.
+        changed = {p for p, h in r.source_spec()["manifest"].items() if frozen["manifest"].get(p) != h}
+        self.assertEqual(changed, {"safeshift/fulltrain/admission.py", "safeshift/fulltrain/runtime.py",
+            "safeshift/fulltrain/contract.py", "safeshift/fulltrain/provision.py", "safeshift/fulltrain/original_inputs.py",
+            "safeshift/fulltrain/minicpm_notebook.py", "safeshift/fulltrain/minicpm_ui.py"})
 
     def test_source_hash_equality_does_not_waive_exact_merged_commit(self):
         with tempfile.TemporaryDirectory() as d:

@@ -23,7 +23,7 @@ SUITES = ["test_fulltrain", "test_fresh_fulltrain", "test_fresh_fulltrain_revisi
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", required=True, type=Path)
-    p.add_argument("--component", choices=("core", "native", "supervision"), default="core")
+    p.add_argument("--component", choices=("core", "native", "supervision", "operator"), default="core")
     p.add_argument("--native-snapshot", type=Path)
     p.add_argument("--native-index", type=Path)
     args = p.parse_args()
@@ -35,6 +35,9 @@ def main():
     sys.path.insert(0, str(ROOT / "tests"))
     names = list(SUITES) if args.component == "core" else ["test_fresh_fulltrain_revision.SupervisionTests"]
     versions = {}
+    if args.component == "operator":
+        names = ["test_train3763_manual", "test_internvl3763_python", "test_minicpm_ui_transport"]
+        versions = {n: importlib.metadata.version(n) for n in ("kaggle", "kagglesdk", "requests", "urllib3")}
     if args.native_snapshot:
         os.environ.update(SAFESHIFT_CANDIDATE_KEY="minicpm4", SAFESHIFT_CANDIDATE_SNAPSHOT=str(args.native_snapshot),
                           SAFESHIFT_CANDIDATE_INDEX=str(args.native_index), SAFESHIFT_NUMERICS_SNAPSHOT=str(args.native_snapshot))
@@ -52,6 +55,8 @@ def main():
     files = set(contract.sources()) | {"notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb",
         "scripts/generate_minicpm_fulltrain_notebook.py", "scripts/qualify_qwen_minicpm_fulltrain.py"}
     files |= {"tests/" + n.split(".")[0] + ".py" for n in names}
+    if args.component == "operator":
+        files.add("tests/frozen_internvl_snapshot.py")
     receipt = {"scope": "CPU_SYNTHETIC_ONLY", "status": "PASS" if result.wasSuccessful() and not network_attempts else "FAIL",
         "tests": result.testsRun, "passed": passed, "failures": len(result.failures), "errors": len(result.errors),
         "skips": len(result.skipped), "skip_reasons": [reason for _, reason in result.skipped],
