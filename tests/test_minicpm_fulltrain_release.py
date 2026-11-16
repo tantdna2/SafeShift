@@ -18,7 +18,7 @@ from safeshift.pilot.contract import digest
 from scripts import minicpm_fulltrain_release as release
 from scripts.generate_minicpm_fulltrain_notebook import notebook
 
-BASE = "6744c319152743f399c79f6c8b16acb527d5acb4"
+BASE = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ui.ROOT, text=True).strip()
 
 
 class ReleaseTests(unittest.TestCase):

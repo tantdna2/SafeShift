@@ -1,4 +1,4 @@
-"""Fresh native orchestration preparation; public worker/launch remain fenced.
+"""Shared native controller; MiniCPM V2 uses authenticated bounded capabilities.
 
 The CPU rehearsal uses the SAME per-call controller with exact public byte
 fixtures. Adapters are injected only by tests; no fake backend ships here.
@@ -22,7 +22,11 @@ def native_factory(key, snapshot, weights, *, repo=ROOT):
 
 
 def _native_factory(key, snapshot, weights, *, repo=ROOT):
-    # Internal composition point for a future separately reviewed activation.
+    # Internal native binding; activated MiniCPM requires its one-load claim.
+    from .minicpm_release import current
+    if current() is not None:
+        require(key == "minicpm4", "MINICPM_CAPABILITY_CANNOT_OPEN_PEERS")
+        contract.authorize("load")
     from safeshift.candidates.source import verify_snapshot
     from safeshift.candidates.loading import verify_weights
     from safeshift.pilot.contract import PROMPT_SHA
@@ -106,7 +110,7 @@ def recover(root, cohort, plan_sha):
 
 def worker(request, **kwargs):
     # Must precede even Path conversion, directory creation or heavy imports.
-    contract.authorize()
+    contract.authorize(request=request)
     return _worker(request, **kwargs)
 
 
@@ -117,6 +121,9 @@ def _worker(request, *, repo=ROOT):
     must bind the request/caps to externally reviewed O2-O6 and a supervisor
     deadline; this function does not authenticate an approval document.
     """
+    from .minicpm_release import current
+    if current() is not None:
+        contract.authorize(request=request)
     from .inputs import admit, verify_image_bytes
     from safeshift.candidates.train_inputs import checkpoint
     from safeshift.candidates.train_runtime import software, worker_cuda, resources, verify_images
@@ -184,7 +191,7 @@ def _worker(request, *, repo=ROOT):
 
 
 def launch(*args, **kwargs):
-    contract.authorize()
+    contract.authorize(request=args[0] if args else kwargs.get("request"))
     from .admission import launch_prepared
     return launch_prepared(*args, **kwargs)
 
@@ -206,6 +213,14 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
         max_seconds=p["max_seconds"], repair=p["repair"]), "FRESH_PLAN_CHANGED")
     require(p["run_id"] not in ("attempts", "campaign.json"), "RESERVED_RUN_NAME")
     check_repair_case(p, repair_case)
+    from . import minicpm_release as capability
+    active = capability.current()
+    adaptive = None
+    if active is not None:
+        require(digest(p) == digest(active["value"]["request"]["plan"]), "MINICPM_ACTIVE_PLAN")
+        from .minicpm_sizing import CallBudget
+        started = read(active["claims"] / "launch.json")["time_unix"]
+        adaptive = CallBudget(clock() + max(0, started + p["max_seconds"] - time.time()), active["grant"]["sizing"], clock=clock)
     if p["identity"]["hnlo_policy"] == "LABEL_ONLY":
         require(evaluator is None, "LABEL_ONLY_MUST_NOT_REOPEN_HNLO")
         evaluator = journal.label_only
@@ -247,17 +262,30 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
         write(root / "campaign.json", campaign)
         write(root / "plan.json", p)
         write(root / "history.json", history)
+        if active is not None:
+            write(root / "capability.json", {"locator": active["locator"], "ticket": active["ticket"]})
         if repair_case is not None:
             write(root / "repair_case.json", repair_case)
         backend, stop, count = None, None, 0
         deadline = clock() + p["max_seconds"]
         try:
             for i in p["scheduled_ordinals"]:
+                if adaptive is not None and not adaptive.can_start():
+                    stop = "ADAPTIVE_TIME_STOP"
+                    break
                 if clock() >= deadline:
                     stop = "TIME_CAP"
                     break
                 if before_call is not None:
                     before_call()
+                if active is not None and backend is None:
+                    # Load once under its permanent claim, then reassess actual
+                    # time *before* creating a sample start/native-call marker.
+                    write(root / "model_load.json", {"load_attempts": 1})
+                    backend = factory()
+                    if not adaptive.can_start():
+                        stop = "ADAPTIVE_TIME_STOP"
+                        break
                 row = {**cohort["samples"][i], "image": str(safe(bundle, image_path(i)))}
                 require(sha(row["image"]) == row["image_sha256"], "INPUT_CHANGED_BEFORE_CALL")
                 store = store_class(root / f"calls/{i:06d}/run", journal._identity(p, row))
@@ -266,17 +294,27 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                     if backend is None:
                         write(root / "model_load.json", {"load_attempts": 1})
                         backend = factory()
-                    return backend
+                    return capability.GuardedBackend(backend, i) if active is not None else backend
+                call_started = clock()
                 engine, options = execute, {}
                 if p["identity"]["model_key"] == "qwen3" and not p["identity"]["model_id"].startswith("synthetic/"):
                     from .engine import execute as engine
                     from .qwen import parser
                     options["label_parser"] = parser
+                native_seconds = max(0, deadline - clock()) if adaptive is None else max(
+                    0, adaptive.deadline - adaptive.policy["export_seconds"] - clock())
                 result, blocked = engine(store, [row], cached,
                     {"run_id": p["run_id"], "attempt_id": p["attempt_id"]}, p["identity"]["model_key"], cohort,
-                    time_budget=max(0, deadline - clock()), transport=journal._identity(p, row)["transport"],
+                    time_budget=native_seconds, transport=journal._identity(p, row)["transport"],
                     hnlo_replay=evaluator, **options)
+                if active is not None and row["sample_id"] not in result:
+                    reason = read(store.root / "stop.json")["reason"] if (store.root / "stop.json").exists() else None
+                    if reason == "TIME_BUDGET_STOP_BEFORE_NEXT_CALL":
+                        stop = "ADAPTIVE_TIME_STOP"
+                        break
                 count += result[row["sample_id"]]["native_calls"]
+                if adaptive is not None:
+                    adaptive.observed(clock() - call_started)
                 require(count <= p["max_calls"], "CALL_CAP")
                 write(root / f"checkpoints/{i:06d}.json", {"result_sha256": digest(result), "native_calls": count})
                 if blocked:
@@ -293,6 +331,11 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                 "observed_native_markers": observed,
                 "loads": int(backend is not None), "stop": stop, "planned_ids": 3763,
                 "scope": cohort["scope"], "scientific_selection": "PENDING", "pooling_allowed": False})
+            if active is not None:
+                write(root / "claims.json", capability.claims_snapshot())
+                write(root / "timing.json", {"model_key": "minicpm4", "source_sha256": p["identity"]["implementation_sha256"],
+                    "call_seconds": adaptive.timings, "overhead_seconds": max(0.001, time.time() - started - sum(adaptive.timings)),
+                    "observed_complete_calls": len(adaptive.timings), "population_bound": False})
             try:
                 # An accounting projection never chooses scientific outputs.
                 h = recover(root, cohort, digest(p))

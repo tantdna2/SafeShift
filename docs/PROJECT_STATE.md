@@ -1,6 +1,42 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — MiniCPM Full-TRAIN release preparation — 16/11/2026
+## CURRENT — PR198 expanded MiniCPM execution release V2 — 16/11/2026
+
+[Owner/ChatGPT directive6907347740](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907347740)
+supersedes the fragmented dossier-only scope. Continue the same session/branch/
+Draft PR198; no new PR. Review6907210268 only accepted the old bounded CPU
+dossier, not this expanded implementation. The [correction6907239054](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907239054)
+withdraws every fixed200/19-job assumption. BASE remains merged PR195
+`6744c319152743f399c79f6c8b16acb527d5acb4`.
+
+V2 now implements a conditional executable route over PR195: authentic live
+GitHub exact-source release; reviewed Owner-delegated signing key; signed finite
+serial tickets; mirrored create-only operator reservations before publication;
+fresh provider/Input/version/Private/quota checks; fixed VM launch/stage/load/call
+claims; integrated preflight and bounded adaptive call/export timing; original
+raw/C1/FP32/ZIP/history verification; terminal collection and pending-only resume.
+There is no unconditional authorize removal and no kernel-push/submit endpoint.
+Default, missing, forged, stale or ambiguous evidence stays closed. Existing
+historical notebooks/source locks/results and PR196/197 science remain preserved.
+
+[Release/operations V2](MINICPM_FULLTRAIN_RELEASE.md) and [three Owner steps](MINICPM_FULLTRAIN_OWNER_UI.md)
+describe the implementation, no-refund budget, unknown-vs-measured MiniCPM sizing,
+offline package recovery and upload ambiguity. Native adapter, strict C1,
+FP32 resampler/FP16 weights, HNLO N/A and3763 original TRAIN IDs remain unchanged;
+new runtime source identity is versioned explicitly, never passed off as PR195.
+
+**ACTIVATION / OWNER RUN BLOCKED:** after expanded direct review, independent
+Antigravity audit, separately authorized merge and verified postmerge, the one
+external handoff is an authentic V2 release record binding final source/projection/
+O2–O6/caps/window/resource policy/public key/host and approval locators. Current
+provider facts are then acquired by the authorized operator, not guessed or
+requested as throughput numbers from Owner. No release/rights/caps are fabricated.
+Final-source live environment/weights/inference/export remain NOT_RUN. Codex
+performs only code/synthetic CPU tests, no provider/Kaggle/GPU/model/TEST,
+production writes, activation, audit or merge. Stop at this same Draft for fresh
+ChatGPT review of the expanded diff; the older sections below are snapshots.
+
+## HISTORICAL — PR198 initial dossier preparation — 16/11/2026
 
 PR195 is MERGED at verified BASE `6744c319152743f399c79f6c8b16acb527d5acb4`;
 Owner reports ChatGPT postmerge PASS. One new isolated branch

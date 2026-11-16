@@ -598,12 +598,24 @@ Nguồn tham khảo đã đọc ngày 24/10/2026, commit
 ## Định tuyến ngữ cảnh cho Codex/Antigravity
 
 MiniCPM Full-TRAIN Owner UI: read
+the current [V2 execution release contract](MINICPM_FULLTRAIN_RELEASE.md),
+`fulltrain/minicpm_release.py` (live authority/signed capability/VM claims),
+`minicpm_execution.py` (parent/child boundary), `minicpm_sizing.py` (same-source
+timing/adaptive export reserve), and `scripts/minicpm_fulltrain_operator.py`
+(serial mirrored journal/provider/publish/collect). They reuse the PR195 native
+controller and Input/history/raw verifier. `minicpm_fulltrain_transport.py`
+shares the existing manual collector's bounded output-inventory/HTTP primitives;
+it never submits jobs. `test_minicpm_fulltrain_execution.py` and
+`test_minicpm_execution_transport.py` cover authorized synthetic and adversarial
+paths. Historical notebook reproduction uses each exact Git builder/runtime;
+current-source builders stay strict. The initial dossier is separately retained:
 the [source-bound release dossier](MINICPM_FULLTRAIN_RELEASE.md) and external
 `scripts/minicpm_fulltrain_release.py` / `test_minicpm_fulltrain_release.py` for
 exact package reproduction, authority proposals/replay and conservative campaign
 budget checks. This CPU companion remains outside the frozen runtime manifest;
 it never activates a runtime, reserves resources or authenticates offline export
-origin. Then read
+origin. V2 operator/runtime are the conditional executable route; the older
+dossier is not its authority. Then read
 [the short Vietnamese handoff](MINICPM_FULLTRAIN_OWNER_UI.md),
 `fulltrain/minicpm_ui.py`, `scripts/minicpm_fulltrain_ui.py` and their synthetic
 tests. They package/verify the existing supervised fresh171 runtime; the source

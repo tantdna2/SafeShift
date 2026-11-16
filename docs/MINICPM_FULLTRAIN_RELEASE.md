@@ -1,129 +1,151 @@
-# MiniCPM Full-TRAIN — gói phát hành có ràng buộc source
+# MiniCPM Full-TRAIN — phát hành và thực thi V2
 
-Ngày16/11/2026, BASE `6744c319152743f399c79f6c8b16acb527d5acb4`, sau
-[PR195 MERGED](https://github.com/tantdna2/SafeShift/pull/195). Owner cung cấp
-trạng thái ChatGPT hậu merge PASS; phiên này kiểm GitHub xác nhận merge,
-không tự nhận là ChatGPT review/audit đó. Phạm vi: CPU code/tests/docs,
-một Draft PR mới; không Kaggle/API provider/GPU/inference/TEST/production writes.
+Tiếp tục **cùng branch/session/Draft PR198** theo
+[directive6907347740](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907347740)
+và [đính chính không có cap200](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907239054).
+BASE PR195: `6744c319152743f399c79f6c8b16acb527d5acb4`. Dossier commit0d9f7ee
+và receipt ban đầu là lịch sử, không phải nghiệm thu phạm vi mở rộng này.
 
-**BLOCKED cho thực thi.** Chưa có authentic campaign release MiniCPM, quyền dữ
-liệu/model/caps, chứng cứ provider/version/quota hiện tại hoặc source activation.
-Không có gói đã được phép chạy thật trong PR này. Phần mềm cung cấp đường
-chuẩn bị/đối chiếu hồ sơ trong quyền CPU hiện có; `contract.authorize` giữ nguyên.
-JSON candidate, receipt CPU và PR195 merge không thay các chứng từ còn thiếu.
+V2 có nhánh thực thi có điều kiện: live release GitHub + signed ticket + serial
+reservation hợp lệ → pipeline PR195. Thiếu chứng từ thì BLOCKED; không có flag,
+`approved=true` hoặc offline export mở GPU. **Phiên Codex này không chạy Kaggle/
+API provider/GPU/inference/TEST, upload Input hoặc ghi production journal.**
 
-## Gói dùng lại và phần bổ sung
+## Quyền và source
 
-Giữ nguyên byte mọi runtime, notebook lịch sử, checkpoint/locks và science của
-PR195. Dùng lại `minicpm_fulltrain_ui plan/prepare/next`, capsule năm Input,
-controller supervised, Python Input InternVL, strict C1, FP32 resampler/FP16
-weights, HNLO N/A, raw-before-parse, complete ancestry và verifier hai cặp ZIP.
-Không tạo Dataset ảnh/checkpoint mới, parser/loop mới, pilot hay series mới.
+`minicpm_release.load` chỉ đọc HTTPS API chính thức, không redirect/retry. Kiểm
+Owner `tantdna2`/ID246929698, comment đúng PR198/body SHA, PR merged/main/reviewed
+HEAD/merge và mọi runtime byte tại runtime/reviewed/merged Git trees. Chín
+attestations riêng khóa source review, audit độc lập phạm vi mở rộng, quyền merge,
+hậu merge và O2–O6. Không tái dùng review CPU6907210268 làm duyệt expanded diff.
 
-Companion CPU `scripts/minicpm_fulltrain_release.py` nằm ngoài runtime manifest:
+Grant marker `SAFESHIFT_MINICPM_FULLTRAIN_RELEASE_V2`, schema
+`safeshift-minicpm-fulltrain-release-v2`; `release-template` xuất chính xác fields.
+`authorization=OWNER_MINICPM_TRAIN3763_SERIAL_UI_ONLY`. Scope khóa original
+projection/master, MiniCPM source/revision/config, policy/driver/reserves,
+checkpoint marker/Python Input. `subject_sha256` là digest toàn grant trừ
+approval locators; thay caps/key/source/window làm approvals cũ không khớp.
+Attestation marker `SAFESHIFT_MINICPM_FULLTRAIN_APPROVAL_V2` chứa chính xác
+`{kind,status:"APPROVED",reviewed_head,subject_sha256}`. Owner dẫn chứng các quyết
+định có thật; không tạo chữ ký ChatGPT/Antigravity hoặc quyền bên thứ ba.
 
-- `inspect_package` kiểm capsule/ancestor bằng verifier hiện hữu; dựng lại toàn
-  notebook từ Git commit chính xác và so cả bytes, không chỉ tin hash handoff.
-  Kiểm Private/settings, đúng năm Input/version và metadata capsule. Binding ghi
-  source/runtime, identity, policy, notebook/request/capsule/settings và tool SHA.
-- `template` xuất đề xuất **unsigned**, để quyền, caps, ngày, PR và mọi approval
-  là `null`. Không tự chọn số calls/giây hoặc ký quyền thay Owner.
-- `check` phát lại mọi package theo thứ tự và hai cặp ZIP của từng lượt trước.
-  Mọi source/identity/Input/policy phải khớp, job/capsule/run/attempt không lặp,
-  history phải đúng kết quả verifier tái tính. Receipt JSON sửa thành PASS không
-  vượt được lỗi trong ZIP. SUCCESS/INVALID/consumed error không trở thành pending.
-- Tính cả proposed job: tổng `max_calls`, số jobs và **2 × max_seconds** cho từng
-  job T4x2. GPU0 chạy MiniCPM, nhưng reservation tính cả hai GPU vật lý. Không
-  refund maxima chưa dùng, không coi số SUCCESS là số calls hay billing đo được.
-  Kiểm cap từng job/toàn chiến dịch, archive-size, deadline và khả năng bao phủ
-  pending theo số calls/jobs. Đủ số calls không chứng minh đủ latency/VRAM/quota.
-- Thiếu chứng từ trả receipt BLOCKED. Metadata hỏng, ZIP thiếu/tamper, source
-  lệch, lỗi kỹ thuật hoặc cap/window sai bị từ chối trước khi xuất receipt mới.
-  Mọi output create-only; partial/evidence cũ giữ nguyên để đối soát.
+Một campaign grant bao trùm các resume serial, không cần approval khoa học từng
+shard. Owner duyệt RSA3072/e65537 public key và host hash của máy vận hành. Private
+key chỉ ở máy đó, **không vào notebook/capsule/Input/Git/chat**. OpenSSL ký local;
+worker dùng stdlib xác minh full PKCS1-v1_5 SHA256 encoding theo
+[RFC8017 §8.2.2/9.2](https://www.rfc-editor.org/rfc/rfc8017#section-8.2.2).
+Chữ ký xác thực delegation/reservation, không chứng nhận chất lượng model.
 
-Ngân sách trên là phép kiểm kế hoạch CPU, **không phải durable reservation**.
-Không dùng nó thay journal/claim đã được duyệt. Chưa có runtime nhận capability
-MiniCPM mới; companion không mở gate bằng cờ, grant-file hoặc environment.
-Nếu còn job/intention không có ZIP, không dùng receipt này để chạy job khác.
+`contract.authorize` mặc định đóng. Context sau authentic release + signed ticket
+mới mở đúng request MiniCPM. Parent và mỗi child kiểm authority/source; children
+dùng signed delegation cho decisions đã kiểm, vẫn GET Owner record + merged PR
+thật. Claims launch/admit/setup/cpu/gpu/native/load/call dùng fixed VM path,
+create-only/fsync/OS lock. Sai request/model/ordinal, replay stage/load/call,
+expired/cap/source đều chặn. Load một lần, raw trước parse, strict C1/HNLO N/A.
 
-## Chứng từ cần bổ sung trước phát hành
+Local có thể tái dùng login `gh` hoặc token môi trường, chỉ giữ trong memory.
+Clean worker không nhận token từ kernel; Kaggle public-repo reads có thể anonymous.
+Rate-limit/disconnect là BLOCKED/partial, không bỏ check hoặc dùng exports thay API.
+Không log credentials/bearer URL. Không cần remote server hoặc giữ AI nền.
 
-| Gate | Bằng chứng cụ thể cần có | Tình trạng phiên này |
-| --- | --- | --- |
-| Source/review/audit/merge | PR mới, exact reviewed HEAD/merge, source/runtime/tool/notebook/capsule SHA; ChatGPT direct review, audit độc lập theo quyết định ChatGPT, quyền merge và hậu merge | PENDING; PR195 không là quyền chạy |
-| O2 | Full original3763 TRAIN projection seal từ master SHA đã khóa, IDs/order/image SHA; TEST đóng | Chưa được cấp seal thật cho gói mới |
-| O3/O4 | Quyền dữ liệu/ảnh/model/checkpoint và đúng MiniCPM Full-TRAIN/FP32/C1/HNLO N/A, không chuyển quyền Candidate160/InternVL | Thiếu chứng từ xác thực cho campaign này |
-| O5 | Owner cung cấp total calls/jobs/physical GPU-seconds; cap calls/seconds mỗi job; 1 load/job; finite issued/expiry, archive bound, resource policy/driver/reserves | Không có số được cấp; không mặc định160/200 |
-| O6 / provider | Private account/job version1, code notebook SHA; TRAIN/master/Python Dataset version1, checkpoint Output version1, capsule mới/version1; rights, current availability, quota, deadline và không VM khác | Chỉ có metadata lịch sử nêu trong Owner UI; không hỏi Kaggle trong phiên này |
-| Kết quả/resume | Provider COMPLETE/version/code/Inputs; inventory đủ mọi trang, đúng hai ZIP và sidecar; SHA provider bằng local; complete ancestry và raw/markers/process accounting | Chưa có lượt MiniCPM Full-TRAIN mới |
-| Activation | Thay đổi phát hành được review riêng để capability có authority/custody/caps được kiểm ở mọi entrypoint/child/load/call, durable serial reservation trước Owner Run, chống replay trong VM | Runtime PR195 vẫn hard-fenced; không được bỏ fence |
-| Live kỹ thuật | Admission → storage/RAM/allocation → pinned Python/pins/ABI/processor → T4/driver/CUDA FP16 → weights/native → C1/raw → ZIP/SHA trong chính job được cấp quyền | NOT_RUN; không thêm mặc định vòng smoke độc lập |
+## Chuẩn bị, giữ chỗ, Owner Run và thu
 
-Antigravity không được tự điền chứng từ Owner hoặc gọi helper nội bộ để vượt
-gate. Khi ChatGPT quyết định audit/merge/release tiếp theo, cần đối chiếu các
-bằng chứng này với bản gốc. Không có claim READY, global exactly-once hay
-SCIENTIFIC_QUALIFIED từ một dossier hợp lệ về cấu trúc.
+`scripts.minicpm_fulltrain_operator` dùng một máy và hai directories create-only
+dưới `data/processed/`: REGISTERED → RESERVED → PUBLISH_INTENT → PUBLISHED →
+COLLECTED. Ghi cả hai reservation trước publish/handoff. Gap/torn/divergence/open
+reservation STOP, không refund/takeover/tự tạo job thay thế. Hai bản cùng ổ không
+phải backup phần cứng. Không claim global exactly-once giữa các VM độc lập; Owner
+phải giữ originals/backup và không chạy song song hoặc bấm lại cùng ticket.
 
-## Hợp đồng authority đề xuất để review
+`stage` kiểm đầy đủ account inventory, slug mới absent, mọi campaign predecessor
+COMPLETE đúng Private/version/code/Inputs, Dataset Private owner và ListFiles ở
+version cụ thể, checkpoint Output v1 COMPLETE, quota reserved=0. GetKernel chỉ
+chứng minh refs không version; filesystem mount không là chứng cứ provider version.
+Master/3763 JPG/checkpoint/Python/ancestor/capsule bytes được worker lặp admission
+trên read-only mounts trước model. Không copy/reupload TRAIN hoặc checkpoint.
 
-Schema `safeshift-minicpm-fulltrain-release-candidate-v1` chỉ dành cho đường này.
-Một Owner campaign record có thể bao trùm các resume serial cùng scope/caps;
-không thiết kế xin quyền khoa học lại cho từng shard. Schema chưa được runtime
-tiêu thụ, chưa thay bất kỳ grant/decision lịch sử nào. `template` sinh đúng field
-và source binding; các cột chưa có chứng từ luôn để null.
+Writer PR195 giữ marker/request/cohort, ancestor `.bin`+sidecar nguyên byte; V2
+thêm signed ticket. Notebook builder pin đúng runtime commit/capsule SHA/live
+locator. `publish` chỉ tạo **Private metadata Dataset mới**, không push notebook
+hoặc submit kernel. Kiểm exact inventory/size/version, tải kiểm ticket bytes rồi
+kiểm lại Inputs/quota/no-active-VM trước `owner-handoff.json=RELEASED_FOR_OWNER_UI`.
 
-Nếu có bản gốc mới, `authenticate` đọc record marker
-`SAFESHIFT_MINICPM_FULLTRAIN_CAMPAIGN_V1` trong đúng comment GitHub của
-`tantdna2`, hash toàn body và đúng PR mới (>195). Nó kiểm PR merged/main,
-reviewed HEAD/merge và chín attestations riêng (`source_review`,
-`independent_audit`, `merge`, `postmerge`, `O2`–`O6`). Mỗi attestation mang marker
-`SAFESHIFT_MINICPM_FULLTRAIN_APPROVAL_V1`, kind/status/head và `scope_sha256`.
-API Contents phải cung cấp đúng bytes từng tool tại cả reviewed HEAD và merge
-commit; chỉ metadata PR hoặc hash local không đủ. Hash scope bao gồm
-source/Input/science, first package, caps và window; thay cap
-hoặc tool/source làm attestation cũ không khớp. Đây là Owner dẫn chứng các quyết
-định độc lập, không phải tool tự phát hành chữ ký ChatGPT/Antigravity/học vụ.
+Timeout upload giữ PUBLISH_INTENT; chỉ `publish --verify-only` đối soát existing
+v1, không retry create. Gián đoạn package offline: `recover-package --output
+<new-path>` tái dựng cùng ticket/reservation, giữ mọi partial cũ. Quá hạn hoặc
+không xác minh được provider/history thì STOP, không tự gia hạn hay refund.
+Không giao Owner Run từ handoff candidate cũ; chỉ dùng owner-handoff mới trong
+start-before window. Owner làm [ba bước](MINICPM_FULLTRAIN_OWNER_UI.md).
 
-CLI **chỉ replay exports offline**, không tự lên GitHub hoặc Kaggle. Exports là
-map từ `/pulls/<PR>`, `/issues/comments/<id>` và `/contents/<tool-path>?ref=<commit40>`
-tới JSON nguyên bản (Contents gồm path/size/encoding/base64 content); locator là
-`{comment_id, body_sha256}`. JSON local không chứng minh nguồn tải hay người thao
-tác. Ngay cả replay PASS vẫn ghi `OFFLINE_REPLAY_ONLY_ORIGIN_NOT_AUTHENTICATED`
-và BLOCKED. Cần đối chiếu bản gốc độc lập trước mọi activation thực sự. Không có
-approval/record thật nào được tạo, gửi comment hoặc publish bởi công cụ này.
+Antigravity thu khi Owner báo terminal trong đúng conversation. `collect` kiểm
+status bounded một lần; RUNNING/QUEUED trả RUNNING_UNVERIFIED và kết thúc lượt AI.
+Terminal kiểm Private/latest1/code/Inputs rồi tải đúng **hai ZIP + hai sidecars**
+qua SDK/URL/stream guards hiện hữu. Hết mọi trang trước GET; extra/missing ZIP,
+URL lạ, redirect, byte/time/space vượt cap đều STOP. Giữ log/partial/error.
 
-## Lệnh CPU cho Antigravity
+COLLECTED chỉ sau CRC/member SHA/raw/C1/native/process/accounting/ticket/claims
+PASS. Native marker phải khớp signed-ticket claim; có claim mà thiếu marker là
+unknown STOP. Lỗi/timeout/nonfinite không biến thành pending hoặc COMPLETE.
+`stage` kế tiếp đối chiếu provider ZIP lại, tái tính history và telemetry từ
+originals; sửa receipt/telemetry local không vượt gate. SUCCESS/INVALID/consumed
+error không chạy lại; repair khoa học không thuộc route V2.
 
-Chạy từ checkout đúng source. Đầu vào phải là gói `prepare` thật có sealed
-projection, caps/policy đã được cung cấp, không dùng synthetic fixture cho Owner.
-Giữ artifacts tại `data/processed/`, không commit ảnh/weights/raw/archive/secrets.
-Ví dụ dưới có placeholder, **không copy chạy trước khi thay đúng bằng chứng**.
+## Tự tính lượt, không mặc định200
+
+Calls ceiling = min(pending, authorized job_calls, remaining total_calls).
+Seconds = min(job_seconds, campaign GPU-time còn /2, available quota /2,
+grant deadline trừ start window). Tính **hai GPU vật lý**, MiniCPM chỉ dùng GPU0;
+không cộng VRAM. Cộng maxima calls/jobs/GPU-seconds, không refund sau early stop,
+load error hoặc INVALID. Kiểm khả năng pending theo calls/jobs còn lại. Bound512
+jobs khớp ancestry bound hiện hữu, không là số job dự báo/mặc định.
+
+Chưa có telemetry MiniCPM cùng source: `UNKNOWN_ADAPTIVE_WITHIN_APPROVED_CAPS`,
+không mượn throughput InternVL. Trong cùng job đã cấp quyền: admission → storage/
+RAM/allocation → pinned Python/pins/CPU ABI/processor → T4/driver/child CUDA FP16
+→ load một lần → native/raw/C1/ZIP. Sau load và trước sample-start tiếp, kiểm
+thời gian dành cho call/export. Guard dùng approved first_call_seconds và safety
+factor; chưa đo thì không bảo đảm worst-case latency/model-fit. Process-group
+hard deadline giữ partial khi native treo. ADAPTIVE_TIME_STOP trước sample mới
+giữ NOT_ATTEMPTED thật và seal/export để resume.
+
+Lượt sau dùng timing **MiniCPM cùng source, ZIP/provider/claims verified**:
+overhead × safety, max observed call × safety, approved first-call guard, export
+reserve và caps. Chỉ đo overhead chưa call thì throughput vẫn UNKNOWN. RAM/VRAM/
+disk vẫn phải qua live gates. Không thêm vòng smoke riêng hoặc hứa một job3763.
+
+## Lệnh sau release thật
+
+Không chạy placeholder. Từ checkout merged/clean, dùng SDK venv hiện có
+kaggle2.2.5/kagglesdk0.1.38/requests2.34.2 và OpenSSL local. `plan` PR195 dựng
+spec từ projection seal/policy thật; không import predictions cũ. Runtime ref phải
+chứa đúng mọi runtime bytes. Notebook/ticket tạo sau release, không hash cycle.
 
 ```powershell
-python -B -m scripts.minicpm_fulltrain_release template --package data/processed/<initial-package> --output data/processed/<unsigned-campaign.json>
-python -B -m scripts.minicpm_fulltrain_release check --package data/processed/<initial-package> --output data/processed/<new-blocked-receipt.json>
-python -B -m scripts.minicpm_fulltrain_release check --package data/processed/<initial-package> --package data/processed/<next-package> --attempt <original-first-run.zip> --supervisor <original-first-supervisor.zip> --locator data/processed/<owner-locator.json> --github-exports data/processed/<github-original-exports.json> --output data/processed/<new-replay-receipt.json>
+python -B -m scripts.minicpm_fulltrain_operator release-template --spec data/processed/<spec.json> --runtime-ref <runtime40> --output data/processed/<unsigned-release.json>
+python -B -m scripts.minicpm_fulltrain_operator --directory data/processed/<journal> --mirror data/processed/<mirror> init --locator data/processed/<authentic-locator.json> --spec data/processed/<spec.json>
+python -B -m scripts.minicpm_fulltrain_operator --directory data/processed/<journal> --mirror data/processed/<mirror> stage --private-key <local-key-path> --output data/processed/<new-package>
+python -B -m scripts.minicpm_fulltrain_operator --directory data/processed/<journal> --mirror data/processed/<mirror> publish
+python -B -m scripts.minicpm_fulltrain_operator --directory data/processed/<journal> --mirror data/processed/<mirror> collect --output data/processed/<new-collection>
 ```
 
-Mỗi ancestor cần đúng một `--package`, `--attempt` và `--supervisor`, oldest
-first; gói cuối proposed chưa có kết quả. ZIP sidecar phải ở cạnh file ZIP.
-Không có `--approve`, `--activate`, `--submit` hoặc cờ tự authenticate export.
-Vẫn dùng `plan/prepare/next` như [Owner UI](MINICPM_FULLTRAIN_OWNER_UI.md).
+Chỉ stage tiếp sau verified COLLECTED và còn pending. `status` không đo billing.
+Key riêng có thể tạo offline trên máy Owner bằng OpenSSL; public modulus/e và
+host hash phải được Owner/reviewer xác minh trước grant. Không dùng key test.
+Không gọi helper nội bộ hoặc sửa source/journal để vượt BLOCKED.
 
-## Luồng khi đã được phát hành riêng
+## Chứng từ ngoại sinh còn thiếu / nghiệm thu
 
-Antigravity chuẩn bị notebook/capsule/Input và hồ sơ đã đối chiếu → Owner kiểm
-Private/T4x2/Input/caps rồi **Save Version → Save & Run All một lần** →
-Antigravity theo dõi tối đa15 phút, lưu conversation/job/version và
-RUNNING_UNVERIFIED rồi thoát lượt AI. Owner báo xong thì resume đúng conversation,
-thu/kiểm provider và đủ ZIP/raw/log/sidecars; sau đó mới chuẩn bị pending kế tiếp.
-Owner giữ hướng dẫn [ba bước ngắn](MINICPM_FULLTRAIN_OWNER_UI.md).
+**Hành động duy nhất sau review/audit/merge:** cung cấp record release V2 thật
+trên PR198 ràng buộc merged/runtime source, projection seal và quyền O2–O6,
+finite total/job calls/jobs/GPU-seconds/deadline/policy/reserves, public key/host,
+cùng locators review/audit/merge/postmerge. Directive giao lập trình không thay
+record này. Antigravity tự thu current provider facts bằng read-only SDK sau
+quyền đó; không bắt Owner nhập throughput hoặc đoán200.
 
-Không chia TRAIN thành các vòng thử vì thói quen. Initial có thể đề xuất đủ3763
-nếu đúng caps; preflight an toàn nằm trong cùng controller trước load/call.
-Một job có thể dừng ở cap/time hoặc lỗi, không bảo đảm xử lý hết. Chỉ sau verified
-terminal/custody mới resume NOT_ATTEMPTED; lỗi consumed/unknown/partial STOP, giữ
-toàn bộ raw/error/history. Không refund, repair ngầm, GT rescue hoặc mở TEST.
-
-Kiểm thử mới: `python -B -m unittest discover -s tests -p test_minicpm_fulltrain_release.py -v`.
-Acceptance và giới hạn nằm trong [hồ sơ CPU](research/MINICPM_FULLTRAIN_RELEASE_20261116.md).
+Hiện chưa có record; **BLOCKED cho activation và Owner Run**. Không tự đặt số
+cap/time/rights trong task. Checkpoint/Input lịch sử PR195 không là quan sát mới.
+Final-source live ABI/VRAM/load/inference/export **NOT_RUN** theo lệnh cấm chạy thực.
+Nghiệm thu code gồm signed authorized synthetic end-to-end, adversarial gates,
+full3763 controller/failure/resume, exact-ref notebook và focused regressions.
+Review/audit dossier cũ không áp dụng expanded diff. Không tuyên bố DONE/runnable
+release cho Owner trước authority và concrete published capsule hợp lệ.

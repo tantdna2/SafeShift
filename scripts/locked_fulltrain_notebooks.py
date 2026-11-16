@@ -19,9 +19,9 @@ import tempfile
 from safeshift.candidates.source import ROOT, require
 
 PREFIXES = ("safeshift/__init__.py", "safeshift/candidates", "safeshift/pilot", "safeshift/fulltrain",
-    "safeshift/internvl3763_python.py", "configs/candidate160", "configs/cpu_g2_g3", "configs/pilot",
+    "safeshift/internvl3763_python.py", "safeshift/internvl3763_release.py", "configs/candidate160", "configs/cpu_g2_g3", "configs/pilot",
     "configs/fulltrain", "scripts/__init__.py", "scripts/build_three_vlm_notebooks.py",
-    "scripts/build_candidate160_notebooks.py", "scripts/build_fresh_fulltrain_notebooks.py")
+    "scripts/build_candidate160_notebooks.py", "scripts/build_fresh_fulltrain_notebooks.py", "scripts/generate_minicpm_fulltrain_notebook.py")
 
 CHILD = r'''
 import hashlib, importlib.abc, json, pathlib, socket, sys
@@ -36,7 +36,11 @@ class NoModel(importlib.abc.MetaPathFinder):
         if fullname.split('.')[0] in ('torch', 'transformers', 'PIL', 'kaggle', 'kagglesdk', 'kagglehub'):
             raise AssertionError('LOCKED_BUILDER_MODEL_OR_PROVIDER_IMPORT')
 sys.meta_path.insert(0, NoModel())
-if kind == 'fresh':
+if kind == 'minicpm':
+    from scripts.generate_minicpm_fulltrain_notebook import notebook
+    from safeshift.fulltrain.contract import sources
+    value = notebook(ref, pathlib.Path(root))
+elif kind == 'fresh':
     from scripts.build_fresh_fulltrain_notebooks import notebook
     from safeshift.fulltrain.contract import sources
     value = notebook(key, ref, pathlib.Path(root), diagnostic=diagnostic == '1')
@@ -98,7 +102,8 @@ def _reproduce(key, ref, repo, kind, diagnostic):
 
 def reproduce(key, ref, repo=ROOT, *, kind="fresh", diagnostic=False):
     require(type(ref) is str and re.fullmatch(r"[0-9a-f]{40}", ref), "EXACT_RUNTIME_COMMIT")
-    require(key in ("minicpm4", "internvl35", "qwen3") and kind in ("fresh", "fulltrain")
+    require(key in ("minicpm4", "internvl35", "qwen3") and kind in ("fresh", "fulltrain", "minicpm")
+        and (kind != "minicpm" or key == "minicpm4")
         and type(diagnostic) is bool and (kind == "fresh" or not diagnostic), "LOCKED_NOTEBOOK_KIND")
     # Cache immutable Git-derived bytes, never mutable caller objects or HEAD files.
     return strict_json(_reproduce(key, ref, str(Path(repo).resolve()), kind, diagnostic))

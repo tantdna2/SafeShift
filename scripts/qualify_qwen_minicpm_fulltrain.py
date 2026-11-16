@@ -17,7 +17,7 @@ from safeshift.pilot.contract import digest
 
 SUITES = ["test_fulltrain", "test_fresh_fulltrain", "test_fresh_fulltrain_revision",
           "test_kaggle173_verification", "test_fulltrain_minicpm4_notebook", "test_fulltrain_original_inputs",
-          "test_minicpm_fulltrain_ui", "test_minicpm_fulltrain_release"]
+          "test_minicpm_fulltrain_ui", "test_minicpm_fulltrain_release", "test_minicpm_fulltrain_execution"]
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     names = list(SUITES) if args.component == "core" else ["test_fresh_fulltrain_revision.SupervisionTests"]
     versions = {}
     if args.component == "operator":
-        names = ["test_train3763_manual", "test_internvl3763_python", "test_minicpm_ui_transport"]
+        names = ["test_train3763_manual", "test_internvl3763_python", "test_minicpm_ui_transport", "test_minicpm_execution_transport"]
         versions = {n: importlib.metadata.version(n) for n in ("kaggle", "kagglesdk", "requests", "urllib3")}
     if args.native_snapshot:
         os.environ.update(SAFESHIFT_CANDIDATE_KEY="minicpm4", SAFESHIFT_CANDIDATE_SNAPSHOT=str(args.native_snapshot),
@@ -54,7 +54,8 @@ def main():
     passed = result.testsRun - len(result.failures) - len(result.errors) - len(result.skipped)
     files = set(contract.sources()) | {"notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb",
         "scripts/generate_minicpm_fulltrain_notebook.py", "scripts/qualify_qwen_minicpm_fulltrain.py",
-        "scripts/minicpm_fulltrain_release.py"}
+        "scripts/minicpm_fulltrain_release.py", "scripts/minicpm_fulltrain_operator.py", "scripts/minicpm_fulltrain_transport.py",
+        "scripts/reconcile_train3763_manual.py", "scripts/locked_fulltrain_notebooks.py"}
     files |= {"tests/" + n.split(".")[0] + ".py" for n in names}
     if args.component == "operator":
         files.add("tests/frozen_internvl_snapshot.py")

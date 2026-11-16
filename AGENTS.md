@@ -1,5 +1,22 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner16/11/2026 — PR198 expanded MiniCPM execution release, same session
+
+[Directive6907347740](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907347740)
+requires completing the functional MiniCPM Full-TRAIN release/execution path in
+the SAME branch/session/Draft PR198, superseding dossier-only preparation scope.
+Reuse PR195; implement authentic exact-source authority, finite signed serial
+reservations/claims, provider/Input/quota gates, integrated preflight/native/raw/
+ZIP and NOT_ATTEMPTED-only continuation. No fixed160/200 calls,19-job guarantee,
+unnecessary standalone smoke rounds, fake rights or gate removal. Version source
+changes explicitly; preserve scientific method, historical notebooks/locks/raw.
+Codex may implement/tests/docs/push this same PR, but must not perform Kaggle/API
+provider/GPU/inference/TEST or production writes. Expanded direct ChatGPT review,
+new independent Antigravity audit, separately authorized merge/postmerge and
+authentic final-source release precede Owner Run. Old dossier pre-audit PASS is
+not approval for this expanded scope. Missing external rights/caps/projection/
+release evidence remains BLOCKED with precise required evidence; no fake DONE.
+
 ## Owner12/11/2026 — PR196 review fixes, same branch/session
 
 [Review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)
