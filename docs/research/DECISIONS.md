@@ -780,3 +780,42 @@ append-only Seminar protocol amendment and new analysis config. Existing frozen
 config/receipts remain unchanged. Exactly one Draft PR for direct ChatGPT review,
 mandatory independent Antigravity audit and separately authorized merge. Code
 verification is not independent audit or merge permission.
+
+
+## DEC-20261116-OWNER-MINICPM-TRAIN3763-UI-RESTART
+
+Authority: [Owner directive6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424),
+authenticated author tantdna2 on PR199. **OWNER_APPROVED_PROJECT_OPERATIONAL_RESET**,
+not a faculty qualification, source review/audit/merge PASS or inference result.
+
+Retire only original Full-TRAIN Run1, V2 and V3-1 as sources of MiniCPM prediction
+results. Retain their complete immutable tickets/journals/reservations/local logs/
+sealed archives and the old PUBLISHED/provider mismatch. Zero calls are Owner /
+local-log reported; unavailable old jobs are not independently verified deleted
+or terminal. Historical reservations remain3000 calls/3 jobs/86400 GPU-seconds.
+
+Begin a distinct `mcpm4-restart-v1` execution and
+`fresh171-minicpm4-owner-restart-v1` series at ordinal0 on all original3763 TRAIN
+IDs/JPG hashes, without inherited predictions. Preserve cohort, labels, metrics,
+native C1, FP16 weights/eager plus exact FP32 resampler, HNLO N/A and TEST closure.
+Other historical MiniCPM/Candidate160 evidence and prior decisions are untouched.
+
+The Owner authorizes a reviewed finite operational budget policy without repeated
+separate budget-amendment comments. The implementation derives a reservation
+envelope from <=3763 new serial jobs, <=3763 pending-ID call slots/14400 seconds/
+2 physical GPUs per job, plus the immutable historical holds. Derived totals
+14163169 reserved call slots/3766 jobs/108460800 reserved GPU-seconds are a finite
+scheduler bound, not Owner-quoted numbers, actual native calls, weekly account
+quota or a completion guarantee. Actual new image calls remain <=3763 under
+pending-only verified history. No refund/counter rewrite, unlimited retry,
+automatic account switch or quota circumvention. Current actual provider quota
+and absence of active accelerator/duplicate jobs are checked for every new job.
+
+Owner personally runs Kaggle UI. Antigravity resumes its SAME Operator session
+to prepare/publish current signed source-bound notebook/capsule after direct
+ChatGPT source PASS, independent audit, authorized merge and verified postmerge.
+Owner gets <=3 steps and a current expiry; old notebooks/capsules/tickets are
+never rerun. Codex removes its unused API submit/live-observer path in SAME
+Draft PR199; no new PR, production write or GPU operation in this coding task.
+Only authenticated new-run raw/claims/ZIP/provider history feeds continuation.
+See [V4 implementation contract](../MINICPM_RUN1_RECOVERY.md).

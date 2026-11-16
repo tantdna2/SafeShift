@@ -44,6 +44,14 @@ task. Source review/re-review, independent audit, authorized merge/postmerge and
 genuine final-source release remain required; old72000 is historical, not a new
 request for Owner to repeat budget consent. Live native results remain NOT_RUN.
 
+[V4 CPU acceptance](research/MINICPM_OWNER_UI_RESTART_20261116.md): Windows85 run /
+84 PASS /1 Linux-only skip; Linux18/18 PASS; exact80-file notebook reproduction,
+ordinal0/3763/empty-history metadata and preservation PASS at code ffda8b6.
+Runtime SHA256 `4b4f6bcccaaaa1793da3240bf9f4640e7a0796c9d1b615db0a627d4965a356c9`.
+The real SDK50-character dataset-name limit is now enforced; current execution
+ID is `mcpm4-restart-v1`. [Append-only decision](research/DECISIONS.md#dec-20261116-owner-minicpm-train3763-ui-restart)
+records Owner result retirement, derived finite policy and UI workflow.
+
 ## HISTORICAL — PR199 initial one-Codex-launch proposal — 16/11/2026
 
 Verified GitHub PR198 merge/main: `507e9817b91054fa7af324c6a915c35d56b5acf1`.

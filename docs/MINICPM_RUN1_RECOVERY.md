@@ -163,7 +163,9 @@ ancestors and reservations carry forward; only NOT_ATTEMPTED IDs are scheduled.
 INVALID/errors stay preserved and consumed; technical/unknown output STOPs.
 No Codex API submit or automatic account/compute switch exists.
 
-Historical initial PR199 acceptance remains at
+Current [V4 acceptance and limitations](research/MINICPM_OWNER_UI_RESTART_20261116.md)
+and [machine receipts/logs](research/evidence/minicpm_owner_ui_restart_20261116/index.json)
+cover the current Owner UI source. Historical initial PR199 acceptance remains at
 [the earlier V3 receipt](research/MINICPM_RUN1_RECOVERY_20261116.md), scoped to its
 old source only. New V4 acceptance is recorded separately in this same PR. No
 live GPU/model-fit/inference/Owner Run or scientific qualification is claimed.
