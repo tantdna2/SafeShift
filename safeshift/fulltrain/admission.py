@@ -1,8 +1,8 @@
 """Prepared final-source setup/diagnostic/native pipeline, public routes fenced.
 
 Internal functions compose reviewed checks and are exercised with synthetic
-boundaries. A later reviewed activation must authenticate O2-O6 before calling
-them; a request JSON is a binding record, never an approval or authority token.
+boundaries. MiniCPM V2 authenticates O2-O6 and a signed serial reservation before
+calling them; a request JSON alone is never approval or an authority token.
 """
 import argparse
 from copy import deepcopy
@@ -187,7 +187,7 @@ def stage(mode, request, repo, output, deadline):
                     # Parent and every child recheck source/input/checkpoint/plan.
                     # Controller alone creates the immutable attempt reservation.
                     result = runtime._worker(request, repo=repo)
-                    require(read(result / "receipt.json")["stop"] is None
+                    require(read(result / "receipt.json")["stop"] in (None, "ADAPTIVE_TIME_STOP", "ADAPTIVE_STORAGE_STOP")
                             and not (result / "accounting_failure.json").exists(), "NATIVE_ATTEMPT_STOPPED_REVIEW_EVIDENCE")
             else:
                 raise ValueError("UNKNOWN_FRESH_STAGE")
@@ -199,6 +199,10 @@ def stage(mode, request, repo, output, deadline):
 
 
 def command(python, mode, request_file, repo, output, deadline):
+    from .minicpm_release import current
+    if current() is not None:
+        from .minicpm_execution import child_command
+        return child_command(python, mode, request_file, repo, output, deadline)
     return [str(python), "-B", "-m", "safeshift.fulltrain.admission", "--stage", mode,
             "--request", str(request_file), "--repo", str(repo), "--output", str(output), "--deadline", str(deadline)]
 
@@ -224,6 +228,14 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
     write(request_file, request)
     p, budgets = request["plan"], request["resource_policy"]
     deadline = time.monotonic() + p["max_seconds"]
+    from . import minicpm_release as capability
+    active = capability.current()
+    if active is not None:
+        capability.authorize(request=request)
+        # Save the signed reservation for custody; never include the signing key.
+        write(output / "capability.json", {"locator": active["locator"], "ticket": active["ticket"]})
+        launch_time = read(active["claims"] / "launch.json")["time_unix"]
+        deadline = min(deadline, time.monotonic() + launch_time + p["max_seconds"] - time.time())
     python, env = sys.executable, provision.clean_env(repo, scratch)
     stage_name, failure = "setup", None
     control = work / "supervisor_control"
@@ -239,6 +251,8 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
                 stage_name = mode
                 limit = budgets["setup_seconds"] if mode == "setup" else budgets["diagnostic_seconds"] if mode != "native" else p["max_seconds"]
                 until = min(deadline, time.monotonic() + limit)
+                if active is not None and mode == "native":
+                    until = min(until, deadline - active["grant"]["sizing"]["export_seconds"])
                 if mode in ("gpu", "native"):
                     env["CUDA_VISIBLE_DEVICES"] = "0,1" if request["model_key"] == "qwen3" else "0"
                 supervision.run(command(python, mode, request_file, repo, output / mode, until),
@@ -258,6 +272,7 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
         write(output / "failure.json", failure)
     finally:
         attempt = safe(work, p["run_id"])
+        attempt_observed = attempt.exists()
         recovery = "NO_ATTEMPT"
         if attempt.exists():
             recovery = "PARTIAL_OR_SEALED_REQUIRES_CUSTODY"
@@ -268,11 +283,26 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
                     recovery = "PARTIAL_EVIDENCE_SEALED_NOT_RETRIED"
                 except BaseException as error:
                     write(output / "partial_export_failure.json", error_record(error, "partial_export"))
+        if active is not None:
+            try:
+                from .minicpm_execution import retain_sealed_trees
+                write(output / "retention.json", retain_sealed_trees(request,work,scratch,active["capsule_directory"]))
+            except BaseException as error:
+                if failure is None:
+                    failure = error_record(error, "retention")
+                write(output / "retention_failure.json", error_record(error, "retention"))
+            write(output / "final_timing.json", {"seconds_before_supervisor_export":time.time()-launch_time,
+                "export_reserve_seconds":active["grant"]["sizing"]["export_seconds"],"billing":"NOT_OBSERVED"})
+            if time.time() + active["grant"]["sizing"]["export_seconds"] >= launch_time + p["max_seconds"]:
+                failure = failure or {"type":"TimeoutError","message":"FINAL_EXPORT_RESERVE_EXHAUSTED",
+                    "stage":"export","category":"TECHNICAL"}
         write(output / "release.json", {"status": "BLOCKED" if failure else "TECHNICAL_STAGES_RETURNED_NOT_RELEASE_AUTHORITY",
             "diagnostic": diagnostic, "last_stage": stage_name, "failure": failure,
-            "attempt_observed": attempt.exists(), "recovery": recovery, "automatic_retry": False,
+            "attempt_observed": attempt_observed, "recovery": recovery, "automatic_retry": False,
             "scientific_qualified": False, "source_sha256": request["source_sha256"],
             "scratch_retained": True, "cleanup": "OWNER_INSPECTION_REQUIRED_NO_RECURSIVE_DELETE"})
+        if active is not None:
+            write(output / "claims.json", capability.claims_snapshot())
         export(output, Path(str(output) + ".zip"))
     return output
 

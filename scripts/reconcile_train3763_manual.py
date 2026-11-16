@@ -396,23 +396,9 @@ def anonymous_output_session(deadline):
                 timer.join()  # no watchdog/socket work remains after return
 
 
-def download_outputs(client, job, version, archive, expected_sha, destination, *, output_pairs=None):
-    """Pinned SDK listing + bounded anonymous GET, no SDK retry/resume downloader."""
-    import os
+def output_inventory(client, job, version):
     from kagglesdk.kernels.types.kernels_api_service import ApiListKernelSessionOutputRequest
     from scripts.submit_internvl_v2 import bounded_http
-    require(re.fullmatch(r"[A-Za-z0-9_-]+\.zip", archive.name), "MANUAL_ARCHIVE_NAME")
-    require_hash(expected_sha)
-    pairs = {archive.name: archive} if output_pairs is None else output_pairs
-    require(type(pairs) is dict and 1 <= len(pairs) <= 2, "MANUAL_OUTPUT_PAIRS_BOUND")
-    for name, local in pairs.items():
-        require(type(name) is str and name.endswith(".zip") and all(
-            re.fullmatch(r"[A-Za-z0-9_~.-]+", part) and part not in (".", "..")
-            for part in name.split("/")), "MANUAL_ARCHIVE_NAME")
-        require(Path(local).is_file(), "MANUAL_LOCAL_OUTPUT_REQUIRED")
-    expected = {name: Path(local).stat().st_size for name, local in pairs.items()}
-    expected.update({name + ".sha256.json": 4096 for name in pairs})
-    require(shutil.disk_usage(destination).free > sum(expected.values()) + 2**20, "MANUAL_DOWNLOAD_DISK_BOUND")
     with private_transport_logs(), bounded_http():
         query = ApiListKernelSessionOutputRequest()
         query.user_name, query.kernel_slug = job.split("/")
@@ -458,8 +444,29 @@ def download_outputs(client, job, version, archive, expected_sha, destination, *
             query.page_token = token  # official kagglesdk==0.1.38 request field
         else:
             raise ValueError("MANUAL_OUTPUT_LIST_BOUND")
-        require(set(selected) == set(expected) and provider_log is not None,
-            "MANUAL_EXACT_PROVIDER_OUTPUTS_AND_LOG")
+        require(provider_log is not None, "MANUAL_EXACT_PROVIDER_OUTPUTS_AND_LOG")
+    return selected, provider_log
+
+
+def download_outputs(client, job, version, archive, expected_sha, destination, *, output_pairs=None):
+    """Pinned SDK listing + bounded anonymous GET, no SDK retry/resume downloader."""
+    import os
+    from kagglesdk.kernels.types.kernels_api_service import ApiListKernelSessionOutputRequest
+    from scripts.submit_internvl_v2 import bounded_http
+    require(re.fullmatch(r"[A-Za-z0-9_-]+\.zip", archive.name), "MANUAL_ARCHIVE_NAME")
+    require_hash(expected_sha)
+    pairs = {archive.name: archive} if output_pairs is None else output_pairs
+    require(type(pairs) is dict and 1 <= len(pairs) <= 2, "MANUAL_OUTPUT_PAIRS_BOUND")
+    for name, local in pairs.items():
+        require(type(name) is str and name.endswith(".zip") and all(
+            re.fullmatch(r"[A-Za-z0-9_~.-]+", part) and part not in (".", "..")
+            for part in name.split("/")), "MANUAL_ARCHIVE_NAME")
+        require(Path(local).is_file(), "MANUAL_LOCAL_OUTPUT_REQUIRED")
+    expected = {name: Path(local).stat().st_size for name, local in pairs.items()}
+    expected.update({name + ".sha256.json": 4096 for name in pairs})
+    require(shutil.disk_usage(destination).free > sum(expected.values()) + 2**20, "MANUAL_DOWNLOAD_DISK_BOUND")
+    selected, provider_log = output_inventory(client, job, version)
+    require(set(selected) == set(expected), "MANUAL_EXACT_PROVIDER_OUTPUTS_AND_LOG")
     # Validate the pair before ANY output GET. Keep SDK's timeout wrapper above
     # separate: it replaces caller timeouts, including a shrinking GET budget.
     for name in expected:

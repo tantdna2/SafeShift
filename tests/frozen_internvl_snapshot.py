@@ -27,7 +27,8 @@ def observed(ref=BASE):
             if result.returncode:
                 # New Mini-only modules did not exist in the frozen tree.
                 if name not in ("safeshift/fulltrain/minicpm_notebook.py", "safeshift/fulltrain/original_inputs.py",
-                                "safeshift/fulltrain/minicpm_ui.py"):
+                                "safeshift/fulltrain/minicpm_ui.py", "safeshift/fulltrain/minicpm_execution.py",
+                                "safeshift/fulltrain/minicpm_release.py", "safeshift/fulltrain/minicpm_sizing.py"):
                     raise AssertionError("MISSING_FROZEN_RUNTIME_FILE:" + name)
                 continue
             path = target / name

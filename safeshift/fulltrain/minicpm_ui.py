@@ -1,7 +1,8 @@
 """Owner UI capsule over the shared fresh171 controller; no new model loop.
 
 Capsules bind metadata and custody, never authenticate an execution release.
-Public execution/collection remain behind the unchanged source release fence.
+These V1 public entries stay closed without a capability. The V2 signed release
+entrypoint reuses the capsule/history/verifier functions, not a second model loop.
 """
 from pathlib import Path
 from copy import deepcopy
@@ -126,13 +127,16 @@ def restore_history(directory, value, work):
     return history
 
 
-def verify_capsule(directory, expected_sha256, repo=ROOT):
+def verify_capsule(directory, expected_sha256, repo=ROOT, *, release_ticket=False):
     require_hash(expected_sha256)
     marker = safe(directory, MARKER)
     require(snapshot_stat(marker).st_size <= 64 * 2**20 and sha(marker) == expected_sha256, "UI_CAPSULE_PIN")
     value = validate(read(marker), repo)
     names = {MARKER, *[v["file"] for v in value["ancestors"]],
         *[v["file"] + ".sha256.json" for v in value["ancestors"]]}
+    if release_ticket:
+        from .minicpm_execution import MARKER as TICKET_MARKER
+        names.add(TICKET_MARKER)
     found = set()
     for entry in Path(directory).iterdir():
         require(len(found) < len(names) and entry.name in names, "UI_CAPSULE_EXACT_FILES")
@@ -261,7 +265,8 @@ def verify_results(value, directory, attempt, supervisor, destination, *, repo=R
             and receipt["load_attempts"] <= 1 and receipt["loads"] <= 1, "UI_NATIVE_ACCOUNTING")
         require(not (old / "accounting_failure.json").exists(), "UI_ACCOUNTING_UNVERIFIED")
     successful = (release["status"] == "TECHNICAL_STAGES_RETURNED_NOT_RELEASE_AUTHORITY"
-        and release["failure"] is None and release["last_stage"] == "native" and receipt["stop"] is None)
+        and release["failure"] is None and release["last_stage"] == "native"
+        and receipt["stop"] in (None, "ADAPTIVE_TIME_STOP", "ADAPTIVE_STORAGE_STOP"))
     next_history = [*request["history"], history]
     preview = contract.plan(request["campaign"], cohort, request["plan"]["identity"], next_history,
         action="resume", run_id="preview-next", attempt_id="preview-next-attempt",

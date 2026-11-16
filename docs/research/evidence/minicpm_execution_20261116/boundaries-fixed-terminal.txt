@@ -1,0 +1,7 @@
+test_actual_child_cli_installs_capability_and_rejects_replay (test_minicpm_execution_boundaries.ChildBoundaryTests.test_actual_child_cli_installs_capability_and_rejects_replay) ... ok
+test_signed_local_context_without_authenticated_launch_cannot_start_child (test_minicpm_execution_boundaries.ChildBoundaryTests.test_signed_local_context_without_authenticated_launch_cannot_start_child) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 7.639s
+
+OK

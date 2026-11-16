@@ -10,7 +10,7 @@ from scripts.build_fresh_fulltrain_notebooks import notebook as fresh_notebook
 OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
-def notebook(ref, repo=ROOT, *, capsule_sha256=None):
+def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None):
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
     old_import = "from safeshift.fulltrain.preflight import prepare as launch"
@@ -99,6 +99,30 @@ Không sửa cell, capsule hoặc batch. Lỗi/BLOCKED: giữ mọi Output/log/Z
 không chạy lại; Antigravity thu và đối soát trước lượt tiếp theo.
 Giữ nguyên3.763 TRAIN IDs, MiniCPM FP32 resampler/FP16 weights, strict C1,
 HNLO N/A. Capsule tự mang request và mọi history; không nhập dự đoán pilot/smoke.
+""".splitlines(True)
+    if release_locator is not None:
+        require(capsule_sha256 is not None and type(release_locator) is dict
+            and set(release_locator) == {"comment_id", "body_sha256"}
+            and type(release_locator["comment_id"]) is int and release_locator["comment_id"] > 0,
+            "MINICPM_EXACT_RELEASE_LOCATOR")
+        require_hash(release_locator["body_sha256"])
+        nb["cells"][1]["source"] = ["import time\n", "minicpm_notebook_started_unix = time.time()\n", *nb["cells"][1]["source"]]
+        nb["cells"][-1]["source"] = ("from safeshift.fulltrain.minicpm_execution import run_capsule\n"
+            f"run_capsule('/kaggle/input', {capsule_sha256!r}, {release_locator!r}, repo=root, "
+            "started_unix=minicpm_notebook_started_unix)\n").splitlines(True)
+        nb["metadata"]["safeshift"].update(mode="MINICPM_FULLTRAIN_RELEASE_V2",
+            status="AUTHENTIC_RELEASE_AND_SIGNED_TICKET_REQUIRED", execution_release=release_locator)
+        nb["cells"][0]["source"] = """# MiniCPM-V-4 — Full TRAIN — Owner UI
+
+Chỉ chạy khi handoff đã kiểm quyền nguồn, Input/version, quota và signed ticket.
+1. Import notebook này và gắn đúng năm Input/version trong handoff.
+2. Kiểm Private, Internet On, T4 x2 và thời hạn/caps hiển thị trong handoff.
+3. Save Version > Save & Run All một lần; gửi URL/version khi terminal.
+
+Không sửa cell hoặc chạy lại version. Preflight tích hợp trước load/calls.
+Một job có thể dừng an toàn trước hết TRAIN; Antigravity kiểm ZIP/history rồi
+chuẩn bị NOT_ATTEMPTED tiếp theo. Giữ tất cả raw/lỗi. Strict C1, FP32 resampler,
+FP16 weights, HNLO N/A; TEST đóng. Không có quyền thật/ticket thì BLOCKED.
 """.splitlines(True)
     return nb
 

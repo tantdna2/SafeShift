@@ -914,7 +914,9 @@ class ManualSourceTests(unittest.TestCase):
         changed = {p for p, h in r.source_spec()["manifest"].items() if frozen["manifest"].get(p) != h}
         self.assertEqual(changed, {"safeshift/fulltrain/admission.py", "safeshift/fulltrain/runtime.py",
             "safeshift/fulltrain/contract.py", "safeshift/fulltrain/provision.py", "safeshift/fulltrain/original_inputs.py",
-            "safeshift/fulltrain/minicpm_notebook.py", "safeshift/fulltrain/minicpm_ui.py"})
+            "safeshift/fulltrain/minicpm_notebook.py", "safeshift/fulltrain/minicpm_ui.py",
+            "safeshift/fulltrain/minicpm_execution.py", "safeshift/fulltrain/minicpm_release.py",
+            "safeshift/fulltrain/minicpm_sizing.py"})
 
     def test_source_hash_equality_does_not_waive_exact_merged_commit(self):
         with tempfile.TemporaryDirectory() as d:

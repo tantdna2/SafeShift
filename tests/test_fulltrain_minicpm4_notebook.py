@@ -32,8 +32,11 @@ class MiniCPMFulltrainNotebookTests(unittest.TestCase):
         self.assertIsNone(meta["execution_caps"])
         self.assertEqual(meta["series_id"], "fresh171-minicpm4-v1")
         self.assertEqual(meta["policy"], "LABEL_ONLY")
-        self.assertEqual((ROOT / OUTPUT).read_bytes(), (json.dumps(notebook(meta["runtime_ref"]),
+        from scripts.locked_fulltrain_notebooks import reproduce, verify_payload
+        locked = reproduce("minicpm4", meta["runtime_ref"], kind="minicpm")
+        self.assertEqual((ROOT / OUTPUT).read_bytes(), (json.dumps(locked["notebook"],
             indent=1, ensure_ascii=False) + "\n").encode())
+        verify_payload(self.nb, locked)
         for cell in self.nb["cells"]:
             if cell["cell_type"] == "code":
                 compile("".join(cell["source"]), cell.get("id", "cell"), "exec")
@@ -41,9 +44,9 @@ class MiniCPMFulltrainNotebookTests(unittest.TestCase):
                 self.assertIsNone(cell["execution_count"])
         encoded = re.search(r"base64\.b64decode\('([^']+)'\)", self.code()).group(1)
         payload = json.loads(zlib.decompress(base64.b64decode(encoded)))
-        self.assertEqual(set(payload), set(contract.sources()))
+        self.assertEqual(set(payload), set(locked["manifest"]))
         for name, text in payload.items():
-            self.assertEqual(text.encode(), (ROOT / name).read_bytes(), name)
+            self.assertEqual(text.encode(), subprocess.check_output(["git", "show", meta["runtime_ref"] + ":" + name], cwd=ROOT), name)
             if name.endswith(".py"):
                 compile(text, name, "exec")
         self.assertIn("safeshift/fulltrain/runtime.py", payload)
@@ -102,7 +105,8 @@ socket.create_connection = no_network
             launch.assert_not_called()
 
     def test_owner_ui_variant_pins_capsule_and_fails_before_input_without_prep_archives(self):
-        nb = notebook(self.nb["metadata"]["safeshift"]["runtime_ref"], capsule_sha256="a"*64)
+        ref = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        nb = notebook(ref, capsule_sha256="a"*64)
         self.assertEqual(nb["metadata"]["safeshift"]["capsule_sha256"], "a"*64)
         code = "\n".join("".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "code")
         self.assertNotIn("REQUEST_FILE = None", code)
