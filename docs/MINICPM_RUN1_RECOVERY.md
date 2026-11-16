@@ -26,7 +26,7 @@ cannot silently be retired by copying this report.
 
 ## New execution and finite budget
 
-The new execution id is `mcpm4-train3763-owner-restart-v1`; MiniCPM series is
+The new execution id is `mcpm4-restart-v1`; MiniCPM series is
 `fresh171-minicpm4-owner-restart-v1`. First plan contains all original3763 TRAIN
 IDs/order/JPG hashes from ordinal0, empty prediction history, no old SUCCESS or
 INVALID inheritance. FP16/eager, exact FP32 resampler, strict C1, labels, HNLO N/A,
@@ -94,7 +94,7 @@ gated, not assumed from the table.
 | `nguynanhtn/safeshift-pilot-input/1` | `datasets/nguynanhtn/safeshift-pilot-input` |
 | `nguynanhtn/safeshift-prepare-minicpm4/1` | `notebooks/nguynanhtn/safeshift-prepare-minicpm4` |
 | `nguynanhtn/safeshift-cpython3119-20240726/1` | `datasets/nguynanhtn/safeshift-cpython3119-20240726` |
-| New signed `.../safeshift-minicpm-capsule-mcpm4-train3763-owner-restart-v1-4/1` | `datasets/nguynanhtn/safeshift-minicpm-capsule-mcpm4-train3763-owner-restart-v1-4` |
+| New signed `.../safeshift-minicpm-capsule-mcpm4-restart-v1-4/1` | `datasets/nguynanhtn/safeshift-minicpm-capsule-mcpm4-restart-v1-4` |
 
 Original master/projection/JPG SHA, checkpoint, isolated Python/ABI, scratch/RAM,
 GPU/driver/CUDA, child release, raw-before-parse, signed load/call claims and
@@ -140,7 +140,7 @@ publication or Owner Run has happened merely because these commands exist.
 
 Owner receives at most three actions:
 
-1. Upload the exact notebook and attach its five pinned Input versions.
+1. Upload the exact notebook, use the exact job slug in the handoff, and attach its five pinned Input versions.
 2. Select Private / Python / Internet On / GPU T4x2.
 3. Before the signed expiry, Save Version ? Save & Run All ONCE and send the exact version URL to Antigravity.
 

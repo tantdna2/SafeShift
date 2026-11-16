@@ -271,6 +271,13 @@ class RecoveryTests(unittest.TestCase):
     def test_five_nested_mounts_and_accelerator_are_enforced_in_collection(self):
         table = r.mounted_inputs(self.value)
         self.assertEqual(len(table), 5)
+        for number in (4, 3766):
+            slug = "safeshift-minicpm-capsule-" + r.CAMPAIGN + "-" + str(number)
+            self.assertLessEqual(len(slug), 50)
+        bad = deepcopy(self.value)
+        bad["capsule_ref"] = "nguynanhtn/safeshift-minicpm-capsule-" + "x" * 45 + "/1"
+        bad["input_sources"]["dataset_sources"][-1] = bad["capsule_ref"]
+        with self.assertRaisesRegex(ValueError, "PROVIDER_SLUG_LENGTH"): r.mounted_inputs(bad)
         from safeshift.internvl3763_operator import verify_kernel_metadata_inputs
         meta = NS(machine_shape="NvidiaTeslaT4", dataset_data_sources=[v.rsplit("/", 1)[0] for v in self.value["input_sources"]["dataset_sources"]],
             kernel_data_sources=[ui.CHECKPOINT.rsplit("/", 1)[0]])

@@ -14,7 +14,7 @@ from . import minicpm_release as a, minicpm_ui as ui
 
 SCHEMA = "safeshift-minicpm-owner-restart-snapshot-v4"
 CAMPAIGNS = ("mcpm4-train3763", "mcpm4-train3763-v2", "mcpm4-train3763-v3")
-CAMPAIGN = "mcpm4-train3763-owner-restart-v1"
+CAMPAIGN = "mcpm4-restart-v1"
 SERIES = "fresh171-minicpm4-owner-restart-v1"
 DIRECTIVE = 6918902424
 EVENT_PREFIX = "SAFESHIFT_MINICPM_LIVE_V3 "
@@ -149,6 +149,7 @@ def mounted_inputs(value):
     for kind, refs in value["input_sources"].items():
         for ref in refs:
             owner, slug, version = ref.split("/")
+            require(6 <= len(slug) <= 50, "MINICPM_PROVIDER_SLUG_LENGTH")
             table[ref] = {"mount": ("notebooks/" if kind == "kernel_sources" else "datasets/") + owner + "/" + slug,
                           "version": int(version)}
     for name in ("master_dataset", "train_dataset"):

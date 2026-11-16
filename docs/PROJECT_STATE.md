@@ -18,7 +18,7 @@ native calls are Owner/local-log reported, not independently authenticated curre
 provider custody. Their PUBLISHED mismatch remains explicit. No old SUCCESS,
 INVALID, errors or predicted labels enter the new execution series.
 
-V4 Owner-UI-only release uses new `mcpm4-train3763-owner-restart-v1` execution /
+V4 Owner-UI-only release uses new `mcpm4-restart-v1` execution /
 `fresh171-minicpm4-owner-restart-v1` series, same original3763 IDs/JPG hashes and
 scientific configuration, first ordinal0. One create-only restart binding appends
 to the SAME V3 Operator journal, keeps historical serials/counters and uses global

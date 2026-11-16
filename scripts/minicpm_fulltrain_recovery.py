@@ -292,7 +292,7 @@ class RecoveredSerialJournal(old.Journal):
             "start_before_local": local.isoformat(), "timezone": "Asia/Ho_Chi_Minh",
             "historical_reservations": grant["recovery"]["reserved"], "cumulative_reservations": ticket["payload"]["reserved_after"],
             "historical_provider_status": "UNVERIFIED_RETIRED_NO_USABLE_RESULTS", "scientific_inheritance": False,
-            "owner_steps": ["Upload this exact notebook; attach the five pinned Inputs.",
+            "owner_steps": ["Upload this exact notebook using job slug " + value["job"] + "; attach the five pinned Inputs.",
                 "Select Private / Python / Internet On / GPU T4x2.",
                 "Save Version > Save & Run All ONCE before start_before; send the version URL to Antigravity."]}
 
