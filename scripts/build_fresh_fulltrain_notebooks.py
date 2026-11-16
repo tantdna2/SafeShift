@@ -18,6 +18,12 @@ def packed(payload):
     return base64.b64encode(zlib.compress(json.dumps(payload, sort_keys=True).encode(), 9)).decode()
 
 
+def notebook_at_ref(key, ref, repo=ROOT, *, diagnostic=False):
+    """Read-only historical reproduction; the default builder stays HEAD-strict."""
+    from scripts.locked_fulltrain_notebooks import reproduce
+    return reproduce(key, ref, repo, diagnostic=diagnostic)["notebook"]
+
+
 def notebook(key, ref, repo=ROOT, *, diagnostic=False):
     require(re.fullmatch(r"[0-9a-f]{40}", ref), "EXACT_RUNTIME_COMMIT")
     repo = Path(repo)

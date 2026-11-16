@@ -1,0 +1,28 @@
+test_all_statuses_across_shards_cover_full_plan_once (test_fresh_fulltrain.FreshTests.test_all_statuses_across_shards_cover_full_plan_once) ... ok
+test_deadline_stops_without_load_and_time_has_no_default (test_fresh_fulltrain.FreshTests.test_deadline_stops_without_load_and_time_has_no_default) ... ok
+test_exact_paired_projection_rejects_order_sha_and_160 (test_fresh_fulltrain.FreshTests.test_exact_paired_projection_rejects_order_sha_and_160) ... ok
+test_false_preflight_receipts_do_not_grant_execution (test_fresh_fulltrain.FreshTests.test_false_preflight_receipts_do_not_grant_execution) ... ok
+test_foreign_series_or_identity_rejected_before_calls (test_fresh_fulltrain.FreshTests.test_foreign_series_or_identity_rejected_before_calls) ... ok
+test_history_checksum_and_missing_ancestor_fail_closed (test_fresh_fulltrain.FreshTests.test_history_checksum_and_missing_ancestor_fail_closed) ... ok
+test_load_failure_keeps_pending_and_failure_evidence (test_fresh_fulltrain.FreshTests.test_load_failure_keeps_pending_and_failure_evidence) ... ok
+test_mapping_strict_no_gt_no_order_drift (test_fresh_fulltrain.FreshTests.test_mapping_strict_no_gt_no_order_drift) ... ok
+test_marker_missing_duplicate_and_bad_pin (test_fresh_fulltrain.FreshTests.test_marker_missing_duplicate_and_bad_pin) ... ok
+test_native_descriptors_keep_science_but_new_selection (test_fresh_fulltrain.FreshTests.test_native_descriptors_keep_science_but_new_selection) ... ok
+test_native_factory_reuses_exact_candidate_and_fp32_adapter (test_fresh_fulltrain.FreshTests.test_native_factory_reuses_exact_candidate_and_fp32_adapter) ... ok
+test_native_worker_missing_source_stops_before_inputs (test_fresh_fulltrain.FreshTests.test_native_worker_missing_source_stops_before_inputs) ... ok
+test_no_public_entrypoint_reads_paths_or_accepts_approved (test_fresh_fulltrain.FreshTests.test_no_public_entrypoint_reads_paths_or_accepts_approved) ... ok
+test_partial_reservation_prevents_implicit_retry (test_fresh_fulltrain.FreshTests.test_partial_reservation_prevents_implicit_retry) ... ok
+test_peer_worker_to_native_store_parser_archive_with_scripted_boundaries (test_fresh_fulltrain.FreshTests.test_peer_worker_to_native_store_parser_archive_with_scripted_boundaries) ... ok
+test_raw_durable_before_parser_failure (test_fresh_fulltrain.FreshTests.test_raw_durable_before_parser_failure) ... ok
+test_repair_requires_outcome_fix_regression_and_cause (test_fresh_fulltrain.FreshTests.test_repair_requires_outcome_fix_regression_and_cause) ... ok
+test_source_input_change_before_call_is_not_retried (test_fresh_fulltrain.FreshTests.test_source_input_change_before_call_is_not_retried) ... ok
+test_storage_simultaneous_cleanup_repeat_and_quota_failure (test_fresh_fulltrain.FreshTests.test_storage_simultaneous_cleanup_repeat_and_quota_failure) ... ok
+test_success_invalid_error_resume_only_not_attempted (test_fresh_fulltrain.FreshTests.test_success_invalid_error_resume_only_not_attempted) ... ok
+test_three_full_initial_plans_no_inherited_predictions (test_fresh_fulltrain.FreshTests.test_three_full_initial_plans_no_inherited_predictions) ... ok
+test_torn_raw_recovery_preserves_bytes_and_native_marker_only_is_error (test_fresh_fulltrain.FreshTests.test_torn_raw_recovery_preserves_bytes_and_native_marker_only_is_error) ... ok
+test_zip_import_fresh_workspace_exact_resume_and_no_overwrite (test_fresh_fulltrain.FreshTests.test_zip_import_fresh_workspace_exact_resume_and_no_overwrite) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 67.394s
+
+OK

@@ -1,0 +1,16 @@
+test_all_historical_and_deferred_providers_versions_capsules_are_exercised (test_train3763_results.FinalProviderVerificationTests.test_all_historical_and_deferred_providers_versions_capsules_are_exercised) ... ok
+test_failure_at_last_provider_preserves_proofs_without_success_or_append (test_train3763_results.FinalProviderVerificationTests.test_failure_at_last_provider_preserves_proofs_without_success_or_append) ... ok
+test_archive_or_mirror_mutation_blocks_official_read (test_train3763_results.OfficialResultsTests.test_archive_or_mirror_mutation_blocks_official_read) ... ok
+test_authenticated_account_record_cannot_override_raw_resource_evidence (test_train3763_results.OfficialResultsTests.test_authenticated_account_record_cannot_override_raw_resource_evidence) ... ok
+test_before_release_closed_even_when_all_local_outputs_exist (test_train3763_results.OfficialResultsTests.test_before_release_closed_even_when_all_local_outputs_exist) ... ok
+test_final_report_mutation_even_with_rechained_mirrors_is_rejected (test_train3763_results.OfficialResultsTests.test_final_report_mutation_even_with_rechained_mirrors_is_rejected) ... ok
+test_full_official_coverage_budget_invalid_and_legacy_separation (test_train3763_results.OfficialResultsTests.test_full_official_coverage_budget_invalid_and_legacy_separation) ... ok
+test_late_native_failure_never_creates_a_formal_event (test_train3763_results.OfficialResultsTests.test_late_native_failure_never_creates_a_formal_event) ... ok
+test_nonfinite_resource_and_missing_observations_are_never_zero_filled (test_train3763_results.OfficialResultsTests.test_nonfinite_resource_and_missing_observations_are_never_zero_filled) ... ok
+test_wrong_authorized_admission_principal_or_body_is_not_a_release (test_train3763_results.OfficialResultsTests.test_wrong_authorized_admission_principal_or_body_is_not_a_release) ... ok
+test_wrong_owner_export_or_missing_admission_never_appends (test_train3763_results.OfficialResultsTests.test_wrong_owner_export_or_missing_admission_never_appends) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 194.708s
+
+OK

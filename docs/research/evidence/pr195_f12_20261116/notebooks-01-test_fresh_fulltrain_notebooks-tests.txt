@@ -1,0 +1,10 @@
+test_corrupt_payload_fails_before_prepare_and_preserves_failure (test_fresh_fulltrain_notebooks.FreshNotebookTests.test_corrupt_payload_fails_before_prepare_and_preserves_failure) ... ok
+test_every_notebook_clean_cpu_child_repeated_no_attempt_or_input (test_fresh_fulltrain_notebooks.FreshNotebookTests.test_every_notebook_clean_cpu_child_repeated_no_attempt_or_input) ... ok
+test_exact_committed_payload_builder_compile_empty_outputs (test_fresh_fulltrain_notebooks.FreshNotebookTests.test_exact_committed_payload_builder_compile_empty_outputs) ... ok
+test_historical_notebooks_contracts_and_science_bytes_unchanged (test_fresh_fulltrain_notebooks.FreshNotebookTests.test_historical_notebooks_contracts_and_science_bytes_unchanged) ... ok
+test_locked_validation_rejects_added_missing_modified_duplicate_source_and_wrong_ref (test_fresh_fulltrain_notebooks.FreshNotebookTests.test_locked_validation_rejects_added_missing_modified_duplicate_source_and_wrong_ref) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 90.038s
+
+OK

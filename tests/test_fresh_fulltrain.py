@@ -317,12 +317,13 @@ class FreshTests(unittest.TestCase):
     def test_peer_worker_to_native_store_parser_archive_with_scripted_boundaries(self):
         # CPU wiring proof only: all hardware, real images and model loading are
         # explicit doubles. The actual controller, NativeStore, parser and archive run.
-        for key in ("internvl35", "minicpm4"):
-            with self.subTest(key=key), ExitStack() as stack:
+        for key, mounted in (("internvl35", False), ("minicpm4", False), ("minicpm4", True)):
+            with self.subTest(key=key, original_mounts=mounted), ExitStack() as stack:
                 identity = c.native_identity(key)
                 p = c.plan(self.campaign, self.cohort, identity, [], action="initial",
                     run_id="native-" + key, attempt_id="attempt-" + key, max_calls=1, max_seconds=60)
-                bundle = self.root / key
+                suffix = key + ("-mounted" if mounted else "")
+                bundle = self.root / suffix
                 (bundle / "images").mkdir(parents=True)
                 (bundle / "images/000000.jpg").write_bytes(journal.synthetic_bytes(0))
                 rows = [{**row, "image": f"images/{row['ordinal']:06d}.jpg", "width": 1, "height": 1}
@@ -359,8 +360,24 @@ class FreshTests(unittest.TestCase):
                 hnlo = stack.enter_context(patch("safeshift.pilot.hnlo.replay", return_value={"status": "SCRIPTED_ONLY", "hnlo": None}))
                 request = {"model_key": key, "source_sha256": digest(c.source_manifest()), "inputs": self.root,
                     "marker_sha256": "f" * 64, "projection_sha256": digest(self.cohort), "campaign": self.campaign,
-                    "plan": p, "history": [], "work": self.root / ("native-work-" + key), "scratch": self.root,
+                    "plan": p, "history": [], "work": self.root / ("native-work-" + suffix), "scratch": self.root,
                     "resource_policy": {"review_mode": "EXTERNAL"}, "repair_case": None}
+                if mounted:
+                    from test_fresh_fulltrain_revision import budgets
+                    from safeshift.fulltrain import original_inputs, admission, environment
+                    binding = {"schema": original_inputs.SCHEMA, "master_sha256": original_inputs.MASTER_SHA,
+                        "projection_sha256": digest(self.cohort), **{name: {"ref": ref, "version": 1,
+                        "mount": ref.split("/")[1]} for name, ref in original_inputs.REFS.items()}}
+                    request.update(original_inputs=binding, marker_sha256=digest(binding),
+                        inputs=str(self.root / "synthetic-mounts"), scratch=str(self.root / "scratch-mounted"),
+                        checkpoint_marker_sha256="a"*64, resource_policy=budgets(), runtime_lock=None,
+                        runtime_lock_sha256=None, software_input=None, software_marker_sha256=None)
+                    stack.enter_context(patch.object(original_inputs, "admit", return_value=(bundle, self.cohort, rows)))
+                    stack.enter_context(patch.object(original_inputs, "verify_bytes"))
+                    stack.enter_context(patch.object(original_inputs, "verify_images"))
+                    stack.enter_context(patch.object(admission, "checkpoint_binding", return_value=(None, self.root, self.root, {})))
+                    for name in ("resources", "hardware", "cuda"):
+                        stack.enter_context(patch.object(environment, name))
                 result = rt._worker(request)
                 h = rt.recover(result, self.cohort, digest(p))
                 self.assertEqual(h["records"][0]["status"], "SUCCESS")

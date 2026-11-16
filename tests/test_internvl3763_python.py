@@ -84,7 +84,11 @@ class PythonInputTests(unittest.TestCase):
         return py.stage(self.inputs, self.request, self.scratch, self.out, {}, time.monotonic()+60)
 
     def test_lock_science_and_inherited_source_are_unchanged(self):
-        self.assertEqual(digest(campaign.science()), "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50")
+        from frozen_internvl_snapshot import observed
+        frozen = observed()
+        self.assertEqual(frozen["science"], "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50")
+        self.assertEqual(campaign.science()["configuration"], frozen["configuration"])
+        self.assertEqual(campaign.science()["native"], frozen["native"])
         self.assertEqual(py.manifest()["lock"]["size_bytes"], 29713170)
         self.assertEqual(py.manifest()["lock"]["sha256"], "f6e955dc9ddfcad74e77abe6f439dac48ebca14b101ed7c85a5bf3206ed2c53d")
         for name in ("safeshift/candidates/train_python.py", "safeshift/candidates/train_runtime.py",

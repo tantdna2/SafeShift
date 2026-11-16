@@ -1,5 +1,42 @@
 # SafeShift — PROJECT STATE
 
+## PR195 F1/F2 review follow-up — 16/11/2026, same branch and Draft PR
+
+[Review6896803837](https://github.com/tantdna2/SafeShift/pull/195#issuecomment-6896803837)
+is addressed on `fix/qwen-minicpm-fulltrain-20261112`. Normal merge
+`9d417864112a0e4a958703ea3fc42b8d3b689601` has parents reviewed HEAD8b9570f
+and main `89088dbc57d629933ab1462171019cd0125c2869`. ARCHITECTURE/PROJECT_STATE
+conflicts retain both PR195 and PR196/197. Main's Qwen3 Composite V1 decision,
+amendment, code and evidence remain unchanged; prior snapshots below do not
+override its approved scope. No new branch, rebase, force push or PR merge.
+
+F2 uses the original builder/source inventory from each notebook's exact Git
+runtime in a bounded isolated CPU snapshot. Complete notebook/payload membership,
+bytes, source digest/ref, syntax and empty outputs are verified; bad/extra/missing/
+duplicate sources and wrong commits fail. The default current-source builder
+remains strict. All historical notebook bytes, locked source, capsule/raw/history
+and execution fences are unchanged. No notebook/hash/source-lock regeneration.
+
+Fresh complete per-suite runs at code HEAD
+`1e24192eff5f8ba96f36ab33f733e2d47729a80f`: Fresh notebooks5/5, Full-TRAIN PREP3/3,
+MiniCPM notebooks9/9, Full-TRAIN24/24, fresh controller23/23, fresh revision23 PASS
+and5 Linux-only skips, original Inputs8/8, Owner UI11/11, SDK transport3/3,
+manual collector107/107, Python Input21 PASS/1 Windows symlink skip, Qwen Composite
+23/23, continuation40/40 and official results11/11. Corresponding Linux process
+and symlink cases6/6 PASS. No final FAIL/ERROR, network attempt, GPU/Kaggle/real
+inference/TEST or production mutation. These are individual suite runs, not the
+older269-case pooled coverage statement or a GitHub Actions/full-discovery PASS.
+
+[Follow-up and reproduction](research/PR195_F12_REVIEW_20261116.md) and
+[per-suite receipts](research/evidence/pr195_f12_20261116/suites.json) retain exact
+tested commit/file/source/log hashes, skips and the original15/11 FAIL/PASS evidence.
+Runtime SHA remains `1ae53f138508c35e2863367f052d3268c862b944294be810e23600d675948335`;
+MiniCPM notebook SHA remains
+`de604979761211127728229240af7c91fe104f263c71e9f6dc66f8911ba96922`.
+Delivery changes only docs/evidence after testing. Source release/activation,
+rights/caps/live verification remain BLOCKED/NOT_RUN. Stop at the same Draft for
+ChatGPT re-review; independent Antigravity audit and authorized PR merge are pending.
+
 
 ## CURRENT - Qwen3 Full-TRAIN Composite V1 - 15/11/2026
 
@@ -129,6 +166,61 @@ required. **NOT READY / NOT ACTIVATED.**
 PASS; inherited158 run (156 PASS, two SDK opt-in skips covered by separate2/2
 PASS); targeted hardening10/10 and custody6/6 PASS. Combined author CPU evidence,
 no unresolved failure, not independent audit or live service verification.
+
+## MiniCPM Full-TRAIN Owner UI continuation — 15/11/2026, same Draft PR #195
+
+Continues branch `fix/qwen-minicpm-fulltrain-20261112` from PR195 HEAD18351f8;
+no new PR, no modification of the root Qwen checkout or InternVL Operator.
+[Vietnamese Owner UI handoff and exact Inputs](MINICPM_FULLTRAIN_OWNER_UI.md)
+uses the existing fresh171 native controller/FP32/C1/raw/history/export pipeline.
+Added source-bound private capsule packaging, explicit complete ancestor restore,
+shared offline CPython Input selection without GitHub Python fallback, read-only
+provider/two-pair ZIP verification, and bounded resume preparation for pending IDs.
+Shared InternVL collector defaults retain their one-pair checks; MiniCPM explicitly
+selects two nested pairs without relaxing pagination/URL/hash/replay guards.
+
+Retained local InternVL23 request binds TRAIN/master Dataset versions1; retained
+MiniCPM preparation metadata binds Private checkpoint Output version1. These are
+historical local evidence, not fresh provider observations or execution authority.
+No Dataset/checkpoint reupload or download was made. Capsule publication and
+actual source/science/caps/rights/provider/live release remain separate gates.
+`contract.authorize` remains closed before Input/provider/raw I/O; package status
+is CANDIDATE_RELEASE_BLOCKED, final-source live checks NOT_RUN. O2–O6 where missing
+remain pending. Current task performs zero Kaggle/API/GPU/model/TEST operations,
+no production-ledger writes, approval, audit or merge. Stop at this same Draft
+for ChatGPT direct review and mandatory independent Antigravity audit.
+
+CPU validation and final artifact hashes for this continuation are recorded in
+[the continuation receipt](research/evidence/minicpm_owner_ui_20261115/README.md).
+269 distinct CPU cases have a PASS across the recorded runs. The first operator
+run's two historical snapshot assertion failures remain visible; both corrected
+at their exact original BASE without changing frozen digest constants, with
+additional native/configuration/source-delta checks. All six Windows-only skips
+have matching Linux PASS evidence. Final native CPU19/19 and notebook9/9 PASS.
+
+## Qwen3 / MiniCPM full-TRAIN technical candidate — 12/11/2026
+
+New isolated branch from GitHub-verified main
+`341ab626ff2af7ef79ced0d9c3119794eea4a820`; one Draft PR, no merge or submit.
+[Review, Inputs and runbook](QWEN_MINICPM_FULLTRAIN_REVIEW.md) records the supplied
+untracked Antigravity notebook's simulated FP32/parser/history/completion defects
+and its replacement with the reviewed shared native adapter/controller. The new
+MiniCPM notebook is **BLOCKED_NOT_LIVE_VERIFIED**, label-only/HNLO N/A. Explicit
+original-mount admission avoids image copying/reupload and preserves frozen
+3,763 TRAIN IDs/order/SHA. Dataset versions/projection/release/caps still need
+authenticated admission; no defaults or Owner-science approvals are fabricated.
+
+Qwen V4 ORIGINAL remains `3539 SUCCESS + 1 TECHNICAL_ERROR + 223 NOT_ATTEMPTED`;
+Recovery224 remains separate `224 SUCCESS`. No fresh-Qwen completion evidence was
+found in the reviewed tracked dossier. MiniCPM Candidate160 `155 SUCCESS + 5 INVALID`
+and Issue173 v3's single native SUCCESS remain historical, never fresh predictions.
+O2–O6 where missing, final-source live verification, ChatGPT review, independent
+Antigravity audit and separately authorized merge/activation remain pending.
+No `operator-asus-win` session or production ledger was touched. CPU receipt and
+exact file hashes are linked from the review; CPU is not model READY or science PASS.
+Final focused acceptance: Windows core101 PASS/5 Linux-only SKIP, pinned native
+CPU19/19 PASS, Linux supervisor5/5 PASS; zero FAIL/ERROR. The five skips are covered
+on Linux. [Receipts/logs/source and notebook hashes](research/evidence/qwen_minicpm_20261112/summary.json).
 
 ## HISTORICAL — Attempt9 output pagination correction, same integrated task — 11/11/2026
 

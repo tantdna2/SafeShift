@@ -109,7 +109,14 @@ def prepare(request, repo, output, deadline):
     env = clean_env(repo, scratch)
     if key != "qwen3":
         from safeshift.candidates.train_runtime import prepare_runtime
-        python, env = prepare_runtime(Path(repo), key, scratch, Path(output), env, deadline)
+        if "python_input" in request:
+            from .minicpm_ui import stage_python
+            from safeshift.internvl3763_python import selected_interpreter
+            selected = stage_python(request, scratch, Path(output), env, deadline)
+            with selected_interpreter(selected, scratch):
+                python, env = prepare_runtime(Path(repo), key, scratch, Path(output), env, deadline)
+        else:
+            python, env = prepare_runtime(Path(repo), key, scratch, Path(output), env, deadline)
     else:
         from safeshift.pilot import bootstrap
         root = Path(request["software_input"])

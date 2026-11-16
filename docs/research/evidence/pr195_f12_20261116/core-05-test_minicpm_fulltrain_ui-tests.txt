@@ -1,0 +1,16 @@
+test_capsule_corrupt_extra_missing_or_wrong_pin_fail_closed (test_minicpm_fulltrain_ui.OwnerUITests.test_capsule_corrupt_extra_missing_or_wrong_pin_fail_closed) ... ok
+test_initial_builder_uses_current_source_and_explicit_caps_without_data_reads (test_minicpm_fulltrain_ui.OwnerUITests.test_initial_builder_uses_current_source_and_explicit_caps_without_data_reads) ... ok
+test_initial_package_complete_inputs_and_unchanged_fence (test_minicpm_fulltrain_ui.OwnerUITests.test_initial_package_complete_inputs_and_unchanged_fence) ... ok
+test_offline_python_bad_bytes_missing_duplicate_marker_and_writable_mount_block (test_minicpm_fulltrain_ui.OwnerUITests.test_offline_python_bad_bytes_missing_duplicate_marker_and_writable_mount_block) ... ok
+test_offline_python_is_selected_for_shared_setup_no_provider_fallback (test_minicpm_fulltrain_ui.OwnerUITests.test_offline_python_is_selected_for_shared_setup_no_provider_fallback) ... ok
+test_public_execution_and_collection_block_before_any_path_network_or_output (test_minicpm_fulltrain_ui.OwnerUITests.test_public_execution_and_collection_block_before_any_path_network_or_output) ... ok
+test_python_binding_failure_precedes_decode (test_minicpm_fulltrain_ui.OwnerUITests.test_python_binding_failure_precedes_decode) ... ok
+test_real_controller_export_verify_resume_package_and_empty_vm_restore (test_minicpm_fulltrain_ui.OwnerUITests.test_real_controller_export_verify_resume_package_and_empty_vm_restore) ... ok
+test_strict_caps_versions_model_history_and_no_invented_authority (test_minicpm_fulltrain_ui.OwnerUITests.test_strict_caps_versions_model_history_and_no_invented_authority) ... ok
+test_tampered_zip_or_sidecar_and_foreign_supervisor_block_without_output (test_minicpm_fulltrain_ui.OwnerUITests.test_tampered_zip_or_sidecar_and_foreign_supervisor_block_without_output) ... ok
+test_technical_error_preserved_and_next_turn_stops (test_minicpm_fulltrain_ui.OwnerUITests.test_technical_error_preserved_and_next_turn_stops) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 29.335s
+
+OK

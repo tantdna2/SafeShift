@@ -10,7 +10,7 @@ import unittest
 from safeshift.candidates.fulltrain import MODELS
 from safeshift.candidates.source import ROOT
 from safeshift.pilot.artifacts import read, verify_archive
-from scripts.build_candidate160_notebooks import fulltrain_notebook
+from scripts.locked_fulltrain_notebooks import reproduce, verify_payload
 
 
 class FulltrainNotebookTests(unittest.TestCase):
@@ -18,8 +18,9 @@ class FulltrainNotebookTests(unittest.TestCase):
         for key in MODELS:
             path = ROOT / f"notebooks/SafeShift_FULLTRAIN_PREP_{key}.ipynb"
             nb = read(path)
-            expected = fulltrain_notebook(key, nb["metadata"]["safeshift"]["runtime_ref"])
-            self.assertEqual(path.read_bytes(), (json.dumps(expected, indent=1, ensure_ascii=False)+"\n").encode())
+            locked = reproduce(key, nb["metadata"]["safeshift"]["runtime_ref"], kind="fulltrain")
+            self.assertEqual(path.read_bytes(), (json.dumps(locked["notebook"], indent=1, ensure_ascii=False)+"\n").encode())
+            verify_payload(nb, locked)
             for cell in nb["cells"]:
                 if cell["cell_type"] == "code":
                     self.assertEqual(cell["outputs"], [])

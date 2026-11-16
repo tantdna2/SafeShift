@@ -1,0 +1,10 @@
+test_deadline_expired_before_launch (test_fresh_fulltrain_revision.SupervisionTests.test_deadline_expired_before_launch) ... ok
+test_hung_native_tree_is_killed_and_partial_raw_retained (test_fresh_fulltrain_revision.SupervisionTests.test_hung_native_tree_is_killed_and_partial_raw_retained) ... ok
+test_large_internal_setup_log_stops_without_truncating (test_fresh_fulltrain_revision.SupervisionTests.test_large_internal_setup_log_stops_without_truncating) ... ok
+test_parent_death_terminates_guard_and_native_descendants (test_fresh_fulltrain_revision.SupervisionTests.test_parent_death_terminates_guard_and_native_descendants) ... ok
+test_success_nonzero_and_no_output_overwrite (test_fresh_fulltrain_revision.SupervisionTests.test_success_nonzero_and_no_output_overwrite) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 2.727s
+
+OK

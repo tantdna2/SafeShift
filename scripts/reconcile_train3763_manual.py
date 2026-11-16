@@ -299,17 +299,20 @@ def validate_output_url(url, name):
     # No percent escapes, empty/dot path segments or path parameters. The SDK file
     # name and literal last URL component must BOTH equal the expected name.
     parts = target.path.split("/")
-    require(parts[0] == "" and parts[-1] == name and all(
+    expected_parts = name.split("/")
+    require(all(re.fullmatch(r"[A-Za-z0-9_~.-]+", p) and p not in (".", "..") for p in expected_parts),
+        "MANUAL_UNSAFE_OUTPUT_URL")
+    require(parts[0] == "" and parts[-len(expected_parts):] == expected_parts and all(
         re.fullmatch(r"[A-Za-z0-9_~.-]+", p) and p not in (".", "..") for p in parts[1:]),
         "MANUAL_UNSAFE_OUTPUT_URL")
     if target.netloc == "www.kaggleusercontent.com":
         # Actual v1 output URLs use a compact JWE-style token: header, empty
         # encrypted-key field, IV, ciphertext, tag. Dots are INSIDE one path
         # segment; never decode it or publish it. Preserve simple opaque tokens.
-        token = parts[3] if len(parts) == 5 else ""
+        token = parts[3] if len(parts) == 4 + len(expected_parts) else ""
         token_ok = re.fullmatch(r"[A-Za-z0-9_-]+", token) or re.fullmatch(
             r"[A-Za-z0-9_-]+\.\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", token)
-        require("?" not in url and len(parts) == 5 and parts[1] == "kf"
+        require("?" not in url and len(parts) == 4 + len(expected_parts) and parts[1] == "kf"
             and re.fullmatch(r"[1-9][0-9]*", parts[2])
             and token_ok, "MANUAL_UNSAFE_OUTPUT_URL")
     else:
@@ -393,14 +396,22 @@ def anonymous_output_session(deadline):
                 timer.join()  # no watchdog/socket work remains after return
 
 
-def download_outputs(client, job, version, archive, expected_sha, destination):
+def download_outputs(client, job, version, archive, expected_sha, destination, *, output_pairs=None):
     """Pinned SDK listing + bounded anonymous GET, no SDK retry/resume downloader."""
     import os
     from kagglesdk.kernels.types.kernels_api_service import ApiListKernelSessionOutputRequest
     from scripts.submit_internvl_v2 import bounded_http
     require(re.fullmatch(r"[A-Za-z0-9_-]+\.zip", archive.name), "MANUAL_ARCHIVE_NAME")
     require_hash(expected_sha)
-    expected = {archive.name: archive.stat().st_size, archive.name + ".sha256.json": 4096}
+    pairs = {archive.name: archive} if output_pairs is None else output_pairs
+    require(type(pairs) is dict and 1 <= len(pairs) <= 2, "MANUAL_OUTPUT_PAIRS_BOUND")
+    for name, local in pairs.items():
+        require(type(name) is str and name.endswith(".zip") and all(
+            re.fullmatch(r"[A-Za-z0-9_~.-]+", part) and part not in (".", "..")
+            for part in name.split("/")), "MANUAL_ARCHIVE_NAME")
+        require(Path(local).is_file(), "MANUAL_LOCAL_OUTPUT_REQUIRED")
+    expected = {name: Path(local).stat().st_size for name, local in pairs.items()}
+    expected.update({name + ".sha256.json": 4096 for name in pairs})
     require(shutil.disk_usage(destination).free > sum(expected.values()) + 2**20, "MANUAL_DOWNLOAD_DISK_BOUND")
     with private_transport_logs(), bounded_http():
         query = ApiListKernelSessionOutputRequest()
@@ -470,7 +481,9 @@ def download_outputs(client, job, version, archive, expected_sha, destination):
                 length = response.headers.get("Content-Length")
                 require(length is None or (re.fullmatch(r"[0-9]+", length)
                     and int(length) <= limit), "MANUAL_DOWNLOAD_BOUND")
-                with (destination / name).open("xb") as stream:
+                target = safe(destination, name)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with target.open("xb") as stream:
                     total = 0
                     try:
                         for chunk in response.iter_content(65536):
@@ -482,6 +495,12 @@ def download_outputs(client, job, version, archive, expected_sha, destination):
                     finally:
                         # Even a timeout leaves durable, create-only partials.
                         stream.flush(); os.fsync(stream.fileno())
+    if output_pairs is not None:
+        require(archive in [Path(v) for v in pairs.values()] and sha(archive) == expected_sha, "MANUAL_PRIMARY_PAIR_BINDING")
+        for name, local in pairs.items():
+            require(sha(destination / name) == sha(local) == read(str(destination / name) + ".sha256.json")["sha256"],
+                "MANUAL_PROVIDER_ARCHIVE_MISMATCH")
+        return {"pairs": {name: sha(destination / name) for name in pairs}, "log_sha256": sha(destination / "provider.log")}
     remote_archive = destination / archive.name
     require(sha(remote_archive) == expected_sha == read(str(remote_archive) + ".sha256.json")["sha256"],
         "MANUAL_PROVIDER_ARCHIVE_MISMATCH")

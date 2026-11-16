@@ -1,0 +1,8 @@
+test_cells_execute_on_cpu_in_empty_directory_without_site_packages (test_fulltrain_notebooks.FulltrainNotebookTests.test_cells_execute_on_cpu_in_empty_directory_without_site_packages) ... ok
+test_cli_prepares_same_3763_plan_without_predictions_and_no_overwrite (test_fulltrain_notebooks.FulltrainNotebookTests.test_cli_prepares_same_3763_plan_without_predictions_and_no_overwrite) ... ok
+test_deterministic_builder_empty_outputs_compile_all_models (test_fulltrain_notebooks.FulltrainNotebookTests.test_deterministic_builder_empty_outputs_compile_all_models) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 17.544s
+
+OK

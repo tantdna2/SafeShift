@@ -1,0 +1,8 @@
+test_two_nested_pairs_real_sdk_exact_four_anonymous_gets (test_minicpm_ui_transport.MiniCPMPairTransportTests.test_two_nested_pairs_real_sdk_exact_four_anonymous_gets) ... ok
+test_two_pairs_missing_extra_or_conflicting_path_before_get (test_minicpm_ui_transport.MiniCPMPairTransportTests.test_two_pairs_missing_extra_or_conflicting_path_before_get) ... ok
+test_two_pairs_sha_disagreement_preserves_download_without_acceptance (test_minicpm_ui_transport.MiniCPMPairTransportTests.test_two_pairs_sha_disagreement_preserves_download_without_acceptance) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.226s
+
+OK

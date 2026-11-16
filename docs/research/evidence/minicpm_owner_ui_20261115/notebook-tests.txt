@@ -1,0 +1,14 @@
+test_clean_cpu_cells_repeated_without_network_tensor_model_or_input_access (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_clean_cpu_cells_repeated_without_network_tensor_model_or_input_access) ... ok
+test_corrupt_embedded_source_fails_before_preparation (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_corrupt_embedded_source_fails_before_preparation) ... ok
+test_exact_builder_committed_payload_syntax_and_no_cell_output (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_exact_builder_committed_payload_syntax_and_no_cell_output) ... ok
+test_future_request_boundary_calls_shared_pipeline_and_rejects_foreign_or_corrupt (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_future_request_boundary_calls_shared_pipeline_and_rejects_foreign_or_corrupt) ... ok
+test_owner_ui_variant_pins_capsule_and_fails_before_input_without_prep_archives (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_owner_ui_variant_pins_capsule_and_fails_before_input_without_prep_archives) ... ok
+test_pinned_checkpoint_sizes_hashes_and_historical_byte_receipt_match (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_pinned_checkpoint_sizes_hashes_and_historical_byte_receipt_match) ... ok
+test_preparation_source_mismatch_does_not_create_outputs (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_preparation_source_mismatch_does_not_create_outputs) ... ok
+test_production_gate_precedes_request_path_hash_import_or_model (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_production_gate_precedes_request_path_hash_import_or_model) ... ok
+test_real_c1_parser_rejects_previous_notebook_rescues (test_fulltrain_minicpm4_notebook.MiniCPMFulltrainNotebookTests.test_real_c1_parser_rejects_previous_notebook_rescues) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 14.070s
+
+OK
