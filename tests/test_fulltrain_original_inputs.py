@@ -71,6 +71,44 @@ class OriginalMountedInputsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "UNIQUE_ORIGINAL_MOUNT"):
             self.admit()
 
+    def test_verified_kaggle_v1_nested_master_and_train_layout(self):
+        # Names mirror the authenticated version1 ListDatasetFiles inventory;
+        # contents remain synthetic and are not evidence of private byte PASS.
+        nested = self.master.parent / "safeshift-pilot-input/master_manifest.json"
+        nested.parent.mkdir()
+        self.master.rename(nested)
+        with patch.object(original.inputs, "project_master", return_value=self.cohort):
+            self.assertEqual(self.admit(), (self.bundle, self.cohort, self.rows))
+
+    def test_missing_unknown_duplicate_and_wrong_kind_content_roots(self):
+        nested = self.master.parent / "safeshift-pilot-input/master_manifest.json"
+        nested.parent.mkdir()
+        nested.write_bytes(self.master.read_bytes())
+        with self.assertRaisesRegex(ValueError, "UNIQUE_ORIGINAL_CONTENT"):
+            self.admit()
+        nested.unlink(); self.master.unlink()
+        (nested.parent / "unexpected").mkdir()
+        with self.assertRaisesRegex(ValueError, "UNIQUE_ORIGINAL_CONTENT"):
+            self.admit()
+        self.master.mkdir()
+        with self.assertRaisesRegex(ValueError, "REGULAR_FILE"):
+            self.admit()
+
+    def test_train_root_has_no_fallback_to_test_or_arbitrary_depth(self):
+        self.bundle.rename(self.bundle.with_name("unknown"))
+        with patch.object(original.inputs, "project_master", return_value=self.cohort):
+            with self.assertRaisesRegex(ValueError, "UNIQUE_ORIGINAL_CONTENT"):
+                self.admit()
+
+    def test_nested_master_hardlink_is_rejected_before_projecting(self):
+        import os
+        nested = self.master.parent / "safeshift-pilot-input/master_manifest.json"
+        nested.parent.mkdir()
+        os.link(self.master, nested)
+        with patch.object(original.inputs, "project_master") as project:
+            with self.assertRaises(ValueError): self.admit()
+            project.assert_not_called()
+
     def test_locator_id_and_checksum_changes_fail_before_decode_or_call(self):
         for mutate in (lambda r:r.update(image_locator="DATA_PATH/TEST/private.jpg"),
                        lambda r:r.update(sample_id="other"), lambda r:r.update(image_sha256="f"*64)):
@@ -105,11 +143,14 @@ class OriginalMountedInputsTests(unittest.TestCase):
             with self.assertRaises(ValueError): runtime._worker({**request, "model_key":"minicpm4"})
             private.assert_not_called()
 
-    def test_child_decoder_uses_admitted_path_and_rejects_non_jpeg(self):
+    def test_child_decoder_matches_native_pil_rgb_even_for_png_bytes_at_jpg_locator(self):
         image = Mock(format="JPEG", n_frames=1, size=(17, 1))
         context = Mock()
         context.__enter__ = Mock(return_value=image)
         context.__exit__ = Mock(return_value=False)
+        rgb = Mock(mode="RGB")
+        image.convert.return_value.__enter__ = Mock(return_value=rgb)
+        image.convert.return_value.__exit__ = Mock(return_value=False)
         opener = Mock(return_value=context)
         with patch.object(original, "verify_bytes") as bytes_gate, \
              patch.dict("sys.modules", {"PIL": SimpleNamespace(Image=SimpleNamespace(open=opener))}):
@@ -119,7 +160,9 @@ class OriginalMountedInputsTests(unittest.TestCase):
             bytes_gate.assert_called_once_with(self.bundle, self.cohort, self.rows[:1])
             opener.assert_called_once_with(self.bundle / self.rows[0]["image"])
             image.format = "PNG"
-            with self.assertRaisesRegex(ValueError, "STILL_JPEG"):
+            self.assertEqual(original.verify_images(self.bundle, self.cohort, self.rows[:1])["formats"], {"PNG": 1})
+            image.n_frames = 2
+            with self.assertRaisesRegex(ValueError, "STILL_IMAGE"):
                 original.verify_images(self.bundle, self.cohort, self.rows[:1])
 
 

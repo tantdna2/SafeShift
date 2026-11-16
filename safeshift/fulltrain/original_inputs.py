@@ -15,6 +15,21 @@ from . import inputs
 SCHEMA = "safeshift-original-mounted-train-v1"
 REFS = {"master_dataset": "nguynanhtn/safeshift-pilot-input",
         "train_dataset": "nguynanhtn/inspecsafe-v1-kaggle"}
+# Version1 provider listings, rechecked for the V4-4 incident. No recursive
+# fallback: the flat Master is retained for existing direct exported bundles.
+MASTER_PATHS = ("master_manifest.json", "safeshift-pilot-input/master_manifest.json")
+TRAIN_PATHS = ("InspecSafe-V1-Kaggle/train/DATA_PATH",)
+
+
+def unique_path(mount, paths, *, directory=False):
+    found = []
+    for name in paths:
+        path = safe(mount, name)  # also rejects dangling links and hardlinks
+        if path.exists():
+            snapshot_stat(path, directory=directory)
+            found.append(path)
+    require(len(found) == 1, "UNIQUE_ORIGINAL_CONTENT_PATH_REQUIRED")
+    return found[0]
 
 
 def validate_binding(binding, expected_binding_sha256, expected_projection_sha256):
@@ -36,7 +51,7 @@ def validate_binding(binding, expected_binding_sha256, expected_projection_sha25
 
 def admit(root, binding, binding_sha256, projection_sha256):
     validate_binding(binding, binding_sha256, projection_sha256)
-    root = Path(root)
+    root = Path(root).absolute()
     require(not any(p.is_symlink() or (hasattr(p, "is_junction") and p.is_junction())
                     for p in (root, *root.parents)), "ORIGINAL_INPUT_ROOT_ALIAS")
     attached = mounts(root)  # bounded direct/nested discovery; no image/TEST walk
@@ -44,14 +59,13 @@ def admit(root, binding, binding_sha256, projection_sha256):
         selected = safe(root, binding[name]["mount"])
         require([p for p in attached if p.name == ref.split("/")[1]] == [selected],
                 "UNIQUE_ORIGINAL_MOUNT_REQUIRED")
-    master = safe(root, binding["master_dataset"]["mount"] + "/master_manifest.json")
+    master = unique_path(safe(root, binding["master_dataset"]["mount"]), MASTER_PATHS)
     require(snapshot_stat(master).st_size <= 16 * 2**20, "ORIGINAL_MASTER_BOUND")
     raw = master.read_bytes()
     cohort = inputs.project_master(raw, projection_sha256)  # frozen SHA BEFORE parse
     originals = json.loads(raw)["samples"]
     require(len(originals) == len(cohort["samples"]) == 3763, "EXACT_ORIGINAL_3763")
-    bundle = safe(root, binding["train_dataset"]["mount"] + "/InspecSafe-V1-Kaggle/train/DATA_PATH")
-    snapshot_stat(bundle, directory=True)
+    bundle = unique_path(safe(root, binding["train_dataset"]["mount"]), TRAIN_PATHS, directory=True)
     rows = []
     for row, original in zip(cohort["samples"], originals):
         locator = original["image_locator"]
@@ -60,6 +74,7 @@ def admit(root, binding, binding_sha256, projection_sha256):
         require(original["sample_id"] == row["sample_id"]
                 and original["image_sha256"] == row["image_sha256"], "ORIGINAL_ROW_CUSTODY")
         image = locator.removeprefix("DATA_PATH/")
+        require(Path(image).stem == row["sample_id"], "ORIGINAL_MAPPING_ID_PATH")
         safe(bundle, image)
         rows.append({**row, "image": image})  # No GT/domain/label fields leave admission.
     return bundle, cohort, rows
@@ -83,9 +98,16 @@ def verify_images(root, cohort, rows):
     """Pinned child CPU image decode; SHA locks dimensions, no invented sizes."""
     verify_bytes(root, cohort, rows)
     from PIL import Image
+    formats = {}
     for row in rows:
         with Image.open(safe(root, row["image"])) as image:
-            require(image.format == "JPEG" and getattr(image, "n_frames", 1) == 1
-                    and all(n > 0 for n in image.size), "ORIGINAL_STILL_JPEG_REQUIRED")
+            # Match the proven native PIL loader. The original TRAIN includes
+            # PNG bytes with .jpg locators; the frozen SHA, not the suffix,
+            # identifies the unchanged input. Never transcode or rewrite it.
+            require(getattr(image, "n_frames", 1) == 1 and all(n > 0 for n in image.size),
+                    "ORIGINAL_STILL_IMAGE_REQUIRED")
             image.load()
-    return {"verified_images": len(rows), "decode": "PASS", "copied_bytes": 0}
+            formats[image.format] = formats.get(image.format, 0) + 1
+            with image.convert("RGB") as rgb:
+                require(rgb.mode == "RGB", "ORIGINAL_NATIVE_RGB_CONVERSION")
+    return {"verified_images": len(rows), "decode": "PASS", "formats": formats, "copied_bytes": 0}

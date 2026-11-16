@@ -1,6 +1,52 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR199 Owner UI restart from ordinal0 — 16/11/2026
+## CURRENT — V4-4 real Input and source repair — 17/11/2026
+
+[Owner6922725439](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922725439)
+starts one new Codex task/branch/Draft PR from PR199 merge
+`92e7af41b3102cac16609908c88688f4049b4cc1` (verified GitHub main). The previous
+postmerge review missed real Input rehearsal; synthetic acceptance did not prove
+the new original-Master path. [Reference comparison](research/MINICPM_V44_REFERENCE_COMPARISON_20261117.md)
+opens actual downloaded successful Kaggle version1 notebook payloads, not just
+their reports. The old160-image pilot first image differs from Full-TRAIN ordinal0.
+
+Read-only current provider evidence confirms nested Master, exact original TRAIN
+tree and all3763 paths/sizes, flat Python/capsule and19-file checkpoint layout.
+Downloaded Master SHA is frozen; repaired admission, all3763 SHA checks and native
+PIL/RGB CPU decode pass on authentic original copies.73 images were independently
+downloaded from current Kaggle version1; the other3690 bytes come from originals
+and match frozen SHA/current listing. The attempted full remote download stopped
+on transport errors; this is not3763 new remote-byte verifications. All partials
+remain. No synthetic data replaces real checks. Decode found3724 JPEG and39 PNG
+at original `.jpg` locators; preflight now follows the proven native still-image
+PIL/RGB loader, preserving bytes/configuration. Python payload/decoded archive,
+checkpoint marker/index and old capsule ticket were independently checked.
+Current full weights are not rehashed/loaded; final-source GPU/model-fit NOT_RUN.
+
+Authenticated V4-4: provider COMPLETE, kernel145432984, supervisor BLOCKED/admit,
+exact launch/admit claims, reaped child, exhaustive145-file inventory and only
+supervisor ZIP pair. It is FAILED_PRE_NATIVE_NO_USABLE_RESULTS, native calls0,
+not COLLECTED. This differs from the three older provider-uncertain retired jobs.
+All real journals/mirrors/tickets/registrations remain unchanged in this task.
+
+[Source-repair contract/handoff](MINICPM_V44_REPAIR.md) implements one authenticated
+source transition in the same mirrored journal, preserving old holds and adding
+no predictions. Serial5 starts from6763 call reservations/4 jobs/115200 physical
+GPU-seconds, all3763 NOT_ATTEMPTED at ordinal0, same finite project caps and fresh
+actual quota gate. The exact previous release/ticket/source, authentic new
+directive, closure receipt, journal head, new implementation PR/source and fresh
+review/audit/merge/postmerge approvals are bound. Supervisor-only closure is never
+false COLLECTED/refund; duplicate/unknown/native/partial custody blocks.
+
+**DRAFT SOURCE REVIEW REQUIRED / OWNER RUN BLOCKED.** Genuine production closure,
+new final-source release/signature/publication and Owner Run have not occurred.
+Code/CPU validation and real read-only evidence are distinct from independent
+audit, merge and GPU/scientific qualification. ChatGPT reviews the new Draft HEAD;
+after remaining gates the SAME historical Antigravity Operator session publishes
+the valid current notebook/private capsule and <=3 Owner steps. Codex does not
+submit or monitor live. FP16 weights/FP32 resampler/C1/HNLO N/A/TEST remain fixed.
+
+## HISTORICAL — PR199 Owner UI restart from ordinal0 — 16/11/2026
 
 [Owner decision6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
 supersedes automatic Codex submit, remote-terminal recovery of deleted/unavailable
