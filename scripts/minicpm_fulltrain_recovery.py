@@ -1,32 +1,28 @@
-"""Source-reviewed recovery, one SDK submission, bounded native-start handoff.
+"""Owner UI restart in PR199 and the SAME historical Operator journal.
 
-Use the SAME historical Operator journal. No automatic refund, fourth campaign,
-retry, cancellation, science change, or inference in any preparation command.
+CPU preparation and read-only observations never issue a production release.
+Only after review/audit/merge/postmerge may Antigravity bind, stage and publish.
+There is no notebook/API submit, live observer, account switch or cancellation.
 """
 import argparse
 from copy import deepcopy
 import hashlib
 import json
 from pathlib import Path
-import re
-import subprocess
-import tempfile
 import time
-from unittest.mock import patch
+from datetime import datetime, timezone, timedelta
 
 from safeshift.candidates.source import ROOT, require, snapshot_stat
-from safeshift.pilot.artifacts import read, write, write_bytes, safe, sha, import_archive
-from safeshift.pilot.contract import digest, json_bytes
+from safeshift.pilot.artifacts import read, write, safe, sha
+from safeshift.pilot.contract import digest
 from safeshift.kaggle_handoff import lock, private_root
 from safeshift.fulltrain import contract, minicpm_release as a, minicpm_recovery as recovery, minicpm_ui as ui
-from safeshift.fulltrain.minicpm_execution import MARKER
 from scripts import minicpm_fulltrain_operator as old
 
 KNOWN = (("minicpm-v2-journal", "minicpm-v2-mirror"),
          ("minicpm-v2-2-journal", "minicpm-v2-2-mirror"), ("minicpm-v3-journal", "minicpm-v3-mirror"))
-EXTENSIONS = {"RECOVERY_RESERVED", "RECOVERY_PUBLISH_INTENT", "RECOVERY_PUBLISHED", "CODEX_PUSH_INTENT",
-              "CODEX_SUBMITTED", "CODEX_NATIVE_HANDOFF", "CODEX_OBSERVATION", "RECOVERY_COLLECTED",
-              "PENDING_RESERVED", "PENDING_PUBLISH_INTENT", "PENDING_PUBLISHED", "PENDING_PACKAGE_RECOVERED"}
+EXTENSIONS = {"RESTART_BOUND", "PENDING_RESERVED", "PENDING_PUBLISH_INTENT", "PENDING_PUBLISHED",
+              "RESTART_COLLECTED", "PENDING_PACKAGE_RECOVERED"}
 
 
 def inspect_journals():
@@ -93,502 +89,275 @@ def account_jobs(client):
     raise ValueError("MINICPM_RECOVERY_INCOMPLETE_PROVIDER_INVENTORY")
 
 
-def authenticate_old(row):
-    """Verify original source/reviews at its frozen Git bytes, not changed HEAD."""
-    with tempfile.TemporaryDirectory() as tmp:
-        repo = Path(tmp)
-        ref = "507e9817b91054fa7af324c6a915c35d56b5acf1"
-        names = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", ref], cwd=ROOT, text=True).splitlines()
-        for name in set(contract.sources()).intersection(names):
-            path = repo / name
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(subprocess.check_output(["git", "show", ref + ":" + name], cwd=ROOT))
-        grant = a.load(row["grant_locator"], repo=repo, collection=True)
-    a.verify_signature(grant["public_key"], row["ticket"]["payload"], row["ticket"]["signature"])
-    require(grant["campaign_id"] == row["campaign_id"]
-        and row["ticket"]["payload"]["grant_sha256"] == digest(grant), "MINICPM_OLD_AUTHENTIC_GRANT_BINDING")
-    return grant
+LOCAL_EVIDENCE = (
+    (("data/processed/inspect_run_1/safeshift-minicpm-mcpm4-train3763-1.log", "LOCAL_LOG"),
+     ("data/processed/inspect_run_1/minicpm-fulltrain/supervision/abcd3b0663fa4742a10c2f0016a517ba.zip", "LOCAL_SEALED_SUPERVISOR"),
+     ("data/processed/inspect_run_1/minicpm-fulltrain/supervision/abcd3b0663fa4742a10c2f0016a517ba.zip.sha256.json", "LOCAL_SIDECAR")),
+    (("data/processed/inspect_run_v2_1/safeshift-minicpm-mcpm4-train3763-v2-1.log", "LOCAL_LOG"),),
+    (("data/processed/minicpm-v3-package-1/dataset/safeshift_minicpm_release_ticket.json", "LOCAL_TICKET"),))
 
 
-def observe_predecessor(client, row, destination):
-    from scripts.reconcile_train3763_manual import observe_kernel, output_inventory
-    from scripts.minicpm_fulltrain_transport import download_selected
+def retirement_snapshot(directive):
+    """Derived local report only. No old journal, ticket or remote status changes."""
+    recovery.locator(directive)
+    require(directive["comment_id"] == recovery.DIRECTIVE, "MINICPM_OWNER_RETIREMENT_DIRECTIVE")
+    result = inspect_journals()
+    result.pop("prior_jobs"); result.pop("budget_amendment")
+    result.update(schema=recovery.SCHEMA, directive=directive, budget_policy=recovery.budget_policy(result["reserved"]))
+    for row, evidence in zip(result["journals"], LOCAL_EVIDENCE):
+        proofs = []
+        for name, kind in evidence:
+            path = safe(ROOT, name)
+            require(snapshot_stat(path).st_size <= 64 * 2**20, "MINICPM_RETIRED_EVIDENCE_BOUND")
+            if kind == "LOCAL_SEALED_SUPERVISOR":
+                ui.pair(path)
+            proofs.append({"path": name, "sha256": sha(path), "kind": kind})
+        row.update(disposition="RETIRED_NO_USABLE_RESULTS", historical_status="PROVIDER_UNAVAILABLE_NOT_VERIFIED_DELETED",
+            native_calls_evidence="OWNER_REPORTED_LOCAL_LOGS_NOT_PROVIDER_VERIFIED", evidence=proofs,
+            evidence_sha256=digest(proofs))
+    return result
+
+
+def verify_retired(snapshot):
+    baseline = inspect_journals()
+    require(snapshot["reserved"] == baseline["reserved"] == recovery.HISTORICAL, "MINICPM_RETIRED_COUNTER_DRIFT")
+    for original, retired in zip(baseline["journals"], snapshot["journals"]):
+        require(original == {k: ("UNVERIFIED" if k == "disposition" else None if k == "evidence_sha256" else retired[k])
+            for k in original}, "MINICPM_RETIRED_JOURNAL_HEAD_DRIFT")
+        for proof in retired["evidence"]:
+            path = safe(ROOT, proof["path"])
+            require(snapshot_stat(path).st_size <= 64 * 2**20 and sha(path) == proof["sha256"], "MINICPM_RETIRED_EVIDENCE_DRIFT")
+            if proof["kind"] == "LOCAL_SEALED_SUPERVISOR":
+                ui.pair(path)
+    return baseline
+
+
+def restart_spec(initial):
+    require(not initial["ancestors"] and not initial["request"]["history"], "MINICPM_RESTART_NO_OLD_PREDICTIONS")
+    prefix = "nguynanhtn/safeshift-minicpm-" + recovery.CAMPAIGN
+    return ui.initial(initial["cohort"], initial["request"]["projection_sha256"], initial["request"]["resource_policy"],
+        checkpoint_marker_sha256=initial["request"]["checkpoint_marker_sha256"], run_id=recovery.CAMPAIGN + "-run-4",
+        attempt_id=recovery.CAMPAIGN + "-attempt-4", job=prefix + "-4",
+        capsule_ref="nguynanhtn/safeshift-minicpm-capsule-" + recovery.CAMPAIGN + "-4/1",
+        max_calls=recovery.COUNT, max_seconds=recovery.JOB_SECONDS, nested_mounts=True,
+        series={**contract.SERIES, "minicpm4": recovery.SERIES})
+
+
+def current_safety(client, snapshot, known_jobs, target):
+    """Retired unavailable jobs are not fabricated terminal predecessors.
+
+    Owned inventory catches renamed/new-route conflicts. Current quota's reserved
+    time detects active accelerator sessions, including interactive/unlisted VMs.
+    Visible old jobs are checked for QUEUED/RUNNING independently of retirement.
+    """
     from scripts.submit_internvl_v2 import bounded_http
-    journal = old.Journal(safe(ROOT, row["root"]), safe(ROOT, row["mirror"]))
-    item = next(e["payload"] for e in journal.events() if e["kind"] == "RESERVED")
-    pkg = safe(ROOT, item["package"])
-    value = item["value"]
-    nb = read(pkg / "notebook.ipynb")
-    from safeshift.internvl3763_operator import code_hash
-    require(code_hash(nb) == row["ticket"]["payload"]["notebook_code_sha256"], "MINICPM_OLD_SIGNED_NOTEBOOK")
-    with bounded_http():
-        state = str(client.kernels_status(row["job"] + "/1").status).split(".")[-1]
-    require(state in ("COMPLETE", "ERROR", "CANCELLED"), "MINICPM_PREDECESSOR_RUNNING_OR_UNKNOWN")
-    proof = observe_kernel(client, row["job"], 1, nb, value["input_sources"], expected_state=state)
-    write(destination / "provider.json", proof)
-    selected, log = output_inventory(client, row["job"], 1)
-    write_bytes(destination / "provider.log", log.encode())
-    supervisors = [n for n in selected if re.fullmatch(r"minicpm-fulltrain/supervision/[0-9a-f]{32}\.zip", n)]
-    release, claims = None, None
-    if selected:
-        require(len(supervisors) == 1 and set(selected) == {supervisors[0], supervisors[0] + ".sha256.json"},
-                "MINICPM_PREDECESSOR_ATTEMPT_PARTIAL_OR_UNKNOWN_ZIP")
-        limits = {supervisors[0]: 64 * 2**20, supervisors[0] + ".sha256.json": 4096}
-        download_selected(selected, limits, destination / "outputs")
-        archive = destination / "outputs" / supervisors[0]
-        ui.pair(archive)
-        with tempfile.TemporaryDirectory() as tmp:
-            tree = import_archive(archive, Path(tmp) / "supervisor")
-            require(read(tree / "request.json") == value["request"], "MINICPM_OLD_SUPERVISOR_REQUEST")
-            capability = read(tree / "capability.json")
-            require(capability == {"locator": row["grant_locator"], "ticket": row["ticket"]},
-                    "MINICPM_OLD_SUPERVISOR_TICKET")
-            release, claims = read(tree / "release.json"), read(tree / "claims.json")
-            # Preserve the actual child error, not just SUPERVISED_CHILD_FAILURE.
-            failure = tree / release["last_stage"] / "failure.json"
-            if failure.is_file():
-                release = {**release, "failure": read(failure)}
-    receipt = recovery.failure_receipt(value, row["ticket"], proof, log, release=release, claims=claims,
-                                       inventory_complete=True)
-    write(destination / "failed-pre-native.json", receipt)
-    return receipt
-
-
-def reconcile(destination):
-    """Read-only provider reconciliation; originals and journal bytes untouched."""
-    destination = private_root(destination)
-    destination.mkdir(parents=True, exist_ok=False)
-    snapshot = inspect_journals()
-    from safeshift.internvl3763_operator import api
-    client = api()
     owned = account_jobs(client)
-    expected = {j["job"] for j in snapshot["journals"]}
-    require({j for j in owned if j.startswith("nguynanhtn/safeshift-minicpm-mcpm4-train3763")}
-        <= expected, "MINICPM_UNKNOWN_JOB_OR_DUPLICATE_STOP")
-    from scripts.submit_internvl_v2 import bounded_http
+    prefix = "nguynanhtn/safeshift-minicpm-" + recovery.CAMPAIGN + "-"
+    require(target not in owned and {ref for ref in owned if ref.startswith(prefix)} == set(known_jobs),
+            "MINICPM_RESTART_DUPLICATE_OR_UNKNOWN_JOB")
+    observed = []
     with bounded_http():
+        for row in snapshot["journals"]:
+            if row["job"] not in owned:
+                observed.append({"job": row["job"], "visibility": "NOT_VISIBLE_NOW_NOT_VERIFIED_DELETED"})
+                continue
+            state = str(client.kernels_status(row["job"]).status).split(".")[-1]
+            require(state in ("COMPLETE", "ERROR", "CANCELLED"), "MINICPM_VISIBLE_RETIRED_JOB_ACTIVE_OR_UNKNOWN")
+            observed.append({"job": row["job"], "visibility": "VISIBLE", "current_state": state})
         q = client.quota_view().gpu_quota
         quota = {k: int(getattr(q, f).total_seconds()) for k, f in
             (("used", "time_used"), ("reserved", "time_reserved"), ("total", "total_time_allowed"))}
-    require(quota["reserved"] == 0, "MINICPM_OUTSTANDING_VM_STOP")
-    write(destination / "account.json", {"quota": quota, "owned_sha256": digest(sorted(owned)), "observed_unix": int(time.time())})
-    directive = a.github_get("/issues/comments/6914854993")
-    require(directive["user"]["id"] == a.OWNER_ID and directive["user"]["login"] == a.OWNER
-        and directive["issue_url"] == a.API + "/issues/198", "MINICPM_OWNER_DIRECTIVE_REQUIRED")
-    snapshot["directive"]["body_sha256"] = hashlib.sha256(directive["body"].encode()).hexdigest()
-    for i, row in enumerate(snapshot["journals"]):
-        authenticate_old(row)
-        directory = destination / str(i + 1)
-        directory.mkdir()
-        if row["job"] in owned:
-            receipt = observe_predecessor(client, row, directory)
-            row["disposition"] = "FAILED_PRE_NATIVE"
-            state = receipt["provider"]["state"]
-        else:
-            require(row["publication"] == "RESERVED", "MINICPM_PUBLISHED_HISTORICAL_JOB_MISSING_RECONCILE_READ_ONLY")
-            require(time.time() >= row["ticket"]["payload"]["start_before_unix"], "MINICPM_ABSENT_TICKET_NOT_EXPIRED")
-            receipt = {"status": "EXPIRED_UNPUBLISHED", "job": row["job"], "refund": False,
-                "owned_sha256": digest(sorted(owned)), "ticket_sha256": digest(row["ticket"]), "observed_unix": int(time.time())}
-            write(directory / "absent-expired.json", receipt)
-            row["disposition"], state = "EXPIRED_UNPUBLISHED", "ABSENT_EXPIRED"
-        row["evidence_sha256"] = digest(receipt)
-        snapshot["prior_jobs"].append({"job": row["job"], "version": 1, "state": state, "evidence_sha256": digest(receipt)})
-    write(destination / "snapshot.json", snapshot)
-    # No grant, release, journal event or rights are issued by this command.
-    return {"status": "RECONCILED_NOT_RELEASED", "reserved": snapshot["reserved"],
-        "project_gpu_seconds": recovery.PROJECT_GPU_SECONDS,
-        "budget_status": "BLOCKED" if snapshot["reserved"]["gpu_seconds"] >= recovery.PROJECT_GPU_SECONDS else "REVIEW_REQUIRED"}
-
-
-class RecoveryOperator:
-    def __init__(self):
-        self.journal = old.Journal(ROOT / "data/processed/minicpm-v3-journal", ROOT / "data/processed/minicpm-v3-mirror")
-
-    def state(self):
-        baseline = inspect_journals()
-        events = self.journal.events()
-        additions = [e for e in events if e["kind"] in EXTENSIONS]
-        reservations = [e["payload"] for e in additions if e["kind"] == "RECOVERY_RESERVED"]
-        require(len(reservations) == 1 and additions[0]["kind"] == "RECOVERY_RESERVED", "MINICPM_EXACT_ONE_RECOVERY_RESERVATION")
-        item = reservations[0]
-        grant = a.load(item["locator"], collection=True)
-        require(grant["schema"] == a.RECOVERY_SCHEMA and grant["operator_host_sha256"] == old.host(), "MINICPM_RECOVERY_OPERATOR")
-        require(baseline["journals"] == [{**j, "disposition": "UNVERIFIED", "evidence_sha256": None}
-            for j in grant["recovery"]["journals"]], "MINICPM_RECOVERY_BASELINE_CHANGED")
-        a.verify_ticket(grant, item["ticket"], item["value"], collection=True)
-        require(item["ticket"]["payload"]["previous_event_sha256"] == additions[0]["previous"], "MINICPM_RECOVERY_CHAIN_BINDING")
-        order = [e["kind"] for e in additions]
-        main = [k for k in order if k not in ("CODEX_OBSERVATION", "CODEX_NATIVE_HANDOFF")]
-        sequence = ["RECOVERY_RESERVED", "RECOVERY_PUBLISH_INTENT", "RECOVERY_PUBLISHED", "CODEX_PUSH_INTENT", "CODEX_SUBMITTED"]
-        require(main == sequence[:len(main)] and len(main) <= len(sequence)
-            and order.count("CODEX_NATIVE_HANDOFF") <= 1, "MINICPM_RECOVERY_SEQUENCE_NO_REPLAY")
-        for e in additions[1:]:
-            require(e["payload"]["ticket_sha256"] == digest(item["ticket"]), "MINICPM_RECOVERY_EVENT_TICKET")
-        return grant, item, order
-
-    def stage(self, locator, value, private_key, destination, reconciliation):
-        with lock(self.journal.root):
-            baseline = inspect_journals()
-            require(not any(e["kind"] in EXTENSIONS for e in self.journal.events()), "MINICPM_RECOVERY_ALREADY_STAGED")
-            grant = a.load(locator)
-            require(grant["schema"] == a.RECOVERY_SCHEMA and grant["operator_host_sha256"] == old.host(), "MINICPM_RECOVERY_RELEASE_REQUIRED")
-            old.clean_source(grant)
-            fresh = read(reconciliation / "snapshot.json")
-            require(fresh == grant["recovery"], "MINICPM_REVIEWED_RECONCILIATION_REQUIRED")
-            require(baseline["journals"] == [{**j, "disposition": "UNVERIFIED", "evidence_sha256": None} for j in fresh["journals"]]
-                and baseline["reserved"] == fresh["reserved"], "MINICPM_RECOVERY_ALL_JOURNAL_HEADS")
-            recovery.mounted_inputs(value)
-            a.bind(grant, value)
-            number = fresh["reserved"]["jobs"] + 1
-            require(value["job"] == "nguynanhtn/safeshift-minicpm-" + grant["campaign_id"] + "-" + str(number),
-                    "MINICPM_RECOVERY_EXACT_JOB_NUMBER")
-            from safeshift.internvl3763_operator import api, code_hash
-            client = api()
-            evidence = live_provider(client, grant, value, reconciliation)
-            from scripts.generate_minicpm_fulltrain_notebook import notebook
-            nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value), release_locator=locator, release_version=3)
-            before, plan = fresh["reserved"], value["request"]["plan"]
-            payload = {"schema": a.RECOVERY_TICKET, "grant_sha256": digest(grant), "value_sha256": digest(value),
-                "capsule_sha256": digest(value), "notebook_code_sha256": code_hash(nb), "number": number,
-                "previous_event_sha256": digest(self.journal.events()[-1]), "reserved_before": before,
-                "reserved_after": {"calls": before["calls"] + plan["max_calls"], "jobs": before["jobs"] + 1,
-                    "gpu_seconds": before["gpu_seconds"] + 2 * plan["max_seconds"]}, "issued_unix": int(time.time()),
-                "start_before_unix": evidence["observed_unix"] + grant["provider_max_age_seconds"], "provider": evidence,
-                "sizing": {"calls": plan["max_calls"], "seconds": plan["max_seconds"]}}
-            envelope = old.sign(private_key, grant["public_key"], payload)
-            a.verify_ticket(grant, envelope, value)
-            destination = private_root(destination)
-            require(not destination.exists(), "MINICPM_RECOVERY_PACKAGE_CREATE_ONLY")
-            item = {"locator": locator, "ticket": envelope, "value": value,
-                "package": destination.relative_to(ROOT).as_posix(), "reconciliation": reconciliation.relative_to(ROOT).as_posix()}
-            self.journal.append("RECOVERY_RESERVED", item)
-            ui.package(value, [], destination, lambda _: nb)
-            write(destination / "dataset" / MARKER, envelope)
-            write(destination / "release.json", {"status": "RECOVERY_RESERVED", "locator": locator, "ticket": envelope})
-            return {"status": "RECOVERY_RESERVED_NOT_SUBMITTED", "ticket_sha256": digest(envelope)}
-
-    def publish(self, verify_only=False):
-        from safeshift.internvl3763_operator import api
-        from scripts.submit_internvl_v2 import bounded_http
-        with lock(self.journal.root):
-            grant, item, order = self.state()
-            require("RECOVERY_PUBLISHED" not in order and "CODEX_PUSH_INTENT" not in order, "MINICPM_RECOVERY_NO_REPUBLISH")
-            old.clean_source(grant)
-            check_window(grant, item)
-            pkg, client = safe(ROOT, item["package"]), api()
-            verify_package(grant, item, pkg)
-            live_provider(client, grant, item["value"], safe(ROOT, item["reconciliation"]))
-            if not verify_only:
-                require("RECOVERY_PUBLISH_INTENT" not in order, "MINICPM_RECOVERY_UPLOAD_UNKNOWN_VERIFY_ONLY")
-                upload = pkg / "private-upload"
-                upload.mkdir(exist_ok=False)
-                for path in (pkg / "dataset").iterdir():
-                    old._copy(path, upload / path.name)
-                old._copy(pkg / "dataset-metadata.json", upload / "dataset-metadata.json")
-                self.journal.append("RECOVERY_PUBLISH_INTENT", {"ticket_sha256": digest(item["ticket"])})
-                with bounded_http(), patch.object(client, "with_retry", lambda fn, *args, **kwargs: fn):
-                    result = client.dataset_create_new(str(upload), public=False, quiet=True, convert_to_csv=False, dir_mode="skip")
-                old.check_create_response(result)
-            else:
-                require("RECOVERY_PUBLISH_INTENT" in order, "MINICPM_RECOVERY_PUBLISH_INTENT_REQUIRED")
-            proof = old.verify_published_capsule(client, item["value"], item["ticket"], pkg)
-            check_window(grant, item)
-            self.journal.append("RECOVERY_PUBLISHED", {"ticket_sha256": digest(item["ticket"]), "proof": proof})
-            return {"status": "RECOVERY_PUBLISHED_NOT_SUBMITTED"}
-
-    def submit_once(self):
-        from safeshift.internvl3763_operator import api
-        from scripts.submit_internvl_v2 import bounded_http
-        with lock(self.journal.root):
-            grant, item, order = self.state()
-            require("RECOVERY_PUBLISHED" in order and "CODEX_PUSH_INTENT" not in order,
-                    "MINICPM_CODEX_SUBMIT_ONCE_UNKNOWN_NO_RETRY")
-            old.clean_source(grant)
-            check_window(grant, item)
-            pkg, value, client = safe(ROOT, item["package"]), item["value"], api()
-            verify_package(grant, item, pkg)
-            old.verify_published_capsule(client, value, item["ticket"], pkg)
-            evidence = live_provider(client, grant, value, safe(ROOT, item["reconciliation"]))
-            stage = pkg / "submission"
-            stage.mkdir(exist_ok=False)
-            write_bytes(stage / "notebook.ipynb", (pkg / "notebook.ipynb").read_bytes())
-            write(stage / "kernel-metadata.json", {"id": value["job"], "title": value["job"].split("/")[1],
-                "code_file": "notebook.ipynb", "language": "python", "kernel_type": "notebook", "is_private": True,
-                "enable_gpu": True, "enable_tpu": False, "enable_internet": True,
-                **value["input_sources"], "competition_sources": [], "model_sources": []})
-            # Re-authenticate after slow provider checks. The intent is durable
-            # BEFORE the sole mutating call and survives an ambiguous timeout.
-            require(a.load(item["locator"]) == grant, "MINICPM_RECOVERY_AUTHORITY_CHANGED")
-            check_window(grant, item)
-            self.journal.append("CODEX_PUSH_INTENT", {"ticket_sha256": digest(item["ticket"]),
-                "provider_sha256": digest(evidence), "notebook_sha256": sha(pkg / "notebook.ipynb")})
-            with bounded_http(), patch.object(client, "with_retry", lambda fn, *args, **kwargs: fn):
-                response = client.kernels_push(str(stage), timeout=str(value["request"]["plan"]["max_seconds"]), acc="NvidiaTeslaT4")
-            returned = response.to_dict()
-            write(stage / "submit-return.json", returned)
-            require(returned.get("error") in (None, "") and type(returned.get("versionNumber")) is int
-                and returned["versionNumber"] == 1 and returned.get("ref") == value["job"]
-                and type(returned.get("kernelId")) is int and returned["kernelId"] > 0
-                and all(not returned.get(k) for k in ("invalidTags", "invalidDatasetSources", "invalidKernelSources",
-                    "invalidCompetitionSources", "invalidModelSources")),
-                    "MINICPM_SUBMIT_RETURN_AMBIGUOUS_RECONCILE_NO_RETRY")
-            self.journal.append("CODEX_SUBMITTED", {"ticket_sha256": digest(item["ticket"]), "response_sha256": digest(returned)})
-            return {"status": "SUBMITTED_UNVERIFIED", "job": value["job"], "version": 1}
-
-    def observe(self, destination):
-        """ONE observation; no sleep, cancel, submit, terminal wait or background AI."""
-        from safeshift.internvl3763_operator import api, code_hash, verify_kernel_metadata_inputs
-        from kagglesdk.kernels.types.kernels_api_service import ApiGetKernelRequest
-        from scripts.reconcile_train3763_manual import output_inventory
-        from scripts.submit_internvl_v2 import bounded_http
-        with lock(self.journal.root):
-            grant, item, order = self.state()
-            require("CODEX_PUSH_INTENT" in order and "CODEX_NATIVE_HANDOFF" not in order, "MINICPM_OBSERVE_EXACT_LAUNCH_ONCE")
-            client, value = api(), item["value"]
-            query = ApiGetKernelRequest()
-            query.user_name, query.kernel_slug = value["job"].split("/")
-            with bounded_http():
-                # Latest must still be v1. No status-only inference claim.
-                with client.build_kaggle_client() as remote:
-                    remote_value = remote.kernels.kernels_api_client.get_kernel(query)
-                state = str(client.kernels_status(value["job"] + "/1").status).split(".")[-1]
-                q = client.quota_view().gpu_quota
-                quota = {k: int(getattr(q, f).total_seconds()) for k, f in
-                    (("used", "time_used"), ("reserved", "time_reserved"), ("total", "total_time_allowed"))}
-            meta = remote_value.metadata
-            require(meta is not None and meta.ref == value["job"] and meta.is_private is True
-                and type(meta.current_version_number) is int and meta.current_version_number == 1
-                and type(meta.id) is int and meta.id > 0 and remote_value.blob is not None,
-                    "MINICPM_LIVE_REMOTE_ID_VERSION_PRIVATE")
-            require(code_hash(a.strict_json(remote_value.blob.source)) == item["ticket"]["payload"]["notebook_code_sha256"],
-                    "MINICPM_LIVE_REMOTE_SOURCE")
-            verify_kernel_metadata_inputs(meta, value["input_sources"])
-            _, log = output_inventory(client, value["job"], 1)
-            proof = recovery.live_proof(log, value, item["ticket"])
-            with bounded_http():
-                state = str(client.kernels_status(value["job"] + "/1").status).split(".")[-1]
-            require(state in ("QUEUED", "RUNNING", "COMPLETE", "ERROR", "CANCELLED"), "MINICPM_LIVE_UNKNOWN_STATE")
-            status = "PASS_NATIVE_STARTED_JOB_RUNNING" if state == "RUNNING" and proof["status"] == "NATIVE_STARTED" else (
-                "RUNNING_UNVERIFIED" if state in ("QUEUED", "RUNNING") else "TERMINAL_RECONCILIATION_REQUIRED")
-            pkg = safe(ROOT, item["package"])
-            result = {"status": status, "job": value["job"], "url": "https://www.kaggle.com/code/" + value["job"],
-                "version": 1, "kernel_id": meta.id, "provider_state": state, "runtime_commit": grant["runtime_commit"],
-                "merged_sha": grant["merged_sha"], "notebook_sha256": sha(pkg / "notebook.ipynb"),
-                "capsule_ref": value["capsule_ref"], "capsule_sha256": digest(value), "input_sources": value["input_sources"],
-                "ticket_sha256": digest(item["ticket"]), "grant_locator": item["locator"],
-                "reserved": item["ticket"]["payload"]["reserved_after"], "calls": value["request"]["plan"]["max_calls"],
-                "seconds": value["request"]["plan"]["max_seconds"], "physical_gpus": 2, "quota": quota,
-                "proof": proof, "journal": str(self.journal.root.relative_to(ROOT).as_posix()),
-                "journal_head_before": digest(self.journal.events()[-1]), "kernel_action": "LEAVE_RUNNING_DO_NOT_CANCEL",
-                "operator_action": "RESUME_SAME_HISTORICAL_OPERATOR_SESSION", "scientific_qualified": False}
-            destination = private_root(destination)
-            destination.mkdir(parents=True, exist_ok=False)
-            write_bytes(destination / "provider.log", log.encode())
-            self.journal.append("CODEX_NATIVE_HANDOFF" if status == "PASS_NATIVE_STARTED_JOB_RUNNING" else "CODEX_OBSERVATION",
-                {"ticket_sha256": digest(item["ticket"]), "proof_sha256": digest(result),
-                 "directory": destination.relative_to(ROOT).as_posix()})
-            result["journal_head_after"] = digest(self.journal.events()[-1])
-            write(destination / "handoff.json", result)
-            return result
-
-
-def check_window(grant, item):
-    a.verify_ticket(grant, item["ticket"], item["value"])
-    require(time.time() < item["ticket"]["payload"]["start_before_unix"], "MINICPM_RECOVERY_EXPIRED_NO_TICKET_REUSE")
-
-
-def verify_package(grant, item, pkg):
-    from scripts.generate_minicpm_fulltrain_notebook import notebook
-    expected = notebook(grant["runtime_commit"], capsule_sha256=digest(item["value"]), release_locator=item["locator"], release_version=3)
-    require(read(pkg / "notebook.ipynb") == expected, "MINICPM_RECOVERY_EXACT_FINAL_NOTEBOOK")
-    require(ui.verify_capsule(pkg / "dataset", digest(item["value"]), release_ticket=True) == item["value"]
-        and read(pkg / "dataset" / MARKER) == item["ticket"], "MINICPM_RECOVERY_EXACT_CAPSULE_TICKET")
+    require(0 <= quota["used"] <= quota["total"] and quota["reserved"] == 0,
+            "MINICPM_CURRENT_QUOTA_OR_ACTIVE_SESSION_STOP")
+    return {"retired_visibility": observed, "quota": quota, "owned_sha256": digest(sorted(owned)),
+            "observed_unix": int(time.time()), "historical_provider_custody": "NOT_AUTHENTICATED_BY_RETIREMENT"}
 
 
 class RecoveredSerialJournal(old.Journal):
-    """Antigravity continues the same journal using PR198 collection/serial UI.
-
-    This class has no API submit method. The sole Codex POST remains guarded by
-    RecoveryOperator; later jobs are signed pending-only Owner UI handoffs.
-    """
+    """Signed Owner UI only, same physical journal; no submit/monitor API route."""
     def __init__(self):
         super().__init__(ROOT / "data/processed/minicpm-v3-journal", ROOT / "data/processed/minicpm-v3-mirror")
 
     def append(self, kind, payload):
-        mapped = {"RESERVED": "PENDING_RESERVED", "PUBLISH_INTENT": "PENDING_PUBLISH_INTENT",
-            "PUBLISHED": "PENDING_PUBLISHED", "COLLECTED": "RECOVERY_COLLECTED", "PACKAGE_RECOVERED": "PENDING_PACKAGE_RECOVERED"}
-        super().append(mapped.get(kind, kind), payload)
+        mapping = {"RESERVED": "PENDING_RESERVED", "PUBLISH_INTENT": "PENDING_PUBLISH_INTENT",
+            "PUBLISHED": "PENDING_PUBLISHED", "COLLECTED": "RESTART_COLLECTED", "PACKAGE_RECOVERED": "PENDING_PACKAGE_RECOVERED"}
+        super().append(mapping.get(kind, kind), payload)
 
-    def first(self, events):
-        return next(e["payload"] for e in events if e["kind"] == "RECOVERY_RESERVED")
+    def bound(self, events):
+        found = [e["payload"] for e in events if e["kind"] == "RESTART_BOUND"]
+        require(len(found) == 1, "MINICPM_ONE_SOURCE_BOUND_OWNER_RESTART")
+        return found[0]
+
+    def bind_release(self, locator, value):
+        with lock(self.root):
+            require(not any(e["kind"] in EXTENSIONS for e in self.events()), "MINICPM_RESTART_NO_SECOND_BINDING")
+            grant = a.load(locator)
+            require(grant["schema"] == a.RECOVERY_SCHEMA and grant["operator_host_sha256"] == old.host(), "MINICPM_OWNER_UI_RELEASE_REQUIRED")
+            old.clean_source(grant)
+            verify_retired(grant["recovery"])
+            a.bind(grant, value)
+            recovery.mounted_inputs(value)
+            p = value["request"]["plan"]
+            require(not value["request"]["history"] and not value["ancestors"] and p["action"] == "initial"
+                and p["counts"] == {"NOT_ATTEMPTED": recovery.COUNT}
+                and p["scheduled_ordinals"][0] == 0, "MINICPM_OWNER_RESTART_FROM_ORDINAL_ZERO")
+            guard = self.guard_path(grant)
+            # Keep all three original registrations. This create-only guard is
+            # one source-bound restart, not a reusable budget initializer.
+            write(guard, self.binding(grant))
+            a.sync_directory(guard.parent)
+            self.append("RESTART_BOUND", {"locator": locator, "grant_sha256": digest(grant), "initial": value,
+                "retirement_sha256": digest(grant["recovery"]), "historical_reservations": grant["recovery"]["reserved"]})
+            return {"status": "BOUND_NOT_PUBLISHED_NOT_RUN", "grant_sha256": digest(grant)}
 
     def stage_initial(self, events):
-        return self.first(events)["value"]
+        return self.bound(events)["initial"]
 
     def release_locator(self, events):
-        return self.first(events)["locator"]
+        return self.bound(events)["locator"]
 
     def state(self):
-        baseline, events = inspect_journals(), self.events()
-        first = self.first(events)
-        grant = a.load(first["locator"], collection=True)
+        events = self.events()
+        binding = self.bound(events)
+        grant = a.load(binding["locator"], collection=True)
         require(grant["schema"] == a.RECOVERY_SCHEMA and grant["operator_host_sha256"] == old.host()
-            and baseline["journals"] == [{**j, "disposition": "UNVERIFIED", "evidence_sha256": None}
-                for j in grant["recovery"]["journals"]], "MINICPM_SERIAL_RECOVERY_BASELINE")
-        reserved, active, completed, pushes = grant["recovery"]["reserved"], None, [], 0
+            and binding["grant_sha256"] == digest(grant) and binding["retirement_sha256"] == digest(grant["recovery"])
+            and read(self.guard_path(grant)) == self.binding(grant), "MINICPM_RESTART_BOUND_GRANT_DRIFT")
+        verify_retired(grant["recovery"])
+        reserved, active, completed, begun = grant["recovery"]["reserved"], None, [], False
         for event in events:
             kind, payload = event["kind"], event["payload"]
-            if kind not in EXTENSIONS:
+            if kind == "RESTART_BOUND":
+                begun = True
                 continue
-            if kind in ("RECOVERY_RESERVED", "PENDING_RESERVED"):
-                require(active is None and (kind == "RECOVERY_RESERVED") == (not completed)
-                    and payload["ticket"]["payload"]["reserved_before"] == reserved
-                    and payload["ticket"]["payload"]["previous_event_sha256"] == event["previous"],
-                        "MINICPM_PENDING_SERIAL_RESERVATION")
+            if not begun:
+                continue
+            require(kind in EXTENSIONS, "MINICPM_RESTART_UNKNOWN_EVENT_STOP")
+            if kind == "PENDING_RESERVED":
+                require(active is None and payload["ticket"]["payload"]["reserved_before"] == reserved
+                    and payload["ticket"]["payload"]["previous_event_sha256"] == event["previous"], "MINICPM_OWNER_SERIAL_RESERVATION")
                 a.verify_ticket(grant, payload["ticket"], payload["value"], collection=True)
+                require(len(payload["value"]["ancestors"]) == len(completed), "MINICPM_NO_SKIPPED_NEW_HISTORY")
                 active = deepcopy(payload)
                 reserved = payload["ticket"]["payload"]["reserved_after"]
                 continue
-            require(active is not None and payload["ticket_sha256"] == digest(active["ticket"]),
-                    "MINICPM_PENDING_EVENT_EXACT_ACTIVE_TICKET")
-            if kind in ("RECOVERY_PUBLISH_INTENT", "PENDING_PUBLISH_INTENT"):
-                require("publish_intent" not in active, "MINICPM_PENDING_DUPLICATE_PUBLICATION")
+            require(active is not None and payload["ticket_sha256"] == digest(active["ticket"]), "MINICPM_OWNER_EVENT_ACTIVE_TICKET")
+            if kind == "PENDING_PUBLISH_INTENT":
+                require("publish_intent" not in active, "MINICPM_OWNER_NO_DUPLICATE_UPLOAD")
                 active["publish_intent"] = payload
-            elif kind in ("RECOVERY_PUBLISHED", "PENDING_PUBLISHED"):
-                require("publish_intent" in active and "published" not in active, "MINICPM_PENDING_PUBLICATION_SEQUENCE")
+            elif kind == "PENDING_PUBLISHED":
+                require("publish_intent" in active and "published" not in active, "MINICPM_OWNER_PUBLICATION_SEQUENCE")
                 active["published"] = payload
             elif kind == "PENDING_PACKAGE_RECOVERED":
-                require("publish_intent" not in active, "MINICPM_PENDING_RECOVERY_BEFORE_UPLOAD_ONLY")
+                require("publish_intent" not in active, "MINICPM_OWNER_RECOVER_BEFORE_UPLOAD_ONLY")
                 active["package"] = payload["package"]
-            elif kind == "CODEX_PUSH_INTENT":
-                require(not completed and "published" in active and pushes == 0, "MINICPM_SINGLE_CODEX_PUSH_ONLY")
-                pushes += 1
-                active["push_intent"] = payload
-            elif kind == "CODEX_SUBMITTED":
-                require("push_intent" in active and "submitted" not in active, "MINICPM_SUBMITTED_SEQUENCE")
-                active["submitted"] = payload
-            elif kind in ("CODEX_OBSERVATION", "CODEX_NATIVE_HANDOFF"):
-                require("push_intent" in active, "MINICPM_OBSERVE_AFTER_PUSH_ONLY")
-            elif kind == "RECOVERY_COLLECTED":
-                require("published" in active, "MINICPM_COLLECT_PUBLISHED_ONLY")
+            elif kind == "RESTART_COLLECTED":
+                require("published" in active, "MINICPM_OWNER_COLLECT_ONLY_PUBLISHED")
                 active["collection"] = payload
-                completed.append(active)
-                active = None
+                completed.append(active); active = None
+            else:
+                raise ValueError("MINICPM_OWNER_EVENT_SEQUENCE")
         return grant, events, reserved, active, completed
 
     def observe_provider(self, client, grant, value, prior):
-        first = self.first(self.events())
+        verify_retired(grant["recovery"])
+        safety = current_safety(client, grant["recovery"], [p["job"] for p in prior], value["job"])
+        # Exact new-series predecessor code/Input/terminal checks and Input/quota
+        # use PR198's verifier; historical retired records are not passed to it.
+        result = old.provider(client, grant, value, prior)
+        require(safety["owned_sha256"] == result["owned_sha256"], "MINICPM_ACCOUNT_CHANGED_DURING_RELEASE")
+        result["current_account_safety"] = safety
         _, _, _, _, completed = self.state()
-        require(len(prior) == len(completed), "MINICPM_ALL_PENDING_PREDECESSORS")
-        return live_provider(client, grant, value, safe(ROOT, first["reconciliation"]), recovered=completed)
+        require(len(completed) == len(prior), "MINICPM_NEW_RUN_PROVIDER_LINEAGE")
+        for row, item in zip(result["prior_jobs"], completed):
+            row["ticket"] = item["ticket"]
+        return result
 
+    def validate_package(self, grant, active):
+        from safeshift.fulltrain.minicpm_execution import MARKER
+        destination = safe(ROOT, active["package"])
+        value = active["value"]
+        expected = old.notebook(grant["runtime_commit"], capsule_sha256=digest(value),
+            release_locator=self.release_locator(self.events()), release_version=4)
+        require(read(destination / "notebook.ipynb") == expected, "MINICPM_OWNER_EXACT_SOURCE_NOTEBOOK")
+        require(ui.verify_capsule(destination / "dataset", digest(value), release_ticket=True) == value
+            and read(destination / "dataset" / MARKER) == active["ticket"], "MINICPM_OWNER_EXACT_CAPSULE_TICKET")
 
-def live_provider(client, grant, value, reconciliation, *, recovered=()):
-    """Re-observe old failures and all account jobs; reuse V2 Input/quota gates."""
-    require(read(reconciliation / "snapshot.json") == grant["recovery"], "MINICPM_RECOVERY_RECONCILIATION_CUSTODY")
-    owned = account_jobs(client)
-    expected = {j["job"] for j in grant["recovery"]["journals"] if j["disposition"] == "FAILED_PRE_NATIVE"}
-    expected.update(item["value"]["job"] for item in recovered)
-    require(value["job"] not in owned and {j for j in owned if j.startswith(
-        "nguynanhtn/safeshift-minicpm-mcpm4-train3763")} == expected, "MINICPM_RECOVERY_DUPLICATE_OR_UNKNOWN_JOB")
-    with tempfile.TemporaryDirectory(dir=ROOT / "data/processed") as tmp:
-        for i, row in enumerate(grant["recovery"]["journals"]):
-            if row["disposition"] == "FAILED_PRE_NATIVE":
-                receipt = observe_predecessor(client, row, Path(tmp) / str(i))
-                require(digest(receipt) == row["evidence_sha256"], "MINICPM_RECOVERY_PREDECESSOR_EVIDENCE_CHANGED")
-            else:
-                require(row["job"] not in owned and time.time() >= row["ticket"]["payload"]["start_before_unix"],
-                        "MINICPM_RECOVERY_EXPIRED_ABSENCE_CHANGED")
-    # Provider's V2 inventory is scoped to this campaign. Present the terminal
-    # original v3 job only when it genuinely exists; no invented predecessor.
-    prior = []
-    for row in grant["recovery"]["journals"][-1:]:
-        if row["job"] in owned:
-            j = old.Journal(safe(ROOT, row["root"]), safe(ROOT, row["mirror"]))
-            original = next(e["payload"] for e in j.events() if e["kind"] == "RESERVED")
-            prior.append({"job": row["job"], "notebook": read(safe(ROOT, original["package"] + "/notebook.ipynb")),
-                "input_sources": original["value"]["input_sources"], "kernel_id": read(reconciliation / "3/provider.json")["kernel_id"],
-                "state": grant["recovery"]["prior_jobs"][2]["state"]})
-    recovered_proofs = []
-    for item in recovered:
-        directory = safe(ROOT, item["collection"]["directory"])
-        proof = read(directory / "provider.json")
-        row = {"job": item["value"]["job"], "notebook": read(safe(ROOT, item["package"] + "/notebook.ipynb")),
-            "input_sources": item["value"]["input_sources"], "kernel_id": proof["kernel_id"]}
-        prior.append(row)
-        recovered_proofs.append({"job": row["job"], "version": 1, "state": "COMPLETE", "kernel_id": proof["kernel_id"],
-            "ticket": item["ticket"]})
-    evidence = old.provider(client, grant, value, prior)
-    evidence["prior_jobs"] = [*deepcopy(grant["recovery"]["prior_jobs"]), *recovered_proofs]
-    require(evidence["quota"]["total"] - evidence["quota"]["used"] >= 2 * value["request"]["plan"]["max_seconds"],
-            "MINICPM_RECOVERY_LIVE_QUOTA")
-    return evidence
+    def handoff_details(self, handoff, grant, value, ticket, destination):
+        local = datetime.fromtimestamp(ticket["payload"]["start_before_unix"], timezone(timedelta(hours=7)))
+        return {**handoff, "mode": "OWNER_UI_ONLY", "runtime_commit": grant["runtime_commit"],
+            "source_sha256": grant["scope"]["source_sha256"], "merged_sha": grant["merged_sha"],
+            "release_locator": self.release_locator(self.events()), "input_mounts": recovery.mounted_inputs(value),
+            "notebook_file": (destination / "notebook.ipynb").relative_to(ROOT).as_posix(),
+            "start_before_local": local.isoformat(), "timezone": "Asia/Ho_Chi_Minh",
+            "historical_reservations": grant["recovery"]["reserved"], "cumulative_reservations": ticket["payload"]["reserved_after"],
+            "historical_provider_status": "UNVERIFIED_RETIRED_NO_USABLE_RESULTS", "scientific_inheritance": False,
+            "owner_steps": ["Upload this exact notebook; attach the five pinned Inputs.",
+                "Select Private / Python / Internet On / GPU T4x2.",
+                "Save Version > Save & Run All ONCE before start_before; send the version URL to Antigravity."]}
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="action", required=True)
     sub.add_parser("inspect")
+    retire = sub.add_parser("retire")
+    retire.add_argument("--directive-locator", type=Path, required=True); retire.add_argument("--output", type=Path, required=True)
     spec = sub.add_parser("prepare-spec")
-    spec.add_argument("--initial-spec", type=Path, required=True)
-    spec.add_argument("--calls", type=int, required=True); spec.add_argument("--seconds", type=int, required=True)
-    spec.add_argument("--output", type=Path, required=True)
+    spec.add_argument("--initial-spec", type=Path, required=True); spec.add_argument("--output", type=Path, required=True)
     template = sub.add_parser("release-template")
     for name in ("spec", "snapshot", "output"):
         template.add_argument("--" + name, type=Path, required=True)
     template.add_argument("--runtime-ref", required=True)
-    template.add_argument("--implementation-pr", required=True, type=int)
-    r = sub.add_parser("reconcile"); r.add_argument("--output", type=Path, required=True)
-    s = sub.add_parser("stage")
-    for name in ("locator", "spec", "private-key", "output", "reconciliation"):
-        s.add_argument("--" + name, type=Path, required=True)
+    binding = sub.add_parser("bind")
+    binding.add_argument("--locator", type=Path, required=True); binding.add_argument("--spec", type=Path, required=True)
+    stage = sub.add_parser("stage")
+    stage.add_argument("--private-key", type=Path, required=True); stage.add_argument("--output", type=Path, required=True)
     pub = sub.add_parser("publish"); pub.add_argument("--verify-only", action="store_true")
-    sub.add_parser("submit-once")
-    obs = sub.add_parser("observe"); obs.add_argument("--output", type=Path, required=True)
     collect = sub.add_parser("collect"); collect.add_argument("--output", type=Path, required=True)
-    pending = sub.add_parser("stage-pending")
-    pending.add_argument("--private-key", type=Path, required=True); pending.add_argument("--output", type=Path, required=True)
-    pub_pending = sub.add_parser("publish-pending"); pub_pending.add_argument("--verify-only", action="store_true")
+    recover = sub.add_parser("recover-package")
+    recover.add_argument("--output", type=Path, required=True)
+    sub.add_parser("status")
     args = p.parse_args()
     if args.action == "inspect":
-        snapshot = inspect_journals()
-        result = {"status": "LOCAL_ONLY_UNAUTHENTICATED", "reserved": snapshot["reserved"],
-            "project_gpu_seconds": recovery.PROJECT_GPU_SECONDS, "billing": "NOT_OBSERVED",
-            "journal_heads": [j["head_sha256"] for j in snapshot["journals"]]}
+        result = inspect_journals()
+    elif args.action == "retire":
+        result = retirement_snapshot(read(args.directive_locator))
+        write(args.output, result)
     elif args.action == "prepare-spec":
-        initial = read(args.initial_spec)
-        require(not initial["request"]["history"] and not initial["ancestors"], "MINICPM_PRE_NATIVE_HISTORY_ONLY")
-        job = "nguynanhtn/safeshift-minicpm-mcpm4-train3763-v3-4"
-        value = ui.initial(initial["cohort"], initial["request"]["projection_sha256"], initial["request"]["resource_policy"],
-            checkpoint_marker_sha256=initial["request"]["checkpoint_marker_sha256"],
-            run_id="mcpm4-train3763-v3-run-4", attempt_id="mcpm4-train3763-v3-attempt-4", job=job,
-            capsule_ref="nguynanhtn/safeshift-minicpm-capsule-mcpm4-train3763-v3-4/1",
-            max_calls=args.calls, max_seconds=args.seconds, nested_mounts=True)
-        recovery.mounted_inputs(value)
-        write(args.output, value)
-        result = {"status": "METADATA_PREPARATION_NOT_AUTHORITY", "input_mounts": recovery.mounted_inputs(value)}
+        result = restart_spec(read(args.initial_spec))
+        write(args.output, result)
     elif args.action == "release-template":
-        proposal = old.release_template(read(args.spec), args.runtime_ref)
-        proposal.update(schema=a.RECOVERY_SCHEMA, implementation_pr=args.implementation_pr,
-            recovery=read(args.snapshot))
-        write(args.output, proposal)
-        result = {"status": "UNSIGNED_PROPOSAL_NOT_AUTHORITY"}
-    elif args.action == "reconcile":
-        result = reconcile(args.output)
-    elif args.action == "stage":
-        result = RecoveryOperator().stage(read(args.locator), read(args.spec), args.private_key, args.output, args.reconciliation)
-    elif args.action == "publish":
-        result = RecoveryOperator().publish(args.verify_only)
-    elif args.action == "submit-once":
-        result = RecoveryOperator().submit_once()
-    elif args.action == "collect":
-        result = RecoveredSerialJournal().collect(args.output)
-    elif args.action == "stage-pending":
-        result = {"package": str(RecoveredSerialJournal().stage(args.private_key, args.output))}
-    elif args.action == "publish-pending":
-        result = RecoveredSerialJournal().publish(verify_only=args.verify_only)
+        value, snapshot = read(args.spec), read(args.snapshot)
+        result = old.release_template(value, args.runtime_ref)
+        result.update(schema=a.RECOVERY_SCHEMA, authorization="OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY",
+            campaign_id=recovery.CAMPAIGN, implementation_pr=199, recovery=snapshot,
+            caps=recovery.budget_policy(snapshot["reserved"])["caps"],
+            approvals={kind: None for kind in recovery.SOURCE_ROLES})
+        write(args.output, result)
+        print("UNSIGNED_PROPOSAL_NOT_AUTHORITY")
+        return
     else:
-        result = RecoveryOperator().observe(args.output)
+        operator = RecoveredSerialJournal()
+        if args.action == "bind":
+            result = operator.bind_release(read(args.locator), read(args.spec))
+        elif args.action == "stage":
+            result = {"package": str(operator.stage(args.private_key, args.output)), "status": "RESERVED_NOT_RELEASED"}
+        elif args.action == "publish":
+            result = operator.publish(verify_only=args.verify_only)
+        elif args.action == "collect":
+            result = operator.collect(args.output)
+        elif args.action == "recover-package":
+            result = {"package": str(operator.recover_package(args.output))}
+        else:
+            _, _, reserved, active, completed = operator.state()
+            result = {"reserved": reserved, "open_reservation": active is not None, "verified_new_jobs": len(completed)}
+    # Private metadata remains in local files, not printed with every operation.
+    if args.action in ("inspect", "retire"):
+        result = {"status": "LOCAL_REPORT_NOT_PROVIDER_AUTHORITY", "reserved": result["reserved"],
+            "historical_status": "RETIRED_ONLY_BY_OWNER_DECISION_NOT_VERIFIED_DELETED"}
+    elif args.action == "prepare-spec":
+        result = {"status": "PREPARED_NOT_RELEASED", "first_ordinal": result["request"]["plan"]["scheduled_ordinals"][0]}
     print(json.dumps(result, sort_keys=True))
 
 

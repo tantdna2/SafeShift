@@ -1,195 +1,169 @@
-# MiniCPM Run1 recovery and one Codex launch — V3
+# MiniCPM Full-TRAIN Owner UI restart ? V4
 
-[Owner directive6914854993](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6914854993)
-starts this new session from merged PR198/main
-`507e9817b91054fa7af324c6a915c35d56b5acf1`. One branch/Draft PR covers the complete
-fix and its deployment gates. Continue this same Codex session after review,
-independent Antigravity audit, authorized merge and ChatGPT postmerge verification.
-No additional standalone smoke or scientific cohort is introduced.
+[Owner decision6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
+supersedes PR199's one-Codex-submit proposal. SAME session/branch/Draft PR199,
+BASE main507e981. No new PR, smoke round or repeated budget-approval loop.
+This document describes code pending fresh review/audit/merge, not a live release.
 
-## Verified observations and unresolved history
+## Old attempts: retired results, immutable evidence and uncertainty
 
-The local original journal uses grant6911429335; its PUBLISHED reservation holds
-1000 calls/28800 GPU-s. Run1's retained sealed supervisor and admit failure say
-`UNIQUE_ORIGINAL_MOUNT_REQUIRED`. The selected direct TRAIN/master mount strings
-do not match Kaggle's nested layout. No local native call is reported.
+Run1 local sealed supervisor records `UNIQUE_ORIGINAL_MOUNT_REQUIRED` at admit;
+V2 local log records `MINICPM_STALE_PROVIDER_BEFORE_LAUNCH`; V3-1 has a reserved,
+expired ticket. The Owner reports no usable image results and reportedly deleted
+old jobs. Old account observations found no matching slugs and denied reads.
+These facts are kept separate: **not** independently verified deletion, terminal
+remote custody or measured zero native calls. New classification is
+`RETIRED_NO_USABLE_RESULTS`, with
+`historical_status=PROVIDER_UNAVAILABLE_NOT_VERIFIED_DELETED` and
+`native_calls_evidence=OWNER_REPORTED_LOCAL_LOGS_NOT_PROVIDER_VERIFIED`.
 
-Two V2 release comments exist:6912703004 has an incompatible sizing object;
-6912724858 has the required export/first-call/safety policy and is registered in
-`minicpm-v2-2-journal`. Its ticket is also PUBLISHED/1000 calls/28800 GPU-s. The
-retained V2 notebook log fails `MINICPM_STALE_PROVIDER_BEFORE_LAUNCH`. V3 grant
-6913569723 is registered in `minicpm-v3-journal`, with a third RESERVED ticket
-for1000 calls/28800 GPU-s and no publication event. No grant is assumed unused.
+All three original journal/mirror heads, PUBLISHED mismatch, tickets, signatures,
+source/notebook locks, logs and local supervisor ZIP/sidecar hashes remain.
+Their original3000 calls/3 jobs/86400 physical GPU-second reservations remain
+recorded. Retirement excludes predictions; it does not refund or rewrite holds.
+The named three are covered by this exact Owner decision; future ambiguous jobs
+cannot silently be retired by copying this report.
 
-All three local journal/mirror byte pairs match. Their reservation total is
-3000 calls/3 jobs/86400 physical GPU-seconds; old project cap72000. Native failures
-and expiry do **not** refund reservations. Existing total_calls4500 also cannot
-reserve another3763 calls after3000 held calls. No numerical replacement caps
-are invented, and account quota is a separate provider constraint.
+## New execution and finite budget
 
-Read-only official SDK at this session observed account GPU quota
-26745 used/0 reserved/108000 total, and189 owned notebooks across complete pages.
-The exact three production slugs are absent; their direct status reads deny
-`kernels.get`. Local downloaded logs therefore lack fresh authenticated terminal
-provider custody. **BLOCKED** until the exact original notebook id/slug/version,
-code/Inputs/output and account facts reconcile. A missing published job could
-have run or changed/deleted its slug; absence is not a zero-call proof.
+The new execution id is `mcpm4-train3763-owner-restart-v1`; MiniCPM series is
+`fresh171-minicpm4-owner-restart-v1`. First plan contains all original3763 TRAIN
+IDs/order/JPG hashes from ordinal0, empty prediction history, no old SUCCESS or
+INVALID inheritance. FP16/eager, exact FP32 resampler, strict C1, labels, HNLO N/A,
+cohort and TEST closure stay unchanged. One create-only binding appends to the
+same historical V3 journal; first new job is global serial4. Serial numbers and
+budget provenance do not restart at zero.
 
-Local observations are preserved under ignored
-`data/processed/minicpm-run1-recovery-20261116/`. Earlier failed read-only proxy
-and empty-token diagnostics are not counted as provider success. SDK supports
-empty terminal tokens and classic page fallback; repeated pages/tokens, wrong
-account or incomplete inventory still STOP. No provider write was performed.
+The implementation derives one auditable finite policy from the Owner directive:
+
+| Quantity | Formula / bound |
+| --- | --- |
+| New job ceiling | 3763 serial jobs |
+| Each job | at most3763 pending-ID reservations,14400 seconds,2 physical T4s,1 load |
+| Inclusive reserved calls | 3000 + 3763?3763 =14163169 |
+| Inclusive jobs | 3 + 3763 =3766 |
+| Inclusive reserved GPU-s | 86400 + 3763?2?14400 =108460800 |
+| Actual new native image calls | at most3763 under unchanged NOT_ATTEMPTED-only histories |
+
+The four-hour job envelope reuses the existing approved job limit. The job/call
+products bound the actual scheduler even if reserved image slots are unused by
+short/aborted jobs; no hold is refunded. This conservative mathematical ceiling
+is **not** a request to execute millions of images, a model-throughput claim, a
+guarantee of success, weekly provider quota or numbers quoted from Owner. It
+covers a finite scheduler capable of all3763 original calls without granting
+infinite retries. Exhausted jobs/technical ambiguity still stop for reconciliation.
+
+Every job separately reads the legitimate account's real current quota. At most
+the smaller of per-job time, remaining project reservation and provider available
+GPU-seconds/2 can be held. Account reserved time must be zero before a new launch;
+current new-series inventory and visible retired-job states are also checked.
+Provider quota resets do not change cumulative project reservations. No account
+switching or multi-account quota circumvention exists. If quota is insufficient,
+wait for reset or use separately authorized different compute; do not ask for the
+same project-budget consent again.
+
+## Exact-source release and current tickets
+
+Marker `SAFESHIFT_MINICPM_OWNER_UI_RESTART_RELEASE_V4`, schema
+`safeshift-minicpm-owner-ui-restart-release-v4`, authorization
+`OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY`. It binds exact runtime/reviewed/
+merged trees, original scope, host/key, finite expiry, retirement hashes and the
+precise derived numerical policy. Live authentic Owner records on PR199 still
+bind source_review/independent_audit/merge/postmerge. Existing original O2?O6
+rights/scope records are authenticated from the historical V3 grant; the new
+budget basis is this Owner decision plus the reviewed formula, not a fabricated
+APPROVED numerical amendment or repeated O5 comments. No new third-party or
+academic authority is claimed. Missing/tampered authority/source/rights stays shut.
+
+Do not use the old V3 CODEX_SUBMIT_ONCE authorization, old notebook/capsule or an
+expired ticket. The CLI has no submit or live-observe action. F1's terminal-output
+helper is not used to watch RUNNING jobs. F2's accelerator check remains enforced
+by the existing strict terminal verifier and source-bound two-T4 GPU preflight;
+wrong/unknown machine shapes are rejected in regression tests. Terminal output
+inventory remains strict. The runtime still writes durable native generate-entry
+claims/logs, which Antigravity can inspect through the official live logs/UI.
 
 ## Five nested Inputs
 
-| Input | Pinned ref/version | Exact mount below `/kaggle/input` |
-| --- | --- | --- |
-| TRAIN | `nguynanhtn/inspecsafe-v1-kaggle/1` | `datasets/nguynanhtn/inspecsafe-v1-kaggle` |
-| Master | `nguynanhtn/safeshift-pilot-input/1` | `datasets/nguynanhtn/safeshift-pilot-input` |
-| Checkpoint | `nguynanhtn/safeshift-prepare-minicpm4/1` | `notebooks/nguynanhtn/safeshift-prepare-minicpm4` |
-| Python | `nguynanhtn/safeshift-cpython3119-20240726/1` | `datasets/nguynanhtn/safeshift-cpython3119-20240726` |
-| New capsule | exact signed `.../safeshift-minicpm-capsule-mcpm4-train3763-v3-4/1` | `datasets/nguynanhtn/safeshift-minicpm-capsule-mcpm4-train3763-v3-4` |
+Paths below are relative to `/kaggle/input`; actual versions/Private/bytes are
+gated, not assumed from the table.
 
-TRAIN/master bind the exact nested strings; capsule/Python/checkpoint markers
-must uniquely resolve to their signed nested roots before admit. All original
-master/projection/3763 ordered IDs/JPG SHA, model checkpoint, isolated Python/ABI,
-storage/RAM/T4/CUDA, child authority, raw-before-parse and ZIP gates remain active.
-TEST is closed. No image/checkpoint/Python reupload is needed.
+| Input / pinned ref | Mount |
+| --- | --- |
+| `nguynanhtn/inspecsafe-v1-kaggle/1` | `datasets/nguynanhtn/inspecsafe-v1-kaggle` |
+| `nguynanhtn/safeshift-pilot-input/1` | `datasets/nguynanhtn/safeshift-pilot-input` |
+| `nguynanhtn/safeshift-prepare-minicpm4/1` | `notebooks/nguynanhtn/safeshift-prepare-minicpm4` |
+| `nguynanhtn/safeshift-cpython3119-20240726/1` | `datasets/nguynanhtn/safeshift-cpython3119-20240726` |
+| New signed `.../safeshift-minicpm-capsule-mcpm4-train3763-owner-restart-v1-4/1` | `datasets/nguynanhtn/safeshift-minicpm-capsule-mcpm4-train3763-owner-restart-v1-4` |
 
-## Authority and no-refund recovery
+Original master/projection/JPG SHA, checkpoint, isolated Python/ABI, scratch/RAM,
+GPU/driver/CUDA, child release, raw-before-parse, signed load/call claims and
+ZIP/sidecar gates remain. No data/checkpoint/Python reupload or GT/parser rescue.
+Preflight is integrated in the same production job, not a separate smoke loop.
 
-V2 `OWNER_MINICPM_TRAIN3763_SERIAL_UI_ONLY` stays UI-only. New record marker
-`SAFESHIFT_MINICPM_FULLTRAIN_RECOVERY_RELEASE_V3`, schema
-`safeshift-minicpm-fulltrain-recovery-release-v3`, authorizes
-`OWNER_MINICPM_TRAIN3763_CODEX_SUBMIT_ONCE` only on the new reviewed implementation
-PR. It binds final runtime/reviewed/merged source trees, original science/Input
-scope, host/public key, finite caps/window and separate authentic approval
-locators for source_review, independent_audit, merge, postmerge and O2–O6.
-Root and approvals must be authentic Owner records on that new implementation PR.
-Expired authority is usable only for terminal collection, never a new launch.
+## Antigravity operations after source review/audit/merge/postmerge
 
-The required `recovery` snapshot binds **all three** original registered
-journal/mirror paths/heads, original live grant locators, full signed old tickets,
-publication states, resource sums and exact terminal/absence evidence hashes.
-The old public key and science must agree; only source provenance and nested
-mount layout can differ. No fourth campaign is accepted. Original/V2/V3 grants,
-keys, raw and journals are not rewritten. A new reservation is appended to the
-existing V3 pair, with global serial4 and all3000 calls/86400 GPU-s carried forward.
-
-`FAILED_PRE_NATIVE` requires exact remote notebook/version/Private/Inputs,
-terminal provider state, full bounded output inventory, intact supervisor ZIP/
-sidecar/request/ticket/claims, no native/load/call/attempt and a recorded failure.
-The source-bound pre-launch expiry exception has no supervisor ZIP; it requires
-the exact terminal provider log/code and expiry-before-launch error. Native,
-partial attempt, unknown claims, extra ZIP, missing sidecar or ambiguous provider
-remains STOP. All received partial bytes/logs are retained. These receipts are
-operational classifications, never scientific results or budget credits.
-
-`EXPIRED_UNPUBLISHED` additionally requires original journal state RESERVED
-without a PUBLISH_INTENT, expired ticket and authenticated complete job absence.
-PUBLISH_INTENT/PUBLISHED plus missing job always needs read-only reconciliation.
-
-The current86400 reservation already exceeds72000. An actual Owner budget
-amendment is required before any positive remaining budget can exist. Its separate
-PR198 Owner record uses marker `SAFESHIFT_MINICPM_PROJECT_BUDGET_AMENDMENT_V1` and
-an exact object with `previous_gpu_seconds:72000`, explicitly decided
-`total_gpu_seconds`, complete `reserved` totals, ordered `journal_heads`, and
-`refund:false`. The new release binds its locator. This code does not issue that
-decision. O5/new release also binds finite calls/jobs and coverage capacity; no
-old cap is reset and no new campaign makes resources available.
-
-## Operations after the internal review/merge gates
-
-Use the existing pinned operator venv (kaggle2.2.5/kagglesdk0.1.38/requests2.34.2).
-All commands are repository-relative. `inspect` is offline, read-only and explicitly
-unauthenticated. `reconcile` reads official provider/Owner records and preserves
-new local evidence only; it does not reserve/upload/submit or repair old journals.
+Use the SAME old Operator session and existing pinned venv
+(kaggle2.2.5/kagglesdk0.1.38/requests2.34.2). All paths are repository-relative.
+CPU preparation below writes ignored derived files only; it is not a release.
 
 ```powershell
 $py = 'data/processed/operator-venv/Scripts/python.exe'
-& $py -B -m scripts.minicpm_fulltrain_recovery inspect
-& $py -B -m scripts.minicpm_fulltrain_recovery reconcile --output data/processed/<new-reconciliation>
+& $py -B -m scripts.minicpm_fulltrain_recovery retire --directive-locator <authentic-6918902424-locator.json> --output data/processed/<retirement-snapshot.json>
+& $py -B -m scripts.minicpm_fulltrain_recovery prepare-spec --initial-spec <retained-original-spec.json> --output data/processed/<new-spec.json>
+& $py -B -m scripts.minicpm_fulltrain_recovery release-template --spec <new-spec.json> --snapshot <retirement-snapshot.json> --runtime-ref <exact-current-runtime-commit> --output data/processed/<unsigned-proposal.json>
 ```
 
-After genuine reconciliation, `prepare-spec --initial-spec <old-spec> --calls
-<approved-calls> --seconds <approved-seconds> --output <new-spec>` preserves the
-original3763 metadata, explicitly versions current source and sets five nested
-bindings. No calls/time defaults. `release-template --spec <new-spec> --snapshot
-<snapshot> --runtime-ref <exact-commit> --implementation-pr <new-PR> --output
-<proposal>` writes an **unsigned proposal**, with authority/caps/approvals unset.
-Authentic final-source approval and cap evidence must be supplied externally.
-Never upload private keys or credentials in a grant, capsule, notebook or PR.
-
-After all gates, in this same Codex session:
+The proposal labels numbers as derived, leaves dates/key/approval/merge evidence
+unset, and cannot authorize execution. After a genuine final-source V4 release:
 
 ```powershell
-& $py -B -m scripts.minicpm_fulltrain_recovery stage --locator <release-locator> --spec <new-spec> --private-key <local-key> --reconciliation <verified-directory> --output data/processed/<new-package>
+& $py -B -m scripts.minicpm_fulltrain_recovery bind --locator <current-release-locator.json> --spec <new-spec.json>
+& $py -B -m scripts.minicpm_fulltrain_recovery stage --private-key <local-operator-key> --output data/processed/<fresh-package>
 & $py -B -m scripts.minicpm_fulltrain_recovery publish
-& $py -B -m scripts.minicpm_fulltrain_recovery submit-once
-& $py -B -m scripts.minicpm_fulltrain_recovery observe --output data/processed/<new-observation>
 ```
 
-Stage requires clean exact merged checkout and genuine final-source release;
-fresh provider/Input/version/Private/quota/no-outstanding-VM checks precede sign
-and append-only reservation. Capsule publication has a durable intent and
-`publish --verify-only` reconciles one ambiguous create without retrying it.
-The SDK's POST retry decorator is disabled. Notebook byte reproduction and
-capsule/ticket identity are rechecked immediately before the only kernel push.
-`CODEX_PUSH_INTENT` is fsynced into both journal copies **before** that POST.
-Timeout, error or ambiguous return retains intent/reservation and blocks every
-second submit; no forced version2, expired-ticket refresh or overwrite.
+Bind rechecks untouched retired evidence, source and authentic release; create-only
+restart guard prevents reinitialization or alternate-root budget resets. Stage
+checks current account/no active sessions/quota/new job absence, then signs and
+records full cumulative reservations before publication. Private capsule create
+has a durable mirrored intent and no POST retry. Timeout remains ambiguous;
+`publish --verify-only` verifies exact existing bytes/version without recreating.
+Never put the local private key or credentials in GitHub, Kaggle or the capsule.
 
-## Native-start PASS and Antigravity continuation
+Only successful provider capsule-v1 verification plus fresh Input/quota and
+unexpired ticket yields local downloadable `notebook.ipynb` and
+`owner-handoff.json` with `RELEASED_FOR_OWNER_UI`, all hashes/versions/mounts,
+source/release/ticket refs, cumulative vs historical reservations and
+`start_before_local` in Asia/Ho_Chi_Minh. Missing evidence remains BLOCKED; no
+publication or Owner Run has happened merely because these commands exist.
 
-`observe` performs one bounded read-only provider observation, then exits.
-It checks exact latest v1 kernel id/Private/T4/Inputs/code, quota and full live
-provider log, then rechecks job status. Mere QUEUED/RUNNING returns
-`RUNNING_UNVERIFIED`. No indefinite poller, resubmit or cancellation exists.
+Owner receives at most three actions:
 
-Parent emits positive `stage_returned` only after verified child process success
-and returned stage binding for admit/setup/cpu/gpu. The native child persists
-the ordered signed-ticket call claim, then observes the unchanged backend at
-its actual `model.generate` entry after model load/image preprocessing/transfer.
-It writes/fsyncs the generate observation before emitting a bounded structured
-`native_generate_started` stdout event. Supervisor forwards only these public
-receipt lines while keeping complete original child logs. JSON provider stdout
-chunks are reassembled; stderr/entry/load-only events cannot establish PASS.
+1. Upload the exact notebook and attach its five pinned Input versions.
+2. Select Private / Python / Internet On / GPU T4x2.
+3. Before the signed expiry, Save Version ? Save & Run All ONCE and send the exact version URL to Antigravity.
 
-PASS requires all positive ordered stages, exact source/request/ticket and first
-scheduled ordinal/TRAIN ID/JPG SHA, genuine claim/model-loaded observation and
-provider still RUNNING. No successful output or job completion is required.
-`CODEX_NATIVE_HANDOFF` records URL/version/kernel id, runtime/merge commit,
-notebook/capsule/ticket SHA and grant refs, all five Inputs, finite calls/time/
-physical GPUs, live quota/log proof and before/after journal heads. Leave the
-kernel running and stop Codex monitoring. No claim that actual live events can
-be read is made before testing the real provider; unavailable logs mean UNVERIFIED.
-
-Antigravity resumes its SAME historical Operator conversation and journal:
+Do not run cells manually/restart/submit another version. Expired new tickets
+need read-only reconciliation and fresh valid release handling, never source-lock
+edits, replay or overwritten old artifacts. RUNNING alone is not native-start
+proof. Antigravity observes durable model.generate-entry proof after positive
+admit/setup/cpu/gpu and model load, keeps the kernel running, then collects when
+terminal in the same Operator session:
 
 ```powershell
-& $py -B -m scripts.minicpm_fulltrain_recovery collect --output data/processed/<new-terminal-collection>
-& $py -B -m scripts.minicpm_fulltrain_recovery stage-pending --private-key <local-key> --output data/processed/<next-package>
-& $py -B -m scripts.minicpm_fulltrain_recovery publish-pending
+& $py -B -m scripts.minicpm_fulltrain_recovery collect --output data/processed/<fresh-collection>
+& $py -B -m scripts.minicpm_fulltrain_recovery stage --private-key <local-operator-key> --output data/processed/<next-package>
+& $py -B -m scripts.minicpm_fulltrain_recovery publish
 ```
 
-Collection reuses PR198's two sealed ZIP/sidecar/raw/native/C1/history/provider
-verifiers and verifies generate observations against the ticket/native markers.
-Only verified terminal collection permits next signed serial5+ capsules. These
-carry every immutable same-source ancestor, full cumulative reservation and only
-NOT_ATTEMPTED IDs; SUCCESS/INVALID/errors remain consumed. Later launches retain
-the existing Owner UI flow under signed finite caps; this task grants no second
-Codex API submission. Ambiguity or technical failures STOP for reconciliation.
+Only genuine COMPLETE provider/code/T4/Inputs, both sealed ZIP/sidecar pairs,
+raw/native/C1/claims/history and timings permit a next plan. All new-series
+ancestors and reservations carry forward; only NOT_ATTEMPTED IDs are scheduled.
+INVALID/errors stay preserved and consumed; technical/unknown output STOPs.
+No Codex API submit or automatic account/compute switch exists.
 
-## Validation and limits
-
-CPU synthetic acceptance is recorded alongside the PR. Test boundaries mock
-Owner/provider/model IO; signatures, mirrored append-only events, history/C1/
-archive/claim validators and single-submit state transitions execute normally.
-Linux process-group streaming verifies live receipt visibility before child exit.
-No code test authenticates real GPU/model-fit, provider run or academic rights.
-Final-source native execution is NOT_RUN; DONE is not claimed at Draft PR.
-
-[Accepted commands, exact source, counts and limitations](research/MINICPM_RUN1_RECOVERY_20261116.md)
-and [machine receipts/log hashes](research/evidence/minicpm_run1_recovery_20261116/index.json)
-separate final acceptance from preserved development failures.
+Historical initial PR199 acceptance remains at
+[the earlier V3 receipt](research/MINICPM_RUN1_RECOVERY_20261116.md), scoped to its
+old source only. New V4 acceptance is recorded separately in this same PR. No
+live GPU/model-fit/inference/Owner Run or scientific qualification is claimed.

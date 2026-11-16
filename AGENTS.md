@@ -1,5 +1,30 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner16/11/2026 — PR199 Owner UI restart / finite derived budget
+
+[Directive6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
+supersedes PR199's automatic Codex submit and recurring72000-cap amendment flow.
+Continue SAME Codex session/branch/Draft PR199; no new PR. Retire only the three
+named historical MiniCPM attempts as sources of results, preserving every ticket,
+journal/reservation/local log/sealed archive and provider uncertainty. Zero calls
+are Owner/local-reported, never authenticated remote deletion or terminal proof.
+
+Implement a separately identified Owner-UI restart at ordinal0 over all original
+3763 TRAIN IDs, no old predictions. Bind a finite auditable reservation policy to
+this exact directive and reviewed source; distinguish derived numerical ceilings,
+historical reservations, actual native calls and current account quota. No fake
+APPROVED amendment, counter rewrite/refund, automatic account switching or quota
+circumvention. Per-job caps, signed expiry/source/Input/raw/claims/anti-replay stay.
+
+Codex performs code/CPU tests/docs/push only and requests fresh direct HEAD review.
+After source PASS: independent Antigravity audit, separately authorized merge and
+verified postmerge, then authentic final-source release. Antigravity in SAME old
+Operator session publishes current signed notebook/private capsule and ≤3 concrete
+Owner steps; Owner personally Save Version > Save & Run All once before expiry.
+No Codex submit/live observer or claim that publication/Owner Run already happened.
+Antigravity collects authenticated new results and stages only NOT_ATTEMPTED.
+Science/FP16 weights/FP32 resampler/C1/HNLO N/A/TEST closure remain unchanged.
+
 ## Owner16/11/2026 — post-PR198 Run1 recovery / one Codex launch
 
 [Directive6914854993](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6914854993)

@@ -1,9 +1,9 @@
-"""Synthetic recovery/signatures/provider doubles; no account/model/image IO."""
+"""Synthetic Owner-UI restart/retirement/source/signature tests; zero live IO."""
 from contextlib import ExitStack
 from copy import deepcopy
 from datetime import timedelta
+import ast
 import hashlib
-import importlib.util
 import io
 import json
 import os
@@ -13,12 +13,11 @@ import tempfile
 import time
 from types import SimpleNamespace as NS
 import unittest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 import test_minicpm_fulltrain_execution as fixtures
-from safeshift.fulltrain import minicpm_release as a, minicpm_recovery as r, minicpm_ui as ui
-from safeshift.pilot.artifacts import read, write
-from safeshift.pilot.artifacts import export
+from safeshift.fulltrain import contract, minicpm_release as a, minicpm_recovery as r, minicpm_ui as ui
+from safeshift.pilot.artifacts import read, write, sha, export
 from safeshift.pilot.contract import digest
 from scripts import minicpm_fulltrain_operator as old, minicpm_fulltrain_recovery as op
 
@@ -52,196 +51,296 @@ class RecoveryTests(unittest.TestCase):
     setUpClass = classmethod(fixtures.ExecutionTests.setUpClass.__func__)
     tearDownClass = classmethod(fixtures.ExecutionTests.tearDownClass.__func__)
     make_ticket = fixtures.ExecutionTests.make_ticket
-    fake_graph = fixtures.ExecutionTests.fake_graph
 
     def setUp(self):
         fixtures.ExecutionTests.setUp(self)
-        p = patch.object(op, "ROOT", self.root)
-        p.start(); self.addCleanup(p.stop)
-        p = patch.object(op, "private_root", side_effect=lambda path: Path(path))
-        p.start(); self.addCleanup(p.stop)
+        for module, attr, value in ((op, "ROOT", self.root), (op, "private_root", lambda p: Path(p)),
+                                    (old, "private_root", lambda p: Path(p))):
+            patcher = patch.object(module, attr, value); patcher.start(); self.addCleanup(patcher.stop)
         self.old_grants = []
-        for campaign, (root_name, mirror_name) in zip(r.CAMPAIGNS, op.KNOWN):
-            grant = deepcopy(self.grant)
-            grant["campaign_id"] = campaign
-            grant["merged_sha"] = "507e9817b91054fa7af324c6a915c35d56b5acf1"
-            grant["scope"]["source_sha256"] = "7c76a2c331aef2383e9d8f2fe236f0c4302cabb587a759925b5d3dadae206b5c"
-            grant["scope"]["identity"]["implementation_sha256"] = grant["scope"]["source_sha256"]
-            value = deepcopy(self.value)
+        for campaign, pair in zip(r.CAMPAIGNS, op.KNOWN):
+            g, value = deepcopy(self.grant), deepcopy(self.value)
+            g.update(campaign_id=campaign, merged_sha="507e9817b91054fa7af324c6a915c35d56b5acf1")
+            g["scope"]["source_sha256"] = "7c76a2c331aef2383e9d8f2fe236f0c4302cabb587a759925b5d3dadae206b5c"
+            g["scope"]["identity"]["implementation_sha256"] = g["scope"]["source_sha256"]
             value["job"] = "nguynanhtn/safeshift-minicpm-" + campaign + "-1"
-            value["capsule_ref"] = "nguynanhtn/safeshift-minicpm-capsule-" + campaign + "-1/1"
-            value["input_sources"]["dataset_sources"][-1] = value["capsule_ref"]
-            journal = old.Journal(self.root / "data/processed" / root_name, self.root / "data/processed" / mirror_name)
+            value["request"]["plan"] = contract.plan(value["request"]["campaign"], self.cohort,
+                value["request"]["plan"]["identity"], [], action="initial", run_id=campaign + "-r", attempt_id=campaign + "-a",
+                max_calls=1000, max_seconds=r.JOB_SECONDS)
+            body = a.MARKER + "\n```json\n" + json.dumps(g) + "\n```"
+            loc = {"comment_id": 20 + len(self.old_grants), "body_sha256": hashlib.sha256(body.encode()).hexdigest()}
+            self.old_grants.append(g)
+            journal = old.Journal(*(self.root / "data/processed" / name for name in pair))
             journal.root.mkdir(parents=True); journal.mirror.mkdir(parents=True)
-            body = a.MARKER + "\n```json\n" + json.dumps(grant) + "\n```"
-            loc = {"comment_id": len(self.old_grants) + 20, "body_sha256": hashlib.sha256(body.encode()).hexdigest()}
-            self.old_grants.append((grant, body))
-            journal._pair({"schema": old.SCHEMA, "number": 1, "previous": "0" * 64, "kind": "REGISTERED",
-                "payload": {"host": old.host(), "locator": loc, "grant_sha256": digest(grant), "initial": value}})
-            write(journal.guard_path(grant), journal.binding(grant))
-            ticket = deepcopy(self.ticket["payload"])
-            ticket.update(grant_sha256=digest(grant), value_sha256=digest(value), previous_event_sha256=digest(journal.events()[-1]))
-            signed = old.sign(self.key, self.public, ticket)
-            journal.append("RESERVED", {"ticket": signed, "value": value, "package": "data/processed/old"})
-        snapshot = op.inspect_journals()
+            journal._pair({"schema": old.SCHEMA, "kind": "REGISTERED", "number": 1, "previous": "0" * 64,
+                "payload": {"host": old.host(), "locator": loc, "grant_sha256": digest(g), "initial": value}})
+            write(journal.guard_path(g), journal.binding(g))
+            payload = deepcopy(self.ticket["payload"])
+            payload.update(grant_sha256=digest(g), value_sha256=digest(value), previous_event_sha256=digest(journal.events()[-1]),
+                reserved_after={"calls": 1000, "jobs": 1, "gpu_seconds": 28800}, sizing={"calls": 1000, "seconds": 14400})
+            envelope = old.sign(self.key, self.public, payload)
+            journal.append("RESERVED", {"value": value, "ticket": envelope, "package": "data/processed/old"})
+            if campaign != r.CAMPAIGNS[-1]:
+                journal.append("PUBLISH_INTENT", {"ticket_sha256": digest(envelope)})
+                journal.append("PUBLISHED", {"ticket_sha256": digest(envelope), "proof": {"synthetic": True}})
+        # Tiny local evidence, never genuine model data or a provider assertion.
+        self.evidence = []
+        for i in range(3):
+            name = "data/processed/local-evidence-" + str(i) + ".json"
+            write(self.root / name, {"fixture": "SYNTHETIC_LOCAL_HISTORY_NOT_PROVIDER_AUTHORITY"})
+            self.evidence.append(((name, "LOCAL_TICKET"),))
+        self.directive_body = "SYNTHETIC Owner restart decision fixture, not an actual grant"
+        self.directive = {"comment_id": r.DIRECTIVE, "body_sha256": hashlib.sha256(self.directive_body.encode()).hexdigest()}
+        with patch.object(op, "LOCAL_EVIDENCE", self.evidence):
+            snapshot = op.retirement_snapshot(self.directive)
         self.value = ui.initial(self.cohort, digest(self.cohort), self.value["request"]["resource_policy"],
-            checkpoint_marker_sha256="b" * 64, run_id="recovery-run", attempt_id="recovery-attempt",
-            job="nguynanhtn/safeshift-minicpm-mcpm4-train3763-v3-4",
-            capsule_ref="nguynanhtn/safeshift-minicpm-capsule-mcpm4-train3763-v3-4/1",
-            max_calls=3, max_seconds=600, nested_mounts=True)
-        self.grant.update(schema=a.RECOVERY_SCHEMA, authorization="OWNER_MINICPM_TRAIN3763_CODEX_SUBMIT_ONCE",
-            campaign_id=r.CAMPAIGNS[-1], implementation_pr=199, scope=a.scope(self.value), recovery=snapshot)
-        self.grant["caps"]["total_gpu_seconds"] = 72000
-        for row in snapshot["journals"]:
-            row.update(disposition="EXPIRED_UNPUBLISHED", evidence_sha256="9" * 64)
-            snapshot["prior_jobs"].append({"job": row["job"], "version": 1, "state": "ABSENT_EXPIRED", "evidence_sha256": "9" * 64})
-        directive_body = "Owner authorizes exact one postmerge submission"
-        snapshot["directive"]["body_sha256"] = hashlib.sha256(directive_body.encode()).hexdigest()
-        self.directive_body = directive_body
-        self.provider["prior_jobs"] = deepcopy(snapshot["prior_jobs"])
-        self.provider["observed_unix"] = int(time.time())
-        self.ticket = self.recovery_ticket()
-        self.logs = self.events_log()
+            checkpoint_marker_sha256="b" * 64, run_id="restart-r", attempt_id="restart-a",
+            job="nguynanhtn/safeshift-minicpm-" + r.CAMPAIGN + "-4",
+            capsule_ref="nguynanhtn/safeshift-minicpm-capsule-" + r.CAMPAIGN + "-4/1",
+            max_calls=3, max_seconds=600, nested_mounts=True, series={**contract.SERIES, "minicpm4": r.SERIES})
+        self.grant.update(schema=a.RECOVERY_SCHEMA, authorization="OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY",
+            campaign_id=r.CAMPAIGN, implementation_pr=199, scope=a.scope(self.value), recovery=snapshot,
+            caps=r.budget_policy(snapshot["reserved"])["caps"], approvals={role: None for role in r.SOURCE_ROLES})
+        self.provider["current_account_safety"] = {"retired_visibility": [{"job": j["job"],
+            "visibility": "NOT_VISIBLE_NOW_NOT_VERIFIED_DELETED"} for j in snapshot["journals"]],
+            "quota": deepcopy(self.provider["quota"]), "owned_sha256": self.provider["owned_sha256"],
+            "observed_unix": self.provider["observed_unix"], "historical_provider_custody": "NOT_AUTHENTICATED_BY_RETIREMENT"}
+        payload = deepcopy(self.ticket["payload"])
+        payload.update(schema=a.RECOVERY_TICKET, grant_sha256=digest(self.grant), value_sha256=digest(self.value),
+            capsule_sha256=digest(self.value), number=4, reserved_before=r.HISTORICAL,
+            reserved_after={"calls": 3003, "jobs": 4, "gpu_seconds": 87600}, provider=deepcopy(self.provider))
+        self.ticket = old.sign(self.key, self.public, payload)
 
-    def recovery_ticket(self):
-        ticket = deepcopy(self.ticket["payload"])
-        before = self.grant["recovery"]["reserved"]
-        ticket.update(schema=a.RECOVERY_TICKET, grant_sha256=digest(self.grant), value_sha256=digest(self.value),
-            capsule_sha256=digest(self.value), number=4, reserved_before=before,
-            reserved_after={"calls": before["calls"] + 3, "jobs": 4, "gpu_seconds": before["gpu_seconds"] + 1200},
-            issued_unix=int(time.time()), provider=deepcopy(self.provider),
-            start_before_unix=self.provider["observed_unix"] + self.grant["provider_max_age_seconds"])
-        return old.sign(self.key, self.public, ticket)
-
-    def events_log(self):
-        now = time.time()
-        base = {"ticket_sha256": digest(self.ticket), "request_sha256": digest(self.value["request"]),
-            "source_sha256": self.value["request"]["source_sha256"], "time_unix": now}
-        rows = [{**base, "kind": "stage_returned", "stage": stage} for stage in ("admit", "setup", "cpu", "gpu")]
-        sample = self.value["cohort"]["samples"][0]
-        rows.append({**base, "kind": "native_generate_started", "model_loaded": True, "ordinal": 0,
-            "sample_id": sample["sample_id"], "image_sha256": sample["image_sha256"],
-            "claim": {"kind": "call-000000", "ticket_sha256": digest(self.ticket),
-                "request_sha256": digest(self.value["request"]), "number": 4, "time_unix": now}})
-        return rows
-
-    def encoded(self, rows=None):
-        return "\n".join(r.EVENT_PREFIX + json.dumps(row) for row in (self.logs if rows is None else rows)) + "\n"
+    def build(self, ref, *, capsule_sha256, **kwargs):
+        return {"cells": [{"cell_type": "code", "source": ["pass\n"]}], "metadata": {"safeshift": {
+            "runtime_ref": ref, "source_sha256": self.value["request"]["source_sha256"], "capsule_sha256": capsule_sha256}}}
 
     def graph(self):
-        locator, graph = self.fake_graph()
-        graph["/pulls/199"] = graph.pop("/pulls/198")
-        for row in graph.values():
-            if "issue_url" in row:
-                row["issue_url"] = a.API + "/issues/199"
-        for i, (_, body) in enumerate(self.old_grants, 20):
-            graph["/issues/comments/" + str(i)] = {"id": i, "user": {"id": a.OWNER_ID, "login": a.OWNER},
-                "issue_url": a.API + "/issues/198", "body": body}
-        graph["/issues/comments/6914854993"] = {"id": 6914854993, "user": {"id": a.OWNER_ID, "login": a.OWNER},
-            "issue_url": a.API + "/issues/198", "body": self.directive_body}
-        root = graph["/issues/comments/1"]
-        root["body"] = root["body"].replace(a.MARKER, a.RECOVERY_MARKER)
-        locator["body_sha256"] = hashlib.sha256(root["body"].encode()).hexdigest()
-        return locator, graph
-
-    def test_v3_live_graph_requires_new_merged_pr_approvals_and_original_grants(self):
-        loc, graph = self.graph()
-        self.assertEqual(a.load(loc, reader=graph.__getitem__), self.grant)
-        for mutate in (lambda g:g["/pulls/199"].update(merged=False),
-                       lambda g:g["/issues/comments/20"]["user"].update(id=1),
-                       lambda g:g["/issues/comments/6914854993"].update(body="edited")):
-            bad = deepcopy(graph); mutate(bad)
-            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
-                a.load(loc, reader=bad.__getitem__)
-
-    def test_signed_replacement_keeps_every_reservation_and_number(self):
-        a.validate(self.grant)
-        a.verify_ticket(self.grant, self.ticket, self.value)
-        for mutate in (lambda t:t.update(number=1), lambda t:t["reserved_before"].update(gpu_seconds=0),
-                       lambda t:t["provider"].update(prior_jobs=[])):
-            bad = deepcopy(self.ticket["payload"]); mutate(bad)
-            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
-                a.verify_ticket(self.grant, old.sign(self.key, self.public, bad), self.value)
-
-    def test_actual_86400_reservations_cannot_fit_old_72000_cap(self):
         grant = deepcopy(self.grant)
-        for row in grant["recovery"]["journals"]:
-            t = deepcopy(row["ticket"]["payload"])
-            t["sizing"] = {"calls": 1000, "seconds": 14400}
-            t["reserved_after"] = {"calls": 1000, "jobs": 1, "gpu_seconds": 28800}
-            row["ticket"] = old.sign(self.key, self.public, t)
-        grant["recovery"]["reserved"] = {"calls": 3000, "jobs": 3, "gpu_seconds": 86400}
-        with self.assertRaisesRegex(ValueError, "PROJECT_BUDGET_EXHAUSTED_NO_REFUND"):
-            a.validate(grant)
-        grant["caps"]["total_gpu_seconds"] = 200000
-        with self.assertRaisesRegex(ValueError, "CAP_AMENDMENT_REQUIRED"):
-            a.validate(grant)
+        graph = {"/pulls/199": {"merged": True, "draft": False, "base": {"ref": "main"},
+            "head": {"sha": grant["reviewed_head"]}, "merge_commit_sha": grant["merged_sha"]}}
+        def add(i, issue, marker, value):
+            body = marker + "\n```json\n" + json.dumps(value) + "\n```"
+            graph["/issues/comments/" + str(i)] = {"id": i, "issue_url": a.API + "/issues/" + str(issue),
+                "user": {"id": a.OWNER_ID, "login": a.OWNER}, "body": body}
+            return {"comment_id": i, "body_sha256": hashlib.sha256(body.encode()).hexdigest()}
+        graph["/issues/comments/" + str(r.DIRECTIVE)] = {"id": r.DIRECTIVE, "issue_url": a.API + "/issues/199",
+            "user": {"id": a.OWNER_ID, "login": a.OWNER}, "body": self.directive_body}
+        for i, old_grant in enumerate(deepcopy(self.old_grants)):
+            if i == 2:
+                for number, role in enumerate(("O2", "O3", "O4", "O5", "O6"), 100):
+                    old_grant["approvals"][role] = add(number, 198, a.APPROVAL,
+                        {"kind": role, "status": "APPROVED", "reviewed_head": old_grant["reviewed_head"],
+                         "subject_sha256": a.subject(old_grant)})
+            row = grant["recovery"]["journals"][i]
+            row["grant_locator"] = add(20 + i, 198, a.MARKER, old_grant)
+            payload = deepcopy(row["ticket"]["payload"]); payload["grant_sha256"] = digest(old_grant)
+            row["ticket"] = old.sign(self.key, self.public, payload)
+        for number, role in enumerate(r.SOURCE_ROLES, 2):
+            grant["approvals"][role] = add(number, 199, a.APPROVAL, {"kind": role, "status": "APPROVED",
+                "reviewed_head": grant["reviewed_head"], "subject_sha256": a.subject(grant)})
+        locator = add(1, 199, a.RECOVERY_MARKER, grant)
+        rows = []
+        for name in contract.sources():
+            raw = (ui.ROOT / name).read_bytes()
+            rows.append({"path": name, "type": "blob", "mode": "100644",
+                "sha": hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()})
+        for ref in (grant["runtime_commit"], grant["reviewed_head"], grant["merged_sha"]):
+            graph["/git/trees/" + ref + "?recursive=1"] = {"truncated": False, "tree": deepcopy(rows)}
+        return locator, graph, grant
 
-    def test_unknown_native_duplicate_fourth_campaign_and_torn_mirror_stop(self):
-        for mutate in (lambda g:g["recovery"]["journals"][0].update(disposition="UNKNOWN"),
-                       lambda g:g.update(campaign_id="mcpm4-train3763-v4"),
-                       lambda g:g["recovery"]["journals"].pop(),
-                       lambda g:g["recovery"]["reserved"].update(calls=0),
-                       lambda g:g["recovery"]["journals"][0].update(publication="PUBLISHED"),
-                       lambda g:g["recovery"]["journals"][0]["ticket"].update(signature="0" * 768)):
+    def test_one_authentic_directive_derived_policy_and_fresh_source_graph_not_fake_amendment(self):
+        loc, graph, grant = self.graph()
+        self.assertEqual(a.load(loc, reader=graph.__getitem__), grant)
+        self.assertEqual(set(grant["approvals"]), set(r.SOURCE_ROLES))
+        self.assertNotIn("budget_amendment", grant["recovery"])
+        for mutate in (lambda g:g["/pulls/199"].update(merged=False),
+                       lambda g:g["/issues/comments/" + str(r.DIRECTIVE)]["user"].update(id=1),
+                       lambda g:g["/issues/comments/104"].update(body="wrong old rights"),
+                       lambda g:g["/git/trees/" + grant["runtime_commit"] + "?recursive=1"]["tree"][0].update(sha="0" * 40)):
+            bad = deepcopy(graph); mutate(bad)
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError): a.load(loc, reader=bad.__getitem__)
+
+    def staged_operator(self):
+        operator = op.RecoveredSerialJournal()
+        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
+             patch.object(operator, "observe_provider", return_value=self.provider), \
+             patch.object(old.sizing, "propose", return_value={"calls": 3, "seconds": 600}), \
+             patch.object(old, "notebook", side_effect=self.build), patch("safeshift.internvl3763_operator.api", return_value=Mock()):
+            operator.bind_release(self.locator, self.value)
+            operator.stage(self.key, self.root / "data/processed/package")
+        return operator
+
+    def test_restart_starts_zero_with_all3763_and_no_historical_predictions(self):
+        initial = op.restart_spec(self.value)
+        self.assertEqual(initial["request"]["plan"]["scheduled_ordinals"], list(range(3763)))
+        self.assertEqual(initial["request"]["plan"]["counts"], {"NOT_ATTEMPTED": 3763})
+        self.assertEqual(initial["request"]["history"], [])
+        self.assertEqual(initial["request"]["campaign"]["series"]["minicpm4"], r.SERIES)
+        self.assertEqual(initial["cohort"], self.cohort)
+
+    def test_retirement_preserves_published_mismatch_uncertainty_and_old_bytes(self):
+        before = {p: p.read_bytes() for p in (self.root / "data/processed").rglob("event-*.json")}
+        snapshot = self.grant["recovery"]
+        self.assertEqual(snapshot["reserved"], {"calls": 3000, "jobs": 3, "gpu_seconds": 86400})
+        self.assertEqual(snapshot["journals"][0]["publication"], "PUBLISHED")
+        self.assertTrue(all(j["historical_status"] == "PROVIDER_UNAVAILABLE_NOT_VERIFIED_DELETED" for j in snapshot["journals"]))
+        op.verify_retired(snapshot)
+        for path, raw in before.items(): self.assertEqual(path.read_bytes(), raw)
+        for mutate in (lambda g:g["recovery"]["reserved"].update(calls=0),
+                       lambda g:g["recovery"]["journals"][0].update(disposition="FAILED_PRE_NATIVE"),
+                       lambda g:g["recovery"]["journals"][0].update(historical_status="VERIFIED_DELETED")):
             grant = deepcopy(self.grant); mutate(grant)
             with self.subTest(mutate=mutate), self.assertRaises(ValueError): a.validate(grant)
-        mirror = self.root / "data/processed/minicpm-v2-mirror/event-00002.json"
-        mirror.write_bytes(b"{}")
+
+    def test_finite_derived_policy_covers_all_scheduler_reservations_not_weekly_quota(self):
+        policy = r.budget_policy(r.HISTORICAL)
+        self.assertEqual(policy["caps"], self.grant["caps"])
+        self.assertGreater(policy["caps"]["total_gpu_seconds"], 108000)
+        reserved = dict(r.HISTORICAL)
+        for _ in range(3763):
+            reserved = {"calls": reserved["calls"] + 3763, "jobs": reserved["jobs"] + 1,
+                        "gpu_seconds": reserved["gpu_seconds"] + 28800}
+        self.assertEqual(reserved, {k: policy["caps"]["total_" + k] for k in reserved})
+        a.validate(self.grant)
+        for key in self.grant["caps"]:
+            bad = deepcopy(self.grant); bad["caps"][key] += 1
+            with self.subTest(key=key), self.assertRaises(ValueError): a.validate(bad)
+
+    def test_old_self_submit_authorization_and_cli_are_absent_or_denied(self):
+        bad = deepcopy(self.grant); bad["authorization"] = "OWNER_MINICPM_TRAIN3763_CODEX_SUBMIT_ONCE"
+        with self.assertRaises(ValueError): a.validate(bad)
+        self.assertFalse(hasattr(op, "RecoveryOperator"))
+        source = Path(op.__file__).read_text(encoding="utf-8")
+        self.assertNotIn("kernels_push", source)
+        self.assertNotIn("submit-once", source)
+        self.assertNotIn("output_inventory", source)
+        self.assertNotIn("def observe(", source)
+        with patch.object(sys, "argv", ["recovery", "submit-once"]), patch("sys.stderr", new=io.StringIO()):
+            with self.assertRaises(SystemExit): op.main()
+
+    def test_expired_ticket_old_signature_and_source_drift_fail_closed(self):
+        a.verify_ticket(self.grant, self.ticket, self.value)
+        changed = deepcopy(self.value); changed["request"]["source_sha256"] = "0" * 64
+        with self.assertRaises(ValueError): a.verify_ticket(self.grant, self.ticket, changed)
+        with patch.object(a.time, "time", return_value=self.grant["expires_unix"]):
+            with self.assertRaisesRegex(ValueError, "TICKET_EXPIRED"): a.verify_ticket(self.grant, self.ticket, self.value)
+        bad = deepcopy(self.ticket); bad["signature"] = "0" * 768
+        with self.assertRaises(ValueError): a.verify_ticket(self.grant, bad, self.value)
+        for mutate in (lambda t:t["provider"]["current_account_safety"]["quota"].update(reserved=1),
+                       lambda t:t["provider"]["current_account_safety"]["retired_visibility"][0].update(visibility="VERIFIED_DELETED"),
+                       lambda t:t["reserved_before"].update(calls=0)):
+            payload = deepcopy(self.ticket["payload"]); mutate(payload)
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
+                a.verify_ticket(self.grant, old.sign(self.key, self.public, payload), self.value)
+
+    def test_duplicate_binding_stage_and_torn_history_never_reset_budget(self):
+        before = {p: p.read_bytes() for p in (self.root / "data/processed").rglob("event-*.json")}
+        operator = self.staged_operator()
+        with patch.object(a, "load", return_value=self.grant):
+            _, _, reserved, item, _ = operator.state()
+            self.assertEqual(reserved, item["ticket"]["payload"]["reserved_after"])
+            with self.assertRaisesRegex(ValueError, "SECOND_BINDING"): operator.bind_release(self.locator, self.value)
+            with self.assertRaisesRegex(ValueError, "OPEN_RESERVATION"): operator.stage(self.key, self.root / "duplicate")
+        for path, raw in before.items(): self.assertEqual(path.read_bytes(), raw)
+        (operator.mirror / "event-00003.json").write_bytes(b"{}")
         with self.assertRaisesRegex(ValueError, "MIRROR_BYTES"): op.inspect_journals()
 
-    def test_five_nested_paths_and_direct_layout_denied(self):
+    def test_retired_evidence_tamper_blocks_even_when_owner_excludes_predictions(self):
+        file = self.root / self.evidence[0][0][0]
+        file.write_bytes(b"changed")
+        with self.assertRaisesRegex(ValueError, "EVIDENCE_DRIFT"): op.verify_retired(self.grant["recovery"])
+
+    def test_current_quota_active_vm_and_unknown_new_job_block_without_old_get(self):
+        client = Mock()
+        client.kernels_list_with_response.return_value = NS(kernels=[], next_page_token="")
+        quota = NS(time_used=timedelta(seconds=26745), time_reserved=timedelta(0), total_time_allowed=timedelta(seconds=108000))
+        client.quota_view.return_value = NS(gpu_quota=quota)
+        proof = op.current_safety(client, self.grant["recovery"], [], self.value["job"])
+        client.kernels_status.assert_not_called()
+        self.assertEqual(proof["historical_provider_custody"], "NOT_AUTHENTICATED_BY_RETIREMENT")
+        quota.time_reserved = timedelta(seconds=1)
+        with self.assertRaisesRegex(ValueError, "ACTIVE_SESSION"): op.current_safety(client, self.grant["recovery"], [], self.value["job"])
+        quota.time_reserved = timedelta(0)
+        client.kernels_list_with_response.return_value = NS(kernels=[NS(ref=self.value["job"])], next_page_token="")
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_OR_UNKNOWN"): op.current_safety(client, self.grant["recovery"], [], self.value["job"])
+        client.kernels_list_with_response.return_value = NS(kernels=[NS(ref=r.CAMPAIGNS[0].join(["nguynanhtn/safeshift-minicpm-", "-1"]))], next_page_token="")
+        client.kernels_status.return_value = NS(status="RUNNING")
+        with self.assertRaisesRegex(ValueError, "RETIRED_JOB_ACTIVE"): op.current_safety(client, self.grant["recovery"], [], self.value["job"])
+
+    def test_five_nested_mounts_and_accelerator_are_enforced_in_collection(self):
         table = r.mounted_inputs(self.value)
         self.assertEqual(len(table), 5)
-        self.assertEqual(table[ui.CHECKPOINT]["mount"], "notebooks/nguynanhtn/safeshift-prepare-minicpm4")
-        self.assertTrue(all(v["mount"].startswith("datasets/nguynanhtn/") for k, v in table.items() if k != ui.CHECKPOINT))
-        direct = deepcopy(self.value)
-        for name in ("master_dataset", "train_dataset"):
-            row = direct["request"]["original_inputs"][name]
-            row["mount"] = row["ref"].split("/")[1]
-        direct["request"]["marker_sha256"] = digest(direct["request"]["original_inputs"])
-        with self.assertRaisesRegex(ValueError, "NESTED_BINDING"): r.mounted_inputs(direct)
+        from safeshift.internvl3763_operator import verify_kernel_metadata_inputs
+        meta = NS(machine_shape="NvidiaTeslaT4", dataset_data_sources=[v.rsplit("/", 1)[0] for v in self.value["input_sources"]["dataset_sources"]],
+            kernel_data_sources=[ui.CHECKPOINT.rsplit("/", 1)[0]])
+        verify_kernel_metadata_inputs(meta, self.value["input_sources"])
+        for shape in ("NvidiaTeslaP100", None, "UNKNOWN"):
+            meta.machine_shape = shape
+            with self.subTest(shape=shape), self.assertRaises(ValueError): verify_kernel_metadata_inputs(meta, self.value["input_sources"])
 
-    def test_pre_native_failure_requires_positive_complete_terminal_evidence(self):
-        provider = {"state": "ERROR", "job_id": self.value["job"], "version": 1,
-            "notebook_code_sha256": self.ticket["payload"]["notebook_code_sha256"]}
-        receipt = r.failure_receipt(self.value, self.ticket, provider,
-            "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH", inventory_complete=True)
-        self.assertEqual(receipt["status"], "FAILED_PRE_NATIVE")
-        self.assertFalse(receipt["refund"])
-        self.assertEqual(receipt["reservation_preserved"], self.ticket["payload"]["reserved_after"])
-        for kwargs in ({"log": "no output"}, {"log": "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH", "inventory_complete": False}):
-            with self.assertRaises(ValueError):
-                r.failure_receipt(self.value, self.ticket, provider, **kwargs)
-        release = {"failure": {"message": "UNIQUE_ORIGINAL_MOUNT_REQUIRED"}, "attempt_observed": False,
-            "recovery": "NO_ATTEMPT", "last_stage": "admit", "source_sha256": self.value["request"]["source_sha256"]}
-        claim = {"kind": "launch", "ticket_sha256": digest(self.ticket), "request_sha256": digest(self.value["request"])}
-        claims = {"launch.json": claim}
-        r.failure_receipt(self.value, self.ticket, provider, "", release=release, claims=claims, inventory_complete=True)
-        for mutate in (lambda c:c.update({"native.json": claim}), lambda c:c.update({"call-000000.json": claim}), lambda c:c.clear()):
-            bad = deepcopy(claims); mutate(bad)
-            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
-                r.failure_receipt(self.value, self.ticket, provider, "", release=release, claims=bad, inventory_complete=True)
+    def test_publish_is_real_owner_ui_handoff_no_notebook_submit_and_no_duplicate_create(self):
+        operator = self.staged_operator()
+        client = Mock(); client.dataset_create_new.return_value = NS(status="ok", error="")
+        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
+             patch.object(operator, "observe_provider", return_value=self.provider), \
+             patch.object(old, "notebook", side_effect=self.build), \
+             patch.object(old, "verify_published_capsule", return_value={"private": True, "version": 1}), \
+             patch("safeshift.internvl3763_operator.api", return_value=client):
+            result = operator.publish()
+            self.assertEqual(result["status"], "RELEASED_FOR_OWNER_UI")
+            self.assertEqual(result["mode"], "OWNER_UI_ONLY")
+            self.assertEqual(result["timezone"], "Asia/Ho_Chi_Minh")
+            self.assertEqual(len(result["input_mounts"]), 5)
+            self.assertEqual(result["historical_reservations"], r.HISTORICAL)
+            self.assertFalse(result["scientific_inheritance"])
+            self.assertTrue((self.root / result["notebook_file"]).is_file())
+            with self.assertRaisesRegex(ValueError, "UNPUBLISHED_RESERVATION"): operator.publish()
+        client.kernels_push.assert_not_called()
+        self.assertEqual(client.dataset_create_new.call_count, 1)
 
-    def test_running_stage_entries_and_model_load_alone_never_pass(self):
-        self.assertEqual(r.live_proof("RUNNING", self.value, self.ticket)["status"], "RUNNING_UNVERIFIED")
-        self.assertEqual(r.live_proof(self.encoded(self.logs[:-1]), self.value, self.ticket)["status"], "RUNNING_UNVERIFIED")
-        self.assertEqual(r.live_proof(self.encoded(), self.value, self.ticket)["status"], "NATIVE_STARTED")
-        for mutate in (lambda rows:rows.pop(0), lambda rows:rows[-1].update(ordinal=1),
-                       lambda rows:rows[-1].update(model_loaded=False),
-                       lambda rows:rows[-1]["claim"].update(ticket_sha256="0" * 64),
-                       lambda rows:rows[-1].update(source_sha256="0" * 64),
-                       lambda rows:rows[-1].update(image_sha256="0" * 64)):
-            rows = deepcopy(self.logs); mutate(rows)
-            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
-                r.live_proof(self.encoded(rows), self.value, self.ticket)
+    def test_upload_timeout_stays_ambiguous_preserves_reservation_and_never_retries(self):
+        operator = self.staged_operator()
+        client = Mock(); client.dataset_create_new.side_effect = TimeoutError("synthetic ambiguous upload")
+        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
+             patch.object(old, "notebook", side_effect=self.build), \
+             patch("safeshift.internvl3763_operator.api", return_value=client):
+            with self.assertRaises(TimeoutError): operator.publish()
+            with self.assertRaisesRegex(ValueError, "UPLOAD_UNKNOWN_VERIFY_ONLY"): operator.publish()
+            self.assertEqual(operator.state()[2]["gpu_seconds"], 87600)
+        self.assertEqual(client.dataset_create_new.call_count, 1)
 
-    def test_provider_json_stdout_chunks_reassembled_stderr_never_proves_calls(self):
-        text = self.encoded()
-        chunks = [{"stream_name": "stdout", "data": text[:100]}, {"stream_name": "stdout", "data": text[100:]}]
-        self.assertEqual(r.live_proof(json.dumps(chunks), self.value, self.ticket)["status"], "NATIVE_STARTED")
-        chunks = [{"stream_name": "stderr", "data": text}]
-        self.assertEqual(r.live_proof(json.dumps(chunks), self.value, self.ticket)["status"], "RUNNING_UNVERIFIED")
+    def test_expired_owner_start_window_never_publishes_or_refreshes_ticket(self):
+        operator = self.staged_operator()
+        with patch.object(a, "load", return_value=self.grant): item = operator.state()[3]
+        client = Mock()
+        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
+             patch.object(old, "notebook", side_effect=self.build), \
+             patch.object(a.time, "time", return_value=item["ticket"]["payload"]["start_before_unix"]), \
+             patch("safeshift.internvl3763_operator.api", return_value=client):
+            with self.assertRaisesRegex(ValueError, "PROVIDER_TICKET_STALE"): operator.publish()
+            self.assertEqual(operator.state()[2], item["ticket"]["payload"]["reserved_after"])
+        client.dataset_create_new.assert_not_called()
+
+    def test_project_budget_never_overrides_exhausted_real_quota(self):
+        provider = deepcopy(self.provider)
+        provider["quota"] = {"used": 108000, "reserved": 0, "total": 108000}
+        with self.assertRaisesRegex(ValueError, "BUDGET_EXHAUSTED"):
+            old.sizing.propose(self.grant, 3763, r.HISTORICAL, provider)
+
+    def test_local_notebook_tamper_blocks_owner_ready_before_capsule_post(self):
+        operator = self.staged_operator()
+        with patch.object(a, "load", return_value=self.grant): item = operator.state()[3]
+        path = self.root / item["package"] / "notebook.ipynb"
+        nb = read(path); nb["cells"][0]["source"] = ["raise RuntimeError('tampered')\n"]
+        path.write_text(json.dumps(nb), encoding="utf-8")
+        client = Mock()
+        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
+             patch.object(old, "notebook", side_effect=self.build), \
+             patch("safeshift.internvl3763_operator.api", return_value=client):
+            with self.assertRaisesRegex(ValueError, "EXACT_SOURCE_NOTEBOOK"): operator.publish()
+        client.dataset_create_new.assert_not_called()
+
 
     def test_native_observation_is_at_model_generate_after_processing(self):
         with patch.object(a, "CLAIMS", self.root / "claims"):
@@ -266,112 +365,16 @@ class RecoveryTests(unittest.TestCase):
                 with self.assertRaises(FileExistsError):
                     with patch("sys.stdout", new=io.StringIO()):
                         r.native_started(0, sample["sample_id"], sample["image_sha256"])
-
-    def test_expired_ticket_cannot_publish_or_submit(self):
-        item = {"ticket": self.ticket, "value": self.value}
-        with patch.object(a.time, "time", return_value=self.ticket["payload"]["start_before_unix"]):
-            with self.assertRaisesRegex(ValueError, "EXPIRED_NO_TICKET_REUSE"): op.check_window(self.grant, item)
-
-    def staged_operator(self):
-        operator = op.RecoveryOperator()
-        nb = {"cells": [{"cell_type": "code", "source": ["pass\n"]}], "metadata": {"safeshift": {}}}
-        nb["metadata"]["safeshift"] = {"runtime_ref": self.grant["runtime_commit"],
-            "source_sha256": self.value["request"]["source_sha256"], "capsule_sha256": digest(self.value)}
-        reconciliation = self.root / "data/processed/reconcile"
-        write(reconciliation / "snapshot.json", self.grant["recovery"])
-        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
-             patch.object(op, "live_provider", return_value=self.provider), \
-             patch("scripts.generate_minicpm_fulltrain_notebook.notebook", return_value=nb), \
-             patch("safeshift.internvl3763_operator.api", return_value=Mock()):
-            operator.stage(self.locator, self.value, self.key, self.root / "data/processed/package", reconciliation)
-        return operator
-
-    def test_real_journal_stage_and_duplicate_stage_keep_all_old_bytes(self):
-        before = {p: p.read_bytes() for p in (self.root / "data/processed").rglob("event-*.json")}
-        operator = self.staged_operator()
-        with patch.object(a, "load", return_value=self.grant):
-            grant, item, order = operator.state()
-        self.assertEqual(order, ["RECOVERY_RESERVED"])
-        self.assertEqual(item["ticket"]["payload"]["reserved_before"], grant["recovery"]["reserved"])
-        for p, raw in before.items(): self.assertEqual(p.read_bytes(), raw)
-        with self.assertRaisesRegex(ValueError, "ALREADY_STAGED"):
-            operator.stage(self.locator, self.value, self.key, self.root / "new", self.root / "reconcile")
-
-    def test_ambiguous_submit_is_exactly_one_post_and_never_automatic_retry(self):
-        operator = self.staged_operator()
-        with patch.object(a, "load", return_value=self.grant):
-            _, item, _ = operator.state()
-        ticket = digest(item["ticket"])
-        operator.journal.append("RECOVERY_PUBLISH_INTENT", {"ticket_sha256": ticket})
-        operator.journal.append("RECOVERY_PUBLISHED", {"ticket_sha256": ticket, "proof": {}})
-        client = Mock()
-        client.kernels_push.side_effect = TimeoutError("ambiguous POST")
-        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
-             patch.object(op, "verify_package"), patch.object(old, "verify_published_capsule"), \
-             patch.object(op, "live_provider", return_value=self.provider), \
-             patch("safeshift.internvl3763_operator.api", return_value=client):
-            with self.assertRaises(TimeoutError): operator.submit_once()
-            with self.assertRaisesRegex(ValueError, "SUBMIT_ONCE_UNKNOWN_NO_RETRY"): operator.submit_once()
-        self.assertEqual(client.kernels_push.call_count, 1)
-        self.assertEqual(operator.journal.events()[-1]["kind"], "CODEX_PUSH_INTENT")
-
-    def test_provider_inventory_pagination_duplicate_or_wrong_account_denied(self):
-        client = Mock()
-        client.kernels_list_with_response.return_value = NS(kernels=[NS(ref="nguynanhtn/synthetic")], next_page_token=None)
-        self.assertEqual(op.account_jobs(client), {"nguynanhtn/synthetic"})
-        for refs in (["nguynanhtn/synthetic", "nguynanhtn/synthetic"], ["another/synthetic"]):
-            client.kernels_list_with_response.return_value = NS(kernels=[NS(ref=ref) for ref in refs], next_page_token=None)
-            with self.assertRaises(ValueError): op.account_jobs(client)
-
-    @unittest.skipUnless(importlib.util.find_spec("kagglesdk"), "Existing pinned SDK required; Windows operator suite covers this boundary")
-    def test_single_launch_then_positive_running_handoff_preserves_live_kernel(self):
-        operator = self.staged_operator()
-        with patch.object(a, "load", return_value=self.grant):
-            _, item, _ = operator.state()
-        self.ticket = item["ticket"]
-        self.logs = self.events_log()
-        client = MagicMock()
-        client.dataset_create_new.return_value = NS(status="ok", error="")
-        response = {"ref": self.value["job"], "versionNumber": 1, "kernelId": 1234}
-        client.kernels_push.return_value = NS(to_dict=lambda: response)
-        client.kernels_status.return_value = NS(status="RUNNING")
-        client.quota_view.return_value = NS(gpu_quota=NS(time_used=timedelta(seconds=10),
-            time_reserved=timedelta(seconds=1200), total_time_allowed=timedelta(seconds=10000)))
-        meta = NS(ref=self.value["job"], is_private=True, current_version_number=1, id=1234,
-            machine_shape="NvidiaTeslaT4", dataset_data_sources=[v.rsplit("/", 1)[0] for v in self.value["input_sources"]["dataset_sources"]],
-            kernel_data_sources=[ui.CHECKPOINT.rsplit("/", 1)[0]])
-        nb = read(self.root / item["package"] / "notebook.ipynb")
-        client.build_kaggle_client.return_value.__enter__.return_value.kernels.kernels_api_client.get_kernel.return_value = NS(
-            metadata=meta, blob=NS(source=json.dumps(nb)))
-        with patch.object(a, "load", return_value=self.grant), patch.object(old, "clean_source"), \
-             patch.object(op, "verify_package"), patch.object(old, "verify_published_capsule", return_value={"private": True}), \
-             patch.object(op, "live_provider", return_value=self.provider), \
-             patch("safeshift.internvl3763_operator.api", return_value=client), \
-             patch("scripts.reconcile_train3763_manual.output_inventory", return_value=({}, self.encoded())):
-            operator.publish()
-            result = operator.submit_once()
-            self.assertEqual(result["status"], "SUBMITTED_UNVERIFIED")
-            with self.assertRaisesRegex(ValueError, "SUBMIT_ONCE_UNKNOWN_NO_RETRY"): operator.submit_once()
-            result = operator.observe(self.root / "data/processed/handoff")
-            self.assertEqual(result["status"], "PASS_NATIVE_STARTED_JOB_RUNNING")
-            self.assertEqual(result["kernel_action"], "LEAVE_RUNNING_DO_NOT_CANCEL")
-            self.assertEqual(result["journal_head_after"], digest(operator.journal.events()[-1]))
-            with self.assertRaisesRegex(ValueError, "OBSERVE_EXACT_LAUNCH_ONCE"):
-                operator.observe(self.root / "data/processed/second")
-        self.assertEqual(client.kernels_push.call_count, 1)
-        client.kernels_stop.assert_not_called()
-        client.kernels_cancel.assert_not_called()
-
     def test_antigravity_same_journal_collects_real_synthetic_zips_and_stages_pending_only(self):
         from safeshift.fulltrain import runtime as rt, contract
         from safeshift.candidates import fulltrain_run as journal
         from safeshift.fulltrain.minicpm_execution import retain_sealed_trees
         operator = self.staged_operator()
-        with patch.object(a, "load", return_value=self.grant): _, item, _ = operator.state()
+        with patch.object(a, "load", return_value=self.grant): _, _, _, item, _ = operator.state()
         value, ticket = item["value"], item["ticket"]
         checksum = digest(ticket)
-        operator.journal.append("RECOVERY_PUBLISH_INTENT", {"ticket_sha256": checksum})
-        operator.journal.append("RECOVERY_PUBLISHED", {"ticket_sha256": checksum, "proof": {}})
+        operator.append("PUBLISH_INTENT", {"ticket_sha256": checksum})
+        operator.append("PUBLISHED", {"ticket_sha256": checksum, "proof": {}})
         serial = op.RecoveredSerialJournal()
         bundle, work, scratch = self.root / "images", self.root / "work", self.root / "scratch"
         bundle.mkdir(); scratch.mkdir()
@@ -440,7 +443,7 @@ class RecoveryTests(unittest.TestCase):
             def build(ref, *, capsule_sha256, **kwargs):
                 return {"cells": [{"cell_type": "code", "source": ["pass\n"]}], "metadata": {"safeshift": {
                     "runtime_ref": ref, "source_sha256": self.value["request"]["source_sha256"], "capsule_sha256": capsule_sha256}}}
-            stack.enter_context(patch.object(op, "live_provider", side_effect=provider))
+            stack.enter_context(patch.object(serial, "observe_provider", side_effect=lambda client, grant, v, prior: provider(client, grant, v, None, recovered=serial.state()[4])))
             stack.enter_context(patch.object(old, "notebook", side_effect=build))
             serial.stage(self.key, self.root / "data/processed/pending")
             _, _, reserved, active, completed = serial.state()

@@ -294,7 +294,7 @@ class Journal:
             locator = self.release_locator(events)
             pin = digest(value)
             nb = notebook(grant["runtime_commit"], capsule_sha256=pin, release_locator=locator,
-                **({"release_version": 3} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
+                **({"release_version": 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             from safeshift.internvl3763_operator import code_hash
             now = int(time.time())
             ticket = {"schema": authority.RECOVERY_TICKET if grant["schema"] == authority.RECOVERY_SCHEMA else authority.TICKET,
@@ -332,6 +332,7 @@ class Journal:
             destination = safe(ROOT, active["package"])
             value, ticket = active["value"], active["ticket"]
             authority.verify_ticket(grant, ticket, value)
+            self.validate_package(grant, active)
             require(time.time() < ticket["payload"]["start_before_unix"], "MINICPM_PROVIDER_TICKET_STALE_RECONCILE")
             client = api()
             if not verify_only:
@@ -368,8 +369,15 @@ class Journal:
                 "start_before_unix": ticket["payload"]["start_before_unix"], "ticket_sha256": digest(ticket),
                 "live_model_fit": "NOT_ESTABLISHED_INTEGRATED_PREFLIGHT_REQUIRED", "provider": proof,
                 "fresh_provider": fresh}
+            handoff = self.handoff_details(handoff, grant, value, ticket, destination)
             write(destination / "owner-handoff.json", handoff)
             return handoff
+
+    def handoff_details(self, handoff, grant, value, ticket, destination):
+        return handoff
+
+    def validate_package(self, grant, active):
+        pass
 
     def stage_initial(self, events):
         return events[0]["payload"]["initial"]
@@ -436,7 +444,7 @@ class Journal:
             ancestors = [safe(ROOT, item["collection"]["directory"] + "/" + read(safe(ROOT,
                 item["collection"]["directory"] + "/paths.json"))["attempt"]) for item in completed]
             nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value), release_locator=locator,
-                **({"release_version": 3} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
+                **({"release_version": 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             destination = private_root(destination)
             require(not destination.exists(), "MINICPM_RECOVERY_KEEP_PARTIAL_USE_NEW_PATH")
             ui.package(value, ancestors, destination, lambda _: nb)

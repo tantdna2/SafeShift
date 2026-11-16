@@ -597,6 +597,14 @@ Nguồn tham khảo đã đọc ngày 24/10/2026, commit
 
 ## Định tuyến ngữ cảnh cho Codex/Antigravity
 
+PR199 current Owner UI restart: [V4 contract](MINICPM_RUN1_RECOVERY.md),
+`minicpm_recovery.py` (Owner retirement with uncertainty, deterministic finite
+budget, original-rights/source binding and durable native-entry receipts),
+`scripts/minicpm_fulltrain_recovery.py` (same-journal bind/stage/publish/collect,
+no API submit/live observer). `minicpm_release.py` recognizes only the new V4 UI
+authority, separate from historical V2; old V3 self-submit authorization fails.
+Tests: `test_minicpm_run1_recovery.py`. Original project states below are history.
+
 MiniCPM post-PR198 Run1 recovery: first read
 [the V3 recovery contract](MINICPM_RUN1_RECOVERY.md),
 `fulltrain/minicpm_recovery.py` (nested bindings, historical reservation budget,

@@ -118,7 +118,7 @@ def release_report(key):
 
 
 def authorize(*args, **kwargs):
-    """Default closed; only the authenticated MiniCPM V2 context can delegate."""
+    """Default closed; only an authenticated MiniCPM release context delegates."""
     from . import minicpm_release as capability
     if capability.current() is None:
         raise PermissionError("ISSUE171_NO_GPU_INFERENCE_PRIVATE_INPUT: RELEASE_O2_O6_G0_G6_BLOCKED")

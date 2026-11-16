@@ -1,7 +1,7 @@
 """Versioned MiniCPM authority and signed, finite Owner-UI reservations.
 
 No offline export, environment variable or caller's approved flag is authority.
-The root of trust is a fresh HTTPS GitHub Owner record on the merged PR198.
+Root trust is a fresh HTTPS Owner record: historical PR198 or reviewed PR199 UI restart.
 The Owner-approved public key delegates only bounded serial capsule preparation;
 the corresponding private key never enters Kaggle. RSA verification is the
 fixed SHA256/3072-bit RSASSA-PKCS1-v1_5 operation in RFC8017,8.2.2/9.2.
@@ -27,9 +27,9 @@ SCHEMA = "safeshift-minicpm-fulltrain-release-v2"
 MARKER = "SAFESHIFT_MINICPM_FULLTRAIN_RELEASE_V2"
 APPROVAL = "SAFESHIFT_MINICPM_FULLTRAIN_APPROVAL_V2"
 TICKET = "safeshift-minicpm-serial-ticket-v2"
-RECOVERY_SCHEMA = "safeshift-minicpm-fulltrain-recovery-release-v3"
-RECOVERY_MARKER = "SAFESHIFT_MINICPM_FULLTRAIN_RECOVERY_RELEASE_V3"
-RECOVERY_TICKET = "safeshift-minicpm-recovery-ticket-v3"
+RECOVERY_SCHEMA = "safeshift-minicpm-owner-ui-restart-release-v4"
+RECOVERY_MARKER = "SAFESHIFT_MINICPM_OWNER_UI_RESTART_RELEASE_V4"
+RECOVERY_TICKET = "safeshift-minicpm-owner-ui-restart-ticket-v4"
 OWNER = "tantdna2"
 OWNER_ID = 246929698
 API = "https://api.github.com/repos/tantdna2/SafeShift"
@@ -122,11 +122,11 @@ def validate(grant, *, repo=ROOT):
         "expires_unix", "provider_max_age_seconds", "approvals"}
     recovery = type(grant) is dict and grant.get("schema") == RECOVERY_SCHEMA
     require(type(grant) is dict and set(grant) == fields | ({"recovery"} if recovery else set())
-        and (recovery and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_CODEX_SUBMIT_ONCE"
+        and (recovery and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY"
              or not recovery and grant["schema"] == SCHEMA
              and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_SERIAL_UI_ONLY"), "MINICPM_V2_EXPLICIT_AUTHORITY")
     contract.planning.token(grant["campaign_id"])
-    require(type(grant["implementation_pr"]) is int and (grant["implementation_pr"] > 198 if recovery
+    require(type(grant["implementation_pr"]) is int and (grant["implementation_pr"] == 199 if recovery
         else grant["implementation_pr"] == 198), "MINICPM_REVIEWED_IMPLEMENTATION_PR")
     for field in ("runtime_commit", "reviewed_head", "merged_sha"):
         require(type(grant[field]) is str and re.fullmatch(r"[0-9a-f]{40}", grant[field]), "MINICPM_EXACT_RELEASE_COMMIT")
@@ -150,7 +150,7 @@ def validate(grant, *, repo=ROOT):
         "job_seconds", "physical_gpus", "loads_per_job", "archive_bytes"}
         and all(type(n) is int and n > 0 for n in caps.values()), "MINICPM_FINITE_CAPS")
     require(caps["total_calls"] >= 3763 and caps["job_calls"] <= 3763 and caps["job_seconds"] <= 43200
-        and caps["total_jobs"] <= 512
+        and caps["total_jobs"] <= (3766 if recovery else 512)
         and caps["physical_gpus"] == 2 and caps["loads_per_job"] == 1 and caps["archive_bytes"] <= 7 * 2**30,
         "MINICPM_RESOURCE_SCOPE")
     for field in ("issued_unix", "expires_unix", "provider_max_age_seconds"):
@@ -159,7 +159,9 @@ def validate(grant, *, repo=ROOT):
         "MINICPM_FINITE_WINDOW")
     from .minicpm_sizing import validate_policy
     validate_policy(grant["sizing"], caps["job_seconds"])
-    require(type(grant["approvals"]) is dict and set(grant["approvals"]) == set(ROLES), "MINICPM_O2_O6_AND_SOURCE_APPROVALS")
+    from .minicpm_recovery import SOURCE_ROLES
+    require(type(grant["approvals"]) is dict and set(grant["approvals"]) == set(SOURCE_ROLES if recovery else ROLES),
+            "MINICPM_O2_O6_AND_SOURCE_APPROVALS")
     if recovery:
         from .minicpm_recovery import validate_recovery
         validate_recovery(grant)
@@ -218,7 +220,7 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
                 and blobs[name]["sha"] == checksum for name, checksum in expected.items()), "MINICPM_MERGED_RUNTIME_BYTES")
     if grant["schema"] == RECOVERY_SCHEMA:
         from .minicpm_recovery import authenticate_recovery
-        authenticate_recovery(grant, reader)
+        authenticate_recovery(grant, reader, rights=approvals)
     now = time.time()
     require(collection or grant["issued_unix"] <= now < grant["expires_unix"], "MINICPM_AUTHORITY_EXPIRED")
     return grant
@@ -285,7 +287,7 @@ def verify_ticket(grant, envelope, value, *, collection=False):
         require(type(t[field]) is int, "MINICPM_TICKET_TIME")
     provider = t["provider"]
     require(type(provider) is dict and set(provider) == {"observed_unix", "quota", "input_versions",
-        "prior_jobs", "job_absent", "owned_sha256"}, "MINICPM_PROVIDER_EVIDENCE")
+        "prior_jobs", "job_absent", "owned_sha256"} | ({"current_account_safety"} if recovery else set()), "MINICPM_PROVIDER_EVIDENCE")
     quota = provider["quota"]
     require(set(quota) == {"used", "reserved", "total"} and all(type(n) is int and n >= 0 for n in quota.values())
         and quota["reserved"] == 0 and quota["total"] - quota["used"] >= 2 * p["max_seconds"]
@@ -300,11 +302,27 @@ def verify_ticket(grant, envelope, value, *, collection=False):
         require(digest(row) == digest({"ref": ref, "version": int(ref.rsplit("/", 1)[1]), "private": True}),
             "MINICPM_PROVIDER_PRIVATE_VERSION")
     if recovery:
+        safety = provider["current_account_safety"]
+        require(type(safety) is dict and set(safety) == {"retired_visibility", "quota", "owned_sha256", "observed_unix",
+            "historical_provider_custody"} and safety["historical_provider_custody"] == "NOT_AUTHENTICATED_BY_RETIREMENT"
+            and safety["owned_sha256"] == provider["owned_sha256"] and type(safety["observed_unix"]) is int
+            and safety["observed_unix"] <= provider["observed_unix"] <= t["issued_unix"]
+            and provider["observed_unix"] - safety["observed_unix"] <= grant["provider_max_age_seconds"],
+                "MINICPM_CURRENT_ACCOUNT_SAFETY_PROOF")
+        q = safety["quota"]
+        require(set(q) == {"used", "reserved", "total"} and all(type(v) is int and v >= 0 for v in q.values())
+            and q["reserved"] == 0 and q["used"] <= q["total"], "MINICPM_ACTIVE_SESSION_PROOF")
+        require(type(safety["retired_visibility"]) is list and len(safety["retired_visibility"]) == 3,
+                "MINICPM_RETIRED_CURRENT_VISIBILITY")
+        for original, observed in zip(grant["recovery"]["journals"], safety["retired_visibility"]):
+            require(type(observed) is dict and observed.get("job") == original["job"] and (
+                observed == {"job": original["job"], "visibility": "NOT_VISIBLE_NOW_NOT_VERIFIED_DELETED"}
+                or set(observed) == {"job", "visibility", "current_state"} and observed["visibility"] == "VISIBLE"
+                and observed["current_state"] in ("COMPLETE", "ERROR", "CANCELLED")), "MINICPM_RETIRED_ACTIVE_OR_FALSE_DELETION")
         prior = provider["prior_jobs"]
-        require(type(prior) is list and len(prior) == offset + len(value["ancestors"])
-            and prior[:offset] == grant["recovery"]["prior_jobs"], "MINICPM_RECOVERY_PROVIDER_LINEAGE")
+        require(type(prior) is list and len(prior) == len(value["ancestors"]), "MINICPM_RECOVERY_PROVIDER_LINEAGE")
         expected_before = grant["recovery"]["reserved"]
-        for i, row in enumerate(prior[offset:], offset + 1):
+        for i, row in enumerate(prior, offset + 1):
             require(set(row) == {"job", "version", "state", "kernel_id", "ticket"}
                 and row["job"] == prefix + str(i) and row["version"] == 1 and row["state"] == "COMPLETE",
                     "MINICPM_PENDING_ONLY_PROVIDER_LINEAGE")

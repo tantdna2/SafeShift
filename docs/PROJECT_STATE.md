@@ -1,6 +1,50 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR198 merged; Run1 recovery / one Codex launch — 16/11/2026
+## CURRENT — PR199 Owner UI restart from ordinal0 — 16/11/2026
+
+[Owner decision6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
+supersedes automatic Codex submit, remote-terminal recovery of deleted/unavailable
+old jobs, and the separate recurring72000 project-cap amendment loop. Continue
+same session/branch/Draft PR199; BASE remains merged507e981. Earlier review
+[6916816471](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6916816471)
+requested F1/F2; the unused self-submit/live-observer path is removed. Terminal
+collection stays strict and checks exact remote `NvidiaTeslaT4` and both ZIP pairs.
+
+The three named old attempts are RETIRED_NO_USABLE_RESULTS by Owner decision.
+All original tickets, source locks, journals/mirrors, logs and sealed local ZIPs
+remain unchanged. Historical reservation is still3000 calls/3 jobs/86400 physical
+GPU-seconds. `historical_status=PROVIDER_UNAVAILABLE_NOT_VERIFIED_DELETED`; zero
+native calls are Owner/local-log reported, not independently authenticated current
+provider custody. Their PUBLISHED mismatch remains explicit. No old SUCCESS,
+INVALID, errors or predicted labels enter the new execution series.
+
+V4 Owner-UI-only release uses new `mcpm4-train3763-owner-restart-v1` execution /
+`fresh171-minicpm4-owner-restart-v1` series, same original3763 IDs/JPG hashes and
+scientific configuration, first ordinal0. One create-only restart binding appends
+to the SAME V3 Operator journal, keeps historical serials/counters and uses global
+serial4 for the first new job. Only verified new-series results feed continuation.
+
+The reviewed budget policy is derived from at most3763 new serial jobs, each
+with at most3763 pending-ID reservations /14400 seconds /2 physical T4s /1 load.
+Inclusive immutable historic holds, ceilings are14163169 reserved call slots,
+3766 jobs and108460800 reserved physical GPU-seconds. This is a finite worst-case
+scheduler envelope, **not** the native-call count, a throughput guarantee, weekly
+Kaggle quota or numbers the Owner explicitly typed. Actual new image calls remain
+<=3763 via pending-only history. No refund/reset. Every job separately requires
+fresh actual account quota, no active accelerator reservation and no duplicate
+current/new-series job. Use the legitimate account; quota exhaustion waits for
+reset or separately authorized compute, never account switching.
+
+[V4 runbook](MINICPM_RUN1_RECOVERY.md) covers local retirement/hash custody,
+authentic exact-source release, inherited original rights plus Owner-derived
+budget, five nested pinned Inputs, current signed ticket, publication proof and
+downloadable notebook/handoff with Asia/Ho_Chi_Minh expiry. No production ticket,
+publication, Owner Run, GPU/inference, audit or merge has occurred in this coding
+task. Source review/re-review, independent audit, authorized merge/postmerge and
+genuine final-source release remain required; old72000 is historical, not a new
+request for Owner to repeat budget consent. Live native results remain NOT_RUN.
+
+## HISTORICAL — PR199 initial one-Codex-launch proposal — 16/11/2026
 
 Verified GitHub PR198 merge/main: `507e9817b91054fa7af324c6a915c35d56b5acf1`.
 [Owner directive6914854993](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6914854993)
