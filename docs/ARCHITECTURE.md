@@ -607,7 +607,10 @@ controller and Input/history/raw verifier. `minicpm_fulltrain_transport.py`
 shares the existing manual collector's bounded output-inventory/HTTP primitives;
 it never submits jobs. `test_minicpm_fulltrain_execution.py` and
 `test_minicpm_execution_transport.py` cover authorized synthetic and adversarial
-paths. Historical notebook reproduction uses each exact Git builder/runtime;
+paths; `test_minicpm_execution_boundaries.py` exercises the actual child CLI
+capability/replay boundary. [Expanded acceptance](research/MINICPM_FULLTRAIN_EXECUTION_20261116.md)
+records exact tested identities, development failures and live-release limits.
+Historical notebook reproduction uses each exact Git builder/runtime;
 current-source builders stay strict. The initial dossier is separately retained:
 the [source-bound release dossier](MINICPM_FULLTRAIN_RELEASE.md) and external
 `scripts/minicpm_fulltrain_release.py` / `test_minicpm_fulltrain_release.py` for

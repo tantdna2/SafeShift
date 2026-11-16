@@ -32,6 +32,21 @@ offline package recovery and upload ambiguity. Native adapter, strict C1,
 FP32 resampler/FP16 weights, HNLO N/A and3763 original TRAIN IDs remain unchanged;
 new runtime source identity is versioned explicitly, never passed off as PR195.
 
+[Expanded CPU acceptance](research/MINICPM_FULLTRAIN_EXECUTION_20261116.md) and
+[exact receipts/logs](research/evidence/minicpm_execution_20261116/index.json):
+final full Linux core149/149 PASS; pinned SDK135 PASS/1 Windows symlink SKIP
+(same case1/1 PASS on Linux); child CLI2/2 PASS; separate Linux supervision5/5
+PASS at identical runtime bytes. Full3763 synthetic controller/raw/C1/claims/ZIP/
+empty-workspace import passes and completed history schedules zero repeats.
+No FAIL/ERROR in final accepted runs; fixed Windows native-import and Linux
+statvfs fixture failures and interrupted development logs are retained separately, never pooled as acceptance.
+Runtime source SHA256 `7c76a2c331aef2383e9d8f2fe236f0c4302cabb587a759925b5d3dadae206b5c`
+(79 files). Exact-ref V2 notebook byte/syntax reproduction passes; historical
+notebook/config/native/science bytes remain unchanged from BASE. Per-receipt
+commits/file hashes distinguish runtime HEADd710a0f and subsequent test-only commits;
+delivery after acceptance changes only docs/evidence. This is no live Kaggle,
+weights/model-fit/inference/export, audit, merge or scientific PASS.
+
 **ACTIVATION / OWNER RUN BLOCKED:** after expanded direct review, independent
 Antigravity audit, separately authorized merge and verified postmerge, the one
 external handoff is an authentic V2 release record binding final source/projection/

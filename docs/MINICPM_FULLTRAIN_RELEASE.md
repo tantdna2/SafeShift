@@ -162,3 +162,31 @@ Nghiệm thu code gồm signed authorized synthetic end-to-end, adversarial gate
 full3763 controller/failure/resume, exact-ref notebook và focused regressions.
 Review/audit dossier cũ không áp dụng expanded diff. Không tuyên bố DONE/runnable
 release cho Owner trước authority và concrete published capsule hợp lệ.
+
+### Chi tiết bằng chứng còn thiếu
+
+Giữ định nghĩa [O2–O6 hiện hành](FRESH_FULLTRAIN_171.md#o2-o6-b1-b6-and-g0-g6);
+directive giao code không tự đóng các mục sau cho MiniCPM V2:
+
+| Mục | Bằng chứng phải có trong release thật / locator | Hiện tại |
+| --- | --- | --- |
+| O2 | Source/series/method và comparability/selection đúng MiniCPM; không trộn pilot hoặc tự chọn kết quả | PENDING cho release V2 |
+| O3 | Roster/roles/qualification có thẩm quyền; không tuyển model thứ tư hoặc suy chuẩn học vụ | PENDING cho release V2 |
+| O4 | Quyền dùng master/ảnh/history/export thực tế, custody và seal original3763 projection/ID/order/JPG SHA | BLOCKED, không tạo seal từ counts/tài liệu |
+| O5 | Total/job calls/jobs/GPU-seconds, deadline, stop/precision/policy và reserve hữu hạn; ngân sách tính hai T4, không refund | PENDING, template không tự điền số |
+| O6 | Grant đúng final merged/runtime/source/Input/model/campaign; key/host được duyệt, notebook/ticket sinh từ source đó | BLOCKED trước review/audit/merge/release |
+| Source activation | Expanded ChatGPT review + independent Antigravity audit + quyền merge riêng + postmerge verified, đúng head/merge | PENDING, không dùng review dossier cũ |
+| Provider | Current exact Private/Input versions, checkpoint v1 COMPLETE, quota và không VM đang giữ chỗ; capsule mới verified sau publish | NOT_OBSERVED; operator tự thu sau quyền thật |
+| Live technical | ABI/Python/driver/CUDA/RAM/VRAM/storage/load/native/raw/export trên source cuối | NOT_RUN; integrated first Owner-run, không claim CPU là live PASS |
+
+Owner/đúng bên có thẩm quyền cung cấp các quyết định/quyền thực tế; Antigravity
+đối chiếu source/seal và tự thu provider facts được phép. Các guard/reserve kỹ thuật
+phải được Antigravity/reviewer đối chiếu chứng cứ và duyệt trong policy; không bắt
+Owner đoán throughput hoặc tự chọn200. Không chuyển grant InternVL sang MiniCPM,
+không nâng quyền của bên thứ ba bằng một comment Owner. Một record release tập
+hợp các locator đúng thẩm quyền là hành động bàn giao cần bổ sung; không phải
+yêu cầu chạy các vòng thử riêng hoặc xin approval mỗi shard.
+
+[Nghiệm thu code V2, receipt/hash và giới hạn](research/MINICPM_FULLTRAIN_EXECUTION_20261116.md)
+ghi riêng với dossier lịch sử. Concrete released capsule/handoff chưa tồn tại;
+notebook synthetic byte proof không được dùng cho Owner Run.

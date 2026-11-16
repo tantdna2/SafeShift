@@ -7,10 +7,12 @@ V2 đúng source/quyền/caps. PR195 đã merge tại
 
 ## Owner chỉ làm ba bước khi nhận handoff đã phát hành
 
-1. Import `notebook.ipynb` Antigravity bàn giao; gắn đúng **năm Input/version**
-   trong `owner-handoff.json` có trạng thái `RELEASED_FOR_OWNER_UI`.
+1. Import `notebook.ipynb` Antigravity bàn giao; đặt tên/slug đúng `job` và
+   gắn **năm Input/version** trong `owner-handoff.json` có trạng thái
+   `RELEASED_FOR_OWNER_UI`.
 2. Kiểm **Private, Python, Internet On, T4 x2**, calls/time và `start_before_unix`
-   trong handoff. Không chạy bản quá hạn hoặc khi VM cũ chưa terminal.
+   trong handoff. VM cũ phải terminal; không chạy bản quá hạn, chạy cell riêng
+   hoặc khởi động thêm interactive session.
 3. **Save Version → Save & Run All một lần** trên slug/version1 đã giao. Gửi
    URL/version cho Antigravity khi terminal; giữ Output/log/ZIP kể cả lỗi.
 
