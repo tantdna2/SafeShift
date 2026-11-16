@@ -212,7 +212,7 @@ class ExecutionTests(unittest.TestCase):
         self.grant["caps"]["total_jobs"]=512
         self.grant["caps"]["job_seconds"]=600
         remote=Mock()
-        remote.dataset_create_new.return_value=NS(error_message="")
+        remote.dataset_create_new.return_value=NS(status="ok",error="")
         remote.kernels_status.return_value=NS(status="COMPLETE")
         def provider(client,grant,value,prior):
             result=deepcopy(self.provider)

@@ -16,6 +16,7 @@ import subprocess
 import tempfile
 import time
 import uuid
+from unittest.mock import patch
 
 from safeshift.candidates.source import ROOT, require, snapshot_stat
 from safeshift.pilot.artifacts import read, write, write_bytes, safe, sha, import_archive
@@ -343,9 +344,11 @@ class Journal:
                 _copy(destination / "dataset-metadata.json", upload / "dataset-metadata.json")
                 self.append("PUBLISH_INTENT", {"ticket_sha256": digest(ticket)})
                 from scripts.submit_internvl_v2 import bounded_http
-                with bounded_http():
+                # The pinned SDK otherwise retries its create_dataset POST.
+                # A timeout after this one mutation remains PUBLISH_INTENT.
+                with bounded_http(), patch.object(client, "with_retry", lambda fn, *args, **kwargs: fn):
                     result = client.dataset_create_new(str(upload), public=False, quiet=True, convert_to_csv=False, dir_mode="skip")
-                require(not result.error_message, "MINICPM_PRIVATE_CAPSULE_CREATE_FAILED_NO_RETRY")
+                check_create_response(result)
             require(not verify_only or "publish_intent" in active, "MINICPM_PUBLISH_INTENT_REQUIRED")
             proof = verify_published_capsule(client, value, ticket, destination)
             prior = [{"job": item["value"]["job"], "notebook": read(safe(ROOT, item["package"] + "/notebook.ipynb")),
@@ -447,6 +450,11 @@ def telemetry_record(timing, attempt, supervisor, ticket):
     return result
 
 
+def check_create_response(result):
+    require(type(result.status) is str and result.status.lower() == "ok"
+        and result.error in (None, ""), "MINICPM_PRIVATE_CAPSULE_CREATE_FAILED_NO_RETRY")
+
+
 def verify_published_capsule(client, value, ticket, package):
     import zipfile
     from safeshift.internvl3763_operator import download_capsule, bounded_python_zip
@@ -460,10 +468,22 @@ def verify_published_capsule(client, value, ticket, package):
             result = remote.datasets.dataset_api_client.get_dataset_metadata(query)
         require(not result.error_message and result.info.is_private is True
             and result.info.owner_user == owner and result.info.dataset_slug == slug, "MINICPM_CAPSULE_PRIVATE_OWNER")
-        files = client.dataset_list_files(value["capsule_ref"], page_size=1000)
-        require(not files.error_message and not files.next_page_token
-            and len(files.files) == len(expected) and {f.name: f.total_bytes for f in files.files} == expected,
-            "MINICPM_PUBLISHED_CAPSULE_VERSION_FILES")
+        found, token, tokens = {}, None, set()
+        for _ in range(4):
+            files = client.dataset_list_files(value["capsule_ref"], page_size=1000, page_token=token)
+            require(not files.error_message and type(files.files) is list and files.files, "MINICPM_CAPSULE_INVENTORY_PAGE")
+            for item in files.files:
+                require(item.name in expected and item.name not in found and type(item.total_bytes) is int
+                    and item.total_bytes == expected[item.name], "MINICPM_PUBLISHED_CAPSULE_VERSION_FILES")
+                found[item.name] = item.total_bytes
+            token = files.next_page_token
+            if not token:
+                break
+            require(type(token) is str and len(token) <= 4096 and token not in tokens, "MINICPM_CAPSULE_PAGE_TOKEN")
+            tokens.add(token)
+        else:
+            raise ValueError("MINICPM_CAPSULE_INVENTORY_BOUND")
+        require(found == expected, "MINICPM_PUBLISHED_CAPSULE_VERSION_FILES")
     # Exact signed ticket bytes at explicit version1; payload/ancestor hashes are
     # then independently rechecked from read-only mounts before preflight/load.
     with tempfile.TemporaryDirectory() as tmp:

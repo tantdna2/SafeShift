@@ -42,5 +42,14 @@ class FirstCollectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"PROVIDER_ZIP_SHA"):fetch_outputs(self.client,self.value(),output,16*2**20)
         self.assertTrue((output/"minicpm-fulltrain"/self.archive.name).exists())
 
+    def test_pinned_sdk_create_response_uses_status_and_error_fields(self):
+        from kagglesdk.datasets.types.dataset_api_service import ApiCreateDatasetResponse
+        from scripts.minicpm_fulltrain_operator import check_create_response
+        response=ApiCreateDatasetResponse()
+        response.status="ok";response.error=""
+        check_create_response(response)
+        response.status="error";response.error="already exists"
+        with self.assertRaisesRegex(ValueError,"CREATE_FAILED_NO_RETRY"):check_create_response(response)
+
 
 if __name__=="__main__":unittest.main()

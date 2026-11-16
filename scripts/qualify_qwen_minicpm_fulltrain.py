@@ -4,6 +4,7 @@ import importlib.metadata
 import os
 from pathlib import Path
 import platform
+import shutil
 import socket
 import subprocess
 import sys
@@ -47,11 +48,6 @@ def main():
     def blocked(*a, **kw):
         network_attempts.append("NETWORK_FORBIDDEN")
         raise AssertionError("NETWORK_FORBIDDEN")
-    suite = unittest.defaultTestLoader.loadTestsFromNames(names)
-    with (args.output / "tests.log").open("x", encoding="utf8") as log, \
-         patch.object(socket.socket, "connect", blocked), patch.object(socket, "create_connection", blocked):
-        result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
-    passed = result.testsRun - len(result.failures) - len(result.errors) - len(result.skipped)
     files = set(contract.sources()) | {"notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb",
         "scripts/generate_minicpm_fulltrain_notebook.py", "scripts/qualify_qwen_minicpm_fulltrain.py",
         "scripts/minicpm_fulltrain_release.py", "scripts/minicpm_fulltrain_operator.py", "scripts/minicpm_fulltrain_transport.py",
@@ -59,14 +55,24 @@ def main():
     files |= {"tests/" + n.split(".")[0] + ".py" for n in names}
     if args.component == "operator":
         files.add("tests/frozen_internvl_snapshot.py")
-    receipt = {"scope": "CPU_SYNTHETIC_ONLY", "status": "PASS" if result.wasSuccessful() and not network_attempts else "FAIL",
+    before = {n: sha(ROOT / n) for n in sorted(files)}
+    tested_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    suite = unittest.defaultTestLoader.loadTestsFromNames(names)
+    with (args.output / "tests.log").open("x", encoding="utf8") as log, \
+         patch.object(socket.socket, "connect", blocked), patch.object(socket, "create_connection", blocked):
+        result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
+    passed = result.testsRun - len(result.failures) - len(result.errors) - len(result.skipped)
+    after = {n: sha(ROOT / n) for n in sorted(files)}
+    changed = sorted(n for n in before if before[n] != after[n])
+    receipt = {"scope": "CPU_SYNTHETIC_ONLY", "status": "PASS" if result.wasSuccessful() and not network_attempts and not changed else "FAIL",
         "tests": result.testsRun, "passed": passed, "failures": len(result.failures), "errors": len(result.errors),
         "skips": len(result.skipped), "skip_reasons": [reason for _, reason in result.skipped],
         "suites": names, "python": sys.version, "platform": platform.platform(), "dependencies": versions,
-        "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+        "commit": tested_commit, "changed_during_tests": changed,
         "tracked_dirty": bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT)),
         "source_sha256": digest(contract.source_manifest()),
-        "file_sha256": {n: sha(ROOT / n) for n in sorted(files)}, "log_sha256": sha(args.output / "tests.log"),
+        "file_sha256": before, "log_sha256": sha(args.output / "tests.log"),
+        "openssl_version": subprocess.check_output(["openssl", "version"], text=True).strip() if shutil.which("openssl") else "NOT_AVAILABLE",
         "network_attempts": len(network_attempts), "kaggle_submissions": 0, "gpu_used": False,
         "real_model_inference_calls": 0, "real_image_reads": 0, "production_ledger_writes": 0,
         "final_source_live_verification": "NOT_RUN", "independent_audit": "NOT_PERFORMED",
