@@ -1,3 +1,22 @@
+# Current TRAIN amendment ? Qwen3 composite, 15/11/2026
+
+Owner [decision6889519264](https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264)
+now authorizes **QWEN3_FULL_TRAIN_COMPOSITE_V1** as the full 3763 Qwen3 TRAIN
+label analysis table. The [implemented contract, verified confusion and metrics](research/QWEN3_FULL_TRAIN_COMPOSITE_V1.md)
+uses3539 original V4 +224 exact Recovery records. Recomputed Accuracy 2932/3763
+(77.9166%), Macro-F1 0.4531572, Balanced Accuracy 0.6448992, Hazard Recall 711/749,
+False-Safe 38/749, False-Alarm 443/3014; source provenance and original errors remain.
+
+For this derived label product only, this decision supersedes historical
+statements below that composite/recovery cannot be used in main TRAIN analysis.
+Composite HNLO AUROC remains **N/A**, with original V4 saved-score 0.9527927338600111
+and Recovery 0.9545189504373177 reported separately. Historical pooled 0.952935
+is not promoted. TRAIN exposure,44 exact-content duplicate pairs, uncertain
+source identity, Level03 n=8, raw-audit and cross-model limitations remain.
+Implementation is in one Draft PR pending direct ChatGPT review, independent
+Antigravity audit and authorized merge. The full historical document follows
+unchanged; its old no-pooling language describes its original scope/time.
+
 # Kết quả lịch sử và mức bằng chứng
 
 Các số dưới đây thuộc snapshot trước reset

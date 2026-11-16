@@ -98,7 +98,19 @@ class FreshNotebookTests(unittest.TestCase):
         for name in names:
             with self.subTest(name=name):
                 original = subprocess.check_output(["git", "show", f"{contract.BASE}:{name}"], cwd=ROOT)
-                self.assertEqual((ROOT / name).read_bytes(), original)
+                current = (ROOT / name).read_bytes()
+                if name == "docs/research/SEMINAR_PROTOCOL.md":
+                    # Owner6889519264 authorizes only an appended composite amendment.
+                    # Keep the entire frozen historical protocol prefix byte-identical.
+                    config = json.loads((ROOT / "configs/analysis/qwen3_full_train_composite.v1.json").read_bytes())
+                    lock = config["protocol"]
+                    self.assertEqual(current[:len(original)], original)
+                    self.assertEqual(len(original), lock["original_prefix_size_bytes"])
+                    self.assertEqual(hashlib.sha256(original).hexdigest(), lock["original_prefix_sha256"])
+                    self.assertEqual(hashlib.sha256(current[len(original):]).hexdigest(), lock["amendment_sha256"])
+                    self.assertEqual(hashlib.sha256(current).hexdigest(), lock["amended_sha256"])
+                else:
+                    self.assertEqual(current, original)
 
 
 if __name__ == "__main__":

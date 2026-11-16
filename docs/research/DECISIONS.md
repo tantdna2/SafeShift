@@ -744,3 +744,39 @@ post-merge final-source qualification remains one original ordinal0 call, then
 measured resource limits before larger shards. PR177 PASS does not validate
 the new source. ChatGPT direct GitHub review, independent Antigravity audit and
 separately authorized merge remain required. No self-issued audit/merge/PASS.
+
+
+## DEC-20261115-OWNER-QWEN3-FULL-TRAIN-COMPOSITE-V1
+
+Authority: [Owner comment6889519264](https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264),
+authenticated GitHub export by author tantdna2 / OWNER, created and unedited
+15/11/2026. BASE 044b53059e7a9615d54f07a4ce8a44308b47e56a.
+
+**APPROVED_FOR_PROJECT_TRAIN_DERIVED_LABEL_ANALYSIS.** This narrow successor
+amends prior no-pooling decisions only for QWEN3_FULL_TRAIN_COMPOSITE_V1:3539
+original V4 successes plus exact 224 Recovery224 successes for original missing
+SUCCESS IDs. All3763 original TRAIN IDs, image SHA256, GT and lineage must pass
+strict verification. Membership is original-status/ID-based, never chosen by GT
+correctness, prediction, HNLO or favorable attempt. No diagnostic substitutions.
+
+Original ledgers, grants, results and failures remain immutable; V4 still has
+3539 SUCCESS/1 TECHNICAL_ERROR/223 NOT_ATTEMPTED. Recovery remains its own
+run/config/attempt. The new product may be used for full-TRAIN label analyses
+with explicit provenance/denominators. It does not replace a homogeneous fresh
+run, change execution authority or open GPU/Kaggle/TEST. Previous V4-only
+numbers remain valid for their own cohort and are not overwritten.
+
+Compute all metrics from exact saved records; historical2932/3763,38/749,
+443/3014 and pooled 0.952935 are comparisons, not constants for computation.
+Label metrics remain authorized if composite HNLO is N/A. Never average AUROC;
+pooled HNLO needs separate compatibility evidence for scale/token/decision
+alignment. Current implementation reports N/A and source AUROCs separately.
+Retain 44 exact-content duplicate pairs, source identity limits, exposed-TRAIN,
+small-Level03 and cross-model provenance restrictions. No faculty signature,
+third-party rights, calibration or superiority is inferred.
+
+Implementation and acceptance: [composite contract](QWEN3_FULL_TRAIN_COMPOSITE_V1.md),
+append-only Seminar protocol amendment and new analysis config. Existing frozen
+config/receipts remain unchanged. Exactly one Draft PR for direct ChatGPT review,
+mandatory independent Antigravity audit and separately authorized merge. Code
+verification is not independent audit or merge permission.

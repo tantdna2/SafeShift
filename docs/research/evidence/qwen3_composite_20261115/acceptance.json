@@ -1,0 +1,517 @@
+{
+  "artifact_directory": "data/processed/qwen3-composite-v1/release-v1",
+  "artifact_files": {
+    "audit.json": {
+      "sha256": "9917bd59ae47c41f9ac7078a02d1825db0c54ebb011efc46d928bc6b44c2d7bc",
+      "size_bytes": 47549
+    },
+    "composite.json": {
+      "sha256": "ab749065bdfdf856ed7422eed58df5f3b51f4cb9e024de6b982f6ec3c7e72520",
+      "size_bytes": 13284583
+    },
+    "image_verification.json": {
+      "sha256": "8ab399d5f1da2ca2f5a06d8faa04f43d57f2574ecb415570ecba01a2feda6998",
+      "size_bytes": 618495
+    },
+    "metrics.csv": {
+      "sha256": "b1b15bfacf5f76b89dc870b7431ca1f0e4dbed0097f4c83958148f39b00c0d67",
+      "size_bytes": 93815
+    },
+    "metrics.json": {
+      "sha256": "43b4e42e54f207688ef8f2c3a68d9bf9b62de80405d7f0ad82fb5341599fcafc",
+      "size_bytes": 462084
+    },
+    "samples.csv": {
+      "sha256": "3cc1dac9504d0fc66dbf2e5c782bde80757332908cd4ff18e65752bc676d0a1c",
+      "size_bytes": 3569463
+    }
+  },
+  "artifact_manifest_sha256": "7e7793073eb639a2d0bd22e84c11cd773be7fdb86e7e1f5f59e3baf0dd0c98de",
+  "base": "044b53059e7a9615d54f07a4ce8a44308b47e56a",
+  "branch": "feat/qwen3-full-train-composite-v1",
+  "classification": {
+    "accuracy": {
+      "denominator": 3763,
+      "numerator": 2932,
+      "value": 0.7791655593941005
+    },
+    "balanced_accuracy": 0.6448991518858818,
+    "binary": {
+      "FN": 38,
+      "FP": 443,
+      "TN": 2571,
+      "TP": 711,
+      "U_A": 0,
+      "U_N": 0,
+      "accuracy": {
+        "denominator": 3763,
+        "numerator": 3282,
+        "value": 0.872176454956152
+      },
+      "balanced_accuracy": 0.9011424655568185,
+      "f1": {
+        "denominator": 1903,
+        "numerator": 1422,
+        "value": 0.7472411981082502
+      },
+      "false_alarm": {
+        "denominator": 3014,
+        "numerator": 443,
+        "value": 0.14698075646980757
+      },
+      "false_safe": {
+        "denominator": 749,
+        "numerator": 38,
+        "value": 0.050734312416555405
+      },
+      "hazard_recall": {
+        "denominator": 749,
+        "numerator": 711,
+        "value": 0.9492656875834445
+      },
+      "hazard_support": 749,
+      "normal_support": 3014,
+      "precision": {
+        "denominator": 1154,
+        "numerator": 711,
+        "value": 0.6161178509532063
+      },
+      "specificity": {
+        "denominator": 3014,
+        "numerator": 2571,
+        "value": 0.8530192435301924
+      }
+    },
+    "confusion_4x5": {
+      "Level01": {
+        "INVALID": 0,
+        "Level01": 163,
+        "Level02": 303,
+        "Level03": 10,
+        "Level04": 14
+      },
+      "Level02": {
+        "INVALID": 0,
+        "Level01": 2,
+        "Level02": 193,
+        "Level03": 32,
+        "Level04": 24
+      },
+      "Level03": {
+        "INVALID": 0,
+        "Level01": 0,
+        "Level02": 3,
+        "Level03": 5,
+        "Level04": 0
+      },
+      "Level04": {
+        "INVALID": 0,
+        "Level01": 104,
+        "Level02": 154,
+        "Level03": 185,
+        "Level04": 2571
+      }
+    },
+    "invalid_n": 0,
+    "macro_classes": [
+      "Level01",
+      "Level02",
+      "Level03",
+      "Level04"
+    ],
+    "macro_f1": 0.45315720192557896,
+    "per_class": {
+      "Level01": {
+        "f1": {
+          "denominator": 759,
+          "numerator": 326,
+          "value": 0.4295125164690382
+        },
+        "precision": {
+          "denominator": 269,
+          "numerator": 163,
+          "value": 0.6059479553903345
+        },
+        "predicted_n": 269,
+        "recall": {
+          "denominator": 490,
+          "numerator": 163,
+          "value": 0.3326530612244898
+        },
+        "support": 490
+      },
+      "Level02": {
+        "f1": {
+          "denominator": 904,
+          "numerator": 386,
+          "value": 0.4269911504424779
+        },
+        "precision": {
+          "denominator": 653,
+          "numerator": 193,
+          "value": 0.29555895865237364
+        },
+        "predicted_n": 653,
+        "recall": {
+          "denominator": 251,
+          "numerator": 193,
+          "value": 0.7689243027888446
+        },
+        "support": 251
+      },
+      "Level03": {
+        "f1": {
+          "denominator": 240,
+          "numerator": 10,
+          "value": 0.041666666666666664
+        },
+        "precision": {
+          "denominator": 232,
+          "numerator": 5,
+          "value": 0.021551724137931036
+        },
+        "predicted_n": 232,
+        "recall": {
+          "denominator": 8,
+          "numerator": 5,
+          "value": 0.625
+        },
+        "support": 8
+      },
+      "Level04": {
+        "f1": {
+          "denominator": 5623,
+          "numerator": 5142,
+          "value": 0.9144584741241331
+        },
+        "precision": {
+          "denominator": 2609,
+          "numerator": 2571,
+          "value": 0.9854350325795324
+        },
+        "predicted_n": 2609,
+        "recall": {
+          "denominator": 3014,
+          "numerator": 2571,
+          "value": 0.8530192435301924
+        },
+        "support": 3014
+      }
+    },
+    "planned_n": 3763,
+    "severe_false_safe": {
+      "denominator": 490,
+      "numerator": 14,
+      "value": 0.02857142857142857
+    },
+    "support": {
+      "Level01": 490,
+      "Level02": 251,
+      "Level03": 8,
+      "Level04": 3014
+    }
+  },
+  "config_sha256": "7e8002e3de962bb546f50839ddb0696f90e0712fe7dcb41508eae568b1e9947c",
+  "date": "2026-11-15",
+  "duplicate_content": {
+    "distinct_sha256": 3719,
+    "duplicate_groups": 44,
+    "extra_records": 44
+  },
+  "environment": {
+    "dependencies": [],
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.9",
+    "seed": null
+  },
+  "focused_tests": {
+    "exhaustive_confusion_synthetic_combinations": 625,
+    "failed": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "exit_code": 0,
+        "log": "data/processed/qwen3-composite-v1/final-test_qwen_composite.py.log",
+        "pattern": "test_qwen_composite.py",
+        "sha256": "1d7a861b7938e220eb42b833640541385f26b358ea682c9c5f6471e51a55bbba",
+        "tests": 23
+      },
+      {
+        "exit_code": 0,
+        "log": "data/processed/qwen3-composite-v1/final-test_source_sensitivity.py.log",
+        "pattern": "test_source_sensitivity.py",
+        "sha256": "5da04b399d1e56da99afbf81662e9633e00a05229e3d155ed0898505793dc40a",
+        "tests": 27
+      },
+      {
+        "exit_code": 0,
+        "log": "data/processed/qwen3-composite-v1/final-test_metrics.py.log",
+        "pattern": "test_metrics.py",
+        "sha256": "f478309e95bce978ca0d676725c03ddc1f9cd7f7dc916b70e993b036cbbeb66e",
+        "tests": 7
+      },
+      {
+        "exit_code": 0,
+        "log": "data/processed/qwen3-composite-v1/final-test_smoke.py.log",
+        "pattern": "test_smoke.py",
+        "sha256": "cefd7ba8f72b6abd71e29c60f9be78b3f924399d3ada20a610dda329aeaa3f83",
+        "tests": 2
+      },
+      {
+        "exit_code": 0,
+        "log": "data/processed/qwen3-composite-v1/final-test_schema.py.log",
+        "pattern": "test_schema.py",
+        "sha256": "9ce3945f97b52b354933f2b0b573e8215febfbe73c32015d9f834474dcc34f18",
+        "tests": 12
+      }
+    ],
+    "total": 71
+  },
+  "full_discovery": {
+    "command": "python -B -m unittest discover -s tests -v",
+    "log": "data/processed/qwen3-composite-v1/full-tests.log",
+    "log_sha256": "f572d84acda5be83296740b5c180760401545b35fd5db07591d85dd525678b02",
+    "reason": "Unrelated historical 160-call synthetic batch tests run for an extended period; stopped only the task test process. No full-suite PASS claimed.",
+    "status": "INTERRUPTED_NOT_COMPLETE"
+  },
+  "gpu_kaggle_inference_test_access": false,
+  "historical_evidence_preserved": true,
+  "hnlo": {
+    "composite": {
+      "planned_n": 3763,
+      "reason": "CROSS_SERIES_SCALE_TOKEN_DECISION_ALIGNMENT_NOT_INDEPENDENTLY_VERIFIED",
+      "status": "N/A",
+      "value": null
+    },
+    "recovery224": {
+      "eligible_n": 224,
+      "excluded_by_reason": {},
+      "negative_n": 175,
+      "pair_denominator": 8575,
+      "planned_n": 224,
+      "positive_n": 49,
+      "raw_audit_performed": false,
+      "reason": null,
+      "status": "SAVED_SCORE_RECOMPUTED",
+      "tie_credit": 0.5,
+      "value": 0.9545189504373177
+    },
+    "v4_original_success": {
+      "eligible_n": 3539,
+      "excluded_by_reason": {},
+      "negative_n": 2839,
+      "pair_denominator": 1987300,
+      "planned_n": 3539,
+      "positive_n": 700,
+      "raw_audit_performed": false,
+      "reason": null,
+      "status": "SAVED_SCORE_RECOMPUTED",
+      "tie_credit": 0.5,
+      "value": 0.9527927338600111
+    }
+  },
+  "identity_sha256": "a25f411f4ff8beb21e417d18025f235511158f877dfadaedb592d1e3b8d5768e",
+  "image_verification": {
+    "images_decoded": false,
+    "status": "PASS_TRAIN_IMAGE_BYTES_SHA256",
+    "test_accessed": false,
+    "train_root": "data/raw/InspecSafe-V1/train",
+    "verified_n": 3763
+  },
+  "independent_antigravity_audit": "PENDING",
+  "inherited_notebook_tests": {
+    "baseline_log": "data/processed/qwen3-composite-v1/base-check-fresh-tests.log",
+    "baseline_log_sha256": "8943f267b816702bfa9890a3958c7d82b14fb10e7a0c276ca81642ed172314b5",
+    "baseline_reproduced_at": "044b53059e7a9615d54f07a4ce8a44308b47e56a",
+    "command": "python -B -m unittest discover -s tests -p test_fresh_fulltrain_notebooks.py -v",
+    "failures": "Frozen source assertions for candidates/backend.py and candidates/loading.py; six builder source/runtime mismatches for backend.py. Same failures/errors on exact untouched base checkout. No inherited runtime changes in this PR.",
+    "subtest_errors": 6,
+    "subtest_failures": 2,
+    "tests": 4
+  },
+  "label_status": "VERIFIED_COMPLETE_TRAIN_COMPOSITE",
+  "membership_sha256": "087b4885baeb6e7abb2f6d04b9869d7762d6d9284b0339771b0058e314bf822b",
+  "merge": "NOT_AUTHORIZED_NOT_PERFORMED",
+  "numerical_oracle": {
+    "checks": 980,
+    "dependencies": [],
+    "implementation_path": "scripts/check_qwen3_composite_metrics.py",
+    "implementation_sha256": "d421fb37026c98108f34311d1cb11e03488df38817ad4cf788850cf4e8aa18e9",
+    "inputs_sha256": {
+      "metrics.json": "43b4e42e54f207688ef8f2c3a68d9bf9b62de80405d7f0ad82fb5341599fcafc",
+      "samples.csv": "3cc1dac9504d0fc66dbf2e5c782bde80757332908cd4ff18e65752bc676d0a1c"
+    },
+    "receipt_sha256": "49788f6a6e510ddb3dec54ebd907a5ede1f2590296bfe15082608ae2a4138f19",
+    "rows": 3763,
+    "status": "PASS_INDEPENDENT_NUMERICAL_ORACLE_NOT_EXTERNAL_AUDIT",
+    "strata": 15
+  },
+  "original_status_counts": {
+    "NOT_ATTEMPTED": 223,
+    "SUCCESS": 3539,
+    "TECHNICAL_ERROR": 1
+  },
+  "owner_decision": "https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264",
+  "owner_decision_export_sha256": "922c96b32b25399cf16324d977fe781cbfc352f23e8410c768cea461ee2a4b74",
+  "planned_n": 3763,
+  "product_id": "QWEN3_FULL_TRAIN_COMPOSITE_V1",
+  "raw_audit_performed": false,
+  "reproduce_command": [
+    "python",
+    "-B",
+    "-m",
+    "scripts.build_qwen3_composite",
+    "--input-dir",
+    "data/processed/qwen3-composite-v1/inputs",
+    "--output",
+    "data/processed/qwen3-composite-v1/release-v1",
+    "--train-root",
+    "data/raw/InspecSafe-V1/train"
+  ],
+  "reproduction": {
+    "core_files_identical": {
+      "composite.json": "ab749065bdfdf856ed7422eed58df5f3b51f4cb9e024de6b982f6ec3c7e72520",
+      "metrics.csv": "b1b15bfacf5f76b89dc870b7431ca1f0e4dbed0097f4c83958148f39b00c0d67",
+      "metrics.json": "43b4e42e54f207688ef8f2c3a68d9bf9b62de80405d7f0ad82fb5341599fcafc",
+      "samples.csv": "3cc1dac9504d0fc66dbf2e5c782bde80757332908cd4ff18e65752bc676d0a1c"
+    },
+    "directory": "data/processed/qwen3-composite-v1/reproduced-v1",
+    "manifest_sha256": "2f31beff4388097b42a9539856aff08606644d7da9737884010d098b62e61994",
+    "note": "Second build reuses locked saved input; image bytes rehashed in release-v1 only. Audit/manifest differ by command and image byte-check receipt.",
+    "saved_product_reader": "PASS_RECOMPUTED_BOTH_BUILDS"
+  },
+  "review": "PENDING_CHATGPT_DIRECT_GITHUB_REVIEW",
+  "schema": "safeshift-qwen3-composite-acceptance-v1",
+  "source_commit": "67278dbae0a42774c74d0af16b97550220312e4e",
+  "source_counts": {
+    "RECOVERY224": 224,
+    "V4_ORIGINAL": 3539
+  },
+  "source_sha256": {
+    "safeshift/evaluation/qwen_composite.py": "9a25b3a0b4dde2b64bfb2db0d6af7b7020faa395cd7dddc4f425c920de952e90",
+    "safeshift/evaluation/sensitivity.py": "c955a7eea4ffa85ccce0336ffff7df152a83baac54289b3d24ac3de46ed325da",
+    "safeshift/pilot/manifest.py": "574587b2f77fc140e154b3e5fb44bb9afa0cfb444171b8d5078bf5813cd59df0",
+    "scripts/analyze_source_sensitivity.py": "1f0c8b4562bc2a91d63b5ef4abf0ecb899c6fd7c20a31bfd40814d2d70761994",
+    "scripts/build_qwen3_composite.py": "e9189144e1f022b60432e66ff6036ada5a651395842ec43a1d9eec98342c54d6"
+  },
+  "sources": {
+    "recovery224": {
+      "archive_sha256": "da56ff98a6504faff7f3bff73b9797a25c8b36cadd87d8a3be056379f785c673",
+      "attempt_id": "hnlo-qwen3-s2-recovery224-v1-20261022-a1",
+      "authority_commit": "484b40355b0971832f81bc7a4c377cd190bbdd91",
+      "config_sha256": "0b8731b6d989501fffd4aebf5d2042b16e791b3cd3b36a3047d19d2846caed44",
+      "inference_sha256": "b9573ef7fdc38b6b06f0600d157ccd8417084ef15475d7c05e2da050543aa426",
+      "kind": "RECOVERY224",
+      "manifest_sha256": "9758269c44ca8256588e2c685b09c29f33fe4dbe7891f7116d445c5b6cffe285",
+      "merge_commit": "4774f02e84507811243cc587ba877f582614b051",
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "result_sha256": "81b48d4ab45cc98b1deb8e2cdcb0e7d43dc396436fa714d10350d27448894f0d",
+      "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "run_id": "hnlo-qwen3-s2-recovery224-v1-20261022",
+      "samples_sha256": "6c2acbedbe4c1492936103c6e7865e5dfb79a43f4d0a7f0cb1c9f38a8b750a4d",
+      "source_commit": "778b03b4bc0843311b8f1724f345f4ab6f1bdda8",
+      "source_payload_sha256": "437f16b714da75df8323bb4aad2675236a13f9e86114a27ade8d76d8ba86dd41"
+    },
+    "v4_s0": {
+      "archive_sha256": "bcaaa0b09dd664a39d0a1059d442e6eac2ed7352634e18dc0525926bb25e0dcc",
+      "attempt_id": "hnlo-train-v4-qwen3-s0-20261019-a1",
+      "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+      "config_sha256": "3c502ecd1a9188a2b2cbf883a13b2fa44cba7fcf1463dde6351f46b6245a493d",
+      "inference_sha256": "37b9fae412db374c54b79bbb83aad1d0ba3029d06fe836b71952763550054f70",
+      "kind": "V4_ORIGINAL",
+      "manifest_sha256": "036fe817a81b6942964a9c27f63f1be36c080dd8df4cd0549518d29422ca8162",
+      "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "result_sha256": "b8960093f2f3f1a74f6c67d721c443dc092b0c5138a57464f16039d9d3829527",
+      "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "run_id": "hnlo-train-v4-qwen3-s0-a1",
+      "samples_sha256": "2a915def0555fdfa63f23eca48b7e6089ca6562bde5feaac7e625c9ca6175c0b",
+      "source_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+      "source_payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a"
+    },
+    "v4_s1": {
+      "archive_sha256": "af4e05c3d8b63e552166a8f7eb671ae3ec4836fef32ec4e534b0563cc13017c2",
+      "attempt_id": "hnlo-train-v4-qwen3-s1-20261019-a1",
+      "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+      "config_sha256": "c916beec7d63d853748451f12ec7da2600acbfb4208ad67851f70b93bbe0980a",
+      "inference_sha256": "9482465485f316dbef12116c99239da1f9e868a7075c2c06281148ec0641bc10",
+      "kind": "V4_ORIGINAL",
+      "manifest_sha256": "e7f9e356e9643d607cb167cbc425b85450f535ebe76d2d368338fc2b6384f3f3",
+      "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "result_sha256": "0d1b34096040cec3d94da8eb3c54d53cf9d82602b33646f322a9917942394f4e",
+      "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "run_id": "hnlo-train-v4-qwen3-s1-a1",
+      "samples_sha256": "1510762c7c4420537993a85f6366138dfa37c5b898ed1afe5cac6350173e3add",
+      "source_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+      "source_payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a"
+    },
+    "v4_s2": {
+      "archive_sha256": "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920",
+      "attempt_id": "hnlo-train-v4-qwen3-s2-20261019-a1",
+      "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+      "config_sha256": "22fa272c02f63120607fee38e8091d491bae30083cabb40b064285127d97d02c",
+      "inference_sha256": "f9d2370dd5feece46c91ffe88171cb7cd5e838d3a7818000894b7f71d3829695",
+      "kind": "V4_ORIGINAL",
+      "manifest_sha256": "b5c5b3dfb6e9ad270174d364a7544ed93e4d47f8518e372ecdd106b862b33ae1",
+      "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "result_sha256": "fcf70c6c6a8915f858cf95583ec40f02003379fd85c3f8681da2ec9c4500a1c6",
+      "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "run_id": "hnlo-train-v4-qwen3-s2-a1",
+      "samples_sha256": "c5e995270cef84c98b327e65d96650b56ab47e72adff9d0997028d604b489fa8",
+      "source_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+      "source_payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a"
+    },
+    "v4_s3": {
+      "archive_sha256": "07abe1551e51b9194dcd1a32b79a93940a435a6567b61275d887c6d0878a5273",
+      "attempt_id": "hnlo-train-v4-qwen3-s3-20261019-a1",
+      "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+      "config_sha256": "3955fd7dca662de78fd9d14d5e679714c64edcc60bb8d1eb7579f83e9f9690d6",
+      "inference_sha256": "d72046fe5265ee8896745584140c322f9fa14a11fdddd8abd40e75270d06e4c8",
+      "kind": "V4_ORIGINAL",
+      "manifest_sha256": "6aa273860e54781b3eebf00308b236c702ee0b4ca2a3bc341472cea8e1f5055c",
+      "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+      "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+      "result_sha256": "d7e8789892e3f2c831180e008751987b10dda59894d7a83c8be942b005e25fbd",
+      "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+      "run_id": "hnlo-train-v4-qwen3-s3-a1",
+      "samples_sha256": "e75854f20190cf572dc68b09697712ae525a50433ea329db9e1fb4f4492b1d65",
+      "source_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+      "source_payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a"
+    }
+  },
+  "timezone": "Asia/Bangkok",
+  "verification_commands": [
+    [
+      "python",
+      "-B",
+      "-m",
+      "scripts.build_qwen3_composite",
+      "--output",
+      "data/processed/qwen3-composite-v1/release-v1",
+      "--verify-manifest-sha256",
+      "7e7793073eb639a2d0bd22e84c11cd773be7fdb86e7e1f5f59e3baf0dd0c98de"
+    ],
+    [
+      "python",
+      "-B",
+      "-m",
+      "scripts.check_qwen3_composite_metrics",
+      "--product-dir",
+      "data/processed/qwen3-composite-v1/release-v1",
+      "--output",
+      "data/processed/qwen3-composite-v1/oracle-release-v1.json"
+    ],
+    [
+      "python",
+      "-B",
+      "-m",
+      "scripts.build_qwen3_composite",
+      "--input-dir",
+      "data/processed/qwen3-composite-v1/inputs",
+      "--output",
+      "data/processed/qwen3-composite-v1/reproduced-v1"
+    ]
+  ]
+}

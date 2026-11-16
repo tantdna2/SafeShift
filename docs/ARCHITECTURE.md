@@ -1,5 +1,55 @@
 # Kiến trúc Foundation V1
 
+
+## Qwen3 derived full-TRAIN label analysis ? 15/11/2026
+
+Read [the versioned composite contract](research/QWEN3_FULL_TRAIN_COMPOSITE_V1.md).
+scripts/build_qwen3_composite.py authenticates five historical report archives,
+exact original/recovery manifests, source/config/release and GT/hash lineage.
+safeshift/evaluation/qwen_composite.py selects the original-status complement
+and computes image-weighted four-level/binary metrics and source-specific AUC.
+The CLI exports sealed JSON/CSV and verifies them for downstream use via
+read_product(directory, trusted_manifest_sha256). Tests: test_qwen_composite.py.
+The separate config/amendment implements Owner decision6889519264 without
+changing old source locks, frozen analysis config or execution ledgers. No
+raw-logit replay, model/image inference, TEST or automatic HNLO score pooling.
+
+## Deferred offline campaign route — Owner12/11/2026
+
+PR196 R1 adds `scripts/train3763_results.py` and the read-only `official-report`
+command. It authenticates and replays the final certificate through the same
+`Continuation.validate_reconciliation` gate as admission, verifies immutable
+custody, reconstructs all3763 per-image records/lineages and every attempt, and
+independently sums original plus deferred reservations. Resource facts are read
+from each verified ZIP and compared to the authenticated report; missing telemetry
+and unobserved GPU billing remain explicit. Provisional `status` cannot claim
+official results from event presence alone. Legacy readers/writers remain
+unchanged and intentionally unsuitable for whole-campaign consumption; the new
+versioned official-results schema is the downstream handoff. No GT/metrics or
+new scientific authorization. Tests: `test_train3763_results.py` plus existing
+continuation, manual, campaign and notebook suites.
+
+Read [deferred reconciliation contract](TRAIN3763_DEFERRED_RECONCILIATION.md)
+before the historical per-attempt operator routes. The external companion
+`scripts/train3763_continuation.py` imports the untouched approved Operator
+checkout, authenticates one exact source-bound route release from Owner exports,
+and maintains a separate mirrored create-only journal. Initial admission requires
+exact INTENT35 and preserved Attempt11 facts; legacy INTENT35 remains open to
+fence old reserve/collector routes. No core runtime/source manifest changes.
+
+Quick local verification checks every archive byte/CRC/hash, exact original
+ordinals and raw/Input/checkpoint/native custody; independent numerical replay
+and provider verification remain deferred. New reservations precede capsule
+export, conserve all caps without refunds and permit only one active Owner-run
+job. Restart exports the same reserved capsule; partial/ambiguous histories stop.
+`scripts/owner_verify_train3763_continuation.py` is an explicit **Owner-only online
+command**, never called by the offline route. At campaign end it verifies every
+real provider job/version/code/Input/capsule/ZIP plus full raw numerical traces
+and original histories. One genuine Owner aggregate record and one reviewer
+admission release gate a new formal aggregate ledger event. No synthetic legacy
+COLLECTED/SUBMITTED/MEASURED or retrospective permissions. Tests:
+`test_train3763_continuation.py` and unchanged manual/campaign/notebook suites.
+
 ## MiniCPM / Qwen fresh full-TRAIN review — 12/11/2026
 
 Read [technical review/runbook](QWEN_MINICPM_FULLTRAIN_REVIEW.md).
