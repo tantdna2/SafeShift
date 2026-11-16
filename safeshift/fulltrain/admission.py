@@ -258,10 +258,15 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
                 supervision.run(command(python, mode, request_file, repo, output / mode, until),
                     cwd=repo, env=env, deadline=until, log=output / (mode + ".log"),
                     receipt=output / (mode + "-process.json"), max_log_bytes=budgets["max_log_bytes"],
-                    watch_log_root=output / mode, **lock_options)
+                    watch_log_root=output / mode,
+                    **({"live_prefix": "SAFESHIFT_MINICPM_LIVE_V3 "} if active is not None
+                        and active["grant"]["schema"] == capability.RECOVERY_SCHEMA else {}), **lock_options)
                 proof = read(output / mode / "stage.json")
                 require(proof == {"status": "RETURNED", "stage": mode, "request_sha256": digest(request),
                     "source_sha256": request["source_sha256"], "native_attempt_permitted": mode == "native"}, "CHILD_STAGE_BINDING")
+                if active is not None and active["grant"]["schema"] == capability.RECOVERY_SCHEMA:
+                    from .minicpm_recovery import emit
+                    emit("stage_returned", stage=mode)
                 if mode == "setup":
                     installed = read(output / "setup/runtime.json")
                     require(installed["request_sha256"] == digest(request), "SETUP_RUNTIME_BINDING")

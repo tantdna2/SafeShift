@@ -1,6 +1,54 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR198 expanded MiniCPM execution release V2 — 16/11/2026
+## CURRENT — PR198 merged; Run1 recovery / one Codex launch — 16/11/2026
+
+Verified GitHub PR198 merge/main: `507e9817b91054fa7af324c6a915c35d56b5acf1`.
+[Owner directive6914854993](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6914854993)
+authorizes a new coding session/one Draft PR, then one Codex Kaggle submission
+after direct review, independent Antigravity audit, separately authorized merge,
+verified postmerge and authentic final-source release. This is one ongoing task;
+the older Draft/CPU-only headings below are historical snapshots.
+
+Local evidence: Run1 supervisor failed `UNIQUE_ORIGINAL_MOUNT_REQUIRED` at admit;
+the original direct binding mismatched nested Kaggle datasets. V2 job log failed
+`MINICPM_STALE_PROVIDER_BEFORE_LAUNCH` before a launch claim. Three original
+journal/mirror pairs match: original and V2 each RESERVED/PUBLISH_INTENT/PUBLISHED;
+V3 remains RESERVED. Each holds1000 calls/1 job/28800 physical GPU-seconds.
+Combined reservation is3000 calls/3 jobs/**86400 GPU-s**, above the existing72000
+project ceiling. These are conservative reservations, **not measured billing**.
+No reservation is refunded, released or rewritten by this task.
+
+Read-only official pinned SDK observations: account quota used26745/reserved0/
+total108000 GPU-seconds; complete paginated owned inventory189 notebooks. None
+of the three production slugs is present, and direct version/status reads return
+`kernels.get` denied. This conflicts with retained local Run1/V2 logs. Published
+job absence is ambiguous, never EXPIRED_UNPUBLISHED or proof of zero native calls.
+No current terminal custody or unused-grant assertion is made from these facts.
+
+[Recovery V3 contract and operations](MINICPM_RUN1_RECOVERY.md) implement exact
+five nested mounts, authentic final-source release/approval graph, historical
+grant/ticket/journal binding, truthful FAILED_PRE_NATIVE receipts, no-refund
+cross-campaign accounting and one durable SDK push intent without automatic retry.
+The same native backend/model/config/parser is used. Positive returned preflight
+receipts and durable actual model.generate-start observations are forwarded live
+from the supervised child. Only exact source/ticket/TRAIN ID/SHA plus provider
+RUNNING qualify for native-start handoff; terminal success is not required.
+Antigravity can collect both sealed ZIP pairs in the same journal and continue
+signed NOT_ATTEMPTED-only Owner UI jobs; Codex has no second launch capability.
+
+**EXECUTION BLOCKED / NATIVE NOT VERIFIED.** Required: resolve missing historical
+provider jobs/capsule versions with authentic account evidence, retain full old
+reservations, obtain an explicit project cap amendment if needed (the old72000
+cannot contain86400 already reserved), then new-source review/audit/merge/
+postmerge/release and fresh five Input/quota/ticket checks. Old UI-only grants
+cannot authorize this changed source or Codex API submission. No upload, submit,
+GPU, inference, TEST, production journal mutation, audit approval or merge has
+been performed. DONE remains first real native call + running job + handoff.
+
+CPU acceptance and exact source/log hashes are recorded in the recovery runbook
+and its linked receipt; synthetic tests do not establish live model-fit or PASS.
+
+## HISTORICAL — PR198 expanded MiniCPM execution release V2 — 16/11/2026
 
 [Owner/ChatGPT directive6907347740](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907347740)
 supersedes the fragmented dossier-only scope. Continue the same session/branch/

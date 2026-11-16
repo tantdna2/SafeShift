@@ -27,6 +27,9 @@ SCHEMA = "safeshift-minicpm-fulltrain-release-v2"
 MARKER = "SAFESHIFT_MINICPM_FULLTRAIN_RELEASE_V2"
 APPROVAL = "SAFESHIFT_MINICPM_FULLTRAIN_APPROVAL_V2"
 TICKET = "safeshift-minicpm-serial-ticket-v2"
+RECOVERY_SCHEMA = "safeshift-minicpm-fulltrain-recovery-release-v3"
+RECOVERY_MARKER = "SAFESHIFT_MINICPM_FULLTRAIN_RECOVERY_RELEASE_V3"
+RECOVERY_TICKET = "safeshift-minicpm-recovery-ticket-v3"
 OWNER = "tantdna2"
 OWNER_ID = 246929698
 API = "https://api.github.com/repos/tantdna2/SafeShift"
@@ -117,10 +120,14 @@ def validate(grant, *, repo=ROOT):
     fields = {"schema", "authorization", "campaign_id", "implementation_pr", "reviewed_head", "merged_sha",
         "runtime_commit", "scope", "public_key", "operator_host_sha256", "caps", "sizing", "issued_unix",
         "expires_unix", "provider_max_age_seconds", "approvals"}
-    require(type(grant) is dict and set(grant) == fields and grant["schema"] == SCHEMA
-        and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_SERIAL_UI_ONLY", "MINICPM_V2_EXPLICIT_AUTHORITY")
+    recovery = type(grant) is dict and grant.get("schema") == RECOVERY_SCHEMA
+    require(type(grant) is dict and set(grant) == fields | ({"recovery"} if recovery else set())
+        and (recovery and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_CODEX_SUBMIT_ONCE"
+             or not recovery and grant["schema"] == SCHEMA
+             and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_SERIAL_UI_ONLY"), "MINICPM_V2_EXPLICIT_AUTHORITY")
     contract.planning.token(grant["campaign_id"])
-    require(grant["implementation_pr"] == 198 and type(grant["implementation_pr"]) is int, "MINICPM_PR198_ONLY")
+    require(type(grant["implementation_pr"]) is int and (grant["implementation_pr"] > 198 if recovery
+        else grant["implementation_pr"] == 198), "MINICPM_REVIEWED_IMPLEMENTATION_PR")
     for field in ("runtime_commit", "reviewed_head", "merged_sha"):
         require(type(grant[field]) is str and re.fullmatch(r"[0-9a-f]{40}", grant[field]), "MINICPM_EXACT_RELEASE_COMMIT")
     public_key(grant["public_key"])
@@ -153,6 +160,9 @@ def validate(grant, *, repo=ROOT):
     from .minicpm_sizing import validate_policy
     validate_policy(grant["sizing"], caps["job_seconds"])
     require(type(grant["approvals"]) is dict and set(grant["approvals"]) == set(ROLES), "MINICPM_O2_O6_AND_SOURCE_APPROVALS")
+    if recovery:
+        from .minicpm_recovery import validate_recovery
+        validate_recovery(grant)
     return grant
 
 
@@ -164,25 +174,31 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
     Only the signed-ticket child entry uses approvals=False.
     """
     reader = github_get if reader is None else reader
-    def fetch(loc):
+    def fetch(loc, issue):
         require(type(loc) is dict and set(loc) == {"comment_id", "body_sha256"}
             and type(loc["comment_id"]) is int and loc["comment_id"] > 0, "MINICPM_V2_LOCATOR")
         require_hash(loc["body_sha256"])
-        value = reader("/issues/comments/" + str(loc["comment_id"]))
+        value = raw if loc == locator else reader("/issues/comments/" + str(loc["comment_id"]))
         require(value["id"] == loc["comment_id"] and value["user"]["login"] == OWNER
-            and value["user"]["id"] == OWNER_ID and value["issue_url"] == API + "/issues/198"
+            and value["user"]["id"] == OWNER_ID and value["issue_url"] == API + "/issues/" + str(issue)
             and hashlib.sha256(value["body"].encode()).hexdigest() == loc["body_sha256"], "MINICPM_AUTHENTIC_OWNER_RECORD")
         return value
-    owner = fetch(locator)
-    grant = validate(record(owner["body"], MARKER), repo=repo)
-    pr = reader("/pulls/198")
+    # Locate only; authenticate author/body/issue below before trusting the record.
+    require(type(locator) is dict and type(locator.get("comment_id")) is int, "MINICPM_V2_LOCATOR")
+    raw = reader("/issues/comments/" + str(locator["comment_id"]))
+    marker = RECOVERY_MARKER if RECOVERY_MARKER in raw["body"] else MARKER
+    proposed = record(raw["body"], marker)
+    issue = proposed.get("implementation_pr")
+    owner = fetch(locator, issue)
+    grant = validate(record(owner["body"], marker), repo=repo)
+    pr = reader("/pulls/" + str(issue))
     require(pr["merged"] is True and pr["draft"] is False and pr["base"]["ref"] == "main"
         and pr["head"]["sha"] == grant["reviewed_head"] and pr["merge_commit_sha"] == grant["merged_sha"],
         "MINICPM_EXPANDED_REVIEW_AUDIT_MERGE_REQUIRED")
     if approvals:
         seen = {owner["id"]}
         for kind, loc in grant["approvals"].items():
-            proof = fetch(loc)
+            proof = fetch(loc, issue)
             require(proof["id"] not in seen, "MINICPM_SEPARATE_APPROVAL_RECORD")
             seen.add(proof["id"])
             require(record(proof["body"], APPROVAL) == {"kind": kind, "status": "APPROVED",
@@ -200,6 +216,9 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
             blobs = {v["path"]: v for v in tree["tree"]}
             require(all(name in blobs and blobs[name]["type"] == "blob" and blobs[name]["mode"] == "100644"
                 and blobs[name]["sha"] == checksum for name, checksum in expected.items()), "MINICPM_MERGED_RUNTIME_BYTES")
+    if grant["schema"] == RECOVERY_SCHEMA:
+        from .minicpm_recovery import authenticate_recovery
+        authenticate_recovery(grant, reader)
     now = time.time()
     require(collection or grant["issued_unix"] <= now < grant["expires_unix"], "MINICPM_AUTHORITY_EXPIRED")
     return grant
@@ -234,13 +253,17 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     require(type(envelope) is dict and set(envelope) == {"payload", "signature"}, "MINICPM_SIGNED_TICKET_REQUIRED")
     t = envelope["payload"]
     verify_signature(grant["public_key"], t, envelope["signature"])
+    recovery = grant["schema"] == RECOVERY_SCHEMA
     require(type(t) is dict and set(t) == {"schema", "grant_sha256", "value_sha256", "capsule_sha256",
         "notebook_code_sha256", "number", "previous_event_sha256", "reserved_before", "reserved_after",
-        "issued_unix", "start_before_unix", "provider", "sizing"} and t["schema"] == TICKET
+        "issued_unix", "start_before_unix", "provider", "sizing"} and t["schema"] == (RECOVERY_TICKET if recovery else TICKET)
         and t["grant_sha256"] == digest(grant) and t["value_sha256"] == digest(value)
         and t["capsule_sha256"] == digest(value), "MINICPM_TICKET_BINDING")
     bind(grant, value)
-    require(type(t["number"]) is int and t["number"] == len(value["ancestors"]) + 1, "MINICPM_SERIAL_NUMBER")
+    offset = grant["recovery"]["reserved"]["jobs"] if recovery else 0
+    require(type(t["number"]) is int and t["number"] == offset + len(value["ancestors"]) + 1, "MINICPM_SERIAL_NUMBER")
+    if recovery:
+        require(len(value["ancestors"]) == len(value["request"]["history"]), "MINICPM_RECOVERY_COMPLETE_HISTORY")
     require_hash(t["previous_event_sha256"])
     require_hash(t["notebook_code_sha256"])
     p, caps = value["request"]["plan"], grant["caps"]
@@ -276,9 +299,30 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     for ref, row in provider["input_versions"].items():
         require(digest(row) == digest({"ref": ref, "version": int(ref.rsplit("/", 1)[1]), "private": True}),
             "MINICPM_PROVIDER_PRIVATE_VERSION")
-    require(type(provider["prior_jobs"]) is list and len(provider["prior_jobs"]) == t["number"] - 1 and all(
-        row["job"] == prefix + str(i) and row["version"] == 1 and row["state"] == "COMPLETE"
-        for i, row in enumerate(provider["prior_jobs"], 1)), "MINICPM_PRIOR_PROVIDER_TERMINAL")
+    if recovery:
+        prior = provider["prior_jobs"]
+        require(type(prior) is list and len(prior) == offset + len(value["ancestors"])
+            and prior[:offset] == grant["recovery"]["prior_jobs"], "MINICPM_RECOVERY_PROVIDER_LINEAGE")
+        expected_before = grant["recovery"]["reserved"]
+        for i, row in enumerate(prior[offset:], offset + 1):
+            require(set(row) == {"job", "version", "state", "kernel_id", "ticket"}
+                and row["job"] == prefix + str(i) and row["version"] == 1 and row["state"] == "COMPLETE",
+                    "MINICPM_PENDING_ONLY_PROVIDER_LINEAGE")
+            old = row["ticket"]
+            verify_signature(grant["public_key"], old["payload"], old["signature"])
+            p_old = old["payload"]
+            require(p_old["grant_sha256"] == digest(grant) and p_old["schema"] == RECOVERY_TICKET
+                and p_old["number"] == i and p_old["reserved_before"] == expected_before
+                and p_old["reserved_after"] == {"calls": expected_before["calls"] + p_old["sizing"]["calls"],
+                    "jobs": expected_before["jobs"] + 1,
+                    "gpu_seconds": expected_before["gpu_seconds"] + 2 * p_old["sizing"]["seconds"]},
+                    "MINICPM_PENDING_ONLY_NO_BUDGET_RESET")
+            expected_before = p_old["reserved_after"]
+        require(t["reserved_before"] == expected_before, "MINICPM_RECOVERY_NO_HISTORY_OR_BUDGET_RESET")
+    else:
+        require(type(provider["prior_jobs"]) is list and len(provider["prior_jobs"]) == t["number"] - 1 and all(
+            row["job"] == prefix + str(i) and row["version"] == 1 and row["state"] == "COMPLETE"
+            for i, row in enumerate(provider["prior_jobs"], 1)), "MINICPM_PRIOR_PROVIDER_TERMINAL")
     require(t["sizing"]["calls"] == p["max_calls"] and t["sizing"]["seconds"] == p["max_seconds"], "MINICPM_SIGNED_SIZING")
     require_hash(provider["owned_sha256"])
     if not collection:
@@ -303,6 +347,20 @@ class GuardedBackend:
 
     def generate(self, image, evidence):
         authorize("call", ordinal=self.ordinal)
+        c = current()
+        if c["grant"]["schema"] == RECOVERY_SCHEMA:
+            from unittest.mock import patch
+            from .minicpm_recovery import native_started
+            # Observe precisely model.generate, after unchanged backend image
+            # decode/processor/transfer and native_call.json durable write.
+            model = self.backend.model
+            native_generate = model.generate
+            row = c["value"]["cohort"]["samples"][self.ordinal]
+            def observed_generate(*args, **kwargs):
+                native_started(self.ordinal, row["sample_id"], row["image_sha256"])
+                return native_generate(*args, **kwargs)
+            with patch.object(model, "generate", observed_generate):
+                return self.backend.generate(image, evidence)
         return self.backend.generate(image, evidence)
 
 

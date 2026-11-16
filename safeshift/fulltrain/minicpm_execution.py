@@ -34,6 +34,14 @@ def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None
     require(sha(value_marker) == capsule_sha256, "MINICPM_RELEASE_CAPSULE_PIN")
     authority.verify_ticket(grant, envelope, metadata(value_marker))
     value = ui.verify_capsule(marker.parent, capsule_sha256, repo, release_ticket=True)
+    if grant["schema"] == authority.RECOVERY_SCHEMA:
+        from .minicpm_recovery import mounted_inputs
+        from safeshift import internvl3763_python as py
+        table = mounted_inputs(value)
+        for ref, filename in ((value["capsule_ref"], MARKER), (py.REF, py.MARKER),
+                              (ui.CHECKPOINT, "candidate_checkpoint_minicpm4.json")):
+            found = discover(inputs, filename, limit=128)
+            require(found.parent == safe(inputs, table[ref]["mount"]), "MINICPM_RECOVERY_EXACT_NESTED_INPUT")
     owner, slug, _ = value["capsule_ref"].split("/")
     require(marker.parent.relative_to(Path(inputs)).as_posix() in (slug, "datasets/" + owner + "/" + slug),
         "MINICPM_V2_CAPSULE_MOUNT")
