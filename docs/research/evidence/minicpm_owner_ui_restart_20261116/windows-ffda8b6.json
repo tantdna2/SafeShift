@@ -1,0 +1,29 @@
+{
+  "code_commit": "ffda8b695ea30f76b1177251af2d2183d9136332",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "runtime_sha256": "4b4f6bcccaaaa1793da3240bf9f4640e7a0796c9d1b615db0a627d4965a356c9",
+  "runtime_bytes_unchanged": true,
+  "test_sha256": "36fce19e6af6dbf05b852f462071c45f618cf8e5136421ac667c578285b1796c",
+  "patterns": [
+    "test_minicpm_run1_recovery.py",
+    "test_minicpm_fulltrain_execution.py",
+    "test_minicpm_execution_boundaries.py",
+    "test_minicpm_execution_transport.py",
+    "test_fulltrain_original_inputs.py",
+    "test_minicpm_fulltrain_ui.py",
+    "test_minicpm_fulltrain_release.py",
+    "test_fulltrain_minicpm4_notebook.py",
+    "test_minicpm_ui_transport.py"
+  ],
+  "run": 85,
+  "failures": 0,
+  "errors": 0,
+  "skips": 1,
+  "log_sha256": "c527a16bb72701da95101a4067ca83e39c1f17ef12bd073fb1728cf5f3f91215",
+  "excluded": [
+    "preexisting full3763 stress case"
+  ],
+  "live": "NOT_RUN",
+  "captured_log_sha256": "033671af796898f9bb5b8abb8b6562eb62bb6a33bbf041782e4f88b6974f33d4",
+  "public_log_normalization": "CRLF_TO_LF; original capture preserved locally"
+}

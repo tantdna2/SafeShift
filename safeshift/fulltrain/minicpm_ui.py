@@ -26,7 +26,7 @@ MASTER = "nguynanhtn/safeshift-pilot-input/1"
 
 
 def initial(cohort, projection_sha256, resource_policy, *, checkpoint_marker_sha256,
-            run_id, attempt_id, job, capsule_ref, max_calls, max_seconds, nested_mounts, repo=ROOT):
+            run_id, attempt_id, job, capsule_ref, max_calls, max_seconds, nested_mounts, repo=ROOT, series=None):
     """Plan metadata only from a separately sealed original-master projection.
 
     The worker re-derives it from the frozen master; caller metadata confers no
@@ -40,7 +40,7 @@ def initial(cohort, projection_sha256, resource_policy, *, checkpoint_marker_sha
         owner, slug, version = ref.split("/")
         binding[name] = {"ref": owner + "/" + slug, "version": int(version),
             "mount": "datasets/" + owner + "/" + slug if nested_mounts else slug}
-    campaign = contract.campaign({k: cohort for k in contract.planning.MODELS}, projection_sha256)
+    campaign = contract.campaign({k: cohort for k in contract.planning.MODELS}, projection_sha256, series=series)
     plan = contract.plan(campaign, cohort, contract.native_identity("minicpm4", repo), [], action="initial",
         run_id=run_id, attempt_id=attempt_id, max_calls=max_calls, max_seconds=max_seconds)
     request = {"model_key": "minicpm4", "source_sha256": digest(contract.source_manifest(repo)),

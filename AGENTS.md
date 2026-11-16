@@ -1,5 +1,55 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner16/11/2026 — PR199 Owner UI restart / finite derived budget
+
+[Directive6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
+supersedes PR199's automatic Codex submit and recurring72000-cap amendment flow.
+Continue SAME Codex session/branch/Draft PR199; no new PR. Retire only the three
+named historical MiniCPM attempts as sources of results, preserving every ticket,
+journal/reservation/local log/sealed archive and provider uncertainty. Zero calls
+are Owner/local-reported, never authenticated remote deletion or terminal proof.
+
+Implement a separately identified Owner-UI restart at ordinal0 over all original
+3763 TRAIN IDs, no old predictions. Bind a finite auditable reservation policy to
+this exact directive and reviewed source; distinguish derived numerical ceilings,
+historical reservations, actual native calls and current account quota. No fake
+APPROVED amendment, counter rewrite/refund, automatic account switching or quota
+circumvention. Per-job caps, signed expiry/source/Input/raw/claims/anti-replay stay.
+
+Codex performs code/CPU tests/docs/push only and requests fresh direct HEAD review.
+After source PASS: independent Antigravity audit, separately authorized merge and
+verified postmerge, then authentic final-source release. Antigravity in SAME old
+Operator session publishes current signed notebook/private capsule and ≤3 concrete
+Owner steps; Owner personally Save Version > Save & Run All once before expiry.
+No Codex submit/live observer or claim that publication/Owner Run already happened.
+Antigravity collects authenticated new results and stages only NOT_ATTEMPTED.
+Science/FP16 weights/FP32 resampler/C1/HNLO N/A/TEST closure remain unchanged.
+
+## Owner16/11/2026 — post-PR198 Run1 recovery / one Codex launch
+
+[Directive6914854993](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6914854993)
+starts a new coding session/one Draft PR from merged main507e981. Diagnose direct
+versus nested five Inputs, preserve all original/V2/V3 grants, mirrored journals,
+failures and full reservations; no fourth campaign or automatic refund. Read-only
+provider reconciliation is allowed. New source/auth/journal changes require
+ChatGPT direct GitHub review, independent Antigravity audit, separately authorized
+merge by the audit session and verified postmerge in this same task.
+
+After those gates and an authentic final-source release, Codex may upload and
+submit exactly ONE Owner-account Kaggle TRAIN job through the reviewed signed
+V3 route. V2 UI-only grants do not authorize an API POST. Expiry/unknown provider,
+partial ZIP, native ambiguity, duplicate intent or exhausted project caps STOP.
+No invented rights, new campaign, expired ticket reuse, budget reset, TEST or
+science/precision/parser changes. See [recovery runbook](docs/MINICPM_RUN1_RECOVERY.md).
+
+PASS requires genuine provider source/version/Inputs, positive admit/setup/cpu/gpu
+receipts and the first ordered TRAIN model.generate-start receipt after model
+load, while the exact job is still RUNNING. RUNNING alone is UNVERIFIED. Then
+stop Codex monitoring, leave the kernel running and hand its URL/version/source/
+capsule/ticket/SHA/quota/log/journal to Antigravity's SAME historical Operator
+session. Do not wait for full success. Subsequent runs use verified collection,
+signed caps and NOT_ATTEMPTED only; no second Codex submission.
+
 ## Owner16/11/2026 — PR198 expanded MiniCPM execution release, same session
 
 [Directive6907347740](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907347740)

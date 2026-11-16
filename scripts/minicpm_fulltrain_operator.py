@@ -122,7 +122,7 @@ def provider(client, grant, value, prior):
         for item in prior:
             within_bound()
             proof = observe_kernel(client, item["job"], 1, item["notebook"], item["input_sources"],
-                kernel_id=item["kernel_id"])
+                kernel_id=item["kernel_id"], **({"expected_state": item["state"]} if "state" in item else {}))
             predecessors.append({"job": proof["job_id"], "version": 1, "state": proof["state"], "kernel_id": proof["kernel_id"]})
         versions = {}
         for ref in value["input_sources"]["dataset_sources"][:-1]:
@@ -254,7 +254,7 @@ class Journal:
             grant, events, reserved, active, completed = self.state()
             require(active is None, "MINICPM_OPEN_RESERVATION_NO_RETRY")
             clean_source(grant)
-            value = deepcopy(events[0]["payload"]["initial"])
+            value = deepcopy(self.stage_initial(events))
             prior, telemetry = [], None
             for item in completed:
                 collection = item["collection"]
@@ -274,12 +274,12 @@ class Journal:
                 checked_timing = verify_claims(item["value"], item["ticket"], grant, old_attempt, old_supervisor)
                 telemetry = telemetry_record(checked_timing, old_attempt, old_supervisor, item["ticket"])
                 require(digest(telemetry) == digest(collection["telemetry"]), "MINICPM_MEASURED_TELEMETRY_CUSTODY")
-            number = len(completed) + 1
+            number = len(completed) + 1 + (grant["recovery"]["reserved"]["jobs"] if grant["schema"] == authority.RECOVERY_SCHEMA else 0)
             value["job"] = "nguynanhtn/safeshift-minicpm-" + grant["campaign_id"] + "-" + str(number)
             value["capsule_ref"] = "nguynanhtn/safeshift-minicpm-capsule-" + grant["campaign_id"] + "-" + str(number) + "/1"
             value["input_sources"]["dataset_sources"][-1] = value["capsule_ref"]
             from safeshift.internvl3763_operator import api
-            evidence = provider(api(), grant, value, prior)
+            evidence = self.observe_provider(api(), grant, value, prior)
             pending = value["request"]["plan"]["counts"]["NOT_ATTEMPTED"]
             proposal = sizing.propose(grant, pending, reserved, evidence, telemetry)
             r = value["request"]
@@ -291,12 +291,14 @@ class Journal:
             # any capsule publication or Owner handoff. Failure leaves it OPEN.
             destination = private_root(destination)
             require(not destination.exists(), "MINICPM_PACKAGE_CREATE_ONLY")
-            locator = events[0]["payload"]["locator"]
+            locator = self.release_locator(events)
             pin = digest(value)
-            nb = notebook(grant["runtime_commit"], capsule_sha256=pin, release_locator=locator)
+            nb = notebook(grant["runtime_commit"], capsule_sha256=pin, release_locator=locator,
+                **({"release_version": 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             from safeshift.internvl3763_operator import code_hash
             now = int(time.time())
-            ticket = {"schema": authority.TICKET, "grant_sha256": digest(grant), "value_sha256": pin,
+            ticket = {"schema": authority.RECOVERY_TICKET if grant["schema"] == authority.RECOVERY_SCHEMA else authority.TICKET,
+                "grant_sha256": digest(grant), "value_sha256": pin,
                 "capsule_sha256": pin, "notebook_code_sha256": code_hash(nb), "number": number,
                 "previous_event_sha256": digest(events[-1]), "reserved_before": reserved,
                 "reserved_after": {"calls": reserved["calls"] + proposal["calls"], "jobs": reserved["jobs"] + 1,
@@ -330,6 +332,7 @@ class Journal:
             destination = safe(ROOT, active["package"])
             value, ticket = active["value"], active["ticket"]
             authority.verify_ticket(grant, ticket, value)
+            self.validate_package(grant, active)
             require(time.time() < ticket["payload"]["start_before_unix"], "MINICPM_PROVIDER_TICKET_STALE_RECONCILE")
             client = api()
             if not verify_only:
@@ -354,7 +357,7 @@ class Journal:
             prior = [{"job": item["value"]["job"], "notebook": read(safe(ROOT, item["package"] + "/notebook.ipynb")),
                 "input_sources": item["value"]["input_sources"], "kernel_id": read(safe(ROOT,
                     item["collection"]["directory"] + "/provider.json"))["kernel_id"]} for item in completed]
-            fresh = provider(client, grant, value, prior)
+            fresh = self.observe_provider(client, grant, value, prior)
             require(fresh["quota"]["total"] - fresh["quota"]["used"] >= 2 * value["request"]["plan"]["max_seconds"],
                 "MINICPM_QUOTA_CHANGED_BEFORE_HANDOFF")
             require(time.time() < ticket["payload"]["start_before_unix"], "MINICPM_PUBLISH_EXPIRED_DURING_UPLOAD")
@@ -366,8 +369,24 @@ class Journal:
                 "start_before_unix": ticket["payload"]["start_before_unix"], "ticket_sha256": digest(ticket),
                 "live_model_fit": "NOT_ESTABLISHED_INTEGRATED_PREFLIGHT_REQUIRED", "provider": proof,
                 "fresh_provider": fresh}
+            handoff = self.handoff_details(handoff, grant, value, ticket, destination)
             write(destination / "owner-handoff.json", handoff)
             return handoff
+
+    def handoff_details(self, handoff, grant, value, ticket, destination):
+        return handoff
+
+    def validate_package(self, grant, active):
+        pass
+
+    def stage_initial(self, events):
+        return events[0]["payload"]["initial"]
+
+    def release_locator(self, events):
+        return events[0]["payload"]["locator"]
+
+    def observe_provider(self, client, grant, value, prior):
+        return provider(client, grant, value, prior)
 
     def collect(self, destination):
         """Bounded terminal check; RUNNING returns without downloading/resubmitting."""
@@ -421,10 +440,11 @@ class Journal:
             clean_source(grant)
             value, envelope = active["value"], active["ticket"]
             authority.verify_ticket(grant, envelope, value)
-            locator = self.events()[0]["payload"]["locator"]
+            locator = self.release_locator(self.events())
             ancestors = [safe(ROOT, item["collection"]["directory"] + "/" + read(safe(ROOT,
                 item["collection"]["directory"] + "/paths.json"))["attempt"]) for item in completed]
-            nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value), release_locator=locator)
+            nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value), release_locator=locator,
+                **({"release_version": 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             destination = private_root(destination)
             require(not destination.exists(), "MINICPM_RECOVERY_KEEP_PARTIAL_USE_NEW_PATH")
             ui.package(value, ancestors, destination, lambda _: nb)
@@ -557,6 +577,13 @@ def verify_claims(value, envelope, grant, attempt, supervisor):
             (root / f"calls/{i:06d}/run/samples/000000/native_call.json").exists()}
         called = {int(n[5:-5]) for n in claims if n.startswith("call-")}
         require(called == native and (not called or "load.json" in claims), "MINICPM_UNKNOWN_CALL_CLAIM_STOP")
+        if grant["schema"] == authority.RECOVERY_SCHEMA:
+            generated = {int(n[9:-5]) for n in claims if n.startswith("generate-")}
+            require(generated == native, "MINICPM_GENERATE_OBSERVATION_CUSTODY")
+            for i in generated:
+                observation = claims[f"generate-{i:06d}.json"]["observation"]
+                require(observation["ordinal"] == i and observation["kind"] == "native_generate_started"
+                    and observation["claim"] == claims[f"call-{i:06d}.json"], "MINICPM_GENERATE_CALL_CLAIM_CUSTODY")
         timing = read(root / "timing.json")
         require(timing["observed_complete_calls"] == len(timing["call_seconds"]) == len(native)
             and timing["model_key"] == "minicpm4" and timing["source_sha256"] == value["request"]["source_sha256"]

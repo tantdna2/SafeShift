@@ -1,0 +1,21 @@
+{
+  "schema": "minicpm-owner-ui-restart-acceptance-v4",
+  "directive": "https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424",
+  "code_commit": "ffda8b695ea30f76b1177251af2d2183d9136332",
+  "runtime_sha256": "4b4f6bcccaaaa1793da3240bf9f4640e7a0796c9d1b615db0a627d4965a356c9",
+  "runtime_files": 80,
+  "files": {
+    "windows-ffda8b6-tests.txt": "c527a16bb72701da95101a4067ca83e39c1f17ef12bd073fb1728cf5f3f91215",
+    "windows-ffda8b6.json": "919e6103a91d4a98310f331ca16bf2386c8f2263afc1782e21917c6c298bb545",
+    "linux-ffda8b6-tests.txt": "2d75395e63024cd8a88a614316039124de3bc54b8c5a1ebb21762d0a48074e00",
+    "linux-ffda8b6.json": "8bcbd9feaac8d898159257d1698ab0bb77eb262f0962887dfb5a6552cc48eec3",
+    "reproduction-ffda8b6.json": "55f5b37ccbdc3ec685bfaa9b878b0da3340189d0f9fb572c32a1dab2d62f5e95",
+    "preservation-ffda8b6.json": "8d42158a5ac043e67835b12e1e2a558d7f49c4de1a543ee20dd815af78e359b3"
+  },
+  "limits": [
+    "CPU synthetic, mocked external Owner/provider/model boundaries",
+    "Windows Linux-only skip covered by Linux18/18",
+    "No full3763 stress/full-discovery/live GPU claim",
+    "No production release, ticket, publication, Owner Run, audit or merge"
+  ]
+}

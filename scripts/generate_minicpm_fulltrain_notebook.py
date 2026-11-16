@@ -10,7 +10,9 @@ from scripts.build_fresh_fulltrain_notebooks import notebook as fresh_notebook
 OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
-def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None):
+def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None, release_version=2):
+    require(type(release_version) is int and release_version in (2, 4)
+        and (release_version == 2 or release_locator is not None), "MINICPM_NOTEBOOK_RELEASE_VERSION")
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
     old_import = "from safeshift.fulltrain.preflight import prepare as launch"
@@ -110,7 +112,7 @@ HNLO N/A. Capsule tự mang request và mọi history; không nhập dự đoán
         nb["cells"][-1]["source"] = ("from safeshift.fulltrain.minicpm_execution import run_capsule\n"
             f"run_capsule('/kaggle/input', {capsule_sha256!r}, {release_locator!r}, repo=root, "
             "started_unix=minicpm_notebook_started_unix)\n").splitlines(True)
-        nb["metadata"]["safeshift"].update(mode="MINICPM_FULLTRAIN_RELEASE_V2",
+        nb["metadata"]["safeshift"].update(mode="MINICPM_FULLTRAIN_RELEASE_V" + str(release_version),
             status="AUTHENTIC_RELEASE_AND_SIGNED_TICKET_REQUIRED", execution_release=release_locator)
         nb["cells"][0]["source"] = """# MiniCPM-V-4 — Full TRAIN — Owner UI
 
@@ -123,6 +125,21 @@ Không sửa cell hoặc chạy lại version. Preflight tích hợp trước lo
 Một job có thể dừng an toàn trước hết TRAIN; Antigravity kiểm ZIP/history rồi
 chuẩn bị NOT_ATTEMPTED tiếp theo. Giữ tất cả raw/lỗi. Strict C1, FP32 resampler,
 FP16 weights, HNLO N/A; TEST đóng. Không có quyền thật/ticket thì BLOCKED.
+""".splitlines(True)
+        if release_version == 4:
+            nb["cells"][0]["source"] = """# MiniCPM-V-4 — Full TRAIN — Owner UI restart V4
+
+Run only with the current signed RELEASED_FOR_OWNER_UI handoff from Antigravity.
+1. Upload this exact notebook and attach its five pinned nested Input versions.
+2. Select Private / Python / Internet On / GPU T4x2.
+3. Save Version > Save & Run All ONCE before start_before; send the version URL.
+Integrated admit/setup/cpu/gpu precede model load and native generate.
+Do not run cells manually, restart, create a second version or resubmit.
+Owner starts the job; Antigravity continues its same Operator session to observe
+and collect. Old attempts supply zero inherited predictions; start at ordinal0.
+Historical reservations/errors/raw stay recorded; project reservation ceiling
+is distinct from current Kaggle quota. No automatic account switching.
+Original3763 TRAIN, strict C1, FP16 weights/FP32 resampler, HNLO N/A; TEST closed.
 """.splitlines(True)
     return nb
 

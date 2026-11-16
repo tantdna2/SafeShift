@@ -1,6 +1,111 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — PR198 expanded MiniCPM execution release V2 — 16/11/2026
+## CURRENT — PR199 Owner UI restart from ordinal0 — 16/11/2026
+
+[Owner decision6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
+supersedes automatic Codex submit, remote-terminal recovery of deleted/unavailable
+old jobs, and the separate recurring72000 project-cap amendment loop. Continue
+same session/branch/Draft PR199; BASE remains merged507e981. Earlier review
+[6916816471](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6916816471)
+requested F1/F2; the unused self-submit/live-observer path is removed. Terminal
+collection stays strict and checks exact remote `NvidiaTeslaT4` and both ZIP pairs.
+
+The three named old attempts are RETIRED_NO_USABLE_RESULTS by Owner decision.
+All original tickets, source locks, journals/mirrors, logs and sealed local ZIPs
+remain unchanged. Historical reservation is still3000 calls/3 jobs/86400 physical
+GPU-seconds. `historical_status=PROVIDER_UNAVAILABLE_NOT_VERIFIED_DELETED`; zero
+native calls are Owner/local-log reported, not independently authenticated current
+provider custody. Their PUBLISHED mismatch remains explicit. No old SUCCESS,
+INVALID, errors or predicted labels enter the new execution series.
+
+V4 Owner-UI-only release uses new `mcpm4-restart-v1` execution /
+`fresh171-minicpm4-owner-restart-v1` series, same original3763 IDs/JPG hashes and
+scientific configuration, first ordinal0. One create-only restart binding appends
+to the SAME V3 Operator journal, keeps historical serials/counters and uses global
+serial4 for the first new job. Only verified new-series results feed continuation.
+
+The reviewed budget policy is derived from at most3763 new serial jobs, each
+with at most3763 pending-ID reservations /14400 seconds /2 physical T4s /1 load.
+Inclusive immutable historic holds, ceilings are14163169 reserved call slots,
+3766 jobs and108460800 reserved physical GPU-seconds. This is a finite worst-case
+scheduler envelope, **not** the native-call count, a throughput guarantee, weekly
+Kaggle quota or numbers the Owner explicitly typed. Actual new image calls remain
+<=3763 via pending-only history. No refund/reset. Every job separately requires
+fresh actual account quota, no active accelerator reservation and no duplicate
+current/new-series job. Use the legitimate account; quota exhaustion waits for
+reset or separately authorized compute, never account switching.
+
+[V4 runbook](MINICPM_RUN1_RECOVERY.md) covers local retirement/hash custody,
+authentic exact-source release, inherited original rights plus Owner-derived
+budget, five nested pinned Inputs, current signed ticket, publication proof and
+downloadable notebook/handoff with Asia/Ho_Chi_Minh expiry. No production ticket,
+publication, Owner Run, GPU/inference, audit or merge has occurred in this coding
+task. Source review/re-review, independent audit, authorized merge/postmerge and
+genuine final-source release remain required; old72000 is historical, not a new
+request for Owner to repeat budget consent. Live native results remain NOT_RUN.
+
+[V4 CPU acceptance](research/MINICPM_OWNER_UI_RESTART_20261116.md): Windows85 run /
+84 PASS /1 Linux-only skip; Linux18/18 PASS; exact80-file notebook reproduction,
+ordinal0/3763/empty-history metadata and preservation PASS at code ffda8b6.
+Runtime SHA256 `4b4f6bcccaaaa1793da3240bf9f4640e7a0796c9d1b615db0a627d4965a356c9`.
+The real SDK50-character dataset-name limit is now enforced; current execution
+ID is `mcpm4-restart-v1`. [Append-only decision](research/DECISIONS.md#dec-20261116-owner-minicpm-train3763-ui-restart)
+records Owner result retirement, derived finite policy and UI workflow.
+
+## HISTORICAL — PR199 initial one-Codex-launch proposal — 16/11/2026
+
+Verified GitHub PR198 merge/main: `507e9817b91054fa7af324c6a915c35d56b5acf1`.
+[Owner directive6914854993](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6914854993)
+authorizes a new coding session/one Draft PR, then one Codex Kaggle submission
+after direct review, independent Antigravity audit, separately authorized merge,
+verified postmerge and authentic final-source release. This is one ongoing task;
+the older Draft/CPU-only headings below are historical snapshots.
+
+Local evidence: Run1 supervisor failed `UNIQUE_ORIGINAL_MOUNT_REQUIRED` at admit;
+the original direct binding mismatched nested Kaggle datasets. V2 job log failed
+`MINICPM_STALE_PROVIDER_BEFORE_LAUNCH` before a launch claim. Three original
+journal/mirror pairs match: original and V2 each RESERVED/PUBLISH_INTENT/PUBLISHED;
+V3 remains RESERVED. Each holds1000 calls/1 job/28800 physical GPU-seconds.
+Combined reservation is3000 calls/3 jobs/**86400 GPU-s**, above the existing72000
+project ceiling. These are conservative reservations, **not measured billing**.
+No reservation is refunded, released or rewritten by this task.
+
+Read-only official pinned SDK observations: account quota used26745/reserved0/
+total108000 GPU-seconds; complete paginated owned inventory189 notebooks. None
+of the three production slugs is present, and direct version/status reads return
+`kernels.get` denied. This conflicts with retained local Run1/V2 logs. Published
+job absence is ambiguous, never EXPIRED_UNPUBLISHED or proof of zero native calls.
+No current terminal custody or unused-grant assertion is made from these facts.
+
+[Recovery V3 contract and operations](MINICPM_RUN1_RECOVERY.md) implement exact
+five nested mounts, authentic final-source release/approval graph, historical
+grant/ticket/journal binding, truthful FAILED_PRE_NATIVE receipts, no-refund
+cross-campaign accounting and one durable SDK push intent without automatic retry.
+The same native backend/model/config/parser is used. Positive returned preflight
+receipts and durable actual model.generate-start observations are forwarded live
+from the supervised child. Only exact source/ticket/TRAIN ID/SHA plus provider
+RUNNING qualify for native-start handoff; terminal success is not required.
+Antigravity can collect both sealed ZIP pairs in the same journal and continue
+signed NOT_ATTEMPTED-only Owner UI jobs; Codex has no second launch capability.
+
+**EXECUTION BLOCKED / NATIVE NOT VERIFIED.** Required: resolve missing historical
+provider jobs/capsule versions with authentic account evidence, retain full old
+reservations, obtain an explicit project cap amendment if needed (the old72000
+cannot contain86400 already reserved), then new-source review/audit/merge/
+postmerge/release and fresh five Input/quota/ticket checks. Old UI-only grants
+cannot authorize this changed source or Codex API submission. No upload, submit,
+GPU, inference, TEST, production journal mutation, audit approval or merge has
+been performed. DONE remains first real native call + running job + handoff.
+
+CPU acceptance and exact source/log hashes are recorded in the recovery runbook
+and its linked receipt; synthetic tests do not establish live model-fit or PASS.
+Final runtime80-file SHA256 is
+`dfc3a043e7b65f68726b9dfc7e0368c9a4f38f2ef4d5667f92bbd62ffd23df0d`.
+Focused regression67/67 PASS; recovery16 run/15 PASS on each Windows/Linux with
+complementary platform/SDK skips. [Acceptance](research/MINICPM_RUN1_RECOVERY_20261116.md)
+records exact code commit b788f3f, notebook reproduction and test limitations.
+
+## HISTORICAL — PR198 expanded MiniCPM execution release V2 — 16/11/2026
 
 [Owner/ChatGPT directive6907347740](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907347740)
 supersedes the fragmented dossier-only scope. Continue the same session/branch/

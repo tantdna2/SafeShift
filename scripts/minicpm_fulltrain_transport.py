@@ -23,6 +23,15 @@ def fetch_outputs(client, value, destination, archive_limit):
     expected = {attempt: archive_limit, supervisor: archive_limit, attempt + ".sha256.json": 4096,
         supervisor + ".sha256.json": 4096}
     require(set(selected) == set(expected), "MINICPM_EXACT_TWO_OUTPUT_PAIRS")
+    download_selected(selected, expected, destination)
+    return destination / attempt, destination / supervisor
+
+
+def download_selected(selected, expected, destination):
+    """Bounded immutable ZIP/sidecar transport, including a lone failure ZIP."""
+    destination = Path(destination)
+    destination.mkdir(parents=True, exist_ok=True)
+    require(0 < len(expected) <= 4 and set(selected) == set(expected), "MINICPM_EXACT_OUTPUT_PAIRS")
     for name in expected:
         manual.validate_output_url(selected[name].url, name)
     require(shutil.disk_usage(destination).free > sum(expected.values()) + 2**20, "MINICPM_DOWNLOAD_SPACE")
@@ -49,6 +58,7 @@ def fetch_outputs(client, value, destination, archive_limit):
                         require(time.monotonic() < deadline and (length is None or int(length) == total), "MINICPM_DOWNLOAD_INCOMPLETE")
                     finally:
                         stream.flush(); os.fsync(stream.fileno())
-    for name in (attempt, supervisor):
+    for name in expected:
+        if not name.endswith(".zip"):
+            continue
         require(sha(destination / name) == read(destination / (name + ".sha256.json"))["sha256"], "MINICPM_PROVIDER_ZIP_SHA")
-    return destination / attempt, destination / supervisor

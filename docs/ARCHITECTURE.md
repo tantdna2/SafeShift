@@ -597,6 +597,26 @@ Nguồn tham khảo đã đọc ngày 24/10/2026, commit
 
 ## Định tuyến ngữ cảnh cho Codex/Antigravity
 
+PR199 current Owner UI restart: [V4 contract](MINICPM_RUN1_RECOVERY.md),
+`minicpm_recovery.py` (Owner retirement with uncertainty, deterministic finite
+budget, original-rights/source binding and durable native-entry receipts),
+`scripts/minicpm_fulltrain_recovery.py` (same-journal bind/stage/publish/collect,
+no API submit/live observer). `minicpm_release.py` recognizes only the new V4 UI
+authority, separate from historical V2; old V3 self-submit authorization fails.
+Tests: `test_minicpm_run1_recovery.py`. Original project states below are history.
+
+MiniCPM post-PR198 Run1 recovery: first read
+[the V3 recovery contract](MINICPM_RUN1_RECOVERY.md),
+`fulltrain/minicpm_recovery.py` (nested bindings, historical reservation budget,
+FAILED_PRE_NATIVE and actual native-start proof), `minicpm_release.py` (versioned
+live approval graph/signatures), `scripts/minicpm_fulltrain_recovery.py` (read-only
+reconciliation, one SDK POST, same-journal Antigravity collection/pending UI),
+and `test_minicpm_run1_recovery.py`. The shared supervisor forwards only bounded
+structured live receipts while preserving complete child logs. The unchanged
+CandidateBackend generate/precision/parser is observed at its actual model call;
+historical notebook/config/checkpoint/raw bytes are not regenerated. V3 is a
+source revision requiring fresh release; old V2 UI authority cannot submit it.
+
 MiniCPM Full-TRAIN Owner UI: read
 the current [V2 execution release contract](MINICPM_FULLTRAIN_RELEASE.md),
 `fulltrain/minicpm_release.py` (live authority/signed capability/VM claims),

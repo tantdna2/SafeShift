@@ -36,7 +36,7 @@ raise SystemExit(child.wait())
 '''
 
 
-def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_root=None, pass_fds=()):
+def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_root=None, pass_fds=(), live_prefix=None):
     """Reap one tree, never retry; timeout includes hanging load/native calls.
 
     Descendants must not deliberately escape their process group. The reviewed
@@ -52,7 +52,9 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
     require(type(max_log_bytes) is int and max_log_bytes > 0, "EXPLICIT_LOG_BUDGET")
     log, receipt = Path(log), Path(receipt)
     require(not receipt.exists(), "SUPERVISOR_RECEIPT_EXISTS")
+    require(live_prefix is None or live_prefix == "SAFESHIFT_MINICPM_LIVE_V3 ", "SUPERVISOR_LIVE_PREFIX")
     begun, child, reason, code = time.monotonic(), None, None, None
+    position, pending = 0, b""
     try:
         with log.open("xb") as stream:
             child = subprocess.Popen([sys.executable, "-I", "-B", "-c", GUARD, str(os.getpid()),
@@ -65,6 +67,23 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
                     reason = "HARD_DEADLINE"
                     break
                 log_bytes = os.fstat(stream.fileno()).st_size
+                if live_prefix is not None:
+                    # Only small structured public receipts reach provider logs.
+                    # The complete child log stays untouched on disk.
+                    with log.open("rb") as live:
+                        live.seek(position)
+                        chunk = live.read(min(65536, max_log_bytes + 1))
+                        position += len(chunk)
+                    for line in (pending + chunk).splitlines(keepends=True):
+                        if line.endswith(b"\n"):
+                            if line.startswith(live_prefix.encode()):
+                                require(len(line) <= 65536, "SUPERVISOR_LIVE_EVENT_BOUND")
+                                print(line.decode("utf-8").rstrip("\r\n"), flush=True)
+                            pending = b""
+                        else:
+                            # Ignore long unstructured lines without buffering
+                            # unbounded private model/package diagnostics.
+                            pending = line if len(line) <= 65536 else b""
                 if watch_log_root is not None and Path(watch_log_root).is_dir():
                     # Known direct stage logs only; never an unbounded recursive scan.
                     for i, entry in enumerate(Path(watch_log_root).iterdir()):
@@ -75,7 +94,7 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
                 if log_bytes > max_log_bytes:
                     reason = "LOG_BUDGET_EXCEEDED"
                     break
-                if code is not None:
+                if code is not None and (live_prefix is None or position >= os.fstat(stream.fileno()).st_size):
                     reason = "EXITED" if code == 0 else "CHILD_FAILURE"
                     break
                 time.sleep(min(.05, max(0, deadline - time.monotonic())))
