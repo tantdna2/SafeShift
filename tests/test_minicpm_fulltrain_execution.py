@@ -421,7 +421,10 @@ class ExecutionTests(unittest.TestCase):
         self.assertEqual(p["scheduled_ordinals"],[])
         with self.assertRaisesRegex(ValueError,"PENDING_COUNT"):
             sizing.propose(self.grant,0,ticket["payload"]["reserved_after"],self.provider)
-        with tempfile.TemporaryDirectory() as tmp:
+        # The scripted adapter has no real native model descriptor. Preserve the
+        # same explicit native-only mock when validating its sealed ZIP import;
+        # all archive/raw/C1/history/ordered-ID checks remain real.
+        with tempfile.TemporaryDirectory() as tmp,patch.object(rt,"validate_native_raw"):
             restored=Path(tmp)/"empty-vm"
             self.assertEqual(rt.import_history(restored,Path(str(result)+".zip"),sha(str(result)+".zip"),
                 self.cohort,r["campaign"],digest(r["plan"])),history)
