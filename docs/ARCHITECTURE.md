@@ -598,6 +598,12 @@ Nguồn tham khảo đã đọc ngày 24/10/2026, commit
 ## Định tuyến ngữ cảnh cho Codex/Antigravity
 
 MiniCPM Full-TRAIN Owner UI: read
+the [source-bound release dossier](MINICPM_FULLTRAIN_RELEASE.md) and external
+`scripts/minicpm_fulltrain_release.py` / `test_minicpm_fulltrain_release.py` for
+exact package reproduction, authority proposals/replay and conservative campaign
+budget checks. This CPU companion remains outside the frozen runtime manifest;
+it never activates a runtime, reserves resources or authenticates offline export
+origin. Then read
 [the short Vietnamese handoff](MINICPM_FULLTRAIN_OWNER_UI.md),
 `fulltrain/minicpm_ui.py`, `scripts/minicpm_fulltrain_ui.py` and their synthetic
 tests. They package/verify the existing supervised fresh171 runtime; the source

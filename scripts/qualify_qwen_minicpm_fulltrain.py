@@ -17,7 +17,7 @@ from safeshift.pilot.contract import digest
 
 SUITES = ["test_fulltrain", "test_fresh_fulltrain", "test_fresh_fulltrain_revision",
           "test_kaggle173_verification", "test_fulltrain_minicpm4_notebook", "test_fulltrain_original_inputs",
-          "test_minicpm_fulltrain_ui"]
+          "test_minicpm_fulltrain_ui", "test_minicpm_fulltrain_release"]
 
 
 def main():
@@ -53,7 +53,8 @@ def main():
         result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
     passed = result.testsRun - len(result.failures) - len(result.errors) - len(result.skipped)
     files = set(contract.sources()) | {"notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb",
-        "scripts/generate_minicpm_fulltrain_notebook.py", "scripts/qualify_qwen_minicpm_fulltrain.py"}
+        "scripts/generate_minicpm_fulltrain_notebook.py", "scripts/qualify_qwen_minicpm_fulltrain.py",
+        "scripts/minicpm_fulltrain_release.py"}
     files |= {"tests/" + n.split(".")[0] + ".py" for n in names}
     if args.component == "operator":
         files.add("tests/frozen_internvl_snapshot.py")

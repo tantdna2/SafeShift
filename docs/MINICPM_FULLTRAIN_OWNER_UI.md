@@ -1,9 +1,12 @@
 # MiniCPM Full-TRAIN — Owner UI
 
-**Bản PR #195 hiện là candidate, chưa được phép chạy Kaggle.** Chỉ CPU tổng hợp
-được kiểm trong lượt này. ChatGPT kiểm GitHub → Antigravity audit độc lập → merge
-được cấp riêng → xác minh hậu merge và phát hành đúng source/quyền/caps → kiểm
-thực tế cuối nguồn theo quyền riêng. Không xóa `contract.authorize`, dùng JSON
+**PR #195 đã MERGED tại `6744c319152743f399c79f6c8b16acb527d5acb4`.** Owner
+báo ChatGPT xác minh hậu merge PASS. Đây là nghiệm thu mã nguồn; quyền chạy
+MiniCPM Full-TRAIN, caps và provider hiện tại vẫn **BLOCKED**. Lượt tiếp nối
+16/11 chỉ CPU, một Draft PR mới. ChatGPT kiểm GitHub và quyết định audit độc lập,
+sau đó mới xét quyền merge/phát hành riêng. Xem
+[gói phát hành, chứng từ thiếu và lệnh kiểm CPU](MINICPM_FULLTRAIN_RELEASE.md).
+Không xóa `contract.authorize`, dùng JSON
 `approved=true`, hoặc chuyển grant InternVL/Candidate160 sang MiniCPM.
 
 ## Owner làm đúng ba bước sau khi nhận bản đã phát hành
@@ -52,7 +55,13 @@ COLLECTED/MEASURED. Không sửa ledger, notebook hay checkout Operator InternVL
    `handoff.json`. Capsule chỉ có marker và ancestor `.bin` cùng sidecar; `.bin`
    giữ nguyên bytes ZIP để tránh Kaggle tự bung archive. Chỉ công bố nội dung
    `dataset/`; metadata CLI ở thư mục cha, không lẫn vào Input.
-2. **Phát hành riêng.** Xác minh Private/version1 của capsule, đúng năm Input,
+2. **Đối chiếu gói phát hành.** Chạy `minicpm_fulltrain_release template/check`
+   theo tài liệu liên kết trên; kiểm toàn bộ packages và cả hai cặp ZIP của mỗi
+   lượt trước, không chỉ receipt do `next` đọc. Ngân sách cộng maxima đã dành
+   trước của từng job, kể cả phần chưa dùng; không hoàn calls/time sau INVALID,
+   lỗi hay abort. Một quyền campaign có thể bao trùm các lượt resume serial trong
+   caps; không xin quyền khoa học mới từng shard. Công cụ CPU chưa reserve hoặc
+   cấp quyền chạy. Xác minh Private/version1 của capsule, đúng năm Input,
    request/capsule/notebook/source SHA, quyền dữ liệu/model/source và finite
    call/job/GPU-time/deadline/stop rules. `evidence_refs` thiếu giữ `null`;
    string/receipt không xác thực tác giả và không mở fence. Final source phải
@@ -112,6 +121,9 @@ Supervision giữ process-group deadline và bounded logs, không retry. Giữ s
 partial/raw/exception/markers; unknown không được coi như NOT_ATTEMPTED.
 
 Final-source Kaggle ABI/VRAM/model-fit/load/inference/export **NOT_RUN**, không có
-quyền smoke trong task này. Trước release chạy thật còn phải xác minh authority,
+quyền smoke trong task này. Không đặt thêm vòng smoke/pilot riêng làm mặc định.
+Sau khi được cấp đúng quyền, preflight ở ngay job thực thi, trước load/calls;
+inference/export của chính job cung cấp bằng chứng, không hứa trước model-fit.
+Lỗi/timeout vẫn giữ partial và STOP đối soát. Trước release chạy thật còn phải xác minh authority,
 caps/rights/projection, provider/version/capsule, quota/history và live gates.
 Đây là giới hạn được giữ nguyên; CPU PASS và Draft không hoàn tất DONE vận hành.

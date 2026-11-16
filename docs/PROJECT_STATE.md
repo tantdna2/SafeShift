@@ -1,5 +1,39 @@
 # SafeShift — PROJECT STATE
 
+## CURRENT — MiniCPM Full-TRAIN release preparation — 16/11/2026
+
+PR195 is MERGED at verified BASE `6744c319152743f399c79f6c8b16acb527d5acb4`;
+Owner reports ChatGPT postmerge PASS. One new isolated branch
+`feat/minicpm-fulltrain-release` prepares a single Draft PR. Earlier PR195 Draft
+headings below are preserved historical snapshots, not the current merge status.
+
+[Release dossier and missing evidence](MINICPM_FULLTRAIN_RELEASE.md) and
+[short Owner flow](MINICPM_FULLTRAIN_OWNER_UI.md) reuse PR195's complete capsule,
+original Inputs/checkpoint/Python, supervised native FP32/C1/raw/two-ZIP/history
+pipeline. New external CPU companion re-creates exact notebook bytes, binds all
+source/tool/Input/policy/package hashes, validates proposed authenticated Owner
+records without granting execution, replays every prior attempt/supervisor ZIP
+and conservatively sums calls/jobs/physical GPU-seconds without refunds. A forged
+PASS planning receipt cannot conceal a failed native attempt. No new model loop,
+runtime/lock/notebook edits, data uploads, campaign mutation or grant transfer.
+
+**EXECUTION BLOCKED.** Authentic MiniCPM campaign rights/O2–O6/caps/window,
+current provider/Input/version/quota/no-outstanding-VM and reviewed source
+activation remain missing. Offline export replay never authenticates its origin;
+the tool always reports BLOCKED and cannot remove `contract.authorize`.
+Final-source environment/ABI/VRAM/load/inference/export remain NOT_RUN. Future
+authorized jobs integrate the mandatory preflight before native consumption;
+no additional default smoke rounds or promise that one job fits all3763 IDs.
+Strict C1, FP32 resampler/FP16 weights, HNLO N/A, original3763 and TEST closure stay.
+
+[CPU acceptance](research/MINICPM_FULLTRAIN_RELEASE_20261116.md) records actual
+checks and limits: final134 run,129 PASS,5 existing Linux-only SKIP,0 FAIL/ERROR;
+new release16/16 PASS. All76 runtime files and the MiniCPM notebook match BASE
+byte-for-byte. No full-discovery or fresh Linux/native live PASS is claimed.
+No Kaggle/provider API/GPU/real inference/TEST/production write,
+audit, approval, merge or activation in this task. Stop at the new Draft PR for
+ChatGPT direct GitHub review and its independent-audit/merge/release decisions.
+
 ## PR195 F1/F2 review follow-up — 16/11/2026, same branch and Draft PR
 
 [Review6896803837](https://github.com/tantdna2/SafeShift/pull/195#issuecomment-6896803837)
