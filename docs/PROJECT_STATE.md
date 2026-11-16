@@ -1,5 +1,42 @@
 # SafeShift — PROJECT STATE
 
+## PR195 F1/F2 review follow-up — 16/11/2026, same branch and Draft PR
+
+[Review6896803837](https://github.com/tantdna2/SafeShift/pull/195#issuecomment-6896803837)
+is addressed on `fix/qwen-minicpm-fulltrain-20261112`. Normal merge
+`9d417864112a0e4a958703ea3fc42b8d3b689601` has parents reviewed HEAD8b9570f
+and main `89088dbc57d629933ab1462171019cd0125c2869`. ARCHITECTURE/PROJECT_STATE
+conflicts retain both PR195 and PR196/197. Main's Qwen3 Composite V1 decision,
+amendment, code and evidence remain unchanged; prior snapshots below do not
+override its approved scope. No new branch, rebase, force push or PR merge.
+
+F2 uses the original builder/source inventory from each notebook's exact Git
+runtime in a bounded isolated CPU snapshot. Complete notebook/payload membership,
+bytes, source digest/ref, syntax and empty outputs are verified; bad/extra/missing/
+duplicate sources and wrong commits fail. The default current-source builder
+remains strict. All historical notebook bytes, locked source, capsule/raw/history
+and execution fences are unchanged. No notebook/hash/source-lock regeneration.
+
+Fresh complete per-suite runs at code HEAD
+`1e24192eff5f8ba96f36ab33f733e2d47729a80f`: Fresh notebooks5/5, Full-TRAIN PREP3/3,
+MiniCPM notebooks9/9, Full-TRAIN24/24, fresh controller23/23, fresh revision23 PASS
+and5 Linux-only skips, original Inputs8/8, Owner UI11/11, SDK transport3/3,
+manual collector107/107, Python Input21 PASS/1 Windows symlink skip, Qwen Composite
+23/23, continuation40/40 and official results11/11. Corresponding Linux process
+and symlink cases6/6 PASS. No final FAIL/ERROR, network attempt, GPU/Kaggle/real
+inference/TEST or production mutation. These are individual suite runs, not the
+older269-case pooled coverage statement or a GitHub Actions/full-discovery PASS.
+
+[Follow-up and reproduction](research/PR195_F12_REVIEW_20261116.md) and
+[per-suite receipts](research/evidence/pr195_f12_20261116/suites.json) retain exact
+tested commit/file/source/log hashes, skips and the original15/11 FAIL/PASS evidence.
+Runtime SHA remains `1ae53f138508c35e2863367f052d3268c862b944294be810e23600d675948335`;
+MiniCPM notebook SHA remains
+`de604979761211127728229240af7c91fe104f263c71e9f6dc66f8911ba96922`.
+Delivery changes only docs/evidence after testing. Source release/activation,
+rights/caps/live verification remain BLOCKED/NOT_RUN. Stop at the same Draft for
+ChatGPT re-review; independent Antigravity audit and authorized PR merge are pending.
+
 
 ## CURRENT - Qwen3 Full-TRAIN Composite V1 - 15/11/2026
 
