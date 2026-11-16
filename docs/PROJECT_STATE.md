@@ -10,6 +10,22 @@ the new original-Master path. [Reference comparison](research/MINICPM_V44_REFERE
 opens actual downloaded successful Kaggle version1 notebook payloads, not just
 their reports. The old160-image pilot first image differs from Full-TRAIN ordinal0.
 
+Current delivery: [Draft PR200](https://github.com/tantdna2/SafeShift/pull/200),
+branch `fix/minicpm-v44-real-input-recovery`. Private review handoff and unsigned
+PR200 release proposal are prepared under `data/processed/minicpm-v44-repair/`;
+they cannot activate a notebook. The authentic old release is rejected against
+this new source at `MINICPM_REVIEWED_NATIVE_SOURCE` before private Input access.
+
+[CPU acceptance](research/MINICPM_V44_ACCEPTANCE_20261117.md) at runtime/test
+commit `debec82c3a80ab8d08d135cbdd4393919bbd317b`: Linux98 tests/91 PASS/7 SDK
+SKIP; Windows97 completed distinct cases/96 PASS/1 Linux-only SKIP across two
+hash-bound logs,0 errors/failures. Full3763 synthetic controller/export/import
+PASS is from Linux; its duplicate Windows run was interrupted and is explicitly
+not counted as PASS. All98 cases are covered between platforms. Runtime81-file
+SHA256 `3054352804cebd536b048389e01849344aacc6f5a6f2a76eb830500df9da185c`;
+committed V5 notebook builder reproduction passes. These are CPU checks, distinct
+from the real-data admission evidence below and from GPU qualification.
+
 Read-only current provider evidence confirms nested Master, exact original TRAIN
 tree and all3763 paths/sizes, flat Python/capsule and19-file checkpoint layout.
 Downloaded Master SHA is frozen; repaired admission, all3763 SHA checks and native

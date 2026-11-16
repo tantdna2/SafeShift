@@ -1,0 +1,35 @@
+{
+  "code_commit": "debec82c3a80ab8d08d135cbdd4393919bbd317b",
+  "source_manifest_sha256": "3054352804cebd536b048389e01849344aacc6f5a6f2a76eb830500df9da185c",
+  "platform": "Linux",
+  "python": "3.14.4",
+  "modules": [
+    "test_fulltrain_original_inputs",
+    "test_minicpm_v44_incident",
+    "test_minicpm_run1_recovery",
+    "test_minicpm_fulltrain_release",
+    "test_minicpm_fulltrain_execution",
+    "test_minicpm_execution_transport",
+    "test_minicpm_execution_boundaries",
+    "test_minicpm_ui_transport",
+    "test_minicpm_fulltrain_ui",
+    "test_fulltrain_minicpm4_notebook"
+  ],
+  "run": 98,
+  "failures": 0,
+  "errors": 0,
+  "skips": 7,
+  "skip_reasons": [
+    "requires existing pinned SDK environment",
+    "requires existing pinned SDK environment",
+    "requires existing pinned SDK environment",
+    "requires existing pinned SDK environment",
+    "requires existing pinned operator venv",
+    "requires existing pinned operator venv",
+    "requires existing pinned operator venv"
+  ],
+  "seconds": 883.2954568862915,
+  "log_sha256": "d2dbae4224ca35663088d6c454c432d4f9fa644f56d5384626935a6204657b13",
+  "gpu": "NOT_RUN",
+  "production_journal_writes": 0
+}

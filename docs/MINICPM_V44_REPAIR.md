@@ -31,6 +31,9 @@ Its canonical SHA256 is
 Provider log SHA `e659a304a76fe1c461bebe9975133126d4037937dcff67c4589ab09af0dfe81d`.
 All production journal/mirror/ticket/registration bytes remain unchanged in the
 coding task. The active V4-4 reservation is not yet operationally closed.
+The separate current account observation was26774 used/0 reserved/108000 total
+GPU-seconds. It is neither V4-4 billing nor project reservation accounting and
+must be refreshed before a later real signature/publication.
 
 ## Versioned source transition, no budget reset
 
@@ -42,6 +45,8 @@ approval records, the authentic repair directive, previous release and ticket,
 unchanged journal head, exact authenticated closure receipt and retained holds.
 The old source-bound grant is authenticated as immutable history, never
 revalidated as current execution authority or reused for a new signature.
+The builder identifies the replacement notebook as release V5 and embeds the
+source-transition schema; it never rewrites a historical notebook in place.
 
 Original retired holds remain3000 calls/3 jobs/86400 physical GPU-seconds.
 V4-4 adds3763 call reservations/1 job/28800 physical GPU-seconds. New-source
@@ -75,7 +80,8 @@ create-only output paths. No command submits a notebook or starts a GPU job.
    python -B -m scripts.minicpm_fulltrain_recovery release-template --spec data/processed/<source-repair-spec.json> --snapshot data/processed/<unchanged-retirement-snapshot.json> --runtime-ref <exact-runtime-commit> --implementation-pr <new-PR-number> --repair-closure data/processed/<fresh-incident-custody> --repair-directive data/processed/<authentic-directive-locator.json> --output data/processed/<unsigned-proposal.json>
    ```
 
-   The template has null authority/review/merge/window/key fields. Fill only
+   The template names the requested scope, with null review/merge/window/key
+   fields and no approval records. Fill only
    genuine external records after all gates; never publish it as an approval.
    Rehearse actual Master/TRAIN copies using the command in the comparison and
    retain the other three Input proofs. Runtime/Input changes require recheck.
@@ -100,3 +106,10 @@ independent audit focused on Input identity/closure/source authority, separately
 authorized merge, verified postmerge and fresh authentic final-source release
 are still required. Scientific method, FP16 weights/FP32 resampler, strict C1,
 HNLO N/A, labels, historical results and TEST closure are unchanged.
+
+Review delivery is [Draft PR200](https://github.com/tantdna2/SafeShift/pull/200).
+The private `source-review-handoff.json` and `unsigned-release-proposal.json`
+under `data/processed/minicpm-v44-repair/` bind PR200, runtime/debec82, the current
+81-file source digest, authenticated closure and retained holds. Their real
+review/merge/window/key/approval fields remain unissued. They do not constitute
+a valid production ticket or permission to press Run.

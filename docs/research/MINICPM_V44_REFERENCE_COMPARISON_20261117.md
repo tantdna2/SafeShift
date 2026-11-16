@@ -39,6 +39,17 @@ the extracted MiniCPM payload hashes exactly match their successful receipts.
 Private sources, metadata and per-file hash inventory stay in ignored
 `data/processed/minicpm-v44-repair/reference-source/` and `reference-source-proof.json`.
 
+The successful MiniCPM child stack is CPython3.11.9, torch2.6.0+cu124,
+transformers4.51.3, Pillow10.4.0, explicit eager/FP16 weights and the identified
+FP32 resampler. Its `loading.load_weight_model` remains local-files-only with
+the unchanged source/weight SHA allowlists. V4-4's admit traceback is from the
+parent CPython3.13; it failed before the controlled3.11.9 setup/native child.
+The current offline CPython Input is byte-verified below. InternVL's different
+model/transformers/grammar are not substituted for MiniCPM. The later inspected
+4407dc9 Operator route supports offline Python; the earlier successful Attempt4
+notebook predates that Input and must not be described as having all five current
+V4-4 attachments.
+
 ## Verified current five Input layouts
 
 | Pinned Input | Relative content under the approved outer mount | Read-only evidence |
@@ -65,12 +76,18 @@ then passed the actual repaired `admit`, `verify_bytes` and `verify_images`.
 The admission/verifier copied zero bytes and rewrote no images; construction of
 the separate rehearsal copy is explicitly recorded. Total image bytes2420332674.
 
-73 JPEG-named files were independently downloaded from current Kaggle version1
-and SHA-verified. The larger download attempt stopped on transport failures;
+73 JPEG-named files (71 JPEG and2 PNG bodies) were independently downloaded from
+current Kaggle version1 and SHA-verified. The larger download attempt stopped on transport failures;
 partial downloads/logs remain. **This is not3763 newly downloaded remote files.**
 The other3690 rehearsal files are original authentic local bytes with the same
 frozen hashes, corroborated by the complete current provider listing. No
 synthetic master/projector/image fixture substitutes for this check.
+
+The earlier authenticated [Issue173 byte receipt](evidence/issue173/checkpoint-bytes-v1.json)
+also records TRAIN_BYTES_PASS for3763 real Kaggle-mounted originals (zero missing,
+changed or duplicate IDs) and CHECKPOINT_BYTES_AND_HEADERS_PASS for MiniCPM.
+It corroborates the successful original-mount route; it is historical evidence,
+not a replacement for this task's current listing and real-file rehearsal.
 
 CPU decode found **3724 JPEG +39 PNG**, all single-frame and valid native PIL/RGB
 inputs. The old new-route `image.format == "JPEG"` preflight would have failed at

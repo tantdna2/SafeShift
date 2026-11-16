@@ -1,0 +1,16 @@
+{
+  "status": "PRESERVED",
+  "base": "92e7af41b3102cac16609908c88688f4049b4cc1",
+  "checked_commit": "debec82c3a80ab8d08d135cbdd4393919bbd317b",
+  "protected_native_config_notebook_diff": [],
+  "journal_event_files": 28,
+  "journal_bytes_digest": "a2b067314645629404ee0d1bbb8f7848890f5e1e9880d7389bf55c1b0bac4950",
+  "v44_head_sha256": "ab518a996990321d186c876f9c33d4fd00b15de454394e1f2f4fa624872940a1",
+  "original_reserved": {
+    "calls": 3000,
+    "jobs": 3,
+    "gpu_seconds": 86400
+  },
+  "production_journal_writes": 0,
+  "other_untracked_files": "UNTOUCHED"
+}

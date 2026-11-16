@@ -1,0 +1,11 @@
+{
+  "status": "EXACT_COMMITTED_V5_BUILDER_REPRODUCTION_PASS_NOT_RELEASED",
+  "runtime_commit": "debec82c3a80ab8d08d135cbdd4393919bbd317b",
+  "source_manifest_sha256": "3054352804cebd536b048389e01849344aacc6f5a6f2a76eb830500df9da185c",
+  "source_files": 81,
+  "notebook_mode": "MINICPM_FULLTRAIN_RELEASE_V5",
+  "production_release_locator": "NOT_YET_ISSUED",
+  "synthetic_locator_used_only_for_cpu_build": true,
+  "signed_production_ticket": "NOT_ISSUED",
+  "native_or_provider_execution": false
+}
