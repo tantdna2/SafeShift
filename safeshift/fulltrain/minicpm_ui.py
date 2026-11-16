@@ -266,7 +266,7 @@ def verify_results(value, directory, attempt, supervisor, destination, *, repo=R
         require(not (old / "accounting_failure.json").exists(), "UI_ACCOUNTING_UNVERIFIED")
     successful = (release["status"] == "TECHNICAL_STAGES_RETURNED_NOT_RELEASE_AUTHORITY"
         and release["failure"] is None and release["last_stage"] == "native"
-        and receipt["stop"] in (None, "ADAPTIVE_TIME_STOP"))
+        and receipt["stop"] in (None, "ADAPTIVE_TIME_STOP", "ADAPTIVE_STORAGE_STOP"))
     next_history = [*request["history"], history]
     preview = contract.plan(request["campaign"], cohort, request["plan"]["identity"], next_history,
         action="resume", run_id="preview-next", attempt_id="preview-next-attempt",

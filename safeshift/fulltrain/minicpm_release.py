@@ -325,7 +325,7 @@ def claim(kind):
         else:
             require(kind == "launch", "MINICPM_CLAIM_KIND")
         receipt = {"kind": kind, "ticket_sha256": digest(c["ticket"]), "request_sha256": digest(request),
-            "number": ticket["number"], "time_unix": time.time()}
+            "number": ticket["number"], "time_unix": c["started_unix"] if kind == "launch" else time.time()}
         write(root / (kind + ".json"), receipt)
         sync_directory(root)
         return receipt
@@ -351,13 +351,15 @@ def authorize(kind=None, *, request=None, ordinal=None):
 
 @contextmanager
 def activate(locator, envelope, value, phase, *, repo=ROOT, child=False):
+    began = time.time()
     grant = load(locator, repo=repo, approvals=not child)
-    with _activated(grant, locator, envelope, value, phase, repo=repo, child=child) as context:
+    with _activated(grant, locator, envelope, value, phase, repo=repo, child=child,
+                    started_unix=began if phase == "launch" else None) as context:
         yield context
 
 
 @contextmanager
-def _activated(grant, locator, envelope, value, phase, *, repo=ROOT, child=False):
+def _activated(grant, locator, envelope, value, phase, *, repo=ROOT, child=False, started_unix=None):
     """Internal composition after live authentication; never exposed as a CLI."""
     require(current() is None and phase in STAGES and (phase == "launch") != child, "MINICPM_CAPABILITY_PHASE")
     validate(grant, repo=repo)
@@ -365,6 +367,9 @@ def _activated(grant, locator, envelope, value, phase, *, repo=ROOT, child=False
     root = safe(CLAIMS, grant["campaign_id"] + "/" + str(ticket["number"]))
     if phase == "launch":
         require(time.time() < ticket["start_before_unix"], "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH")
+        started_unix = time.time() if started_unix is None else started_unix
+        require(type(started_unix) in (int,float) and ticket["issued_unix"] <= started_unix <= time.time(),
+            "MINICPM_START_INCLUDES_BOOTSTRAP_AUTHORITY_AND_HISTORY")
         root.mkdir(parents=True, exist_ok=False)
         (root / "attempts").mkdir()
     else:
@@ -373,7 +378,7 @@ def _activated(grant, locator, envelope, value, phase, *, repo=ROOT, child=False
         require(launch["ticket_sha256"] == digest(envelope)
             and launch["request_sha256"] == digest(value["request"]), "MINICPM_CHILD_LAUNCH_BINDING")
     token = _active.set({"grant": grant, "ticket": envelope, "value": value, "phase": phase, "claims": root,
-                         "locator": locator, "repo": str(repo)})
+                         "locator": locator, "repo": str(repo), "started_unix":started_unix})
     try:
         claim(phase)
         yield current()

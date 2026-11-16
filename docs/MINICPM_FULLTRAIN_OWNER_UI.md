@@ -19,6 +19,8 @@ cùng job trước load/calls, không cần vòng smoke riêng. Antigravity thu 
 ZIP/sidecar, kiểm provider/raw/history/caps rồi chỉ chuẩn bị NOT_ATTEMPTED tiếp.
 RUNNING thì lưu conversation và kết thúc lượt AI; không AI nền hoặc submit thêm.
 Unknown/partial/error phải đối soát; không refund hoặc chạy lại consumed.
+Raw đã seal được giữ nguyên trong ZIP và scratch; Output giữ hai cặp ZIP cùng
+control files nhỏ để Antigravity thu được cả chiến dịch, không tràn inventory.
 
 ## Năm Input dùng lại
 

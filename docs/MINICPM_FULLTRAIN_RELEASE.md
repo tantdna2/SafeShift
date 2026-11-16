@@ -52,7 +52,9 @@ Không log credentials/bearer URL. Không cần remote server hoặc giữ AI n�
 
 `scripts.minicpm_fulltrain_operator` dùng một máy và hai directories create-only
 dưới `data/processed/`: REGISTERED → RESERVED → PUBLISH_INTENT → PUBLISHED →
-COLLECTED. Ghi cả hai reservation trước publish/handoff. Gap/torn/divergence/open
+COLLECTED. Registry create-only tại đường dẫn campaign cố định ngăn khởi tạo
+hai cặp journal khác nhau để reset budget trên cùng máy; init gián đoạn giữ
+guard để đối soát. Ghi cả hai reservation trước publish/handoff. Gap/torn/divergence/open
 reservation STOP, không refund/takeover/tự tạo job thay thế. Hai bản cùng ổ không
 phải backup phần cứng. Không claim global exactly-once giữa các VM độc lập; Owner
 phải giữ originals/backup và không chạy song song hoặc bấm lại cùng ticket.
@@ -83,6 +85,14 @@ Terminal kiểm Private/latest1/code/Inputs rồi tải đúng **hai ZIP + hai s
 qua SDK/URL/stream guards hiện hữu. Hết mọi trang trước GET; extra/missing ZIP,
 URL lạ, redirect, byte/time/space vượt cap đều STOP. Giữ log/partial/error.
 
+Sau khi attempt ZIP đã seal/CRC/member SHA và so khớp từng byte với cây raw,
+supervisor chuyển các cây raw/ancestor đã seal vào scratch, giữ nguyên ZIP/
+sidecars tại Output. Không xóa bytes; nếu khác filesystem phải có đủ scratch
+space và kiểm lại cây sau move. Thiếu/sai/partial thì giữ evidence và STOP.
+Nhờ vậy lịch sử restore không làm inventory Output tăng tới giới hạn16.384 file;
+giới hạn/pagination/URL guard của collector cũ vẫn giữ nguyên. Supervisor ZIP
+ghi retention proof và timing cuối; claims/control nhỏ vẫn ở Output.
+
 COLLECTED chỉ sau CRC/member SHA/raw/C1/native/process/accounting/ticket/claims
 PASS. Native marker phải khớp signed-ticket claim; có claim mà thiếu marker là
 unknown STOP. Lỗi/timeout/nonfinite không biến thành pending hoặc COMPLETE.
@@ -94,7 +104,8 @@ error không chạy lại; repair khoa học không thuộc route V2.
 
 Calls ceiling = min(pending, authorized job_calls, remaining total_calls).
 Seconds = min(job_seconds, campaign GPU-time còn /2, available quota /2,
-grant deadline trừ start window). Tính **hai GPU vật lý**, MiniCPM chỉ dùng GPU0;
+grant deadline trừ start window). Đồng hồ từ đầu bootstrap notebook, gồm
+authority/history/Input checks, không chỉ tính đoạn native sau setup. Tính **hai GPU vật lý**, MiniCPM chỉ dùng GPU0;
 không cộng VRAM. Cộng maxima calls/jobs/GPU-seconds, không refund sau early stop,
 load error hoặc INVALID. Kiểm khả năng pending theo calls/jobs còn lại. Bound512
 jobs khớp ancestry bound hiện hữu, không là số job dự báo/mặc định.
@@ -105,8 +116,10 @@ RAM/allocation → pinned Python/pins/CPU ABI/processor → T4/driver/child CUDA
 → load một lần → native/raw/C1/ZIP. Sau load và trước sample-start tiếp, kiểm
 thời gian dành cho call/export. Guard dùng approved first_call_seconds và safety
 factor; chưa đo thì không bảo đảm worst-case latency/model-fit. Process-group
-hard deadline giữ partial khi native treo. ADAPTIVE_TIME_STOP trước sample mới
-giữ NOT_ATTEMPTED thật và seal/export để resume.
+hard deadline giữ partial khi native treo. ADAPTIVE_TIME_STOP hoặc
+ADAPTIVE_STORAGE_STOP trước sample mới giữ NOT_ATTEMPTED thật và seal/export
+để resume. RAM/driver/CUDA/nonfinite/unknown không được đổi thành storage stop.
+Thiếu reserve cho final export là FAIL giữ partial, không báo complete giả.
 
 Lượt sau dùng timing **MiniCPM cùng source, ZIP/provider/claims verified**:
 overhead × safety, max observed call × safety, approved first-call guard, export

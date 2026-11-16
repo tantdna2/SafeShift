@@ -277,7 +277,13 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                     stop = "TIME_CAP"
                     break
                 if before_call is not None:
-                    before_call()
+                    try:
+                        before_call()
+                    except ValueError as error:
+                        if active is not None and str(error) in ("SHARED_DISK_RESERVES", "SEPARATE_DISK_RESERVES"):
+                            stop = "ADAPTIVE_STORAGE_STOP"
+                            break
+                        raise
                 if active is not None and backend is None:
                     # Load once under its permanent claim, then reassess actual
                     # time *before* creating a sample start/native-call marker.
@@ -307,10 +313,11 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                     {"run_id": p["run_id"], "attempt_id": p["attempt_id"]}, p["identity"]["model_key"], cohort,
                     time_budget=native_seconds, transport=journal._identity(p, row)["transport"],
                     hnlo_replay=evaluator, **options)
-                if active is not None and row["sample_id"] not in result:
+                if active is not None and blocked and result.get(row["sample_id"], {}).get("status") == "NOT_ATTEMPTED":
                     reason = read(store.root / "stop.json")["reason"] if (store.root / "stop.json").exists() else None
-                    if reason == "TIME_BUDGET_STOP_BEFORE_NEXT_CALL":
-                        stop = "ADAPTIVE_TIME_STOP"
+                    if reason in ("TIME_BUDGET_STOP_BEFORE_NEXT_CALL", "OUTPUT_FREE_BELOW_1GIB_KEEP_EXPORT_RESERVE") \
+                            and not (store.root / "samples/000000/started.json").exists():
+                        stop = "ADAPTIVE_TIME_STOP" if reason.startswith("TIME_") else "ADAPTIVE_STORAGE_STOP"
                         break
                 count += result[row["sample_id"]]["native_calls"]
                 if adaptive is not None:

@@ -19,6 +19,13 @@ There is no unconditional authorize removal and no kernel-push/submit endpoint.
 Default, missing, forged, stale or ambiguous evidence stays closed. Existing
 historical notebooks/source locks/results and PR196/197 science remain preserved.
 
+Output retention verifies sealed archive/tree bytes before moving unpacked raw
+and restored ancestry into scratch. ZIP pairs/sidecars stay in Output; small
+claims/control remain bounded under the existing collector's inventory cap.
+Clock starts before bootstrap/authority/history overhead. Adaptive pre-call disk
+or time stops preserve true NOT_ATTEMPTED; technical/nonfinite/unknown errors
+stay separate. Final export reserve failure never produces a false completion.
+
 [Release/operations V2](MINICPM_FULLTRAIN_RELEASE.md) and [three Owner steps](MINICPM_FULLTRAIN_OWNER_UI.md)
 describe the implementation, no-refund budget, unknown-vs-measured MiniCPM sizing,
 offline package recovery and upload ambiguity. Native adapter, strict C1,

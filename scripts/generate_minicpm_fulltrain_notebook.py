@@ -106,8 +106,10 @@ HNLO N/A. Capsule tự mang request và mọi history; không nhập dự đoán
             and type(release_locator["comment_id"]) is int and release_locator["comment_id"] > 0,
             "MINICPM_EXACT_RELEASE_LOCATOR")
         require_hash(release_locator["body_sha256"])
+        nb["cells"][1]["source"] = ["import time\n", "minicpm_notebook_started_unix = time.time()\n", *nb["cells"][1]["source"]]
         nb["cells"][-1]["source"] = ("from safeshift.fulltrain.minicpm_execution import run_capsule\n"
-            f"run_capsule('/kaggle/input', {capsule_sha256!r}, {release_locator!r}, repo=root)\n").splitlines(True)
+            f"run_capsule('/kaggle/input', {capsule_sha256!r}, {release_locator!r}, repo=root, "
+            "started_unix=minicpm_notebook_started_unix)\n").splitlines(True)
         nb["metadata"]["safeshift"].update(mode="MINICPM_FULLTRAIN_RELEASE_V2",
             status="AUTHENTIC_RELEASE_AND_SIGNED_TICKET_REQUIRED", execution_release=release_locator)
         nb["cells"][0]["source"] = """# MiniCPM-V-4 — Full TRAIN — Owner UI

@@ -187,7 +187,7 @@ def stage(mode, request, repo, output, deadline):
                     # Parent and every child recheck source/input/checkpoint/plan.
                     # Controller alone creates the immutable attempt reservation.
                     result = runtime._worker(request, repo=repo)
-                    require(read(result / "receipt.json")["stop"] in (None, "ADAPTIVE_TIME_STOP")
+                    require(read(result / "receipt.json")["stop"] in (None, "ADAPTIVE_TIME_STOP", "ADAPTIVE_STORAGE_STOP")
                             and not (result / "accounting_failure.json").exists(), "NATIVE_ATTEMPT_STOPPED_REVIEW_EVIDENCE")
             else:
                 raise ValueError("UNKNOWN_FRESH_STAGE")
@@ -272,6 +272,7 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
         write(output / "failure.json", failure)
     finally:
         attempt = safe(work, p["run_id"])
+        attempt_observed = attempt.exists()
         recovery = "NO_ATTEMPT"
         if attempt.exists():
             recovery = "PARTIAL_OR_SEALED_REQUIRES_CUSTODY"
@@ -282,9 +283,22 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
                     recovery = "PARTIAL_EVIDENCE_SEALED_NOT_RETRIED"
                 except BaseException as error:
                     write(output / "partial_export_failure.json", error_record(error, "partial_export"))
+        if active is not None:
+            try:
+                from .minicpm_execution import retain_sealed_trees
+                write(output / "retention.json", retain_sealed_trees(request,work,scratch,active["capsule_directory"]))
+            except BaseException as error:
+                if failure is None:
+                    failure = error_record(error, "retention")
+                write(output / "retention_failure.json", error_record(error, "retention"))
+            write(output / "final_timing.json", {"seconds_before_supervisor_export":time.time()-launch_time,
+                "export_reserve_seconds":active["grant"]["sizing"]["export_seconds"],"billing":"NOT_OBSERVED"})
+            if time.time() + active["grant"]["sizing"]["export_seconds"] >= launch_time + p["max_seconds"]:
+                failure = failure or {"type":"TimeoutError","message":"FINAL_EXPORT_RESERVE_EXHAUSTED",
+                    "stage":"export","category":"TECHNICAL"}
         write(output / "release.json", {"status": "BLOCKED" if failure else "TECHNICAL_STAGES_RETURNED_NOT_RELEASE_AUTHORITY",
             "diagnostic": diagnostic, "last_stage": stage_name, "failure": failure,
-            "attempt_observed": attempt.exists(), "recovery": recovery, "automatic_retry": False,
+            "attempt_observed": attempt_observed, "recovery": recovery, "automatic_retry": False,
             "scientific_qualified": False, "source_sha256": request["source_sha256"],
             "scratch_retained": True, "cleanup": "OWNER_INSPECTION_REQUIRED_NO_RECURSIVE_DELETE"})
         if active is not None:

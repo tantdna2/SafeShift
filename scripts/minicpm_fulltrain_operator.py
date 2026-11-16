@@ -561,6 +561,21 @@ def verify_claims(value, envelope, grant, attempt, supervisor):
         require(timing["observed_complete_calls"] == len(timing["call_seconds"]) == len(native)
             and timing["model_key"] == "minicpm4" and timing["source_sha256"] == value["request"]["source_sha256"]
             and timing["population_bound"] is False, "MINICPM_TIMING_NATIVE_CUSTODY")
+        retained = read(control / "retention.json")
+        expected_archives = {h["run_id"]:v["sha256"] for h,v in zip(value["request"]["history"],value["ancestors"])}
+        expected_archives[value["request"]["plan"]["run_id"]] = sha(attempt)
+        require(retained["status"] == "SEALED_ZIPS_IN_OUTPUT_RAW_BYTES_RETAINED_IN_SCRATCH"
+            and retained["raw_deleted"] is False and len(retained["retained"]) == len(expected_archives)
+            and {v["run_id"]:v["archive_sha256"] for v in retained["retained"]} == expected_archives,
+            "MINICPM_SEALED_OUTPUT_RETENTION_CUSTODY")
+        final_timing = read(control / "final_timing.json")
+        elapsed = final_timing["seconds_before_supervisor_export"]
+        require(type(elapsed) in (int,float) and math.isfinite(elapsed)
+            and sum(timing["call_seconds"]) <= elapsed
+            and final_timing["export_reserve_seconds"] == grant["sizing"]["export_seconds"]
+            and elapsed + grant["sizing"]["export_seconds"] < value["request"]["plan"]["max_seconds"],
+            "MINICPM_EXPORT_TIME_RESERVE_CUSTODY")
+        timing["overhead_seconds"] = max(0.001,elapsed-sum(timing["call_seconds"]))
         return timing
 
 

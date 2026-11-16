@@ -267,6 +267,15 @@ class ExecutionTests(unittest.TestCase):
                 write(control/mode/"stage.json",{"status":"RETURNED","stage":mode,
                     "request_sha256":digest(value["request"]),"source_sha256":value["request"]["source_sha256"],
                     "native_attempt_permitted":mode=="native"})
+            from safeshift.fulltrain.minicpm_execution import retain_sealed_trees
+            # The fixture has a local work/scratch rather than Kaggle paths.
+            owned=deepcopy(value["request"]);owned["work"]=str(work);owned["scratch"]=str(self.root/"scratch")
+            Path(owned["scratch"]).mkdir()
+            write(control/"retention.json",retain_sealed_trees(owned,work,owned["scratch"],pkg/"dataset"))
+            write(control/"final_timing.json",{"seconds_before_supervisor_export":time.time()-claims["launch.json"]["time_unix"],
+                "export_reserve_seconds":self.grant["sizing"]["export_seconds"],"billing":"NOT_OBSERVED"})
+            self.assertFalse(result.exists())
+            self.assertTrue((Path(owned["scratch"])/"sealed-output-trees"/value["request"]["plan"]["run_id"]).is_dir())
             export(control,Path(str(control)+".zip"))
             def fetch(client,v,directory,limit):
                 attempt=directory/"minicpm-fulltrain"/(v["request"]["plan"]["run_id"]+".zip")
@@ -346,6 +355,37 @@ class ExecutionTests(unittest.TestCase):
             j.append("PUBLISH_INTENT",{"ticket_sha256":digest(ticket)})
             j.append("PUBLISH_INTENT",{"ticket_sha256":digest(ticket)})
             with self.assertRaisesRegex(ValueError,"NO_DUPLICATE_CAPSULE_UPLOAD"):j.state()
+
+    def test_adaptive_storage_boundary_has_no_sample_start_or_native_call(self):
+        work,bundle=self.root/"disk-work",self.root/"disk-images";bundle.mkdir()
+        for i in range(3):(bundle/f"{i:06d}.bin").write_bytes(journal.synthetic_bytes(i))
+        backend=Scripted([])
+        def factory():contract.authorize("load");return backend
+        with patch.object(a,"CLAIMS",self.root/"claims"):
+            with a._activated(self.grant,self.locator,self.ticket,self.value,"launch"):pass
+            for phase in a.STAGES[1:-1]:
+                with a._activated(self.grant,self.locator,self.ticket,self.value,phase,child=True):pass
+            with a._activated(self.grant,self.locator,self.ticket,self.value,"native",child=True), \
+                    patch("safeshift.pilot.runner.shutil.disk_usage",return_value=NS(free=0)):
+                root=rt._execute(work,bundle,self.cohort,self.value["request"]["campaign"],self.value["request"]["plan"],[],factory,
+                    image_path=lambda i:f"{i:06d}.bin",store_class=journal.BoundStore)
+        self.assertEqual(read(root/"receipt.json")["stop"],"ADAPTIVE_STORAGE_STOP")
+        self.assertEqual(backend.calls,0)
+        self.assertFalse(list(root.glob("calls/*/run/samples/*/started.json")))
+        self.assertTrue(all(r["status"]=="NOT_ATTEMPTED" for r in rt.recover(root,self.cohort,digest(self.value["request"]["plan"]))["records"]))
+
+    def test_retention_refuses_unsealed_or_changed_tree_without_moving_it(self):
+        from safeshift.fulltrain.minicpm_execution import retain_sealed_trees
+        work,scratch=self.root/"retention-work",self.root/"retention-scratch"
+        work.mkdir();scratch.mkdir();source=work/self.value["request"]["plan"]["run_id"];source.mkdir()
+        write(source/"raw.json",{"SYNTHETIC":"original"})
+        export(source,Path(str(source)+".zip"))
+        (source/"raw.json").write_text('{"SYNTHETIC":"changed"}')
+        request=deepcopy(self.value["request"]);request.update(work=str(work),scratch=str(scratch))
+        with self.assertRaisesRegex(ValueError,"ARCHIVE_TREE_CUSTODY"):
+            retain_sealed_trees(request,work,scratch,self.root)
+        self.assertTrue(source.exists())
+        self.assertTrue(Path(str(source)+".zip").exists())
 
     def test_all3763_once_through_controller_export_and_complete_resume_no_calls(self):
         value=deepcopy(self.value)
