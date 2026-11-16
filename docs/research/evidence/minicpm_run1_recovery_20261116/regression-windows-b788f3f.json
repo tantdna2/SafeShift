@@ -1,0 +1,13 @@
+{
+  "commit": "b788f3f09d55d59facabbbabd477bd5bc7b1e9b6",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "runtime_sha256": "dfc3a043e7b65f68726b9dfc7e0368c9a4f38f2ef4d5667f92bbd62ffd23df0d",
+  "run": 67,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "excluded": [
+    "preexisting full3763 stress case"
+  ],
+  "log_sha256": "dd4d45b9a88cbbf4e7e3efc0d92aa71367bc659661ad464179d0127720c3a4be"
+}

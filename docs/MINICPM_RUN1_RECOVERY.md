@@ -189,3 +189,7 @@ archive/claim validators and single-submit state transitions execute normally.
 Linux process-group streaming verifies live receipt visibility before child exit.
 No code test authenticates real GPU/model-fit, provider run or academic rights.
 Final-source native execution is NOT_RUN; DONE is not claimed at Draft PR.
+
+[Accepted commands, exact source, counts and limitations](research/MINICPM_RUN1_RECOVERY_20261116.md)
+and [machine receipts/log hashes](research/evidence/minicpm_run1_recovery_20261116/index.json)
+separate final acceptance from preserved development failures.

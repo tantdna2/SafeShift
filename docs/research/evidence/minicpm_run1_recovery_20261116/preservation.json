@@ -1,0 +1,21 @@
+{
+  "source_commit": "b788f3f09d55d59facabbbabd477bd5bc7b1e9b6",
+  "runtime_sha256": "dfc3a043e7b65f68726b9dfc7e0368c9a4f38f2ef4d5667f92bbd62ffd23df0d",
+  "protected_tracked_changes": [],
+  "journal_heads": [
+    "5562392ecff526ab9968fc3d1cffb597905a4194169b95924bd8b1b74c8906f7",
+    "6957e794dc0db07008e0120458b4255b4b4ebebc2dcd4935037ce985598a90f2",
+    "e0fbecb64ee33db1d2a64fb3813e4ff1acd6036a8ce9022e369c50190cf5e4b9"
+  ],
+  "reserved": {
+    "calls": 3000,
+    "jobs": 3,
+    "gpu_seconds": 86400
+  },
+  "mirrors": "BYTE_IDENTICAL",
+  "production_journal_events_written": 0,
+  "kaggle_uploads": 0,
+  "kaggle_submissions": 0,
+  "gpu_inference": "NOT_RUN",
+  "TEST": "CLOSED"
+}

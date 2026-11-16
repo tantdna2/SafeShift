@@ -47,6 +47,11 @@ been performed. DONE remains first real native call + running job + handoff.
 
 CPU acceptance and exact source/log hashes are recorded in the recovery runbook
 and its linked receipt; synthetic tests do not establish live model-fit or PASS.
+Final runtime80-file SHA256 is
+`dfc3a043e7b65f68726b9dfc7e0368c9a4f38f2ef4d5667f92bbd62ffd23df0d`.
+Focused regression67/67 PASS; recovery16 run/15 PASS on each Windows/Linux with
+complementary platform/SDK skips. [Acceptance](research/MINICPM_RUN1_RECOVERY_20261116.md)
+records exact code commit b788f3f, notebook reproduction and test limitations.
 
 ## HISTORICAL — PR198 expanded MiniCPM execution release V2 — 16/11/2026
 
