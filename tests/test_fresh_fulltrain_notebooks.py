@@ -1,5 +1,6 @@
 """Exact generated payload, clean child execution and preservation of old notebooks."""
 import base64
+from copy import deepcopy
 import hashlib
 import json
 import os
@@ -15,7 +16,8 @@ from safeshift.candidates.source import ROOT
 from safeshift.fulltrain import contract
 from safeshift.pilot.artifacts import read, verify_archive
 from safeshift.pilot.contract import digest
-from scripts.build_fresh_fulltrain_notebooks import notebook
+from scripts.build_fresh_fulltrain_notebooks import notebook, notebook_at_ref
+from scripts.locked_fulltrain_notebooks import reproduce, verify_payload
 
 
 class FreshNotebookTests(unittest.TestCase):
@@ -30,7 +32,8 @@ class FreshNotebookTests(unittest.TestCase):
             with self.subTest(path=path.name):
                 nb = read(path)
                 ref = nb["metadata"]["safeshift"]["runtime_ref"]
-                self.assertEqual(path.read_bytes(), (json.dumps(notebook(key, ref, diagnostic=diagnostic),
+                locked = reproduce(key, ref, diagnostic=diagnostic)
+                self.assertEqual(path.read_bytes(), (json.dumps(notebook_at_ref(key, ref, diagnostic=diagnostic),
                                                                indent=1, ensure_ascii=False) + "\n").encode())
                 for cell in nb["cells"]:
                     if cell["cell_type"] != "code":
@@ -41,11 +44,12 @@ class FreshNotebookTests(unittest.TestCase):
                     compile(code, path.name, "exec")
                     encoded = re.search(r"base64\.b64decode\('([^']+)'\)", code).group(1)
                     payload = json.loads(zlib.decompress(base64.b64decode(encoded)))
-                    self.assertEqual(set(payload), set(contract.sources()))
+                    self.assertEqual(set(payload), set(locked["manifest"]))
                     for name, text in payload.items():
-                        self.assertEqual(text.encode(), (ROOT / name).read_bytes())
+                        self.assertEqual(text.encode(), subprocess.check_output(["git", "show", f"{ref}:{name}"], cwd=ROOT))
                     self.assertEqual(digest({n: hashlib.sha256(t.encode()).hexdigest() for n, t in payload.items()}),
                                      nb["metadata"]["safeshift"]["source_sha256"])
+                self.assertEqual(verify_payload(nb, locked), payload)
 
     def test_every_notebook_clean_cpu_child_repeated_no_attempt_or_input(self):
         for key, diagnostic, path in self.paths():
@@ -71,6 +75,37 @@ class FreshNotebookTests(unittest.TestCase):
                     self.assertFalse(r["owner_slot_created"])
                     self.assertEqual(r["levels"]["ENVIRONMENT_OBSERVED"], "PASS")
                     self.assertEqual(r["levels"]["WEIGHTS_LOADED"], "NOT_RUN")
+
+    def test_locked_validation_rejects_added_missing_modified_duplicate_source_and_wrong_ref(self):
+        key, diagnostic, path = next(self.paths())
+        nb = read(path)
+        ref = nb["metadata"]["safeshift"]["runtime_ref"]
+        locked = reproduce(key, ref, diagnostic=diagnostic)
+        payload = verify_payload(nb, locked)
+        for change in (lambda p:p.update({"safeshift/fulltrain/minicpm_ui.py":"HEAD source must not leak"}),
+                       lambda p:p.pop(next(iter(p))), lambda p:p.update({next(iter(p)):"changed"})):
+            bad = deepcopy(nb)
+            code = "".join(bad["cells"][1]["source"])
+            original = re.search(r"base64\.b64decode\('([^']+)'\)", code).group(1)
+            altered = deepcopy(payload); change(altered)
+            encoded = base64.b64encode(zlib.compress(json.dumps(altered).encode())).decode()
+            bad["cells"][1]["source"] = code.replace(original, encoded).splitlines(True)
+            with self.assertRaisesRegex(ValueError, "LOCKED_PAYLOAD_"): verify_payload(bad, locked)
+        first = next(iter(payload))
+        duplicate = json.dumps(payload)[:-1] + ',' + json.dumps(first) + ':"duplicate"}'
+        bad = deepcopy(nb); code = "".join(bad["cells"][1]["source"])
+        encoded = re.search(r"base64\.b64decode\('([^']+)'\)", code).group(1)
+        bad["cells"][1]["source"] = code.replace(encoded,
+            base64.b64encode(zlib.compress(duplicate.encode())).decode()).splitlines(True)
+        with self.assertRaisesRegex(ValueError, "LOCKED_DUPLICATE_JSON_KEY"): verify_payload(bad, locked)
+        bad = deepcopy(nb); bad["metadata"]["safeshift"]["runtime_ref"] = "0" * 40
+        with self.assertRaisesRegex(ValueError, "LOCKED_NOTEBOOK_METADATA"): verify_payload(bad, locked)
+        with self.assertRaisesRegex(ValueError, "EXACT_RUNTIME_COMMIT"): reproduce(key, "main")
+        with self.assertRaises(subprocess.CalledProcessError): reproduce(key, "0" * 40)
+        # Historical compatibility never opens the HEAD builder's byte gate.
+        with self.assertRaisesRegex(ValueError, "RUNTIME_REF_SOURCE_MISMATCH"): notebook(key, ref)
+        locked["notebook"]["cells"].clear()
+        self.assertEqual(reproduce(key, ref)["notebook"], nb)
 
     def test_corrupt_payload_fails_before_prepare_and_preserves_failure(self):
         _, _, path = next(self.paths())
@@ -109,6 +144,15 @@ class FreshNotebookTests(unittest.TestCase):
                     self.assertEqual(hashlib.sha256(original).hexdigest(), lock["original_prefix_sha256"])
                     self.assertEqual(hashlib.sha256(current[len(original):]).hexdigest(), lock["amendment_sha256"])
                     self.assertEqual(hashlib.sha256(current).hexdigest(), lock["amended_sha256"])
+                elif name in ("safeshift/candidates/backend.py", "safeshift/candidates/loading.py"):
+                    # Later reviewed source added CPU verifier seams. Compare
+                    # each historical byte at its own runtime; preserve current
+                    # main's reviewed implementation rather than reverting it.
+                    old_nb = read(ROOT / "notebooks/SafeShift_FRESH_FULLTRAIN_PREP_minicpm4.ipynb")
+                    ref = old_nb["metadata"]["safeshift"]["runtime_ref"]
+                    self.assertEqual(original, subprocess.check_output(["git", "show", f"{ref}:{name}"], cwd=ROOT))
+                    self.assertEqual(current, subprocess.check_output(["git", "show",
+                        "89088dbc57d629933ab1462171019cd0125c2869:" + name], cwd=ROOT))
                 else:
                     self.assertEqual(current, original)
 
