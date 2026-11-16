@@ -10,6 +10,9 @@ Subsequent delivery changes are documents/evidence only.
 Machine receipts and complete accepted CPU logs are in
 [the evidence directory](evidence/minicpm_run1_recovery_20261116/index.json).
 No real data/raw, model weights, credentials or private signing keys are included.
+Public Windows test logs use Git's LF line endings. Their receipts distinguish
+the public `log_sha256` from the original local `captured_log_sha256`; the index
+hashes the actual committed LF files. Original captures remain untouched locally.
 
 | Accepted check | Result | Boundary |
 | --- | --- | --- |

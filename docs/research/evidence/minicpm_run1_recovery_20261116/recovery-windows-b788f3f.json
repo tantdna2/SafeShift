@@ -7,5 +7,7 @@
   "failures": 0,
   "errors": 0,
   "skips": 1,
-  "log_sha256": "3453354ada5512387b58af5ce988cf1797cf87be5e811abf4c8ddea7f4d4d2e2"
+  "log_sha256": "5e6db5d9d656b4cd4d1fa45c823f3bd8c1f35813367c72c84bdb039d50d6b9e9",
+  "captured_log_sha256": "3453354ada5512387b58af5ce988cf1797cf87be5e811abf4c8ddea7f4d4d2e2",
+  "public_log_normalization": "CRLF_TO_LF; original capture retained locally"
 }
