@@ -104,7 +104,8 @@ class OwnerUITests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "PYTHON_INPUT_READ_ONLY"):
                 ui.stage_python(request, self.root, self.root, {}, time.monotonic()+30)
         with patch.object(ui.os, "statvfs", return_value=SimpleNamespace(f_flag=1), create=True), \
-             patch.object(ui.os, "ST_RDONLY", 1, create=True):
+             patch.object(ui.os, "ST_RDONLY", 1, create=True), \
+             patch.object(ui.shutil, "disk_usage", return_value=SimpleNamespace(free=32 * 2**30)):
             with self.assertRaisesRegex(ValueError, "PYTHON_INPUT_SIZE"):
                 ui.stage_python(request, self.root, self.root, {}, time.monotonic()+30)
         duplicate = inputs / "duplicate"; duplicate.mkdir(); write(duplicate / ui.py.MARKER, {})
