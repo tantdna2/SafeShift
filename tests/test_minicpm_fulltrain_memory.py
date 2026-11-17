@@ -85,6 +85,7 @@ class MemoryTests(unittest.TestCase):
     def test_reclaim_success_is_fresh_gate_and_no_effect_stays_blocked(self):
         out = self.root / 'control/reclaim'; out.mkdir(parents=True)
         write(out.parent / 'owned-scratch.json', m.ownership(self.request))
+        write(out.parent / 'setup-process.json', {'status': 'EXITED', 'returncode': 0, 'group_exit': {'status': 'NO_LIVE_MEMBERS'}})
         write(out.parent / 'setup/runtime.json', {'request_sha256': digest(self.request)})
         for n, effect in enumerate((None, ValueError('HOST_OR_CGROUP_RAM'), KeyboardInterrupt())):
             with self.subTest(effect=type(effect).__name__), patch.object(m, 'snapshot', return_value=self.observed()), \
@@ -100,11 +101,20 @@ class MemoryTests(unittest.TestCase):
 
     def test_missing_ownership_or_scan_error_never_runs_gate(self):
         out = self.root / 'control/reclaim'; out.mkdir(parents=True)
+        write(out.parent / 'setup-process.json', {'status': 'EXITED', 'returncode': 0, 'group_exit': {'status': 'NO_LIVE_MEMBERS'}})
         write(out.parent / 'setup/runtime.json', {})
         with patch.object(m, 'snapshot', return_value=self.observed()), patch.object(m, 'resource_check') as gate:
             with self.assertRaises(FileNotFoundError): m.reclaim(self.request, out, time.monotonic()+5)
             gate.assert_not_called()
         self.assertTrue((out / 'owned-advice-after-memory.json').exists())
+
+    def test_live_setup_child_prevents_any_advice(self):
+        out = self.root / 'control/reclaim'; out.mkdir(parents=True)
+        write(out.parent / 'setup-process.json', {'status': 'EXITED', 'returncode': 0,
+            'group_exit': {'status': 'LIVE_SURVIVORS'}})
+        with patch.object(m, 'snapshot', return_value=self.observed()), patch.object(m, 'advise_owned_runtime') as advice:
+            with self.assertRaisesRegex(ValueError, 'SETUP_GROUP_EXIT'): m.reclaim(self.request, out, time.monotonic()+5)
+            advice.assert_not_called()
 
     def test_loader_guard_ram_drop_after_processor_or_rehash_prevents_weight_load(self):
         from safeshift.candidates import backend, loading
@@ -166,6 +176,20 @@ class MemoryTests(unittest.TestCase):
 
 
 class PipelineTests(unittest.TestCase):
+    def test_post_image_ram_failure_stops_actual_generate_and_native_receipt(self):
+        from safeshift.fulltrain import minicpm_release as a, minicpm_recovery
+        from types import SimpleNamespace as NS
+        model = NS(generate=Mock())
+        backend = NS(model=model, generate=lambda *_: model.generate())
+        context = {'grant': {'schema': a.RECOVERY_SCHEMA}, 'value': {'request': {},
+            'cohort': {'samples': [{'sample_id': 'SYNTHETIC', 'image_sha256': 'a'*64}]}}}
+        with patch.object(a, 'current', return_value=context), patch.object(a, 'authorize'), \
+                patch.object(m, 'resource_check', side_effect=ValueError('HOST_OR_CGROUP_RAM')), \
+                patch.object(minicpm_recovery, 'native_started') as native:
+            with self.assertRaisesRegex(ValueError, 'HOST_OR_CGROUP_RAM'):
+                a.GuardedBackend(backend, 0).generate('synthetic', 'synthetic')
+            model.generate.assert_not_called(); native.assert_not_called()
+
     def test_setup_then_reclaim_failure_stops_before_cpu_gpu_and_model(self):
         with tempfile.TemporaryDirectory() as tmp:
             fixture = revisions.RevisionTests(); fixture.root = Path(tmp)

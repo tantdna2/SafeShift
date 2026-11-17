@@ -179,8 +179,20 @@ CPU checks do not prove final-source model fit or full-run completion.
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--runtime-ref", required=True)
+    p.add_argument('--ram-repair-candidate', action='store_true')
     args = p.parse_args()
-    (ROOT / OUTPUT).write_bytes((json.dumps(notebook(args.runtime_ref), indent=1,
+    output = 'notebooks/SafeShift_FULLTRAIN_MINICPM4_RAM_V6_CANDIDATE.ipynb' if args.ram_repair_candidate else OUTPUT
+    nb = notebook(args.runtime_ref)
+    if args.ram_repair_candidate:
+        nb['metadata']['safeshift'].update(planned_release_version=6,
+            source_transition='safeshift-minicpm-v5-ram-repair-v1',
+            resource_stages=['admit', 'setup', 'reclaim', 'cpu', 'gpu', 'native'])
+        nb['cells'][0]['source'] = ['# MiniCPM-V-4 Full-TRAIN — V6 RAM repair candidate\n',
+            '\n', '**DRAFT / BLOCKED.** CPU preparation only. No signed release, ticket or Owner Run.\n',
+            'The Operator generates the exact executable V6 notebook only after review/audit/merge/release.\n',
+            'Owned runtime cache advice follows isolated setup; unchanged 16 GiB RAM gates apply throughout.\n',
+            'Original 3,763 TRAIN IDs; FP16 weights, FP32 resampler, strict C1; HNLO N/A; TEST closed.\n']
+    (ROOT / output).write_bytes((json.dumps(nb, indent=1,
                                           ensure_ascii=False) + "\n").encode("utf-8"))
 
 

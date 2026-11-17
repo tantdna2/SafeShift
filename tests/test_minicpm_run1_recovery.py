@@ -360,9 +360,10 @@ class RecoveryTests(unittest.TestCase):
                 order = []
                 model = NS(generate=lambda: order.append("real-generate"))
                 backend = NS(model=model, generate=lambda *_: (order.append("image-prepared"), model.generate()))
-                with patch.object(r, "native_started", side_effect=lambda *_: order.append("observed-native")):
+                with patch.object(r, "native_started", side_effect=lambda *_: order.append("observed-native")), \
+                        patch('safeshift.fulltrain.memory.resource_check', side_effect=lambda *_: order.append('ram-checked')):
                     a.GuardedBackend(backend, 0).generate("synthetic", "synthetic")
-                self.assertEqual(order, ["image-prepared", "observed-native", "real-generate"])
+                self.assertEqual(order, ["image-prepared", 'ram-checked', "observed-native", "real-generate"])
                 self.assertFalse((c["claims"] / "generate-000000.json").exists())
                 # The real receipt writer also rejects an unclaimed ordinal.
                 sample = self.value["cohort"]["samples"][0]
@@ -402,6 +403,7 @@ class RecoveryTests(unittest.TestCase):
             stack.enter_context(patch.object(a, "load", return_value=self.grant))
             stack.enter_context(patch.object(a, "CLAIMS", self.root / "claims"))
             stack.enter_context(patch.object(rt, "validate_native_raw"))
+            stack.enter_context(patch('safeshift.fulltrain.memory.resource_check', return_value={'scope': 'SYNTHETIC_GATE'}))
             stack.enter_context(patch.object(old, "private_root", side_effect=lambda path: Path(path)))
             stack.enter_context(patch.object(old, "clean_source"))
             remote = Mock(); remote.kernels_status.return_value = NS(status="COMPLETE")

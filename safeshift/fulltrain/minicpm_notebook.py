@@ -40,7 +40,8 @@ def prepare(expected_source_sha256, repo, runtime_ref, *, work=None):
         write(output / "pipeline.json", {
             "entrypoint": "safeshift.fulltrain.minicpm_notebook.run_request",
             "release": "contract.authorize BEFORE request read; runtime.launch repeats gate",
-            "stages": ["admit", "setup", "cpu", "gpu", "native"],
+            "stages": ["admit", "setup", "reclaim", "cpu", "gpu", "native"],
+            "ram": "owned-venv file advice after reaped setup; fresh unchanged signed floor at every boundary",
             "native": "runtime._worker -> runtime._native_factory -> minicpm_resampler_fp32.backend",
             "controller": "runtime._execute / NativeStore / pilot.runner.execute",
             "parser": "safeshift.pilot.contract.parse_label (strict C1, unchanged)",

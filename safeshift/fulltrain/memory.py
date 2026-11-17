@@ -172,6 +172,10 @@ def reclaim(request, output, deadline):
     before = observe(output, 'owned-advice-before')
     try:
         complete(before)
+        process = read(output.parent / 'setup-process.json')
+        require(process['status'] == 'EXITED' and process['returncode'] == 0
+                and process.get('group_exit', {}).get('status') == 'NO_LIVE_MEMBERS',
+                'ADVICE_SETUP_GROUP_EXIT_UNVERIFIED')
         installed = read(output.parent / 'setup/runtime.json')
         result = advise_owned_runtime(request, read(output.parent / 'owned-scratch.json'),
                                       installed, deadline=deadline)
