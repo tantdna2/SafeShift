@@ -440,6 +440,7 @@ class OfflineTests(unittest.TestCase):
         admission=comment(102,p.FINAL+"_ADMISSION",{"manifest_sha256":digest(manifest),"report_sha256":digest(report),
             "owner":owner,"status":"RELEASED_FOR_FINAL_ADMISSION"})
         self.route.reconcile(report,exports,owner,admission)
+        self.assertEqual(self.route.state()["status"],"FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT")
         official=self.route.official_report()
         self.assertEqual(official["status"],"OFFICIAL_RECONCILED_RESULTS")
         self.assertEqual(len(official["rows"]),3763)

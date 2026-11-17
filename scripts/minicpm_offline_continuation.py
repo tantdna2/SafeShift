@@ -312,7 +312,8 @@ class Continuation:
             and all(r["status"] in ("SUCCESS", "INVALID") for r in records), "MINICPM_OFFLINE_NO_SKIP_DUPLICATE_OR_ERROR")
         return {"reserved": reserved, "active": active, "completed": completed, "history": history, "records": records,
             "next_ordinal": len(records), "counts": dict(Counter(r["status"] for r in records)) | {"NOT_ATTEMPTED": 3763-len(records)},
-            "stopped": stopped, "final": final, "status": "STOPPED" if stopped else "PENDING_FINAL_RECONCILIATION"}
+            "stopped": stopped, "final": final, "status": "STOPPED" if stopped else
+                "FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT" if final is not None else "PENDING_FINAL_RECONCILIATION"}
 
     @staticmethod
     def lineage(completed):
