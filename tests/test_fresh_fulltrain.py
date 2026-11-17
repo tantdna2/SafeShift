@@ -378,7 +378,14 @@ class FreshTests(unittest.TestCase):
                     stack.enter_context(patch.object(admission, "checkpoint_binding", return_value=(None, self.root, self.root, {})))
                     for name in ("resources", "hardware", "cuda"):
                         stack.enter_context(patch.object(environment, name))
-                result = rt._worker(request)
+                    # The supervised MiniCPM worker now requires a dedicated
+                    # RAM receipt directory. Hardware/RAM remain explicit CPU
+                    # doubles in this native-controller wiring fixture.
+                    ram_gate = stack.enter_context(patch('safeshift.fulltrain.memory.resource_check', return_value={
+                        'scope': 'SYNTHETIC_RESOURCE_BOUNDARY'}))
+                result = rt._worker(request, **({'memory_output': self.root / 'native-memory'} if mounted else {}))
+                if mounted:
+                    self.assertGreaterEqual(ram_gate.call_count, 2)
                 h = rt.recover(result, self.cohort, digest(p))
                 self.assertEqual(h["records"][0]["status"], "SUCCESS")
                 self.assertEqual(h["records"][0]["label"], "Level03")
