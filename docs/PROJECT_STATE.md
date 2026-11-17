@@ -1,6 +1,43 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — Issue202 MiniCPM offline serial continuation — 17/11/2026
+## CURRENT — Issue202 V7: Owner final approval, initial100, release30 days — 17/11/2026
+
+[Owner decision6954626555](https://github.com/tantdna2/SafeShift/issues/202#issuecomment-6954626555)
+supersedes PR203's second GitHub account requirement. New Codex task/branch
+`codex/issue202-v7-owner-final` starts from main
+`0f598f1f4f67619edbf8948492ac9b12af119edd`; one Draft PR, then STOP.
+
+Offline delegation/release/ticket/final markers are version2. Old V1 grants and
+`offline.review_logins` are rejected. Final admission needs ONE authentic Owner
+Issue202 comment binding full ordered3763 manifest and Owner-obtained per-job
+provider report; no second account or CLI admission locator. Source-stage four
+approvals, exact source/tool subject hashes, signatures, all historical holds,
+mirrored create-only custody, duplicate/replay guards and official-report
+revalidation remain mandatory. SUCCESS/INVALID stay durable; technical failures
+STOP. `scientific_qualified:false`, scientific selection PENDING.
+
+`offline.unmeasured_calls=100` is only the first-job ceiling; time/quota can lower
+signed max_calls. No measured throughput or completion promise. Job cap4h and
+adaptive pre-call/export guards remain. Release expiry must equal actual
+`issued_unix + 30*24*3600`; unsigned templates clear both timestamps. Fresh quota
+and four fixed Inputs are checked per stage, fifth Private Capsule after upload,
+all five before Owner Run. No reuse of old source grants.
+
+Original Operator session stays `0b1d115c-c002-44e8-b22e-087226f6dc73`, with original
+key/host. Only UNSIGNED offline preparation is allowed before merged-source
+review/audit, separately authorized merge/postmerge and new exact-source release.
+No real signing, init/stage, Kaggle/GPU, production journal writes or results in
+this task. PR201 RAM/native, model/science/precision/parser and TRAIN/TEST bytes
+remain unchanged. Validation evidence is recorded in
+[V7 Owner approval acceptance](research/MINICPM_V7_OWNER_APPROVAL_20261117.md).
+At code/tests commit `826b3f83ed358ee7ca59cdd594fce737124d199a`, **100 distinct
+test IDs PASS** across Windows/Linux: Windows 90 PASS/5 platform SKIP, Linux 24
+offline/full3763 PASS and 23 RAM/collection/supervision/adaptive PASS. All five
+skips passed on Linux; overlapping IDs/subTests are not summed. No unresolved
+FAIL/ERROR; subsequent delivery edits are documentation only. This is author CPU
+validation, with direct review and independent audit still pending.
+
+## HISTORICAL — PR203 MiniCPM offline serial continuation — 17/11/2026
 
 PR203 [post-audit correction6943496144](https://github.com/tantdna2/SafeShift/pull/203#issuecomment-6943496144)
 requires changes in the SAME branch/session/Draft PR. Earlier final-admission

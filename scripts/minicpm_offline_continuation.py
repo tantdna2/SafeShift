@@ -30,7 +30,7 @@ PROVISIONAL = "OFFLINE_VERIFIED_PROVISIONAL"
 class Exports:
     """Owner-acquired evidence only; never fallback to a network transport.
 
-    JSON cannot authenticate its own origin. Owner export custody and independent
+    JSON cannot authenticate its own origin. Owner export custody and direct
     inspection of GitHub originals are the explicit trust boundary, as in PR196.
     """
     def __init__(self, values):
@@ -466,40 +466,21 @@ class Continuation:
             "ordinals": list(range(3763)), "counts": state["counts"], "reserved": state["reserved"],
             "caps": self.grant["caps"], "billing_gpu_seconds": "NOT_OBSERVED", "scientific_qualified": False}
 
-    def validate_final(self, manifest, report, exports, owner_locator, admission_locator):
+    def validate_final(self, manifest, report, exports, owner_locator):
         from safeshift.fulltrain.minicpm_incident import owner_record
         reader = Exports(exports)
         authenticate(self.registration["locator"], exports, collection=True)
         owner = owner_record(reader, owner_locator, 202)
         require(a.record(owner["body"], policy.FINAL) == {"manifest_sha256": digest(manifest),
             "report_sha256": digest(report), "status": "APPROVED_FOR_FINAL_ADMISSION"}, "MINICPM_AUTHENTIC_FINAL_OWNER")
-        from safeshift.fulltrain.minicpm_recovery import locator
-        locator(admission_locator)
-        reviewer = reader("/issues/comments/"+str(admission_locator["comment_id"]))
-        user = reviewer.get("user")
-        # GitHub comment IDs identify comments, not accounts. Both stable user
-        # ID and case-insensitive login must identify a separate authorized
-        # account, including when an Owner alias appears in the allowlist.
-        require(type(user) is dict and type(user.get("id")) is int and user["id"] > 0
-            and user["id"] not in (a.OWNER_ID, owner["user"]["id"])
-            and type(user.get("login")) is str and user["login"]
-            and user["login"].casefold() not in (a.OWNER.casefold(), owner["user"]["login"].casefold())
-            and user["login"].casefold() in {login.casefold() for login in self.grant["offline"]["review_logins"]},
-            "MINICPM_INDEPENDENT_FINAL_REVIEWER_ACCOUNT_REQUIRED")
-        require(reviewer["id"] == admission_locator["comment_id"] and reviewer["id"] != owner["id"]
-            and reviewer["issue_url"] == a.API+"/issues/202"
-            and hashlib.sha256(reviewer["body"].encode()).hexdigest() == admission_locator["body_sha256"]
-            and a.record(reviewer["body"], policy.FINAL+"_ADMISSION") == {"manifest_sha256": digest(manifest),
-                "report_sha256": digest(report), "owner": owner_locator, "status": "RELEASED_FOR_FINAL_ADMISSION"},
-            "MINICPM_AUTHENTIC_FINAL_REVIEWER")
         validate_provider_report(manifest, report)
         return report
 
-    def reconcile(self, report, exports, owner_locator, admission_locator):
+    def reconcile(self, report, exports, owner_locator):
         with lock(self.root):
             require(self.state()["final"] is None, "MINICPM_NO_DUPLICATE_FINAL_ADMISSION")
             manifest = self.manifest()
-            self.validate_final(manifest, report, exports, owner_locator, admission_locator)
+            self.validate_final(manifest, report, exports, owner_locator)
             # Keep the one final event small even for many jobs. The complete
             # ordered documents are separate, mirrored, create-only and bound
             # by the certificate; never duplicate all cumulative histories in
@@ -510,7 +491,7 @@ class Continuation:
                 require(len(raw) <= 8*2**30, "MINICPM_FINAL_DOCUMENT_BOUND")
                 for root in (self.root, self.mirror): put(root/"final"/(name+".json"), raw)
             return self.append(policy.RECONCILED, {**{name+"_sha256": digest(value) for name,value in documents.items()},
-                "owner": owner_locator, "admission": admission_locator})
+                "owner": owner_locator})
 
     def official_report(self):
         state = self.state()
@@ -524,7 +505,7 @@ class Continuation:
             documents[name]=read(self.root/"final"/(name+".json"))
         manifest = self.manifest()
         require(documents["manifest"] == manifest, "MINICPM_FINAL_MANIFEST_DRIFT")
-        self.validate_final(manifest, documents["report"], documents["exports"], p["owner"], p["admission"])
+        self.validate_final(manifest, documents["report"], documents["exports"], p["owner"])
         ordinals = {r["sample_id"]: r["ordinal"] for r in self.registration["initial"]["cohort"]["samples"]}
         lineage = [{"ordinal": ordinals[row["sample_id"]], "sample_id": row["sample_id"], "run_id": item["value"]["request"]["plan"]["run_id"],
             "attempt_id": item["value"]["request"]["plan"]["attempt_id"], "job": item["value"]["job"],
@@ -584,7 +565,7 @@ def main(argv=None):
         sub.add_parser(name)
     manifest = sub.add_parser("manifest"); manifest.add_argument("--output", type=Path, required=True)
     final = sub.add_parser("reconcile")
-    for name in ("report", "exports", "owner-locator", "admission-locator"):
+    for name in ("report", "exports", "owner-locator"):
         final.add_argument("--"+name, type=Path, required=True)
     args = p.parse_args(argv)
     if args.command == "release-template":
@@ -592,10 +573,11 @@ def main(argv=None):
         require(proposal["schema"] == a.RECOVERY_SCHEMA and proposal["repair"]["schema"] == v5.SCHEMA
             and "offline" not in proposal, "MINICPM_V6_UNSIGNED_PROPOSAL_REQUIRED")
         proposal.update(implementation_pr=None, reviewed_head=None, merged_sha=None,
+            issued_unix=None, expires_unix=None,
             approvals={k: None for k in ("source_review", "independent_audit", "merge", "postmerge")})
-        proposal["offline"] = {"schema": SCHEMA, "decision_issue": 202, "operator_session": None,
+        proposal["offline"] = {"schema": SCHEMA, "decision_issue": 202, "operator_session": policy.ORIGINAL_SESSION,
             "base_journal_head_sha256": proposal["repair"]["journal_head_sha256"], "tools_sha256": digest(tools_manifest()),
-            "tool_blobs": tool_blobs(), "unmeasured_calls": None, "review_logins": None}
+            "tool_blobs": tool_blobs(), "unmeasured_calls": 100}
         write(private(args.output), proposal)
         result = {"status": "UNSIGNED_PROPOSAL_BLOCKED_NOT_AUTHORITY", "marker_required": policy.RELEASE}
     elif args.command == "init":
@@ -610,7 +592,7 @@ def main(argv=None):
             with lock(route.root): result = route.export_active()
         elif args.command == "manifest":
             result = route.manifest(); write(private(args.output), result)
-        elif args.command == "reconcile": result = route.reconcile(read(args.report), read(args.exports), read(args.owner_locator), read(args.admission_locator))
+        elif args.command == "reconcile": result = route.reconcile(read(args.report), read(args.exports), read(args.owner_locator))
         elif args.command == "official-report": result = route.official_report()
         elif args.command == "forecast": result = route.forecast()
         else:

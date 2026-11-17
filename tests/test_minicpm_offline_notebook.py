@@ -23,7 +23,7 @@ class OfflineNotebookTests(unittest.TestCase):
         meta=first["metadata"]["safeshift"]
         self.assertEqual(meta["source_sha256"],digest(contract.source_manifest()))
         self.assertEqual(meta["resource_stages"],["admit","setup","reclaim","cpu","gpu","native"])
-        self.assertEqual(meta["continuation_route"],"safeshift-minicpm-offline-continuation-v1")
+        self.assertEqual(meta["continuation_route"],"safeshift-minicpm-offline-continuation-v2")
         code="\n".join("".join(cell["source"]) for cell in first["cells"] if cell["cell_type"]=="code")
         self.assertIn("safeshift.fulltrain.minicpm_execution",code)
         payload=json.loads(zlib.decompress(base64.b64decode(re.search(r"base64\.b64decode\('([^']+)'\)",code).group(1))))
