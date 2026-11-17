@@ -11,7 +11,7 @@ OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
 def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None, release_version=2):
-    require(type(release_version) is int and release_version in (2, 4, 5, 6)
+    require(type(release_version) is int and release_version in (2, 4, 5, 6, 7)
         and (release_version == 2 or release_locator is not None), "MINICPM_NOTEBOOK_RELEASE_VERSION")
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
@@ -155,7 +155,7 @@ not established by CPU rehearsal. Preserve all raw/errors/receipts and old holds
 Do not reuse V4-4's notebook, capsule or ticket. No manual cell edits or retry.
 Original3763 TRAIN, FP16 weights/FP32 resampler, strict C1, HNLO N/A; TEST closed.
 """.splitlines(True)
-        if release_version == 6:
+        if release_version in (6, 7):
             nb['metadata']['safeshift']['source_transition'] = 'safeshift-minicpm-v5-ram-repair-v1'
             nb['metadata']['safeshift']['resource_stages'] = ['admit', 'setup', 'reclaim', 'cpu', 'gpu', 'native']
             nb['cells'][0]['source'] = '''# MiniCPM-V-4 — Full TRAIN — RAM repair V6
@@ -172,6 +172,23 @@ Failure: retain all Output/log/ZIP/SHA and stop; no edited cell or reused ticket
 Full coverage may require serial continuation over NOT_ATTEMPTED images only.
 FP16 weights, FP32 resampler, strict C1, HNLO N/A; TEST closed.
 CPU checks do not prove final-source model fit or full-run completion.
+'''.splitlines(True)
+        if release_version == 7:
+            nb['metadata']['safeshift']['continuation_route'] = 'safeshift-minicpm-offline-continuation-v1'
+            nb['cells'][0]['source'] = '''# MiniCPM-V-4 Full TRAIN — offline serial continuation V7
+
+Chỉ dùng handoff có vé ký mới từ Operator MiniCPM gốc, sau release đúng source.
+1. Import notebook đúng slug/version1; upload capsule mới Private và gắn 5 Input.
+2. Kiểm Private/Python/Internet On/T4x2, quota tuần thật và hạn vé; VM cũ đã terminal.
+3. Save Version > Save & Run All một lần. Tải cả hai ZIP/sidecar và proof terminal.
+
+Antigravity chỉ kiểm offline và chuẩn bị NOT_ATTEMPTED tiếp theo. Không gọi API,
+không duyệt GitHub từng job. OFFLINE_VERIFIED_PROVISIONAL chưa là kết quả chính thức.
+Chỉ đối soát provider từng job và admission một lần sau đủ 3763 ordinal.
+admit → setup → reclaim → cpu → gpu → native, signed RAM floor 16384 MiB.
+FP16 weights/FP32 resampler/C1 strict/HNLO N/A; TEST đóng. Giữ mọi raw/lỗi/holds.
+KAGGLE_VENV_LAYOUT_UNVERIFIED; FAIL_CLOSED_BUT_OWNER_RUN_CAN_STILL_ABORT.
+Không sửa cell, tái dùng vé, tạo version2 hoặc tự retry; quota vẫn có thể bị tiêu.
 '''.splitlines(True)
     return nb
 

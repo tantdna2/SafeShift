@@ -630,6 +630,17 @@ Nguồn tham khảo đã đọc ngày 24/10/2026, commit
 
 ## Định tuyến ngữ cảnh cho Codex/Antigravity
 
+Issue202 MiniCPM offline serial route: first read
+[the Vietnamese runbook](MINICPM_OFFLINE_CONTINUATION.md), then
+`fulltrain/minicpm_offline.py` (new delegation/ticket/Owner observation schema),
+`scripts/minicpm_offline_continuation.py` (mirrored provisional journal, signing,
+custody, scheduling, final admission and official reader),
+`scripts/owner_verify_minicpm_offline.py` (Owner-only online authority export and
+per-job final provider verification), and `test_minicpm_offline_continuation.py`.
+The route inherits V4 rights/V5 closure and PR201 RAM/native verifiers; it never
+turns offline Owner UI observations into provider authentication. Original
+Operator/session/key and new merged-source release remain activation gates.
+
 PR199 current Owner UI restart: [V4 contract](MINICPM_RUN1_RECOVERY.md),
 `minicpm_recovery.py` (Owner retirement with uncertainty, deterministic finite
 budget, original-rights/source binding and durable native-entry receipts),
