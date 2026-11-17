@@ -1,5 +1,20 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner17/11/2026 — V5 RAM repair after PR200
+
+[Incident6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950)
+and direct Owner task require one NEW Codex branch/Draft PR from merged0061050.
+Read actual successful MiniCPM1/3-image and InternVL Full-TRAIN sources,
+Issue173 cache remedy and fulltrain/internvl_v2 memory code. Reuse only safe
+job-owned runtime advice under hard supervision; unchanged signed16GiB floor,
+fresh RAM/disk gates and failure snapshots through native/pre-call. No GPU smoke,
+Kaggle submit, old notebook/ticket edits, production journal writes or science
+changes. Read-only provider verification is allowed. Authenticate V5 supervisor-
+only CPU failure and retain every hold; source-bound serial6 requires fresh
+authority/ticket after direct review, independent audit, separately authorized
+merge/postmerge/release. Same original Operator later publishes <=3 Owner steps;
+Owner personally runs. See [RAM repair runbook](docs/MINICPM_V5_RAM_REPAIR.md).
+
 ## Owner16/11/2026 — post-PR199 V4-4 real-Input/source repair
 
 [Directive6922725439](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922725439)

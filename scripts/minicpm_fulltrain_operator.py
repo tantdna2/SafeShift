@@ -24,6 +24,7 @@ from safeshift.pilot.contract import digest, json_bytes
 from safeshift.kaggle_handoff import lock, private_root
 from safeshift.fulltrain import contract, minicpm_release as authority, minicpm_sizing as sizing, minicpm_ui as ui
 from safeshift.fulltrain.minicpm_execution import MARKER
+from safeshift.fulltrain.minicpm_incident import release_version
 from scripts.generate_minicpm_fulltrain_notebook import notebook
 
 SCHEMA = "safeshift-minicpm-serial-journal-v2"
@@ -295,7 +296,7 @@ class Journal:
             locator = self.release_locator(events)
             pin = digest(value)
             nb = notebook(grant["runtime_commit"], capsule_sha256=pin, release_locator=locator,
-                **({"release_version": 5 if "repair" in grant else 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
+                **({"release_version": release_version(grant)} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             from safeshift.internvl3763_operator import code_hash
             now = int(time.time())
             ticket = {"schema": authority.RECOVERY_TICKET if grant["schema"] == authority.RECOVERY_SCHEMA else authority.TICKET,
@@ -445,7 +446,7 @@ class Journal:
             ancestors = [safe(ROOT, item["collection"]["directory"] + "/" + read(safe(ROOT,
                 item["collection"]["directory"] + "/paths.json"))["attempt"]) for item in completed]
             nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value), release_locator=locator,
-                **({"release_version": 5 if "repair" in grant else 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
+                **({"release_version": release_version(grant)} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             destination = private_root(destination)
             require(not destination.exists(), "MINICPM_RECOVERY_KEEP_PARTIAL_USE_NEW_PATH")
             ui.package(value, ancestors, destination, lambda _: nb)
@@ -548,7 +549,8 @@ def verify_collection(value, envelope, grant, directory, *, online):
                 "minicpm-fulltrain/supervision/" + supervisor.name: supervisor}
             download_outputs(api(), value["job"], 1, attempt, sha(attempt), Path(tmp), output_pairs=pairs)
     with tempfile.TemporaryDirectory() as tmp:
-        report = ui.verify_results(value, pkg / "dataset", attempt, supervisor, Path(tmp) / "verified")
+        report = ui.verify_results(value, pkg / "dataset", attempt, supervisor, Path(tmp) / "verified",
+            memory_required='repair' in grant and release_version(grant) == 6)
     require(report["continuation"] == "REVIEW_CAPS_AND_RELEASE", "MINICPM_FAILED_ATTEMPT_STOP_RECONCILE")
     verify_claims(value, envelope, grant, attempt, supervisor)
     return report, observed

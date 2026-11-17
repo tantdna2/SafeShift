@@ -25,6 +25,23 @@ RESERVED = {"calls": 6763, "jobs": 4, "gpu_seconds": 115200}
 JOB = "nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-4"
 
 
+def source_incident(grant):
+    """Explicit version dispatch; unknown/repeated transitions cannot activate."""
+    from . import minicpm_v5_incident
+    schema = grant['repair']['schema']
+    require(schema in (SCHEMA, minicpm_v5_incident.SCHEMA), 'MINICPM_UNKNOWN_SOURCE_TRANSITION')
+    if schema == minicpm_v5_incident.SCHEMA:
+        return minicpm_v5_incident
+    import sys
+    return sys.modules[__name__]
+
+
+def release_version(grant):
+    if 'repair' in grant:
+        return 6 if source_incident(grant).DIRECTIVE == 6937169950 else 5
+    return 4
+
+
 def initial_reserved(grant):
     return deepcopy(grant["repair"]["reserved_after"] if "repair" in grant else grant["recovery"]["reserved"])
 

@@ -1,6 +1,40 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — V4-4 real Input and source repair — 17/11/2026
+## CURRENT — V5 CPU RAM failure / source repair — 17/11/2026
+
+[Owner6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950)
+starts one new Codex branch/Draft PR from PR200 merge
+`006105080fc9b240e6ffff31618d325adac41522`. [RAM repair runbook](MINICPM_V5_RAM_REPAIR.md)
+and [evidence](research/MINICPM_V5_RAM_EVIDENCE_20261117.md) describe the new route.
+
+Actual official SDK read-only custody verifies V5 version1/kernel145520728,
+COMPLETE with admit/setup returned, CPU HOST_OR_CGROUP_RAM, exhaustive supervisor-
+only Output, signed ticket and ZIP/sidecar. No native attempt/result/load/call
+claim: FAILED_PRE_NATIVE_NO_USABLE_RESULTS, never COLLECTED/refunded. Admit RAM
+21102653440 bytes; exact failure RAM/stat/events/RSS were not recorded. Cache vs
+anonymous-process cause is UNRESOLVED; Issue173's proven cache recovery is a
+separate actual VM observation, not a reconstructed V5 cause.
+
+Prepared source adds isolated post-setup advice of owned venv file pages, strict
+ownership/alias/scan/deadline checks, unchanged16GiB RAM floor and RAM/disk evidence
+across admit/setup/reclaim/cpu/gpu/native/processor/weights/every call. Process-group
+survivors or missing cleanup evidence stop. Scientific native sources/configuration
+remain unchanged. CPU acceptance is recorded after final committed-source checks.
+
+Prepared V5 closure/source transition preserves V4-4 and V5 custody in the same
+mirrored journal. Holds remain10526 calls/5 jobs/144000 physical GPU-seconds;
+fresh serial6 would add its full reservation without refund/reset or predictions.
+No production closure/rebind/signature/publication/Owner Run occurred. Quota last
+read27490/108000 used,0 reserved; refresh for any later ticket. Historical Operator
+CLI resume attempted but acknowledgement/session identity remains unconfirmed.
+
+**DRAFT SOURCE REVIEW REQUIRED / NEW OWNER RUN BLOCKED.** Direct ChatGPT review,
+independent audit, separately authorized merge/verified postmerge and authentic
+new source release/ticket precede the SAME old Operator's <=3-step Owner handoff.
+No Codex submit/live observer, standalone GPU smoke or TEST. CPU tests cannot
+guarantee real model fit or whole-cohort completion.
+
+## HISTORICAL — V4-4 real Input and source repair — 17/11/2026
 
 [Owner6922725439](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922725439)
 starts one new Codex task/branch/Draft PR from PR199 merge

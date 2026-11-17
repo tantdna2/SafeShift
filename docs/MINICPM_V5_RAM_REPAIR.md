@@ -1,0 +1,174 @@
+# MiniCPM V5 RAM failure and source-bound V6 replacement
+
+Owner [6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950),
+17/11/2026. New Codex branch from merged PR200
+`006105080fc9b240e6ffff31618d325adac41522`; one Draft PR, then STOP for direct
+ChatGPT review. No Kaggle submission, GPU smoke, model inference, production
+journal append, signature, publication, audit approval or merge in this task.
+
+## What the actual V5 evidence proves
+
+Official pinned SDK read-only verification authenticated
+`nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-5/1`, kernel **145520728**,
+provider COMPLETE, exact normalized notebook code, SafeShift metadata and five
+Input bindings. Exhaustive provider inventory and a newly downloaded supervisor
+ZIP/sidecar verify an admit PASS, setup PASS and CPU `HOST_OR_CGROUP_RAM` failure.
+The ZIP is `72640aec4640447e9e6392bc0a59b229.zip`, SHA256
+`6b0e122f9e0b3c1595d58604dd4e9910292cf188b100f722c2c9f867de110963`.
+There is no GPU/native stage, load/call claim, attempt or result archive.
+Disposition is **FAILED_PRE_NATIVE_NO_USABLE_RESULTS**, zero native calls by
+authenticated pre-native custody; it is never COLLECTED or a refund. The remote
+file listing, log and signed ticket are retained privately under
+`data/processed/minicpm-v5-ram-repair/operator/custody-2/`.
+
+Admit recorded **21,102,653,440 bytes** available (about19.65 GiB), constrained
+by cgroup headroom. CPU failure records the failed16 GiB guard but **no exact
+failure-time available number, memory.stat/events, RSS or survivor snapshot**.
+The original leader exited with code1 and group SIGKILL was sent. That is weaker
+than an observed empty group; no historical survivor telemetry is invented.
+RAM after setup was reported lower by the Operator; the retained V5 log cannot
+separate cache, anonymous process allocations or other pressure at that time.
+**CACHE_VS_ANON_UNRESOLVED**, not "PyTorch occupied RAM".
+
+Historical quota read: used27490/reserved0/total108000 physical GPU-seconds.
+It is neither project reservations nor a current release guarantee. V5 consumed
+provider resources despite zero native calls. Refresh before issuing any ticket.
+
+The recorded historical CLI conversation
+`a5fa95c9-bbc0-4df2-bdc7-ecb56b098bbc` was explicitly resumed for read-only
+coordination. Headless permission denial and a later180-second timeout prevented
+an authenticated Operator acknowledgement/report; both responses are retained.
+The custody above was independently fetched by Codex using the official SDK.
+Do not claim the V5 Operator session identity, independent audit or publication
+has been confirmed. The actual original Operator must acknowledge this dossier
+in the existing session before later operations; never start a replacement
+Operator or use `--continue` to guess the session.
+
+## Actual code compared
+
+The downloaded successful one-image and three-image Kaggle version1 sources
+were opened again: `exact-loading.py`, `exact-train_runtime.py`, `exact-train_route.py`
+and `exact-train_inputs.py` in the private reference-source directory recorded in
+[PR200 comparison](research/MINICPM_V44_REFERENCE_COMPARISON_20261117.md).
+They use the unchanged CPython3.11.9/torch2.6.0+cu124/transformers4.51.3 stack,
+FP16 eager weights, exact source/weights hashes, PIL/RGB, strict C1, FP32 resampler,
+raw-before-parse and sealed ZIP recovery. Their Candidate160 ordinals and model
+fit evidence do not establish Full-TRAIN final-source fit.
+
+Actual successful InternVL Full-TRAIN notebook payload code
+`internvl3763.NativeBackend` and `internvl3763_campaign` was opened: its weight
+verifier retains actual hash reads, checks resources again after loader hashing,
+and serial histories bind every predecessor and preserve reservations. The
+current `internvl_v2_memory.py`, `scripts/internvl_v2.py` and
+`internvl_v2_runtime.py` were also read. No InternVL grammar, model or precision
+is substituted for MiniCPM.
+
+[Issue173 repair](ISSUE173_REVIEW_REPAIR.md) and the actual
+`scripts/minicpm173_preflight.py::memory/advise_owned_runtime/launch/worker`
+prove the relevant MiniCPM precedent: same-VM owned runtime advice after the
+setup child exits, then fresh actual unchanged RAM admission. Its real receipt
+records available RAM17,761,562,624→25,173,176,320 bytes, file memory
+13,711,212,544→6,502,432,768 bytes, nearly stable anon and24,321,982,464 bytes
+before weights. That observation supports file-cache pressure **in Issue173**;
+it is not a causal reconstruction of V5 or a transferable model-fit guarantee.
+
+## Integrated resource safety
+
+`fulltrain/memory.py` reuses the actual InternVL snapshot primitive and validates
+nonnegative cgroup current/max/stat/events, host MemAvailable and process RSS.
+Missing/malformed diagnostics and observed oom/oom_kill stop execution. Each
+resource gate rereads `environment.resources`; signed **16384 MiB** remains
+unchanged. No "reclaimable" bytes are added to available RAM.
+
+Pipeline is **admit → setup → reclaim → cpu → gpu → native**. All stages use
+the same signed request, source verification and hard supervisor. Reclaim runs
+in the copied isolated worker only after successful setup returns and its group
+has no live members. It does not reread Inputs or import torch before advice.
+The parent records the initially empty scratch's device/inode/request binding.
+Reclaim checks that binding, setup runtime receipt and actual worker prefix.
+
+Two bounded directory-FD passes inspect only this job's `venv3119/lib`, reject
+symlinks, hardlinks, junctions, special files, filesystem changes, changed inode
+identities, scan overflow and deadline failure. Only regular single-link files
+>=8 MiB receive read-only fsync/POSIX_FADV_DONTNEED. No file is deleted; no global
+drop_caches, shared-cache advice, Input/checkpoint/raw/ticket/journal modification
+or package/version change. Advice failure or no effective headroom recovery
+stops before CPU/GPU/native; no retry loop.
+
+Receipts survive ordinary exceptions, timeout and interrupts where the parent
+can still run its finally block. Parent snapshots bracket every stage; children
+record entry/exit, before setup, after admission, post-advice and before CPU
+processor checks. Native loader uses scoped wrappers around the unchanged
+CandidateBackend processor and the existing `weight_verifier` seam: before/after
+processor, immediately after actual weight hashing/before deserialization,
+after weight load, before every controller call and immediately before actual
+model.generate after image packing. Process RSS and cgroup anon/file counters
+remain distinct. Scoped wrappers restore on every exit and change no native
+model argument, dtype, generation config, prompt or parser.
+
+Supervisor kills the process group even after success, reaps the leader, then
+observes all remaining group members. Live survivors or unobserved cleanup block
+the next stage and are recorded. Zombies are recorded but cannot execute work.
+Workers do not daemonize; hostile process-group escape or container-wide SIGKILL
+cannot be repaired by Python finally blocks. The checkpoint source/weight hashes
+are still checked on actual bytes at every original boundary; there is no cached
+"verified" shortcut and no Input page advice. Resource gates can still reject a
+later VM or load; CPU acceptance cannot guarantee GPU fit or full completion.
+
+## V5 closure and fresh serial6
+
+`scripts/minicpm_v5_incident.py` is read-only. It authenticates the exact public
+V5 release and signed ticket, exact notebook/Inputs/provider terminal identity,
+exhaustive Output inventory and strict31-member supervisor payload. CPU failure,
+returned admit/setup receipts, leader reaping, claim order/expiry and absence of
+native/partial evidence must all agree. Unexpected ZIP, raw/attempt files,
+unknown claim, wrong source/ticket, provider ambiguity or changed custody STOP.
+The V4-4 closure remains separately verified; its historical bytes are untouched.
+
+Only a new reviewed/merged source-bound release can bind the versioned
+`safeshift-minicpm-v5-ram-repair-v1` transition. It authenticates the original
+Owner incident, previous V5 authority, inherited V4-4 authority, unchanged science,
+public key, caps and recovery policy. A create-only RAM_REPAIR_BOUND event in the
+**same mirrored journal** binds both prior failures and the exact current head.
+It never fabricates COLLECTED or imports old predictions. Duplicate binding,
+unknown history, changed prefix or mirror divergence stop. This coding task
+prepares the path but appends no such production event.
+
+Serial6 starts ordinal0 with all3763 NOT_ATTEMPTED and no old predictions. Before
+it, conservative holds remain **10526 calls /5 jobs /144000 physical GPU-seconds**.
+Reserving3763 calls/14400 seconds adds3763/1/28800, yielding
+**14289 /6 /172800**. Existing finite derived project ceilings remain
+14163169 calls/3766 jobs/108460800 GPU-seconds. These are ceilings on reservation
+slots, not actual calls, billing, available weekly quota or a completion promise.
+Every new serial separately checks finite remaining coverage, no active job,
+exact predecessor custody, fresh quota and expiry/export reserve. No fake budget
+approval, cap reset/refund, account switching or serial5 ticket reuse.
+
+After genuine new results, shared collection validates the additional reclaim
+stage/process-group/RAM receipts for V6 and continues only NOT_ATTEMPTED using
+full verified new-series ancestry. Native ambiguity or partial raw stops ordinary
+continuation; this V5 closure cannot close a later failure automatically.
+
+## Reproduce and later Owner handoff
+
+CPU commands (synthetic except the explicitly named read-only real-file check):
+
+```console
+python -B -m unittest discover -s tests -p test_minicpm_fulltrain_memory.py -v
+python -B -m unittest discover -s tests -p test_minicpm_v5_incident.py -v
+python -B -m scripts.minicpm_v5_incident --output data/processed/<new-read-only-custody>
+python -B -m scripts.check_minicpm_original_inputs --inputs <authentic-copied-mounts> --spec <private-spec> --output data/processed/<new-rehearsal>.json
+python -B -m scripts.minicpm_fulltrain_recovery prepare-spec --initial-spec <private-original-spec> --ram-repair --output data/processed/<new-serial6-spec>.json
+python -B -m scripts.minicpm_fulltrain_recovery release-template --spec <new-serial6-spec> --snapshot <preserved-retirement> --runtime-ref <exact-reviewed-runtime> --implementation-pr <new-PR> --ram-repair --repair-closure <V5-custody-directory> --repair-directive <authentic-locator> --output data/processed/<unsigned-proposal>.json
+```
+
+Last two commands prepare unsigned material only. New direct source review,
+independent Antigravity audit, separately authorized merge, verified postmerge
+and authentic final-source release precede production rebind/signing/publication.
+The SAME original Operator later performs that authorized work and supplies the
+current signed notebook/private capsule with at most three concrete Owner steps.
+Owner personally Save Version > Save & Run All once before expiry. Codex neither
+submits nor watches a live job. No old notebook or ticket is edited.
+
+Acceptance and real Input/evidence hashes are recorded in the linked
+[repair evidence](research/MINICPM_V5_RAM_EVIDENCE_20261117.md).

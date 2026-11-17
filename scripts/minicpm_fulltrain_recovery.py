@@ -22,7 +22,29 @@ from scripts import minicpm_fulltrain_operator as old
 KNOWN = (("minicpm-v2-journal", "minicpm-v2-mirror"),
          ("minicpm-v2-2-journal", "minicpm-v2-2-mirror"), ("minicpm-v3-journal", "minicpm-v3-mirror"))
 EXTENSIONS = {"RESTART_BOUND", "PENDING_RESERVED", "PENDING_PUBLISH_INTENT", "PENDING_PUBLISHED",
-              "RESTART_COLLECTED", "PENDING_PACKAGE_RECOVERED", "REPAIR_BOUND"}
+              "RESTART_COLLECTED", "PENDING_PACKAGE_RECOVERED", "REPAIR_BOUND", 'RAM_REPAIR_BOUND'}
+
+
+def repair_route(grant):
+    from safeshift.fulltrain.minicpm_incident import release_version
+    if release_version(grant) == 6:
+        from scripts import minicpm_v5_incident
+        return minicpm_v5_incident, 'RAM_REPAIR_BOUND'
+    from scripts import minicpm_v44_incident
+    return minicpm_v44_incident, 'REPAIR_BOUND'
+
+
+def verify_v44_prefix(events, *, online=False, client=None):
+    """RAM repair retains AND verifies the earlier V4-4 closure; no reset."""
+    from scripts import minicpm_v44_incident
+    binding = events[6]['payload']
+    prior = minicpm_v44_incident.prefix(events[:6])
+    report = minicpm_v44_incident.verify_evidence(safe(ROOT, binding['closure_directory']), prior,
+                                                 online=online, client=client)
+    require(digest(report) == binding['closure_sha256'], 'MINICPM_V5_V44_CUSTODY_DRIFT')
+    return {'job': prior['value']['job'], 'notebook': read(safe(ROOT, binding['closure_directory'] + '/notebook.ipynb')),
+        'input_sources': prior['value']['input_sources'], 'kernel_id': report['provider']['kernel_id'],
+        'state': report['provider']['state']}
 
 
 def inspect_journals():
@@ -132,10 +154,11 @@ def verify_retired(snapshot):
     return baseline
 
 
-def restart_spec(initial, *, source_repair=False):
+def restart_spec(initial, *, source_repair=False, ram_repair=False):
     require(not initial["ancestors"] and not initial["request"]["history"], "MINICPM_RESTART_NO_OLD_PREDICTIONS")
     prefix = "nguynanhtn/safeshift-minicpm-" + recovery.CAMPAIGN
-    serial = "5" if source_repair else "4"
+    require(not (source_repair and ram_repair), 'MINICPM_ONE_SOURCE_TRANSITION')
+    serial = '6' if ram_repair else "5" if source_repair else "4"
     return ui.initial(initial["cohort"], initial["request"]["projection_sha256"], initial["request"]["resource_policy"],
         checkpoint_marker_sha256=initial["request"]["checkpoint_marker_sha256"], run_id=recovery.CAMPAIGN + "-run-" + serial,
         attempt_id=recovery.CAMPAIGN + "-attempt-" + serial, job=prefix + "-" + serial,
@@ -185,8 +208,13 @@ class RecoveredSerialJournal(old.Journal):
         super().append(mapping.get(kind, kind), payload)
 
     def bound(self, events):
+        ram = [e['payload'] for e in events if e['kind'] == 'RAM_REPAIR_BOUND']
+        require(len(ram) <= 1, 'MINICPM_NO_REPLAYED_RAM_REPAIR')
         repaired = [e["payload"] for e in events if e["kind"] == "REPAIR_BOUND"]
         require(len(repaired) <= 1, "MINICPM_NO_REPLAYED_SOURCE_REPAIR")
+        if ram:
+            require(len(repaired) == 1, 'MINICPM_RAM_REPAIR_REQUIRES_V44_HISTORY')
+            return ram[0]
         if repaired:
             return repaired[0]
         found = [e["payload"] for e in events if e["kind"] == "RESTART_BOUND"]
@@ -195,7 +223,9 @@ class RecoveredSerialJournal(old.Journal):
 
     def guard_path(self, grant):
         if "repair" in grant:
-            return safe(ROOT, "data/processed/minicpm-release-registrations/" + grant["campaign_id"] + "-source-repair-v1.json")
+            _, kind = repair_route(grant)
+            suffix = '-ram-repair-v1.json' if kind == 'RAM_REPAIR_BOUND' else '-source-repair-v1.json'
+            return safe(ROOT, "data/processed/minicpm-release-registrations/" + grant["campaign_id"] + suffix)
         return super().guard_path(grant)
 
     def rebind_release(self, locator, value, closure_directory):
@@ -204,18 +234,20 @@ class RecoveredSerialJournal(old.Journal):
         The old active reservation remains immutable history and fully charged.
         It is never COLLECTED and cannot supply an ancestor or prediction.
         """
-        from scripts.minicpm_v44_incident import prefix, verify_evidence
         from safeshift.fulltrain import minicpm_incident as incident
         with lock(self.root):
             events = self.events()
-            prior = prefix(events)
             grant = a.load(locator)
+            route, kind = repair_route(grant)
+            prior = route.prefix(events)
+            if kind == 'RAM_REPAIR_BOUND':
+                verify_v44_prefix(events, online=True)
             require("repair" in grant and grant["operator_host_sha256"] == old.host(), "MINICPM_FRESH_SOURCE_REPAIR_REQUIRED")
             old.clean_source(grant)
             verify_retired(grant["recovery"])
             a.bind(grant, value)
             recovery.mounted_inputs(value)
-            report = verify_evidence(closure_directory, prior, online=True)
+            report = route.verify_evidence(closure_directory, prior, online=True)
             require(digest(report) == grant["repair"]["closure_sha256"]
                 and digest(events[-1]) == grant["repair"]["journal_head_sha256"]
                 and prior["locator"] == grant["repair"]["previous_release"]
@@ -226,10 +258,10 @@ class RecoveredSerialJournal(old.Journal):
                 "MINICPM_REPAIR_EMPTY_HISTORY_ORDINAL_ZERO")
             write(self.guard_path(grant), self.binding(grant))
             a.sync_directory(self.guard_path(grant).parent)
-            self.append("REPAIR_BOUND", {"locator": locator, "grant_sha256": digest(grant), "initial": value,
+            self.append(kind, {"locator": locator, "grant_sha256": digest(grant), "initial": value,
                 "retirement_sha256": digest(grant["recovery"]), "historical_reservations": incident.initial_reserved(grant),
                 "closure_directory": Path(closure_directory).relative_to(ROOT).as_posix(), "closure_sha256": digest(report)})
-            return {"status": "SOURCE_REBOUND_FAILED_PRE_NATIVE_NO_REFUND", "next_serial": 5}
+            return {"status": "SOURCE_REBOUND_FAILED_PRE_NATIVE_NO_REFUND", "next_serial": incident.initial_reserved(grant)['jobs'] + 1}
 
     def bind_release(self, locator, value):
         with lock(self.root):
@@ -269,16 +301,18 @@ class RecoveredSerialJournal(old.Journal):
         verify_retired(grant["recovery"])
         from safeshift.fulltrain.minicpm_incident import initial_reserved
         if "repair" in grant:
-            from scripts.minicpm_v44_incident import prefix, verify_evidence
-            index = next(i for i, e in enumerate(events) if e["kind"] == "REPAIR_BOUND")
-            prior = prefix(events[:index])
+            route, kind = repair_route(grant)
+            index = next(i for i, e in enumerate(events) if e["kind"] == kind)
+            prior = route.prefix(events[:index])
+            if kind == 'RAM_REPAIR_BOUND':
+                verify_v44_prefix(events[:index])
             require(digest(events[index - 1]) == grant["repair"]["journal_head_sha256"]
-                and digest(verify_evidence(safe(ROOT, binding["closure_directory"]), prior))
+                and digest(route.verify_evidence(safe(ROOT, binding["closure_directory"]), prior))
                     == binding["closure_sha256"] == grant["repair"]["closure_sha256"], "MINICPM_REPAIR_CUSTODY_DRIFT")
         reserved, active, completed, begun = initial_reserved(grant), None, [], False
         for event in events:
             kind, payload = event["kind"], event["payload"]
-            if kind == ("REPAIR_BOUND" if "repair" in grant else "RESTART_BOUND"):
+            if kind == (repair_route(grant)[1] if "repair" in grant else "RESTART_BOUND"):
                 begun = True
                 continue
             if not begun:
@@ -314,22 +348,27 @@ class RecoveredSerialJournal(old.Journal):
         verify_retired(grant["recovery"])
         technical = []
         if "repair" in grant:
-            from scripts.minicpm_v44_incident import prefix, verify_evidence
+            route, kind = repair_route(grant)
             events = self.events()
-            index = next(i for i, e in enumerate(events) if e["kind"] == "REPAIR_BOUND")
-            previous = prefix(events[:index])
+            index = next(i for i, e in enumerate(events) if e["kind"] == kind)
+            previous = route.prefix(events[:index])
             directory = safe(ROOT, self.bound(events)["closure_directory"])
-            report = verify_evidence(directory, previous, online=True, client=client)
+            report = route.verify_evidence(directory, previous, online=True, client=client)
             require(digest(report) == grant["repair"]["closure_sha256"], "MINICPM_REPAIR_PROVIDER_CUSTODY_CHANGED")
             technical = [{"job": previous["value"]["job"], "notebook": read(directory / "notebook.ipynb"),
                 "input_sources": previous["value"]["input_sources"], "kernel_id": report["provider"]["kernel_id"],
                 "state": report["provider"]["state"]}]
+            if kind == 'RAM_REPAIR_BOUND':
+                technical.insert(0, verify_v44_prefix(events[:index], online=True, client=client))
         safety = current_safety(client, grant["recovery"], [p["job"] for p in technical + prior], value["job"])
         # Exact new-series predecessor code/Input/terminal checks and Input/quota
         # use PR198's verifier; historical retired records are not passed to it.
         result = old.provider(client, grant, value, technical + prior)
         if technical:
             result["technical_predecessor"] = result["prior_jobs"].pop(0)
+            if len(technical) == 2:
+                result['technical_history'] = [result['technical_predecessor']]
+                result['technical_predecessor'] = result['prior_jobs'].pop(0)
         require(safety["owned_sha256"] == result["owned_sha256"], "MINICPM_ACCOUNT_CHANGED_DURING_RELEASE")
         result["current_account_safety"] = safety
         _, _, _, _, completed = self.state()
@@ -340,18 +379,20 @@ class RecoveredSerialJournal(old.Journal):
 
     def validate_package(self, grant, active):
         from safeshift.fulltrain.minicpm_execution import MARKER
+        from safeshift.fulltrain.minicpm_incident import release_version
         destination = safe(ROOT, active["package"])
         value = active["value"]
         expected = old.notebook(grant["runtime_commit"], capsule_sha256=digest(value),
-            release_locator=self.release_locator(self.events()), release_version=5 if "repair" in grant else 4)
+            release_locator=self.release_locator(self.events()), release_version=release_version(grant))
         require(read(destination / "notebook.ipynb") == expected, "MINICPM_OWNER_EXACT_SOURCE_NOTEBOOK")
         require(ui.verify_capsule(destination / "dataset", digest(value), release_ticket=True) == value
             and read(destination / "dataset" / MARKER) == active["ticket"], "MINICPM_OWNER_EXACT_CAPSULE_TICKET")
 
     def handoff_details(self, handoff, grant, value, ticket, destination):
+        from safeshift.fulltrain.minicpm_incident import release_version
         local = datetime.fromtimestamp(ticket["payload"]["start_before_unix"], timezone(timedelta(hours=7)))
         return {**handoff, "mode": "OWNER_UI_ONLY", "runtime_commit": grant["runtime_commit"],
-            "notebook_release_version": 5 if "repair" in grant else 4,
+            "notebook_release_version": release_version(grant),
             "source_transition": grant.get("repair", {}).get("schema"),
             "retained_before_new_source": grant.get("repair", {}).get("reserved_after"),
             "source_sha256": grant["scope"]["source_sha256"], "merged_sha": grant["merged_sha"],
@@ -374,6 +415,7 @@ def main():
     spec = sub.add_parser("prepare-spec")
     spec.add_argument("--initial-spec", type=Path, required=True); spec.add_argument("--output", type=Path, required=True)
     spec.add_argument("--source-repair", action="store_true")
+    spec.add_argument('--ram-repair', action='store_true')
     template = sub.add_parser("release-template")
     for name in ("spec", "snapshot", "output"):
         template.add_argument("--" + name, type=Path, required=True)
@@ -381,6 +423,7 @@ def main():
     template.add_argument("--implementation-pr", type=int)
     template.add_argument("--repair-closure", type=Path)
     template.add_argument("--repair-directive", type=Path)
+    template.add_argument('--ram-repair', action='store_true')
     binding = sub.add_parser("bind")
     binding.add_argument("--locator", type=Path, required=True); binding.add_argument("--spec", type=Path, required=True)
     rebinding = sub.add_parser("rebind-source")
@@ -401,7 +444,7 @@ def main():
         result = retirement_snapshot(read(args.directive_locator))
         write(args.output, result)
     elif args.action == "prepare-spec":
-        result = restart_spec(read(args.initial_spec), source_repair=args.source_repair)
+        result = restart_spec(read(args.initial_spec), source_repair=args.source_repair, ram_repair=args.ram_repair)
         write(args.output, result)
     elif args.action == "release-template":
         value, snapshot = read(args.spec), read(args.snapshot)
@@ -411,7 +454,10 @@ def main():
             caps=recovery.budget_policy(snapshot["reserved"])["caps"],
             approvals={kind: None for kind in recovery.SOURCE_ROLES})
         if args.repair_closure is not None:
-            from scripts.minicpm_v44_incident import prefix, verify_evidence, repair_template
+            if args.ram_repair:
+                from scripts.minicpm_v5_incident import prefix, verify_evidence, repair_template
+            else:
+                from scripts.minicpm_v44_incident import prefix, verify_evidence, repair_template
             require(args.implementation_pr is not None and args.implementation_pr > 199
                 and args.repair_directive is not None, "MINICPM_REPAIR_NEW_PR_AND_DIRECTIVE_REQUIRED")
             prior = prefix(RecoveredSerialJournal().events())
@@ -419,7 +465,7 @@ def main():
             result = repair_template(result, prior, closure, read(args.repair_directive))
             result["implementation_pr"] = args.implementation_pr
         else:
-            require(args.implementation_pr is None and args.repair_directive is None,
+            require(args.implementation_pr is None and args.repair_directive is None and not args.ram_repair,
                 "MINICPM_REPAIR_CLOSURE_REQUIRED")
         write(args.output, result)
         print("UNSIGNED_PROPOSAL_NOT_AUTHORITY")
