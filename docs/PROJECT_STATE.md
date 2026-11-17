@@ -22,7 +22,12 @@ Prepared source adds isolated post-setup advice of owned venv file pages, strict
 ownership/alias/scan/deadline checks, unchanged16GiB RAM floor and RAM/disk evidence
 across admit/setup/reclaim/cpu/gpu/native/processor/weights/every call. Process-group
 survivors or missing cleanup evidence stop. Scientific native sources/configuration
-remain unchanged. CPU acceptance is recorded after final committed-source checks.
+remain unchanged. [CPU acceptance](research/MINICPM_V5_RAM_EVIDENCE_20261117.md):
+177 distinct cases covered across Linux broad/follow-up/collection and Windows
+SDK/focused logs, no unresolved errors. The original173-case Linux log records
+one old-fixture error (missing new explicit RAM output directory); test-only
+fix888dd15 and full23-case module rerun PASS, unchanged runtime SHA. All3763
+synthetic controller/export/import/resume checks PASS; no real inference claim.
 
 Actual source/byte identity comparison changes only implementation SHA; model,
 configuration, prompt/parser/generation/preprocessing/checkpoint/runtime identity
