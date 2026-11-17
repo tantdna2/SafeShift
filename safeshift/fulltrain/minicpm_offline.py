@@ -13,10 +13,12 @@ from safeshift.candidates.source import require
 from safeshift.pilot.contract import digest, require_hash
 from . import minicpm_release as a, minicpm_v5_incident as v5
 
-SCHEMA = "safeshift-minicpm-offline-continuation-v1"
-RELEASE = "SAFESHIFT_MINICPM_OFFLINE_RELEASE_V1"
-TICKET = "safeshift-minicpm-offline-ticket-v1"
-FINAL = "SAFESHIFT_MINICPM_OFFLINE_FINAL_V1"
+SCHEMA = "safeshift-minicpm-offline-continuation-v2"
+RELEASE = "SAFESHIFT_MINICPM_OFFLINE_RELEASE_V2"
+TICKET = "safeshift-minicpm-offline-ticket-v2"
+FINAL = "SAFESHIFT_MINICPM_OFFLINE_FINAL_V2"
+RELEASE_SECONDS = 30 * 24 * 3600
+ORIGINAL_SESSION = "0b1d115c-c002-44e8-b22e-087226f6dc73"
 RECONCILED = "MINICPM_OFFLINE_CAMPAIGN_RECONCILED"
 EXCLUDED_SESSION = "a5fa95c9-bbc0-4df2-bdc7-ecb56b098bbc"
 TOOLS = ("minicpm_offline_continuation.py", "owner_verify_minicpm_offline.py",
@@ -28,13 +30,13 @@ TOOLS = ("minicpm_offline_continuation.py", "owner_verify_minicpm_offline.py",
 def validate_delegation(grant):
     d = grant["offline"]
     require(type(d) is dict and set(d) == {"schema", "decision_issue", "operator_session",
-        "base_journal_head_sha256", "tools_sha256", "tool_blobs", "unmeasured_calls", "review_logins"}
+        "base_journal_head_sha256", "tools_sha256", "tool_blobs", "unmeasured_calls"}
         and d["schema"] == SCHEMA and d["decision_issue"] == 202
-        and grant["schema"] == a.RECOVERY_SCHEMA and grant["implementation_pr"] > 201
+        and grant["schema"] == a.RECOVERY_SCHEMA and grant["implementation_pr"] > 203
         and grant["repair"]["schema"] == v5.SCHEMA, "MINICPM_NEW_OFFLINE_AUTHORITY_REQUIRED")
     require(type(d["operator_session"]) is str and re.fullmatch(
         r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", d["operator_session"])
-        and d["operator_session"] != EXCLUDED_SESSION, "MINICPM_ORIGINAL_OPERATOR_SESSION_REQUIRED")
+        and d["operator_session"] == ORIGINAL_SESSION, "MINICPM_ORIGINAL_OPERATOR_SESSION_REQUIRED")
     for name in ("base_journal_head_sha256", "tools_sha256"):
         require_hash(d[name])
     require(type(d["tool_blobs"]) is dict and set(d["tool_blobs"]) == {"scripts/"+name for name in TOOLS}
@@ -42,13 +44,13 @@ def validate_delegation(grant):
         "MINICPM_EXACT_REVIEWED_TOOL_BLOBS")
     require(d["base_journal_head_sha256"] == grant["repair"]["journal_head_sha256"],
         "MINICPM_OFFLINE_EXACT_PRE_SERIAL6_HEAD")
-    require(type(d["unmeasured_calls"]) is int and 1 <= d["unmeasured_calls"] < 3763
-        and d["unmeasured_calls"] <= grant["caps"]["job_calls"], "MINICPM_EXPLICIT_CONSERVATIVE_INITIAL_CAP")
-    require(type(d["review_logins"]) is list and 1 <= len(d["review_logins"]) <= 8
-        and all(type(s) is str and re.fullmatch(r"[A-Za-z0-9-]{1,39}", s) for s in d["review_logins"])
-        and len({s.casefold() for s in d["review_logins"]}) == len(d["review_logins"])
-        and all(s.casefold() != a.OWNER.casefold() for s in d["review_logins"]),
-        "MINICPM_FINAL_REVIEWERS_REQUIRED")
+    require(type(d["unmeasured_calls"]) is int and d["unmeasured_calls"] == 100,
+        "MINICPM_EXPLICIT_CONSERVATIVE_INITIAL_CAP")
+    require(type(grant["issued_unix"]) is int and grant["issued_unix"] > 0
+        and type(grant["expires_unix"]) is int
+        and grant["expires_unix"] == grant["issued_unix"] + RELEASE_SECONDS,
+        "MINICPM_OFFLINE_EXACT_30_DAY_RELEASE")
+    require(0 < grant["caps"]["job_seconds"] <= 4 * 3600, "MINICPM_OFFLINE_FOUR_HOUR_JOB_CAP")
     return d
 
 

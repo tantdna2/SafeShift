@@ -1,7 +1,7 @@
 # MiniCPM nối nhiều job offline — Issue #202
 
 **SOURCE CANDIDATE / OWNER RUN BLOCKED.** Task lập trình ngày 17/11/2026 từ
-main `e713d56d62a5a649a2078f2c2376fde6d025b978` sau PR201. Một branch mới,
+main `0f598f1f4f67619edbf8948492ac9b12af119edd` sau PR203. Một branch mới,
 một Draft PR; dừng để ChatGPT review trực tiếp, audit Antigravity độc lập,
 quyền merge riêng trong cùng session audit, xác minh hậu merge và release thật.
 Không có GPU, Kaggle/API thật, TEST, production journal, ký vé thật hoặc xuất
@@ -19,34 +19,36 @@ Không chuyển throughput, grant, khóa, session hoặc kết quả InternVL sa
 ## Quyền mới được đề xuất
 
 Giữ schema release recovery V4 và repair V5/RAM V6, thêm **bắt buộc** record
-`offline` versioned; marker mới `SAFESHIFT_MINICPM_OFFLINE_RELEASE_V1`.
+`offline` versioned; marker mới `SAFESHIFT_MINICPM_OFFLINE_RELEASE_V2`.
 Marker cũ không kích hoạt quyền offline. Mọi source_review/independent_audit/
 merge/postmerge phải là record mới, subject hash chứa toàn bộ delegation này.
 Quyền O2–O6 gốc, retirement, hai failed closures và chữ ký cũ vẫn được kiểm.
 
 ```text
-offline.schema = safeshift-minicpm-offline-continuation-v1
+offline.schema = safeshift-minicpm-offline-continuation-v2
 offline.decision_issue = 202
-offline.operator_session = UUID MiniCPM Operator gốc, được xác nhận thật
+offline.operator_session = 0b1d115c-c002-44e8-b22e-087226f6dc73
 offline.base_journal_head_sha256 = exact head trước Serial6 = repair.journal_head_sha256
 offline.tools_sha256 = digest(tools_manifest())
 offline.tool_blobs = Git blob SHA1 của đúng 11 scripts, kiểm mọi reviewed/merged tree
-offline.unmeasured_calls = số nguyên hữu hạn do release thật khóa, 1..3762
-offline.review_logins = tài khoản được phép admission cuối
+offline.unmeasured_calls = 100 (trần job đầu; signed max_calls có thể thấp hơn)
+expires_unix = issued_unix + 30*24*3600 (tại thời điểm phát hành thật)
 ```
 
-Sau [review6943496144](https://github.com/tantdna2/SafeShift/pull/203#issuecomment-6943496144),
-`review_logins` bắt buộc chứa tài khoản GitHub **khác Owner** (so login không
-phân biệt hoa/thường), không trùng alias. Khi admission, Reviewer phải có
-`user.id` nguyên dương khác cả `a.OWNER_ID` và ID của Owner comment đã xác thực;
-login cũng khác Owner, đồng thời thuộc allowlist trong quyền gốc đúng source.
-Hai comment ID khác nhau không đủ tách vai trò. Không có Reviewer thật được
-Owner cấp quyền thì final gate **BLOCKED**; `synthetic-reviewer` chỉ là fixture,
-không chỉ định Reviewer thật hoặc cấp quyền. Sửa allowlist đòi hỏi subject/source
-approvals hợp lệ; JSON local không tự cấp quyền.
+[Quyết định Owner6954626555](https://github.com/tantdna2/SafeShift/issues/202#issuecomment-6954626555)
+thay yêu cầu tài khoản Reviewer thứ hai của PR203 bằng **một comment GitHub thật
+của Owner** trên Issue202, sau đối soát đủ3763 ảnh và từng job/provider gốc.
+Schema V2 từ chối grant V1 hoặc trường `review_logins`; không sửa grant/ticket cũ.
+Bốn source-stage approvals vẫn giữ nguyên theo `minicpm_release.load`, mỗi record
+ràng buộc `subject_sha256` chứa schema, cap và thời hạn mới; chúng không yêu cầu
+thêm người GitHub. Source mới phải có review/audit/merge/postmerge và release mới.
 
-Không có giá trị mặc định cho `unmeasured_calls`, session, private key, thời hạn
-hoặc approval. Đây là cap bảo thủ được review, không phải tốc độ đã đo. Module
+Proposal để trống `issued_unix/expires_unix`; chỉ điền thời điểm phát hành thật,
+không kế thừa hoặc hồi tố ngày cũ. Verifier bắt buộc đúng30 ngày, không phải cam
+kết hoàn tất trong30 ngày. Trần đầu100 không phải tốc độ đã đo hoặc cam kết hoàn
+tất100 ảnh trong2–2,5 giờ; quota/time/export có thể giảm signed max_calls. Mỗi job
+tối đa4 giờ; adaptive pre-call/export guards vẫn chặn khi thiếu thời gian.
+Không có approval/private key mặc định. Module
 `minicpm_offline.py` nằm trong runtime manifest; source tree của runtime,
 reviewed HEAD và merged SHA còn phải khóa cả 11 tools trong `tools_manifest()`.
 Notebook V7 sinh từ **runtime commit có cùng bytes**, khóa source/capsule/code
@@ -58,11 +60,11 @@ và locator. Dùng cùng entrypoint/child/controller PR201; không có vòng mod
 python -B -m scripts.minicpm_offline_continuation --directory data/processed/minicpm-offline release-template --v6-proposal data/processed/<unsigned-v6>.json --output data/processed/<new-unsigned-offline>.json
 ```
 
-Các trường merge/HEAD/approvals/session/cap đầu còn trống; proposal bị từ chối
-bởi verifier. Không sửa release V5 đã ký hoặc tự đặt APPROVED. Reviewer/Owner
+Các trường merge/HEAD/approvals/issued_unix/expires_unix còn trống; proposal bị từ chối
+bởi verifier. Không sửa release V5 đã ký hoặc tự đặt APPROVED. Owner
 cấp quyền một lần sau source gates, không vòng GitHub release từng job.
 
-**BLOCKED hiện tại:** chưa xác định MiniCPM Operator gốc; không dùng
+**BLOCKED hiện tại:** giữ Operator gốc `0b1d115c-c002-44e8-b22e-087226f6dc73`; không dùng
 `a5fa95c9-bbc0-4df2-bdc7-ecb56b098bbc` (InternVL Attempt4). Chưa xác nhận khóa
 riêng gốc/host, chưa có authentic exact-source offline release/expiry/initial
 cap, chưa có quota/Input proof hiện tại. Không tạo Operator thay thế, key mới,
@@ -114,7 +116,7 @@ python -B -m scripts.minicpm_offline_continuation --directory data/processed/min
 ```
 
 Fresh gate phải còn trong provider_max_age_seconds của grant. Ticket có schema
-riêng `safeshift-minicpm-offline-ticket-v1`, RSA3072/SHA256 thật, grant/value/
+riêng `safeshift-minicpm-offline-ticket-v2`, RSA3072/SHA256 thật, grant/value/
 notebook/capsule hashes, serial6+, previous-event hash, đủ lineage/holds, limit và
 start-before. Chỉ tạo tuần tự trên host/session được quyền gốc ủy nhiệm. Không
 ký khi thiếu key, có active/STOP, sai history hoặc hết cap/quota/expiry. Runtime
@@ -154,7 +156,7 @@ reservation và error type, không tự repair/skip/rerun. Chỉ append
 
 Sizing dùng MiniCPM telemetry kiểm từ ZIP/claims cùng source: overhead thực,
 max call latency×safety, first-call/export margin, pending thật, caps, quota và
-expiry. Lượt đầu dùng cap hữu hạn đã review, không mặc định3763. Không mượn
+expiry. Lượt đầu dùng trần100 đã review; signed max_calls có thể thấp hơn. Không mượn
 13.42s/200/174 của InternVL, không hứa số job. Runtime tiếp tục kiểm thời gian,
 ZIP/disk/RAM trước từng call; adaptive stop giữ completed outputs và pending.
 Telemetry offline giúp ước lượng, không giả event MEASURED hay population bound.
@@ -186,15 +188,14 @@ Owner có tối đa ba thao tác ở lượt final:
    (kể cả ancestors), cả hai ZIP/sidecar và full local replay. Kiểm lại hai failed
    technical jobs và account inventory/quota; retired provider uncertainty giữ
    nguyên, không suy absence hiện tại thành deletion/terminal trong quá khứ.
-2. Sau report thật, Owner đăng lên Issue202 marker
-   `SAFESHIFT_MINICPM_OFFLINE_FINAL_V1` với `{manifest_sha256, report_sha256,
-   status:"APPROVED_FOR_FINAL_ADMISSION"}`. Reviewer là tài khoản GitHub khác
-   Owner có ID/login độc lập, nằm trong delegation đã xác thực, kiểm originals rồi cấp một
-   comment riêng marker+`_ADMISSION` với `{manifest_sha256,report_sha256,
-   owner:{comment_id,body_sha256},status:"RELEASED_FOR_FINAL_ADMISSION"}`.
-3. Owner export hai comment thật; Antigravity hợp vào **bản copy exports mới**
+2. Sau kiểm đầy đủ report/originals, Owner đăng **một** comment thật lên Issue202:
+   marker `SAFESHIFT_MINICPM_OFFLINE_FINAL_V2` với `{manifest_sha256,
+   report_sha256, status:"APPROVED_FOR_FINAL_ADMISSION"}`. Hash phải khớp manifest
+   có thứ tự đủ3763 ảnh và report xác thực từng job/ZIP/sidecar/capsule/source,
+   cùng mọi bằng chứng cũ. Không cần tài khoản Reviewer thứ hai.
+3. Owner export comment thật; Antigravity hợp vào **bản copy exports mới**
    (không sửa bản gốc) rồi chạy `reconcile --report <report.json> --exports
-   <final-exports.json> --owner-locator <json> --admission-locator <json>`.
+   <final-exports.json> --owner-locator <json>` với locator `{comment_id,body_sha256}`.
 
 `reconcile` append đúng một `MINICPM_OFFLINE_CAMPAIGN_RECONCILED` trong journal
 mới, giữ mọi thời điểm/reservations gốc. Event chỉ khóa hash; manifest/report/
@@ -202,18 +203,18 @@ exports đầy đủ nằm trong `final/` ở cả hai mirror, create-only. Nh�
 nhiều không làm event chứa lặp mọi cumulative history vượt envelope128MiB.
 Từng final document vẫn có bound8GiB; thiếu RAM/disk phải STOP, không bỏ custody.
 Duplicate bị chặn. `official-report`
-chỉ PASS sau kiểm lại certificate/manifest/Owner/reviewer/every-job report,
+chỉ PASS sau kiểm lại certificate/manifest/Owner/every-job report,
 xuất3763 rows/history/lineage/budget. Trước đó official analysis BLOCKED.
 Legacy summary/collector không biết schema mới và không được dùng làm kết quả
 chính thức. Provider exception giữ partial/BLOCKED và không log signed URL.
 
 `official-report` kiểm lại cùng quy tắc ID/login khi đọc certificate, không chỉ
 tin event từng được append. Exports là response GitHub do Owner lấy thật; sửa
-offline JSON có thể giả nguồn gốc, nên custody của exports và reviewer/auditor
-kiểm originals trên GitHub vẫn là trust boundary đã công bố. Không nhận một
-`approved:true` hay proof tổng quát thay Owner/reviewer comments và từng provider.
+offline JSON có thể giả nguồn gốc, nên Owner custody của exports và kiểm originals
+trực tiếp trên GitHub vẫn là trust boundary đã công bố. Không nhận một
+`approved:true` hay proof tổng quát thay comment Owner và từng provider.
 Owner verifier online chỉ xuất report/template PENDING, không tạo final approval
-hoặc admission; cả hai comment thật vẫn cần ở bước sau.
+hoặc admission; một comment Owner thật vẫn cần ở bước sau.
 
 ## RAM và giới hạn còn lại
 

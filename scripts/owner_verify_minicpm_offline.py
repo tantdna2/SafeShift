@@ -145,7 +145,7 @@ def verify(route, destination, *, owner_performs_network=False, client=None):
         c.write(destination / "github-exports.json", exports)
         c.write(destination / "report.json", report)
         c.write(destination / "owner-template.json", {"manifest_sha256": c.digest(manifest), "report_sha256": c.digest(report),
-            "status": "PENDING_OWNER_AND_REVIEWER_RECORDS"})
+            "status": "PENDING_AUTHENTIC_OWNER_FINAL_COMMENT"})
         return report
     except BaseException as error:
         blocked(destination, error)
