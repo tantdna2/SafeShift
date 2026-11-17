@@ -1,0 +1,12 @@
+test_extra_late_pair_or_bad_url_blocks_before_download (test_minicpm_execution_transport.FirstCollectionTests.test_extra_late_pair_or_bad_url_blocks_before_download) ... ok
+test_first_download_reuses_sdk_inventory_and_exact_four_gets (test_minicpm_execution_transport.FirstCollectionTests.test_first_download_reuses_sdk_inventory_and_exact_four_gets) ... ok
+test_pinned_sdk_create_response_uses_status_and_error_fields (test_minicpm_execution_transport.FirstCollectionTests.test_pinned_sdk_create_response_uses_status_and_error_fields) ... ok
+test_sidecar_mismatch_retains_download_and_blocks_acceptance (test_minicpm_execution_transport.FirstCollectionTests.test_sidecar_mismatch_retains_download_and_blocks_acceptance) ... ok
+test_two_nested_pairs_real_sdk_exact_four_anonymous_gets (test_minicpm_ui_transport.MiniCPMPairTransportTests.test_two_nested_pairs_real_sdk_exact_four_anonymous_gets) ... ok
+test_two_pairs_missing_extra_or_conflicting_path_before_get (test_minicpm_ui_transport.MiniCPMPairTransportTests.test_two_pairs_missing_extra_or_conflicting_path_before_get) ... ok
+test_two_pairs_sha_disagreement_preserves_download_without_acceptance (test_minicpm_ui_transport.MiniCPMPairTransportTests.test_two_pairs_sha_disagreement_preserves_download_without_acceptance) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.617s
+
+OK

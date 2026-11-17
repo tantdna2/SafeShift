@@ -34,7 +34,7 @@ OWNER = "tantdna2"
 OWNER_ID = 246929698
 API = "https://api.github.com/repos/tantdna2/SafeShift"
 ROLES = ("source_review", "independent_audit", "merge", "postmerge", "O2", "O3", "O4", "O5", "O6")
-STAGES = ("launch", "admit", "setup", "cpu", "gpu", "native")
+STAGES = ("launch", "admit", "setup", "reclaim", "cpu", "gpu", "native")
 CLAIMS = Path("/kaggle/working/minicpm-fulltrain-claims")
 _active = ContextVar("minicpm_release_context", default=None)
 
@@ -167,8 +167,8 @@ def validate(grant, *, repo=ROOT):
         from .minicpm_recovery import validate_recovery
         validate_recovery(grant)
     if repair:
-        from .minicpm_incident import validate_repair
-        validate_repair(grant)
+        from .minicpm_incident import source_incident
+        source_incident(grant).validate_repair(grant)
     return grant
 
 
@@ -226,8 +226,8 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
         from .minicpm_recovery import authenticate_recovery
         authenticate_recovery(grant, reader, rights=approvals)
     if "repair" in grant:
-        from .minicpm_incident import authenticate_repair
-        authenticate_repair(grant, reader)
+        from .minicpm_incident import source_incident
+        source_incident(grant).authenticate_repair(grant, reader)
     now = time.time()
     require(collection or grant["issued_unix"] <= now < grant["expires_unix"], "MINICPM_AUTHORITY_EXPIRED")
     return grant
@@ -294,15 +294,27 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     for field in ("issued_unix", "start_before_unix"):
         require(type(t[field]) is int, "MINICPM_TICKET_TIME")
     provider = t["provider"]
+    from .minicpm_incident import release_version
+    ram_repair = 'repair' in grant and release_version(grant) == 6
     require(type(provider) is dict and set(provider) == {"observed_unix", "quota", "input_versions",
         "prior_jobs", "job_absent", "owned_sha256"} | ({"current_account_safety"} if recovery else set())
-        | ({"technical_predecessor"} if "repair" in grant else set()), "MINICPM_PROVIDER_EVIDENCE")
+        | ({"technical_predecessor"} if "repair" in grant else set())
+        | ({'technical_history'} if ram_repair else set()), "MINICPM_PROVIDER_EVIDENCE")
     if "repair" in grant:
-        from .minicpm_incident import JOB
+        from .minicpm_incident import source_incident
+        JOB = source_incident(grant).JOB
         previous = provider["technical_predecessor"]
         require(set(previous) == {"job", "version", "state", "kernel_id"} and previous["job"] == JOB
             and previous["version"] == 1 and previous["state"] in ("COMPLETE", "ERROR")
             and type(previous["kernel_id"]) is int, "MINICPM_REPAIR_TERMINAL_PREDECESSOR")
+        if ram_repair:
+            from .minicpm_incident import JOB as v44_job
+            require(type(provider['technical_history']) is list and len(provider['technical_history']) == 1,
+                    'MINICPM_V5_ALL_TECHNICAL_HOLDS_REQUIRED')
+            row = provider['technical_history'][0]
+            require(set(row) == {'job', 'version', 'state', 'kernel_id'} and row['job'] == v44_job
+                    and row['version'] == 1 and row['state'] in ('COMPLETE', 'ERROR')
+                    and type(row['kernel_id']) is int, 'MINICPM_V5_V44_TERMINAL_REQUIRED')
     quota = provider["quota"]
     require(set(quota) == {"used", "reserved", "total"} and all(type(n) is int and n >= 0 for n in quota.values())
         and quota["reserved"] == 0 and quota["total"] - quota["used"] >= 2 * p["max_seconds"]
@@ -390,6 +402,8 @@ class GuardedBackend:
             native_generate = model.generate
             row = c["value"]["cohort"]["samples"][self.ordinal]
             def observed_generate(*args, **kwargs):
+                from . import memory
+                memory.resource_check(c['value']['request'], evidence, 'before-model-generate')
                 native_started(self.ordinal, row["sample_id"], row["image_sha256"])
                 return native_generate(*args, **kwargs)
             with patch.object(model, "generate", observed_generate):

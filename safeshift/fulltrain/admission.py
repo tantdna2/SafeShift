@@ -20,7 +20,7 @@ from safeshift.candidates.train_runtime import verify_images
 from safeshift.pilot.artifacts import read, sha, write, export, safe
 from safeshift.pilot.contract import digest, require_hash
 from safeshift.pilot.runner import error_record
-from . import contract, environment, supervision, provision, inputs, runtime
+from . import contract, environment, supervision, provision, inputs, runtime, memory
 
 REQUEST_FIELDS = {"model_key", "source_sha256", "inputs", "marker_sha256", "projection_sha256",
     "campaign", "plan", "history", "work", "scratch", "resource_policy", "repair_case",
@@ -151,9 +151,19 @@ def stage(mode, request, repo, output, deadline):
     output = Path(output)
     output.mkdir(exist_ok=False)
     try:
-        if mode == "setup":
+        if request['model_key'] == 'minicpm4':
+            memory.observe(output, 'stage-entry')
+        if mode == 'reclaim':
+            require(os.environ.get('CUDA_VISIBLE_DEVICES') == ''
+                and Path(sys.prefix).resolve() == (Path(request['scratch']) / 'venv3119').resolve(),
+                'ADVICE_ACTUAL_ISOLATED_WORKER_REQUIRED')
+            memory.reclaim(request, output, deadline)
+        elif mode == "setup":
             admit(request, repo)  # all Input/checkpoint admission before package activity
-            environment.resources(request["model_key"], request["resource_policy"], request["scratch"], request["work"])
+            if request['model_key'] == 'minicpm4':
+                memory.resource_check(request, output, 'before-setup')
+            else:
+                environment.resources(request["model_key"], request["resource_policy"], request["scratch"], request["work"])
             from .preflight import storage_probe
             budgets = request["resource_policy"]
             write(output / "allocation.json", storage_probe(request["scratch"], request["work"],
@@ -166,7 +176,8 @@ def stage(mode, request, repo, output, deadline):
                 require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
             if mode != "admit":
                 write(output / "software.json", environment.software(request["model_key"], repo, request["runtime_lock"]))
-            write(output / "resources.json", environment.resources(request["model_key"], request["resource_policy"],
+            write(output / "resources.json", memory.resource_check(request, output, 'after-admission')
+                if request['model_key'] == 'minicpm4' else environment.resources(request["model_key"], request["resource_policy"],
                                                                     request["scratch"], request["work"]))
             if mode == "admit":
                 pass  # bounded byte/hash/history admission before setup or no-op
@@ -178,6 +189,8 @@ def stage(mode, request, repo, output, deadline):
                 else:
                     write(output / "images.json", verify_images(bundle, rows))
                 from .preflight import cpu_native_checks
+                if request['model_key'] == 'minicpm4':
+                    memory.resource_check(request, output, 'before-processor')
                 write(output / "native_cpu.json", cpu_native_checks(request["model_key"], snapshot, repo,
                       wheel_lock=request["runtime_lock"]))
             elif mode in ("gpu", "native"):
@@ -186,7 +199,8 @@ def stage(mode, request, repo, output, deadline):
                 if mode == "native":
                     # Parent and every child recheck source/input/checkpoint/plan.
                     # Controller alone creates the immutable attempt reservation.
-                    result = runtime._worker(request, repo=repo)
+                    result = runtime._worker(request, repo=repo, **({'memory_output': output / 'memory'}
+                        if request['model_key'] == 'minicpm4' else {}))
                     require(read(result / "receipt.json")["stop"] in (None, "ADAPTIVE_TIME_STOP", "ADAPTIVE_STORAGE_STOP")
                             and not (result / "accounting_failure.json").exists(), "NATIVE_ATTEMPT_STOPPED_REVIEW_EVIDENCE")
             else:
@@ -196,6 +210,9 @@ def stage(mode, request, repo, output, deadline):
     except BaseException as error:
         write(output / "failure.json", error_record(error, mode))
         raise
+    finally:
+        if request['model_key'] == 'minicpm4':
+            memory.observe(output, 'stage-exit')
 
 
 def command(python, mode, request_file, repo, output, deadline):
@@ -226,6 +243,8 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
     output.mkdir(parents=True, exist_ok=False)
     request_file = output / "request.json"
     write(request_file, request)
+    if request['model_key'] == 'minicpm4':
+        write(output / 'owned-scratch.json', memory.ownership(request))
     p, budgets = request["plan"], request["resource_policy"]
     deadline = time.monotonic() + p["max_seconds"]
     from . import minicpm_release as capability
@@ -245,7 +264,8 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
         with lease_key(control, key) as lock_options:
             # Allocation is also supervised, inside setup child (see below),
             # so quota stalls cannot hang the notebook outside the deadline.
-            modes = ("admit",) + (("setup", "cpu", "gpu") + (() if diagnostic else ("native",))
+            setup_modes = ('setup', 'reclaim', 'cpu', 'gpu') if request['model_key'] == 'minicpm4' else ('setup', 'cpu', 'gpu')
+            modes = ("admit",) + (setup_modes + (() if diagnostic else ("native",))
                                    if p["scheduled_ordinals"] or diagnostic else ())
             for mode in modes:
                 stage_name = mode
@@ -255,12 +275,18 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
                     until = min(until, deadline - active["grant"]["sizing"]["export_seconds"])
                 if mode in ("gpu", "native"):
                     env["CUDA_VISIBLE_DEVICES"] = "0,1" if request["model_key"] == "qwen3" else "0"
-                supervision.run(command(python, mode, request_file, repo, output / mode, until),
-                    cwd=repo, env=env, deadline=until, log=output / (mode + ".log"),
-                    receipt=output / (mode + "-process.json"), max_log_bytes=budgets["max_log_bytes"],
-                    watch_log_root=output / mode,
-                    **({"live_prefix": "SAFESHIFT_MINICPM_LIVE_V3 "} if active is not None
-                        and active["grant"]["schema"] == capability.RECOVERY_SCHEMA else {}), **lock_options)
+                if request['model_key'] == 'minicpm4':
+                    memory.observe(output, mode + '-parent-before')
+                try:
+                    supervision.run(command(python, mode, request_file, repo, output / mode, until),
+                        cwd=repo, env=env, deadline=until, log=output / (mode + ".log"),
+                        receipt=output / (mode + "-process.json"), max_log_bytes=budgets["max_log_bytes"],
+                        watch_log_root=output / mode,
+                        **({"live_prefix": "SAFESHIFT_MINICPM_LIVE_V3 "} if active is not None
+                            and active["grant"]["schema"] == capability.RECOVERY_SCHEMA else {}), **lock_options)
+                finally:
+                    if request['model_key'] == 'minicpm4':
+                        memory.observe(output, mode + '-parent-after')
                 proof = read(output / mode / "stage.json")
                 require(proof == {"status": "RETURNED", "stage": mode, "request_sha256": digest(request),
                     "source_sha256": request["source_sha256"], "native_attempt_permitted": mode == "native"}, "CHILD_STAGE_BINDING")
@@ -306,6 +332,8 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
             "attempt_observed": attempt_observed, "recovery": recovery, "automatic_retry": False,
             "scientific_qualified": False, "source_sha256": request["source_sha256"],
             "scratch_retained": True, "cleanup": "OWNER_INSPECTION_REQUIRED_NO_RECURSIVE_DELETE"})
+        if request['model_key'] == 'minicpm4':
+            memory.observe(output, 'final')
         if active is not None:
             write(output / "claims.json", capability.claims_snapshot())
         export(output, Path(str(output) + ".zip"))
@@ -315,7 +343,7 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
 def main():
     contract.authorize()  # before argparse, request/private I/O or CUDA imports
     parser = argparse.ArgumentParser()
-    parser.add_argument("--stage", choices=("admit", "setup", "cpu", "gpu", "native"), required=True)
+    parser.add_argument("--stage", choices=("admit", "setup", "reclaim", "cpu", "gpu", "native"), required=True)
     for name in ("request", "repo", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--deadline", type=float, required=True)

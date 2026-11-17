@@ -114,7 +114,7 @@ def worker(request, **kwargs):
     return _worker(request, **kwargs)
 
 
-def _worker(request, *, repo=ROOT):
+def _worker(request, *, repo=ROOT, memory_output=None):
     """Prepared peer native chain; never called by this release's public worker.
 
     Requires an already provisioned isolated pinned worker. Future activation
@@ -175,17 +175,34 @@ def _worker(request, *, repo=ROOT):
         environment.cuda(key, policy)
     else:
         worker_cuda(policy)
+    resource_index = 0
+    memory_out = None
+    if key == 'minicpm4' and set(request) in supervised:
+        from . import memory
+        require(memory_output is not None, 'SUPERVISED_NATIVE_MEMORY_OUTPUT_REQUIRED')
+        memory_out = Path(memory_output)
+        memory_out.mkdir(exist_ok=False)
     def check_resources():
+        nonlocal resource_index
         if set(request) in supervised:
             from . import environment
-            environment.resources(key, policy, request["scratch"], request["work"])
+            if memory_out is not None:
+                memory.resource_check(request, memory_out, f'pre-call-{resource_index:06d}')
+                resource_index += 1
+            else:
+                environment.resources(key, policy, request["scratch"], request["work"])
             environment.hardware(key, policy)
             environment.cuda(key, policy)
         else:
             resources(policy, request["scratch"], request["work"], gpu=True)
     check_resources()
+    def factory():
+        if memory_out is not None:
+            with memory.load_guard(request, memory_out):
+                return _native_factory(key, snapshot, weights, repo=repo)
+        return _native_factory(key, snapshot, weights, repo=repo)
     return _execute(request["work"], bundle, cohort, request["campaign"], request["plan"], request["history"],
-        lambda: _native_factory(key, snapshot, weights, repo=repo),
+        factory,
         image_path=lambda i: rows[i]["image"], evaluator=None if key == "minicpm4" else replay,
         before_call=check_resources, repair_case=request["repair_case"])
 
@@ -289,6 +306,8 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                     # time *before* creating a sample start/native-call marker.
                     write(root / "model_load.json", {"load_attempts": 1})
                     backend = factory()
+                    if before_call is not None:
+                        before_call()  # model load/processor/hash churn cannot inherit an earlier PASS
                     if not adaptive.can_start():
                         stop = "ADAPTIVE_TIME_STOP"
                         break

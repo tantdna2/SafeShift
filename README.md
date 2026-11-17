@@ -1,5 +1,9 @@
 # SafeShift
 
+MiniCPM V5 RAM/source repair after merged PR200: see
+[RAM safety, authenticated failure custody and blocked V6 handoff](docs/MINICPM_V5_RAM_REPAIR.md).
+Draft PR201 prepares the complete Owner-run path; no new Kaggle/GPU job is launched.
+
 TRAIN3763 execution candidate after PR178 merge: see
 [source scope, PowerShell operations and BLOCKED live gates](docs/INTERNVL3763_EXECUTION.md).
 Current task is CPU preparation/source review only; no new Kaggle job or inference.

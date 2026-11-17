@@ -1,6 +1,58 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — V4-4 real Input and source repair — 17/11/2026
+## CURRENT — V5 CPU RAM failure / source repair — 17/11/2026
+
+[Owner6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950)
+starts one new Codex branch/Draft PR from PR200 merge
+`006105080fc9b240e6ffff31618d325adac41522`. [RAM repair runbook](MINICPM_V5_RAM_REPAIR.md)
+and [evidence](research/MINICPM_V5_RAM_EVIDENCE_20261117.md) describe the new route.
+Delivery: [Draft PR201](https://github.com/tantdna2/SafeShift/pull/201), branch
+`fix/minicpm-v5-owned-ram-20261117`; runtime/test commit02ddbf4,84-file runtime
+SHA256 `20c2440e2048830f9143ba5548c20b54637c277e6f9e9246f9602f699a6bc5b8`.
+
+Actual official SDK read-only custody verifies V5 version1/kernel145520728,
+COMPLETE with admit/setup returned, CPU HOST_OR_CGROUP_RAM, exhaustive supervisor-
+only Output, signed ticket and ZIP/sidecar. No native attempt/result/load/call
+claim: FAILED_PRE_NATIVE_NO_USABLE_RESULTS, never COLLECTED/refunded. Admit RAM
+21102653440 bytes; exact failure RAM/stat/events/RSS were not recorded. Cache vs
+anonymous-process cause is UNRESOLVED; Issue173's proven cache recovery is a
+separate actual VM observation, not a reconstructed V5 cause.
+
+Prepared source adds isolated post-setup advice of owned venv file pages, strict
+ownership/alias/scan/deadline checks, unchanged16GiB RAM floor and RAM/disk evidence
+across admit/setup/reclaim/cpu/gpu/native/processor/weights/every call. Process-group
+survivors or missing cleanup evidence stop. Scientific native sources/configuration
+remain unchanged. [CPU acceptance](research/MINICPM_V5_RAM_EVIDENCE_20261117.md):
+177 distinct cases covered across Linux broad/follow-up/collection and Windows
+SDK/focused logs, no unresolved errors. The original173-case Linux log records
+one old-fixture error (missing new explicit RAM output directory); test-only
+fix888dd15 and full23-case module rerun PASS, unchanged runtime SHA. All3763
+synthetic controller/export/import/resume checks PASS; no real inference claim.
+
+Actual source/byte identity comparison changes only implementation SHA; model,
+configuration, prompt/parser/generation/preprocessing/checkpoint/runtime identity
+fields match V5 exactly. Real read-only rehearsal rechecked all3763 authentic
+original copies/SHA/PIL/RGB (3724 JPEG/39 PNG-at-JPG), no TEST body or image copy.
+Current exact Input versions and both terminal technical predecessors were read
+again. New blocked V6 candidate reproduced twice with heavy/provider imports and
+network forbidden. No old notebook is changed.
+
+Prepared V5 closure/source transition preserves V4-4 and V5 custody in the same
+mirrored journal. Holds remain10526 calls/5 jobs/144000 physical GPU-seconds;
+fresh serial6 would add its full reservation without refund/reset or predictions.
+No production closure/rebind/signature/publication/Owner Run occurred. Quota last
+read27490/108000 used,0 reserved; refresh for any later ticket. Resumed historical
+CLI session confirmed it holds InternVL Attempt4, not MiniCPM V5. Actual MiniCPM
+Operator conversation ID remains missing; no new Operator/session or operation
+is substituted. Codex authenticated the provider evidence read-only independently.
+
+**DRAFT SOURCE REVIEW REQUIRED / NEW OWNER RUN BLOCKED.** Direct ChatGPT review,
+independent audit, separately authorized merge/verified postmerge and authentic
+new source release/ticket precede the SAME old Operator's <=3-step Owner handoff.
+No Codex submit/live observer, standalone GPU smoke or TEST. CPU tests cannot
+guarantee real model fit or whole-cohort completion.
+
+## HISTORICAL — V4-4 real Input and source repair — 17/11/2026
 
 [Owner6922725439](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922725439)
 starts one new Codex task/branch/Draft PR from PR199 merge

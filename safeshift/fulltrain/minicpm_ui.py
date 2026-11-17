@@ -230,7 +230,7 @@ def stage_python(request, scratch, output, env, deadline):
     return python
 
 
-def verify_results(value, directory, attempt, supervisor, destination, *, repo=ROOT):
+def verify_results(value, directory, attempt, supervisor, destination, *, repo=ROOT, memory_required=False):
     """Internal offline verifier, used by collection and synthetic regression.
 
     A local verification receipt is never COLLECTED, MEASURED or permission.
@@ -250,12 +250,26 @@ def verify_results(value, directory, attempt, supervisor, destination, *, repo=R
             and release["attempt_observed"] is True and release["scientific_qualified"] is False,
             "UI_SUPERVISOR_BINDING")
         if release["failure"] is None:
-            for mode in ("admit", "setup", "cpu", "gpu", "native"):
+            modes = ('admit', 'setup', 'reclaim', 'cpu', 'gpu', 'native') if memory_required else ('admit', 'setup', 'cpu', 'gpu', 'native')
+            for mode in modes:
                 process = read(control / (mode + "-process.json"))
                 require(process["status"] == "EXITED" and process["returncode"] == 0, "UI_STAGE_PROCESS")
                 require(read(control / mode / "stage.json") == {"status": "RETURNED", "stage": mode,
                     "request_sha256": digest(request), "source_sha256": request["source_sha256"],
                     "native_attempt_permitted": mode == "native"}, "UI_STAGE_REQUEST")
+                if memory_required:
+                    require(process.get('group_exit', {}).get('status') == 'NO_LIVE_MEMBERS', 'UI_PROCESS_GROUP_UNVERIFIED')
+            if memory_required:
+                advice = read(control / 'reclaim/owned-advice.json')
+                require(advice['scan_complete'] is True and advice['deleted_files'] == 0
+                        and advice['effect'] == 'ADVISORY_NOT_RAM_PROOF', 'UI_OWNED_ADVICE_UNVERIFIED')
+                from .memory import complete
+                for mode in modes:
+                    complete(read(control / mode / 'stage-entry-memory.json'))
+                    complete(read(control / mode / 'stage-exit-memory.json'))
+                post = read(control / 'reclaim/post-advice-resources.json')
+                require(post['memory']['available_bytes'] >= request['resource_policy']['free_ram_mib'] * 2**20,
+                        'UI_UNCHANGED_RAM_FLOOR')
         old = import_archive(attempt, Path(tmp) / "result")
         require(read(old / "plan.json") == request["plan"] and read(old / "history.json") == request["history"],
                 "UI_ATTEMPT_REQUEST")

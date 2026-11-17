@@ -36,6 +36,33 @@ raise SystemExit(child.wait())
 '''
 
 
+def group_members(pgid, proc=Path('/proc')):
+    """Bounded Linux observation after SIGKILL. Zombies cannot execute work."""
+    found = []
+    for i, path in enumerate(proc.iterdir()):
+        require(i < 16384, 'PROCESS_GROUP_SCAN_BOUND')
+        if not path.name.isdecimal():
+            continue
+        try:
+            value = (path / 'stat').read_text()
+            fields = value[value.rfind(')') + 2:].split()
+            if int(fields[2]) == pgid:
+                found.append({'pid': int(path.name), 'state': fields[0]})
+        except (FileNotFoundError, ProcessLookupError):
+            pass
+    return found
+
+
+def wait_group_exit(pgid, *, seconds=2):
+    deadline = time.monotonic() + seconds
+    while True:
+        rows = group_members(pgid)
+        live = [row for row in rows if row['state'] != 'Z']
+        if not live or time.monotonic() >= deadline:
+            return {'status': 'NO_LIVE_MEMBERS' if not live else 'LIVE_SURVIVORS', 'members': rows}
+        time.sleep(.02)
+
+
 def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_root=None, pass_fds=(), live_prefix=None):
     """Reap one tree, never retry; timeout includes hanging load/native calls.
 
@@ -102,17 +129,25 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
         reason = "SUPERVISOR_EXCEPTION"
         raise
     finally:
-        if child is not None:
-            try:
-                os.killpg(child.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            # Kill even on success: no orphan descendant may outlive a stage.
-            code = child.wait(timeout=5)
+        group_exit = {'status': 'NOT_LAUNCHED', 'members': []}
+        try:
+            if child is not None:
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                # Kill even on success; observe surviving descendants too.
+                code = child.wait(timeout=5)
+                group_exit = wait_group_exit(child.pid)
+                if group_exit['status'] != 'NO_LIVE_MEMBERS':
+                    reason = 'PROCESS_GROUP_SURVIVORS'
+        except BaseException as cleanup_error:
+            reason = 'PROCESS_GROUP_CLEANUP_UNVERIFIED'
+            group_exit = {'status': 'UNVERIFIED', 'error': type(cleanup_error).__name__}
         write(receipt, {"schema": "fresh-process-supervision-v1", "status": reason,
             "returncode": code, "seconds": time.monotonic() - begun,
             "log_bytes": log.stat().st_size if log.exists() else 0,
-            "group_kill_sent": child is not None, "automatic_retry": False,
+            "group_kill_sent": child is not None, "group_exit": group_exit, "automatic_retry": False,
             "retention": "ALL_PARTIAL_FILES_RETAINED", "model_fit": "NOT_ESTABLISHED"})
     if reason != "EXITED":
         raise RuntimeError("SUPERVISED_" + str(reason))

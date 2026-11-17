@@ -1,5 +1,21 @@
 # Kiến trúc Foundation V1
 
+## Post-PR200 V5 RAM/source repair — 17/11/2026
+
+Read [RAM runbook](MINICPM_V5_RAM_REPAIR.md) first. `fulltrain/memory.py` reuses
+`internvl_v2_memory.snapshot` and Issue173's job-owned fsync/DONTNEED precedent,
+with bounded no-follow directory-FD scans, unchanged signed resource floors and
+durable failure observations. `admission` inserts isolated reclaim after reaped
+setup, and supervises every stage. `runtime` uses scoped callbacks around the
+unchanged native loader/weight-verifier seam; `minicpm_release.GuardedBackend`
+checks immediately before generate. `supervision` now observes group exit.
+`fulltrain/minicpm_v5_incident.py` plus `scripts/minicpm_v5_incident.py` provide
+exact read-only V5 CPU-failure custody. Versioned RAM_REPAIR_BOUND/source/ticket
+and notebook V6 support in the existing serial operator preserve both V4-4 and
+V5 holds without false COLLECTED/prediction import/refund. Tests:
+`test_minicpm_fulltrain_memory.py`, `test_minicpm_v5_incident.py` and shared
+admission/controller/release/recovery/transport/notebook suites. No GPU/submit.
+
 ## Post-PR199 V4-4 source repair — 17/11/2026
 
 Read [real reference/Input comparison](research/MINICPM_V44_REFERENCE_COMPARISON_20261117.md)

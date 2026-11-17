@@ -22,7 +22,7 @@ QWEN = {"id": "Qwen/Qwen3-VL-8B-Instruct",
 
 def sources(repo=ROOT):
     repo = Path(repo)
-    return sorted(set(candidate_sources(repo) + ["safeshift/internvl3763_python.py"] + [
+    return sorted(set(candidate_sources(repo) + ["safeshift/internvl3763_python.py", "safeshift/internvl_v2_memory.py"] + [
         p.relative_to(repo).as_posix() for folder, pattern in (("safeshift/fulltrain", "*.py"),
             ("configs/fulltrain", "*.json")) for p in (repo / folder).glob(pattern)]))
 

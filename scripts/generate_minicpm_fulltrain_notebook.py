@@ -11,7 +11,7 @@ OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
 def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None, release_version=2):
-    require(type(release_version) is int and release_version in (2, 4, 5)
+    require(type(release_version) is int and release_version in (2, 4, 5, 6)
         and (release_version == 2 or release_locator is not None), "MINICPM_NOTEBOOK_RELEASE_VERSION")
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
@@ -155,14 +155,44 @@ not established by CPU rehearsal. Preserve all raw/errors/receipts and old holds
 Do not reuse V4-4's notebook, capsule or ticket. No manual cell edits or retry.
 Original3763 TRAIN, FP16 weights/FP32 resampler, strict C1, HNLO N/A; TEST closed.
 """.splitlines(True)
+        if release_version == 6:
+            nb['metadata']['safeshift']['source_transition'] = 'safeshift-minicpm-v5-ram-repair-v1'
+            nb['metadata']['safeshift']['resource_stages'] = ['admit', 'setup', 'reclaim', 'cpu', 'gpu', 'native']
+            nb['cells'][0]['source'] = '''# MiniCPM-V-4 — Full TRAIN — RAM repair V6
+
+Use only the current RELEASED_FOR_OWNER_UI handoff from the historical Operator.
+1. Import this exact notebook and attach its five pinned Input versions.
+2. Select Private / Python / Internet On / GPU T4x2; check signed expiry.
+3. Save Version > Save & Run All ONCE before expiry; send the version URL.
+
+Integrated preflight verifies all 3,763 TRAIN images, software, RAM and storage.
+Each stage runs under a hard supervisor. Runtime-owned cache advice after setup
+is followed by the unchanged 16 GiB RAM gate; recovery is never assumed.
+Failure: retain all Output/log/ZIP/SHA and stop; no edited cell or reused ticket.
+Full coverage may require serial continuation over NOT_ATTEMPTED images only.
+FP16 weights, FP32 resampler, strict C1, HNLO N/A; TEST closed.
+CPU checks do not prove final-source model fit or full-run completion.
+'''.splitlines(True)
     return nb
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--runtime-ref", required=True)
+    p.add_argument('--ram-repair-candidate', action='store_true')
     args = p.parse_args()
-    (ROOT / OUTPUT).write_bytes((json.dumps(notebook(args.runtime_ref), indent=1,
+    output = 'notebooks/SafeShift_FULLTRAIN_MINICPM4_RAM_V6_CANDIDATE.ipynb' if args.ram_repair_candidate else OUTPUT
+    nb = notebook(args.runtime_ref)
+    if args.ram_repair_candidate:
+        nb['metadata']['safeshift'].update(planned_release_version=6,
+            source_transition='safeshift-minicpm-v5-ram-repair-v1',
+            resource_stages=['admit', 'setup', 'reclaim', 'cpu', 'gpu', 'native'])
+        nb['cells'][0]['source'] = ['# MiniCPM-V-4 Full-TRAIN — V6 RAM repair candidate\n',
+            '\n', '**DRAFT / BLOCKED.** CPU preparation only. No signed release, ticket or Owner Run.\n',
+            'The Operator generates the exact executable V6 notebook only after review/audit/merge/release.\n',
+            'Owned runtime cache advice follows isolated setup; unchanged 16 GiB RAM gates apply throughout.\n',
+            'Original 3,763 TRAIN IDs; FP16 weights, FP32 resampler, strict C1; HNLO N/A; TEST closed.\n']
+    (ROOT / output).write_bytes((json.dumps(nb, indent=1,
                                           ensure_ascii=False) + "\n").encode("utf-8"))
 
 
