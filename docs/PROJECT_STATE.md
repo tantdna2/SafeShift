@@ -6,6 +6,9 @@
 starts one new Codex branch/Draft PR from PR200 merge
 `006105080fc9b240e6ffff31618d325adac41522`. [RAM repair runbook](MINICPM_V5_RAM_REPAIR.md)
 and [evidence](research/MINICPM_V5_RAM_EVIDENCE_20261117.md) describe the new route.
+Delivery: [Draft PR201](https://github.com/tantdna2/SafeShift/pull/201), branch
+`fix/minicpm-v5-owned-ram-20261117`; runtime/test commit02ddbf4,84-file runtime
+SHA256 `20c2440e2048830f9143ba5548c20b54637c277e6f9e9246f9602f699a6bc5b8`.
 
 Actual official SDK read-only custody verifies V5 version1/kernel145520728,
 COMPLETE with admit/setup returned, CPU HOST_OR_CGROUP_RAM, exhaustive supervisor-
@@ -21,12 +24,22 @@ across admit/setup/reclaim/cpu/gpu/native/processor/weights/every call. Process-
 survivors or missing cleanup evidence stop. Scientific native sources/configuration
 remain unchanged. CPU acceptance is recorded after final committed-source checks.
 
+Actual source/byte identity comparison changes only implementation SHA; model,
+configuration, prompt/parser/generation/preprocessing/checkpoint/runtime identity
+fields match V5 exactly. Real read-only rehearsal rechecked all3763 authentic
+original copies/SHA/PIL/RGB (3724 JPEG/39 PNG-at-JPG), no TEST body or image copy.
+Current exact Input versions and both terminal technical predecessors were read
+again. New blocked V6 candidate reproduced twice with heavy/provider imports and
+network forbidden. No old notebook is changed.
+
 Prepared V5 closure/source transition preserves V4-4 and V5 custody in the same
 mirrored journal. Holds remain10526 calls/5 jobs/144000 physical GPU-seconds;
 fresh serial6 would add its full reservation without refund/reset or predictions.
 No production closure/rebind/signature/publication/Owner Run occurred. Quota last
-read27490/108000 used,0 reserved; refresh for any later ticket. Historical Operator
-CLI resume attempted but acknowledgement/session identity remains unconfirmed.
+read27490/108000 used,0 reserved; refresh for any later ticket. Resumed historical
+CLI session confirmed it holds InternVL Attempt4, not MiniCPM V5. Actual MiniCPM
+Operator conversation ID remains missing; no new Operator/session or operation
+is substituted. Codex authenticated the provider evidence read-only independently.
 
 **DRAFT SOURCE REVIEW REQUIRED / NEW OWNER RUN BLOCKED.** Direct ChatGPT review,
 independent audit, separately authorized merge/verified postmerge and authentic
