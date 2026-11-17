@@ -27,7 +27,81 @@ OS matrix supplied here is for Codex's own hash-bound logs; the auditor must
 provide its own identifiers/logs/hashes or correct unsupported numeric claims.
 No audit-only case is invented or added to Codex PASS counts.
 
-Corrected source and test log hashes are recorded below after test completion.
+[Original Codex per-test OS/log matrix](MINICPM_OFFLINE_TEST_MATRIX_20261117.csv)
+contains exactly91 IDs, generated from the six historical logs and SHA256 listed
+below. `NOT_RUN` is not PASS; platform overlap and unittest subTests are never
+counted as additional test IDs. This supports the author's historical count
+only. The independently submitted audit used different suite groupings and
+must be reconciled by its author with its own signed evidence, including the
+five ad-hoc cases identified in the review.
+
+Matrix reproduction from the original local logs (after checking their SHA256):
+
+```python
+import csv, re
+from pathlib import Path
+root = Path('data/processed/issue202-cpu')
+logs = {
+    'windows_regression': 'windows-6d8ea36-pinned-regression.log',
+    'windows_adaptive': 'windows-6d8ea36-adaptive.log',
+    'linux_offline': 'linux-6d8ea36-offline.log',
+    'linux_memory': 'linux-6d8ea36-memory.log',
+    'linux_collection': 'linux-6d8ea36-collection.log',
+    'linux_forwarding': 'linux-6d8ea36-forwarding.log',
+}
+rows = {}
+for column, name in logs.items():
+    for line in (root / name).read_text(encoding='utf-8').splitlines():
+        match = re.match(r'test_\w+ \(([^)]+)\) \.\.\. (ok|skipped.*)$', line)
+        if match:
+            rows.setdefault(match[1], {})[column] = 'PASS' if match[2] == 'ok' else 'SKIP'
+assert len(rows) == 91 and all('PASS' in row.values() for row in rows.values())
+with (root / 'reproduced-original-matrix.csv').open('x', newline='', encoding='utf-8') as out:
+    writer = csv.writer(out, lineterminator='\n')
+    writer.writerow(['test_id', *logs, 'any_platform_pass'])
+    for test_id, statuses in sorted(rows.items()):
+        writer.writerow([test_id, *[statuses.get(key, 'NOT_RUN') for key in logs], 'PASS'])
+```
+
+Corrected tested code/tools commit:
+`babbac8e8b7858337417a74b9f25539a4e7f03a6`. Subsequent changes are documentation
+and per-test matrices only. Runtime85-file SHA256:
+`32aabc133f7ebb9638863207398ab8c905f00bf75ca99d67aa19becc0ba0fd85`;
+11-tool manifest SHA256:
+`6accf28ddef2635c71eb0c5538ec04fe88ccb6e1a3fb16c29fd3e8e1dde47924`.
+
+**Corrected source:97 distinct test IDs PASS**, no unresolved failures/errors
+and no unexercised skips. Windows92-case suite:87 PASS/5 Linux-only SKIP;
+separate Windows adaptive5 PASS. Linux21 offline +13 memory +4 collection
++1 forwarding PASS. Platform overlap and subTests are not summed.
+[Corrected per-ID OS/log matrix](MINICPM_OFFLINE_REVIEWFIX_TEST_MATRIX_20261117.csv)
+includes the six new identity/admission tests. Full3763 is a single test ID;
+it rejects same-Owner admission with different comment IDs and leaves official
+reading BLOCKED, then admits the separately authorized mock reviewer and
+verifies official3763 rows. All source allowlist/record/hash/native/ZIP/mirror
+regressions complete on the fixed code above.
+
+Environments and module commands are the same as the historical commands below:
+Windows CPython3.11.9, pinned kaggle2.2.5/kagglesdk0.1.38 with socket connections
+forbidden; Linux WSL2/x86_64/CPython3.14.4 from an exact Git source archive.
+The corrected Windows module loader discovers six additional methods in
+`FinalAdmissionIdentityTests`; no new production tool is needed for accounting.
+To reproduce the corrected matrix, use the matrix snippet above with these six
+log names and require97 distinct IDs instead of91.
+
+| Corrected log in `data/processed/issue202-cpu/` | SHA256 |
+| --- | --- |
+| `reviewer-fix-windows-regression.log` | `5c69d223d0b1d9680f068dc55fb4a9dd41bab1d3a571b046c7b1cd6f83d80f5b` |
+| `reviewer-fix-windows-adaptive.log` | `45a8030da027bbab412604b8743232a87ce8f1e88370127259b7ce3a1d14b046` |
+| `reviewer-fix-linux-offline.log` | `28a9d4b2a0a14b3ab2fc0979b3abbd529ec5da2277c5268d171f8d546ca0e779` |
+| `reviewer-fix-linux-memory.log` | `7bf9e525eec3791ef08868cce3dda095e7294c26ee29b5c28189cf939d5186b4` |
+| `reviewer-fix-linux-collection.log` | `a65ec7ba98fa6f6628acb8b8b02a2a8f9508477cf90a23081866d620c3c80e77` |
+| `reviewer-fix-linux-forwarding.log` | `219609f9c96445044fd38795de98ac44ee44f84bb977f29cc08fc24902d12dc6` |
+
+This is Codex author evidence, not independent CI/audit or an authentic execution
+grant. The same Antigravity auditor must still recheck the corrected exact HEAD
+and own its signed accounting addendum; its five ad-hoc cases remain outside
+these97 IDs until the auditor supplies their own reproducible evidence.
 
 ## Historical initial delivery at acae1fa
 

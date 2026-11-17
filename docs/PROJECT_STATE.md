@@ -15,6 +15,16 @@ treated as approval of the corrected source; direct review and focused re-audit
 remain required. Historical91-case execution evidence below is not proof of the
 previously missing identity separation; corrected evidence is appended to its
 [acceptance record](research/MINICPM_OFFLINE_ACCEPTANCE_20261117.md).
+Correction tested at `babbac8e8b7858337417a74b9f25539a4e7f03a6`:97 distinct
+CPU test IDs PASS across Windows/Linux, including full3763 self-admission
+rejection and valid independent mock admission; no unresolved errors or
+unexercised skips. [Per-ID OS matrix](research/MINICPM_OFFLINE_REVIEWFIX_TEST_MATRIX_20261117.csv)
+and log hashes distinguish these author runs from the still-pending independent
+audit accounting addendum. Current runtime SHA256
+`32aabc133f7ebb9638863207398ab8c905f00bf75ca99d67aa19becc0ba0fd85`;
+tool-manifest SHA256 `6accf28ddef2635c71eb0c5538ec04fe88ccb6e1a3fb16c29fd3e8e1dde47924`.
+PR201 RAM/native/parser/Owner verifier bytes remain unchanged from the reviewed
+delivery; no production data, journal, key, budget or authority was modified.
 
 [Owner task202](https://github.com/tantdna2/SafeShift/issues/202) starts a NEW
 Codex session/branch `codex/issue202-minicpm-offline-chain` from verified main
