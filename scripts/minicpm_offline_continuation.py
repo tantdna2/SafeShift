@@ -156,7 +156,7 @@ def verify_local(grant, active, package, attempt, supervisor, receipt, proof):
     """Reuse actual strict raw/parser/native/ancestor and PR201 RAM verifiers."""
     value, ticket = active["value"], active["ticket"]
     a.verify_ticket(grant, ticket, value, collection=True)
-    require(snapshot_stat(proof).st_size <= 16*2**20, "MINICPM_TERMINAL_PROOF_BOUND")
+    require(0 < snapshot_stat(proof).st_size <= 16*2**20, "MINICPM_TERMINAL_PROOF_BOUND")
     require(sha(proof) == receipt["proof_sha256"], "MINICPM_TERMINAL_PROOF_BYTES_REQUIRED")
     policy.terminal(receipt, value, sha(attempt), sha(supervisor))
     require(attempt.name == value["request"]["plan"]["run_id"] + ".zip", "MINICPM_EXACT_OUTPUT_NAME")
@@ -356,7 +356,7 @@ class Continuation:
                 and state["next_ordinal"] < 3763, "MINICPM_ACTIVE_STOP_FINAL_OR_FINISHED")
             authenticate(self.registration["locator"], self.registration["exports"])
             require(old.public_from_private(private_key) == self.grant["public_key"], "MINICPM_ORIGINAL_PRIVATE_KEY_REQUIRED")
-            require(snapshot_stat(gate_proof).st_size <= 16*2**20, "MINICPM_OWNER_GATE_PROOF_BOUND")
+            require(0 < snapshot_stat(gate_proof).st_size <= 16*2**20, "MINICPM_OWNER_GATE_PROOF_BOUND")
             require(sha(gate_proof) == gate["proof_sha256"], "MINICPM_OWNER_GATE_PROOF_BYTES")
             completed = state["completed"]
             serial = state["reserved"]["jobs"] + 1

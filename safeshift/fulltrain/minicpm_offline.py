@@ -121,6 +121,10 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     amounts(before, t["reserved_after"], caps, calls=p["max_calls"], seconds=p["max_seconds"])
     require(t["sizing"]["calls"] == p["max_calls"] and t["sizing"]["seconds"] == p["max_seconds"],
         "MINICPM_OFFLINE_SIGNED_LIMITS")
+    if not t["lineage"]:
+        require(p["max_calls"] <= min(grant["offline"]["unmeasured_calls"],
+            (p["max_seconds"]-grant["sizing"]["export_seconds"]) // grant["sizing"]["first_call_seconds"]),
+            "MINICPM_UNMEASURED_RELEASE_CAP")
     gate = owner_gate(grant, t["owner_gate"], value, now=t["issued_unix"])
     for n in (t["issued_unix"], t["start_before_unix"]): number(n, integer=True)
     require(grant["issued_unix"] <= t["issued_unix"] < t["start_before_unix"]

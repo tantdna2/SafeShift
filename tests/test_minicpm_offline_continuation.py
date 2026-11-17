@@ -252,6 +252,14 @@ class OfflineTests(unittest.TestCase):
         bad = deepcopy(active["ticket"]["payload"]);bad["reserved_before"]["calls"]-=1
         signed = c.old.sign(self.key,self.public,bad)
         with self.assertRaisesRegex(ValueError,"NO_HOLD_RESET"):a.verify_ticket(self.grant,signed,active["value"])
+        value=deepcopy(active["value"]);r=value["request"];plan=r["plan"]
+        r["plan"]=contract.plan(r["campaign"],value["cohort"],plan["identity"],[],action="initial",
+            run_id=plan["run_id"],attempt_id=plan["attempt_id"],max_calls=3,max_seconds=plan["max_seconds"])
+        payload=deepcopy(active["ticket"]["payload"])
+        payload.update(value_sha256=digest(value),capsule_sha256=digest(value))
+        payload["sizing"]["calls"]=3;payload["reserved_after"]["calls"]=payload["reserved_before"]["calls"]+3
+        signed=c.old.sign(self.key,self.public,payload)
+        with self.assertRaisesRegex(ValueError,"UNMEASURED_RELEASE_CAP"):a.verify_ticket(self.grant,signed,value)
 
     def test_source_tools_drift_and_owner_network_boundary(self):
         self.grant["offline"]["tools_sha256"]="0"*64
