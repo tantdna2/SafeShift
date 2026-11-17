@@ -30,6 +30,12 @@ No real signing, init/stage, Kaggle/GPU, production journal writes or results in
 this task. PR201 RAM/native, model/science/precision/parser and TRAIN/TEST bytes
 remain unchanged. Validation evidence is recorded in
 [V7 Owner approval acceptance](research/MINICPM_V7_OWNER_APPROVAL_20261117.md).
+At code/tests commit `826b3f83ed358ee7ca59cdd594fce737124d199a`, **100 distinct
+test IDs PASS** across Windows/Linux: Windows 90 PASS/5 platform SKIP, Linux 24
+offline/full3763 PASS and 23 RAM/collection/supervision/adaptive PASS. All five
+skips passed on Linux; overlapping IDs/subTests are not summed. No unresolved
+FAIL/ERROR; subsequent delivery edits are documentation only. This is author CPU
+validation, with direct review and independent audit still pending.
 
 ## HISTORICAL — PR203 MiniCPM offline serial continuation — 17/11/2026
 
