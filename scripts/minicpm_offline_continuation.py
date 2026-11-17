@@ -489,16 +489,31 @@ class Continuation:
             require(self.state()["final"] is None, "MINICPM_NO_DUPLICATE_FINAL_ADMISSION")
             manifest = self.manifest()
             self.validate_final(manifest, report, exports, owner_locator, admission_locator)
-            return self.append(policy.RECONCILED, {"manifest": manifest, "report": report, "exports": exports,
+            # Keep the one final event small even for many jobs. The complete
+            # ordered documents are separate, mirrored, create-only and bound
+            # by the certificate; never duplicate all cumulative histories in
+            # a journal event with its stricter 128 MiB envelope.
+            documents = {"manifest": manifest, "report": report, "exports": exports}
+            for name, value in documents.items():
+                raw = json_bytes(value)
+                require(len(raw) <= 8*2**30, "MINICPM_FINAL_DOCUMENT_BOUND")
+                for root in (self.root, self.mirror): put(root/"final"/(name+".json"), raw)
+            return self.append(policy.RECONCILED, {**{name+"_sha256": digest(value) for name,value in documents.items()},
                 "owner": owner_locator, "admission": admission_locator})
 
     def official_report(self):
         state = self.state()
         require(state["final"] is not None and not state["stopped"], "MINICPM_OFFICIAL_RESULTS_BLOCKED_PENDING_FINAL_ADMISSION")
         p = state["final"]["payload"]
+        documents = {}
+        for name in ("manifest", "report", "exports"):
+            for root in (self.root,self.mirror):
+                path=safe(root,"final/"+name+".json")
+                require(snapshot_stat(path).st_size <= 8*2**30 and sha(path)==p[name+"_sha256"], "MINICPM_FINAL_DOCUMENT_BYTES")
+            documents[name]=read(self.root/"final"/(name+".json"))
         manifest = self.manifest()
-        require(p["manifest"] == manifest, "MINICPM_FINAL_MANIFEST_DRIFT")
-        self.validate_final(manifest, p["report"], p["exports"], p["owner"], p["admission"])
+        require(documents["manifest"] == manifest, "MINICPM_FINAL_MANIFEST_DRIFT")
+        self.validate_final(manifest, documents["report"], documents["exports"], p["owner"], p["admission"])
         ordinals = {r["sample_id"]: r["ordinal"] for r in self.registration["initial"]["cohort"]["samples"]}
         lineage = [{"ordinal": ordinals[row["sample_id"]], "sample_id": row["sample_id"], "run_id": item["value"]["request"]["plan"]["run_id"],
             "attempt_id": item["value"]["request"]["plan"]["attempt_id"], "job": item["value"]["job"],

@@ -454,7 +454,10 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(len(official["rows"]),3763)
         self.assertFalse(official["scientific_qualified"])
         self.assertEqual(official["budget"]["billing_gpu_seconds"],"NOT_OBSERVED")
+        self.assertNotIn("manifest",self.route.state()["final"]["payload"])
         with self.assertRaisesRegex(ValueError,"DUPLICATE_FINAL"):self.route.reconcile(report,exports,owner,admission)
+        with (self.route.mirror/"final/manifest.json").open("ab") as file:file.write(b" ")
+        with self.assertRaisesRegex(ValueError,"FINAL_DOCUMENT_BYTES"):self.route.official_report()
 
 
 if __name__ == "__main__": unittest.main()

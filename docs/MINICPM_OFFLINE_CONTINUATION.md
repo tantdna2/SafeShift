@@ -186,7 +186,11 @@ Owner có tối đa ba thao tác ở lượt final:
    <final-exports.json> --owner-locator <json> --admission-locator <json>`.
 
 `reconcile` append đúng một `MINICPM_OFFLINE_CAMPAIGN_RECONCILED` trong journal
-mới, giữ mọi thời điểm/reservations gốc. Duplicate bị chặn. `official-report`
+mới, giữ mọi thời điểm/reservations gốc. Event chỉ khóa hash; manifest/report/
+exports đầy đủ nằm trong `final/` ở cả hai mirror, create-only. Nhờ đó số job
+nhiều không làm event chứa lặp mọi cumulative history vượt envelope128MiB.
+Từng final document vẫn có bound8GiB; thiếu RAM/disk phải STOP, không bỏ custody.
+Duplicate bị chặn. `official-report`
 chỉ PASS sau kiểm lại certificate/manifest/Owner/reviewer/every-job report,
 xuất3763 rows/history/lineage/budget. Trước đó official analysis BLOCKED.
 Legacy summary/collector không biết schema mới và không được dùng làm kết quả
