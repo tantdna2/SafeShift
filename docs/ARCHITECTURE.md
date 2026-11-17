@@ -1,5 +1,22 @@
 # Kiến trúc Foundation V1
 
+## Post-PR199 V4-4 source repair — 17/11/2026
+
+Read [real reference/Input comparison](research/MINICPM_V44_REFERENCE_COMPARISON_20261117.md)
+and [repair runbook](MINICPM_V44_REPAIR.md). `fulltrain/original_inputs.py` resolves
+only observed nested/flat Master paths, one original TRAIN root and unchanged
+3763 ID/SHA order. CPU image admission follows the existing native PIL/RGB loader,
+including original PNG bytes at `.jpg` locators. No native model/parser changes.
+`scripts/check_minicpm_original_inputs.py` rehearses real copied bytes read-only.
+`fulltrain/minicpm_incident.py` verifies exact sealed pre-native failure custody;
+`scripts/minicpm_v44_incident.py` adds authenticated provider/full inventory proof
+without journal writes. The optional versioned `repair` release contract and
+`minicpm_fulltrain_recovery rebind-source` preserve the old mirrored prefix/holds,
+create one separate source registration and schedule signed serial5 only after
+fresh exact-source authority. Existing successful-result collection/pending-only
+continuation remains shared. Tests: original Inputs, V4-4 incident, existing
+release/recovery/transport/execution/notebook suites. No GPU or production rebind.
+
 
 ## Qwen3 derived full-TRAIN label analysis ? 15/11/2026
 

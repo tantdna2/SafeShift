@@ -274,7 +274,8 @@ class Journal:
                 checked_timing = verify_claims(item["value"], item["ticket"], grant, old_attempt, old_supervisor)
                 telemetry = telemetry_record(checked_timing, old_attempt, old_supervisor, item["ticket"])
                 require(digest(telemetry) == digest(collection["telemetry"]), "MINICPM_MEASURED_TELEMETRY_CUSTODY")
-            number = len(completed) + 1 + (grant["recovery"]["reserved"]["jobs"] if grant["schema"] == authority.RECOVERY_SCHEMA else 0)
+            from safeshift.fulltrain.minicpm_incident import initial_reserved
+            number = len(completed) + 1 + (initial_reserved(grant)["jobs"] if grant["schema"] == authority.RECOVERY_SCHEMA else 0)
             value["job"] = "nguynanhtn/safeshift-minicpm-" + grant["campaign_id"] + "-" + str(number)
             value["capsule_ref"] = "nguynanhtn/safeshift-minicpm-capsule-" + grant["campaign_id"] + "-" + str(number) + "/1"
             value["input_sources"]["dataset_sources"][-1] = value["capsule_ref"]
@@ -294,7 +295,7 @@ class Journal:
             locator = self.release_locator(events)
             pin = digest(value)
             nb = notebook(grant["runtime_commit"], capsule_sha256=pin, release_locator=locator,
-                **({"release_version": 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
+                **({"release_version": 5 if "repair" in grant else 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             from safeshift.internvl3763_operator import code_hash
             now = int(time.time())
             ticket = {"schema": authority.RECOVERY_TICKET if grant["schema"] == authority.RECOVERY_SCHEMA else authority.TICKET,
@@ -444,7 +445,7 @@ class Journal:
             ancestors = [safe(ROOT, item["collection"]["directory"] + "/" + read(safe(ROOT,
                 item["collection"]["directory"] + "/paths.json"))["attempt"]) for item in completed]
             nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value), release_locator=locator,
-                **({"release_version": 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
+                **({"release_version": 5 if "repair" in grant else 4} if grant["schema"] == authority.RECOVERY_SCHEMA else {}))
             destination = private_root(destination)
             require(not destination.exists(), "MINICPM_RECOVERY_KEEP_PARTIAL_USE_NEW_PATH")
             ui.package(value, ancestors, destination, lambda _: nb)

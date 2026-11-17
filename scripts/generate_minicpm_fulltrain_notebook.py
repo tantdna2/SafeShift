@@ -11,7 +11,7 @@ OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
 def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None, release_version=2):
-    require(type(release_version) is int and release_version in (2, 4)
+    require(type(release_version) is int and release_version in (2, 4, 5)
         and (release_version == 2 or release_locator is not None), "MINICPM_NOTEBOOK_RELEASE_VERSION")
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
@@ -140,6 +140,20 @@ and collect. Old attempts supply zero inherited predictions; start at ordinal0.
 Historical reservations/errors/raw stay recorded; project reservation ceiling
 is distinct from current Kaggle quota. No automatic account switching.
 Original3763 TRAIN, strict C1, FP16 weights/FP32 resampler, HNLO N/A; TEST closed.
+""".splitlines(True)
+        if release_version == 5:
+            nb["metadata"]["safeshift"]["source_transition"] = "safeshift-minicpm-v44-source-repair-v1"
+            nb["cells"][0]["source"] = """# MiniCPM-V-4 — Full TRAIN — reviewed V4-4 source repair V5
+
+Run only with the current signed RELEASED_FOR_OWNER_UI handoff from Antigravity.
+1. Import this exact notebook and attach its five pinned Input versions.
+2. Select Private / Python / Internet On / GPU T4x2; check the signed expiry.
+3. Save Version > Save & Run All ONCE before expiry; send the version URL.
+Real Master/TRAIN layout and native PIL/RGB input bytes were checked read-only.
+Integrated admit/setup/cpu/gpu still precede native load/generate; model fit is
+not established by CPU rehearsal. Preserve all raw/errors/receipts and old holds.
+Do not reuse V4-4's notebook, capsule or ticket. No manual cell edits or retry.
+Original3763 TRAIN, FP16 weights/FP32 resampler, strict C1, HNLO N/A; TEST closed.
 """.splitlines(True)
     return nb
 

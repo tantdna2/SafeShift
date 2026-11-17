@@ -1,0 +1,19 @@
+{
+  "status": "PROVIDER_V1_LAYOUT_MARKER_INDEX_PASS",
+  "ref": "nguynanhtn/safeshift-prepare-minicpm4/1",
+  "files": 19,
+  "marker_sha256": "6ff382a6d1951d8224221c7ab1b4cb77830efb7abd5c1a72166482ed3a133040",
+  "source_root": "source/6f69a8235885be89608f3a71ffd40695b379e1e7",
+  "weights_root": "weights",
+  "index_sha256": "803b4c6605fd33df8ba4386c787f914e75d4d382f937e4e2c3f640d47e1f6d5c",
+  "current_full_weight_bytes": "NOT_REHASHED_EXISTING_VERSION1_REUSED",
+  "gpu_load": "NOT_RUN",
+  "python": {
+    "ref": "nguynanhtn/safeshift-cpython3119-20240726/1",
+    "manifest_sha256": "c6a508803f4e435261da40e3d1c6a08d855ba3fc05af84bf8ecb6edc29ba6e77",
+    "payload_sha256": "871cccab019cb6ef7417af6f3287233f3ba25e904fc007c429fdcb5e3a67b9f5",
+    "decoded_archive_sha256": "f6e955dc9ddfcad74e77abe6f439dac48ebca14b101ed7c85a5bf3206ed2c53d",
+    "manifest_layout": "FLAT",
+    "payload_bytes": 39617560
+  }
+}

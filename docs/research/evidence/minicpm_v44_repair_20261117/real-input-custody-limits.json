@@ -1,0 +1,25 @@
+{
+  "status": "REAL_FILES_READ_ONLY_ADMISSION_PASS",
+  "verified": {
+    "verified_images": 3763,
+    "decode": "NOT_RUN",
+    "copied_bytes": 0
+  },
+  "provider_version": "nguynanhtn/inspecsafe-v1-kaggle/1",
+  "provider_paths": 3763,
+  "direct_provider_jpeg_bytes_verified": 73,
+  "original_local_jpeg_bytes_verified": 3763,
+  "provider_all_jpeg_download": "INCOMPLETE_TRANSPORT_FAILURE_NOT_ALL_REMOTE_BYTES_REVERIFIED",
+  "projection_sha256": "524980d374daf6be3bedc743b6dc5ddc423dfe11c833609253cc5b2ce38586dc",
+  "master_sha256": "a35e91fb431752dbf3b6c161f227d953d5748d69ef9f39aef613019faca33008",
+  "first_file": {
+    "bytes": 546411,
+    "sha256": "a13ac091662772ec644b5382904dcdcd1606c296d145f41b7de4d513b8261d86",
+    "ordinal": 0
+  },
+  "total_image_bytes": 2420332674,
+  "seconds": 41.71162724494934,
+  "copy_for_rehearsal_only": true,
+  "model_calls": 0,
+  "test_bytes_read": 0
+}

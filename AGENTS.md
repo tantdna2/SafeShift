@@ -1,5 +1,26 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner16/11/2026 — post-PR199 V4-4 real-Input/source repair
+
+[Directive6922725439](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922725439)
+and [incident6922592580](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922592580)
+require a NEW Codex coding task/branch/one Draft PR after merged92e7af4.
+Read actual successful MiniCPM one/three-image and InternVL Full-TRAIN source,
+not only summaries; verify current versioned Master/TRAIN and other Input roots
+with real read-only evidence. No separate GPU smoke or Owner path-discovery run.
+See [comparison](docs/research/MINICPM_V44_REFERENCE_COMPARISON_20261117.md) and
+[source-repair runbook](docs/MINICPM_V44_REPAIR.md).
+
+Preserve science/model/precision/parser/labels/results and every historical
+grant/ticket/journal/reservation/partial. Reconcile exact terminal V4-4 supervisor-
+only admit failure without false COLLECTED or refund. Source transition requires
+new reviewed/merged source authority and fresh valid signed ticket; no V4-4 reuse.
+Codex does code/CPU/docs/read-only provider verification/push only and stops at
+the new Draft PR for direct ChatGPT review. Independent audit, separately
+authorized merge/postmerge and authentic final-source release precede the SAME
+old Antigravity Operator session publishing a current <=3-step Owner handoff.
+Owner personally runs once before expiry; no Codex submit/live observer.
+
 ## Owner16/11/2026 — PR199 Owner UI restart / finite derived budget
 
 [Directive6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
