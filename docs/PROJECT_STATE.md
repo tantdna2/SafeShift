@@ -38,6 +38,17 @@ RAM floor16384MiB, admit/setup/reclaim/cpu/gpu/native, cgroup/OOM/RSS/process-gr
 snapshots and owned-only cache advice remain. No historical notebook, journal,
 ticket, model/precision/parser/C1/cohort/GT/TEST/scientific decision is changed.
 
+CPU acceptance at source/tools commit
+`6d8ea362b93fca415480870cbde515a17d401b5e`: **91 distinct test IDs PASS** across
+Windows pinned-SDK mocks and POSIX Linux, zero unresolved failures/errors and
+no unexercised skips. Full3763 synthetic multi-job/tail/admission, unchanged
+RAM/native/historical notebook bytes, signed limits, mirrored crash handling and
+official-reader fences are covered. [Commands, OS, log SHA256 and file list](research/MINICPM_OFFLINE_ACCEPTANCE_20261117.md)
+record overlap without double-counting. Runtime85-file SHA256
+`e3620934ef1662886bb723ac47d13accdfda4bc5362d6e5359112b79390e41ee`;
+11-tool manifest SHA256 `88c6939d03add8456e352ac676b3193eb418d33ccc661a46c587d5ad381ecbac`.
+Delivery-only documentation leaves those source bytes unchanged.
+
 **ACTIVATION BLOCKED:** original MiniCPM Operator UUID is still unconfirmed;
 `a5fa95c9...` is the excluded InternVL Attempt4 session. Existing private key/host
 custody, authentic offline route release/source approvals, signed initial cap/
