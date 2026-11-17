@@ -35,6 +35,16 @@ offline.unmeasured_calls = số nguyên hữu hạn do release thật khóa, 1..
 offline.review_logins = tài khoản được phép admission cuối
 ```
 
+Sau [review6943496144](https://github.com/tantdna2/SafeShift/pull/203#issuecomment-6943496144),
+`review_logins` bắt buộc chứa tài khoản GitHub **khác Owner** (so login không
+phân biệt hoa/thường), không trùng alias. Khi admission, Reviewer phải có
+`user.id` nguyên dương khác cả `a.OWNER_ID` và ID của Owner comment đã xác thực;
+login cũng khác Owner, đồng thời thuộc allowlist trong quyền gốc đúng source.
+Hai comment ID khác nhau không đủ tách vai trò. Không có Reviewer thật được
+Owner cấp quyền thì final gate **BLOCKED**; `synthetic-reviewer` chỉ là fixture,
+không chỉ định Reviewer thật hoặc cấp quyền. Sửa allowlist đòi hỏi subject/source
+approvals hợp lệ; JSON local không tự cấp quyền.
+
 Không có giá trị mặc định cho `unmeasured_calls`, session, private key, thời hạn
 hoặc approval. Đây là cap bảo thủ được review, không phải tốc độ đã đo. Module
 `minicpm_offline.py` nằm trong runtime manifest; source tree của runtime,
@@ -178,7 +188,8 @@ Owner có tối đa ba thao tác ở lượt final:
    nguyên, không suy absence hiện tại thành deletion/terminal trong quá khứ.
 2. Sau report thật, Owner đăng lên Issue202 marker
    `SAFESHIFT_MINICPM_OFFLINE_FINAL_V1` với `{manifest_sha256, report_sha256,
-   status:"APPROVED_FOR_FINAL_ADMISSION"}`. Reviewer kiểm originals rồi cấp một
+   status:"APPROVED_FOR_FINAL_ADMISSION"}`. Reviewer là tài khoản GitHub khác
+   Owner có ID/login độc lập, nằm trong delegation đã xác thực, kiểm originals rồi cấp một
    comment riêng marker+`_ADMISSION` với `{manifest_sha256,report_sha256,
    owner:{comment_id,body_sha256},status:"RELEASED_FOR_FINAL_ADMISSION"}`.
 3. Owner export hai comment thật; Antigravity hợp vào **bản copy exports mới**
@@ -195,6 +206,14 @@ chỉ PASS sau kiểm lại certificate/manifest/Owner/reviewer/every-job report
 xuất3763 rows/history/lineage/budget. Trước đó official analysis BLOCKED.
 Legacy summary/collector không biết schema mới và không được dùng làm kết quả
 chính thức. Provider exception giữ partial/BLOCKED và không log signed URL.
+
+`official-report` kiểm lại cùng quy tắc ID/login khi đọc certificate, không chỉ
+tin event từng được append. Exports là response GitHub do Owner lấy thật; sửa
+offline JSON có thể giả nguồn gốc, nên custody của exports và reviewer/auditor
+kiểm originals trên GitHub vẫn là trust boundary đã công bố. Không nhận một
+`approved:true` hay proof tổng quát thay Owner/reviewer comments và từng provider.
+Owner verifier online chỉ xuất report/template PENDING, không tạo final approval
+hoặc admission; cả hai comment thật vẫn cần ở bước sau.
 
 ## RAM và giới hạn còn lại
 

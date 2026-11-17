@@ -473,11 +473,22 @@ class Continuation:
         owner = owner_record(reader, owner_locator, 202)
         require(a.record(owner["body"], policy.FINAL) == {"manifest_sha256": digest(manifest),
             "report_sha256": digest(report), "status": "APPROVED_FOR_FINAL_ADMISSION"}, "MINICPM_AUTHENTIC_FINAL_OWNER")
+        from safeshift.fulltrain.minicpm_recovery import locator
+        locator(admission_locator)
         reviewer = reader("/issues/comments/"+str(admission_locator["comment_id"]))
+        user = reviewer.get("user")
+        # GitHub comment IDs identify comments, not accounts. Both stable user
+        # ID and case-insensitive login must identify a separate authorized
+        # account, including when an Owner alias appears in the allowlist.
+        require(type(user) is dict and type(user.get("id")) is int and user["id"] > 0
+            and user["id"] not in (a.OWNER_ID, owner["user"]["id"])
+            and type(user.get("login")) is str and user["login"]
+            and user["login"].casefold() not in (a.OWNER.casefold(), owner["user"]["login"].casefold())
+            and user["login"].casefold() in {login.casefold() for login in self.grant["offline"]["review_logins"]},
+            "MINICPM_INDEPENDENT_FINAL_REVIEWER_ACCOUNT_REQUIRED")
         require(reviewer["id"] == admission_locator["comment_id"] and reviewer["id"] != owner["id"]
             and reviewer["issue_url"] == a.API+"/issues/202"
             and hashlib.sha256(reviewer["body"].encode()).hexdigest() == admission_locator["body_sha256"]
-            and reviewer["user"]["login"] in self.grant["offline"]["review_logins"]
             and a.record(reviewer["body"], policy.FINAL+"_ADMISSION") == {"manifest_sha256": digest(manifest),
                 "report_sha256": digest(report), "owner": owner_locator, "status": "RELEASED_FOR_FINAL_ADMISSION"},
             "MINICPM_AUTHENTIC_FINAL_REVIEWER")

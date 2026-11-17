@@ -2,6 +2,20 @@
 
 ## CURRENT — Issue202 MiniCPM offline serial continuation — 17/11/2026
 
+PR203 [post-audit correction6943496144](https://github.com/tantdna2/SafeShift/pull/203#issuecomment-6943496144)
+requires changes in the SAME branch/session/Draft PR. Earlier final-admission
+checks distinguished comment IDs but allowed one Owner account in both roles;
+the old positive fixture reproduced that flaw. The correction requires a
+different authorized GitHub account by stable positive integer user.id AND
+case-insensitive login, excludes Owner from the delegated reviewer allowlist,
+and rechecks this at admission and official reading. Synthetic positives now
+use a distinct mock reviewer; no real reviewer is designated. Missing genuine
+independent reviewer authority remains BLOCKED. No prior source/audit PASS is
+treated as approval of the corrected source; direct review and focused re-audit
+remain required. Historical91-case execution evidence below is not proof of the
+previously missing identity separation; corrected evidence is appended to its
+[acceptance record](research/MINICPM_OFFLINE_ACCEPTANCE_20261117.md).
+
 [Owner task202](https://github.com/tantdna2/SafeShift/issues/202) starts a NEW
 Codex session/branch `codex/issue202-minicpm-offline-chain` from verified main
 `e713d56d62a5a649a2078f2c2376fde6d025b978` (PR201 MERGED). One Draft PR, then

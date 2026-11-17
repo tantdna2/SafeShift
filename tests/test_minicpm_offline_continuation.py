@@ -14,6 +14,7 @@ from types import SimpleNamespace
 import shutil
 import socket
 import sys
+import tempfile
 import time
 import unittest
 from unittest.mock import Mock, patch
@@ -28,6 +29,105 @@ from safeshift.pilot.contract import digest
 from scripts import minicpm_offline_continuation as c, owner_verify_minicpm_offline as online
 
 REAL_LOAD, REAL_VALIDATE = a.load, a.validate
+
+
+class FinalAdmissionIdentityTests(unittest.TestCase):
+    """Synthetic GitHub responses; no signer/provider/model or authority issued."""
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.root=Path(self.tmp.name)
+        self.route=c.Continuation.__new__(c.Continuation)
+        self.route.root=self.root/"primary";self.route.root.mkdir()
+        self.route.mirror=self.root/"mirror";self.route.mirror.mkdir()
+        self.route.grant={"offline":{"review_logins":["synthetic-reviewer"]}}
+        self.route.registration={"locator":{"comment_id":1,"body_sha256":"a"*64}}
+        self.manifest={"scope":"SYNTHETIC_FINAL_AUTH_ONLY"}
+        self.report={"manifest_sha256":digest(self.manifest),"scope":"SYNTHETIC_PROVIDER_BOUNDARY"}
+        self.exports={}
+        self.owner=self.comment(101,p.FINAL,{"manifest_sha256":digest(self.manifest),"report_sha256":digest(self.report),
+            "status":"APPROVED_FOR_FINAL_ADMISSION"},{"login":a.OWNER,"id":a.OWNER_ID})
+        self.admission=self.comment(102,p.FINAL+"_ADMISSION",{"manifest_sha256":digest(self.manifest),
+            "report_sha256":digest(self.report),"owner":self.owner,"status":"RELEASED_FOR_FINAL_ADMISSION"},
+            {"login":"synthetic-reviewer","id":202000001})
+        self.auth=patch.object(c,"authenticate",return_value=self.route.grant)
+        self.auth.start();self.addCleanup(self.auth.stop)
+        self.provider=patch.object(c,"validate_provider_report")
+        self.provider_mock=self.provider.start();self.addCleanup(self.provider.stop)
+
+    def comment(self,number,marker,payload,user):
+        body=marker+"\n```json\n"+json.dumps(payload)+"\n```"
+        self.exports["/issues/comments/"+str(number)]={"id":number,"issue_url":a.API+"/issues/202","body":body,"user":user}
+        return {"comment_id":number,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
+
+    def validate(self):
+        return self.route.validate_final(self.manifest,self.report,self.exports,self.owner,self.admission)
+
+    def test_independent_authorized_reviewer_passes_and_provider_still_validates(self):
+        self.assertEqual(self.validate(),self.report)
+        self.provider_mock.assert_called_once_with(self.manifest,self.report)
+
+    def test_owner_different_comment_cannot_reconcile_or_enable_official_reader(self):
+        self.exports["/issues/comments/102"]["user"]={"login":a.OWNER,"id":a.OWNER_ID}
+        # Even an incorrectly broadened allowlist cannot bypass account checks.
+        self.route.grant["offline"]["review_logins"].append(a.OWNER)
+        with patch.object(self.route,"state",return_value={"final":None,"stopped":False}), \
+             patch.object(self.route,"manifest",return_value=self.manifest),patch.object(self.route,"append") as append:
+            with self.assertRaisesRegex(ValueError,"INDEPENDENT_FINAL_REVIEWER_ACCOUNT"):
+                self.route.reconcile(self.report,self.exports,self.owner,self.admission)
+            append.assert_not_called()
+            self.assertFalse((self.route.root/"final").exists())
+            with self.assertRaisesRegex(ValueError,"OFFICIAL_RESULTS_BLOCKED"):self.route.official_report()
+        self.provider_mock.assert_not_called()
+
+    def test_missing_invalid_or_owner_alias_account_identity_is_rejected(self):
+        variants=[None,{}, {"login":"synthetic-reviewer"},{"id":202000001},
+            {"login":"synthetic-reviewer","id":None},{"login":"synthetic-reviewer","id":True},
+            {"login":"synthetic-reviewer","id":"202000001"},{"login":"synthetic-reviewer","id":0},
+            {"login":"synthetic-reviewer","id":-1},{"login":"synthetic-reviewer","id":a.OWNER_ID},
+            {"login":a.OWNER.upper(),"id":202000001},{"login":"unauthorized-reviewer","id":202000001}]
+        for user in variants:
+            with self.subTest(user=user):
+                self.exports["/issues/comments/102"]["user"]=user
+                with self.assertRaisesRegex(ValueError,"INDEPENDENT_FINAL_REVIEWER_ACCOUNT"):self.validate()
+        del self.exports["/issues/comments/102"]["user"]
+        with self.assertRaisesRegex(ValueError,"INDEPENDENT_FINAL_REVIEWER_ACCOUNT"):self.validate()
+
+    def test_changed_body_comment_id_issue_or_locator_is_rejected(self):
+        original=deepcopy(self.exports)
+        for mutate in (lambda r:r.update(body=r["body"]+" changed"),lambda r:r.update(id=103),
+                       lambda r:r.update(issue_url=a.API+"/issues/180")):
+            self.exports=deepcopy(original);mutate(self.exports["/issues/comments/102"])
+            with self.assertRaises(ValueError):self.validate()
+        self.exports=original
+        for locator in ({"comment_id":102},{"comment_id":True,"body_sha256":"a"*64},
+                        {"comment_id":102,"body_sha256":"bad"}):
+            with self.subTest(locator=locator),self.assertRaises(ValueError):
+                self.route.validate_final(self.manifest,self.report,self.exports,self.owner,locator)
+
+    def test_wrong_owner_and_rehashed_wrong_report_manifest_or_owner_binding_rejected(self):
+        original=deepcopy(self.exports)
+        for key,value in (("id",202000001),("login","synthetic-reviewer")):
+            self.exports=deepcopy(original);self.exports["/issues/comments/101"]["user"][key]=value
+            with self.assertRaises(ValueError):self.validate()
+        self.exports=deepcopy(original)
+        payload={"manifest_sha256":digest(self.manifest),"report_sha256":digest(self.report),
+            "owner":self.owner,"status":"RELEASED_FOR_FINAL_ADMISSION"}
+        for key,value in (("manifest_sha256","0"*64),("report_sha256","0"*64),
+                          ("owner",{"comment_id":103,"body_sha256":"a"*64})):
+            bad=deepcopy(payload);bad[key]=value
+            self.admission=self.comment(102,p.FINAL+"_ADMISSION",bad,{"login":"synthetic-reviewer","id":202000001})
+            with self.assertRaisesRegex(ValueError,"AUTHENTIC_FINAL_REVIEWER"):self.validate()
+
+    def test_official_reader_revalidates_identity_even_with_consistent_final_hashes(self):
+        self.exports["/issues/comments/102"]["user"]={"login":a.OWNER,"id":a.OWNER_ID}
+        documents={"manifest":self.manifest,"report":self.report,"exports":self.exports}
+        payload={"owner":self.owner,"admission":self.admission}
+        for name,value in documents.items():
+            for root in (self.route.root,self.route.mirror):write(root/"final"/(name+".json"),value)
+            payload[name+"_sha256"]=digest(value)
+        with patch.object(self.route,"state",return_value={"stopped":False,"final":{"payload":payload}}), \
+             patch.object(self.route,"manifest",return_value=self.manifest):
+            with self.assertRaisesRegex(ValueError,"INDEPENDENT_FINAL_REVIEWER_ACCOUNT"):self.route.official_report()
 
 
 class OfflineTests(unittest.TestCase):
@@ -47,7 +147,7 @@ class OfflineTests(unittest.TestCase):
         self.grant["sizing"] = {"export_seconds": 60, "first_call_seconds": 5, "safety_milli": 1000}
         self.grant["offline"] = {"schema": p.SCHEMA, "decision_issue": 202,
             "operator_session": "12345678-1234-1234-1234-123456789abc", "base_journal_head_sha256": "f"*64,
-            "tools_sha256": digest(c.tools_manifest()), "tool_blobs": c.tool_blobs(), "unmeasured_calls": 2, "review_logins": [a.OWNER]}
+            "tools_sha256": digest(c.tools_manifest()), "tool_blobs": c.tool_blobs(), "unmeasured_calls": 2, "review_logins": ["synthetic-reviewer"]}
         self.stack.enter_context(patch.object(a, "load", return_value=self.grant))  # synthetic release boundary
         self.stack.enter_context(patch.object(a, "validate", side_effect=lambda grant, **_: grant))
         self.stack.enter_context(patch.object(c.old, "clean_source"))
@@ -195,6 +295,11 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"ORIGINAL_OPERATOR_SESSION"): p.validate_delegation(bad)
         bad = deepcopy(self.grant); bad["offline"]["unmeasured_calls"] = 3763
         with self.assertRaisesRegex(ValueError,"CONSERVATIVE_INITIAL"): p.validate_delegation(bad)
+        for logins in ([a.OWNER],[a.OWNER.upper()],["synthetic-reviewer",a.OWNER],
+                       ["synthetic-reviewer","SYNTHETIC-REVIEWER"],[None],[]):
+            bad=deepcopy(self.grant);bad["offline"]["review_logins"]=logins
+            with self.subTest(logins=logins),self.assertRaisesRegex(ValueError,"FINAL_REVIEWERS_REQUIRED"):
+                p.validate_delegation(bad)
 
     def test_crash_after_reservation_exports_same_ticket_without_new_budget(self):
         with patch.object(self.route,"export_active",side_effect=RuntimeError("SYNTHETIC_CRASH")):
@@ -312,6 +417,12 @@ class OfflineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"MERGED_RUNTIME_BYTES"):REAL_LOAD(locator,reader=c.Exports(bad))
             bad=deepcopy(exports);bad["/issues/comments/1"]["user"]["id"]=3
             with self.assertRaisesRegex(ValueError,"AUTHENTIC_OWNER"):REAL_LOAD(locator,reader=c.Exports(bad))
+            bad=deepcopy(exports)
+            modified=deepcopy(self.grant);modified["offline"]["review_logins"]=["unapproved-reviewer"]
+            body=p.RELEASE+"\n```json\n"+json.dumps(modified)+"\n```"
+            bad["/issues/comments/1"]["body"]=body
+            changed_locator={"comment_id":1,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
+            with self.assertRaisesRegex(ValueError,"APPROVAL_SOURCE_SCOPE"):REAL_LOAD(changed_locator,reader=c.Exports(bad))
 
     def test_native_claim_raw_mutation_and_missing_capsule_never_become_results(self):
         from safeshift.pilot.artifacts import import_archive
@@ -439,14 +550,21 @@ class OfflineTests(unittest.TestCase):
             bad=deepcopy(report);mutate(bad)
             with self.assertRaises(ValueError):c.validate_provider_report(manifest,bad)
         exports={}
-        def comment(i,marker,payload):
+        def comment(i,marker,payload,*,user):
             body=marker+"\n```json\n"+json.dumps(payload)+"\n```"
             exports["/issues/comments/"+str(i)]={"id":i,"issue_url":a.API+"/issues/202","body":body,
-                "user":{"login":a.OWNER,"id":a.OWNER_ID}}
+                "user":user}
             return {"comment_id":i,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
-        owner=comment(101,p.FINAL,{"manifest_sha256":digest(manifest),"report_sha256":digest(report),"status":"APPROVED_FOR_FINAL_ADMISSION"})
+        owner=comment(101,p.FINAL,{"manifest_sha256":digest(manifest),"report_sha256":digest(report),"status":"APPROVED_FOR_FINAL_ADMISSION"},
+            user={"login":a.OWNER,"id":a.OWNER_ID})
         admission=comment(102,p.FINAL+"_ADMISSION",{"manifest_sha256":digest(manifest),"report_sha256":digest(report),
-            "owner":owner,"status":"RELEASED_FOR_FINAL_ADMISSION"})
+            "owner":owner,"status":"RELEASED_FOR_FINAL_ADMISSION"},user={"login":"synthetic-reviewer","id":202000001})
+        self_review=deepcopy(exports)
+        self_review["/issues/comments/102"]["user"]={"login":a.OWNER,"id":a.OWNER_ID}
+        with self.assertRaisesRegex(ValueError,"INDEPENDENT_FINAL_REVIEWER_ACCOUNT"):
+            self.route.reconcile(report,self_review,owner,admission)
+        self.assertIsNone(self.route.state()["final"])
+        with self.assertRaisesRegex(ValueError,"OFFICIAL_RESULTS_BLOCKED"):self.route.official_report()
         self.route.reconcile(report,exports,owner,admission)
         self.assertEqual(self.route.state()["status"],"FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT")
         official=self.route.official_report()

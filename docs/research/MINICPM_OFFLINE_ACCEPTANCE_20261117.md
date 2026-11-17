@@ -1,5 +1,36 @@
 # Issue202 MiniCPM offline continuation — CPU acceptance
 
+## PR203 post-audit correction — review6943496144
+
+[ChatGPT changes-required](https://github.com/tantdna2/SafeShift/pull/203#issuecomment-6943496144)
+identified a real defect in the original final-positive fixture and predicate:
+two distinct comment IDs were accepted from the same Owner account. The
+historical execution counts below remain execution evidence, **not evidence of
+independent account separation**. The corrected code rejects Owner allowlists
+(including case variants), missing/invalid/reused stable user IDs, Owner login
+aliases and unauthorized reviewers; both reconcile and official-report use
+the same identity check. The positive fixture uses only a synthetic distinct
+reviewer, and full3763 verifies self-admission rejection before independent
+admission succeeds.
+
+Focused regressions exercise missing/changed user/id/login/body hash, wrong
+comment/issue/locator, rehashed wrong manifest/report/Owner bindings, consistent
+but self-approved final documents, changed grant reviewer lists without new
+subject approvals, and the unchanged provider gate. Owner-authenticated GitHub
+export custody remains a trust boundary: unsigned local JSON cannot prove its
+own origin. No real GitHub reviewer identity or authority is fabricated.
+
+The corrected independent Antigravity audit receipt belongs to auditor session
+`e5a463b2-f0ca-4bd8-9d46-19a1d4875c63`, via Owner after exact-HEAD review. Codex
+does not certify that audit or its five ad-hoc adversarial cases. The per-ID
+OS matrix supplied here is for Codex's own hash-bound logs; the auditor must
+provide its own identifiers/logs/hashes or correct unsupported numeric claims.
+No audit-only case is invented or added to Codex PASS counts.
+
+Corrected source and test log hashes are recorded below after test completion.
+
+## Historical initial delivery at acae1fa
+
 **SOURCE CANDIDATE ONLY.** This is software evidence using synthetic IDs/raw,
 temporary signing keys and mock provider transports. No authentic release,
 production journal write, notebook publication, Kaggle/GPU/inference/TEST,

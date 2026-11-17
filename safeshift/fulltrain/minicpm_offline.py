@@ -45,8 +45,9 @@ def validate_delegation(grant):
     require(type(d["unmeasured_calls"]) is int and 1 <= d["unmeasured_calls"] < 3763
         and d["unmeasured_calls"] <= grant["caps"]["job_calls"], "MINICPM_EXPLICIT_CONSERVATIVE_INITIAL_CAP")
     require(type(d["review_logins"]) is list and 1 <= len(d["review_logins"]) <= 8
-        and len(set(d["review_logins"])) == len(d["review_logins"])
-        and all(type(s) is str and re.fullmatch(r"[A-Za-z0-9-]{1,39}", s) for s in d["review_logins"]),
+        and all(type(s) is str and re.fullmatch(r"[A-Za-z0-9-]{1,39}", s) for s in d["review_logins"])
+        and len({s.casefold() for s in d["review_logins"]}) == len(d["review_logins"])
+        and all(s.casefold() != a.OWNER.casefold() for s in d["review_logins"]),
         "MINICPM_FINAL_REVIEWERS_REQUIRED")
     return d
 
