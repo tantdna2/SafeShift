@@ -1,6 +1,86 @@
 # SafeShift — PROJECT STATE
 
-## CURRENT — V5 CPU RAM failure / source repair — 17/11/2026
+## CURRENT — Issue202 MiniCPM offline serial continuation — 17/11/2026
+
+PR203 [post-audit correction6943496144](https://github.com/tantdna2/SafeShift/pull/203#issuecomment-6943496144)
+requires changes in the SAME branch/session/Draft PR. Earlier final-admission
+checks distinguished comment IDs but allowed one Owner account in both roles;
+the old positive fixture reproduced that flaw. The correction requires a
+different authorized GitHub account by stable positive integer user.id AND
+case-insensitive login, excludes Owner from the delegated reviewer allowlist,
+and rechecks this at admission and official reading. Synthetic positives now
+use a distinct mock reviewer; no real reviewer is designated. Missing genuine
+independent reviewer authority remains BLOCKED. No prior source/audit PASS is
+treated as approval of the corrected source; direct review and focused re-audit
+remain required. Historical91-case execution evidence below is not proof of the
+previously missing identity separation; corrected evidence is appended to its
+[acceptance record](research/MINICPM_OFFLINE_ACCEPTANCE_20261117.md).
+Correction tested at `babbac8e8b7858337417a74b9f25539a4e7f03a6`:97 distinct
+CPU test IDs PASS across Windows/Linux, including full3763 self-admission
+rejection and valid independent mock admission; no unresolved errors or
+unexercised skips. [Per-ID OS matrix](research/MINICPM_OFFLINE_REVIEWFIX_TEST_MATRIX_20261117.csv)
+and log hashes distinguish these author runs from the still-pending independent
+audit accounting addendum. Current runtime SHA256
+`32aabc133f7ebb9638863207398ab8c905f00bf75ca99d67aa19becc0ba0fd85`;
+tool-manifest SHA256 `6accf28ddef2635c71eb0c5538ec04fe88ccb6e1a3fb16c29fd3e8e1dde47924`.
+PR201 RAM/native/parser/Owner verifier bytes remain unchanged from the reviewed
+delivery; no production data, journal, key, budget or authority was modified.
+
+[Owner task202](https://github.com/tantdna2/SafeShift/issues/202) starts a NEW
+Codex session/branch `codex/issue202-minicpm-offline-chain` from verified main
+`e713d56d62a5a649a2078f2c2376fde6d025b978` (PR201 MERGED). One Draft PR, then
+STOP for direct ChatGPT review and a NEW independent Antigravity audit session;
+only separately authorized merge/postmerge and authentic exact-source release
+can activate the route. No production journal, signing/publication, GPU/Kaggle
+job, TEST or scientific result is produced by this coding task.
+
+[Vietnamese runbook](MINICPM_OFFLINE_CONTINUATION.md) documents the new source-
+bound delegation, offline Operator tools, Owner-only online verifier and <=3
+Owner actions per turn. The implementation reuses PR196's provisional/final
+separation and PR201's unchanged native controller/RAM pipeline, with a new
+release marker/delegation and signed ticket schema. Separate mirrored create-only
+journal, legacy writer fence, preserved originals, single active job, exact
+terminal/download proof and strict local ZIP/raw/native/history verification
+precede every continuation. Local SUCCESS/INVALID remain provisional; technical
+error/unknown/partial/extra version STOP without refund or automatic repair.
+
+Initial calls require an explicit reviewed conservative cap; subsequent sizing
+uses only verified same-source MiniCPM timing, actual pending IDs, overhead,
+export/storage/resource guards, finite caps, fresh Owner quota/Input observation
+and expiry. No InternVL throughput, fixed200/174 or promised job count. Owner
+alone uploads/runs/downloads each job; Antigravity prepares/accepts offline with
+the original delegated private key. No per-job GitHub attestation/release/audit
+cycle. Full provider checks of each new job, notebook, five Inputs, every capsule
+member and both ZIP pairs happen at campaign end, with failed technical custody
+and retired uncertainty preserved. One authentic Owner/reviewer final admission
+enables official-report rows/history/lineage/budget; earlier official use BLOCKED.
+
+Pre-Serial6 holds remain10526 calls/5 jobs/144000 physical GPU-seconds; derived
+ceilings14163169/3766/108460800 are unchanged reservations, not billing or current
+weekly quota. Serial6 starts ordinal0/history=[], no inherited predictions.
+RAM floor16384MiB, admit/setup/reclaim/cpu/gpu/native, cgroup/OOM/RSS/process-group
+snapshots and owned-only cache advice remain. No historical notebook, journal,
+ticket, model/precision/parser/C1/cohort/GT/TEST/scientific decision is changed.
+
+CPU acceptance at source/tools commit
+`6d8ea362b93fca415480870cbde515a17d401b5e`: **91 distinct test IDs PASS** across
+Windows pinned-SDK mocks and POSIX Linux, zero unresolved failures/errors and
+no unexercised skips. Full3763 synthetic multi-job/tail/admission, unchanged
+RAM/native/historical notebook bytes, signed limits, mirrored crash handling and
+official-reader fences are covered. [Commands, OS, log SHA256 and file list](research/MINICPM_OFFLINE_ACCEPTANCE_20261117.md)
+record overlap without double-counting. Runtime85-file SHA256
+`e3620934ef1662886bb723ac47d13accdfda4bc5362d6e5359112b79390e41ee`;
+11-tool manifest SHA256 `88c6939d03add8456e352ac676b3193eb418d33ccc661a46c587d5ad381ecbac`.
+Delivery-only documentation leaves those source bytes unchanged.
+
+**ACTIVATION BLOCKED:** original MiniCPM Operator UUID is still unconfirmed;
+`a5fa95c9...` is the excluded InternVL Attempt4 session. Existing private key/host
+custody, authentic offline route release/source approvals, signed initial cap/
+expiry and fresh Owner quota/Input proof remain external gates. No new session,
+key, permission or real SUCCESS is fabricated. CPU validation evidence is tracked
+in the same PR; it cannot establish final-source Kaggle fit or completion.
+
+## HISTORICAL — V5 CPU RAM failure / source repair — 17/11/2026
 
 [Owner6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950)
 starts one new Codex branch/Draft PR from PR200 merge

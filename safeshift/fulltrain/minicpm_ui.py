@@ -89,7 +89,7 @@ def validate(value, repo=ROOT):
     require(all(v is None or type(v) is str and 0 < len(v) <= 2048 for v in value["evidence_refs"].values()),
             "BOUNDED_EVIDENCE_REFERENCES")
     ancestors = value["ancestors"]
-    require(type(ancestors) is list and len(ancestors) == len(request["history"]) <= 512, "ALL_UI_ANCESTORS_REQUIRED")
+    require(type(ancestors) is list and len(ancestors) == len(request["history"]) <= 3763, "ALL_UI_ANCESTORS_REQUIRED")
     for i, item in enumerate(ancestors):
         require(type(item) is dict and set(item) == {"file", "sha256", "plan_sha256"}
             and item["file"] == f"ancestor-{i:04d}.bin", "EXPLICIT_ANCESTOR_FILE")

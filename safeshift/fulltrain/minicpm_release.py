@@ -122,7 +122,8 @@ def validate(grant, *, repo=ROOT):
         "expires_unix", "provider_max_age_seconds", "approvals"}
     recovery = type(grant) is dict and grant.get("schema") == RECOVERY_SCHEMA
     repair = recovery and "repair" in grant
-    require(type(grant) is dict and set(grant) == fields | ({"recovery"} if recovery else set()) | ({"repair"} if repair else set())
+    offline = recovery and "offline" in grant
+    require(type(grant) is dict and set(grant) == fields | ({"recovery"} if recovery else set()) | ({"repair"} if repair else set()) | ({"offline"} if offline else set())
         and (recovery and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY"
              or not recovery and grant["schema"] == SCHEMA
              and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_SERIAL_UI_ONLY"), "MINICPM_V2_EXPLICIT_AUTHORITY")
@@ -169,6 +170,9 @@ def validate(grant, *, repo=ROOT):
     if repair:
         from .minicpm_incident import source_incident
         source_incident(grant).validate_repair(grant)
+    if offline:
+        from .minicpm_offline import validate_delegation
+        validate_delegation(grant)
     return grant
 
 
@@ -192,11 +196,13 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
     # Locate only; authenticate author/body/issue below before trusting the record.
     require(type(locator) is dict and type(locator.get("comment_id")) is int, "MINICPM_V2_LOCATOR")
     raw = reader("/issues/comments/" + str(locator["comment_id"]))
-    marker = RECOVERY_MARKER if RECOVERY_MARKER in raw["body"] else MARKER
+    from .minicpm_offline import RELEASE as OFFLINE_RELEASE
+    marker = OFFLINE_RELEASE if OFFLINE_RELEASE in raw["body"] else RECOVERY_MARKER if RECOVERY_MARKER in raw["body"] else MARKER
     proposed = record(raw["body"], marker)
     issue = proposed.get("implementation_pr")
     owner = fetch(locator, issue)
     grant = validate(record(owner["body"], marker), repo=repo)
+    require((marker == OFFLINE_RELEASE) == ("offline" in grant), "MINICPM_EXPLICIT_OFFLINE_RELEASE_MARKER")
     pr = reader("/pulls/" + str(issue))
     require(pr["merged"] is True and pr["draft"] is False and pr["base"]["ref"] == "main"
         and pr["head"]["sha"] == grant["reviewed_head"] and pr["merge_commit_sha"] == grant["merged_sha"],
@@ -215,6 +221,11 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
         for name in contract.sources(repo):
             raw = (Path(repo) / name).read_bytes()
             expected[name] = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+        if "offline" in grant:
+            # Operator tools are outside the Kaggle runtime payload. Their
+            # authentic release pins Git blob IDs; the local companion also
+            # recomputes every SHA256/blob against its own reviewed bytes.
+            expected.update(grant["offline"]["tool_blobs"])
         for ref in set((grant["runtime_commit"], grant["reviewed_head"], grant["merged_sha"])):
             tree = reader("/git/trees/" + ref + "?recursive=1")
             require(tree.get("truncated") is False and type(tree.get("tree")) is list and len(tree["tree"]) <= 20000,
@@ -259,6 +270,9 @@ def bind(grant, value):
 
 
 def verify_ticket(grant, envelope, value, *, collection=False):
+    if "offline" in grant:
+        from .minicpm_offline import verify_ticket as verify_offline
+        return verify_offline(grant, envelope, value, collection=collection)
     require(type(envelope) is dict and set(envelope) == {"payload", "signature"}, "MINICPM_SIGNED_TICKET_REQUIRED")
     t = envelope["payload"]
     verify_signature(grant["public_key"], t, envelope["signature"])
