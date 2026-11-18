@@ -3,8 +3,9 @@
 No image copy, renamed checkpoint, symlink view, prediction import or TEST walk.
 Dataset versions are release/transport bindings, not observations from a mount.
 """
-import json
 import io
+import json
+import os
 from pathlib import Path
 
 from safeshift.candidates.source import require, snapshot_stat
@@ -84,7 +85,8 @@ def admit(root, binding, binding_sha256, projection_sha256, *, deadline=None):
     return bundle, cohort, rows
 
 
-def verify_bytes(root, cohort, rows, *, deadline=None):
+def _verify_files(root, cohort, rows, *, deadline):
+    files = []
     require(len(rows) == len(cohort["samples"]) == 3763, "EXACT_ORIGINAL_3763")
     for expected, row in zip(cohort["samples"], rows):
         require(set(row) == {*expected, "image"} and all(row[n] == v for n, v in expected.items()),
@@ -93,29 +95,39 @@ def verify_bytes(root, cohort, rows, *, deadline=None):
                 and Path(row["image"]).stem == row["sample_id"],
                 "ORIGINAL_TRAIN_JPG_ONLY")
         path = safe(root, row["image"])
-        size = snapshot_stat(path).st_size
-        require(memory.stream_readonly_sha256(path, expected_size=size, deadline=deadline) == row["image_sha256"], "ORIGINAL_IMAGE_BYTES_CHANGED")
-    return {"verified_images": len(rows), "decode": "NOT_RUN", "copied_bytes": 0}
+        info = snapshot_stat(path)
+        identity = memory.identity(info)
+        require(memory.stream_readonly_sha256(path, expected_size=info.st_size, deadline=deadline,
+                                              expected_identity=identity) == row["image_sha256"],
+                "ORIGINAL_IMAGE_BYTES_CHANGED")
+        files.append((path, identity))
+    return tuple(files)
+
+
+def verify_bytes(root, cohort, rows, *, deadline=None):
+    files = _verify_files(root, cohort, rows, deadline=deadline)
+    return {"verified_images": len(files), "decode": "NOT_RUN", "copied_bytes": 0}
 
 
 def verify_images(root, cohort, rows, *, deadline=None):
-    """Pinned child CPU image decode; SHA locks dimensions, no invented sizes."""
-    verify_bytes(root, cohort, rows, deadline=deadline)
+    """Independent decode verifies every image byte before using it."""
+    return _decode_files(_verify_files(root, cohort, rows, deadline=deadline), deadline=deadline)
+
+
+def _decode_files(files, *, deadline):
     from PIL import Image
     formats = {}
-    for row in rows:
-        path = safe(root, row["image"])
-        size = snapshot_stat(path).st_size
-        memory.check_deadline(deadline)
-        with Image.open(path) as image:
-            # Match the proven native PIL loader. The original TRAIN includes
-            # PNG bytes with .jpg locators; the frozen SHA, not the suffix,
-            # identifies the unchanged input. Never transcode or rewrite it.
-            require(getattr(image, "n_frames", 1) == 1 and all(n > 0 for n in image.size),
-                    "ORIGINAL_STILL_IMAGE_REQUIRED")
-            image.load()
-            formats[image.format] = formats.get(image.format, 0) + 1
-            with image.convert("RGB") as rgb:
-                require(rgb.mode == "RGB", "ORIGINAL_NATIVE_RGB_CONVERSION")
-        memory.evict_readonly_file(path, expected_size=size, deadline=deadline)
-    return {"verified_images": len(rows), "decode": "PASS", "formats": formats, "copied_bytes": 0}
+    for path, identity in files:
+        # Decode the admitted inode, on the same checked descriptor used for
+        # post-decode identity validation and cache advice.
+        with memory.readonly_fd(path, None, deadline, expected_identity=identity) as (fd, _, _):
+            with os.fdopen(fd, "rb", closefd=False) as stream, Image.open(stream) as image:
+                # Some original .jpg locators contain PNG bytes. PIL's content
+                # detection and RGB validation match the native loader.
+                require(getattr(image, "n_frames", 1) == 1 and all(n > 0 for n in image.size),
+                        "ORIGINAL_STILL_IMAGE_REQUIRED")
+                image.load()
+                formats[image.format] = formats.get(image.format, 0) + 1
+                with image.convert("RGB") as rgb:
+                    require(rgb.mode == "RGB", "ORIGINAL_NATIVE_RGB_CONVERSION")
+    return {"verified_images": len(files), "decode": "PASS", "formats": formats, "copied_bytes": 0}

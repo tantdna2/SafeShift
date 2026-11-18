@@ -1,13 +1,15 @@
 # SafeShift — PROJECT STATE
 
-## Current / MiniCPM after Serial 6 / 18 November 2026
+## Current / MiniCPM after Serial 6 / 19 November 2026
 
 Local signed custody and the supervisor ZIP confirm a reclaim-stage RAM failure
 before native execution. All 3,763 original TRAIN IDs remain NOT_ATTEMPTED.
 Reservation totals are 10,626 calls / 6 jobs / 172,800 physical GPU-seconds.
-The page-cache patch is a CPU-tested source candidate pending direct review,
-independent audit, authorized merge, postmerge verification and a fresh
-Serial 7 release. [Incident and memory measurements](MINICPM_V5_RAM_REPAIR.md)
+The PR205 revision addresses the independent audit's call accounting,
+same-stage TRAIN reads and directory traversal findings. The revised source
+awaits direct HEAD review, independent re-audit, authorized merge, postmerge
+verification and a fresh Serial 7 release. The Serial 6 evidence remains
+\`LOCAL_DOWNLOAD_ONLY\`. [Incident and memory measurements](MINICPM_V5_RAM_REPAIR.md)
 and [source transition](MINICPM_OFFLINE_CONTINUATION.md).
 
 ### Historical status through PR204

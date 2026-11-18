@@ -188,21 +188,6 @@ class MemoryTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     func(item)
 
-    def test_image_advice_occurs_on_generate_exit_even_when_backend_fails(self):
-        from safeshift.fulltrain.runtime import _ImageCacheBackend
-        native = Mock()
-        backend = _ImageCacheBackend(native, None)
-        with patch.object(m, 'evict_readonly_file') as advise:
-            self.assertIs(backend.generate('image', 'sample'), native.generate.return_value)
-            advise.assert_called_once_with('image', deadline=None)
-            advise.side_effect = OSError('ADVICE_FAILED')
-            self.assertIs(backend.generate('image', 'sample'), native.generate.return_value)
-            self.assertIsInstance(backend.advice_error, OSError)
-            native.generate.side_effect = ValueError('GENERATION_FAILED')
-            with self.assertRaisesRegex(ValueError, 'GENERATION_FAILED'):
-                backend.generate('image', 'sample')
-            self.assertEqual(advise.call_count, 3)
-
     def test_postload_advises_every_locked_shard_with_exact_sizes(self):
         from safeshift.candidates.source import LOCK
         locked = read(LOCK.with_name('checkpoint_metadata_lock.json'))['minicpm4']['weights']
@@ -283,7 +268,153 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(sha(file), before)
 
 
+    @unittest.skipUnless(sys.platform == 'linux', 'POSIX directory-FD advice')
+    def test_owned_pass_two_reuses_directories_for_a_wide_deep_tree(self):
+        scratch = Path(self.request['scratch'])
+        prefix = scratch / 'venv3119'
+        leaf = prefix / 'lib' / Path(*(['nested'] * 20))
+        leaf.mkdir(parents=True)
+        for i in range(300):
+            (leaf / f'{i:04}.so').write_bytes(b'x')
+        owned = m.ownership(self.request)
+        installed = {'request_sha256': digest(self.request), 'python': str(prefix / 'bin/python'),
+                     'env': {'SAFESHIFT_RUNTIME_ROOT': str(prefix)}}
+        original_open = os.open
+        directory_opens = []
+        def counted_open(name, flags, *args, **kwargs):
+            if flags & os.O_DIRECTORY:
+                directory_opens.append(name)
+            return original_open(name, flags, *args, **kwargs)
+        open_fds = len(list(Path('/proc/self/fd').iterdir()))
+        with patch.object(m.os, 'open', side_effect=counted_open), patch.object(m.os, 'fsync'), \
+                patch.object(m.os, 'posix_fadvise') as advice:
+            result = m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+10)
+        self.assertEqual(result['advised_files'], 300)
+        self.assertEqual(advice.call_count, 300)
+        self.assertEqual(len(directory_opens), 1 + 2 * 22)
+        self.assertEqual(len(list(Path('/proc/self/fd').iterdir())), open_fds)
+
+        (leaf / Path(*(['deeper'] * 43))).mkdir(parents=True)
+        with patch.object(m.os, 'posix_fadvise') as advice:
+            with self.assertRaisesRegex(ValueError, 'ADVICE_SCAN_LIMIT'):
+                m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+10)
+            advice.assert_not_called()
+        self.assertEqual(len(list(Path('/proc/self/fd').iterdir())), open_fds)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'POSIX directory-FD advice')
+    def test_owned_pass_two_rejects_changed_inode_and_metadata(self):
+        scratch = Path(self.request['scratch'])
+        prefix = scratch / 'venv3119'
+        path = prefix / 'lib' / 'owned.so'
+        path.parent.mkdir(parents=True)
+        owned = m.ownership(self.request)
+        installed = {'request_sha256': digest(self.request), 'python': str(prefix / 'bin/python'),
+                     'env': {'SAFESHIFT_RUNTIME_ROOT': str(prefix)}}
+        real_stat = os.stat
+        for mutation in ('inode', 'size', 'mode'):
+            with self.subTest(mutation=mutation):
+                path.write_bytes(b'x')
+                path.chmod(0o600)
+                seen = 0
+                def stat_after_inventory(name, *args, **kwargs):
+                    nonlocal seen
+                    if name == path.name and kwargs.get('dir_fd') is not None:
+                        seen += 1
+                        if seen == 2:
+                            if mutation == 'inode':
+                                replacement = path.with_suffix('.new')
+                                replacement.write_bytes(b'x')
+                                replacement.replace(path)
+                            elif mutation == 'size':
+                                path.write_bytes(b'xx')
+                            else:
+                                path.chmod(0o640)
+                    return real_stat(name, *args, **kwargs)
+                open_fds = len(list(Path('/proc/self/fd').iterdir()))
+                with patch.object(os, 'stat', side_effect=stat_after_inventory), patch.object(os, 'posix_fadvise') as advice:
+                    with self.assertRaisesRegex(ValueError, 'ADVICE_FILE_CHANGED'):
+                        m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+5)
+                    advice.assert_not_called()
+                self.assertEqual(seen, 2)
+                self.assertEqual(len(list(Path('/proc/self/fd').iterdir())), open_fds)
+
+
 class PipelineTests(unittest.TestCase):
+    def test_controller_preserves_calls_raw_and_primary_error_before_image_advice(self):
+        from test_fresh_fulltrain import FreshTests, Scripted
+        from safeshift.candidates.fulltrain_run import BoundStore
+        from safeshift.fulltrain import runtime, minicpm_release
+        fixture = FreshTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        for case, model_error, advice_error, expired, stop, calls in (
+            ('ok', False, False, False, None, 2),
+            ('advice', False, True, False, 'IMAGE_CACHE_ADVICE_FAILURE', 1),
+            ('model', True, False, False, 'TECHNICAL_STOP', 1),
+            ('both', True, True, False, 'TECHNICAL_STOP', 1),
+            ('expiry', False, False, True, 'ADAPTIVE_TIME_STOP', 1),
+        ):
+            with self.subTest(case=case):
+                p = fixture.plan(name=case, cap=2)
+                work = fixture.root / ('work-' + case)
+                claims = fixture.root / ('claims-' + case)
+                write(claims / 'launch.json', {'time_unix': time.time()})
+                active = {'value': {'request': {'plan': p}}, 'locator': {}, 'ticket': {}, 'claims': claims,
+                          'grant': {'sizing': {'export_seconds': 5, 'first_call_seconds': 1, 'safety_milli': 1000}}}
+                result_text = '{"safety_level":"Level04"}'
+                native = Scripted([ValueError('SYNTHETIC_MODEL_FAILURE') if model_error else result_text, result_text])
+                now = Mock(return_value=0.0)
+                generate = native.generate
+
+                def timed_generate(*args):
+                    try:
+                        return generate(*args)
+                    finally:
+                        now.return_value += 56.0 if expired else 2.0
+
+                native.generate = timed_generate
+
+                def advice(path, *, deadline):
+                    ordinal = int(Path(path).stem)
+                    call = work / case / f'calls/{ordinal:06d}/run'
+                    sample = call / 'samples/000000'
+                    self.assertTrue((sample / 'result.json').is_file())
+                    self.assertEqual((sample / 'raw.json').is_file(), not model_error)
+                    self.assertTrue((work / case / f'checkpoints/{ordinal:06d}.json').is_file())
+                    self.assertGreater(deadline, time.monotonic())
+                    if advice_error:
+                        raise OSError('SYNTHETIC_ADVICE_FAILURE')
+                    return {'advised': True}
+
+                with patch.object(minicpm_release, 'current', return_value=active), \
+                     patch.object(minicpm_release, 'GuardedBackend', side_effect=lambda backend, _: backend), \
+                     patch.object(minicpm_release, 'claims_snapshot', return_value={}), \
+                     patch.object(m, 'evict_readonly_file', side_effect=advice) as evict:
+                    root = runtime._execute(work, fixture.bundle, fixture.cohort, fixture.campaign, p, [],
+                        lambda: native, image_path=lambda i: f'{i:06d}.bin', store_class=BoundStore, clock=now)
+                receipt = read(root / 'receipt.json')
+                self.assertEqual((receipt['native_calls'], receipt['observed_native_markers'], native.calls), (calls,) * 3)
+                self.assertEqual(receipt['stop'], stop)
+                self.assertEqual(read(root / 'timing.json')['call_seconds'], [56.0 if expired else 2.0] * calls)
+                self.assertEqual(evict.call_count, 0 if expired else calls)
+                self.assertFalse((root / 'accounting_failure.json').exists())
+                self.assertTrue(root.with_suffix('.zip').is_file())
+                for ordinal in range(calls):
+                    call = root / f'calls/{ordinal:06d}/run'
+                    sample = call / 'samples/000000'
+                    status = 'TECHNICAL_ERROR' if model_error else 'SUCCESS'
+                    self.assertEqual(read(sample / 'result.json')['status'], status)
+                    self.assertEqual(read(root / 'accounting.json')['samples'][ordinal]['status'], status)
+                    if model_error:
+                        self.assertIn('SYNTHETIC_MODEL_FAILURE', read(call / 'failure.json')['message'])
+                    else:
+                        self.assertEqual(read(sample / 'result.json')['raw_sha256'], sha(sample / 'raw.json'))
+                    self.assertEqual(read(root / f'checkpoints/{ordinal:06d}.json')['native_calls'], ordinal + 1)
+                    self.assertEqual(read(call / 'image-cache-advice.json')['status'],
+                                     'DEADLINE' if expired else 'FAILED' if advice_error else 'RETURNED')
+                if calls == 1:
+                    self.assertEqual(read(root / 'accounting.json')['samples'][1]['status'], 'NOT_ATTEMPTED')
+
     def test_post_image_ram_failure_stops_actual_generate_and_native_receipt(self):
         from safeshift.fulltrain import minicpm_release as a, minicpm_recovery
         from types import SimpleNamespace as NS

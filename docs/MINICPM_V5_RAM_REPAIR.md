@@ -50,6 +50,32 @@ Read-only replay from the repaired checkout, with the private evidence present:
 python -B -c "from pathlib import Path; from safeshift.fulltrain.minicpm_serial6 import verify_local; print(verify_local(Path('data/processed'))[0])"
 ```
 
+### PR205 audit follow-up / 19 November 2026
+
+- Native cache advice runs after raw, result, elapsed call time and the
+  cumulative call checkpoint have been recorded. A failed advice gets a
+  separate per-call receipt and stops the run before another sample. A model
+  failure remains the primary failure when advice also fails. At the call
+  deadline the controller records an advisory skip and keeps the completed
+  sample. File syscalls remain in the hard-supervised native process and
+  before the signed export reserve.
+- CPU and native reuse the original admission from their own stage. The
+  process-local binding covers the request, source directory, deadline,
+  bundle, cohort and ordered image mapping. Each file's opened descriptor
+  must match the identity checked during SHA256 verification, and its
+  identity is checked again after PIL decode. The native reservation check
+  rechecks the scheduled files by identity. Each selected image still gets
+  SHA256 verification immediately before its model call. Independent
+  callers verify all bytes before decode.
+- Pass 1 inventories the entire allowed scratch tree with entry and depth
+  bounds. Pass 2 walks only that inventory via open directory descriptors,
+  rechecking each file and directory. The Linux regression with 300 files
+  under 20 nested directories observes 45 explicit directory opens across
+  both passes, including the root and the two venv ancestors. Reproduce with
+  \`PYTHONPATH=tests python -B -m unittest test_minicpm_fulltrain_memory.MemoryTests.test_owned_pass_two_reuses_directories_for_a_wide_deep_tree -v\`.
+  This fixture measures opens on Linux. Kaggle I/O latency, cache eviction
+  effectiveness and RAM headroom still need release-bound evidence.
+
 The remaining sections document the V5 incident and the earlier Serial 6 design.
 
 Owner [6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950),

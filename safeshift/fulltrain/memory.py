@@ -89,13 +89,14 @@ def check_deadline(deadline):
 
 
 @contextmanager
-def readonly_fd(path, expected_size, deadline):
+def readonly_fd(path, expected_size, deadline, *, expected_identity=None):
     path = Path(path)
     check_deadline(deadline)
     for parent in path.parents:
         snapshot_stat(parent, directory=True)
     before = snapshot_stat(path)
     require(expected_size is None or before.st_size == expected_size, 'READONLY_EXPECTED_SIZE')
+    require(expected_identity is None or identity(before) == expected_identity, 'READONLY_FILE_CHANGED')
     fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
                  | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0))
     try:
@@ -113,9 +114,9 @@ def readonly_fd(path, expected_size, deadline):
         os.close(fd)
 
 
-def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=None):
+def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=None, expected_identity=None):
     hashed = hashlib.sha256()
-    with readonly_fd(path, expected_size, deadline) as (fd, size, advice):
+    with readonly_fd(path, expected_size, deadline, expected_identity=expected_identity) as (fd, size, advice):
         if advice and hasattr(os, 'POSIX_FADV_RANDOM'):
             os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_RANDOM)
         page = os.sysconf('SC_PAGE_SIZE') if advice else None
@@ -167,20 +168,22 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
     archive = py.manifest()['filename']
     flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
     directory_flags = flags | os.O_DIRECTORY
-    inventory = {}
-    skipped = 0
+    entries = skipped = 0
 
-    def inspect(parent, name, path, *, optional=False, directory=None, skip_links=False):
-        nonlocal skipped
+    def inspect(parent, name, path, tree, *, optional=False, directory=None, skip_links=False):
+        nonlocal entries, skipped
         require(time.monotonic() < deadline, 'ADVICE_DEADLINE')
+        require(len(path) <= 64, 'ADVICE_SCAN_LIMIT')
         try:
             info = os.stat(name, dir_fd=parent, follow_symlinks=False)
         except FileNotFoundError:
             if optional:
                 return
             raise
-        require(len(inventory) < max_entries, 'ADVICE_SCAN_LIMIT')
-        inventory[path] = identity(info)
+        require(entries < max_entries, 'ADVICE_SCAN_LIMIT')
+        entries += 1
+        children = {} if stat.S_ISDIR(info.st_mode) else None
+        tree[name] = (identity(info), children)
         if skip_links and stat.S_ISLNK(info.st_mode):
             skipped += 1
             return
@@ -193,13 +196,13 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
             try:
                 require(identity(os.fstat(child)) == identity(info), 'ADVICE_DIRECTORY_CHANGED')
                 if path == ('venv3119',):
-                    inspect(child, 'lib', path + ('lib',), directory=True)
-                    inspect(child, 'bin', path + ('bin',), optional=True, directory=True)
+                    inspect(child, 'lib', path + ('lib',), children, directory=True)
+                    inspect(child, 'bin', path + ('bin',), children, optional=True, directory=True)
                 else:
                     allow_links = path[:2] == ('venv3119', 'bin') or path[0] == 'input-cpython3119'
-                    with os.scandir(child) as entries:
-                        for entry in entries:
-                            inspect(child, entry.name, path + (entry.name,), skip_links=allow_links)
+                    with os.scandir(child) as scanned:
+                        for entry in scanned:
+                            inspect(child, entry.name, path + (entry.name,), children, skip_links=allow_links)
             finally:
                 os.close(child)
 
@@ -208,40 +211,51 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
         root_info = os.fstat(root)
         require((root_info.st_dev, root_info.st_ino) == (owned['device'], owned['inode']),
                 'ADVICE_ROOT_CHANGED')
-        inspect(root, 'venv3119', ('venv3119',), directory=True)
-        inspect(root, archive, (archive,), optional=True, directory=False)
+        inventory = {}
+        inspect(root, 'venv3119', ('venv3119',), inventory, directory=True)
+        inspect(root, archive, (archive,), inventory, optional=True, directory=False)
         for name in ('pip-bootstrap', 'input-cpython3119'):
-            inspect(root, name, (name,), optional=True, directory=True)
+            inspect(root, name, (name,), inventory, optional=True, directory=True)
 
         count = total = 0
-        for path, expected in inventory.items():
-            require(time.monotonic() < deadline, 'ADVICE_DEADLINE')
-            parent = os.dup(root)
-            try:
-                for i, name in enumerate(path[:-1], 1):
-                    child = os.open(name, directory_flags, dir_fd=parent)
-                    os.close(parent)
-                    parent = child
-                    require(identity(os.fstat(parent)) == inventory[path[:i]], 'ADVICE_DIRECTORY_CHANGED')
-                info = os.stat(path[-1], dir_fd=parent, follow_symlinks=False)
+
+        def advise(parent, tree):
+            nonlocal count, total
+            for name, (expected, children) in tree.items():
+                require(time.monotonic() < deadline, 'ADVICE_DEADLINE')
+                info = os.stat(name, dir_fd=parent, follow_symlinks=False)
                 require(identity(info) == expected, 'ADVICE_FILE_CHANGED')
-                if stat.S_ISREG(info.st_mode) and info.st_size >= min_bytes:
-                    fd = os.open(path[-1], flags, dir_fd=parent)
+                if children is not None:
+                    child = os.open(name, directory_flags, dir_fd=parent)
+                    try:
+                        require(identity(os.fstat(child)) == expected, 'ADVICE_DIRECTORY_CHANGED')
+                        advise(child, children)
+                        require(identity(os.fstat(child)) == expected
+                                and identity(os.stat(name, dir_fd=parent, follow_symlinks=False)) == expected,
+                                'ADVICE_DIRECTORY_CHANGED')
+                    finally:
+                        os.close(child)
+                elif stat.S_ISREG(info.st_mode) and info.st_size >= min_bytes:
+                    fd = os.open(name, flags, dir_fd=parent)
                     try:
                         require(identity(os.fstat(fd)) == expected, 'ADVICE_OPEN_CHANGED')
                         os.fsync(fd)
+                        require(time.monotonic() < deadline, 'ADVICE_DEADLINE')
                         os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
                         require(identity(os.fstat(fd)) == expected, 'ADVICE_CHANGED_DURING_SYSCALL')
                         count += 1
                         total += info.st_size
                     finally:
                         os.close(fd)
-            finally:
-                os.close(parent)
+
+        require(identity(os.fstat(root)) == identity(root_info) == identity(scratch.lstat()),
+                'ADVICE_ROOT_CHANGED')
+        advise(root, inventory)
+        require(time.monotonic() < deadline, 'ADVICE_DEADLINE')
         require(identity(os.fstat(root)) == identity(root_info) == identity(scratch.lstat()),
                 'ADVICE_ROOT_CHANGED')
         return {'method': 'FSYNC_POSIX_FADV_DONTNEED_OWNED_RUNTIME', 'label': label,
-                'scan_complete': True, 'entries': len(inventory), 'skipped_symlinks': skipped,
+                'scan_complete': True, 'entries': entries, 'skipped_symlinks': skipped,
                 'advised_files': count, 'advised_bytes': total,
                 'deleted_files': 0, 'effect': 'ADVISORY_NOT_RAM_PROOF'}
     finally:
