@@ -181,7 +181,8 @@ class Journal:
 
     def append(self, kind, payload):
         fence = ROOT / "data/processed/minicpm-release-registrations/mcpm4-restart-v1-offline-v1.json"
-        require(not fence.exists(), "MINICPM_OFFLINE_ROUTE_ACTIVE_LEGACY_WRITER_BLOCKED")
+        successor = fence.with_name("mcpm4-restart-v1-offline-post-serial6.json")
+        require(not fence.exists() and not successor.exists(), "MINICPM_OFFLINE_ROUTE_ACTIVE_LEGACY_WRITER_BLOCKED")
         events = self.events()
         self._pair({"schema": SCHEMA, "number": len(events) + 1, "previous": digest(events[-1]), "kind": kind, "payload": payload})
 

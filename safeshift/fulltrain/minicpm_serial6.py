@@ -49,11 +49,13 @@ def verify_local(processed):
     download = safe(processed, "inspect_run_6")
     # Exact inspected file listing also rejects an extra attempt, raw or loose claim.
     names = []
+    visited = 0
     pending = [download]
     while pending:
         parent = pending.pop()
         for entry in parent.iterdir():
-            require(len(names) + len(pending) < 512, "SERIAL6_INVENTORY_BOUND")
+            visited += 1
+            require(visited <= 512, "SERIAL6_INVENTORY_BOUND")
             if entry.is_dir():
                 snapshot_stat(entry, directory=True)
                 pending.append(entry)
@@ -67,7 +69,8 @@ def verify_local(processed):
     with zipfile.ZipFile(archive) as bundle:
         for name in bundle.namelist():
             path = safe(out, name)
-            require(path.read_bytes() == bundle.read(name), "SERIAL6_EXTRACTED_RECEIPT_CHANGED")
+            require(snapshot_stat(path).st_size == bundle.getinfo(name).file_size
+                    and path.read_bytes() == bundle.read(name), "SERIAL6_EXTRACTED_RECEIPT_CHANGED")
             files.append(path)
     files.extend((archive, Path(str(archive) + ".sha256.json")))
     context = safe(download, "mcpm4-restart-v1-6-release-context.json")

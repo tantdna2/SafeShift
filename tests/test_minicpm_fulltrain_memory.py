@@ -203,6 +203,16 @@ class MemoryTests(unittest.TestCase):
                 backend.generate('image', 'sample')
             self.assertEqual(advise.call_count, 3)
 
+    def test_postload_advises_every_locked_shard_with_exact_sizes(self):
+        from safeshift.candidates.source import LOCK
+        locked = read(LOCK.with_name('checkpoint_metadata_lock.json'))['minicpm4']['weights']
+        with patch.object(m, 'evict_readonly_file', return_value={'advised': True}) as evict:
+            receipt = m.advise_readonly_weights(self.root, deadline=99)
+        self.assertEqual(set(receipt['files']), set(locked))
+        self.assertEqual([(c.args[0], c.kwargs) for c in evict.call_args_list],
+                         [(self.root / name, {'expected_size': row['size'], 'deadline': 99})
+                          for name, row in locked.items()])
+
     def test_loader_hashes_then_advises_before_after_load_gate(self):
         from safeshift.candidates import backend, loading
         shard = self.root / 'synthetic-shard'

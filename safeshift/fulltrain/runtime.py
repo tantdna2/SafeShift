@@ -185,9 +185,12 @@ def _worker(request, *, repo=ROOT, memory_output=None, stage_deadline=None, admi
             _, snapshot, weights, _ = checkpoint_binding(request, repo, deadline=stage_deadline)
         else:
             _, snapshot, weights = checkpoint(request["inputs"], key)
+        if key != "minicpm4" or set(request) not in supervised:
             verify_snapshot(snapshot, key)
-            reader = memory.stream_readonly_sha256 if key == "minicpm4" else sha
-            verify_weights(weights, key, hash_reader=reader)
+            if key == "minicpm4":
+                verify_weights(weights, key, hash_reader=memory.stream_readonly_sha256)
+            else:
+                verify_weights(weights, key)
         software(key)  # actual isolated Python/pins/compiled ABI, no kernel fallback
     if "original_inputs" in request:
         from .original_inputs import verify_images as original_images

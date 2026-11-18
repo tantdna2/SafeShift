@@ -602,7 +602,8 @@ class OfflineTests(unittest.TestCase):
                 c.copy(Path(str(source)+".sha256.json"),Path(str(destination/name)+".sha256.json"))
             return {"mock_sdk":"EXACT_SYNTHETIC_BYTES"}
         with patch.object(online,"historical",return_value={"status":"ALL_HISTORICAL_CUSTODY_RECHECKED",
-                "historical_sha256":digest(manifest["historical"])}), \
+                "historical_sha256":digest(manifest["historical"]), "serial6_supervisor_sha256": c.serial6.ZIP_SHA,
+                "serial6": {"job_id": c.serial6.JOB, "version": 1, "state": "ERROR", "kernel_id": 6}}), \
              patch.object(online,"capsule",return_value={"mock_sdk":"CAPSULE_CHECKED"}), \
              patch.object(manual,"observe_kernel",side_effect=observe), \
              patch.object(manual,"download_outputs",side_effect=download):
@@ -615,6 +616,8 @@ class OfflineTests(unittest.TestCase):
                        lambda r:r.update(manifest_sha256="0"*64),
                        lambda r:r.update(historical_sha256="0"*64),
                        lambda r:r["historical_verification"].update(status="PENDING"),
+                       lambda r:r["historical_verification"].pop("serial6"),
+                       lambda r:r["historical_verification"]["serial6"].update(state="RUNNING"),
                        lambda r:r["attempts"][0].update(ticket_sha256="0"*64),
                        lambda r:r["attempts"][0].update(completion_sha256="0"*64),
                        lambda r:r["attempts"][0].update(output_verified=False),

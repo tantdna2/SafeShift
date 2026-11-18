@@ -215,6 +215,8 @@ class Continuation:
         old.clean_source(grant)
         a.bind(grant, initial)
         require(initial["request"]["history"] == initial["ancestors"] == []
+            and initial["request"]["plan"]["action"] == "initial"
+            and initial["request"]["plan"]["counts"] == {"NOT_ATTEMPTED": 3763}
             and initial["request"]["plan"]["scheduled_ordinals"][0] == 0, "MINICPM_SERIAL7_EMPTY_HISTORY")
         require(not root.exists() and not mirror.exists() and not fence().exists(), "MINICPM_NO_OFFLINE_REINITIALIZATION")
         for dest in (root, mirror):
@@ -543,6 +545,12 @@ def validate_provider_report(manifest, report):
             and proof["output_verified"] is True and proof["local_replayed"] is True,
             "MINICPM_FINAL_JOB_VERSION_OUTPUT_OR_CAPSULE_MISMATCH")
         kernels.add(provider["kernel_id"])
+    sixth = report["historical_verification"].get("serial6", {})
+    require(sixth.get("job_id") == serial6.JOB and sixth.get("version") == 1
+        and sixth.get("state") in ("COMPLETE", "ERROR") and type(sixth.get("kernel_id")) is int
+        and sixth["kernel_id"] > 0 and sixth["kernel_id"] not in kernels
+        and report["historical_verification"].get("serial6_supervisor_sha256") == serial6.ZIP_SHA,
+        "MINICPM_FINAL_SERIAL6_PROVIDER_REQUIRED")
     require(report["historical_verification"]["status"] == "ALL_HISTORICAL_CUSTODY_RECHECKED"
         and report["historical_verification"]["historical_sha256"] == digest(manifest["historical"]),
         "MINICPM_FINAL_FAILED_AND_RETIRED_HOLDS_REQUIRED")
