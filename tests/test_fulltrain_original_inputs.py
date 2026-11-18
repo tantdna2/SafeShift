@@ -125,9 +125,25 @@ class OriginalMountedInputsTests(unittest.TestCase):
         for mutate in (lambda r:r.reverse(), lambda r:r.__setitem__(1, r[0]),
                        lambda r:r[0].update(image="TEST/private.jpg"), lambda r:r.pop()):
             rows = copy.deepcopy(self.rows); mutate(rows)
-            with patch.object(original, "sha", return_value=self.rows[0]["image_sha256"]), \
+            with patch.object(original.memory, "stream_readonly_sha256", return_value=self.rows[0]["image_sha256"]), \
                  patch.object(original, "snapshot_stat"):
                 with self.assertRaises(ValueError): original.verify_bytes(self.bundle, self.cohort, rows)
+
+    def test_each_original_hash_uses_size_and_deadline_before_accepting(self):
+        limit = 123.0
+        first, second = self.rows[:2]
+        first_path = self.bundle / first["image"]
+        first_path.parent.mkdir(parents=True)
+        first_path.write_bytes(b'a')
+        second_path = self.bundle / second["image"]
+        second_path.write_bytes(b'bb')
+        with patch.object(original.memory, "stream_readonly_sha256",
+                          side_effect=[first["image_sha256"], "corrupt"]) as reader:
+            with self.assertRaisesRegex(ValueError, "BYTES_CHANGED"):
+                original.verify_bytes(self.bundle, self.cohort, self.rows, deadline=limit)
+        self.assertEqual([call.args[0] for call in reader.call_args_list], [first_path, second_path])
+        self.assertEqual([call.kwargs for call in reader.call_args_list],
+                         [{"expected_size": 1, "deadline": limit}, {"expected_size": 2, "deadline": limit}])
 
     def test_shared_admission_and_worker_dispatch_original_binding(self):
         request = {"original_inputs": self.binding, "inputs": self.root, "marker_sha256": digest(self.binding),
@@ -136,8 +152,8 @@ class OriginalMountedInputsTests(unittest.TestCase):
              patch.object(original, "verify_bytes", return_value={"copied_bytes":0}) as check:
             self.assertEqual(admission.input_binding(request), (self.bundle, self.cohort, self.rows))
             admission.input_bytes(request, self.bundle, self.cohort, self.rows)
-        admit.assert_called_once_with(self.root, self.binding, digest(self.binding), digest(self.cohort))
-        check.assert_called_once_with(self.bundle, self.cohort, self.rows)
+        admit.assert_called_once_with(self.root, self.binding, digest(self.binding), digest(self.cohort), deadline=None)
+        check.assert_called_once_with(self.bundle, self.cohort, self.rows, deadline=None)
         # Direct worker keeps the exact-model/source guard before original mounts.
         with patch.object(original, "admit") as private:
             with self.assertRaises(ValueError): runtime._worker({**request, "model_key":"minicpm4"})
@@ -152,12 +168,18 @@ class OriginalMountedInputsTests(unittest.TestCase):
         image.convert.return_value.__enter__ = Mock(return_value=rgb)
         image.convert.return_value.__exit__ = Mock(return_value=False)
         opener = Mock(return_value=context)
-        with patch.object(original, "verify_bytes") as bytes_gate, \
+        path = self.bundle / self.rows[0]["image"]
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"synthetic")
+
+        with patch.object(original.memory, "evict_readonly_file", wraps=original.memory.evict_readonly_file) as advice, \
+             patch.object(original, "verify_bytes") as bytes_gate, \
              patch.dict("sys.modules", {"PIL": SimpleNamespace(Image=SimpleNamespace(open=opener))}):
             result = original.verify_images(self.bundle, self.cohort, self.rows[:1])
             self.assertEqual(result["decode"], "PASS")
             image.load.assert_called_once()
-            bytes_gate.assert_called_once_with(self.bundle, self.cohort, self.rows[:1])
+            advice.assert_called_once_with(path, expected_size=9, deadline=None)
+            bytes_gate.assert_called_once_with(self.bundle, self.cohort, self.rows[:1], deadline=None)
             opener.assert_called_once_with(self.bundle / self.rows[0]["image"])
             image.format = "PNG"
             self.assertEqual(original.verify_images(self.bundle, self.cohort, self.rows[:1])["formats"], {"PNG": 1})

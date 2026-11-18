@@ -1,6 +1,7 @@
 """CPU-only RAM replay, owned-file advice and real Linux process supervision."""
 from contextlib import ExitStack
 from copy import deepcopy
+import hashlib
 import os
 from pathlib import Path
 import signal
@@ -139,6 +140,93 @@ class MemoryTests(unittest.TestCase):
             self.assertIs(backend.native_setup, original_processor)
             self.assertIs(backend.load_weight_model, original_loader)
 
+    def test_readonly_hash_ranges_final_advice_and_no_fsync(self):
+        path = self.root / 'input'
+        data = b'X' * (8 * 2**20 + 4099)
+        path.write_bytes(data)
+        with patch.object(os, 'posix_fadvise', create=True) as advice, \
+                patch.object(os, 'POSIX_FADV_DONTNEED', 4, create=True), \
+                patch.object(os, 'POSIX_FADV_RANDOM', 1, create=True), \
+                patch.object(os, 'sysconf', return_value=4096, create=True), patch.object(os, 'fsync') as sync:
+            self.assertEqual(m.stream_readonly_sha256(path, expected_size=len(data)), hashlib.sha256(data).hexdigest())
+            self.assertEqual([c.args[1:] for c in advice.call_args_list],
+                             [(0, 0, 1), (0, 8*2**20, 4), (8*2**20, 4096, 4), (0, 0, 4)])
+            advice.reset_mock()
+            with patch.object(os, 'read', side_effect=AssertionError('eviction must not read')):
+                self.assertEqual(m.evict_readonly_file(path)['advised'], True)
+            self.assertEqual([c.args[1:] for c in advice.call_args_list], [(0, 0, 4)])
+            sync.assert_not_called()
+
+    def test_readonly_changed_fd_size_or_deadline_stop(self):
+        path = self.root / 'input'
+        path.write_bytes(b'synthetic')
+        for func in (m.stream_readonly_sha256, m.evict_readonly_file):
+            with self.assertRaisesRegex(ValueError, 'EXPECTED_SIZE'):
+                func(path, expected_size=12)
+            with self.assertRaisesRegex(ValueError, 'DEADLINE'):
+                func(path, deadline=time.monotonic()-1)
+            other = self.root.stat()
+            with patch.object(os, 'fstat', side_effect=[path.stat(), other]):
+                with self.assertRaisesRegex(ValueError, 'FILE_CHANGED'):
+                    func(path)
+        with patch.object(m.time, 'monotonic', side_effect=[1, 2, 4]):
+            with self.assertRaisesRegex(ValueError, 'DEADLINE'):
+                m.stream_readonly_sha256(path, deadline=3)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'POSIX aliases and special files')
+    def test_readonly_rejects_fifo_links_and_symlink_parent(self):
+        file = self.root / 'ordinary'
+        file.touch()
+        link = self.root / 'alias'
+        link.symlink_to(file)
+        parent = self.root / 'parent-link'
+        parent.symlink_to(self.root, target_is_directory=True)
+        fifo = self.root / 'fifo'
+        os.mkfifo(fifo)
+        for item in (link, parent / file.name, fifo):
+            for func in (m.stream_readonly_sha256, m.evict_readonly_file):
+                with self.assertRaises(ValueError):
+                    func(item)
+
+    def test_image_advice_occurs_on_generate_exit_even_when_backend_fails(self):
+        from safeshift.fulltrain.runtime import _ImageCacheBackend
+        native = Mock()
+        backend = _ImageCacheBackend(native, None)
+        with patch.object(m, 'evict_readonly_file') as advise:
+            self.assertIs(backend.generate('image', 'sample'), native.generate.return_value)
+            advise.assert_called_once_with('image', deadline=None)
+            advise.side_effect = OSError('ADVICE_FAILED')
+            self.assertIs(backend.generate('image', 'sample'), native.generate.return_value)
+            self.assertIsInstance(backend.advice_error, OSError)
+            native.generate.side_effect = ValueError('GENERATION_FAILED')
+            with self.assertRaisesRegex(ValueError, 'GENERATION_FAILED'):
+                backend.generate('image', 'sample')
+            self.assertEqual(advise.call_count, 3)
+
+    def test_loader_hashes_then_advises_before_after_load_gate(self):
+        from safeshift.candidates import backend, loading
+        shard = self.root / 'synthetic-shard'
+        shard.write_bytes(b'shard')
+        calls = []
+        def verify(path, key, *, hash_reader):
+            self.assertEqual(hash_reader(shard), hashlib.sha256(b'shard').hexdigest())
+            calls.append('hash')
+        def load(snapshot, key, config, cls, weights, device, *, weight_verifier):
+            weight_verifier(weights, key)
+            calls.append('load')
+            return 'model'
+        def advise(weights, key, *, deadline):
+            calls.append('advice')
+            return {'files': 1}
+        with patch.object(backend, 'load_weight_model', side_effect=load), \
+             patch.object(loading, 'verify_weights', side_effect=verify), \
+             patch.object(m, 'observe'), patch.object(m, 'advise_readonly_weights', side_effect=advise), \
+             patch.object(m, 'resource_check', side_effect=lambda r, o, n: calls.append(n)):
+            with m.load_guard(self.request, self.root):
+                self.assertEqual(backend.load_weight_model(None, 'minicpm4', None, None, self.root, 'cuda:0'), 'model')
+        self.assertEqual(calls, ['hash', 'before-weight-deserialization', 'load', 'advice', 'after-weight-load'])
+        self.assertEqual(read(self.root / 'post-weight-load-advice.json'), {'files': 1})
+
     @unittest.skipUnless(sys.platform == 'linux', 'POSIX directory-FD advice')
     def test_owned_advice_complete_bounded_preserves_bytes_and_rejects_aliases(self):
         scratch = Path(self.request['scratch']); prefix = scratch / 'venv3119'
@@ -147,9 +235,19 @@ class MemoryTests(unittest.TestCase):
         owned = m.ownership(self.request)
         installed = {'request_sha256': digest(self.request), 'python': str(prefix / 'bin/python'),
                      'env': {'SAFESHIFT_RUNTIME_ROOT': str(prefix)}}
+        from safeshift import internvl3763_python as py
+        for directory in (lib, prefix / 'bin', scratch / 'input-cpython3119/lib', scratch / 'pip-bootstrap'):
+            directory.mkdir(exist_ok=True, parents=True)
+            (directory / 'tiny').write_bytes(b'x')
+        (scratch / py.manifest()['filename']).write_bytes(b'archive')
+        (prefix / 'bin/python').symlink_to('../lib/tiny')
+        (scratch / 'input-cpython3119/lib/libpython.so').symlink_to('tiny')
+        (scratch / 'outside-allowlist').write_bytes(b'untouched')
         before = sha(file)
         result = m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+5)
-        self.assertTrue(result['scan_complete']); self.assertEqual(result['advised_files'], 1)
+        self.assertTrue(result['scan_complete']); self.assertEqual(result['advised_files'], 6)
+        self.assertEqual(result['skipped_symlinks'], 2)
+        self.assertEqual(result['advised_bytes'], file.stat().st_size + 11)
         self.assertEqual(sha(file), before); self.assertEqual(result['deleted_files'], 0)
         for alias in ('symlink', 'hardlink', 'fifo', 'dirlink'):
             path = lib / 'alias'

@@ -154,11 +154,11 @@ def verify_retired(snapshot):
     return baseline
 
 
-def restart_spec(initial, *, source_repair=False, ram_repair=False):
+def restart_spec(initial, *, source_repair=False, ram_repair=False, page_cache_repair=False):
     require(not initial["ancestors"] and not initial["request"]["history"], "MINICPM_RESTART_NO_OLD_PREDICTIONS")
     prefix = "nguynanhtn/safeshift-minicpm-" + recovery.CAMPAIGN
-    require(not (source_repair and ram_repair), 'MINICPM_ONE_SOURCE_TRANSITION')
-    serial = '6' if ram_repair else "5" if source_repair else "4"
+    require(sum((source_repair, ram_repair, page_cache_repair)) <= 1, 'MINICPM_ONE_SOURCE_TRANSITION')
+    serial = "7" if page_cache_repair else "6" if ram_repair else "5" if source_repair else "4"
     return ui.initial(initial["cohort"], initial["request"]["projection_sha256"], initial["request"]["resource_policy"],
         checkpoint_marker_sha256=initial["request"]["checkpoint_marker_sha256"], run_id=recovery.CAMPAIGN + "-run-" + serial,
         attempt_id=recovery.CAMPAIGN + "-attempt-" + serial, job=prefix + "-" + serial,
@@ -416,6 +416,7 @@ def main():
     spec.add_argument("--initial-spec", type=Path, required=True); spec.add_argument("--output", type=Path, required=True)
     spec.add_argument("--source-repair", action="store_true")
     spec.add_argument('--ram-repair', action='store_true')
+    spec.add_argument('--page-cache-repair', action='store_true')
     template = sub.add_parser("release-template")
     for name in ("spec", "snapshot", "output"):
         template.add_argument("--" + name, type=Path, required=True)
@@ -444,7 +445,8 @@ def main():
         result = retirement_snapshot(read(args.directive_locator))
         write(args.output, result)
     elif args.action == "prepare-spec":
-        result = restart_spec(read(args.initial_spec), source_repair=args.source_repair, ram_repair=args.ram_repair)
+        result = restart_spec(read(args.initial_spec), source_repair=args.source_repair, ram_repair=args.ram_repair,
+                              page_cache_repair=args.page_cache_repair)
         write(args.output, result)
     elif args.action == "release-template":
         value, snapshot = read(args.spec), read(args.snapshot)

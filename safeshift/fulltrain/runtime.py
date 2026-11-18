@@ -12,7 +12,7 @@ from safeshift.candidates.source import require, ROOT
 from safeshift.pilot.artifacts import read, safe, sha, write, export
 from safeshift.pilot.contract import digest
 from safeshift.pilot.runner import execute, error_record
-from . import contract
+from . import contract, memory
 
 
 def native_factory(key, snapshot, weights, *, repo=ROOT):
@@ -40,10 +40,32 @@ def _native_factory(key, snapshot, weights, *, repo=ROOT):
     prompt = Path(repo) / "configs/pilot/classification_c1.txt"
     require(sha(prompt) == PROMPT_SHA, "FROZEN_C1_SHA")
     verify_snapshot(snapshot, key)
-    verify_weights(weights, key)
     if key == "minicpm4":
+        # load_weight_model verifies both shards at deserialization in load_guard.
         return numerical.backend(key, Path(snapshot), Path(weights), prompt.read_text(encoding="utf-8"), device="cuda:0")
+    verify_weights(weights, key)
     return CandidateBackend(key, Path(snapshot), Path(weights), prompt.read_text(encoding="utf-8"), device="cuda:0")
+
+
+class _ImageCacheBackend:
+    """Advise immediately after generation, preserving a returned raw on advice failure."""
+    def __init__(self, backend, deadline):
+        self.backend = backend
+        self.deadline = deadline
+        self.advice_error = None
+
+    def __getattr__(self, name):
+        return getattr(self.backend, name)
+
+    def generate(self, image, sample):
+        try:
+            return self.backend.generate(image, sample)
+        finally:
+            try:
+                memory.evict_readonly_file(image, deadline=self.deadline)
+            except (OSError, ValueError) as error:
+                # The controller raises this after the engine has journaled raw/error.
+                self.advice_error = error
 
 
 class NativeStore(journal.BoundStore):
@@ -108,13 +130,13 @@ def recover(root, cohort, plan_sha):
     return h
 
 
-def worker(request, **kwargs):
+def worker(request, *, repo=ROOT, memory_output=None):
     # Must precede even Path conversion, directory creation or heavy imports.
     contract.authorize(request=request)
-    return _worker(request, **kwargs)
+    return _worker(request, repo=repo, memory_output=memory_output)
 
 
-def _worker(request, *, repo=ROOT, memory_output=None):
+def _worker(request, *, repo=ROOT, memory_output=None, stage_deadline=None, admitted_checkpoint=None):
     """Prepared peer native chain; never called by this release's public worker.
 
     Requires an already provisioned isolated pinned worker. Future activation
@@ -132,7 +154,7 @@ def _worker(request, *, repo=ROOT, memory_output=None):
     from safeshift.pilot.hnlo import replay
     required = {"model_key", "source_sha256", "inputs", "marker_sha256", "projection_sha256",
                 "campaign", "plan", "history", "work", "scratch", "resource_policy", "repair_case"}
-    from .admission import REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS, checkpoint_binding, input_binding, input_bytes
+    from .admission import REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS, checkpoint_binding, input_binding
     supervised = (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS)
     require(type(request) is dict and set(request) in (required, *supervised), "EXACT_NATIVE_REQUEST")
     key = request["model_key"]
@@ -143,8 +165,8 @@ def _worker(request, *, repo=ROOT, memory_output=None):
         # Direct internal entry must enforce the same binding/model validation.
         from .admission import validate_request
         validate_request(request, repo)
-        bundle, cohort, rows = input_binding(request)
-        input_bytes(request, bundle, cohort, rows)
+        bundle, cohort, rows = input_binding(request, deadline=stage_deadline)
+        # verify_images hashes every original image before decoding below.
     else:
         bundle, cohort, rows = admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
         verify_image_bytes(bundle, cohort, rows)
@@ -156,16 +178,20 @@ def _worker(request, *, repo=ROOT, memory_output=None):
         qwen.native_setup(snapshot, repo)
         replay = qwen.replay
     else:
-        if set(request) in supervised:
-            _, snapshot, weights, _ = checkpoint_binding(request, repo)
+        if admitted_checkpoint is not None:
+            require(key == 'minicpm4' and set(request) in supervised, 'MINICPM_STAGE_CHECKPOINT_ONLY')
+            snapshot, weights = admitted_checkpoint
+        elif set(request) in supervised:
+            _, snapshot, weights, _ = checkpoint_binding(request, repo, deadline=stage_deadline)
         else:
             _, snapshot, weights = checkpoint(request["inputs"], key)
-        verify_snapshot(snapshot, key)
-        verify_weights(weights, key)
+            verify_snapshot(snapshot, key)
+            reader = memory.stream_readonly_sha256 if key == "minicpm4" else sha
+            verify_weights(weights, key, hash_reader=reader)
         software(key)  # actual isolated Python/pins/compiled ABI, no kernel fallback
     if "original_inputs" in request:
         from .original_inputs import verify_images as original_images
-        original_images(bundle, cohort, rows)
+        original_images(bundle, cohort, rows, deadline=stage_deadline)
     else:
         verify_images(bundle, rows)
     policy = request["resource_policy"]
@@ -178,7 +204,6 @@ def _worker(request, *, repo=ROOT, memory_output=None):
     resource_index = 0
     memory_out = None
     if key == 'minicpm4' and set(request) in supervised:
-        from . import memory
         require(memory_output is not None, 'SUPERVISED_NATIVE_MEMORY_OUTPUT_REQUIRED')
         memory_out = Path(memory_output)
         memory_out.mkdir(exist_ok=False)
@@ -198,13 +223,13 @@ def _worker(request, *, repo=ROOT, memory_output=None):
     check_resources()
     def factory():
         if memory_out is not None:
-            with memory.load_guard(request, memory_out):
+            with memory.load_guard(request, memory_out.parent, deadline=stage_deadline):
                 return _native_factory(key, snapshot, weights, repo=repo)
         return _native_factory(key, snapshot, weights, repo=repo)
     return _execute(request["work"], bundle, cohort, request["campaign"], request["plan"], request["history"],
         factory,
         image_path=lambda i: rows[i]["image"], evaluator=None if key == "minicpm4" else replay,
-        before_call=check_resources, repair_case=request["repair_case"])
+        before_call=check_resources, repair_case=request["repair_case"], stage_deadline=stage_deadline)
 
 
 def launch(*args, **kwargs):
@@ -219,7 +244,8 @@ def worker_command(python, request, output):
 
 
 def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
-             store_class=NativeStore, evaluator=None, before_call=None, repair_case=None, clock=time.monotonic):
+             store_class=NativeStore, evaluator=None, before_call=None, repair_case=None, clock=time.monotonic,
+             stage_deadline=None):
     """Shared bounded controller; requires pre-admitted inputs and explicit plan.
 
     Internal only, not an execution authority. Public real-data entries are
@@ -272,8 +298,13 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
             raise ValueError("IMPORTED_HISTORY_RESERVATIONS_REQUIRED")
         root = safe(work, p["run_id"])
         require(not root.exists() and not Path(str(root) + ".zip").exists(), "RUN_ALREADY_EXISTS")
+        def image_hash(path):
+            if p["identity"]["model_key"] == "minicpm4":
+                return memory.stream_readonly_sha256(path, deadline=stage_deadline)
+            return sha(path)
+
         for i in p["scheduled_ordinals"]:
-            require(sha(safe(bundle, image_path(i))) == cohort["samples"][i]["image_sha256"], "INPUT_CHECKSUM")
+            require(image_hash(safe(bundle, image_path(i))) == cohort["samples"][i]["image_sha256"], "INPUT_CHECKSUM")
         write(work / "attempts" / (p["attempt_id"] + ".json"), {"plan_sha256": digest(p), "campaign_sha256": digest(campaign)})
         root.mkdir()
         write(root / "campaign.json", campaign)
@@ -312,14 +343,19 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                         stop = "ADAPTIVE_TIME_STOP"
                         break
                 row = {**cohort["samples"][i], "image": str(safe(bundle, image_path(i)))}
-                require(sha(row["image"]) == row["image_sha256"], "INPUT_CHANGED_BEFORE_CALL")
+                require(image_hash(row["image"]) == row["image_sha256"], "INPUT_CHANGED_BEFORE_CALL")
                 store = store_class(root / f"calls/{i:06d}/run", journal._identity(p, row))
+                image_backend = None
                 def cached():
-                    nonlocal backend
+                    nonlocal backend, image_backend
                     if backend is None:
                         write(root / "model_load.json", {"load_attempts": 1})
                         backend = factory()
-                    return capability.GuardedBackend(backend, i) if active is not None else backend
+                    guarded = capability.GuardedBackend(backend, i) if active is not None else backend
+                    if p["identity"]["model_key"] == "minicpm4":
+                        image_backend = _ImageCacheBackend(guarded, stage_deadline)
+                        return image_backend
+                    return guarded
                 call_started = clock()
                 engine, options = execute, {}
                 if p["identity"]["model_key"] == "qwen3" and not p["identity"]["model_id"].startswith("synthetic/"):
@@ -332,6 +368,8 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                     {"run_id": p["run_id"], "attempt_id": p["attempt_id"]}, p["identity"]["model_key"], cohort,
                     time_budget=native_seconds, transport=journal._identity(p, row)["transport"],
                     hnlo_replay=evaluator, **options)
+                if image_backend is not None and image_backend.advice_error is not None:
+                    raise image_backend.advice_error
                 if active is not None and blocked and result.get(row["sample_id"], {}).get("status") == "NOT_ATTEMPTED":
                     reason = read(store.root / "stop.json")["reason"] if (store.root / "stop.json").exists() else None
                     if reason in ("TIME_BUDGET_STOP_BEFORE_NEXT_CALL", "OUTPUT_FREE_BELOW_1GIB_KEEP_EXPORT_RESERVE") \

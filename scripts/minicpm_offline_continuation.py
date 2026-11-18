@@ -20,7 +20,7 @@ from safeshift.kaggle_handoff import lock
 from safeshift.pilot.artifacts import read, write, write_bytes, sha, safe, import_archive
 from safeshift.pilot.contract import digest, json_bytes
 from safeshift.fulltrain import contract, minicpm_release as a, minicpm_ui as ui
-from safeshift.fulltrain import minicpm_offline as policy, minicpm_v5_incident as v5
+from safeshift.fulltrain import minicpm_offline as policy, minicpm_v5_incident as v5, minicpm_serial6 as serial6
 from scripts import minicpm_fulltrain_operator as old
 
 SCHEMA = policy.SCHEMA
@@ -66,7 +66,7 @@ def relative(path):
 
 
 def fence():
-    return ROOT / "data/processed/minicpm-release-registrations/mcpm4-restart-v1-offline-v1.json"
+    return ROOT / "data/processed/minicpm-release-registrations/mcpm4-restart-v1-offline-post-serial6.json"
 
 
 def put(path, payload):
@@ -147,8 +147,9 @@ def historical(grant, closure):
         for proof in row["evidence"]:
             paths.append(safe(ROOT, proof["path"]))
         paths.append(ROOT / "data/processed/minicpm-release-registrations" / (row["campaign_id"] + ".json"))
-    return {"files": snapshot_files(paths), "events": events, "v5_closure": report,
-        "v5_directory": relative(closure), "reserved": deepcopy(v5.RESERVED),
+    sixth, local_files = serial6.verify_local(ROOT / "data/processed")
+    return {"files": snapshot_files(paths + local_files), "serial6": sixth, "events": events, "v5_closure": report,
+        "v5_directory": relative(closure), "reserved": deepcopy(serial6.RESERVED),
         "disposition": "HISTORICAL_HOLDS_UNCHANGED_NO_PREDICTIONS_NO_REFUND"}
 
 
@@ -214,8 +215,11 @@ class Continuation:
         old.clean_source(grant)
         a.bind(grant, initial)
         require(initial["request"]["history"] == initial["ancestors"] == []
-            and initial["request"]["plan"]["scheduled_ordinals"][0] == 0, "MINICPM_SERIAL6_EMPTY_HISTORY")
+            and initial["request"]["plan"]["scheduled_ordinals"][0] == 0, "MINICPM_SERIAL7_EMPTY_HISTORY")
         require(not root.exists() and not mirror.exists() and not fence().exists(), "MINICPM_NO_OFFLINE_REINITIALIZATION")
+        for dest in (root, mirror):
+            for name in ("minicpm-offline", "minicpm-offline-mirror", "inspect_run_6"):
+                cls.distinct(dest, ROOT / "data/processed" / name)
         legacy = ROOT / "data/processed/minicpm-v3-journal"
         with lock(legacy):
             base = historical(grant, closure)
@@ -270,7 +274,7 @@ class Continuation:
         return row
 
     def state(self, *, verify=True):
-        reserved, active, completed = deepcopy(v5.RESERVED), None, []
+        reserved, active, completed = deepcopy(serial6.RESERVED), None, []
         history, rows, stopped, final = [], self.events(), False, None
         kernels, jobs = set(), set()
         for e in rows:
@@ -577,7 +581,8 @@ def main(argv=None):
             approvals={k: None for k in ("source_review", "independent_audit", "merge", "postmerge")})
         proposal["offline"] = {"schema": SCHEMA, "decision_issue": 202, "operator_session": policy.ORIGINAL_SESSION,
             "base_journal_head_sha256": proposal["repair"]["journal_head_sha256"], "tools_sha256": digest(tools_manifest()),
-            "tool_blobs": tool_blobs(), "unmeasured_calls": 100}
+            "tool_blobs": tool_blobs(), "unmeasured_calls": 100,
+            "serial6_event_sha256": serial6.EVENT_SHA, "serial6_supervisor_sha256": serial6.ZIP_SHA}
         write(private(args.output), proposal)
         result = {"status": "UNSIGNED_PROPOSAL_BLOCKED_NOT_AUTHORITY", "marker_required": policy.RELEASE}
     elif args.command == "init":

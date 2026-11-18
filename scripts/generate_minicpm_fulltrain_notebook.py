@@ -174,7 +174,7 @@ FP16 weights, FP32 resampler, strict C1, HNLO N/A; TEST closed.
 CPU checks do not prove final-source model fit or full-run completion.
 '''.splitlines(True)
         if release_version == 7:
-            nb['metadata']['safeshift']['continuation_route'] = 'safeshift-minicpm-offline-continuation-v2'
+            nb['metadata']['safeshift']['continuation_route'] = 'safeshift-minicpm-offline-continuation-v3'
             nb['cells'][0]['source'] = '''# MiniCPM-V-4 Full TRAIN — offline serial continuation V7
 
 Chỉ dùng handoff có vé ký mới từ Operator MiniCPM gốc, sau release đúng source.

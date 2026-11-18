@@ -138,14 +138,15 @@ class OfflineTests(unittest.TestCase):
         self.stack.enter_context(patch.object(c, "ROOT", self.root))
         self.stack.enter_context(patch.object(a, "CLAIMS", self.root / "claims"))
         self.grant.update(schema=a.RECOVERY_SCHEMA, authorization="OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY",
-            implementation_pr=204, recovery={"journals": []}, repair={"schema": v5.SCHEMA, "journal_head_sha256": "f"*64})
+            implementation_pr=205, recovery={"journals": []}, repair={"schema": v5.SCHEMA, "journal_head_sha256": "f"*64})
         self.grant["caps"].update(total_calls=14163169, total_jobs=3766, total_gpu_seconds=108460800,
             job_calls=3763, job_seconds=14400)
         self.grant["sizing"] = {"export_seconds": 60, "first_call_seconds": 5000, "safety_milli": 1000}
         self.grant["expires_unix"] = self.grant["issued_unix"] + p.RELEASE_SECONDS
         self.grant["offline"] = {"schema": p.SCHEMA, "decision_issue": 202,
             "operator_session": p.ORIGINAL_SESSION, "base_journal_head_sha256": "f"*64,
-            "tools_sha256": digest(c.tools_manifest()), "tool_blobs": c.tool_blobs(), "unmeasured_calls": 100}
+            "tools_sha256": digest(c.tools_manifest()), "tool_blobs": c.tool_blobs(), "unmeasured_calls": 100,
+            "serial6_event_sha256": c.serial6.EVENT_SHA, "serial6_supervisor_sha256": c.serial6.ZIP_SHA}
         self.stack.enter_context(patch.object(a, "load", return_value=self.grant))  # synthetic release boundary
         self.stack.enter_context(patch.object(a, "validate", side_effect=lambda grant, **_: grant))
         self.stack.enter_context(patch.object(c.old, "clean_source"))
@@ -154,7 +155,7 @@ class OfflineTests(unittest.TestCase):
         self.stack.enter_context(patch("scripts.generate_minicpm_fulltrain_notebook.notebook", side_effect=self.notebook))
         self.legacy = self.root / "data/processed/minicpm-v3-journal"; self.legacy.mkdir(parents=True)
         self.original = self.legacy / "event-00001.json"; write(self.original, {"synthetic": "unchanged"})
-        self.base = {"files": c.snapshot_files([self.original]), "reserved": deepcopy(v5.RESERVED),
+        self.base = {"files": c.snapshot_files([self.original]), "reserved": deepcopy(c.serial6.RESERVED),
             "events": [], "v5_closure": {"disposition": "SYNTHETIC_PRE_NATIVE"}, "v5_directory": "data/processed/closure"}
         self.stack.enter_context(patch.object(c, "historical", return_value=self.base))
         self.route = c.Continuation.initialize(self.root / "data/processed/offline", self.root / "data/processed/mirror",
@@ -254,8 +255,8 @@ class OfflineTests(unittest.TestCase):
         original = self.original.read_bytes()
         self.stage()
         first = self.route.state()["active"]
-        self.assertEqual(first["ticket"]["payload"]["number"], 6)
-        self.assertEqual(first["ticket"]["payload"]["reserved_before"], {"calls":10526,"jobs":5,"gpu_seconds":144000})
+        self.assertEqual(first["ticket"]["payload"]["number"], 7)
+        self.assertEqual(first["ticket"]["payload"]["reserved_before"], {"calls":10626,"jobs":6,"gpu_seconds":172800})
         with self.assertRaisesRegex(ValueError, "ACTIVE_STOP"): self.stage()
         accepted = self.accept()
         self.assertEqual(accepted["status"], c.PROVISIONAL)
@@ -264,7 +265,7 @@ class OfflineTests(unittest.TestCase):
         self.stage()
         active = self.route.state()["active"]
         self.assertEqual(active["value"]["request"]["plan"]["scheduled_ordinals"][0], 2)
-        self.assertEqual(active["ticket"]["payload"]["number"], 7)
+        self.assertEqual(active["ticket"]["payload"]["number"], 8)
         self.assertEqual(self.original.read_bytes(), original)
         with self.assertRaisesRegex(ValueError, "OFFICIAL_RESULTS_BLOCKED"): self.route.official_report()
 
@@ -281,6 +282,25 @@ class OfflineTests(unittest.TestCase):
         with a._activated(self.grant,self.locator,ticket,active["value"],"launch"): pass
         with self.assertRaises(FileExistsError):
             with a._activated(self.grant,self.locator,ticket,active["value"],"launch"): pass
+
+    def test_serial6_authority_source_or_reset_cannot_issue_serial7(self):
+        for mutate in (lambda g: g.update(implementation_pr=204),
+                       lambda g: g["offline"].update(serial6_event_sha256="0"*64),
+                       lambda g: g["offline"].update(serial6_supervisor_sha256="0"*64),
+                       lambda g: g["scope"].update(source_sha256=c.serial6.SOURCE)):
+            grant = deepcopy(self.grant)
+            mutate(grant)
+            with self.assertRaises(ValueError):
+                p.validate_delegation(grant)
+        self.assertEqual(self.route.forecast()["next_ordinal"], 0)
+        self.assertEqual(self.route.forecast()["remaining_images"], 3763)
+        self.stage()
+        active = self.route.state()["active"]
+        for change in ({"number": 6}, {"reserved_before": v5.RESERVED}):
+            payload = {**active["ticket"]["payload"], **change}
+            ticket = c.old.sign(self.key, self.grant["public_key"], payload)
+            with self.assertRaises(ValueError):
+                a.verify_ticket(self.grant, ticket, active["value"])
 
     def test_owner_quota_input_proof_and_session_fail_closed(self):
         for change in (lambda g:g["quota"].update(reserved=1), lambda g:g.update(observed_unix=1),
@@ -306,7 +326,7 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(ticket["payload"]["sizing"]["calls"],2)
         self.assertEqual(ticket["payload"]["sizing"]["status"],"UNMEASURED_CONSERVATIVE_CAP_NOT_THROUGHPUT")
         grant=deepcopy(self.grant);grant["sizing"]["first_call_seconds"]=5
-        proposal=p.proposal(grant,3763,v5.RESERVED,self.gate())
+        proposal=p.proposal(grant,3763,c.serial6.RESERVED,self.gate())
         self.assertEqual(proposal["calls"],100)
         self.assertEqual(proposal["seconds"],14400)
         for value in (0,99,101,True,100.0):
@@ -375,7 +395,7 @@ class OfflineTests(unittest.TestCase):
         state = self.route.state()
         self.assertTrue(state["stopped"])
         self.assertIsNotNone(state["active"])
-        self.assertTrue((self.route.root/"custody/6"/attempt.name).exists())
+        self.assertTrue((self.route.root/"custody/7"/attempt.name).exists())
         with self.assertRaisesRegex(ValueError,"ACTIVE_STOP"): self.stage()
         with self.assertRaisesRegex(ValueError,"OFFICIAL_RESULTS_BLOCKED"): self.route.official_report()
 
@@ -396,7 +416,7 @@ class OfflineTests(unittest.TestCase):
             with self.assertRaises(ValueError): p.proposal(self.grant,3763,reserved,gate)
         telemetry = {"model_key":"internvl35","source_sha256":self.grant["scope"]["source_sha256"],
             "overhead_seconds":2192,"call_seconds":[13.42],"provenance_sha256":"f"*64}
-        with self.assertRaisesRegex(ValueError,"NO_PEER_THROUGHPUT"): p.proposal(self.grant,3763,v5.RESERVED,gate,telemetry)
+        with self.assertRaisesRegex(ValueError,"NO_PEER_THROUGHPUT"): p.proposal(self.grant,3763,c.serial6.RESERVED,gate,telemetry)
         self.stage();active = self.route.state()["active"]
         bad = deepcopy(active["ticket"]["payload"]);bad["reserved_before"]["calls"]-=1
         signed = c.old.sign(self.key,self.public,bad)
@@ -415,13 +435,13 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"REVIEWED_OFFLINE_TOOLS"): c.authenticate(self.locator,{})
         with self.assertRaisesRegex(ValueError,"OWNER_MUST_PERSONALLY"): online.verify(self.route,self.root/"data/processed/provider")
         with self.assertRaisesRegex(ValueError,"OWNER_MUST_PERSONALLY"): online.acquire(self.locator,self.root/"data/processed/export")
-        with self.assertRaisesRegex(ValueError,"MISSING_AUTHENTIC"): c.Exports({})("/pulls/204")
+        with self.assertRaisesRegex(ValueError,"MISSING_AUTHENTIC"): c.Exports({})("/pulls/205")
 
     def test_new_marker_exact_source_approvals_and_tool_tree_are_mandatory(self):
         exports = {}
         def add(i,marker,payload):
             body=marker+"\n```json\n"+json.dumps(payload)+"\n```"
-            exports["/issues/comments/"+str(i)]={"id":i,"issue_url":a.API+"/issues/204","body":body,
+            exports["/issues/comments/"+str(i)]={"id":i,"issue_url":a.API+"/issues/205","body":body,
                 "user":{"login":a.OWNER,"id":a.OWNER_ID}}
             return {"comment_id":i,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
         self.grant["approvals"]={role:None for role in recovery.SOURCE_ROLES}
@@ -429,7 +449,7 @@ class OfflineTests(unittest.TestCase):
             self.grant["approvals"][role]=add(i,a.APPROVAL,{"kind":role,"status":"APPROVED",
                 "reviewed_head":self.grant["reviewed_head"],"subject_sha256":a.subject(self.grant)})
         locator=add(1,p.RELEASE,self.grant)
-        exports["/pulls/204"]={"merged":True,"draft":False,"base":{"ref":"main"},
+        exports["/pulls/205"]={"merged":True,"draft":False,"base":{"ref":"main"},
             "head":{"sha":self.grant["reviewed_head"]},"merge_commit_sha":self.grant["merged_sha"]}
         rows=[]
         repo=ui.ROOT
@@ -453,7 +473,7 @@ class OfflineTests(unittest.TestCase):
                 shutil.copyfile(repo/name,target)
             self.assertFalse((runtime_repo/"scripts").exists())
             self.assertEqual(REAL_LOAD(locator,reader=c.Exports(exports),repo=runtime_repo),self.grant)
-            bad=deepcopy(exports);bad["/pulls/204"]["merged"]=False
+            bad=deepcopy(exports);bad["/pulls/205"]["merged"]=False
             with self.assertRaisesRegex(ValueError,"REVIEW_AUDIT_MERGE"):REAL_LOAD(locator,reader=c.Exports(bad))
             bad=deepcopy(exports)
             tree=bad["/git/trees/"+self.grant["merged_sha"]+"?recursive=1"]["tree"]
@@ -561,7 +581,7 @@ class OfflineTests(unittest.TestCase):
         manifest=self.route.manifest()
         self.assertEqual([r["ordinal"] for r in manifest["rows"]],list(range(3763)))
         self.assertEqual(len(manifest["attempts"]),2)
-        self.assertEqual(manifest["reserved"]["calls"],10526+3763)
+        self.assertEqual(manifest["reserved"]["calls"],10626+3763)
         self.exercise_final(manifest)
 
     def exercise_final(self,manifest):
@@ -604,7 +624,7 @@ class OfflineTests(unittest.TestCase):
                        lambda r:r["attempts"][0]["provider"].update(state="RUNNING"),
                        lambda r:r["attempts"][0]["provider"].update(version=2),
                        lambda r:r["attempts"][0]["provider"].update(job_id="foreign/job"),
-                       lambda r:r["attempts"][1]["provider"].update(kernel_id=6)):
+                       lambda r:r["attempts"][1]["provider"].update(kernel_id=7)):
             bad=deepcopy(report);mutate(bad)
             with self.assertRaises(ValueError):c.validate_provider_report(manifest,bad)
         exports={}

@@ -1,5 +1,45 @@
 # MiniCPM nối nhiều job offline — Issue #202
 
+## Serial 7 transition / 18 November 2026
+
+The V3 offline delegation starts with **10,626 reserved calls, six jobs and
+172,800 physical GPU-seconds**. The first three holds account for 3,000 calls,
+Serials 4 and 5 for 3,763 each, and Serial 6 for 100. Serial 7 begins at
+ordinal 0 with all 3,763 original TRAIN IDs NOT_ATTEMPTED and empty history.
+No prediction or reservation is imported as a scientific result.
+
+The read-only verifier checks the two copies of the prior registration and
+event, the old signed ticket, the exact downloaded inventory, supervisor ZIP,
+sidecar, extracted receipts and loose claims. The local SHA256 pins are
+
+| Object | SHA256 |
+| --- | --- |
+| Serial 6 source | `cc0141cb3800898398d32d8114c275e0c89773a41affcd3dcd2ca2a8b86b2f95` |
+| Historical signed ticket | `99085ce10341106b99e8470cc30ff25f0e5c041008436d0b6511a5f975c653b2` |
+| `data/processed/minicpm-offline/event-000001.json` | `b32b8728b5848ca94c9b883c1718969aeb2891d4e3d2d3e2b950cc7c4394b200` |
+| Supervisor under `data/processed/inspect_run_6/` | `3d92d80065e89fe2abd22e81b4f64462121e0f0a8b2d03be986c4f5bfdd93a5c` |
+
+**Release pending.** After direct HEAD review, independent audit, separate
+merge authorization and postmerge verification, prepare the initial spec using
+`prepare-spec --page-cache-repair` and the existing original spec. Use the
+repaired checkout and its exact runtime ref to construct the unsigned RAM-repair
+proposal over that new spec, then the offline `release-template`. New source
+authority must bind the two Serial 6 evidence hashes, the reviewed tools and
+the new runtime. The release marker is `SAFESHIFT_MINICPM_OFFLINE_RELEASE_V3`.
+
+The original Operator uses separate, fresh primary/mirror directories for
+`init` (e.g. `data/processed/minicpm-offline-s7` and its `-mirror`) with the
+original V5 closure. Keep the original offline directories, registration and
+fence in place. Following source release and current quota/Input/expiry checks,
+the first fresh ticket binds `mcpm4-restart-v1-7`. The Operator publishes at
+most three Owner steps. The Owner alone runs. The provider verifier separately
+rechecks Serial 6 during final reconciliation. No fresh release, ticket, job
+or provider observation was issued by this source repair.
+
+### Historical Serial 6 route (PR204)
+
+The following commands, schemas and initial balances describe that earlier release.
+
 **SOURCE CANDIDATE / OWNER RUN BLOCKED.** Task lập trình ngày 17/11/2026 từ
 main `0f598f1f4f67619edbf8948492ac9b12af119edd` sau PR203. Một branch mới,
 một Draft PR; dừng để ChatGPT review trực tiếp, audit Antigravity độc lập,

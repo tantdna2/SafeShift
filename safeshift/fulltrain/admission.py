@@ -71,7 +71,7 @@ def validate_request(request, repo=ROOT):
     return request
 
 
-def checkpoint_binding(request, repo=ROOT):
+def checkpoint_binding(request, repo=ROOT, *, deadline=None):
     key = request["model_key"]
     if key == "qwen3":
         from . import qwen
@@ -80,30 +80,35 @@ def checkpoint_binding(request, repo=ROOT):
     marker, snapshot, weights = checkpoint(request["inputs"], key)
     require(sha(marker) == request["checkpoint_marker_sha256"], "FRESH_CHECKPOINT_MARKER_PIN")
     source = verify_snapshot(snapshot, key)
-    weights_receipt = verify_weights(weights, key)
+    if key == "minicpm4":
+        weights_receipt = verify_weights(weights, key, hash_reader=lambda path:
+                                        memory.stream_readonly_sha256(path, deadline=deadline))
+    else:
+        weights_receipt = verify_weights(weights, key)
     return marker, snapshot, weights, {"source": source, "weights": weights_receipt}
 
 
-def input_binding(request):
+def input_binding(request, *, deadline=None):
     if "original_inputs" in request:
         from .original_inputs import admit as original
-        return original(request["inputs"], request["original_inputs"], request["marker_sha256"], request["projection_sha256"])
+        return original(request["inputs"], request["original_inputs"], request["marker_sha256"],
+                        request["projection_sha256"], deadline=deadline)
     return inputs.admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
 
 
-def input_bytes(request, bundle, cohort, rows):
+def input_bytes(request, bundle, cohort, rows, *, deadline=None):
     if "original_inputs" in request:
         from .original_inputs import verify_bytes
-        return verify_bytes(bundle, cohort, rows)
+        return verify_bytes(bundle, cohort, rows, deadline=deadline)
     return inputs.verify_image_bytes(bundle, cohort, rows)
 
 
-def admit(request, repo=ROOT):
+def admit(request, repo=ROOT, *, deadline=None):
     validate_request(request, repo)
     history_admission(request)
     if request["model_key"] == "qwen3":
         provision.software_input(request["software_input"], request["software_marker_sha256"], request["runtime_lock"], repo)
-    bundle, cohort, rows = input_binding(request)
+    bundle, cohort, rows = input_binding(request, deadline=deadline)
     p = request["plan"]
     require(p == contract.plan(request["campaign"], cohort, p["identity"], request["history"], action=p["action"],
         run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"], repair=p["repair"]),
@@ -111,8 +116,8 @@ def admit(request, repo=ROOT):
     for old in request["history"]:
         root = safe(request["work"], old["run_id"])
         require(runtime.recover(root, cohort, digest(read(root / "plan.json"))) == old, "ADMISSION_HISTORY_CUSTODY")
-    input_bytes(request, bundle, cohort, rows)
-    marker, snapshot, weights, receipt = checkpoint_binding(request, repo)
+    input_bytes(request, bundle, cohort, rows, deadline=deadline)
+    marker, snapshot, weights, receipt = checkpoint_binding(request, repo, deadline=deadline)
     return bundle, cohort, rows, snapshot, weights, receipt
 
 
@@ -159,7 +164,7 @@ def stage(mode, request, repo, output, deadline):
                 'ADVICE_ACTUAL_ISOLATED_WORKER_REQUIRED')
             memory.reclaim(request, output, deadline)
         elif mode == "setup":
-            admit(request, repo)  # all Input/checkpoint admission before package activity
+            admit(request, repo, deadline=deadline)  # all Input/checkpoint admission before package activity
             if request['model_key'] == 'minicpm4':
                 memory.resource_check(request, output, 'before-setup')
             else:
@@ -170,7 +175,7 @@ def stage(mode, request, repo, output, deadline):
                 scratch_bytes=budgets["scratch_probe_bytes"], output_bytes=budgets["output_probe_bytes"]))
             provision.prepare(request, repo, output, deadline)
         else:
-            bundle, cohort, rows, snapshot, weights, checkpoint_receipt = admit(request, repo)
+            bundle, cohort, rows, snapshot, weights, checkpoint_receipt = admit(request, repo, deadline=deadline)
             write(output / "checkpoint.json", checkpoint_receipt)
             if mode == "cpu":
                 require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
@@ -185,7 +190,7 @@ def stage(mode, request, repo, output, deadline):
                 require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
                 if "original_inputs" in request:
                     from .original_inputs import verify_images as original_images
-                    write(output / "images.json", original_images(bundle, cohort, rows))
+                    write(output / "images.json", original_images(bundle, cohort, rows, deadline=deadline))
                 else:
                     write(output / "images.json", verify_images(bundle, rows))
                 from .preflight import cpu_native_checks
@@ -193,13 +198,16 @@ def stage(mode, request, repo, output, deadline):
                     memory.resource_check(request, output, 'before-processor')
                 write(output / "native_cpu.json", cpu_native_checks(request["model_key"], snapshot, repo,
                       wheel_lock=request["runtime_lock"]))
+                if request['model_key'] == 'minicpm4':
+                    memory.reclaim(request, output, deadline, label='cpu-owned-advice', gate='cpu')
             elif mode in ("gpu", "native"):
                 write(output / "physical_gpu.json", environment.hardware(request["model_key"], request["resource_policy"]))
                 write(output / "worker_cuda.json", environment.cuda(request["model_key"], request["resource_policy"]))
                 if mode == "native":
                     # Parent and every child recheck source/input/checkpoint/plan.
                     # Controller alone creates the immutable attempt reservation.
-                    result = runtime._worker(request, repo=repo, **({'memory_output': output / 'memory'}
+                    result = runtime._worker(request, repo=repo, **({'memory_output': output / 'memory',
+                        'stage_deadline': deadline, 'admitted_checkpoint': (snapshot, weights)}
                         if request['model_key'] == 'minicpm4' else {}))
                     require(read(result / "receipt.json")["stop"] in (None, "ADAPTIVE_TIME_STOP", "ADAPTIVE_STORAGE_STOP")
                             and not (result / "accounting_failure.json").exists(), "NATIVE_ATTEMPT_STOPPED_REVIEW_EVIDENCE")
