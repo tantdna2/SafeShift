@@ -130,10 +130,11 @@ def recover(root, cohort, plan_sha):
     return h
 
 
-def worker(request, *, repo=ROOT, memory_output=None):
-    # Must precede even Path conversion, directory creation or heavy imports.
+def worker(request, **kwargs):
+    # Must precede keyword validation, Path conversion, or heavy imports.
     contract.authorize(request=request)
-    return _worker(request, repo=repo, memory_output=memory_output)
+    require(set(kwargs) <= {"repo", "memory_output"}, "UNSUPPORTED_WORKER_OPTIONS")
+    return _worker(request, **kwargs)
 
 
 def _worker(request, *, repo=ROOT, memory_output=None, stage_deadline=None, admitted_checkpoint=None):
