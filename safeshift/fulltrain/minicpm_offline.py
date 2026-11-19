@@ -19,6 +19,9 @@ TICKET = "safeshift-minicpm-offline-ticket-v3"
 TRANSITION_SCHEMA = "safeshift-minicpm-offline-continuation-v4"
 TRANSITION_RELEASE = "SAFESHIFT_MINICPM_OFFLINE_RELEASE_V4"
 TRANSITION_TICKET = "safeshift-minicpm-offline-ticket-v4"
+SERIAL9_SCHEMA = "safeshift-minicpm-offline-continuation-v5"
+SERIAL9_RELEASE = "SAFESHIFT_MINICPM_OFFLINE_RELEASE_V5"
+SERIAL9_TICKET = "safeshift-minicpm-offline-ticket-v5"
 FINAL = "SAFESHIFT_MINICPM_OFFLINE_FINAL_V2"
 RELEASE_SECONDS = 30 * 24 * 3600
 ORIGINAL_SESSION = "0b1d115c-c002-44e8-b22e-087226f6dc73"
@@ -32,11 +35,12 @@ TOOLS = ("minicpm_offline_continuation.py", "owner_verify_minicpm_offline.py",
 
 def validate_delegation(grant):
     d = grant["offline"]
-    transition = d.get("schema") == TRANSITION_SCHEMA
+    transition = a.uses_proof(grant)
+    after_serial8 = d.get("schema") == SERIAL9_SCHEMA
     require(type(d) is dict and set(d) == {"schema", "decision_issue", "operator_session",
         "base_journal_head_sha256", "tools_sha256", "tool_blobs", "unmeasured_calls", "serial6_event_sha256", "serial6_supervisor_sha256"}
-        | ({"serial7"} if transition else set())
-        and d["schema"] in (SCHEMA, TRANSITION_SCHEMA) and d["decision_issue"] == 202
+        | ({"serial7"} if transition else set()) | ({"serial8"} if after_serial8 else set())
+        and d["schema"] in (SCHEMA, TRANSITION_SCHEMA, SERIAL9_SCHEMA) and d["decision_issue"] == 202
         and grant["schema"] == a.RECOVERY_SCHEMA and grant["implementation_pr"] > 204
         and grant["scope"]["source_sha256"] != serial6.SOURCE
         and d["serial6_event_sha256"] == serial6.EVENT_SHA and d["serial6_supervisor_sha256"] == serial6.ZIP_SHA
@@ -61,14 +65,24 @@ def validate_delegation(grant):
     if transition:
         from . import minicpm_serial7
         minicpm_serial7.validate_transition(grant)
+    if after_serial8:
+        from . import minicpm_serial8
+        minicpm_serial8.validate_transition(grant)
     return d
 
 
 def first_serial(grant):
-    return 8 if a.uses_proof(grant) else serial6.FIRST_SERIAL
+    return {TRANSITION_SCHEMA: 8, SERIAL9_SCHEMA: 9}.get(grant["offline"]["schema"], serial6.FIRST_SERIAL)
+
+
+def ticket_schema(grant):
+    return {SCHEMA: TICKET, TRANSITION_SCHEMA: TRANSITION_TICKET, SERIAL9_SCHEMA: SERIAL9_TICKET}[grant["offline"]["schema"]]
 
 
 def initial_hold(grant):
+    if grant["offline"]["schema"] == SERIAL9_SCHEMA:
+        from .minicpm_serial8 import RESERVED
+        return deepcopy(RESERVED)
     if a.uses_proof(grant):
         from .minicpm_serial7 import RESERVED
         return deepcopy(RESERVED)
@@ -123,7 +137,7 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     require(type(t) is dict and set(t) == {"schema", "grant_sha256", "value_sha256", "capsule_sha256",
         "notebook_code_sha256", "number", "previous_event_sha256", "reserved_before", "reserved_after",
         "issued_unix", "start_before_unix", "owner_gate", "sizing", "lineage"}
-        and t["schema"] == (TRANSITION_TICKET if a.uses_proof(grant) else TICKET)
+        and t["schema"] == ticket_schema(grant)
         and t["grant_sha256"] == digest(grant)
         and t["value_sha256"] == t["capsule_sha256"] == digest(value), "MINICPM_OFFLINE_TICKET_BINDING")
     a.bind(grant, value)
@@ -132,6 +146,9 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     require(type(t["number"]) is int and t["number"] == first_serial(grant) + len(value["ancestors"])
         and value["job"] == "nguynanhtn/safeshift-minicpm-" + grant["campaign_id"] + "-" + str(t["number"]),
         "MINICPM_OFFLINE_SERIAL7_NO_REPLAY")
+    if grant["offline"]["schema"] == SERIAL9_SCHEMA:
+        require(value["capsule_ref"] == "nguynanhtn/safeshift-minicpm-capsule-"
+            + grant["campaign_id"] + "-" + str(t["number"]) + "/1", "MINICPM_SERIAL9_FRESH_CAPSULE_REQUIRED")
     require(type(t["lineage"]) is list and len(t["lineage"]) == len(value["request"]["history"]),
         "MINICPM_OFFLINE_ALL_PREDECESSORS")
     before = initial_hold(grant)

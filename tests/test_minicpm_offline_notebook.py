@@ -29,6 +29,12 @@ class OfflineNotebookTests(unittest.TestCase):
         payload=json.loads(zlib.decompress(base64.b64decode(re.search(r"base64\.b64decode\('([^']+)'\)",code).group(1))))
         self.assertIn("safeshift/fulltrain/minicpm_offline.py",payload)
         self.assertFalse(any(name.startswith("scripts/") for name in payload))
+        successor = notebook(ref, **{**args, "release_version": 9})
+        self.assertEqual(successor["metadata"]["safeshift"]["continuation_route"],
+            "safeshift-minicpm-offline-continuation-v5")
+        self.assertEqual([cell["source"] for cell in first["cells"] if cell["cell_type"] == "code"],
+            [cell["source"] for cell in successor["cells"] if cell["cell_type"] == "code"])
+        self.assertIn("safeshift/fulltrain/minicpm_serial8.py", payload)
         for name,text in payload.items():
             self.assertEqual(hashlib.sha256(text.encode()).hexdigest(),contract.source_manifest()[name])
             if name.endswith(".py"):compile(text,name,"exec")

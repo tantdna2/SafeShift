@@ -128,6 +128,56 @@ def serial7_closure(destination, *, owner_performs_network=False, client=None):
         blocked(destination, error)
 
 
+def serial8_closure(destination, *, owner_performs_network=False, client=None):
+    """Owner-side, read-only custody for the actual Serial 8 kernel."""
+    c.require(owner_performs_network is True, "OWNER_MUST_PERSONALLY_RUN_EXTERNAL_VERIFICATION")
+    from scripts.minicpm_fulltrain_recovery import account_jobs
+    from scripts.reconcile_train3763_manual import download_outputs, observe_kernel
+    from scripts.submit_internvl_v2 import bounded_http
+
+    incident = c.serial8
+    processed = c.ROOT / "data/processed"
+    local, active, _ = incident.verify_local(processed)
+    c.require(time.time() >= active["ticket"]["payload"]["start_before_unix"],
+        "MINICPM_SERIAL8_PREVIOUS_START_WINDOW_OPEN")
+    destination = c.private(destination)
+    destination.mkdir(parents=True, exist_ok=False)
+    try:
+        if client is None:
+            from safeshift.internvl3763_operator import api
+            client = api()
+        owned = account_jobs(client)
+        c.require(incident.ACTUAL_JOB in owned and incident.TICKET_JOB not in owned,
+            "MINICPM_SERIAL8_ACTUAL_OR_RESERVED_SLUG_CONFLICT")
+        job, version = incident.ACTUAL_JOB, 1
+        with bounded_http():
+            state = str(client.kernels_status(job + "/1").status).split(".")[-1]
+        c.require(state in ("COMPLETE", "ERROR"), "MINICPM_SERIAL8_TERMINAL_REQUIRED")
+        value, ticket = active["value"], active["ticket"]
+        notebook, sources = active["notebook"], value["input_sources"]
+        provider = observe_kernel(client, job, version, notebook, sources, expected_state=state, require_no_gpu=True)
+        download = processed / incident.DOWNLOAD
+        archive = download / incident.ARCHIVE
+        output = download_outputs(client, job, version, archive, incident.ZIP_SHA, destination,
+            output_pairs={incident.ARCHIVE: archive}, known_names=incident.inventory(download))
+        output["sidecar_sha256"] = c.sha(destination / (incident.ARCHIVE + ".sha256.json"))
+        package = c.safe(processed / incident.PRIMARY, active["package"])
+        cap = capsule(client, value, ticket, package, destination / "capsule")
+        cap["metadata"].pop("observed_unix")
+        c.require(provider == observe_kernel(client, job, version, notebook, sources, expected_state=state,
+            kernel_id=provider["kernel_id"], require_no_gpu=True), "MINICPM_SERIAL8_PROVIDER_CHANGED")
+        owned = account_jobs(client)
+        c.require(incident.ACTUAL_JOB in owned and incident.TICKET_JOB not in owned,
+            "MINICPM_SERIAL8_ACTUAL_OR_RESERVED_SLUG_CONFLICT")
+        result = {"local": local, "provider": provider, "capsule": cap, "output": output,
+            "ticket_slug_visibility": "ABSENT_IN_VERIFIED_OWNER_INVENTORY"}
+        incident.verify_closure(result, local, active)
+        c.write(destination / "serial8-closure.json", result)
+        return result
+    except BaseException as error:
+        blocked(destination, error)
+
+
 def historical(route, client, destination):
     """Recheck both failed jobs; preserve retired unknowns, never assert deletion."""
     from scripts import minicpm_v5_incident, minicpm_fulltrain_recovery as recovery
@@ -163,12 +213,16 @@ def historical(route, client, destination):
     c.require(provider == observe_kernel(client, sixth.JOB, 1, active["notebook"], value["input_sources"],
         expected_state=state, kernel_id=provider["kernel_id"]), "MINICPM_SERIAL6_PROVIDER_CHANGED")
     known_jobs = {item["value"]["job"] for item in route.manifest()["attempts"]} | {v44["job"], v5.JOB, sixth.JOB}
-    seventh = {}
+    failures = {}
     if "serial7_closure" in base:
         checked = serial7_closure(destination / "serial7", owner_performs_network=True, client=client)
         c.require(checked == base["serial7_closure"], "MINICPM_FINAL_SERIAL7_CLOSURE_DRIFT")
-        seventh["serial7_closure"] = checked
+        failures["serial7_closure"] = checked
         known_jobs.add(c.serial7.JOB)
+    if "serial8_closure" in base:
+        checked = serial8_closure(destination / "serial8", owner_performs_network=True, client=client)
+        c.require(checked == base["serial8_closure"], "MINICPM_FINAL_SERIAL8_CLOSURE_DRIFT")
+        failures["serial8_closure"] = checked
     safety = recovery.current_safety(client, route.grant["recovery"], known_jobs,
         "nguynanhtn/safeshift-minicpm-final-never-submit")
     # Original technical capsules also retain their original ticket and bytes.
@@ -176,7 +230,7 @@ def historical(route, client, destination):
     for number, active in ((4, events[3]["payload"]), (5, events[7]["payload"])):
         historical_capsules.append(capsule(client, active["value"], active["ticket"],
             c.safe(c.ROOT, active["package"]), destination / ("capsule-"+str(number))))
-    return {"status": "ALL_HISTORICAL_CUSTODY_RECHECKED", "historical_sha256": c.digest(base), **seventh,
+    return {"status": "ALL_HISTORICAL_CUSTODY_RECHECKED", "historical_sha256": c.digest(base), **failures,
         "v44": v44, "v5": v5proof, "serial6": provider, "serial6_capsule": sixth_capsule,
         "serial6_supervisor_sha256": sixth.ZIP_SHA, "current_account_safety": safety, "capsules": historical_capsules,
         "retired_disposition": "RETIRED_NO_USABLE_RESULTS_PROVIDER_UNCERTAINTY_PRESERVED", "refund": False}
@@ -240,13 +294,17 @@ def main(argv=None):
     group.add_argument("--authority-locator", type=Path)
     group.add_argument("--directory", type=Path)
     group.add_argument("--serial7-closure", action="store_true")
-    group.add_argument("--serial8-proof-proposal", type=Path)
+    group.add_argument("--serial8-closure", action="store_true")
+    group.add_argument("--serial8-proof-proposal", "--serial9-proof-proposal", type=Path)
     args = p.parse_args(argv)
     if args.authority_locator:
         result = acquire(c.read(args.authority_locator), args.output, owner_performs_network=args.owner_performs_network)
     elif args.serial7_closure:
         serial7_closure(args.output, owner_performs_network=args.owner_performs_network)
         result = {"status": "SERIAL7_PROVIDER_CLOSURE_EXPORTED"}
+    elif args.serial8_closure:
+        serial8_closure(args.output, owner_performs_network=args.owner_performs_network)
+        result = {"status": "SERIAL8_PROVIDER_CLOSURE_EXPORTED"}
     elif args.serial8_proof_proposal:
         result = serial8_proof(c.read(args.serial8_proof_proposal), args.output,
             owner_performs_network=args.owner_performs_network)

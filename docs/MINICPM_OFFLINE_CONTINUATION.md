@@ -1,5 +1,51 @@
 # MiniCPM nối nhiều job offline — Issue #202
 
+## Serial 8 GPU-stage closure and Serial 9 / 19 November 2026
+
+The Serial 8 journal reserved `nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-8`.
+The Owner reported running `nguynanhtn/notebook1358a4d09b`. The two slugs are
+retained separately. Local replay of both signed journal copies and
+`data/processed/inspect_run_8` verifies successful admit/setup/reclaim/CPU,
+a supervised GPU failure (`nvidia-smi` exit 12), zero native loads and calls,
+and only the supervisor ZIP and sidecar. Exit 12 records the failed command.
+Kaggle metadata is required to confirm the CPU-only setting.
+
+**Pending Owner provider verification and fresh source release.** Use the
+original MiniCPM Operator checkout and custody for the following transition.
+
+1. After merge and postmerge verification, the Owner personally runs
+   `python -B -m scripts.owner_verify_minicpm_offline --serial8-closure --output data/processed/<new-serial8-export> --owner-performs-network`.
+   The read-only verifier checks actual private kernel v1 and latest, terminal
+   status, explicitly disabled GPU, notebook code, the five attached Input
+   slugs, published private capsule v1 bytes, paginated Output inventory and
+   the exact supervisor pair. It checks that the reserved slug is absent in
+   the current Owner inventory after the Serial 8 start window has closed.
+   A missing `enableGpu` field, unknown version, conflicting slug or extra
+   Output blocks closure. Preserve the original
+   download and the new provider export.
+2. Prepare the unsigned spec and proposal with the continuation CLI.
+   `serial9-spec --output <initial>` derives the plan from the original 3,763
+   TRAIN IDs. `serial9-release-template --initial <initial> --serial8-closure <export>/serial8-closure.json --output <proposal>`
+   pins the verified closure. Use the same global `--directory` argument as
+   other commands. The fresh `SAFESHIFT_MINICPM_OFFLINE_RELEASE_V5` release
+   binds the reviewed/merged source, tools, historical authority and closure.
+   The Owner proof workflow accepts `--serial9-proof-proposal` followed by
+   `--authority-locator` after publication.
+3. The original Operator initializes new primary/mirror directories with the
+   existing `init` arguments and `--serial8-closure <export>/serial8-closure.json`.
+   This creates a new fence and records `FAILED_PRE_NATIVE_NO_USABLE_RESULTS`
+   in the successor registration. All originals remain in place. The first
+   forecast has ordinal 0, 3,763 `NOT_ATTEMPTED`, and **10,826 calls / 8 jobs /
+   230,400 physical GPU-seconds reserved**. After the fresh quota, Inputs,
+   no-active-job and expiry checks, `stage` issues only a new Serial 9 ticket
+   for `nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-9` and private capsule
+   `nguynanhtn/safeshift-minicpm-capsule-mcpm4-restart-v1-9/1`. The original
+   Operator publishes the handoff for the Owner to run once with T4 ?2.
+
+The failed run contributes zero imported results and zero refunds. Successful
+result ingestion still requires an attempt ZIP. The final Owner reconciliation
+rechecks the Serial 8 closure alongside the earlier technical failures.
+
 ## Serial 8 source transition / 19 November 2026
 
 Serial 7 stopped during CPU-stage GitHub authority verification. Local custody

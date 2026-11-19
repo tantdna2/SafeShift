@@ -30,7 +30,24 @@ sai quy ước nhị phân. Giao thức khóa dùng Level01–Level03 là Hazard
 là Normal. [Quyết định Qwen3](research/DECISIONS.md#dec-20261115-owner-qwen3-full-train-composite-v1)
 và [giao thức Seminar](research/SEMINAR_PROTOCOL.md).
 
-## Current / MiniCPM after Serial 7 / 19 November 2026
+## Current / MiniCPM after Serial 8 / 19 November 2026
+
+Local custody verifies successful admit/setup/reclaim/CPU, then a supervised
+GPU-stage failure at `nvidia-smi` exit 12. Only the supervisor ZIP and sidecar
+are present. There were zero native loads or calls, all **3,763 TRAIN IDs**
+remain `NOT_ATTEMPTED`, and the reservation is **10,826 calls / 8 jobs /
+230,400 physical GPU-seconds**. Owner reports that GPU was disabled on the
+actual slug `nguynanhtn/notebook1358a4d09b`. Provider metadata and terminal
+custody are pending Owner verification. The signed Serial 8 slug is preserved
+separately.
+
+Serial 9 is blocked pending direct HEAD review, independent audit, authorized
+merge, postmerge verification, the Owner's provider closure and a fresh
+source-bound release. The original Operator will use new mirrored custody
+and a new slug, private capsule and ticket, with all eight reservations carried
+forward. [Serial 8 closure and Serial 9 runbook](MINICPM_OFFLINE_CONTINUATION.md#serial-8-gpu-stage-closure-and-serial-9--19-november-2026).
+
+### Historical status after Serial 7 / 19 November 2026
 
 The Serial 7 supervisor sealed successful admit/setup/reclaim stages and a
 CPU child failure during GitHub authority lookup. The local evidence shows
