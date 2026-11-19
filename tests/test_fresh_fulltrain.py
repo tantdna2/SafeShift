@@ -364,7 +364,7 @@ class FreshTests(unittest.TestCase):
                     "resource_policy": {"review_mode": "EXTERNAL"}, "repair_case": None}
                 if mounted:
                     from test_fresh_fulltrain_revision import budgets
-                    from safeshift.fulltrain import original_inputs, admission, environment
+                    from safeshift.fulltrain import original_inputs, admission, environment, gpu_driver
                     binding = {"schema": original_inputs.SCHEMA, "master_sha256": original_inputs.MASTER_SHA,
                         "projection_sha256": digest(self.cohort), **{name: {"ref": ref, "version": 1,
                         "mount": ref.split("/")[1]} for name, ref in original_inputs.REFS.items()}}
@@ -377,7 +377,9 @@ class FreshTests(unittest.TestCase):
                     stack.enter_context(patch.object(original_inputs, "verify_images"))
                     stack.enter_context(patch.object(admission, "checkpoint_binding", return_value=(None, self.root, self.root, {})))
                     for name in ("resources", "hardware", "cuda"):
-                        stack.enter_context(patch.object(environment, name))
+                        stack.enter_context(patch.object(environment, name, return_value={"scope": "SYNTHETIC"}))
+                    binding = stack.enter_context(patch.object(gpu_driver, "bind", return_value=self.root))
+                    physical = stack.enter_context(patch.object(gpu_driver, "hardware", return_value={"scope": "SYNTHETIC"}))
                     # The supervised MiniCPM worker now requires a dedicated
                     # RAM receipt directory. Hardware/RAM remain explicit CPU
                     # doubles in this native-controller wiring fixture.
@@ -386,6 +388,8 @@ class FreshTests(unittest.TestCase):
                 result = rt._worker(request, **({'memory_output': self.root / 'native-memory'} if mounted else {}))
                 if mounted:
                     self.assertGreaterEqual(ram_gate.call_count, 2)
+                    binding.assert_called_once()
+                    self.assertEqual(physical.call_count, ram_gate.call_count)
                 h = rt.recover(result, self.cohort, digest(p))
                 self.assertEqual(h["records"][0]["status"], "SUCCESS")
                 self.assertEqual(h["records"][0]["label"], "Level03")

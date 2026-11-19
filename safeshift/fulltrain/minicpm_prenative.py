@@ -68,6 +68,34 @@ def _json(bundle, name):
     return a.strict_json(bundle.read(name))
 
 
+def _work_files(download, names, archive, value):
+    """Only the supervisor and the signed, restored predecessor reservations may exist."""
+    request = value["request"]
+    campaign = digest(request["campaign"])
+    lease = digest({"campaign": request["campaign"], "model": request["model_key"]})
+    allowed = {"minicpm-fulltrain/attempts/active_" + lease + ".lock",
+        "minicpm-fulltrain/supervisor_control/attempts/active_" + lease + ".lock",
+        archive, archive + ".sha256.json"}
+    for h, ancestor in zip(request["history"], value["ancestors"]):
+        name = "minicpm-fulltrain/attempts/" + h["attempt_id"] + ".json"
+        require(read_json_file(download, name) == {"plan_sha256": ancestor["plan_sha256"], "campaign_sha256": campaign},
+            "MINICPM_PRE_NATIVE_ANCESTOR_RESERVATION")
+        allowed.add(name)
+    campaign_file = "minicpm-fulltrain/campaign.json"
+    if request["history"] or campaign_file in names:
+        require(read_json_file(download, campaign_file) == request["campaign"], "MINICPM_PRE_NATIVE_CAMPAIGN")
+        allowed.add(campaign_file)
+    loose_prefix = archive[:-4] + "/"
+    require(all(name in allowed or name.startswith(loose_prefix)
+        for name in names if name.startswith("minicpm-fulltrain/")), "MINICPM_PRE_NATIVE_UNKNOWN_WORK_OUTPUT")
+
+
+def read_json_file(directory, name):
+    path = safe(directory, name)
+    require(snapshot_stat(path).st_size <= 64 * 2**20, "MINICPM_PRE_NATIVE_JSON_BOUND")
+    return a.strict_json(path.read_bytes())
+
+
 def _extracted(archive, bundle):
     """Loose copies, when downloaded, must be byte-identical ZIP members."""
     root = Path(str(archive)[:-4])
@@ -95,10 +123,14 @@ def _stages(bundle, release, request_sha, source):
     k = STAGES.index(last)
     # A missing process receipt is ambiguous even when the supervisor saw no tree.
     require(present == list(STAGES[:k + 1]), "MINICPM_PRE_NATIVE_STAGE_PREFIX")
+    require(not any(name.startswith(stage + "/") for stage in STAGES[k+1:] for name in members),
+        "MINICPM_PRE_NATIVE_STAGE_AFTER_FAILURE")
     for stage in present:
         process = _json(bundle, stage + "-process.json")
+        group = process.get("group_exit", {})
         require(process.get("schema") == "fresh-process-supervision-v1" and process.get("automatic_retry") is False
-            and process.get("group_exit") == {"status": "NO_LIVE_MEMBERS", "members": []},
+            and group.get("status") == "NO_LIVE_MEMBERS" and type(group.get("members")) is list
+            and all(row.get("state") == "Z" for row in group["members"]),
             "MINICPM_PRE_NATIVE_UNREAPED_STAGE")
         binding = {"status": "RETURNED", "stage": stage, "request_sha256": request_sha,
                    "source_sha256": source, "native_attempt_permitted": stage == "native"}
@@ -107,7 +139,9 @@ def _stages(bundle, release, request_sha, source):
                 and _json(bundle, stage + "/stage.json") == binding, "MINICPM_PRE_NATIVE_STAGE_BINDING")
         else:
             require(process["status"] in ("CHILD_FAILURE", "HARD_DEADLINE", "LOG_BUDGET_EXCEEDED")
-                and type(process["returncode"]) is int, "MINICPM_PRE_NATIVE_CHILD_FAILURE")
+                and type(process["returncode"]) is int
+                and (process["status"] != "CHILD_FAILURE" or process["returncode"] != 0),
+                "MINICPM_PRE_NATIVE_CHILD_FAILURE")
     failure = release["failure"]
     child = stage_failure = None
     if last + "/failure.json" in members:
@@ -152,6 +186,7 @@ def verify_download(download, active, locator, campaign_id, *, proof_sha256=None
     names = inventory(download)
     archive_name = supervisor_only(names, plan["run_id"], plan["attempt_id"])
     archive = safe(download, archive_name)
+    _work_files(download, names, archive_name, value)
     require(snapshot_stat(archive).st_size <= ARCHIVE_BOUND, "MINICPM_PRE_NATIVE_ARCHIVE_BOUND")
     entries = ui.pair(archive)
     request_sha, source = digest(request), request["source_sha256"]

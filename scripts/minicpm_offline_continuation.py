@@ -634,6 +634,7 @@ class Continuation:
             for item in manifest["attempts"] for row in item["completion"]["verification"]["report"]["history"][-1]["records"]
             if row["status"] != "NOT_ATTEMPTED"]
         return {"status": "OFFICIAL_RECONCILED_RESULTS", "rows": manifest["rows"], "history": state["history"], "lineage": lineage,
+            **({"failed_pre_native": [item["summary"] for item in manifest["closed"]]} if "closed" in manifest else {}),
             "attempts": manifest["attempts"], "historical": manifest["historical"], "budget": {"reserved": state["reserved"],
                 "caps": self.grant["caps"], "billing_gpu_seconds": "NOT_OBSERVED"},
             "certificate_sha256": digest(state["final"]), "scientific_selection": "PENDING", "scientific_qualified": False}

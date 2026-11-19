@@ -44,6 +44,10 @@ elif kind == 'fresh':
     from scripts.build_fresh_fulltrain_notebooks import notebook
     from safeshift.fulltrain.contract import sources
     value = notebook(key, ref, pathlib.Path(root), diagnostic=diagnostic == '1')
+elif kind == 'fp32-smoke':
+    from scripts.build_candidate160_notebooks import effective_notebook
+    from safeshift.candidates.train_contract import sources
+    value = effective_notebook(ref, pathlib.Path(root))
 else:
     from scripts.build_candidate160_notebooks import fulltrain_notebook
     from safeshift.candidates.train_contract import sources
@@ -102,8 +106,8 @@ def _reproduce(key, ref, repo, kind, diagnostic):
 
 def reproduce(key, ref, repo=ROOT, *, kind="fresh", diagnostic=False):
     require(type(ref) is str and re.fullmatch(r"[0-9a-f]{40}", ref), "EXACT_RUNTIME_COMMIT")
-    require(key in ("minicpm4", "internvl35", "qwen3") and kind in ("fresh", "fulltrain", "minicpm")
-        and (kind != "minicpm" or key == "minicpm4")
+    require(key in ("minicpm4", "internvl35", "qwen3") and kind in ("fresh", "fulltrain", "minicpm", "fp32-smoke")
+        and (kind not in ("minicpm", "fp32-smoke") or key == "minicpm4")
         and type(diagnostic) is bool and (kind == "fresh" or not diagnostic), "LOCKED_NOTEBOOK_KIND")
     # Cache immutable Git-derived bytes, never mutable caller objects or HEAD files.
     return strict_json(_reproduce(key, ref, str(Path(repo).resolve()), kind, diagnostic))

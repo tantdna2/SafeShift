@@ -6,6 +6,7 @@ Tests replace official SDK transport; JSON snapshots never replace provider GETs
 """
 import argparse
 from pathlib import Path
+import re
 import tempfile
 import time
 import zipfile
@@ -45,7 +46,12 @@ def serial8_proof(proposal, destination, *, owner_performs_network=False):
 
 
 def blocked(destination, error):
+    # Only project gate identifiers may leave the exception. SDK exceptions
+    # can include credentials in signed URLs or machine-specific paths.
+    code = str(error).split(":", 1)[0]
+    reason = code if re.fullmatch(r"(?:MINICPM|MANUAL|CAPSULE|UI)_[A-Z0-9_]{1,100}", code) else None
     c.write(destination / "BLOCKED.json", {"status": "BLOCKED", "error_type": type(error).__name__,
+        "gate": reason,
         "partial_evidence": "PRESERVED", "automatic_retry": False, "journal_written": False})
     raise ValueError("MINICPM_OWNER_VERIFIER_BLOCKED:"+type(error).__name__) from None
 
@@ -54,6 +60,8 @@ def capsule(client, value, ticket, package, destination):
     """Check explicit version/private inventory AND every downloaded capsule byte."""
     from safeshift.internvl3763_operator import download_capsule, bounded_python_zip
     from safeshift.fulltrain.minicpm_execution import MARKER
+    from scripts.submit_internvl_v2 import bounded_http
+    from scripts.minicpm_fulltrain_transport import download_ancestor
     expected = {c.ui.MARKER, MARKER, *(x["file"] for x in value["ancestors"]),
         *(x["file"]+".sha256.json" for x in value["ancestors"])}
     c.require({f.name for f in (package/"dataset").iterdir()} == expected
@@ -61,7 +69,8 @@ def capsule(client, value, ticket, package, destination):
         and ticket["payload"]["value_sha256"] == c.digest(value), "MINICPM_FINAL_CAPSULE_REQUEST_AND_TICKET")
     for ancestor in value["ancestors"]:
         c.ui.pair(package/"dataset"/ancestor["file"], ancestor["sha256"])
-    result = c.old.verify_published_capsule(client, value, ticket, package)
+    with bounded_http():
+        result = c.old.verify_published_capsule(client, value, ticket, package)
     owner, slug, version = value["capsule_ref"].split("/")
     destination.mkdir(parents=True, exist_ok=False)
     files = {}
@@ -69,7 +78,11 @@ def capsule(client, value, ticket, package, destination):
         c.snapshot_stat(source)
         target_dir = destination / source.name
         target_dir.mkdir()
-        downloaded = download_capsule(client, owner, slug, version, source.name, target_dir)
+        if source.name.endswith(".bin") and source.stat().st_size >= 63 * 2**20:
+            downloaded = download_ancestor(client, owner, slug, version, source, target_dir)
+        else:
+            with bounded_http():
+                downloaded = download_capsule(client, owner, slug, version, source.name, target_dir)
         if c.sha(downloaded) == c.sha(source):
             checksum = c.sha(downloaded)
         elif zipfile.is_zipfile(downloaded):

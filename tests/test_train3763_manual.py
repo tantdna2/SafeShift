@@ -911,12 +911,12 @@ class ManualSourceTests(unittest.TestCase):
         self.assertEqual(c.science()["native"], frozen["native"])
         # Mini's candidate deliberately has a NEW source identity. Never assert
         # that its shared preparation code is the released InternVL Operator.
-        changed = {p for p, h in r.source_spec()["manifest"].items() if frozen["manifest"].get(p) != h}
+        previous = observed("5a457a9c736a6a724b3b40a9a777c565e033cae8")["manifest"]
+        current = r.source_spec()["manifest"]
+        changed = {path for path in previous.keys() | current.keys() if previous.get(path) != current.get(path)}
         self.assertEqual(changed, {"safeshift/fulltrain/admission.py", "safeshift/fulltrain/runtime.py",
-            "safeshift/fulltrain/contract.py", "safeshift/fulltrain/provision.py", "safeshift/fulltrain/original_inputs.py",
-            "safeshift/fulltrain/minicpm_notebook.py", "safeshift/fulltrain/minicpm_ui.py",
-            "safeshift/fulltrain/minicpm_execution.py", "safeshift/fulltrain/minicpm_release.py",
-            "safeshift/fulltrain/minicpm_sizing.py"})
+            "safeshift/fulltrain/gpu_driver.py", "safeshift/fulltrain/minicpm_offline.py",
+            "safeshift/fulltrain/minicpm_serial8.py", "safeshift/fulltrain/minicpm_prenative.py"})
 
     def test_source_hash_equality_does_not_waive_exact_merged_commit(self):
         with tempfile.TemporaryDirectory() as d:

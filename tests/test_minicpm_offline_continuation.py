@@ -279,17 +279,26 @@ class OfflineTests(unittest.TestCase):
         self.grant["offline"].update(schema=p.SERIAL9_SCHEMA, resident_gpu0_min_free_mib=1,
             serial7={"event_sha256": c.serial7.EVENT_SHA, "provider_closure_sha256": "a" * 64},
             serial8={"event_sha256": c.serial8.EVENT_SHA, "provider_closure_sha256": "b" * 64})
-        write(processed / c.serial8.PRIMARY / "registration.json", {"base": {"serial7_closure": {}}})
+        seventh = {"provider": {"kernel_id": 37}}
+        eighth = {"schema": c.prenative.PROVIDER_SCHEMA, "provider": {"job_id": c.serial8.TICKET_JOB,
+            "kernel_id": c.serial8.KERNEL_ID}, "provider_job": c.serial8.TICKET_JOB, "ticket_job": c.serial8.TICKET_JOB,
+            "local": {"native_calls": 0}, "capsule": {}, "output": {}}
+        write(processed / c.serial8.PRIMARY / "registration.json", {"base": {"serial7_closure": seventh}})
         self.stack.enter_context(patch.object(c, "verify_transition_closure", return_value=[]))
         self.stack.enter_context(patch.object(c, "require_live_transition"))
         self.route = c.Continuation.initialize(processed / "nine", processed / "nine-mirror",
-            self.locator, {}, self.value, processed / "closure", p.ORIGINAL_SESSION, serial8_closure={})
+            self.locator, {}, self.value, processed / "closure", p.ORIGINAL_SESSION, serial8_closure=eighth)
 
     def failed_download(self, item, last):
         v, t = item["value"], item["ticket"]
         r, payload = v["request"], t["payload"]
         stages = a.STAGES[:a.STAGES.index(last) + 1]
         folder = self.root / "data/processed" / ("download-" + str(payload["number"]))
+        if r["history"]:
+            write(folder / "minicpm-fulltrain/campaign.json", r["campaign"])
+            for h, ancestor in zip(r["history"], v["ancestors"]):
+                write(folder / "minicpm-fulltrain/attempts" / (h["attempt_id"] + ".json"),
+                    {"plan_sha256": ancestor["plan_sha256"], "campaign_sha256": digest(r["campaign"])})
         control = folder / "minicpm-fulltrain/supervision" / ("e" * 32)
         write(control / "request.json", r)
         write(control / "capability.json", {"locator": self.locator, "ticket": t})
@@ -346,7 +355,9 @@ class OfflineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "START_WINDOW_OPEN"):
             self.route.close_pre_native(folder, closure)
         # Advance wall clock past this ticket's launch window.
-        self.stack.enter_context(patch.object(time, "time", return_value=item["ticket"]["payload"]["start_before_unix"] + 1))
+        real_time = time.time
+        shift = item["ticket"]["payload"]["start_before_unix"] + 1 - real_time()
+        self.stack.enter_context(patch.object(time, "time", side_effect=lambda: real_time() + shift))
         wrong = deepcopy(closure)
         wrong["output"]["pairs"]["unbound.zip"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "SUPERVISOR_ONLY"):
@@ -681,13 +692,9 @@ class OfflineTests(unittest.TestCase):
             return deepcopy(verified_cache[key])
         self.stack.enter_context(patch.object(c,"verify_local",side_effect=verified_once))
         self.grant["sizing"]["first_call_seconds"] = 1
-        # Registration binds the grant; fixture changes happen only before this
-        # synthetic release is initialized, never in a running campaign.
-        for root in (self.route.root,self.route.mirror):
-            reg = read(root/"registration.json");reg["grant_sha256"]=digest(self.grant)
-            (root/"registration.json").write_bytes(c.json_bytes(reg))
-        self.route.registration=reg
-        c.fence().write_bytes(c.json_bytes({"root":c.relative(self.route.root),"registration_sha256":digest(reg)}))
+        self.initialize_serial9()
+        self.stage()
+        self.close_failure("gpu")
         self.stage(); self.accept()
         self.assertEqual(self.route.state()["next_ordinal"],100)
         self.stage()
@@ -697,7 +704,8 @@ class OfflineTests(unittest.TestCase):
         manifest=self.route.manifest()
         self.assertEqual([r["ordinal"] for r in manifest["rows"]],list(range(3763)))
         self.assertEqual(len(manifest["attempts"]),2)
-        self.assertEqual(manifest["reserved"]["calls"],10626+3763)
+        self.assertEqual(manifest["reserved"]["calls"], c.serial8.RESERVED["calls"] + 100 + 3763)
+        self.assertEqual([i["active"]["ticket"]["payload"]["number"] for i in manifest["closed"]], [9])
         self.exercise_final(manifest)
 
     def exercise_final(self,manifest):
@@ -718,9 +726,13 @@ class OfflineTests(unittest.TestCase):
                 c.copy(Path(str(source)+".sha256.json"),Path(str(destination/name)+".sha256.json"))
             return {"mock_sdk":"EXACT_SYNTHETIC_BYTES"}
         with patch.object(online,"historical",return_value={"status":"ALL_HISTORICAL_CUSTODY_RECHECKED",
+                "serial7_closure": manifest["historical"]["serial7_closure"],
+                "serial8_closure": manifest["historical"]["serial8_closure"],
                 "historical_sha256":digest(manifest["historical"]), "serial6_supervisor_sha256": c.serial6.ZIP_SHA,
                 "serial6": {"job_id": c.serial6.JOB, "version": 1, "state": "ERROR", "kernel_id": 6}}), \
              patch.object(online,"capsule",return_value={"mock_sdk":"CAPSULE_CHECKED"}), \
+             patch.object(online,"resolve_kernel",side_effect=lambda client, candidates, kernel_id: next(iter(candidates))), \
+             patch.object(online,"provider_closure",return_value=deepcopy(manifest["closed"][0]["closure"])), \
              patch.object(manual,"observe_kernel",side_effect=observe), \
              patch.object(manual,"download_outputs",side_effect=download):
             report=online.verify(self.route,self.root/"data/processed/provider",owner_performs_network=True,client=sdk)
@@ -743,7 +755,9 @@ class OfflineTests(unittest.TestCase):
                        lambda r:r["attempts"][0]["provider"].update(state="RUNNING"),
                        lambda r:r["attempts"][0]["provider"].update(version=2),
                        lambda r:r["attempts"][0]["provider"].update(job_id="foreign/job"),
-                       lambda r:r["attempts"][1]["provider"].update(kernel_id=7)):
+                       lambda r:r["attempts"][1]["provider"].update(kernel_id=r["attempts"][0]["provider"]["kernel_id"]),
+                       lambda r:r["closed"].clear(),
+                       lambda r:r["closed"][0]["provider"].update(kernel_id=1234)):
             bad=deepcopy(report);mutate(bad)
             with self.assertRaises(ValueError):c.validate_provider_report(manifest,bad)
         exports={}
@@ -763,6 +777,7 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(self.route.state()["status"],"FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT")
         official=self.route.official_report()
         self.assertEqual(official["status"],"OFFICIAL_RECONCILED_RESULTS")
+        self.assertEqual([entry["number"] for entry in official["failed_pre_native"]], [9])
         self.assertEqual(len(official["rows"]),3763)
         self.assertFalse(official["scientific_qualified"])
         self.assertEqual(official["budget"]["billing_gpu_seconds"],"NOT_OBSERVED")

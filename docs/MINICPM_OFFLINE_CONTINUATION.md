@@ -1,6 +1,6 @@
 # MiniCPM nối nhiều job offline — Issue #202
 
-## Serial 8 GPU-stage closure and Serial 9 / 19 November 2026
+## Serial 8 GPU-stage closure and Serial 9 / 20 November 2026
 
 The Serial 8 journal reserved `nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-8`.
 The Owner reported running `nguynanhtn/notebook1358a4d09b`. The two slugs are
@@ -8,7 +8,18 @@ retained separately. Local replay of both signed journal copies and
 `data/processed/inspect_run_8` verifies successful admit/setup/reclaim/CPU,
 a supervised GPU failure (`nvidia-smi` exit 12), zero native loads and calls,
 and only the supervisor ZIP and sidecar. Exit 12 records the failed command.
-Kaggle metadata is required to confirm the CPU-only setting.
+Read-only GetKernel v1 and latest returned the reserved slug with ID
+`145987007`, version 1, private, COMPLETE, `enableGpu=true` and
+`machineShape=NvidiaTeslaT4`. The versioned notebook code hash was
+`ccb3f0485f34cd4218cf1ef1840d59a5d580ed903b04e88510f1df402273eda5`.
+The versioned Output had 246 files. Its log SHA256 was
+`aa64813972c708e1ab581ae1df0b5a5cdb46b3a3769c2da207b79c6211987fad`
+and the downloaded supervisor SHA256 was
+`3b5f95188943d5af6dc4abf9b6c9431586503c77075b0fe3c311d2360d563ec8`.
+Only the UI-supplied standalone notebook log was extra in the local download.
+The run's own receipts record the failed GPU command. The API fields describe
+the saved configuration. Actual device allocation and the loader error text
+inside this container remain unknown.
 
 **Pending Owner provider verification and fresh source release.** Use the
 original MiniCPM Operator checkout and custody for the following transition.
@@ -16,12 +27,14 @@ original MiniCPM Operator checkout and custody for the following transition.
 1. After merge and postmerge verification, the Owner personally runs
    `python -B -m scripts.owner_verify_minicpm_offline --serial8-closure --output data/processed/<new-serial8-export> --owner-performs-network`.
    The read-only verifier checks actual private kernel v1 and latest, terminal
-   status, explicitly disabled GPU, notebook code, the five attached Input
+   status, stable numeric ID, notebook code, the five attached Input
    slugs, published private capsule v1 bytes, paginated Output inventory and
-   the exact supervisor pair. It checks that the reserved slug is absent in
-   the current Owner inventory after the Serial 8 start window has closed.
-   A missing `enableGpu` field, unknown version, conflicting slug or extra
-   Output blocks closure. Preserve the original
+   the exact supervisor pair after the start window closes. Both known slugs
+   are candidates. If renamed again, pass the current slug via `--provider-job`.
+   Inventory entries can omit the numeric ID. Exactly one candidate must resolve
+   and GetKernel must return ID 145987007 for both v1 and latest. Missing
+   accelerator fields are recorded as unknown. Conflicting jobs, version, code,
+   Input, capsule bytes or Output block closure. Preserve the original
    download and the new provider export.
 2. Prepare the unsigned spec and proposal with the continuation CLI.
    `serial9-spec --output <initial>` derives the plan from the original 3,763
@@ -40,11 +53,47 @@ original MiniCPM Operator checkout and custody for the following transition.
    no-active-job and expiry checks, `stage` issues only a new Serial 9 ticket
    for `nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-9` and private capsule
    `nguynanhtn/safeshift-minicpm-capsule-mcpm4-restart-v1-9/1`. The original
-   Operator publishes the handoff for the Owner to run once with T4 ?2.
+   Operator publishes the handoff for the Owner to run once with **GPU T4 ×2**.
 
 The failed run contributes zero imported results and zero refunds. Successful
 result ingestion still requires an attempt ZIP. The final Owner reconciliation
 rechecks the Serial 8 closure alongside the earlier technical failures.
+
+### Runtime and recovery on the new source
+
+The isolated worker had no loader path for its unscoped NVIDIA utility. In
+Issue173 the same symptom was reproduced with a working kernel driver and
+missing worker-side NVML resolution. The successful InternVL worker explicitly
+bound host libcuda and scoped the mounted driver directory to the utility.
+The MiniCPM GPU and native stages now use this pattern, save driver binding
+and bounded command diagnostics, then check two physical T4s and CUDA FP16 on
+worker GPU0. RAM/cgroup, disk, quota and pre-load VRAM checks still run.
+[Issue173 driver evidence](KAGGLE_CHECKPOINTS_173.md#measured-loader-isolation-and-scoped-driver-binding--03112026).
+
+The Serial 8 policy required 13,000 MiB free on both devices before load.
+Reapplying that threshold to GPU0 with resident FP16 weights can stop the
+first call. The unsigned V5 template explicitly proposes 256 MiB of **free**
+GPU0 memory after load, the per-call reserve from the MiniCPM Candidate160
+route. The reviewed release must bind `offline.resident_gpu0_min_free_mib`.
+Only after a successful load does the worker use that value. It checks both
+NVML and CUDA free memory, the unused GPU1 reserve and a functional FP16 probe.
+The value marks a stop threshold. Full-TRAIN fit, latency and completion remain
+unmeasured on this source.
+
+| Observation in a later serial | Action |
+| --- | --- |
+| Terminal before load or call, sealed supervisor and sidecar, closed start window | Owner runs `python -B -m scripts.owner_verify_minicpm_offline --pre-native-closure <primary> --download <original-output> --output <fresh-export> --owner-performs-network`. Supply `--provider-job <owner/current-slug>` if needed. The original Operator runs `python -B -m scripts.minicpm_offline_continuation --directory <primary> close-pre-native --download <original-output> --provider-closure <fresh-export>/pre-native-closure.json`. Preserve the original download for replay. |
+| Accepted pre-native closure | Both journals append the failure. Its signed successor binds the failed ticket, closure and full hold. Run `forecast` and address the recorded failure before staging a fresh ticket. Pending starts at the previous next ordinal, including zero when history is empty. |
+| Timeout, API outage, ambiguous job, missing/torn supervisor, current launch window, expired unused ticket or uncertain native activity | Keep active reservation and every partial. Recheck the same version into a fresh export when evidence becomes available. Expiry alone never closes a hold. If evidence cannot establish the outcome, further staging stays blocked for external reconciliation. |
+| Attempt ZIP with a clean adaptive stop | Use ordinary `accept` with both sealed pairs and terminal proof. Replay raw/claims against the ordered IDs. Preserve SUCCESS and INVALID, schedule only NOT_ATTEMPTED. |
+| Attempt ZIP with zero progress, runtime error, corrupt/missing raw or duplicated/out-of-order ordinal | Preserve the failure and originals. The result path stops for reconciliation. An uncertain attempt cannot use pre-native closure. |
+
+Final verification re-fetches successful attempts, every pre-native closure,
+each private capsule and their Output. If an Owner kernel has since moved, the
+final verifier accepts `--aliases <json>` mapping its known numeric ID to the
+current Owner slug. Duplicate candidates or conflicting stable identity stop
+verification. The final manifest and authentic Owner approval remain required
+before `official-report`. This checkout supplies code and CPU verification only.
 
 ## Serial 8 source transition / 19 November 2026
 

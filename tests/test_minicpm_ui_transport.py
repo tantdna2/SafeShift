@@ -1,7 +1,9 @@
 """Real pinned SDK serialization/HTTP adapter fixtures; zero network."""
 from pathlib import Path
+from contextlib import nullcontext
 from types import SimpleNamespace as NS
 import unittest
+from unittest.mock import MagicMock, patch
 
 import test_train3763_manual as manual
 from test_train3763_manual import KaggleClient, output_fixture, DOWNLOAD_OUTPUTS
@@ -11,6 +13,33 @@ from safeshift.pilot.artifacts import sha
 @unittest.skipUnless(KaggleClient is not None, "requires existing pinned operator venv")
 class MiniCPMPairTransportTests(unittest.TestCase):
     setUp = manual.ManualDownloadTests.setUp
+
+    def test_ancestor_download_is_versioned_size_bounded_and_create_only(self):
+        from scripts.minicpm_fulltrain_transport import download_ancestor
+        client = MagicMock()
+        remote = client.build_kaggle_client.return_value.__enter__.return_value
+        remote.http_client.return_value._verbose = False
+        rpc = remote.datasets.dataset_api_client.download_dataset
+        response = rpc.return_value.__enter__.return_value
+        response.status_code = 200
+        source = self.root / "ancestor-0000.bin"
+        source.write_bytes(b"synthetic-ancestor")
+        with patch("safeshift.internvl3763_operator.capsule_http", return_value=nullcontext()):
+            for index, chunks in enumerate(([source.read_bytes()], [b"first", bytes(66000)])):
+                destination = self.root / ("ancestor-download-" + str(index))
+                destination.mkdir()
+                response.iter_content.return_value = chunks
+                args = (client, "nguynanhtn", "example", "1", source, destination)
+                if index == 0:
+                    self.assertEqual(sha(download_ancestor(*args)), sha(source))
+                    with self.assertRaisesRegex(ValueError, "FAILED_NO_RETRY"):
+                        download_ancestor(*args)
+                else:
+                    with self.assertRaisesRegex(ValueError, "FAILED_NO_RETRY"):
+                        download_ancestor(*args)
+                    self.assertEqual((destination / "download.part").read_bytes(), b"first")
+                query = rpc.call_args.args[0]
+                self.assertEqual((query.file_name, query.dataset_version_number), (source.name, 1))
 
     def pairs(self):
         supervisor = self.root / ("a" * 32 + ".zip")
