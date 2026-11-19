@@ -1,5 +1,21 @@
 # TRAIN3763 — nối lượt offline và đối soát cuối chiến dịch
 
+## Trạng thái InternVL3.5 Full-TRAIN — 19/11/2026
+
+Owner xác nhận đã hoàn thành thực thi trên toàn bộ 3.763 ảnh TRAIN gốc. Báo cáo
+kiểm tra cục bộ ghi đủ 3.763 kết quả trong chuỗi ZIP lưu trên máy. Owner đã giải
+thích lượt đầu của Attempt 23 gặp lỗi và Owner chủ động chạy lại. Dùng mục
+[trạng thái hiện hành](PROJECT_STATE.md#hiện-hành--internvl35-full-train-đã-hoàn-thành--19112026)
+khi tiếp nối. Các baseline `COLLECTED`, `NOT_ATTEMPTED` và dự báo dưới đây là ảnh
+chụp lịch sử của quy trình.
+
+Đối soát chính thức còn `PENDING`. Cần chứng từ provider cho lịch sử Attempt 23,
+giải quyết receipt mâu thuẫn và sai lệch định danh máy Operator, rồi xác lập
+thẩm quyền ghi journal theo quy trình được duyệt trước khi xét final certificate
+và `official-report`. Giữ các cổng dưới đây và hồ sơ gốc khi đối soát. Xác nhận
+thực thi và lý do chạy lại đã được chốt theo
+[bản ghi Owner](research/DECISIONS.md#dec-20261119-owner-internvl3763-execution-completed).
+
 ## PR196 R1 — reader chính thức sau đối soát
 
 [Review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)

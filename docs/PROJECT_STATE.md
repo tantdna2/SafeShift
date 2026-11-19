@@ -1,5 +1,35 @@
 # SafeShift — PROJECT STATE
 
+## Hiện hành — InternVL3.5 Full-TRAIN đã hoàn thành — 19/11/2026
+
+| Trạng thái | Bằng chứng và phạm vi |
+| --- | --- |
+| `EXECUTION_COMPLETED_OWNER_CONFIRMED` | Owner xác nhận đã chạy xong trên toàn bộ **3.763 ảnh InspecSafe-V1 TRAIN gốc**, kết quả đã lưu cục bộ và được Owner chấp nhận về mặt thực thi. Nguồn là xác nhận trực tiếp trong cuộc trò chuyện giao task ngày 19/11/2026, được lưu trong [bản ghi Owner](research/DECISIONS.md#dec-20261119-owner-internvl3763-execution-completed). |
+| `LOCAL_ARTIFACTS_VERIFIED` | Báo cáo Codex ngày 15/11 ghi nhận 3.763/3.763 ID có kết quả, đủ ordinal 0–3762, mỗi sample ID xuất hiện một lần và cả 3.763 nhãn hợp lệ. Phân bố dự đoán Level01/02/03/04 là **245 / 598 / 1.418 / 1.502**. Kiểm tra SHA256, CRC và checksum theo từng thành viên áp dụng cho 25 ZIP còn lưu trong chuỗi custody. Nguồn cục bộ tại `data/processed/independent-train3763-audit-20261115/01_DATA_INTEGRITY.md` và `run-20261115-095439/coverage.json` trong cùng thư mục. |
+| `FORMAL_RECONCILIATION` / `SCIENTIFIC_QUALIFICATION` | **PENDING.** Còn thiếu xác minh lịch sử và chứng từ provider, xử lý thẩm quyền ghi journal, final certificate và bản xuất `official-report`. Việc sử dụng InternVL cho báo cáo khoa học còn cần xác minh quyền và điều kiện phân tích áp dụng. Các điều kiện này độc lập với trạng thái hoàn thành thực thi và kiểm tra cục bộ. [Quy trình đối soát](TRAIN3763_DEFERRED_RECONCILIATION.md). |
+
+**Attempt 23.** Owner giải thích lượt đầu gặp lỗi và Owner chủ động chạy lại để
+lấy kết quả. Hai lượt chạy/kernel trong hồ sơ là hệ quả của lần chạy lại sau
+lỗi. Kết quả chạy lại nằm trong ZIP mà journal continuation tham chiếu ở
+`event-000025.json`. Giữ nguyên lịch sử lượt đầu và SHA256, log, receipt của cả
+hai lượt. Lịch sử phiên bản và chứng từ Kaggle vẫn cần đối soát chính thức.
+[Bản ghi Owner và tham chiếu cục bộ](research/DECISIONS.md#dec-20261119-owner-internvl3763-execution-completed).
+
+**Tiếp nối.** Các phiên ChatGPT, Codex và Antigravity dùng xác nhận trên, không
+hỏi lại Owner về độ phủ 3.763 ảnh hoặc lý do chạy lại Attempt 23. Chỉ mở lại câu
+hỏi về nguyên nhân khi có bằng chứng mới, cụ thể và mâu thuẫn với giải thích đã
+ghi. Trạng thái `PARTIAL` hoặc `NOT_ATTEMPTED` trong báo cáo GitHub/ledger cũ và
+việc thiếu bảng metric chính thức đều không phải căn cứ yêu cầu chạy lại.
+
+**Việc tiếp theo cho phân tích TRAIN.** Đối chiếu các chứng từ còn thiếu cho
+InternVL, ưu tiên so sánh nhãn Qwen3 Composite V1 và InternVL3.5 trên đúng cùng
+3.763 ID khi đủ điều kiện theo giao thức đã duyệt. Qwen3 Composite V1 có đủ
+3.763 nhãn hợp lệ và đã được Owner duyệt cho phân tích nhãn TRAIN trong phạm vi
+quyết định riêng. Loại `train3763_final_metrics.json` cũ khỏi bảng chính thức vì
+sai quy ước nhị phân. Giao thức khóa dùng Level01–Level03 là Hazard và Level04
+là Normal. [Quyết định Qwen3](research/DECISIONS.md#dec-20261115-owner-qwen3-full-train-composite-v1)
+và [giao thức Seminar](research/SEMINAR_PROTOCOL.md).
+
 ## Current / MiniCPM after Serial 6 / 19 November 2026
 
 Local signed custody and the supervisor ZIP confirm a reclaim-stage RAM failure
