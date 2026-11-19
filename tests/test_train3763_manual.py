@@ -1100,6 +1100,10 @@ class ManualSdkTests(unittest.TestCase):
         self.meta.pop("machineShape")
         self.meta["enableGpu"] = False
         self.assertIs(observe(True)["enable_gpu"], False)
+        self.meta["datasetDataSources"].append("nguynanhtn/unexpected")
+        with self.assertRaisesRegex(ValueError, "MANUAL_CPU_PROVIDER_INPUT_DRIFT"):
+            observe(True)
+        self.meta["datasetDataSources"].pop()
         with self.assertRaisesRegex(ValueError, "REMOTE_ACCELERATOR_OR_INPUT_DRIFT"):
             observe(False)
         self.meta.pop("enableGpu")  # Pinned SDK getter would return False here.

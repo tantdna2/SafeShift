@@ -19,8 +19,9 @@ original MiniCPM Operator checkout and custody for the following transition.
    status, explicitly disabled GPU, notebook code, the five attached Input
    slugs, published private capsule v1 bytes, paginated Output inventory and
    the exact supervisor pair. It checks that the reserved slug is absent in
-   the current Owner inventory. A missing accelerator field, unknown version,
-   conflicting slug or extra Output blocks closure. Preserve the original
+   the current Owner inventory after the Serial 8 start window has closed.
+   A missing `enableGpu` field, unknown version, conflicting slug or extra
+   Output blocks closure. Preserve the original
    download and the new provider export.
 2. Prepare the unsigned spec and proposal with the continuation CLI.
    `serial9-spec --output <initial>` derives the plan from the original 3,763
