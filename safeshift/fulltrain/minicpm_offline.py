@@ -16,6 +16,9 @@ from . import minicpm_release as a, minicpm_v5_incident as v5, minicpm_serial6 a
 SCHEMA = "safeshift-minicpm-offline-continuation-v3"
 RELEASE = "SAFESHIFT_MINICPM_OFFLINE_RELEASE_V3"
 TICKET = "safeshift-minicpm-offline-ticket-v3"
+TRANSITION_SCHEMA = "safeshift-minicpm-offline-continuation-v4"
+TRANSITION_RELEASE = "SAFESHIFT_MINICPM_OFFLINE_RELEASE_V4"
+TRANSITION_TICKET = "safeshift-minicpm-offline-ticket-v4"
 FINAL = "SAFESHIFT_MINICPM_OFFLINE_FINAL_V2"
 RELEASE_SECONDS = 30 * 24 * 3600
 ORIGINAL_SESSION = "0b1d115c-c002-44e8-b22e-087226f6dc73"
@@ -29,9 +32,11 @@ TOOLS = ("minicpm_offline_continuation.py", "owner_verify_minicpm_offline.py",
 
 def validate_delegation(grant):
     d = grant["offline"]
+    transition = d.get("schema") == TRANSITION_SCHEMA
     require(type(d) is dict and set(d) == {"schema", "decision_issue", "operator_session",
         "base_journal_head_sha256", "tools_sha256", "tool_blobs", "unmeasured_calls", "serial6_event_sha256", "serial6_supervisor_sha256"}
-        and d["schema"] == SCHEMA and d["decision_issue"] == 202
+        | ({"serial7"} if transition else set())
+        and d["schema"] in (SCHEMA, TRANSITION_SCHEMA) and d["decision_issue"] == 202
         and grant["schema"] == a.RECOVERY_SCHEMA and grant["implementation_pr"] > 204
         and grant["scope"]["source_sha256"] != serial6.SOURCE
         and d["serial6_event_sha256"] == serial6.EVENT_SHA and d["serial6_supervisor_sha256"] == serial6.ZIP_SHA
@@ -53,7 +58,21 @@ def validate_delegation(grant):
         and grant["expires_unix"] == grant["issued_unix"] + RELEASE_SECONDS,
         "MINICPM_OFFLINE_EXACT_30_DAY_RELEASE")
     require(0 < grant["caps"]["job_seconds"] <= 4 * 3600, "MINICPM_OFFLINE_FOUR_HOUR_JOB_CAP")
+    if transition:
+        from . import minicpm_serial7
+        minicpm_serial7.validate_transition(grant)
     return d
+
+
+def first_serial(grant):
+    return 8 if a.uses_proof(grant) else serial6.FIRST_SERIAL
+
+
+def initial_hold(grant):
+    if a.uses_proof(grant):
+        from .minicpm_serial7 import RESERVED
+        return deepcopy(RESERVED)
+    return deepcopy(serial6.RESERVED)
 
 
 def number(n, *, integer=False):
@@ -104,18 +123,23 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     require(type(t) is dict and set(t) == {"schema", "grant_sha256", "value_sha256", "capsule_sha256",
         "notebook_code_sha256", "number", "previous_event_sha256", "reserved_before", "reserved_after",
         "issued_unix", "start_before_unix", "owner_gate", "sizing", "lineage"}
-        and t["schema"] == TICKET and t["grant_sha256"] == digest(grant)
+        and t["schema"] == (TRANSITION_TICKET if a.uses_proof(grant) else TICKET)
+        and t["grant_sha256"] == digest(grant)
         and t["value_sha256"] == t["capsule_sha256"] == digest(value), "MINICPM_OFFLINE_TICKET_BINDING")
     a.bind(grant, value)
     require_hash(t["notebook_code_sha256"]); require_hash(t["previous_event_sha256"])
     p, caps = value["request"]["plan"], grant["caps"]
-    require(type(t["number"]) is int and t["number"] == serial6.FIRST_SERIAL + len(value["ancestors"])
+    require(type(t["number"]) is int and t["number"] == first_serial(grant) + len(value["ancestors"])
         and value["job"] == "nguynanhtn/safeshift-minicpm-" + grant["campaign_id"] + "-" + str(t["number"]),
         "MINICPM_OFFLINE_SERIAL7_NO_REPLAY")
     require(type(t["lineage"]) is list and len(t["lineage"]) == len(value["request"]["history"]),
         "MINICPM_OFFLINE_ALL_PREDECESSORS")
-    before = deepcopy(serial6.RESERVED)
-    for i, (entry, history) in enumerate(zip(t["lineage"], value["request"]["history"]), serial6.FIRST_SERIAL):
+    before = initial_hold(grant)
+    if a.uses_proof(grant) and not t["lineage"]:
+        require(value["ancestors"] == value["request"]["history"] == []
+            and p["action"] == "initial" and p["counts"] == {"NOT_ATTEMPTED": 3763}
+            and p["scheduled_ordinals"][0] == 0, "MINICPM_SERIAL8_EMPTY_HISTORY")
+    for i, (entry, history) in enumerate(zip(t["lineage"], value["request"]["history"]), first_serial(grant)):
         require(set(entry) == {"number", "ticket_sha256", "history_sha256", "owner_receipt_sha256", "reserved_after"}
             and entry["number"] == i and entry["history_sha256"] == digest(history), "MINICPM_OFFLINE_LINEAGE_ORDER")
         for k in ("ticket_sha256", "owner_receipt_sha256"): require_hash(entry[k])

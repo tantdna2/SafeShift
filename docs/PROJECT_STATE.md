@@ -30,7 +30,18 @@ sai quy ước nhị phân. Giao thức khóa dùng Level01–Level03 là Hazard
 là Normal. [Quyết định Qwen3](research/DECISIONS.md#dec-20261115-owner-qwen3-full-train-composite-v1)
 và [giao thức Seminar](research/SEMINAR_PROTOCOL.md).
 
-## Current / MiniCPM after Serial 6 / 19 November 2026
+## Current / MiniCPM after Serial 7 / 19 November 2026
+
+The Serial 7 supervisor sealed successful admit/setup/reclaim stages and a
+CPU child failure during GitHub authority lookup. The local evidence shows
+zero native loads and calls, no attempt ZIP and 3,763 `NOT_ATTEMPTED`. Holds
+remain 10,726 calls / 7 jobs / 201,600 physical GPU-seconds. Provider closure
+awaits read-only verification. The Serial 8 source uses a GitHub-pinned
+supporting proof with live release and PR checks at every stage. Serial 8
+requires direct review, independent audit, authorized merge, postmerge
+verification and a fresh source-bound release. [Serial 7 evidence and Serial 8 transition](MINICPM_SERIAL8_AUTHORITY.md).
+
+### Historical status after Serial 6
 
 Local signed custody and the supervisor ZIP confirm a reclaim-stage RAM failure
 before native execution. All 3,763 original TRAIN IDs remain NOT_ATTEMPTED.

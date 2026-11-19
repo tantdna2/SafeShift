@@ -25,7 +25,8 @@ def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None
     require(type(started_unix) in (int,float) and math.isfinite(started_unix) and started_unix <= time.time(),
         "MINICPM_NOTEBOOK_START_TIME")
     # Genuine authority before any Input path, request, credentials or model IO.
-    grant = authority.load(locator, repo=repo)
+    proof = {}
+    grant = authority.load(locator, repo=repo, capture=proof)
     marker = discover(inputs, MARKER, limit=128)
     require(hasattr(os, "statvfs") and os.statvfs(marker.parent).f_flag & os.ST_RDONLY,
         "MINICPM_CAPSULE_READ_ONLY")
@@ -56,6 +57,11 @@ def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None
         context_file = work.parent / (request["plan"]["run_id"] + "-release-context.json")
         write(context_file, {"locator": locator, "ticket": envelope, "value": value})
         context["context_file"] = str(context_file)
+        if authority.uses_proof(grant):
+            # Scratch must remain empty for the supervisor's ownership gate.
+            proof_file = work.parent / (request["plan"]["run_id"] + "-authority-proof.json")
+            write(proof_file, proof)
+            context["proof_file"] = str(proof_file)
         context["capsule_directory"] = str(marker.parent)
         from .runtime import launch
         return launch(request, repo=repo)
@@ -106,10 +112,13 @@ def retain_sealed_trees(request, work, scratch, capsule_directory):
 def child_command(python, mode, request_file, repo, output, deadline):
     c = authority.current()
     require(c is not None and "context_file" in c, "MINICPM_SUPERVISED_CAPABILITY_CONTEXT")
-    return [str(python), "-B", "-m", "safeshift.fulltrain.minicpm_execution", "--stage", mode,
+    argv = [str(python), "-B", "-m", "safeshift.fulltrain.minicpm_execution", "--stage", mode,
         "--request", str(request_file), "--repo", str(repo), "--output", str(output), "--deadline", str(deadline),
         "--capability", c["context_file"], "--release-comment-id", str(c["locator"]["comment_id"]),
         "--release-body-sha256", c["locator"]["body_sha256"]]
+    if "proof_file" in c:
+        argv.extend(("--authority-proof", c["proof_file"]))
+    return argv
 
 
 def main():
@@ -120,17 +129,36 @@ def main():
     p.add_argument("--deadline", type=float, required=True)
     p.add_argument("--release-comment-id", type=int, required=True)
     p.add_argument("--release-body-sha256", required=True)
+    p.add_argument("--authority-proof", type=Path)
     args = p.parse_args()
     locator = {"comment_id": args.release_comment_id, "body_sha256": args.release_body_sha256}
-    # The signed operator ticket delegates the already independently validated
-    # decisions; a child still revalidates current Owner record and merged PR.
-    grant = authority.load(locator, repo=args.repo, approvals=False)
+    proof = None
+    if args.authority_proof is not None:
+        require(snapshot_stat(args.authority_proof).st_size <= authority.PROOF_BYTES,
+            "MINICPM_STAGE_AUTHORITY_PROOF_BOUND")
+        proof = authority.strict_json(args.authority_proof.read_bytes())
+    grant = authority.load(locator, repo=args.repo, child=True, stage_proof=proof)
     context = metadata(args.capability)
     require(set(context) == {"locator", "ticket", "value"} and context["locator"] == locator, "MINICPM_CHILD_CONTEXT")
+    request = metadata(args.request, 4 * 2**20)
+    require(digest(request) == digest(context["value"]["request"]), "MINICPM_CHILD_REQUEST_PIN")
+    if authority.uses_proof(grant):
+        directory = args.request.resolve().parent
+        require(directory.parent == Path(request["work"]).resolve() / "supervision"
+            and args.request.name == "request.json" and args.output.resolve() == directory / args.stage
+            and math.isfinite(args.deadline) and time.monotonic() < args.deadline,
+            "MINICPM_CHILD_SUPERVISOR_PATH_OR_DEADLINE")
+        predecessor = authority.STAGES[authority.STAGES.index(args.stage) - 1]
+        if predecessor != "launch":
+            receipt = metadata(directory / (predecessor + "-process.json"), 4096)
+            prior = metadata(directory / predecessor / "stage.json", 4096)
+            require(receipt["schema"] == "fresh-process-supervision-v1" and receipt["status"] == "EXITED"
+                and receipt["returncode"] == 0 and receipt["group_exit"]["status"] == "NO_LIVE_MEMBERS"
+                and prior == {"status": "RETURNED", "stage": predecessor, "request_sha256": digest(request),
+                    "source_sha256": request["source_sha256"], "native_attempt_permitted": False},
+                "MINICPM_CHILD_PREDECESSOR_RETURN")
     with authority._activated(grant, locator, context["ticket"], context["value"], args.stage, repo=args.repo, child=True):
-        request = metadata(args.request, 4 * 2**20)
         authority.authorize(request=request)
-        require(digest(request) == digest(context["value"]["request"]), "MINICPM_CHILD_REQUEST_PIN")
         from .admission import stage
         return stage(args.stage, request, args.repo, args.output, args.deadline)
 

@@ -1,5 +1,14 @@
 # MiniCPM nối nhiều job offline — Issue #202
 
+## Serial 8 source transition / 19 November 2026
+
+Serial 7 stopped during CPU-stage GitHub authority verification. Local custody
+confirms zero native loads or calls and 3,763 `NOT_ATTEMPTED`. The versioned
+transition carries all seven holds forward with verified provider custody
+and a separately released source. Each stage keeps live GitHub release and PR
+checks and verifies the supporting proof pinned by that release.
+[Incident and transition runbook](MINICPM_SERIAL8_AUTHORITY.md).
+
 ## Serial 7 transition / 18 November 2026
 
 The V3 offline delegation starts with **10,626 reserved calls, six jobs and
