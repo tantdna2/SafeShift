@@ -1,5 +1,83 @@
 # MiniCPM V5 RAM failure and source-bound V6 replacement
 
+## Serial 6 local custody and Serial 7 source candidate / 18 November 2026
+
+The signed reservation for `nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-6`
+and its downloaded supervisor `2f26e8db607d47f180feff588f840639.zip` agree on
+the request, source and stage claims. The supervisor returned BLOCKED at
+`reclaim` with `ValueError("HOST_OR_CGROUP_RAM")`. The signed floor was
+17,179,869,184 bytes. Both snapshots bracketing the failed check recorded
+14,420,357,120 bytes available. The local disposition is
+**FAILED_PRE_NATIVE_NO_USABLE_RESULTS**, with zero native loads and calls.
+Online provider re-verification is pending.
+
+| Reclaim observation | Bytes |
+| --- | ---: |
+| memory.current | 17,791,897,600 |
+| file / active_file / inactive_file | 17,153,515,520 / 10,821,332,992 / 6,332,178,432 |
+| anon / kernel | 299,859,968 / 337,985,536 |
+| File cache decrease across owned advice | 4,241,870,848 |
+| File sizes covered by the original 30 advice calls | 5,293,230,375 |
+
+Repeated reads of all TRAIN images and both weight shards, together with the
+old 8 MiB threshold, explain the pressure identified by the independent audit.
+The counters measure aggregate file cache. They do not identify individual
+inodes or guarantee how many pages Linux will reclaim.
+
+The candidate uses read-only regular-file descriptors to stream each SHA256
+with an 8 MiB block limit, aligned range advice and a final whole-file hint.
+The original Master is read once into its bounded parse buffer. Original
+projection rows carry the frozen SHA and no size field. The reader additionally
+binds the observed regular-file size and compares descriptor and path identity.
+PIL decode, base64 transport and every native generation release their file
+pages. The native stage passes its in-process checkpoint binding to its worker.
+The loader independently hashes actual shard bytes immediately before
+deserialization. After loading, it records `native/post-weight-load-advice.json`
+before sampling RAM again. Returned native raw survives an advice error.
+
+After setup and CPU checks, two directory-FD passes cover nonempty, single-link
+regular files under the owned venv lib/bin, pip bootstrap, extracted CPython and
+its pinned archive. Only symlink entries *inside* venv bin and extracted CPython
+are skipped. Unexpected aliases in lib, special files, cross-device traversal,
+identity changes, deadline and inventory overflow stop the stage. Each owned
+file receives fsync and DONTNEED. Input files receive read-only advice, with no
+fsync. Admission still verifies bytes in each separate stage. The signed fresh
+16 GiB cgroup/host floor and disk gates determine whether the next step runs.
+
+Read-only replay from the repaired checkout, with the private evidence present:
+
+```console
+python -B -c "from pathlib import Path; from safeshift.fulltrain.minicpm_serial6 import verify_local; print(verify_local(Path('data/processed'))[0])"
+```
+
+### PR205 audit follow-up / 19 November 2026
+
+- Native cache advice runs after raw, result, elapsed call time and the
+  cumulative call checkpoint have been recorded. A failed advice gets a
+  separate per-call receipt and stops the run before another sample. A model
+  failure remains the primary failure when advice also fails. At the call
+  deadline the controller records an advisory skip and keeps the completed
+  sample. File syscalls remain in the hard-supervised native process and
+  before the signed export reserve.
+- CPU and native reuse the original admission from their own stage. The
+  process-local binding covers the request, source directory, deadline,
+  bundle, cohort and ordered image mapping. Each file's opened descriptor
+  must match the identity checked during SHA256 verification, and its
+  identity is checked again after PIL decode. The native reservation check
+  rechecks the scheduled files by identity. Each selected image still gets
+  SHA256 verification immediately before its model call. Independent
+  callers verify all bytes before decode.
+- Pass 1 inventories the entire allowed scratch tree with entry and depth
+  bounds. Pass 2 walks only that inventory via open directory descriptors,
+  rechecking each file and directory. The Linux regression with 300 files
+  under 20 nested directories observes 45 explicit directory opens across
+  both passes, including the root and the two venv ancestors. Reproduce with
+  \`PYTHONPATH=tests python -B -m unittest test_minicpm_fulltrain_memory.MemoryTests.test_owned_pass_two_reuses_directories_for_a_wide_deep_tree -v\`.
+  This fixture measures opens on Linux. Kaggle I/O latency, cache eviction
+  effectiveness and RAM headroom still need release-bound evidence.
+
+The remaining sections document the V5 incident and the earlier Serial 6 design.
+
 Owner [6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950),
 17/11/2026. New Codex branch from merged PR200
 `006105080fc9b240e6ffff31618d325adac41522`; one Draft PR, then STOP for direct

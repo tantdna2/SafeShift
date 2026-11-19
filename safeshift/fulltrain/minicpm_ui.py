@@ -220,7 +220,10 @@ def stage_python(request, scratch, output, env, deadline):
     lock = py.manifest()["lock"]
     require(shutil.disk_usage(scratch).free >= lock["max_uncompressed_bytes"] + lock["size_bytes"], "PYTHON_INPUT_SCRATCH_SPACE")
     archive = Path(scratch) / py.manifest()["filename"]
-    proof = py.decode(marker.parent / py.PAYLOAD, archive, deadline)
+    from . import memory
+    raw = marker.parent / py.PAYLOAD
+    proof = py.decode(raw, archive, deadline)
+    memory.evict_readonly_file(raw, deadline=deadline)
     python, extraction = py.train_python.extract(archive, Path(scratch) / "input-cpython3119", lock)
     probe = py.boot.probe_interpreter(python, env)
     require(time.monotonic() < deadline and probe.get("eligible") and probe.get("version") == [3, 11, 9]

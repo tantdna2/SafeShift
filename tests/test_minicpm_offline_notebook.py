@@ -23,7 +23,7 @@ class OfflineNotebookTests(unittest.TestCase):
         meta=first["metadata"]["safeshift"]
         self.assertEqual(meta["source_sha256"],digest(contract.source_manifest()))
         self.assertEqual(meta["resource_stages"],["admit","setup","reclaim","cpu","gpu","native"])
-        self.assertEqual(meta["continuation_route"],"safeshift-minicpm-offline-continuation-v2")
+        self.assertEqual(meta["continuation_route"],"safeshift-minicpm-offline-continuation-v3")
         code="\n".join("".join(cell["source"]) for cell in first["cells"] if cell["cell_type"]=="code")
         self.assertIn("safeshift.fulltrain.minicpm_execution",code)
         payload=json.loads(zlib.decompress(base64.b64decode(re.search(r"base64\.b64decode\('([^']+)'\)",code).group(1))))
@@ -39,11 +39,16 @@ class OfflineNotebookTests(unittest.TestCase):
 
     def test_pr201_ram_supervisor_native_and_historical_notebooks_unchanged(self):
         base="e713d56d62a5a649a2078f2c2376fde6d025b978"
-        protected=("safeshift/fulltrain/memory.py","safeshift/fulltrain/supervision.py",
-            "safeshift/fulltrain/environment.py","safeshift/fulltrain/runtime.py","safeshift/fulltrain/admission.py",
+        protected=("safeshift/fulltrain/supervision.py",
+            "safeshift/fulltrain/environment.py",
             "safeshift/candidates/backend.py","safeshift/candidates/minicpm_resampler_fp32.py",
             "safeshift/pilot/contract.py","notebooks/SafeShift_FULLTRAIN_MINICPM4_RAM_V6_CANDIDATE.ipynb",
             "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb")
+        # These three modules were frozen through PR204, then repaired for Serial 7.
+        for name in ("memory.py", "runtime.py", "admission.py"):
+            name = "safeshift/fulltrain/" + name
+            self.assertEqual(subprocess.check_output(["git", "show", base + ":" + name], cwd=ROOT),
+                subprocess.check_output(["git", "show", "0b79c87230bcaea83f4105dea2c7b6635c97bdb4:" + name], cwd=ROOT))
         for name in protected:
             with self.subTest(name=name):
                 expected=subprocess.check_output(["git","show",base+":"+name],cwd=ROOT)

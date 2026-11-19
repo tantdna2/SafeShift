@@ -8,11 +8,11 @@ import time
 
 from safeshift.candidates import fulltrain_run as journal
 from safeshift.candidates.train_history import lease_key
-from safeshift.candidates.source import require, ROOT
+from safeshift.candidates.source import require, ROOT, snapshot_stat
 from safeshift.pilot.artifacts import read, safe, sha, write, export
 from safeshift.pilot.contract import digest
 from safeshift.pilot.runner import execute, error_record
-from . import contract
+from . import contract, memory
 
 
 def native_factory(key, snapshot, weights, *, repo=ROOT):
@@ -40,10 +40,22 @@ def _native_factory(key, snapshot, weights, *, repo=ROOT):
     prompt = Path(repo) / "configs/pilot/classification_c1.txt"
     require(sha(prompt) == PROMPT_SHA, "FROZEN_C1_SHA")
     verify_snapshot(snapshot, key)
-    verify_weights(weights, key)
     if key == "minicpm4":
+        # load_weight_model verifies both shards at deserialization in load_guard.
         return numerical.backend(key, Path(snapshot), Path(weights), prompt.read_text(encoding="utf-8"), device="cuda:0")
+    verify_weights(weights, key)
     return CandidateBackend(key, Path(snapshot), Path(weights), prompt.read_text(encoding="utf-8"), device="cuda:0")
+
+
+def _image_cache_advice(path, deadline):
+    """Advise only within the worker budget, after native evidence is durable."""
+    if time.monotonic() < deadline:
+        try:
+            return {"status": "RETURNED", **memory.evict_readonly_file(path, deadline=deadline)}
+        except (OSError, ValueError) as error:
+            if not (isinstance(error, ValueError) and str(error) == "READONLY_ADVICE_DEADLINE"):
+                return {"status": "FAILED", "failure": error_record(error, "image-cache-advice")}
+    return {"status": "DEADLINE"}
 
 
 class NativeStore(journal.BoundStore):
@@ -109,12 +121,13 @@ def recover(root, cohort, plan_sha):
 
 
 def worker(request, **kwargs):
-    # Must precede even Path conversion, directory creation or heavy imports.
+    # Must precede keyword validation, Path conversion, or heavy imports.
     contract.authorize(request=request)
+    require(set(kwargs) <= {"repo", "memory_output"}, "UNSUPPORTED_WORKER_OPTIONS")
     return _worker(request, **kwargs)
 
 
-def _worker(request, *, repo=ROOT, memory_output=None):
+def _worker(request, *, repo=ROOT, memory_output=None, stage_deadline=None, admitted_checkpoint=None):
     """Prepared peer native chain; never called by this release's public worker.
 
     Requires an already provisioned isolated pinned worker. Future activation
@@ -132,19 +145,24 @@ def _worker(request, *, repo=ROOT, memory_output=None):
     from safeshift.pilot.hnlo import replay
     required = {"model_key", "source_sha256", "inputs", "marker_sha256", "projection_sha256",
                 "campaign", "plan", "history", "work", "scratch", "resource_policy", "repair_case"}
-    from .admission import REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS, checkpoint_binding, input_binding, input_bytes
+    from .admission import REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS, checkpoint_binding, input_binding
     supervised = (REQUEST_FIELDS, ORIGINAL_REQUEST_FIELDS, UI_REQUEST_FIELDS)
     require(type(request) is dict and set(request) in (required, *supervised), "EXACT_NATIVE_REQUEST")
     key = request["model_key"]
     require(key != "qwen3" or set(request) == REQUEST_FIELDS, "QWEN_SUPERVISED_REQUEST_REQUIRED")
     require(digest(contract.source_manifest(repo)) == request["source_sha256"], "FINAL_NATIVE_SOURCE")
     require(request["plan"]["identity"] == contract.native_identity(key, repo), "PINNED_NATIVE_IDENTITY")
+    original_stage = None
     if "original_inputs" in request:
-        # Direct internal entry must enforce the same binding/model validation.
-        from .admission import validate_request
-        validate_request(request, repo)
-        bundle, cohort, rows = input_binding(request)
-        input_bytes(request, bundle, cohort, rows)
+        require(admitted_checkpoint is None, "ORIGINAL_STAGE_CHECKPOINT_OVERRIDE")
+        from .admission import _current_original_stage, validate_request
+        original_stage = _current_original_stage("native", request, repo, stage_deadline)
+        if original_stage is None:
+            # Independent entry still checks the original binding and all image bytes.
+            validate_request(request, repo)
+            bundle, cohort, rows = input_binding(request, deadline=stage_deadline)
+        else:
+            (bundle, cohort, rows, snapshot, weights, _), verified_files = original_stage
     else:
         bundle, cohort, rows = admit(request["inputs"], request["marker_sha256"], request["projection_sha256"])
         verify_image_bytes(bundle, cohort, rows)
@@ -155,17 +173,28 @@ def _worker(request, *, repo=ROOT, memory_output=None):
         environment.software(key, repo, request["runtime_lock"])
         qwen.native_setup(snapshot, repo)
         replay = qwen.replay
-    else:
-        if set(request) in supervised:
-            _, snapshot, weights, _ = checkpoint_binding(request, repo)
+    elif original_stage is None:
+        if admitted_checkpoint is not None:
+            require(key == 'minicpm4' and set(request) in supervised, 'MINICPM_STAGE_CHECKPOINT_ONLY')
+            snapshot, weights = admitted_checkpoint
+        elif set(request) in supervised:
+            _, snapshot, weights, _ = checkpoint_binding(request, repo, deadline=stage_deadline)
         else:
             _, snapshot, weights = checkpoint(request["inputs"], key)
-        verify_snapshot(snapshot, key)
-        verify_weights(weights, key)
+        if key != "minicpm4" or set(request) not in supervised:
+            verify_snapshot(snapshot, key)
+            if key == "minicpm4":
+                verify_weights(weights, key, hash_reader=memory.stream_readonly_sha256)
+            else:
+                verify_weights(weights, key)
+    if key != "qwen3":
         software(key)  # actual isolated Python/pins/compiled ABI, no kernel fallback
-    if "original_inputs" in request:
+    if original_stage is not None:
+        from .original_inputs import _decode_files
+        _decode_files(verified_files, deadline=stage_deadline)
+    elif "original_inputs" in request:
         from .original_inputs import verify_images as original_images
-        original_images(bundle, cohort, rows)
+        original_images(bundle, cohort, rows, deadline=stage_deadline)
     else:
         verify_images(bundle, rows)
     policy = request["resource_policy"]
@@ -178,7 +207,6 @@ def _worker(request, *, repo=ROOT, memory_output=None):
     resource_index = 0
     memory_out = None
     if key == 'minicpm4' and set(request) in supervised:
-        from . import memory
         require(memory_output is not None, 'SUPERVISED_NATIVE_MEMORY_OUTPUT_REQUIRED')
         memory_out = Path(memory_output)
         memory_out.mkdir(exist_ok=False)
@@ -198,13 +226,14 @@ def _worker(request, *, repo=ROOT, memory_output=None):
     check_resources()
     def factory():
         if memory_out is not None:
-            with memory.load_guard(request, memory_out):
+            with memory.load_guard(request, memory_out.parent, deadline=stage_deadline):
                 return _native_factory(key, snapshot, weights, repo=repo)
         return _native_factory(key, snapshot, weights, repo=repo)
     return _execute(request["work"], bundle, cohort, request["campaign"], request["plan"], request["history"],
         factory,
         image_path=lambda i: rows[i]["image"], evaluator=None if key == "minicpm4" else replay,
-        before_call=check_resources, repair_case=request["repair_case"])
+        before_call=check_resources, repair_case=request["repair_case"], stage_deadline=stage_deadline,
+        stage_request=(request, repo) if original_stage is not None else None)
 
 
 def launch(*args, **kwargs):
@@ -219,7 +248,8 @@ def worker_command(python, request, output):
 
 
 def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
-             store_class=NativeStore, evaluator=None, before_call=None, repair_case=None, clock=time.monotonic):
+             store_class=NativeStore, evaluator=None, before_call=None, repair_case=None, clock=time.monotonic,
+             stage_deadline=None, stage_request=None):
     """Shared bounded controller; requires pre-admitted inputs and explicit plan.
 
     Internal only, not an execution authority. Public real-data entries are
@@ -244,6 +274,14 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
     else:
         require(callable(evaluator), "LOCKED_HNLO_REQUIRED")
     work, bundle = Path(work), Path(bundle)
+    verified_files = None
+    if stage_request is not None:
+        from .admission import _current_original_stage
+        request, repo = stage_request
+        admitted = _current_original_stage("native", request, repo, stage_deadline)
+        require(admitted is not None and p is request["plan"]
+                and cohort is admitted[0][1] and bundle == admitted[0][0], "ORIGINAL_STAGE_EXECUTION_BINDING")
+        verified_files = admitted[1]
     work.mkdir(parents=True, exist_ok=True)
     lock = digest({"campaign": campaign, "model": p["identity"]["model_key"]})
     with lease_key(work, lock):
@@ -272,8 +310,20 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
             raise ValueError("IMPORTED_HISTORY_RESERVATIONS_REQUIRED")
         root = safe(work, p["run_id"])
         require(not root.exists() and not Path(str(root) + ".zip").exists(), "RUN_ALREADY_EXISTS")
+        def image_hash(path):
+            if p["identity"]["model_key"] == "minicpm4":
+                return memory.stream_readonly_sha256(path, deadline=stage_deadline)
+            return sha(path)
+
         for i in p["scheduled_ordinals"]:
-            require(sha(safe(bundle, image_path(i))) == cohort["samples"][i]["image_sha256"], "INPUT_CHECKSUM")
+            path = safe(bundle, image_path(i))
+            if verified_files is None:
+                require(image_hash(path) == cohort["samples"][i]["image_sha256"], "INPUT_CHECKSUM")
+            else:
+                expected_path, expected_identity = verified_files[i]
+                memory.check_deadline(stage_deadline)
+                require(path == expected_path and memory.identity(snapshot_stat(path)) == expected_identity,
+                        "ORIGINAL_IMAGE_CHANGED_BEFORE_RESERVATION")
         write(work / "attempts" / (p["attempt_id"] + ".json"), {"plan_sha256": digest(p), "campaign_sha256": digest(campaign)})
         root.mkdir()
         write(root / "campaign.json", campaign)
@@ -312,7 +362,7 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                         stop = "ADAPTIVE_TIME_STOP"
                         break
                 row = {**cohort["samples"][i], "image": str(safe(bundle, image_path(i)))}
-                require(sha(row["image"]) == row["image_sha256"], "INPUT_CHANGED_BEFORE_CALL")
+                require(image_hash(row["image"]) == row["image_sha256"], "INPUT_CHANGED_BEFORE_CALL")
                 store = store_class(root / f"calls/{i:06d}/run", journal._identity(p, row))
                 def cached():
                     nonlocal backend
@@ -326,25 +376,44 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
                     from .engine import execute as engine
                     from .qwen import parser
                     options["label_parser"] = parser
-                native_seconds = max(0, deadline - clock()) if adaptive is None else max(
-                    0, adaptive.deadline - adaptive.policy["export_seconds"] - clock())
+                call_deadline = deadline if adaptive is None else adaptive.deadline - adaptive.policy["export_seconds"]
+                native_seconds = max(0, call_deadline - clock())
                 result, blocked = engine(store, [row], cached,
                     {"run_id": p["run_id"], "attempt_id": p["attempt_id"]}, p["identity"]["model_key"], cohort,
                     time_budget=native_seconds, transport=journal._identity(p, row)["transport"],
                     hnlo_replay=evaluator, **options)
-                if active is not None and blocked and result.get(row["sample_id"], {}).get("status") == "NOT_ATTEMPTED":
+                if blocked and result[row["sample_id"]]["status"] == "NOT_ATTEMPTED":
                     reason = read(store.root / "stop.json")["reason"] if (store.root / "stop.json").exists() else None
                     if reason in ("TIME_BUDGET_STOP_BEFORE_NEXT_CALL", "OUTPUT_FREE_BELOW_1GIB_KEEP_EXPORT_RESERVE") \
                             and not (store.root / "samples/000000/started.json").exists():
-                        stop = "ADAPTIVE_TIME_STOP" if reason.startswith("TIME_") else "ADAPTIVE_STORAGE_STOP"
+                        if active is not None:
+                            stop = "ADAPTIVE_TIME_STOP" if reason.startswith("TIME_") else "ADAPTIVE_STORAGE_STOP"
+                        else:
+                            stop = "TIME_CAP" if reason.startswith("TIME_") else "TECHNICAL_STOP"
                         break
                 count += result[row["sample_id"]]["native_calls"]
                 if adaptive is not None:
                     adaptive.observed(clock() - call_started)
                 require(count <= p["max_calls"], "CALL_CAP")
                 write(root / f"checkpoints/{i:06d}.json", {"result_sha256": digest(result), "native_calls": count})
+                advice_status = None
+                if p["identity"]["model_key"] == "minicpm4" and (store.root / "samples/000000/started.json").exists():
+                    # The engine has already persisted raw/result or the original failure.
+                    # Keep fadvise inside the hard-supervised stage and the call budget.
+                    advice_deadline = time.monotonic() + max(0, call_deadline - clock())
+                    if stage_deadline is not None:
+                        advice_deadline = min(advice_deadline, stage_deadline)
+                    advice = _image_cache_advice(row["image"], advice_deadline)
+                    write(store.root / "image-cache-advice.json", advice)
+                    advice_status = advice["status"]
                 if blocked:
                     stop = "TECHNICAL_STOP"
+                    break
+                if advice_status == "FAILED":
+                    stop = "IMAGE_CACHE_ADVICE_FAILURE"
+                    break
+                if advice_status == "DEADLINE":
+                    stop = "TIME_CAP" if adaptive is None else "ADAPTIVE_TIME_STOP"
                     break
         except BaseException as error:
             stop = "CONTROLLER_FAILURE"

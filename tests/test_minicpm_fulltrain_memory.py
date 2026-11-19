@@ -1,6 +1,7 @@
 """CPU-only RAM replay, owned-file advice and real Linux process supervision."""
 from contextlib import ExitStack
 from copy import deepcopy
+import hashlib
 import os
 from pathlib import Path
 import signal
@@ -139,6 +140,88 @@ class MemoryTests(unittest.TestCase):
             self.assertIs(backend.native_setup, original_processor)
             self.assertIs(backend.load_weight_model, original_loader)
 
+    def test_readonly_hash_ranges_final_advice_and_no_fsync(self):
+        path = self.root / 'input'
+        data = b'X' * (8 * 2**20 + 4099)
+        path.write_bytes(data)
+        with patch.object(os, 'posix_fadvise', create=True) as advice, \
+                patch.object(os, 'POSIX_FADV_DONTNEED', 4, create=True), \
+                patch.object(os, 'POSIX_FADV_RANDOM', 1, create=True), \
+                patch.object(os, 'sysconf', return_value=4096, create=True), patch.object(os, 'fsync') as sync:
+            self.assertEqual(m.stream_readonly_sha256(path, expected_size=len(data)), hashlib.sha256(data).hexdigest())
+            self.assertEqual([c.args[1:] for c in advice.call_args_list],
+                             [(0, 0, 1), (0, 8*2**20, 4), (8*2**20, 4096, 4), (0, 0, 4)])
+            advice.reset_mock()
+            with patch.object(os, 'read', side_effect=AssertionError('eviction must not read')):
+                self.assertEqual(m.evict_readonly_file(path)['advised'], True)
+            self.assertEqual([c.args[1:] for c in advice.call_args_list], [(0, 0, 4)])
+            sync.assert_not_called()
+
+    def test_readonly_changed_fd_size_or_deadline_stop(self):
+        path = self.root / 'input'
+        path.write_bytes(b'synthetic')
+        for func in (m.stream_readonly_sha256, m.evict_readonly_file):
+            with self.assertRaisesRegex(ValueError, 'EXPECTED_SIZE'):
+                func(path, expected_size=12)
+            with self.assertRaisesRegex(ValueError, 'DEADLINE'):
+                func(path, deadline=time.monotonic()-1)
+            other = self.root.stat()
+            with patch.object(os, 'fstat', side_effect=[path.stat(), other]):
+                with self.assertRaisesRegex(ValueError, 'FILE_CHANGED'):
+                    func(path)
+        with patch.object(m.time, 'monotonic', side_effect=[1, 2, 4]):
+            with self.assertRaisesRegex(ValueError, 'DEADLINE'):
+                m.stream_readonly_sha256(path, deadline=3)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'POSIX aliases and special files')
+    def test_readonly_rejects_fifo_links_and_symlink_parent(self):
+        file = self.root / 'ordinary'
+        file.touch()
+        link = self.root / 'alias'
+        link.symlink_to(file)
+        parent = self.root / 'parent-link'
+        parent.symlink_to(self.root, target_is_directory=True)
+        fifo = self.root / 'fifo'
+        os.mkfifo(fifo)
+        for item in (link, parent / file.name, fifo):
+            for func in (m.stream_readonly_sha256, m.evict_readonly_file):
+                with self.assertRaises(ValueError):
+                    func(item)
+
+    def test_postload_advises_every_locked_shard_with_exact_sizes(self):
+        from safeshift.candidates.source import LOCK
+        locked = read(LOCK.with_name('checkpoint_metadata_lock.json'))['minicpm4']['weights']
+        with patch.object(m, 'evict_readonly_file', return_value={'advised': True}) as evict:
+            receipt = m.advise_readonly_weights(self.root, deadline=99)
+        self.assertEqual(set(receipt['files']), set(locked))
+        self.assertEqual([(c.args[0], c.kwargs) for c in evict.call_args_list],
+                         [(self.root / name, {'expected_size': row['size'], 'deadline': 99})
+                          for name, row in locked.items()])
+
+    def test_loader_hashes_then_advises_before_after_load_gate(self):
+        from safeshift.candidates import backend, loading
+        shard = self.root / 'synthetic-shard'
+        shard.write_bytes(b'shard')
+        calls = []
+        def verify(path, key, *, hash_reader):
+            self.assertEqual(hash_reader(shard), hashlib.sha256(b'shard').hexdigest())
+            calls.append('hash')
+        def load(snapshot, key, config, cls, weights, device, *, weight_verifier):
+            weight_verifier(weights, key)
+            calls.append('load')
+            return 'model'
+        def advise(weights, key, *, deadline):
+            calls.append('advice')
+            return {'files': 1}
+        with patch.object(backend, 'load_weight_model', side_effect=load), \
+             patch.object(loading, 'verify_weights', side_effect=verify), \
+             patch.object(m, 'observe'), patch.object(m, 'advise_readonly_weights', side_effect=advise), \
+             patch.object(m, 'resource_check', side_effect=lambda r, o, n: calls.append(n)):
+            with m.load_guard(self.request, self.root):
+                self.assertEqual(backend.load_weight_model(None, 'minicpm4', None, None, self.root, 'cuda:0'), 'model')
+        self.assertEqual(calls, ['hash', 'before-weight-deserialization', 'load', 'advice', 'after-weight-load'])
+        self.assertEqual(read(self.root / 'post-weight-load-advice.json'), {'files': 1})
+
     @unittest.skipUnless(sys.platform == 'linux', 'POSIX directory-FD advice')
     def test_owned_advice_complete_bounded_preserves_bytes_and_rejects_aliases(self):
         scratch = Path(self.request['scratch']); prefix = scratch / 'venv3119'
@@ -147,9 +230,19 @@ class MemoryTests(unittest.TestCase):
         owned = m.ownership(self.request)
         installed = {'request_sha256': digest(self.request), 'python': str(prefix / 'bin/python'),
                      'env': {'SAFESHIFT_RUNTIME_ROOT': str(prefix)}}
+        from safeshift import internvl3763_python as py
+        for directory in (lib, prefix / 'bin', scratch / 'input-cpython3119/lib', scratch / 'pip-bootstrap'):
+            directory.mkdir(exist_ok=True, parents=True)
+            (directory / 'tiny').write_bytes(b'x')
+        (scratch / py.manifest()['filename']).write_bytes(b'archive')
+        (prefix / 'bin/python').symlink_to('../lib/tiny')
+        (scratch / 'input-cpython3119/lib/libpython.so').symlink_to('tiny')
+        (scratch / 'outside-allowlist').write_bytes(b'untouched')
         before = sha(file)
         result = m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+5)
-        self.assertTrue(result['scan_complete']); self.assertEqual(result['advised_files'], 1)
+        self.assertTrue(result['scan_complete']); self.assertEqual(result['advised_files'], 6)
+        self.assertEqual(result['skipped_symlinks'], 2)
+        self.assertEqual(result['advised_bytes'], file.stat().st_size + 11)
         self.assertEqual(sha(file), before); self.assertEqual(result['deleted_files'], 0)
         for alias in ('symlink', 'hardlink', 'fifo', 'dirlink'):
             path = lib / 'alias'
@@ -175,7 +268,153 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(sha(file), before)
 
 
+    @unittest.skipUnless(sys.platform == 'linux', 'POSIX directory-FD advice')
+    def test_owned_pass_two_reuses_directories_for_a_wide_deep_tree(self):
+        scratch = Path(self.request['scratch'])
+        prefix = scratch / 'venv3119'
+        leaf = prefix / 'lib' / Path(*(['nested'] * 20))
+        leaf.mkdir(parents=True)
+        for i in range(300):
+            (leaf / f'{i:04}.so').write_bytes(b'x')
+        owned = m.ownership(self.request)
+        installed = {'request_sha256': digest(self.request), 'python': str(prefix / 'bin/python'),
+                     'env': {'SAFESHIFT_RUNTIME_ROOT': str(prefix)}}
+        original_open = os.open
+        directory_opens = []
+        def counted_open(name, flags, *args, **kwargs):
+            if flags & os.O_DIRECTORY:
+                directory_opens.append(name)
+            return original_open(name, flags, *args, **kwargs)
+        open_fds = len(list(Path('/proc/self/fd').iterdir()))
+        with patch.object(m.os, 'open', side_effect=counted_open), patch.object(m.os, 'fsync'), \
+                patch.object(m.os, 'posix_fadvise') as advice:
+            result = m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+10)
+        self.assertEqual(result['advised_files'], 300)
+        self.assertEqual(advice.call_count, 300)
+        self.assertEqual(len(directory_opens), 1 + 2 * 22)
+        self.assertEqual(len(list(Path('/proc/self/fd').iterdir())), open_fds)
+
+        (leaf / Path(*(['deeper'] * 43))).mkdir(parents=True)
+        with patch.object(m.os, 'posix_fadvise') as advice:
+            with self.assertRaisesRegex(ValueError, 'ADVICE_SCAN_LIMIT'):
+                m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+10)
+            advice.assert_not_called()
+        self.assertEqual(len(list(Path('/proc/self/fd').iterdir())), open_fds)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'POSIX directory-FD advice')
+    def test_owned_pass_two_rejects_changed_inode_and_metadata(self):
+        scratch = Path(self.request['scratch'])
+        prefix = scratch / 'venv3119'
+        path = prefix / 'lib' / 'owned.so'
+        path.parent.mkdir(parents=True)
+        owned = m.ownership(self.request)
+        installed = {'request_sha256': digest(self.request), 'python': str(prefix / 'bin/python'),
+                     'env': {'SAFESHIFT_RUNTIME_ROOT': str(prefix)}}
+        real_stat = os.stat
+        for mutation in ('inode', 'size', 'mode'):
+            with self.subTest(mutation=mutation):
+                path.write_bytes(b'x')
+                path.chmod(0o600)
+                seen = 0
+                def stat_after_inventory(name, *args, **kwargs):
+                    nonlocal seen
+                    if name == path.name and kwargs.get('dir_fd') is not None:
+                        seen += 1
+                        if seen == 2:
+                            if mutation == 'inode':
+                                replacement = path.with_suffix('.new')
+                                replacement.write_bytes(b'x')
+                                replacement.replace(path)
+                            elif mutation == 'size':
+                                path.write_bytes(b'xx')
+                            else:
+                                path.chmod(0o640)
+                    return real_stat(name, *args, **kwargs)
+                open_fds = len(list(Path('/proc/self/fd').iterdir()))
+                with patch.object(os, 'stat', side_effect=stat_after_inventory), patch.object(os, 'posix_fadvise') as advice:
+                    with self.assertRaisesRegex(ValueError, 'ADVICE_FILE_CHANGED'):
+                        m.advise_owned_runtime(self.request, owned, installed, deadline=time.monotonic()+5)
+                    advice.assert_not_called()
+                self.assertEqual(seen, 2)
+                self.assertEqual(len(list(Path('/proc/self/fd').iterdir())), open_fds)
+
+
 class PipelineTests(unittest.TestCase):
+    def test_controller_preserves_calls_raw_and_primary_error_before_image_advice(self):
+        from test_fresh_fulltrain import FreshTests, Scripted
+        from safeshift.candidates.fulltrain_run import BoundStore
+        from safeshift.fulltrain import runtime, minicpm_release
+        fixture = FreshTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        for case, model_error, advice_error, expired, stop, calls in (
+            ('ok', False, False, False, None, 2),
+            ('advice', False, True, False, 'IMAGE_CACHE_ADVICE_FAILURE', 1),
+            ('model', True, False, False, 'TECHNICAL_STOP', 1),
+            ('both', True, True, False, 'TECHNICAL_STOP', 1),
+            ('expiry', False, False, True, 'ADAPTIVE_TIME_STOP', 1),
+        ):
+            with self.subTest(case=case):
+                p = fixture.plan(name=case, cap=2)
+                work = fixture.root / ('work-' + case)
+                claims = fixture.root / ('claims-' + case)
+                write(claims / 'launch.json', {'time_unix': time.time()})
+                active = {'value': {'request': {'plan': p}}, 'locator': {}, 'ticket': {}, 'claims': claims,
+                          'grant': {'sizing': {'export_seconds': 5, 'first_call_seconds': 1, 'safety_milli': 1000}}}
+                result_text = '{"safety_level":"Level04"}'
+                native = Scripted([ValueError('SYNTHETIC_MODEL_FAILURE') if model_error else result_text, result_text])
+                now = Mock(return_value=0.0)
+                generate = native.generate
+
+                def timed_generate(*args):
+                    try:
+                        return generate(*args)
+                    finally:
+                        now.return_value += 56.0 if expired else 2.0
+
+                native.generate = timed_generate
+
+                def advice(path, *, deadline):
+                    ordinal = int(Path(path).stem)
+                    call = work / case / f'calls/{ordinal:06d}/run'
+                    sample = call / 'samples/000000'
+                    self.assertTrue((sample / 'result.json').is_file())
+                    self.assertEqual((sample / 'raw.json').is_file(), not model_error)
+                    self.assertTrue((work / case / f'checkpoints/{ordinal:06d}.json').is_file())
+                    self.assertGreater(deadline, time.monotonic())
+                    if advice_error:
+                        raise OSError('SYNTHETIC_ADVICE_FAILURE')
+                    return {'advised': True}
+
+                with patch.object(minicpm_release, 'current', return_value=active), \
+                     patch.object(minicpm_release, 'GuardedBackend', side_effect=lambda backend, _: backend), \
+                     patch.object(minicpm_release, 'claims_snapshot', return_value={}), \
+                     patch.object(m, 'evict_readonly_file', side_effect=advice) as evict:
+                    root = runtime._execute(work, fixture.bundle, fixture.cohort, fixture.campaign, p, [],
+                        lambda: native, image_path=lambda i: f'{i:06d}.bin', store_class=BoundStore, clock=now)
+                receipt = read(root / 'receipt.json')
+                self.assertEqual((receipt['native_calls'], receipt['observed_native_markers'], native.calls), (calls,) * 3)
+                self.assertEqual(receipt['stop'], stop)
+                self.assertEqual(read(root / 'timing.json')['call_seconds'], [56.0 if expired else 2.0] * calls)
+                self.assertEqual(evict.call_count, 0 if expired else calls)
+                self.assertFalse((root / 'accounting_failure.json').exists())
+                self.assertTrue(root.with_suffix('.zip').is_file())
+                for ordinal in range(calls):
+                    call = root / f'calls/{ordinal:06d}/run'
+                    sample = call / 'samples/000000'
+                    status = 'TECHNICAL_ERROR' if model_error else 'SUCCESS'
+                    self.assertEqual(read(sample / 'result.json')['status'], status)
+                    self.assertEqual(read(root / 'accounting.json')['samples'][ordinal]['status'], status)
+                    if model_error:
+                        self.assertIn('SYNTHETIC_MODEL_FAILURE', read(call / 'failure.json')['message'])
+                    else:
+                        self.assertEqual(read(sample / 'result.json')['raw_sha256'], sha(sample / 'raw.json'))
+                    self.assertEqual(read(root / f'checkpoints/{ordinal:06d}.json')['native_calls'], ordinal + 1)
+                    self.assertEqual(read(call / 'image-cache-advice.json')['status'],
+                                     'DEADLINE' if expired else 'FAILED' if advice_error else 'RETURNED')
+                if calls == 1:
+                    self.assertEqual(read(root / 'accounting.json')['samples'][1]['status'], 'NOT_ATTEMPTED')
+
     def test_post_image_ram_failure_stops_actual_generate_and_native_receipt(self):
         from safeshift.fulltrain import minicpm_release as a, minicpm_recovery
         from types import SimpleNamespace as NS

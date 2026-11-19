@@ -88,8 +88,31 @@ def historical(route, client, destination):
     v5proof = minicpm_v5_incident.verify_evidence(c.safe(c.ROOT, base["v5_directory"]),
         minicpm_v5_incident.prefix(events), online=True, client=client)
     c.require(v5proof == base["v5_closure"], "MINICPM_FINAL_V5_CLOSURE_DRIFT")
+    from scripts.reconcile_train3763_manual import observe_kernel, download_outputs
+    sixth = c.serial6
+    processed = c.ROOT / "data/processed"
+    local, _ = sixth.verify_local(processed)
+    c.require(local == base["serial6"], "MINICPM_FINAL_SERIAL6_CUSTODY")
+    active = c.read(processed / "minicpm-offline/event-000001.json")["payload"]
+    value = active["value"]
+    from scripts.submit_internvl_v2 import bounded_http
+    with bounded_http():
+        state = str(client.kernels_status(sixth.JOB + "/1").status).split(".")[-1]
+    c.require(state in ("COMPLETE", "ERROR"), "MINICPM_SERIAL6_TERMINAL_REQUIRED")
+    provider = observe_kernel(client, sixth.JOB, 1, active["notebook"], value["input_sources"],
+                              expected_state=state)
+    archive = processed / "inspect_run_6" / sixth.ARCHIVE
+    folder = destination / "serial6"
+    folder.mkdir(parents=True, exist_ok=False)
+    download_outputs(client, sixth.JOB, 1, archive, sixth.ZIP_SHA, folder,
+                     output_pairs={sixth.ARCHIVE: archive})
+    c.ui.pair(folder / sixth.ARCHIVE, sixth.ZIP_SHA)
+    sixth_capsule = capsule(client, value, active["ticket"],
+        c.safe(processed / "minicpm-offline", active["package"]), folder / "capsule")
+    c.require(provider == observe_kernel(client, sixth.JOB, 1, active["notebook"], value["input_sources"],
+        expected_state=state, kernel_id=provider["kernel_id"]), "MINICPM_SERIAL6_PROVIDER_CHANGED")
     safety = recovery.current_safety(client, route.grant["recovery"],
-        {item["value"]["job"] for item in route.manifest()["attempts"]} | {v44["job"], v5.JOB},
+        {item["value"]["job"] for item in route.manifest()["attempts"]} | {v44["job"], v5.JOB, sixth.JOB},
         "nguynanhtn/safeshift-minicpm-final-never-submit")
     # Original technical capsules also retain their original ticket and bytes.
     historical_capsules = []
@@ -97,7 +120,8 @@ def historical(route, client, destination):
         historical_capsules.append(capsule(client, active["value"], active["ticket"],
             c.safe(c.ROOT, active["package"]), destination / ("capsule-"+str(number))))
     return {"status": "ALL_HISTORICAL_CUSTODY_RECHECKED", "historical_sha256": c.digest(base),
-        "v44": v44, "v5": v5proof, "current_account_safety": safety, "capsules": historical_capsules,
+        "v44": v44, "v5": v5proof, "serial6": provider, "serial6_capsule": sixth_capsule,
+        "serial6_supervisor_sha256": sixth.ZIP_SHA, "current_account_safety": safety, "capsules": historical_capsules,
         "retired_disposition": "RETIRED_NO_USABLE_RESULTS_PROVIDER_UNCERTAINTY_PRESERVED", "refund": False}
 
 
@@ -118,7 +142,7 @@ def verify(route, destination, *, owner_performs_network=False, client=None):
             "billing_gpu_seconds": "NOT_OBSERVED", "attempts": [], "historical_sha256": c.digest(manifest["historical"]),
             "observed_unix": time.time(), "scientific_qualified": False}
         report["historical_verification"] = historical(route, client, destination / "historical")
-        for i, item in enumerate(manifest["attempts"], 6):
+        for i, item in enumerate(manifest["attempts"], c.serial6.FIRST_SERIAL):
             value, ticket, completion = item["value"], item["ticket"], item["completion"]
             c.require(route.recheck(item, completion) == completion["verification"], "MINICPM_FINAL_LOCAL_REPLAY")
             pkg = c.safe(route.root, item["package"])
