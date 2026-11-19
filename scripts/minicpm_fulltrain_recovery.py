@@ -89,7 +89,7 @@ def inspect_journals():
         "directive": {"comment_id": 6914854993, "body_sha256": None}, "budget_amendment": None}
 
 
-def account_jobs(client):
+def account_jobs(client, *, kernel_ids=None):
     """Complete bounded Owner inventory, never a search result or guessed slug."""
     from scripts.submit_internvl_v2 import bounded_http
     owned, tokens, token = set(), set(), None
@@ -101,6 +101,8 @@ def account_jobs(client):
             require(len(refs) == len(set(refs)) and not owned.intersection(refs)
                 and all(type(ref) is str and ref.startswith("nguynanhtn/") for ref in refs), "MINICPM_RECOVERY_OWNER_INVENTORY")
             owned.update(refs)
+            if kernel_ids is not None:
+                kernel_ids.update((k.ref, getattr(k, "id", None)) for k in result.kernels)
             token = result.next_page_token
             if not token and len(refs) < 100:
                 return owned

@@ -39,7 +39,7 @@ def validate_delegation(grant):
     after_serial8 = d.get("schema") == SERIAL9_SCHEMA
     require(type(d) is dict and set(d) == {"schema", "decision_issue", "operator_session",
         "base_journal_head_sha256", "tools_sha256", "tool_blobs", "unmeasured_calls", "serial6_event_sha256", "serial6_supervisor_sha256"}
-        | ({"serial7"} if transition else set()) | ({"serial8"} if after_serial8 else set())
+        | ({"serial7"} if transition else set()) | ({"serial8", "resident_gpu0_min_free_mib"} if after_serial8 else set())
         and d["schema"] in (SCHEMA, TRANSITION_SCHEMA, SERIAL9_SCHEMA) and d["decision_issue"] == 202
         and grant["schema"] == a.RECOVERY_SCHEMA and grant["implementation_pr"] > 204
         and grant["scope"]["source_sha256"] != serial6.SOURCE
@@ -66,6 +66,10 @@ def validate_delegation(grant):
         from . import minicpm_serial7
         minicpm_serial7.validate_transition(grant)
     if after_serial8:
+        floor = d["resident_gpu0_min_free_mib"]
+        admission = grant["scope"]["resource_policy"]["free_gpu0_runtime_mib"]
+        require(type(floor) is int and min(256, admission) <= floor <= admission,
+            "MINICPM_RELEASED_RESIDENT_GPU0_FLOOR")
         from . import minicpm_serial8
         minicpm_serial8.validate_transition(grant)
     return d
@@ -134,16 +138,19 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     require(type(envelope) is dict and set(envelope) == {"payload", "signature"}, "MINICPM_SIGNED_OFFLINE_TICKET")
     t = envelope["payload"]
     a.verify_signature(grant["public_key"], t, envelope["signature"])
+    closable = grant["offline"]["schema"] == SERIAL9_SCHEMA
     require(type(t) is dict and set(t) == {"schema", "grant_sha256", "value_sha256", "capsule_sha256",
         "notebook_code_sha256", "number", "previous_event_sha256", "reserved_before", "reserved_after",
-        "issued_unix", "start_before_unix", "owner_gate", "sizing", "lineage"}
+        "issued_unix", "start_before_unix", "owner_gate", "sizing", "lineage"} | ({"closures"} if closable else set())
         and t["schema"] == ticket_schema(grant)
         and t["grant_sha256"] == digest(grant)
         and t["value_sha256"] == t["capsule_sha256"] == digest(value), "MINICPM_OFFLINE_TICKET_BINDING")
     a.bind(grant, value)
     require_hash(t["notebook_code_sha256"]); require_hash(t["previous_event_sha256"])
     p, caps = value["request"]["plan"], grant["caps"]
-    require(type(t["number"]) is int and t["number"] == first_serial(grant) + len(value["ancestors"])
+    closures = t["closures"] if closable else []
+    require(type(closures) is list, "MINICPM_OFFLINE_PRE_NATIVE_CLOSURES")
+    require(type(t["number"]) is int and t["number"] == first_serial(grant) + len(value["ancestors"]) + len(closures)
         and value["job"] == "nguynanhtn/safeshift-minicpm-" + grant["campaign_id"] + "-" + str(t["number"]),
         "MINICPM_OFFLINE_SERIAL7_NO_REPLAY")
     if grant["offline"]["schema"] == SERIAL9_SCHEMA:
@@ -156,10 +163,24 @@ def verify_ticket(grant, envelope, value, *, collection=False):
         require(value["ancestors"] == value["request"]["history"] == []
             and p["action"] == "initial" and p["counts"] == {"NOT_ATTEMPTED": 3763}
             and p["scheduled_ordinals"][0] == 0, "MINICPM_SERIAL8_EMPTY_HISTORY")
-    for i, (entry, history) in enumerate(zip(t["lineage"], value["request"]["history"]), first_serial(grant)):
-        require(set(entry) == {"number", "ticket_sha256", "history_sha256", "owner_receipt_sha256", "reserved_after"}
-            and entry["number"] == i and entry["history_sha256"] == digest(history), "MINICPM_OFFLINE_LINEAGE_ORDER")
+    for entry, history in zip(t["lineage"], value["request"]["history"]):
+        require(type(entry) is dict and set(entry) == {"number", "ticket_sha256", "history_sha256",
+            "owner_receipt_sha256", "reserved_after"} and entry["history_sha256"] == digest(history),
+            "MINICPM_OFFLINE_LINEAGE_ORDER")
         for k in ("ticket_sha256", "owner_receipt_sha256"): require_hash(entry[k])
+    for entry in closures:
+        require(type(entry) is dict and set(entry) == {"number", "ticket_sha256", "closure_sha256",
+            "local_sha256", "fingerprint_sha256", "reserved_after"}, "MINICPM_OFFLINE_PRE_NATIVE_CLOSURE_FIELDS")
+        for k in ("ticket_sha256", "closure_sha256", "local_sha256", "fingerprint_sha256"): require_hash(entry[k])
+    # Completed and pre-native-closed serials form ONE contiguous numbered hold
+    # chain: every closed job keeps its full reservation, nothing is refunded.
+    require(all(type(e["number"]) is int for e in t["lineage"] + closures)
+        and [e["number"] for e in closures] == sorted(e["number"] for e in closures), "MINICPM_OFFLINE_LINEAGE_ORDER")
+    merged = sorted(t["lineage"] + closures, key=lambda entry: entry["number"])
+    require([entry["number"] for entry in merged] == list(range(first_serial(grant), first_serial(grant) + len(merged)))
+        and [e["number"] for e in t["lineage"]] == sorted(e["number"] for e in t["lineage"]),
+        "MINICPM_OFFLINE_LINEAGE_ORDER")
+    for entry in merged:
         after = entry["reserved_after"]
         amounts(before, after, caps)
         before = after

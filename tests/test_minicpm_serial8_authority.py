@@ -342,7 +342,7 @@ class Serial8AuthorityTests(unittest.TestCase):
         self.stack.enter_context(patch.object(s8, "MERGE", old["merged_sha"]))
         new = self.grant
         new.update(implementation_pr=208, merged_sha="c" * 40)
-        new["offline"].update(schema=policy.SERIAL9_SCHEMA,
+        new["offline"].update(schema=policy.SERIAL9_SCHEMA, resident_gpu0_min_free_mib=1,
             serial8={"event_sha256": s8.EVENT_SHA, "provider_closure_sha256": "f" * 64})
         self.graph["/git/trees/" + "c" * 40 + "?recursive=1"] = self.graph["/git/trees/" + "b" * 40 + "?recursive=1"]
         self.graph["/pulls/208"] = {**self.graph["/pulls/207"], "merge_commit_sha": new["merged_sha"]}
@@ -365,24 +365,27 @@ class Serial8AuthorityTests(unittest.TestCase):
         old_value = deepcopy(self.value)
         old_ticket = self.sign(old_value)
         active = {"value": old_value, "ticket": old_ticket}
-        local = {"ticket_job": s8.TICKET_JOB, "sidecar_sha256": "f" * 64, "native_calls": 0,
+        local = {"ticket_job": old_value["job"], "sidecar_sha256": "f" * 64, "native_calls": 0,
+            "supervisor": s8.ARCHIVE, "supervisor_sha256": s8.ZIP_SHA,
             "disposition": "FAILED_PRE_NATIVE_NO_USABLE_RESULTS"}
         names = sorted([s8.ARCHIVE, s8.ARCHIVE + ".sha256.json"])
-        closure = {"local": local,
-            "ticket_slug_visibility": "ABSENT_IN_VERIFIED_OWNER_INVENTORY",
-            "provider": {"job_id": s8.ACTUAL_JOB, "version": 1, "kernel_id": 38, "state": "COMPLETE",
-                "notebook_code_sha256": "a" * 64, "remote_notebook_sha256": "b" * 64, "safeshift_metadata": "MATCHED",
-                "enable_gpu": False, "machine_shape": ""},
+        local["provider_files_sha256"] = digest(names)
+        closure = {"local": local, "schema": s8.prenative.PROVIDER_SCHEMA,
+            "ticket_job": old_value["job"], "provider_job": s8.TICKET_JOB,
+            "accelerator": {"enable_gpu": True, "machine_shape": "NvidiaTeslaT4",
+                "scope": "CURRENT_KERNEL_METADATA_NOT_EXECUTION_TIME_PROOF"},
+            "provider": {"job_id": s8.TICKET_JOB, "version": 1, "kernel_id": s8.KERNEL_ID, "state": "COMPLETE",
+                "notebook_code_sha256": "a" * 64, "remote_notebook_sha256": "b" * 64, "safeshift_metadata": "MATCHED"},
             "capsule": {"private": True, "version": 1, "files": {
                 entry.ui.MARKER: digest(old_value), entry.MARKER: digest(old_ticket)}},
             "output": {"pairs": {s8.ARCHIVE: s8.ZIP_SHA}, "inventory": names,
                 "sidecar_sha256": "f" * 64, "log_sha256": "d" * 64}}
         for section, changes, error in (
-            ("provider", {"job_id": s8.TICKET_JOB}, "ACTUAL_KERNEL_IDENTITY"),
-            ("provider", {"job_id": "nguynanhtn/unrelated"}, "ACTUAL_KERNEL_IDENTITY"),
-            ("provider", {"enable_gpu": None}, "PROVIDER_NO_GPU_REQUIRED"),
-            ("provider", {"enable_gpu": True}, "PROVIDER_NO_GPU_REQUIRED"),
-            ("provider", {"machine_shape": "NvidiaTeslaT4"}, "PROVIDER_NO_GPU_REQUIRED"),
+            ("provider", {"kernel_id": 38}, "ACTUAL_KERNEL_IDENTITY"),
+            ("provider", {"job_id": "nguynanhtn/unrelated"}, "KERNEL_IDENTITY"),
+            ("provider", {"version": 2}, "KERNEL_IDENTITY"),
+            ("provider", {"notebook_code_sha256": "0" * 64}, "KERNEL_IDENTITY"),
+            ("accelerator", {"enable_gpu": "true"}, "ACCELERATOR_RECORD"),
             ("output", {"inventory": names + ["z-attempt.zip"]}, "PROVIDER_SUPERVISOR_ONLY"),
             ("local", {"native_calls": 1}, "OWNER_PROVIDER_CLOSURE_REQUIRED"),
         ):
@@ -398,7 +401,7 @@ class Serial8AuthorityTests(unittest.TestCase):
             "capsule": closure["capsule"], "output": {**closure["output"], "pairs": {s7.ARCHIVE: s7.ZIP_SHA},
                 "inventory": [s7.ARCHIVE, s7.ARCHIVE + ".sha256.json"]}}
         self.grant["implementation_pr"] = 208
-        self.grant["offline"].update(schema=policy.SERIAL9_SCHEMA,
+        self.grant["offline"].update(schema=policy.SERIAL9_SCHEMA, resident_gpu0_min_free_mib=1,
             serial7={"event_sha256": s7.EVENT_SHA, "provider_closure_sha256": digest(prior)},
             serial8={"event_sha256": s8.EVENT_SHA, "provider_closure_sha256": digest(closure)})
         processed = self.root / "data/processed"
@@ -426,7 +429,7 @@ class Serial8AuthorityTests(unittest.TestCase):
                 operator.Continuation.initialize(*args)
             with self.assertRaisesRegex(ValueError, "OWNER_CLOSURE_PIN"):
                 changed = deepcopy(closure)
-                changed["provider"]["kernel_id"] += 1
+                changed["output"]["log_sha256"] = "0" * 64
                 operator.Continuation.initialize(*args, serial8_closure=changed)
             route = operator.Continuation.initialize(*args, serial8_closure=closure)
             forecast = route.forecast()

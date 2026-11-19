@@ -128,49 +128,70 @@ def serial7_closure(destination, *, owner_performs_network=False, client=None):
         blocked(destination, error)
 
 
-def serial8_closure(destination, *, owner_performs_network=False, client=None):
-    """Owner-side, read-only custody for the actual Serial 8 kernel."""
-    c.require(owner_performs_network is True, "OWNER_MUST_PERSONALLY_RUN_EXTERNAL_VERIFICATION")
+def resolve_kernel(client, candidates, kernel_id=None):
     from scripts.minicpm_fulltrain_recovery import account_jobs
+    ids = {}
+    c.require(all(isinstance(ref, str) and c.prenative.SLUG.fullmatch(ref) for ref in candidates),
+        "MINICPM_PRE_NATIVE_PROVIDER_CANDIDATES")
+    owned = account_jobs(client, kernel_ids=ids)
+    matches = (set(candidates) & owned) | {ref for ref, number in ids.items()
+        if kernel_id is not None and number == kernel_id}
+    c.require(len(matches) == 1, "MINICPM_PRE_NATIVE_PROVIDER_SLUG_ABSENT_OR_AMBIGUOUS")
+    return matches.pop()
+
+
+def provider_closure(client, active, local, download, package, destination, candidates, *, kernel_id=None):
+    """Read-only provider custody for one signed reservation closed before native.
+
+    The kernel is identified by its numeric ID, exact notebook code, private
+    capsule bytes and supervisor-only Output, not by a slug: Kaggle UI imports
+    may run under an auto-generated slug and a later rename changes it. Exactly
+    one candidate slug must exist in the complete Owner inventory.
+    """
     from scripts.reconcile_train3763_manual import download_outputs, observe_kernel
     from scripts.submit_internvl_v2 import bounded_http
 
+    value, ticket = active["value"], active["ticket"]
+    c.require(time.time() >= ticket["payload"]["start_before_unix"], "MINICPM_PRE_NATIVE_START_WINDOW_OPEN")
+    c.require(value["job"] in candidates, "MINICPM_PRE_NATIVE_PROVIDER_CANDIDATES")
+    job = resolve_kernel(client, candidates, kernel_id)
+    with bounded_http():
+        state = str(client.kernels_status(job + "/1").status).split(".")[-1]
+    c.require(state in ("COMPLETE", "ERROR"), "MINICPM_PRE_NATIVE_TERMINAL_REQUIRED")
+    notebook, sources = active["notebook"], value["input_sources"]
+    provider = observe_kernel(client, job, 1, notebook, sources, expected_state=state,
+        kernel_id=kernel_id, record_accelerator=True)
+    archive = download / local["supervisor"]
+    output = download_outputs(client, job, 1, archive, local["supervisor_sha256"], destination,
+        output_pairs={local["supervisor"]: archive}, known_names=set(c.prenative.inventory(download)))
+    output["sidecar_sha256"] = c.sha(destination / (local["supervisor"] + ".sha256.json"))
+    cap = capsule(client, value, ticket, package, destination / "capsule")
+    cap["metadata"].pop("observed_unix")
+    c.require(provider == observe_kernel(client, job, 1, notebook, sources, expected_state=state,
+        kernel_id=provider["kernel_id"], record_accelerator=True), "MINICPM_PRE_NATIVE_PROVIDER_CHANGED")
+    c.require(resolve_kernel(client, candidates, provider["kernel_id"]) == job, "MINICPM_PRE_NATIVE_PROVIDER_SLUG_CHANGED")
+    accelerator = {"enable_gpu": provider.pop("enable_gpu"), "machine_shape": provider.pop("machine_shape"),
+        "scope": "CURRENT_KERNEL_METADATA_NOT_EXECUTION_TIME_PROOF"}
+    return {"schema": c.prenative.PROVIDER_SCHEMA, "local": local, "provider": provider, "accelerator": accelerator,
+        "ticket_job": value["job"], "provider_job": job, "capsule": cap, "output": output}
+
+
+def serial8_closure(destination, *, owner_performs_network=False, client=None, provider_job=None):
+    """Owner-side, read-only custody for the actual Serial 8 kernel."""
+    c.require(owner_performs_network is True, "OWNER_MUST_PERSONALLY_RUN_EXTERNAL_VERIFICATION")
     incident = c.serial8
     processed = c.ROOT / "data/processed"
     local, active, _ = incident.verify_local(processed)
-    c.require(time.time() >= active["ticket"]["payload"]["start_before_unix"],
-        "MINICPM_SERIAL8_PREVIOUS_START_WINDOW_OPEN")
     destination = c.private(destination)
     destination.mkdir(parents=True, exist_ok=False)
     try:
         if client is None:
             from safeshift.internvl3763_operator import api
             client = api()
-        owned = account_jobs(client)
-        c.require(incident.ACTUAL_JOB in owned and incident.TICKET_JOB not in owned,
-            "MINICPM_SERIAL8_ACTUAL_OR_RESERVED_SLUG_CONFLICT")
-        job, version = incident.ACTUAL_JOB, 1
-        with bounded_http():
-            state = str(client.kernels_status(job + "/1").status).split(".")[-1]
-        c.require(state in ("COMPLETE", "ERROR"), "MINICPM_SERIAL8_TERMINAL_REQUIRED")
-        value, ticket = active["value"], active["ticket"]
-        notebook, sources = active["notebook"], value["input_sources"]
-        provider = observe_kernel(client, job, version, notebook, sources, expected_state=state, require_no_gpu=True)
-        download = processed / incident.DOWNLOAD
-        archive = download / incident.ARCHIVE
-        output = download_outputs(client, job, version, archive, incident.ZIP_SHA, destination,
-            output_pairs={incident.ARCHIVE: archive}, known_names=incident.inventory(download))
-        output["sidecar_sha256"] = c.sha(destination / (incident.ARCHIVE + ".sha256.json"))
-        package = c.safe(processed / incident.PRIMARY, active["package"])
-        cap = capsule(client, value, ticket, package, destination / "capsule")
-        cap["metadata"].pop("observed_unix")
-        c.require(provider == observe_kernel(client, job, version, notebook, sources, expected_state=state,
-            kernel_id=provider["kernel_id"], require_no_gpu=True), "MINICPM_SERIAL8_PROVIDER_CHANGED")
-        owned = account_jobs(client)
-        c.require(incident.ACTUAL_JOB in owned and incident.TICKET_JOB not in owned,
-            "MINICPM_SERIAL8_ACTUAL_OR_RESERVED_SLUG_CONFLICT")
-        result = {"local": local, "provider": provider, "capsule": cap, "output": output,
-            "ticket_slug_visibility": "ABSENT_IN_VERIFIED_OWNER_INVENTORY"}
+        result = provider_closure(client, active, local, processed / incident.DOWNLOAD,
+            c.safe(processed / incident.PRIMARY, active["package"]), destination,
+            {*incident.PROVIDER_JOBS, provider_job or incident.TICKET_JOB},
+            kernel_id=incident.KERNEL_ID)
         incident.verify_closure(result, local, active)
         c.write(destination / "serial8-closure.json", result)
         return result
@@ -178,7 +199,32 @@ def serial8_closure(destination, *, owner_performs_network=False, client=None):
         blocked(destination, error)
 
 
-def historical(route, client, destination):
+def pre_native_closure(directory, download, destination, *, provider_job=None, owner_performs_network=False,
+                       client=None):
+    """Generic Owner provider closure for the active reservation of any serial."""
+    c.require(owner_performs_network is True, "OWNER_MUST_PERSONALLY_RUN_EXTERNAL_VERIFICATION")
+    route = c.Continuation(directory)
+    active = route.state()["active"]
+    c.require(active is not None, "MINICPM_PRE_NATIVE_ACTIVE_RESERVATION_REQUIRED")
+    download = c.private(download)
+    local = route.pre_native_local(download, active)
+    destination = c.private(destination)
+    destination.mkdir(parents=True, exist_ok=False)
+    try:
+        if client is None:
+            from safeshift.internvl3763_operator import api
+            client = api()
+        candidates = {active["value"]["job"]} | ({provider_job} if provider_job else set())
+        package = c.safe(route.root, active["package"])
+        result = provider_closure(client, active, local, download, package, destination, candidates)
+        c.prenative.verify_provider(result, local, active, c.prenative.package_files(package))
+        c.write(destination / "pre-native-closure.json", result)
+        return result
+    except BaseException as error:
+        blocked(destination, error)
+
+
+def historical(route, client, destination, *, observed_jobs, aliases):
     """Recheck both failed jobs; preserve retired unknowns, never assert deletion."""
     from scripts import minicpm_v5_incident, minicpm_fulltrain_recovery as recovery
     from safeshift.fulltrain import minicpm_v5_incident as v5
@@ -212,7 +258,7 @@ def historical(route, client, destination):
         c.safe(processed / "minicpm-offline", active["package"]), folder / "capsule")
     c.require(provider == observe_kernel(client, sixth.JOB, 1, active["notebook"], value["input_sources"],
         expected_state=state, kernel_id=provider["kernel_id"]), "MINICPM_SERIAL6_PROVIDER_CHANGED")
-    known_jobs = {item["value"]["job"] for item in route.manifest()["attempts"]} | {v44["job"], v5.JOB, sixth.JOB}
+    known_jobs = set(observed_jobs) | {v44["job"], v5.JOB, sixth.JOB}
     failures = {}
     if "serial7_closure" in base:
         checked = serial7_closure(destination / "serial7", owner_performs_network=True, client=client)
@@ -220,9 +266,13 @@ def historical(route, client, destination):
         failures["serial7_closure"] = checked
         known_jobs.add(c.serial7.JOB)
     if "serial8_closure" in base:
-        checked = serial8_closure(destination / "serial8", owner_performs_network=True, client=client)
-        c.require(checked == base["serial8_closure"], "MINICPM_FINAL_SERIAL8_CLOSURE_DRIFT")
+        checked = serial8_closure(destination / "serial8", owner_performs_network=True, client=client,
+            provider_job=aliases.get(str(c.serial8.KERNEL_ID), base["serial8_closure"]["provider_job"]))
+        c.prenative.same_execution(base["serial8_closure"], checked)
         failures["serial8_closure"] = checked
+        if checked["provider_job"].startswith("nguynanhtn/safeshift-minicpm-" + route.grant["campaign_id"] + "-"):
+            known_jobs.add(checked["provider_job"])
+    known_jobs = {job for job in known_jobs if job.startswith("nguynanhtn/safeshift-minicpm-" + route.grant["campaign_id"] + "-")}
     safety = recovery.current_safety(client, route.grant["recovery"], known_jobs,
         "nguynanhtn/safeshift-minicpm-final-never-submit")
     # Original technical capsules also retain their original ticket and bytes.
@@ -236,7 +286,7 @@ def historical(route, client, destination):
         "retired_disposition": "RETIRED_NO_USABLE_RESULTS_PROVIDER_UNCERTAINTY_PRESERVED", "refund": False}
 
 
-def verify(route, destination, *, owner_performs_network=False, client=None):
+def verify(route, destination, *, owner_performs_network=False, client=None, aliases=None):
     c.require(owner_performs_network is True, "OWNER_MUST_PERSONALLY_RUN_EXTERNAL_VERIFICATION")
     destination = c.private(destination)
     manifest = route.manifest()
@@ -252,29 +302,50 @@ def verify(route, destination, *, owner_performs_network=False, client=None):
             "tools_sha256": c.digest(c.tools_manifest()), "reserved": manifest["reserved"],
             "billing_gpu_seconds": "NOT_OBSERVED", "attempts": [], "historical_sha256": c.digest(manifest["historical"]),
             "observed_unix": time.time(), "scientific_qualified": False}
-        report["historical_verification"] = historical(route, client, destination / "historical")
-        for i, item in enumerate(manifest["attempts"], c.policy.first_serial(route.grant)):
+        aliases = aliases or {}
+        jobs = set()
+        if "closed" in manifest:
+            report["closed"] = []
+            for item in manifest["closed"]:
+                active, original = item["active"], item["closure"]
+                folder = destination / ("closed-" + str(active["ticket"]["payload"]["number"]))
+                folder.mkdir()
+                download = c.private(c.safe(c.ROOT, item["download"]))
+                fresh = provider_closure(client, active, route.pre_native_local(download, active), download,
+                    c.safe(route.root, active["package"]), folder, {active["value"]["job"], original["provider_job"],
+                        aliases.get(str(original["provider"]["kernel_id"]), original["provider_job"])},
+                    kernel_id=original["provider"]["kernel_id"])
+                c.prenative.same_execution(original, fresh)
+                report["closed"].append(fresh)
+                jobs.add(fresh["provider_job"])
+        for item in manifest["attempts"]:
+            i = item["ticket"]["payload"]["number"]
             value, ticket, completion = item["value"], item["ticket"], item["completion"]
             c.require(route.recheck(item, completion) == completion["verification"], "MINICPM_FINAL_LOCAL_REPLAY")
             pkg = c.safe(route.root, item["package"])
             notebook = c.read(pkg / "notebook.ipynb")
             owner = completion["verification"]["owner_receipt"]
-            provider = observe_kernel(client, value["job"], 1, notebook, value["input_sources"], kernel_id=owner["kernel_id"])
+            candidates = {value["job"], aliases.get(str(owner["kernel_id"]), value["job"])}
+            job = resolve_kernel(client, candidates, owner["kernel_id"]) if "closed" in manifest else value["job"]
+            provider = observe_kernel(client, job, 1, notebook, value["input_sources"], kernel_id=owner["kernel_id"])
+            jobs.add(job)
             folder = destination / ("job-"+str(i)); folder.mkdir()
             cap = capsule(client, value, ticket, pkg, folder / "capsule")
             attempt, supervisor = c.safe(route.root, completion["attempt"]), c.safe(route.root, completion["supervisor"])
             pairs = {"minicpm-fulltrain/"+attempt.name: attempt,
                 "minicpm-fulltrain/supervision/"+supervisor.name: supervisor}
-            output = download_outputs(client, value["job"], 1, attempt, c.sha(attempt), folder / "outputs", output_pairs=pairs)
+            (folder / "outputs").mkdir()
+            output = download_outputs(client, job, 1, attempt, c.sha(attempt), folder / "outputs", output_pairs=pairs)
             for remote_name, local in pairs.items():
                 remote = folder / "outputs" / remote_name
                 c.require(c.sha(remote) == c.sha(local) and c.sha(str(remote)+".sha256.json") == c.sha(str(local)+".sha256.json"),
                     "MINICPM_FINAL_EXACT_PROVIDER_OUTPUT_BYTES")
-            c.require(provider == observe_kernel(client, value["job"], 1, notebook, value["input_sources"],
+            c.require(provider == observe_kernel(client, job, 1, notebook, value["input_sources"],
                 kernel_id=owner["kernel_id"]), "MINICPM_PROVIDER_CHANGED_DURING_FINAL")
             proof = {"ticket_sha256": c.digest(ticket), "completion_sha256": c.digest(completion), "provider": provider,
                 "capsule_verified": True, "output_verified": True, "local_replayed": True, "capsule": cap, "output": output}
             c.write(folder / "proof.json", proof); report["attempts"].append(proof)
+        report["historical_verification"] = historical(route, client, destination / "historical", observed_jobs=jobs, aliases=aliases)
         c.require(route.manifest() == manifest, "MINICPM_LOCAL_STATE_CHANGED_DURING_FINAL")
         c.validate_provider_report(manifest, report)
         c.write(destination / "github-exports.json", exports)
@@ -295,21 +366,33 @@ def main(argv=None):
     group.add_argument("--directory", type=Path)
     group.add_argument("--serial7-closure", action="store_true")
     group.add_argument("--serial8-closure", action="store_true")
+    group.add_argument("--pre-native-closure", type=Path, metavar="PRIMARY_DIRECTORY")
     group.add_argument("--serial8-proof-proposal", "--serial9-proof-proposal", type=Path)
+    p.add_argument("--download", type=Path, help="Owner-downloaded Output of the failed serial")
+    p.add_argument("--provider-job", help="Actual owner/slug if Kaggle ran the notebook under another slug")
+    p.add_argument("--aliases", type=Path, help="Final verification only: JSON mapping kernel ID to current Owner slug")
     args = p.parse_args(argv)
+    c.require((args.download is not None) == (args.pre_native_closure is not None)
+        and (args.provider_job is None or args.pre_native_closure is not None or args.serial8_closure)
+        and (args.aliases is None or args.directory is not None), "MINICPM_PRE_NATIVE_ARGUMENTS")
     if args.authority_locator:
         result = acquire(c.read(args.authority_locator), args.output, owner_performs_network=args.owner_performs_network)
     elif args.serial7_closure:
         serial7_closure(args.output, owner_performs_network=args.owner_performs_network)
         result = {"status": "SERIAL7_PROVIDER_CLOSURE_EXPORTED"}
     elif args.serial8_closure:
-        serial8_closure(args.output, owner_performs_network=args.owner_performs_network)
+        serial8_closure(args.output, owner_performs_network=args.owner_performs_network, provider_job=args.provider_job)
         result = {"status": "SERIAL8_PROVIDER_CLOSURE_EXPORTED"}
+    elif args.pre_native_closure:
+        pre_native_closure(args.pre_native_closure, args.download, args.output, provider_job=args.provider_job,
+            owner_performs_network=args.owner_performs_network)
+        result = {"status": "PRE_NATIVE_PROVIDER_CLOSURE_EXPORTED"}
     elif args.serial8_proof_proposal:
         result = serial8_proof(c.read(args.serial8_proof_proposal), args.output,
             owner_performs_network=args.owner_performs_network)
     else:
-        result = verify(c.Continuation(args.directory), args.output, owner_performs_network=args.owner_performs_network)
+        result = verify(c.Continuation(args.directory), args.output, owner_performs_network=args.owner_performs_network,
+            aliases=c.read(args.aliases) if args.aliases else None)
     print(result["status"])
 
 

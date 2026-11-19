@@ -1090,28 +1090,29 @@ class ManualSdkTests(unittest.TestCase):
         self.assertEqual(self.calls[0]["versionLabel"], "v1")
         self.assertNotIn("versionLabel", self.calls[1])
 
-    def test_serial8_gpu_disabled_requires_explicit_versioned_provider_metadata(self):
-        def observe(no_gpu):
+    def test_serial8_renamed_v1_records_accelerator_with_exact_inputs(self):
+        self.meta.update(ref="nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-8", id=145987007)
+        def observe(record):
             with patch("socket.socket", side_effect=AssertionError("NO_NETWORK")), \
                     patch.object(requests.adapters.HTTPAdapter, "send", self.send):
                 return m.observe_kernel(self.client, self.meta["ref"], 1, self.notebook, self.sources,
-                    kernel_id=123, require_no_gpu=no_gpu)
+                    kernel_id=145987007, record_accelerator=record)
 
         self.meta.pop("machineShape")
         self.meta["enableGpu"] = False
         self.assertIs(observe(True)["enable_gpu"], False)
         self.meta["datasetDataSources"].append("nguynanhtn/unexpected")
-        with self.assertRaisesRegex(ValueError, "MANUAL_CPU_PROVIDER_INPUT_DRIFT"):
+        with self.assertRaisesRegex(ValueError, "MANUAL_PROVIDER_INPUT_DRIFT"):
             observe(True)
         self.meta["datasetDataSources"].pop()
         with self.assertRaisesRegex(ValueError, "REMOTE_ACCELERATOR_OR_INPUT_DRIFT"):
             observe(False)
         self.meta.pop("enableGpu")  # Pinned SDK getter would return False here.
-        with self.assertRaisesRegex(ValueError, "PROVIDER_NO_GPU_REQUIRED"):
-            observe(True)
-        self.meta.update(enableGpu=False, machineShape="NvidiaTeslaT4")
-        with self.assertRaisesRegex(ValueError, "PROVIDER_NO_GPU_REQUIRED"):
-            observe(True)
+        self.assertIsNone(observe(True)["enable_gpu"])
+        self.meta.update(enableGpu=True, machineShape="NvidiaTeslaT4")
+        observed = observe(True)
+        self.assertEqual((observed["enable_gpu"], observed["machine_shape"], observed["kernel_id"]),
+            (True, "NvidiaTeslaT4", 145987007))
 
     def test_same_scheduled_slug_exact_five_inputs_and_latest_v1_are_required(self):
         job = "nguynanhtn/safeshift-train3763-synthetic180-9"

@@ -21,7 +21,7 @@ from safeshift.pilot.artifacts import read, write, write_bytes, sha, safe, impor
 from safeshift.pilot.contract import digest, json_bytes
 from safeshift.fulltrain import contract, minicpm_release as a, minicpm_ui as ui
 from safeshift.fulltrain import minicpm_offline as policy, minicpm_v5_incident as v5, minicpm_serial6 as serial6
-from safeshift.fulltrain import minicpm_serial7 as serial7, minicpm_serial8 as serial8
+from safeshift.fulltrain import minicpm_prenative as prenative, minicpm_serial7 as serial7, minicpm_serial8 as serial8
 from scripts import minicpm_fulltrain_operator as old
 
 SCHEMA = policy.SCHEMA
@@ -340,6 +340,7 @@ class Continuation:
         reserved, active, completed = policy.initial_hold(self.grant), None, []
         history, rows, stopped, final = [], self.events(), False, None
         kernels, jobs = set(), set()
+        closed = []
         for e in rows:
             p = e["payload"]
             require(not stopped and final is None, "MINICPM_OFFLINE_EVENT_AFTER_STOP_OR_FINAL")
@@ -349,7 +350,9 @@ class Continuation:
                 require(p["ticket"]["payload"]["previous_event_sha256"] == e["previous"]
                     and p["ticket"]["payload"]["reserved_before"] == reserved
                     and p["value"]["request"]["history"] == history
-                    and p["ticket"]["payload"]["lineage"] == self.lineage(completed), "MINICPM_OFFLINE_RESERVATION_HISTORY")
+                    and p["ticket"]["payload"]["lineage"] == self.lineage(completed)
+                    and p["ticket"]["payload"].get("closures", []) == [item["summary"] for item in closed],
+                    "MINICPM_OFFLINE_RESERVATION_HISTORY")
                 require(p["value"]["job"] not in jobs, "MINICPM_DUPLICATE_JOB")
                 for root in (self.root, self.mirror):
                     require(sha(safe(root, p["gate_proof"])) == p["ticket"]["payload"]["owner_gate"]["proof_sha256"],
@@ -366,6 +369,14 @@ class Continuation:
                 require(kernel not in kernels, "MINICPM_DUPLICATE_OWNER_KERNEL")
                 kernels.add(kernel)
                 completed.append({**active, "completion": p}); active = None
+            elif e["kind"] == prenative.DISPOSITION:
+                require(active is not None and policy.first_serial(self.grant) == 9, "MINICPM_PRE_NATIVE_SEQUENCE")
+                checked = self.check_closure(active, p["download"], p["closure"])
+                kernel = p["closure"]["provider"]["kernel_id"]
+                require(checked == p["summary"] and kernel not in kernels, "MINICPM_PRE_NATIVE_CUSTODY_DRIFT")
+                kernels.add(kernel)
+                closed.append({**p, "active": active})
+                active = None
             elif e["kind"] == "STOPPED":
                 stopped = True
             elif e["kind"] == policy.RECONCILED:
@@ -377,7 +388,8 @@ class Continuation:
         records = [{**r, "ordinal": ordinals[r["sample_id"]]} for h in history for r in h["records"] if r["status"] != "NOT_ATTEMPTED"]
         require([r["ordinal"] for r in records] == list(range(len(records))) and len(records) <= 3763
             and all(r["status"] in ("SUCCESS", "INVALID") for r in records), "MINICPM_OFFLINE_NO_SKIP_DUPLICATE_OR_ERROR")
-        return {"reserved": reserved, "active": active, "completed": completed, "history": history, "records": records,
+        return {"reserved": reserved, "active": active, "completed": completed, "closed": closed,
+            "history": history, "records": records,
             "next_ordinal": len(records), "counts": dict(Counter(r["status"] for r in records)) | {"NOT_ATTEMPTED": 3763-len(records)},
             "stopped": stopped, "final": final, "status": "STOPPED" if stopped else
                 "FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT" if final is not None else "PENDING_FINAL_RECONCILIATION"}
@@ -388,6 +400,40 @@ class Continuation:
             "history_sha256": digest(item["completion"]["verification"]["report"]["history"][-1]),
             "owner_receipt_sha256": digest(item["completion"]["verification"]["owner_receipt"]),
             "reserved_after": item["ticket"]["payload"]["reserved_after"]} for item in completed]
+
+    def pre_native_local(self, download, active):
+        require(policy.first_serial(self.grant) == 9, "MINICPM_PRE_NATIVE_V5_REQUIRED")
+        return prenative.verify_download(download, active, self.registration["locator"], self.grant["campaign_id"],
+            proof_sha256=self.grant["approvals"][a.PROOF_KEY])
+
+    def check_closure(self, active, download, closure):
+        from safeshift.internvl3763_operator import code_hash
+        ticket = active["ticket"]
+        require(time.time() >= ticket["payload"]["start_before_unix"], "MINICPM_PRE_NATIVE_START_WINDOW_OPEN")
+        local = self.pre_native_local(private(safe(ROOT, download)), active)
+        for root in (self.root, self.mirror):
+            package = safe(root, active["package"])
+            require(read(safe(package, "notebook.ipynb")) == active["notebook"]
+                and code_hash(active["notebook"]) == ticket["payload"]["notebook_code_sha256"],
+                "MINICPM_PRE_NATIVE_SIGNED_NOTEBOOK")
+            files = prenative.package_files(package)
+            prenative.verify_provider(closure, local, active, files)
+        return {"number": ticket["payload"]["number"], "ticket_sha256": digest(ticket),
+            "local_sha256": digest(local), "closure_sha256": digest(closure),
+            "fingerprint_sha256": digest(local["fingerprint"]), "reserved_after": ticket["payload"]["reserved_after"]}
+
+    def close_pre_native(self, download, closure):
+        with lock(self.root):
+            state = self.state()
+            active = state["active"]
+            require(active is not None and not state["stopped"] and state["final"] is None, "MINICPM_NO_ACTIVE_CLOSURE")
+            path = relative(download)
+            summary = self.check_closure(active, path, closure)
+            used = {item["closure"]["provider"]["kernel_id"] for item in state["closed"]}
+            used.update(item["completion"]["verification"]["owner_receipt"]["kernel_id"] for item in state["completed"])
+            require(closure["provider"]["kernel_id"] not in used, "MINICPM_DUPLICATE_OWNER_KERNEL")
+            self.append(prenative.DISPOSITION, {"download": path, "closure": closure, "summary": summary})
+            return {"status": prenative.DISPOSITION, "reserved": state["reserved"], "next_ordinal": state["next_ordinal"]}
 
     def forecast(self):
         state = self.state()
@@ -459,6 +505,8 @@ class Continuation:
                     "jobs": before["jobs"]+1, "gpu_seconds": before["gpu_seconds"]+2*proposal["seconds"]},
                 "issued_unix": int(time.time()), "start_before_unix": gate["observed_unix"]+self.grant["provider_max_age_seconds"],
                 "owner_gate": gate, "sizing": proposal, "lineage": self.lineage(completed)}
+            if policy.first_serial(self.grant) == 9:
+                payload["closures"] = [item["summary"] for item in state["closed"]]
             ticket = old.sign(private_key, self.grant["public_key"], payload)
             a.verify_ticket(self.grant, ticket, value)
             proof_name = "gates/"+gate["proof_sha256"]+".bin"
@@ -533,6 +581,7 @@ class Continuation:
         return {"schema": self.registration.get("schema", SCHEMA),
             "registration_sha256": digest(self.registration), "grant_sha256": digest(self.grant),
             "historical": self.registration["base"], "attempts": attempts, "rows": state["records"],
+            **({"closed": state["closed"]} if policy.first_serial(self.grant) == 9 else {}),
             "ordinals": list(range(3763)), "counts": state["counts"], "reserved": state["reserved"],
             "caps": self.grant["caps"], "billing_gpu_seconds": "NOT_OBSERVED", "scientific_qualified": False}
 
@@ -597,15 +646,24 @@ def validate_provider_report(manifest, report):
         and len(report["attempts"]) == len(manifest["attempts"])
         and report["historical_sha256"] == digest(manifest["historical"]), "MINICPM_FINAL_EVERY_ORIGINAL_REQUIRED")
     kernels = set()
+    if manifest.get("schema") == policy.SERIAL9_SCHEMA:
+        require(len(report["closed"]) == len(manifest["closed"]), "MINICPM_FINAL_PRE_NATIVE_CLOSURES")
+        for item, observation in zip(manifest["closed"], report["closed"]):
+            prenative.same_execution(item["closure"], observation)
+            kernel = observation["provider"]["kernel_id"]
+            require(kernel not in kernels, "MINICPM_DUPLICATE_OWNER_KERNEL")
+            kernels.add(kernel)
     for item, proof in zip(manifest["attempts"], report["attempts"]):
         v, c = item["value"], item["completion"]
         owner = c["verification"]["owner_receipt"]
         provider = proof["provider"]
         require(proof["ticket_sha256"] == digest(item["ticket"]) and proof["completion_sha256"] == digest(c)
-            and provider["job_id"] == v["job"] and provider["version"] == 1 and provider["state"] == "COMPLETE"
+            and (provider["job_id"] == v["job"] or manifest.get("schema") == policy.SERIAL9_SCHEMA
+                 and prenative.SLUG.fullmatch(provider["job_id"])) and provider["version"] == 1 and provider["state"] == "COMPLETE"
             and provider["kernel_id"] == owner["kernel_id"] and provider["kernel_id"] not in kernels
             and provider["notebook_code_sha256"] == item["ticket"]["payload"]["notebook_code_sha256"]
-            and provider["safeshift_metadata"] == "MATCHED" and proof["capsule_verified"] is True
+            and (provider["safeshift_metadata"] == "MATCHED" or manifest.get("schema") == policy.SERIAL9_SCHEMA
+                 and provider["safeshift_metadata"] == "ABSENT_EXECUTABLE_CODE_BOUND") and proof["capsule_verified"] is True
             and proof["output_verified"] is True and proof["local_replayed"] is True,
             "MINICPM_FINAL_JOB_VERSION_OUTPUT_OR_CAPSULE_MISMATCH")
         kernels.add(provider["kernel_id"])
@@ -625,8 +683,8 @@ def validate_provider_report(manifest, report):
             "MINICPM_FINAL_SERIAL7_PROVIDER_REQUIRED")
     if manifest.get("schema") == policy.SERIAL9_SCHEMA:
         eighth = report["historical_verification"].get("serial8_closure", {})
-        require(eighth == manifest["historical"]["serial8_closure"]
-            and eighth["provider"]["kernel_id"] not in kernels | {sixth["kernel_id"], seventh["provider"]["kernel_id"]},
+        prenative.same_execution(manifest["historical"]["serial8_closure"], eighth)
+        require(eighth["provider"]["kernel_id"] not in kernels | {sixth["kernel_id"], seventh["provider"]["kernel_id"]},
             "MINICPM_FINAL_SERIAL8_PROVIDER_REQUIRED")
 
 
@@ -655,6 +713,9 @@ def main(argv=None):
     for name in ("private-key", "owner-gate", "proof"):
         stage.add_argument("--"+name, type=Path, required=True)
     accept = sub.add_parser("accept")
+    close = sub.add_parser("close-pre-native")
+    close.add_argument("--download", type=Path, required=True)
+    close.add_argument("--provider-closure", type=Path, required=True)
     for name in ("attempt", "supervisor", "owner-receipt", "proof"):
         accept.add_argument("--"+name, type=Path, required=True)
     for name in ("status", "forecast", "export-active", "official-report"):
@@ -712,6 +773,11 @@ def main(argv=None):
         schema = policy.SERIAL9_SCHEMA if after_serial8 else policy.TRANSITION_SCHEMA
         marker = policy.SERIAL9_RELEASE if after_serial8 else policy.TRANSITION_RELEASE
         proposal["offline"].update(schema=schema, tools_sha256=digest(tools_manifest()), tool_blobs=tool_blobs())
+        if after_serial8:
+            # Historical successful MiniCPM Candidate160 per-call reserve. This
+            # proposal cannot change runtime behaviour until the V5 release binds it.
+            from safeshift.candidates.train_owner import policy as candidate_policy
+            proposal["offline"]["resident_gpu0_min_free_mib"] = candidate_policy()["free_gpu0_runtime_mib"]
         proposal["offline"]["serial8" if after_serial8 else "serial7"] = {
             "event_sha256": incident.EVENT_SHA, "provider_closure_sha256": digest(provider_closure)}
         write(private(args.output), proposal)
@@ -726,6 +792,7 @@ def main(argv=None):
         route = Continuation(args.directory)
         if args.command == "stage": result = route.stage(args.private_key, read(args.owner_gate), args.proof)
         elif args.command == "accept": result = route.accept(args.attempt, args.supervisor, read(args.owner_receipt), args.proof)
+        elif args.command == "close-pre-native": result = route.close_pre_native(args.download, read(args.provider_closure))
         elif args.command == "export-active":
             with lock(route.root): result = route.export_active()
         elif args.command == "manifest":
