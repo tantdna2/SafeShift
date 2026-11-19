@@ -401,7 +401,7 @@ def verify_python_input(client, request, destination):
         write(destination / "receipt.json", receipt)
 
 
-def verify_kernel_metadata_inputs(metadata, sources):
+def verify_kernel_metadata_inputs(metadata, sources, *, machine_shape="NvidiaTeslaT4"):
     """Match GetKernel's unversioned owner/slug attachments without relaxing pins.
 
     GetKernel exposes owner/slug attachments, never dataset/kernel input version
@@ -409,7 +409,7 @@ def verify_kernel_metadata_inputs(metadata, sources):
     validation, pre-submit inventory/capsule checks, pushed kernel-metadata.json,
     and worker-side master/image/checkpoint/capsule SHA256 verification.
     """
-    require(metadata is not None and metadata.machine_shape == "NvidiaTeslaT4",
+    require(metadata is not None and metadata.machine_shape == machine_shape,
         "REMOTE_ACCELERATOR_OR_INPUT_DRIFT")
     for extra_attr in ("competition_data_sources", "model_data_sources"):
         extra = getattr(metadata, extra_attr, None)

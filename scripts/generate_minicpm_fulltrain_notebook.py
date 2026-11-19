@@ -11,7 +11,7 @@ OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
 def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None, release_version=2):
-    require(type(release_version) is int and release_version in (2, 4, 5, 6, 7, 8)
+    require(type(release_version) is int and release_version in (2, 4, 5, 6, 7, 8, 9)
         and (release_version == 2 or release_locator is not None), "MINICPM_NOTEBOOK_RELEASE_VERSION")
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
@@ -155,7 +155,7 @@ not established by CPU rehearsal. Preserve all raw/errors/receipts and old holds
 Do not reuse V4-4's notebook, capsule or ticket. No manual cell edits or retry.
 Original3763 TRAIN, FP16 weights/FP32 resampler, strict C1, HNLO N/A; TEST closed.
 """.splitlines(True)
-        if release_version in (6, 7, 8):
+        if release_version in (6, 7, 8, 9):
             nb['metadata']['safeshift']['source_transition'] = 'safeshift-minicpm-v5-ram-repair-v1'
             nb['metadata']['safeshift']['resource_stages'] = ['admit', 'setup', 'reclaim', 'cpu', 'gpu', 'native']
             nb['cells'][0]['source'] = '''# MiniCPM-V-4 — Full TRAIN — RAM repair V6
@@ -190,9 +190,10 @@ FP16 weights/FP32 resampler/C1 strict/HNLO N/A; TEST đóng. Giữ mọi raw/l�
 KAGGLE_VENV_LAYOUT_UNVERIFIED; FAIL_CLOSED_BUT_OWNER_RUN_CAN_STILL_ABORT.
 Không sửa cell, tái dùng vé, tạo version2 hoặc tự retry; quota vẫn có thể bị tiêu.
 '''.splitlines(True)
-        if release_version == 8:
-            nb["metadata"]["safeshift"]["continuation_route"] = "safeshift-minicpm-offline-continuation-v4"
-            nb["cells"][0]["source"] = """# MiniCPM-V-4 Full TRAIN — Serial 8 source transition
+        if release_version in (8, 9):
+            route = "safeshift-minicpm-offline-continuation-v" + str(release_version - 4)
+            nb["metadata"]["safeshift"]["continuation_route"] = route
+            nb["cells"][0]["source"] = f"""# MiniCPM-V-4 Full TRAIN — Serial {release_version} source transition
 
 Use the current private capsule and signed handoff from the original Operator.
 1. Import the exact notebook and attach the five versioned Inputs in the handoff.

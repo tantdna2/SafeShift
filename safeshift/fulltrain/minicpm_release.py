@@ -221,9 +221,9 @@ def validate(grant, *, repo=ROOT):
 
 
 def uses_proof(grant):
-    from .minicpm_offline import TRANSITION_SCHEMA
+    from .minicpm_offline import SERIAL9_SCHEMA, TRANSITION_SCHEMA
     offline = grant.get("offline")
-    return type(offline) is dict and offline.get("schema") == TRANSITION_SCHEMA
+    return type(offline) is dict and offline.get("schema") in (TRANSITION_SCHEMA, SERIAL9_SCHEMA)
 
 
 def owner_comment(value, loc, issue):
@@ -277,6 +277,9 @@ def _release_checks(grant, locator, reader, repo, approvals):
     if uses_proof(grant):
         from . import minicpm_serial7
         minicpm_serial7.authenticate_transition(grant, reader)
+        if "serial8" in grant["offline"]:
+            from . import minicpm_serial8
+            minicpm_serial8.authenticate_transition(grant, reader)
 
 
 def collect_proof(grant, locator, reader, *, repo=ROOT):
@@ -309,17 +312,19 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True,
          capture=None, child=False, stage_proof=None):
     """Live Owner release and merged PR, with full checks on the new route."""
     from .minicpm_recovery import locator as validate_locator
-    from .minicpm_offline import RELEASE, TRANSITION_RELEASE
+    from .minicpm_offline import RELEASE, SERIAL9_RELEASE, SERIAL9_SCHEMA, TRANSITION_RELEASE
     validate_locator(locator)
     reader = github_get if reader is None else reader
     raw = reader("/issues/comments/" + str(locator["comment_id"]))
-    marker = next((tag for tag in (TRANSITION_RELEASE, RELEASE, RECOVERY_MARKER) if tag in raw["body"]), MARKER)
+    marker = next((tag for tag in (SERIAL9_RELEASE, TRANSITION_RELEASE, RELEASE, RECOVERY_MARKER) if tag in raw["body"]), MARKER)
     proposed = record(raw["body"], marker)
     issue = proposed.get("implementation_pr")
     owner_comment(raw, locator, issue)
     grant = validate(proposed, repo=repo)
     expected = TRANSITION_RELEASE if uses_proof(grant) else RELEASE if "offline" in grant else (
         RECOVERY_MARKER if grant["schema"] == RECOVERY_SCHEMA else MARKER)
+    if grant.get("offline", {}).get("schema") == SERIAL9_SCHEMA:
+        expected = SERIAL9_RELEASE
     require(marker == expected, "MINICPM_EXPLICIT_OFFLINE_RELEASE_MARKER")
     require(collection or grant["issued_unix"] <= time.time() < grant["expires_unix"], "MINICPM_AUTHORITY_EXPIRED")
     pr = reader("/pulls/" + str(issue))

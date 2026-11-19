@@ -21,7 +21,7 @@ from safeshift.pilot.artifacts import read, write, write_bytes, sha, safe, impor
 from safeshift.pilot.contract import digest, json_bytes
 from safeshift.fulltrain import contract, minicpm_release as a, minicpm_ui as ui
 from safeshift.fulltrain import minicpm_offline as policy, minicpm_v5_incident as v5, minicpm_serial6 as serial6
-from safeshift.fulltrain import minicpm_serial7 as serial7
+from safeshift.fulltrain import minicpm_serial7 as serial7, minicpm_serial8 as serial8
 from scripts import minicpm_fulltrain_operator as old
 
 SCHEMA = policy.SCHEMA
@@ -72,6 +72,22 @@ def fence():
 
 def transition_fence():
     return ROOT / "data/processed/minicpm-release-registrations/mcpm4-restart-v1-offline-post-serial7.json"
+
+
+def registration_fence(grant):
+    if policy.first_serial(grant) == 9:
+        return transition_fence().with_name("mcpm4-restart-v1-offline-post-serial8.json")
+    return transition_fence() if a.uses_proof(grant) else fence()
+
+
+def verify_transition_closure(grant, incident, closure, initial=None):
+    local, active, files = incident.verify_local(ROOT / "data/processed")
+    incident.verify_closure(closure, local, active)
+    key = "serial8" if incident is serial8 else "serial7"
+    require(digest(closure) == grant["offline"][key]["provider_closure_sha256"]
+        and (initial is None or initial["cohort"] == active["value"]["cohort"]),
+        "MINICPM_OWNER_CLOSURE_PIN_OR_TRAIN_COHORT")
+    return files
 
 
 def put(path, payload):
@@ -208,18 +224,16 @@ class Continuation:
             "MINICPM_OFFLINE_REGISTRATION_MIRROR")
         self.grant = authenticate(self.registration["locator"], self.registration["exports"], collection=True)
         transition = a.uses_proof(self.grant)
-        require(self.registration["schema"] == (policy.TRANSITION_SCHEMA if transition else SCHEMA)
+        require(self.registration["schema"] == self.grant["offline"]["schema"]
             and self.registration["root"] == relative(self.root)
-            and read(transition_fence() if transition else fence()) ==
+            and read(registration_fence(self.grant)) ==
                 {"root": relative(self.root), "registration_sha256": digest(self.registration)},
             "MINICPM_OFFLINE_SINGLE_REGISTRATION")
         require(self.registration["grant_sha256"] == digest(self.grant), "MINICPM_OFFLINE_REGISTERED_GRANT")
         if transition:
-            report, active, _ = serial7.verify_local(ROOT / "data/processed")
-            closure = self.registration["base"]["serial7_closure"]
-            serial7.verify_closure(closure, report, active)
-            require(digest(closure) == self.grant["offline"]["serial7"]["provider_closure_sha256"],
-                "MINICPM_SERIAL8_OWNER_CLOSURE_PIN")
+            verify_transition_closure(self.grant, serial7, self.registration["base"]["serial7_closure"])
+        if policy.first_serial(self.grant) == 9:
+            verify_transition_closure(self.grant, serial8, self.registration["base"]["serial8_closure"])
 
     @staticmethod
     def distinct(root, mirror):
@@ -227,13 +241,16 @@ class Continuation:
             "MINICPM_OFFLINE_DISTINCT_MIRRORS")
 
     @classmethod
-    def initialize(cls, root, mirror, locator, exports, initial, closure, operator_session, *, serial7_closure=None):
+    def initialize(cls, root, mirror, locator, exports, initial, closure, operator_session, *, serial7_closure=None, serial8_closure=None):
         root, mirror, closure = private(root), private(mirror), private(closure)
         cls.distinct(root, mirror)
         grant = authenticate(locator, exports)
         transition = a.uses_proof(grant)
-        require(transition == (serial7_closure is not None), "MINICPM_SERIAL8_CLOSURE_REQUIRED")
-        registration_fence = transition_fence() if transition else fence()
+        after_serial8 = policy.first_serial(grant) == 9
+        require(after_serial8 == (serial8_closure is not None), "MINICPM_SERIAL9_CLOSURE_REQUIRED")
+        require((transition and not after_serial8) == (serial7_closure is not None),
+            "MINICPM_SERIAL8_CLOSURE_REQUIRED")
+        target_fence = registration_fence(grant)
         require(operator_session == grant["offline"]["operator_session"], "MINICPM_ORIGINAL_SESSION_ACK_REQUIRED")
         old.clean_source(grant)
         require_live_transition(grant, locator, exports)
@@ -242,39 +259,43 @@ class Continuation:
             and initial["request"]["plan"]["action"] == "initial"
             and initial["request"]["plan"]["counts"] == {"NOT_ATTEMPTED": 3763}
             and initial["request"]["plan"]["scheduled_ordinals"][0] == 0, "MINICPM_OFFLINE_EMPTY_HISTORY")
-        require(not root.exists() and not mirror.exists() and not registration_fence.exists(),
+        require(not root.exists() and not mirror.exists() and not target_fence.exists(),
             "MINICPM_NO_OFFLINE_REINITIALIZATION")
         for dest in (root, mirror):
             names = ("minicpm-offline", "minicpm-offline-mirror", "inspect_run_6")
             if transition:
                 names += (serial7.PRIMARY, serial7.MIRROR, "inspect_run_7")
+            if after_serial8:
+                names += (serial8.PRIMARY, serial8.MIRROR, serial8.DOWNLOAD)
             for name in names:
                 cls.distinct(dest, ROOT / "data/processed" / name)
         legacy = ROOT / "data/processed/minicpm-v3-journal"
         with lock(legacy):
             base = historical(grant, closure)
+            if after_serial8:
+                files = verify_transition_closure(grant, serial8, serial8_closure, initial)
+                frozen = read(safe(ROOT / "data/processed", serial8.PRIMARY + "/registration.json"))
+                serial7_closure = frozen["base"]["serial7_closure"]
+                base["files"].update(snapshot_files(files))
+                base["serial8_closure"] = serial8_closure
             if transition:
-                local, active, files = serial7.verify_local(ROOT / "data/processed")
-                serial7.verify_closure(serial7_closure, local, active)
-                require(digest(serial7_closure) == grant["offline"]["serial7"]["provider_closure_sha256"]
-                    and initial["cohort"] == active["value"]["cohort"],
-                    "MINICPM_SERIAL8_OWNER_CLOSURE_OR_TRAIN_COHORT")
+                files = verify_transition_closure(grant, serial7, serial7_closure, initial)
                 base["files"].update(snapshot_files(files))
                 base["serial7_closure"] = serial7_closure
-                base["reserved"] = dict(serial7.RESERVED)
+                base["reserved"] = policy.initial_hold(grant)
             for p in (root, mirror):
                 require(not any(p.is_relative_to(safe(ROOT, row[k])) or safe(ROOT, row[k]).is_relative_to(p)
                     for row in grant["recovery"]["journals"] for k in ("root", "mirror")),
                     "MINICPM_NEW_CUSTODY_OUTSIDE_ORIGINALS")
-            registration = {"schema": policy.TRANSITION_SCHEMA if transition else SCHEMA,
+            registration = {"schema": grant["offline"]["schema"],
                 "root": relative(root), "mirror": relative(mirror),
                 "locator": locator, "exports": exports, "grant_sha256": digest(grant), "initial": initial,
                 "base": base, "operator_session": operator_session}
             # Durable fence first. A torn initialization blocks every route;
             # never guess how to fill missing state or consume another slot.
-            registration_fence.parent.mkdir(parents=True, exist_ok=True)
-            write(registration_fence, {"root": relative(root), "registration_sha256": digest(registration)})
-            a.sync_directory(registration_fence.parent)
+            target_fence.parent.mkdir(parents=True, exist_ok=True)
+            write(target_fence, {"root": relative(root), "registration_sha256": digest(registration)})
+            a.sync_directory(target_fence.parent)
             for p in (root, mirror):
                 p.mkdir(parents=True, exist_ok=False)
                 write(p / "registration.json", registration); a.sync_directory(p)
@@ -430,7 +451,7 @@ class Continuation:
                 release_locator=self.registration["locator"], release_version=policy.first_serial(self.grant))
             events = self.events()
             before = state["reserved"]
-            payload = {"schema": policy.TRANSITION_TICKET if a.uses_proof(self.grant) else policy.TICKET,
+            payload = {"schema": policy.ticket_schema(self.grant),
                 "grant_sha256": digest(self.grant), "value_sha256": digest(value),
                 "capsule_sha256": digest(value), "notebook_code_sha256": code_hash(nb), "number": serial,
                 "previous_event_sha256": digest(events[-1]) if events else digest(self.registration),
@@ -597,11 +618,16 @@ def validate_provider_report(manifest, report):
     require(report["historical_verification"]["status"] == "ALL_HISTORICAL_CUSTODY_RECHECKED"
         and report["historical_verification"]["historical_sha256"] == digest(manifest["historical"]),
         "MINICPM_FINAL_FAILED_AND_RETIRED_HOLDS_REQUIRED")
-    if manifest.get("schema") == policy.TRANSITION_SCHEMA:
+    if manifest.get("schema") in (policy.TRANSITION_SCHEMA, policy.SERIAL9_SCHEMA):
         seventh = report["historical_verification"].get("serial7_closure", {})
         require(seventh == manifest["historical"]["serial7_closure"]
             and seventh["provider"]["kernel_id"] not in kernels | {sixth["kernel_id"]},
             "MINICPM_FINAL_SERIAL7_PROVIDER_REQUIRED")
+    if manifest.get("schema") == policy.SERIAL9_SCHEMA:
+        eighth = report["historical_verification"].get("serial8_closure", {})
+        require(eighth == manifest["historical"]["serial8_closure"]
+            and eighth["provider"]["kernel_id"] not in kernels | {sixth["kernel_id"], seventh["provider"]["kernel_id"]},
+            "MINICPM_FINAL_SERIAL8_PROVIDER_REQUIRED")
 
 
 def main(argv=None):
@@ -614,13 +640,17 @@ def main(argv=None):
     transition = sub.add_parser("serial8-release-template")
     for name in ("initial", "serial7-closure", "output"):
         transition.add_argument("--" + name, type=Path, required=True)
-    spec = sub.add_parser("serial8-spec")
-    spec.add_argument("--output", type=Path, required=True)
+    transition9 = sub.add_parser("serial9-release-template")
+    for name in ("initial", "serial8-closure", "output"):
+        transition9.add_argument("--" + name, type=Path, required=True)
+    for command in ("serial8-spec", "serial9-spec"):
+        sub.add_parser(command).add_argument("--output", type=Path, required=True)
     init = sub.add_parser("init")
     for name in ("mirror", "locator", "exports", "initial", "closure"):
         init.add_argument("--"+name, type=Path, required=True)
     init.add_argument("--operator-session", required=True)
     init.add_argument("--serial7-closure", type=Path)
+    init.add_argument("--serial8-closure", type=Path)
     stage = sub.add_parser("stage")
     for name in ("private-key", "owner-gate", "proof"):
         stage.add_argument("--"+name, type=Path, required=True)
@@ -647,41 +677,50 @@ def main(argv=None):
             "serial6_event_sha256": serial6.EVENT_SHA, "serial6_supervisor_sha256": serial6.ZIP_SHA}
         write(private(args.output), proposal)
         result = {"status": "UNSIGNED_PROPOSAL_BLOCKED_NOT_AUTHORITY", "marker_required": policy.RELEASE}
-    elif args.command == "serial8-spec":
-        _, active, _ = serial7.verify_local(ROOT / "data/processed")
+    elif args.command in ("serial8-spec", "serial9-spec"):
+        number = int(args.command.removeprefix("serial").removesuffix("-spec"))
+        incident = serial8 if number == 9 else serial7
+        before, after = "-" + str(number - 1), "-" + str(number)
+        _, active, _ = incident.verify_local(ROOT / "data/processed")
         value = active["value"]
         r = value["request"]
         plan = r["plan"]
-        name = r["plan"]["run_id"].removesuffix("-7") + "-8"
+        name = plan["run_id"].removesuffix(before) + after
         initial = ui.initial(value["cohort"], r["projection_sha256"], r["resource_policy"],
             checkpoint_marker_sha256=r["checkpoint_marker_sha256"], run_id=name, attempt_id=name + "-attempt",
-            job=value["job"].removesuffix("-7") + "-8", capsule_ref=value["capsule_ref"].removesuffix("-7/1") + "-8/1",
+            job=value["job"].removesuffix(before) + after,
+            capsule_ref=value["capsule_ref"].removesuffix(before + "/1") + after + "/1",
             max_calls=plan["max_calls"], max_seconds=plan["max_seconds"], nested_mounts=True,
             series=r["campaign"]["series"])
         write(private(args.output), initial)
         result = {"status": "UNSIGNED_SPEC_BLOCKED_NOT_AUTHORITY", "next_ordinal": 0}
-    elif args.command == "serial8-release-template":
+    elif args.command in ("serial8-release-template", "serial9-release-template"):
+        after_serial8 = args.command == "serial9-release-template"
+        incident = serial8 if after_serial8 else serial7
         processed = ROOT / "data/processed"
-        report, active, _ = serial7.verify_local(processed)
-        provider_closure = read(args.serial7_closure)
-        serial7.verify_closure(provider_closure, report, active)
+        report, active, _ = incident.verify_local(processed)
+        provider_closure = read(args.serial8_closure if after_serial8 else args.serial7_closure)
+        incident.verify_closure(provider_closure, report, active)
         initial = read(args.initial)
         ui.validate(initial)
         require(initial["cohort"] == active["value"]["cohort"], "MINICPM_SERIAL8_EXACT_TRAIN_COHORT")
-        registration = read(processed / serial7.PRIMARY / "registration.json")
-        proposal = serial7.old_release(registration["exports"]["/issues/comments/" + str(serial7.RELEASE["comment_id"])])
+        registration = read(processed / incident.PRIMARY / "registration.json")
+        proposal = incident.old_release(registration["exports"]["/issues/comments/" + str(incident.RELEASE["comment_id"])])
         proposal.update(implementation_pr=None, reviewed_head=None, merged_sha=None, runtime_commit=None,
             issued_unix=None, expires_unix=None, scope=a.scope(initial),
             approvals={**{k: None for k in proposal["approvals"]}, a.PROOF_KEY: "0" * 64})
-        proposal["offline"].update(schema=policy.TRANSITION_SCHEMA, tools_sha256=digest(tools_manifest()),
-            tool_blobs=tool_blobs(), serial7={"event_sha256": serial7.EVENT_SHA,
-            "provider_closure_sha256": digest(provider_closure)})
+        schema = policy.SERIAL9_SCHEMA if after_serial8 else policy.TRANSITION_SCHEMA
+        marker = policy.SERIAL9_RELEASE if after_serial8 else policy.TRANSITION_RELEASE
+        proposal["offline"].update(schema=schema, tools_sha256=digest(tools_manifest()), tool_blobs=tool_blobs())
+        proposal["offline"]["serial8" if after_serial8 else "serial7"] = {
+            "event_sha256": incident.EVENT_SHA, "provider_closure_sha256": digest(provider_closure)}
         write(private(args.output), proposal)
-        result = {"status": "UNSIGNED_PROPOSAL_BLOCKED_NOT_AUTHORITY", "marker_required": policy.TRANSITION_RELEASE}
+        result = {"status": "UNSIGNED_PROPOSAL_BLOCKED_NOT_AUTHORITY", "marker_required": marker}
     elif args.command == "init":
         Continuation.initialize(args.directory, args.mirror, read(args.locator), read(args.exports),
             read(args.initial), args.closure, args.operator_session,
-            serial7_closure=read(args.serial7_closure) if args.serial7_closure else None)
+            serial7_closure=read(args.serial7_closure) if args.serial7_closure else None,
+            serial8_closure=read(args.serial8_closure) if args.serial8_closure else None)
         result = {"status": "OFFLINE_REGISTERED_NOT_RUN"}
     else:
         route = Continuation(args.directory)

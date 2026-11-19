@@ -15,10 +15,10 @@ from urllib.error import HTTPError, URLError
 import test_minicpm_fulltrain_execution as fixtures
 from safeshift.fulltrain import contract, minicpm_execution as entry, minicpm_release as a
 from safeshift.fulltrain import minicpm_offline as policy, minicpm_v5_incident as v5
-from safeshift.fulltrain import minicpm_recovery as recovery, minicpm_serial7 as s7
+from safeshift.fulltrain import minicpm_recovery as recovery, minicpm_serial7 as s7, minicpm_serial8 as s8
 from safeshift.pilot.artifacts import read, sha, write
 from safeshift.pilot.contract import digest
-from scripts import minicpm_offline_continuation as operator
+from scripts import minicpm_offline_continuation as operator, owner_verify_minicpm_offline as owner
 
 
 class TransportTests(unittest.TestCase):
@@ -319,6 +319,151 @@ class Serial8AuthorityTests(unittest.TestCase):
             self.assertTrue(route.forecast()["owner_gate_template"]["job"].endswith("-8"))
             self.assertIsNone(route.state()["active"])
             self.assertEqual(sha(operator.fence()), before)
+            self.assertEqual(read(route.root / "registration.json"), read(route.mirror / "registration.json"))
+
+
+    def test_serial8_supervisor_only_inventory_rejects_any_attempt_zip(self):
+        archive = self.root / s8.ARCHIVE
+        archive.parent.mkdir(parents=True)
+        archive.touch()
+        archive.with_name(archive.name + ".sha256.json").touch()
+        expected = {s8.ARCHIVE, s8.ARCHIVE + ".sha256.json"}
+        with patch.object(s8, "INVENTORY_SHA", digest(sorted(expected))):
+            self.assertEqual(s8.inventory(self.root), expected)
+            (self.root / "unexpected-attempt.zip").touch()
+            with self.assertRaisesRegex(ValueError, "SUPERVISOR_ONLY"):
+                s8.inventory(self.root)
+
+    def test_serial9_requires_fresh_release_and_retains_serial8_authority(self):
+        old = deepcopy(self.grant)
+        old_locator = self.comment(s8.RELEASE["comment_id"], 207, policy.TRANSITION_RELEASE, old)
+        self.stack.enter_context(patch.object(s8, "RELEASE", old_locator))
+        self.stack.enter_context(patch.object(s8, "GRANT_SHA", digest(old)))
+        self.stack.enter_context(patch.object(s8, "MERGE", old["merged_sha"]))
+        new = self.grant
+        new.update(implementation_pr=208, merged_sha="c" * 40)
+        new["offline"].update(schema=policy.SERIAL9_SCHEMA,
+            serial8={"event_sha256": s8.EVENT_SHA, "provider_closure_sha256": "f" * 64})
+        self.graph["/git/trees/" + "c" * 40 + "?recursive=1"] = self.graph["/git/trees/" + "b" * 40 + "?recursive=1"]
+        self.graph["/pulls/208"] = {**self.graph["/pulls/207"], "merge_commit_sha": new["merged_sha"]}
+        for number, role in enumerate(recovery.SOURCE_ROLES, 10):
+            new["approvals"][role] = self.comment(number, 208, a.APPROVAL,
+                {"kind": role, "status": "APPROVED", "reviewed_head": new["reviewed_head"],
+                 "subject_sha256": a.subject(new)})
+        proof = a.collect_proof(new, {"comment_id": 9}, self.graph.__getitem__)
+        new["approvals"][a.PROOF_KEY] = digest(proof)
+        locator = self.comment(9, 208, policy.SERIAL9_RELEASE, new)
+        self.assertEqual(a.load(locator, reader=self.graph.__getitem__), new)
+        wrong_marker = self.comment(9, 208, policy.TRANSITION_RELEASE, new)
+        with self.assertRaisesRegex(ValueError, "EXPLICIT_OFFLINE_RELEASE_MARKER"):
+            a.load(wrong_marker, reader=self.graph.__getitem__)
+        self.graph["/issues/comments/" + str(s8.RELEASE["comment_id"])]["body"] += "\n"
+        with self.assertRaisesRegex(ValueError, "AUTHENTIC_OWNER_RECORD"):
+            a.collect_proof(new, {"comment_id": 9}, self.graph.__getitem__)
+
+    def test_serial9_requires_owner_provider_closure_and_fresh_signed_reservation(self):
+        old_value = deepcopy(self.value)
+        old_ticket = self.sign(old_value)
+        active = {"value": old_value, "ticket": old_ticket}
+        local = {"ticket_job": s8.TICKET_JOB, "sidecar_sha256": "f" * 64, "native_calls": 0,
+            "disposition": "FAILED_PRE_NATIVE_NO_USABLE_RESULTS"}
+        names = sorted([s8.ARCHIVE, s8.ARCHIVE + ".sha256.json"])
+        closure = {"local": local,
+            "ticket_slug_visibility": "ABSENT_IN_VERIFIED_OWNER_INVENTORY",
+            "provider": {"job_id": s8.ACTUAL_JOB, "version": 1, "kernel_id": 38, "state": "COMPLETE",
+                "notebook_code_sha256": "a" * 64, "remote_notebook_sha256": "b" * 64, "safeshift_metadata": "MATCHED",
+                "enable_gpu": False, "machine_shape": ""},
+            "capsule": {"private": True, "version": 1, "files": {
+                entry.ui.MARKER: digest(old_value), entry.MARKER: digest(old_ticket)}},
+            "output": {"pairs": {s8.ARCHIVE: s8.ZIP_SHA}, "inventory": names,
+                "sidecar_sha256": "f" * 64, "log_sha256": "d" * 64}}
+        for section, changes, error in (
+            ("provider", {"job_id": s8.TICKET_JOB}, "ACTUAL_KERNEL_IDENTITY"),
+            ("provider", {"job_id": "nguynanhtn/unrelated"}, "ACTUAL_KERNEL_IDENTITY"),
+            ("provider", {"enable_gpu": None}, "PROVIDER_NO_GPU_REQUIRED"),
+            ("provider", {"enable_gpu": True}, "PROVIDER_NO_GPU_REQUIRED"),
+            ("provider", {"machine_shape": "NvidiaTeslaT4"}, "PROVIDER_NO_GPU_REQUIRED"),
+            ("output", {"inventory": names + ["z-attempt.zip"]}, "PROVIDER_SUPERVISOR_ONLY"),
+            ("local", {"native_calls": 1}, "OWNER_PROVIDER_CLOSURE_REQUIRED"),
+        ):
+            with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, error):
+                changed = deepcopy(closure)
+                changed[section].update(changes)
+                s8.verify_closure(changed, local, active)
+        with self.assertRaisesRegex(ValueError, "OWNER_MUST_PERSONALLY"):
+            owner.serial8_closure(self.root / "forbidden")
+
+        prior = {"local": {"supervisor_sidecar_sha256": "f" * 64},
+            "provider": {**closure["provider"], "job_id": s7.JOB, "kernel_id": 37},
+            "capsule": closure["capsule"], "output": {**closure["output"], "pairs": {s7.ARCHIVE: s7.ZIP_SHA},
+                "inventory": [s7.ARCHIVE, s7.ARCHIVE + ".sha256.json"]}}
+        self.grant["implementation_pr"] = 208
+        self.grant["offline"].update(schema=policy.SERIAL9_SCHEMA,
+            serial7={"event_sha256": s7.EVENT_SHA, "provider_closure_sha256": digest(prior)},
+            serial8={"event_sha256": s8.EVENT_SHA, "provider_closure_sha256": digest(closure)})
+        processed = self.root / "data/processed"
+        (processed / "minicpm-v3-journal").mkdir(parents=True)
+        with patch.object(operator, "ROOT", self.root):
+            frozen = processed / s8.PRIMARY / "registration.json"
+            frozen_fence = operator.transition_fence()
+            frozen_mirror = processed / s8.MIRROR / "registration.json"
+            for path in (frozen, frozen_mirror):
+                write(path, {"base": {"serial7_closure": prior}})
+            write(frozen_fence, {"synthetic": "preserved"})
+            originals = {p: sha(p) for p in (frozen, frozen_mirror, frozen_fence)}
+            for target, name, result in (
+                (operator, "authenticate", self.grant),
+                (operator, "require_live_transition", None),
+                (operator.old, "clean_source", None),
+                                (s7, "verify_local", (prior["local"], active, [])),
+                (s8, "verify_local", (local, active, list(originals))),
+            ):
+                self.stack.enter_context(patch.object(target, name, return_value=result))
+            self.stack.enter_context(patch.object(operator, "historical", side_effect=lambda *_: {"files": {}}))
+            args = (processed / "next-primary", processed / "next-mirror", self.locator, {}, self.value,
+                processed / "older-closure", policy.ORIGINAL_SESSION)
+            with self.assertRaisesRegex(ValueError, "SERIAL9_CLOSURE_REQUIRED"):
+                operator.Continuation.initialize(*args)
+            with self.assertRaisesRegex(ValueError, "OWNER_CLOSURE_PIN"):
+                changed = deepcopy(closure)
+                changed["provider"]["kernel_id"] += 1
+                operator.Continuation.initialize(*args, serial8_closure=changed)
+            route = operator.Continuation.initialize(*args, serial8_closure=closure)
+            forecast = route.forecast()
+            self.assertEqual((forecast["next_ordinal"], forecast["reserved"]), (0, s8.RESERVED))
+            self.assertEqual(route.state()["counts"], {"NOT_ATTEMPTED": 3763})
+            self.assertEqual(route.state()["history"], [])
+            self.assertEqual(route.registration["base"]["serial8_closure"]["local"]["native_calls"], 0)
+
+            proof = self.root / "synthetic-owner-gate.bin"
+            proof.write_bytes(b"SYNTHETIC")
+            gate = forecast["owner_gate_template"]
+            gate.update(observed_unix=int(time.time()), quota={"used": 0, "reserved": 0, "total": 1000000},
+                no_active_job=True, job_absent=True, owner_checked=True, proof_sha256=sha(proof))
+            with patch("scripts.generate_minicpm_fulltrain_notebook.notebook",
+                    return_value={"cells": [], "metadata": {"safeshift": {}}}) as builder:
+                route.stage(self.key, gate, proof)
+            item = route.state()["active"]
+            ticket = item["ticket"]
+            self.assertEqual(ticket["payload"]["number"], 9)
+            self.assertEqual(ticket["payload"]["reserved_before"], s8.RESERVED)
+            self.assertEqual(ticket["payload"]["reserved_after"]["jobs"], 9)
+            self.assertEqual(item["value"]["cohort"], old_value["cohort"])
+            self.assertTrue(item["value"]["job"].endswith("-9"))
+            self.assertTrue(item["value"]["capsule_ref"].endswith("-9/1"))
+            self.assertEqual(builder.call_args.kwargs["release_version"], 9)
+            with self.assertRaisesRegex(ValueError, "TICKET_BINDING"):
+                a.verify_ticket(self.grant, old_ticket, old_value)
+            for field, invalid, error in (
+                ("number", 8, "NO_REPLAY"),
+                ("reserved_before", s7.RESERVED, "NO_HOLD_RESET"),
+            ):
+                bad = operator.old.sign(self.key, self.public, {**ticket["payload"], field: invalid})
+                with self.subTest(field=field), self.assertRaisesRegex(ValueError, error):
+                    a.verify_ticket(self.grant, bad, item["value"])
+            with self.assertRaisesRegex(ValueError, "ACTIVE_STOP_FINAL_OR_FINISHED"):
+                route.stage(self.key, gate, proof)
+            self.assertEqual({p: sha(p) for p in originals}, originals)
             self.assertEqual(read(route.root / "registration.json"), read(route.mirror / "registration.json"))
 
 
