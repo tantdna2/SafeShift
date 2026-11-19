@@ -819,3 +819,32 @@ never rerun. Codex removes its unused API submit/live-observer path in SAME
 Draft PR199; no new PR, production write or GPU operation in this coding task.
 Only authenticated new-run raw/claims/ZIP/provider history feeds continuation.
 See [V4 implementation contract](../MINICPM_RUN1_RECOVERY.md).
+
+## DEC-20261119-OWNER-INTERNVL3763-EXECUTION-COMPLETED
+
+**Nguồn.** Owner dự án SafeShift xác nhận trực tiếp trong cuộc trò chuyện giao
+task ngày 19/11/2026 (Asia/Bangkok). Đây là bản ghi nội dung Owner cung cấp trong
+cuộc trò chuyện. Nguồn này có phạm vi xác nhận của Owner và chưa được xác thực
+độc lập bằng comment GitHub, chữ ký hay chứng từ provider.
+
+**Hoàn thành thực thi.** Owner xác nhận InternVL3.5 đã chạy xong trên toàn bộ
+3.763 ảnh InspecSafe-V1 TRAIN gốc, chấp nhận bộ kết quả đã lưu cục bộ và không
+yêu cầu chạy lại cả cohort. Việc thiếu bảng metric chính thức không làm thay
+đổi trạng thái `EXECUTION_COMPLETED_OWNER_CONFIRMED`.
+
+**Lịch sử Attempt 23 do Owner giải thích.** Lượt đầu gặp lỗi. Owner chủ động
+chạy lại để lấy kết quả, dẫn đến hai lượt chạy/kernel trong hồ sơ. Kết quả của
+lượt chạy lại hiện nằm trong ZIP được `event-000025.json` của journal
+continuation tham chiếu, SHA256
+`217f685b5bb841244f6eb15e96dbd63c1e39379d9fc227844ba21b27f7dbfb09`.
+Giữ nguyên lịch sử lượt đầu, mọi SHA256, log, receipt và bằng chứng hiện có.
+Đối chiếu chi tiết tại báo cáo cục bộ
+`data/processed/independent-train3763-audit-20261115/05_BLOCKER_INVESTIGATION.md`.
+
+**Sử dụng bản ghi.** Các phiên sau không hỏi lại Owner về độ phủ hoặc lý do
+chạy lại. Chỉ mở lại câu hỏi về nguyên nhân khi có bằng chứng mới, cụ thể và
+mâu thuẫn với lời giải thích. Bản ghi này chỉ chốt phần thực thi và lời giải
+thích của Owner. Xác minh provider, thẩm quyền journal, final certificate,
+`official-report` và quyền dùng kết quả trong phân tích khoa học vẫn theo
+[quy trình đối soát](../TRAIN3763_DEFERRED_RECONCILIATION.md) và giao thức áp
+dụng. Xem [trạng thái hiện hành và phạm vi kiểm tra cục bộ](../PROJECT_STATE.md#hiện-hành--internvl35-full-train-đã-hoàn-thành--19112026).
