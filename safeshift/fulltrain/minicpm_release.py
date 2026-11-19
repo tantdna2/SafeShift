@@ -36,20 +36,24 @@ API = "https://api.github.com/repos/tantdna2/SafeShift"
 ROLES = ("source_review", "independent_audit", "merge", "postmerge", "O2", "O3", "O4", "O5", "O6")
 STAGES = ("launch", "admit", "setup", "reclaim", "cpu", "gpu", "native")
 CLAIMS = Path("/kaggle/working/minicpm-fulltrain-claims")
+PROOF_KEY = "authority_proof_sha256"
+PROOF_BYTES = 24 * 2**20
 _active = ContextVar("minicpm_release_context", default=None)
 
 
 def github_get(path):
     """Official HTTPS, no redirects/retry/cache. Credentials never enter evidence.
 
-    Local operations may reuse the existing gh login; Kaggle uses anonymous
-    public-repository reads unless an explicit environment secret is provisioned.
-    No credential is persisted or propagated into the isolated worker environment.
+    Local operations may reuse the existing gh login. Kaggle reads are anonymous.
     """
     from urllib.request import Request, build_opener, HTTPRedirectHandler
+    from urllib.error import HTTPError, URLError
+    from http.client import HTTPException
     require(type(path) is str and (re.fullmatch(r"/(?:issues/comments|pulls)/[1-9][0-9]*", path)
         or re.fullmatch(r"/git/trees/[0-9a-f]{40}\?recursive=1", path)), "MINICPM_OFFICIAL_GITHUB_PATH")
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    token = None
+    if not Path("/kaggle").is_dir():
+        token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token is None and not Path("/kaggle").is_dir():
         try:
             result = subprocess.run(["gh", "auth", "token", "--hostname", "github.com"],
@@ -69,10 +73,45 @@ def github_get(path):
         with build_opener(NoRedirect).open(Request(url, headers=headers), timeout=15) as response:
             require(response.geturl() == url, "MINICPM_AUTHORITY_REDIRECT")
             raw = response.read(8 * 2**20 + 1)
+    except HTTPError as error:
+        status, headers = error.code, error.headers or {}
+        error.close()
+        if status == 429 or (status == 403 and (headers.get("X-RateLimit-Remaining") == "0"
+                                               or headers.get("Retry-After") is not None)):
+            reason = "RATE_LIMITED"
+        else:
+            reason = {403: "FORBIDDEN", 404: "NOT_FOUND"}.get(status, "HTTP_ERROR")
+        raise PermissionError(f"MINICPM_LIVE_GITHUB_{reason}_HTTP_{status}") from None
+    except URLError as error:
+        reason = "TIMEOUT" if isinstance(error.reason, TimeoutError) else "CONNECTION"
+        raise PermissionError("MINICPM_LIVE_GITHUB_" + reason) from None
+    except TimeoutError:
+        raise PermissionError("MINICPM_LIVE_GITHUB_TIMEOUT") from None
+    except (OSError, HTTPException):
+        raise PermissionError("MINICPM_LIVE_GITHUB_CONNECTION") from None
+    except ValueError:
+        raise PermissionError("MINICPM_LIVE_GITHUB_CONTENT") from None
+    try:
         require(len(raw) <= 8 * 2**20, "MINICPM_AUTHORITY_RESPONSE_BOUND")
-        return strict_json(raw)
-    except Exception:
-        raise PermissionError("MINICPM_LIVE_GITHUB_UNAVAILABLE_OR_RATE_LIMITED_NO_OFFLINE_BYPASS") from None
+        result = strict_json(raw)
+        require(type(result) is dict, "MINICPM_AUTHORITY_RESPONSE_OBJECT")
+        if path.startswith("/issues/comments/"):
+            require(type(result.get("body")) is str and type(result.get("id")) is int
+                and type(result.get("issue_url")) is str and type(result.get("user")) is dict
+                and type(result["user"].get("id")) is int and type(result["user"].get("login")) is str,
+                "MINICPM_GITHUB_COMMENT_CONTENT")
+        elif path.startswith("/pulls/"):
+            require(type(result.get("merged")) is bool and type(result.get("draft")) is bool
+                and type(result.get("base")) is dict and type(result["base"].get("ref")) is str
+                and type(result.get("head")) is dict and type(result["head"].get("sha")) is str
+                and "merge_commit_sha" in result, "MINICPM_GITHUB_PULL_CONTENT")
+        else:
+            require(type(result.get("truncated")) is bool and type(result.get("tree")) is list
+                and all(type(row) is dict and all(type(row.get(k)) is str for k in ("path", "type", "mode", "sha"))
+                        for row in result["tree"]), "MINICPM_GITHUB_TREE_CONTENT")
+        return result
+    except (ValueError, UnicodeError, RecursionError):
+        raise PermissionError("MINICPM_LIVE_GITHUB_CONTENT") from None
 
 
 def strict_json(raw):
@@ -162,8 +201,13 @@ def validate(grant, *, repo=ROOT):
     from .minicpm_sizing import validate_policy
     validate_policy(grant["sizing"], caps["job_seconds"])
     from .minicpm_recovery import SOURCE_ROLES
-    require(type(grant["approvals"]) is dict and set(grant["approvals"]) == set(SOURCE_ROLES if recovery else ROLES),
+    roles = set(SOURCE_ROLES if recovery else ROLES)
+    if uses_proof(grant):
+        roles.add(PROOF_KEY)
+    require(type(grant["approvals"]) is dict and set(grant["approvals"]) == roles,
             "MINICPM_O2_O6_AND_SOURCE_APPROVALS")
+    if uses_proof(grant):
+        require_hash(grant["approvals"][PROOF_KEY])
     if recovery:
         from .minicpm_recovery import validate_recovery
         validate_recovery(grant)
@@ -176,45 +220,35 @@ def validate(grant, *, repo=ROOT):
     return grant
 
 
-def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
-    """Fresh official GitHub evidence. No CLI transport override or offline mode.
+def uses_proof(grant):
+    from .minicpm_offline import TRANSITION_SCHEMA
+    offline = grant.get("offline")
+    return type(offline) is dict and offline.get("schema") == TRANSITION_SCHEMA
 
-    Children may use the signed operator delegation after parent full validation;
-    they still recheck the live Owner record and exact merged PR (two HTTPS GETs).
-    Only the signed-ticket child entry uses approvals=False.
-    """
-    reader = github_get if reader is None else reader
-    def fetch(loc, issue):
-        require(type(loc) is dict and set(loc) == {"comment_id", "body_sha256"}
-            and type(loc["comment_id"]) is int and loc["comment_id"] > 0, "MINICPM_V2_LOCATOR")
-        require_hash(loc["body_sha256"])
-        value = raw if loc == locator else reader("/issues/comments/" + str(loc["comment_id"]))
-        require(value["id"] == loc["comment_id"] and value["user"]["login"] == OWNER
-            and value["user"]["id"] == OWNER_ID and value["issue_url"] == API + "/issues/" + str(issue)
-            and hashlib.sha256(value["body"].encode()).hexdigest() == loc["body_sha256"], "MINICPM_AUTHENTIC_OWNER_RECORD")
-        return value
-    # Locate only; authenticate author/body/issue below before trusting the record.
-    require(type(locator) is dict and type(locator.get("comment_id")) is int, "MINICPM_V2_LOCATOR")
-    raw = reader("/issues/comments/" + str(locator["comment_id"]))
-    from .minicpm_offline import RELEASE as OFFLINE_RELEASE
-    marker = OFFLINE_RELEASE if OFFLINE_RELEASE in raw["body"] else RECOVERY_MARKER if RECOVERY_MARKER in raw["body"] else MARKER
-    proposed = record(raw["body"], marker)
-    issue = proposed.get("implementation_pr")
-    owner = fetch(locator, issue)
-    grant = validate(record(owner["body"], marker), repo=repo)
-    require((marker == OFFLINE_RELEASE) == ("offline" in grant), "MINICPM_EXPLICIT_OFFLINE_RELEASE_MARKER")
-    pr = reader("/pulls/" + str(issue))
-    require(pr["merged"] is True and pr["draft"] is False and pr["base"]["ref"] == "main"
-        and pr["head"]["sha"] == grant["reviewed_head"] and pr["merge_commit_sha"] == grant["merged_sha"],
-        "MINICPM_EXPANDED_REVIEW_AUDIT_MERGE_REQUIRED")
+
+def owner_comment(value, loc, issue):
+    from .minicpm_recovery import locator
+    locator(loc)
+    require(value["id"] == loc["comment_id"] and value["user"]["login"] == OWNER
+        and value["user"]["id"] == OWNER_ID and value["issue_url"] == API + "/issues/" + str(issue)
+        and hashlib.sha256(value["body"].encode()).hexdigest() == loc["body_sha256"], "MINICPM_AUTHENTIC_OWNER_RECORD")
+    return value
+
+
+def _release_checks(grant, locator, reader, repo, approvals):
     if approvals:
-        seen = {owner["id"]}
+        from .minicpm_recovery import locator as validate_locator
+        seen = {locator["comment_id"]}
+        approval_subject = subject(grant)
         for kind, loc in grant["approvals"].items():
-            proof = fetch(loc, issue)
+            if kind == PROOF_KEY:
+                continue
+            validate_locator(loc)
+            proof = owner_comment(reader("/issues/comments/" + str(loc["comment_id"])), loc, grant["implementation_pr"])
             require(proof["id"] not in seen, "MINICPM_SEPARATE_APPROVAL_RECORD")
             seen.add(proof["id"])
             require(record(proof["body"], APPROVAL) == {"kind": kind, "status": "APPROVED",
-                "reviewed_head": grant["reviewed_head"], "subject_sha256": subject(grant)}, "MINICPM_APPROVAL_SOURCE_SCOPE")
+                "reviewed_head": grant["reviewed_head"], "subject_sha256": approval_subject}, "MINICPM_APPROVAL_SOURCE_SCOPE")
         # Genuine source trees bind every embedded runtime byte at runtime,
         # reviewed and merged commits; a copied comment cannot approve new code.
         expected = {}
@@ -226,11 +260,12 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
             # authentic release pins Git blob IDs; the local companion also
             # recomputes every SHA256/blob against its own reviewed bytes.
             expected.update(grant["offline"]["tool_blobs"])
-        for ref in set((grant["runtime_commit"], grant["reviewed_head"], grant["merged_sha"])):
+        for ref in sorted({grant["runtime_commit"], grant["reviewed_head"], grant["merged_sha"]}):
             tree = reader("/git/trees/" + ref + "?recursive=1")
             require(tree.get("truncated") is False and type(tree.get("tree")) is list and len(tree["tree"]) <= 20000,
                 "MINICPM_COMPLETE_RELEASE_TREE")
             blobs = {v["path"]: v for v in tree["tree"]}
+            require(len(blobs) == len(tree["tree"]), "MINICPM_UNIQUE_RELEASE_TREE_PATHS")
             require(all(name in blobs and blobs[name]["type"] == "blob" and blobs[name]["mode"] == "100644"
                 and blobs[name]["sha"] == checksum for name, checksum in expected.items()), "MINICPM_MERGED_RUNTIME_BYTES")
     if grant["schema"] == RECOVERY_SCHEMA:
@@ -239,6 +274,79 @@ def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True):
     if "repair" in grant:
         from .minicpm_incident import source_incident
         source_incident(grant).authenticate_repair(grant, reader)
+    if uses_proof(grant):
+        from . import minicpm_serial7
+        minicpm_serial7.authenticate_transition(grant, reader)
+
+
+def collect_proof(grant, locator, reader, *, repo=ROOT):
+    """Read and check each distinct supporting endpoint once per invocation."""
+    proof = {}
+
+    def read_once(path):
+        if path not in proof:
+            row = reader(path)
+            if path.startswith("/issues/comments/"):
+                row = {"id": row["id"], "body": row["body"], "issue_url": row["issue_url"],
+                       "user": {"id": row["user"]["id"], "login": row["user"]["login"]}}
+            else:
+                require(path.startswith("/git/trees/") and row.get("truncated") is False
+                    and type(row.get("tree")) is list and len(row["tree"]) <= 20000,
+                    "MINICPM_COMPLETE_RELEASE_TREE")
+                row = {"truncated": False, "tree": sorted(
+                    ({key: entry[key] for key in ("path", "type", "mode", "sha")} for entry in row["tree"]),
+                    key=lambda entry: entry["path"])}
+            proof[path] = row
+        return proof[path]
+
+    _release_checks(grant, locator, read_once, repo, True)
+    from safeshift.pilot.contract import json_bytes
+    require(len(json_bytes(proof)) <= PROOF_BYTES, "MINICPM_AUTHORITY_PROOF_BOUND")
+    return proof
+
+
+def load(locator, *, repo=ROOT, collection=False, reader=None, approvals=True,
+         capture=None, child=False, stage_proof=None):
+    """Live Owner release and merged PR, with full checks on the new route."""
+    from .minicpm_recovery import locator as validate_locator
+    from .minicpm_offline import RELEASE, TRANSITION_RELEASE
+    validate_locator(locator)
+    reader = github_get if reader is None else reader
+    raw = reader("/issues/comments/" + str(locator["comment_id"]))
+    marker = next((tag for tag in (TRANSITION_RELEASE, RELEASE, RECOVERY_MARKER) if tag in raw["body"]), MARKER)
+    proposed = record(raw["body"], marker)
+    issue = proposed.get("implementation_pr")
+    owner_comment(raw, locator, issue)
+    grant = validate(proposed, repo=repo)
+    expected = TRANSITION_RELEASE if uses_proof(grant) else RELEASE if "offline" in grant else (
+        RECOVERY_MARKER if grant["schema"] == RECOVERY_SCHEMA else MARKER)
+    require(marker == expected, "MINICPM_EXPLICIT_OFFLINE_RELEASE_MARKER")
+    require(collection or grant["issued_unix"] <= time.time() < grant["expires_unix"], "MINICPM_AUTHORITY_EXPIRED")
+    pr = reader("/pulls/" + str(issue))
+    require(pr["merged"] is True and pr["draft"] is False and pr["base"]["ref"] == "main"
+        and pr["head"]["sha"] == grant["reviewed_head"] and pr["merge_commit_sha"] == grant["merged_sha"],
+        "MINICPM_EXPANDED_REVIEW_AUDIT_MERGE_REQUIRED")
+    if uses_proof(grant):
+        require(approvals, "MINICPM_FULL_SOURCE_AUTHORITY_REQUIRED")
+        require(not child or stage_proof is not None, "MINICPM_STAGE_AUTHORITY_PROOF_MISSING")
+        expected_sha = grant["approvals"][PROOF_KEY]
+        if stage_proof is not None:
+            require(type(stage_proof) is dict and digest(stage_proof) == expected_sha,
+                "MINICPM_STAGE_AUTHORITY_PROOF_PIN")
+
+            def replay(path):
+                require(path in stage_proof, "MINICPM_STAGE_AUTHORITY_PROOF_MISSING")
+                return stage_proof[path]
+
+            proof = collect_proof(grant, locator, replay, repo=repo)
+        else:
+            proof = collect_proof(grant, locator, reader, repo=repo)
+        require(digest(proof) == expected_sha, "MINICPM_RELEASE_AUTHORITY_PROOF_PIN")
+        if capture is not None:
+            capture.update(proof)
+    else:
+        require(stage_proof is None, "MINICPM_UNEXPECTED_STAGE_AUTHORITY_PROOF")
+        _release_checks(grant, locator, reader, repo, approvals)
     now = time.time()
     require(collection or grant["issued_unix"] <= now < grant["expires_unix"], "MINICPM_AUTHORITY_EXPIRED")
     return grant
@@ -432,7 +540,16 @@ def claim(kind):
     from safeshift.candidates.train_history import lease_key
     with lease_key(root, digest({"scope": TICKET, "ticket": digest(c["ticket"])})):
         if kind in STAGES[1:]:
-            require((root / (STAGES[STAGES.index(kind) - 1] + ".json")).is_file(), "MINICPM_PARENT_STAGE_CLAIM")
+            predecessor = STAGES[STAGES.index(kind) - 1]
+            path = root / (predecessor + ".json")
+            require(path.is_file(), "MINICPM_PARENT_STAGE_CLAIM")
+            if uses_proof(c["grant"]):
+                previous = read(path)
+                require(previous["kind"] == predecessor and previous["number"] == ticket["number"]
+                    and previous["ticket_sha256"] == digest(c["ticket"])
+                    and previous["request_sha256"] == digest(request)
+                    and c["started_unix"] <= previous["time_unix"] <= time.time(),
+                    "MINICPM_CHILD_PREDECESSOR_BINDING")
         elif kind == "load":
             require((root / "native.json").is_file(), "MINICPM_LOAD_NATIVE_PHASE")
         elif kind.startswith("call-"):
@@ -471,7 +588,7 @@ def authorize(kind=None, *, request=None, ordinal=None):
 @contextmanager
 def activate(locator, envelope, value, phase, *, repo=ROOT, child=False):
     began = time.time()
-    grant = load(locator, repo=repo, approvals=not child)
+    grant = load(locator, repo=repo, child=child)
     with _activated(grant, locator, envelope, value, phase, repo=repo, child=child,
                     started_unix=began if phase == "launch" else None) as context:
         yield context
@@ -496,6 +613,14 @@ def _activated(grant, locator, envelope, value, phase, *, repo=ROOT, child=False
         launch = read(root / "launch.json")
         require(launch["ticket_sha256"] == digest(envelope)
             and launch["request_sha256"] == digest(value["request"]), "MINICPM_CHILD_LAUNCH_BINDING")
+        started_unix = launch["time_unix"]
+        if uses_proof(grant):
+            now = time.time()
+            require(launch["kind"] == "launch" and launch["number"] == ticket["number"]
+                and ticket["issued_unix"] <= started_unix < ticket["start_before_unix"]
+                and started_unix <= now < min(grant["expires_unix"],
+                    started_unix + value["request"]["plan"]["max_seconds"]),
+                "MINICPM_CHILD_LAUNCH_WINDOW")
     token = _active.set({"grant": grant, "ticket": envelope, "value": value, "phase": phase, "claims": root,
                          "locator": locator, "repo": str(repo), "started_unix":started_unix})
     try:

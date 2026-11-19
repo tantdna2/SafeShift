@@ -396,7 +396,7 @@ def anonymous_output_session(deadline):
                 timer.join()  # no watchdog/socket work remains after return
 
 
-def output_inventory(client, job, version):
+def output_inventory(client, job, version, *, observed_names=None):
     from kagglesdk.kernels.types.kernels_api_service import ApiListKernelSessionOutputRequest
     from scripts.submit_internvl_v2 import bounded_http
     with private_transport_logs(), bounded_http():
@@ -445,10 +445,12 @@ def output_inventory(client, job, version):
         else:
             raise ValueError("MANUAL_OUTPUT_LIST_BOUND")
         require(provider_log is not None, "MANUAL_EXACT_PROVIDER_OUTPUTS_AND_LOG")
+        if observed_names is not None:
+            observed_names.update(names)
     return selected, provider_log
 
 
-def download_outputs(client, job, version, archive, expected_sha, destination, *, output_pairs=None):
+def download_outputs(client, job, version, archive, expected_sha, destination, *, output_pairs=None, known_names=None):
     """Pinned SDK listing + bounded anonymous GET, no SDK retry/resume downloader."""
     import os
     from kagglesdk.kernels.types.kernels_api_service import ApiListKernelSessionOutputRequest
@@ -465,7 +467,12 @@ def download_outputs(client, job, version, archive, expected_sha, destination, *
     expected = {name: Path(local).stat().st_size for name, local in pairs.items()}
     expected.update({name + ".sha256.json": 4096 for name in pairs})
     require(shutil.disk_usage(destination).free > sum(expected.values()) + 2**20, "MANUAL_DOWNLOAD_DISK_BOUND")
-    selected, provider_log = output_inventory(client, job, version)
+    observed_names = set()
+    if known_names is None:
+        selected, provider_log = output_inventory(client, job, version)
+    else:
+        selected, provider_log = output_inventory(client, job, version, observed_names=observed_names)
+        require(observed_names <= known_names, "MANUAL_UNEXPECTED_PROVIDER_OUTPUT")
     require(set(selected) == set(expected), "MANUAL_EXACT_PROVIDER_OUTPUTS_AND_LOG")
     # Validate the pair before ANY output GET. Keep SDK's timeout wrapper above
     # separate: it replaces caller timeouts, including a shrinking GET budget.
@@ -507,7 +514,10 @@ def download_outputs(client, job, version, archive, expected_sha, destination, *
         for name, local in pairs.items():
             require(sha(destination / name) == sha(local) == read(str(destination / name) + ".sha256.json")["sha256"],
                 "MANUAL_PROVIDER_ARCHIVE_MISMATCH")
-        return {"pairs": {name: sha(destination / name) for name in pairs}, "log_sha256": sha(destination / "provider.log")}
+        result = {"pairs": {name: sha(destination / name) for name in pairs}, "log_sha256": sha(destination / "provider.log")}
+        if known_names is not None:
+            result["inventory"] = sorted(observed_names)
+        return result
     remote_archive = destination / archive.name
     require(sha(remote_archive) == expected_sha == read(str(remote_archive) + ".sha256.json")["sha256"],
         "MANUAL_PROVIDER_ARCHIVE_MISMATCH")
