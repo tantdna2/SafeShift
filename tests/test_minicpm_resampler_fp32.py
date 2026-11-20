@@ -104,11 +104,11 @@ class EffectiveContractTests(unittest.TestCase):
 
     def test_effective_notebook_is_reproducible_and_only_has_one_image_route(self):
         from safeshift.candidates.source import ROOT
-        from scripts.build_candidate160_notebooks import effective_notebook
+        from scripts.locked_fulltrain_notebooks import reproduce
         path=ROOT/"notebooks/SafeShift_CANDIDATE160_MINICPM4_FP32_ATTENTION_SMOKE.ipynb"
         if not path.exists(): self.skipTest("generate exact-commit notebook before notebook check")
         nb=read(path)
-        self.assertEqual(nb,effective_notebook(nb["metadata"]["safeshift"]["runtime_ref"]))
+        self.assertEqual(nb, reproduce("minicpm4", nb["metadata"]["safeshift"]["runtime_ref"], kind="fp32-smoke")["notebook"])
         self.assertEqual(nb["metadata"]["safeshift"]["max_images"],1)
         code="\n".join("".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"]=="code")
         compile(code,"effective-notebook","exec")

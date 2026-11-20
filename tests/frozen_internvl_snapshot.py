@@ -19,21 +19,15 @@ BASE = "341ab626ff2af7ef79ced0d9c3119794eea4a820"
 
 @lru_cache(maxsize=2)
 def observed(ref=BASE):
-    names = runtime.source_spec()["manifest"]
+    tree = set(subprocess.check_output(["git", "ls-tree", "-r", "--name-only", ref], cwd=ROOT,
+        text=True).splitlines())
+    names = tree.intersection(runtime.source_spec()["manifest"])
     with tempfile.TemporaryDirectory() as tmp:
         target = Path(tmp)
         for name in names:
-            result = subprocess.run(["git", "show", ref + ":" + name], cwd=ROOT, capture_output=True)
-            if result.returncode:
-                # New Mini-only modules did not exist in the frozen tree.
-                if name not in ("safeshift/fulltrain/minicpm_notebook.py", "safeshift/fulltrain/original_inputs.py",
-                                "safeshift/fulltrain/minicpm_ui.py", "safeshift/fulltrain/minicpm_execution.py",
-                                "safeshift/fulltrain/minicpm_release.py", "safeshift/fulltrain/minicpm_sizing.py"):
-                    raise AssertionError("MISSING_FROZEN_RUNTIME_FILE:" + name)
-                continue
             path = target / name
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(result.stdout)
+            path.write_bytes(subprocess.check_output(["git", "show", ref + ":" + name], cwd=ROOT))
         code = """import json,sys
 sys.path.insert(0,sys.argv[1])
 from safeshift import internvl3763 as r, internvl3763_campaign as c

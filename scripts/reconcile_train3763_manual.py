@@ -186,23 +186,20 @@ def owner_attestation(locator, ledger, intent, archive, *, mode=DISTINCT_SLUG):
     return value
 
 
-def verify_cpu_kernel_inputs(meta, sources):
-    from safeshift.fulltrain import minicpm_serial8
-    # The SDK getter defaults a missing enableGpu to False.
-    minicpm_serial8.verify_no_gpu({"enable_gpu": getattr(meta, "_enable_gpu", None),
-        "machine_shape": getattr(meta, "_machine_shape", None)})
+def verify_attached_inputs(meta, sources):
+    """Exact attached Inputs, independent of the accelerator setting."""
     require(all(getattr(meta, attr, None) in (None, [])
-        for attr in ("competition_data_sources", "model_data_sources")), "MANUAL_CPU_PROVIDER_INPUT_DRIFT")
+        for attr in ("competition_data_sources", "model_data_sources")), "MANUAL_PROVIDER_INPUT_DRIFT")
     for attr, key in (("dataset_data_sources", "dataset_sources"), ("kernel_data_sources", "kernel_sources")):
         actual = getattr(meta, attr, None)
         expected = [ref.rsplit("/", 1)[0] for ref in sources[key]]
         require(type(actual) is list and all(type(ref) is str for ref in actual)
             and len(actual) == len(set(actual)) and sorted(actual) == sorted(expected),
-            "MANUAL_CPU_PROVIDER_INPUT_DRIFT")
+            "MANUAL_PROVIDER_INPUT_DRIFT")
 
 
 def observe_kernel(client, job, version, notebook, sources, *, kernel_id=None, expected_state="COMPLETE",
-                   require_no_gpu=False):
+                   record_accelerator=False):
     from kagglesdk.kernels.types.kernels_api_service import ApiGetKernelRequest
     from scripts.submit_internvl_v2 import bounded_http
     with bounded_http():
@@ -230,13 +227,17 @@ def observe_kernel(client, job, version, notebook, sources, *, kernel_id=None, e
         require(operator.code_hash(remote_notebook) == operator.code_hash(notebook)
             and (remote_metadata is None or remote_metadata == notebook.get("metadata", {}).get("safeshift")),
             "MANUAL_REMOTE_NOTEBOOK_DRIFT")
-        verify_inputs = verify_cpu_kernel_inputs if require_no_gpu else operator.verify_kernel_metadata_inputs
+        # A closure records the accelerator; collection keeps the T4 requirement.
+        verify_inputs = verify_attached_inputs if record_accelerator else operator.verify_kernel_metadata_inputs
         verify_inputs(meta, sources)
     require(latest.metadata.id == value.metadata.id, "MANUAL_PROVIDER_KERNEL_CHANGED")
     accelerator = {}
-    if require_no_gpu:
-        require(value.metadata.machine_shape == latest.metadata.machine_shape, "MANUAL_PROVIDER_ACCELERATOR_CHANGED")
-        accelerator = {"enable_gpu": value.metadata._enable_gpu, "machine_shape": value.metadata._machine_shape}
+    if record_accelerator:
+        # The SDK getter defaults a missing enableGpu to False; keep raw fields.
+        observed = [(getattr(m.metadata, "_enable_gpu", None), getattr(m.metadata, "_machine_shape", None))
+                    for m in (value, latest)]
+        require(observed[0] == observed[1], "MANUAL_PROVIDER_ACCELERATOR_CHANGED")
+        accelerator = {"enable_gpu": observed[0][0], "machine_shape": observed[0][1]}
     return {**accelerator, "state": expected_state, "job_id": job, "version": version, "kernel_id": value.metadata.id,
         "remote_notebook_sha256": hashlib.sha256(value.blob.source.encode()).hexdigest(),
         "safeshift_metadata": "ABSENT_EXECUTABLE_CODE_BOUND" if

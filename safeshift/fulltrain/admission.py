@@ -221,6 +221,11 @@ def stage(mode, request, repo, output, deadline):
             write(output / "checkpoint.json", checkpoint_receipt)
             if mode == "cpu":
                 require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
+            driver = None
+            if mode in ("gpu", "native") and request["model_key"] == "minicpm4":
+                # Before Torch import/CUDA initialization in this isolated child.
+                from . import gpu_driver
+                driver = gpu_driver.bind(output)
             if mode != "admit":
                 write(output / "software.json", environment.software(request["model_key"], repo, request["runtime_lock"]))
             write(output / "resources.json", memory.resource_check(request, output, 'after-admission')
@@ -244,7 +249,9 @@ def stage(mode, request, repo, output, deadline):
                 if request['model_key'] == 'minicpm4':
                     memory.reclaim(request, output, deadline, label='cpu-owned-advice', gate='cpu')
             elif mode in ("gpu", "native"):
-                write(output / "physical_gpu.json", environment.hardware(request["model_key"], request["resource_policy"]))
+                write(output / "physical_gpu.json", environment.hardware(request["model_key"], request["resource_policy"])
+                    if driver is None else gpu_driver.hardware(request["model_key"], request["resource_policy"],
+                                                               driver, output, mode))
                 write(output / "worker_cuda.json", environment.cuda(request["model_key"], request["resource_policy"]))
                 if mode == "native":
                     # Parent and every child recheck source/input/checkpoint/plan.

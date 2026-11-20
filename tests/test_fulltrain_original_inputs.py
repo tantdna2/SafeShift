@@ -219,7 +219,7 @@ class OriginalMountedInputsTests(unittest.TestCase):
         from test_fresh_fulltrain import Scripted
         from test_fresh_fulltrain_revision import RevisionTests
         from safeshift.candidates import train_runtime
-        from safeshift.fulltrain import preflight
+        from safeshift.fulltrain import gpu_driver, preflight
         workdir = tempfile.TemporaryDirectory()
         self.addCleanup(workdir.cleanup)
         fixture = RevisionTests()
@@ -250,6 +250,8 @@ class OriginalMountedInputsTests(unittest.TestCase):
             stack.enter_context(patch.object(original.memory, "load_guard"))
             for name in ("software", "hardware", "cuda"):
                 stack.enter_context(patch.object(admission.environment, name, return_value={}))
+            bind_driver = stack.enter_context(patch.object(gpu_driver, "bind", return_value=self.root))
+            stack.enter_context(patch.object(gpu_driver, "hardware", return_value={}))
             for name in ("software", "worker_cuda"):
                 stack.enter_context(patch.object(train_runtime, name))
             stack.enter_context(patch.object(preflight, "cpu_native_checks", return_value={}))
@@ -265,6 +267,8 @@ class OriginalMountedInputsTests(unittest.TestCase):
                 self.assertEqual(sum(call.args[0] == self.master for call in reader.call_args_list), 1)
                 self.assertIsNone(admission._current_original_stage(mode, request, repo, deadline))
             self.assertEqual(decoder.call_count, 2)
+            self.assertEqual([call.args[0] for call in bind_driver.call_args_list],
+                             [fixture.root / "native", fixture.root / "native" / "memory"])
             self.assertEqual(backend.calls, 1)
             root = Path(request["work"]) / request["plan"]["run_id"]
             self.assertEqual(read(root / "accounting.json")["samples"][0]["status"], "SUCCESS")

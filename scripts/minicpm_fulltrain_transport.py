@@ -10,6 +10,40 @@ from safeshift.pilot.artifacts import read, write_bytes, safe, sha
 from scripts import reconcile_train3763_manual as manual
 
 
+def download_ancestor(client, owner, slug, version, source, destination):
+    """Stream an already authenticated large ancestor under its own byte bound."""
+    from kagglesdk.datasets.types.dataset_api_service import ApiDownloadDatasetRequest
+    from safeshift.internvl3763_operator import capsule_http
+    from scripts.submit_internvl_v2 import bounded_http
+    # Single-file ZIP wrappers may add headers and DEFLATE framing even for
+    # already-compressed data. The caller verifies the unwrapped exact bytes.
+    size = source.stat().st_size
+    limit = size + size // 1000 + 65536
+    require(shutil.disk_usage(destination).free > limit, "MINICPM_CAPSULE_DOWNLOAD_SPACE")
+    query = ApiDownloadDatasetRequest()
+    query.owner_slug, query.dataset_slug = owner, slug
+    query.dataset_version_number, query.file_name = int(version), source.name
+    target = destination / "download.part"
+    deadline = time.monotonic() + 90 + size // 2**20
+    total = 0
+    try:
+        with bounded_http(), client.build_kaggle_client() as remote, capsule_http(query):
+            require(remote.http_client()._verbose is False, "CAPSULE_SDK_VERBOSE_FORBIDDEN")
+            with remote.datasets.dataset_api_client.download_dataset(query) as response:
+                require(response.status_code == 200, "CAPSULE_HTTP_STATUS")
+                with target.open("xb") as stream:
+                    for chunk in response.iter_content(65536):
+                        total += len(chunk)
+                        require(total <= limit and time.monotonic() < deadline, "MINICPM_CAPSULE_DOWNLOAD_BOUND")
+                        stream.write(chunk)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                require(time.monotonic() < deadline, "MINICPM_CAPSULE_DOWNLOAD_BOUND")
+    except Exception:
+        raise ValueError("MINICPM_CAPSULE_DOWNLOAD_FAILED_NO_RETRY") from None
+    return target
+
+
 def fetch_outputs(client, value, destination, archive_limit):
     """Discover both unique ZIP pairs after COMPLETE; retain every partial byte."""
     selected, log = manual.output_inventory(client, value["job"], 1)

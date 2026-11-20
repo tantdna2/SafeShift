@@ -199,35 +199,53 @@ def _worker(request, *, repo=ROOT, memory_output=None, stage_deadline=None, admi
         verify_images(bundle, rows)
     policy = request["resource_policy"]
     require(policy.get("review_mode") == "EXTERNAL", "NO_CANDIDATE160_OWNER_CAP_INHERITANCE")
+    supervised_minicpm = key == 'minicpm4' and set(request) in supervised
     if key == "qwen3":
         environment.hardware(key, policy)
         environment.cuda(key, policy)
-    else:
+    elif not supervised_minicpm:
         worker_cuda(policy)
     resource_index = 0
     memory_out = None
-    if key == 'minicpm4' and set(request) in supervised:
+    driver = None
+    model_loaded = False
+    if supervised_minicpm:
         require(memory_output is not None, 'SUPERVISED_NATIVE_MEMORY_OUTPUT_REQUIRED')
         memory_out = Path(memory_output)
         memory_out.mkdir(exist_ok=False)
+        # The clean worker has no loader path: bind the mounted host driver and
+        # scope NVML to nvidia-smi, as in the successful InternVL worker.
+        from . import environment, gpu_driver
+        driver = gpu_driver.bind(memory_out)
     def check_resources():
         nonlocal resource_index
         if set(request) in supervised:
             from . import environment
+            label = f'pre-call-{resource_index:06d}'
             if memory_out is not None:
-                memory.resource_check(request, memory_out, f'pre-call-{resource_index:06d}')
+                memory.resource_check(request, memory_out, label)
                 resource_index += 1
             else:
                 environment.resources(key, policy, request["scratch"], request["work"])
-            environment.hardware(key, policy)
-            environment.cuda(key, policy)
+            if driver is None:
+                environment.hardware(key, policy)
+                environment.cuda(key, policy)
+            elif model_loaded and current() and "resident_gpu0_min_free_mib" in current()["grant"].get("offline", {}):
+                floor = current()["grant"]["offline"]["resident_gpu0_min_free_mib"]
+                write(memory_out / (label + '-loaded-gpu.json'), gpu_driver.loaded(key, policy, driver, memory_out, label, floor))
+            else:
+                write(memory_out / (label + '-physical-gpu.json'), gpu_driver.hardware(key, policy, driver, memory_out, label))
+                write(memory_out / (label + '-worker-cuda.json'), environment.cuda(key, policy))
         else:
             resources(policy, request["scratch"], request["work"], gpu=True)
     check_resources()
     def factory():
+        nonlocal model_loaded
         if memory_out is not None:
             with memory.load_guard(request, memory_out.parent, deadline=stage_deadline):
-                return _native_factory(key, snapshot, weights, repo=repo)
+                backend = _native_factory(key, snapshot, weights, repo=repo)
+            model_loaded = True
+            return backend
         return _native_factory(key, snapshot, weights, repo=repo)
     return _execute(request["work"], bundle, cohort, request["campaign"], request["plan"], request["history"],
         factory,
