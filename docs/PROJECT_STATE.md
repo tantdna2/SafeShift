@@ -1,5 +1,15 @@
 # SafeShift — PROJECT STATE
 
+## Hiện hành — MiniCPM-V-4 sau Serial 11 — 21/11/2026
+
+| Phạm vi | Trạng thái và bằng chứng |
+| --- | --- |
+| Nguồn GitHub | PR #209 đã merge vào `main` tại `6bad2ead3ea57134f3665703fb87563acc49a708`. Đây là base của PR tối ưu. SHA256 của release trong registration khớp comment Owner trên GitHub. [PR #209](https://github.com/tantdna2/SafeShift/pull/209), [release V5](https://github.com/tantdna2/SafeShift/pull/209#issuecomment-7033394502). |
+| Tiến độ do Operator báo cáo | Serial 11 đạt `OFFLINE_VERIFIED_PROVISIONAL`, 808 `SUCCESS` và 2.955 `NOT_ATTEMPTED`. Operator báo `accept` thành công sau restart. Owner chưa xác nhận kết quả cuối của `forecast` cho Serial 12. |
+| Đối chiếu local chỉ đọc | Primary và mirror cùng có sáu event nối hash. Event 5 giữ reservation Serial 11 và event 6 ghi `OFFLINE_VERIFIED_PROVISIONAL` với đúng các số trên. Hai head cùng SHA256 `e106270e971683ee18509bcc5c5bd862673483506accae22d63287533e67475f`. Sáu tệp dưới `custody/11` trùng SHA256 giữa hai bản. |
+| Serial 12 | Trong snapshot local, cả hai journal dừng ở Serial 11. Không thấy reservation, ticket hay `handoffs/12`. Trạng thái capsule, kernel và quota ở provider chưa xác minh. Owner gate vẫn bắt buộc. |
+| Companion tối ưu | Kiểm thử CPU synthetic. Chờ review trực tiếp, audit độc lập, merge được cấp riêng, hậu kiểm và release Operator ràng buộc đúng prefix. Cả 808 ảnh vẫn ở trạng thái tạm thời. [Runbook MiniCPM](MINICPM_OFFLINE_CONTINUATION.md). |
+
 ## Hiện hành — InternVL3.5 Full-TRAIN đã hoàn thành — 19/11/2026
 
 | Trạng thái | Bằng chứng và phạm vi |
@@ -30,7 +40,7 @@ sai quy ước nhị phân. Giao thức khóa dùng Level01–Level03 là Hazard
 là Normal. [Quyết định Qwen3](research/DECISIONS.md#dec-20261115-owner-qwen3-full-train-composite-v1)
 và [giao thức Seminar](research/SEMINAR_PROTOCOL.md).
 
-## Current / MiniCPM after Serial 8 / 20 November 2026
+## Historical / MiniCPM after Serial 8 / 20 November 2026
 
 Local custody verifies successful admit/setup/reclaim/CPU, then a supervised
 GPU-stage failure at `nvidia-smi` exit 12. Only the supervisor ZIP and sidecar
