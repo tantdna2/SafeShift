@@ -50,13 +50,17 @@ C1, native custody và lịch sử. Numeric vector replay thuộc
 Owner verifier. [Runbook InternVL](TRAIN3763_DEFERRED_RECONCILIATION.md).
 
 V5 MiniCPM gọi `recheck` cho mỗi completion trong mọi `state`.
-`verify_claims` và `verify_results` giải nén hai ZIP. `restore_history` nhập
-từng tổ tiên, replay trước/sau cài scratch. `export-active` làm lại trên cả
-hai capsule. Companion dùng prefix đã được audit và chứng từ có chữ ký cho
+`verify_claims` và `verify_results` giải nén hai ZIP và ghi từng thành viên
+vào scratch. `restore_history` nhập từng tổ tiên, replay trước/sau cài scratch.
+`verify_claims` còn tính lại hash của cùng request lớn cho từng claim.
+`export-active` replay tổ tiên của cả hai capsule. Companion dùng chung một
+lần giải nén và hash request cho các kiểm tra lượt hiện tại. Lịch sử dựa vào
+prefix đã được audit và chứng từ có chữ ký cho
 completion về sau. Mỗi lệnh kiểm event/mirror, ký số, lineage, gate, file gốc
-và SHA256 từ byte hiện tại trong cả hai bản custody/capsule. ZIP đã xác minh
-được đối chiếu hash cho các bước vận hành. Các closure pre-native tiếp tục
-qua trình xác minh hiện hành.
+và SHA256 từ byte hiện tại trong cả hai bản custody/capsule của lượt đã
+accept. Capsule của vé đang giữ được kiểm trước khi xuất hoặc accept.
+ZIP đã xác minh được đối chiếu hash cho các bước vận hành. Các closure
+pre-native tiếp tục qua trình xác minh hiện hành.
 
 Dùng `manifest`, `reconcile`, `official-report` của
 `scripts.minicpm_offline_continuation` và
@@ -70,17 +74,57 @@ raw/parser/native, provenance, chữ ký, holds/budget và Owner final approval.
 ```text
 python -B -m scripts.benchmark_minicpm_offline
 python -B -m scripts.benchmark_minicpm_offline --case 808
+python -B -m scripts.benchmark_minicpm_offline --case 2000 --completed-only
+python -B -m scripts.benchmark_minicpm_offline --case 3763 --completed-only
 ```
 
 Bài đo tạo cohort 3.763 ID tổng hợp, ticket RSA fixture và ZIP có raw/claims
 tổng hợp. V5 và companion nhận cùng snapshot journal/mirror và cùng hai
 ZIP mới. Mỗi trường hợp đo `state → accept → forecast → stage → export-active`
 khi lượt mới đưa tổng lên 808, 2.000 hoặc 3.763. Ở 3.763, các bước chuẩn bị
-lượt mới phải dừng. Chỉ số `zip_file_bytes` đếm byte ZIP nén qua đọc tệp
+lượt mới phải dừng. `--completed-only` đo riêng hai cách đọc cùng một
+snapshot đã hoàn thành, với hai Serial. Chỉ số `zip_file_bytes` đếm byte ZIP nén qua đọc tệp
 bao gồm copy, SHA và ZIP reader. `zip_member_bytes` đếm byte thành viên
 sau giải nén. `sha256` đếm khởi tạo SHA256 trong Python, `file_sha256` là phần gọi
 helper đọc tệp để băm. `historical_replays` đếm số lượt replay nội dung
-lịch sử. Thời gian tạo fixture và bản sao nằm ngoài số đo.
+lịch sử. Thời gian tạo fixture và bản sao nằm ngoài số đo. Chỉ bước tạo đầu
+vào fixture dùng lại digest của các object bất biến. Các bước đo đọc và
+kiểm tra lại theo từng bản công cụ.
+
+Phép đo wall time dùng Python 3.14.4, WSL2 tmpfs, Intel Core i5-10300H,
+trên máy dùng chung với các test CPU. Chuỗi Serial 11
+bắt đầu với 461 ảnh, nhận thêm 347 ảnh để đạt 808. Hai bản ghi cùng payload
+provisional và cho cùng kết quả forecast, stage và export trên hai bản sao
+của cùng snapshot. Các cột dưới đây ghi V5 → companion.
+
+| Lệnh | Giây | Lần mở ZIP | Byte ZIP nén đọc | SHA256 | Replay lịch sử |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `state` | 50,51 → 1,45 | 38 → 0 | 54.471.702 → 6.384.702 | 72.450 → 1.635 | 6 → 0 |
+| `accept` | 272,68 → 15,78 | 138 → 4 | 236.717.890 → 35.192.838 | 336.859 → 15.040 | 20 → 0 |
+| `forecast` | 175,25 → 1,87 | 69 → 0 | 114.574.317 → 14.473.504 | 168.415 → 1.674 | 12 → 0 |
+| `stage` | 539,36 → 2,51 | 186 → 0 | 339.797.322 → 44.335.464 | 514.540 → 4.569 | 36 → 0 |
+| `export-active` | 327,89 → 1,87 | 117 → 0 | 217.757.515 → 36.869.974 | 343.263 → 2.878 | 24 → 0 |
+| Tổng | 1.365,70 → 23,47 | 548 → 4 | 963.318.746 → 137.256.482 | 1.435.527 → 25.796 | 98 → 0 |
+
+Tổng byte thành viên sau giải nén giảm từ 1.269.867.989 xuống 9.855.739.
+Số lần băm qua helper đọc tệp giảm từ 285.436 xuống 9.214. `accept` chiếm
+15,78 giây của chuỗi mới, vì vẫn kiểm CRC, replay raw/C1 của ZIP mới và giữ
+hai bản custody. `stage` và `export-active` tiếp tục sao chép hoặc băm byte
+theo pin. Thời gian thực tế phụ thuộc số Serial, đĩa, mirror và kích thước ZIP.
+
+| Snapshot đã hoàn thành | `state` (giây) | Lần mở ZIP | Byte ZIP nén đọc | SHA256 | Replay lịch sử |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 2.000 | 292,00 → 1,07 | 38 → 0 | 168.464.187 → 18.076.976 | 264.024 → 834 | 6 → 0 |
+| 3.763 | 420,52 → 1,68 | 38 → 0 | 298.813.859 → 31.442.484 | 484.399 → 834 | 6 → 0 |
+
+Hai mốc trên đo cùng snapshot ở mỗi cặp, kiểm kết quả `state` trùng tuyệt đối.
+Chuỗi năm lệnh được đo đầy đủ ở mốc Serial 11. Ở 3.763, snapshot đã hết ordinal
+để cấp vé mới.
+
+Các suite liên quan đã PASS trên fixture CPU, gồm 9 test companion, 27 test
+continuation V5, 2 test notebook và 40 test InternVL. Đối soát cuối V5 đi qua
+đủ 3.763 ID, một closure pre-native, hai lượt có kết quả và provider SDK mock.
+Chứng từ provider thực và phê duyệt cuối vẫn thuộc bước Owner.
 
 ### Chuyển tiếp trên cùng chiến dịch
 

@@ -102,26 +102,31 @@ class FastTests(fixtures.OfflineTests):
             self.accept_fast(quick, outputs)
         self.assertEqual(len(quick.events()), 2)
 
-    def test_unannounced_active_ticket_keeps_hold_and_exports_same_package(self):
-        outputs = self.outputs()
+    def test_unannounced_serial12_keeps_hold_and_exports_same_package(self):
         quick = self.released_route()
-        self.accept_fast(quick, outputs)
         self.route = quick
+        propose = fast.policy.proposal
+        with patch.object(fast.policy, "proposal", side_effect=lambda *args: propose(*args) | {"calls": 2}):
+            for number in (9, 10, 11):
+                self.assertEqual(quick.state()["active"]["ticket"]["payload"]["number"], number)
+                self.accept_fast(quick, self.outputs(invalid=False))
+                if number < 11:
+                    self.stage()
         owner_gate = self.gate()
         with patch.object(quick, "export_package", side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):
                 quick.stage(self.key, owner_gate, self.proof)
         quick = self.released_route()
         active = quick.state()["active"]
-        self.assertEqual(active["ticket"]["payload"]["number"], 10)
-        self.assertFalse((quick.root / "handoffs/10").exists())
+        self.assertEqual(active["ticket"]["payload"]["number"], 12)
+        self.assertFalse((quick.root / "handoffs/12").exists())
         with self.assertRaisesRegex(ValueError, "ACTIVE"):
             quick.forecast()
         with self.assertRaisesRegex(ValueError, "ACTIVE"):
             quick.stage(self.key, owner_gate, self.proof)
         quick.export_active()
         self.assertEqual(quick.state()["active"], active)
-        self.assertEqual(len(quick.events()), 3)
+        self.assertEqual(len(quick.events()), 7)
 
     def test_tamper_or_missing_copy_blocks_even_if_event_is_valid(self):
         quick = self.released_route()

@@ -59,7 +59,7 @@ class MeasuredFile:
         return count
 
 
-def timed(operation, new_plan=None):
+def timed(operation, new_plan=None, expected_error=None):
     counters = Counter({name: 0 for name in ("zip_opens", "zip_file_bytes", "zip_member_bytes",
         "sha256", "file_sha256", "historical_replays", "incoming_replays")})
     sha256, file_sha = hashlib.sha256, artifacts.sha
@@ -110,9 +110,12 @@ def timed(operation, new_plan=None):
         try:
             result = operation()
         except ValueError as error:
-            if not str(error).endswith(("STOP_FINAL_OR_FINISHED", "NO_RECOVERABLE_ACTIVE_JOB")):
+            if str(error) != expected_error:
                 raise
             result = {"status": "EXPECTED_FINISHED_STOP"}
+        else:
+            if expected_error is not None:
+                raise AssertionError("Completed campaign did not stop")
         counters["seconds"] = round(time.perf_counter() - started, 4)
     return result, dict(counters)
 
@@ -145,12 +148,18 @@ def compare(fixture, route, new, total, measured_gate, assertion):
             operations = {"state": variant.state, "accept": accept, "forecast": variant.forecast,
                 "stage": lambda: variant.stage(
                     fixture.key, measured_gate | {"observed_unix": int(time.time())}, fixture.proof), "export-active": variant.export_active}
+            terminal_errors = {
+                "forecast": "MINICPM_FORECAST_ACTIVE_STOP_FINAL_OR_FINISHED",
+                "stage": "MINICPM_ACTIVE_STOP_FINAL_OR_FINISHED",
+                "export-active": "MINICPM_NO_RECOVERABLE_ACTIVE_JOB",
+            } if total == 3763 else {}
             for label, operation in operations.items():
                 if mode == "v5" and label == "export-active":
                     def operation():
                         with v5.lock(variant.root):
                             return variant.export_active()
-                result, counters = timed(operation, new_plan=plan_sha if label == "accept" else None)
+                result, counters = timed(operation, new_plan=plan_sha if label == "accept" else None,
+                    expected_error=terminal_errors.get(label))
                 clocks[mode][label] = counters
                 if label == "state":
                     result = {key: result[key] for key in ("counts", "reserved", "next_ordinal", "status")}
@@ -169,7 +178,40 @@ def compare(fixture, route, new, total, measured_gate, assertion):
     return clocks
 
 
-def run(case):
+def compare_completed(fixture, count):
+    """Time a completed snapshot independently of the five-command profile."""
+    original = v5.Continuation(fixture.route.root)
+    expected, before = timed(original.state)
+    actual, after = timed(fixture.released_route().state)
+    fixture.assertEqual(actual, expected)
+    fixture.assertEqual(actual["next_ordinal"], count)
+    for label, values in (("v5", before), ("fast", after)):
+        print(f"{count:4d} {label:4s} completed-state {json.dumps(values)}", flush=True, file=sys.stderr)
+    return {"v5": {"completed-state": before}, "fast": {"completed-state": after}}
+
+
+def prepare_outputs(fixture):
+    """Reuse fixed request digests while building the untimed synthetic input."""
+    state = fixture.route.state()
+    value, ticket = state["active"]["value"], state["active"]["ticket"]
+    request = value["request"]
+    fixed = [(item, digest(item)) for item in (value, ticket, request, request["plan"])]
+
+    def fixture_digest(item):
+        for original, checksum in fixed:
+            if item is original:
+                return checksum
+        return digest(item)
+
+    with patch.object(fixture.route, "state", return_value=state), \
+            patch.object(fast.runtime, "digest", fixture_digest), \
+            patch.object(v5.a, "digest", fixture_digest):
+        outputs = fixture.outputs(invalid=False)
+    fixture.assertEqual([digest(item) for item, _ in fixed], [checksum for _, checksum in fixed])
+    return outputs
+
+
+def run(case, *, completed_only=False):
     # Test fixtures are local and keep their own ignored temporary custody.
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
     from test_minicpm_offline_fast import FastTests
@@ -186,7 +228,8 @@ def run(case):
         fixture.legacy_route = fixture.route
         propose = v5.policy.proposal
         total = 0
-        for calls in BATCHES:
+        batches = (BATCHES[0], case - BATCHES[0]) if completed_only else BATCHES
+        for calls in batches:
             def bounded(*args):
                 envelope = propose(*args)
                 assert calls <= envelope["calls"], (calls, envelope)
@@ -199,8 +242,8 @@ def run(case):
             # Outputs have a full 3763-ID cohort, valid sealed ZIPs, real RSA
             # signatures and raw parser checks. The stock test backend is CPU.
             print(f"preparing {next_total} completed synthetic IDs", flush=True, file=sys.stderr)
-            outputs = fixture.outputs(invalid=False)
-            if next_total in CASES and case in (0, next_total):
+            outputs = prepare_outputs(fixture)
+            if not completed_only and next_total in CASES and case in (0, next_total):
                 active_state = fixture.route.state()
                 sample = active_state["active"]["ticket"]["payload"]["owner_gate"]
                 gate = deepcopy(sample)
@@ -208,7 +251,7 @@ def run(case):
                 gate.update(observed_unix=int(time.time()), job="nguynanhtn/safeshift-minicpm-" + name)
                 gate["inputs"]["dataset_sources"][-1] = "nguynanhtn/safeshift-minicpm-capsule-" + name + "/1"
                 clocks[next_total] = compare(fixture, fixture.route, outputs, next_total, gate, fixture.assertEqual)
-            if case == next_total or next_total == CASES[-1]:
+            if not completed_only and (case == next_total or next_total == CASES[-1]):
                 break
             try:
                 receipt = fixture.accept_fast(fixture.route, outputs)
@@ -217,8 +260,13 @@ def run(case):
                 if error.__context__ is not None:
                     raise RuntimeError("Synthetic fixture preparation failed") from error.__context__
                 raise
-            assert receipt["counts"] == {"SUCCESS": next_total, "NOT_ATTEMPTED": 3763-next_total}
+            expected = {"SUCCESS": next_total}
+            if next_total < 3763:
+                expected["NOT_ATTEMPTED"] = 3763 - next_total
+            fixture.assertEqual(receipt["counts"], expected)
             total = next_total
+        if completed_only:
+            clocks[case] = compare_completed(fixture, case)
     finally:
         fixture.doCleanups()
         FastTests.tearDownClass()
@@ -228,9 +276,14 @@ def run(case):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", type=int, choices=(0, *CASES), default=0, help="0 profiles all milestones")
+    parser.add_argument("--completed-only", action="store_true",
+        help="profile the exact same completed journal with two serials, without the additional command timings")
     args = parser.parse_args()
+    if args.completed_only and args.case == 0:
+        parser.error("--completed-only requires a nonzero --case")
     print(json.dumps({"platform": platform.platform(), "python": platform.python_version(),
-        "fixture": "SYNTHETIC_ONLY", "batches": BATCHES, "results": run(args.case)}, indent=2))
+        "fixture": "SYNTHETIC_ONLY", "batches": (BATCHES[0], args.case - BATCHES[0]) if args.completed_only else BATCHES,
+        "results": run(args.case, completed_only=args.completed_only)}, indent=2))
 
 
 if __name__ == "__main__":
