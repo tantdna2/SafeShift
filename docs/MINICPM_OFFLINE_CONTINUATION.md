@@ -1,5 +1,114 @@
 # MiniCPM nối nhiều job offline — Issue #202
 
+## Tiếp nối nhanh sau Serial 11 — 21/11/2026
+
+`scripts.minicpm_offline_fast` là companion cho Operator trên journal V5 đã
+đăng ký. Runtime, grant V5, schema ticket/event, notebook, checkpoint, năm Input,
+C1 và trình đối soát cuối dùng mã PR #209. Việc chuyển tiếp cần release
+Operator riêng. [Snapshot local và trạng thái GitHub](PROJECT_STATE.md).
+
+### Quy trình sau khi companion được cấp quyền
+
+Dùng tiền tố lệnh dưới đây tại repo root của Operator đã hậu kiểm, với primary
+hiện hành và locator/export được Owner giao qua custody.
+
+```text
+python -B -m scripts.minicpm_offline_fast --directory <primary> --operator-release <locator.json> --owner-exports <github-exports.json>
+```
+
+1. **Sau khi Kaggle hoàn tất**, Owner giao hai ZIP, sidecar, terminal proof và
+   Owner receipt đúng job/version. Operator chạy `accept --attempt <zip>
+   --supervisor <zip> --owner-receipt <json> --proof <file> --private-key
+   <original-key>` rồi `forecast`. Companion kiểm CRC, raw/C1 và native claims
+   của lượt mới. Operator dùng khóa hiện hành ký chứng từ xác minh local, ghi
+   create-only vào hai mirror trước event tạm thời. Khóa vẫn nằm tại chỗ.
+2. **Chuẩn bị lượt tiếp theo.** `forecast` trả ordinal, ảnh còn lại,
+   reservation, telemetry, trần thời gian và số job tối thiểu theo trần call.
+   Quota và kích cỡ được cấp xác định tại `stage`. Owner kiểm tra quota tuần,
+   không job đang chạy, slug/version đích chưa tồn tại và năm Input theo template.
+   Operator chạy `stage --private-key <original-key> --owner-gate <json>
+   --proof <file>`. Lệnh reserve đúng một lượt rồi xuất notebook/capsule.
+3. **Bàn giao notebook.** Operator chuyển đúng capsule Private, notebook và
+   `owner-steps.json` theo luồng Owner UI V5. Owner xác minh slug, năm Input,
+   T4 ×2, quota và hạn ticket, rồi tự bấm **Save Version > Save & Run All** đúng
+   một lần. Tệp xuất local chỉ xác nhận bước chuẩn bị.
+
+**STOP.** Dừng khi mirror thiếu, hash lệch, job/capsule bất định, hết hạn, thiếu
+proof hoặc raw/native lỗi. `status` cho biết active serial và ticket digest.
+Nếu cả hai event `accept` đã ghi và `forecast` bị ngắt, chạy `status` rồi
+`forecast` khi active rỗng. Nếu mới ghi custody hoặc seal, tiếp tục `accept`
+với đúng ticket và chứng cứ đã giữ. Event chỉ có ở một mirror cần đối chiếu
+chỉ đọc. Nếu `stage` đã reserve mà thông báo bị ngắt, giữ ticket hiện có và
+kiểm tra Owner UI trước khi `export-active` hoặc bàn giao. `export-active` cần
+ticket còn hạn và dừng nếu đã bắt đầu `accept`. Mọi hold được giữ nguyên.
+
+### Hai tầng xác minh
+
+InternVL gọi `quick_bundle` qua `verify_local(full=False)`, kiểm CRC, SHA,
+C1, native custody và lịch sử. Numeric vector replay thuộc
+`validate_reconciliation`, cùng đối chiếu từng job, capsule và output qua
+Owner verifier. [Runbook InternVL](TRAIN3763_DEFERRED_RECONCILIATION.md).
+
+V5 MiniCPM gọi `recheck` cho mỗi completion trong mọi `state`.
+`verify_claims` và `verify_results` giải nén hai ZIP. `restore_history` nhập
+từng tổ tiên, replay trước/sau cài scratch. `export-active` làm lại trên cả
+hai capsule. Companion dùng prefix đã được audit và chứng từ có chữ ký cho
+completion về sau. Mỗi lệnh kiểm event/mirror, ký số, lineage, gate, file gốc
+và SHA256 từ byte hiện tại trong cả hai bản custody/capsule. ZIP đã xác minh
+được đối chiếu hash cho các bước vận hành. Các closure pre-native tiếp tục
+qua trình xác minh hiện hành.
+
+Dùng `manifest`, `reconcile`, `official-report` của
+`scripts.minicpm_offline_continuation` và
+`scripts.owner_verify_minicpm_offline` để đối soát cuối. Owner tự lấy provider
+proof. V5 replay mọi attempt, capsule và closure, đủ thứ tự 3.763 ID,
+raw/parser/native, provenance, chữ ký, holds/budget và Owner final approval.
+`OFFLINE_VERIFIED_PROVISIONAL` tiếp tục là tạm thời.
+
+### Tái lập bài đo CPU
+
+```text
+python -B -m scripts.benchmark_minicpm_offline
+python -B -m scripts.benchmark_minicpm_offline --case 808
+```
+
+Bài đo tạo cohort 3.763 ID tổng hợp, ticket RSA fixture và ZIP có raw/claims
+tổng hợp. V5 và companion nhận cùng snapshot journal/mirror và cùng hai
+ZIP mới. Mỗi trường hợp đo `state → accept → forecast → stage → export-active`
+khi lượt mới đưa tổng lên 808, 2.000 hoặc 3.763. Ở 3.763, các bước chuẩn bị
+lượt mới phải dừng. Chỉ số `zip_file_bytes` đếm byte ZIP nén qua đọc tệp
+bao gồm copy, SHA và ZIP reader. `zip_member_bytes` đếm byte thành viên
+sau giải nén. `sha256` đếm khởi tạo SHA256 trong Python, `file_sha256` là phần gọi
+helper đọc tệp để băm. `historical_replays` đếm số lượt replay nội dung
+lịch sử. Thời gian tạo fixture và bản sao nằm ngoài số đo.
+
+### Chuyển tiếp trên cùng chiến dịch
+
+- V5 có thể tiếp tục theo release, gate và giới hạn hiện hành. Khi chuyển
+  tiếp, Operator chốt head sau khi đối chiếu active/reservation với Owner.
+  Giữ nguyên thư mục, khóa và mọi hold. Các Serial 9–11 được tiếp nhận từ
+  chứng cứ có sẵn.
+- Sau review trực tiếp, audit Antigravity độc lập, merge được phép riêng và
+  hậu kiểm, đối chiếu prefix thực tế bằng V5 đầy đủ. Prefix có thể kết thúc
+  ở một reservation đã xác minh. Owner phát hành record
+  `SAFESHIFT_MINICPM_OFFLINE_OPERATOR_FAST_V1` trên PR companion với
+  `status=RELEASED_OPERATOR_FAST_PATH`, `implementation_pr`, `reviewed_head`,
+  `merged_sha`, `grant_sha256`, `registration_sha256`, `prefix_event_number`,
+  `prefix_head_sha256`, `tool_sha256` và `approvals`. Bốn approval riêng
+  `source_review`, `independent_audit`, `merge`, `postmerge` dùng marker
+  `SAFESHIFT_MINICPM_FULLTRAIN_APPROVAL_V2` và `subject_sha256` của record
+  canonical bỏ trường `approvals`. Job tiếp tục dùng cap và expiry V5.
+- Owner chuyển locator (`comment_id`, `body_sha256` của body UTF-8) và JSON
+  mapping response GitHub gốc từ phiên xác thực. Gồm `/issues/comments/<id>`
+  của release và bốn approval, `/pulls/<pr>`, cùng
+  `/git/trees/<ref>?recursive=1` của reviewed HEAD và merge SHA. Companion
+  kiểm SHA256 và Git blob trong hai tree theo custody Owner exports V5.
+- Companion mở cùng registration, mirror và lock. Mỗi thời điểm chỉ có một
+  Operator ghi. V5 có thể đọc kết quả do companion ghi. Nếu V5 ghi thêm
+  completion sau prefix đã duyệt, cần review lại prefix trước khi chuyển lại
+  companion. Mất đồng thời cả hai bản phần đuôi cùng toàn bộ custody phải
+  đối chiếu với chứng cứ bên ngoài.
+
 ## Serial 8 GPU-stage closure and Serial 9 / 20 November 2026
 
 The Serial 8 journal reserved `nguynanhtn/safeshift-minicpm-mcpm4-restart-v1-8`.
