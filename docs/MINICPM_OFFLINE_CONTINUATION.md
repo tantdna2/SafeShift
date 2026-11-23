@@ -1,5 +1,13 @@
 # MiniCPM nối nhiều job offline — Issue #202
 
+## Khôi phục sau Serial 19
+
+Xem [điều tra, benchmark và hồ sơ chuyển nguồn](MINICPM_SERIAL19_RECOVERY.md).
+Companion mới cung cấp `close-pre-native` trên cùng journal V5 và giữ nguyên
+reservation. Serial 20 cần release nguồn và ticket mới sau khi prefix đã
+được xác minh. Phần hướng dẫn Serial 11 dưới đây ghi đường PR #210 trước
+khi có sửa đổi runtime Serial 19.
+
 ## Tiếp nối nhanh sau Serial 11 — 21/11/2026
 
 `scripts.minicpm_offline_fast` là companion cho Operator trên journal V5 đã

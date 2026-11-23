@@ -1,5 +1,14 @@
 # SafeShift — PROJECT STATE
 
+## MiniCPM-V-4 Serial 19 — 23/11/2026
+
+| Phạm vi | Trạng thái và bằng chứng |
+| --- | --- |
+| Nguồn đối chiếu | Main `57fb693648a03469eb25778e7a63f5be4ac0f501`. PR #210 đã merge. [Release Operator PR #210](https://github.com/tantdna2/SafeShift/pull/210#issuecomment-7063393426). |
+| Serial 19 | Operator báo kernel `146811245`, CPU `HARD_DEADLINE` sau 600,06 giây, mã thoát −9 và chỉ có supervisor ZIP. Báo cáo 2.559 SUCCESS, 118 INVALID, 1.086 NOT_ATTEMPTED. Chứng cứ Output và hai mirror production chưa có trong workspace Codex. Closure production chưa được xác minh. |
+| Sửa runtime và companion | Trần CPU riêng 1.200 giây với chính sách hiện hành. Kiểm SHA tại stage dùng dữ liệu, giảm replay và ghi thời gian từng phần. `close-pre-native` dùng chứng từ và event V5 hiện có. [Runbook và hồ sơ nguồn](MINICPM_SERIAL19_RECOVERY.md). |
+| Serial 20 | Chờ review, audit, merge được cấp riêng, hậu kiểm, hai release xác thực và gate quota/Input hiện thời. Giữ cùng journal, khóa Operator, lịch sử và các hold. |
+
 ## Hiện hành — MiniCPM-V-4 sau Serial 11 — 21/11/2026
 
 | Phạm vi | Trạng thái và bằng chứng |
