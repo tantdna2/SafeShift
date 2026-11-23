@@ -251,7 +251,8 @@ def _worker(request, *, repo=ROOT, memory_output=None, stage_deadline=None, admi
         factory,
         image_path=lambda i: rows[i]["image"], evaluator=None if key == "minicpm4" else replay,
         before_call=check_resources, repair_case=request["repair_case"], stage_deadline=stage_deadline,
-        stage_request=(request, repo) if original_stage is not None else None)
+        stage_request=(request, repo) if original_stage is not None else None,
+        history_timing=Path(memory_output).parent if memory_output and current() and "continuation" in current()["grant"] else None)
 
 
 def launch(*args, **kwargs):
@@ -267,7 +268,7 @@ def worker_command(python, request, output):
 
 def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
              store_class=NativeStore, evaluator=None, before_call=None, repair_case=None, clock=time.monotonic,
-             stage_deadline=None, stage_request=None):
+             stage_deadline=None, stage_request=None, history_timing=None):
     """Shared bounded controller; requires pre-admitted inputs and explicit plan.
 
     Internal only, not an execution authority. Public real-data entries are
@@ -309,11 +310,14 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
         else:
             require(not history, "FRESH_WORKSPACE_REQUIRES_EXPLICIT_HISTORY_IMPORT")
             write(campaign_file, campaign)
-        for h in history:
-            prior = safe(work, h["run_id"])
-            require(read(prior / "campaign.json") == campaign, "FOREIGN_CAMPAIGN_HISTORY")
-            require(recover(prior, cohort, digest(read(prior / "plan.json"))) == h,
-                    "HISTORY_EVIDENCE_CHANGED")
+        from .admission import measured
+        with measured(history_timing, "history-replay"):
+            for h in history:
+                memory.check_deadline(stage_deadline)
+                prior = safe(work, h["run_id"])
+                require(read(prior / "campaign.json") == campaign, "FOREIGN_CAMPAIGN_HISTORY")
+                require(recover(prior, cohort, digest(read(prior / "plan.json"))) == h,
+                        "HISTORY_EVIDENCE_CHANGED")
         # Refuse omitted partial/reserved attempts even if caller supplies a
         # plausible complete subset of the history. No implicit retry after kill.
         reservations = work / "attempts"

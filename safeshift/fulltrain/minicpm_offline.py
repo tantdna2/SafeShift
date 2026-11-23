@@ -9,7 +9,7 @@ import math
 import re
 import time
 
-from safeshift.candidates.source import require
+from safeshift.candidates.source import ROOT, require
 from safeshift.pilot.contract import digest, require_hash
 from . import minicpm_release as a, minicpm_v5_incident as v5, minicpm_serial6 as serial6
 
@@ -133,7 +133,25 @@ def terminal(receipt, value, attempt_sha, supervisor_sha):
     return receipt
 
 
-def verify_ticket(grant, envelope, value, *, collection=False):
+def recovery_cpu_seconds(budgets):
+    return max(1200, budgets["diagnostic_seconds"])
+
+
+def recovery_pre_native_seconds(grant):
+    budgets = grant["scope"]["resource_policy"]
+    # Admit, reclaim and GPU share the untouched diagnostic ceiling.
+    return budgets["setup_seconds"] + 3 * budgets["diagnostic_seconds"] + recovery_cpu_seconds(budgets)
+
+
+def require_recovery_envelope(grant, seconds):
+    overhead = recovery_pre_native_seconds(grant)
+    sizing = grant["sizing"]
+    require(seconds > overhead + sizing["export_seconds"] + sizing["first_call_seconds"],
+            "MINICPM_RECOVERY_STAGE_RESERVE_CANNOT_FIT")
+    return overhead
+
+
+def verify_ticket(grant, envelope, value, *, collection=False, repo=ROOT):
     validate_delegation(grant)
     require(type(envelope) is dict and set(envelope) == {"payload", "signature"}, "MINICPM_SIGNED_OFFLINE_TICKET")
     t = envelope["payload"]
@@ -145,7 +163,10 @@ def verify_ticket(grant, envelope, value, *, collection=False):
         and t["schema"] == ticket_schema(grant)
         and t["grant_sha256"] == digest(grant)
         and t["value_sha256"] == t["capsule_sha256"] == digest(value), "MINICPM_OFFLINE_TICKET_BINDING")
-    a.bind(grant, value)
+    if repo == ROOT:
+        a.bind(grant, value)
+    else:
+        a.bind(grant, value, repo=repo)
     require_hash(t["notebook_code_sha256"]); require_hash(t["previous_event_sha256"])
     p, caps = value["request"]["plan"], grant["caps"]
     closures = t["closures"] if closable else []
@@ -153,6 +174,9 @@ def verify_ticket(grant, envelope, value, *, collection=False):
     require(type(t["number"]) is int and t["number"] == first_serial(grant) + len(value["ancestors"]) + len(closures)
         and value["job"] == "nguynanhtn/safeshift-minicpm-" + grant["campaign_id"] + "-" + str(t["number"]),
         "MINICPM_OFFLINE_SERIAL7_NO_REPLAY")
+    if "continuation" in grant:
+        require(t["number"] >= grant["continuation"]["first_serial"], "MINICPM_SOURCE_TRANSITION_SERIAL")
+        require_recovery_envelope(grant, p["max_seconds"])
     if grant["offline"]["schema"] == SERIAL9_SCHEMA:
         require(value["capsule_ref"] == "nguynanhtn/safeshift-minicpm-capsule-"
             + grant["campaign_id"] + "-" + str(t["number"]) + "/1", "MINICPM_SERIAL9_FRESH_CAPSULE_REQUIRED")
@@ -222,9 +246,10 @@ def amounts(before, after, caps, *, calls=None, seconds=None):
 def proposal(grant, pending, reserved, gate, telemetry=None):
     from .minicpm_sizing import propose
     p = propose(grant, pending, reserved, {"quota": gate["quota"], "observed_unix": gate["observed_unix"]}, telemetry)
+    overhead = require_recovery_envelope(grant, p["seconds"]) if "continuation" in grant else 0
     if telemetry is None:
         p["calls"] = min(p["calls"], grant["offline"]["unmeasured_calls"],
-            (p["seconds"] - grant["sizing"]["export_seconds"]) // grant["sizing"]["first_call_seconds"])
+            (p["seconds"] - overhead - grant["sizing"]["export_seconds"]) // grant["sizing"]["first_call_seconds"])
         require(p["calls"] > 0, "MINICPM_OFFLINE_INITIAL_ENVELOPE")
         p["status"] = "UNMEASURED_CONSERVATIVE_CAP_NOT_THROUGHPUT"
     return p

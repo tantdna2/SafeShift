@@ -15,6 +15,7 @@ from safeshift.pilot.contract import digest, require_hash
 
 BASE = "1acb3ef7c0deadbbde7da0b1c63b71296e3950e5"
 DIRECTION = "OWNER_FRESH_FULLTRAIN_ONLY"
+V5_SOURCE = "81ddb4df4a13e08f98e8944b3a7070b90d8b484d4a0f3605667829ca1a4f9b41"
 SERIES = {key: "fresh171-" + key + "-v1" for key in planning.MODELS}
 QWEN = {"id": "Qwen/Qwen3-VL-8B-Instruct",
         "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"}
@@ -94,17 +95,43 @@ def campaign(cohorts, expected_projection_sha256, *, series=None):
             "prediction_inheritance": False, "scientific_selection": "PENDING"}
 
 
+def v5_science_unchanged(previous, current):
+    return (previous["model_key"] == current["model_key"] == "minicpm4"
+            and previous["implementation_sha256"] == V5_SOURCE
+            and current["implementation_sha256"] != V5_SOURCE
+            and previous == {**current, "implementation_sha256": V5_SOURCE})
+
+
 def plan(c, cohort, spec, history, *, action, run_id, attempt_id, max_calls, max_seconds, repair=None):
     require(c == campaign({k: cohort for k in planning.MODELS}, c["cohort_sha256"], series=c["series"]),
             "CAMPAIGN_CHANGED")
     key = spec["model_key"]
     sid = c["series"][key]
     require(action in ("initial", "resume", "repair"), "RERUN_REQUIRES_NEW_CAMPAIGN_AND_SERIES")
-    require(all(h["series_id"] == sid and h["identity"] == spec for h in history), "FOREIGN_HISTORY_FORBIDDEN")
-    # No inherited ancestors from any other series, even if they have the same IDs.
-    return planning.plan(cohort, c["cohort_sha256"], spec, history, digest(history), action=action,
+    require(all(h["series_id"] == sid for h in history), "FOREIGN_HISTORY_FORBIDDEN")
+    history_sha = digest(history)
+    planning_history = history
+    if any(h["identity"] != spec for h in history):
+        # The generic planner uses one identity per series. Build an in-memory
+        # planning view after checking the original, one-way V5 lineage. The
+        # returned plan and all archives keep the original signed history hash.
+        require(action == "resume", "FOREIGN_HISTORY_FORBIDDEN")
+        planning_history = []
+        seen_current = False
+        for i, h in enumerate(history):
+            same = h["identity"] == spec
+            require(same or (not seen_current and v5_science_unchanged(h["identity"], spec)),
+                "FOREIGN_HISTORY_FORBIDDEN")
+            require(h["parent_history_sha256"] == digest(history[:i]), "MISSING_OR_REORDERED_ANCESTOR")
+            if same and not seen_current:
+                require(i > 0 and h["action"] == "resume", "MINICPM_V5_HISTORY_TRANSITION_ORDER")
+            seen_current |= same
+            planning_history.append({**h, "identity": spec, "parent_history_sha256": digest(planning_history)})
+    p = planning.plan(cohort, c["cohort_sha256"], spec, planning_history,
+        history_sha if planning_history is history else digest(planning_history), action=action,
         series_id=sid, run_id=run_id, attempt_id=attempt_id,
         max_calls=max_calls, max_seconds=max_seconds, repair=repair)
+    return {**p, "history_sha256": history_sha}
 
 
 def release_report(key):

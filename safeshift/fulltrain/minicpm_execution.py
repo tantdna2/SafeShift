@@ -1,9 +1,11 @@
 """Released Owner UI and isolated child entrypoints, using PR195's pipeline."""
 import argparse
+from contextlib import ExitStack
 import os
 import math
 from pathlib import Path
 import shutil
+import tempfile
 import time
 
 from safeshift.candidates.source import ROOT, require, snapshot_stat
@@ -33,8 +35,11 @@ def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None
     envelope = metadata(marker, 128 * 2**20)
     value_marker = safe(marker.parent, ui.MARKER)
     require(sha(value_marker) == capsule_sha256, "MINICPM_RELEASE_CAPSULE_PIN")
-    authority.verify_ticket(grant, envelope, metadata(value_marker))
-    value = ui.verify_capsule(marker.parent, capsule_sha256, repo, release_ticket=True)
+    ticket = authority.verify_ticket(grant, envelope, metadata(value_marker), repo=repo)
+    # The released launch restores and validates directly into the fresh VM
+    # below. A second temporary replay would read the same signed ancestors.
+    value = ui.verify_capsule(marker.parent, capsule_sha256, repo, release_ticket=True,
+        replay="continuation" not in grant)
     if grant["schema"] == authority.RECOVERY_SCHEMA:
         from .minicpm_recovery import mounted_inputs
         from safeshift import internvl3763_python as py
@@ -46,12 +51,30 @@ def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None
     owner, slug, _ = value["capsule_ref"].split("/")
     require(marker.parent.relative_to(Path(inputs)).as_posix() in (slug, "datasets/" + owner + "/" + slug),
         "MINICPM_V2_CAPSULE_MOUNT")
-    with authority._activated(grant, locator, envelope, value, "launch", repo=repo, started_unix=started_unix) as context:
-        authority.authorize(request=value["request"])
-        request = value["request"]
-        work, scratch = Path(request["work"]), Path(request["scratch"])
+    request = value["request"]
+    work, scratch = Path(request["work"]), Path(request["scratch"])
+    with ExitStack() as stack:
+        staged = None
+        restoration_seconds = None
+        if "continuation" in grant:
+            require(not work.exists() and not scratch.exists(), "MINICPM_V2_FRESH_VM_WORKSPACE")
+            require(time.time() < ticket["start_before_unix"], "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH")
+            # Stage onto the output filesystem. Validate before claiming launch,
+            # then install the validated tree by rename without a second replay.
+            temporary = stack.enter_context(tempfile.TemporaryDirectory(prefix="minicpm-history-", dir=work.parent))
+            staged = Path(temporary) / "work"
+            restoration_started = time.monotonic()
+            ui.restore_history(marker.parent, value, staged)
+            restoration_seconds = time.monotonic() - restoration_started
+        context = stack.enter_context(authority._activated(grant, locator, envelope, value, "launch",
+            repo=repo, started_unix=started_unix))
+        authority.authorize(request=request)
         require(not work.exists() and not scratch.exists(), "MINICPM_V2_FRESH_VM_WORKSPACE")
-        ui.restore_history(marker.parent, value, work)
+        if staged is None:
+            ui.restore_history(marker.parent, value, work)
+        elif staged.exists():
+            staged.rename(work)
+        context["history_restore_seconds"] = restoration_seconds
         work.mkdir(parents=True, exist_ok=True)
         scratch.mkdir(parents=True, exist_ok=False)
         context_file = work.parent / (request["plan"]["run_id"] + "-release-context.json")
@@ -131,6 +154,7 @@ def main():
     p.add_argument("--release-body-sha256", required=True)
     p.add_argument("--authority-proof", type=Path)
     args = p.parse_args()
+    authority_started = time.monotonic()
     locator = {"comment_id": args.release_comment_id, "body_sha256": args.release_body_sha256}
     proof = None
     if args.authority_proof is not None:
@@ -160,6 +184,9 @@ def main():
     with authority._activated(grant, locator, context["ticket"], context["value"], args.stage, repo=args.repo, child=True):
         authority.authorize(request=request)
         from .admission import stage
+        if "continuation" in grant:
+            return stage(args.stage, request, args.repo, args.output, args.deadline,
+                authority_seconds=time.monotonic() - authority_started)
         return stage(args.stage, request, args.repo, args.output, args.deadline)
 
 

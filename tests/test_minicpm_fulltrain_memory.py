@@ -29,6 +29,45 @@ class MemoryTests(unittest.TestCase):
         for name in ('scratch', 'work'):
             (self.root / name).mkdir()
 
+    def test_released_cpu_budget_and_other_stage_limits(self):
+        request = self.request | {"original_inputs": {}, "plan": {"max_seconds": 14400}}
+        request["resource_policy"].update(setup_seconds=1800, diagnostic_seconds=600)
+        active = {"grant": {"continuation": {}, "sizing": {"export_seconds": 600}}}
+        until = admission.stage_deadline("cpu", request, 14400, active, now=100)
+        self.assertLess(100 + 601, until)
+        self.assertEqual(until, 100 + 1200)
+        self.assertEqual(admission.stage_deadline("cpu", request, 14400, None, now=100), 700)
+        for mode in ("gpu", "reclaim"):
+            self.assertEqual(admission.stage_deadline(mode, request, 14400, active, now=100), 700)
+        self.assertEqual(admission.stage_deadline("setup", request, 14400, active, now=100), 1900)
+        for mode in ("admit", "setup", "reclaim", "cpu", "gpu", "native"):
+            self.assertEqual(admission.stage_deadline(mode, request, 14400, active, now=13799), 13800)
+
+    def test_export_reserve_exhaustion_never_starts_a_child(self):
+        from safeshift.fulltrain import minicpm_execution, minicpm_release
+        request = self.request | {"inputs": str(self.root / "inputs"), "software_input": None,
+            "original_inputs": {}, "source_sha256": "a" * 64, "campaign": {},
+            "plan": {"run_id": "synthetic", "max_seconds": 600, "scheduled_ordinals": [0]}}
+        claims = self.root / "claims"
+        write(claims / "launch.json", {"time_unix": 100})
+        active = {"grant": {"continuation": {}, "sizing": {"export_seconds": 600}},
+            "locator": {}, "ticket": {}, "claims": claims, "capsule_directory": self.root}
+        with ExitStack() as stack:
+            for obj, name, value in (
+                (admission, "validate_request", None), (m, "observe", None),
+                (minicpm_release, "current", active), (minicpm_release, "authorize", None),
+                (minicpm_release, "claims_snapshot", {}), (minicpm_execution, "retain_sealed_trees", {}),
+                (time, "time", 100), (time, "monotonic", 200),
+            ):
+                stack.enter_context(patch.object(obj, name, return_value=value))
+            supervise = stack.enter_context(patch.object(supervision, "run"))
+            output = admission.launch_prepared(request)
+        supervise.assert_not_called()
+        self.assertEqual(read(output / "admit-budget.json"), {"seconds": 0, "export_seconds": 600})
+        self.assertEqual(read(output / "release.json")["status"], "BLOCKED")
+        self.assertIn("STAGE_NO_TIME_BEFORE_EXPORT_RESERVE", read(output / "failure.json")["message"])
+        self.assertTrue(output.with_suffix(".zip").is_file())
+
     def recorded(self, name='setup-after-child-exit-memory.json'):
         return read(ROOT / 'docs/research/evidence/issue173/review/minicpm-only-ram-preflight.json')['memory_stages'][name]
 

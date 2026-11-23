@@ -180,7 +180,7 @@ class OfflineTests(unittest.TestCase):
     def stage(self):
         return self.route.stage(self.key, self.gate(), self.proof)
 
-    def outputs(self, *, invalid=True, before_call=None):
+    def outputs(self, *, invalid=True, before_call=None, invalid_ordinals=None):
         state = self.route.state()
         active = state["active"]
         value, ticket = active["value"], active["ticket"]
@@ -198,8 +198,10 @@ class OfflineTests(unittest.TestCase):
             def generate(backend, image, sample):
                 with redirect_stdout(io.StringIO()):
                     return backend.model.generate(image,sample)
-        outputs = ['fenced INVALID' if invalid and n % 7 == 0 else '{"safety_level":"Level04"}'
-            for n in r["plan"]["scheduled_ordinals"]]
+        ordinals = r["plan"]["scheduled_ordinals"]
+        if invalid_ordinals is None:
+            invalid_ordinals = {n for n in ordinals if invalid and n % 7 == 0}
+        outputs = ['fenced INVALID' if n in invalid_ordinals else '{"safety_level":"Level04"}' for n in ordinals]
         backend = Backend(outputs)
         def factory():
             contract.authorize("load")
@@ -289,7 +291,7 @@ class OfflineTests(unittest.TestCase):
         self.route = c.Continuation.initialize(processed / "nine", processed / "nine-mirror",
             self.locator, {}, self.value, processed / "closure", p.ORIGINAL_SESSION, serial8_closure=eighth)
 
-    def failed_download(self, item, last):
+    def failed_download(self, item, last, *, hard_deadline=False):
         v, t = item["value"], item["ticket"]
         r, payload = v["request"], t["payload"]
         stages = a.STAGES[:a.STAGES.index(last) + 1]
@@ -302,7 +304,8 @@ class OfflineTests(unittest.TestCase):
         control = folder / "minicpm-fulltrain/supervision" / ("e" * 32)
         write(control / "request.json", r)
         write(control / "capability.json", {"locator": self.locator, "ticket": t})
-        failure = {"type": "RuntimeError", "message": "SUPERVISED_CHILD_FAILURE"}
+        failure = {"type": "TimeoutError" if hard_deadline else "RuntimeError",
+            "message": "HARD_DEADLINE" if hard_deadline else "SUPERVISED_CHILD_FAILURE"}
         write(control / "failure.json", failure)
         write(control / "release.json", {"status": "BLOCKED", "diagnostic": False, "failure": failure,
             "source_sha256": r["source_sha256"], "automatic_retry": False, "scientific_qualified": False,
@@ -319,7 +322,9 @@ class OfflineTests(unittest.TestCase):
             if stage == "launch":
                 continue
             write(control / (stage + "-process.json"), {"schema": "fresh-process-supervision-v1",
-                "status": "CHILD_FAILURE" if stage == last else "EXITED", "returncode": int(stage == last),
+                "status": ("HARD_DEADLINE" if hard_deadline else "CHILD_FAILURE") if stage == last else "EXITED",
+                "returncode": (-9 if hard_deadline else 1) if stage == last else 0,
+                **({"seconds": 600.06} if stage == last and hard_deadline else {}),
                 "automatic_retry": False, "group_exit": {"status": "NO_LIVE_MEMBERS", "members": []}})
             if stage != last:
                 write(control / stage / "stage.json", {"status": "RETURNED", "stage": stage, "request_sha256": digest(r),
@@ -336,14 +341,14 @@ class OfflineTests(unittest.TestCase):
             shutil.copyfile(contract.ROOT / name, target)
         return folder
 
-    def close_failure(self, last):
-        item = self.route.state()["active"]
-        folder = self.failed_download(item, last)
+    def failure_evidence(self, last, *, hard_deadline=False, kernel_id=191, item=None):
+        item = self.route.state()["active"] if item is None else item
+        folder = self.failed_download(item, last, hard_deadline=hard_deadline)
         local = self.route.pre_native_local(folder, item)
         package = self.route.root / item["package"]
         job = item["value"]["job"]
         closure = {"schema": c.prenative.PROVIDER_SCHEMA, "local": local, "ticket_job": job, "provider_job": job,
-            "provider": {"job_id": job, "version": 1, "kernel_id": 191, "state": "ERROR",
+            "provider": {"job_id": job, "version": 1, "kernel_id": kernel_id, "state": "ERROR",
                 "notebook_code_sha256": item["ticket"]["payload"]["notebook_code_sha256"],
                 "remote_notebook_sha256": sha(package / "notebook.ipynb"), "safeshift_metadata": "MATCHED"},
             "accelerator": {"enable_gpu": True, "machine_shape": "NvidiaTeslaT4",
@@ -351,7 +356,12 @@ class OfflineTests(unittest.TestCase):
             "capsule": {"private": True, "version": 1, "files": c.prenative.package_files(package)},
             "output": {"inventory": c.prenative.inventory(folder), "pairs": {local["supervisor"]: local["supervisor_sha256"]},
                 "sidecar_sha256": local["sidecar_sha256"], "log_sha256": "e" * 64}}
+        return folder, closure
+
+    def close_failure(self, last):
+        folder, closure = self.failure_evidence(last)
         before = self.route.state()
+        item = before["active"]
         with self.assertRaisesRegex(ValueError, "START_WINDOW_OPEN"):
             self.route.close_pre_native(folder, closure)
         # Advance wall clock past this ticket's launch window.

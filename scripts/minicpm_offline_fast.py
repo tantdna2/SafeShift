@@ -1,8 +1,8 @@
 """Released Operator-only fast path for the existing MiniCPM V5 journal.
 
-The V5 runtime, notebook template, tickets, journal events and final verifier
-retain their original bytes and formats. This companion requires its own
-Owner release over an audited V5 journal prefix.
+The companion requires its own Owner release over an audited V5 journal prefix.
+A separately authenticated runtime continuation can issue new V5-format tickets
+against the same journal and hold chain.
 """
 import argparse
 from copy import deepcopy
@@ -16,7 +16,7 @@ import time
 import zipfile
 
 from safeshift.candidates.source import require, snapshot_stat
-from safeshift.fulltrain import contract, minicpm_execution, runtime
+from safeshift.fulltrain import contract, memory, minicpm_execution, runtime
 from safeshift.internvl3763_operator import code_hash
 from safeshift.pilot.artifacts import read, safe, sha, verify_archive
 from safeshift.pilot.contract import digest, json_bytes, require_hash
@@ -25,6 +25,8 @@ from scripts import minicpm_offline_continuation as v5
 a, policy, ui = v5.a, v5.policy, v5.ui
 RELEASE = "SAFESHIFT_MINICPM_OFFLINE_OPERATOR_FAST_V1"
 SEAL = "safeshift-minicpm-offline-accept-verification-v1"
+CLOSURE_SEAL = "safeshift-minicpm-offline-closure-verification-v1"
+prenative = v5.prenative
 
 
 def authenticate_release(locator, exports, registration, grant):
@@ -34,12 +36,18 @@ def authenticate_release(locator, exports, registration, grant):
     release = a.record(comment["body"], RELEASE)
     pr_number = release["implementation_pr"]
     a.owner_comment(comment, locator, pr_number)
-    require(set(release) == {"status", "implementation_pr", "reviewed_head", "merged_sha",
-        "grant_sha256", "registration_sha256", "prefix_event_number", "prefix_head_sha256",
-        "tool_sha256", "approvals"} and release["status"] == "RELEASED_OPERATOR_FAST_PATH"
+    fields = {"status", "implementation_pr", "reviewed_head", "merged_sha", "grant_sha256",
+        "registration_sha256", "prefix_event_number", "prefix_head_sha256", "tool_sha256", "approvals"}
+    optional = {"closure_snapshots", "companion_dependencies"}
+    require(fields <= set(release) <= fields | optional and release["status"] == "RELEASED_OPERATOR_FAST_PATH"
         and release["grant_sha256"] == digest(grant) and release["registration_sha256"] == digest(registration)
         and type(release["prefix_event_number"]) is int and 1 <= release["prefix_event_number"] <= 20000,
         "MINICPM_FAST_EXACT_EXISTING_CAMPAIGN_RELEASE")
+    if "closure_snapshots" in release:
+        pins = release["closure_snapshots"]
+        require(type(pins) is dict and len(pins) <= release["prefix_event_number"], "MINICPM_FAST_CLOSURE_PREFIX_SCOPE")
+        for pin in pins.values():
+            require_hash(pin)
     for key in ("prefix_head_sha256", "tool_sha256"):
         require_hash(release[key])
     pr = reader("/pulls/" + str(pr_number))
@@ -60,14 +68,25 @@ def authenticate_release(locator, exports, registration, grant):
     raw = path.read_bytes()
     require(hashlib.sha256(raw).hexdigest() == release["tool_sha256"], "MINICPM_FAST_TOOL_SHA256")
     blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
-    tool = "scripts/" + path.name
+    expected = {"scripts/" + path.name: blob}
+    if "companion_dependencies" in release:
+        sources = contract.source_manifest()
+        tools = v5.tools_manifest()
+        require(release["companion_dependencies"] ==
+            {"source_sha256": digest(sources), "tools_sha256": digest(tools)}, "MINICPM_FAST_DEPENDENCY_SHA256")
+        for name in sources:
+            raw = (contract.ROOT / name).read_bytes()
+            expected[name] = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+        expected.update(v5.tool_blobs())
     for ref in {release["reviewed_head"], release["merged_sha"]}:
         require(type(ref) is str and len(ref) == 40 and all(c in "0123456789abcdef" for c in ref),
             "MINICPM_FAST_GIT_REF")
         tree = reader("/git/trees/" + ref + "?recursive=1")
-        require(tree.get("truncated") is False and len(tree["tree"]) <= 20000
-            and [(item["type"], item["mode"], item["sha"]) for item in tree["tree"] if item["path"] == tool]
-            == [("blob", "100644", blob)], "MINICPM_FAST_TOOL_GIT_TREE")
+        require(tree.get("truncated") is False and len(tree["tree"]) <= 20000, "MINICPM_FAST_TOOL_GIT_TREE")
+        observed = {item["path"]: (item["type"], item["mode"], item["sha"]) for item in tree["tree"]}
+        require(len(observed) == len(tree["tree"])
+            and all(observed.get(name) == ("blob", "100644", checksum) for name, checksum in expected.items()),
+            "MINICPM_FAST_TOOL_GIT_TREE")
     return release
 
 
@@ -264,19 +283,34 @@ def custody_files(completion):
         str(Path(completion["proof"]).parent.as_posix()) + "/owner-receipt.json": digest(receipt)}
 
 
+def closure_snapshot(download):
+    """Hash the current bounded inventory, including loose evidence and claims."""
+    def checked_sha(name):
+        path = safe(download, name)
+        before = memory.identity(snapshot_stat(path))
+        checksum = sha(path)
+        require(before == memory.identity(snapshot_stat(path)), "MINICPM_FAST_CLOSURE_EVIDENCE_DRIFT")
+        return checksum
+
+    return digest({name: checked_sha(name) for name in prenative.inventory(download)})
+
+
 class Continuation(v5.Continuation):
     """Operator view only. V5 still owns final manifest and provider admission."""
 
-    def __init__(self, root, locator, exports):
+    def __init__(self, root, locator, exports, *, historical_repo=None, runtime_release=None):
         self.root = v5.private(root)
         path = safe(self.root, "registration.json")
         require(snapshot_stat(path).st_size <= 64*2**20, "MINICPM_REGISTRATION_BOUND")
         self.registration = read(path)
         self.mirror = v5.private(safe(v5.ROOT, self.registration["mirror"]))
         self.distinct(self.root, self.mirror)
-        self.grant = v5.authenticate(self.registration["locator"], self.registration["exports"], collection=True)
+        self.load_authority(historical_repo, runtime_release)
         require(policy.first_serial(self.grant) == 9, "MINICPM_FAST_REQUIRES_V5")
         self.release = authenticate_release(locator, exports, self.registration, self.grant)
+        if self.historical_repo != contract.ROOT:
+            require({"companion_dependencies", "closure_snapshots"} <= set(self.release),
+                "MINICPM_FAST_TRANSITION_RELEASE_REQUIRED")
         self.check_registration()
 
     @classmethod
@@ -310,6 +344,12 @@ class Continuation(v5.Continuation):
                     and active["gate_proof"] == "gates/" + signed["owner_gate"]["proof_sha256"] + ".bin",
                     "MINICPM_FAST_CANONICAL_RESERVATION_PATHS")
         self._completions = {row["payload"]["ticket_sha256"]: row for row in rows if row["kind"] == v5.PROVISIONAL}
+        self._closures = {row["payload"]["summary"]["ticket_sha256"]: row for row in rows
+            if row["kind"] == prenative.DISPOSITION}
+        if "closure_snapshots" in self.release:
+            require(set(self.release["closure_snapshots"]) ==
+                {str(row["payload"]["summary"]["number"]) for row in rows[:prefix]
+                    if row["kind"] == prenative.DISPOSITION}, "MINICPM_FAST_CLOSURE_PREFIX_SCOPE")
         self._rows = rows
         return rows
 
@@ -342,7 +382,8 @@ class Continuation(v5.Continuation):
                 and seal["payload"] == self.seal_payload(event), "MINICPM_FAST_SEAL_DRIFT")
             a.verify_signature(self.grant["public_key"], seal["payload"], seal["signature"])
         files = package_files(active, self._accepted)
-        require(active["notebook"]["metadata"]["safeshift"]["runtime_ref"] == self.grant["runtime_commit"],
+        grant, _, _ = self.authority_for(active)
+        require(active["notebook"]["metadata"]["safeshift"]["runtime_ref"] == grant["runtime_commit"],
             "MINICPM_FAST_V5_RUNTIME_REF")
         for root in (self.root, self.mirror):
             for name, expected in custody_files(completion).items():
@@ -351,6 +392,86 @@ class Continuation(v5.Continuation):
         self._accepted.append({**active, "completion": completion})
         return completion["verification"]
 
+    @staticmethod
+    def closure_seal_name(serial):
+        return f"closure-verifications/{serial}.json"
+
+    def closure_seal_payload(self, event, evidence_sha256):
+        return {"schema": CLOSURE_SEAL, "registration_sha256": self.release["registration_sha256"],
+            "event_sha256": digest(event), "event_unix": event["unix"], "evidence_sha256": evidence_sha256}
+
+    def closure_seals(self, serial):
+        return [safe(root, self.closure_seal_name(serial)) for root in (self.root, self.mirror)]
+
+    @staticmethod
+    def read_closure_seal(path):
+        require(snapshot_stat(path).st_size <= 8192, "MINICPM_FAST_CLOSURE_SEAL_BOUND")
+        return read(path)
+
+    def check_closure(self, active, download, closure):
+        serial = active["ticket"]["payload"]["number"]
+        event = self._closures[digest(active["ticket"])]
+        if event["number"] <= self.release["prefix_event_number"]:
+            expected = self.release.get("closure_snapshots", {}).get(str(serial))
+            if expected is None:
+                return super().check_closure(active, download, closure)
+        else:
+            seals = self.closure_seals(serial)
+            # A V5 closure written outside the companion has no seal. Replay
+            # it with the original verifier until an Owner release audits it.
+            if not any(path.exists() for path in seals):
+                return super().check_closure(active, download, closure)
+            seal, mirror = map(self.read_closure_seal, seals)
+            require(seal == mirror and set(seal) == {"payload", "signature"}, "MINICPM_FAST_CLOSURE_SEAL_MIRROR")
+            expected = seal["payload"]["evidence_sha256"]
+            require(seal["payload"] == self.closure_seal_payload(event, expected), "MINICPM_FAST_CLOSURE_SEAL_DRIFT")
+            a.verify_signature(self.grant["public_key"], seal["payload"], seal["signature"])
+        require(closure_snapshot(v5.private(safe(v5.ROOT, download))) == expected,
+            "MINICPM_FAST_CLOSURE_EVIDENCE_DRIFT")
+        return super().check_closure(active, download, closure, verified_local=closure["local"])
+
+    def close_pre_native(self, download, closure, *, private_key, kernel_id):
+        path = v5.relative(download)
+        with v5.lock(self.root):
+            state = self.state()
+            require(type(kernel_id) is int and kernel_id > 0 and closure.get("provider", {}).get("kernel_id") == kernel_id,
+                "MINICPM_PRE_NATIVE_EXPECTED_KERNEL_ID")
+            for item in state["closed"]:
+                if item["summary"]["ticket_sha256"] == closure.get("local", {}).get("ticket_sha256"):
+                    require(item["download"] == path and item["closure"] == closure, "MINICPM_PRE_NATIVE_EXISTING_CLOSURE_DRIFT")
+                    return {"status": "ALREADY_CLOSED", "reserved": state["reserved"],
+                        "next_ordinal": state["next_ordinal"],
+                        "active_serial": state["active"]["ticket"]["payload"]["number"] if state["active"] else None}
+            active = state["active"]
+            require(active is not None and not state["stopped"] and state["final"] is None,
+                "MINICPM_NO_ACTIVE_CLOSURE")
+            require(closure.get("local", {}).get("ticket_sha256") == digest(active["ticket"]),
+                "MINICPM_PRE_NATIVE_ACTIVE_TICKET")
+            require(v5.old.public_from_private(private_key) == self.grant["public_key"],
+                "MINICPM_ORIGINAL_PRIVATE_KEY_REQUIRED")
+            used = {item["closure"]["provider"]["kernel_id"] for item in state["closed"]}
+            used.update(item["completion"]["verification"]["owner_receipt"]["kernel_id"] for item in state["completed"])
+            used.update(self.registration["base"][name]["provider"]["kernel_id"]
+                for name in ("serial7_closure", "serial8_closure"))
+            require(kernel_id not in used, "MINICPM_DUPLICATE_OWNER_KERNEL")
+            serial = active["ticket"]["payload"]["number"]
+            require(not any((root / f"custody/{serial}").exists() or (root / self.seal_name(active)).exists()
+                for root in (self.root, self.mirror)), "MINICPM_FAST_ACCEPT_ALREADY_STARTED")
+            source = v5.private(safe(v5.ROOT, path))
+            evidence = closure_snapshot(source)
+            summary = super().check_closure(active, path, closure)
+            require(closure_snapshot(source) == evidence, "MINICPM_FAST_CLOSURE_EVIDENCE_DRIFT")
+            payload = {"download": path, "closure": closure, "summary": summary}
+            seals = self.closure_seals(serial)
+            existing = next((seal for seal in seals if seal.exists()), None)
+            unix = self.read_closure_seal(existing)["payload"]["event_unix"] if existing else time.time()
+            event = self.next_event(prenative.DISPOSITION, payload, unix=unix)
+            envelope = v5.old.sign(private_key, self.grant["public_key"], self.closure_seal_payload(event, evidence))
+            for seal in seals:
+                v5.put(seal, json_bytes(envelope))
+            self.commit(prenative.DISPOSITION, payload, unix=unix)
+            return {"status": prenative.DISPOSITION, "reserved": state["reserved"], "next_ordinal": state["next_ordinal"]}
+
     def state(self):
         self._accepted = []
         state = super().state()
@@ -358,9 +479,13 @@ class Continuation(v5.Continuation):
         # investigation. This also catches a removed reservation with files left.
         serials = {str(row["payload"]["ticket"]["payload"]["number"]) for row in self._rows
             if row["kind"] == "RESERVED_OFFLINE"}
+        close_serials = {str(item["summary"]["number"]) for item in state["closed"]}
+        if state["active"] is not None:
+            close_serials.add(str(state["active"]["ticket"]["payload"]["number"]))
         for root in (self.root, self.mirror):
             for folder, expected in (("handoffs", serials), ("custody", serials),
-                                      ("accept-verifications", {n + ".json" for n in serials})):
+                                      ("accept-verifications", {n + ".json" for n in serials}),
+                                      ("closure-verifications", {n + ".json" for n in close_serials})):
                 path = safe(root, folder)
                 if path.exists():
                     snapshot_stat(path, directory=True)
@@ -371,6 +496,12 @@ class Continuation(v5.Continuation):
         forecast = super().forecast()
         remaining = {key: self.grant["caps"]["total_" + key] - forecast["reserved"][key]
             for key in ("calls", "jobs", "gpu_seconds")}
+        if self.historical_repo != contract.ROOT:
+            forecast["runtime_release"] = "VERIFIED" if self.runtime_grant else "REQUIRED_BEFORE_STAGE"
+            telemetry = forecast["telemetry"]
+            if telemetry is not None and (self.runtime_grant is None
+                or telemetry["source_sha256"] != self.runtime_grant["scope"]["source_sha256"]):
+                forecast["telemetry"] = None
         max_calls = self.grant["caps"]["job_calls"]
         forecast["grant_capacity"] = {
             "remaining_reservations": remaining,
@@ -410,6 +541,8 @@ class Continuation(v5.Continuation):
             require(v5.old.public_from_private(private_key) == self.grant["public_key"],
                 "MINICPM_ORIGINAL_PRIVATE_KEY_REQUIRED")
             serial = active["ticket"]["payload"]["number"]
+            require(not any(path.exists() for path in self.closure_seals(serial)), "MINICPM_FAST_CLOSURE_ALREADY_STARTED")
+            grant, _, _ = self.authority_for(active)
             folder = f"custody/{serial}"
             sources = {p.name: p for out in (Path(attempt), Path(supervisor))
                 for p in (out, Path(str(out) + ".sha256.json"))}
@@ -421,7 +554,7 @@ class Continuation(v5.Continuation):
                         v5.copy(source, safe(root, folder + "/" + name))
                     v5.put(safe(root, folder + "/owner-receipt.json"), json_bytes(receipt))
                 files = package_files(active, state["completed"])
-                require(active["notebook"]["metadata"]["safeshift"]["runtime_ref"] == self.grant["runtime_commit"],
+                require(active["notebook"]["metadata"]["safeshift"]["runtime_ref"] == grant["runtime_commit"],
                     "MINICPM_FAST_V5_RUNTIME_REF")
                 for root in (self.root, self.mirror):
                     check_package(safe(root, active["package"]), files)
@@ -432,7 +565,7 @@ class Continuation(v5.Continuation):
                 require(receipt["kernel_id"] not in used, "MINICPM_DUPLICATE_OWNER_KERNEL")
                 result = {"ticket_sha256": digest(active["ticket"]), "attempt": folder + "/" + Path(attempt).name,
                     "supervisor": folder + "/" + Path(supervisor).name, "proof": folder + "/terminal-proof.bin"}
-                verified = verify_new(self.grant, active, safe(self.root, result["attempt"]),
+                verified = verify_new(grant, active, safe(self.root, result["attempt"]),
                     safe(self.root, result["supervisor"]), receipt, safe(self.root, result["proof"]))
                 result["verification"] = verified
                 for root in (self.root, self.mirror):
@@ -462,9 +595,14 @@ class Continuation(v5.Continuation):
             state = self.state()
             require(not state["stopped"] and state["final"] is None and state["active"] is None
                 and state["next_ordinal"] < 3763, "MINICPM_ACTIVE_STOP_FINAL_OR_FINISHED")
-            v5.authenticate(self.registration["locator"], self.registration["exports"])
-            v5.require_live_transition(self.grant, self.registration["locator"], self.registration["exports"])
-            require(v5.old.public_from_private(private_key) == self.grant["public_key"],
+            grant = self.runtime_grant or self.grant
+            locator = self.runtime_locator or self.registration["locator"]
+            exports = self.runtime_exports if self.runtime_grant else self.registration["exports"]
+            require(self.runtime_grant is not None or self.historical_repo == contract.ROOT,
+                "MINICPM_NEW_RUNTIME_RELEASE_REQUIRED_TO_STAGE")
+            require(v5.authenticate(locator, exports) == grant, "MINICPM_STAGE_RUNTIME_AUTHORITY")
+            v5.require_live_transition(grant, locator, exports)
+            require(v5.old.public_from_private(private_key) == grant["public_key"],
                 "MINICPM_ORIGINAL_PRIVATE_KEY_REQUIRED")
             require(0 < snapshot_stat(gate_proof).st_size <= 16*2**20, "MINICPM_OWNER_GATE_PROOF_BOUND")
             pinned(gate_proof, gate["proof_sha256"])
@@ -482,27 +620,35 @@ class Continuation(v5.Continuation):
                 value = deepcopy(self.registration["initial"])
                 value.update(job=job, capsule_ref=capsule)
                 value["input_sources"]["dataset_sources"][-1] = capsule
-            policy.owner_gate(self.grant, gate, value)
+            policy.owner_gate(grant, gate, value)
             telemetry = completed[-1]["completion"]["verification"]["telemetry"] if completed else None
-            proposal = policy.proposal(self.grant, 3763-state["next_ordinal"], state["reserved"], gate, telemetry)
+            if telemetry is not None and telemetry["source_sha256"] != grant["scope"]["source_sha256"]:
+                telemetry = None
+            proposal = policy.proposal(grant, 3763-state["next_ordinal"], state["reserved"], gate, telemetry)
             request = value["request"]
-            request["plan"] = contract.plan(request["campaign"], value["cohort"], request["plan"]["identity"],
+            if self.runtime_grant is not None:
+                t = self.runtime_grant["continuation"]
+                require(serial >= t["first_serial"]
+                    and (serial == t["first_serial"]) == (len(self._rows) == t["prefix_number"]),
+                    "MINICPM_V5_TRANSITION_NEXT_SERIAL")
+            request["source_sha256"] = grant["scope"]["source_sha256"]
+            request["plan"] = contract.plan(request["campaign"], value["cohort"], grant["scope"]["identity"],
                 request["history"], action="resume" if completed else "initial", run_id=name, attempt_id=name+"-attempt",
                 max_calls=proposal["calls"], max_seconds=proposal["seconds"])
             from scripts.generate_minicpm_fulltrain_notebook import notebook
-            nb = notebook(self.grant["runtime_commit"], capsule_sha256=digest(value),
-                release_locator=self.registration["locator"], release_version=policy.first_serial(self.grant))
+            nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value),
+                release_locator=locator, release_version=policy.first_serial(grant))
             before = state["reserved"]
-            payload = {"schema": policy.ticket_schema(self.grant), "grant_sha256": digest(self.grant),
+            payload = {"schema": policy.ticket_schema(grant), "grant_sha256": digest(grant),
                 "value_sha256": digest(value), "capsule_sha256": digest(value), "notebook_code_sha256": code_hash(nb),
                 "number": serial, "previous_event_sha256": digest(self._rows[-1]), "reserved_before": before,
                 "reserved_after": {"calls": before["calls"]+proposal["calls"], "jobs": before["jobs"]+1,
                     "gpu_seconds": before["gpu_seconds"]+2*proposal["seconds"]},
-                "issued_unix": int(time.time()), "start_before_unix": gate["observed_unix"]+self.grant["provider_max_age_seconds"],
+                "issued_unix": int(time.time()), "start_before_unix": gate["observed_unix"]+grant["provider_max_age_seconds"],
                 "owner_gate": gate, "sizing": proposal, "lineage": self.lineage(completed),
                 "closures": [row["summary"] for row in state["closed"]]}
-            ticket = v5.old.sign(private_key, self.grant["public_key"], payload)
-            a.verify_ticket(self.grant, ticket, value)
+            ticket = v5.old.sign(private_key, grant["public_key"], payload)
+            a.verify_ticket(grant, ticket, value)
             proof_name = "gates/" + gate["proof_sha256"] + ".bin"
             for root in (self.root, self.mirror):
                 v5.copy(gate_proof, safe(root, proof_name))
@@ -520,15 +666,17 @@ class Continuation(v5.Continuation):
             serial = active["ticket"]["payload"]["number"]
             require(not any((root / f"custody/{serial}").exists() or (root / self.seal_name(active)).exists()
                 for root in (self.root, self.mirror)), "MINICPM_FAST_ACCEPT_ALREADY_STARTED")
+            require(not any(path.exists() for path in self.closure_seals(serial)), "MINICPM_FAST_CLOSURE_ALREADY_STARTED")
             return self.export_package(active, state["completed"])
 
     def export_package(self, active, completed):
         files = package_files(active, completed)
         value, ticket = active["value"], active["ticket"]
         signed = ticket["payload"]
-        require(time.time() < signed["start_before_unix"] and time.time() < self.grant["expires_unix"],
+        grant, _, _ = self.authority_for(active)
+        require(time.time() < signed["start_before_unix"] and time.time() < grant["expires_unix"],
             "MINICPM_OFFLINE_TICKET_EXPIRED")
-        require(active["notebook"]["metadata"]["safeshift"]["runtime_ref"] == self.grant["runtime_commit"],
+        require(active["notebook"]["metadata"]["safeshift"]["runtime_ref"] == grant["runtime_commit"],
             "MINICPM_FAST_V5_RUNTIME_REF")
         steps = {"status": "OFFLINE_PREPARED_NOT_UPLOADED_NOT_SUBMITTED", "job": value["job"], "version": 1,
             "capsule": value["capsule_ref"], "input_sources": value["input_sources"], "ticket_sha256": digest(ticket),
@@ -553,33 +701,47 @@ class Continuation(v5.Continuation):
             v5.put(safe(pkg, "owner-steps.json"), json_bytes(steps))
         return {"status": steps["status"], "directory": v5.relative(self.root / active["package"])}
 
+    def full_verifier(self):
+        historical = self.historical_repo if self.historical_repo != contract.ROOT else None
+        release = (self.runtime_locator, self.runtime_exports) if self.runtime_grant else None
+        return v5.Continuation(self.root, historical_repo=historical, runtime_release=release)
+
     def manifest(self):
-        return v5.Continuation(self.root).manifest()
+        return self.full_verifier().manifest()
 
     def reconcile(self, report, exports, owner_locator):
-        return v5.Continuation(self.root).reconcile(report, exports, owner_locator)
+        return self.full_verifier().reconcile(report, exports, owner_locator)
 
     def official_report(self):
-        return v5.Continuation(self.root).official_report()
+        return self.full_verifier().official_report()
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("directory", "operator-release", "owner-exports"):
         parser.add_argument("--" + name, type=Path, required=True)
+    v5.add_runtime_options(parser)
     sub = parser.add_subparsers(dest="command", required=True)
     for name in ("status", "forecast", "export-active"):
         sub.add_parser(name)
     accept = sub.add_parser("accept")
     for name in ("attempt", "supervisor", "owner-receipt", "proof", "private-key"):
         accept.add_argument("--" + name, type=Path, required=True)
+    close = sub.add_parser("close-pre-native")
+    for name in ("download", "provider-closure", "private-key"):
+        close.add_argument("--" + name, type=Path, required=True)
+    close.add_argument("--kernel-id", type=int, required=True)
     stage = sub.add_parser("stage")
     for name in ("private-key", "owner-gate", "proof"):
         stage.add_argument("--" + name, type=Path, required=True)
     args = parser.parse_args(argv)
-    route = Continuation(args.directory, read(v5.private(args.operator_release)), read(v5.private(args.owner_exports)))
+    route = Continuation(args.directory, read(v5.private(args.operator_release)), read(v5.private(args.owner_exports)),
+        **v5.runtime_options(args))
     if args.command == "accept":
         result = route.accept(args.attempt, args.supervisor, read(args.owner_receipt), args.proof, private_key=args.private_key)
+    elif args.command == "close-pre-native":
+        result = route.close_pre_native(args.download, read(args.provider_closure), private_key=args.private_key,
+            kernel_id=args.kernel_id)
     elif args.command == "stage":
         result = route.stage(args.private_key, read(args.owner_gate), args.proof)
     elif args.command == "export-active":
@@ -589,6 +751,9 @@ def main(argv=None):
     else:
         state = route.state()
         result = {key: state[key] for key in ("status", "counts", "reserved", "next_ordinal", "stopped")}
+        result["closed_pre_native"] = [{"serial": item["summary"]["number"],
+            "kernel_id": item["closure"]["provider"]["kernel_id"], "ticket_sha256": item["summary"]["ticket_sha256"]}
+            for item in state["closed"]]
         result["active"] = None if state["active"] is None else {
             "serial": state["active"]["ticket"]["payload"]["number"], "job": state["active"]["value"]["job"],
             "ticket_sha256": digest(state["active"]["ticket"])}
