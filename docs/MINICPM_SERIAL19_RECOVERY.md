@@ -101,11 +101,11 @@ cửa sổ chạy. Ticket hết hạn hoặc có custody đang thu cần đối 
 
 | Thành phần | Đã phát hành | Ứng viên trong Draft PR |
 | --- | --- | --- |
-| Runtime source manifest SHA256 | `81ddb4df4a13e08f98e8944b3a7070b90d8b484d4a0f3605667829ca1a4f9b41` | `248ce992f29ac3b98aec9df0beec319d85be2b16461a3a5bca05a98d76e3c5d4` |
+| Runtime source manifest SHA256 | `81ddb4df4a13e08f98e8944b3a7070b90d8b484d4a0f3605667829ca1a4f9b41` | `a4dd4d775389272eba81b0542dc45662ec2ccdc8fe99d5e22b6fc5829e2734a3` |
 | V5 tool manifest SHA256 | `52c900bd4b1adac38f11119b7787fcdb0fd004b8f81dcdacbfab8aad86014975` | `5a4c12c32872e2c3c99e043d3e974fb10ed5dccfc3ea9a0c53d99bae8f06b6d8` |
 | Fast companion file SHA256 | `4fdf4fe10bb69f40dd8e1a6e3fb9e130ffda588839855d41438363196a5aee77` | `5a4acf9fc690c8dbd8eee81e47c6d1531519d432b4057b91e39816c30195e3be` |
 
-Nguồn runtime đổi ở `admission.py`, `contract.py`, `minicpm_execution.py`,
+Nguồn runtime đổi ở `admission.py`, `contract.py`, `engine.py`, `minicpm_execution.py`,
 `minicpm_offline.py`, `minicpm_release.py`, `minicpm_ui.py`,
 `original_inputs.py` và `runtime.py`. Tool manifest đổi qua
 `scripts/minicpm_offline_continuation.py` và
@@ -138,7 +138,10 @@ dùng để tính tốc độ của nguồn mới.
 ## Bàn giao sau khi có quyền
 
 1. Sau review, audit, merge được cấp riêng và hậu kiểm, Operator kiểm hai
-   mirror và xác minh prefix bằng V5 đầy đủ trên checkout nguồn cũ.
+   mirror và xác minh prefix bằng V5 đầy đủ trên checkout nguồn cũ. Giữ một
+   checkout chỉ chứa source V5 đã khóa cho `--historical-repo`. Cập nhật mã
+   đã merge trong chính checkout Operator đang giữ `data/processed` để
+   primary, mirror, registration và khóa vẫn ở đúng đường dẫn hiện hành.
    Owner phát hành lại record `SAFESHIFT_MINICPM_OFFLINE_OPERATOR_FAST_V1`
    theo [hợp đồng release Fast](MINICPM_OFFLINE_CONTINUATION.md#chuyển-tiếp-trên-cùng-chiến-dịch),
    cộng `companion_dependencies` với `source_sha256`, `tools_sha256` và
@@ -198,5 +201,5 @@ tmpfs, Python 3.14.4. Không suy các số này thành thời gian production.
 
 | Đường đóng lượt | Giây | Mở ZIP | Replay lịch sử | Byte đọc từ file | Byte ZIP nén đọc | Byte giải nén | SHA256 | Lần gọi SHA file |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| V5 đầy đủ | 236,8304 | 56 | 6 | 968.676.820 | 434.713.743 | 268.369.483 | 377.210 | 66.494 |
-| Companion | 6,8932 | 2 | 0 | 487.876.827 | 219.640.236 | 7.927.335 | 29.546 | 4.598 |
+| V5 đầy đủ | 232,9506 | 56 | 6 | 968.744.502 | 434.580.278 | 268.365.301 | 377.210 | 66.494 |
+| Companion | 6,0243 | 2 | 0 | 487.970.223 | 219.567.644 | 7.927.335 | 29.546 | 4.598 |

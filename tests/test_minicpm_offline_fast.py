@@ -398,6 +398,9 @@ class FastTests(fixtures.OfflineTests):
         self.assertEqual(active["ticket"]["payload"]["number"], 20)
         self.assertEqual(active["ticket"]["payload"]["grant_sha256"], digest(new))
         self.assertEqual(active["ticket"]["payload"]["reserved_before"], state["reserved"])
+        self.assertEqual(self.close_fast(upgraded, evidence, kernel_id=19)["active_serial"], 20)
+        with self.assertRaisesRegex(ValueError, "ACTIVE_STOP"):
+            upgraded.stage(self.key, gate, self.proof)
         self.assertEqual(old_events, {name: (quick.root / name).read_bytes() for name in old_events})
         self.assertEqual(upgraded.full_verifier().state(), upgraded.state())
         self.assertEqual(upgraded.export_active(), upgraded.export_active())

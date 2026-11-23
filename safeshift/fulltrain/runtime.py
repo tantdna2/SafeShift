@@ -99,17 +99,22 @@ def recover(root, cohort, plan_sha):
     must also verify; otherwise recovery blocks and preserves all original bytes.
     """
     root = Path(root)
-    spec = read(root / "plan.json")["identity"]
-    if spec["model_key"] == "qwen3" and not spec["model_id"].startswith("synthetic/"):
+    p, campaign, prior = (read(root / name) for name in ("plan.json", "campaign.json", "history.json"))
+    spec = p["identity"]
+    mixed = spec["model_key"] == "minicpm4" and any(h["identity"] != spec for h in prior)
+    if mixed:
+        from .engine import recover as recover_mixed
+        h = recover_mixed(root, cohort, plan_sha, campaign=campaign)
+    elif spec["model_key"] == "qwen3" and not spec["model_id"].startswith("synthetic/"):
         from .engine import recover as qwen_recover
         from .qwen import parser
         h = qwen_recover(root, cohort, plan_sha, label_parser=parser)
     else:
         h = journal.recover(root, cohort, plan_sha)
-    p, campaign = read(root / "plan.json"), read(root / "campaign.json")
-    require(p == contract.plan(campaign, cohort, p["identity"], read(root / "history.json"),
-        action=p["action"], run_id=p["run_id"], attempt_id=p["attempt_id"],
-        max_calls=p["max_calls"], max_seconds=p["max_seconds"], repair=p["repair"]), "FRESH_RECOVERY_PLAN")
+    if not mixed:
+        require(p == contract.plan(campaign, cohort, spec, prior, action=p["action"],
+            run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"],
+            max_seconds=p["max_seconds"], repair=p["repair"]), "FRESH_RECOVERY_PLAN")
     repair_path = root / "repair_case.json"
     check_repair_case(p, read(repair_path) if repair_path.exists() else None)
     if cohort["scope"] != "SYNTHETIC_ONLY":
