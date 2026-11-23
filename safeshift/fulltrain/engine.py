@@ -167,7 +167,7 @@ def _record(root, row, p, label_parser):
     return result
 
 
-def recover(root, cohort_value, expected_plan_hash, *, label_parser=parse_label, campaign=None):
+def recover(root, cohort_value, expected_plan_hash, *, label_parser=parse_label):
     """Read only a checked attempt. Torn valid raw is replayed into a new projection."""
     root = Path(root)
     snapshot = members(root)
@@ -178,30 +178,17 @@ def recover(root, cohort_value, expected_plan_hash, *, label_parser=parse_label,
     require(digest(p) == expected_plan_hash, "PLAN_CHECKSUM")
     rows = f.validate_cohort(cohort_value, p["cohort_sha256"])
     prior = read(root / "history.json")
-    from . import contract
-    opts = {key: p[key] for key in ("action", "run_id", "attempt_id", "max_calls", "max_seconds", "repair")}
-    if campaign is None:
-        expected = f.plan(cohort_value, p["cohort_sha256"], p["identity"], prior, p["history_sha256"],
-            series_id=p["series_id"], **opts)
-    else:
-        require(p["identity"]["model_key"] == "minicpm4" and label_parser is parse_label, "MINICPM_V5_RECOVERY_ONLY")
-        expected = contract.plan(campaign, cohort_value, p["identity"], prior, **opts)
-    require(p == expected, "PLAN_RECOMPUTE_MISMATCH")
+    require(p == f.plan(cohort_value, p["cohort_sha256"], p["identity"], prior, p["history_sha256"],
+        action=p["action"], series_id=p["series_id"], run_id=p["run_id"], attempt_id=p["attempt_id"],
+        max_calls=p["max_calls"], max_seconds=p["max_seconds"], repair=p["repair"]), "PLAN_RECOMPUTE_MISMATCH")
     if (root / "calls").exists():
         expected = {f"{i:06d}" for i in p["scheduled_ordinals"]}
         require({v.name for v in (root / "calls").iterdir()} <= expected, "UNPLANNED_CALL_DIRECTORY")
-    if campaign is None:
-        records = [_record(root, rows[i], p, label_parser) for i in p["scheduled_ordinals"]]
-    else:
-        from safeshift.candidates.fulltrain_run import _record as minicpm_record
-        records = [minicpm_record(root, rows[i], p) for i in p["scheduled_ordinals"]]
+    records = [_record(root, rows[i], p, label_parser) for i in p["scheduled_ordinals"]]
     # A failed load has no sample start and remains pending, with failure retained.
     h = {"run_id": p["run_id"], "attempt_id": p["attempt_id"], "series_id": p["series_id"],
          "identity": p["identity"], "cohort_sha256": p["cohort_sha256"],
          "parent_history_sha256": p["history_sha256"], "action": p["action"], "repair": p["repair"],
          "records": records, "evidence_sha256": digest(snapshot)}
-    complete = [*prior, h]
-    if campaign is not None:
-        complete = contract.history_view(complete, p["identity"], action=p["action"])
-    f.checked_history(complete, rows, p["cohort_sha256"], digest(complete))
+    f.checked_history([*prior, h], rows, p["cohort_sha256"], digest([*prior, h]))
     return h

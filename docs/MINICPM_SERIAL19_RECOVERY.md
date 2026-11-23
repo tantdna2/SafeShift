@@ -101,11 +101,11 @@ cửa sổ chạy. Ticket hết hạn hoặc có custody đang thu cần đối 
 
 | Thành phần | Đã phát hành | Ứng viên trong Draft PR |
 | --- | --- | --- |
-| Runtime source manifest SHA256 | `81ddb4df4a13e08f98e8944b3a7070b90d8b484d4a0f3605667829ca1a4f9b41` | `a4dd4d775389272eba81b0542dc45662ec2ccdc8fe99d5e22b6fc5829e2734a3` |
+| Runtime source manifest SHA256 | `81ddb4df4a13e08f98e8944b3a7070b90d8b484d4a0f3605667829ca1a4f9b41` | `4c3698d804c92ac81ec11c0dbcf783ae646c8e5fdaa8f8ac73f37ee183b990b1` |
 | V5 tool manifest SHA256 | `52c900bd4b1adac38f11119b7787fcdb0fd004b8f81dcdacbfab8aad86014975` | `5a4c12c32872e2c3c99e043d3e974fb10ed5dccfc3ea9a0c53d99bae8f06b6d8` |
 | Fast companion file SHA256 | `4fdf4fe10bb69f40dd8e1a6e3fb9e130ffda588839855d41438363196a5aee77` | `5a4acf9fc690c8dbd8eee81e47c6d1531519d432b4057b91e39816c30195e3be` |
 
-Nguồn runtime đổi ở `admission.py`, `contract.py`, `engine.py`, `minicpm_execution.py`,
+Nguồn runtime đổi ở `admission.py`, `contract.py`, `minicpm_execution.py`,
 `minicpm_offline.py`, `minicpm_release.py`, `minicpm_ui.py`,
 `original_inputs.py` và `runtime.py`. Tool manifest đổi qua
 `scripts/minicpm_offline_continuation.py` và
@@ -203,3 +203,8 @@ tmpfs, Python 3.14.4. Không suy các số này thành thời gian production.
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | V5 đầy đủ | 232,9506 | 56 | 6 | 968.744.502 | 434.580.278 | 268.365.301 | 377.210 | 66.494 |
 | Companion | 6,0243 | 2 | 0 | 487.970.223 | 219.567.644 | 7.927.335 | 29.546 | 4.598 |
+
+Sau phần đo thời gian, fixture đã đi qua forecast, release chuyển nguồn tổng
+hợp, gate, một lần reserve Serial 20 và export lại capsule. Kiểm lại đúng
+2.677 bản ghi, cùng toàn bộ 1.086 ordinal còn lại theo thứ tự. Luồng fast
+sau chuyển nguồn hoàn thành các bước này với thao tác mở ZIP bị chặn.

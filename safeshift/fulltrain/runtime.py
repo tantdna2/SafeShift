@@ -7,7 +7,7 @@ from pathlib import Path
 import time
 
 from safeshift.candidates import fulltrain_run as journal
-from safeshift.candidates.train_history import lease_key
+from safeshift.candidates.train_history import lease_key, members
 from safeshift.candidates.source import require, ROOT, snapshot_stat
 from safeshift.pilot.artifacts import read, safe, sha, write, export
 from safeshift.pilot.contract import digest
@@ -92,6 +92,25 @@ def check_repair_case(p, repair_case):
         require(repair_case is None, "REPAIR_CASE_ON_WRONG_ACTION")
 
 
+def _recover_mixed(root, cohort, p, prior):
+    """Replay the original MiniCPM record reader with the V5 history view."""
+    snapshot = members(root)
+    snapshot.pop("checksums.json", None)
+    if (root / "checksums.json").exists():
+        require(read(root / "checksums.json") == snapshot, "SEALED_JOURNAL_CHANGED")
+    expected = {f"{ordinal:06d}" for ordinal in p["scheduled_ordinals"]}
+    calls = root / "calls"
+    if calls.exists():
+        require({entry.name for entry in calls.iterdir()} <= expected, "UNPLANNED_CALL_DIRECTORY")
+    rows = contract.planning.validate_cohort(cohort, p["cohort_sha256"])
+    records = [journal._record(root, rows[ordinal], p) for ordinal in p["scheduled_ordinals"]]
+    h = {key: p[key] for key in ("run_id", "attempt_id", "series_id", "identity", "cohort_sha256", "action", "repair")}
+    h.update(parent_history_sha256=p["history_sha256"], records=records, evidence_sha256=digest(snapshot))
+    complete = contract.history_view([*prior, h], p["identity"], action=p["action"])
+    contract.planning.checked_history(complete, rows, p["cohort_sha256"], digest(complete))
+    return h
+
+
 def recover(root, cohort, plan_sha):
     """Fresh campaign and native custody on top of the unchanged journal reader.
 
@@ -103,8 +122,11 @@ def recover(root, cohort, plan_sha):
     spec = p["identity"]
     mixed = spec["model_key"] == "minicpm4" and any(h["identity"] != spec for h in prior)
     if mixed:
-        from .engine import recover as recover_mixed
-        h = recover_mixed(root, cohort, plan_sha, campaign=campaign)
+        require(digest(p) == plan_sha, "PLAN_CHECKSUM")
+        require(p == contract.plan(campaign, cohort, spec, prior, action=p["action"],
+            run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"],
+            max_seconds=p["max_seconds"], repair=p["repair"]), "FRESH_RECOVERY_PLAN")
+        h = _recover_mixed(root, cohort, p, prior)
     elif spec["model_key"] == "qwen3" and not spec["model_id"].startswith("synthetic/"):
         from .engine import recover as qwen_recover
         from .qwen import parser
