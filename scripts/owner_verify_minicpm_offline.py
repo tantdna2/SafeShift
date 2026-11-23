@@ -310,8 +310,8 @@ def verify(route, destination, *, owner_performs_network=False, client=None, ali
         if getattr(route, "runtime_grant", None) is not None:
             paths.update(route.runtime_exports)
         exports = {path: c.a.github_get(path) for path in sorted(paths)}
-        historical = getattr(route, "historical_repo", c.contract.ROOT)
-        options = {"repo": historical} if historical != c.contract.ROOT else {}
+        historical_repo = getattr(route, "historical_repo", c.contract.ROOT)
+        options = {"repo": historical_repo} if historical_repo != c.contract.ROOT else {}
         c.authenticate(route.registration["locator"], exports, collection=True, **options)
         if getattr(route, "runtime_grant", None) is not None:
             c.require(c.authenticate(route.runtime_locator, exports, collection=True) == route.runtime_grant,
