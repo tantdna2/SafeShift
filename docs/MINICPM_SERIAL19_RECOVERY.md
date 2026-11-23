@@ -208,3 +208,27 @@ Sau phần đo thời gian, fixture đã đi qua forecast, release chuyển ngu�
 hợp, gate, một lần reserve Serial 20 và export lại capsule. Kiểm lại đúng
 2.677 bản ghi, cùng toàn bộ 1.086 ordinal còn lại theo thứ tự. Luồng fast
 sau chuyển nguồn hoàn thành các bước này với thao tác mở ZIP bị chặn.
+
+## Kết quả kiểm thử
+
+- Suite companion trên WSL2 và regression giữ nguyên trình replay dùng chung
+  qua 13/13 test. Bao gồm nhận kết quả dưới hai grant, retry closure chính xác,
+  một mirror ghi dở, kernel ID sai, ZIP/SHA sai, claim native bất ngờ và Serial
+  20 đã reserve. Source digest của kết quả cũ giữ đúng giá trị ban đầu.
+- Ba regression trên Windows qua kiểm staging capsule đã xác minh, trần riêng
+  CPU và chặn child khi thời gian còn lại dành hết cho export. Trên Linux, kiểm
+  thay đổi ảnh và checkpoint sau admit dùng lại SHA thực tế trên fixture. Test
+  supervisor riêng xác nhận tiến trình con và hậu duệ bị reap ở hard deadline.
+- Trình đọc V5 từ checkout đóng băng của main gốc đọc đúng event closure của
+  companion trên dữ liệu tổng hợp. Bản release V5 công khai khớp runtime manifest
+  và tool manifest của checkout gốc. Notebook ứng viên được tạo từ commit đã
+  ghim với capsule fixture, chỉ để kiểm tra builder.
+- Controller qua bài chạy tổng hợp 3.763 lần gọi và resume đầy đủ không gọi
+  thêm. V5 qua bài nhiều job, closure, provider SDK giả lập, final admission
+  và official-report chính xác 3.763 ID. Lần chạy lại bài V5 mất 302,969 giây
+  khi harness cục bộ tái dùng digest cho object fixture bất biến. Các bước
+  replay raw, kiểm archive, xác thực chữ ký và kiểm bộ đếm vẫn thực thi.
+- Các lượt rộng gồm 121 test runtime/source và 108 test continuation/runtime,
+  có phần giao. Hai lỗi chuyển nguồn/verifier và kiểm tra byte trình replay
+  dùng chung phát hiện trong các lượt đó đã được sửa và chạy lại đúng test
+  tương ứng. Con số này không đại diện cho toàn bộ test lịch sử của repository.

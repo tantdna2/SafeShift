@@ -9,7 +9,7 @@
 | Sửa runtime và companion | Trần CPU riêng 1.200 giây với chính sách hiện hành. Kiểm SHA tại stage dùng dữ liệu, giảm replay và ghi thời gian từng phần. `close-pre-native` dùng chứng từ và event V5 hiện có. [Runbook và hồ sơ nguồn](MINICPM_SERIAL19_RECOVERY.md). |
 | Serial 20 | Chờ review, audit, merge được cấp riêng, hậu kiểm, hai release xác thực và gate quota/Input hiện thời. Giữ cùng journal, khóa Operator, lịch sử và các hold. |
 
-## Hiện hành — MiniCPM-V-4 sau Serial 11 — 21/11/2026
+## Lịch sử — MiniCPM-V-4 sau Serial 11 — 21/11/2026
 
 | Phạm vi | Trạng thái và bằng chứng |
 | --- | --- |
