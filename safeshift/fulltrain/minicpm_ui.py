@@ -127,7 +127,7 @@ def restore_history(directory, value, work):
     return history
 
 
-def verify_capsule(directory, expected_sha256, repo=ROOT, *, release_ticket=False):
+def verify_capsule(directory, expected_sha256, repo=ROOT, *, release_ticket=False, replay=True):
     require_hash(expected_sha256)
     marker = safe(directory, MARKER)
     require(snapshot_stat(marker).st_size <= 64 * 2**20 and sha(marker) == expected_sha256, "UI_CAPSULE_PIN")
@@ -143,8 +143,9 @@ def verify_capsule(directory, expected_sha256, repo=ROOT, *, release_ticket=Fals
         snapshot_stat(safe(directory, entry.name))
         found.add(entry.name)
     require(found == names, "UI_CAPSULE_EXACT_FILES")
-    with tempfile.TemporaryDirectory() as tmp:
-        restore_history(directory, value, Path(tmp) / "work")
+    if replay:
+        with tempfile.TemporaryDirectory() as tmp:
+            restore_history(directory, value, Path(tmp) / "work")
     return value
 
 

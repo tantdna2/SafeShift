@@ -213,10 +213,10 @@ def serial8_closure(destination, *, owner_performs_network=False, client=None, p
 
 
 def pre_native_closure(directory, download, destination, *, provider_job=None, owner_performs_network=False,
-                       client=None):
+                       client=None, route_options=None, kernel_id=None):
     """Generic Owner provider closure for the active reservation of any serial."""
     c.require(owner_performs_network is True, "OWNER_MUST_PERSONALLY_RUN_EXTERNAL_VERIFICATION")
-    route = c.Continuation(directory)
+    route = c.Continuation(directory, **(route_options or {}))
     active = route.state()["active"]
     c.require(active is not None, "MINICPM_PRE_NATIVE_ACTIVE_RESERVATION_REQUIRED")
     download = c.private(download)
@@ -229,7 +229,8 @@ def pre_native_closure(directory, download, destination, *, provider_job=None, o
             client = api()
         candidates = {active["value"]["job"]} | ({provider_job} if provider_job else set())
         package = c.safe(route.root, active["package"])
-        result = provider_closure(client, active, local, download, package, destination, candidates)
+        result = provider_closure(client, active, local, download, package, destination, candidates,
+            kernel_id=kernel_id)
         c.prenative.verify_provider(result, local, active, c.prenative.package_files(package))
         c.write(destination / "pre-native-closure.json", result)
         return result
@@ -305,8 +306,16 @@ def verify(route, destination, *, owner_performs_network=False, client=None, ali
     manifest = route.manifest()
     destination.mkdir(parents=True, exist_ok=False)
     try:
-        exports = {path: c.a.github_get(path) for path in route.registration["exports"]}
-        c.authenticate(route.registration["locator"], exports, collection=True)
+        paths = set(route.registration["exports"])
+        if getattr(route, "runtime_grant", None) is not None:
+            paths.update(route.runtime_exports)
+        exports = {path: c.a.github_get(path) for path in sorted(paths)}
+        historical_repo = getattr(route, "historical_repo", c.contract.ROOT)
+        options = {"repo": historical_repo} if historical_repo != c.contract.ROOT else {}
+        c.authenticate(route.registration["locator"], exports, collection=True, **options)
+        if getattr(route, "runtime_grant", None) is not None:
+            c.require(c.authenticate(route.runtime_locator, exports, collection=True) == route.runtime_grant,
+                "MINICPM_FINAL_TRANSITION_AUTHORITY")
         if client is None:
             from safeshift.internvl3763_operator import api
             client = api()
@@ -383,11 +392,15 @@ def main(argv=None):
     group.add_argument("--serial8-proof-proposal", "--serial9-proof-proposal", type=Path)
     p.add_argument("--download", type=Path, help="Owner-downloaded Output of the failed serial")
     p.add_argument("--provider-job", help="Actual owner/slug if Kaggle ran the notebook under another slug")
+    p.add_argument("--kernel-id", type=int, help="Expected provider kernel ID for pre-native closure")
     p.add_argument("--aliases", type=Path, help="Final verification only: JSON mapping kernel ID to current Owner slug")
+    c.add_runtime_options(p)
     args = p.parse_args(argv)
     c.require((args.download is not None) == (args.pre_native_closure is not None)
         and (args.provider_job is None or args.pre_native_closure is not None or args.serial8_closure)
-        and (args.aliases is None or args.directory is not None), "MINICPM_PRE_NATIVE_ARGUMENTS")
+        and (args.aliases is None or args.directory is not None)
+        and (args.kernel_id is None or (args.kernel_id > 0 and args.pre_native_closure is not None)),
+        "MINICPM_PRE_NATIVE_ARGUMENTS")
     if args.authority_locator:
         result = acquire(c.read(args.authority_locator), args.output, owner_performs_network=args.owner_performs_network)
     elif args.serial7_closure:
@@ -398,13 +411,13 @@ def main(argv=None):
         result = {"status": "SERIAL8_PROVIDER_CLOSURE_EXPORTED"}
     elif args.pre_native_closure:
         pre_native_closure(args.pre_native_closure, args.download, args.output, provider_job=args.provider_job,
-            owner_performs_network=args.owner_performs_network)
+            owner_performs_network=args.owner_performs_network, route_options=c.runtime_options(args), kernel_id=args.kernel_id)
         result = {"status": "PRE_NATIVE_PROVIDER_CLOSURE_EXPORTED"}
     elif args.serial8_proof_proposal:
         result = serial8_proof(c.read(args.serial8_proof_proposal), args.output,
             owner_performs_network=args.owner_performs_network)
     else:
-        result = verify(c.Continuation(args.directory), args.output, owner_performs_network=args.owner_performs_network,
+        result = verify(c.Continuation(args.directory, **c.runtime_options(args)), args.output, owner_performs_network=args.owner_performs_network,
             aliases=c.read(args.aliases) if args.aliases else None)
     print(result["status"])
 

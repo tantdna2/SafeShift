@@ -162,7 +162,10 @@ def validate(grant, *, repo=ROOT):
     recovery = type(grant) is dict and grant.get("schema") == RECOVERY_SCHEMA
     repair = recovery and "repair" in grant
     offline = recovery and "offline" in grant
-    require(type(grant) is dict and set(grant) == fields | ({"recovery"} if recovery else set()) | ({"repair"} if repair else set()) | ({"offline"} if offline else set())
+    continuation = offline and "continuation" in grant
+    fields |= {name for name, present in (("recovery", recovery), ("repair", repair),
+        ("offline", offline), ("continuation", continuation)) if present}
+    require(type(grant) is dict and set(grant) == fields
         and (recovery and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY"
              or not recovery and grant["schema"] == SCHEMA
              and grant["authorization"] == "OWNER_MINICPM_TRAIN3763_SERIAL_UI_ONLY"), "MINICPM_V2_EXPLICIT_AUTHORITY")
@@ -215,8 +218,18 @@ def validate(grant, *, repo=ROOT):
         from .minicpm_incident import source_incident
         source_incident(grant).validate_repair(grant)
     if offline:
-        from .minicpm_offline import validate_delegation
+        from .minicpm_offline import SERIAL9_SCHEMA, validate_delegation
         validate_delegation(grant)
+        if continuation:
+            t = grant["continuation"]
+            require(grant["offline"]["schema"] == SERIAL9_SCHEMA and type(t) is dict
+                and set(t) == {"previous_grant_sha256", "registration_sha256", "prefix_number",
+                    "prefix_sha256", "first_serial"}
+                and type(t["prefix_number"]) is int and 1 <= t["prefix_number"] <= 20000
+                and type(t["first_serial"]) is int and 20 <= t["first_serial"] <= caps["total_jobs"]
+                and s["source_sha256"] != contract.V5_SOURCE, "MINICPM_EXACT_V5_SOURCE_TRANSITION")
+            for name in ("previous_grant_sha256", "registration_sha256", "prefix_sha256"):
+                require_hash(t[name])
     return grant
 
 
@@ -372,9 +385,9 @@ def sync_directory(root):
             os.close(descriptor)
 
 
-def bind(grant, value):
+def bind(grant, value, *, repo=ROOT):
     from .minicpm_ui import validate as validate_spec
-    validate_spec(value)
+    validate_spec(value, repo)
     require(digest(scope(value)) == digest(grant["scope"]), "MINICPM_TICKET_SCIENCE_SOURCE_INPUT_DRIFT")
     require(value["cohort"]["scope"] == "PRIVATE_TRAIN_METADATA", "MINICPM_NO_SYNTHETIC_PRODUCTION")
     p, caps = value["request"]["plan"], grant["caps"]
@@ -382,10 +395,10 @@ def bind(grant, value):
         and p["scheduled_ordinals"], "MINICPM_JOB_FINITE_LIMITS")
 
 
-def verify_ticket(grant, envelope, value, *, collection=False):
+def verify_ticket(grant, envelope, value, *, collection=False, repo=ROOT):
     if "offline" in grant:
         from .minicpm_offline import verify_ticket as verify_offline
-        return verify_offline(grant, envelope, value, collection=collection)
+        return verify_offline(grant, envelope, value, collection=collection, repo=repo)
     require(type(envelope) is dict and set(envelope) == {"payload", "signature"}, "MINICPM_SIGNED_TICKET_REQUIRED")
     t = envelope["payload"]
     verify_signature(grant["public_key"], t, envelope["signature"])
@@ -604,7 +617,7 @@ def _activated(grant, locator, envelope, value, phase, *, repo=ROOT, child=False
     """Internal composition after live authentication; never exposed as a CLI."""
     require(current() is None and phase in STAGES and (phase == "launch") != child, "MINICPM_CAPABILITY_PHASE")
     validate(grant, repo=repo)
-    ticket = verify_ticket(grant, envelope, value)
+    ticket = verify_ticket(grant, envelope, value, repo=repo)
     root = safe(CLAIMS, grant["campaign_id"] + "/" + str(ticket["number"]))
     if phase == "launch":
         require(time.time() < ticket["start_before_unix"], "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH")

@@ -73,6 +73,73 @@ class ExecutionTests(unittest.TestCase):
         self.network = patch.object(socket.socket, "connect", side_effect=AssertionError("NETWORK_FORBIDDEN"))
         self.network.start(); self.addCleanup(self.network.stop)
 
+    def test_new_runtime_installs_verified_history_once_before_launch(self):
+        import os
+        from safeshift.fulltrain import minicpm_execution as execution, minicpm_recovery
+        from safeshift.internvl3763_python import MARKER as PYTHON_MARKER, REF as PYTHON_REF
+        from safeshift.pilot.contract import digest
+
+        value = deepcopy(self.value)
+        request = value["request"]
+        inputs = self.root / "inputs"
+        work, scratch = self.root / "work", self.root / "scratch"
+        request.update(work=str(work), scratch=str(scratch))
+        owner, slug, _ = value["capsule_ref"].split("/")
+        mount = inputs / "datasets" / owner / slug
+        refs = {value["capsule_ref"]: mount.relative_to(inputs).as_posix(),
+            PYTHON_REF: "datasets/python", ui.CHECKPOINT: "notebooks/checkpoint"}
+        caps_sha = write(mount / ui.MARKER, value)
+        write(mount / execution.MARKER, self.ticket)
+        paths = {execution.MARKER: mount / execution.MARKER, PYTHON_MARKER: inputs / refs[PYTHON_REF] / PYTHON_MARKER,
+            "candidate_checkpoint_minicpm4.json": inputs / refs[ui.CHECKPOINT] / "candidate_checkpoint_minicpm4.json"}
+        activated = []
+        marker = "verified-history.txt"
+
+        @contextmanager
+        def activate(*args, **kwargs):
+            activated.append(True)
+            self.assertFalse(work.exists())
+            yield {}
+
+        def restore(directory, capsule, destination):
+            self.assertEqual(directory, mount)
+            self.assertEqual(capsule, value)
+            self.assertFalse(activated)
+            write(destination / marker, {"verified": True})
+
+        def launch(candidate, *, repo):
+            self.assertEqual(candidate, request)
+            self.assertTrue(read(work / marker)["verified"])
+            self.assertTrue(scratch.is_dir())
+            return "SYNTHETIC_BOOTSTRAP"
+
+        with ExitStack() as stack:
+            mocks = (
+                (a, "load", {"schema": a.RECOVERY_SCHEMA, "continuation": {}}),
+                (a, "verify_ticket", {"start_before_unix": time.time() + 600}),
+                (a, "authorize", None), (a, "uses_proof", False),
+                (ui, "verify_capsule", value),
+                (minicpm_recovery, "mounted_inputs", {ref: {"mount": path} for ref, path in refs.items()}),
+            )
+            for module, name, ret in mocks:
+                stack.enter_context(patch.object(module, name, return_value=ret))
+            stack.enter_context(patch.object(a, "_activated", side_effect=activate))
+            stack.enter_context(patch.object(execution, "discover", side_effect=lambda _, name, **kw: paths[name]))
+            stack.enter_context(patch.object(os, "statvfs", return_value=NS(f_flag=1), create=True))
+            stack.enter_context(patch.object(os, "ST_RDONLY", 1, create=True))
+            stack.enter_context(patch.object(rt, "launch", side_effect=launch))
+            restore_mock = stack.enter_context(patch.object(ui, "restore_history", side_effect=ValueError("bad archive")))
+            with self.assertRaisesRegex(ValueError, "bad archive"):
+                execution.run_capsule(inputs, caps_sha, self.locator)
+            self.assertFalse(activated)
+            self.assertFalse(work.exists())
+            restore_mock.reset_mock()
+            restore_mock.side_effect = restore
+            self.assertEqual(execution.run_capsule(inputs, caps_sha, self.locator), "SYNTHETIC_BOOTSTRAP")
+            restore_mock.assert_called_once()
+            self.assertEqual(activated, [True])
+            ui.verify_capsule.assert_called_with(mount, digest(value), contract.ROOT, release_ticket=True, replay=False)
+
     def make_ticket(self, value, number=1, before=None):
         before = before or {"calls": 0, "jobs": 0, "gpu_seconds": 0}
         p = value["request"]["plan"]

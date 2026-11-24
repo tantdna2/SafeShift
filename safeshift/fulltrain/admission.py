@@ -5,6 +5,7 @@ boundaries. MiniCPM V2 authenticates O2-O6 and a signed serial reservation befor
 calling them; a request JSON alone is never approval or an authority token.
 """
 import argparse
+from contextlib import contextmanager
 from contextvars import ContextVar
 from copy import deepcopy
 import os
@@ -109,37 +110,63 @@ def admit(request, repo=ROOT, *, deadline=None):
     return admitted
 
 
-def _admit(request, repo, *, deadline, retain_original_files=False):
+@contextmanager
+def measured(output, part):
+    if output is None:
+        yield
+        return
+    started = time.monotonic()
+    write(output / "timing" / (part + "-start.json"), {"monotonic": started})
+    try:
+        yield
+    finally:
+        write(output / "timing" / (part + "-end.json"), {"seconds": time.monotonic() - started})
+
+
+def _admit(request, repo, *, deadline, retain_original_files=False, replay=True, timing=None, cpu_decode=False):
     validate_request(request, repo)
-    history_admission(request)
+    with measured(timing, "workspace-history"):
+        history_admission(request)
     if request["model_key"] == "qwen3":
         provision.software_input(request["software_input"], request["software_marker_sha256"], request["runtime_lock"], repo)
-    bundle, cohort, rows = input_binding(request, deadline=deadline)
+    with measured(timing, "input-projection"):
+        bundle, cohort, rows = input_binding(request, deadline=deadline)
     p = request["plan"]
-    require(p == contract.plan(request["campaign"], cohort, p["identity"], request["history"], action=p["action"],
-        run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"], repair=p["repair"]),
-        "ADMISSION_PLAN_RECOMPUTE")
-    for old in request["history"]:
-        root = safe(request["work"], old["run_id"])
-        require(runtime.recover(root, cohort, digest(read(root / "plan.json"))) == old, "ADMISSION_HISTORY_CUSTODY")
+    with measured(timing, "plan"):
+        require(p == contract.plan(request["campaign"], cohort, p["identity"], request["history"], action=p["action"],
+            run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"], max_seconds=p["max_seconds"], repair=p["repair"]),
+            "ADMISSION_PLAN_RECOMPUTE")
+    if replay:
+        with measured(timing, "history-replay"):
+            for old in request["history"]:
+                memory.check_deadline(deadline)
+                root = safe(request["work"], old["run_id"])
+                require(runtime.recover(root, cohort, digest(read(root / "plan.json"))) == old, "ADMISSION_HISTORY_CUSTODY")
     files = ()
-    if retain_original_files:
-        from .original_inputs import _verify_files
-        files = _verify_files(bundle, cohort, rows, deadline=deadline)
-    else:
-        input_bytes(request, bundle, cohort, rows, deadline=deadline)
-    _, snapshot, weights, receipt = checkpoint_binding(request, repo, deadline=deadline)
+    with measured(timing, "image-check-decode" if cpu_decode else "image-sha256"):
+        if cpu_decode:
+            from .original_inputs import verify_cpu_images
+            def report(count, metric):
+                write(timing / "timing" / f"images-{count:04d}.json", metric)
+            write(timing / "images.json", verify_cpu_images(bundle, cohort, rows, deadline=deadline, report=report))
+        elif retain_original_files:
+            from .original_inputs import _verify_files
+            files = _verify_files(bundle, cohort, rows, deadline=deadline)
+        else:
+            input_bytes(request, bundle, cohort, rows, deadline=deadline)
+    with measured(timing, "checkpoint"):
+        _, snapshot, weights, receipt = checkpoint_binding(request, repo, deadline=deadline)
     return (bundle, cohort, rows, snapshot, weights, receipt), files
 
 
 _original_stage = ContextVar("fulltrain_original_stage", default=None)
 
 
-def _admit_original_stage(mode, request, repo, deadline):
+def _admit_original_stage(mode, request, repo, deadline, **options):
     require(mode in ("cpu", "native") and "original_inputs" in request
             and request["model_key"] == "minicpm4", "ORIGINAL_STAGE_REQUIRED")
     request_sha = digest(request)
-    admitted, files = _admit(request, repo, deadline=deadline, retain_original_files=True)
+    admitted, files = _admit(request, repo, deadline=deadline, retain_original_files=True, **options)
     bundle, cohort, rows, *_ = admitted
     inputs_sha = digest([str(bundle), cohort, rows])
     source = Path(repo).resolve()
@@ -187,14 +214,40 @@ def history_admission(request):
             require(i < len(allowed) and path.name in allowed, "UNKNOWN_OUTPUT_BEFORE_SETUP")
 
 
-def stage(mode, request, repo, output, deadline):
+def recovery_runtime(request, active):
+    return (active is not None and request["model_key"] == "minicpm4"
+            and "original_inputs" in request and "continuation" in active["grant"])
+
+
+def stage_deadline(mode, request, deadline, active, *, now):
+    budgets = request["resource_policy"]
+    if mode == "setup":
+        limit = budgets["setup_seconds"]
+    elif mode == "native":
+        limit = request["plan"]["max_seconds"]
+    elif mode == "cpu" and recovery_runtime(request, active):
+        # Source-bound policy. Existing signed request fields retain their meanings.
+        from .minicpm_offline import recovery_cpu_seconds
+        limit = recovery_cpu_seconds(budgets)
+    else:
+        limit = budgets["diagnostic_seconds"]
+    if active is not None and (mode == "native" or recovery_runtime(request, active)):
+        deadline -= active["grant"]["sizing"]["export_seconds"]
+    return min(deadline, now + limit)
+
+
+def stage(mode, request, repo, output, deadline, *, authority_seconds=None):
     """Actual child implementation. Public CLI calls authorize BEFORE reading JSON."""
     validate_request(request, repo)
     require(time.monotonic() < deadline, "STAGE_DEADLINE_EXPIRED")
     output = Path(output)
     output.mkdir(exist_ok=False)
+    from .minicpm_release import current
+    optimized = recovery_runtime(request, current())
     token = _original_stage.set(None)
     try:
+        if authority_seconds is not None:
+            write(output / "timing/authority.json", {"seconds": authority_seconds})
         if request['model_key'] == 'minicpm4':
             memory.observe(output, 'stage-entry')
         if mode == 'reclaim':
@@ -203,7 +256,12 @@ def stage(mode, request, repo, output, deadline):
                 'ADVICE_ACTUAL_ISOLATED_WORKER_REQUIRED')
             memory.reclaim(request, output, deadline)
         elif mode == "setup":
-            admit(request, repo, deadline=deadline)  # all Input/checkpoint admission before package activity
+            if optimized:
+                # The authenticated admit predecessor checked all Inputs. Setup
+                # consumes only the independently pinned Python input and wheels.
+                history_admission(request)
+            else:
+                admit(request, repo, deadline=deadline)
             if request['model_key'] == 'minicpm4':
                 memory.resource_check(request, output, 'before-setup')
             else:
@@ -214,11 +272,27 @@ def stage(mode, request, repo, output, deadline):
                 scratch_bytes=budgets["scratch_probe_bytes"], output_bytes=budgets["output_probe_bytes"]))
             provision.prepare(request, repo, output, deadline)
         else:
-            same_stage = "original_inputs" in request and mode in ("cpu", "native")
-            admitted = (_admit_original_stage(mode, request, repo, deadline) if same_stage
-                        else admit(request, repo, deadline=deadline))
-            bundle, cohort, rows, snapshot, weights, checkpoint_receipt = admitted
-            write(output / "checkpoint.json", checkpoint_receipt)
+            cpu_decode = optimized and mode == "cpu"
+            same_stage = "original_inputs" in request and mode in ("cpu", "native") and not cpu_decode
+            if cpu_decode:
+                require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
+                with measured(output, "software"):
+                    write(output / "software.json", environment.software(request["model_key"], repo, request["runtime_lock"]))
+                memory.resource_check(request, output, "before-images")
+            # GPU diagnostics do not consume TRAIN or checkpoint bytes. The
+            # native controller replays history under its attempt lock.
+            if optimized and mode == "gpu":
+                history_admission(request)
+            else:
+                options = {"timing": output, "replay": mode == "admit", "cpu_decode": cpu_decode} if optimized else {}
+                if same_stage:
+                    admitted = _admit_original_stage(mode, request, repo, deadline, **options)
+                elif optimized:
+                    admitted, _ = _admit(request, repo, deadline=deadline, **options)
+                else:
+                    admitted = admit(request, repo, deadline=deadline)
+                bundle, cohort, rows, snapshot, weights, checkpoint_receipt = admitted
+                write(output / "checkpoint.json", checkpoint_receipt)
             if mode == "cpu":
                 require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
             driver = None
@@ -226,8 +300,9 @@ def stage(mode, request, repo, output, deadline):
                 # Before Torch import/CUDA initialization in this isolated child.
                 from . import gpu_driver
                 driver = gpu_driver.bind(output)
-            if mode != "admit":
-                write(output / "software.json", environment.software(request["model_key"], repo, request["runtime_lock"]))
+            if mode != "admit" and not cpu_decode:
+                with measured(output if optimized else None, "software"):
+                    write(output / "software.json", environment.software(request["model_key"], repo, request["runtime_lock"]))
             write(output / "resources.json", memory.resource_check(request, output, 'after-admission')
                 if request['model_key'] == 'minicpm4' else environment.resources(request["model_key"], request["resource_policy"],
                                                                     request["scratch"], request["work"]))
@@ -235,19 +310,21 @@ def stage(mode, request, repo, output, deadline):
                 pass  # bounded byte/hash/history admission before setup or no-op
             elif mode == "cpu":
                 require(os.environ.get("CUDA_VISIBLE_DEVICES") == "", "CPU_STAGE_HIDDEN_CUDA")
-                if "original_inputs" in request:
+                if same_stage:
                     from .original_inputs import _decode_files
                     _, files = _current_original_stage("cpu", request, repo, deadline)
                     write(output / "images.json", _decode_files(files, deadline=deadline))
-                else:
+                elif not cpu_decode:
                     write(output / "images.json", verify_images(bundle, rows))
                 from .preflight import cpu_native_checks
                 if request['model_key'] == 'minicpm4':
                     memory.resource_check(request, output, 'before-processor')
-                write(output / "native_cpu.json", cpu_native_checks(request["model_key"], snapshot, repo,
-                      wheel_lock=request["runtime_lock"]))
+                with measured(output if optimized else None, "processor-cpu"):
+                    write(output / "native_cpu.json", cpu_native_checks(request["model_key"], snapshot, repo,
+                          wheel_lock=request["runtime_lock"]))
                 if request['model_key'] == 'minicpm4':
-                    memory.reclaim(request, output, deadline, label='cpu-owned-advice', gate='cpu')
+                    with measured(output if optimized else None, "cache-advice"):
+                        memory.reclaim(request, output, deadline, label='cpu-owned-advice', gate='cpu')
             elif mode in ("gpu", "native"):
                 write(output / "physical_gpu.json", environment.hardware(request["model_key"], request["resource_policy"])
                     if driver is None else gpu_driver.hardware(request["model_key"], request["resource_policy"],
@@ -312,6 +389,8 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
         capability.authorize(request=request)
         # Save the signed reservation for custody; never include the signing key.
         write(output / "capability.json", {"locator": active["locator"], "ticket": active["ticket"]})
+        if active.get("history_restore_seconds") is not None:
+            write(output / "history-restore-timing.json", {"seconds": active["history_restore_seconds"]})
         launch_time = read(active["claims"] / "launch.json")["time_unix"]
         deadline = min(deadline, time.monotonic() + launch_time + p["max_seconds"] - time.time())
     python, env = sys.executable, provision.clean_env(repo, scratch)
@@ -328,10 +407,12 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
                                    if p["scheduled_ordinals"] or diagnostic else ())
             for mode in modes:
                 stage_name = mode
-                limit = budgets["setup_seconds"] if mode == "setup" else budgets["diagnostic_seconds"] if mode != "native" else p["max_seconds"]
-                until = min(deadline, time.monotonic() + limit)
-                if active is not None and mode == "native":
-                    until = min(until, deadline - active["grant"]["sizing"]["export_seconds"])
+                now = time.monotonic()
+                until = stage_deadline(mode, request, deadline, active, now=now)
+                if recovery_runtime(request, active):
+                    write(output / (mode + "-budget.json"),
+                          {"seconds": max(0, until - now), "export_seconds": active["grant"]["sizing"]["export_seconds"]})
+                    require(until > now, "STAGE_NO_TIME_BEFORE_EXPORT_RESERVE")
                 if mode in ("gpu", "native"):
                     env["CUDA_VISIBLE_DEVICES"] = "0,1" if request["model_key"] == "qwen3" else "0"
                 if request['model_key'] == 'minicpm4':
@@ -383,7 +464,8 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
                 write(output / "retention_failure.json", error_record(error, "retention"))
             write(output / "final_timing.json", {"seconds_before_supervisor_export":time.time()-launch_time,
                 "export_reserve_seconds":active["grant"]["sizing"]["export_seconds"],"billing":"NOT_OBSERVED"})
-            if time.time() + active["grant"]["sizing"]["export_seconds"] >= launch_time + p["max_seconds"]:
+            remaining = launch_time + p["max_seconds"] - time.time()
+            if remaining <= (0 if recovery_runtime(request, active) else active["grant"]["sizing"]["export_seconds"]):
                 failure = failure or {"type":"TimeoutError","message":"FINAL_EXPORT_RESERVE_EXHAUSTED",
                     "stage":"export","category":"TECHNICAL"}
         write(output / "release.json", {"status": "BLOCKED" if failure else "TECHNICAL_STAGES_RETURNED_NOT_RELEASE_AUTHORITY",

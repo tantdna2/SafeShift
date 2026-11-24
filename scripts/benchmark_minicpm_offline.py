@@ -50,18 +50,22 @@ class MeasuredFile:
 
     def read(self, *args):
         result = self.stream.read(*args)
-        self.counts[self.key] += len(result)
+        self.counts["file_bytes_read"] += len(result)
+        if self.key:
+            self.counts[self.key] += len(result)
         return result
 
     def readinto(self, buffer):
         count = self.stream.readinto(buffer)
-        self.counts[self.key] += count or 0
+        self.counts["file_bytes_read"] += count or 0
+        if self.key:
+            self.counts[self.key] += count or 0
         return count
 
 
 def timed(operation, new_plan=None, expected_error=None):
     counters = Counter({name: 0 for name in ("zip_opens", "zip_file_bytes", "zip_member_bytes",
-        "sha256", "file_sha256", "historical_replays", "incoming_replays")})
+        "sha256", "file_sha256", "historical_replays", "incoming_replays", "file_bytes_read")})
     sha256, file_sha = hashlib.sha256, artifacts.sha
     io_open = io.open
     zip_init, member_read, recover = zipfile.ZipFile.__init__, zipfile.ZipExtFile.read, fast.runtime.recover
@@ -75,7 +79,7 @@ def timed(operation, new_plan=None, expected_error=None):
         return file_sha(path)
 
     def wrap(stream, path, mode):
-        return MeasuredFile(stream, "zip_file_bytes", counters) if "r" in mode and is_zip(path) else stream
+        return MeasuredFile(stream, "zip_file_bytes" if is_zip(path) else None, counters) if "rb" in mode else stream
 
     def instrument_io(path, mode="r", *args, **kwargs):
         # Path.open and ZipFile both call io.open.
@@ -190,7 +194,7 @@ def compare_completed(fixture, count):
     return {"v5": {"completed-state": before}, "fast": {"completed-state": after}}
 
 
-def prepare_outputs(fixture):
+def prepare_outputs(fixture, *, invalid_ordinals=()):
     """Reuse fixed request digests while building the untimed synthetic input."""
     state = fixture.route.state()
     value, ticket = state["active"]["value"], state["active"]["ticket"]
@@ -206,7 +210,7 @@ def prepare_outputs(fixture):
     with patch.object(fixture.route, "state", return_value=state), \
             patch.object(fast.runtime, "digest", fixture_digest), \
             patch.object(v5.a, "digest", fixture_digest):
-        outputs = fixture.outputs(invalid=False)
+        outputs = fixture.outputs(invalid_ordinals=invalid_ordinals)
     fixture.assertEqual([digest(item) for item, _ in fixed], [checksum for _, checksum in fixed])
     return outputs
 
@@ -273,12 +277,102 @@ def run(case, *, completed_only=False):
     return clocks
 
 
+def close_case():
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
+    from test_minicpm_offline_fast import FastTests
+
+    fixture = FastTests()
+    FastTests.setUpClass()
+    real_time = time.time
+    offset = 0
+    try:
+        super(FastTests, fixture).setUp()
+        fixture.grant["sizing"]["first_call_seconds"] = 1
+        fixture.initialize_serial9()
+        fixture.legacy_route = fixture.route
+        propose = v5.policy.proposal
+        with patch.object(time, "time", side_effect=lambda: real_time() + offset):
+            for calls in (100, 2577):
+                with patch.object(v5.policy, "proposal", side_effect=lambda *args: propose(*args) | {"calls": calls}):
+                    fixture.stage()
+                if calls == 100:
+                    fixture.route = fixture.released_route()
+                print(f"building {calls} synthetic completions", flush=True, file=sys.stderr)
+                outputs = prepare_outputs(fixture, invalid_ordinals=set(range(0, 118 * 22, 22)))
+                fixture.accept_fast(fixture.route, outputs)
+
+            for serial in range(11, 20):
+                fixture.stage()
+                active = fixture.route.state()["active"]
+                evidence = fixture.failure_evidence("cpu", hard_deadline=True, kernel_id=serial, item=active)
+                offset += fixture.grant["provider_max_age_seconds"] + 1
+                if serial != 19:
+                    fixture.route.close_pre_native(*evidence, private_key=fixture.key, kernel_id=serial)
+            route = fixture.route
+            before = route.state()
+            fixture.assertEqual(before["counts"], {"SUCCESS": 2559, "INVALID": 118, "NOT_ATTEMPTED": 1086})
+            fixture.assertEqual(before["active"]["ticket"]["payload"]["number"], 19)
+
+            results = {}
+            observed = {}
+            for mode in ("v5", "fast"):
+                saved = []
+                for path in (route.root, route.mirror):
+                    parked = path.with_name(path.name + "-benchmark-original")
+                    path.rename(parked)
+                    shutil.copytree(parked, path)
+                    saved.append((path, parked))
+                try:
+                    variant = v5.Continuation(route.root) if mode == "v5" else fixture.released_route()
+                    operation = (lambda: variant.close_pre_native(*evidence)) if mode == "v5" else (
+                        lambda: variant.close_pre_native(*evidence, private_key=fixture.key, kernel_id=19))
+                    observed[mode], results[mode] = timed(operation)
+                    print(f"{mode} close-pre-native {json.dumps(results[mode])}", flush=True, file=sys.stderr)
+                    if mode == "fast":
+                        after = variant.state()
+                        fixture.assertEqual(after["records"], before["records"])
+                        fixture.assertEqual(after["reserved"], before["reserved"])
+                        forecast = variant.forecast()
+                        fixture.assertTrue(forecast["owner_gate_template"]["job"].endswith("-20"))
+                        gate = fixture.forecast_gate(variant)
+                        upgraded, _, grant = fixture.prepare_source_transition(variant)
+                        with patch.object(zipfile, "ZipFile", side_effect=AssertionError("HISTORICAL_ZIP_REOPENED")):
+                            upgraded.stage(fixture.key, gate, fixture.proof)
+                            report = upgraded.state()
+                            package = upgraded.export_active()
+                            current = report["active"]
+                            plan = current["value"]["request"]["plan"]
+                            fixture.assertEqual(current["ticket"]["payload"]["number"], 20)
+                            fixture.assertEqual(current["ticket"]["payload"]["grant_sha256"], digest(grant))
+                            fixture.assertEqual(current["ticket"]["payload"]["reserved_before"], before["reserved"])
+                            fixture.assertEqual(report["records"], before["records"])
+                            fixture.assertEqual(plan["scheduled_ordinals"] + plan["deferred_ordinals"], list(range(2677, 3763)))
+                            fixture.assertEqual(package["directory"], v5.relative(upgraded.root / current["package"]))
+                        print("Serial 20 source transition, owner gate, stage and export-active passed (synthetic)",
+                              file=sys.stderr, flush=True)
+                finally:
+                    for path, parked in saved:
+                        path.rename(path.with_name(path.name + "-benchmark-" + mode))
+                        parked.rename(path)
+            fixture.assertEqual(observed["v5"], observed["fast"])
+            return results
+    finally:
+        fixture.doCleanups()
+        FastTests.tearDownClass()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", type=int, choices=(0, *CASES), default=0, help="0 profiles all milestones")
     parser.add_argument("--completed-only", action="store_true",
         help="profile the exact same completed journal with two serials, without the additional command timings")
+    parser.add_argument("--close-serial19", action="store_true", help="compare closure at 2677 completed IDs")
     args = parser.parse_args()
+    if args.close_serial19:
+        print(json.dumps({"platform": platform.platform(), "python": platform.python_version(),
+            "fixture": "SYNTHETIC_ONLY", "completed": 2677, "first_serial": 9, "active_serial": 19,
+            "completed_serials": 2, "prior_closures": 8, "results": close_case()}, indent=2))
+        return
     if args.completed_only and args.case == 0:
         parser.error("--completed-only requires a nonzero --case")
     print(json.dumps({"platform": platform.platform(), "python": platform.python_version(),

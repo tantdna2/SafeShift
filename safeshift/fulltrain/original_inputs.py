@@ -6,6 +6,7 @@ Dataset versions are release/transport bindings, not observations from a mount.
 import io
 import json
 import os
+import time
 from pathlib import Path
 
 from safeshift.candidates.source import require, snapshot_stat
@@ -85,8 +86,7 @@ def admit(root, binding, binding_sha256, projection_sha256, *, deadline=None):
     return bundle, cohort, rows
 
 
-def _verify_files(root, cohort, rows, *, deadline):
-    files = []
+def _checked_paths(root, cohort, rows):
     require(len(rows) == len(cohort["samples"]) == 3763, "EXACT_ORIGINAL_3763")
     for expected, row in zip(cohort["samples"], rows):
         require(set(row) == {*expected, "image"} and all(row[n] == v for n, v in expected.items()),
@@ -94,11 +94,16 @@ def _verify_files(root, cohort, rows, *, deadline):
         require(row["image"].startswith("train/Annotations/") and row["image"].endswith(".jpg")
                 and Path(row["image"]).stem == row["sample_id"],
                 "ORIGINAL_TRAIN_JPG_ONLY")
-        path = safe(root, row["image"])
+        yield safe(root, row["image"]), row["image_sha256"]
+
+
+def _verify_files(root, cohort, rows, *, deadline):
+    files = []
+    for path, expected_sha in _checked_paths(root, cohort, rows):
         info = snapshot_stat(path)
         identity = memory.identity(info)
         require(memory.stream_readonly_sha256(path, expected_size=info.st_size, deadline=deadline,
-                                              expected_identity=identity) == row["image_sha256"],
+                                              expected_identity=identity) == expected_sha,
                 "ORIGINAL_IMAGE_BYTES_CHANGED")
         files.append((path, identity))
     return tuple(files)
@@ -114,20 +119,62 @@ def verify_images(root, cohort, rows, *, deadline=None):
     return _decode_files(_verify_files(root, cohort, rows, deadline=deadline), deadline=deadline)
 
 
-def _decode_files(files, *, deadline):
+def _decode(stream, formats):
     from PIL import Image
+    with Image.open(stream) as image:
+        # Some original .jpg locators contain PNG bytes. PIL's content
+        # detection and RGB validation match the native loader.
+        require(getattr(image, "n_frames", 1) == 1 and all(n > 0 for n in image.size),
+                "ORIGINAL_STILL_IMAGE_REQUIRED")
+        image.load()
+        formats[image.format] = formats.get(image.format, 0) + 1
+        with image.convert("RGB") as rgb:
+            require(rgb.mode == "RGB", "ORIGINAL_NATIVE_RGB_CONVERSION")
+
+
+def _decode_file(path, identity, formats, deadline):
+    with memory.readonly_fd(path, None, deadline, expected_identity=identity) as (fd, _, _):
+        with os.fdopen(fd, "rb", closefd=False) as stream:
+            _decode(stream, formats)
+
+
+def verify_cpu_images(root, cohort, rows, *, deadline, report):
+    """Hash and decode the same bytes with one bounded buffer per image."""
+    formats = {}
+    hash_seconds = decode_seconds = 0.0
+    checked_bytes = 0
+    for count, (path, expected_sha) in enumerate(_checked_paths(root, cohort, rows), 1):
+        start = time.monotonic()
+        info = snapshot_stat(path)
+        identity = memory.identity(info)
+        # Oversize images use the same checked-descriptor fallback as native.
+        # The compressed buffer adds at most 8 MiB of live memory.
+        with io.BytesIO() as stream:
+            buffered = info.st_size <= 8 * 2**20
+            require(memory.stream_readonly_sha256(path, expected_size=info.st_size, deadline=deadline,
+                    expected_identity=identity, copy_to=stream if buffered else None) == expected_sha,
+                    "ORIGINAL_IMAGE_BYTES_CHANGED")
+            decoded = time.monotonic()
+            hash_seconds += decoded - start
+            if buffered:
+                stream.seek(0)
+                _decode(stream, formats)
+                require(memory.identity(snapshot_stat(path)) == identity, "READONLY_FILE_CHANGED")
+            else:
+                _decode_file(path, identity, formats, deadline)
+            decode_seconds += time.monotonic() - decoded
+            memory.check_deadline(deadline)
+        checked_bytes += info.st_size
+        if count % 256 == 0 or count == len(rows):
+            report(count, {"images": count, "sha256_bytes": checked_bytes, "sha256_seconds": hash_seconds,
+                "decode_seconds": decode_seconds})
+    return {"verified_images": len(rows), "decode": "PASS", "formats": formats, "copied_bytes": 0}
+
+
+def _decode_files(files, *, deadline):
     formats = {}
     for path, identity in files:
         # Decode the admitted inode, on the same checked descriptor used for
         # post-decode identity validation and cache advice.
-        with memory.readonly_fd(path, None, deadline, expected_identity=identity) as (fd, _, _):
-            with os.fdopen(fd, "rb", closefd=False) as stream, Image.open(stream) as image:
-                # Some original .jpg locators contain PNG bytes. PIL's content
-                # detection and RGB validation match the native loader.
-                require(getattr(image, "n_frames", 1) == 1 and all(n > 0 for n in image.size),
-                        "ORIGINAL_STILL_IMAGE_REQUIRED")
-                image.load()
-                formats[image.format] = formats.get(image.format, 0) + 1
-                with image.convert("RGB") as rgb:
-                    require(rgb.mode == "RGB", "ORIGINAL_NATIVE_RGB_CONVERSION")
+        _decode_file(path, identity, formats, deadline)
     return {"verified_images": len(files), "decode": "PASS", "formats": formats, "copied_bytes": 0}

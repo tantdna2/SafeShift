@@ -7,7 +7,7 @@ from pathlib import Path
 import time
 
 from safeshift.candidates import fulltrain_run as journal
-from safeshift.candidates.train_history import lease_key
+from safeshift.candidates.train_history import lease_key, members
 from safeshift.candidates.source import require, ROOT, snapshot_stat
 from safeshift.pilot.artifacts import read, safe, sha, write, export
 from safeshift.pilot.contract import digest
@@ -92,6 +92,25 @@ def check_repair_case(p, repair_case):
         require(repair_case is None, "REPAIR_CASE_ON_WRONG_ACTION")
 
 
+def _recover_mixed(root, cohort, p, prior):
+    """Replay the original MiniCPM record reader with the V5 history view."""
+    snapshot = members(root)
+    snapshot.pop("checksums.json", None)
+    if (root / "checksums.json").exists():
+        require(read(root / "checksums.json") == snapshot, "SEALED_JOURNAL_CHANGED")
+    expected = {f"{ordinal:06d}" for ordinal in p["scheduled_ordinals"]}
+    calls = root / "calls"
+    if calls.exists():
+        require({entry.name for entry in calls.iterdir()} <= expected, "UNPLANNED_CALL_DIRECTORY")
+    rows = contract.planning.validate_cohort(cohort, p["cohort_sha256"])
+    records = [journal._record(root, rows[ordinal], p) for ordinal in p["scheduled_ordinals"]]
+    h = {key: p[key] for key in ("run_id", "attempt_id", "series_id", "identity", "cohort_sha256", "action", "repair")}
+    h.update(parent_history_sha256=p["history_sha256"], records=records, evidence_sha256=digest(snapshot))
+    complete = contract.history_view([*prior, h], p["identity"], action=p["action"])
+    contract.planning.checked_history(complete, rows, p["cohort_sha256"], digest(complete))
+    return h
+
+
 def recover(root, cohort, plan_sha):
     """Fresh campaign and native custody on top of the unchanged journal reader.
 
@@ -99,17 +118,25 @@ def recover(root, cohort, plan_sha):
     must also verify; otherwise recovery blocks and preserves all original bytes.
     """
     root = Path(root)
-    spec = read(root / "plan.json")["identity"]
-    if spec["model_key"] == "qwen3" and not spec["model_id"].startswith("synthetic/"):
+    p, campaign, prior = (read(root / name) for name in ("plan.json", "campaign.json", "history.json"))
+    spec = p["identity"]
+    mixed = spec["model_key"] == "minicpm4" and any(h["identity"] != spec for h in prior)
+    if mixed:
+        require(digest(p) == plan_sha, "PLAN_CHECKSUM")
+        require(p == contract.plan(campaign, cohort, spec, prior, action=p["action"],
+            run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"],
+            max_seconds=p["max_seconds"], repair=p["repair"]), "FRESH_RECOVERY_PLAN")
+        h = _recover_mixed(root, cohort, p, prior)
+    elif spec["model_key"] == "qwen3" and not spec["model_id"].startswith("synthetic/"):
         from .engine import recover as qwen_recover
         from .qwen import parser
         h = qwen_recover(root, cohort, plan_sha, label_parser=parser)
     else:
         h = journal.recover(root, cohort, plan_sha)
-    p, campaign = read(root / "plan.json"), read(root / "campaign.json")
-    require(p == contract.plan(campaign, cohort, p["identity"], read(root / "history.json"),
-        action=p["action"], run_id=p["run_id"], attempt_id=p["attempt_id"],
-        max_calls=p["max_calls"], max_seconds=p["max_seconds"], repair=p["repair"]), "FRESH_RECOVERY_PLAN")
+    if not mixed:
+        require(p == contract.plan(campaign, cohort, spec, prior, action=p["action"],
+            run_id=p["run_id"], attempt_id=p["attempt_id"], max_calls=p["max_calls"],
+            max_seconds=p["max_seconds"], repair=p["repair"]), "FRESH_RECOVERY_PLAN")
     repair_path = root / "repair_case.json"
     check_repair_case(p, read(repair_path) if repair_path.exists() else None)
     if cohort["scope"] != "SYNTHETIC_ONLY":
@@ -251,7 +278,8 @@ def _worker(request, *, repo=ROOT, memory_output=None, stage_deadline=None, admi
         factory,
         image_path=lambda i: rows[i]["image"], evaluator=None if key == "minicpm4" else replay,
         before_call=check_resources, repair_case=request["repair_case"], stage_deadline=stage_deadline,
-        stage_request=(request, repo) if original_stage is not None else None)
+        stage_request=(request, repo) if original_stage is not None else None,
+        history_timing=Path(memory_output).parent if memory_output and current() and "continuation" in current()["grant"] else None)
 
 
 def launch(*args, **kwargs):
@@ -267,7 +295,7 @@ def worker_command(python, request, output):
 
 def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
              store_class=NativeStore, evaluator=None, before_call=None, repair_case=None, clock=time.monotonic,
-             stage_deadline=None, stage_request=None):
+             stage_deadline=None, stage_request=None, history_timing=None):
     """Shared bounded controller; requires pre-admitted inputs and explicit plan.
 
     Internal only, not an execution authority. Public real-data entries are
@@ -309,11 +337,14 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
         else:
             require(not history, "FRESH_WORKSPACE_REQUIRES_EXPLICIT_HISTORY_IMPORT")
             write(campaign_file, campaign)
-        for h in history:
-            prior = safe(work, h["run_id"])
-            require(read(prior / "campaign.json") == campaign, "FOREIGN_CAMPAIGN_HISTORY")
-            require(recover(prior, cohort, digest(read(prior / "plan.json"))) == h,
-                    "HISTORY_EVIDENCE_CHANGED")
+        from .admission import measured
+        with measured(history_timing, "history-replay"):
+            for h in history:
+                memory.check_deadline(stage_deadline)
+                prior = safe(work, h["run_id"])
+                require(read(prior / "campaign.json") == campaign, "FOREIGN_CAMPAIGN_HISTORY")
+                require(recover(prior, cohort, digest(read(prior / "plan.json"))) == h,
+                        "HISTORY_EVIDENCE_CHANGED")
         # Refuse omitted partial/reserved attempts even if caller supplies a
         # plausible complete subset of the history. No implicit retry after kill.
         reservations = work / "attempts"

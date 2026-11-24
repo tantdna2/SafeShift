@@ -13,7 +13,7 @@ from unittest.mock import patch, Mock
 from safeshift.candidates import fulltrain_run as journal
 from safeshift.fulltrain import original_inputs as original, admission, runtime, contract
 from safeshift.pilot.contract import digest
-from safeshift.pilot.artifacts import read
+from safeshift.pilot.artifacts import read, sha, write
 
 
 class OriginalMountedInputsTests(unittest.TestCase):
@@ -214,6 +214,68 @@ class OriginalMountedInputsTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "READONLY_FILE_CHANGED"):
                 original._decode_files(files, deadline=None)
             image.load.assert_called_once()
+
+    def test_recovery_cpu_rehashes_mutated_train_and_checkpoint(self):
+        from test_fresh_fulltrain_revision import RevisionTests
+        from safeshift.candidates import loading
+        from safeshift.fulltrain import minicpm_release, preflight
+
+        workdir = tempfile.TemporaryDirectory()
+        self.addCleanup(workdir.cleanup)
+        fixture = RevisionTests()
+        fixture.root = Path(workdir.name)
+        request = fixture.request("minicpm4")
+        request.update(inputs=str(self.root), original_inputs=self.binding, marker_sha256=digest(self.binding))
+        marker = self.root / "checkpoint-marker.json"
+        write(marker, {"synthetic": True})
+        request["checkpoint_marker_sha256"] = sha(marker)
+        weights = self.root / "weights"
+        weights.mkdir()
+        weight = weights / "model.safetensors"
+        weight.write_bytes(b"SAFE")
+        write(weights / "index.json", {"synthetic": True})
+        lock = self.root / "fixture-lock.json"
+        write(lock.with_name("checkpoint_metadata_lock.json"), {"minicpm4": {"index": {"filename": "index.json"},
+            "weights": {weight.name: {"size": weight.stat().st_size, "sha256": sha(weight)}}}})
+        for i, row in enumerate(self.rows):
+            path = self.bundle / row["image"]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(journal.synthetic_bytes(i))
+
+        first = self.bundle / self.rows[0]["image"]
+        original_bytes = first.read_bytes()
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(minicpm_release, "current", return_value={"grant": {"continuation": {}}}))
+            stack.enter_context(patch.dict(os.environ, {"CUDA_VISIBLE_DEVICES": ""}))
+            stack.enter_context(patch.object(original.inputs, "project_master", return_value=self.cohort))
+            stack.enter_context(patch.object(admission, "checkpoint", return_value=(marker, self.root, weights)))
+            stack.enter_context(patch.object(admission, "verify_snapshot", return_value={}))
+            stack.enter_context(patch.object(loading, "LOCK", lock))
+            stack.enter_context(patch.object(loading, "checkpoint_index"))
+            stack.enter_context(patch.object(original.memory, "observe"))
+            stack.enter_context(patch.object(original.memory, "resource_check", return_value={}))
+            stack.enter_context(patch.object(original.memory, "reclaim"))
+            stack.enter_context(patch.object(admission.environment, "software", return_value={}))
+            processor = stack.enter_context(patch.object(preflight, "cpu_native_checks", return_value={}))
+            decode = stack.enter_context(patch.object(original, "_decode", side_effect=lambda stream, _: stream.read()))
+            deadline = time.monotonic() + 240
+            admission.stage("admit", request, runtime.ROOT, fixture.root / "admit", deadline)
+            first.write_bytes(b"changed after admit")
+            with self.assertRaisesRegex(ValueError, "ORIGINAL_IMAGE_BYTES_CHANGED"):
+                admission.stage("cpu", request, runtime.ROOT, fixture.root / "cpu-mutated-image", deadline)
+            decode.assert_not_called()
+            first.write_bytes(original_bytes)
+            weight.write_bytes(b"EDIT")
+            with self.assertRaisesRegex(ValueError, "WEIGHT_CHECKSUM"):
+                admission.stage("cpu", request, runtime.ROOT, fixture.root / "cpu-mutated-checkpoint", deadline)
+            processor.assert_not_called()
+            weight.write_bytes(b"SAFE")
+            cpu = fixture.root / "cpu"
+            admission.stage("cpu", request, runtime.ROOT, cpu, deadline)
+            self.assertEqual(read(cpu / "images.json")["verified_images"], 3763)
+            self.assertEqual(read(cpu / "timing/images-3763.json")["images"], 3763)
+            self.assertFalse((cpu / "timing/history-replay-start.json").exists())
+            processor.assert_called_once()
 
     def test_cpu_and_native_share_verified_inputs_and_independent_calls_hash(self):
         from test_fresh_fulltrain import Scripted
