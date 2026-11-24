@@ -29,6 +29,13 @@ ARCHIVE_BOUND = 64 * 2**20
 SUPERVISOR = re.compile(r"minicpm-fulltrain/supervision/[0-9a-f]{32}\.zip")
 SLUG = re.compile(r"nguynanhtn/[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?")
 CLAIM_FIELDS = {"kind", "number", "request_sha256", "ticket_sha256", "time_unix"}
+LAUNCH_TIMEOUT_FAILURE = {"type": "TimeoutError", "message": "SUPERVISED_PARENT_DEADLINE_LAUNCH",
+                          "stage": "launch", "category": "TECHNICAL"}
+
+
+def launch_stop(request, ticket):
+    return {"status": "RESTORE_TIMED_OUT_BEFORE_CHILD_DISPATCH", "staging_discarded": True,
+            "request_sha256": digest(request), "ticket_sha256": digest(ticket)}
 
 
 def inventory(download):
@@ -68,7 +75,7 @@ def _json(bundle, name):
     return a.strict_json(bundle.read(name))
 
 
-def _work_files(download, names, archive, value):
+def _work_files(download, names, archive, value, *, restored=True):
     """Only the supervisor and the signed, restored predecessor reservations may exist."""
     request = value["request"]
     campaign = digest(request["campaign"])
@@ -76,6 +83,13 @@ def _work_files(download, names, archive, value):
     allowed = {"minicpm-fulltrain/attempts/active_" + lease + ".lock",
         "minicpm-fulltrain/supervisor_control/attempts/active_" + lease + ".lock",
         archive, archive + ".sha256.json"}
+    if not restored:
+        require(not any(name.startswith("minicpm-history-") for name in names),
+                "MINICPM_PRE_NATIVE_LAUNCH_STAGING_REMAINS")
+        prefix = archive[:-4] + "/"
+        require(all(name in (archive, archive + ".sha256.json") or name.startswith(prefix)
+            for name in names if name.startswith("minicpm-fulltrain/")), "MINICPM_PRE_NATIVE_UNKNOWN_WORK_OUTPUT")
+        return
     for h, ancestor in zip(request["history"], value["ancestors"]):
         name = "minicpm-fulltrain/attempts/" + h["attempt_id"] + ".json"
         require(read_json_file(download, name) == {"plan_sha256": ancestor["plan_sha256"], "campaign_sha256": campaign},
@@ -156,10 +170,10 @@ def _claims(download, bundle, ticket, request, campaign_id, last):
     """Create-only capability claims: no load/call; bound to this exact ticket."""
     t = ticket["payload"]
     claims = _json(bundle, "claims.json")
-    allowed = ("launch",) + STAGES[:STAGES.index(last) + 1]
+    allowed = ("launch",) if last == "launch" else ("launch",) + STAGES[:STAGES.index(last) + 1]
     kinds = [kind for kind in allowed if kind + ".json" in claims]
     require(set(claims) == {kind + ".json" for kind in kinds}
-        and kinds in (list(allowed), list(allowed[:-1])),
+        and kinds and kinds in (list(allowed), list(allowed[:-1])),
         "MINICPM_PRE_NATIVE_NO_LOAD_OR_CALL_CLAIM")
     loose = safe(download, "minicpm-fulltrain-claims/" + campaign_id + "/" + str(t["number"]))
     require({p.name for p in loose.glob("*.json")} == set(claims), "MINICPM_PRE_NATIVE_LOOSE_CLAIMS")
@@ -177,7 +191,7 @@ def _claims(download, bundle, ticket, request, campaign_id, last):
     return digest(claims)
 
 
-def verify_download(download, active, locator, campaign_id, *, proof_sha256=None):
+def verify_download(download, active, locator, campaign_id, *, proof_sha256=None, bounded_launch=False):
     """Read-only check of an Owner download against one signed reservation."""
     download = Path(download)
     value, ticket = active["value"], active["ticket"]
@@ -186,7 +200,6 @@ def verify_download(download, active, locator, campaign_id, *, proof_sha256=None
     names = inventory(download)
     archive_name = supervisor_only(names, plan["run_id"], plan["attempt_id"])
     archive = safe(download, archive_name)
-    _work_files(download, names, archive_name, value)
     require(snapshot_stat(archive).st_size <= ARCHIVE_BOUND, "MINICPM_PRE_NATIVE_ARCHIVE_BOUND")
     entries = ui.pair(archive)
     request_sha, source = digest(request), request["source_sha256"]
@@ -202,16 +215,30 @@ def verify_download(download, active, locator, campaign_id, *, proof_sha256=None
             and release.get("scientific_qualified") is False and release.get("source_sha256") == source
             and type(release.get("failure")) is dict and release["failure"] == _json(bundle, "failure.json"),
             "MINICPM_PRE_NATIVE_SEALED_BLOCKED_NO_ATTEMPT")
-        stages = _stages(bundle, release, request_sha, source)
-        claims_sha = _claims(download, bundle, ticket, request, campaign_id, stages["last_stage"])
         members = set(bundle.namelist())
-        require("retention.json" in members and "retention_failure.json" not in members, "MINICPM_PRE_NATIVE_RETENTION")
-        retention = _json(bundle, "retention.json")
-        require(retention["status"] == "SEALED_ZIPS_IN_OUTPUT_RAW_BYTES_RETAINED_IN_SCRATCH"
-            and retention["raw_deleted"] is False and
-            [(row["run_id"], row["archive_sha256"]) for row in retention["retained"]] ==
-            [(h["run_id"], ancestor["sha256"]) for h, ancestor in zip(request["history"], value["ancestors"])],
-            "MINICPM_PRE_NATIVE_RETENTION")
+        last = release["last_stage"]
+        _work_files(download, names, archive_name, value, restored=last != "launch")
+        if last == "launch":
+            require(bounded_launch and proof_sha256 is not None
+                and members == {"request.json", "capability.json", "release.json", "failure.json", "claims.json",
+                                "launch-stop.json", "checksums.json"}
+                and release["failure"] == LAUNCH_TIMEOUT_FAILURE
+                and _json(bundle, "launch-stop.json") == launch_stop(request, ticket),
+                "MINICPM_PRE_NATIVE_LAUNCH_STOP_UNVERIFIED")
+            stages = {"last_stage": last, "child_launched": False, "fingerprint": {
+                "stage": last, "supervisor_type": "TimeoutError",
+                "supervisor_message": LAUNCH_TIMEOUT_FAILURE["message"], "child": None}}
+        else:
+            require(not bounded_launch or last != "native", "MINICPM_PRE_NATIVE_NATIVE_DISPATCH_REQUIRES_RECONCILIATION")
+            stages = _stages(bundle, release, request_sha, source)
+            require("retention.json" in members and "retention_failure.json" not in members, "MINICPM_PRE_NATIVE_RETENTION")
+            retention = _json(bundle, "retention.json")
+            require(retention["status"] == "SEALED_ZIPS_IN_OUTPUT_RAW_BYTES_RETAINED_IN_SCRATCH"
+                and retention["raw_deleted"] is False and
+                [(row["run_id"], row["archive_sha256"]) for row in retention["retained"]] ==
+                [(h["run_id"], ancestor["sha256"]) for h, ancestor in zip(request["history"], value["ancestors"])],
+                "MINICPM_PRE_NATIVE_RETENTION")
+        claims_sha = _claims(download, bundle, ticket, request, campaign_id, last)
     context = safe(download, plan["run_id"] + "-release-context.json")
     require(a.strict_json(context.read_bytes()) == {"locator": locator, "value": value, "ticket": ticket},
         "MINICPM_PRE_NATIVE_CONTEXT_BINDING")

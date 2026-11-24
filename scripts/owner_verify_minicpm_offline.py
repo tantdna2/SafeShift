@@ -220,10 +220,10 @@ def pre_native_closure(directory, download, destination, *, provider_job=None, o
     active = route.state()["active"]
     c.require(active is not None, "MINICPM_PRE_NATIVE_ACTIVE_RESERVATION_REQUIRED")
     download = c.private(download)
-    local = route.pre_native_local(download, active)
     destination = c.private(destination)
     destination.mkdir(parents=True, exist_ok=False)
     try:
+        local = route.pre_native_local(download, active)
         if client is None:
             from safeshift.internvl3763_operator import api
             client = api()

@@ -118,6 +118,7 @@ HNLO N/A. Capsule tự mang request và mọi history; không nhập dự đoán
 if signal.getitimer(signal.ITIMER_REAL) != (0, 0):
     raise RuntimeError("MINICPM_BOOTSTRAP_TIMER_REQUIRED")
 def minicpm_bootstrap_timeout(*_):
+    print("MINICPM_BLOCKED_BOOTSTRAP_KEEP_RESERVATION", flush=True)
     raise TimeoutError("SUPERVISED_PARENT_DEADLINE_BOOTSTRAP")
 minicpm_old_alarm = signal.signal(signal.SIGALRM, minicpm_bootstrap_timeout)
 try:

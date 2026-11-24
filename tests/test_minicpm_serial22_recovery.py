@@ -1,19 +1,188 @@
 """CPU-only deadline, custody and three-source continuation regressions."""
+from contextlib import ExitStack
 from copy import deepcopy
 from pathlib import Path
 import os
+import shutil
 import signal
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
+import test_minicpm_fulltrain_execution as fixtures
 from safeshift.candidates import fulltrain_run as journal
 from safeshift.fulltrain import admission, contract, minicpm_offline as policy, minicpm_ui as ui, runtime, supervision
-from safeshift.pilot.artifacts import export, write
+from safeshift.fulltrain import minicpm_execution as execution, minicpm_prenative as closure, minicpm_release as authority
+from safeshift.pilot.artifacts import export, read, sha, write
 from safeshift.pilot.contract import digest
-from scripts import minicpm_offline_continuation as route
+from scripts import minicpm_offline_continuation as route, minicpm_offline_fast as fast, owner_verify_minicpm_offline as owner
+
+
+@unittest.skipUnless(sys.platform == "linux", "Kaggle parent timer uses Linux signals")
+class TimeoutCustodyTests(unittest.TestCase):
+    setUpClass = classmethod(fixtures.ExecutionTests.setUpClass.__func__)
+    tearDownClass = classmethod(fixtures.ExecutionTests.tearDownClass.__func__)
+    setUp = fixtures.ExecutionTests.setUp
+    make_ticket = fixtures.ExecutionTests.make_ticket
+
+    def test_authenticated_restore_timeout_seals_only_positive_pre_dispatch_evidence(self):
+        download, inputs = self.root / "download", self.root / "input"
+        work = download / "minicpm-fulltrain"
+        request = self.value["request"]
+        request.update(work=str(work), scratch=str(self.root / "scratch"))
+        self.grant["continuation"] = {"previous_source_sha256": contract.PR211_SOURCE}
+        proof = {"synthetic_authority_proof": True}
+        self.grant["approvals"][authority.PROOF_KEY] = digest(proof)
+        ticket = self.make_ticket(self.value)
+        mount = inputs / self.value["capsule_ref"].split("/")[1]
+        capsule_sha = write(mount / ui.MARKER, self.value)
+        ticket_path = mount / execution.MARKER
+        write(ticket_path, ticket | {"signature": "0" * 768})
+        download.mkdir()
+        claims = download / "minicpm-fulltrain-claims"
+
+        def load(locator, *, repo, capture):
+            capture.update(proof)
+            return self.grant
+
+        def restore(directory, value, staged, deadline):
+            self.assertEqual(set(authority.claims_snapshot()), {"launch.json"})
+            write(staged / "copy.json", {"source": "immutable capsule"})
+            time.sleep(4)
+
+        # Only live release retrieval, Kaggle path validation and restoration
+        # latency are simulated. RSA, claims, timeout, ZIP and readers are real.
+        with ExitStack() as stack:
+            for obj, name, result in ((authority, "validate", self.grant), (ui, "validate", self.value),
+                (authority, "uses_proof", True), (os, "statvfs", SimpleNamespace(f_flag=os.ST_RDONLY))):
+                stack.enter_context(patch.object(obj, name, return_value=result))
+            stack.enter_context(patch.object(authority, "load", side_effect=load))
+            stack.enter_context(patch.object(authority, "CLAIMS", claims))
+            stack.enter_context(patch.object(ui, "restore_released_history", side_effect=restore))
+            stack.enter_context(patch.object(policy, "LAUNCH_SECONDS", 1))
+            launch = stack.enter_context(patch.object(runtime, "launch"))
+            with self.assertRaisesRegex(ValueError, "SIGNATURE_INVALID"):
+                execution.run_capsule(inputs, capsule_sha, self.locator, bounded_launch=True)
+            self.assertFalse(work.exists())
+            self.assertFalse(claims.exists())
+            ticket_path.unlink()
+            write(ticket_path, ticket)
+            output = execution.run_capsule(inputs, capsule_sha, self.locator, bounded_launch=True)
+            launch.assert_not_called()
+        self.assertFalse(list(download.glob("minicpm-history-*")))
+        self.assertFalse(list(output.glob("*-process.json")))
+        snapshot = download / "data/processed/fresh_fulltrain_code" / request["source_sha256"]
+        for name in contract.sources():
+            dest = snapshot / name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(contract.ROOT / name, dest)
+        active = {"value": self.value, "ticket": ticket}
+
+        def verify(**options):
+            return closure.verify_download(download, active, self.locator, self.grant["campaign_id"],
+                proof_sha256=digest(proof), **options)
+
+        local = verify(bounded_launch=True)
+        self.assertEqual(local["disposition"], closure.DISPOSITION)
+        self.assertEqual(local["last_stage"], "launch")
+        self.assertIs(local["child_launched"], False)
+        self.assertEqual(local["reserved_after"], ticket["payload"]["reserved_after"])
+        with self.assertRaisesRegex(ValueError, "LAUNCH_STOP_UNVERIFIED"):
+            verify()
+        job = self.value["job"]
+        files = {name: sha(mount / name) for name in (ui.MARKER, execution.MARKER)}
+        provider = {"schema": closure.PROVIDER_SCHEMA, "local": local, "provider_job": job, "ticket_job": job,
+            "provider": {"job_id": job, "kernel_id": 23, "version": 1, "state": "ERROR",
+                         "notebook_code_sha256": ticket["payload"]["notebook_code_sha256"],
+                         "remote_notebook_sha256": "a" * 64, "safeshift_metadata": "MATCHED"},
+            "accelerator": {"enable_gpu": True, "machine_shape": None,
+                            "scope": "CURRENT_KERNEL_METADATA_NOT_EXECUTION_TIME_PROOF"},
+            "capsule": {"private": True, "version": 1, "files": files},
+            "output": {"inventory": closure.inventory(download), "pairs": {local["supervisor"]: local["supervisor_sha256"]},
+                       "sidecar_sha256": local["sidecar_sha256"], "log_sha256": "e" * 64}}
+        self.assertEqual(closure.verify_provider(provider, local, active, files), provider)
+        provider["provider"]["state"] = "RUNNING"
+        with self.assertRaisesRegex(ValueError, "KERNEL_IDENTITY"):
+            closure.verify_provider(provider, local, active, files)
+        # A sealed pair and launch claim without the positive dispatch
+        # receipt must still block, even with no attempt or native files.
+        output.with_suffix(".zip").unlink()
+        output.with_suffix(".zip.sha256.json").unlink()
+        (output / "checksums.json").unlink()
+        (output / "launch-stop.json").unlink()
+        export(output, output.with_suffix(".zip"))
+        with self.assertRaisesRegex(ValueError, "LAUNCH_STOP_UNVERIFIED"):
+            verify(bounded_launch=True)
+
+    def test_retention_or_export_timeout_preserves_sealed_attempt_and_failure_evidence(self):
+        for stage in ("retention", "export"):
+            with self.subTest(stage=stage), ExitStack() as stack:
+                work, scratch = self.root / stage / "work", self.root / stage / "scratch"
+                scratch.mkdir(parents=True)
+                request = deepcopy(self.value["request"])
+                request.update(inputs=str(self.root / "inputs"), work=str(work), scratch=str(scratch))
+                request["plan"]["max_seconds"] = 14400
+                attempt = work / request["plan"]["run_id"]
+                write(attempt / "raw.json", {"preserved": stage})
+                archive = attempt.with_suffix(".zip")
+                before = export(attempt, archive)
+                sidecar = Path(str(archive) + ".sha256.json")
+                sidecar_bytes = sidecar.read_bytes()
+                claims = self.root / stage / "claims"
+                write(claims / "launch.json", {"time_unix": time.time()})
+                active = {"grant": self.grant | {"continuation": {"previous_source_sha256": contract.PR211_SOURCE}},
+                    "value": self.value, "claims": claims, "capsule_directory": self.root,
+                    "locator": self.locator, "ticket": self.ticket, "context_file": str(work / "context.json")}
+                for obj, name, result in ((admission, "validate_request", None), (admission.memory, "observe", None),
+                    (admission.memory, "ownership", {}), (authority, "current", active),
+                    (authority, "authorize", None), (authority, "claims_snapshot", {})):
+                    stack.enter_context(patch.object(obj, name, return_value=result))
+                stack.enter_context(patch.object(supervision, "run", side_effect=RuntimeError("SUPERVISED_CHILD_FAILURE")))
+                error = TimeoutError("SUPERVISED_PARENT_DEADLINE_" + stage.upper())
+                if stage == "retention":
+                    stack.enter_context(patch.object(execution, "retain_sealed_trees", side_effect=error))
+                    output = admission.launch_prepared(request)
+                    self.assertTrue(output.with_suffix(".zip").is_file())
+                    self.assertEqual(read(output / "retention_failure.json")["message"], str(error))
+                    with self.assertRaisesRegex(ValueError, "UI_SUPERVISOR_BINDING"):
+                        fast.verify_supervisor(output, request)
+                else:
+                    stack.enter_context(patch.object(execution, "retain_sealed_trees", return_value={}))
+
+                    def interrupted_export(control, partial):
+                        partial.write_bytes(b"incomplete supervisor")
+                        raise error
+
+                    stack.enter_context(patch.object(supervision, "export", side_effect=interrupted_export))
+                    with self.assertRaisesRegex(TimeoutError, str(error)):
+                        admission.launch_prepared(request)
+                    (receipt,) = (work / "supervision").glob("*-export-failure.json")
+                    self.assertEqual(read(receipt)["status"], "BLOCKED")
+                    self.assertEqual(read(receipt)["failure"]["message"], str(error))
+                    self.assertEqual(read(receipt)["reservation"], "KEEP")
+                    self.assertFalse(list((work / "supervision").glob("*.zip")))
+                    self.assertTrue(list((work / "supervision").glob("*.zip.partial")))
+                self.assertEqual(read(attempt / "raw.json"), {"preserved": stage})
+                self.assertEqual(sha(archive), before)
+                self.assertEqual(sidecar.read_bytes(), sidecar_bytes)
+
+    def test_owner_verifier_marks_missing_export_blocked_before_provider_call(self):
+        download, output = self.root / "data/processed/download", self.root / "data/processed/verification"
+        download.mkdir(parents=True)
+        active = {"ticket": self.ticket, "value": self.value}
+        reader = SimpleNamespace(state=lambda: {"active": active}, pre_native_local=lambda path, item:
+            closure.verify_download(path, item, self.locator, self.grant["campaign_id"], bounded_launch=True))
+        with patch.object(route, "ROOT", self.root), patch.object(route, "Continuation", return_value=reader), \
+                patch.object(owner, "provider_closure") as verify:
+            with self.assertRaisesRegex(ValueError, "MINICPM_OWNER_VERIFIER_BLOCKED"):
+                owner.pre_native_closure(download, download, output, owner_performs_network=True)
+            verify.assert_not_called()
+        blocked = read(output / "BLOCKED.json")
+        self.assertEqual(blocked["gate"], "MINICPM_PRE_NATIVE_SUPERVISOR_ONLY")
+        self.assertFalse(blocked["journal_written"])
 
 
 class Serial22RecoveryTests(unittest.TestCase):

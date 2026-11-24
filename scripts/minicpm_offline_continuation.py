@@ -553,7 +553,7 @@ class Continuation:
         require(policy.first_serial(self.grant) == 9, "MINICPM_PRE_NATIVE_V5_REQUIRED")
         grant, locator, _ = self.authority_for(active)
         return prenative.verify_download(download, active, locator, grant["campaign_id"],
-            proof_sha256=grant["approvals"][a.PROOF_KEY])
+            proof_sha256=grant["approvals"][a.PROOF_KEY], bounded_launch=policy.serial22_recovery(grant))
 
     def check_closure(self, active, download, closure, *, verified_local=None):
         from safeshift.internvl3763_operator import code_hash

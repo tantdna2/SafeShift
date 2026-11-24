@@ -88,8 +88,8 @@ nhận một lượt 669 ảnh. [Release V5](https://github.com/tantdna2/SafeShi
 
 | Thành phần ứng viên | SHA256 |
 | --- | --- |
-| Runtime source manifest | `a8f1efb720c5befbc383c23b22035dd287dddf92c933cca3481f7980f2f94828` |
-| V5 tool manifest | `b6e59217b2bda475591c094e1c1bd42a661f18dff10961be70f0f171ba56da2b` |
+| Runtime source manifest | `3204960b386b8625d289a9a3dc95e98373712d44ee5e359df6e0a25db6de0e14` |
+| V5 tool manifest | `13462015682a4bc62cad8a72622afe88e1d0734661e2c96895ed218b2cbcb9ff` |
 | Fast companion | `f23bfbcbe81dd27bc697f13c5cb6b1beb08fb81f2f3f9d5e8a340f807df8b45e` |
 
 1. Sau review, audit, merge được cấp riêng và hậu kiểm, giữ hai checkout
@@ -126,15 +126,38 @@ python -B -m scripts.minicpm_offline_fast --directory <primary> --historical-rep
 python -B -c "from safeshift.fulltrain import contract; from safeshift.pilot.contract import digest; from scripts import minicpm_offline_continuation as v5, minicpm_offline_fast as fast; print(digest(contract.source_manifest())); print(digest(v5.tools_manifest())); print(fast.sha(fast.__file__)); print(v5.tool_blobs())"
 ```
 
+## Timeout và custody
+
+- Runtime ghi claim launch sau khi xác thực release, ticket và capsule.
+  Nếu restore chạm 2.400 giây trước khi dispatch child và dọn xong bản sao
+  staging, supervisor niêm phong `launch-stop.json`, claim và lỗi trong
+  cặp ZIP/SHA. Owner dùng `--pre-native-closure` với đúng kernel ID và toàn
+  bộ Output. Sau khi khớp job terminal, notebook, capsule và chứng cứ, Operator
+  dùng `close-pre-native` hiện có. Hold và ordinal kế tiếp giữ nguyên.
+- Khi retention timeout, supervisor giữ ZIP/SHA của attempt đã niêm phong
+  và ghi `retention_failure.json`. Khi supervisor export timeout, giữ
+  cây control, file `.zip.partial` nếu có và ghi `*-export-failure.json`
+  trong thời gian còn lại. Log in trạng thái BLOCKED nếu thiếu thời gian ghi
+  receipt. Owner đối chiếu ZIP/SHA, claims và provider Output trước khi
+  quyết định cách thu hồi kết quả đã niêm phong.
+- Bootstrap hoặc install thiếu receipt, staging dọn dở, native đã dispatch
+  với chứng cứ thiếu, hoặc supervisor thiếu cặp ZIP/SHA đầy đủ đều cần
+  đối soát Owner. Giữ reservation, toàn bộ Output và log của đúng kernel.
+  Chỉ đóng theo đường đã xác minh. Thiếu file không chứng minh zero load/call.
+
 ## Kiểm thử CPU
 
-WSL2, Python 3.14.4 — 23 test trọng điểm PASS. Các bài gồm admit qua 600
+Trước review, 23 test trọng điểm PASS trên WSL2, Python 3.14.4. Các bài gồm admit qua 600
 giây theo đồng hồ mô phỏng, giới hạn từng stage, reserve export, thiếu
 quota, launch timeout và reap process group thật, sửa ảnh/checkpoint/lịch sử,
 12 ancestor với 3.094 bản ghi, thứ tự 669 ordinal, closure Fast, giữ hold
 khi đã reserve và kiểm ba release trước đối soát cuối. Notebook ứng viên
 được tạo từ commit local và biên dịch đủ hai cell code.
 [Regression Serial 22](../tests/test_minicpm_serial22_recovery.py).
+
+Sau review, 7 test trực tiếp PASS trên WSL2. Các test kiểm restore timeout
+với ticket RSA và ZIP thật, thiếu receipt/Output, retention/export timeout
+và closure Fast hiện có. Provider dùng fixture tổng hợp.
 
 Các fixture dùng dữ liệu tổng hợp. Timing, GPU/RAM thực tế và khả năng
 chạy đủ 669 ảnh trong một lượt thuộc lần chạy được Owner phê duyệt.

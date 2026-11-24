@@ -456,6 +456,10 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
         attempt = safe(work, p["run_id"])
         attempt_observed = attempt.exists()
         recovery = "NO_ATTEMPT"
+        if bounded and stage_name == "native":
+            # A failed native dispatch needs custody reconciliation even if
+            # the expected attempt tree or a later claim is unavailable.
+            recovery = "NATIVE_STAGE_REQUIRES_RECONCILIATION"
         finalize_by = deadline - SUPERVISOR_SEAL_SECONDS
         if attempt.exists():
             recovery = "PARTIAL_OR_SEALED_REQUIRES_CUSTODY"
@@ -495,7 +499,9 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
             memory.observe(output, 'final')
         if active is not None:
             write(output / "claims.json", capability.claims_snapshot())
-        with supervision.parent_deadline(deadline, "export") if bounded else nullcontext():
+        if bounded:
+            supervision.seal_supervisor(output, deadline)
+        else:
             export(output, Path(str(output) + ".zip"))
     return output
 

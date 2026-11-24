@@ -1,17 +1,19 @@
 """Released Owner UI and isolated child entrypoints, using PR195's pipeline."""
 import argparse
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 import os
 import math
 from pathlib import Path
 import shutil
 import tempfile
 import time
+import uuid
 
 from safeshift.candidates.source import ROOT, require, snapshot_stat
 from safeshift.candidates.train_inputs import discover
 from safeshift.pilot.artifacts import read, write, safe, sha
 from safeshift.pilot.contract import digest
+from safeshift.pilot.runner import error_record
 from . import minicpm_release as authority, minicpm_ui as ui
 
 MARKER = "safeshift_minicpm_release_ticket.json"
@@ -29,16 +31,23 @@ def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None
     from .minicpm_offline import LAUNCH_SECONDS
     from .supervision import parent_deadline
     deadline = time.monotonic() + LAUNCH_SECONDS - (time.time() - started_unix)
-    with ExitStack() as stack, ExitStack() as launch_budget:
+    with ExitStack() as stack:
+        try:
+            with parent_deadline(deadline, "launch") if bounded_launch else nullcontext():
+                request, context = _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack, bounded_launch)
+        except Exception:
+            if bounded_launch:
+                print("MINICPM_BLOCKED_LAUNCH_WITHOUT_RESTORE_RECEIPT_KEEP_RESERVATION", flush=True)
+            raise
         if bounded_launch:
-            launch_budget.enter_context(parent_deadline(deadline, "launch"))
-        request = _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack, deadline, bounded_launch)
-        launch_budget.close()
+            failure_output = _restore_bounded(request, context, deadline)
+            if failure_output is not None:
+                return failure_output
         from .runtime import launch
         return launch(request, repo=repo)
 
 
-def _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack, deadline, bounded_launch):
+def _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack, bounded_launch):
     # Genuine authority before any Input path, request, credentials or model IO.
     from .minicpm_offline import serial22_recovery
     proof = {}
@@ -73,25 +82,24 @@ def _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack,
     if "continuation" in grant:
         require(not work.exists() and not scratch.exists(), "MINICPM_V2_FRESH_VM_WORKSPACE")
         require(time.time() < ticket["start_before_unix"], "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH")
+    if "continuation" in grant and not bounded_launch:
         temporary = stack.enter_context(tempfile.TemporaryDirectory(prefix="minicpm-history-", dir=work.parent))
         staged = Path(temporary) / "work"
         restoration_started = time.monotonic()
-        if bounded_launch:
-            ui.restore_released_history(marker.parent, value, staged, deadline)
-        else:
-            ui.restore_history(marker.parent, value, staged)
+        ui.restore_history(marker.parent, value, staged)
         restoration_seconds = time.monotonic() - restoration_started
     context = stack.enter_context(authority._activated(grant, locator, envelope, value, "launch",
         repo=repo, started_unix=started_unix))
     authority.authorize(request=request)
     require(not work.exists() and not scratch.exists(), "MINICPM_V2_FRESH_VM_WORKSPACE")
-    if staged is None:
-        ui.restore_history(marker.parent, value, work)
-    elif staged.exists():
-        staged.rename(work)
+    if not bounded_launch:
+        if staged is None:
+            ui.restore_history(marker.parent, value, work)
+        elif staged.exists():
+            staged.rename(work)
+        work.mkdir(parents=True, exist_ok=True)
+        scratch.mkdir(parents=True, exist_ok=False)
     context["history_restore_seconds"] = restoration_seconds
-    work.mkdir(parents=True, exist_ok=True)
-    scratch.mkdir(parents=True, exist_ok=False)
     context_file = work.parent / (request["plan"]["run_id"] + "-release-context.json")
     write(context_file, {"locator": locator, "ticket": envelope, "value": value})
     context["context_file"] = str(context_file)
@@ -100,7 +108,79 @@ def _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack,
         write(proof_file, proof)
         context["proof_file"] = str(proof_file)
     context["capsule_directory"] = str(marker.parent)
-    return request
+    return request, context
+
+
+def _restore_bounded(request, context, deadline):
+    """Restore after the authenticated launch claim and before any child dispatch."""
+    from . import supervision
+
+    work, scratch = Path(request["work"]), Path(request["scratch"])
+    started = time.monotonic()
+    staging = None
+    try:
+        with supervision.parent_deadline(deadline, "launch"):
+            staging = Path(tempfile.mkdtemp(prefix="minicpm-history-", dir=work.parent))
+            staged = staging / "work"
+            ui.restore_released_history(context["capsule_directory"], context["value"], staged, deadline)
+    except (TimeoutError, ValueError) as error:
+        if time.monotonic() < deadline or str(error) not in (
+                "SUPERVISED_PARENT_DEADLINE_LAUNCH", "READONLY_ADVICE_DEADLINE"):
+            print("MINICPM_BLOCKED_LAUNCH_WITHOUT_RESTORE_RECEIPT_KEEP_RESERVATION", flush=True)
+            raise
+        return _seal_restore_timeout(request, context, staging)
+    try:
+        with supervision.parent_deadline(deadline, "launch_install"):
+            if staged.exists():
+                staged.rename(work)
+            staging.rmdir()
+            work.mkdir(parents=True, exist_ok=True)
+            scratch.mkdir(parents=True, exist_ok=False)
+    except TimeoutError:
+        print("MINICPM_BLOCKED_LAUNCH_INSTALL_KEEP_RESERVATION", flush=True)
+        raise
+    context["history_restore_seconds"] = time.monotonic() - started
+    return None
+
+
+def _seal_restore_timeout(request, context, staging):
+    from . import minicpm_prenative, supervision
+    from .minicpm_offline import SUPERVISOR_SEAL_SECONDS
+
+    print("MINICPM_BLOCKED_LAUNCH_RESTORE_TIMEOUT_KEEP_RESERVATION", flush=True)
+    ticket = context["ticket"]
+    claims = authority.claims_snapshot()
+    work, scratch = Path(request["work"]), Path(request["scratch"])
+    require(set(claims) == {"launch.json"} and not work.exists() and not scratch.exists(),
+            "MINICPM_BLOCKED_LAUNCH_CUSTODY_AMBIGUOUS")
+    deadline = time.monotonic() + claims["launch.json"]["time_unix"] + request["plan"]["max_seconds"] - time.time()
+    cleanup_failure = None
+    try:
+        with supervision.parent_deadline(min(time.monotonic() + SUPERVISOR_SEAL_SECONDS,
+                                             deadline - SUPERVISOR_SEAL_SECONDS), "launch_cleanup"):
+            if staging is not None:
+                # This tree contains only staging copies of immutable capsule ancestors.
+                shutil.rmtree(staging)
+    except Exception as error:
+        cleanup_failure = error_record(error, "launch_cleanup")
+    output = work / "supervision" / uuid.uuid4().hex
+    with supervision.parent_deadline(deadline - 5, "launch_receipt"):
+        failure = minicpm_prenative.LAUNCH_TIMEOUT_FAILURE
+        write(output / "request.json", request)
+        write(output / "capability.json", {"locator": context["locator"], "ticket": ticket})
+        write(output / "claims.json", claims)
+        if cleanup_failure is None:
+            write(output / "launch-stop.json", minicpm_prenative.launch_stop(request, ticket))
+        else:
+            write(output / "launch-cleanup-failure.json", cleanup_failure)
+        write(output / "failure.json", failure)
+        write(output / "release.json", {"status": "BLOCKED", "diagnostic": False, "last_stage": "launch",
+            "failure": failure, "attempt_observed": False,
+            "recovery": "NO_ATTEMPT" if cleanup_failure is None else "LAUNCH_STAGING_REQUIRES_RECONCILIATION",
+            "automatic_retry": False,
+            "scientific_qualified": False, "source_sha256": request["source_sha256"]})
+    supervision.seal_supervisor(output, min(deadline, time.monotonic() + SUPERVISOR_SEAL_SECONDS))
+    return output
 
 
 def retain_sealed_trees(request, work, scratch, capsule_directory, *, ancestors=None, deadline=None):
