@@ -13,6 +13,19 @@ def validate_policy(policy, job_seconds):
     return policy
 
 
+def measured_bounds(grant, telemetry, expected_source):
+    require(type(telemetry) is dict and set(telemetry) == {"source_sha256", "model_key", "overhead_seconds",
+        "call_seconds", "provenance_sha256"} and telemetry["model_key"] == "minicpm4"
+        and telemetry["source_sha256"] == expected_source, "MINICPM_NO_PEER_THROUGHPUT_TRANSFER")
+    calls = telemetry["call_seconds"]
+    require(type(calls) is list and all(type(n) in (int, float) and math.isfinite(n) and n > 0
+        for n in [telemetry["overhead_seconds"], *calls]), "MINICPM_MEASURED_TIMING_REQUIRED")
+    from safeshift.pilot.contract import require_hash
+    require_hash(telemetry["provenance_sha256"])
+    safety = grant["sizing"]["safety_milli"] / 1000
+    return math.ceil(telemetry["overhead_seconds"] * safety), math.ceil(max(calls, default=0) * safety)
+
+
 def propose(grant, pending, reserved, provider, telemetry=None):
     """Use only same-source verified MiniCPM telemetry, otherwise an adaptive cap.
 
@@ -33,16 +46,8 @@ def propose(grant, pending, reserved, provider, telemetry=None):
         "MINICPM_TIME_QUOTA_OR_CALL_BUDGET_EXHAUSTED")
     status, overhead, per_call = "UNKNOWN_ADAPTIVE_WITHIN_APPROVED_CAPS", None, None
     if telemetry is not None:
-        require(type(telemetry) is dict and set(telemetry) == {"source_sha256", "model_key", "overhead_seconds",
-            "call_seconds", "provenance_sha256"} and telemetry["model_key"] == "minicpm4"
-            and telemetry["source_sha256"] == grant["scope"]["source_sha256"], "MINICPM_NO_PEER_THROUGHPUT_TRANSFER")
-        numbers = [telemetry["overhead_seconds"], *telemetry["call_seconds"]]
-        require(type(telemetry["call_seconds"]) is list and all(type(n) in (int, float) and math.isfinite(n) and n > 0 for n in numbers),
-            "MINICPM_MEASURED_TIMING_REQUIRED")
-        from safeshift.pilot.contract import require_hash
-        require_hash(telemetry["provenance_sha256"])
-        overhead = math.ceil(telemetry["overhead_seconds"] * policy["safety_milli"] / 1000)
-        per_call = max(policy["first_call_seconds"], math.ceil(max(telemetry["call_seconds"], default=0) * policy["safety_milli"] / 1000))
+        overhead, measured_call = measured_bounds(grant, telemetry, grant["scope"]["source_sha256"])
+        per_call = max(policy["first_call_seconds"], measured_call)
         calls = min(calls, max(0, (seconds - overhead - policy["export_seconds"]) // per_call))
         require(calls > 0, "MINICPM_MEASURED_ENVELOPE_CANNOT_FIT")
         status = "MEASURED_SAME_SOURCE_ESTIMATE_NOT_POPULATION_GUARANTEE" if telemetry["call_seconds"] else "MEASURED_OVERHEAD_ONLY_THROUGHPUT_UNKNOWN"

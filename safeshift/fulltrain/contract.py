@@ -16,6 +16,7 @@ from safeshift.pilot.contract import digest, require_hash
 BASE = "1acb3ef7c0deadbbde7da0b1c63b71296e3950e5"
 DIRECTION = "OWNER_FRESH_FULLTRAIN_ONLY"
 V5_SOURCE = "81ddb4df4a13e08f98e8944b3a7070b90d8b484d4a0f3605667829ca1a4f9b41"
+PR211_SOURCE = "4c3698d804c92ac81ec11c0dbcf783ae646c8e5fdaa8f8ac73f37ee183b990b1"
 SERIES = {key: "fresh171-" + key + "-v1" for key in planning.MODELS}
 QWEN = {"id": "Qwen/Qwen3-VL-8B-Instruct",
         "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"}
@@ -96,27 +97,41 @@ def campaign(cohorts, expected_projection_sha256, *, series=None):
 
 
 def v5_science_unchanged(previous, current):
+    return (previous["implementation_sha256"] == V5_SOURCE
+            and minicpm_science_unchanged(previous, current))
+
+
+def minicpm_science_unchanged(previous, current):
+    source = previous["implementation_sha256"]
     return (previous["model_key"] == current["model_key"] == "minicpm4"
-            and previous["implementation_sha256"] == V5_SOURCE
-            and current["implementation_sha256"] != V5_SOURCE
-            and previous == {**current, "implementation_sha256": V5_SOURCE})
+            and source != current["implementation_sha256"]
+            and previous == {**current, "implementation_sha256": source})
 
 
 def history_view(history, spec, *, action):
     if all(h["identity"] == spec for h in history):
         return history
-    # Validate the original one-way chain before adapting it to the generic
-    # planner. Every signed request and archive keeps the original history.
     require(action == "resume", "FOREIGN_HISTORY_FORBIDDEN")
+    source = spec["implementation_sha256"]
+    sources = [V5_SOURCE]
+    if source not in (V5_SOURCE, PR211_SOURCE):
+        sources.append(PR211_SOURCE)
+    if source != V5_SOURCE:
+        sources.append(source)
     compatible = []
-    seen_current = False
+    generation = 0
     for i, h in enumerate(history):
-        same = h["identity"] == spec
-        require(same or (not seen_current and v5_science_unchanged(h["identity"], spec)), "FOREIGN_HISTORY_FORBIDDEN")
+        identity = h["identity"]
+        previous = identity["implementation_sha256"]
+        require(previous in sources and (identity == spec or minicpm_science_unchanged(identity, spec)),
+                "FOREIGN_HISTORY_FORBIDDEN")
+        next_generation = sources.index(previous)
+        require(next_generation >= generation and (i > 0 or next_generation == 0),
+                "FOREIGN_HISTORY_FORBIDDEN")
         require(h["parent_history_sha256"] == digest(history[:i]), "MISSING_OR_REORDERED_ANCESTOR")
-        if same and not seen_current:
-            require(i > 0 and h["action"] == "resume", "MINICPM_V5_HISTORY_TRANSITION_ORDER")
-        seen_current |= same
+        if next_generation != generation:
+            require(h["action"] == "resume", "MINICPM_V5_HISTORY_TRANSITION_ORDER")
+        generation = next_generation
         compatible.append({**h, "identity": spec, "parent_history_sha256": digest(compatible)})
     return compatible
 

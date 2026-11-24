@@ -22,13 +22,28 @@ def metadata(path, limit=64 * 2**20):
     return read(path)
 
 
-def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None):
+def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None, bounded_launch=False):
     started_unix = time.time() if started_unix is None else started_unix
     require(type(started_unix) in (int,float) and math.isfinite(started_unix) and started_unix <= time.time(),
         "MINICPM_NOTEBOOK_START_TIME")
+    from .minicpm_offline import LAUNCH_SECONDS
+    from .supervision import parent_deadline
+    deadline = time.monotonic() + LAUNCH_SECONDS - (time.time() - started_unix)
+    with ExitStack() as stack, ExitStack() as launch_budget:
+        if bounded_launch:
+            launch_budget.enter_context(parent_deadline(deadline, "launch"))
+        request = _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack, deadline, bounded_launch)
+        launch_budget.close()
+        from .runtime import launch
+        return launch(request, repo=repo)
+
+
+def _prepare_capsule(inputs, capsule_sha256, locator, repo, started_unix, stack, deadline, bounded_launch):
     # Genuine authority before any Input path, request, credentials or model IO.
+    from .minicpm_offline import serial22_recovery
     proof = {}
     grant = authority.load(locator, repo=repo, capture=proof)
+    require(bounded_launch == serial22_recovery(grant), "MINICPM_EXACT_NOTEBOOK_LAUNCH_BUDGET")
     marker = discover(inputs, MARKER, limit=128)
     require(hasattr(os, "statvfs") and os.statvfs(marker.parent).f_flag & os.ST_RDONLY,
         "MINICPM_CAPSULE_READ_ONLY")
@@ -53,44 +68,42 @@ def run_capsule(inputs, capsule_sha256, locator, *, repo=ROOT, started_unix=None
         "MINICPM_V2_CAPSULE_MOUNT")
     request = value["request"]
     work, scratch = Path(request["work"]), Path(request["scratch"])
-    with ExitStack() as stack:
-        staged = None
-        restoration_seconds = None
-        if "continuation" in grant:
-            require(not work.exists() and not scratch.exists(), "MINICPM_V2_FRESH_VM_WORKSPACE")
-            require(time.time() < ticket["start_before_unix"], "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH")
-            # Stage onto the output filesystem. Validate before claiming launch,
-            # then install the validated tree by rename without a second replay.
-            temporary = stack.enter_context(tempfile.TemporaryDirectory(prefix="minicpm-history-", dir=work.parent))
-            staged = Path(temporary) / "work"
-            restoration_started = time.monotonic()
-            ui.restore_history(marker.parent, value, staged)
-            restoration_seconds = time.monotonic() - restoration_started
-        context = stack.enter_context(authority._activated(grant, locator, envelope, value, "launch",
-            repo=repo, started_unix=started_unix))
-        authority.authorize(request=request)
+    staged = None
+    restoration_seconds = None
+    if "continuation" in grant:
         require(not work.exists() and not scratch.exists(), "MINICPM_V2_FRESH_VM_WORKSPACE")
-        if staged is None:
-            ui.restore_history(marker.parent, value, work)
-        elif staged.exists():
-            staged.rename(work)
-        context["history_restore_seconds"] = restoration_seconds
-        work.mkdir(parents=True, exist_ok=True)
-        scratch.mkdir(parents=True, exist_ok=False)
-        context_file = work.parent / (request["plan"]["run_id"] + "-release-context.json")
-        write(context_file, {"locator": locator, "ticket": envelope, "value": value})
-        context["context_file"] = str(context_file)
-        if authority.uses_proof(grant):
-            # Scratch must remain empty for the supervisor's ownership gate.
-            proof_file = work.parent / (request["plan"]["run_id"] + "-authority-proof.json")
-            write(proof_file, proof)
-            context["proof_file"] = str(proof_file)
-        context["capsule_directory"] = str(marker.parent)
-        from .runtime import launch
-        return launch(request, repo=repo)
+        require(time.time() < ticket["start_before_unix"], "MINICPM_STALE_PROVIDER_BEFORE_LAUNCH")
+        temporary = stack.enter_context(tempfile.TemporaryDirectory(prefix="minicpm-history-", dir=work.parent))
+        staged = Path(temporary) / "work"
+        restoration_started = time.monotonic()
+        if bounded_launch:
+            ui.restore_released_history(marker.parent, value, staged, deadline)
+        else:
+            ui.restore_history(marker.parent, value, staged)
+        restoration_seconds = time.monotonic() - restoration_started
+    context = stack.enter_context(authority._activated(grant, locator, envelope, value, "launch",
+        repo=repo, started_unix=started_unix))
+    authority.authorize(request=request)
+    require(not work.exists() and not scratch.exists(), "MINICPM_V2_FRESH_VM_WORKSPACE")
+    if staged is None:
+        ui.restore_history(marker.parent, value, work)
+    elif staged.exists():
+        staged.rename(work)
+    context["history_restore_seconds"] = restoration_seconds
+    work.mkdir(parents=True, exist_ok=True)
+    scratch.mkdir(parents=True, exist_ok=False)
+    context_file = work.parent / (request["plan"]["run_id"] + "-release-context.json")
+    write(context_file, {"locator": locator, "ticket": envelope, "value": value})
+    context["context_file"] = str(context_file)
+    if authority.uses_proof(grant):
+        proof_file = work.parent / (request["plan"]["run_id"] + "-authority-proof.json")
+        write(proof_file, proof)
+        context["proof_file"] = str(proof_file)
+    context["capsule_directory"] = str(marker.parent)
+    return request
 
 
-def retain_sealed_trees(request, work, scratch, capsule_directory):
+def retain_sealed_trees(request, work, scratch, capsule_directory, *, ancestors=None, deadline=None):
     """Keep ZIP pairs in Output, move verified unpacked trees into scratch.
 
     Preserve every byte in both the immutable ZIP and retained scratch tree.
@@ -103,20 +116,28 @@ def retain_sealed_trees(request, work, scratch, capsule_directory):
         and not work.is_relative_to(scratch) and not scratch.is_relative_to(work), "MINICPM_RETENTION_OWNED_ROOTS")
     selected = []
     for i, h in enumerate(request["history"]):
-        selected.append((h["run_id"], safe(capsule_directory, f"ancestor-{i:04d}.bin")))
+        selected.append((h["run_id"], safe(capsule_directory, f"ancestor-{i:04d}.bin"),
+                         (h, ancestors[i]) if ancestors is not None else None))
     run = request["plan"]["run_id"]
     if (work / (run + ".zip")).is_file():
-        selected.append((run, safe(work, run + ".zip")))
+        selected.append((run, safe(work, run + ".zip"), None))
     target_root = safe(scratch, "sealed-output-trees")
     target_root.mkdir(exist_ok=False)
     retained = []
-    for name, archive in selected:
+    for name, archive, restored in selected:
         source, target = safe(work, name), safe(target_root, name)
         require(source.is_dir() and not target.exists() and source.resolve().is_relative_to(work)
             and target.resolve().is_relative_to(scratch), "MINICPM_RETENTION_SAFE_TARGET")
-        expected = ui.pair(archive)
-        found = members(source); found.pop("checksums.json", None)
-        require(found == expected, "MINICPM_RETENTION_ARCHIVE_TREE_CUSTODY")
+        if restored is None:
+            expected = ui.pair(archive)
+            archive_sha = sha(archive)
+            found = members(source); found.pop("checksums.json", None)
+            require(found == expected, "MINICPM_RETENTION_ARCHIVE_TREE_CUSTODY")
+        else:
+            from .runtime import restored_history_members
+            item, ancestor = restored
+            expected = restored_history_members(source, item, deadline)
+            archive_sha = ancestor["sha256"]
         if work.stat().st_dev != scratch.stat().st_dev:
             wanted = sum(p.stat().st_size for p in source.rglob("*") if p.is_file())
             require(shutil.disk_usage(scratch).free >= wanted + request["resource_policy"]["free_scratch_mib"] * 2**20,
@@ -126,7 +147,7 @@ def retain_sealed_trees(request, work, scratch, capsule_directory):
         shutil.move(str(source), str(target))
         after = members(target); after.pop("checksums.json", None)
         require(after == expected, "MINICPM_RETENTION_MOVED_BYTES")
-        retained.append({"run_id":name,"archive_sha256":sha(archive),"members":len(expected),
+        retained.append({"run_id":name,"archive_sha256":archive_sha,"members":len(expected),
             "scratch_relative":"sealed-output-trees/"+name})
     return {"status":"SEALED_ZIPS_IN_OUTPUT_RAW_BYTES_RETAINED_IN_SCRATCH", "retained":retained,
         "raw_deleted":False,"observed_unix":time.time(),"output_inventory":"ZIP_PAIRS_AND_SMALL_CONTROL_FILES"}

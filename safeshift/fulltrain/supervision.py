@@ -3,6 +3,7 @@
 This primitive grants no data/model authority. Public fulltrain routes remain
 fenced. Every launched command has an absolute deadline and a bounded log.
 """
+from contextlib import contextmanager
 import json
 import math
 import os
@@ -14,6 +15,27 @@ import time
 
 from safeshift.candidates.source import require
 from safeshift.pilot.artifacts import write
+
+
+@contextmanager
+def parent_deadline(deadline, stage):
+    """Bound main-thread notebook I/O that starts no process group."""
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("SUPERVISED_PARENT_DEADLINE_" + stage.upper())
+    require(sys.platform == "linux" and signal.getitimer(signal.ITIMER_REAL) == (0, 0),
+            "SUPERVISOR_PARENT_TIMER_REQUIRED")
+
+    def expired(*_):
+        raise TimeoutError("SUPERVISED_PARENT_DEADLINE_" + stage.upper())
+
+    old = signal.signal(signal.SIGALRM, expired)
+    try:
+        signal.setitimer(signal.ITIMER_REAL, remaining)
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old)
 
 # Keep a stdlib guardian alive above the target process. Linux parent-death
 # signal kills the whole process group if the notebook/supervisor disappears.

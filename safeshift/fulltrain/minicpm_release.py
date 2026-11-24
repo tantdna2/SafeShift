@@ -218,18 +218,28 @@ def validate(grant, *, repo=ROOT):
         from .minicpm_incident import source_incident
         source_incident(grant).validate_repair(grant)
     if offline:
-        from .minicpm_offline import SERIAL9_SCHEMA, validate_delegation
+        from .minicpm_offline import SERIAL9_SCHEMA, serial22_recovery, validate_delegation
         validate_delegation(grant)
         if continuation:
             t = grant["continuation"]
+            followup = type(t) is dict and serial22_recovery(grant)
             require(grant["offline"]["schema"] == SERIAL9_SCHEMA and type(t) is dict
                 and set(t) == {"previous_grant_sha256", "registration_sha256", "prefix_number",
-                    "prefix_sha256", "first_serial"}
+                    "prefix_sha256", "first_serial"} | ({"previous_source_sha256", "pr211_call_bound"} if followup else set())
                 and type(t["prefix_number"]) is int and 1 <= t["prefix_number"] <= 20000
                 and type(t["first_serial"]) is int and 20 <= t["first_serial"] <= caps["total_jobs"]
                 and s["source_sha256"] != contract.V5_SOURCE, "MINICPM_EXACT_V5_SOURCE_TRANSITION")
             for name in ("previous_grant_sha256", "registration_sha256", "prefix_sha256"):
                 require_hash(t[name])
+            if followup:
+                require(t["previous_source_sha256"] == contract.PR211_SOURCE and t["first_serial"] >= 23
+                    and s["source_sha256"] != contract.PR211_SOURCE, "MINICPM_EXACT_PR211_SOURCE_TRANSITION")
+                bound = t["pr211_call_bound"]
+                if bound is not None:
+                    require(type(bound) is dict and set(bound) == {"telemetry_sha256", "overhead_seconds", "call_seconds"}
+                        and all(type(bound[k]) is int and bound[k] > 0 for k in ("overhead_seconds", "call_seconds")),
+                        "MINICPM_PR211_TIMING_BOUND")
+                    require_hash(bound["telemetry_sha256"])
     return grant
 
 

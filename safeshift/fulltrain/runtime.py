@@ -147,6 +147,24 @@ def recover(root, cohort, plan_sha):
     return h
 
 
+def restored_history_members(root, expected, deadline):
+    """Rebind installed bytes to the history verified during authenticated launch."""
+    memory.check_deadline(deadline)
+    require(not (root / "history").exists(), "UNEXPECTED_RESTORED_HISTORY_DIRECTORY")
+    inventory = members(root)
+    require(digest(inventory) == expected["evidence_sha256"], "HISTORY_EVIDENCE_CHANGED")
+    memory.check_deadline(deadline)
+    return inventory
+
+
+def verify_restored_history(work, history, ancestors, deadline):
+    require(len(history) == len(ancestors), "HISTORY_ANCESTOR_CUSTODY")
+    for item, ancestor in zip(history, ancestors):
+        root = safe(work, item["run_id"])
+        restored_history_members(root, item, deadline)
+        require(digest(read(safe(root, "plan.json"))) == ancestor["plan_sha256"], "HISTORY_PLAN_CHANGED")
+
+
 def worker(request, **kwargs):
     # Must precede keyword validation, Path conversion, or heavy imports.
     contract.authorize(request=request)
@@ -309,11 +327,16 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
     from . import minicpm_release as capability
     active = capability.current()
     adaptive = None
+    from .minicpm_offline import serial22_recovery, NATIVE_SEAL_SECONDS
+    reused_history = active is not None and serial22_recovery(active["grant"])
     if active is not None:
         require(digest(p) == digest(active["value"]["request"]["plan"]), "MINICPM_ACTIVE_PLAN")
         from .minicpm_sizing import CallBudget
         started = read(active["claims"] / "launch.json")["time_unix"]
-        adaptive = CallBudget(clock() + max(0, started + p["max_seconds"] - time.time()), active["grant"]["sizing"], clock=clock)
+        sizing = active["grant"]["sizing"]
+        if reused_history:
+            sizing = {**sizing, "export_seconds": sizing["export_seconds"] + NATIVE_SEAL_SECONDS}
+        adaptive = CallBudget(clock() + max(0, started + p["max_seconds"] - time.time()), sizing, clock=clock)
     if p["identity"]["hnlo_policy"] == "LABEL_ONLY":
         require(evaluator is None, "LABEL_ONLY_MUST_NOT_REOPEN_HNLO")
         evaluator = journal.label_only
@@ -338,13 +361,16 @@ def _execute(work, bundle, cohort, campaign, p, history, factory, *, image_path,
             require(not history, "FRESH_WORKSPACE_REQUIRES_EXPLICIT_HISTORY_IMPORT")
             write(campaign_file, campaign)
         from .admission import measured
-        with measured(history_timing, "history-replay"):
-            for h in history:
-                memory.check_deadline(stage_deadline)
-                prior = safe(work, h["run_id"])
-                require(read(prior / "campaign.json") == campaign, "FOREIGN_CAMPAIGN_HISTORY")
-                require(recover(prior, cohort, digest(read(prior / "plan.json"))) == h,
-                        "HISTORY_EVIDENCE_CHANGED")
+        with measured(history_timing, "history-bytes" if reused_history else "history-replay"):
+            if reused_history:
+                verify_restored_history(work, history, active["value"]["ancestors"], stage_deadline)
+            else:
+                for h in history:
+                    memory.check_deadline(stage_deadline)
+                    prior = safe(work, h["run_id"])
+                    require(read(prior / "campaign.json") == campaign, "FOREIGN_CAMPAIGN_HISTORY")
+                    require(recover(prior, cohort, digest(read(prior / "plan.json"))) == h,
+                            "HISTORY_EVIDENCE_CHANGED")
         # Refuse omitted partial/reserved attempts even if caller supplies a
         # plausible complete subset of the history. No implicit retry after kill.
         reservations = work / "attempts"

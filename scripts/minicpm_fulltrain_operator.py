@@ -601,14 +601,9 @@ def verify_claims(value, envelope, grant, attempt, supervisor):
             and retained["raw_deleted"] is False and len(retained["retained"]) == len(expected_archives)
             and {v["run_id"]:v["archive_sha256"] for v in retained["retained"]} == expected_archives,
             "MINICPM_SEALED_OUTPUT_RETENTION_CUSTODY")
-        final_timing = read(control / "final_timing.json")
-        elapsed = final_timing["seconds_before_supervisor_export"]
-        require(type(elapsed) in (int,float) and math.isfinite(elapsed)
-            and sum(timing["call_seconds"]) <= elapsed
-            and final_timing["export_reserve_seconds"] == grant["sizing"]["export_seconds"]
-            and elapsed + grant["sizing"]["export_seconds"] < value["request"]["plan"]["max_seconds"],
-            "MINICPM_EXPORT_TIME_RESERVE_CUSTODY")
-        timing["overhead_seconds"] = max(0.001,elapsed-sum(timing["call_seconds"]))
+        from safeshift.fulltrain.minicpm_offline import verify_export_timing
+        timing["overhead_seconds"] = verify_export_timing(
+            grant, value, read(control / "final_timing.json"), timing["call_seconds"])
         return timing
 
 

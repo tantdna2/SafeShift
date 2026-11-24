@@ -127,6 +127,35 @@ def restore_history(directory, value, work):
     return history
 
 
+def restore_released_history(directory, value, work, deadline):
+    """Install the authenticated chain in a private staging tree once."""
+    from safeshift.pilot.artifacts import import_archive
+    from . import memory
+
+    request = value["request"]
+    history = []
+    for item, expected in zip(value["ancestors"], request["history"]):
+        archive = safe(directory, item["file"])
+        side = safe(directory, item["file"] + ".sha256.json")
+        require(snapshot_stat(side).st_size <= 4096
+            and memory.stream_readonly_sha256(archive, deadline=deadline) == item["sha256"], "UI_ARCHIVE_OUTER_SHA")
+        root = import_archive(archive, safe(work, expected["run_id"]))
+        require(read(side) == {"sha256": item["sha256"], "members": 1 + sum(p.is_file() for p in root.rglob("*"))},
+            "UI_ARCHIVE_SIDECAR")
+        require(not (root / "history").exists()
+            and read(safe(root, "history.json")) == history
+            and read(safe(root, "campaign.json")) == request["campaign"], "UI_MISSING_OR_REORDERED_ANCESTOR")
+        got = runtime.recover(root, value["cohort"], item["plan_sha256"])
+        require(got == expected, "UI_ANCESTOR_CUSTODY")
+        write(safe(work, "attempts/" + got["attempt_id"] + ".json"),
+              {"plan_sha256": item["plan_sha256"], "campaign_sha256": digest(request["campaign"])})
+        history.append(got)
+        memory.check_deadline(deadline)
+    if history:
+        write(safe(work, "campaign.json"), request["campaign"])
+    return history
+
+
 def verify_capsule(directory, expected_sha256, repo=ROOT, *, release_ticket=False, replay=True):
     require_hash(expected_sha256)
     marker = safe(directory, MARKER)
