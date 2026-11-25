@@ -25,6 +25,10 @@ SERIAL9_TICKET = "safeshift-minicpm-offline-ticket-v5"
 FINAL = "SAFESHIFT_MINICPM_OFFLINE_FINAL_V2"
 RELEASE_SECONDS = 30 * 24 * 3600
 ORIGINAL_SESSION = "0b1d115c-c002-44e8-b22e-087226f6dc73"
+LAUNCH_SECONDS = 2400
+NATIVE_PRE_CALL_SECONDS = 900
+NATIVE_SEAL_SECONDS = 300
+SUPERVISOR_SEAL_SECONDS = 120
 RECONCILED = "MINICPM_OFFLINE_CAMPAIGN_RECONCILED"
 EXCLUDED_SESSION = "a5fa95c9-bbc0-4df2-bdc7-ecb56b098bbc"
 TOOLS = ("minicpm_offline_continuation.py", "owner_verify_minicpm_offline.py",
@@ -137,18 +141,54 @@ def recovery_cpu_seconds(budgets):
     return max(1200, budgets["diagnostic_seconds"])
 
 
+def serial22_recovery(grant):
+    return "previous_source_sha256" in grant.get("continuation", {})
+
+
+def recovery_stage_seconds(budgets, *, extended):
+    diagnostic = budgets["diagnostic_seconds"]
+    return {"admit": max(1800, diagnostic) if extended else diagnostic,
+            "setup": budgets["setup_seconds"], "reclaim": diagnostic,
+            "cpu": recovery_cpu_seconds(budgets), "gpu": diagnostic}
+
+
 def recovery_pre_native_seconds(grant):
-    budgets = grant["scope"]["resource_policy"]
-    # Admit, reclaim and GPU share the untouched diagnostic ceiling.
-    return budgets["setup_seconds"] + 3 * budgets["diagnostic_seconds"] + recovery_cpu_seconds(budgets)
+    extended = serial22_recovery(grant)
+    return sum(recovery_stage_seconds(grant["scope"]["resource_policy"], extended=extended).values()) + (
+        LAUNCH_SECONDS if extended else 0)
+
+
+def recovery_overhead_seconds(grant):
+    return recovery_pre_native_seconds(grant) + (
+        NATIVE_PRE_CALL_SECONDS + NATIVE_SEAL_SECONDS if serial22_recovery(grant) else 0)
 
 
 def require_recovery_envelope(grant, seconds):
-    overhead = recovery_pre_native_seconds(grant)
+    overhead = recovery_overhead_seconds(grant)
     sizing = grant["sizing"]
     require(seconds > overhead + sizing["export_seconds"] + sizing["first_call_seconds"],
             "MINICPM_RECOVERY_STAGE_RESERVE_CANNOT_FIT")
     return overhead
+
+
+def verify_export_timing(grant, value, timing, call_seconds):
+    elapsed = timing["seconds_before_supervisor_export"]
+    reserve = grant["sizing"]["export_seconds"]
+    tail = SUPERVISOR_SEAL_SECONDS if serial22_recovery(grant) else reserve
+    require(type(elapsed) in (int, float) and math.isfinite(elapsed) and sum(call_seconds) <= elapsed
+        and timing["export_reserve_seconds"] == reserve
+        and elapsed + tail < value["request"]["plan"]["max_seconds"], "MINICPM_EXPORT_TIME_RESERVE_CUSTODY")
+    return max(0.001, elapsed - sum(call_seconds))
+
+
+def recovery_call_capacity(grant, seconds, overhead, per_call, *, measured):
+    policy = grant["sizing"]
+    available = seconds - overhead - policy["export_seconds"]
+    if measured:
+        # Retain the signed minimum time before each live call. In a batch
+        # estimate it is a tail allowance, with measured latency charged per image.
+        available -= policy["first_call_seconds"]
+    return available // per_call
 
 
 def verify_ticket(grant, envelope, value, *, collection=False, repo=ROOT):
@@ -192,6 +232,13 @@ def verify_ticket(grant, envelope, value, *, collection=False, repo=ROOT):
             "owner_receipt_sha256", "reserved_after"} and entry["history_sha256"] == digest(history),
             "MINICPM_OFFLINE_LINEAGE_ORDER")
         for k in ("ticket_sha256", "owner_receipt_sha256"): require_hash(entry[k])
+        if serial22_recovery(grant):
+            from . import contract
+            require(type(entry["number"]) is int, "MINICPM_OFFLINE_LINEAGE_ORDER")
+            source = contract.V5_SOURCE if entry["number"] < 20 else contract.PR211_SOURCE
+            if entry["number"] >= grant["continuation"]["first_serial"]:
+                source = grant["scope"]["source_sha256"]
+            require(history["identity"]["implementation_sha256"] == source, "MINICPM_HISTORY_SERIAL_SOURCE")
     for entry in closures:
         require(type(entry) is dict and set(entry) == {"number", "ticket_sha256", "closure_sha256",
             "local_sha256", "fingerprint_sha256", "reserved_after"}, "MINICPM_OFFLINE_PRE_NATIVE_CLOSURE_FIELDS")
@@ -212,6 +259,27 @@ def verify_ticket(grant, envelope, value, *, collection=False, repo=ROOT):
     amounts(before, t["reserved_after"], caps, calls=p["max_calls"], seconds=p["max_seconds"])
     require(t["sizing"]["calls"] == p["max_calls"] and t["sizing"]["seconds"] == p["max_seconds"],
         "MINICPM_OFFLINE_SIGNED_LIMITS")
+    if serial22_recovery(grant):
+        sizing = t["sizing"]
+        floor = recovery_overhead_seconds(grant)
+        first_call = grant["sizing"]["first_call_seconds"]
+        approved = grant["continuation"]["pr211_call_bound"]
+        overhead, per_call = sizing["overhead_bound_seconds"], sizing["per_call_estimate_seconds"]
+        status = sizing["status"]
+        measured = status in ("OWNER_APPROVED_PR211_ESTIMATE", "MEASURED_SAME_SOURCE_ESTIMATE_NOT_POPULATION_GUARANTEE")
+        require(type(overhead) is int and overhead >= floor and type(per_call) is int and per_call > 0
+            and (measured or per_call >= first_call) and p["max_calls"] <= recovery_call_capacity(
+                grant, p["max_seconds"], overhead, per_call, measured=measured),
+            "MINICPM_RECOVERY_SIGNED_CALL_BUDGET")
+        if status == "OWNER_APPROVED_PR211_ESTIMATE":
+            require(approved is not None and overhead >= approved["overhead_seconds"]
+                and per_call >= approved["call_seconds"] and sizing["throughput_source"] == approved["telemetry_sha256"],
+                "MINICPM_RECOVERY_APPROVED_TIMING_BOUND")
+        elif measured:
+            require(any(entry["number"] >= grant["continuation"]["first_serial"] for entry in t["lineage"]),
+                    "MINICPM_MEASURED_SOURCE_LINEAGE_REQUIRED")
+        else:
+            require(p["max_calls"] <= grant["offline"]["unmeasured_calls"], "MINICPM_UNMEASURED_RELEASE_CAP")
     if not t["lineage"]:
         require(p["max_calls"] <= min(grant["offline"]["unmeasured_calls"],
             (p["max_seconds"]-grant["sizing"]["export_seconds"]) // grant["sizing"]["first_call_seconds"]),
@@ -244,9 +312,30 @@ def amounts(before, after, caps, *, calls=None, seconds=None):
 
 
 def proposal(grant, pending, reserved, gate, telemetry=None):
-    from .minicpm_sizing import propose
-    p = propose(grant, pending, reserved, {"quota": gate["quota"], "observed_unix": gate["observed_unix"]}, telemetry)
+    from .minicpm_sizing import measured_bounds, propose
+    extended = serial22_recovery(grant)
+    p = propose(grant, pending, reserved, {"quota": gate["quota"], "observed_unix": gate["observed_unix"]},
+                None if extended else telemetry)
     overhead = require_recovery_envelope(grant, p["seconds"]) if "continuation" in grant else 0
+    if extended:
+        approved = grant["continuation"]["pr211_call_bound"]
+        observed, per_call = measured_bounds(grant, telemetry, grant["scope"]["source_sha256"]) if telemetry else (0, 0)
+        if per_call:
+            p["status"] = "MEASURED_SAME_SOURCE_ESTIMATE_NOT_POPULATION_GUARANTEE"
+        elif approved is not None:
+            observed, per_call = max(observed, approved["overhead_seconds"]), approved["call_seconds"]
+            p["status"] = "OWNER_APPROVED_PR211_ESTIMATE"
+            p["throughput_source"] = approved["telemetry_sha256"]
+        measured = per_call > 0
+        p["overhead_bound_seconds"] = max(overhead, observed)
+        p["per_call_estimate_seconds"] = per_call or grant["sizing"]["first_call_seconds"]
+        p["calls"] = min(p["calls"], recovery_call_capacity(grant, p["seconds"],
+            p["overhead_bound_seconds"], p["per_call_estimate_seconds"], measured=measured))
+        if not measured:
+            p["calls"] = min(p["calls"], grant["offline"]["unmeasured_calls"])
+            p["status"] = "UNMEASURED_CONSERVATIVE_CAP_NOT_THROUGHPUT"
+        require(p["calls"] > 0, "MINICPM_RECOVERY_CALL_BUDGET_CANNOT_FIT")
+        return p
     if telemetry is None:
         p["calls"] = min(p["calls"], grant["offline"]["unmeasured_calls"],
             (p["seconds"] - overhead - grant["sizing"]["export_seconds"]) // grant["sizing"]["first_call_seconds"])

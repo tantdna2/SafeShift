@@ -3,6 +3,7 @@
 This primitive grants no data/model authority. Public fulltrain routes remain
 fenced. Every launched command has an absolute deadline and a bounded log.
 """
+from contextlib import contextmanager
 import json
 import math
 import os
@@ -13,7 +14,61 @@ import sys
 import time
 
 from safeshift.candidates.source import require
-from safeshift.pilot.artifacts import write
+from safeshift.pilot.artifacts import export, write
+
+
+@contextmanager
+def parent_deadline(deadline, stage):
+    """Bound main-thread notebook I/O that starts no process group."""
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("SUPERVISED_PARENT_DEADLINE_" + stage.upper())
+    require(sys.platform == "linux" and signal.getitimer(signal.ITIMER_REAL) == (0, 0),
+            "SUPERVISOR_PARENT_TIMER_REQUIRED")
+
+    def expired(*_):
+        raise TimeoutError("SUPERVISED_PARENT_DEADLINE_" + stage.upper())
+
+    old = signal.signal(signal.SIGALRM, expired)
+    try:
+        signal.setitimer(signal.ITIMER_REAL, remaining)
+        yield
+        if time.monotonic() >= deadline:
+            expired()
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, old)
+
+
+def seal_supervisor(output, deadline):
+    """Publish the ZIP only after export has produced its verified sidecar."""
+    from safeshift.pilot.runner import error_record
+
+    archive = output.with_suffix(".zip")
+    partial = archive.with_suffix(".zip.partial")
+    sidecar = Path(str(archive) + ".sha256.json")
+    verified = False
+    try:
+        with parent_deadline(deadline - 5, "export"):
+            require(not archive.exists() and not sidecar.exists(), "SUPERVISOR_EXPORT_ALREADY_PRESENT")
+            export(output, partial)
+            verified = True
+            Path(str(partial) + ".sha256.json").rename(sidecar)
+            partial.rename(archive)
+    except Exception as error:
+        if verified and archive.is_file() and sidecar.is_file() and not partial.exists():
+            return  # The alarm arrived after both verified files were published.
+        # The loose control tree and any partial archive are evidence. Leave
+        # them and any separately sealed native attempt exactly where they are.
+        print("MINICPM_BLOCKED_SUPERVISOR_EXPORT_KEEP_RESERVATION", flush=True)
+        try:
+            with parent_deadline(deadline, "export_failure_receipt"):
+                write(output.with_name(output.name + "-export-failure.json"),
+                    {"status": "BLOCKED", "failure": error_record(error, "export"),
+                     "automatic_retry": False, "reservation": "KEEP", "partial_evidence": "PRESERVED"})
+        except Exception:
+            print("MINICPM_BLOCKED_SUPERVISOR_EXPORT_RECEIPT_UNAVAILABLE", flush=True)
+        raise
 
 # Keep a stdlib guardian alive above the target process. Linux parent-death
 # signal kills the whole process group if the notebook/supervisor disappears.

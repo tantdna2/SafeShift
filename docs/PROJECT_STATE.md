@@ -1,6 +1,15 @@
 # SafeShift — PROJECT STATE
 
-## MiniCPM-V-4 Serial 19 — 23/11/2026
+## MiniCPM-V-4 sau Serial 22 — 24/11/2026
+
+| Phạm vi | Trạng thái và bằng chứng |
+| --- | --- |
+| Nguồn | Main `f520688adef4c73a142a69d1542a630a147854ac`, PR #211 đã merge. V5 gốc cho Serial 9–19, runtime PR #211 từ Serial 20. |
+| Serial 22 | Operator báo kernel `147046083` bị hard deadline ở admit sau 600,06 giây rồi được đóng bằng companion PR #211. Journal đến event #28, `FAILED_PRE_NATIVE_NO_USABLE_RESULTS`. Operator xác nhận chữ ký closure. Codex chưa nhận Output hoặc hai mirror production. |
+| Tiến độ | Operator báo 2.947 SUCCESS, 147 INVALID, 669 NOT_ATTEMPTED, `next_ordinal=3094`. Serial 23 chưa reserve. |
+| Draft | Admit 1.800 giây, giới hạn launch và export, tái sử dụng lịch sử đã xác minh và đường release nguồn thứ ba. Serial 23 cần release, ticket, quota và Input thật qua Operator. [Ngân sách và runbook](MINICPM_SERIAL22_RECOVERY.md). |
+
+## Lịch sử — MiniCPM-V-4 Serial 19 — 23/11/2026
 
 | Phạm vi | Trạng thái và bằng chứng |
 | --- | --- |

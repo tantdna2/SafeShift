@@ -2,6 +2,7 @@
 import argparse
 import json
 from pathlib import Path
+from textwrap import indent
 
 from safeshift.candidates.source import ROOT, require
 from safeshift.candidates.minicpm_resampler_fp32 import ID
@@ -10,9 +11,10 @@ from scripts.build_fresh_fulltrain_notebooks import notebook as fresh_notebook
 OUTPUT = "notebooks/SafeShift_FULLTRAIN_MINICPM4_FP32.ipynb"
 
 
-def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None, release_version=2):
+def notebook(ref, repo=ROOT, *, capsule_sha256=None, release_locator=None, release_version=2, bounded_launch=False):
     require(type(release_version) is int and release_version in (2, 4, 5, 6, 7, 8, 9)
-        and (release_version == 2 or release_locator is not None), "MINICPM_NOTEBOOK_RELEASE_VERSION")
+        and (release_version == 2 or release_locator is not None)
+        and (not bounded_launch or release_version == 9), "MINICPM_NOTEBOOK_RELEASE_VERSION")
     nb = fresh_notebook("minicpm4", ref, repo)
     code = "".join(nb["cells"][1]["source"])
     old_import = "from safeshift.fulltrain.preflight import prepare as launch"
@@ -108,10 +110,29 @@ HNLO N/A. Capsule tự mang request và mọi history; không nhập dự đoán
             and type(release_locator["comment_id"]) is int and release_locator["comment_id"] > 0,
             "MINICPM_EXACT_RELEASE_LOCATOR")
         require_hash(release_locator["body_sha256"])
-        nb["cells"][1]["source"] = ["import time\n", "minicpm_notebook_started_unix = time.time()\n", *nb["cells"][1]["source"]]
+        bootstrap = "import time\nminicpm_notebook_started_unix = time.time()\n"
+        body = "".join(nb["cells"][1]["source"])
+        if bounded_launch:
+            from safeshift.fulltrain.minicpm_offline import LAUNCH_SECONDS
+            body = f"""import signal
+if signal.getitimer(signal.ITIMER_REAL) != (0, 0):
+    raise RuntimeError("MINICPM_BOOTSTRAP_TIMER_REQUIRED")
+def minicpm_bootstrap_timeout(*_):
+    print("MINICPM_BLOCKED_BOOTSTRAP_KEEP_RESERVATION", flush=True)
+    raise TimeoutError("SUPERVISED_PARENT_DEADLINE_BOOTSTRAP")
+minicpm_old_alarm = signal.signal(signal.SIGALRM, minicpm_bootstrap_timeout)
+try:
+    signal.setitimer(signal.ITIMER_REAL, {LAUNCH_SECONDS})
+{indent(body.rstrip(), "    ")}
+finally:
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    signal.signal(signal.SIGALRM, minicpm_old_alarm)
+"""
+        nb["cells"][1]["source"] = (bootstrap + body).splitlines(True)
+        launch_options = ", bounded_launch=True" if bounded_launch else ""
         nb["cells"][-1]["source"] = ("from safeshift.fulltrain.minicpm_execution import run_capsule\n"
             f"run_capsule('/kaggle/input', {capsule_sha256!r}, {release_locator!r}, repo=root, "
-            "started_unix=minicpm_notebook_started_unix)\n").splitlines(True)
+            f"started_unix=minicpm_notebook_started_unix{launch_options})\n").splitlines(True)
         nb["metadata"]["safeshift"].update(mode="MINICPM_FULLTRAIN_RELEASE_V" + str(release_version),
             status="AUTHENTIC_RELEASE_AND_SIGNED_TICKET_REQUIRED", execution_release=release_locator)
         nb["cells"][0]["source"] = """# MiniCPM-V-4 — Full TRAIN — Owner UI

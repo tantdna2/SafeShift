@@ -220,10 +220,10 @@ def pre_native_closure(directory, download, destination, *, provider_job=None, o
     active = route.state()["active"]
     c.require(active is not None, "MINICPM_PRE_NATIVE_ACTIVE_RESERVATION_REQUIRED")
     download = c.private(download)
-    local = route.pre_native_local(download, active)
     destination = c.private(destination)
     destination.mkdir(parents=True, exist_ok=False)
     try:
+        local = route.pre_native_local(download, active)
         if client is None:
             from safeshift.internvl3763_operator import api
             client = api()
@@ -306,16 +306,8 @@ def verify(route, destination, *, owner_performs_network=False, client=None, ali
     manifest = route.manifest()
     destination.mkdir(parents=True, exist_ok=False)
     try:
-        paths = set(route.registration["exports"])
-        if getattr(route, "runtime_grant", None) is not None:
-            paths.update(route.runtime_exports)
-        exports = {path: c.a.github_get(path) for path in sorted(paths)}
-        historical_repo = getattr(route, "historical_repo", c.contract.ROOT)
-        options = {"repo": historical_repo} if historical_repo != c.contract.ROOT else {}
-        c.authenticate(route.registration["locator"], exports, collection=True, **options)
-        if getattr(route, "runtime_grant", None) is not None:
-            c.require(c.authenticate(route.runtime_locator, exports, collection=True) == route.runtime_grant,
-                "MINICPM_FINAL_TRANSITION_AUTHORITY")
+        exports = {path: c.a.github_get(path) for path in sorted(route.release_export_paths())}
+        route.verify_release_exports(exports)
         if client is None:
             from safeshift.internvl3763_operator import api
             client = api()

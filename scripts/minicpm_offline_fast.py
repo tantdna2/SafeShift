@@ -186,14 +186,8 @@ def verify_claims(value, envelope, grant, root, control, attempt_sha):
         and retained["raw_deleted"] is False and len(retained["retained"]) == len(expected_archives)
         and {v["run_id"]:v["archive_sha256"] for v in retained["retained"]} == expected_archives,
         "MINICPM_SEALED_OUTPUT_RETENTION_CUSTODY")
-    final_timing = read(control / "final_timing.json")
-    elapsed = final_timing["seconds_before_supervisor_export"]
-    require(type(elapsed) in (int,float) and math.isfinite(elapsed)
-        and sum(timing["call_seconds"]) <= elapsed
-        and final_timing["export_reserve_seconds"] == grant["sizing"]["export_seconds"]
-        and elapsed + grant["sizing"]["export_seconds"] < value["request"]["plan"]["max_seconds"],
-        "MINICPM_EXPORT_TIME_RESERVE_CUSTODY")
-    timing["overhead_seconds"] = max(0.001,elapsed-sum(timing["call_seconds"]))
+    timing["overhead_seconds"] = policy.verify_export_timing(
+        grant, value, read(control / "final_timing.json"), timing["call_seconds"])
     return timing
 
 
@@ -298,14 +292,14 @@ def closure_snapshot(download):
 class Continuation(v5.Continuation):
     """Operator view only. V5 still owns final manifest and provider admission."""
 
-    def __init__(self, root, locator, exports, *, historical_repo=None, runtime_release=None):
+    def __init__(self, root, locator, exports, *, historical_repo=None, runtime_release=None, previous_runtime=None):
         self.root = v5.private(root)
         path = safe(self.root, "registration.json")
         require(snapshot_stat(path).st_size <= 64*2**20, "MINICPM_REGISTRATION_BOUND")
         self.registration = read(path)
         self.mirror = v5.private(safe(v5.ROOT, self.registration["mirror"]))
         self.distinct(self.root, self.mirror)
-        self.load_authority(historical_repo, runtime_release)
+        self.load_authority(historical_repo, runtime_release, previous_runtime)
         require(policy.first_serial(self.grant) == 9, "MINICPM_FAST_REQUIRES_V5")
         self.release = authenticate_release(locator, exports, self.registration, self.grant)
         if self.historical_repo != contract.ROOT:
@@ -509,6 +503,10 @@ class Continuation(v5.Continuation):
             "max_seconds_per_job": self.grant["caps"]["job_seconds"],
             "weekly_quota": "FRESH_OWNER_GATE_REQUIRED",
         }
+        if self.runtime_grant is not None and policy.serial22_recovery(self.runtime_grant):
+            forecast["pre_native_seconds"] = policy.recovery_pre_native_seconds(self.runtime_grant)
+            forecast["overhead_floor_seconds"] = policy.recovery_overhead_seconds(self.runtime_grant)
+            forecast["approved_pr211_call_bound"] = self.runtime_grant["continuation"]["pr211_call_bound"]
         return forecast
 
     def next_event(self, kind, payload, *, unix):
@@ -636,8 +634,9 @@ class Continuation(v5.Continuation):
                 request["history"], action="resume" if completed else "initial", run_id=name, attempt_id=name+"-attempt",
                 max_calls=proposal["calls"], max_seconds=proposal["seconds"])
             from scripts.generate_minicpm_fulltrain_notebook import notebook
+            options = {"bounded_launch": True} if policy.serial22_recovery(grant) else {}
             nb = notebook(grant["runtime_commit"], capsule_sha256=digest(value),
-                release_locator=locator, release_version=policy.first_serial(grant))
+                release_locator=locator, release_version=policy.first_serial(grant), **options)
             before = state["reserved"]
             payload = {"schema": policy.ticket_schema(grant), "grant_sha256": digest(grant),
                 "value_sha256": digest(value), "capsule_sha256": digest(value), "notebook_code_sha256": code_hash(nb),
@@ -704,7 +703,8 @@ class Continuation(v5.Continuation):
     def full_verifier(self):
         historical = self.historical_repo if self.historical_repo != contract.ROOT else None
         release = (self.runtime_locator, self.runtime_exports) if self.runtime_grant else None
-        return v5.Continuation(self.root, historical_repo=historical, runtime_release=release)
+        return v5.Continuation(self.root, historical_repo=historical, runtime_release=release,
+                               previous_runtime=self.previous_runtime)
 
     def manifest(self):
         return self.full_verifier().manifest()
@@ -724,6 +724,9 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="command", required=True)
     for name in ("status", "forecast", "export-active"):
         sub.add_parser(name)
+    proposal = sub.add_parser("runtime-release-template")
+    proposal.add_argument("--output", type=Path, required=True)
+    proposal.add_argument("--review-pr211-throughput", action="store_true")
     accept = sub.add_parser("accept")
     for name in ("attempt", "supervisor", "owner-receipt", "proof", "private-key"):
         accept.add_argument("--" + name, type=Path, required=True)
@@ -737,7 +740,12 @@ def main(argv=None):
     args = parser.parse_args(argv)
     route = Continuation(args.directory, read(v5.private(args.operator_release)), read(v5.private(args.owner_exports)),
         **v5.runtime_options(args))
-    if args.command == "accept":
+    if args.command == "runtime-release-template":
+        value = route.runtime_proposal(review_pr211_throughput=args.review_pr211_throughput)
+        write(v5.private(args.output), value)
+        result = {"status": "UNSIGNED_PROPOSAL_BLOCKED_NOT_AUTHORITY", "marker_required": policy.SERIAL9_RELEASE,
+            "first_serial": value["continuation"]["first_serial"]}
+    elif args.command == "accept":
         result = route.accept(args.attempt, args.supervisor, read(args.owner_receipt), args.proof, private_key=args.private_key)
     elif args.command == "close-pre-native":
         result = route.close_pre_native(args.download, read(args.provider_closure), private_key=args.private_key,

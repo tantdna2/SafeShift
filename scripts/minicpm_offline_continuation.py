@@ -215,7 +215,7 @@ def verify_local(grant, active, package, attempt, supervisor, receipt, proof, *,
 
 
 class Continuation:
-    def __init__(self, root, *, historical_repo=None, runtime_release=None):
+    def __init__(self, root, *, historical_repo=None, runtime_release=None, previous_runtime=None):
         self.root = private(root)
         require(snapshot_stat(safe(self.root, "registration.json")).st_size <= 64*2**20, "MINICPM_REGISTRATION_BOUND")
         self.registration = read(safe(self.root, "registration.json"))
@@ -223,7 +223,7 @@ class Continuation:
         self.distinct(self.root, self.mirror)
         require((self.root / "registration.json").read_bytes() == (self.mirror / "registration.json").read_bytes(),
             "MINICPM_OFFLINE_REGISTRATION_MIRROR")
-        self.load_authority(historical_repo, runtime_release)
+        self.load_authority(historical_repo, runtime_release, previous_runtime)
         transition = a.uses_proof(self.grant)
         require(self.registration["schema"] == self.grant["offline"]["schema"]
             and self.registration["root"] == relative(self.root)
@@ -236,28 +236,52 @@ class Continuation:
         if policy.first_serial(self.grant) == 9:
             verify_transition_closure(self.grant, serial8, self.registration["base"]["serial8_closure"])
 
-    def load_authority(self, historical_repo, runtime_release):
+    def load_authority(self, historical_repo, runtime_release, previous_runtime=None):
         self.historical_repo = Path(historical_repo).resolve() if historical_repo is not None else contract.ROOT
         historical = {"repo": self.historical_repo} if historical_repo is not None else {}
         self.grant = authenticate(self.registration["locator"], self.registration["exports"], collection=True, **historical)
         self.runtime_grant = None
         self.runtime_locator = None
-        if runtime_release is None:
+        self.previous_runtime = previous_runtime
+        self.previous_authority = None
+        if runtime_release is None and previous_runtime is None:
             return
         require(historical_repo is not None and self.historical_repo != contract.ROOT
             and self.grant["scope"]["source_sha256"] == contract.V5_SOURCE, "MINICPM_FROZEN_V5_CHECKOUT_REQUIRED")
-        self.runtime_locator, self.runtime_exports = runtime_release
-        new = authenticate(self.runtime_locator, self.runtime_exports, collection=True)
-        self.check_runtime_transition(new)
-        self.runtime_grant = new
+        if previous_runtime is not None:
+            repo, locator, exports = previous_runtime
+            repo = Path(repo).resolve()
+            require(repo not in (self.historical_repo, contract.ROOT), "MINICPM_FROZEN_PR211_CHECKOUT_REQUIRED")
+            previous = authenticate(locator, exports, collection=True, repo=repo)
+            require(previous["scope"]["source_sha256"] == contract.PR211_SOURCE
+                and previous.get("continuation", {}).get("first_serial") == 20
+                and not policy.serial22_recovery(previous), "MINICPM_EXACT_PR211_PREDECESSOR")
+            self.check_runtime_transition(previous)
+            self.previous_authority = (previous, locator, repo)
+        if runtime_release is not None:
+            self.runtime_locator, self.runtime_exports = runtime_release
+            new = authenticate(self.runtime_locator, self.runtime_exports, collection=True)
+            require(policy.serial22_recovery(new) == (self.previous_authority is not None),
+                    "MINICPM_PREVIOUS_RUNTIME_RELEASE_REQUIRED")
+            self.check_runtime_transition(new)
+            self.runtime_grant = new
 
     def check_runtime_transition(self, new):
         old_grant = self.grant
         t = new["continuation"]
+        if policy.serial22_recovery(new):
+            require(self.previous_authority is not None and t["previous_source_sha256"] == contract.PR211_SOURCE,
+                    "MINICPM_EXACT_PR211_PREDECESSOR")
+            old_grant = self.previous_authority[0]
+            require(t["prefix_number"] > old_grant["continuation"]["prefix_number"]
+                and t["first_serial"] >= 23 and contract.minicpm_science_unchanged(
+                    old_grant["scope"]["identity"], new["scope"]["identity"]), "MINICPM_PR211_TRANSITION_ORDER")
+        else:
+            require(old_grant["scope"]["source_sha256"] == contract.V5_SOURCE
+                and contract.v5_science_unchanged(old_grant["scope"]["identity"], new["scope"]["identity"]),
+                "MINICPM_V5_TRANSITION_BINDING")
         require(t["previous_grant_sha256"] == digest(old_grant)
-            and t["registration_sha256"] == digest(self.registration)
-            and old_grant["scope"]["source_sha256"] == contract.V5_SOURCE
-            and contract.v5_science_unchanged(old_grant["scope"]["identity"], new["scope"]["identity"]),
+            and t["registration_sha256"] == digest(self.registration),
             "MINICPM_V5_TRANSITION_BINDING")
         require(all(new[k] == old_grant[k] for k in ("schema", "authorization", "campaign_id", "public_key",
             "operator_host_sha256", "caps", "sizing", "provider_max_age_seconds", "recovery", "repair"))
@@ -267,34 +291,77 @@ class Continuation:
             == {k: v for k, v in old_grant["offline"].items() if k not in ("tools_sha256", "tool_blobs")},
             "MINICPM_V5_TRANSITION_SCOPE")
 
-    def runtime_proposal(self):
+    @staticmethod
+    def pr211_call_bound(completed, grant, first_serial):
+        from safeshift.fulltrain.minicpm_sizing import measured_bounds
+
+        records = [item["completion"]["verification"]["telemetry"] for item in completed
+            if item["ticket"]["payload"]["number"] < first_serial
+            and item["value"]["request"]["source_sha256"] == contract.PR211_SOURCE]
+        require(records, "MINICPM_VERIFIED_PR211_THROUGHPUT_REQUIRED")
+        telemetry = records[-1]
+        overhead, per_call = measured_bounds(grant, telemetry, contract.PR211_SOURCE)
+        require(per_call > 0, "MINICPM_VERIFIED_PR211_THROUGHPUT_REQUIRED")
+        return {"telemetry_sha256": digest(telemetry), "overhead_seconds": overhead, "call_seconds": per_call}
+
+    def runtime_proposal(self, *, review_pr211_throughput=False):
         require(self.historical_repo != contract.ROOT and self.runtime_grant is None
             and self.grant["scope"]["source_sha256"] == contract.V5_SOURCE,
             "MINICPM_FROZEN_V5_CHECKOUT_REQUIRED")
         with lock(self.root):
             state = self.state()
+            previous = getattr(self, "previous_authority", None)
             require(state["active"] is None and not state["stopped"] and state["final"] is None
-                and state["next_ordinal"] < 3763 and state["reserved"]["jobs"] >= 19,
+                and state["next_ordinal"] < 3763 and state["reserved"]["jobs"] >= (22 if previous else 19),
                 "MINICPM_V5_TRANSITION_REQUIRES_SETTLED_PREFIX")
-            prefix = self.events()[-1]
+            rows = self.events()
+            prefix = rows[-1]
             require(prefix["kind"] in (PROVISIONAL, prenative.DISPOSITION), "MINICPM_V5_TRANSITION_PREFIX_CHANGED")
-            new = deepcopy(self.grant)
+            predecessor = previous[0] if previous else self.grant
+            new = deepcopy(predecessor)
             new.update(implementation_pr=None, reviewed_head=None, merged_sha=None, runtime_commit=None,
                 issued_unix=None, expires_unix=None, approvals={k: None for k in self.grant["approvals"]})
             new["scope"]["source_sha256"] = digest(contract.source_manifest())
             new["scope"]["identity"] = contract.native_identity("minicpm4")
             new["offline"].update(tools_sha256=digest(tools_manifest()), tool_blobs=tool_blobs())
-            new["continuation"] = {"previous_grant_sha256": digest(self.grant),
+            new["continuation"] = {"previous_grant_sha256": digest(predecessor),
                 "registration_sha256": digest(self.registration), "prefix_number": prefix["number"],
                 "prefix_sha256": digest(prefix), "first_serial": state["reserved"]["jobs"] + 1}
+            require(not review_pr211_throughput or previous is not None, "MINICPM_PR211_RELEASE_REQUIRED")
+            if previous is not None:
+                bound = self.pr211_call_bound(state["completed"], new, new["continuation"]["first_serial"]
+                    ) if review_pr211_throughput else None
+                new["continuation"].update(previous_source_sha256=contract.PR211_SOURCE, pr211_call_bound=bound)
             self.check_runtime_transition(new)
             return new
 
     def authority_for(self, active):
-        new = getattr(self, "runtime_grant", None)
-        if new is not None and active["ticket"]["payload"]["number"] >= new["continuation"]["first_serial"]:
-            return new, self.runtime_locator, contract.ROOT
+        number = active["ticket"]["payload"]["number"]
+        for authority in reversed(self.runtime_authorities()):
+            if number >= authority[0]["continuation"]["first_serial"]:
+                return authority
         return self.grant, self.registration["locator"], getattr(self, "historical_repo", contract.ROOT)
+
+    def runtime_authorities(self):
+        previous = getattr(self, "previous_authority", None)
+        current = getattr(self, "runtime_grant", None)
+        return ([previous] if previous is not None else []) + (
+            [(current, self.runtime_locator, contract.ROOT)] if current is not None else [])
+
+    def release_export_paths(self):
+        paths = set(self.registration["exports"])
+        if getattr(self, "previous_runtime", None) is not None:
+            paths.update(self.previous_runtime[2])
+        if getattr(self, "runtime_grant", None) is not None:
+            paths.update(self.runtime_exports)
+        return paths
+
+    def verify_release_exports(self, exports):
+        registered = (self.grant, self.registration["locator"], getattr(self, "historical_repo", contract.ROOT))
+        for grant, locator, repo in [registered, *self.runtime_authorities()]:
+            options = {"repo": repo} if repo != contract.ROOT else {}
+            require(authenticate(locator, exports, collection=True, **options) == grant,
+                    "MINICPM_FINAL_TRANSITION_AUTHORITY")
 
     @staticmethod
     def distinct(root, mirror):
@@ -384,9 +451,8 @@ class Continuation:
                 and row["previous"] == previous and row["number"] == i,
                 "MINICPM_OFFLINE_CHAIN")
             previous = digest(row); rows.append(row)
-        new = getattr(self, "runtime_grant", None)
-        if new is not None:
-            t = new["continuation"]
+        for grant, _, _ in self.runtime_authorities():
+            t = grant["continuation"]
             require(len(rows) >= t["prefix_number"], "MINICPM_V5_TRANSITION_PREFIX_MISSING")
             prefix = rows[t["prefix_number"] - 1]
             require(digest(prefix) == t["prefix_sha256"] and prefix["kind"] in (PROVISIONAL, prenative.DISPOSITION),
@@ -407,6 +473,7 @@ class Continuation:
     def state(self, *, verify=True):
         reserved, active, completed = policy.initial_hold(self.grant), None, []
         history, rows, stopped, final = [], self.events(), False, None
+        transitions = self.runtime_authorities()
         kernels, jobs = set(), set()
         closed = []
         for e in rows:
@@ -415,11 +482,13 @@ class Continuation:
             if e["kind"] == "RESERVED_OFFLINE":
                 require(active is None, "MINICPM_ONLY_ONE_ACTIVE_JOB")
                 grant, _, repo = self.authority_for(p)
-                new = getattr(self, "runtime_grant", None)
-                if new is not None:
-                    require((grant is new) == (e["number"] > new["continuation"]["prefix_number"]),
-                        "MINICPM_V5_TRANSITION_RESERVATION_PREFIX")
                 a.verify_ticket(grant, p["ticket"], p["value"], collection=True, repo=repo)
+                serial = p["ticket"]["payload"]["number"]
+                for source, _, _ in transitions:
+                    t = source["continuation"]
+                    require((serial >= t["first_serial"]) == (e["number"] > t["prefix_number"])
+                        and (serial == t["first_serial"]) == (e["number"] == t["prefix_number"] + 1),
+                        "MINICPM_V5_TRANSITION_RESERVATION_PREFIX")
                 require(p["ticket"]["payload"]["previous_event_sha256"] == e["previous"]
                     and p["ticket"]["payload"]["reserved_before"] == reserved
                     and p["value"]["request"]["history"] == history
@@ -461,6 +530,12 @@ class Continuation:
         records = [{**r, "ordinal": ordinals[r["sample_id"]]} for h in history for r in h["records"] if r["status"] != "NOT_ATTEMPTED"]
         require([r["ordinal"] for r in records] == list(range(len(records))) and len(records) <= 3763
             and all(r["status"] in ("SUCCESS", "INVALID") for r in records), "MINICPM_OFFLINE_NO_SKIP_DUPLICATE_OR_ERROR")
+        current = getattr(self, "runtime_grant", None)
+        if current is not None and policy.serial22_recovery(current):
+            t = current["continuation"]
+            bound = t["pr211_call_bound"]
+            if bound is not None and verify:
+                require(bound == self.pr211_call_bound(completed, current, t["first_serial"]), "MINICPM_PR211_TIMING_DRIFT")
         return {"reserved": reserved, "active": active, "completed": completed, "closed": closed,
             "history": history, "records": records,
             "next_ordinal": len(records), "counts": dict(Counter(r["status"] for r in records)) | {"NOT_ATTEMPTED": 3763-len(records)},
@@ -478,7 +553,7 @@ class Continuation:
         require(policy.first_serial(self.grant) == 9, "MINICPM_PRE_NATIVE_V5_REQUIRED")
         grant, locator, _ = self.authority_for(active)
         return prenative.verify_download(download, active, locator, grant["campaign_id"],
-            proof_sha256=grant["approvals"][a.PROOF_KEY])
+            proof_sha256=grant["approvals"][a.PROOF_KEY], bounded_launch=policy.serial22_recovery(grant))
 
     def check_closure(self, active, download, closure, *, verified_local=None):
         from safeshift.internvl3763_operator import code_hash
@@ -673,12 +748,7 @@ class Continuation:
     def validate_final(self, manifest, report, exports, owner_locator):
         from safeshift.fulltrain.minicpm_incident import owner_record
         reader = Exports(exports)
-        historical = getattr(self, "historical_repo", contract.ROOT)
-        options = {"repo": historical} if historical != contract.ROOT else {}
-        authenticate(self.registration["locator"], exports, collection=True, **options)
-        if getattr(self, "runtime_grant", None) is not None:
-            require(authenticate(self.runtime_locator, exports, collection=True) == self.runtime_grant,
-                "MINICPM_FINAL_TRANSITION_AUTHORITY")
+        self.verify_release_exports(exports)
         owner = owner_record(reader, owner_locator, 202)
         require(a.record(owner["body"], policy.FINAL) == {"manifest_sha256": digest(manifest),
             "report_sha256": digest(report), "status": "APPROVED_FOR_FINAL_ADMISSION"}, "MINICPM_AUTHENTIC_FINAL_OWNER")
@@ -783,13 +853,20 @@ def add_runtime_options(parser):
     parser.add_argument("--historical-repo", type=Path)
     parser.add_argument("--runtime-release", type=Path)
     parser.add_argument("--runtime-exports", type=Path)
+    parser.add_argument("--previous-runtime-repo", type=Path)
+    parser.add_argument("--previous-runtime-release", type=Path)
+    parser.add_argument("--previous-runtime-exports", type=Path)
 
 
 def runtime_options(args):
     require((args.runtime_release is None) == (args.runtime_exports is None)
         and (args.runtime_release is None or args.historical_repo is not None), "MINICPM_RUNTIME_RELEASE_ARGUMENTS")
     release = (read(private(args.runtime_release)), read(private(args.runtime_exports))) if args.runtime_release else None
-    return {"historical_repo": args.historical_repo, "runtime_release": release}
+    previous_args = (args.previous_runtime_repo, args.previous_runtime_release, args.previous_runtime_exports)
+    require(not any(previous_args) or (all(previous_args) and args.historical_repo), "MINICPM_PREVIOUS_RUNTIME_RELEASE_ARGUMENTS")
+    previous = (args.previous_runtime_repo, read(private(args.previous_runtime_release)),
+        read(private(args.previous_runtime_exports))) if all(previous_args) else None
+    return {"historical_repo": args.historical_repo, "runtime_release": release, "previous_runtime": previous}
 
 
 def main(argv=None):

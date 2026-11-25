@@ -5,7 +5,7 @@ boundaries. MiniCPM V2 authenticates O2-O6 and a signed serial reservation befor
 calling them; a request JSON alone is never approval or an authority token.
 """
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from contextvars import ContextVar
 from copy import deepcopy
 import os
@@ -123,7 +123,8 @@ def measured(output, part):
         write(output / "timing" / (part + "-end.json"), {"seconds": time.monotonic() - started})
 
 
-def _admit(request, repo, *, deadline, retain_original_files=False, replay=True, timing=None, cpu_decode=False):
+def _admit(request, repo, *, deadline, retain_original_files=False, replay=True, timing=None,
+           cpu_decode=False, restored_history=None):
     validate_request(request, repo)
     with measured(timing, "workspace-history"):
         history_admission(request)
@@ -142,6 +143,9 @@ def _admit(request, repo, *, deadline, retain_original_files=False, replay=True,
                 memory.check_deadline(deadline)
                 root = safe(request["work"], old["run_id"])
                 require(runtime.recover(root, cohort, digest(read(root / "plan.json"))) == old, "ADMISSION_HISTORY_CUSTODY")
+    if restored_history is not None:
+        with measured(timing, "history-bytes"):
+            runtime.verify_restored_history(request["work"], request["history"], restored_history, deadline)
     files = ()
     with measured(timing, "image-check-decode" if cpu_decode else "image-sha256"):
         if cpu_decode:
@@ -221,14 +225,13 @@ def recovery_runtime(request, active):
 
 def stage_deadline(mode, request, deadline, active, *, now):
     budgets = request["resource_policy"]
-    if mode == "setup":
-        limit = budgets["setup_seconds"]
-    elif mode == "native":
+    if mode == "native":
         limit = request["plan"]["max_seconds"]
-    elif mode == "cpu" and recovery_runtime(request, active):
-        # Source-bound policy. Existing signed request fields retain their meanings.
-        from .minicpm_offline import recovery_cpu_seconds
-        limit = recovery_cpu_seconds(budgets)
+    elif recovery_runtime(request, active):
+        from .minicpm_offline import recovery_stage_seconds, serial22_recovery
+        limit = recovery_stage_seconds(budgets, extended=serial22_recovery(active["grant"]))[mode]
+    elif mode == "setup":
+        limit = budgets["setup_seconds"]
     else:
         limit = budgets["diagnostic_seconds"]
     if active is not None and (mode == "native" or recovery_runtime(request, active)):
@@ -243,7 +246,10 @@ def stage(mode, request, repo, output, deadline, *, authority_seconds=None):
     output = Path(output)
     output.mkdir(exist_ok=False)
     from .minicpm_release import current
-    optimized = recovery_runtime(request, current())
+    from .minicpm_offline import serial22_recovery
+    active = current()
+    optimized = recovery_runtime(request, active)
+    sealed = optimized and serial22_recovery(active["grant"])
     token = _original_stage.set(None)
     try:
         if authority_seconds is not None:
@@ -284,7 +290,10 @@ def stage(mode, request, repo, output, deadline, *, authority_seconds=None):
             if optimized and mode == "gpu":
                 history_admission(request)
             else:
-                options = {"timing": output, "replay": mode == "admit", "cpu_decode": cpu_decode} if optimized else {}
+                options = {"timing": output, "replay": mode == "admit" and not sealed,
+                           "cpu_decode": cpu_decode} if optimized else {}
+                if mode == "admit" and sealed:
+                    options["restored_history"] = active["value"]["ancestors"]
                 if same_stage:
                     admitted = _admit_original_stage(mode, request, repo, deadline, **options)
                 elif optimized:
@@ -384,7 +393,9 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
     p, budgets = request["plan"], request["resource_policy"]
     deadline = time.monotonic() + p["max_seconds"]
     from . import minicpm_release as capability
+    from .minicpm_offline import serial22_recovery, SUPERVISOR_SEAL_SECONDS
     active = capability.current()
+    bounded = recovery_runtime(request, active) and serial22_recovery(active["grant"])
     if active is not None:
         capability.authorize(request=request)
         # Save the signed reservation for custody; never include the signing key.
@@ -445,19 +456,28 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
         attempt = safe(work, p["run_id"])
         attempt_observed = attempt.exists()
         recovery = "NO_ATTEMPT"
+        if bounded and stage_name == "native":
+            # A failed native dispatch needs custody reconciliation even if
+            # the expected attempt tree or a later claim is unavailable.
+            recovery = "NATIVE_STAGE_REQUIRES_RECONCILIATION"
+        finalize_by = deadline - SUPERVISOR_SEAL_SECONDS
         if attempt.exists():
             recovery = "PARTIAL_OR_SEALED_REQUIRES_CUSTODY"
             archive = Path(str(attempt) + ".zip")
             if not archive.exists() and not (attempt / "checksums.json").exists():
                 try:
-                    export(attempt, archive)
+                    with supervision.parent_deadline(finalize_by, "partial_export") if bounded else nullcontext():
+                        export(attempt, archive)
                     recovery = "PARTIAL_EVIDENCE_SEALED_NOT_RETRIED"
                 except BaseException as error:
                     write(output / "partial_export_failure.json", error_record(error, "partial_export"))
         if active is not None:
             try:
                 from .minicpm_execution import retain_sealed_trees
-                write(output / "retention.json", retain_sealed_trees(request,work,scratch,active["capsule_directory"]))
+                options = {"ancestors": active["value"]["ancestors"], "deadline": finalize_by} if bounded else {}
+                with supervision.parent_deadline(finalize_by, "retention") if bounded else nullcontext():
+                    write(output / "retention.json",
+                          retain_sealed_trees(request, work, scratch, active["capsule_directory"], **options))
             except BaseException as error:
                 if failure is None:
                     failure = error_record(error, "retention")
@@ -465,7 +485,9 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
             write(output / "final_timing.json", {"seconds_before_supervisor_export":time.time()-launch_time,
                 "export_reserve_seconds":active["grant"]["sizing"]["export_seconds"],"billing":"NOT_OBSERVED"})
             remaining = launch_time + p["max_seconds"] - time.time()
-            if remaining <= (0 if recovery_runtime(request, active) else active["grant"]["sizing"]["export_seconds"]):
+            tail = SUPERVISOR_SEAL_SECONDS if bounded else (
+                0 if recovery_runtime(request, active) else active["grant"]["sizing"]["export_seconds"])
+            if remaining <= tail:
                 failure = failure or {"type":"TimeoutError","message":"FINAL_EXPORT_RESERVE_EXHAUSTED",
                     "stage":"export","category":"TECHNICAL"}
         write(output / "release.json", {"status": "BLOCKED" if failure else "TECHNICAL_STAGES_RETURNED_NOT_RELEASE_AUTHORITY",
@@ -477,7 +499,10 @@ def launch_prepared(request, *, repo=ROOT, diagnostic=False):
             memory.observe(output, 'final')
         if active is not None:
             write(output / "claims.json", capability.claims_snapshot())
-        export(output, Path(str(output) + ".zip"))
+        if bounded:
+            supervision.seal_supervisor(output, deadline)
+        else:
+            export(output, Path(str(output) + ".zip"))
     return output
 
 
