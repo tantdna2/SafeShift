@@ -39,6 +39,14 @@ def auc(labels, scores, weights=None):
             "reason": None if value is not None else ("EMPTY" if not labels else "ONE_CLASS")}
 
 
+def exclusion_reason(row):
+    if not row["persisted"]:
+        return row["native_status"]
+    if row["generated_label"] is None:
+        return "INVALID_AND_MISSING_SCORE" if row["hnlo_score"] is None else "INVALID"
+    return "MISSING_SCORE"
+
+
 def eligibility(rows):
     observed = [r for r in rows if r["persisted"]]
     labels = [r for r in observed if r["generated_label"] is not None]
@@ -52,9 +60,7 @@ def eligibility(rows):
         excluded[name] = {"n": len(missing),
                           "by_level": dict(Counter(r["true_level"] for r in missing)),
                           "by_domain": dict(Counter(r["folder_domain"] for r in missing)),
-                          "by_reason": dict(Counter(r["native_status"] if not r["persisted"] else
-                              "INVALID_AND_MISSING_SCORE" if r["generated_label"] is None and r["hnlo_score"] is None else
-                              "INVALID" if r["generated_label"] is None else "MISSING_SCORE" for r in missing))}
+                          "by_reason": dict(Counter(exclusion_reason(r) for r in missing))}
     return sets, {"counts": {k: len(v) for k, v in sets.items()}, "excluded": excluded,
                   "membership": {k: membership(r["sample_id"] for r in v) for k, v in sets.items()}}
 
@@ -212,7 +218,7 @@ def disagreement(tables, ids, models, planned_n):
                   for s in joint} for m in models}
     anomaly_n = sum(tables[models[0]][s]["true_level"] != NORMAL for s in joint)
     all_errors = sum(all(errors[m][s] for m in models) for s in joint)
-    out = {"models": models, "panel_n": len(ids), "joint_ids": joint, "membership_sha256": membership(joint),
+    out = {"models": models, "panel_n": len(ids), "panel_ids": ids, "joint_ids": joint, "membership_sha256": membership(joint),
            "joint_parse": ratio(len(joint), len(ids), "EMPTY"), "joint_to_parent_planned": ratio(len(joint), planned_n),
            "missing_invalid_combinations": dict(sorted(combinations_missing.items())),
            "unanimous4": ratio(sum(len(set(v)) == 1 for v in votes.values()), len(joint), "EMPTY"),
@@ -261,7 +267,7 @@ def disagreement(tables, ids, models, planned_n):
                         (q3[s]["true_level"] != NORMAL) == true_a and (q3[s]["generated_label"] != NORMAL) == pred_a]
             values = [q3[s]["hnlo_score"] for s in selected]
             out["hnlo_true_predicted_binary"][f"true_{int(true_a)}_pred_{int(pred_a)}"] = {
-                "n": len(values), "min": min(values, default=None), "median": finite_median(values),
+                "ids": selected, "n": len(values), "min": min(values, default=None), "median": finite_median(values),
                 "max": max(values, default=None), "reason": None if values else "EMPTY"}
     out["hnlo_global_error_detection"] = {"status": "NOT_IN_V1", "value": None, "reason": "NO_APPROVED_DIRECTION"}
     return out

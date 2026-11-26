@@ -25,11 +25,13 @@ from .validation import validate_identifier, validate_relative_path
 
 NOTICE = "SYNTHETIC — NOT RESEARCH RESULT"
 MERGE = "28fdf82512577f2ed0fb435fb2c12b88e82baf2f"
+PROTOCOL_AMENDMENT_MERGE = "89088dbc57d629933ab1462171019cd0125c2869"
 CONFIG_PATH = "docs/research/seminar_analysis_config.v1.json"
 PROTOCOL_PATH = "docs/research/SEMINAR_PROTOCOL.md"
 AUTHORITY_PATH = "docs/research/m3_cpu_authority.v1.json"
 CONFIG_SHA = "dd3b86660f0795dba099abac0d8a3b8bd3498e625e49b128aa9c50e72639e5ff"
 PROTOCOL_SHA = "54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1"
+AMENDED_PROTOCOL_SHA = "47d0e9f543d35a96fffa205249de86bc8627da65aad088e727d6bbce71532abb"
 AUTHORITY_SHA = "49acdb5d7fbbdd86fdfd2c6f8c2a1304d73033fc226f6294b2b6f7c66def89b6"
 MODELS = ("qwen25", "internvl3", "qwen3")
 STATUSES = ("SUCCESS", "TECHNICAL_ERROR", "NOT_ATTEMPTED")
@@ -105,7 +107,17 @@ def verify_authority(root, config_path=CONFIG_PATH):
     if config_path != CONFIG_PATH:
         raise AuthorityError("only the approved M2 config path is permitted")
     config_bytes = checked(confined(root, CONFIG_PATH).read_bytes(), CONFIG_SHA)
-    protocol = checked(confined(root, PROTOCOL_PATH).read_bytes(), PROTOCOL_SHA)
+    # The M2 contract is the exact PR135 blob. Main appends a separate protocol
+    # for the Qwen3 composite in PR197; it supplies no authority for this run.
+    protocol = checked(git(root, "show", MERGE + ":" + PROTOCOL_PATH), PROTOCOL_SHA)
+    working_protocol = confined(root, PROTOCOL_PATH).read_bytes()
+    if working_protocol != git(root, "show", "HEAD:" + PROTOCOL_PATH):
+        raise IntegrityError("working protocol differs from its committed version")
+    if working_protocol != protocol:
+        git(root, "merge-base", "--is-ancestor", PROTOCOL_AMENDMENT_MERGE, "HEAD")
+        amended = checked(git(root, "show", PROTOCOL_AMENDMENT_MERGE + ":" + PROTOCOL_PATH), AMENDED_PROTOCOL_SHA)
+        if working_protocol != amended or not amended.startswith(protocol):
+            raise IntegrityError("unrecognized amendment or historical M2 protocol prefix")
     authority_bytes = checked(confined(root, AUTHORITY_PATH).read_bytes(), AUTHORITY_SHA)
     config, authority = strict_json(config_bytes), strict_json(authority_bytes)
     decision_path = "docs/research/DECISIONS.md"
@@ -134,8 +146,7 @@ def verify_authority(root, config_path=CONFIG_PATH):
             or decision["config"]["sha256"] != CONFIG_SHA
             or config["protocol"]["sha256"] != sha256(protocol)):
         raise IntegrityError("decision/config/protocol binding mismatch")
-    for path, expected in ((CONFIG_PATH, CONFIG_SHA), (PROTOCOL_PATH, PROTOCOL_SHA)):
-        checked(git(root, "show", MERGE + ":" + path), expected)
+    checked(git(root, "show", MERGE + ":" + CONFIG_PATH), CONFIG_SHA)
     parents = git(root, "show", "-s", "--format=%P", MERGE).decode().strip().split()
     if parents != authority["merge_parents"]:
         raise AuthorityError("verified merge parents differ")
@@ -147,6 +158,7 @@ def verify_authority(root, config_path=CONFIG_PATH):
                     "post_merge_ref": authority["post_merge_ref"],
                     "task_grant_ref": authority["task_grant_ref"], "scope": authority["scope"],
                     **{k: False for k in denied}, "protocol_sha256": PROTOCOL_SHA,
+                    "working_protocol_sha256": sha256(working_protocol),
                     "config_sha256": CONFIG_SHA, "authority_sha256": AUTHORITY_SHA,
                     "merged_decision_sha256": sha256(merged_decisions),
                     "evidence_receipt_sha256": evidence["sha256"]}

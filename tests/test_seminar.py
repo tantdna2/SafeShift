@@ -6,6 +6,7 @@ Subprocess tests use -S (standard library only), and an audited filesystem fence
 
 import copy
 import csv
+import hashlib
 import io
 import itertools
 import json
@@ -13,6 +14,7 @@ import math
 from pathlib import Path
 import random
 import stat
+import statistics
 import subprocess
 import sys
 import tarfile
@@ -448,6 +450,31 @@ class EvidenceTests(unittest.TestCase):
                 with self.assertRaises(reader.AuthorityError):
                     reader.verify_authority(ROOT, path)
 
+    def test_m2_locked_protocol_and_separate_pr197_amendment(self):
+        protocol_path = ROOT / reader.PROTOCOL_PATH
+        old = subprocess.check_output(["git", "show", reader.MERGE + ":" + reader.PROTOCOL_PATH], cwd=ROOT)
+        current = protocol_path.read_bytes()
+        self.assertTrue(current.startswith(old))
+        self.assertEqual(hashlib.sha256(current[len(old):]).hexdigest(),
+                         "fbb6a383a83c74ce4003ba9a2c59be9bff84d3720cc9e56ce24d39f3b58563c9")
+        real_git = reader.git
+        for revision in (reader.MERGE, reader.PROTOCOL_AMENDMENT_MERGE):
+            def tampered_blob(root, *args):
+                data = real_git(root, *args)
+                return data + b"x" if args == ("show", revision + ":" + reader.PROTOCOL_PATH) else data
+            with self.subTest(revision=revision), mock.patch.object(reader, "git", tampered_blob):
+                with self.assertRaises(reader.IntegrityError):
+                    reader.verify_authority(ROOT)
+        # Even an appended file committed at HEAD must match an admitted revision.
+        real_read = Path.read_bytes
+        def changed_read(path):
+            return current + b"x" if path == protocol_path else real_read(path)
+        def changed_head(root, *args):
+            return current + b"x" if args == ("show", "HEAD:" + reader.PROTOCOL_PATH) else real_git(root, *args)
+        with mock.patch.object(Path, "read_bytes", changed_read), mock.patch.object(reader, "git", changed_head):
+            with self.assertRaises(reader.IntegrityError):
+                reader.verify_authority(ROOT)
+
     def test_c10_symlink_reparse_path_escape_without_privileged_link_creation(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -481,6 +508,143 @@ class EvidenceTests(unittest.TestCase):
 
 
 class ReportAndCliTests(unittest.TestCase):
+    def assert_csv_population(self, row, path, cohort, model, planned, eligible, reports):
+        report = row["output_id"]
+        key = (json.dumps([report, *path], ensure_ascii=False, indent=2) + "\n").encode()
+        digest = hashlib.sha256("".join(s + "\n" for s in sorted(eligible)).encode()).hexdigest()
+        self.assertEqual(row["row_id"], report + "_" + hashlib.sha256(key).hexdigest()[:20])
+        self.assertEqual((row["metric_id"], row["cohort_id"], row["model_or_pair"]),
+                         ("/".join(path), cohort, model))
+        self.assertEqual((int(row["planned_n"]), int(row["eligible_n"]), row["membership_sha256"]),
+                         (len(planned), len(eligible), digest))
+        sources = [r for m in model.replace("->", "|").split("|") for r in reports[m] if r["sample_id"] in eligible]
+        for field, key in (("run_refs", "run_id"), ("input_refs", "input_ref")):
+            self.assertEqual(json.loads(row[field]), sorted({r[key] for r in sources}))
+
+    def assert_csv_lineage(self, r3, r4, reports):
+        # Build sets from the original synthetic input records. No analyzer ledger,
+        # derived panels, membership helper or report row is used as the oracle.
+        tables = {m: {r["sample_id"]: r for r in rows} for m, rows in reports.items()}
+        q3 = tables["qwen3"]
+        for domain in ("ALL", *CONFIG["domains"]):
+            full = {s for s, r in q3.items() if domain == "ALL" or r["folder_domain"] == domain}
+            common = {s for s in full if q3[s]["native_status"] == "SUCCESS"}
+            missing = full - common
+            for level in ("Level01", "Level02", "Level03", "Level04"):
+                path = ["missing_composition", domain, level]
+                row = r3["/".join(path)]
+                eligible = {s for s in missing if q3[s]["true_level"] == level}
+                self.assert_csv_population(row, path, "M224", "qwen3", missing, eligible, reports)
+                self.assertEqual(int(row["value"]), len(eligible))
+                self.assertEqual(int(row["positive_n"]), 0 if level == "Level04" else len(eligible))
+            for panel, cohort, planned, models in (
+                ("three_model_main", "V3539", common, ("qwen25", "internvl3", "qwen3")),
+                ("two_model_secondary", "T3763", full, ("qwen25", "internvl3")),
+            ):
+                model = "|".join(models)
+                frequencies = {}
+                joint = set()
+                for sid in planned:
+                    statuses = []
+                    for m in models:
+                        entry = tables[m][sid]
+                        status = entry["native_status"] if not entry["persisted"] else (
+                            "VALID" if entry["generated_label"] is not None else "INVALID")
+                        statuses.append(status)
+                    signature = "|".join(m + ":" + status for m, status in zip(models, statuses))
+                    frequencies[signature] = frequencies.get(signature, 0) + 1
+                    if all(status == "VALID" for status in statuses):
+                        joint.add(sid)
+                prefix = panel + "/" + domain + "/missing_invalid_combinations/"
+                self.assertEqual({k[len(prefix):] for k in r4 if k.startswith(prefix)}, set(frequencies))
+                for signature, n in frequencies.items():
+                    path = [panel, domain, "missing_invalid_combinations", signature]
+                    row = r4["/".join(path)]
+                    self.assert_csv_population(row, path, cohort, model, planned, planned, reports)
+                    self.assertEqual(int(row["value"]), n)
+                for field, source, eligible in (("panel_n", planned, planned), ("joint_parse", planned, joint),
+                                                ("joint_to_parent_planned", full, joint)):
+                    path = [panel, domain, field]
+                    row = r4["/".join(path)]
+                    self.assert_csv_population(row, path, cohort, model, source, eligible, reports)
+                    if field != "panel_n":
+                        self.assertEqual((int(row["numerator"]), int(row["denominator"])), (len(joint), len(source)))
+                for pair, first, second in (("pairwise", models[0], models[-1]),
+                                            ("complementarity", models[-1], models[0])):
+                    name = first + ("|" if pair == "pairwise" else "->") + second
+                    path = [panel, domain, pair, name] + (["kappa4"] if pair == "pairwise" else [])
+                    self.assert_csv_population(r4["/".join(path)], path, cohort, name, planned, joint, reports)
+                if cohort == "V3539":
+                    matched = {s for s in joint if q3[s]["generated_label"] == "Level04" and q3[s]["hnlo_score"] is not None}
+                    signal = [panel, domain, "association", "B04_matched", "signals", "HNLO_Q3"]
+                    for index, cut in enumerate([None, *sorted({q3[s]["hnlo_score"] for s in matched})]):
+                        retained = {s for s in matched if cut is not None and q3[s]["hnlo_score"] <= cut}
+                        path = [*signal, "risk_coverage", str(index), "risk4"]
+                        row = r4["/".join(path)]
+                        self.assert_csv_population(row, path, cohort, model, planned, retained, reports)
+                        self.assertEqual(int(row["denominator"]), len(retained))
+                    for truth, pred in itertools.product((0, 1), repeat=2):
+                        ids = {s for s in joint if q3[s]["hnlo_score"] is not None and
+                               (q3[s]["true_level"] != "Level04") == truth and
+                               (q3[s]["generated_label"] != "Level04") == pred}
+                        scores = [q3[s]["hnlo_score"] for s in ids]
+                        values = {"n": len(ids), "min": min(scores, default=None),
+                                  "max": max(scores, default=None), "median": statistics.median(scores) if ids else None}
+                        for stat_name, value in values.items():
+                            path = [panel, domain, "hnlo_true_predicted_binary", f"true_{truth}_pred_{pred}", stat_name]
+                            row = r4["/".join(path)]
+                            self.assert_csv_population(row, path, cohort, "qwen3", planned, ids, reports)
+                            self.assertEqual(float(row["value"]) if row["value"] else None, value)
+
+    def test_csv_lineage_nonjoint_missing_scores_ties_all_invalid_and_empty(self):
+        for scenario in ("mixed", "all_invalid", "empty"):
+            metadata, reports, near = fixture()
+            if scenario == "mixed":
+                invalid(reports["internvl3"][0])
+                reports["qwen3"][2].update(hnlo_score=None, score_reason="MISSING_SCORE")
+                reports["qwen3"][5]["hnlo_score"] = reports["qwen3"][1]["hnlo_score"]
+            elif scenario == "all_invalid":
+                for rows in reports.values():
+                    for entry in rows:
+                        if entry["persisted"]:
+                            invalid(entry, keep_score=True)
+            else:
+                metadata, reports, near = [], {m: [] for m in reports}, []
+            result = metrics.analyze(metadata, reports, near, CONFIG)
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as temp:
+                written = {}
+                for report in ("R2", "R3", "R4"):
+                    filename = Path(temp) / (report + ".csv")
+                    cli.write_csv(filename, cli.report_rows(report, result, CONFIG), cli.LONG_FIELDS)
+                    with filename.open(encoding="utf-8", newline="") as stream:
+                        written[report] = {r["metric_id"]: r for r in csv.DictReader(stream)}
+                    for row in written[report].values():
+                        if row["eligible_n"] == "":
+                            continue
+                        delta = int(row["planned_n"]) - int(row["eligible_n"])
+                        exclusions = json.loads(row["excluded_by_reason"])
+                        counts = exclusions.get("by_reason", exclusions)
+                        self.assertGreaterEqual(delta, 0, row["metric_id"])
+                        self.assertTrue(all(v >= 0 for v in counts.values()), row["metric_id"])
+                        self.assertEqual(sum(counts.values()), delta, row["metric_id"])
+                        if row["positive_n"] != "":
+                            self.assertEqual(int(row["positive_n"]) + int(row["negative_n"]), int(row["eligible_n"]))
+                self.assert_csv_lineage(written["R3"], written["R4"], reports)
+                if scenario == "mixed":
+                    full = {r["sample_id"] for r in reports["internvl3"]}
+                    prefix = ["T3763", "ALL", "internvl3", "ranking", "eligibility"]
+                    for tail, ids in ((["counts", "J"], full - {"synthetic-00"}),
+                                      (["excluded", "J", "by_level", "Level01"], {"synthetic-00"})):
+                        path = prefix + tail
+                        self.assert_csv_population(written["R2"]["/".join(path)], path, "T3763", "internvl3", full, ids, reports)
+                    common = {f"synthetic-{i:02d}" for i in range(10)}
+                    prefix = ["sensitivity", "V3539", "variants", "exact_representative_first"]
+                    path = [*prefix, "strata", "ALL", "models", "qwen3", "hnlo_F"]
+                    ids = common - {"synthetic-01", "synthetic-02"}
+                    self.assert_csv_population(written["R3"]["/".join(path)], path, "V3539", "qwen3", common, ids, reports)
+                    path = ["sensitivity", "V3539", "exact_consistency", "0", "models", "internvl3", "within_group_hazard_auc"]
+                    self.assert_csv_population(written["R3"]["/".join(path)], path, "V3539", "internvl3", common, {"synthetic-01"}, reports)
+
     def test_c10_csv_eligibility_bounds_and_pair_provenance(self):
         metadata, reports, near = fixture()
         result = metrics.analyze(metadata, reports, near, CONFIG)
@@ -535,11 +699,15 @@ class ReportAndCliTests(unittest.TestCase):
                 receipt = json.loads((directory / "receipt.json").read_text(encoding="utf-8"))
                 receipts.append(receipt)
                 self.assertEqual(len(receipt["outputs"]), 11)  # receipt is the twelfth file, no self hash
+                self.assertEqual(len(list(directory.iterdir())), 12)
                 self.assertEqual(receipt["authority"]["protocol_sha256"], reader.PROTOCOL_SHA)
+                self.assertEqual(receipt["authority"]["working_protocol_sha256"],
+                                 hashlib.sha256((ROOT / reader.PROTOCOL_PATH).read_bytes()).hexdigest())
                 self.assertEqual(receipt["authority"]["config_sha256"], reader.CONFIG_SHA)
                 self.assertEqual(len(receipt["inputs"]["units"]), 12)
                 for name, digest in receipt["outputs"].items():
                     self.assertEqual(reader.sha256((directory / name).read_bytes()), digest)
+                written = {}
                 for report_id, name in cli.NAMES.items():
                     structured = json.loads((directory / (name + ".json")).read_text(encoding="utf-8"))
                     self.assertEqual(structured["notice"], reader.NOTICE)
@@ -547,10 +715,12 @@ class ReportAndCliTests(unittest.TestCase):
                         csv_reader = csv.DictReader(stream)
                         self.assertEqual(csv_reader.fieldnames, cli.LONG_FIELDS)
                         rows = list(csv_reader)
+                    written[report_id] = {r["metric_id"]: r for r in rows}
                     self.assertEqual(len({r["row_id"] for r in rows}), len(rows))
                     self.assertEqual(len(rows), len(structured["rows"]))
                     self.assertTrue(all(r["notice"] == reader.NOTICE for r in rows))
                     self.assertTrue(all(r["reason"] for r in rows if r["value"] == ""))
+                self.assert_csv_lineage(written["R3"], written["R4"], fixture()[1])
                 summary = json.loads((directory / "summary.json").read_text(encoding="utf-8"))
                 self.assertEqual(summary["status"], "PENDING_ANALYST_M4")
                 self.assertIsNone(summary["scientific_conclusions"])

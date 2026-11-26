@@ -34,10 +34,18 @@ blobs and the Git-tracked evidence receipt hash. Missing Git objects/refs or
 authority fail closed. Runtime verification is offline against pinned evidence;
 it does not claim to refresh live GitHub state.
 
-| Immutable file | SHA-256 |
+| Locked PR135 file | SHA-256 |
 | --- | --- |
 | `docs/research/SEMINAR_PROTOCOL.md` | `54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1` |
 | `docs/research/seminar_analysis_config.v1.json` | `dd3b86660f0795dba099abac0d8a3b8bd3498e625e49b128aa9c50e72639e5ff` |
+
+The historical runner reads the protocol bytes at the PR135 merge. The
+integrated checkout carries the separate PR197 Qwen3 appendix, SHA-256
+`47d0e9f543d35a96fffa205249de86bc8627da65aad088e727d6bbce71532abb` for
+the whole file. The verifier checks the working bytes against HEAD and the
+pinned PR197 merge and verifies the exact PR135 prefix. The receipt records
+the historical lock in `authority.protocol_sha256` and the checkout digest
+in `authority.working_protocol_sha256`. [PR197](https://github.com/tantdna2/SafeShift/pull/197)
 
 Original `frozen=false`, PENDING and null refs remain unchanged. Approval comes
 from DEC-20261026-M2 plus verified merge and assignment. No real-artifact, GPU,
@@ -112,6 +120,24 @@ numerator/denominator/value/status/reason/membership plus planned/eligible/suppo
 exclusions/run/input refs/evidence and JSON pointer (relative to `details`).
 Counts stay counts; AUC numerator is pair concordance. Null becomes an empty CSV
 cell with a reason, never NaN/Inf. Confusion and curve arrays remain in JSON.
+
+The long-row membership digest covers the IDs counted by `eligible_n`. Run and
+input references identify source records for those IDs and the reported model(s).
+On the bundled twelve-record fixture, the corrected lineages are:
+
+| Metric (ALL stratum) | Cohort and model(s) | Planned | Eligible IDs (synthetic suffixes) | Value |
+| --- | --- | ---: | --- | ---: |
+| R4 three-model, all-VALID combination | V3539, qwen25 / internvl3 / qwen3 | 10 | 00–09 (full panel) | 10 |
+| R3 missing composition, Level01 | M224, qwen3 | 2 | 10 | 1 |
+| R4 HNLO, true hazard / predicted Normal, median | V3539, qwen3 | 10 | 00, 06 | 1 |
+
+For a domain, R4 combination frequencies use its entire panel, including INVALID
+outputs. Their values partition that panel. R3 plans the missing IDs in the domain
+and hashes the subset with the row's level. HNLO cell statistics share the exact
+joint-parse IDs in that cell with finite Qwen3 scores. Empty cells have zero
+eligible IDs and the SHA-256 of empty bytes. Parent-planned coverage ratios use
+the full T3763 stratum as their planned population. A ratio's numeric denominator
+retains its formula-specific units, including class support and AUC pair mass.
 
 R5 maps S-RQs to exact R1–R4 row IDs/input refs in `summary.json`, with no generated
 scientific answer. B01 has exactly 19 BLOCKED placeholders; B02 controls N/A,

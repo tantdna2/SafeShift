@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+from collections import Counter
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -15,7 +16,7 @@ from safeshift.data.saved_reports import (
     AUTHORITY_PATH, CONFIG_PATH, CONFIG_SHA, PROTOCOL_PATH, AuthorityError, IntegrityError,
     NOTICE, confined, git, json_bytes, membership, read_synthetic, sha256, verify_authority,
 )
-from safeshift.evaluation.seminar import analyze, long_rows
+from safeshift.evaluation.seminar import analyze, eligibility, exclusion_reason, long_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 LONG_FIELDS = ["notice", "output_id", "row_id", "cohort_id", "model_or_pair", "stratum", "metric_id",
@@ -49,96 +50,172 @@ def write_csv(path, rows, fields=None):
                              if isinstance(v, (list, dict)) else v for k, v in row.items()})
 
 
-def report_rows(report_id, result, config):
-    """Add denominator, membership, provenance and eligibility to long rows."""
-    rows = long_rows(report_id, result[report_id], {})
-    ledger = result["ledger"]
-    for row in rows:
-        path = row["metric_id"].split("/")
-        cohort = next((p for p in path if p in ("T3763", "V3539")), None)
-        if "three_model_main" in path:
-            cohort = "V3539"
-        elif "two_model_secondary" in path or "completion_bounds" in path or "missing_composition" in path:
-            cohort = "T3763"
-        stratum = next((p for p in path if p in ("ALL", *config["domains"])), "ALL")
-        model = next((p for p in path if p in (*config["models"],)), None)
-        pair = next((p for p in path if "|" in p or "->" in p), None)
-        variant = next((p for p in path if p in config["sensitivity"]["variants"]), "")
-        if report_id == "R4" and model is None:
-            model = pair or ("qwen25|internvl3|qwen3" if cohort == "V3539" else "qwen25|internvl3")
-        if "completion_bounds" in path or "missing_composition" in path:
+def row_scope(path, config, panels):
+    """Read model/cohort keys only in schema positions that name them."""
+    section = path[0]
+    cohort, stratum, model, variant = None, "ALL", None, ""
+    if section in panels:
+        spec = panels[section]
+        cohort, stratum = spec["cohort"], path[1]
+        if path[2] in ("pairwise", "complementarity"):
+            model = path[3]
+        elif path[2] in ("hnlo_true_predicted_binary", "hnlo_global_error_detection"):
             model = "qwen3"
-        if model is None and cohort:
-            model = "|".join(config["cohorts"][cohort]["models"])
-        selection = [r for r in ledger if r["cohort_id"] == cohort and
-                     (stratum == "ALL" or r["folder_domain"] == stratum) and
-                     (r["model_id"] in (model or "").replace("->", "|").split("|"))]
-        ids = sorted({r["sample_id"] for r in selection})
-        planned_ids = ids[:]
-        if report_id == "R3" and "sensitivity" in path and cohort:
-            panel = result["R3"]["sensitivity"][cohort]
-            if variant:
-                retained = set(panel["variants"][variant]["weights"])
-                selection = [r for r in selection if r["sample_id"] in retained]
-                ids = sorted({r["sample_id"] for r in selection})
-            elif "exact_consistency" in path:
-                position = path.index("exact_consistency") + 1
-                retained = set(panel["exact_consistency"][int(path[position])]["ids"])
-                selection = [r for r in selection if r["sample_id"] in retained]
-                ids = sorted({r["sample_id"] for r in selection})
-        excluded = {}
-        # Resolve the closest explicit eligibility object along the JSON path.
-        node, info, parent_node = result[report_id], None, None
-        for part in path:
-            if isinstance(node, dict) and "eligibility" in node:
-                info = node["eligibility"]
-            try:
-                parent_node = node
-                node = node[int(part)] if isinstance(node, list) else node[part]
-            except (KeyError, IndexError, TypeError, ValueError):
-                break
-        if info:
-            eligible_set = "J" if "paired_J" in path or "delta" in path else "F" if "hnlo_F" in path else "O"
-            row["eligible_n"] = info["counts"][eligible_set]
-            digest = info["membership"][eligible_set]
-            excluded = info["excluded"][eligible_set]
         else:
-            if report_id == "R4" and cohort and model != "moondream2":
-                panel_name = "three_model_main" if cohort == "V3539" else "two_model_secondary"
-                panel = result["R4"][panel_name][stratum]
-                ids = panel["joint_ids"]
-                association = next((p for p in path if p in ("joint", "B04", "B04_matched")), None)
-                if "association" in path and association:
-                    ids = panel["association"][association]["ids"]
-                excluded = {"non_joint_or_signal_missing": len(planned_ids) - len(ids)}
-            elif report_id == "R3" and model in config["models"] and "completion_bounds" not in path:
-                ids = sorted({r["sample_id"] for r in selection if r["persisted"]})
-                excluded = {"no_output": len(planned_ids) - len(ids)}
-            row["eligible_n"] = row.get("eligible_n") if row.get("eligible_n") is not None else len(ids)
-            digest = membership(ids)
+            model = "|".join(spec["models"])
+    elif section in ("missing_composition", "completion_bounds"):
+        cohort = "M224" if section == "missing_composition" else "T3763"
+        stratum, model = path[1], "qwen3"
+    elif section in ("T3763", "V3539"):
+        cohort, stratum, model = path[:3]
+    elif section == "sensitivity":
+        cohort = path[1]
+        if path[2] == "variants":
+            variant = path[3]
+            if path[4] == "strata":
+                stratum = path[5]
+                if path[6] == "models":
+                    model = path[7]
+        elif path[2] == "exact_consistency":
+            model = path[5]
+        model = model or "|".join(config["cohorts"][cohort]["models"])
+    elif section == "moondream2":
+        model = section
+    return cohort, stratum, model, variant
+
+
+def disagreement_members(path, panel, selection):
+    field = path[2]
+    if field in ("panel_n", "missing_invalid_combinations"):
+        return set(panel["panel_ids"]), None
+    if field == "hnlo_true_predicted_binary":
+        return set(panel[field][path[3]]["ids"]), "outside_finite_qwen3_joint_cell"
+    if field == "hnlo_global_error_detection":
+        return set(), "not_in_v1"
+    if field == "signals":  # One disagreement score per joint sample.
+        return {path[3]}, "other_panel_ids"
+    if field == "association":
+        group = panel[field][path[3]]
+        ids = set(group["ids"])
+        if path[4:5] == ["signals"] and path[6:7] == ["risk_coverage"] and path[-1] == "risk4":
+            signal = path[5]
+            threshold = group["signals"][signal]["risk_coverage"][int(path[7])]["threshold"]
+            if threshold is None:
+                return set(), "outside_retained_tie_blocks"
+            if signal == "HNLO_Q3":
+                retained = {r["sample_id"] for r in selection if r["model_id"] == "qwen3" and
+                            r["sample_id"] in ids and r["hnlo_score"] <= threshold}
+            else:
+                retained = {sid for sid in ids if panel["signals"][sid][signal] <= threshold}
+            return retained, "outside_retained_tie_blocks"
+        return ids, "outside_association_panel"
+    return set(panel["joint_ids"]), "outside_joint_panel"
+
+
+def ranking_members(path, sets, info):
+    """Resolve both metric populations and the diagnostic counts about them."""
+    if "eligibility" in path:
+        kind, name, *bucket = path[path.index("eligibility") + 1:]
+        if kind == "excluded":
+            accepted = {r["sample_id"] for r in sets[name]}
+            rows = [r for r in sets["P"] if r["sample_id"] not in accepted]
+            if bucket[0] == "by_reason":
+                rows = [r for r in rows if exclusion_reason(r) == bucket[1]]
+            elif bucket[0] in ("by_level", "by_domain"):
+                key = "true_level" if bucket[0] == "by_level" else "folder_domain"
+                rows = [r for r in rows if r[key] == bucket[1]]
+            return rows, None
+    else:
+        name = "J" if "paired_J" in path or "delta" in path else "F" if "hnlo_F" in path else "O"
+    return sets[name], info["excluded"][name]
+
+
+def ranking_exclusions(breakdown, variant_rows, planned_rows):
+    if len(variant_rows) == len(planned_rows):
+        return breakdown
+    retained = {r["sample_id"] for r in variant_rows}
+    outside = [r for r in planned_rows if r["sample_id"] not in retained]
+    return {"n": breakdown["n"] + len(outside),
+            "by_reason": {**breakdown["by_reason"], "outside_variant": len(outside)},
+            "by_level": dict(Counter(breakdown["by_level"]) + Counter(r["true_level"] for r in outside)),
+            "by_domain": dict(Counter(breakdown["by_domain"]) + Counter(r["folder_domain"] for r in outside))}
+
+
+def report_rows(report_id, result, config):
+    """Attach planned and eligible populations to the unchanged numeric endpoints."""
+    rows = long_rows(report_id, result[report_id], {})
+    panels = {spec["id"]: spec for spec in config["disagreement_panels"]}
+    ledger = result["ledger"]
+    missing = set(result["memberships"]["M224"]["ids"])
+    ranking_cache = {}
+    for row in rows:
+        path = [part.replace("~1", "/").replace("~0", "~") for part in row["json_pointer"][1:].split("/")]
+        cohort, stratum, model, variant = row_scope(path, config, panels)
+        ledger_cohort = "T3763" if cohort == "M224" else cohort
+        # Parent-planned coverage ratios use T3763 even in the V3539 panel.
+        if report_id == "R4" and path[-1] in ("joint_to_parent_planned", "panel_to_planned"):
+            ledger_cohort = "T3763"
+        models = (model or "").replace("->", "|").split("|")
+        selection = [r for r in ledger if r["cohort_id"] == ledger_cohort and r["model_id"] in models and
+                     (stratum == "ALL" or r["folder_domain"] == stratum) and
+                     (cohort != "M224" or r["sample_id"] in missing)]
+        planned_ids = {r["sample_id"] for r in selection}
+        ids = planned_ids
+        excluded, reason = {}, None
+        if path[0] in panels:
+            panel = result["R4"][path[0]][stratum]
+            ids, reason = disagreement_members(path, panel, selection)
+        elif path[0] == "missing_composition":
+            ids = {r["sample_id"] for r in selection if r["true_level"] == path[2]}
+            reason = "other_missing_levels"
+        elif path[0] == "completion_bounds":
+            bounds = result["R3"]["completion_bounds"][stratum][path[2]]
+            if path[-1] in ("lower", "upper"):
+                row["denominator"] = bounds["denominator"]
+                row["numerator"] = bounds["observed_errors"] + (bounds["missing_support"] if path[-1] == "upper" else 0)
+        elif model and model != "moondream2":
+            if variant:
+                details = result["R3"]["sensitivity"][cohort]["variants"][variant]
+                if path[4] == "weights":
+                    ids, reason = {path[5]}, "other_variant_ids"
+                elif path[4] == "strata":
+                    ids, reason = planned_ids.intersection(details["weights"]), "outside_variant"
+            elif path[0] == "sensitivity" and path[2] == "exact_consistency":
+                group = result["R3"]["sensitivity"][cohort]["exact_consistency"][int(path[3])]
+                ids, reason = set(group["ids"]), "outside_exact_group"
+                if path[-1] in ("score_available_n", "score_spread", "within_group_hazard_auc"):
+                    ids &= {r["sample_id"] for r in selection if r["hnlo_score"] is not None}
+                    reason = "outside_scored_exact_group"
+            is_ranking = (report_id == "R2" or (variant and path[4] == "strata" and path[6] == "models"))
+            if is_ranking:
+                key = cohort, stratum, model, variant
+                if key not in ranking_cache:
+                    ranking_cache[key] = eligibility([r for r in selection if r["sample_id"] in ids])
+                sets, info = ranking_cache[key]
+                eligible_rows, breakdown = ranking_members(path, sets, info)
+                ids = {r["sample_id"] for r in eligible_rows}
+                if breakdown is not None:
+                    excluded = ranking_exclusions(breakdown, sets["P"], selection)
+                    reason = None
+                else:
+                    reason = "outside_exclusion_bucket"
+            elif path[0] in ("T3763", "V3539"):
+                ids = {r["sample_id"] for r in selection if r["persisted"]}
+                reason = "no_output"
+        if not ids <= planned_ids or row["eligible_n"] not in (None, len(ids)):
+            raise ValueError("metric membership disagrees with its population: " + row["metric_id"])
+        if reason:
+            excluded = {reason: len(planned_ids) - len(ids)}
+        eligible_rows = [r for r in selection if r["sample_id"] in ids]
         applicable = cohort is not None and model != "moondream2"
         row.update({"cohort_id": cohort or "NOT_APPLICABLE", "model_or_pair": model or "NOT_APPLICABLE",
-                    "stratum": stratum, "variant_id": variant, "membership_sha256": digest,
-                    "planned_n": len(planned_ids) if applicable else None,
-                    "excluded_by_reason": excluded, "run_refs": sorted({r["run_id"] for r in selection}),
-                    "input_refs": sorted({r["input_ref"] for r in selection}), "evidence_level": "SYNTHETIC"})
-        if not applicable:
-            row["eligible_n"] = None
-        if "completion_bounds" in path and path[-1] in ("lower", "upper"):
-            row["denominator"] = parent_node["denominator"]
-            row["numerator"] = parent_node["observed_errors"] + (parent_node["missing_support"] if path[-1] == "upper" else 0)
-        if row["positive_n"] is None and applicable and report_id != "R4":
-            eligible_ids = set(ids)
-            if info:
-                eligible_ids = {r["sample_id"] for r in selection if r["persisted"] and
-                    (eligible_set != "F" or r["hnlo_score"] is not None) and
-                    (eligible_set != "J" or (r["hnlo_score"] is not None and r["generated_label"] is not None))}
-            truth = {r["sample_id"]: r["true_level"] for r in selection if r["sample_id"] in eligible_ids}
-            row["positive_n"] = sum(level != "Level04" for level in truth.values())
-            row["negative_n"] = len(truth) - row["positive_n"]
-        # Every CSV column is explicit; JSON keeps full structured details.
-        for field in LONG_FIELDS:
-            row.setdefault(field, None)
+                    "stratum": stratum, "variant_id": variant, "membership_sha256": membership(ids),
+                    "planned_n": len(planned_ids) if applicable else None, "eligible_n": len(ids) if applicable else None,
+                    "excluded_by_reason": excluded, "run_refs": sorted({r["run_id"] for r in eligible_rows}),
+                    "input_refs": sorted({r["input_ref"] for r in eligible_rows}), "evidence_level": "SYNTHETIC"})
+        if row["positive_n"] is None and applicable and (report_id != "R4" or path[2] == "hnlo_true_predicted_binary"):
+            positive = {r["sample_id"] for r in eligible_rows if r["true_level"] != "Level04"}
+            row["positive_n"], row["negative_n"] = len(positive), len(ids) - len(positive)
     return rows
 
 
