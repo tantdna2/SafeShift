@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = "configs/analysis/full_train_benchmark.v1.json"
 MEMBERS = ("cohort", *PRODUCTS)
 LIMIT_BYTES = 16 * 1024 * 1024
+RELEASE_STATUSES = ("PROVISIONAL_PRE_FINAL_ADMISSION", "RECONCILED_SOURCE_RETROSPECTIVE")
 SOURCE_FILES = (
     "scripts/benchmark_full_train.py",
     "scripts/build_qwen3_composite.py",
@@ -42,8 +43,9 @@ def load_inputs(root, input_dir, config):
     members = release.get("members")
     require(all(isinstance(release.get(key), str) and release[key].strip()
                 for key in ("rights_ref", "custody_ref", "source_review_ref")) and
+            release.get("result_status") in RELEASE_STATUSES and
             isinstance(members, dict) and set(members) == set(MEMBERS),
-            "incomplete TRAIN rights, custody, source review or members")
+            "incomplete TRAIN rights, custody, source review, result status or members")
     require(set(config["products"]) == set(PRODUCTS) and
             all(is_sha256(config["products"][key]["source_seal_sha256"]) for key in PRODUCTS),
             "all selected products require authenticated source seals")
@@ -111,13 +113,16 @@ def confusion_html(models, notice):
 
 def export(root, output_dir, result, config, command):
     output = confined(root, output_dir, ("data", "processed"))
-    result_data = json_bytes(result)
+    status = config["release"]["result_status"]
+    result_data = json_bytes({**result, "result_status": status})
     files = {
         "benchmark.json": result_data,
-        "metrics.csv": csv_bytes(list(metric_rows({"models": result["models"],
+        "metrics.csv": csv_bytes(list(metric_rows({"result_status": status, "models": result["models"],
                                                    "paired": result["paired"],
+                                                   "minicpm_normalization_impact":
+                                                       result["minicpm_normalization_impact"],
                                                    "scores": result["scores"]}))),
-        "confusion.html": confusion_html(result["models"], "Retrospective comparison on exposed TRAIN."),
+        "confusion.html": confusion_html(result["models"], f"{status}. Retrospective comparison on exposed TRAIN."),
     }
     receipt = {"schema": f"{SCHEMA}-receipt", "source_sha": git(root, "rev-parse", "HEAD").decode().strip(),
                "source_dirty": bool(git(root, "status", "--porcelain", "--untracked-files=no")),

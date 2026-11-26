@@ -83,6 +83,33 @@ def label_summary(rows):
     return result
 
 
+def normalization_impact(original, strict, normalized):
+    """Track INVALID → Normal using the original status and fixed GT support."""
+    converted = Counter(row["true_level"] for row in original if row["status"] == "INVALID")
+    before, after = strict["binary"], normalized["binary"]
+    endpoints = {
+        "valid_label_rate": (strict["valid_label_rate"], normalized["valid_label_rate"]),
+        "accuracy": (strict["accuracy"], normalized["accuracy"]),
+        "hazard_false_safe": (before["fnr"], after["fnr"]),
+        "level01_false_safe": (strict["severe_false_safe"], normalized["severe_false_safe"]),
+        "hazard_missed_or_invalid": tuple(
+            ratio(binary["FN"] + binary["U_A"], binary["hazard_support"])
+            for binary in (before, after)),
+    }
+    return {
+        "converted_n": sum(converted.values()),
+        "converted_by_true_level": {level: converted[level] for level in LEVELS},
+        "hazard_invalid_to_false_safe_n": sum(converted[level] for level in LEVELS[:-1]),
+        "normal_invalid_to_true_negative_n": converted["Level04"],
+        "strict_c1_invalid_n": strict["invalid_n"],
+        "normalized_invalid_n": normalized["invalid_n"],
+        "endpoints": {name: {"strict_c1": prior, "normalization_v1": current,
+                             "change": ratio(current["numerator"] - prior["numerator"],
+                                             prior["denominator"])}
+                      for name, (prior, current) in endpoints.items()},
+    }
+
+
 def paired(left, right, *, binary=False):
     counts = Counter()
     hazard = {level: level != "Level04" for level in LEVELS}
@@ -144,6 +171,16 @@ def compare(cohort, products, config, *, mini_conversion_n=205):
                    for domain, indices in sorted(strata.items())}
         by_model[key] = {"overall": label_summary(panel), "by_domain": domains,
                          "worst_domain": worst_domains(domains)}
+    strict_metrics, normalized_metrics = by_model["minicpm_c1"], by_model["minicpm"]
+    c1_panel = panels["minicpm_c1"]
+    normalization = {
+        "overall": normalization_impact(c1_panel, strict_metrics["overall"],
+                                        normalized_metrics["overall"]),
+        "by_domain": {domain: normalization_impact(
+            [c1_panel[i] for i in indices], strict_metrics["by_domain"][domain],
+            normalized_metrics["by_domain"][domain])
+            for domain, indices in sorted(strata.items())},
+    }
     paired_results = {}
     pairs = [*combinations(PRODUCTS, 2), ("minicpm_c1", "minicpm")]
     for left, right in pairs:
@@ -168,6 +205,7 @@ def compare(cohort, products, config, *, mini_conversion_n=205):
         "duplicate_content_groups": sum(count > 1 for count in duplicate_counts.values()),
         "duplicate_groups_with_conflicting_gt": sum(len(labels) > 1 for labels in labels_by_hash.values()),
         "provenance": provenance, "models": by_model, "paired": paired_results,
+        "minicpm_normalization_impact": normalization,
         "four_level_error_patterns": [
             {"models_in_error": list(keys), "n": n} for keys, n in sorted(triple_errors.items())],
         "scores": {key: {"status": "N/A", "reason": product["score_limit"],

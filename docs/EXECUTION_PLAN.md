@@ -12,7 +12,7 @@ luận hiện hành theo chỉ đạo Owner/giảng viên gồm các mốc sau.
 | Phân tích lỗi và truy nguyên | Ghép 3.763 ID/hash/GT/domain từ đúng dữ liệu đã niêm phong. Xếp theo số ca, mức nặng, domain và độ mạnh bằng chứng. Tách pattern, cơ chế đã xác minh và giả thuyết. |
 | Đề xuất và phản biện | Gắn chứng cứ với CV-A/B/C/D và CT1/CT2/CT3, endpoint chính/guardrail, đối chứng và chi phí. Codex và Antigravity phản biện độc lập qua Orca; Coordinator xử lý bất đồng và ghi blocker. |
 | Chốt và triển khai | Owner chọn phương pháp sau phản biện. Chốt giao thức, quyền dữ liệu, precision, chi phí và điều kiện loại trước khi lập trình phương pháp hoặc chạy E1–E5. |
-| E1–E5 | Tách hồi cứu TRAIN khỏi development/validation và đánh giá độc lập. Bảo toàn split/GT, không có TEST release trong phạm vi này. |
+| E1–E5 | E1 so sánh cùng protocol, E2 ablation, E3 stress test, E4 error analysis, E5 tái lập. Tách hồi cứu TRAIN khỏi validation và đánh giá độc lập. Giữ split/GT và khóa TEST. [Rubric nghiệm thu](research/THESIS_EXECUTION_PLAN_2026.md#hiện-hành--benchmark-first-27112026). |
 
 Panel hồi cứu gồm đúng Qwen3 Composite V1, InternVL3.5 Grammar V2 và MiniCPM
 Normalization V1. MiniCPM strict C1 là sensitivity trên cùng ID. Yêu cầu bốn

@@ -9,14 +9,16 @@
 - Owner đã chốt Qwen3 Composite V1, InternVL3.5 Grammar V2 và MiniCPM
   Normalization V1 để so nhãn trên cùng TRAIN, giữ MiniCPM C1 làm sensitivity.
   [Quyết định Benchmark First](research/DECISIONS.md#dec-20261127-owner-benchmark-first).
-- Qwen3 được tái tính từ bản dẫn xuất đã cấp quyền và niêm phong. Bảng chung,
-  phân tích cặp, metric theo GT của InternVL/MiniCPM và case review còn chờ
-  quyền đúng phạm vi và chứng từ custody/ledger. Final Admission và phê duyệt
-  học vụ là các trạng thái độc lập. Score chung chưa đủ đầu vào.
+- Qwen3 được tái tính từ bản dẫn xuất đã cấp quyền và niêm phong. Projection
+  cohort và Qwen3 đã kiểm đủ 3.763 ID. Bảng ba bên, phân tích cặp và tác động
+  trên GT của 205 ca MiniCPM còn chờ quyền đọc/ghép thích hợp, seal local
+  InternVL và bộ MiniCPM đã ghim. Final Admission giữ vai trò riêng cho
+  `official-report`. Score chung chưa đủ đầu vào.
   [Báo cáo kết quả và điều kiện mở](research/FULL_TRAIN_BENCHMARK_V1.md).
 - Sau benchmark và truy nguyên, phản biện phương án theo CT1–CT3 trước khi
-  Owner chốt. Scope task hiện hành là CPU và kết quả đã lưu. TEST, GPU và
-  Kaggle nằm ngoài phạm vi.
+  Owner chốt. Rubric hiện hành dùng E1 so sánh cùng protocol, E2 ablation,
+  E3 stress test, E4 error analysis và E5 tái lập. Scope hiện hành là CPU
+  và kết quả đã lưu. TEST, GPU và Kaggle nằm ngoài phạm vi.
 
 ## Hiện hành — MiniCPM-V-4 Full-TRAIN đã hoàn thành — 26/11/2026
 

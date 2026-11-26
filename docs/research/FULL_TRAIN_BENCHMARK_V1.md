@@ -84,7 +84,7 @@ lớp của Qwen3 và Hazard Recall bằng 0. Accuracy riêng lẻ dễ che mứ
   trả INVALID theo hợp đồng. V1 ánh xạ chính xác sang Level04 và giữ mọi
   prediction canonical gốc. Cần GT để biết bao nhiêu conversion thành TN
   hoặc false-safe, bao nhiêu là Level01. Tăng valid rate từ 94,55% lên 100%
-  chỉ xác nhận độ phủ của bản dẫn xuất.
+  tăng độ phủ đúng 205/3.763, tức 5,45 điểm phần trăm.
   Tăng đúng bao nhiêu ca Normal thực trong nhóm chuyển đổi sẽ làm Accuracy
   tăng bấy nhiêu/3.763. Mỗi ca Hazard trong nhóm thêm một false-safe, trong
   khi TP, FP, Hazard Recall và FPR giữ nguyên. Việc tra GT từng ID thực hiện
@@ -107,6 +107,53 @@ TRAIN. Các domain dùng support đã đo. CI suy rộng giữa nguồn là **N/
 nguồn độc lập và quyền, chốt đơn vị cluster/precision trước khi đánh giá.
 [Giới hạn điểm và nguồn](QWEN3_FULL_TRAIN_COMPOSITE_V1.md#separate-hnlo-compatibility-gate).
 
+## Quyền và chứng từ để ghép đủ ba nguồn
+
+Revision `f3cb7d3e` của InspecSafe-V1 công bố CC BY 4.0. Có thể dùng
+TRAIN đã cấp phép để phân tích hồi cứu có attribution. Việc đọc projection
+private và đối chiếu kết quả đã lưu phụ thuộc vào thẩm quyền của đơn vị quản
+lý bản lưu, hash của chính snapshot và phạm vi đã duyệt. Việc chọn ba sản
+phẩm ở cấp dự án đã chốt. V/T độc lập, raw, ảnh và dữ liệu TEST nằm ngoài
+scope này. [Dataset InspecSafe-V1](https://huggingface.co/datasets/Tetrabot2026/InspecSafe-V1/tree/f3cb7d3e7827c1afc1c5bfd0524257984bba46ab),
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/),
+[bài báo dataset](https://doi.org/10.1038/s41597-026-07796-x),
+[bằng chứng selection](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7199181963).
+
+| Phần | Bằng chứng đã có | Cần để dùng trong benchmark hồi cứu |
+| --- | --- | --- |
+| TRAIN GT và Qwen3 | Quyết định Qwen3 riêng và manifest đã niêm phong. Đã tạo `cohort.json` và `qwen3.json` từ bản này, kiểm đúng 3.763 ID, split, GT, domain, hash ảnh, và xác thực nguồn Qwen3. | Dùng bản `cohort.json` đã kiểm làm projection ứng viên. Custodian xác nhận đây là cohort đúng phạm vi và ghim hash các member khi mở benchmark ba bên. |
+| InternVL3.5 Grammar V2 | O4 của Issue180 cấp phạm vi tạo kết quả engineering và custody riêng. Báo cáo cục bộ xác nhận đủ 3.763 và các ZIP được journal trỏ tới. Owner đã chốt lý do chạy lại Attempt 23. | Cần một manifest kết quả hồi cứu có quyền và hash được custodian xác nhận cho đủ 3.763 hàng. Ghi rõ nguồn được chọn liên kết tới ZIP Attempt 23 mà event 25 đã ghi, không đổi lựa chọn theo GT. Giữ giới hạn provider, receipt mâu thuẫn và định danh/thẩm quyền journal. |
+| MiniCPM Normalization V1 và C1 | PR #214 hậu kiểm kỹ thuật cho bản dẫn xuất có receipt ghim `385ceddb…`; receipt ràng buộc C1 parent và 205 conversion. | Dùng chính năm tệp đã niêm phong từ custodian, cùng projection đã kiểm ID/hash ảnh/attempt/config và cặp status/label trước–sau. Quyền tạo V1 không tự mở rộng sang ghép GT. Không cần tạo lại kết quả mô hình hoặc chọn lại C1/V1. |
+| Phạm vi chạy và review | PR #136 định danh extension riêng và giữ quyền M4 lịch sử bất biến. | Một bản ghi của người có thẩm quyền với saved artifacts cho đúng bốn projection TRAIN, quyền đọc/ghép cục bộ và xuất thống kê gộp. Ghép với chứng từ nguồn đã xác minh, review và audit code theo quy trình hiện hành. |
+
+Bản ghi O4 kỹ thuật đã được đọc lại từ GitHub. Phạm vi là original TRAIN,
+run engineering và custody của một Operator, với giới hạn không dùng GT cứu
+nhãn. Văn bản không cấp riêng bundle paired để đánh giá hồi cứu của PR này.
+[Issue180, O4](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6657871236),
+[PR #214 hậu kiểm](https://github.com/tantdna2/SafeShift/pull/214#issuecomment-7184951265),
+[thẩm quyền dữ liệu](THESIS_DATA_PROTOCOL.md).
+
+Nếu chỉ cần benchmark hồi cứu, Owner trong phạm vi custody của mình hoặc
+người được đơn vị giữ dữ liệu ủy quyền có thể cung cấp **một** bản ghi xác
+thực trên PR #136, kèm đường dẫn nội bộ và seal của nguồn đã lưu. Dùng seal
+Qwen3 và MiniCPM đã ghim. Gắn thêm seal hoặc manifest được custodian xác nhận
+cho InternVL, cùng chứng từ chọn snapshot trước khi mở GT. Coordinator chuẩn
+bị và kiểm hash/kích thước bốn projection từ nguồn có quyền. Phạm vi gồm
+đúng 3.763 TRAIN ID, GT mức ảnh, folder domain,
+image SHA, nhãn đã lưu, status gốc và lineage. Quyền chỉ dùng để đọc, ghép,
+tính CPU cục bộ và báo số gộp. Nếu một phần thuộc đơn vị khác, cung cấp căn
+cứ quyền sẵn có hoặc xác nhận từ đơn vị đó. Có thể dùng master/Qwen3 đã kiểm
+và chỉ bổ sung nguồn InternVL cùng bộ MiniCPM đã ghim. Giữ TRAIN hồi cứu và
+ghi `PROVISIONAL_PRE_FINAL_ADMISSION` nếu authority cho phép dùng snapshot
+trước admission. Không cần mở thêm thủ tục cấp phép dataset công khai.
+
+`official-report` của hai route vận hành vẫn cần Final Admission theo runbook.
+Một bản ghi phân tích hồi cứu không thay certificate, chứng từ provider,
+phê duyệt học vụ hay quyền merge. Nếu yêu cầu dùng kết quả chính thức, cần
+chính các chứng từ Final Admission và đường `official-report` đã duyệt.
+[InternVL](../TRAIN3763_DEFERRED_RECONCILIATION.md),
+[MiniCPM](../MINICPM_OFFLINE_CONTINUATION.md).
+
 ## Từ vấn đề đến câu hỏi cải tiến
 
 | Ưu tiên điều tra | Bằng chứng và kiểm tra tiếp | Ứng viên, định hướng | Metric chính và guardrail cần chốt |
@@ -117,9 +164,10 @@ nguồn độc lập và quyền, chốt đơn vị cluster/precision trước k
 | 4. Truy xuất chứng cứ | 205 MiniCPM conversion có lineage và cơ chế định dạng đã kiểm. Qwen3 có lỗi nguy hiểm cần case review; chưa có căn cứ gán vùng bằng chứng. | CV-C/D, CT3. Cân nhắc evidence audit viewer nếu có quyền giữ chứng cứ, rubric và đánh giá người dùng. | Tỷ lệ truy đúng provenance, độ chính xác và thời gian review. Guardrail quyền dữ liệu, độ đầy đủ, lỗi truy xuất và workload. |
 
 Các thứ tự trên ưu tiên **điều tra**. Việc chốt phương pháp, tính mới và
-ngưỡng cần phản biện sau khi đủ benchmark. Có thể dùng E1 để khóa baseline,
-E2 đối chứng phương pháp đã chốt, E3 ablation, E4 đánh giá độc lập theo quyền
-và E5 đo usefulness nếu có rubric/reviewer. Tuning/grounding có thể cần model
+ngưỡng cần phản biện sau khi đủ benchmark. Theo rubric giảng viên, E1 so sánh
+cùng protocol, E2 ablation, E3 stress test, E4 error analysis có case trước–sau
+và E5 tái lập. Nếu viewer được chọn, đo usefulness trong phạm vi CT3 có quyền.
+Tuning/grounding có thể cần model
 calls và thí nghiệm mới, ensemble có thể tăng chi phí thu dự đoán nhiều lần,
 viewer cần bằng chứng và nhân lực review. Gói CPU hiện tại chỉ phân tích kết
 quả đã lưu. [Kế hoạch E1–E5](THESIS_EXECUTION_PLAN_2026.md).
@@ -156,7 +204,9 @@ python -B -m unittest discover -s tests -p test_full_train_benchmark.py -v
 Sau khi có thẩm quyền và review, custodian cung cấp bốn JSON tư nhân có
 SHA256/kích thước độc lập, cùng ref quyền đánh giá TRAIN, chứng từ nguồn,
 review nguồn và source seal chính xác của InternVL. Cấu hình được version
-control ghim các chứng từ và member. Giá trị `release: null` hiện hành làm
+control ghim các chứng từ và member. Bản ghi release xác định `result_status`
+là `PROVISIONAL_PRE_FINAL_ADMISSION` hoặc `RECONCILED_SOURCE_RETROSPECTIVE`
+theo chứng từ nguồn. Giá trị `release: null` hiện hành làm
 CLI trả mã 2 trước khi mở bất kỳ projection. Chỉ tích hợp bằng chứng đã có
 thẩm quyền theo quy trình hiện hành. Final Admission và M4 lịch sử có phạm
 vi riêng. Công cụ không suy quyền từ các tệp tìm thấy trên máy.
@@ -179,6 +229,12 @@ vi riêng. Công cụ không suy quyền từ các tệp tìm thấy trên máy.
   paired outcomes, disagreement trên giao nhãn hợp lệ và đúng/sai trên planned.
   Strict C1 giữ INVALID trong mẫu số, tách U_A/U_N khỏi FN/FP. Macro tính trên
   các lớp có GT support, báo danh sách lớp và `null` khi mẫu số bằng 0.
+  `minicpm_normalization_impact` báo toàn cohort và từng miền, phân bố GT của
+  các conversion, INVALID Hazard chuyển thành false-safe và INVALID Normal
+  chuyển thành true negative. Mỗi delta có tử/mẫu số. FNR dùng support Hazard,
+  severe miss dùng support Level01, accuracy và label validity dùng planned.
+  `(FN + U_A) / support Hazard` được báo riêng để thấy chuyển đổi loại lỗi
+  khi tổng Hazard bị bỏ sót hoặc INVALID giữ nguyên.
   Giữ GT gốc cho từng ID kể cả khi hai ảnh trùng hash có GT khác nhau và đếm
   các nhóm xung đột để kiểm toán riêng.
   `metrics.csv`, `confusion.html`, `receipt.json` cung cấp bảng số, heatmap
@@ -189,12 +245,11 @@ vi riêng. Công cụ không suy quyền từ các tệp tìm thấy trên máy.
 python -B -m scripts.benchmark_full_train --input-dir data/processed/full-train-benchmark-v1/inputs --output-dir data/processed/full-train-benchmark-v1/run-01
 ```
 
-Bằng chứng còn cần gồm quyền O4 cho đúng mục đích đọc và ghép saved labels với
-TRAIN GT, phạm vi xuất số liệu và case review nếu có, projection/receipt xác
-thực cho InternVL, MiniCPM và cohort, cùng review/audit trên chính HEAD.
-Hồ sơ đối soát provider, certificate và bản `official-report` của nguồn đang
-chờ Final Admission theo hai runbook. Quyền payload M4 lịch sử vẫn cần grant
-riêng. Ba sản phẩm, split và kế hoạch dùng kết quả đã lưu đã rõ.
+Bằng chứng còn cần cho chế độ hồi cứu là quyền đọc/ghép scoped, nguồn đã
+seal và review/audit trên chính HEAD. Dùng chế độ chính thức chỉ sau khi hai
+route hoàn thành Final Admission và xuất `official-report`. Quyền payload M4
+lịch sử và quyền xem ảnh/case evidence có scope riêng. Ba sản phẩm, split
+và kế hoạch dùng kết quả đã lưu đã rõ.
 [InternVL](../TRAIN3763_DEFERRED_RECONCILIATION.md),
 [MiniCPM](../MINICPM_OFFLINE_CONTINUATION.md),
 [M2 và lệnh M3 R1–R5](../SEMINAR_ANALYSIS.md).

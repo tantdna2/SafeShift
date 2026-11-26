@@ -85,6 +85,27 @@ class BenchmarkTest(unittest.TestCase):
         self.assertEqual(result["duplicate_groups_with_conflicting_gt"], 1)
         self.assertEqual(result["models"]["qwen3"]["overall"]["support"]["Level02"], 2)
 
+    def test_normalization_transitions_use_fixed_support(self):
+        cohort, products, config = fixture()
+        normal = products["minicpm"]["samples"][0]
+        normal.update(original_status="INVALID", original_label=None)
+        impact = compare(cohort, products, config, mini_conversion_n=2)["minicpm_normalization_impact"]
+        overall = impact["overall"]
+        self.assertEqual(overall["converted_by_true_level"],
+                         {"Level01": 1, "Level02": 0, "Level03": 0, "Level04": 1})
+        self.assertEqual((overall["strict_c1_invalid_n"], overall["normalized_invalid_n"]), (2, 0))
+        self.assertEqual(overall["normal_invalid_to_true_negative_n"], 1)
+        self.assertEqual(overall["hazard_invalid_to_false_safe_n"], 1)
+        endpoints = overall["endpoints"]
+        for metric, numerator, denominator in (("accuracy", 1, 5), ("valid_label_rate", 2, 5),
+                                               ("hazard_false_safe", 1, 3), ("level01_false_safe", 1, 1),
+                                               ("hazard_missed_or_invalid", 0, 3)):
+            self.assertEqual(endpoints[metric]["change"],
+                             {"numerator": numerator, "denominator": denominator,
+                              "value": numerator / denominator})
+        empty = impact["by_domain"]["west"]["endpoints"]["hazard_false_safe"]["change"]
+        self.assertEqual(empty, {"numerator": 0, "denominator": 0, "value": None})
+
     def test_rejects_mismatched_identity_provenance_and_lineage(self):
         for field, value in (("sample_id", "unexpected"), ("split", "TEST"), ("image_sha256", "f" * 64),
                              ("true_level", "Level01"), ("domain", "other"),
@@ -122,7 +143,8 @@ class BenchmarkTest(unittest.TestCase):
                 (input_dir / f"{name}.json").write_bytes(data)
                 members[name] = {"sha256": sha256(data), "size_bytes": len(data)}
             config["release"] = {"rights_ref": "synthetic-fixture", "custody_ref": "synthetic-fixture",
-                                 "source_review_ref": "synthetic-fixture", "members": members}
+                                 "source_review_ref": "synthetic-fixture", "members": members,
+                                 "result_status": "PROVISIONAL_PRE_FINAL_ADMISSION"}
             self.assertEqual(load_inputs(root, "data/processed/candidate", config), (c, p))
             bad = deepcopy(config)
             del bad["release"]["members"]["qwen3"]
@@ -162,6 +184,7 @@ class BenchmarkTest(unittest.TestCase):
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_bytes(b"test source")
                 result = compare(cohort, products, config, mini_conversion_n=1)
+                committed_config["release"] = {"result_status": "PROVISIONAL_PRE_FINAL_ADMISSION"}
                 with patch("scripts.benchmark_full_train.load_inputs", return_value=(cohort, products)), \
                         patch("scripts.benchmark_full_train.compare", return_value=result):
                     self.assertEqual(main(argv), 0)
@@ -171,12 +194,16 @@ class BenchmarkTest(unittest.TestCase):
             self.assertEqual(receipt["config_sha256"], sha256(json_bytes(committed_config)))
             self.assertEqual(receipt["source_files"], {name: sha256(b"test source") for name in SOURCE_FILES})
             self.assertEqual(receipt["command"][-4:], argv)
+            result_json = json.loads((output / "benchmark.json").read_bytes())
+            self.assertEqual(result_json["result_status"], "PROVISIONAL_PRE_FINAL_ADMISSION")
             self.assertEqual(receipt["outputs"], {name: sha256((output / name).read_bytes())
                              for name in ("benchmark.json", "metrics.csv", "confusion.html")})
             with (output / "metrics.csv").open(encoding="utf-8", newline="") as stream:
                 rows = {r["metric_path"]: r["value"] for r in csv.DictReader(stream)}
             self.assertEqual(json.loads(rows["/models/qwen3/worst_domain/false_safe/domains"]), ["east"])
             self.assertEqual(len(json.loads(rows["/models/minicpm/overall/macro_classes"])), 4)
+            self.assertEqual(rows["/minicpm_normalization_impact/overall/converted_n"], "1")
+            self.assertEqual(rows["/result_status"], "PROVISIONAL_PRE_FINAL_ADMISSION")
 
 
 if __name__ == "__main__":

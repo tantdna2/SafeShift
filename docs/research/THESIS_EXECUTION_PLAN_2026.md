@@ -16,15 +16,19 @@ baseline hồi cứu trên TRAIN đã phơi nhiễm. M2 giữ phạm vi Seminar 
 | CT2 / CV-B/C | Có điểm đáng tin để hiệu chỉnh hoặc chỉnh ngưỡng, hay bằng chứng cho sampling, grounding hoặc bổ trợ giữa các model? Chọn đối chứng và tính đủ chi phí. |
 | CT3 / CV-C/D | Có thể tái dựng bằng chứng cho ca nghiêm trọng hay disagreement từ lineage, và đo được độ chính xác/thời gian của người kiểm tra theo rubric được duyệt? |
 
-E1 mô tả baseline và lỗi theo cohort. E2 so một phương pháp đã chốt với đối
-chứng trên development/validation được cấp quyền. E3 ablation cùng budget
-và đo giá an toàn/chi phí. E4 xác nhận trên target độc lập chỉ khi đủ quyền,
-freeze và precision. E5 đánh giá audit với rubric, người đánh giá và quyền
-phù hợp. Đây là khung câu hỏi, chưa khóa endpoint, ngưỡng, số lượng mẫu hay
-thứ tự sử dụng các ứng viên trong từng thí nghiệm. Giữ cả kết quả âm. TRAIN
-dùng cho chẩn đoán hồi cứu, validation dùng chọn phương pháp, TEST đóng và
-chỉ dùng đánh giá xác nhận khi có quyết định riêng. Không chia lại TRAIN để
-tạo holdout. [Báo cáo baseline và giới hạn](FULL_TRAIN_BENCHMARK_V1.md).
+| Thí nghiệm | Nghiệm thu theo rubric giảng viên |
+| --- | --- |
+| **E1 — So sánh cùng protocol** | Cùng dữ liệu, ID, GT, workload, quy tắc metric, mẫu số và điều kiện so sánh. Ghi version của từng hệ thống, số mẫu, hướng mong muốn của metric chính và guardrail. Khi Owner đã chốt phương pháp, so paired baseline với proposed trên phạm vi được freeze. |
+| **E2 — Ablation** | Tắt từng thành phần mới. Khi cấu hình phù hợp, so baseline, chỉ thêm phương pháp và cấu hình đầy đủ. Báo thay đổi chất lượng, lỗi an toàn, độ trễ và chi phí. |
+| **E3 — Stress test** | Audit mapping nhãn, kiểm lớp hiếm và domain shift. Báo worst-domain AUPRC/FNR khi đủ score/support, kết quả âm và bất định. CI bootstrap chỉ dùng khi xác định được đơn vị lấy mẫu phù hợp. |
+| **E4 — Error analysis** | Tối thiểu ba nhóm lỗi và ba ví dụ trước–sau có quyền và provenance. Ghi cơ chế đã xác minh, giả thuyết, cách khắc phục và giới hạn. Trước khi có phương pháp chỉ ghi ca baseline. |
+| **E5 — Tái lập** | Git commit, môi trường, lệnh chạy, seed nếu áp dụng, config và kết quả gốc. Ghi source/model revision, hash đầu vào, stdout/receipt và file đầu ra phù hợp quyền. |
+
+Baseline TRAIN là hồi cứu. Validation độc lập dùng chọn phương pháp hoặc
+ngưỡng sau khi đủ quyền. TEST giữ khóa và đánh giá xác nhận cần freeze, đủ
+precision và quyết định riêng. Giữ kết quả âm, không chia lại TRAIN thành
+holdout. Đánh giá người dùng chỉ thuộc nhánh CT3 nếu viewer được chọn, theo
+rubric và quyền riêng. [Báo cáo baseline và giới hạn](FULL_TRAIN_BENCHMARK_V1.md).
 
 ## OWNER UPDATE - 02/11/2026: fresh full TRAIN only
 
