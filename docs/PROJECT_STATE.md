@@ -6,12 +6,14 @@
 | --- | --- |
 | `EXECUTION_COMPLETED_OWNER_CONFIRMED` | Owner xác nhận đã chạy xong Full-TRAIN MiniCPM-V-4. Serial 23 xử lý 669 ảnh cuối, gồm 611 `SUCCESS` và 58 `INVALID`. [Bản ghi Owner](research/DECISIONS.md#dec-20261126-owner-minicpm3763-execution-completed). |
 | `OFFLINE_VERIFIED_PROVISIONAL` | Fast PR #212 kiểm hai bản journal cục bộ. Có đủ **3.763/3.763** ID TRAIN, mỗi ID một lần, đúng ordinal 0–3762. Có **3.558 `SUCCESS`, 205 `INVALID`, 0 `TECHNICAL_ERROR`, 0 `NOT_ATTEMPTED`**. Phân bố dự đoán Level01/02/03/04 là **145 / 206 / 286 / 2.921**. Tổng `overhead_seconds` và `call_seconds` của 13 lượt có kết quả là **56.648,2 giây**. [Bằng chứng cục bộ và cách đối chiếu](research/MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md#đối-chiếu-full-train). |
+| MiniCPM Full-TRAIN Normalization V1 | Owner trực tiếp duyệt chuyển 205 đầu ra C1 `INVALID` có đúng cụm mô tả Normal sang `Level04` bằng CPU. Bản dẫn xuất cục bộ đủ **3.763/3.763** nhãn hợp lệ và giữ đủ 3.558 dự đoán `SUCCESS` gốc. Phân bố Level01/02/03/04 là **145 / 206 / 286 / 3.126**. [Quyết định Owner](research/DECISIONS.md#dec-20261126-owner-minicpm-fulltrain-normalization-v1), [báo cáo, receipt và hướng dẫn tái kiểm](research/MINICPM_FULLTRAIN_NORMALIZATION_V1.md). |
 | `FINAL_ADMISSION` / `SCIENTIFIC_QUALIFICATION` | **PENDING.** Fast trả về `PENDING_FINAL_RECONCILIATION`. Final Admission còn cần đối soát provider của Owner, phê duyệt gắn hash, certificate và `official-report`. Quyền sử dụng trong phân tích khoa học theo quyết định O2–O6 áp dụng. [Quy trình Final Admission](MINICPM_OFFLINE_CONTINUATION.md). |
 
 Replay cục bộ cả 205 đầu ra xác nhận một nhóm lỗi duy nhất. MiniCPM điền
 cụm mô tả Normal có trong prompt vào trường `safety_level`. Parser C1 trả
-`INVALID` đúng hợp đồng vốn yêu cầu mã định danh. Đề xuất chờ duyệt là thử
-ánh xạ chính xác cụm đó trong một bản dẫn xuất có phiên bản trên CPU.
+`INVALID` đúng hợp đồng vốn yêu cầu mã định danh. Kết quả strict C1 vẫn là
+bản ghi thực thi với độ phủ 94,55%. Normalization V1 ghi độ phủ 100% của bản
+dẫn xuất riêng dưới `data/processed/minicpm-fulltrain-normalization-v1/`.
 [Phân tích nguyên nhân, phương án và kiểm thử](research/MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md).
 
 ## Lịch sử — MiniCPM-V-4 sau Serial 22 — 24/11/2026
