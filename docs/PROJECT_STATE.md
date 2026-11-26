@@ -1,5 +1,23 @@
 # SafeShift — PROJECT STATE
 
+## Hiện hành — Benchmark First, 27/11/2026
+
+- Main xác minh trên GitHub tại `c238f841fb766db430df83ba22967e6b03713952`.
+  Tiếp tục cùng [Draft PR #136](https://github.com/tantdna2/SafeShift/pull/136)
+  với lịch sử merge main thông thường. Audit FAIL tháng 10 là hồ sơ lịch sử.
+  Bản sửa và extension trên HEAD mới cần review và audit riêng.
+- Owner đã chốt Qwen3 Composite V1, InternVL3.5 Grammar V2 và MiniCPM
+  Normalization V1 để so nhãn trên cùng TRAIN, giữ MiniCPM C1 làm sensitivity.
+  [Quyết định Benchmark First](research/DECISIONS.md#dec-20261127-owner-benchmark-first).
+- Qwen3 được tái tính từ bản dẫn xuất đã cấp quyền và niêm phong. Bảng chung,
+  phân tích cặp, metric theo GT của InternVL/MiniCPM và case review còn chờ
+  quyền đúng phạm vi và chứng từ custody/ledger. Final Admission và phê duyệt
+  học vụ là các trạng thái độc lập. Score chung chưa đủ đầu vào.
+  [Báo cáo kết quả và điều kiện mở](research/FULL_TRAIN_BENCHMARK_V1.md).
+- Sau benchmark và truy nguyên, phản biện phương án theo CT1–CT3 trước khi
+  Owner chốt. Scope task hiện hành là CPU và kết quả đã lưu. TEST, GPU và
+  Kaggle nằm ngoài phạm vi.
+
 ## Hiện hành — MiniCPM-V-4 Full-TRAIN đã hoàn thành — 26/11/2026
 
 | Trạng thái | Bằng chứng và phạm vi |

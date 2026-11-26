@@ -1,5 +1,41 @@
 # Hướng dẫn làm việc với SafeShift
 
+## Owner 27/11/2026 — Benchmark First và điều phối Orca
+
+- Coordinator xác minh main, HEAD và chỉ thị GitHub, đọc hướng dẫn orchestration
+  từ đúng Orca đang chạy, kiểm agent/model và quota khả dụng. Phân công Codex
+  sửa code/test, Antigravity phản biện độc lập, rồi tự theo dõi, xử lý findings
+  và tích hợp qua Orca. Owner nhận báo cáo tổng hợp. Dùng Codex và Gemini trong
+  Antigravity, loại Claude và GPT-OSS 120B. Ghi nhận dispatch, model và đầu ra;
+  khi quota hoặc session cũ không xác minh được, ghi đúng giới hạn.
+- Chọn trong danh sách Owner cho phép: Codex GPT-6.2 Sol, GPT-6.1 Sol/Terra,
+  GPT-6 Sol/Luna, GPT-5.6 Sol/Terra/Luna; Antigravity Gemini 4 Neon/Hydrogen.
+  Tạm dừng GPT-6.2 Astra, GPT-6 Astra, Gemini 4 Carbon, Claude mọi phiên bản
+  và GPT-OSS 120B. Khi hết quota, chỉ chuyển sang model được phép.
+- Ưu tiên Medium. Dùng GPT-6.2 Sol cho điều phối/tích hợp, GPT-6.1 Sol/Terra
+  cho code, Gemini 4 Neon cho phản biện khoa học, Gemini 4 Hydrogen cho test,
+  review code và tài liệu, GPT-6 Luna hoặc GPT-5.6 Luna cho việc đơn giản.
+  Tăng effort khi có blocker cụ thể. Đối chiếu model thực tế từ receipt Orca.
+- Tối đa hai worker đồng thời ngoài Coordinator theo mặc định. Khi quota gián
+  đoạn, kiểm trạng thái và liveness, giữ code/evidence rồi dừng có xác nhận
+  bằng Orca nếu cần. Dùng lại phiên/worktree/task phù hợp và chuyển đúng phần
+  còn dở qua Orca. Giao phạm vi file/kiểm thử vừa đủ và tránh lặp review.
+- Thứ tự Khóa luận: benchmark baseline, phân tích lỗi, truy nguyên, đề xuất,
+  phản biện, Owner chốt, triển khai, E1–E5. Ba sản phẩm Full-TRAIN đã chốt ở cấp
+  dự án, MiniCPM strict C1 dùng cho sensitivity. Giữ M2 và các đề xuất lịch sử.
+  Bốn model và ensemble trong kế hoạch cũ thuộc hồ sơ lịch sử/đề xuất.
+- Task CPU này tiếp tục đúng [Draft PR #136](https://github.com/tantdna2/SafeShift/pull/136)
+  theo [review](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-6412563251)
+  và [phạm vi Owner](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7199181963).
+  Giữ M2/R1–R5 khóa hash và dùng extension riêng. Phân biệt TRAIN đã phơi nhiễm
+  với validation và TEST độc lập. GT chỉ đánh giá. Việc đọc, ghép hoặc xuất
+  dữ liệu cần đúng quyền hiện có. Không GPU, Kaggle, inference hoặc mở TEST
+  trong task này.
+- Quy trình điều phối này bổ sung các cổng cũ. Review trực tiếp đúng HEAD,
+  audit độc lập và quyền merge riêng vẫn áp dụng. Không gộp báo cáo kiểm thử,
+  pre-audit của worker hay quyền truy cập dự án thành phê duyệt dữ liệu, khoa học
+  hoặc tích hợp. Xem [kế hoạch hiện hành](docs/EXECUTION_PLAN.md).
+
 ## Owner17/11/2026 — V5 RAM repair after PR200
 
 [Incident6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950)

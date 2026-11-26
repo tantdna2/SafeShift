@@ -899,3 +899,35 @@ Quyết định về khả năng so sánh và sử dụng V1 trong kết quả k
 thuộc O2. Mọi dữ liệu bổ sung hoặc chia sẻ ngoài phạm vi quyền hiện có cần
 quyền O4 tương ứng từ bên có thẩm quyền dữ liệu. Scientific Qualification
 và phê duyệt học vụ vẫn theo quy trình áp dụng.
+
+
+## DEC-20261127-OWNER-BENCHMARK-FIRST
+
+**Nguồn và hiệu lực.** Chỉ đạo trực tiếp của Owner ngày 27/11/2026 và
+[bản ghi ChatGPT trên PR #136](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7199181963).
+Bản ghi GitHub là lời chuyển của ChatGPT về quyết định phạm vi dự án. Quyền
+dữ liệu bên thứ ba, quyền phân tích từng payload/GT, Final Admission và xác
+nhận học vụ tiếp tục theo cơ quan/người có thẩm quyền.
+
+**Chọn sản phẩm hồi cứu.** QWEN3_FULL_TRAIN_COMPOSITE_V1 (3.539 V4 + 224
+Recovery), InternVL3.5 Full-TRAIN Grammar V2 và MiniCPM Full-TRAIN
+Normalization V1 (receipt `385ceddb799e735e3eecea04457f3a178996e29992e69265762a5031a6cb1fbd`)
+được chọn ở cấp dự án làm ba hệ thống nhãn dị thể trên cùng 3.763 TRAIN ID đã
+quan sát. Bản strict C1 của MiniCPM (3.558 SUCCESS, 205 INVALID) dùng để đối
+chiếu độ nhạy. Giữ mọi ledger, dự đoán gốc, nguồn/config, mẫu số và dấu vết
+normalization. Quá trình chọn nguồn diễn ra theo quyết định và lineage; GT
+chỉ tham gia đánh giá. M2 lịch sử và hai tệp khóa SHA256 giữ nguyên, extension
+Full-TRAIN định danh riêng. HNLO không tương thích hoặc thiếu phải ghi N/A.
+
+**Trình tự Khóa luận.** Benchmark baseline, phân tích lỗi, truy nguyên, đề xuất,
+phản biện khoa học, Owner chốt phương pháp, triển khai, E1–E5. CT1 (CV-B/D) tập
+trung metric và chất lượng. CT2 (CV-B/C) xem xét thuật toán, phương pháp/công cụ.
+CT3 (CV-C/D) xem xét chức năng kiểm toán bằng chứng. Calibration, threshold
+tuning, domain-balanced sampling, prompt grounding, ensemble và viewer là ứng
+viên. Thiết kế bốn peers/ensemble lịch sử được lưu như đề xuất. TRAIN hồi cứu,
+validation và TEST độc lập có vai trò riêng. Không đổi split/GT, không mở
+TEST, GPU, Kaggle hay chạy lại model trong task #136.
+
+**Điều phối và review.** Coordinator giao việc với Orca cho Codex và
+Antigravity, tiếp tục đúng Draft PR #136 và kiểm trực tiếp bằng chứng. Quyền
+merge, audit chính thức và thẩm quyền dữ liệu giữ đúng phạm vi.

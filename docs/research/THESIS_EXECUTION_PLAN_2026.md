@@ -1,5 +1,31 @@
 # SafeShift — Kế hoạch thực thi Khóa luận tốt nghiệp 2026
 
+## Hiện hành — Benchmark First, 27/11/2026
+
+Trọng tâm Khóa luận là VLM nhận diện nguy cơ công nghiệp, confidence calibration
+và evidence auditing. Chỉ đạo hiện hành đặt **benchmark baseline → phân tích lỗi
+→ truy nguyên → đề xuất → phản biện khoa học → Owner chốt → triển khai → E1–E5**.
+Thiết kế bốn peers, focal rotation, logistic và ensemble bên dưới được lưu như
+đề xuất lịch sử. Quyết định hiện hành chọn ba **sản phẩm nhãn** đã lưu làm
+baseline hồi cứu trên TRAIN đã phơi nhiễm. M2 giữ phạm vi Seminar lịch sử.
+[Xem quyết định mới](DECISIONS.md#dec-20261127-owner-benchmark-first).
+
+| Định hướng giảng viên | Câu hỏi phải trả lời từ baseline và case review |
+| --- | --- |
+| CT1 / CV-B/D | Metric và loại lỗi nào cần ưu tiên, false-safe/severe miss và false alarm thay đổi thế nào theo lớp và miền? |
+| CT2 / CV-B/C | Có điểm đáng tin để hiệu chỉnh hoặc chỉnh ngưỡng, hay bằng chứng cho sampling, grounding hoặc bổ trợ giữa các model? Chọn đối chứng và tính đủ chi phí. |
+| CT3 / CV-C/D | Có thể tái dựng bằng chứng cho ca nghiêm trọng hay disagreement từ lineage, và đo được độ chính xác/thời gian của người kiểm tra theo rubric được duyệt? |
+
+E1 mô tả baseline và lỗi theo cohort. E2 so một phương pháp đã chốt với đối
+chứng trên development/validation được cấp quyền. E3 ablation cùng budget
+và đo giá an toàn/chi phí. E4 xác nhận trên target độc lập chỉ khi đủ quyền,
+freeze và precision. E5 đánh giá audit với rubric, người đánh giá và quyền
+phù hợp. Đây là khung câu hỏi, chưa khóa endpoint, ngưỡng, số lượng mẫu hay
+thứ tự sử dụng các ứng viên trong từng thí nghiệm. Giữ cả kết quả âm. TRAIN
+dùng cho chẩn đoán hồi cứu, validation dùng chọn phương pháp, TEST đóng và
+chỉ dùng đánh giá xác nhận khi có quyết định riêng. Không chia lại TRAIN để
+tạo holdout. [Báo cáo baseline và giới hạn](FULL_TRAIN_BENCHMARK_V1.md).
+
 ## OWNER UPDATE - 02/11/2026: fresh full TRAIN only
 
 [Issue #171](https://github.com/tantdna2/SafeShift/issues/171) /

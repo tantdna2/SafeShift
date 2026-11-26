@@ -1,0 +1,22 @@
+{
+  "schema": "safeshift-full-train-benchmark-v1",
+  "planned_n": 3763,
+  "products": {
+    "qwen3": {
+      "id": "QWEN3_FULL_TRAIN_COMPOSITE_V1",
+      "source_seal_sha256": "7e7793073eb639a2d0bd22e84c11cd773be7fdb86e7e1f5f59e3baf0dd0c98de",
+      "score_limit": "CROSS_SERIES_SCORE_COMPATIBILITY_UNVERIFIED"
+    },
+    "internvl35": {
+      "id": "InternVL3.5 Full-TRAIN Grammar V2",
+      "source_seal_sha256": null,
+      "score_limit": "HNLO_NOT_AVAILABLE"
+    },
+    "minicpm": {
+      "id": "minicpm-fulltrain-normalization-v1",
+      "source_seal_sha256": "385ceddb799e735e3eecea04457f3a178996e29992e69265762a5031a6cb1fbd",
+      "score_limit": "HNLO_NOT_AVAILABLE"
+    }
+  },
+  "release": null
+}
