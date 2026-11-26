@@ -873,3 +873,29 @@ review phương án sửa.
 Owner approval gắn hash và xác minh `official-report`. Scientific Qualification
 và quyền so sánh TRAIN vẫn theo O2–O6 và giao thức hiện hành.
 [Trạng thái thực thi](../PROJECT_STATE.md#hiện-hành--minicpm-v-4-full-train-đã-hoàn-thành--26112026).
+
+## DEC-20261126-OWNER-MINICPM-FULLTRAIN-NORMALIZATION-V1
+
+Ngày 26/11/2026 (Asia/Bangkok), Owner SafeShift trực tiếp đồng ý trong task
+`MINICPM-FULLTRAIN-NORMALIZATION-V1` cho chuyển đổi bằng CPU 205 kết quả
+`INVALID` từ đầu ra MiniCPM-V-4 Full-TRAIN đã lưu trong phạm vi quyền dữ liệu
+hiện có. Quyết định chốt phần chuyển đổi trong đề xuất ngày 26/11 cho đúng
+phiên bản V1 và parent tại BASE `c95e7792283cdd406e218aef4e65529c615466be`.
+Parent là kết quả strict C1 đã đối chiếu bằng Fast, ghim event 30 tại SHA256
+`62e6ba7650a5fba23286cb00cb88b96104de8c0d7c38945c77e0f1fe7ce820f3`.
+[Xác minh hậu merge #213](https://github.com/tantdna2/SafeShift/pull/213#issuecomment-7184395149).
+
+Quy tắc áp dụng cho response là một object JSON có duy nhất một cặp
+`safety_level` với giá trị chính xác `no abnormalities observed`. V1 ghi
+`Level04` cho các ca đủ điều kiện và giữ 3.558 dự đoán canonical. Công việc
+chỉ dùng metadata TRAIN và đầu ra đã lưu để tạo artifact riêng ở máy. Parser,
+raw output, kết quả thực thi, nhãn dataset, journal và archive giữ nguyên.
+[Báo cáo kết quả CPU và cách tái kiểm](MINICPM_FULLTRAIN_NORMALIZATION_V1.md).
+
+Quyết định có hiệu lực trong phạm vi tạo bản dẫn xuất cục bộ. Draft PR chờ
+ChatGPT kiểm tra GitHub và Antigravity kiểm toán độc lập. Final Admission
+của bản gốc tiếp tục theo quy trình đối soát provider và `official-report`.
+Quyết định về khả năng so sánh và sử dụng V1 trong kết quả khoa học chính thức
+thuộc O2. Mọi dữ liệu bổ sung hoặc chia sẻ ngoài phạm vi quyền hiện có cần
+quyền O4 tương ứng từ bên có thẩm quyền dữ liệu. Scientific Qualification
+và phê duyệt học vụ vẫn theo quy trình áp dụng.
