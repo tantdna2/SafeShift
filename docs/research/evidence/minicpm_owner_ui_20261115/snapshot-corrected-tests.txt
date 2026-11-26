@@ -1,0 +1,7 @@
+test_companion_is_outside_manifest_and_native_source_science_unchanged (test_train3763_manual.ManualSourceTests.test_companion_is_outside_manifest_and_native_source_science_unchanged) ... ok
+test_lock_science_and_inherited_source_are_unchanged (test_internvl3763_python.PythonInputTests.test_lock_science_and_inherited_source_are_unchanged) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 5.526s
+
+OK

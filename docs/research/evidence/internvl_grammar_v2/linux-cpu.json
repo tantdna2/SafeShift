@@ -1,0 +1,46 @@
+{
+  "command": [
+    "python",
+    "-B",
+    "-m",
+    "scripts.qualify_internvl_grammar",
+    "--output",
+    "<new-output>"
+  ],
+  "errors": 0,
+  "failures": 0,
+  "gpu_calls": 0,
+  "log_sha256": "6d7964746564b705b764a16d19bdd03201202e2e5058ed082d8bd5b91243555a",
+  "native_cpu": "NOT_REQUESTED",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+  "randomness": "NONE",
+  "schema": "internvl35-grammar-v2-cpu-qualification",
+  "science": "PROPOSED_LABEL_ONLY_HNLO_NA",
+  "skipped": 0,
+  "source_commit": "cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702",
+  "source_manifest": {
+    "configs/cpu_g2_g3/public_source_lock.json": "7a4840f6ffc0834cbe73e44ddcf4dc593dfaf1a37a98d412a20fab9cd6bd4ae7",
+    "configs/grammar/internvl35_v2.json": "f6e66ee753bc9c3447aa5b33d52838c226f428b87bafbd8a070bf95edce7e99e",
+    "configs/issue173/diagnostic_custody.json": "ba27c48a1aeeef6d14e2616fa4adca88597e58bb6747e45c73b747655f6a2f8d",
+    "configs/pilot/classification_c1.txt": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+    "docs/research/evidence/issue173/diagnostics/issue173-diag-intern-grammar-v2.json": "b48441e250328919633746379a86d1da006397d3fdd3f751061063d9d3ea28a0",
+    "safeshift/diagnostic173_grammar.py": "a345d30f5d36b6142aaab1292c16e4ba31e08cd425e180a794fd8c3040ab4dfc",
+    "safeshift/internvl_grammar.py": "a3cde12d4dbe463acc9d87bcc36c440492636d7479024876c04ef1c1645c69ca",
+    "safeshift/pilot/contract.py": "23c5440c6f9890be32a6715cc40cfdc0ac248cd168f9742669c20e1f9f09fc19",
+    "safeshift/pilot/hnlo.py": "0b5ee6d3eb73b90343cdc3f6e81767c218c906e9ba7cafc562898d9caed35546",
+    "scripts/qualify_internvl_grammar.py": "d0111cd509f62295f4983b1969c669c91e98e1197e976c85821a0710656a4003",
+    "tests/test_internvl_grammar.py": "0e509ab7f1176adbaf485afa9f843b6cb7113bfc3651e7718e30ee7df33a21a1",
+    "tests/test_issue173_format_decision.py": "d5baff5506cd7ea5028b7f4cde0dbcc14d5803ed05ddfebfa919d85a98f5177b",
+    "tests/test_kaggle173_diagnostic.py": "2d37dedb0a9a7b5e6dd2f3e78159ba9a5fd17289908d7e00887badf7acfb11ba",
+    "tests/test_pilot.py": "2bb43f075e0c5379aa223b7da38302822d7b8778eb6dd4ee5c1ec2c393ea1a4d"
+  },
+  "status": "PASS",
+  "test_suites": [
+    "test_internvl_grammar",
+    "test_issue173_format_decision",
+    "test_pilot.HNLOTests",
+    "test_kaggle173_diagnostic"
+  ],
+  "tests_run": 58
+}

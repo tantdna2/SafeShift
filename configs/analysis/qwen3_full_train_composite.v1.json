@@ -1,0 +1,179 @@
+{
+  "schema": "safeshift-qwen3-composite-config-v1",
+  "product_id": "QWEN3_FULL_TRAIN_COMPOSITE_V1",
+  "owner_decision": "https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264",
+  "history_commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+  "historical_files_sha256": {
+    "data/manifests/pa3_full_train.v1.json": "a35e91fb431752dbf3b6c161f227d953d5748d69ef9f39aef613019faca33008",
+    "configs/diagnostics/hnlo_train_authority.v4.json": "b1b2bda93074a1f7b9c83df6a9e80934c11c5ce40e25f2702ff70cf1e95ef492",
+    "configs/diagnostics/qwen3_s2_recovery_authority.v1.json": "44b6ba045cf39a1895e4473c92f116eb0b8b5ec1fddd7a4e0b73e04d0b245654",
+    "configs/diagnostics/qwen3_s2_recovery_source.v1.json": "7b3eb19fb48944b799e0a63fd14adcd5f9600f0b8c57c73a5193ec8ba69fbd40",
+    "data/manifests/pa3_full_train_shard0.v1.json": "37b9fae412db374c54b79bbb83aad1d0ba3029d06fe836b71952763550054f70",
+    "data/manifests/pa3_full_train_shard1.v1.json": "9482465485f316dbef12116c99239da1f9e868a7075c2c06281148ec0641bc10",
+    "data/manifests/pa3_full_train_shard2.v1.json": "f9d2370dd5feece46c91ffe88171cb7cd5e838d3a7818000894b7f71d3829695",
+    "data/manifests/pa3_full_train_shard3.v1.json": "d72046fe5265ee8896745584140c322f9fa14a11fdddd8abd40e75270d06e4c8"
+  },
+  "original_status_counts": {
+    "SUCCESS": 3539,
+    "TECHNICAL_ERROR": 1,
+    "NOT_ATTEMPTED": 223
+  },
+  "planned_n": 3763,
+  "recovery_n": 224,
+  "s2_zip_sha256": "e77199b0818c45e2a15be2815485493fa4a78d064f82288d497fd8d82ecd4f0d",
+  "sources": {
+    "v4_s0": {
+      "archive_sha256": "bcaaa0b09dd664a39d0a1059d442e6eac2ed7352634e18dc0525926bb25e0dcc",
+      "manifest_sha256": "036fe817a81b6942964a9c27f63f1be36c080dd8df4cd0549518d29422ca8162",
+      "source": {
+        "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+        "implementation_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+        "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+        "payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a",
+        "pr_number": 122
+      },
+      "unit": {
+        "attempt_id": "hnlo-train-v4-qwen3-s0-20261019-a1",
+        "count": 941,
+        "cuda": "12.8",
+        "cuda_visible_devices": "0,1",
+        "id": "Qwen/Qwen3-VL-8B-Instruct",
+        "inference_sha256": "37b9fae412db374c54b79bbb83aad1d0ba3029d06fe836b71952763550054f70",
+        "max_attempts": 1,
+        "max_generate_calls": 941,
+        "max_loads": 1,
+        "model": "qwen3",
+        "python": "3.12.13",
+        "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+        "run_id": "hnlo-train-v4-qwen3-s0-a1",
+        "shard": 0
+      },
+      "kind": "V4_ORIGINAL",
+      "result_sha256": "b8960093f2f3f1a74f6c67d721c443dc092b0c5138a57464f16039d9d3829527",
+      "result_file": "qwen3_shard0.json"
+    },
+    "v4_s1": {
+      "archive_sha256": "af4e05c3d8b63e552166a8f7eb671ae3ec4836fef32ec4e534b0563cc13017c2",
+      "manifest_sha256": "e7f9e356e9643d607cb167cbc425b85450f535ebe76d2d368338fc2b6384f3f3",
+      "source": {
+        "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+        "implementation_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+        "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+        "payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a",
+        "pr_number": 122
+      },
+      "unit": {
+        "attempt_id": "hnlo-train-v4-qwen3-s1-20261019-a1",
+        "count": 941,
+        "cuda": "12.8",
+        "cuda_visible_devices": "0,1",
+        "id": "Qwen/Qwen3-VL-8B-Instruct",
+        "inference_sha256": "9482465485f316dbef12116c99239da1f9e868a7075c2c06281148ec0641bc10",
+        "max_attempts": 1,
+        "max_generate_calls": 941,
+        "max_loads": 1,
+        "model": "qwen3",
+        "python": "3.12.13",
+        "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+        "run_id": "hnlo-train-v4-qwen3-s1-a1",
+        "shard": 1
+      },
+      "kind": "V4_ORIGINAL",
+      "result_sha256": "0d1b34096040cec3d94da8eb3c54d53cf9d82602b33646f322a9917942394f4e",
+      "result_file": "qwen3_shard1.json"
+    },
+    "v4_s2": {
+      "archive_sha256": "2dc356fcba9fe2ce5dfc4e3dc9a45286fe5382f574c02d38d7517580e38cd920",
+      "manifest_sha256": "b5c5b3dfb6e9ad270174d364a7544ed93e4d47f8518e372ecdd106b862b33ae1",
+      "source": {
+        "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+        "implementation_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+        "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+        "payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a",
+        "pr_number": 122
+      },
+      "unit": {
+        "attempt_id": "hnlo-train-v4-qwen3-s2-20261019-a1",
+        "count": 941,
+        "cuda": "12.8",
+        "cuda_visible_devices": "0,1",
+        "id": "Qwen/Qwen3-VL-8B-Instruct",
+        "inference_sha256": "f9d2370dd5feece46c91ffe88171cb7cd5e838d3a7818000894b7f71d3829695",
+        "max_attempts": 1,
+        "max_generate_calls": 941,
+        "max_loads": 1,
+        "model": "qwen3",
+        "python": "3.12.13",
+        "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+        "run_id": "hnlo-train-v4-qwen3-s2-a1",
+        "shard": 2
+      },
+      "kind": "V4_ORIGINAL",
+      "result_sha256": "fcf70c6c6a8915f858cf95583ec40f02003379fd85c3f8681da2ec9c4500a1c6",
+      "result_file": null
+    },
+    "v4_s3": {
+      "archive_sha256": "07abe1551e51b9194dcd1a32b79a93940a435a6567b61275d887c6d0878a5273",
+      "manifest_sha256": "6aa273860e54781b3eebf00308b236c702ee0b4ca2a3bc341472cea8e1f5055c",
+      "source": {
+        "authority_commit": "1ad2c1cb6068081f6186744f67f8fa51f57c0f01",
+        "implementation_commit": "a6e08ce96ff8e3bb2256401ab8ecc230c36b2543",
+        "merge_commit": "c9e2279296165d5a0e77fae03a465e216508b5d3",
+        "payload_sha256": "7817f4311a6aabad6c1ce6be15b35b2cfe0dcede1b3c428cfb5c896e3857d91a",
+        "pr_number": 122
+      },
+      "unit": {
+        "attempt_id": "hnlo-train-v4-qwen3-s3-20261019-a1",
+        "count": 940,
+        "cuda": "12.8",
+        "cuda_visible_devices": "0,1",
+        "id": "Qwen/Qwen3-VL-8B-Instruct",
+        "inference_sha256": "d72046fe5265ee8896745584140c322f9fa14a11fdddd8abd40e75270d06e4c8",
+        "max_attempts": 1,
+        "max_generate_calls": 940,
+        "max_loads": 1,
+        "model": "qwen3",
+        "python": "3.12.13",
+        "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+        "run_id": "hnlo-train-v4-qwen3-s3-a1",
+        "shard": 3
+      },
+      "kind": "V4_ORIGINAL",
+      "result_sha256": "d7e8789892e3f2c831180e008751987b10dda59894d7a83c8be942b005e25fbd",
+      "result_file": "qwen3_shard3.json"
+    },
+    "recovery224": {
+      "archive_sha256": "da56ff98a6504faff7f3bff73b9797a25c8b36cadd87d8a3be056379f785c673",
+      "manifest_sha256": "9758269c44ca8256588e2c685b09c29f33fe4dbe7891f7116d445c5b6cffe285",
+      "n_saved_rows": 224,
+      "result_sha256": "81b48d4ab45cc98b1deb8e2cdcb0e7d43dc396436fa714d10350d27448894f0d",
+      "run_id": "hnlo-qwen3-s2-recovery224-v1-20261022",
+      "samples_sha256": "6c2acbedbe4c1492936103c6e7865e5dfb79a43f4d0a7f0cb1c9f38a8b750a4d",
+      "kind": "RECOVERY224",
+      "result_file": "recovery.json",
+      "source": {
+        "implementation_commit": "778b03b4bc0843311b8f1724f345f4ab6f1bdda8",
+        "authority_commit": "484b40355b0971832f81bc7a4c377cd190bbdd91",
+        "merge_commit": "4774f02e84507811243cc587ba877f582614b051",
+        "payload_sha256": "437f16b714da75df8323bb4aad2675236a13f9e86114a27ade8d76d8ba86dd41",
+        "pr_number": 124
+      }
+    }
+  },
+  "hnlo_composite_policy": "N/A_UNTIL_INDEPENDENT_CROSS_SERIES_SCALE_TOKEN_DECISION_ALIGNMENT_VERIFICATION",
+  "selection_rule": "ORIGINAL_SUCCESS_ELSE_EXACT_RECOVERY_COMPLEMENT_NO_GT_SELECTION",
+  "owner_decision_export": {
+    "path": "docs/research/evidence/qwen3_composite_20261115/owner-decision.json",
+    "sha256": "922c96b32b25399cf16324d977fe781cbfc352f23e8410c768cea461ee2a4b74",
+    "comment_id": 6889519264,
+    "author": "tantdna2",
+    "author_association": "OWNER"
+  },
+  "protocol": {
+    "path": "docs/research/SEMINAR_PROTOCOL.md",
+    "original_prefix_sha256": "54c5be6b67e768f8d4819193c5d06867edf02e2008db258731f6e5947ed06dc1",
+    "original_prefix_size_bytes": 33591,
+    "amendment_sha256": "fbb6a383a83c74ce4003ba9a2c59be9bff84d3720cc9e56ce24d39f3b58563c9",
+    "amended_sha256": "47d0e9f543d35a96fffa205249de86bc8627da65aad088e727d6bbce71532abb"
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "actual_attempt1": {
+    "abort_performed": false,
+    "after_files_sha256": "adcbaa42d454716c03981ba58fbb8ca6c784d7820250d926196e184a7d38b86c",
+    "attempt2_staged": false,
+    "before_files_sha256": "adcbaa42d454716c03981ba58fbb8ca6c784d7820250d926196e184a7d38b86c",
+    "capsule_bytes": 5630833,
+    "capsule_sha256": "2c5c056070c8175244e208ce02f29047a6e20766b99978a575732b4dfaa5be63",
+    "custody_file_count": 17,
+    "events": [
+      "INTENT"
+    ],
+    "intent_sha256": "15528ad3f88997fa19416a8dfc8e214eb04a887ff93aaa5c536de287aae8f8f6",
+    "ledger_mutations": 0,
+    "provider_absence": "NOT_RUN_PROHIBITED_BY_TASK",
+    "reserved_calls": 1,
+    "reserved_gpu_seconds": 3600,
+    "reserved_jobs": 1,
+    "root_mirror_guard_valid": true
+  },
+  "base": "bce8725047753415aa65ed28fc79ef04131fe366",
+  "base_source_sha256": "649102f0a4c2a13d87044f3a4c9a7316d9b6d9dee71ebc3ddbacfd196c816934",
+  "changed_manifest_files": [
+    "safeshift/internvl3763_operator.py"
+  ],
+  "ci_pass_claimed": false,
+  "commands": [
+    "python -B -m unittest discover -s tests -p test_internvl3763_versions.py -v (existing pinned operator SDK)",
+    "SAFESHIFT3763_SDK_CPU=1 python -B -m scripts.qualify_internvl3763 --output <new-output> --native --packages data/processed/internvl_grammar_v2/packages --packages data/processed/internvl_v2_native/deps --packages data/processed/operator-venv/Lib/site-packages (existing CPU-only .venv)",
+    "python -B -m unittest discover -s tests -p test_internvl3763_notebook.py -v (via local receipt runner)",
+    "python -B -m scripts.build_internvl3763 --source-commit 734be541899e1ac59738efef196e5e858ec5b1ea --output <new-prep.ipynb>",
+    "python -B -m scripts.build_internvl3763 --source-commit 734be541899e1ac59738efef196e5e858ec5b1ea --output <new-execution.ipynb> --execute --campaign"
+  ],
+  "date": "2026-11-06",
+  "exact_clean_merged_head_admission_guards_unchanged": true,
+  "focused_cpu": {
+    "dependencies": {
+      "Pillow": "12.3.0",
+      "numpy": "2.4.6",
+      "tokenizers": "0.21.4",
+      "torch": "2.6.0+cpu",
+      "torchvision": "0.21.0+cpu",
+      "transformers": "4.55.4"
+    },
+    "errors": 0,
+    "failures": 0,
+    "log_sha256": "cec40b1ac4ed71b8cdc9cfb3c18dab1e96b2ff24ebfd7027ebab9fa4f9541066",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "skips": 0,
+    "status": "PASS",
+    "test_suites": [
+      "test_internvl3763",
+      "test_internvl3763_execution",
+      "test_internvl3763_campaign",
+      "test_internvl3763_capsule",
+      "test_internvl3763_versions",
+      "test_kaggle_handoff",
+      "test_fulltrain",
+      "test_internvl_grammar",
+      "test_kaggle173_verification"
+    ],
+    "tests": 206,
+    "tests_sha256": {
+      "scripts/qualify_internvl3763.py": "1298945e3d74726051154296a7e71746ab6a88d208a5fc61c3806a97dc64ee4b",
+      "tests/test_internvl3763.py": "51e15783cad6fc86158faa3929fd1fe4e4a940fb6a5ddf50a5cda9cb23e0d7fe",
+      "tests/test_internvl3763_campaign.py": "102bc9323376a87dc6a251177c0717638fea3e63d18992ef16fff1396094dff8",
+      "tests/test_internvl3763_capsule.py": "e54baa630a016b91dabb7dcab33236f3715684a3cd3db16bda901974f1e9dab8",
+      "tests/test_internvl3763_execution.py": "ed24890f42747c14d40bd9de93599a21406fb9c1861b47592a25dfbc76e382c3",
+      "tests/test_internvl3763_notebook.py": "e843328f28cda5f8887ddfca976695cb8f2202fa636b3c8fc82319ec4a020633",
+      "tests/test_internvl3763_versions.py": "39025c3325e99b0defff8332baf5502ffde10e1b8d88ff43b5b3ed6fa55f4d0d",
+      "tests/test_kaggle_handoff.py": "8146d7988206142b1f1e03523c3c12b2a300a7c72c7084178ef0d5001a987313"
+    },
+    "tracked_dirty": false
+  },
+  "gpu_seconds_consumed": 0,
+  "independent_audit": "PENDING_NOT_SELF_ISSUED",
+  "inherited_runtime_files_unchanged": 84,
+  "kaggle_submissions": 0,
+  "kaggle_uploads": 0,
+  "live_final_source_verification": "NOT_RUN_PROHIBITED_BY_TASK",
+  "live_provider_probes": 0,
+  "merge": "NOT_AUTHORIZED",
+  "notebook_tests": {
+    "errors": 0,
+    "failures": 0,
+    "log_sha256": "a534353e8261b1a7ff2ee717d86d1b21663fc5365754c852cf4592cabfe402b9",
+    "skips": 0,
+    "status": "PASS",
+    "tested_head": "39c5d231bc5a8f72879229e4a3cc2c401e1ba244",
+    "tests": 3,
+    "tracked_dirty": false
+  },
+  "notebooks": {
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
+      "code_sha256": "a144fcc55423f1b381330a66765ec5cf33b0e52702c222b572658a76ed0ad361",
+      "runtime_commit": "734be541899e1ac59738efef196e5e858ec5b1ea",
+      "sha256": "8976b01ffccf8300b2cda7d815cea2a206fbf03db68422cdd0a71d11e75e5ca1",
+      "source_sha256": "ed3b696b8fd76c542df4424e382fc35ac43c5f7b5581c10394a3ea4c584d4667"
+    },
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
+      "code_sha256": "d05dd04f39962a861c1d8f2ba56ef04db824e71055bad5069fb2e3efacc4b7b5",
+      "runtime_commit": "734be541899e1ac59738efef196e5e858ec5b1ea",
+      "sha256": "56d0eb2f2f9680103daa070c2aac762a2709a54325f9d4db4afd3624c9958686",
+      "source_sha256": "ed3b696b8fd76c542df4424e382fc35ac43c5f7b5581c10394a3ea4c584d4667"
+    }
+  },
+  "original_campaign": {
+    "campaign_sha256": "1f672fb601006c7898be271e59f74fb341d7311fc60794a9ed6a332f430395c6",
+    "grant_and_O2_O6_mutations": 0,
+    "grant_comment_id": 6658142293,
+    "renewed_owner_grant_required": false,
+    "scientific_selection": "PENDING"
+  },
+  "preliminary_run": {
+    "acceptance": false,
+    "error": "TRAIN3763_EXACT_SOURCE_REQUIRED",
+    "error_test": "test_one_authentic_campaign_grant_and_no_per_job_release",
+    "errors": 1,
+    "failures": 0,
+    "log_sha256": "9dd3f2f2f2900955bba6b982bc3794a64bb458f03f3c45095a7332c3f6c03e8b",
+    "reason": "SOURCE_CHANGED_DURING_RUN_WHILE_FINALIZING_STRICT_METADATA_CHECK; exact-source gate rejected one synthetic fixture; superseded by clean final run",
+    "skips": 0,
+    "status": "FAIL",
+    "tests": 206
+  },
+  "published_logs": {
+    "focused-tests.txt": {
+      "local_raw_sha256": "cec40b1ac4ed71b8cdc9cfb3c18dab1e96b2ff24ebfd7027ebab9fa4f9541066",
+      "normalization": "CRLF_TO_LF_AND_REPO_ROOT_TO_PLACEHOLDER",
+      "sha256": "5c3da6eb5bff106f8f6276d3b936fb1fdd2799aece8d3736e7958547fe324665"
+    },
+    "notebook-tests.txt": {
+      "local_raw_sha256": "a534353e8261b1a7ff2ee717d86d1b21663fc5365754c852cf4592cabfe402b9",
+      "normalization": "CRLF_TO_LF_AND_REPO_ROOT_TO_PLACEHOLDER",
+      "sha256": "210db98cc56b33ff602f51b32f177895b4cc37e1c6957c74f420a40cdee16291"
+    },
+    "preliminary-tests.txt": {
+      "local_raw_sha256": "9dd3f2f2f2900955bba6b982bc3794a64bb458f03f3c45095a7332c3f6c03e8b",
+      "normalization": "CRLF_TO_LF_AND_REPO_ROOT_TO_PLACEHOLDER",
+      "sha256": "c9cb7fb0726ae919ff9cb6be9f2d8f97670b89fb7860f8c6afea07bce8b5633c"
+    }
+  },
+  "real_image_reads": 0,
+  "real_model_inference_calls": 0,
+  "related_api_audit": {
+    "actual_installed_helper_outputs": {
+      "1": "v1",
+      "12": "v12"
+    },
+    "installed_kaggle_source_sha256": "87fac121033a45f689803b62ae5bdfe879b094ae540a55902a46bb6cd5359b4d",
+    "operator_numeric_version_label_assignments_remaining": 0,
+    "routes": {
+      "kernels_output": "PINNED_SDK_KERNEL_VERSION_LABEL_HELPER_CONFIRMED",
+      "kernels_status": "PINNED_SDK_KERNEL_VERSION_LABEL_HELPER_CONFIRMED"
+    },
+    "shared_latest_identity_guards": "UNCHANGED_NO_PINNED_REQUEST_FALLBACK"
+  },
+  "remaining": [
+    "Direct ChatGPT GitHub review, independent Antigravity audit, separately authorized merge/postmerge verification",
+    "Authentic technical/audit revision bound to this PR and new exact merged source/runtime/notebooks under unchanged PR181 grant",
+    "Same existing Antigravity operator session: fresh live provider absence/quota and exact version/checkpoint reconciliation before later authorized recovery",
+    "Final-source ordinal0 qualification/measurements before larger shards"
+  ],
+  "repository_smoke": {
+    "prior_baseline_limitations": "docs/research/evidence/train3763_capsule302_20261105/summary.json",
+    "status": "NOT_REPEATED_SCOPED_TASK",
+    "whole_repository_green": false
+  },
+  "schema": "train3763-pinned-version404-acceptance-v1",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "science_unchanged": true,
+  "scientific_qualified": false,
+  "sdk": {
+    "kaggle": "2.2.5",
+    "kagglesdk": "0.1.38",
+    "requests": "2.34.2"
+  },
+  "shared_transport_file_unchanged": true,
+  "source_sha256": "ed3b696b8fd76c542df4424e382fc35ac43c5f7b5581c10394a3ea4c584d4667",
+  "status": "CPU_SDK_PASS_READY_FOR_CODE_REVIEW_ONLY",
+  "task": "https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6664802285",
+  "test_split_reads": 0,
+  "tested_source_and_notebook_head": "39c5d231bc5a8f72879229e4a3cc2c401e1ba244",
+  "timezone": "Asia/Bangkok",
+  "version_regressions": {
+    "actual_sdk_request_serialization": true,
+    "full_campaign_inventory": "PASS",
+    "full_pre_submit_inventory": "PASS",
+    "installed_sdk_transport_tests": 15,
+    "legacy_predecessor_v1_v12": "PASS",
+    "next_campaign_job_latest_drift_guard": "PASS",
+    "pinned_input": "nguynanhtn/safeshift-prepare-internvl35/1",
+    "provider_absence_pagination_quota_grant_push_intent_gates": "RETAINED_AND_TESTED",
+    "pure_serializer_tests": 2,
+    "raw_numeric_empty_missing_label": "FIXTURE_HTTP404_NO_RETRY_OR_FALLBACK",
+    "sockets_forbidden": true,
+    "tests": 17,
+    "wire_versionLabel": "v1",
+    "wrong_missing_public_nonterminal_unknown_metadata": "BLOCKED_WITHOUT_LEDGER_MUTATION"
+  }
+}

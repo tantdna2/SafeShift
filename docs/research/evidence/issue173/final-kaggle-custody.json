@@ -1,0 +1,69 @@
+{
+  "schema": "issue173-final-kaggle-custody-v1",
+  "remote_sources": [
+    {
+      "ref": "nguynanhtn/safeshift-issue173-native-smoke-v2",
+      "version": 1,
+      "kernel_id": 142325818,
+      "submitted_notebook_sha256": "e5d5fb02d024f5d87e91f96f8f6232a70dc0cdd6aa11042e0de4834f94ccf877",
+      "normalized_remote_sha256": "95844d30e6893f15996ce9a93997fbe973749f46aed889abec58df766adbd27f",
+      "source_commit": "ae5b488e379bf526b0509802ce9837b03b0f7885",
+      "all_cell_sources_match": true,
+      "private": true,
+      "gpu": true
+    },
+    {
+      "ref": "nguynanhtn/safeshift-issue173-native-smoke-v3",
+      "version": 1,
+      "kernel_id": 142332987,
+      "submitted_notebook_sha256": "635e739445a2c7f1faaf47ea63900dc1d95dfcb027b80ba0e4616c823737e886",
+      "normalized_remote_sha256": "ab96928749f555fa956fc70cdc80f65c6e30f772e187eed400c09c1296c23f9b",
+      "source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1",
+      "all_cell_sources_match": true,
+      "private": true,
+      "gpu": true
+    },
+    {
+      "ref": "nguynanhtn/safeshift-issue173-native-smoke-v4",
+      "version": 1,
+      "kernel_id": 142336336,
+      "submitted_notebook_sha256": "ce1d6d3794116ed8ec6232acc35ab6d06d9640bfb256d763dcf93c23ae8f2ff5",
+      "normalized_remote_sha256": "e4970b5cfb651a96f5111a780b2f21d8fb9cb940cefed7502f3505633792eb7e",
+      "source_commit": "f4bf4d756fb4b0094988e2db5894414fc6cdee8f",
+      "all_cell_sources_match": true,
+      "private": true,
+      "gpu": true
+    },
+    {
+      "ref": "nguynanhtn/safeshift-issue173-native-smoke-v5",
+      "version": 1,
+      "kernel_id": 142340475,
+      "submitted_notebook_sha256": "e6a7cf19d57198fe91432d1bec4c0e24aa8075b8ded52dcaf3149c3b27731222",
+      "normalized_remote_sha256": "ac4efde89a054cccd903cf95f07b9be8cff871889115e402ab582440b30b7279",
+      "source_commit": "1e744d991613f48d81ccf0046bc35c5fdab9d1e2",
+      "all_cell_sources_match": true,
+      "private": true,
+      "gpu": true
+    }
+  ],
+  "quota_and_terminal_status": {
+    "gpu_used_seconds": 9653.567,
+    "gpu_reserved_seconds": 0.0,
+    "gpu_total_seconds": 108000.0,
+    "statuses": {
+      "safeshift-issue173-native-smoke": "KernelWorkerStatus.COMPLETE",
+      "safeshift-issue173-native-smoke-v2": "KernelWorkerStatus.COMPLETE",
+      "safeshift-issue173-native-smoke-v3": "KernelWorkerStatus.COMPLETE",
+      "safeshift-issue173-native-smoke-v4": "KernelWorkerStatus.COMPLETE",
+      "safeshift-issue173-native-smoke-v5": "KernelWorkerStatus.COMPLETE"
+    }
+  },
+  "gpu_used_seconds_at_start": 7630.908,
+  "gpu_used_seconds_at_end": 9653.567,
+  "gpu_quota_delta_seconds": 2022.659,
+  "quota_delta_scope": "account-level observation, includes notebook provisioning/startup/export; not per-model inference timing",
+  "final_runtime_source": "1e744d991613f48d81ccf0046bc35c5fdab9d1e2",
+  "final_smoke_notebook_matches_submitted": true,
+  "no_new_job_after_v5": true,
+  "all_artifacts_private_except_sanitized_receipts": true
+}

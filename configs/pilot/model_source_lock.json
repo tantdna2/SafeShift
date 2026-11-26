@@ -1,0 +1,58 @@
+{
+  "gemma": {
+    "id": "google/gemma-3-4b-it",
+    "revision": "093f9f388b31de276ce2de164bdc2081324b9767",
+    "files": {},
+    "review_status": "NATIVE_TRANSFORMERS_NO_MODEL_REMOTE_CODE",
+    "unavailable": [
+      "added_tokens.json",
+      "chat_template.json",
+      "config.json",
+      "generation_config.json",
+      "preprocessor_config.json",
+      "processor_config.json",
+      "special_tokens_map.json",
+      "tokenizer.json",
+      "tokenizer.model",
+      "tokenizer_config.json"
+    ]
+  },
+  "phi": {
+    "id": "microsoft/Phi-3.5-vision-instruct",
+    "revision": "12b77fb40b63a2c73c68243d3f767aab688a1b2a",
+    "files": {
+      "config.json": "567e28c638a3e41aba1a304ae58b283845ad07e1c60e970643b0ad8fc229b382",
+      "configuration_phi3_v.py": "18ff44c5c1f9a6523184fb2e580e03ebf722a65f37b9cc57cd1a6d620a0f2666",
+      "generation_config.json": "bf86d2cd9250f89f09563b7f80e25e34663f673b836f531dc207362165051dc9",
+      "modeling_phi3_v.py": "b223be7d7e9f01903dd8704e5da45c6030824134441aa2734c40c36597c3b41c",
+      "preprocessor_config.json": "0f3d920fcec587bb425312d30b0660e1fabaf46a75961f2b75ddbb1ff92de01c",
+      "processing_phi3_v.py": "990ef3d1f6b5cc61b44cf8ec8e8886b19721b7e01e8bae3ebea32781b0fcf598",
+      "processor_config.json": "286a9e7fb58a489eae6825b79be69f62068c2028435c29ee52c3a485d071707b",
+      "sample_inference.py": "49b1246f2a18d9b4a1e12892e50d19929e550263075d4c80cedeac2246546da4",
+      "special_tokens_map.json": "f9535fada19315e0d8eb89521cebe111c008fee98d16e7c6744acfb50505d8c3",
+      "tokenizer.json": "493f8ad437be806d5ccdc57e91479bdbb0c656448c1b89ff70f7653530d78518",
+      "tokenizer_config.json": "581d4654c018fbcef2504b57a805dcad37126038137b5d25d22b5a02abc1ef29"
+    },
+    "review_status": "SOURCE_REVIEWED_PREP_INDEPENDENT_REVIEW_PENDING",
+    "unavailable": []
+  },
+  "smolvlm2": {
+    "id": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+    "revision": "482adb537c021c86670beed01cd58990d01e72e4",
+    "files": {
+      "added_tokens.json": "74135b8664b56088c0006f1c8e848d79a8eba003411f72ebf1dc2ee96227be3a",
+      "chat_template.json": "b585e3598909a5687f9f9d738d35223724dedef256b9b274e1cbfb32b13c74bf",
+      "config.json": "ec1f7e45deeafba7601f8dd0b6ca9ba75985dffc2f053e82341d12d06e2d9d46",
+      "generation_config.json": "34835060c9f0f74d1acb456cc72ca32746d3843d9eb5f578f9cbffac1d2eb840",
+      "merges.txt": "0b54e8aa4e53d5383e2e4bc635a56b43f9647f7b13832d5d9ecd8f82dac4f510",
+      "preprocessor_config.json": "70d935393e28a5b77b8f46cbd3e3cb74a336e4814bd43983858215bd0be388e7",
+      "processor_config.json": "55fb18f99dcce2694a011d46addf50a8114e6458d1847f6da9a0af22c6695a95",
+      "special_tokens_map.json": "2dfea2a426162316ff1567c82bc6d36d9690cd9f90455f075c77daca78b45c60",
+      "tokenizer.json": "5ece781dc8d2b2f3e2f289ca0ae50b17cfc27dd27bfe7971bb8241e0b964331a",
+      "tokenizer_config.json": "30d7854334f3f96e9dc8e5210777ba030d55257de0d9c9b5ce65387f2ab73773",
+      "vocab.json": "82b84012e3add4d01d12ba14442026e49b8cbbaead1f79ecf3d919784f82dc79"
+    },
+    "review_status": "NATIVE_TRANSFORMERS_NO_MODEL_REMOTE_CODE",
+    "unavailable": []
+  }
+}

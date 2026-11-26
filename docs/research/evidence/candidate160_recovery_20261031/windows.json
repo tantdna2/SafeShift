@@ -1,0 +1,51 @@
+{
+  "candidate_source_sha256": "f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb",
+  "checks": [
+    {
+      "command": "python -B -c \"import sys,unittest; sys.path.insert(0,'tests'); import test_candidate160_recovery as t; names=['test_kernel_lock_excludes_threads_and_releases_after_abrupt_process_exit', 'test_execution_scope_and_action_tampering_rejected', 'test_direct_history_manifest_is_not_mistaken_for_live_image_bundle', 'test_divergent_history_heads_do_not_implicitly_choose_a_run', 'test_worker_cli_accepts_new_execution_without_grant_or_ledger', 'test_pre_execution_blocked_archive_does_not_permanently_lock_next_start']; r=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(t.RecoveryTests(n) for n in names)); sys.exit(not r.wasSuccessful())\"",
+      "errors": 0,
+      "failures": 0,
+      "passed": 6,
+      "run": 6,
+      "skipped": 0,
+      "test_file_sha256": "0ee662c06534de263160e8d6878ee43f2f9fa67f30b55d2b06fa73d4603a6bb7",
+      "tests": [
+        "test_kernel_lock_excludes_threads_and_releases_after_abrupt_process_exit",
+        "test_execution_scope_and_action_tampering_rejected",
+        "test_direct_history_manifest_is_not_mistaken_for_live_image_bundle",
+        "test_divergent_history_heads_do_not_implicitly_choose_a_run",
+        "test_worker_cli_accepts_new_execution_without_grant_or_ledger",
+        "test_pre_execution_blocked_archive_does_not_permanently_lock_next_start"
+      ]
+    },
+    {
+      "command": "python -B -m unittest discover -s tests -p test_candidate160_notebooks.py -v",
+      "errors": 0,
+      "failures": 0,
+      "passed": 4,
+      "run": 4,
+      "skipped": 0,
+      "test_file_sha256": "1c7b35c285a23a53a1043e87fdce5106511022c67f725de0cc0fa59373a4101c"
+    },
+    {
+      "command": "python -B -c \"import sys,unittest; sys.path.insert(0,'tests'); import test_candidate_integration as t; r=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite([t.CandidateIntegrationTests('test_protected_pilot_c1_generation_and_source_bytes')])); sys.exit(not r.wasSuccessful())\"",
+      "errors": 0,
+      "failures": 0,
+      "passed": 1,
+      "run": 1,
+      "skipped": 0,
+      "test_file_sha256": "27b80ed8b02ef94ddbcfa19d351748998cc772ce028aef1b7e6db506db129a91"
+    }
+  ],
+  "evidence_kind": "observed_direct_unittest_tool_outputs",
+  "full_windows_suite": "NOT_RUN",
+  "gpu": "NOT_RUN",
+  "merge": "NOT_AUTHORIZED",
+  "native_optins": "NOT_RUN",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "runtime_ref": "0f0d272c60c3a574814c1b0d3dc4a73ee169b30c",
+  "schema": "safeshift-candidate160-recovery-windows-cpu-v1",
+  "scientific_result_selection": "PENDING",
+  "scope": "CPU_SYNTHETIC_ONLY_NO_GPU_WEIGHTS_PRIVATE_DATA_OR_EXPERIMENT"
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "internvl-grammar-v2-broad-check-limits-v1",
+  "status": "INTERRUPTED_NOT_FULL_SUITE_PASS",
+  "reason": "Broad unrelated CPU suite was stopped during slow existing Candidate160 scripted persistence tests; relevant qualification completed separately, 58/58 on Linux and Windows.",
+  "runs": [
+    {
+      "artifact": "data/processed/internvl_grammar_v2/linux-full-01/unittest.log",
+      "log_sha256": "5716ff3cdaa86ee505389e678511b4b0596c3cbfd4f6ec6cc589283487cc2ddb",
+      "completed_ok_lines": 62,
+      "terminal_receipt_present": false
+    },
+    {
+      "artifact": "data/processed/internvl_grammar_v2/linux-full-final/unittest.log",
+      "log_sha256": "1bd9fbc77035e8d3f2f2af77251d3cf12ae3cda286c69ebcc60335c8e3e2be81",
+      "completed_ok_lines": 45,
+      "terminal_receipt_present": false
+    }
+  ],
+  "implementation_commit": "cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702",
+  "native_calls": 0
+}

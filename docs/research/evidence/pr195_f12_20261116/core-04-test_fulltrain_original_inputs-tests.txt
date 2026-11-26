@@ -1,0 +1,13 @@
+test_actual_frozen_master_gate_rejects_fixture_before_images (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_actual_frozen_master_gate_rejects_fixture_before_images) ... ok
+test_child_decoder_uses_admitted_path_and_rejects_non_jpeg (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_child_decoder_uses_admitted_path_and_rejects_non_jpeg) ... ok
+test_duplicate_mount_is_ambiguous_even_when_bytes_could_match (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_duplicate_mount_is_ambiguous_even_when_bytes_could_match) ... ok
+test_locator_id_and_checksum_changes_fail_before_decode_or_call (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_locator_id_and_checksum_changes_fail_before_decode_or_call) ... ok
+test_missing_changed_duplicate_or_reordered_mapping_fails_closed (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_missing_changed_duplicate_or_reordered_mapping_fails_closed) ... ok
+test_original_layout_preserves_order_ids_hash_and_excludes_gt_without_copy (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_original_layout_preserves_order_ids_hash_and_excludes_gt_without_copy) ... ok
+test_shared_admission_and_worker_dispatch_original_binding (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_shared_admission_and_worker_dispatch_original_binding) ... ok
+test_version_ref_path_projection_and_binding_are_explicit_not_fallback (test_fulltrain_original_inputs.OriginalMountedInputsTests.test_version_ref_path_projection_and_binding_are_explicit_not_fallback) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 6.142s
+
+OK

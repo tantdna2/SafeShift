@@ -1,26 +1,478 @@
 # Kiến trúc Foundation V1
 
-## M3 Seminar CPU — trạng thái hiện hành
+## Post-PR200 V5 RAM/source repair — 17/11/2026
 
-[M1/M2 đã có hiệu lực](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6409830030)
-tại merge `28fdf82512577f2ed0fb435fb2c12b88e82baf2f`. M3 đang ở Draft, CPU
-synthetic-only. Inventory và các câu “chưa triển khai” bên dưới là snapshot
-Foundation; phần Seminar hiện hành được cập nhật trong bảng này và
-[hướng dẫn CLI/schema](SEMINAR_ANALYSIS.md).
+Read [RAM runbook](MINICPM_V5_RAM_REPAIR.md) first. `fulltrain/memory.py` reuses
+`internvl_v2_memory.snapshot` and Issue173's job-owned fsync/DONTNEED precedent,
+with bounded no-follow directory-FD scans, unchanged signed resource floors and
+durable failure observations. `admission` inserts isolated reclaim after reaped
+setup, and supervises every stage. `runtime` uses scoped callbacks around the
+unchanged native loader/weight-verifier seam; `minicpm_release.GuardedBackend`
+checks immediately before generate. `supervision` now observes group exit.
+`fulltrain/minicpm_v5_incident.py` plus `scripts/minicpm_v5_incident.py` provide
+exact read-only V5 CPU-failure custody. Versioned RAM_REPAIR_BOUND/source/ticket
+and notebook V6 support in the existing serial operator preserve both V4-4 and
+V5 holds without false COLLECTED/prediction import/refund. Tests:
+`test_minicpm_fulltrain_memory.py`, `test_minicpm_v5_incident.py` and shared
+admission/controller/release/recovery/transport/notebook suites. No GPU/submit.
 
-| Module | Trách nhiệm M3 |
-| --- | --- |
-| `data/saved_reports.py` | M2/merge/task/hash gate; fixture tổng hợp; archive/member/CRC/path/link checks; native byte-only adapters chuyển từ CLI cũ; normalized ledger versioned và exact joins |
-| `evaluation/seminar.py` | M2 classification/ranking/errors/disagreement/curves/sensitivity; dùng lại metrics/sensitivity hiện có; không inference/threshold tuning |
-| `scripts/analyze_seminar.py` | Một lệnh R1–R5 + receipt, source/input/output hashes, refuse overwrite, exit codes; không input artifact thật |
-| `tests/test_seminar.py` | C01–C10 synthetic, oracle pair enumeration/BFS/tính tay, lỗi/biên, CLI và audit fence I/O |
+## Post-PR199 V4-4 source repair — 17/11/2026
 
-Luồng: authority → fixture ZIP/TAR trong RAM → checked reader → ledger P/O/L/F/J
-→ metric engine → CSV/JSON/R5 trace → receipt. R5 là `PENDING_ANALYST_M4`.
-Native helpers được CLI sensitivity cũ import lại, không đổi quyền hoặc tự chạy
-pipeline cũ. Không thêm runtime dependency. Synthetic không là kết quả nghiên cứu.
+Read [real reference/Input comparison](research/MINICPM_V44_REFERENCE_COMPARISON_20261117.md)
+and [repair runbook](MINICPM_V44_REPAIR.md). `fulltrain/original_inputs.py` resolves
+only observed nested/flat Master paths, one original TRAIN root and unchanged
+3763 ID/SHA order. CPU image admission follows the existing native PIL/RGB loader,
+including original PNG bytes at `.jpg` locators. No native model/parser changes.
+`scripts/check_minicpm_original_inputs.py` rehearses real copied bytes read-only.
+`fulltrain/minicpm_incident.py` verifies exact sealed pre-native failure custody;
+`scripts/minicpm_v44_incident.py` adds authenticated provider/full inventory proof
+without journal writes. The optional versioned `repair` release contract and
+`minicpm_fulltrain_recovery rebind-source` preserve the old mirrored prefix/holds,
+create one separate source registration and schedule signed serial5 only after
+fresh exact-source authority. Existing successful-result collection/pending-only
+continuation remains shared. Tests: original Inputs, V4-4 incident, existing
+release/recovery/transport/execution/notebook suites. No GPU or production rebind.
 
-## Snapshot Foundation trước M3
+
+## Qwen3 derived full-TRAIN label analysis ? 15/11/2026
+
+Read [the versioned composite contract](research/QWEN3_FULL_TRAIN_COMPOSITE_V1.md).
+scripts/build_qwen3_composite.py authenticates five historical report archives,
+exact original/recovery manifests, source/config/release and GT/hash lineage.
+safeshift/evaluation/qwen_composite.py selects the original-status complement
+and computes image-weighted four-level/binary metrics and source-specific AUC.
+The CLI exports sealed JSON/CSV and verifies them for downstream use via
+read_product(directory, trusted_manifest_sha256). Tests: test_qwen_composite.py.
+The separate config/amendment implements Owner decision6889519264 without
+changing old source locks, frozen analysis config or execution ledgers. No
+raw-logit replay, model/image inference, TEST or automatic HNLO score pooling.
+
+## Deferred offline campaign route — Owner12/11/2026
+
+PR196 R1 adds `scripts/train3763_results.py` and the read-only `official-report`
+command. It authenticates and replays the final certificate through the same
+`Continuation.validate_reconciliation` gate as admission, verifies immutable
+custody, reconstructs all3763 per-image records/lineages and every attempt, and
+independently sums original plus deferred reservations. Resource facts are read
+from each verified ZIP and compared to the authenticated report; missing telemetry
+and unobserved GPU billing remain explicit. Provisional `status` cannot claim
+official results from event presence alone. Legacy readers/writers remain
+unchanged and intentionally unsuitable for whole-campaign consumption; the new
+versioned official-results schema is the downstream handoff. No GT/metrics or
+new scientific authorization. Tests: `test_train3763_results.py` plus existing
+continuation, manual, campaign and notebook suites.
+
+Read [deferred reconciliation contract](TRAIN3763_DEFERRED_RECONCILIATION.md)
+before the historical per-attempt operator routes. The external companion
+`scripts/train3763_continuation.py` imports the untouched approved Operator
+checkout, authenticates one exact source-bound route release from Owner exports,
+and maintains a separate mirrored create-only journal. Initial admission requires
+exact INTENT35 and preserved Attempt11 facts; legacy INTENT35 remains open to
+fence old reserve/collector routes. No core runtime/source manifest changes.
+
+Quick local verification checks every archive byte/CRC/hash, exact original
+ordinals and raw/Input/checkpoint/native custody; independent numerical replay
+and provider verification remain deferred. New reservations precede capsule
+export, conserve all caps without refunds and permit only one active Owner-run
+job. Restart exports the same reserved capsule; partial/ambiguous histories stop.
+`scripts/owner_verify_train3763_continuation.py` is an explicit **Owner-only online
+command**, never called by the offline route. At campaign end it verifies every
+real provider job/version/code/Input/capsule/ZIP plus full raw numerical traces
+and original histories. One genuine Owner aggregate record and one reviewer
+admission release gate a new formal aggregate ledger event. No synthetic legacy
+COLLECTED/SUBMITTED/MEASURED or retrospective permissions. Tests:
+`test_train3763_continuation.py` and unchanged manual/campaign/notebook suites.
+
+## MiniCPM / Qwen fresh full-TRAIN review — 12/11/2026
+
+Read [technical review/runbook](QWEN_MINICPM_FULLTRAIN_REVIEW.md).
+`fulltrain/minicpm_notebook.py` packages the existing supervised native pipeline
+without a second adapter/parser or default batch cap. Its request boundary and
+the existing fresh171 public entries remain release-fenced before private I/O.
+`fulltrain/original_inputs.py` adds an explicit MiniCPM-only request extension
+for the already verified original TRAIN/master mounts: exact refs/versions,
+unique bounded mounts, frozen original master/projection, all image hashes,
+pinned-child CPU decode, no image copy or prediction inheritance. It is dispatched
+by both admission and the native worker; the opaque fresh Input route is retained.
+Builder: `scripts/generate_minicpm_fulltrain_notebook.py`; focused CPU receipt:
+`scripts/qualify_qwen_minicpm_fulltrain.py`. Tests: new notebook/original-Input
+suites plus shared fresh controller/worker/history/archive/native-CPU suites.
+No InternVL operator/campaign changes, historical lock edits or live execution.
+
+## Current TRAIN3763 campaign routing — Issue180
+
+Owner UI collection uses the separately reviewed external
+`scripts/reconcile_train3763_manual.py`; read
+[manual reconciliation](TRAIN3763_MANUAL_RECONCILIATION.md). It is deliberately
+outside the runtime source manifest and imports the original clean approved
+checkout. It appends truthful COLLECTED/OWNER_UI_MANUAL through unchanged Ledger
+mirror/chain/fsync APIs; original histories/measure retain source-bound gating.
+Tests: `test_train3763_manual.py` (CPU synthetic, SDK HTTP doubles, no sockets).
+
+Read [campaign contract/runbook](TRAIN3763_CAMPAIGN.md) before the historical
+execution/PREP sections. `internvl3763_campaign.py` owns one authenticated finite
+grant, science-stable planning, diagnosed repair, canonical machine/path binding,
+mirrored create-only journal/initialization guard and native VM claims.
+`internvl3763_o5.py` pins Owner decision6733033003 and validates the separate
+append-only O5 extension and source-bound execution release. The ledger keeps its
+original grant/hash and validates cumulative old+future reservations against the
+effective cap; see [O5 authority and operations](TRAIN3763_O5_EXTENSION.md).
+`internvl3763_operator.py` admits reviewed source/SDK/Inputs/lineage, checks serial
+provider identity/quota and makes one durable-intent-protected submit. Existing
+`kaggle_handoff.py` retains <=15-minute foreground monitoring and terminal ZIP/
+raw/log/hash verification, then closes the campaign intent. The current execution
+notebook is built with `--execute --campaign`; PREP remains closed.
+
+`scripts/train3763_campaign.py` and its PowerShell wrapper provide identity,
+init, bounded plan/capsule, status, measured shard limits and proved pre-submit
+abort without refund. They never submit a model job. Grant/load/worker admission
+uses an explicit new schema; old per-attempt release/witness tests remain for
+compatibility, not a bypass flag. Tests: `test_internvl3763_campaign.py` plus the
+existing controller/execution/notebook/handoff/native suites. No frozen inherited
+native source/config/parser/prompt/grammar or historical result is imported or
+rewritten. Live final-source qualification remains a separate NOT_RUN gate.
+
+## TRAIN3763 execution candidate after PR178 merge
+
+Read [execution design](INTERNVL3763_EXECUTION.md) before the historical PREP
+section below. `internvl3763_release.py` authenticates new Owner GitHub authority,
+separate approval attestations, exact merged source/Input/limits and permanent
+remote claims. `internvl3763_witness.py` implements one durable SQLite authority;
+TLS hosting/storage/endpoint deployment remains separately BLOCKED.
+`internvl3763_operator.py` checks approved SDK pins, clean merged notebook,
+sealed ancestors, versioned Input availability/account/quota and makes exactly
+one SDK push after atomic remote reservation. Worker/source/grammar identities
+remain separate from the historical PR177 capability and tags.
+
+`build_internvl3763 --execute` packages the same supervised entrypoint with no
+grant. A unique private execution Input and authentic release are required before
+provisioning/load/calls. Sample claims precede native calls; raw precedes parse.
+Supervisor interruption retains conservative all3763 accounting. Collection
+checks remote claim snapshot and numeric full-vector members alongside ZIP/raw/
+sample custody. No ordinary resume repairs consumed IDs or pools results.
+Tests: `test_internvl3763_execution.py`, existing controller/handoff/grammar suites
+and PREP/execution notebook tests. CPU evidence is not final-source live PASS.
+
+## TRAIN3763 grammar V2 and Antigravity handoff — 05/11/2026
+
+Read [scope/operator instructions](INTERNVL3763_ANTIGRAVITY.md), then
+`safeshift/internvl3763.py` (new full-cohort identity/plan, guarded native adapter,
+controller/archive/history) and `safeshift/kaggle_handoff.py` (durable events,
+locks, bounded provider observation, collection and agy JSON/conversation).
+Entry points: `scripts/internvl3763.py`, `build_internvl3763.py`,
+`kaggle_handoff.py`/`.ps1`, `rehearse_kaggle_handoff.py`, `qualify_internvl3763.py`.
+Tests: `test_internvl3763.py`, `test_kaggle_handoff.py`; shared contracts are
+the unchanged V2 capture/grammar and original fulltrain cohort/planner/Inputs.
+No legacy campaign authorization is patched or inherited. Production authority
+is closed before SDK/private Input/GPU/weights. The packaged PREP notebook only
+exports BLOCKED readiness. Synthetic CLI tests are operational rehearsal, not
+an independent audit or live Kaggle/full3763 qualification.
+
+## InternVL3.5 grammar V2 exact-release campaign — 04/11/2026
+
+`internvl_v2_runtime.py` wraps the unchanged offline candidate loader/input
+preparation with the approved V2 callback. Full output-head vectors (including
+padding outside tokenizer vocabulary) are persisted/fsynced before the native
+prefix processor; masked vectors, processor list, returned IDs and exact decoded
+response precede strict parsing and independent replay. HNLO is always N/A.
+`scripts/internvl_v2.py` supplies isolated setup/preflight/native stages.
+Its synthetic processor stage now runs in a supervised CPU-only subprocess and
+must exit successfully before the native worker's final16GiB resource check.
+`internvl_v2_memory.py` records host/cgroup anon/file/current/limit and process
+RSS before/after diagnostics and on failure, and confines optional clean-page
+advice to the current scratch venv libraries. Advice never establishes RAM PASS;
+the unchanged resource gate still applies. Positive worker evidence requires
+the child termination/log and memory receipts. Job1's failure remains immutable.
+`internvl_v2_campaign.py` validates exact PR177 HEAD/request/notebook releases,
+and gates process launch/setup/worker/load/call with fresh nonce
+permits. Create-only GitHub annotated tag refs enforce three jobs and one native
+load/call across VMs without advancing the reviewed branch HEAD. The matching
+campaign script supervises children and seals partial/terminal ledgers and ZIPs.
+Owner directive6625594194 adds the separate `OWNER_PREAUDIT_TECHNICAL_TRIAL_V1`
+authorization for remaining slots2/preflight and3/native only. It pins the
+authentic Owner comment/body SHA and original job1 zero-call finished digest;
+receipts state audit PENDING_POST_TRIAL and science NOT_ESTABLISHED. Legacy
+review/audit-based grants are preserved for history; no fake PASS is generated.
+`scripts/submit_internvl_v2.py` checks an exact release before importing the
+official SDK, reserves before its single push and reconciles terminal private
+ZIP/log evidence. Unknown counts block; prior grants cannot activate this route.
+Positive preflight/native status also requires live Kaggle COMPLETE and matching
+successful stage/environment receipts. The coordinator reserves1200 physical-GPU
+seconds per slot (two T4s x600s provider timeout), without refunds; all three slots
+sum to3600. Missing source-bound budget records block. This upper bound is separate
+from observed account quota and is not a measurement of actual provider billing.
+`scripts/build_internvl_v2.py` packages committed source into an unsubmitted
+notebook. Tests: `test_internvl_v2_runtime.py`, `test_internvl_v2_campaign.py`,
+`test_internvl_v2_notebook.py`;
+reproduce with `scripts.qualify_internvl_v2_runtime`.
+[Exact release/runbook](INTERNVL_V2_CAMPAIGN.md),
+[native capture and initial CPU evidence](INTERNVL_GRAMMAR_V2_RUNTIME.md). This is a distinct
+technical series, not enrollment or qualification of full TRAIN3763.
+
+## Issue173 — existing TRAIN/checkpoints and bounded native smoke
+
+Current Mini-only continuation: `minicpm173_once.py` verifies exact external
+review and public process permits; `scripts/submit_minicpm173_once.py` reconciles
+remote job/version/custody and creates durable, exclusive submission/phase records
+on the same PR branch. `scripts/minicpm173_train_once.py` runs the unchanged
+Mini numerical adapter on original ordinal0 with supervised setup/native children,
+raw-before-parse and partial ZIP/SHA export. Builder: `build_minicpm173_once.py`;
+regression: `test_kaggle173_minicpm_once.py`. No grant or native execution in this
+implementation pass. [Exact review/run contract](ISSUE173_DIAGNOSTICS.md#mini-only-operator-contract-for-the-exact-review).
+The historical v5, diagnostic and earlier review-only entrypoints below remain
+terminal. The new path requires its own exact HEAD/job review and remote permits.
+
+Post-v5 review repair: current `scripts/smoke_kaggle173.py` and its published
+notebook are TERMINAL, with no model-load/generation bodies. Historical refs and
+private submissions remain immutable. `smoke173_history.py` admits all five exact
+seals and prepares a MiniCPM-only request under permanent native REVIEW HOLD.
+`scripts/minicpm173_preflight.py`/builder measure fresh single-model RAM/processor/
+CUDA with zero native calls; `scripts/diagnose_internvl173.py` checks the saved
+generated-fence INVALID without rescue. Tests: `test_kaggle173_review.py` plus
+existing Issue173/fulltrain suites. [Current dossier](ISSUE173_REVIEW_REPAIR.md).
+The adapter/source description below records the original historical execution,
+not current permission to dispatch another smoke call.
+
+Route: `verification173.py` streams actual pinned shard/image bytes,
+checks exact indices and bounded safetensors headers without importing a model.
+`scripts/verify_kaggle173_inputs.py` checks existing read-only Kaggle Inputs and
+exports a private original-TRAIN seal separately from sanitized receipts.
+`scripts/smoke_kaggle173.py` is an independent, source/proof-bound technical route:
+one original image/model, three calls total, exclusive reservations, raw before
+strict parser/HNLO, isolated pinned workers and process-group deadlines. It never
+calls the fenced production worker/factory internals or enrolls fresh171.
+After the first zero-load/zero-call RAM failure, v2 requires that sealed history,
+reclaims only owned public setup caches and keeps the RAM floor unchanged.
+Existing native source/config/parser/HNLO and numerical contracts stay locked.
+Builder: `scripts/build_kaggle173_verification.py`; regression:
+`test_kaggle173_verification.py`, `test_kaggle173_smoke.py`. Actual file proofs,
+failure preservation, bounds, source identities and live limitations:
+[Issue173 runbook](KAGGLE_CHECKPOINTS_173.md). Byte PASS is not inference or
+scientific qualification; scientific release/TEST remain separate.
+
+## Issue171 fresh full TRAIN preparation — 02/11/2026
+
+Route: `safeshift/fulltrain/contract.py` (fresh campaign, three series, exact
+cohort and separate source inventory), `inputs.py` (original-master projection
+and opaque mapping), `runtime.py` (shared native/controller preparation, strict
+fresh recovery/import and release fence), `preflight.py` (bounded storage,
+CPU-native composition, structural receipt admission and stdlib notebook prep).
+Reuses existing `candidates/fulltrain*`, peer adapters/numerics and pilot
+execute/Store/archive/lease without changing their bytes or historical authority.
+Follow-up to ChatGPT review6572757952 adds `qwen.py` and provenance-checked
+`qwen_semantics.py` (Qwen V4 P2.1/raw HNLO only), `engine.py` (same controller
+with explicit parser injection), `admission.py` (source/Input/history/checkpoint
+stages), `provision.py` (isolated peer setup and offline Qwen build/wheelhouse),
+`environment.py` (explicit RAM/disk/driver/CUDA policy) and `supervision.py`
+(Linux process groups, hard deadlines and parent-death guardian). No native
+weights or Kaggle environment have been verified. All public routes stay fenced.
+Tests: `test_fresh_fulltrain*.py`; builders/preparation/receipt commands and
+release gaps: [Issue171 runbook](FRESH_FULLTRAIN_171.md).
+
+## Issue167 full TRAIN CPU readiness/repair — 02/11/2026
+
+Định tuyến: `candidates/fulltrain.py` (exact3763 cohort/identity/lineage/action),
+`fulltrain_run.py` (synthetic controller dùng engine/Store/archive/lease cũ),
+`fulltrain_preflight.py` (receipt admission/preparation-only notebook),
+`scripts/prepare_fulltrain.py`, builder `--fulltrain-prep-only`,
+`tests/test_fulltrain.py`, `tests/test_fulltrain_notebooks.py` và
+[runbook](FULLTRAIN_REPAIR_167.md). Không đọc historical private raw/GT/TEST.
+Runtime thật/O2–O6 bị fence, không nhận arbitrary `approved` flags.
+Repair khác resume; thay identity buộc series mới, không chọn/gộp kết quả.
+MiniCPM label-only, defaults Candidate160/strict C1/HNLO cũ giữ nguyên.
+
+## T3 synthetic provenance adapter — 01/11/2026
+
+`evaluation/triage_adapter.py` nối fixture kết quả đã phân loại vào API T2:
+manifest + content + ba reports + exact selection ledger + focal evidence
+→ kiểm cohort/identity/SHA256/lineage + seal fixture cố định trong source
+→ `AdaptedInputs(planned_ids, focal, peers, ...)` với kiểu T2 nguyên bản.
+`VerifiedSource` giữ source identity, report/row hashes và missing IDs riêng;
+input/evidence/manifest/selection/bundle hashes không tham gia ranking.
+
+Không I/O, raw parser, quyền dữ liệu tự khai báo hoặc production switch.
+Chỉ chín fixture viết tay được seal; thay nội dung dù tự tính lại checksum
+vẫn bị từ chối. Report plan phải đồng nhất ba model; thiếu row giữ MISSING,
+thiếu identity/report/selection thì dừng; không lựa chọn hoặc trộn attempts.
+Peer HNLO bị cấm, focal VALID cần evidence fixture đúng mẫu/identity/input/
+value; null/ineligible không impute, malformed bị từ chối.
+
+Định tuyến: [hướng dẫn/hợp đồng T3](TRIAGE_ADAPTER.md), module trên,
+`tests/test_triage_adapter.py`, `scripts/demo_triage_adapter_cpu.py` và T2 bên
+dưới. Không cần đọc report/raw/ảnh/TEST thật. O2/O4/O5 vẫn PENDING/BLOCKED;
+source seal chứng minh nội dung fixture, không khoa học/quyền/qualification.
+
+## T2 CPU synthetic triage — 01/11/2026
+
+`safeshift/evaluation/triage.py` cung cấp API không học, không I/O:
+
+```python
+from safeshift.evaluation.triage import build_review_queue
+
+queue = build_review_queue(
+    planned_ids, focal, peers, mode="combined", budget=K, tie_key=external_key,
+)
+```
+
+`planned_ids` là iterable token opaque 32 ký tự hex thường, được cấp **trước**
+predictions/GT và độc lập với nhãn, miền, filename. Không chuyển file stem thật
+thành token bằng cách hash metadata chứa đáp án. Validation chỉ kiểm hình thức,
+không chứng minh nguồn ID độc lập. Mapping ID→ảnh/GT thuộc custodian bên ngoài.
+Không có GT/domain/path/raw payload trong hợp đồng đầu vào của bộ xếp hạng.
+
+`focal` và từng phần tử `peers` là `ModelResults(identity, records)` bất biến.
+`SourceIdentity(model_id, model_revision, implementation_id, configuration_id,
+run_id, series_id, attempt_id)` giữ reference công khai của **một** nguồn đã chọn;
+đây là lineage do caller cung cấp, không xác minh artifact hoặc cấp quyền chọn
+series. Tối đa hai peers, các model ID phải khác nhau. Không tự gắn candidate
+roster vào API hoặc pool attempts. Caller phải giữ effective MiniCPM identity
+đúng quyết định khi một bước tích hợp thật được cấp quyền riêng.
+
+`ClassifiedResult(sample_id, status, predicted_safety_level=None, hnlo=None)`
+nhận SUCCESS + một nhãn canonical, hoặc INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED
+với nhãn null. ID vắng trong stream tạo MISSING riêng; ID trùng/thừa hoặc record
+không có ID bị từ chối. `ClassifiedResult.from_prediction()` tái dùng
+`PredictionRecord` Foundation với None→INVALID; không sửa hợp đồng lịch sử.
+`HNLOSignal(value, eligible)` chỉ ở focal: caller phải xác nhận upstream HNLO
+đủ điều kiện; số hữu hạn + eligible=True mới VALID. None→MISSING; hữu hạn nhưng
+chưa đủ điều kiện→INELIGIBLE; bool/string/kiểu sai/NaN/Infinity→MALFORMED, không
+coerce/impute. JSON xuất value=null nếu không VALID. Đây không là raw replay,
+kiểm alignment, calibration hoặc xác suất lỗi. Peer HNLO bị từ chối tại API.
+
+| Chế độ explicit | Feature bắt buộc trong C | Thứ tự E |
+| --- | --- | --- |
+| `hnlo_only` | HNLO focal VALID; có thể cấu hình 0 peers | HNLO giảm dần |
+| `peer_only` | Tất cả 1–2 peers cấu hình có nhãn hợp lệ | Số peers hazard / số peers cấu hình, giảm dần |
+| `combined` | Cả hai điều kiện trên | Tỷ lệ peers hazard giảm dần, rồi HNLO giảm dần |
+
+Theo phương án vận hành [T0 §5–6](research/T0_FALSE_SAFE_DESIGN_20261101.md):
+P=planned; C=focal SUCCESS Level04; M=focal không SUCCESS cộng các ca trong C
+thiếu feature bắt buộc của mode; E=C trừ M. Focal hazard không vào M chỉ vì
+thiếu peer/score, nhưng missingness vẫn được báo trên toàn P. Peers lỗi không
+biến thành hazard/Normal; một peer thiếu không làm giảm mẫu số thành một peer.
+HNLO-only ghi nhận peer thiếu nếu caller cung cấp stream, nhưng không buộc
+review vì tín hiệu đó không thuộc arm. Combined thiếu h vẫn vào M, không tự
+fallback sang peer-only. Caller chọn mode riêng để so ablation không score.
+
+K là **số lượng nguyên không âm** caller cấp, không có mặc định/tỷ lệ 20%.
+M được phục vụ trước E, mỗi ID đúng một slot kể cả nhiều lý do thiếu. M>K trả
+OVERLOAD, chọn K ca mandatory và giữ backlog; hết E thì để slot trống.
+WITHIN_CAPACITY chỉ nghĩa M≤K, vẫn có thể tồn ranked backlog, không là safety
+PASS. Output có P/C/M/E counts, budget/slots, review có thứ tự/category/reasons,
+backlog mandatory/ranked và IDs, trạng thái từng case, outputs model tách riêng.
+Coverage status trên P, HNLO trên P và C, complete-peer trên C; mẫu số 0 cho
+fraction=null, không peers cho complete-peer count=null. Không bỏ failure khỏi P.
+
+Mandatory và tie dùng HMAC-SHA256 trên token opaque với key caller cấp; HMAC
+SHA512 có domain riêng phân xử collision, double collision báo lỗi. Tên model,
+lineage và thứ tự input không tham gia priority. Key/digest không xuất JSON;
+caller cố định key trước khi xem predictions/GT, không thử key để chọn queue
+thuận lợi, và giữ key ngoài Git để tái lập. Mọi output là snapshot mới; input không
+bị đổi và sửa output không sửa input. Các ID/reference đầu vào phải không
+chứa dữ liệu riêng tư; API không xác minh danh tính hoặc làm dịch vụ redaction.
+
+Demo `python -B -m scripts.demo_triage_cpu --budget 3 --tie-seed public-demo`
+tạo sáu record viết tay, gọi `compare_review_queues` để so ba **operational**
+queues với M/E riêng từng arm, cùng P/K/key. Hàm cũng trả bảng **signal_control**
+với M là hợp mandatory, E là giao eligibility của ba arms theo T0 §6. Bảng này
+có cờ `ARTIFICIAL_WORKLOAD`, không đại diện chi phí vận hành baseline đơn tín
+hiệu và không chọn arm thắng. Public seed chỉ dùng synthetic. Sau khi tạo mọi queue mới đọc
+đáp án fixture ở `evaluate_synthetic_queue`; báo số lỗi tổng hợp vào review
+qua M/E, không coi routing là người phát hiện/sửa đúng. Chưa chọn baseline
+mạnh nhất, tính CI hoặc thực hiện E1–E5 khoa học.
+Không claim gain từ demo. `tests/test_triage.py` kiểm API, lỗi/biên và CLI không
+site-packages, không file ngoài trong thư mục rỗng. Module không import model
+backend hoặc scientific metrics và không có runtime dependency mới.
+
+Mọi output mang `SYNTHETIC_ONLY`, `PROPOSED_NOT_FROZEN`,
+`NOT_SCIENTIFICALLY_QUALIFIED`. [Owner T2](https://github.com/tantdna2/SafeShift/pull/159#issuecomment-6552925324)
+chỉ cấp triển khai CPU synthetic; [T1](research/THESIS_DATA_PROTOCOL.md) vẫn chặn
+áp dụng trên TRAIN160 thật đến O2/series-selection, và O4/O5/final roster chưa
+được phê duyệt. Không đổi HNLO/parser/metric/protocol/M1/M2 hoặc suy quyền inference.
+
+## Effective MiniCPM resampler FP32 technical route —31/10/2026
+
+Notebook technical riêng → `launch_owner` với action chỉ1 ảnh → shared OS lease
+→ cùng production supervisor/CLI/worker → `minicpm_resampler_fp32.backend` →
+backend/load weights native cũ → instance-only derived resampler method. Source
+gốc được verify hash nguyên vẹn; thay đúng4 expressions của method locked,
+không global patch/class/file mutation. Chỉ score/softmax/value product FP32,
+value result cast về FP16 trước out_proj; projections/query scaling không đổi.
+Source original/effective descriptor/derived method/config đều có hash riêng.
+
+`train_contract.config` mặc định vẫn trả config gốc; implementation ID opt-in
+tạo config effective riêng và được khóa trong execution binding/raw/context.
+Default history không coi config mới là completion cũ. Effective route chỉ có
+smoke campaign/series/output riêng, không resume/full-run/history import/metrics.
+`train_run` xác minh file effective_numerics trước nhận raw/custody và receipt
+cuối yêu cầu counters3 phép tính hữu hạn + return FP16 + native load evidence.
+Technical Owner authority không cấp baseline/full160/TEST/merge.
+
+[Báo cáo](research/MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md) ghi actual Kaggle
+1-image PASS, HNLO unaligned và giới hạn; các phần phía dưới giữ lịch sử trước
+ngoại lệ. Bốn notebook gốc rebuild source payload chưa tự qualify lại trên Kaggle.
+
+## Kaggle technical smoke và regression production CLI —31/10/2026
+
+Notebook Candidate160 cuối mặc định `technical_smoke` → `launch_owner` giữ cùng
+process lease để loại trừ job trùng → cùng `launch`/supervisor/runtime/worker
+production. `train_smoke` có schema/run prefix/campaign/output riêng, không
+production reservation/history hoặc scientific metrics. Manifest160 nguyên
+vẹn được admission, chỉ ordinal0 được schedule,1 native call/1 load/3600 giây.
+`resume`/`rerun` production tiếp tục dùng luồng recovery phía dưới, không dùng
+completion của smoke. TEST/quyền bên thứ ba/khoa học không đổi.
+
+`worker_command` là ranh giới tạo CLI dùng chung cho supervisor và regression
+thật. Argparse types mọi filesystem argument thành Path; direct worker caller
+cũng chuẩn hóa đủ repo/output/bundle/snapshot/weights. Source stat/verify/stage
+chuẩn hóa str/os.PathLike nhưng giữ lstat/alias/allowlist/checksum. `native_cpu`
+dùng chung giữa preflight và production, không còn hai bản processor/meta check.
+`scripts.rehearse_candidate160_worker` gọi child production thật, không mocks;
+đã tái hiện lỗi cũ rồi kiểm lại cả hai pinned CPU stacks với authorized bundle.
+
+Kaggle `.smoke-result.json` chỉ TECHNICAL_SMOKE_PASS khi actual native GPU/
+weights/inference, durable raw/parser/HNLO/custody, cleanup và ZIP/SHA256 đủ
+evidence. Status COMPLETE/preflight/CPU không chứng minh model inference.
+[AGENTS](../AGENTS.md) bắt buộc quy trình này cho mọi notebook/model hiện tại
+và tương lai; notebook cũ không được nâng READY hồi tố. Review/audit trước merge
+và Owner chạy chính thức vẫn riêng. [Hồ sơ kiểm chứng](research/CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+## Candidate160 retry/resume —31/10/2026
+
+Production notebooks → `train_runtime.launch_owner` → kernel `train_history.lease`
+→ bounded history discovery/snapshot → execution v2 + immutable per-attempt
+reservation → manifest/recovery plan → unchanged environment admission/worker.
+`train_run.run_calls` chỉ schedule pending ordinals; gọi engine `execute` cũ
+với journal riêng, không dùng retry logic của pilot. Pilot/adapter/C1/HNLO/
+checkpoint/source locks giữ nguyên. Luồng Owner v1/grant cũ còn để đọc lịch sử
+và test compatibility; không là production retry entrypoint.
+
+`history_index.json` khóa từng run ID bằng snapshot member hashes, execution
+digest, series ID và ancestors. Lịch sử được flatten để export tiếp sang phiên
+Kaggle khác; directory/ZIP copies trùng được deduplicate, copies khác hash chặn.
+`recovery_plan.json` ghi tất cả kết quả/attempt/calls/raw hashes, pending và
+completion kỹ thuật; `lineage_accounting.json` cộng counts vận hành nhưng không
+chọn output. Rerun mở series riêng để resume nó không lấy completion baseline.
+Không scientific pooling/selection; xem [quyết định](research/CANDIDATE160_RECOVERY_DECISION_20261031.md).
+
+Khóa OS giữ tới lúc supervisor và Linux child đều đóng descriptor; không TTL
+hoặc xóa lock file. Chỉ loại trừ trong shared workspace, không distributed
+exactly-once giữa VM. Owner phải dừng phiên cũ trước, attach đủ lịch sử.
+`test_candidate160_recovery.py` kiểm failure/resume/ZIP/migration/dedup/rerun;
+bộ compatibility v1 vẫn kiểm hợp đồng lịch sử riêng.
+
+## Candidate160 Owner activation — 30/10/2026
+
+Hai notebook candidate dùng `train_runtime.launch_owner` → `train_owner` tạo
+execution/slot tự động → cùng preflight/supervisor/worker → `train_run` giữ raw,
+parser/HNLO/recovery/archive. `train_owner` là record kích hoạt Owner, không
+grant hoặc chữ ký Lead; nhánh grant/batch cũ giữ compatibility. Runtime config
+v2, public/checkpoint locks và pilot engine không đổi. [Runbook](CANDIDATE160_KAGGLE.md)
+và [quyết định](research/CANDIDATE160_OWNER_DECISION_20261030.md) ghi scope,
+chính sách technical-stop/behavior-observe, engineering reserves và giới hạn
+khóa local. `test_candidate160_owner.py` kiểm one-shot/negative/supervisor160;
+native candidate test kiểm160 ảnh tổng hợp qua Owner path cho từng model.
+Implementation chờ ChatGPT audit trước merge; không bằng chứng GPU/quality.
 
 Code mới hỗ trợ bản ghi trong bộ nhớ, phép đếm phân loại và CPU sensitivity
 PROPOSED trên saved reports. Không import code thực nghiệm cũ. Cây có **29 file, 7 thư mục** không tính
@@ -178,6 +630,65 @@ Nguồn tham khảo đã đọc ngày 24/10/2026, commit
 
 ## Định tuyến ngữ cảnh cho Codex/Antigravity
 
+Issue202 MiniCPM offline serial route: first read
+[the Vietnamese runbook](MINICPM_OFFLINE_CONTINUATION.md), then
+`fulltrain/minicpm_offline.py` (new delegation/ticket/Owner observation schema),
+`scripts/minicpm_offline_continuation.py` (mirrored provisional journal, signing,
+custody, scheduling, final admission and official reader),
+`scripts/owner_verify_minicpm_offline.py` (Owner-only online authority export and
+per-job final provider verification), and `test_minicpm_offline_continuation.py`.
+The route inherits V4 rights/V5 closure and PR201 RAM/native verifiers; it never
+turns offline Owner UI observations into provider authentication. Original
+Operator/session/key and new merged-source release remain activation gates.
+
+PR199 current Owner UI restart: [V4 contract](MINICPM_RUN1_RECOVERY.md),
+`minicpm_recovery.py` (Owner retirement with uncertainty, deterministic finite
+budget, original-rights/source binding and durable native-entry receipts),
+`scripts/minicpm_fulltrain_recovery.py` (same-journal bind/stage/publish/collect,
+no API submit/live observer). `minicpm_release.py` recognizes only the new V4 UI
+authority, separate from historical V2; old V3 self-submit authorization fails.
+Tests: `test_minicpm_run1_recovery.py`. Original project states below are history.
+
+MiniCPM post-PR198 Run1 recovery: first read
+[the V3 recovery contract](MINICPM_RUN1_RECOVERY.md),
+`fulltrain/minicpm_recovery.py` (nested bindings, historical reservation budget,
+FAILED_PRE_NATIVE and actual native-start proof), `minicpm_release.py` (versioned
+live approval graph/signatures), `scripts/minicpm_fulltrain_recovery.py` (read-only
+reconciliation, one SDK POST, same-journal Antigravity collection/pending UI),
+and `test_minicpm_run1_recovery.py`. The shared supervisor forwards only bounded
+structured live receipts while preserving complete child logs. The unchanged
+CandidateBackend generate/precision/parser is observed at its actual model call;
+historical notebook/config/checkpoint/raw bytes are not regenerated. V3 is a
+source revision requiring fresh release; old V2 UI authority cannot submit it.
+
+MiniCPM Full-TRAIN Owner UI: read
+the current [V2 execution release contract](MINICPM_FULLTRAIN_RELEASE.md),
+`fulltrain/minicpm_release.py` (live authority/signed capability/VM claims),
+`minicpm_execution.py` (parent/child boundary), `minicpm_sizing.py` (same-source
+timing/adaptive export reserve), and `scripts/minicpm_fulltrain_operator.py`
+(serial mirrored journal/provider/publish/collect). They reuse the PR195 native
+controller and Input/history/raw verifier. `minicpm_fulltrain_transport.py`
+shares the existing manual collector's bounded output-inventory/HTTP primitives;
+it never submits jobs. `test_minicpm_fulltrain_execution.py` and
+`test_minicpm_execution_transport.py` cover authorized synthetic and adversarial
+paths; `test_minicpm_execution_boundaries.py` exercises the actual child CLI
+capability/replay boundary. [Expanded acceptance](research/MINICPM_FULLTRAIN_EXECUTION_20261116.md)
+records exact tested identities, development failures and live-release limits.
+Historical notebook reproduction uses each exact Git builder/runtime;
+current-source builders stay strict. The initial dossier is separately retained:
+the [source-bound release dossier](MINICPM_FULLTRAIN_RELEASE.md) and external
+`scripts/minicpm_fulltrain_release.py` / `test_minicpm_fulltrain_release.py` for
+exact package reproduction, authority proposals/replay and conservative campaign
+budget checks. This CPU companion remains outside the frozen runtime manifest;
+it never activates a runtime, reserves resources or authenticates offline export
+origin. V2 operator/runtime are the conditional executable route; the older
+dossier is not its authority. Then read
+[the short Vietnamese handoff](MINICPM_FULLTRAIN_OWNER_UI.md),
+`fulltrain/minicpm_ui.py`, `scripts/minicpm_fulltrain_ui.py` and their synthetic
+tests. They package/verify the existing supervised fresh171 runtime; the source
+release fence remains closed. The explicit two-pair option in the shared
+`reconcile_train3763_manual.download_outputs` retains InternVL's default route.
+
 Đọc [AGENTS](../AGENTS.md), [README](../README.md), tài liệu này và
 [ROADMAP](ROADMAP.md) trước task code; dùng task description làm phạm vi hiện tại.
 Root `ROADMAP.md`/`TASKS.md` đã thuộc snapshot trước reset; xem [HISTORY](HISTORY.md)
@@ -189,3 +700,73 @@ Sau đó chỉ đọc `schema.py`/`validation.py` + `test_schema.py` cho task re
 `test_demo.py` cho task demo. Task bằng chứng đọc `RESULTS_AND_LIMITATIONS.md`
 rồi đúng nguồn commit được dẫn. Không nạp toàn bộ 693 file, không phục hồi mã
 cũ hàng loạt và không gọi công cụ khác để tự mở rộng thẩm quyền thực nghiệm.
+
+## Ba VLM TRAIN pilot v1 — code PREP (27/10/2026)
+
+Phần Foundation/inventory phía trên mô tả phạm vi nền trước task pilot. Gói mới
+`safeshift/pilot/` có chức năng được Owner giao trong cùng Draft PR; chưa có
+execution release hoặc kết quả thật. Không thay API/metrics Foundation hay M2.
+
+| Module / script | Trách nhiệm |
+| --- | --- |
+| `pilot/contract.py`, `manifest.py` | Model/config/authority/source binding; đúng master TRAIN, selector xác định, input discovery/validation; không có dataset read khi import. |
+| `pilot/backend.py` | Ba native adapters; preflight trước weights, audited Phi code, single-T4 FP16/eager; không synthetic prediction backend production. |
+| `pilot/phi_attention.py`, `phi_inputs.py` | Phi 4.43.3: config eager sau deserialize, CLIP scope và reviewed-class `from_pretrained` dùng chung CPU meta/worker; tránh AutoModel re-exec reset CLIP. CPU native synthetic processor 16 crops/token/grid/mask/dtype và Hub checkpoint metadata trước ledger. Giữ strict eager; không weights/CUDA/forward tại gate CPU. |
+| `pilot/smol.py` | Smol 4.51.3: source hashes, native `from_pretrained` meta/worker, 24+27 explicit eager và cached flags; native processor/token/mask/context checks dùng chung; source-only Hub revision/inventory/LFS CPU admission. |
+| `pilot/output_diagnostics.py`, `scripts/diagnose_pilot_outputs.py` | Mô tả lặp chuỗi raw/JSON/EOS/max64 từ evidence; verify ZIP/sidecar và SHA. Không threshold/stop gate, cứu nhãn hoặc thay metric. |
+| `pilot/diagnostics.py` | Event start/pass/failure theo stage/subcomponent, config/class cụ thể, traceback giới hạn/redacted, RAM/cgroup; giữ lỗi constructor trước khi backend object tồn tại. |
+| `pilot/artifacts.py`, `hnlo.py` | Exclusive durable raw/partial archive/resume; model-specific token branch/actual decision proof, independent decoder và numeric oracle. |
+| `pilot/runner.py`, `bootstrap.py` | Kernel stdlib chọn CPython Linux 3.12/3.11; tạo venv không pip, bootstrap wheel pip đã khóa hash vào đúng target, kiểm pins/CPU ABI và receipt `nvidia-smi` trước consumption; worker khóa executable/prefix, sau đó CUDA/model/first12; dừng lỗi; PILOT không promote FULL. |
+| `pilot/report.py` | Exact planned-ID accounting, classification + HNLO coverage, domain/supplement tách riêng; thresholds đề xuất chưa duyệt. |
+| `scripts/prepare_three_vlm_pilot.py`, `export_pilot_qwen_verified.py` | CPU preparation và optional original-V4 exporter, mỗi phần cần data/artifact grant riêng trước đọc. |
+| `scripts/report_three_vlm_pilot.py`, `build_three_vlm_notebooks.py` | Hash/replay/exact join archives; reproducible embedded-source notebook generation. |
+| `SafeShift_ENVIRONMENT_PREFLIGHT_{phi,smolvlm2}.ipynb` | Cùng runtime qualification production nhưng không grant/data/GPU/weights/attempt; receipt ở working, venv/cache/temp ở scratch. |
+
+Model/data imports nặng nằm sau authorization; package/test CPU mặc định vẫn chỉ
+standard library. Các công cụ public source/tokenizer audit dùng dependencies
+riêng, không weights. Đọc [runbook](KAGGLE_THREE_VLM_PILOT.md),
+[source/CPU audit](THREE_VLM_TECHNICAL_AUDIT.md) và `tests/test_pilot.py` trước sửa
+gói này; không đọc lại toàn lịch sử hoặc chuyển grant cũ. Review/audit độc lập,
+real TRAIN preparation, model access/native T4/Phi ABI, real HNLO/quality và
+FULL TRAIN đều có gate riêng, hiện chưa được thực nghiệm.
+
+Issue #143 bổ sung [nghiệm thu Phi end-to-end](PHI_KAGGLE_END_TO_END_143.md):
+real-loader a4/a5 reproduction và native generation pipeline với scripted logits
+CPU, không model inference. Logs lớn xuất tail có hash/coverage tường minh;
+raw không truncate. Bằng chứng phần mềm không chứng minh T4 fit/HNLO thực tế.
+
+Kaggle notebook kernel có thể là Python 3.13; nó không được dùng làm worker.
+Supervisor probe candidate bằng chính tiến trình đó, yêu cầu CPython Linux x86_64
+3.11/3.12 cùng module stdlib thiết yếu (`ensurepip` chỉ được quan sát), rồi tạo
+`venv --without-pip --copies`. Supervisor pip hỗ trợ `--python` cài local wheel
+pip 25.0.1 đã khóa URL/size/SHA vào target; worker tự kiểm version/path/prefix.
+Requirements phải khớp `runtime_versions.json`; pip check/freeze và CPU native op chạy trước ledger.
+Pilot còn ghi receipt `nvidia-smi` PASS trước ledger, bind receipt hash; lỗi GPU
+hoặc ghi receipt giữ BLOCKED không tiêu thụ attempt. Hai notebook environment
+preflight vẫn chỉ chạy CPU; CUDA FP16 thật được kiểm trong worker sau ledger.
+Worker kiểm lại `sys.executable`, `sys.prefix`, version và mọi site-packages để
+ngăn rò thư viện kernel. Không candidate hợp lệ thì lưu BLOCKED receipt, không
+fallback 3.13 hoặc tự build/download Python.
+
+## Issue173 diagnostic continuation routing
+
+`docs/ISSUE173_DIAGNOSTICS.md` records the four bounded synthetic jobs and
+scientific limits. `scripts/diagnostic173.py` is retired at launch/worker/CLI;
+`safeshift/diagnostic173_grammar.py` is a PROPOSED diagnostic helper only.
+`report_diagnostic173.py` replays sealed status/custody without exporting raw.
+`minicpm173_train_review.py` prepares exact remaining ordinal0 under an explicit
+review hold. `tests/test_kaggle173_diagnostic.py` covers strict INVALID, grammar
+language, unknown consumption, empty-VM replay and published notebook fences.
+Original candidates/fulltrain/pilot adapters and locks are unchanged.
+
+## InternVL grammar V2 science qualification — 04/11/2026
+
+`safeshift/internvl_grammar.py` develops the diagnostic trie as an isolated,
+PROPOSED label-only method. It adds native token/context admission and CPU
+full-vocabulary pre/post mask trace verification; it never computes HNLO or
+registers with a production runner. `configs/grammar/internvl35_v2.json` describes
+the proposed identity, not an execution grant. `scripts/qualify_internvl_grammar.py`
+runs synthetic tests and optionally hash-locked public tokenizer/native processor
+CPU checks without model weights. Tests live in `tests/test_internvl_grammar.py`.
+Read [the science dossier](research/INTERNVL_GRAMMAR_SCIENCE_V1.md) for HNLO N/A,
+same-prefix versus changed-prefix proof, custody and exact-series comparison.

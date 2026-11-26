@@ -189,3 +189,713 @@ Thay đổi hai file khoa học về sau cần quyết định version/hash mớ
 phê duyệt này sang bytes khác. **NEXT TASK sau xác minh hậu merge và giao việc:
 M3-01 — triển khai trọn hệ thống phân tích Seminar CPU trên fixture SYNTHETIC**.
 M4 cần quyền đọc artifact thật riêng; Khóa luận/học vụ vẫn có các gate riêng.
+
+## DEC-20261031-CANDIDATE160-RECOVERY
+
+Owner trực tiếp yêu cầu bỏ One-Shot/No-Retry cho hai notebook Candidate160
+InternVL3.5/MiniCPM-V-4; có thể retry/resume sau lỗi/load/ngắt Kaggle và khôi
+phục từ Outputs mà không approval thủ công từng lần trong phạm vi đã giao.
+[Quyết định vận hành đầy đủ](CANDIDATE160_RECOVERY_DECISION_20261031.md) ghi
+attempt/series/lineage bất biến, migration trạng thái cũ, bounded calls/khóa
+tiến trình và giới hạn cross-VM. Bổ sung append-only; không sửa quyết định cũ.
+
+Giữ160 TRAIN/order/revisions/checkpoint/source hashes/C1/HNLO/metric/nhãn/
+protocol/raw-before-parse/quyền dữ liệu. **Scientific result selection PENDING;
+không pooling hoặc chọn kết quả thuận lợi.** Chỉ task CPU synthetic; một Draft
+PR chờ ChatGPT kiểm GitHub và Antigravity audit độc lập trước merge. Không GPU,
+attempt thực nghiệm, tự phê duyệt khoa học hoặc merge.
+
+## DEC-20261031-KAGGLE-TECHNICAL-VERIFICATION
+
+[Owner directive PR156](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+và task trực tiếp cùng ngày yêu cầu Codex kiểm mọi notebook Kaggle trên Kaggle
+thật trước bàn giao, có bounded inference trên đúng TRAIN/Input/model/config
+đã được phép. Quy tắc này được ghi append-only trong AGENTS; mở rộng task CPU
+cũ sang kiểm kỹ thuật thật trong phạm vi Owner, không duyệt khoa học/học vụ,
+TEST/bên thứ ba hoặc quyền merge. Owner vẫn chạy full experiment sau review.
+
+Candidate160 thêm technical_smoke riêng: manifest160 nguyên bytes/order,
+ordinal0,1 call,1 load,3600 giây/setup; không production reservation/history,
+retry loop, scientific metrics hoặc pooling. Dùng cùng supervisor/worker,
+source/checkpoint/C1/precision/parser/HNLO và admission. Giữ evidence FAIL/PASS,
+receipt/hash của source/notebook cuối; chưa có actual weights/inference/export
+đạt thì BLOCKED/NOT VERIFIED. [Hồ sơ](CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+Scientific result selection vẫn PENDING; không thay quyết định recovery trước.
+
+## FINDING-20261031-MINICPM-FP16-NUMERICS — BLOCKED / proposed change PENDING
+
+Real Kaggle smoke và hai bounded diagnostics trên đúng ảnh0/model/checkpoint/
+FP16/eager đã khóa xác nhận weights/Q/K/V hữu hạn, mask không fully masked;
+native resampler FP16 baddbmm sinh60.522 +Inf, softmax sinh569.800 NaN. Không
+OOM, không lỗi archive/Path. Các ZIP/raw/log/hash được giữ; xem
+[hồ sơ bằng chứng](CANDIDATE160_KAGGLE_VERIFICATION_20261031.md).
+
+[Đề xuất numerical policy riêng cho attention](MINICPM4_NUMERICS_PENDING_DECISION_20261031.md)
+là **PENDING, chưa áp dụng/chưa được phê duyệt**. Task Owner mục9 khóa precision/
+source; bounded smoke authority không tự là ngoại lệ thay các trường đó. Không
+upcast, đổi source lock, đổi precision/model/ảnh/prompt/parser hoặc tắt validation
+để vượt lỗi. Cần quyết định Owner cụ thể trước triển khai exception/effective
+implementation mới; teacher/third-party authority và quyền merge vẫn riêng.
+Không thay scientific result selection=PENDING, không pooling hoặc chạy full160.
+
+## DEC-20261031-OWNER-HOLD-MINICPM-NUMERICS
+
+Owner trực tiếp chọn **phương án1: giữ BLOCKED** sau
+[đánh giá sơ bộ GitHub của ChatGPT](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540368755)
+tại HEAD `51f6eec3be1e1c3eb6a69346e9bd1571be7c87d1`. Chưa cho phép thay đổi
+precision/effective source; ngoại lệ FP32 trong resampler vẫn **PENDING,
+NOT AUTHORIZED, NOT APPLIED**. Không coi đánh giá này là final review PASS,
+Antigravity audit, phê duyệt khoa học hoặc quyền merge.
+
+Giữ nguyên Draft PR156, toàn bộ bằng chứng Kaggle và lỗi FP16. Không merge,
+không chạy lại cấu hình MiniCPM chưa sửa, không chạy160 ảnh chính thức. Chỉ
+tiếp tục triển khai/kiểm số học khi có quyết định Owner riêng về phạm vi thay
+đổi, trong đúng session Codex/branch/PR156. Giữ scientific selection=PENDING,
+pooling_allowed=false và toàn bộ model/checkpoint/source/precision locks.
+Đây là xác nhận HOLD, không phê duyệt hoặc phủ nhận hồi tố đề xuất số học.
+
+## DEC-20261031-MINICPM-RESAMPLER-FP32-TECHNICAL-EXCEPTION
+
+Owner trực tiếp cho phép **triển khai và thử kỹ thuật ngoại lệ số học hẹp**
+trong cùng session/branch/Draft PR156, sau HOLD tại HEAD25d3ec8. Phạm vi duy
+nhất: MiniCPM resampler attention score, softmax và phép nhân với value dùng
+FP32, kết quả về dtype gốc trước output projection. Weights giữ FP16; model/
+checkpoint/revision/source lock gốc, TRAIN160/order, C1, eager, parser, HNLO và
+mọi quyết định khoa học giữ nguyên. Không áp dụng precision toàn mô hình.
+
+Khai báo effective implementation/configuration/ID/hash mới; giữ nguyên tất
+cả evidence FP16 FAIL. Kiểm regression số học/finite/load/history/isolation,
+rồi Codex tự chạy technical smoke trên Kaggle thật, trước tiên đúng ảnh0 của
+TRAIN160,1 call có giới hạn. Phiên bản thử kỹ thuật riêng không resume/pool
+với FP16 cũ hoặc production; chưa cấp quyền chạy160 ảnh/full experiment/TEST.
+
+Quyền này chỉ là **AUTHORIZED_FOR_BOUNDED_TECHNICAL_TRIAL**, không phê duyệt
+baseline/phương pháp khoa học, result selection, audit PASS hoặc merge. Smoke
+chưa PASS phải BLOCKED; nếu PASS giữ Draft để ChatGPT review GitHub rồi quyết
+định Antigravity audit độc lập. Ngoại lệ hẹp này thay HOLD chỉ trong phạm vi
+trên; mọi thay đổi rộng hơn vẫn chưa được cấp quyền. Không sửa quyết định cũ.
+
+## RESULT-20261031-MINICPM-RESAMPLER-FP32-TECHNICAL
+
+Trial được phép ở trên đã **TECHNICAL_SMOKE_PASS** trên Kaggle thật với đúng
+notebook/runtime/effective config được khóa:1 ảnh0 TRAIN160 gốc/1 load/1 call,
+weights FP16, resampler score/softmax/value FP32, output về FP16;11/11 raw
+logit steps hữu hạn, parser SUCCESS, raw/custody/ZIP/SHA256/cleanup PASS.
+[Báo cáo/receipts](MINICPM4_FP32_ATTENTION_TECHNICAL_20261031.md) giữ đủ hashes
+và evidence FP16 FAIL cũ nguyên trạng. HNLO unaligned, numeric HNLO chưa chứng
+minh. Đây là kết quả kỹ thuật, không APPROVED baseline/model quality/science.
+
+Giữ **Draft PR156 / READY FOR REVIEW trial kỹ thuật** để ChatGPT kiểm exact
+GitHub HEAD rồi quyết định audit Antigravity độc lập. Scientific result selection
+vẫn PENDING/pooling=false; không official160/TEST/merge hoặc đổi locks ngoài
+ngoại lệ. Không suy PASS của1 ảnh sang toàn cohort, runtime dài hoặc các model/
+notebook chưa được kiểm lại sau đổi embedded source. Owner chưa cấp quyền
+production cho numerical policy này qua quyết định technical trial.
+
+## DEC-20261031-CANDIDATE160-PRODUCTION-ENGINEERING
+
+Nguồn: [Owner follow-up directive](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540904325)
+và task trực tiếp trong session mới. Cho phép hoàn thiện và tự kiểm kỹ thuật
+hai đường production dự kiến bàn giao, cùng branch/Draft PR156. Chuẩn bị
+đường MiniCPM FP32 với effective ID/config/source/hash và history riêng;
+**không phê duyệt baseline khoa học hoặc activation official160 FP32**.
+Scientific result selection vẫn PENDING, pooling=false; TEST vẫn đóng.
+
+Profile vận hành riêng `train160-production-engineering-v1` dùng đúng manifest
+TRAIN160, không đổi order/nhãn/split/C1/parser/HNLO/model/checkpoint. Ba ordinal
+được chốt trước inference mới theo metadata kích thước đã xác minh:0 (đầu),
+15 (diện tích nhỏ nhất, tie ordinal đầu),111 (height/width lớn nhất, tie đầu).
+Không dùng prediction/GT để chọn. Đây là bounded engineering scope, không
+cohort nghiên cứu mới.1 load/≤3 native calls/3600 giây mỗi attempt; không retry
+nội bộ. Dùng cùng production supervisor/worker/controller/raw/history/export.
+Resume/rerun kỹ thuật chỉ trong scope này, không trở thành lịch sử official.
+Sau PASS, import sealed ZIP vào workspace mới để kiểm resume zero-load/zero-call.
+
+InternVL fence/INVALID và MiniCPM alternative native token segmentation phải
+được giữ đúng parser/continuation contract hiện hành. Không tạo numeric HNLO
+bằng thay token, decode gần đúng hoặc đổi surfaces. Không hồi tố sửa raw hoặc
+receipts cũ. Trước Owner full run: final-source Kaggle evidence, fresh ChatGPT
+exact-HEAD review, Antigravity audit độc lập và merge được cấp quyền riêng.
+Quyết định khoa học còn thiếu: Owner/Lead chấp thuận hay từ chối
+`minicpm4-resampler-attention-fp32-v1` làm effective baseline cho official
+TRAIN160, cùng identity/config đã kiểm; selection/pooling vẫn cần quyết định
+riêng trước phân tích khoa học. Không thể mở gate bằng notebook flag/approval giả.
+
+## RESULT-20261031-CANDIDATE160-PRODUCTION-ENGINEERING
+
+Hai notebook PRODUCTION cuối đã được Codex tự kiểm trên Kaggle private với
+đúng source `09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08`,
+3 ordinal đã chốt0/15/111 mỗi model,1 load/3 native calls; finite logits/raw/
+native tokenizer/parser/HNLO handling/cleanup/ZIP/SHA PASS. Resume sealed ZIP
+vào workspace mới thực sự0 loads/0 calls, giữ INVALID là durable completion.
+[Báo cáo và receipts](CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md).
+
+InternVL có38/38 finite steps, INVALID/SUCCESS/INVALID; case15 HNLO thực
+7.301041903017601 với native branch/Decimal oracle khớp. Hai INVALID do code
+fence thật, không sửa parser. MiniCPM33/33 finite steps,3 SUCCESS, HNLO vẫn
+unaligned do alternative native segmentation ngoài continuations đã prove.
+Không đổi arithmetic implementation đã PASS, checkpoint/TRAIN160/C1/parser/
+HNLO/metric; không chọn theo output hoặc nâng trạng thái khoa học.
+
+**READY_FOR_TECHNICAL_REVIEW**, không READY_FOR_OWNER. Official MiniCPM FP32
+vẫn BLOCKED_PENDING_SCIENTIFIC_DECISION; decision adoption baseline còn thiếu.
+Giữ Draft PR156, fresh ChatGPT review và Antigravity audit độc lập trước merge.
+Không full160/TEST, không coi3 ảnh là kiểm đủ12 giờ/all160 hoặc global lock.
+
+## DEC-20261031-OWNER-MINICPM-FP32-OFFICIAL-TRAIN160
+
+Source: [Owner decision relay](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6544285481),
+read directly through GitHub REST in this task, plus the Owner's current task.
+The relay explicitly transcribes the Owner; it is not an independent Research
+Lead, faculty or auditor signature. Status: **OWNER_ADOPTED_FOR_PROJECT_TRAIN160**;
+activation requires a separately reviewed, independently audited, authorized
+merge and live postmerge verification. No official execution before that sequence.
+
+The Owner adopts `minicpm4-resampler-attention-fp32-v1` for the original official
+160-image TRAIN campaign. Effective configuration SHA256:
+`5b85504ff24ff42d4d629dbf00feb0c484022cfef3a7d57b571eaae99d1c8b00`;
+numerical descriptor SHA256:
+`2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da`.
+FP16 weights/eager remain; only resampler scores, softmax and value product
+compute FP32, with native dtype restored before output projection. Keep original
+model/revision/checkpoint/public-source/manifest/order/C1/generation/parser/HNLO/
+labels/metrics unchanged. Preserve INVALID and unaligned HNLO as observed.
+
+Trusted source policy `safeshift/candidates/train_official.py` binds only these
+identities and the original TRAIN160 manifest. Supervisor checks actual hashes
+before Inputs; direct workers check the immutable expected Owner adoption record
+and complete execution scope before software/data/GPU/load. Notebook metadata is
+informational, not approval. The frozen numerical descriptor's original technical
+scope/authority text remains historical bytes; the new policy supplies official
+project adoption separately, without relabeling old evidence or changing its hash.
+Source identity changes and must be recorded and requalified on final bytes.
+
+One new Draft PR contains activation, tests, deterministic notebooks, documents
+and small sanitized receipts. Codex performs bounded final-source technical
+Kaggle verification separately; stop for ChatGPT's direct GitHub review and an
+independent Antigravity audit. The audit waiver for PR156 does not apply here.
+Do not assert an audit, merge or academic approval that has not happened.
+
+After ChatGPT verifies the authorized merge, the Owner authorizes Codex in this
+same task/session to operate Kaggle `resume`, attach original private bundle,
+checkpoint and verified official historical Outputs, and finish pending TRAIN160
+within160 native calls/43200 seconds per attempt. Serialize jobs, verify history
+before resume; never erase markers or automatically retry unexplained failures.
+Keep technical/FP16 histories separate from official FP32 completion and preserve
+all raw/errors/ZIPs/sidecars/lineage privately under `data/processed/`.
+
+This decision supersedes the earlier FP32 adoption BLOCKED status and personal
+Owner operator requirement only within this exact original TRAIN160 campaign.
+Scientific selection/pooling remains **PENDING**; TEST, new protocols/metrics/
+roster, thesis D/V/T, Accuracy/Macro-F1 analysis and model choice are outside scope.
+No external academic acceptance is claimed. If independent authority outside the
+Owner is established as required, report BLOCKED with that requirement's source.
+
+
+## DEC-20261101-T1-OWNER-FALSE-SAFE-DIRECTION
+
+- Ngày: **01/11/2026, Asia/Bangkok**. Người quyết định: **SafeShift Owner**;
+  Codex chỉ ghi lại. Nguồn: [Owner relay do ChatGPT chuyển lên GitHub](https://github.com/tantdna2/SafeShift/pull/158#issuecomment-6552710543)
+  và task T1 trực tiếp của Owner cùng ngày. Đã đọc comment thật trên GitHub.
+- BASE/main đã xác minh: `a113ef707970c50a7420c84e8a8e46fa2dc3db01`;
+  PR158 MERGED. Merge T0 là hoàn tất hồ sơ đề xuất, không tự phê duyệt khoa học.
+- Trạng thái: **OWNER_DIRECTION_ACCEPTED / T1_AUTHORIZED**. Ý chí Owner có
+  hiệu lực theo nguồn nêu trên; hồ sơ này chờ review/merge vào repository.
+  Không ghi chữ ký độc lập của Research Lead, giảng viên, chủ dữ liệu/custodian.
+
+Owner chấp nhận hướng Khóa luận **phát hiện quyết định false-safe và ưu tiên
+người kiểm tra lại**; Qwen3-VL-8B-Instruct là ứng viên focal có điều kiện,
+InternVL3.5-4B-HF và MiniCPM-V-4 đúng resampler FP32 là hai ứng viên kiểm tra
+chéo, tối đa ba mô hình; **tạm dừng tìm mô hình thứ tư**. MiniCPM giữ identity
+`minicpm4-resampler-attention-fp32-v1`, config SHA256
+`5b85504ff24ff42d4d629dbf00feb0c484022cfef3a7d57b571eaae99d1c8b00`,
+descriptor SHA256 `2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da`;
+weights FP16/eager, không đổi thành toàn model FP32. Exact revisions và các
+điều kiện qualification trong [T0 §4](T0_FALSE_SAFE_DESIGN_20261101.md) giữ nguyên.
+
+Phương pháp phải có **baseline, ablation, stress test, phân tích lỗi và khả
+năng tái lập (E1–E5)**. Đây là yêu cầu thiết kế được Owner nêu, không phê duyệt
+công thức/rule cụ thể hoặc chứng nhận đã thực hiện E1–E5. Final model qualification,
+role utility/cost và final roster vẫn PENDING; không bắt buộc giữ đủ ba bằng
+mọi giá hoặc dùng HNLO không tồn tại của MiniCPM.
+
+Quyết định bổ sung phạm vi hướng/candidate cap cho Khóa luận và dừng tuyển
+model thứ tư trong kế hoạch bốn-peer PROPOSED. Không hồi tố M1/M2, roster
+Seminar lịch sử, T0, dataset/split/nhãn/metric/config đã khóa. Không đóng toàn
+bộ O1/O3: O1 còn chuẩn học vụ/negative route theo scope cụ thể; O3 còn final
+roster/qualification/selection. **O2/O4/O5 PENDING**, gồm protocol/series policy,
+nguồn/quyền/GT/D/V/T/custody, budget/gain/severe margin/coverage/CI/precision/
+min sources-events/cost/stop rules. 20%/10 điểm phần trăm/95%/80% không là số
+được duyệt. O6 run authority và O7 reviewer/study giữ riêng, chưa mở bởi T1.
+
+Owner cho **T1 kiểm tài liệu, metadata TRAIN và feasibility**, ghi checklist
+người có quyền cần bổ sung, một Draft PR và PROJECT_STATE. Không acquisition,
+annotation, liên hệ bên thứ ba, Kaggle/GPU/inference, TEST, huấn luyện/ranker,
+triage implementation, pooling hoặc chạy dữ liệu xác nhận. [Hồ sơ T1](THESIS_DATA_PROTOCOL.md)
+đánh giá GO/BLOCKED/NO-GO; hoàn tất T1 không đồng nghĩa xác nhận cải tiến GO.
+Dừng tại Draft PR; ChatGPT review GitHub và quyết định audit; không merge.
+
+## DEC-20261101-T4-OWNER-O2-DOSSIER-AUTHORIZATION
+
+Ngày01/11/2026, Asia/Bangkok. Nguồn: [Owner START T4 tại PR161](https://github.com/tantdna2/SafeShift/pull/161#issuecomment-6554558701),
+đọc trực tiếp GitHub REST trong T4, và task Owner trực tiếp. BASE/main đã
+kiểm `f10bac7dea054c8e199a807dadd768517579e164`. **T4_AUTHORIZED;
+O2_SCIENTIFIC_SELECTION=PENDING**. Đây là chỉ thị lập hồ sơ sau T3 merge,
+không chữ ký phê duyệt chính sách selection hoặc quyền phân tích predictions.
+
+Owner cho một hồ sơ quyết định có ma trận ba model, exact source/run/series/
+attempt, một quy tắc đề nghị, ledger và GO/BLOCKED/NO-GO; được kiểm receipts/
+metadata TRAIN đã có trong quyền T1. [T4-O2-SELECTION-v1](T4_O2_SELECTION_DOSSIER_20261101.md)
+là **PROPOSED**, kể cả đề nghị dùng riêng official InternVL RECOVERY. Không
+chuyển quyền retry/resume hoặc MiniCPM FP32 adoption thành selection approval.
+
+Không đọc ảnh/TEST/raw archives/per-image saved predictions, không Kaggle/GPU/
+inference/training/ranker hoặc phân tích hiệu quả mới; không sửa T2/T3 khi
+không cần. O2 phần còn lại, O3 final roster, O4/O5, quyền dữ liệu/học vụ vẫn
+riêng. Không đặt thresholds hoặc giả authority ID. Cập nhật PROJECT_STATE
+cùng đúng một Draft PR, dừng để ChatGPT kiểm GitHub, không merge/Antigravity.
+
+## DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR
+
+**Ngày:** 02/11/2026, Asia/Ho_Chi_Minh. **Người quyết định:** Owner trong phạm vi dự án, nguồn [Issue #167](https://github.com/tantdna2/SafeShift/issues/167); main lúc ghi `0295172783dcf82426923d1af621dde9db8ed42c`. **Trạng thái:** `OWNER_SCOPE_DIRECTION_RECORDED; IMPLEMENTATION_PENDING`. Không là phê duyệt học vụ/O2–O6 hoặc quyền chạy.
+
+**Đích phân tích TRAIN:** mọi mô hình được lựa chọn chính thức phải dùng chung **3.763 ảnh InspecSafe TRAIN** với cùng ID/manifest và 3.763 trạng thái đầy đủ. Mục tiêu kỹ thuật: cố gắng đạt **3.763 nhãn Level01–04 hợp lệ/model**; không dùng pilot160 như kết quả full TRAIN; không bảo đảm 100% SUCCESS nếu mô hình không thể được sửa hợp lệ. TRAIN đã phơi nhiễm chỉ cho phân tích development/thăm dò được phép; không thay thế V/T độc lập.
+
+**Xử lý INVALID/lỗi/chưa chạy:** yêu cầu phân loại và sửa nguyên nhân (load/môi trường, GPU/OOM, timeout, pipeline, tokenizer/parser, định dạng sinh, hành vi mô hình); kiểm thử trước và sau sửa, lập kế hoạch chạy lại có kiểm soát cho đúng ảnh còn lỗi/chưa chạy sau quyền O6. Không gán nhãn bằng ground truth, không biến INVALID thành SUCCESS bằng suy đoán, không bỏ hoặc giấu trường hợp không sửa được; ghi NO-GO/blocked và xin quyết định scope khi cần. Quy tắc Candidate160 lịch sử coi INVALID có raw là durable vẫn đúng cho **resume cũ**; campaign sửa lỗi full TRAIN phải có cơ chế `repair` phân biệt với `resume`, không âm thầm đổi cách chọn kết quả.
+
+**Hiện trạng kế thừa, không tự trộn:** Qwen3 V4 ORIGINAL: `3763=3539 SUCCESS+1 TECHNICAL_ERROR+223 NOT_ATTEMPTED`; InternVL3.5 TRAIN160: `135 SUCCESS+25 INVALID`, `3603` ngoài pilot; MiniCPM-V-4 FP32 TRAIN160: `155 SUCCESS+5 INVALID`, `3603` ngoài pilot, **label-only**, HNLO Method A 0/155. Mọi source/revision/config/raw/series/attempt gốc giữ nguyên. Không tự gộp Qwen Recovery224/composite, InternVL RECOVERY với lịch sử khác, MiniCPM smoke/rerun. Nếu sửa prompt/parser/model/generation ảnh hưởng semantics, phải version và đánh giá comparability; có thể cần series mới toàn cohort, không backfill từ lần chạy khác.
+
+**Roster và khoa học:** ba mô hình trên là ứng viên, chưa là final O3; quyết định Owner ngày 01/11 tạm dừng tuyển model thứ tư còn hiệu lực. Không đổi dữ liệu/split/nhãn/metric/protocol/HNLO đã khóa hoặc tự duyệt bốn peers, H1/quorum/O2/O5. Thiếu phê duyệt thì ghi PENDING, không giả quyết định của Research Lead/giảng viên/data custodian.
+
+**Thực hiện:** tài liệu quyết định được ghi **trước code** trong một branch; Codex tiếp tục cùng branch với CPU synthetic full-TRAIN readiness/repair/resume, notebook/preflight G0–G6, tests/runbook và PROJECT_STATE; tạo **duy nhất một Draft PR** rồi dừng. ChatGPT review GitHub thật; vì có đường thay đổi inference/selection phải xét audit Antigravity độc lập. **Không cấp** quyền Kaggle/GPU/full-TRAIN inference, TEST, ảnh/raw/GT ngoài quyền hiện hành; cần approval O2 exact-series, O3 roster, O4 dữ liệu, O5 budget/stop, O6 grant từng run trước chạy thật.
+
+## PROPOSAL-20261102-ISSUE169-FULLTRAIN-SOURCE-REPAIR
+
+Ngày **02/11/2026, Asia/Bangkok**. Nguồn giao việc:
+[Issue #169](https://github.com/tantdna2/SafeShift/issues/169) và task Owner
+trực tiếp, sau [hậu merge PR168](https://github.com/tantdna2/SafeShift/pull/168#issuecomment-6570735120).
+BASE `afc932b2a43cf829db12f53d6ac3d578c6123eec`, đã đối chiếu GitHub.
+**DOCUMENTATION_AUTHORIZED; PROPOSED_FOR_OWNER_REVIEW; O2–O6=PENDING/BLOCKED**.
+Đây là bản ghi đề xuất của Codex, không phải Owner đã duyệt selection.
+Signer/approval ref/time cho đề xuất hiện chưa có; không ký thay bất kỳ ai.
+
+[T4 successor v2](T4_O2_SELECTION_DOSSIER_20261101.md#issue169-successor-full-train)
+tận dụng nguồn T4-v1, đề nghị exact bốn Qwen V4 ORIGINAL, InternVL3.5 official
+RECOVERY, MiniCPM official FP32 INITIAL label-only; kế thừa có điều kiện trên
+cùng3.763 TRAIN IDs, tách resume/repair/rerun và giữ original/attempt/series.
+Qwen legacy thiếu field phải có representation được duyệt; không bịa series
+hoặc config hash. Không ghép Recovery224/composite/smoke hoặc chọn metric đẹp.
+Thay identity/semantics cần version/series/comparability và quyền riêng.
+
+Hướng false-safe/full TRAIN, ba ứng viên tối đa và dừng tuyển thứ tư kế thừa
+quyết định Owner01/11–02/11. [Owner label-only](https://github.com/tantdna2/SafeShift/pull/166#issuecomment-6567502211)
+giữ MiniCPM HNLO0/155; không mở lại tìm điểm. Ma trận O1–O6 và L1–L4/B1–B6
+trong dossier chỉ rõ quyền dự án khác học vụ/quyền bên thứ ba, thiếu seal và
+approval khác metadata PASS. Không chốt phương pháp, roster, thresholds hoặc
+freeze M1/M2 từ Issue169. TRAIN H/D không là xác nhận V/T độc lập.
+
+[Receipt](evidence/issue169_source_checks.md) chỉ kiểm tracked metadata và
+docs; không private raw/GT/TEST, Kaggle/GPU/inference, quyền mới hoặc metrics
+thật. Dừng ở một Draft PR; ChatGPT review, quyết định audit độc lập Antigravity
+và merge được cấp riêng. Native integration/history bridge/preflight phải
+được giao task riêng sau decisions/chứng từ; hồ sơ này không mở task/run đó.
+
+
+## DEC-20261102-OWNER-FRESH-FULLTRAIN-ONLY
+
+Date: **02/11/2026, Asia/Bangkok**. Source: [Issue #171](https://github.com/tantdna2/SafeShift/issues/171)
+and the direct Owner task. BASE `1acb3ef7c0deadbbde7da0b1c63b71296e3950e5`.
+**OWNER_FRESH_FULLTRAIN_ONLY / OWNER_DIRECTION_ACCEPTED**: start over for
+Qwen3-VL-8B-Instruct, InternVL3.5-4B-HF and MiniCPM-V-4 with the exact FP32
+resampler, label-only. Each candidate starts a separate new series on the
+same original 3,763 TRAIN IDs/order/image SHA: 11,289 planned initial calls,
+before repair. This is neither an executed result nor a promise of all SUCCESS.
+
+This supersedes prediction inheritance proposed in
+T4-O2-FULLTRAIN-SELECTION-REPAIR-v2 for this fresh campaign only. Preserve the
+proposal and all historical evidence. No SUCCESS/INVALID/prediction imports
+from Qwen V4, Recovery224/composite, InternVL RECOVERY, MiniCPM INITIAL or
+smoke runs. Historical prediction bridges are not needed for new initial;
+new source/checkpoint/native path and cohort projection custody remain required.
+
+Initial plans all 3,763/model, allowing bounded attempts under approved caps.
+Resume schedules only NOT_ATTEMPTED within the explicitly selected new series
+with unchanged identity. Repair targets only INVALID/TECHNICAL_ERROR with
+outcome hash, cause evidence, fix/regression and specific authority/caps.
+Semantic/configuration changes need another series and comparability review.
+No completion union, backfill or favorable-output selection. Preserve strict
+C1/parser/HNLO/labels/metrics, raw-before-parse and immutable attempts/history.
+MiniCPM keeps FP16 weights/eager and only resampler attention FP32; historical
+HNLO 0/155 remains label-only, without reopening the score investigation.
+
+This is Owner project direction, not academic approval, final O3 roster,
+O2 science/comparability, O4 rights/custody, O5 numerical caps or O6 per-run
+grant. False-safe/E1-E5 and the pause on recruiting a fourth model remain.
+One new branch, first commit documents only, then native preparation,
+notebooks, CPU synthetic tests/receipts/runbook and PROJECT_STATE in one
+Draft PR. No Kaggle/GPU/real model load/inference, private raw/GT/images or
+TEST. Live G0-G6 remain BLOCKED/NOT_VERIFIED. Stop for direct ChatGPT review
+and independent Antigravity audit; merging requires separate authorization.
+## DEC-20261102-ISSUE173-BOUNDED-KAGGLE-VERIFICATION
+
+Source: [Owner Issue #173](https://github.com/tantdna2/SafeShift/issues/173)
+and direct task, 02/11/2026 (Asia/Bangkok). Base main:
+`50d0c910319a6e93354a3d27887418aeb320709f`.
+Owner authorizes live Kaggle environment observation and exact pinned public
+software preparation. This supersedes Issue171's no-Kaggle task restriction
+only for this technical verification; production `contract.authorize()` stays
+closed. No dataset is attached/read until rights, cloud purpose, original TRAIN
+membership/custody, checkpoint identity and resource gates are verified.
+
+Conditional smoke ceiling is one TRAIN image per model, three native calls
+total, with independent run/attempt identities outside all `fresh171-*` series.
+Consumed calls cannot be retried without applicable authority and remaining
+budget. No full TRAIN, TEST, GT rescue, scientific qualification or O2–O6 approval.
+Keep Qwen pins/semantics, peers' strict C1 and MiniCPM FP32 resampler/label-only.
+One branch and one Draft PR; ChatGPT review and independent Antigravity audit,
+no merge. Actual measurements and blockers belong in `KAGGLE_PREFLIGHT_173.md`.
+
+## PROPOSAL-20261104-INTERNVL-GRAMMAR-V2-LABEL-ONLY
+
+Date:04/11/2026, Asia/Bangkok. Authority for the work: direct Owner task and
+[PR175 post-merge handoff](https://github.com/tantdna2/SafeShift/pull/175#issuecomment-6620752693).
+Base `5ff62212434034f29123e266377f041641c09302`.
+**PROPOSED; SCIENTIFIC_ADOPTION_PENDING; NO_EXECUTION_AUTHORITY.**
+
+Codex recommends **ĐỀ XUẤT ÁP DỤNG (chờ phê duyệt khoa học)**
+`internvl35-canonical-json-grammar-v2` as a new **label-only** method with
+`HNLO_NA_GRAMMAR_POLICY_V2`, never HNLO-equivalent. The
+[dossier](INTERNVL_GRAMMAR_SCIENCE_V1.md) gives the fixed-prefix cancellation
+proof, changed-prefix counterexample, tested four-label method and limitations.
+This is Codex's proposal, not an Owner/Research Lead approval or a metric change.
+Signer/approval reference remains absent. If comparable InternVL HNLO is a
+required endpoint, reject this policy and retain official C1.
+
+Any later activation requires the descriptor/implementation hashes, explicit
+acceptance of HNLO N/A and heterogeneous three-system label comparison, and
+new complete-cohort InternVL series on the same3763 original IDs. No mixing
+grammar repairs with old successes, prediction inheritance or favorable-output
+selection. Qwen's existing score eligibility and Mini's label-only decision
+remain separate. O2–O6, academic and third-party authority remain unresolved.
+
+Current work is CPU synthetic/native tokenizer software checks and reuse of
+existing Kaggle receipts only. No real images/GT/private raw/TEST/weights/GPU
+or new model calls. Frozen prompt/parser/HNLO and historical evidence remain
+unchanged. One branch/one Draft PR, ChatGPT direct review, mandatory independent
+audit for this proposed scientific/generation change, then scientific decision
+and separately authorized merge. This entry does not supersede frozen science.
+
+## DEC-20261104-OWNER-APPROVE-INTERNVL-GRAMMAR-V2-LABEL-ONLY
+
+- **Ngày / nguồn:** 04/11/2026 (Asia/Ho_Chi_Minh); Owner dự án SafeShift
+  tuyên bố phê duyệt trực tiếp trong hội thoại và ghi nhận bằng
+  [PR #176 comment #6621440702](https://github.com/tantdna2/SafeShift/pull/176#issuecomment-6621440702).
+- **Người quyết định:** SafeShift Owner/Research Lead trong phạm vi dự án;
+  không mạo nhận phê duyệt học vụ, bên cung cấp dữ liệu hoặc bên thứ ba.
+- **Trạng thái:** `OWNER_PROJECT_METHOD_APPROVED`; hiệu lực trong repository
+  sau khi PR #176 được merge và ChatGPT xác minh hậu merge.
+- **Phạm vi được phê duyệt:**
+  1. `internvl35-canonical-json-grammar-v2` dùng cho InternVL3.5-4B-HF
+     như **một phương pháp label-only có phiên bản riêng**; giữ C1 text và
+     strict parser hiện có, chỉ chấp nhận bốn chuỗi JSON chuẩn và EOS;
+     không gọi phương pháp mới tương đương generation chưa ràng buộc.
+  2. `hnlo=null`, `hnlo_status=HNLO_NA_GRAMMAR_POLICY_V2` cho mọi kết quả
+     grammar V2; không áp dụng phép so sánh HNLO giữa cả ba mô hình,
+     không điền giả điểm và không thay bộ tính HNLO đã khóa.
+  3. **Chấp nhận so sánh nhãn ở mức hệ thống dị thể** của Qwen3 (chính
+     sách gốc), InternVL3.5 (grammar V2) và MiniCPM-V-4 (resampler FP32,
+     label-only) trên cùng tập ID; phải báo rõ chính sách sinh, tỷ lệ
+     đầu ra hợp lệ và mẫu số, không quy khác biệt cho riêng checkpoint.
+  4. Khi có quyền thực thi riêng, InternVL grammar V2 phải khởi tạo một
+     series mới cho **toàn bộ 3.763 TRAIN IDs gốc cùng order/source hashes**;
+     ghi đầy đủ SUCCESS/INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED; không ghép
+     135 SUCCESS/25 INVALID lịch sử, không hồi tố sửa raw, không backfill
+     từ smoke, recovery hay series khác; không sử dụng GT/TEST để cứu nhãn.
+- **Mã/version đóng băng trong quyết định:** PR #176 reviewed/audited HEAD
+  `fd2493c00b65c3a191f5627a29bbe5a0fb4fc94c`; implementation commit
+  `cfeaadefcb31c2bb29b4e59d232aa2a3ef52d702`. Descriptor
+  `configs/grammar/internvl35_v2.json` SHA256
+  `f6e66ee753bc9c3447aa5b33d52838c226f428b87bafbd8a070bf95edce7e99e`;
+  implementation `safeshift/internvl_grammar.py` SHA256
+  `a3cde12d4dbe463acc9d87bcc36c440492636d7479024876c04ef1c1645c69ca`
+  (theo receipt CPU đã đối chiếu). Bản ghi duyệt không sửa byte của hai tệp này.
+- **Không cấp quyền:** Kaggle/GPU, nạp trọng số hay inference mô hình thật,
+  fresh/full TRAIN 3.763, TEST, quyền dữ liệu ngoài Owner, O2–O6,
+  phê duyệt học vụ, thay số liệu khoa học, activation chính thức trên
+  production, hoặc merge bỏ qua kiểm soát. Grammar V2 mới được audit ở
+  phạm vi đề xuất/CPU synthetic, chưa có đánh giá độ chính xác/false-safe thật.
+- **Quy trình merge:** Phê duyệt khoa học **khác** quyền merge.
+  Sau kiểm tra GitHub trên HEAD đã bổ sung quyết định, ChatGPT cấp quyền
+  merge riêng cho Antigravity trong session audit PR #176; hậu merge
+  ChatGPT xác minh main/parents/tree và cập nhật task handoff.
+
+## DEC-20261104-INTERNVL-V2-CONTINUOUS-TECHNICAL-RETRY
+
+- Authority: [Owner6626498951](https://github.com/tantdna2/SafeShift/pull/177#issuecomment-6626498951),
+  authenticated body SHA256 `03407e1981f90a7b03f7ddcd0baacdec32b0f204d7a2afaf040bb17fae76240b`.
+- New operational namespace `internvl-v2-6626498951` has sequential separately
+  released attempts without a fixed total count. Historical j1/j2 namespace,
+  failures, charges and immutable ledger remain unchanged. No old extra slot.
+- New per-job1800s timeout,3600 conservative physical GPU-seconds reservation,
+  actual provider quota, exclusive submission and terminal custody reconciliation.
+  Optional user quota cap; one load/call per attempt, no ambiguous replay.
+- Same-job positive preflight before original TRAIN ordinal0 image read/load is
+  authorized. Exact checkpoint SHA256 remains mandatory; bounded read-only cache
+  advice may repair file-cache pressure, unchanged16GiB floor decides admission.
+- Audit PENDING_POST_RESULT; scientific qualification NOT_ESTABLISHED. Stop on
+  verified real original-image native result, then ChatGPT/Antigravity review on
+  existing Draft PR177. No merge, scientific method changes, TEST/full TRAIN,
+  label rescue or pooling. [Detailed contract](INTERNVL_V2_CONTINUOUS_TECHNICAL_20261104.md).
+
+Append-only encoding correction: the authoritative Owner6626498951 UTF-8 body
+SHA256 is `60090d0a0073861906e09dfc7cf3d43f0845488005aafe6c4ba855a6889b025d`.
+The03407e… hash above identifies a local ASCII-substituted PowerShell rendering,
+not the actual GitHub text. Exact-authority authentication rejected unused
+release6626931045 before any job/ledger reservation. No Owner scope changed.
+
+## DEC-20261105-OWNER-INTERNVL3763-AGY-PREPARATION
+
+Source: direct Owner task05/11/2026, Asia/Bangkok, after PR177 merged at
+`7633dca168f7bb9fdff84f38a3d374cdbaff5b5a`. One new branch/Draft PR combines
+InternVL3.5 grammar V2 full original TRAIN3763 preparation and Antigravity CLI
+delegation. First commit documents the scope; then CPU synthetic implementation,
+tests/notebook preparation and durable local CLI rehearsal. This is an
+operational/preparation directive, not a new scientific-method adoption.
+
+Codex owns code, tests, fixes and Draft PR. Antigravity CLI1.5.0 owns Kaggle
+operations only under a separately granted exact execution scope: submit once,
+observe at most15 minutes, persist RUNNING_UNVERIFIED/job/version/conversation
+and exit without cancelling the job. The user's later completion message
+triggers same-session or read-only recovery, live terminal confirmation,
+private evidence download/integrity/contract checks and PASS/FAIL/BLOCKED report.
+Codex consumes the bound report/evidence; operations do not replace independent
+audit. Unknown submission/calls never allow an automatic retry or duplicate job.
+
+The new series covers all original3763 IDs/order/image hashes with no historical
+predictions or smoke backfill. Keep approved V2/strict C1/parser/FP16/eager/
+checkpoint and HNLO null/N/A. Ordinary resume excludes consumed INVALID/errors;
+repair/comparability, per-attempt caps, rights/custody and execution release stay
+separate. No full TRAIN3763, TEST, real Kaggle job or new model call is authorized
+by this task. No historical ref/source lock/decision is changed. Final-source
+live gates remain NOT_RUN/BLOCKED. Stop at the unified Draft PR for direct
+ChatGPT GitHub review, then independent audit and separately authorized merge.
+
+## DEC-20261105-OWNER-TRAIN3763-EXECUTION-CANDIDATE
+
+Source: direct Owner task after PR178 MERGED at verified main
+`1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`; new branch/session and exactly one
+unified Draft PR. [Execution design](../INTERNVL3763_EXECUTION.md) records the
+design before implementation. This is software/notebook/CPU synthetic preparation,
+not a scientific-method change or authority to execute on Kaggle.
+
+Codex completes the supervised TRAIN3763 notebook/runner, exact new authority,
+isolated approved SDK, remote atomic permanent claims, resource/history bounds,
+Antigravity handoff and evidence verification. Antigravity owns separately
+authorized operations; ChatGPT directly reviews GitHub and decides audit/merge.
+Owner supplies Antigravity's already verified read-only private Kaggle connection;
+do not repeat authentication/connectivity without a new technical reason.
+
+Preserve original3763 IDs/order/SHA, V2 grammar, checkpoint/C1/strict parser,
+FP16/eager and HNLO null/N/A. Every bounded attempt retains all statuses and raw.
+Ordinary resume excludes consumed INVALID/errors and needs sealed ancestors plus
+a new exact release; no repair without diagnosis/authority, favorable selection,
+scientific pooling or automatic next job. PR177/178 evidence and permissions
+remain historical and cannot authorize this route.
+
+**NO NEW SUBMIT, REAL MODEL/IMAGE INFERENCE, FULL TRAIN OR TEST IN THIS TASK.**
+Separate O2–O6 evidence, exact execution release, numerical resource/Input bounds,
+durable remote witness deployment and final-source live verification remain
+BLOCKED/NOT_RUN. A candidate/code review or synthetic PASS does not open them.
+Stop at the single Draft PR; no self-issued audit or merge.
+
+## DEC-20261105-OWNER-TRAIN3763-CAMPAIGN-180
+
+Source: [Issue180](https://github.com/tantdna2/SafeShift/issues/180) and direct
+Owner task05/11/2026 (Asia/Bangkok), after PR179 merged at
+`300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2`. This append-only operational successor
+replaces per-attempt Owner permission and mandatory HTTPS witness only for the
+new serial campaign route. Prior decisions, grants, attempts and results remain.
+
+One future authentic Owner campaign grant binds original3763 IDs/order/SHA,
+InternVL3.5/checkpoint/grammarV2/FP16/eager/C1/parser/HNLO N/A, existing rights,
+Inputs, one operator, finite calls/jobs/physical-GPU seconds/deadline, history,
+stop rules and technical repair policy. No grant or numerical budget is issued
+by this code task. Missing O2–O6/third-party/scientific evidence remains PENDING;
+Owner attestation is not a fabricated academic or third-party signature.
+
+Within that grant, sequential shards, pending-only resume and diagnosed exact-
+target technical repair need no renewed Owner execution approval. Codex fixes
+code with tests, technical source review/independent audit/merge and provenance;
+Antigravity operates and collects evidence. Scientific method/data/TEST changes
+or budget exhaustion STOP for the appropriate new decision. Repair never
+overwrites prior errors or selects a favorable scientific output.
+
+Mirrored create-only local journal, global operator lock, intent before the sole
+provider push, exact provider terminal/source, archived raw/ZIP/checksums and
+lineage are the new admission controls. Unknown/ambiguous/lost history blocks
+submission; no refund, automatic retry or cross-machine takeover. This scoped
+single-writer design makes no global exactly-once claim. Full coordinated local
+rollback/lost custody requires independent provider reconciliation and fencing,
+not an empty new ledger. See [contract/runbook](../TRAIN3763_CAMPAIGN.md).
+
+One unified Draft PR only; CPU synthetic tests/notebook/runbook/receipts, no
+actual Kaggle submit/GPU/inference/private raw/TEST in this task. First authorized
+post-merge final-source qualification remains one original ordinal0 call, then
+measured resource limits before larger shards. PR177 PASS does not validate
+the new source. ChatGPT direct GitHub review, independent Antigravity audit and
+separately authorized merge remain required. No self-issued audit/merge/PASS.
+
+
+## DEC-20261115-OWNER-QWEN3-FULL-TRAIN-COMPOSITE-V1
+
+Authority: [Owner comment6889519264](https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264),
+authenticated GitHub export by author tantdna2 / OWNER, created and unedited
+15/11/2026. BASE 044b53059e7a9615d54f07a4ce8a44308b47e56a.
+
+**APPROVED_FOR_PROJECT_TRAIN_DERIVED_LABEL_ANALYSIS.** This narrow successor
+amends prior no-pooling decisions only for QWEN3_FULL_TRAIN_COMPOSITE_V1:3539
+original V4 successes plus exact 224 Recovery224 successes for original missing
+SUCCESS IDs. All3763 original TRAIN IDs, image SHA256, GT and lineage must pass
+strict verification. Membership is original-status/ID-based, never chosen by GT
+correctness, prediction, HNLO or favorable attempt. No diagnostic substitutions.
+
+Original ledgers, grants, results and failures remain immutable; V4 still has
+3539 SUCCESS/1 TECHNICAL_ERROR/223 NOT_ATTEMPTED. Recovery remains its own
+run/config/attempt. The new product may be used for full-TRAIN label analyses
+with explicit provenance/denominators. It does not replace a homogeneous fresh
+run, change execution authority or open GPU/Kaggle/TEST. Previous V4-only
+numbers remain valid for their own cohort and are not overwritten.
+
+Compute all metrics from exact saved records; historical2932/3763,38/749,
+443/3014 and pooled 0.952935 are comparisons, not constants for computation.
+Label metrics remain authorized if composite HNLO is N/A. Never average AUROC;
+pooled HNLO needs separate compatibility evidence for scale/token/decision
+alignment. Current implementation reports N/A and source AUROCs separately.
+Retain 44 exact-content duplicate pairs, source identity limits, exposed-TRAIN,
+small-Level03 and cross-model provenance restrictions. No faculty signature,
+third-party rights, calibration or superiority is inferred.
+
+Implementation and acceptance: [composite contract](QWEN3_FULL_TRAIN_COMPOSITE_V1.md),
+append-only Seminar protocol amendment and new analysis config. Existing frozen
+config/receipts remain unchanged. Exactly one Draft PR for direct ChatGPT review,
+mandatory independent Antigravity audit and separately authorized merge. Code
+verification is not independent audit or merge permission.
+
+
+## DEC-20261116-OWNER-MINICPM-TRAIN3763-UI-RESTART
+
+Authority: [Owner directive6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424),
+authenticated author tantdna2 on PR199. **OWNER_APPROVED_PROJECT_OPERATIONAL_RESET**,
+not a faculty qualification, source review/audit/merge PASS or inference result.
+
+Retire only original Full-TRAIN Run1, V2 and V3-1 as sources of MiniCPM prediction
+results. Retain their complete immutable tickets/journals/reservations/local logs/
+sealed archives and the old PUBLISHED/provider mismatch. Zero calls are Owner /
+local-log reported; unavailable old jobs are not independently verified deleted
+or terminal. Historical reservations remain3000 calls/3 jobs/86400 GPU-seconds.
+
+Begin a distinct `mcpm4-restart-v1` execution and
+`fresh171-minicpm4-owner-restart-v1` series at ordinal0 on all original3763 TRAIN
+IDs/JPG hashes, without inherited predictions. Preserve cohort, labels, metrics,
+native C1, FP16 weights/eager plus exact FP32 resampler, HNLO N/A and TEST closure.
+Other historical MiniCPM/Candidate160 evidence and prior decisions are untouched.
+
+The Owner authorizes a reviewed finite operational budget policy without repeated
+separate budget-amendment comments. The implementation derives a reservation
+envelope from <=3763 new serial jobs, <=3763 pending-ID call slots/14400 seconds/
+2 physical GPUs per job, plus the immutable historical holds. Derived totals
+14163169 reserved call slots/3766 jobs/108460800 reserved GPU-seconds are a finite
+scheduler bound, not Owner-quoted numbers, actual native calls, weekly account
+quota or a completion guarantee. Actual new image calls remain <=3763 under
+pending-only verified history. No refund/counter rewrite, unlimited retry,
+automatic account switch or quota circumvention. Current actual provider quota
+and absence of active accelerator/duplicate jobs are checked for every new job.
+
+Owner personally runs Kaggle UI. Antigravity resumes its SAME Operator session
+to prepare/publish current signed source-bound notebook/capsule after direct
+ChatGPT source PASS, independent audit, authorized merge and verified postmerge.
+Owner gets <=3 steps and a current expiry; old notebooks/capsules/tickets are
+never rerun. Codex removes its unused API submit/live-observer path in SAME
+Draft PR199; no new PR, production write or GPU operation in this coding task.
+Only authenticated new-run raw/claims/ZIP/provider history feeds continuation.
+See [V4 implementation contract](../MINICPM_RUN1_RECOVERY.md).
+
+## DEC-20261119-OWNER-INTERNVL3763-EXECUTION-COMPLETED
+
+**Nguồn.** Owner dự án SafeShift xác nhận trực tiếp trong cuộc trò chuyện giao
+task ngày 19/11/2026 (Asia/Bangkok). Đây là bản ghi nội dung Owner cung cấp trong
+cuộc trò chuyện. Nguồn này có phạm vi xác nhận của Owner và chưa được xác thực
+độc lập bằng comment GitHub, chữ ký hay chứng từ provider.
+
+**Hoàn thành thực thi.** Owner xác nhận InternVL3.5 đã chạy xong trên toàn bộ
+3.763 ảnh InspecSafe-V1 TRAIN gốc, chấp nhận bộ kết quả đã lưu cục bộ và không
+yêu cầu chạy lại cả cohort. Việc thiếu bảng metric chính thức không làm thay
+đổi trạng thái `EXECUTION_COMPLETED_OWNER_CONFIRMED`.
+
+**Lịch sử Attempt 23 do Owner giải thích.** Lượt đầu gặp lỗi. Owner chủ động
+chạy lại để lấy kết quả, dẫn đến hai lượt chạy/kernel trong hồ sơ. Kết quả của
+lượt chạy lại hiện nằm trong ZIP được `event-000025.json` của journal
+continuation tham chiếu, SHA256
+`217f685b5bb841244f6eb15e96dbd63c1e39379d9fc227844ba21b27f7dbfb09`.
+Giữ nguyên lịch sử lượt đầu, mọi SHA256, log, receipt và bằng chứng hiện có.
+Đối chiếu chi tiết tại báo cáo cục bộ
+`data/processed/independent-train3763-audit-20261115/05_BLOCKER_INVESTIGATION.md`.
+
+**Sử dụng bản ghi.** Các phiên sau không hỏi lại Owner về độ phủ hoặc lý do
+chạy lại. Chỉ mở lại câu hỏi về nguyên nhân khi có bằng chứng mới, cụ thể và
+mâu thuẫn với lời giải thích. Bản ghi này chỉ chốt phần thực thi và lời giải
+thích của Owner. Xác minh provider, thẩm quyền journal, final certificate,
+`official-report` và quyền dùng kết quả trong phân tích khoa học vẫn theo
+[quy trình đối soát](../TRAIN3763_DEFERRED_RECONCILIATION.md) và giao thức áp
+dụng. Xem [trạng thái hiện hành và phạm vi kiểm tra cục bộ](../PROJECT_STATE.md#hiện-hành--internvl35-full-train-đã-hoàn-thành--19112026).
+
+## DEC-20261126-OWNER-MINICPM3763-EXECUTION-COMPLETED
+
+**Nguồn.** Owner xác nhận trực tiếp trong cuộc trò chuyện giao task ngày
+26/11/2026 (Asia/Bangkok), trên main `5f12a752acd636878fb6044c00185e7af5e2ae63`
+sau PR #212. Phạm vi xác nhận là `EXECUTION_COMPLETED_OWNER_CONFIRMED`.
+
+**Đối chiếu cục bộ.** Fast PR #212 kiểm hai mirror. Event 30 ghi
+`OFFLINE_VERIFIED_PROVISIONAL`. Bộ kết quả có 3.763 ID TRAIN duy nhất, gồm 3.558
+`SUCCESS` và 205 `INVALID`. Serial 23 xử lý 669 ID cuối. Giữ nguyên journal,
+archive, receipt, các closure và reservation lịch sử. [Bằng chứng và chẩn đoán
+205 ca](MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md).
+
+**Đề xuất chờ duyệt.** Theo [quyết định Full-TRAIN ngày 02/11](#dec-20261102-owner-thesis-fulltrain-repair),
+ưu tiên thử một phép ánh xạ chính xác trên CPU từ cụm mô tả Normal mà prompt
+đã định nghĩa sang mã tương ứng, trên bản dẫn xuất có phiên bản. Việc triển
+khai, công nhận khả năng so sánh và sử dụng bản dẫn xuất cần quyết định khoa
+học riêng. Kết quả strict C1 vẫn là bản ghi gốc của thực thi MiniCPM. Bộ kiểm
+thử CPU tổng hợp ghi nhận hành vi C1 hiện hành và chuẩn bị tiêu chí cho lần
+review phương án sửa.
+
+**Điều kiện còn lại.** Final Admission của bản gốc chờ đối soát provider,
+Owner approval gắn hash và xác minh `official-report`. Scientific Qualification
+và quyền so sánh TRAIN vẫn theo O2–O6 và giao thức hiện hành.
+[Trạng thái thực thi](../PROJECT_STATE.md#hiện-hành--minicpm-v-4-full-train-đã-hoàn-thành--26112026).
+
+## DEC-20261126-OWNER-MINICPM-FULLTRAIN-NORMALIZATION-V1
+
+Ngày 26/11/2026 (Asia/Bangkok), Owner SafeShift trực tiếp đồng ý trong task
+`MINICPM-FULLTRAIN-NORMALIZATION-V1` cho chuyển đổi bằng CPU 205 kết quả
+`INVALID` từ đầu ra MiniCPM-V-4 Full-TRAIN đã lưu trong phạm vi quyền dữ liệu
+hiện có. Quyết định chốt phần chuyển đổi trong đề xuất ngày 26/11 cho đúng
+phiên bản V1 và parent tại BASE `c95e7792283cdd406e218aef4e65529c615466be`.
+Parent là kết quả strict C1 đã đối chiếu bằng Fast, ghim event 30 tại SHA256
+`62e6ba7650a5fba23286cb00cb88b96104de8c0d7c38945c77e0f1fe7ce820f3`.
+[Xác minh hậu merge #213](https://github.com/tantdna2/SafeShift/pull/213#issuecomment-7184395149).
+
+Quy tắc áp dụng cho response là một object JSON có duy nhất một cặp
+`safety_level` với giá trị chính xác `no abnormalities observed`. V1 ghi
+`Level04` cho các ca đủ điều kiện và giữ 3.558 dự đoán canonical. Công việc
+chỉ dùng metadata TRAIN và đầu ra đã lưu để tạo artifact riêng ở máy. Parser,
+raw output, kết quả thực thi, nhãn dataset, journal và archive giữ nguyên.
+[Báo cáo kết quả CPU và cách tái kiểm](MINICPM_FULLTRAIN_NORMALIZATION_V1.md).
+
+Quyết định có hiệu lực trong phạm vi tạo bản dẫn xuất cục bộ. Draft PR chờ
+ChatGPT kiểm tra GitHub và Antigravity kiểm toán độc lập. Final Admission
+của bản gốc tiếp tục theo quy trình đối soát provider và `official-report`.
+Quyết định về khả năng so sánh và sử dụng V1 trong kết quả khoa học chính thức
+thuộc O2. Mọi dữ liệu bổ sung hoặc chia sẻ ngoài phạm vi quyền hiện có cần
+quyền O4 tương ứng từ bên có thẩm quyền dữ liệu. Scientific Qualification
+và phê duyệt học vụ vẫn theo quy trình áp dụng.

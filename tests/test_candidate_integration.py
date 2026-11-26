@@ -1,0 +1,183 @@
+"""Stdlib admission/evidence regressions; no ML libraries or dataset access."""
+import copy
+import hashlib
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from safeshift.pilot.artifacts import read, sha, write
+from safeshift.pilot.contract import GENERATION, MODELS, PROMPT_SHA, source_digest
+from safeshift.candidates import loading
+from safeshift.candidates.source import ROOT, LOCK, verify_module_cache
+from scripts import verify_candidate_evidence as audit
+
+
+class CandidateIntegrationTests(unittest.TestCase):
+    def test_remote_cache_poisoning_rejected_before_import(self):
+        import hashlib
+        spec = {"revision": "a"*40, "files": {"module.py": hashlib.sha256(b"# harmless\n").hexdigest()}}
+        for defect in (None, "initializer", "source", "bytecode", "extra", "hardlink"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as d:
+                root = Path(d)/"cache"
+                leaf = root/"transformers_modules"/spec["revision"]
+                leaf.mkdir(parents=True)
+                for folder in (root, leaf.parent, leaf): (folder/"__init__.py").write_bytes(b"")
+                (leaf/"module.py").write_bytes(b"# harmless\n")
+                if defect == "initializer": (leaf.parent/"__init__.py").write_text("raise RuntimeError('do not execute')")
+                if defect == "source": (leaf/"module.py").write_bytes(b"changed")
+                if defect == "bytecode": (leaf/"__pycache__").mkdir()
+                if defect == "extra": (root/"unexpected.py").write_text("raise RuntimeError()")
+                if defect == "hardlink": __import__("os").link(leaf/"module.py", Path(d)/"alias")
+                if defect is None: verify_module_cache(root, spec)
+                else:
+                    with self.assertRaises(ValueError): verify_module_cache(root, spec)
+
+    def test_protected_pilot_c1_generation_and_source_bytes(self):
+        for filename, checksum in read(LOCK.with_name("protected_source_lock.json"))["files"].items():
+            if filename == "AGENTS.md":
+                # Check BOTH immutable historical objects, never rewrite a lock
+                # to accommodate the new Owner-authorized append-only rule.
+                historical = subprocess.check_output(["git", "show", "bbbd351e19e404f1108413578c7ed024f92e814d:AGENTS.md"], cwd=ROOT)
+                self.assertEqual(hashlib.sha256(historical).hexdigest(), checksum)
+                base = subprocess.check_output(["git", "show", "39ec489403753ada10f4924c4b0d6077e027f5e1:AGENTS.md"], cwd=ROOT)
+                self.assertEqual(hashlib.sha256(base).hexdigest(), "ad4309eae94bd270a0080eb51d91291239e337fd3fd3612f899a1703bc61e3d2")
+                current = (ROOT/filename).read_bytes()
+                document_first = subprocess.check_output(["git", "show", "ff64958c22684e8713b428b439521f8f3cb1222a:" + filename], cwd=ROOT)
+                self.assertEqual(current, document_first, "Issue167 must preserve the Owner document-first instructions")
+                # The authorized Issue167 directive was prepended, not appended.
+                # Validate prior instructions against their exact BASE, without
+                # rewriting the historical source lock to fit current HEAD.
+                current = subprocess.check_output(["git", "show", "0295172783dcf82426923d1af621dde9db8ed42c:" + filename], cwd=ROOT)
+                self.assertTrue(current.startswith(base), "BASE instructions must remain byte-identical")
+                added = current[len(base):].decode("utf-8")
+                self.assertIn("issuecomment-6533181366", added)
+                for level in ("ENVIRONMENT_OBSERVED", "CPU_SOFTWARE_PASS", "LIVE_GPU_PREFLIGHT_PASS",
+                              "WEIGHTS_LOADED", "INFERENCE_VERIFIED", "SCIENTIFIC_QUALIFIED"):
+                    self.assertIn(level, added)
+                latest = subprocess.check_output(["git", "show", "6252a7de91d9d98bd68a33b9bc13ae9888f2b9da:AGENTS.md"], cwd=ROOT)
+                self.assertTrue(current.startswith(latest), "Recovery directive must only append to main instructions")
+                self.assertIn("CANDIDATE160_RECOVERY_DECISION_20261031.md", current[len(latest):].decode("utf-8"))
+                continue
+            if filename == "docs/research/DECISIONS.md":
+                # Owner explicitly requires an append-only operating decision.
+                # Verify the locked Git object and preserve the entire main
+                # prefix; the historical source lock itself stays unchanged.
+                historical = subprocess.check_output(["git", "show", "bbbd351e19e404f1108413578c7ed024f92e814d:" + filename], cwd=ROOT)
+                self.assertEqual(hashlib.sha256(historical).hexdigest(), checksum)
+                base = subprocess.check_output(["git", "show", "6252a7de91d9d98bd68a33b9bc13ae9888f2b9da:" + filename], cwd=ROOT)
+                self.assertTrue(base.startswith(historical))
+                current = (ROOT/filename).read_bytes()
+                self.assertTrue(current.startswith(base), "Research decisions must never be rewritten")
+                self.assertIn("DEC-20261031-CANDIDATE160-RECOVERY", current[len(base):].decode("utf-8"))
+                continue
+            if filename == "docs/research/THESIS_EXECUTION_PLAN_2026.md":
+                historical = subprocess.check_output(["git", "show", "bbbd351e19e404f1108413578c7ed024f92e814d:" + filename], cwd=ROOT)
+                self.assertEqual(hashlib.sha256(historical).hexdigest(), checksum)
+                document_first = subprocess.check_output(["git", "show", "ff64958c22684e8713b428b439521f8f3cb1222a:" + filename], cwd=ROOT)
+                # Issue171 authorizes a new directive before the Issue167 text.
+                # Preserve the old lock and every historical byte, and pin the
+                # new directive to its documents-only commit (not mutable HEAD).
+                fresh_decision = subprocess.check_output(["git", "show", "8fdfc8dd95f3f25229f40605c14275840709330e:" + filename], cwd=ROOT)
+                self.assertEqual((ROOT/filename).read_bytes(), fresh_decision)
+                title, old_body = document_first.split(b"\n\n", 1)
+                self.assertTrue(fresh_decision.startswith(title + b"\n\n"))
+                self.assertTrue(fresh_decision.endswith(old_body))
+                directive = fresh_decision[len(title) + 2:-len(old_body)]
+                self.assertIn(b"issues/171", directive)
+                self.assertIn(b"No historical", directive)
+                continue
+            self.assertEqual(sha(ROOT/filename), checksum, filename)
+        self.assertEqual(sha(ROOT/"configs/pilot/classification_c1.txt"), PROMPT_SHA)
+        self.assertEqual(set(MODELS), {"phi", "smolvlm2", "gemma"})
+        self.assertEqual(source_digest(ROOT), "eb7af80db2cf3eca08c2b0e4f1c3dc973edfa52664071dc054746db602fcd468")
+        self.assertEqual(GENERATION, {"do_sample": False, "num_beams": 1, "max_new_tokens": 64,
+            "use_cache": True, "return_dict_in_generate": True, "output_scores": False, "output_logits": False})
+
+    def test_metadata_lock_exact_model_revision_and_sha(self):
+        public, metadata = read(LOCK), read(LOCK.with_name("checkpoint_metadata_lock.json"))
+        for key in public:
+            self.assertEqual({k: metadata[key][k] for k in ("id", "revision")},
+                             {k: public[key][k] for k in ("id", "revision")})
+            self.assertEqual(len(metadata[key]["weights"]), 2)
+            for name, item in metadata[key]["weights"].items():
+                self.assertTrue(name.endswith(".safetensors"))
+                self.assertRegex(item["sha256"], r"^[0-9a-f]{64}$")
+                self.assertGreater(item["size"], 0)
+
+    def test_missing_weights_never_reach_loader(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaisesRegex(ValueError, "ALLOWLIST"):
+                loading.verify_weights(Path(d), "internvl35")
+
+    def test_checkpoint_index_corruption_and_alias_fail(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d)/"index.json"
+            write(path, {"weight_map": {}})
+            for key in ("internvl35", "minicpm4"):
+                with self.assertRaisesRegex(ValueError, "CHECKSUM"):
+                    loading.checkpoint_index(path, key)
+
+    def test_dependency_mismatch_before_ml_import(self):
+        import site
+        from scripts import rehearse_candidate_cpu as old
+        with patch.object(old.sys, "prefix", "synthetic-isolated-prefix"), \
+             patch.object(site, "ENABLE_USER_SITE", False), \
+             patch.object(old.metadata, "version", return_value="WRONG"), \
+             self.assertRaisesRegex(ValueError, "DEPENDENCY_VERSION"):
+            old.environment("internvl35")
+
+    def synthetic_receipts(self, root):
+        paths = {"script.py": "synthetic source\n"}
+        for name, text in paths.items(): (root/name).write_text(text)
+        lock = root/"configs/cpu_g2_g3/public_source_lock.json"
+        write(lock, read(LOCK))
+        spec = read(LOCK)
+        evidence = root/"evidence"
+        evidence.mkdir()
+        manifest = {"receipts": {}}
+        for key in spec:
+            receipt = {"schema": "safeshift-candidate-integration-cpu-v1", "model_key": key,
+                "model": {k: spec[key][k] for k in ("id", "revision")},
+                "source_sha256": {"script.py": sha(root/"script.py")}, "pilot_source_sha256": "fixture",
+                "sources_unchanged_during_run": True, "status": "CPU_CHECKS_PASS", "failures": 0, "errors": 0,
+                "tests_run": 1, "skips": 0,
+                "test_events": [{"test": "test_candidate_native.example", "status": "PASS"}],
+                "weights": "NOT_DOWNLOADED_OR_DESERIALIZED", "inference": "NOT_RUN", "gpu": "NOT_CALLED"}
+            path = evidence/(key+".json")
+            write(path, receipt)
+            manifest["receipts"][path.name] = sha(path)
+        write(evidence/"index.json", manifest)
+        return evidence/"index.json"
+
+    def test_evidence_tampering_model_test_accounting_and_scope_rejected(self):
+        for defect in (None, "hash", "source", "identity", "native_skip", "scope", "missing_source", "count", "missing_model"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                index = self.synthetic_receipts(root)
+                path = index.parent/"internvl35.json"
+                receipt = read(path)
+                if defect == "source": (root/"script.py").write_text("corrupted")
+                if defect == "identity": receipt["model"]["revision"] = "incorrect"
+                if defect == "native_skip":
+                    receipt["test_events"][0]["status"] = "SKIP"
+                    receipt["skips"] = 1
+                if defect == "scope": receipt["inference"] = "PASS"
+                if defect == "missing_source": receipt["source_sha256"] = {}
+                if defect == "count": receipt["tests_run"] = 2
+                # Fixtures may be replaced; actual evidence writer is exclusive.
+                path.write_text(__import__("json").dumps(receipt))
+                manifest = read(index)
+                if defect != "hash": manifest["receipts"][path.name] = sha(path)
+                if defect == "missing_model": del manifest["receipts"]["minicpm4.json"]
+                index.write_text(__import__("json").dumps(manifest))
+                with patch.object(audit, "source_digest", return_value="fixture"), \
+                     patch("scripts.rehearse_candidate_integration.evidence_sources", return_value=["script.py"]):
+                    if defect is None: self.assertEqual(audit.verify(index, root)["status"], "PASS")
+                    else:
+                        with self.assertRaises(ValueError): audit.verify(index, root)
+
+
+if __name__ == "__main__":
+    unittest.main()

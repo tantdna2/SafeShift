@@ -1,0 +1,800 @@
+"""Issue202 CPU synthetic custody. No real data/model/provider/key or authority.
+
+RSA3072 signatures, controller/raw/C1/native markers, archives, history, mirrors
+and final admission execute for real. Authority and native backend are explicit
+synthetic boundaries. SDK tests mock transport, never declare provider success.
+"""
+from contextlib import ExitStack, redirect_stdout
+from copy import deepcopy
+import hashlib
+import io
+import json
+from pathlib import Path
+from types import SimpleNamespace
+import shutil
+import socket
+import sys
+import tempfile
+import time
+import unittest
+from unittest.mock import Mock, patch
+
+import test_minicpm_fulltrain_execution as base
+from test_fresh_fulltrain import Scripted
+from safeshift.candidates import fulltrain_run as journal
+from safeshift.fulltrain import contract, runtime as rt, minicpm_ui as ui, minicpm_release as a
+from safeshift.fulltrain import minicpm_offline as p, minicpm_v5_incident as v5, minicpm_recovery as recovery
+from safeshift.pilot.artifacts import read, write, export, sha
+from safeshift.pilot.contract import digest
+from scripts import minicpm_offline_continuation as c, owner_verify_minicpm_offline as online
+
+REAL_LOAD, REAL_VALIDATE = a.load, a.validate
+
+
+class FinalAdmissionIdentityTests(unittest.TestCase):
+    """Synthetic GitHub responses; no signer/provider/model or authority issued."""
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.root=Path(self.tmp.name)
+        self.route=c.Continuation.__new__(c.Continuation)
+        self.route.root=self.root/"primary";self.route.root.mkdir()
+        self.route.mirror=self.root/"mirror";self.route.mirror.mkdir()
+        self.route.grant={"offline":{"schema":p.SCHEMA}}
+        self.route.registration={"locator":{"comment_id":1,"body_sha256":"a"*64}}
+        self.manifest={"scope":"SYNTHETIC_FINAL_AUTH_ONLY"}
+        self.report={"manifest_sha256":digest(self.manifest),"scope":"SYNTHETIC_PROVIDER_BOUNDARY"}
+        self.exports={}
+        self.owner=self.comment({"manifest_sha256":digest(self.manifest),"report_sha256":digest(self.report),
+            "status":"APPROVED_FOR_FINAL_ADMISSION"})
+        self.auth=patch.object(c,"authenticate",return_value=self.route.grant)
+        self.auth.start();self.addCleanup(self.auth.stop)
+        self.provider=patch.object(c,"validate_provider_report")
+        self.provider_mock=self.provider.start();self.addCleanup(self.provider.stop)
+
+    def comment(self,payload):
+        body=p.FINAL+"\n```json\n"+json.dumps(payload)+"\n```"
+        self.exports["/issues/comments/101"]={"id":101,"issue_url":a.API+"/issues/202","body":body,
+            "user":{"login":a.OWNER,"id":a.OWNER_ID}}
+        return {"comment_id":101,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
+
+    def validate(self):
+        return self.route.validate_final(self.manifest,self.report,self.exports,self.owner)
+
+    def test_one_authentic_owner_comment_passes_and_provider_still_validates(self):
+        self.assertEqual(self.validate(),self.report)
+        self.provider_mock.assert_called_once_with(self.manifest,self.report)
+        self.assertEqual(len(self.exports),1)
+
+    def test_missing_or_invalid_comment_cannot_append_or_enable_official_reader(self):
+        for exports in ({},{"/issues/comments/101":None},{"/issues/comments/101":{}}):
+            with self.subTest(exports=exports), \
+                 patch.object(self.route,"state",return_value={"final":None,"stopped":False}), \
+                 patch.object(self.route,"manifest",return_value=self.manifest),patch.object(self.route,"append") as append:
+                with self.assertRaises((ValueError,KeyError,TypeError)):
+                    self.route.reconcile(self.report,exports,self.owner)
+                append.assert_not_called()
+                self.assertFalse((self.route.root/"final").exists())
+                with self.assertRaisesRegex(ValueError,"OFFICIAL_RESULTS_BLOCKED"):self.route.official_report()
+        self.provider_mock.assert_not_called()
+
+    def test_missing_invalid_or_foreign_owner_account_is_rejected(self):
+        variants=[None,{}, {"login":a.OWNER},{"id":a.OWNER_ID},
+            {"login":a.OWNER,"id":None},{"login":a.OWNER,"id":True},
+            {"login":a.OWNER,"id":str(a.OWNER_ID)},{"login":a.OWNER,"id":0},
+            {"login":"foreign-account","id":a.OWNER_ID},{"login":a.OWNER,"id":202000001}]
+        for user in variants:
+            with self.subTest(user=user):
+                self.exports["/issues/comments/101"]["user"]=user
+                with self.assertRaises((ValueError,KeyError,TypeError)):self.validate()
+        del self.exports["/issues/comments/101"]["user"]
+        with self.assertRaises(KeyError):self.validate()
+
+    def test_changed_body_comment_id_issue_or_locator_is_rejected(self):
+        original=deepcopy(self.exports)
+        for mutate in (lambda r:r.update(body=r["body"]+" changed"),lambda r:r.update(id=103),
+                       lambda r:r.update(issue_url=a.API+"/issues/180")):
+            self.exports=deepcopy(original);mutate(self.exports["/issues/comments/101"])
+            with self.assertRaises(ValueError):self.validate()
+        self.exports=original
+        for locator in (None,{}, {"comment_id":101},{"comment_id":True,"body_sha256":"a"*64},
+                        {"comment_id":101,"body_sha256":"bad"},{"comment_id":101,"body_sha256":"0"*64}):
+            with self.subTest(locator=locator),self.assertRaises(ValueError):
+                self.route.validate_final(self.manifest,self.report,self.exports,locator)
+
+    def test_rehashed_wrong_manifest_report_status_or_shortcut_is_rejected(self):
+        payload={"manifest_sha256":digest(self.manifest),"report_sha256":digest(self.report),
+            "status":"APPROVED_FOR_FINAL_ADMISSION"}
+        for key,value in (("manifest_sha256","0"*64),("report_sha256","0"*64),
+                          ("status","PENDING"),("approved",True)):
+            bad=deepcopy(payload);bad[key]=value
+            self.owner=self.comment(bad)
+            with self.assertRaisesRegex(ValueError,"AUTHENTIC_FINAL_OWNER"):self.validate()
+        self.owner=self.comment(payload)
+        with self.assertRaisesRegex(ValueError,"AUTHENTIC_FINAL_OWNER"):
+            self.route.validate_final({"tampered":True},self.report,self.exports,self.owner)
+        with self.assertRaisesRegex(ValueError,"AUTHENTIC_FINAL_OWNER"):
+            self.route.validate_final(self.manifest,{"tampered":True},self.exports,self.owner)
+
+    def test_official_reader_revalidates_owner_even_with_consistent_final_hashes(self):
+        self.exports["/issues/comments/101"]["user"]={"login":"foreign-account","id":202000001}
+        documents={"manifest":self.manifest,"report":self.report,"exports":self.exports}
+        payload={"owner":self.owner}
+        for name,value in documents.items():
+            for root in (self.route.root,self.route.mirror):write(root/"final"/(name+".json"),value)
+            payload[name+"_sha256"]=digest(value)
+        with patch.object(self.route,"state",return_value={"stopped":False,"final":{"payload":payload}}), \
+             patch.object(self.route,"manifest",return_value=self.manifest):
+            with self.assertRaisesRegex(ValueError,"AUTHENTIC_RECORD"):self.route.official_report()
+
+
+class OfflineTests(unittest.TestCase):
+    setUpClass = classmethod(base.ExecutionTests.setUpClass.__func__)
+    tearDownClass = classmethod(base.ExecutionTests.tearDownClass.__func__)
+    make_ticket = base.ExecutionTests.make_ticket
+
+    def setUp(self):
+        base.ExecutionTests.setUp(self)
+        self.stack = ExitStack(); self.addCleanup(self.stack.close)
+        self.stack.enter_context(patch.object(c, "ROOT", self.root))
+        self.stack.enter_context(patch.object(a, "CLAIMS", self.root / "claims"))
+        self.grant.update(schema=a.RECOVERY_SCHEMA, authorization="OWNER_MINICPM_TRAIN3763_RESTART_SERIAL_UI_ONLY",
+            implementation_pr=205, recovery={"journals": []}, repair={"schema": v5.SCHEMA, "journal_head_sha256": "f"*64})
+        self.grant["caps"].update(total_calls=14163169, total_jobs=3766, total_gpu_seconds=108460800,
+            job_calls=3763, job_seconds=14400)
+        self.grant["sizing"] = {"export_seconds": 60, "first_call_seconds": 5000, "safety_milli": 1000}
+        self.grant["expires_unix"] = self.grant["issued_unix"] + p.RELEASE_SECONDS
+        self.grant["offline"] = {"schema": p.SCHEMA, "decision_issue": 202,
+            "operator_session": p.ORIGINAL_SESSION, "base_journal_head_sha256": "f"*64,
+            "tools_sha256": digest(c.tools_manifest()), "tool_blobs": c.tool_blobs(), "unmeasured_calls": 100,
+            "serial6_event_sha256": c.serial6.EVENT_SHA, "serial6_supervisor_sha256": c.serial6.ZIP_SHA}
+        self.stack.enter_context(patch.object(a, "load", return_value=self.grant))  # synthetic release boundary
+        self.stack.enter_context(patch.object(a, "validate", side_effect=lambda grant, **_: grant))
+        self.stack.enter_context(patch.object(c.old, "clean_source"))
+        self.stack.enter_context(patch.object(rt, "validate_native_raw"))  # scripted adapter, not native logits
+        self.stack.enter_context(patch("safeshift.fulltrain.memory.resource_check", return_value={"scope":"SYNTHETIC_ONLY"}))
+        self.stack.enter_context(patch("scripts.generate_minicpm_fulltrain_notebook.notebook", side_effect=self.notebook))
+        self.legacy = self.root / "data/processed/minicpm-v3-journal"; self.legacy.mkdir(parents=True)
+        self.original = self.legacy / "event-00001.json"; write(self.original, {"synthetic": "unchanged"})
+        self.base = {"files": c.snapshot_files([self.original]), "reserved": deepcopy(c.serial6.RESERVED),
+            "events": [], "v5_closure": {"disposition": "SYNTHETIC_PRE_NATIVE"}, "v5_directory": "data/processed/closure"}
+        self.stack.enter_context(patch.object(c, "historical", return_value=self.base))
+        self.route = c.Continuation.initialize(self.root / "data/processed/offline", self.root / "data/processed/mirror",
+            self.locator, {}, self.value, self.root / "data/processed/closure", self.grant["offline"]["operator_session"])
+        self.proof = self.root / "owner-proof.bin"; self.proof.write_bytes(b"SYNTHETIC OWNER UI PROOF - NOT PROVIDER EVIDENCE")
+
+    def notebook(self, ref, *, capsule_sha256, release_locator, release_version):
+        self.assertEqual(release_version, p.first_serial(self.grant))
+        return {"cells": [{"cell_type": "code", "source": ["# SYNTHETIC_BOOTSTRAP\n"]}],
+            "metadata": {"safeshift": {"runtime_ref": ref, "source_sha256": self.grant["scope"]["source_sha256"],
+                "capsule_sha256": capsule_sha256}}}
+
+    def gate(self):
+        serial = self.route.state()["reserved"]["jobs"] + 1
+        name = self.grant["campaign_id"] + "-" + str(serial)
+        inputs = deepcopy(self.value["input_sources"])
+        inputs["dataset_sources"][-1] = "nguynanhtn/safeshift-minicpm-capsule-"+name+"/1"
+        return {"observed_unix": int(time.time()), "quota": {"used": 0, "reserved": 0, "total": 1000000},
+            "job": "nguynanhtn/safeshift-minicpm-"+name, "version": 1, "inputs": inputs,
+            "no_active_job": True, "job_absent": True, "owner_checked": True, "proof_sha256": sha(self.proof)}
+
+    def stage(self):
+        return self.route.stage(self.key, self.gate(), self.proof)
+
+    def outputs(self, *, invalid=True, before_call=None, invalid_ordinals=None):
+        state = self.route.state()
+        active = state["active"]
+        value, ticket = active["value"], active["ticket"]
+        serial = ticket["payload"]["number"]
+        r = value["request"]
+        work, images = self.root / ("work-"+str(serial)), self.root / ("images-"+str(serial))
+        images.mkdir()
+        for i in r["plan"]["scheduled_ordinals"]:
+            (images / f"{i:06d}.bin").write_bytes(journal.synthetic_bytes(i))
+        ui.restore_history(self.route.root / active["package"] / "dataset", value, work)
+        class Backend(Scripted):
+            def __init__(backend, outputs):
+                super().__init__(outputs)
+                backend.model = SimpleNamespace(generate=lambda image,sample: Scripted.generate(backend,image,sample))
+            def generate(backend, image, sample):
+                with redirect_stdout(io.StringIO()):
+                    return backend.model.generate(image,sample)
+        ordinals = r["plan"]["scheduled_ordinals"]
+        if invalid_ordinals is None:
+            invalid_ordinals = {n for n in ordinals if invalid and n % 7 == 0}
+        outputs = ['fenced INVALID' if n in invalid_ordinals else '{"safety_level":"Level04"}' for n in ordinals]
+        backend = Backend(outputs)
+        def factory():
+            contract.authorize("load")
+            return backend
+        with a._activated(self.grant, self.locator, ticket, value, "launch"): pass
+        for stage in a.STAGES[1:-1]:
+            with a._activated(self.grant, self.locator, ticket, value, stage, child=True): pass
+        with a._activated(self.grant, self.locator, ticket, value, "native", child=True):
+            result = rt._execute(work, images, value["cohort"], r["campaign"], r["plan"], r["history"], factory,
+                image_path=lambda i: f"{i:06d}.bin", store_class=journal.BoundStore, before_call=before_call)
+            claims = a.claims_snapshot()
+        control = self.root / (f"{serial:032x}"); control.mkdir()
+        write(control / "request.json", r)
+        write(control / "capability.json", {"ticket": ticket})
+        write(control / "claims.json", claims)
+        write(control / "release.json", {"status": "TECHNICAL_STAGES_RETURNED_NOT_RELEASE_AUTHORITY",
+            "source_sha256": r["source_sha256"], "diagnostic": False, "attempt_observed": True,
+            "scientific_qualified": False, "failure": None, "last_stage": "native"})
+        memory = {"status": "OBSERVED", "cgroup": {"memory.events": {"oom": 0, "oom_kill": 0}}}
+        for mode in a.STAGES[1:]:
+            write(control / (mode+"-process.json"), {"status": "EXITED", "returncode": 0, "group_exit": {"status": "NO_LIVE_MEMBERS"}})
+            write(control / mode / "stage.json", {"status": "RETURNED", "stage": mode,
+                "request_sha256": digest(r), "source_sha256": r["source_sha256"], "native_attempt_permitted": mode == "native"})
+            for point in ("entry", "exit"): write(control / mode / ("stage-"+point+"-memory.json"), memory)
+        write(control / "reclaim/owned-advice.json", {"scan_complete": True, "deleted_files": 0, "effect": "ADVISORY_NOT_RAM_PROOF"})
+        write(control / "reclaim/post-advice-resources.json", {"memory": {"available_bytes": r["resource_policy"]["free_ram_mib"]*2**20}})
+        write(control / "retention.json", {"status": "SEALED_ZIPS_IN_OUTPUT_RAW_BYTES_RETAINED_IN_SCRATCH", "raw_deleted": False,
+            "retained": [{"run_id": h["run_id"], "archive_sha256": x["sha256"]} for h,x in zip(r["history"], value["ancestors"])]
+                + [{"run_id": r["plan"]["run_id"], "archive_sha256": sha(str(result)+".zip")} ]})
+        write(control / "final_timing.json", {"seconds_before_supervisor_export": time.time()-claims["launch.json"]["time_unix"],
+            "export_reserve_seconds": self.grant["sizing"]["export_seconds"]})
+        supervisor = Path(str(control)+".zip"); export(control, supervisor)
+        attempt = Path(str(result)+".zip")
+        receipt = {"job": value["job"], "version": 1, "kernel_id": serial, "state": "COMPLETE",
+            "archive_sha256": sha(attempt), "supervisor_sha256": sha(supervisor), "owner_downloaded_unix": time.time(),
+            "no_other_job_or_version": True, "no_api_submission": True, "proof_sha256": sha(self.proof)}
+        return attempt, supervisor, receipt
+
+    def accept(self):
+        outputs = self.outputs()
+        active = self.route.state()["active"]
+        c.verify_local(self.grant,active,self.route.root/active["package"],*outputs,self.proof)
+        try:
+            return self.route.accept(*outputs, self.proof)
+        except ValueError:
+            for row in self.route.events():
+                if row["kind"] == c.PROVISIONAL:
+                    self.route.recheck(active,row["payload"])
+            self.route.state(verify=False)
+            raise
+
+    def test_signed_offline_roundtrip_zero_refund_and_pending_resume(self):
+        original = self.original.read_bytes()
+        self.stage()
+        first = self.route.state()["active"]
+        self.assertEqual(first["ticket"]["payload"]["number"], 7)
+        self.assertEqual(first["ticket"]["payload"]["reserved_before"], {"calls":10626,"jobs":6,"gpu_seconds":172800})
+        with self.assertRaisesRegex(ValueError, "ACTIVE_STOP"): self.stage()
+        accepted = self.accept()
+        self.assertEqual(accepted["status"], c.PROVISIONAL)
+        self.assertEqual(accepted["counts"], {"SUCCESS":1,"INVALID":1,"NOT_ATTEMPTED":3761})
+        self.assertEqual(self.route.state()["next_ordinal"], 2)
+        self.stage()
+        active = self.route.state()["active"]
+        self.assertEqual(active["value"]["request"]["plan"]["scheduled_ordinals"][0], 2)
+        self.assertEqual(active["ticket"]["payload"]["number"], 8)
+        self.assertEqual(self.original.read_bytes(), original)
+        with self.assertRaisesRegex(ValueError, "OFFICIAL_RESULTS_BLOCKED"): self.route.official_report()
+
+    def initialize_serial9(self):
+        # The real historical signature/ZIP and stable kernel ID are exercised
+        # in test_minicpm_serial8_authority. Only their release is synthetic here.
+        processed = self.root / "data/processed"
+        self.grant.update(implementation_pr=209)
+        self.proof_document = {"fixture": "SYNTHETIC_AUTHORITY"}
+        self.grant["approvals"][a.PROOF_KEY] = digest(self.proof_document)
+        self.grant["offline"].update(schema=p.SERIAL9_SCHEMA, resident_gpu0_min_free_mib=1,
+            serial7={"event_sha256": c.serial7.EVENT_SHA, "provider_closure_sha256": "a" * 64},
+            serial8={"event_sha256": c.serial8.EVENT_SHA, "provider_closure_sha256": "b" * 64})
+        seventh = {"provider": {"kernel_id": 37}}
+        eighth = {"schema": c.prenative.PROVIDER_SCHEMA, "provider": {"job_id": c.serial8.TICKET_JOB,
+            "kernel_id": c.serial8.KERNEL_ID}, "provider_job": c.serial8.TICKET_JOB, "ticket_job": c.serial8.TICKET_JOB,
+            "local": {"native_calls": 0}, "capsule": {}, "output": {}}
+        write(processed / c.serial8.PRIMARY / "registration.json", {"base": {"serial7_closure": seventh}})
+        self.stack.enter_context(patch.object(c, "verify_transition_closure", return_value=[]))
+        self.stack.enter_context(patch.object(c, "require_live_transition"))
+        self.route = c.Continuation.initialize(processed / "nine", processed / "nine-mirror",
+            self.locator, {}, self.value, processed / "closure", p.ORIGINAL_SESSION, serial8_closure=eighth)
+
+    def failed_download(self, item, last, *, hard_deadline=False):
+        v, t = item["value"], item["ticket"]
+        r, payload = v["request"], t["payload"]
+        stages = a.STAGES[:a.STAGES.index(last) + 1]
+        folder = self.root / "data/processed" / ("download-" + str(payload["number"]))
+        if r["history"]:
+            write(folder / "minicpm-fulltrain/campaign.json", r["campaign"])
+            for h, ancestor in zip(r["history"], v["ancestors"]):
+                write(folder / "minicpm-fulltrain/attempts" / (h["attempt_id"] + ".json"),
+                    {"plan_sha256": ancestor["plan_sha256"], "campaign_sha256": digest(r["campaign"])})
+        control = folder / "minicpm-fulltrain/supervision" / ("e" * 32)
+        write(control / "request.json", r)
+        write(control / "capability.json", {"locator": self.locator, "ticket": t})
+        failure = {"type": "TimeoutError" if hard_deadline else "RuntimeError",
+            "message": "HARD_DEADLINE" if hard_deadline else "SUPERVISED_CHILD_FAILURE"}
+        write(control / "failure.json", failure)
+        write(control / "release.json", {"status": "BLOCKED", "diagnostic": False, "failure": failure,
+            "source_sha256": r["source_sha256"], "automatic_retry": False, "scientific_qualified": False,
+            "attempt_observed": False, "recovery": "NO_ATTEMPT", "last_stage": last})
+        write(control / "retention.json", {"status": "SEALED_ZIPS_IN_OUTPUT_RAW_BYTES_RETAINED_IN_SCRATCH",
+            "raw_deleted": False, "retained": [{"run_id": h["run_id"], "archive_sha256": x["sha256"]}
+                for h, x in zip(r["history"], v["ancestors"])]})
+        claims = {}
+        for stage in stages:
+            claims[stage + ".json"] = {"kind": stage, "number": payload["number"], "request_sha256": digest(r),
+                "ticket_sha256": digest(t), "time_unix": payload["issued_unix"]}
+            write(folder / "minicpm-fulltrain-claims" / self.grant["campaign_id"] / str(payload["number"]) /
+                (stage + ".json"), claims[stage + ".json"])
+            if stage == "launch":
+                continue
+            write(control / (stage + "-process.json"), {"schema": "fresh-process-supervision-v1",
+                "status": ("HARD_DEADLINE" if hard_deadline else "CHILD_FAILURE") if stage == last else "EXITED",
+                "returncode": (-9 if hard_deadline else 1) if stage == last else 0,
+                **({"seconds": 600.06} if stage == last and hard_deadline else {}),
+                "automatic_retry": False, "group_exit": {"status": "NO_LIVE_MEMBERS", "members": []}})
+            if stage != last:
+                write(control / stage / "stage.json", {"status": "RETURNED", "stage": stage, "request_sha256": digest(r),
+                    "source_sha256": r["source_sha256"], "native_attempt_permitted": False})
+        write(control / "claims.json", claims)
+        export(control, Path(str(control) + ".zip"))
+        run = r["plan"]["run_id"]
+        write(folder / (run + "-release-context.json"), {"locator": self.locator, "value": v, "ticket": t})
+        write(folder / (run + "-authority-proof.json"), self.proof_document)
+        snapshot = folder / "data/processed/fresh_fulltrain_code" / r["source_sha256"]
+        for name in contract.sources():
+            target = snapshot / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(contract.ROOT / name, target)
+        return folder
+
+    def failure_evidence(self, last, *, hard_deadline=False, kernel_id=191, item=None):
+        item = self.route.state()["active"] if item is None else item
+        folder = self.failed_download(item, last, hard_deadline=hard_deadline)
+        local = self.route.pre_native_local(folder, item)
+        package = self.route.root / item["package"]
+        job = item["value"]["job"]
+        closure = {"schema": c.prenative.PROVIDER_SCHEMA, "local": local, "ticket_job": job, "provider_job": job,
+            "provider": {"job_id": job, "version": 1, "kernel_id": kernel_id, "state": "ERROR",
+                "notebook_code_sha256": item["ticket"]["payload"]["notebook_code_sha256"],
+                "remote_notebook_sha256": sha(package / "notebook.ipynb"), "safeshift_metadata": "MATCHED"},
+            "accelerator": {"enable_gpu": True, "machine_shape": "NvidiaTeslaT4",
+                "scope": "CURRENT_KERNEL_METADATA_NOT_EXECUTION_TIME_PROOF"},
+            "capsule": {"private": True, "version": 1, "files": c.prenative.package_files(package)},
+            "output": {"inventory": c.prenative.inventory(folder), "pairs": {local["supervisor"]: local["supervisor_sha256"]},
+                "sidecar_sha256": local["sidecar_sha256"], "log_sha256": "e" * 64}}
+        return folder, closure
+
+    def close_failure(self, last):
+        folder, closure = self.failure_evidence(last)
+        before = self.route.state()
+        item = before["active"]
+        with self.assertRaisesRegex(ValueError, "START_WINDOW_OPEN"):
+            self.route.close_pre_native(folder, closure)
+        # Advance wall clock past this ticket's launch window.
+        real_time = time.time
+        shift = item["ticket"]["payload"]["start_before_unix"] + 1 - real_time()
+        self.stack.enter_context(patch.object(time, "time", side_effect=lambda: real_time() + shift))
+        wrong = deepcopy(closure)
+        wrong["output"]["pairs"]["unbound.zip"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "SUPERVISOR_ONLY"):
+            self.route.close_pre_native(folder, wrong)
+        self.assertEqual(self.route.state()["active"], item)
+        result = self.route.close_pre_native(folder, closure)
+        self.assertEqual(result["reserved"], before["reserved"])
+        self.assertEqual(self.route.state()["history"], before["history"])
+        with self.assertRaisesRegex(ValueError, "NO_ACTIVE"):
+            self.route.close_pre_native(folder, closure)
+
+    def test_serial9_gpu_failure_stages_same_ordinals_under_fresh_signed_hold(self):
+        self.initialize_serial9()
+        self.stage()
+        original = self.route.state()["active"]
+        self.close_failure("gpu")
+        self.stage()
+        successor = self.route.state()["active"]
+        self.assertEqual(successor["ticket"]["payload"]["number"], 10)
+        self.assertEqual(successor["ticket"]["payload"]["reserved_before"], original["ticket"]["payload"]["reserved_after"])
+        self.assertEqual(successor["ticket"]["payload"]["closures"][0]["ticket_sha256"], digest(original["ticket"]))
+        self.assertEqual(successor["value"]["request"]["plan"]["scheduled_ordinals"],
+            original["value"]["request"]["plan"]["scheduled_ordinals"])
+
+    def test_serial9_results_then_setup_failure_preserves_raw_ancestors_and_resume(self):
+        self.initialize_serial9()
+        self.stage()
+        self.accept()
+        self.stage()
+        before = self.route.state()
+        self.assertEqual(before["next_ordinal"], 2)
+        self.close_failure("setup")
+        self.stage()
+        item = self.route.state()["active"]
+        self.assertEqual(item["ticket"]["payload"]["number"], 11)
+        self.assertEqual(item["value"]["ancestors"], before["active"]["value"]["ancestors"])
+        self.assertEqual(item["value"]["request"]["plan"]["scheduled_ordinals"][0], 2)
+
+    def test_forged_expired_replayed_or_foreign_tickets_fail(self):
+        self.stage()
+        active = self.route.state()["active"]
+        ticket = active["ticket"]
+        for mutate in (lambda t: t.update(signature="0"*768), lambda t: t["payload"].update(number=5),
+                       lambda t: t["payload"].update(grant_sha256="0"*64)):
+            bad = deepcopy(ticket); mutate(bad)
+            with self.assertRaises(ValueError): a.verify_ticket(self.grant, bad, active["value"])
+        with patch.object(p.time, "time", return_value=self.grant["expires_unix"]+1):
+            with self.assertRaisesRegex(ValueError, "TICKET_EXPIRED"): a.verify_ticket(self.grant, ticket, active["value"])
+        with a._activated(self.grant,self.locator,ticket,active["value"],"launch"): pass
+        with self.assertRaises(FileExistsError):
+            with a._activated(self.grant,self.locator,ticket,active["value"],"launch"): pass
+
+    def test_serial6_authority_source_or_reset_cannot_issue_serial7(self):
+        for mutate in (lambda g: g.update(implementation_pr=204),
+                       lambda g: g["offline"].update(serial6_event_sha256="0"*64),
+                       lambda g: g["offline"].update(serial6_supervisor_sha256="0"*64),
+                       lambda g: g["scope"].update(source_sha256=c.serial6.SOURCE)):
+            grant = deepcopy(self.grant)
+            mutate(grant)
+            with self.assertRaises(ValueError):
+                p.validate_delegation(grant)
+        self.assertEqual(self.route.forecast()["next_ordinal"], 0)
+        self.assertEqual(self.route.forecast()["remaining_images"], 3763)
+        self.stage()
+        active = self.route.state()["active"]
+        for change in ({"number": 6}, {"reserved_before": v5.RESERVED}):
+            payload = {**active["ticket"]["payload"], **change}
+            ticket = c.old.sign(self.key, self.grant["public_key"], payload)
+            with self.assertRaises(ValueError):
+                a.verify_ticket(self.grant, ticket, active["value"])
+
+    def test_owner_quota_input_proof_and_session_fail_closed(self):
+        for change in (lambda g:g["quota"].update(reserved=1), lambda g:g.update(observed_unix=1),
+                       lambda g:g.update(no_active_job=False), lambda g:g.update(version=2),
+                       lambda g:g["inputs"]["dataset_sources"].pop(), lambda g:g.update(proof_sha256="0"*64)):
+            gate = self.gate(); change(gate)
+            with self.assertRaises(ValueError): self.route.stage(self.key, gate, self.proof)
+        self.assertEqual(self.route.events(), [])
+        bad = deepcopy(self.grant); bad["offline"]["operator_session"] = p.EXCLUDED_SESSION
+        with self.assertRaisesRegex(ValueError,"ORIGINAL_OPERATOR_SESSION"): p.validate_delegation(bad)
+        bad = deepcopy(self.grant); bad["offline"]["unmeasured_calls"] = 3763
+        with self.assertRaisesRegex(ValueError,"CONSERVATIVE_INITIAL"): p.validate_delegation(bad)
+        bad=deepcopy(self.grant);bad["offline"]["review_logins"]=[a.OWNER]
+        with self.assertRaisesRegex(ValueError,"NEW_OFFLINE_AUTHORITY"):p.validate_delegation(bad)
+        bad["offline"]["schema"]="safeshift-minicpm-offline-continuation-v1"
+        with self.assertRaisesRegex(ValueError,"NEW_OFFLINE_AUTHORITY"):p.validate_delegation(bad)
+
+    def test_initial100_is_only_a_ceiling_and_expiry_is_exactly30_days(self):
+        self.assertEqual(p.validate_delegation(self.grant)["unmeasured_calls"],100)
+        # The lower time envelope reduces the signed first job to two calls.
+        self.stage()
+        ticket=self.route.state()["active"]["ticket"]
+        self.assertEqual(ticket["payload"]["sizing"]["calls"],2)
+        self.assertEqual(ticket["payload"]["sizing"]["status"],"UNMEASURED_CONSERVATIVE_CAP_NOT_THROUGHPUT")
+        grant=deepcopy(self.grant);grant["sizing"]["first_call_seconds"]=5
+        proposal=p.proposal(grant,3763,c.serial6.RESERVED,self.gate())
+        self.assertEqual(proposal["calls"],100)
+        self.assertEqual(proposal["seconds"],14400)
+        for value in (0,99,101,True,100.0):
+            bad=deepcopy(grant);bad["offline"]["unmeasured_calls"]=value
+            with self.subTest(value=value),self.assertRaisesRegex(ValueError,"CONSERVATIVE_INITIAL"):
+                p.validate_delegation(bad)
+        for delta in (-1,1,-p.RELEASE_SECONDS):
+            bad=deepcopy(grant);bad["expires_unix"]+=delta
+            with self.subTest(delta=delta),self.assertRaisesRegex(ValueError,"EXACT_30_DAY"):
+                p.validate_delegation(bad)
+        bad=deepcopy(grant);bad["caps"]["job_seconds"]=14401
+        with self.assertRaisesRegex(ValueError,"FOUR_HOUR_JOB_CAP"):p.validate_delegation(bad)
+
+    def test_crash_after_reservation_exports_same_ticket_without_new_budget(self):
+        with patch.object(self.route,"export_active",side_effect=RuntimeError("SYNTHETIC_CRASH")):
+            with self.assertRaises(RuntimeError): self.stage()
+        before = self.route.state()["reserved"]
+        result = self.route.export_active()
+        self.assertIn("NOT_SUBMITTED",result["status"])
+        self.route.export_active()
+        self.assertEqual(self.route.state()["reserved"], before)
+        pkg = self.route.root/self.route.state()["active"]["package"]
+        (pkg/"notebook.ipynb").write_bytes(b"SYNTHETIC_TORN")
+        with self.assertRaisesRegex(ValueError,"PARTIAL_OR_CHANGED"):self.route.export_active()
+
+    def test_unsigned_template_clears_issuance_and_has_no_second_account_field(self):
+        proposal=deepcopy(self.grant);proposal.pop("offline")
+        source=self.root/"v6-proposal.json";write(source,proposal)
+        target=self.root/"data/processed/unsigned-v2.json"
+        with redirect_stdout(io.StringIO()):
+            c.main(["--directory",str(self.route.root),"release-template",
+                "--v6-proposal",str(source),"--output",str(target)])
+        result=read(target)
+        self.assertIsNone(result["issued_unix"]);self.assertIsNone(result["expires_unix"])
+        self.assertEqual(result["offline"]["schema"],p.SCHEMA)
+        self.assertEqual(result["offline"]["operator_session"],p.ORIGINAL_SESSION)
+        self.assertEqual(result["offline"]["unmeasured_calls"],100)
+        self.assertNotIn("review_logins",result["offline"])
+        self.assertTrue(all(value is None for value in result["approvals"].values()))
+        with self.assertRaises((ValueError,TypeError)):p.validate_delegation(result)
+
+    def test_journal_tamper_in_both_mirrors_is_blocked(self):
+        self.stage()
+        for root in (self.route.root,self.route.mirror):
+            path=root/"event-000001.json";event=read(path)
+            event["payload"]["ticket"]["payload"]["reserved_after"]["calls"]+=1
+            path.write_bytes(c.json_bytes(event))
+        with self.assertRaisesRegex(ValueError,"SIGNATURE_INVALID"):self.route.state()
+        with self.assertRaises(ValueError):self.route.official_report()
+
+    def test_mirror_partial_original_append_and_os_lock_stop(self):
+        with c.lock(self.route.root):
+            with self.assertRaisesRegex(RuntimeError,"ANOTHER_OPERATOR"): self.stage()
+        self.stage()
+        (self.route.mirror/"event-000001.json").unlink()
+        with self.assertRaisesRegex(ValueError,"TORN_MIRROR"): self.route.state()
+        write(self.legacy/"event-00002.json",{"synthetic":"unexpected"})
+        with self.assertRaisesRegex(ValueError,"LEGACY_APPEND"): self.route.events()
+
+    def test_missing_bad_sidecar_terminal_or_native_raw_preserved_and_stopped(self):
+        self.stage()
+        attempt, supervisor, receipt = self.outputs()
+        Path(str(attempt)+".sha256.json").write_bytes(b"{}")
+        with self.assertRaisesRegex(ValueError,"ACCEPT_STOPPED"):
+            self.route.accept(attempt,supervisor,receipt,self.proof)
+        state = self.route.state()
+        self.assertTrue(state["stopped"])
+        self.assertIsNotNone(state["active"])
+        self.assertTrue((self.route.root/"custody/7"/attempt.name).exists())
+        with self.assertRaisesRegex(ValueError,"ACTIVE_STOP"): self.stage()
+        with self.assertRaisesRegex(ValueError,"OFFICIAL_RESULTS_BLOCKED"): self.route.official_report()
+
+    def test_wrong_terminal_version_foreign_job_and_missing_proof(self):
+        self.stage()
+        active = self.route.state()["active"]
+        attempt, supervisor, receipt = self.outputs()
+        for field,value in (("version",2),("state","RUNNING"),("job","foreign/job"),("no_other_job_or_version",False)):
+            bad = deepcopy(receipt);bad[field]=value
+            with self.assertRaisesRegex(ValueError,"TERMINAL_HASH_VERSION"):
+                c.verify_local(self.grant,active,self.route.root/active["package"],attempt,supervisor,bad,self.proof)
+        with self.assertRaises(FileNotFoundError):
+            c.verify_local(self.grant,active,self.route.root/active["package"],attempt,supervisor,receipt,self.root/"missing")
+
+    def test_signed_budget_reset_cap_exhaustion_and_peer_timing_rejected(self):
+        gate = self.gate()
+        for reserved in ({"calls":14163169,"jobs":5,"gpu_seconds":144000}, {"calls":10526,"jobs":3766,"gpu_seconds":144000}):
+            with self.assertRaises(ValueError): p.proposal(self.grant,3763,reserved,gate)
+        telemetry = {"model_key":"internvl35","source_sha256":self.grant["scope"]["source_sha256"],
+            "overhead_seconds":2192,"call_seconds":[13.42],"provenance_sha256":"f"*64}
+        with self.assertRaisesRegex(ValueError,"NO_PEER_THROUGHPUT"): p.proposal(self.grant,3763,c.serial6.RESERVED,gate,telemetry)
+        self.stage();active = self.route.state()["active"]
+        bad = deepcopy(active["ticket"]["payload"]);bad["reserved_before"]["calls"]-=1
+        signed = c.old.sign(self.key,self.public,bad)
+        with self.assertRaisesRegex(ValueError,"NO_HOLD_RESET"):a.verify_ticket(self.grant,signed,active["value"])
+        value=deepcopy(active["value"]);r=value["request"];plan=r["plan"]
+        r["plan"]=contract.plan(r["campaign"],value["cohort"],plan["identity"],[],action="initial",
+            run_id=plan["run_id"],attempt_id=plan["attempt_id"],max_calls=3,max_seconds=plan["max_seconds"])
+        payload=deepcopy(active["ticket"]["payload"])
+        payload.update(value_sha256=digest(value),capsule_sha256=digest(value))
+        payload["sizing"]["calls"]=3;payload["reserved_after"]["calls"]=payload["reserved_before"]["calls"]+3
+        signed=c.old.sign(self.key,self.public,payload)
+        with self.assertRaisesRegex(ValueError,"UNMEASURED_RELEASE_CAP"):a.verify_ticket(self.grant,signed,value)
+
+    def test_source_tools_drift_and_owner_network_boundary(self):
+        self.grant["offline"]["tools_sha256"]="0"*64
+        with self.assertRaisesRegex(ValueError,"REVIEWED_OFFLINE_TOOLS"): c.authenticate(self.locator,{})
+        with self.assertRaisesRegex(ValueError,"OWNER_MUST_PERSONALLY"): online.verify(self.route,self.root/"data/processed/provider")
+        with self.assertRaisesRegex(ValueError,"OWNER_MUST_PERSONALLY"): online.acquire(self.locator,self.root/"data/processed/export")
+        with self.assertRaisesRegex(ValueError,"MISSING_AUTHENTIC"): c.Exports({})("/pulls/205")
+
+    def test_new_marker_exact_source_approvals_and_tool_tree_are_mandatory(self):
+        exports = {}
+        def add(i,marker,payload):
+            body=marker+"\n```json\n"+json.dumps(payload)+"\n```"
+            exports["/issues/comments/"+str(i)]={"id":i,"issue_url":a.API+"/issues/205","body":body,
+                "user":{"login":a.OWNER,"id":a.OWNER_ID}}
+            return {"comment_id":i,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
+        self.grant["approvals"]={role:None for role in recovery.SOURCE_ROLES}
+        for i,role in enumerate(recovery.SOURCE_ROLES,2):
+            self.grant["approvals"][role]=add(i,a.APPROVAL,{"kind":role,"status":"APPROVED",
+                "reviewed_head":self.grant["reviewed_head"],"subject_sha256":a.subject(self.grant)})
+        locator=add(1,p.RELEASE,self.grant)
+        exports["/pulls/205"]={"merged":True,"draft":False,"base":{"ref":"main"},
+            "head":{"sha":self.grant["reviewed_head"]},"merge_commit_sha":self.grant["merged_sha"]}
+        rows=[]
+        repo=ui.ROOT
+        for name in [*contract.sources(), *("scripts/"+name for name in p.TOOLS)]:
+            raw=(repo/name).read_bytes()
+            rows.append({"path":name,"type":"blob","mode":"100644","sha":hashlib.sha1(
+                b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()})
+        for ref in (self.grant["runtime_commit"],self.grant["reviewed_head"],self.grant["merged_sha"]):
+            exports["/git/trees/"+ref+"?recursive=1"]={"tree":deepcopy(rows),"truncated":False}
+        # Inherited V4/V5 contracts have separate real-signature regression
+        # modules. Here only that historical graph is a synthetic boundary.
+        with patch.object(a,"validate",side_effect=REAL_VALIDATE), \
+             patch.object(recovery,"validate_recovery"), patch.object(recovery,"authenticate_recovery"), \
+             patch.object(v5,"validate_repair"), patch.object(v5,"authenticate_repair"):
+            self.assertEqual(REAL_LOAD(locator,reader=c.Exports(exports)),self.grant)
+            # Kaggle embeds runtime sources, not local Operator scripts. The
+            # signed root's blob IDs still verify those tools on GitHub.
+            runtime_repo=self.root/"runtime-only"
+            for name in contract.sources():
+                target=runtime_repo/name;target.parent.mkdir(parents=True,exist_ok=True)
+                shutil.copyfile(repo/name,target)
+            self.assertFalse((runtime_repo/"scripts").exists())
+            self.assertEqual(REAL_LOAD(locator,reader=c.Exports(exports),repo=runtime_repo),self.grant)
+            bad=deepcopy(exports);bad["/pulls/205"]["merged"]=False
+            with self.assertRaisesRegex(ValueError,"REVIEW_AUDIT_MERGE"):REAL_LOAD(locator,reader=c.Exports(bad))
+            bad=deepcopy(exports)
+            tree=bad["/git/trees/"+self.grant["merged_sha"]+"?recursive=1"]["tree"]
+            tree[-1]["sha"]="0"*40
+            with self.assertRaisesRegex(ValueError,"MERGED_RUNTIME_BYTES"):REAL_LOAD(locator,reader=c.Exports(bad))
+            bad=deepcopy(exports);bad["/issues/comments/1"]["user"]["id"]=3
+            with self.assertRaisesRegex(ValueError,"AUTHENTIC_OWNER"):REAL_LOAD(locator,reader=c.Exports(bad))
+            bad=deepcopy(exports)
+            modified=deepcopy(self.grant);modified["expires_unix"]+=1;modified["issued_unix"]+=1
+            body=p.RELEASE+"\n```json\n"+json.dumps(modified)+"\n```"
+            bad["/issues/comments/1"]["body"]=body
+            changed_locator={"comment_id":1,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
+            with self.assertRaisesRegex(ValueError,"APPROVAL_SOURCE_SCOPE"):REAL_LOAD(changed_locator,reader=c.Exports(bad))
+
+    def test_native_claim_raw_mutation_and_missing_capsule_never_become_results(self):
+        from safeshift.pilot.artifacts import import_archive
+        self.stage(); active=self.route.state()["active"]
+        attempt,supervisor,receipt=self.outputs()
+        pkg=self.route.root/active["package"]
+        marker=pkg/"dataset"/ui.MARKER
+        saved=marker.read_bytes();marker.write_bytes(b"{}")
+        with self.assertRaisesRegex(ValueError,"CAPSULE_VALUE"):c.verify_local(self.grant,active,pkg,attempt,supervisor,receipt,self.proof)
+        marker.write_bytes(saved)
+        staged=import_archive(attempt,self.root/"mutated-attempt")
+        raw=staged/"calls/000000/run/samples/000000/raw.json"
+        value=read(raw);value["response"]='{"safety_level":"Level01"}';raw.write_bytes(c.json_bytes(value))
+        (staged/"checksums.json").unlink(missing_ok=True)
+        altered=self.root/"altered"/attempt.name;altered.parent.mkdir()
+        export(staged,altered)
+        receipt["archive_sha256"]=sha(altered)
+        with self.assertRaises(ValueError):c.verify_local(self.grant,active,pkg,altered,supervisor,receipt,self.proof)
+
+    def test_missing_output_stops_and_legacy_writer_is_fenced(self):
+        self.stage()
+        before=self.route.state()["reserved"]
+        with self.assertRaisesRegex(ValueError,"LEGACY_WRITER_BLOCKED"):
+            c.old.Journal(self.legacy,self.root/"data/processed/old-mirror").append("COLLECTED",{})
+        with self.assertRaisesRegex(ValueError,"ACCEPT_STOPPED"):
+            self.route.accept(self.root/"missing.zip",self.root/"supervisor.zip",{},self.proof)
+        self.assertEqual(self.route.state()["reserved"],before)
+        self.assertTrue(self.route.state()["stopped"])
+
+    def test_every_capsule_byte_including_zip_ancestor_is_checked(self):
+        from safeshift import internvl3763_operator as provider
+        self.stage();active=self.route.state()["active"]
+        pkg=self.route.root/active["package"]
+        ziproot=self.root/"small-zip";ziproot.mkdir();write(ziproot/"synthetic.json",{"synthetic":True})
+        ancestor=pkg/"dataset/ancestor-0000.bin";export(ziproot,ancestor)
+        value=deepcopy(active["value"])
+        value["ancestors"].append({"file":ancestor.name,"sha256":sha(ancestor),"plan_sha256":"a"*64})
+        ticket=deepcopy(active["ticket"]);ticket["payload"]["value_sha256"]=digest(value)
+        (pkg/"dataset"/ui.MARKER).write_bytes(c.json_bytes(value))
+        from safeshift.fulltrain.minicpm_execution import MARKER
+        (pkg/"dataset"/MARKER).write_bytes(c.json_bytes(ticket))
+        requested=[]
+        def download(client,owner,slug,version,name,destination):
+            requested.append(name);target=destination/name
+            c.copy(pkg/"dataset"/name,target)
+            return target
+        with patch.object(c.old,"verify_published_capsule",return_value={"synthetic":True}), \
+             patch.object(provider,"download_capsule",side_effect=download):
+            result=online.capsule(Mock(),value,ticket,pkg,self.root/"downloaded-capsule")
+        self.assertEqual(set(requested),{f.name for f in (pkg/"dataset").iterdir()})
+        self.assertEqual(result["files"][ancestor.name],sha(ancestor))
+
+    def test_owner_verifier_network_failure_preserves_blocked_without_journal_write(self):
+        before=self.route.events()
+        with patch.object(a,"github_get",side_effect=OSError("https://private/signed-url")), \
+             patch.object(a,"load",side_effect=REAL_LOAD):
+            with self.assertRaisesRegex(ValueError,"VERIFIER_BLOCKED"):online.acquire(
+                self.locator,self.root/"data/processed/failed-export",owner_performs_network=True)
+        blocked=read(self.root/"data/processed/failed-export/BLOCKED.json")
+        self.assertNotIn("private",json.dumps(blocked))
+        self.assertEqual(self.route.events(),before)
+
+    @unittest.skipUnless(sys.platform == "linux", "3763 real scripted archive/mirror path run on POSIX Linux")
+    def test_all3763_multiple_jobs_tail_mock_provider_and_single_final_admission(self):
+        # Each distinct ZIP pair is replayed through the actual verifier once.
+        # Repeated state inspections in this large CPU fixture recheck outer
+        # hashes and reuse that exact result to avoid redundant fsync/extraction
+        # of tens of thousands of tiny synthetic files. Production has no cache.
+        real_verify, verified_cache = c.verify_local, {}
+        def verified_once(grant,active,package,attempt,supervisor,receipt,proof):
+            key=(digest(grant),digest(active["value"]),digest(active["ticket"]),sha(attempt),sha(str(attempt)+".sha256.json"),sha(supervisor),
+                sha(str(supervisor)+".sha256.json"),digest(receipt),sha(proof),sha(package/"notebook.ipynb"),
+                sha(package/"dataset"/ui.MARKER))
+            if key not in verified_cache:
+                verified_cache[key]=real_verify(grant,active,package,attempt,supervisor,receipt,proof)
+            return deepcopy(verified_cache[key])
+        self.stack.enter_context(patch.object(c,"verify_local",side_effect=verified_once))
+        self.grant["sizing"]["first_call_seconds"] = 1
+        self.initialize_serial9()
+        self.stage()
+        self.close_failure("gpu")
+        self.stage(); self.accept()
+        self.assertEqual(self.route.state()["next_ordinal"],100)
+        self.stage()
+        tail=self.route.state()["active"]["value"]["request"]["plan"]["scheduled_ordinals"]
+        self.assertEqual(tail,list(range(100,3763)))
+        self.accept()
+        manifest=self.route.manifest()
+        self.assertEqual([r["ordinal"] for r in manifest["rows"]],list(range(3763)))
+        self.assertEqual(len(manifest["attempts"]),2)
+        self.assertEqual(manifest["reserved"]["calls"], c.serial8.RESERVED["calls"] + 100 + 3763)
+        self.assertEqual([i["active"]["ticket"]["payload"]["number"] for i in manifest["closed"]], [9])
+        self.exercise_final(manifest)
+
+    def exercise_final(self,manifest):
+        """Mock SDK at transport boundaries; orchestration visits every job."""
+        from scripts import reconcile_train3763_manual as manual
+        sdk=Mock(name="SYNTHETIC_OFFICIAL_SDK")
+        observations=[]
+        def observe(client,job,version,nb,sources,**kw):
+            self.assertIs(client,sdk); self.assertEqual(version,1)
+            item=next(i for i in manifest["attempts"] if i["value"]["job"]==job)
+            self.assertEqual(sources,item["value"]["input_sources"])
+            observations.append(job)
+            return {"job_id":job,"version":1,"state":"COMPLETE","kernel_id":kw["kernel_id"],
+                "notebook_code_sha256":item["ticket"]["payload"]["notebook_code_sha256"],"safeshift_metadata":"MATCHED"}
+        def download(client,job,version,attempt,checksum,destination,*,output_pairs):
+            for name,source in output_pairs.items():
+                c.copy(source,destination/name)
+                c.copy(Path(str(source)+".sha256.json"),Path(str(destination/name)+".sha256.json"))
+            return {"mock_sdk":"EXACT_SYNTHETIC_BYTES"}
+        with patch.object(online,"historical",return_value={"status":"ALL_HISTORICAL_CUSTODY_RECHECKED",
+                "serial7_closure": manifest["historical"]["serial7_closure"],
+                "serial8_closure": manifest["historical"]["serial8_closure"],
+                "historical_sha256":digest(manifest["historical"]), "serial6_supervisor_sha256": c.serial6.ZIP_SHA,
+                "serial6": {"job_id": c.serial6.JOB, "version": 1, "state": "ERROR", "kernel_id": 6}}), \
+             patch.object(online,"capsule",return_value={"mock_sdk":"CAPSULE_CHECKED"}), \
+             patch.object(online,"resolve_kernel",side_effect=lambda client, candidates, kernel_id: next(iter(candidates))), \
+             patch.object(online,"provider_closure",return_value=deepcopy(manifest["closed"][0]["closure"])), \
+             patch.object(manual,"observe_kernel",side_effect=observe), \
+             patch.object(manual,"download_outputs",side_effect=download):
+            report=online.verify(self.route,self.root/"data/processed/provider",owner_performs_network=True,client=sdk)
+        self.assertEqual(len(observations),2*len(manifest["attempts"]))
+        for mutate in (lambda r:r["attempts"].pop(),
+                       lambda r:r["attempts"].append(deepcopy(r["attempts"][0])),
+                       lambda r:r["attempts"].__setitem__(1,deepcopy(r["attempts"][0])),
+                       lambda r:r["attempts"].reverse(),
+                       lambda r:r.update(manifest_sha256="0"*64),
+                       lambda r:r.update(historical_sha256="0"*64),
+                       lambda r:r["historical_verification"].update(status="PENDING"),
+                       lambda r:r["historical_verification"].pop("serial6"),
+                       lambda r:r["historical_verification"]["serial6"].update(state="RUNNING"),
+                       lambda r:r["attempts"][0].update(ticket_sha256="0"*64),
+                       lambda r:r["attempts"][0].update(completion_sha256="0"*64),
+                       lambda r:r["attempts"][0].update(output_verified=False),
+                       lambda r:r["attempts"][0].update(capsule_verified=False),
+                       lambda r:r["attempts"][0].update(local_replayed=False),
+                       lambda r:r["attempts"][0]["provider"].update(notebook_code_sha256="0"*64),
+                       lambda r:r["attempts"][0]["provider"].update(state="RUNNING"),
+                       lambda r:r["attempts"][0]["provider"].update(version=2),
+                       lambda r:r["attempts"][0]["provider"].update(job_id="foreign/job"),
+                       lambda r:r["attempts"][1]["provider"].update(kernel_id=r["attempts"][0]["provider"]["kernel_id"]),
+                       lambda r:r["closed"].clear(),
+                       lambda r:r["closed"][0]["provider"].update(kernel_id=1234)):
+            bad=deepcopy(report);mutate(bad)
+            with self.assertRaises(ValueError):c.validate_provider_report(manifest,bad)
+        exports={}
+        def comment(i,marker,payload,*,user):
+            body=marker+"\n```json\n"+json.dumps(payload)+"\n```"
+            exports["/issues/comments/"+str(i)]={"id":i,"issue_url":a.API+"/issues/202","body":body,
+                "user":user}
+            return {"comment_id":i,"body_sha256":hashlib.sha256(body.encode()).hexdigest()}
+        owner=comment(101,p.FINAL,{"manifest_sha256":digest(manifest),"report_sha256":digest(report),"status":"APPROVED_FOR_FINAL_ADMISSION"},
+            user={"login":a.OWNER,"id":a.OWNER_ID})
+        missing=deepcopy(exports);missing.clear()
+        with self.assertRaisesRegex(ValueError,"MISSING_AUTHENTIC"):
+            self.route.reconcile(report,missing,owner)
+        self.assertIsNone(self.route.state()["final"])
+        with self.assertRaisesRegex(ValueError,"OFFICIAL_RESULTS_BLOCKED"):self.route.official_report()
+        self.route.reconcile(report,exports,owner)
+        self.assertEqual(self.route.state()["status"],"FINAL_EVENT_PRESENT_USE_OFFICIAL_REPORT")
+        official=self.route.official_report()
+        self.assertEqual(official["status"],"OFFICIAL_RECONCILED_RESULTS")
+        self.assertEqual([entry["number"] for entry in official["failed_pre_native"]], [9])
+        self.assertEqual(len(official["rows"]),3763)
+        self.assertFalse(official["scientific_qualified"])
+        self.assertEqual(official["budget"]["billing_gpu_seconds"],"NOT_OBSERVED")
+        self.assertNotIn("manifest",self.route.state()["final"]["payload"])
+        with self.assertRaisesRegex(ValueError,"DUPLICATE_FINAL"):self.route.reconcile(report,exports,owner)
+        with (self.route.mirror/"final/manifest.json").open("ab") as file:file.write(b" ")
+        with self.assertRaisesRegex(ValueError,"FINAL_DOCUMENT_BYTES"):self.route.official_report()
+
+
+if __name__ == "__main__": unittest.main()

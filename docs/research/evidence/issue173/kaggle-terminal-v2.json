@@ -1,0 +1,13 @@
+{
+  "schema": "issue173-kaggle-terminal-v1",
+  "utc": "2026-11-02T13:51:52.965673+00:00",
+  "software_version": 2,
+  "status": "KernelWorkerStatus.COMPLETE",
+  "quota": {
+    "used_seconds": 7630.908,
+    "reserved_seconds": 0.0,
+    "total_seconds": 108000.0
+  },
+  "scope": "Account quota observation, not an exclusive per-job GPU-time attribution",
+  "model_calls": 0
+}

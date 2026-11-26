@@ -1,0 +1,674 @@
+{
+  "schema": "issue173-final-native-evidence-v1",
+  "models": {
+    "qwen3": {
+      "status": "INFERENCE_VERIFIED",
+      "attempt": 2,
+      "source_commit": "ae5b488e379bf526b0509802ce9837b03b0f7885",
+      "weights_loaded": true,
+      "native_calls": 1,
+      "classification_status": "SUCCESS",
+      "strict_parser_replay": "PASS",
+      "raw_result_checksum": "PASS",
+      "independent_decode": "PASS",
+      "generated_tokens": 10,
+      "hnlo_status": "HNLO_VALIDATED",
+      "raw_before_parse_files_preserved": true,
+      "model": {
+        "id": "Qwen/Qwen3-VL-8B-Instruct",
+        "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"
+      }
+    },
+    "internvl35": {
+      "status": "INFERENCE_VERIFIED",
+      "attempt": 5,
+      "source_commit": "1e744d991613f48d81ccf0046bc35c5fdab9d1e2",
+      "weights_loaded": true,
+      "native_calls": 1,
+      "classification_status": "INVALID",
+      "strict_parser_replay": "PASS",
+      "raw_result_checksum": "PASS",
+      "independent_decode": "PASS",
+      "generated_tokens": 14,
+      "hnlo_status": "RAW_LOGITS_AVAILABLE_BUT_UNALIGNED",
+      "raw_before_parse_files_preserved": true,
+      "model": {
+        "id": "OpenGVLab/InternVL3_5-4B-HF",
+        "revision": "6bd4487402110ef9889ba50eb7aefeb302526fed"
+      }
+    },
+    "minicpm4": {
+      "status": "BLOCKED",
+      "weights_loaded": false,
+      "native_calls": 0,
+      "reason": "HOST_OR_CGROUP_RAM_BEFORE_LOAD",
+      "checkpoint_bytes": "PASS_CPU_VERIFICATION",
+      "required_available_ram_bytes": 17179869184,
+      "last_measured_available_ram_after_reclamation_bytes": 13950664704,
+      "precise_available_ram_at_failing_imported_worker": "NOT_CAPTURED",
+      "advisory_scan_limit_reached": true,
+      "load_reservations": 0
+    }
+  },
+  "native_calls_by_model": {
+    "qwen3": 1,
+    "internvl35": 1,
+    "minicpm4": 0
+  },
+  "native_calls_total": 2,
+  "maximum_authorized_total": 3,
+  "attempts": [
+    {
+      "attempt": 1,
+      "archive_sha256": "a296d13984e179a2087acc25a6f45c58f4e15eeb4e32a4efdc46ce8b2a8fac17",
+      "verified_archive_members": 22,
+      "source_commit": "d14218b4df956721e5d32dfc3ce226b40be8048c",
+      "native_calls": 0,
+      "summary": {
+        "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+        "model_calls": 0,
+        "models": {
+          "internvl35": {
+            "native_calls": 0,
+            "status": "NOT_ATTEMPTED",
+            "weights_loaded": false
+          },
+          "minicpm4": {
+            "native_calls": 0,
+            "status": "NOT_ATTEMPTED",
+            "weights_loaded": false
+          },
+          "qwen3": {
+            "native_calls": 0,
+            "status": "BLOCKED",
+            "weights_loaded": false
+          }
+        },
+        "production_authorized": false,
+        "run_id": "issue173-smoke-20261102-v1",
+        "source_commit": "d14218b4df956721e5d32dfc3ce226b40be8048c"
+      },
+      "stages": {
+        "qwen3/native-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 1132,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 1,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 4.702249273999996,
+          "status": "CHILD_FAILURE"
+        },
+        "qwen3/setup-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 303.826283572,
+          "status": "EXITED"
+        }
+      },
+      "failure_type": "RuntimeError"
+    },
+    {
+      "attempt": 2,
+      "archive_sha256": "f1f4fefabff4a6fc80f8863bcc314a13949c53815f9b535170cceda1ccd7117d",
+      "verified_archive_members": 65,
+      "source_commit": "ae5b488e379bf526b0509802ce9837b03b0f7885",
+      "native_calls": 1,
+      "summary": {
+        "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+        "model_calls": 1,
+        "models": {
+          "internvl35": {
+            "native_calls": 0,
+            "status": "BLOCKED",
+            "weights_loaded": false
+          },
+          "minicpm4": {
+            "native_calls": 0,
+            "status": "NOT_ATTEMPTED",
+            "weights_loaded": false
+          },
+          "qwen3": {
+            "classification": "SUCCESS",
+            "native_calls": 1,
+            "status": "INFERENCE_VERIFIED",
+            "weights_loaded": true
+          }
+        },
+        "production_authorized": false,
+        "run_id": "issue173-smoke-20261102-v2",
+        "source_commit": "ae5b488e379bf526b0509802ce9837b03b0f7885"
+      },
+      "stages": {
+        "internvl35/setup-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 1604,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 1,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 3.1666586190000316,
+          "status": "CHILD_FAILURE"
+        },
+        "qwen3/native-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 1263,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 198.582460019,
+          "status": "EXITED"
+        },
+        "qwen3/reclaim-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 2.275916832000007,
+          "status": "EXITED"
+        },
+        "qwen3/setup-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 305.380826563,
+          "status": "EXITED"
+        }
+      },
+      "failure_type": "RuntimeError"
+    },
+    {
+      "attempt": 3,
+      "archive_sha256": "4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5",
+      "verified_archive_members": 26,
+      "source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1",
+      "native_calls": 0,
+      "summary": {
+        "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+        "model_calls": 0,
+        "models": {
+          "internvl35": {
+            "native_calls": 0,
+            "status": "BLOCKED",
+            "weights_loaded": false
+          },
+          "minicpm4": {
+            "native_calls": 0,
+            "status": "NOT_ATTEMPTED",
+            "weights_loaded": false
+          },
+          "qwen3": {
+            "native_calls": 0,
+            "prior_native_calls": 1,
+            "status": "PRIOR_SMOKE_CONSUMED_NOT_REPLAYED",
+            "weights_loaded": false
+          }
+        },
+        "prior_native_calls": 1,
+        "production_authorized": false,
+        "run_id": "issue173-smoke-20261102-v3",
+        "source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1"
+      },
+      "stages": {
+        "internvl35/native-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 1360,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 1,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 5.865701307999984,
+          "status": "CHILD_FAILURE"
+        },
+        "internvl35/reclaim-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 3.7870032049999622,
+          "status": "EXITED"
+        },
+        "internvl35/setup-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 153.19799062500002,
+          "status": "EXITED"
+        }
+      },
+      "failure_type": "RuntimeError"
+    },
+    {
+      "attempt": 4,
+      "archive_sha256": "2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee",
+      "verified_archive_members": 28,
+      "source_commit": "f4bf4d756fb4b0094988e2db5894414fc6cdee8f",
+      "native_calls": 0,
+      "summary": {
+        "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+        "model_calls": 0,
+        "models": {
+          "internvl35": {
+            "native_calls": 0,
+            "status": "BLOCKED",
+            "weights_loaded": false
+          },
+          "minicpm4": {
+            "native_calls": 0,
+            "status": "NOT_ATTEMPTED",
+            "weights_loaded": false
+          },
+          "qwen3": {
+            "native_calls": 0,
+            "prior_native_calls": 1,
+            "status": "PRIOR_SMOKE_CONSUMED_NOT_REPLAYED",
+            "weights_loaded": false
+          }
+        },
+        "prior_native_calls": 1,
+        "production_authorized": false,
+        "run_id": "issue173-smoke-20261102-v4",
+        "source_commit": "f4bf4d756fb4b0094988e2db5894414fc6cdee8f"
+      },
+      "stages": {
+        "internvl35/native-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 1592,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 1,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 5.45509751599991,
+          "status": "CHILD_FAILURE"
+        },
+        "internvl35/reclaim-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 4.9416175019999855,
+          "status": "EXITED"
+        },
+        "internvl35/setup-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 350.86445992899996,
+          "status": "EXITED"
+        }
+      },
+      "failure_type": "RuntimeError"
+    },
+    {
+      "attempt": 5,
+      "archive_sha256": "035c4d9b0216378e23ecc812e1221d68fe451ec25a9cbc3fd8977b5794690619",
+      "verified_archive_members": 78,
+      "source_commit": "1e744d991613f48d81ccf0046bc35c5fdab9d1e2",
+      "native_calls": 1,
+      "summary": {
+        "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+        "model_calls": 1,
+        "models": {
+          "internvl35": {
+            "classification": "INVALID",
+            "native_calls": 1,
+            "status": "INFERENCE_VERIFIED",
+            "weights_loaded": true
+          },
+          "minicpm4": {
+            "native_calls": 0,
+            "status": "BLOCKED",
+            "weights_loaded": false
+          },
+          "qwen3": {
+            "native_calls": 0,
+            "prior_native_calls": 1,
+            "status": "PRIOR_SMOKE_CONSUMED_NOT_REPLAYED",
+            "weights_loaded": false
+          }
+        },
+        "prior_native_calls": 1,
+        "production_authorized": false,
+        "run_id": "issue173-smoke-20261102-v5",
+        "source_commit": "1e744d991613f48d81ccf0046bc35c5fdab9d1e2"
+      },
+      "stages": {
+        "internvl35/native-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 408,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 142.223828109,
+          "status": "EXITED"
+        },
+        "internvl35/reclaim-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 5.3948695060000205,
+          "status": "EXITED"
+        },
+        "internvl35/release-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 1.1115941410000119,
+          "status": "EXITED"
+        },
+        "internvl35/setup-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 153.86585811,
+          "status": "EXITED"
+        },
+        "minicpm4/native-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 1132,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 1,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 5.401652410999986,
+          "status": "CHILD_FAILURE"
+        },
+        "minicpm4/reclaim-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 3.9800210160000233,
+          "status": "EXITED"
+        },
+        "minicpm4/setup-supervisor.json": {
+          "automatic_retry": false,
+          "group_kill_sent": true,
+          "log_bytes": 0,
+          "model_fit": "NOT_ESTABLISHED",
+          "retention": "ALL_PARTIAL_FILES_RETAINED",
+          "returncode": 0,
+          "schema": "fresh-process-supervision-v1",
+          "seconds": 147.426354951,
+          "status": "EXITED"
+        }
+      },
+      "failure_type": "RuntimeError",
+      "observations": {
+        "internvl35/cuda.json": {
+          "fp16": "MEASURED",
+          "gpus": [
+            {
+              "free_bytes": 15526068224,
+              "index": 0,
+              "total_bytes": 15636037632
+            }
+          ],
+          "model_fit": "NOT_ESTABLISHED",
+          "weights_loaded": false
+        },
+        "internvl35/driver-library-binding.json": {
+          "cuda_initialized": false,
+          "implementation": "issue173-explicit-host-cuda-driver-v1",
+          "library": "/usr/local/nvidia/lib64/libcuda.so.1",
+          "library_bytes": 96284520,
+          "library_sha256": "dcdf334aeb177c95b3385b797c9b871d03a287895713c6d107f79096b0985aa9",
+          "model_calls": 0,
+          "nvml_utility_loader_scoped_to_subprocess": true,
+          "python_ld_library_path_changed": false
+        },
+        "internvl35/post-call-cache-reclamation.json": {
+          "advice_errors": [],
+          "advised_file_bytes": 5381544449,
+          "advised_regular_files": 32,
+          "after": {
+            "available_bytes": 15512223744,
+            "cgroup_remaining_bytes": [
+              15512223744
+            ]
+          },
+          "before": {
+            "available_bytes": 15070617600,
+            "cgroup_remaining_bytes": [
+              15070617600
+            ]
+          },
+          "proof": "ADVISORY_ONLY_SUBSEQUENT_RAM_GATE_REQUIRED",
+          "ram_floor_mib_unchanged": 16384,
+          "removed_owned_cache_directories": [],
+          "runtime_files_retained": true,
+          "scan_limit_reached": false,
+          "schema": "issue173-owned-cache-reclamation-v1",
+          "weights_or_inputs_modified": false
+        },
+        "internvl35/resources.json": {
+          "devices": [
+            72,
+            1794
+          ],
+          "free_bytes": [
+            1120082194432,
+            20939935744
+          ],
+          "memory": {
+            "available_bytes": 24467849216,
+            "cgroup_remaining_bytes": [
+              24467849216
+            ]
+          },
+          "model_fit": "NOT_ESTABLISHED",
+          "requested_reserves_bytes": [
+            25769803776,
+            1073741824
+          ]
+        },
+        "internvl35/setup-cache-reclamation.json": {
+          "advice_errors": [],
+          "advised_file_bytes": 5381544449,
+          "advised_regular_files": 32,
+          "after": {
+            "available_bytes": 25145839616,
+            "cgroup_remaining_bytes": [
+              25145839616
+            ]
+          },
+          "before": {
+            "available_bytes": 18177552384,
+            "cgroup_remaining_bytes": [
+              18177552384
+            ]
+          },
+          "proof": "ADVISORY_ONLY_SUBSEQUENT_RAM_GATE_REQUIRED",
+          "ram_floor_mib_unchanged": 16384,
+          "removed_owned_cache_directories": [],
+          "runtime_files_retained": true,
+          "scan_limit_reached": false,
+          "schema": "issue173-owned-cache-reclamation-v1",
+          "weights_or_inputs_modified": false
+        },
+        "internvl35/storage-allocation.json": {
+          "allocations": [
+            {
+              "allocated_bytes": 1048576,
+              "device": 72,
+              "fsync": true,
+              "requested_bytes": 1048576,
+              "written_bytes": 1048576
+            },
+            {
+              "allocated_bytes": 1048576,
+              "device": 1794,
+              "fsync": true,
+              "requested_bytes": 1048576,
+              "written_bytes": 1048576
+            }
+          ],
+          "cleanup_verified": true,
+          "same_filesystem": false,
+          "scope": "OBSERVED_ALLOCATION_ONLY_NOT_O5_APPROVAL"
+        },
+        "internvl35/worker-driver-diagnostic.json": {
+          "binary": "/opt/bin/nvidia-smi",
+          "hardware": {
+            "cuda_initialized": false,
+            "model_fit": "NOT_ESTABLISHED",
+            "physical_gpus": [
+              {
+                "driver": "580.178.04",
+                "free_mib": 14912,
+                "index": 0,
+                "name": "Tesla T4"
+              },
+              {
+                "driver": "580.178.04",
+                "free_mib": 14912,
+                "index": 1,
+                "name": "Tesla T4"
+              }
+            ]
+          },
+          "loader_environment": {
+            "LD_LIBRARY_PATH": null,
+            "LD_PRELOAD": null,
+            "NVIDIA_DRIVER_CAPABILITIES": null,
+            "NVIDIA_VISIBLE_DEVICES": null
+          },
+          "nvml_find_library": null,
+          "nvml_paths": {
+            "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1": false,
+            "/usr/lib64/libnvidia-ml.so.1": false,
+            "/usr/local/nvidia/lib64/libnvidia-ml.so.1": true
+          },
+          "phase": "worker",
+          "status": "PASS",
+          "utility_only_loader_override": {
+            "LD_LIBRARY_PATH": "/usr/local/nvidia/lib64"
+          }
+        },
+        "kernel-driver-diagnostic.json": {
+          "binary": "/opt/bin/nvidia-smi",
+          "hardware": {
+            "cuda_initialized": false,
+            "model_fit": "NOT_ESTABLISHED",
+            "physical_gpus": [
+              {
+                "driver": "580.178.04",
+                "free_mib": 14912,
+                "index": 0,
+                "name": "Tesla T4"
+              },
+              {
+                "driver": "580.178.04",
+                "free_mib": 14912,
+                "index": 1,
+                "name": "Tesla T4"
+              }
+            ]
+          },
+          "loader_environment": {
+            "LD_LIBRARY_PATH": "/usr/local/nvidia/lib64:/usr/local/cuda/lib64:/usr/local/cuda/lib64",
+            "LD_PRELOAD": null,
+            "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
+            "NVIDIA_VISIBLE_DEVICES": "all"
+          },
+          "nvml_find_library": "libnvidia-ml.so.1",
+          "nvml_paths": {
+            "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1": false,
+            "/usr/lib64/libnvidia-ml.so.1": false,
+            "/usr/local/nvidia/lib64/libnvidia-ml.so.1": true
+          },
+          "phase": "kernel",
+          "status": "PASS"
+        },
+        "minicpm4/driver-library-binding.json": {
+          "cuda_initialized": false,
+          "implementation": "issue173-explicit-host-cuda-driver-v1",
+          "library": "/usr/local/nvidia/lib64/libcuda.so.1",
+          "library_bytes": 96284520,
+          "library_sha256": "dcdf334aeb177c95b3385b797c9b871d03a287895713c6d107f79096b0985aa9",
+          "model_calls": 0,
+          "nvml_utility_loader_scoped_to_subprocess": true,
+          "python_ld_library_path_changed": false
+        },
+        "minicpm4/setup-cache-reclamation.json": {
+          "advice_errors": [],
+          "advised_file_bytes": 7707605625,
+          "advised_regular_files": 46,
+          "after": {
+            "available_bytes": 13950664704,
+            "cgroup_remaining_bytes": [
+              13950664704
+            ]
+          },
+          "before": {
+            "available_bytes": 6543110144,
+            "cgroup_remaining_bytes": [
+              6543110144
+            ]
+          },
+          "proof": "ADVISORY_ONLY_SUBSEQUENT_RAM_GATE_REQUIRED",
+          "ram_floor_mib_unchanged": 16384,
+          "removed_owned_cache_directories": [],
+          "runtime_files_retained": true,
+          "scan_limit_reached": true,
+          "schema": "issue173-owned-cache-reclamation-v1",
+          "weights_or_inputs_modified": false
+        }
+      }
+    }
+  ],
+  "scientific_results_excluded": true,
+  "fresh171_import": false,
+  "production_authorized": false,
+  "raw_images_weights_private": true
+}

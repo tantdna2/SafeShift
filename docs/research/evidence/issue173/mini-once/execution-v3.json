@@ -1,0 +1,884 @@
+{
+  "archive": {
+    "bytes": 46906,
+    "crc_and_sidecar": "PASS",
+    "members": 59,
+    "payload_sha256": {
+      "admitted-load-memory.json": "cc0af48f7962f64abcde68d8680d5cba7a9aba019fc10c8f5aa24aca22dfb594",
+      "admitted-load-vram.json": "e84f111f68cf23ea2efb86768bcebf2460db104b8cd48f9a6ecb2ee05e050cf7",
+      "after-load-memory.json": "16e732f828c66cea46ca9f1659d24bba10c316a0df03ff7f7a2c39ee098024b1",
+      "before-load-memory.json": "cbf6e8c6ae913a805bdb5b854ba5342c63dd3222764366e50338918b59027096",
+      "budget.json": "e6d8a1d33930c9b67619dcf87f336e4be4532f40cb3abfe4223afae0e284d8de",
+      "cache-advice.json": "e3941cdfdd2aa84e117d0797a4ded5d61372be45583b8bd864fa4c6d188ea952",
+      "cuda.json": "2c959fb701473357d2e16bcd4e6f55676e2e2bff0e8902fb3fca78c122422a67",
+      "diagnostic-history.json": "8a7be4107791cd33aeb3abc06fcc3bfbad256558181a5d067c900a773742d1dd",
+      "driver-library-binding.json": "377375574cce930f2adc46e132c70400bac03da077278a24e8aec277557cf144",
+      "final-gpu-memory.json": "7c7572b57831a0330fbf0f76f8821b839ce9676b4c3897fb4a9d83a97423d4e0",
+      "final-memory.json": "c8ff321505f717e94e6034e7aa73f98398c1960c9818769ed9672aeecc4f4219",
+      "freeze.txt": "4f50267e8ba5362fbb482000e967090614fe64a11fc55ecb6d1817674c1c7135",
+      "hardware.json": "9cb832ae7e1c4fae0fed1c9ae12eb43146768f7ff437201cc46112e486bb3f91",
+      "history.json": "93907c0782c58bb30dc0eb7654638cf4027aef61227c4bfb7d4a066238290ddd",
+      "initial-memory.json": "39072de35766cac9e6faee1241cc2e813a9348cc9421854a670d1b66c6df1429",
+      "initial-resources.json": "fa691e2347324b5391e07574042ce00a9aa4f8f3db39db93ab8796449162f921",
+      "interpreters.json": "3d341757f33aa8efde6955d1afa26324edea4751526607f1b0c19feb91533e09",
+      "load-reservation.json": "d489434783af670e9f1680cad68f3b138f7feed1919559a9e618ff2ec1981181",
+      "loaded.json": "46f13d6001526b784434f9288e9c7b3efca58b2ca8ba31da1e4dcdffd8bb96d1",
+      "native-supervisor.json": "6b1e77bb48be4f7e1cf201a4b6cb3a45670fc7fa5601c65049130a8f6b5fa125",
+      "native-supervisor.log": "bd5aed95e3acd20fa42e9459e822bda954ed0e39c273d2d3f1218643ed7c6ea1",
+      "original-image.json": "d06630eaa0be8ffa9f45ff5f33f89e67f79e548373e7286c7049e2ce98e17d4b",
+      "pip_bootstrap.json": "e92aca8c45d03b02fbdbed17f1ee973bb1a2a306f33879c70053db9c9509567a",
+      "pip_controller.json": "16b447e619303c4afaed3672ab75a997de7374c5f6e30089231508b01ab22002",
+      "python_provider.json": "9cf9125f14ccd44438bdcd49bbc06de9a3bdcf87e5dc59398e6607784171f042",
+      "python_venv_library.json": "ba6ac8ba4f5f4088674c29b91360fdb859547c689e26f5cff4cfa0c1e7be3fb9",
+      "release.json": "c941adc03247631195ea0642bb710228cadac8a9d8d3e79e574ec994d9f80777",
+      "request.json": "7d3f02f0630287ecafbd1b9be862c08ed3f1316c6a09426217139892fe5e5001",
+      "resources.json": "94f96d1e6bd6e5fa188d8790b134e9d8e3335cafb31941033e99fb6fc3b5c4db",
+      "runtime.json": "ff2916543ca411aed53a27b9bbee36376ab5a7edb1d6115b1ef51ea3a8460f08",
+      "sample/effective_numerics.json": "be69f6ac03fc06ac344d19a5558a89d948cc47c816d654b3626e4154b9b8928e",
+      "sample/native.json": "d684292ca15271740c50b2f6dc297505172c2fab3efad751f06c0cda76392d5b",
+      "sample/native_call.json": "03f00d141982038109433978d4ecf6a6030f4b5fb25fe93a7fa1d6c323226686",
+      "sample/processors.json": "d9350590eb5157965c9230e31d328aa0b2df1a09abdb4a05310f959f2e0f85d4",
+      "sample/raw.json": "b72a21a2c30b9ac2716fd697ed8e101d2214b87ce8c00db6b02e13236323e123",
+      "sample/request.json": "ac043248a8bc5aa1c6542ab269850558fb169d4ac7898eca1d5f8b7c3788b3b2",
+      "sample/reservation.json": "6f1bd294a35f89f4e71dae0e1b6aeaa7c051c85753f9818784bc6e4e43b6841c",
+      "sample/result.json": "344ab641a9add12c8dde7f9793bd746fcc51fb680177fab0a8d835b71e66df8d",
+      "sample/steps/000.json": "d22baab22794028545b8100730af54ff558433594720443c4987f8c336694e95",
+      "sample/steps/001.json": "635619e021598eccd2f8f14d5d47a8754dd3844a581857f7823f034758d8803a",
+      "sample/steps/002.json": "37a2ecc842232eb5b7f7ac0c166fa7f68fd60f9deb9fc5df66ee50a115287c9c",
+      "sample/steps/003.json": "d97588783575d92beb812dbba28e9001298243daa5a302f2ec0d40a73ef31efd",
+      "sample/steps/004.json": "c50381fd495a0c6012f6d37f4f2d7d066b8b2c997be2803de29d2f7feb2e8392",
+      "sample/steps/005.json": "ba68cc20bc8dbe1c0b1dc7d0866b9865323f509f3a6575a82636ea965ad8e655",
+      "sample/steps/006.json": "4b8cf9c3bc59ef874e33b74182d2741badf371825ccf1487d26fe86cb42b1a71",
+      "sample/steps/007.json": "99a4d4d4a656da5ef197eeab811aa18f590be9598a0e9f71793a2cc721bb4a8e",
+      "sample/steps/008.json": "6bc003b7312e3349ae3b6230b6495c4fd037957f608295619f6df544982d51cc",
+      "sample/steps/009.json": "71311ea604c79083187d1f540d9e55952e5186079c56c14b67b5e18e5d2610db",
+      "sample/steps/010.json": "51bf7cca20a0b4bdf19457e1db5c4287b843774466472ffe359e83a7d9a512d1",
+      "setup-supervisor.json": "1847bfdf6ff8621df05b09a2767494b15320f83a09ac5c2c2ad67dc07888a41a",
+      "setup-supervisor.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "setup.log": "bbcb21b44860a167fbdbc2faf4df36882948f5a4bb42c20c40cdfdd5df21305f",
+      "software.json": "0009d9373e6258497ec27ae5eccdf37c237523b1687913b1c523a088741f0d6b",
+      "source.json": "6f3075f771750bb6beb749140974936445d93f371918ea31f8d7c17beaa9fe5d",
+      "summary.json": "1a7f953a05f48c9a5aa75659431c73afd919408f02b3087b700348831f77c65a",
+      "venv_interpreter.json": "98b5425f93a762b7791d78885f6ed55c77888e1c8de9246f7373d7004a42ee7e",
+      "worker-driver-diagnostic.json": "1bafcdc67646e96bf42a8b7ccdcf2de75a58fa2e5977a006b08987bb197437f3",
+      "worker_pip.json": "99c566fd02f5ba445b00cdf7d583b1bca313243addaa54f6388183910bd396d0"
+    },
+    "sha256": "d3174b858e734e8de748cacb15ae7ef6fb43365cc34b3f52b6fb1f1d99f6d6da"
+  },
+  "diagnostic_history": [
+    {
+      "calls": 1,
+      "identity": "issue173-diag-mini-synthetic-v1",
+      "sha256": "5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512"
+    },
+    {
+      "calls": 2,
+      "identity": "issue173-diag-intern-format-v1",
+      "sha256": "05ed72478ba15585ad3cc13df4479f8ee15bcec98651b7fab093b222c19a82e3"
+    },
+    {
+      "calls": 1,
+      "identity": "issue173-diag-mini-scene-v2",
+      "sha256": "e3bfef0467b82a3b19b13fa52041a241e1f58c5815975f9b30e90445f0658991"
+    },
+    {
+      "calls": 1,
+      "identity": "issue173-diag-intern-grammar-v2",
+      "sha256": "2b4593439e76a47035a322a2842c720e5edea98feb1dcd85794ffb8f71378dac"
+    }
+  ],
+  "effective_numerics": {
+    "after": {
+      "returned_dtype": "torch.float16",
+      "scores_fp32_finite_or_negative_mask": 1,
+      "softmax_fp32_finite": 1,
+      "value_product_fp32_finite_and_return_cast": 1
+    },
+    "before": {
+      "returned_dtype": null,
+      "scores_fp32_finite_or_negative_mask": 0,
+      "softmax_fp32_finite": 0,
+      "value_product_fp32_finite_and_return_cast": 0
+    },
+    "implementation": {
+      "attention": "eager",
+      "authority": "docs/research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception",
+      "expression_replacements": [
+        [
+          "torch.baddbmm(attn_mask, q_scaled, k.transpose(-2, -1))",
+          "_safeshift_scores(self, q_scaled, k, attn_mask)"
+        ],
+        [
+          "torch.bmm(q_scaled, k.transpose(-2, -1))",
+          "_safeshift_scores(self, q_scaled, k, None)"
+        ],
+        [
+          "softmax(attn_output_weights, dim=-1)",
+          "_safeshift_probabilities(self, attn_output_weights)"
+        ],
+        [
+          "torch.bmm(attn_output_weights, v)",
+          "_safeshift_values(self, attn_output_weights, v, q.dtype)"
+        ]
+      ],
+      "history_policy": "NEW_ISOLATED_SMOKE_SERIES_NO_IMPORT_NO_POOLING",
+      "id": "minicpm4-resampler-attention-fp32-v1",
+      "implementation_file": "safeshift/candidates/minicpm_resampler_fp32.py",
+      "implementation_file_sha256": "d467037d41b2e5c133a9532c12987f11b624531662a733713e67089631330bf5",
+      "implementation_sha256": "2fe992725df4340f910934b5846278e34968196a9dff3fc4171fb4279bfaf5da",
+      "original_resampler_sha256": "6f4f91977fd409b15fe7d2e7ab2ee3f88b544e71a1209026a937eece6c6c582e",
+      "return_boundary": "native q.dtype before out_proj",
+      "scope": "TECHNICAL_TRIAL_ONLY_NOT_SCIENTIFIC_BASELINE",
+      "score_dtype": "float32",
+      "softmax_dtype": "float32",
+      "value_product_dtype": "float32",
+      "weights_dtype": "float16"
+    }
+  },
+  "further_jobs": "STOP_CALL_COMPLETED",
+  "grant": {
+    "authority": {
+      "6602848993": "136e1b35928e9bfb36a3b9ae1241d72971a9416be570dfe8de066c64ae893734",
+      "6603028889": "f9aea8ece42fa08c5f10fee92b5a2b3c1b97c77362a2061a22da4b582f93abb5"
+    },
+    "authorization_kind": "OWNER_BOUNDED_DELEGATION_NOT_HEAD_REVIEW",
+    "expires_unix": 1793709829,
+    "identity": "issue173-minicpm-original-train-once-v3",
+    "issued_unix": 1793708029,
+    "job": "nguynanhtn/safeshift-issue173-minicpm-original-train-once-v3",
+    "limits": {
+      "max_calls": 1,
+      "max_loads": 1,
+      "max_physical_gpu_seconds": 3600,
+      "max_seconds": 1800,
+      "model_key": "minicpm4",
+      "ordinal": 0
+    },
+    "manifest_sha256": "2d4180b380b729836196f5523035c8f696cd6f4e7e993b480bc21669fc971fbd",
+    "notebook_code_sha256": "3f21d4124e13e9e46af0cb48197ce8339f2af305509ece89e9e59887c50749f1",
+    "notebook_sha256": "dfe0f16d681b3543bd3483b790d48f10861574ba3a86c1dbc36893dfca864ee2",
+    "runtime_commit": "171b1b1d369368232d29eeb1aa49750ac8bc6292",
+    "source_head": "140f6d895a4f9acdf5a83f8c60391441c59f2ac2",
+    "version": 1
+  },
+  "history": {
+    "attempts": [
+      {
+        "archive_sha256": "a296d13984e179a2087acc25a6f45c58f4e15eeb4e32a4efdc46ce8b2a8fac17",
+        "attempt": 1,
+        "members": 22
+      },
+      {
+        "archive_sha256": "f1f4fefabff4a6fc80f8863bcc314a13949c53815f9b535170cceda1ccd7117d",
+        "attempt": 2,
+        "members": 65
+      },
+      {
+        "archive_sha256": "4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5",
+        "attempt": 3,
+        "members": 26
+      },
+      {
+        "archive_sha256": "2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee",
+        "attempt": 4,
+        "members": 28
+      },
+      {
+        "archive_sha256": "035c4d9b0216378e23ecc812e1221d68fe451ec25a9cbc3fd8977b5794690619",
+        "attempt": 5,
+        "members": 78
+      }
+    ],
+    "consumed": {
+      "internvl35": 1,
+      "minicpm4": 0,
+      "qwen3": 1
+    },
+    "consumed_total": 2,
+    "continuation": "issue173-minicpm-only-review-hold-20261103-v1",
+    "evidence_type": "EXACT_SHA256_CUSTODY_NOT_A_SIGNATURE_OR_AUTHORIZATION",
+    "max_one_call_per_model": true,
+    "native_dispatch": "BLOCKED_PENDING_REVIEW",
+    "remaining": {
+      "internvl35": 0,
+      "minicpm4": 1,
+      "qwen3": 0
+    },
+    "schema": "issue173-five-attempt-terminal-history-v1"
+  },
+  "independent_audit": "PENDING",
+  "job": {
+    "code_cells_match": true,
+    "job": "nguynanhtn/safeshift-issue173-minicpm-original-train-once-v3",
+    "kernel_id": 142510493,
+    "observed_unix": 1793708601,
+    "private": true,
+    "status": {
+      "status": "COMPLETE"
+    },
+    "version": 1
+  },
+  "merge_authorized": false,
+  "model": {
+    "id": "openbmb/MiniCPM-V-4",
+    "revision": "6f69a8235885be89608f3a71ffd40695b379e1e7"
+  },
+  "native_proof": {
+    "cpu_tokenizer_replay": "PASS_RECORDED_BY_WORKER",
+    "finite_steps": 11,
+    "greedy_argmax_matches_ids": true,
+    "hnlo": "N/A_LABEL_ONLY_OWNER_DECISION",
+    "native_generation_seconds": 3.4249454849999665,
+    "native_ids_and_input_match": true,
+    "raw_before_parse": true,
+    "steps": 11,
+    "strict_parser_replayed": "SUCCESS"
+  },
+  "new_job_budget": 3,
+  "new_submissions": 1,
+  "private_artifact_sha256": {
+    "coordinator-error.json": "af9f4ea823240a6bc94e649e6d839b98892fb310b9416c247a63ef2e58f38b62",
+    "terminal-log.txt": "c5a094c49e4cbee5a774b9ba8088f380051d784a85f5f5e509e5f9ff7177e79b",
+    "terminal-service.json": "3a0423b4a78110ac517769cfebca29c95b63643855b3eb72be28cfc3636f04e3"
+  },
+  "private_sample_identity": "WITHHELD; original ordinal0 ID/image digest compared inside private archive",
+  "prompt_sha256": "816a9c2602fc6ab8c4589a0df22b9d7063f9427b7bda2554788f8c92a95bfbe3",
+  "raw_sha256": "b72a21a2c30b9ac2716fd697ed8e101d2214b87ce8c00db6b02e13236323e123",
+  "remaining_calls": 0,
+  "resources": {
+    "admitted_vram": {
+      "gpu0_allocated": 0,
+      "gpu0_free": 15507193856,
+      "gpu0_peak_allocated": 0,
+      "gpu0_peak_reserved": 2097152,
+      "gpu0_reserved": 2097152,
+      "gpu0_total": 15636037632,
+      "gpu1_inference": "UNUSED"
+    },
+    "cuda": {
+      "fp16": "MEASURED",
+      "gpus": [
+        {
+          "free_bytes": 15526068224,
+          "index": 0,
+          "total_bytes": 15636037632
+        }
+      ],
+      "model_fit": "NOT_ESTABLISHED",
+      "weights_loaded": false
+    },
+    "disk": {
+      "devices": [
+        55,
+        1794
+      ],
+      "free_bytes": [
+        1032166436864,
+        20939837440
+      ],
+      "memory": {
+        "available_bytes": 24411037696,
+        "cgroup_remaining_bytes": [
+          24411037696
+        ]
+      },
+      "model_fit": "NOT_ESTABLISHED",
+      "requested_reserves_bytes": [
+        25769803776,
+        1073741824
+      ]
+    },
+    "final_gpu": {
+      "gpu0_allocated": 60968960,
+      "gpu0_free": 5604442112,
+      "gpu0_peak_allocated": 9736494592,
+      "gpu0_peak_reserved": 9888071680,
+      "gpu0_reserved": 9888071680,
+      "gpu0_total": 15636037632,
+      "gpu1_inference": "UNUSED"
+    },
+    "hardware": {
+      "cuda_initialized": false,
+      "model_fit": "NOT_ESTABLISHED",
+      "physical_gpus": [
+        {
+          "driver": "580.178.04",
+          "free_mib": 14912,
+          "index": 0,
+          "name": "Tesla T4"
+        },
+        {
+          "driver": "580.178.04",
+          "free_mib": 14912,
+          "index": 1,
+          "name": "Tesla T4"
+        }
+      ]
+    },
+    "memory": {
+      "admitted-load": {
+        "available_bytes": 24390733824,
+        "cgroup_limit": "32212254720",
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "after-load": {
+        "available_bytes": 16088027136,
+        "cgroup_limit": "32212254720",
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "before-load": {
+        "available_bytes": 24410775552,
+        "cgroup_limit": "32212254720",
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "final": {
+        "available_bytes": 16479014912,
+        "cgroup_limit": "32212254720",
+        "oom": 0,
+        "oom_kill": 0
+      },
+      "initial": {
+        "available_bytes": 31760232448,
+        "cgroup_limit": "32212254720",
+        "oom": 0,
+        "oom_kill": 0
+      }
+    },
+    "physical_gpu_seconds_cap": 3600,
+    "quota_after": {
+      "reserved_seconds": 0.0,
+      "total_seconds": 108000.0,
+      "used_seconds": 12074.635
+    },
+    "quota_baseline_exact_previous_terminal": 11688.906,
+    "quota_before_floor_seconds": {
+      "reserved_seconds": 0,
+      "total_seconds": 108000,
+      "used_seconds": 11688
+    },
+    "quota_delta_is_not_native_inference_time": true,
+    "quota_delta_seconds": 385.72899999999936,
+    "supervision": {
+      "native": {
+        "automatic_retry": false,
+        "group_kill_sent": true,
+        "log_bytes": 1700,
+        "model_fit": "NOT_ESTABLISHED",
+        "retention": "ALL_PARTIAL_FILES_RETAINED",
+        "returncode": 0,
+        "schema": "fresh-process-supervision-v1",
+        "seconds": 140.75007192500004,
+        "status": "EXITED"
+      },
+      "setup": {
+        "automatic_retry": false,
+        "group_kill_sent": true,
+        "log_bytes": 0,
+        "model_fit": "NOT_ESTABLISHED",
+        "retention": "ALL_PARTIAL_FILES_RETAINED",
+        "returncode": 0,
+        "schema": "fresh-process-supervision-v1",
+        "seconds": 192.243718918,
+        "status": "EXITED"
+      }
+    }
+  },
+  "result_sha256": "344ab641a9add12c8dde7f9793bd746fcc51fb680177fab0a8d835b71e66df8d",
+  "runtime_files_changed_from_handoff": [
+    "safeshift/minicpm173_once.py",
+    "scripts/minicpm173_train_once.py"
+  ],
+  "schema": "issue173-mini-v3-terminal-verification-v1",
+  "scientific_qualified": false,
+  "source_custody_ledger_head": "98346e209479647a8f5e00ad194da246c3465bf8",
+  "summary": {
+    "automatic_retry": false,
+    "call_reservations": 1,
+    "consumption": "COMPLETED",
+    "diagnostic_calls_separate": 5,
+    "error": null,
+    "identity": "issue173-minicpm-original-train-once-v3",
+    "limits": {
+      "max_calls": 1,
+      "max_loads": 1,
+      "max_physical_gpu_seconds": 3600,
+      "max_seconds": 1800,
+      "model_key": "minicpm4",
+      "ordinal": 0
+    },
+    "load_reservations": 1,
+    "native_call_markers": 1,
+    "original_smoke_counts": {
+      "internvl35": 1,
+      "minicpm4": 1,
+      "qwen3": 1
+    },
+    "scientific_results_excluded": true,
+    "status": "SUCCESS",
+    "weights_loaded": true
+  },
+  "total_new_original_train_calls": 1,
+  "transport": {
+    "connections": 4,
+    "coordinator_restarted": false,
+    "final_eof_before_terminal_status": true,
+    "final_reconnect_budget_exhaustion_retained": true,
+    "permits": [
+      "launch",
+      "load",
+      "call"
+    ],
+    "read_timeout_disconnects": 3,
+    "records": [
+      {
+        "detail": 0,
+        "kind": "connection",
+        "permits": []
+      },
+      {
+        "detail": {
+          "connection": 0,
+          "exception_chain": [
+            {
+              "frames": [
+                {
+                  "file": "submit_minicpm173_once.py",
+                  "function": "stream",
+                  "line": 170
+                },
+                {
+                  "file": "kaggle_api_extended.py",
+                  "function": "kernels_logs_stream",
+                  "line": 7764
+                },
+                {
+                  "file": "kaggle_api_extended.py",
+                  "function": "_iter_sse_events",
+                  "line": 7772
+                },
+                {
+                  "file": "models.py",
+                  "function": "iter_lines",
+                  "line": 1008
+                },
+                {
+                  "file": "utils.py",
+                  "function": "stream_decode_response_unicode",
+                  "line": 604
+                },
+                {
+                  "file": "models.py",
+                  "function": "generate",
+                  "line": 943
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "6059595622bc8f167eea87653041a9b22df047a9798c7ebaa58c070be909a390",
+              "module": "requests.exceptions",
+              "type": "ConnectionError"
+            },
+            {
+              "frames": [
+                {
+                  "file": "models.py",
+                  "function": "generate",
+                  "line": 937
+                },
+                {
+                  "file": "response.py",
+                  "function": "stream",
+                  "line": 1284
+                },
+                {
+                  "file": "response.py",
+                  "function": "read_chunked",
+                  "line": 1436
+                },
+                {
+                  "file": "contextlib.py",
+                  "function": "__exit__",
+                  "line": 158
+                },
+                {
+                  "file": "response.py",
+                  "function": "_error_catcher",
+                  "line": 934
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "6059595622bc8f167eea87653041a9b22df047a9798c7ebaa58c070be909a390",
+              "module": "urllib3.exceptions",
+              "type": "ReadTimeoutError"
+            },
+            {
+              "frames": [
+                {
+                  "file": "response.py",
+                  "function": "_error_catcher",
+                  "line": 929
+                },
+                {
+                  "file": "response.py",
+                  "function": "read_chunked",
+                  "line": 1459
+                },
+                {
+                  "file": "response.py",
+                  "function": "_update_chunk_length",
+                  "line": 1367
+                },
+                {
+                  "file": "socket.py",
+                  "function": "readinto",
+                  "line": 706
+                },
+                {
+                  "file": "ssl.py",
+                  "function": "recv_into",
+                  "line": 1314
+                },
+                {
+                  "file": "ssl.py",
+                  "function": "read",
+                  "line": 1166
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "693919be92a592d0ab39d3a80a50801930732ee20d6dee5aaf1c0eb0cda7c5ff",
+              "module": "builtins",
+              "type": "TimeoutError"
+            }
+          ],
+          "message_policy": "HASH_ONLY_NO_PRIVATE_TEXT"
+        },
+        "kind": "disconnect",
+        "permits": [
+          "launch"
+        ]
+      },
+      {
+        "detail": 1,
+        "kind": "connection",
+        "permits": [
+          "launch"
+        ]
+      },
+      {
+        "detail": {
+          "connection": 1,
+          "exception_chain": [
+            {
+              "frames": [
+                {
+                  "file": "submit_minicpm173_once.py",
+                  "function": "stream",
+                  "line": 170
+                },
+                {
+                  "file": "kaggle_api_extended.py",
+                  "function": "kernels_logs_stream",
+                  "line": 7764
+                },
+                {
+                  "file": "kaggle_api_extended.py",
+                  "function": "_iter_sse_events",
+                  "line": 7772
+                },
+                {
+                  "file": "models.py",
+                  "function": "iter_lines",
+                  "line": 1008
+                },
+                {
+                  "file": "utils.py",
+                  "function": "stream_decode_response_unicode",
+                  "line": 604
+                },
+                {
+                  "file": "models.py",
+                  "function": "generate",
+                  "line": 943
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "6059595622bc8f167eea87653041a9b22df047a9798c7ebaa58c070be909a390",
+              "module": "requests.exceptions",
+              "type": "ConnectionError"
+            },
+            {
+              "frames": [
+                {
+                  "file": "models.py",
+                  "function": "generate",
+                  "line": 937
+                },
+                {
+                  "file": "response.py",
+                  "function": "stream",
+                  "line": 1284
+                },
+                {
+                  "file": "response.py",
+                  "function": "read_chunked",
+                  "line": 1436
+                },
+                {
+                  "file": "contextlib.py",
+                  "function": "__exit__",
+                  "line": 158
+                },
+                {
+                  "file": "response.py",
+                  "function": "_error_catcher",
+                  "line": 934
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "6059595622bc8f167eea87653041a9b22df047a9798c7ebaa58c070be909a390",
+              "module": "urllib3.exceptions",
+              "type": "ReadTimeoutError"
+            },
+            {
+              "frames": [
+                {
+                  "file": "response.py",
+                  "function": "_error_catcher",
+                  "line": 929
+                },
+                {
+                  "file": "response.py",
+                  "function": "read_chunked",
+                  "line": 1459
+                },
+                {
+                  "file": "response.py",
+                  "function": "_update_chunk_length",
+                  "line": 1367
+                },
+                {
+                  "file": "socket.py",
+                  "function": "readinto",
+                  "line": 706
+                },
+                {
+                  "file": "ssl.py",
+                  "function": "recv_into",
+                  "line": 1314
+                },
+                {
+                  "file": "ssl.py",
+                  "function": "read",
+                  "line": 1166
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "693919be92a592d0ab39d3a80a50801930732ee20d6dee5aaf1c0eb0cda7c5ff",
+              "module": "builtins",
+              "type": "TimeoutError"
+            }
+          ],
+          "message_policy": "HASH_ONLY_NO_PRIVATE_TEXT"
+        },
+        "kind": "disconnect",
+        "permits": [
+          "launch"
+        ]
+      },
+      {
+        "detail": 2,
+        "kind": "connection",
+        "permits": [
+          "launch"
+        ]
+      },
+      {
+        "detail": {
+          "connection": 2,
+          "exception_chain": [
+            {
+              "frames": [
+                {
+                  "file": "submit_minicpm173_once.py",
+                  "function": "stream",
+                  "line": 170
+                },
+                {
+                  "file": "kaggle_api_extended.py",
+                  "function": "kernels_logs_stream",
+                  "line": 7764
+                },
+                {
+                  "file": "kaggle_api_extended.py",
+                  "function": "_iter_sse_events",
+                  "line": 7772
+                },
+                {
+                  "file": "models.py",
+                  "function": "iter_lines",
+                  "line": 1008
+                },
+                {
+                  "file": "utils.py",
+                  "function": "stream_decode_response_unicode",
+                  "line": 604
+                },
+                {
+                  "file": "models.py",
+                  "function": "generate",
+                  "line": 943
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "6059595622bc8f167eea87653041a9b22df047a9798c7ebaa58c070be909a390",
+              "module": "requests.exceptions",
+              "type": "ConnectionError"
+            },
+            {
+              "frames": [
+                {
+                  "file": "models.py",
+                  "function": "generate",
+                  "line": 937
+                },
+                {
+                  "file": "response.py",
+                  "function": "stream",
+                  "line": 1284
+                },
+                {
+                  "file": "response.py",
+                  "function": "read_chunked",
+                  "line": 1436
+                },
+                {
+                  "file": "contextlib.py",
+                  "function": "__exit__",
+                  "line": 158
+                },
+                {
+                  "file": "response.py",
+                  "function": "_error_catcher",
+                  "line": 934
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "6059595622bc8f167eea87653041a9b22df047a9798c7ebaa58c070be909a390",
+              "module": "urllib3.exceptions",
+              "type": "ReadTimeoutError"
+            },
+            {
+              "frames": [
+                {
+                  "file": "response.py",
+                  "function": "_error_catcher",
+                  "line": 929
+                },
+                {
+                  "file": "response.py",
+                  "function": "read_chunked",
+                  "line": 1459
+                },
+                {
+                  "file": "response.py",
+                  "function": "_update_chunk_length",
+                  "line": 1367
+                },
+                {
+                  "file": "socket.py",
+                  "function": "readinto",
+                  "line": 706
+                },
+                {
+                  "file": "ssl.py",
+                  "function": "recv_into",
+                  "line": 1314
+                },
+                {
+                  "file": "ssl.py",
+                  "function": "read",
+                  "line": 1166
+                }
+              ],
+              "http_status": null,
+              "message_sha256": "693919be92a592d0ab39d3a80a50801930732ee20d6dee5aaf1c0eb0cda7c5ff",
+              "module": "builtins",
+              "type": "TimeoutError"
+            }
+          ],
+          "message_policy": "HASH_ONLY_NO_PRIVATE_TEXT"
+        },
+        "kind": "disconnect",
+        "permits": [
+          "launch",
+          "load"
+        ]
+      },
+      {
+        "detail": 3,
+        "kind": "connection",
+        "permits": [
+          "launch",
+          "load"
+        ]
+      },
+      {
+        "detail": {
+          "connection": 3,
+          "reason": "EOF_BEFORE_TERMINAL"
+        },
+        "kind": "disconnect",
+        "permits": [
+          "launch",
+          "load",
+          "call"
+        ]
+      },
+      {
+        "detail": {
+          "reason": "READ_ONLY_RECONNECT_BUDGET_EXHAUSTED"
+        },
+        "kind": "error",
+        "permits": [
+          "launch",
+          "load",
+          "call"
+        ]
+      },
+      {
+        "exception_chain": [
+          {
+            "frames": [
+              {
+                "file": "submit_minicpm173_once.py",
+                "function": "coordinate",
+                "line": 213
+              },
+              {
+                "file": "source.py",
+                "function": "require",
+                "line": 12
+              }
+            ],
+            "http_status": null,
+            "message_sha256": "ca4b96d3f056a2d4e66ea94edd60661d772d7c8f9be41838f7027e0c739d6928",
+            "module": "builtins",
+            "type": "ValueError"
+          }
+        ],
+        "kind": "coordinator-failure",
+        "message_policy": "HASH_ONLY_NO_PRIVATE_TEXT",
+        "permits": [
+          "launch",
+          "load",
+          "call"
+        ]
+      }
+    ],
+    "resolution": "READ_ONLY_TERMINAL_RECONCILIATION_AND_VERIFIED_ZIP",
+    "resubmitted": false
+  },
+  "v2_preserved": true
+}

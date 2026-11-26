@@ -364,3 +364,42 @@ không để implementer tự quyết. Không tạo task khảo sát/lập kế 
 thống phân tích Seminar CPU**, reader/metric/CLI/config/tests/docs theo Execution
 Plan, fixtures synthetic, không artifact thật. Task M1/M2 kết thúc ở một Draft PR;
 review/phê duyệt còn pending được xử lý trên cùng gói review, không tự merge.
+
+
+## Amendment 15/11/2026 - QWEN3_FULL_TRAIN_COMPOSITE_V1
+
+Owner [decision6889519264](https://github.com/tantdna2/SafeShift/issues/171#issuecomment-6889519264)
+authorizes the separate derived full-TRAIN Qwen3 label product, effective for
+project reporting now. For this product only, this amendment supersedes the
+preceding recovery/composite exclusion in sections 2.1/2.2/3/5/6/C02/C07: retain 3539
+original V4 SUCCESS and exactly224 Recovery224 SUCCESS for the original
+non-SUCCESS complement. Membership must be verified against all 3763 original
+TRAIN IDs, image SHA256, GT, domain, source/config/release and immutable archives.
+Selection uses original status and exact ID membership, never GT correctness,
+prediction or HNLO. Original V4/Recovery ledgers and historical V3539 analyses
+remain intact. This does not replace a fresh homogeneous run when required.
+
+The [composite contract and verified results](QWEN3_FULL_TRAIN_COMPOSITE_V1.md)
+and [versioned composite config](../../configs/analysis/qwen3_full_train_composite.v1.json)
+define the implementation, new input handoff, formulas and limitations.
+Classification/error/domain/class analyses may use the verified composite with
+planned 3763 and explicit 3539+224 provenance. Four-level confusion is 4x5;
+Macro-F1 uses 2TP/(support+predicted) and averages classes with positive GT support;
+Balanced Accuracy is macro recall over the same classes. Report all denominators,
+null unsupported ratios, Level01 severe misses and INVALID support explicitly.
+Binary Hazard Recall, False-Safe and False-Alarm follow sections 4/5 unchanged.
+
+Composite HNLO AUROC is N/A until cross-series scale/token/decision alignment has
+independent supporting evidence. Recompute and retain V4-success/Recovery AUROC
+separately, with eligible IDs/support, exact tie credit and missing-score reasons.
+Do not average source AUROC or silently pool scores. A valid label product does
+not depend on approval of a pooled HNLO endpoint. No new threshold/calibration,
+raw audit, peer selection, TEST or generalization claim follows.
+
+This appendix is a new contract version; all preceding protocol bytes and the
+old seminar_analysis_config.v1.json remain historical and unchanged. Their
+previous exact hash contract is available at its pinned Git revision; old v1
+consumers must continue to use that version, not hash the amended document as
+if it were the old bytes. The new config pins both the historical prefix and
+this appendix. Direct ChatGPT review, independent Antigravity audit and separately
+authorized merge of the implementation remain required; no self-approval.

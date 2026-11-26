@@ -1,0 +1,233 @@
+{
+  "schema": "safeshift-train3763-campaign-issue180-cpu-acceptance-v1",
+  "date": "2026-11-05",
+  "timezone": "Asia/Bangkok",
+  "base": "300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2",
+  "tested_source_head": "c7130768caecfae039b2323f2fd9fcac5879c6ee",
+  "runtime_commit": "8a0a26e103230946f24bc3b01e69c7d244f20bb5",
+  "source_sha256": "b571c356361f428eb69278c569bf52a90f362f562b7a3837937dad76f77c1e9c",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "status": "READY_FOR_CODE_REVIEW_ONLY",
+  "scope": "CPU_SYNTHETIC_ONLY",
+  "focused_cpu": {
+    "status": "PASS",
+    "tests": 172,
+    "errors": 0,
+    "failures": 0,
+    "skips": 0,
+    "test_suites": [
+      "test_internvl3763",
+      "test_internvl3763_execution",
+      "test_internvl3763_campaign",
+      "test_kaggle_handoff",
+      "test_fulltrain",
+      "test_internvl_grammar",
+      "test_kaggle173_verification"
+    ],
+    "dependencies": {
+      "Pillow": "10.4.0",
+      "numpy": "1.26.4",
+      "tokenizers": "0.21.4",
+      "torch": "2.6.0+cpu",
+      "torchvision": "0.21.0+cpu",
+      "transformers": "4.55.4"
+    },
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "log_sha256": "f9bfdbb01f165ed4040adec1827b5f7ab24308c98da0a4d3bbcb74cca833b469",
+    "tests_sha256": {
+      "scripts/qualify_internvl3763.py": "ba8405d18731306232f0826f877ac400188bf626689bb9303286e897da324aac",
+      "tests/test_internvl3763.py": "51e15783cad6fc86158faa3929fd1fe4e4a940fb6a5ddf50a5cda9cb23e0d7fe",
+      "tests/test_internvl3763_campaign.py": "2fbc812aa9d429add9c45283a08c52004c886043adf99f3f92c035b0ee91dddb",
+      "tests/test_internvl3763_execution.py": "ed24890f42747c14d40bd9de93599a21406fb9c1861b47592a25dfbc76e382c3",
+      "tests/test_internvl3763_notebook.py": "e843328f28cda5f8887ddfca976695cb8f2202fa636b3c8fc82319ec4a020633",
+      "tests/test_kaggle_handoff.py": "8146d7988206142b1f1e03523c3c12b2a300a7c72c7084178ef0d5001a987313"
+    },
+    "command": [
+      "python",
+      "-B",
+      "-m",
+      "scripts.qualify_internvl3763",
+      "--output",
+      "<new-output>",
+      "--native",
+      "--packages",
+      "<local-pinned-public-software>"
+    ],
+    "seed": null,
+    "randomness": "NONE"
+  },
+  "focused_receipt_sha256": "59c750173bcef2799c9e0e5a313fa1d0709e03ebd3dec166d7114b9972359abe",
+  "official_sdk_cpu_pins": {
+    "kaggle": "2.2.5",
+    "kagglesdk": "0.1.38",
+    "requests": "2.34.2"
+  },
+  "official_sdk_cpu_opt_in": "SAFESHIFT3763_SDK_CPU=1, actual installed serialization and synthetic transport, no authentication/network",
+  "notebook_tests": {
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "status": "PASS"
+  },
+  "notebooks": {
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
+      "sha256": "cb3229c5973d1f0cd0e02dc0dd8d39a8a6c39d4d6cccf19bf4012aee3a69c3ca",
+      "runtime_commit": "8a0a26e103230946f24bc3b01e69c7d244f20bb5",
+      "deterministic": true,
+      "empty_outputs": true
+    },
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
+      "sha256": "b6785226a6347953fc3a2e03c7bcc562d866db1831e9a551e0f0ea93a178e5ce",
+      "runtime_commit": "8a0a26e103230946f24bc3b01e69c7d244f20bb5",
+      "deterministic": true,
+      "empty_outputs": true
+    }
+  },
+  "frozen_inherited_files": {
+    "count": 84,
+    "status": "ALL_EXACT_BASE_HASH_MATCH",
+    "manifest_sha256": "24d0f71cccbd3adb71ebc8cf8c8b443d6e2fc211032bb9ab3f101461cf47de21"
+  },
+  "scientific_native_ast": {
+    "generate_prepared": "UNCHANGED_AST_VS_BASE",
+    "NativeBackend": "UNCHANGED_AST_VS_BASE",
+    "trace_binding": "UNCHANGED_AST_VS_BASE",
+    "configuration": "UNCHANGED_AST_VS_BASE"
+  },
+  "powershell": {
+    "parse_status": "PASS",
+    "scripts": [
+      "scripts/train3763_campaign.ps1",
+      "scripts/kaggle_handoff.ps1",
+      "scripts/prepare_train3763_operator.ps1"
+    ],
+    "version": "5.1.26100.9711",
+    "runbook_syntax_blocks": 6,
+    "actual_wrapper_identity": "PASS_NO_PROVIDER_ACCESS",
+    "actual_wrapper_report": "PASS_SYNTHETIC_ONLY",
+    "rehearsal": "RUNNING_UNVERIFIED -> explicit simulated COMPLETE -> collect -> report PASS",
+    "rehearsal_report_sha256": "a24342c0934f18282cb2f58593ef8fc35792dd365dcfd71005164a85c46b435f",
+    "new_actual_agy_turns": 0,
+    "agy_same_conversation": "MOCKED_SUBPROCESS_CONTRACT_TESTS_THIS_PR; historical actual CLI evidence unchanged"
+  },
+  "broad_smoke": {
+    "base_official_fp32": {
+      "status": "COMPLETED",
+      "returncode": 1,
+      "seconds": 63.125,
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_candidate160_official_fp32.py",
+        "-v"
+      ],
+      "log_sha256": "245115fd049203e0989abd8d4156936cb008d017da935e161e6ffa0d8c65cd0b"
+    },
+    "head_official_fp32": {
+      "status": "COMPLETED",
+      "returncode": 1,
+      "seconds": 4.25,
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_candidate160_official_fp32.py",
+        "-v"
+      ],
+      "log_sha256": "54da20c7ecfbb48014618bfff56128d3de3098d360077387943ad1cb4f6ba516"
+    },
+    "repository_smoke": {
+      "status": "TIMEOUT_INCOMPLETE",
+      "returncode": null,
+      "seconds": 600.0160000000615,
+      "command": [
+        "python",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "log_sha256": "d6cce57b9d7bc36cd3400a0e8b3a4970ce5363f85fe77becfc35f0319c7af761"
+    }
+  },
+  "baseline_official_fp32": {
+    "status": "IDENTICAL_PREEXISTING_FAILURE_IDS",
+    "tests": 9,
+    "failures": 1,
+    "errors": 9,
+    "case_ids": [
+      "test_direct_cli_does_not_accept_notebook_approval_switch_or_forged_record (test_candidate160_official_fp32.OfficialFP32Tests.test_direct_cli_does_not_accept_notebook_approval_switch_or_forged_record)",
+      "test_exact_owner_decision_config_descriptor_and_raw_binding (test_candidate160_official_fp32.OfficialFP32Tests.test_exact_owner_decision_config_descriptor_and_raw_binding)",
+      "test_fp16_and_qualification_histories_never_supply_official_completion (test_candidate160_official_fp32.OfficialFP32Tests.test_fp16_and_qualification_histories_never_supply_official_completion)",
+      "test_official160_zip_resume_noop_keeps_invalid_raw_and_decision_custody (test_candidate160_official_fp32.OfficialFP32Tests.test_official160_zip_resume_noop_keeps_invalid_raw_and_decision_custody)",
+      "test_official_faults_stop_without_retry_and_remain_pending (test_candidate160_official_fp32.OfficialFP32Tests.test_official_faults_stop_without_retry_and_remain_pending) (fault='load')",
+      "test_official_faults_stop_without_retry_and_remain_pending (test_candidate160_official_fp32.OfficialFP32Tests.test_official_faults_stop_without_retry_and_remain_pending) (fault='oom')",
+      "test_official_faults_stop_without_retry_and_remain_pending (test_candidate160_official_fp32.OfficialFP32Tests.test_official_faults_stop_without_retry_and_remain_pending) (fault='nonfinite')",
+      "test_official_orphan_marker_missing_zip_and_conflicting_history_block (test_candidate160_official_fp32.OfficialFP32Tests.test_official_orphan_marker_missing_zip_and_conflicting_history_block)",
+      "test_wrong_model_configuration_scope_and_approval_fail_before_worker_io (test_candidate160_official_fp32.OfficialFP32Tests.test_wrong_model_configuration_scope_and_approval_fail_before_worker_io)",
+      "test_internvl_and_technical_authority_have_no_new_approval_field (test_candidate160_official_fp32.OfficialFP32Tests.test_internvl_and_technical_authority_have_no_new_approval_field)"
+    ]
+  },
+  "documentation": {
+    "new_runbook_local_links": "PASS",
+    "code_fences": "BALANCED",
+    "authority": "APPEND_ONLY_NO_GRANT_ISSUED"
+  },
+  "kaggle_submissions": 0,
+  "gpu_consumption": 0,
+  "real_model_calls": 0,
+  "real_image_or_private_raw_reads": 0,
+  "test_split_reads": 0,
+  "live_final_source_qualification": "NOT_RUN_EXPLICITLY_PROHIBITED_BY_TASK",
+  "independent_audit": "PENDING_NOT_SELF_ISSUED",
+  "merge": "NOT_AUTHORIZED",
+  "remaining": [
+    "Authentic one-time campaign grant, finite numerical caps and genuinely missing rights evidence",
+    "ChatGPT direct GitHub review, independent Antigravity audit and separately authorized merge",
+    "Post-merge authorized ordinal0 final-source native qualification and sealed telemetry before multi-image shards"
+  ],
+  "limits": [
+    "Single canonical local operator, not global exactly-once or adversarial rollback-proof storage",
+    "Lost/ambiguous history and cross-machine takeover fail closed; no automatic takeover command",
+    "Full repository smoke is not claimed PASS; pre-existing official-FP32 failure reproduced on exact BASE",
+    "Initial final-source shard size and Kaggle runtime/Input/GPU behavior unverified until authorized live qualification",
+    "Scientific result selection/pooling remains PENDING; all historical attempts retained"
+  ],
+  "development_checks": [
+    {
+      "status": "PASS",
+      "tests": 148,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "receipt_sha256": "d02066ff2ba8e8a11a85f2f0d306f46a7a8554b511e954ad0ecaf9e9206846fa"
+    },
+    {
+      "status": "FAIL_PRESERVED",
+      "reason": "Isolated test replaced socket.socket before ssl class import; fixture import order corrected, no production relaxation",
+      "log_sha256": "cc02cca365e9d62028d9f716723710575fdd0c56996a53e4471df5b0a219365f"
+    },
+    {
+      "status": "PASS_SUPERSEDED_BY_ORIGINAL_INPUT_REUSE",
+      "tests": 154,
+      "failures": 0,
+      "errors": 0,
+      "receipt_sha256": "e933c23a53fd86885452e6470f331f58795e9888d0fcee4d34f8035f1d0d59e1"
+    }
+  ]
+}

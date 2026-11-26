@@ -1,0 +1,101 @@
+{
+  "schema": "issue173-nvml-loader-isolation-v4",
+  "source_commit": "f4bf4d756fb4b0094988e2db5894414fc6cdee8f",
+  "kaggle": {
+    "ref": "nguynanhtn/safeshift-issue173-native-smoke-v4",
+    "version": 1,
+    "kernel_id": 142336336,
+    "status": "COMPLETE"
+  },
+  "archive_sha256": "2ae1b33411e93c3b9c9a43f9e1d05d9368704d43795a1e7052bf8c12dcf4aaee",
+  "archive_verified_members": 28,
+  "summary": {
+    "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+    "model_calls": 0,
+    "models": {
+      "internvl35": {
+        "native_calls": 0,
+        "status": "BLOCKED",
+        "weights_loaded": false
+      },
+      "minicpm4": {
+        "native_calls": 0,
+        "status": "NOT_ATTEMPTED",
+        "weights_loaded": false
+      },
+      "qwen3": {
+        "native_calls": 0,
+        "prior_native_calls": 1,
+        "status": "PRIOR_SMOKE_CONSUMED_NOT_REPLAYED",
+        "weights_loaded": false
+      }
+    },
+    "prior_native_calls": 1,
+    "production_authorized": false,
+    "run_id": "issue173-smoke-20261102-v4",
+    "source_commit": "f4bf4d756fb4b0094988e2db5894414fc6cdee8f"
+  },
+  "kernel_driver": {
+    "binary": "/opt/bin/nvidia-smi",
+    "hardware": {
+      "cuda_initialized": false,
+      "model_fit": "NOT_ESTABLISHED",
+      "physical_gpus": [
+        {
+          "driver": "580.178.04",
+          "free_mib": 14912,
+          "index": 0,
+          "name": "Tesla T4"
+        },
+        {
+          "driver": "580.178.04",
+          "free_mib": 14912,
+          "index": 1,
+          "name": "Tesla T4"
+        }
+      ]
+    },
+    "loader_environment": {
+      "LD_LIBRARY_PATH": "/usr/local/nvidia/lib64:/usr/local/cuda/lib64:/usr/local/cuda/lib64",
+      "LD_PRELOAD": null,
+      "NVIDIA_DRIVER_CAPABILITIES": "compute,utility",
+      "NVIDIA_VISIBLE_DEVICES": "all"
+    },
+    "nvml_find_library": "libnvidia-ml.so.1",
+    "nvml_paths": {
+      "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1": false,
+      "/usr/lib64/libnvidia-ml.so.1": false,
+      "/usr/local/nvidia/lib64/libnvidia-ml.so.1": true
+    },
+    "phase": "kernel",
+    "status": "PASS"
+  },
+  "worker_driver": {
+    "binary": "/opt/bin/nvidia-smi",
+    "command": [
+      "nvidia-smi",
+      "--query-gpu=index,name,memory.free,driver_version",
+      "--format=csv,noheader,nounits"
+    ],
+    "loader_environment": {
+      "LD_LIBRARY_PATH": null,
+      "LD_PRELOAD": null,
+      "NVIDIA_DRIVER_CAPABILITIES": null,
+      "NVIDIA_VISIBLE_DEVICES": null
+    },
+    "nvml_find_library": null,
+    "nvml_paths": {
+      "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1": false,
+      "/usr/lib64/libnvidia-ml.so.1": false,
+      "/usr/local/nvidia/lib64/libnvidia-ml.so.1": true
+    },
+    "phase": "worker",
+    "returncode": 12,
+    "status": "BLOCKED",
+    "stderr": "",
+    "stdout_summary": "NVML_LIBRARY_NOT_FOUND despite mounted /usr/local/nvidia/lib64/libnvidia-ml.so.1"
+  },
+  "peer_load_reservations": 0,
+  "peer_native_markers": 0,
+  "inference": "NOT_RUN_FOR_PEERS"
+}

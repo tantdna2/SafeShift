@@ -1,0 +1,9 @@
+test_complete_v6_receipts_preserve_pending_only_results (test_minicpm_v6_collection.V6CollectionTests.test_complete_v6_receipts_preserve_pending_only_results) ... ok
+test_ineffective_reclaim_never_promoted_to_verified_continuation (test_minicpm_v6_collection.V6CollectionTests.test_ineffective_reclaim_never_promoted_to_verified_continuation) ... ok
+test_live_group_never_promoted_to_verified_continuation (test_minicpm_v6_collection.V6CollectionTests.test_live_group_never_promoted_to_verified_continuation) ... ok
+test_missing_ram_or_unobserved_group_blocks_collection (test_minicpm_v6_collection.V6CollectionTests.test_missing_ram_or_unobserved_group_blocks_collection) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 5.379s
+
+OK

@@ -1,0 +1,246 @@
+{
+  "candidate_source_sha256": "3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e",
+  "checker_sha256": "09bff147994a1511031fe682b43ae4c42484e36bb446e700257140853b9c92f3",
+  "checks": {
+    "notebooks": {
+      "SafeShift_CANDIDATE160_internvl35.ipynb": {
+        "embedded_source_sha256": "3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e",
+        "sha256": "05c2444ed0eeb294052216c4980823e26edea95fec67056b6a16d08ab0084a09",
+        "status": "PASS"
+      },
+      "SafeShift_CANDIDATE160_minicpm4.ipynb": {
+        "embedded_source_sha256": "3b63d9cf92df66042cbd201861c50ab8f0cfd0b4d1a57d194493faf33c24524e",
+        "sha256": "be09bb4dee90d150c154e518500913a5080a54aa0047abbcd84607bfc460545c",
+        "status": "PASS"
+      },
+      "SafeShift_ENVIRONMENT_PREFLIGHT_phi.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "9f966a61ee06fe459f177136e58ac3affdfd9a1f4d3aeb02948e5d80ba19b2a3",
+        "status": "PASS"
+      },
+      "SafeShift_ENVIRONMENT_PREFLIGHT_smolvlm2.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "1c611aa66aab2605508cc6758ca496cf7450bdb47e3d3e7062bccfc22546f73e",
+        "status": "PASS"
+      },
+      "SafeShift_STORAGE_PREFLIGHT.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "6da5b5afa6855905e780aa4624b9fc0ff9a9ae0dbe00204e4fd51ddb715e8a69",
+        "status": "PASS"
+      },
+      "SafeShift_TRAIN_PILOT_gemma.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "cc48a21012ec58c8d1e45c4e3f04717c7e2dddebaa6dc6d418a1c80f40c6865f",
+        "status": "PASS"
+      },
+      "SafeShift_TRAIN_PILOT_phi.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "364d5f3014ccd175b33122405a0bcf90e76b748a0e26ab87bf77b6b929303793",
+        "status": "PASS"
+      },
+      "SafeShift_TRAIN_PILOT_smolvlm2.ipynb": {
+        "embedded_source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884",
+        "sha256": "81a6dcc158be48649b82e049836857d35d6074d4991c5ef0d2463e7bab20a87e",
+        "status": "PASS"
+      }
+    },
+    "stdlib_suite": {
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "run": 293,
+        "skip_details": [
+          [
+            "test_symlinked_directory_is_rejected (test_candidate_cpu.CandidateCPUTests.test_symlinked_directory_is_rejected)",
+            "OS symbolic link permission unavailable"
+          ],
+          [
+            "test_symlinked_file_and_dangling_link_are_rejected (test_candidate_cpu.CandidateCPUTests.test_symlinked_file_and_dangling_link_are_rejected)",
+            "OS symbolic link permission unavailable"
+          ],
+          [
+            "test_symlinked_root_is_rejected_without_resolving_it (test_candidate_cpu.CandidateCPUTests.test_symlinked_root_is_rejected_without_resolving_it)",
+            "OS symbolic link permission unavailable"
+          ],
+          [
+            "test_candidate160_corrupt_image_before_native_generation (test_candidate_native.NativeCandidateTests.test_candidate160_corrupt_image_before_native_generation)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_candidate160_native_processor_tokens_raw_runner_and_archive (test_candidate_native.NativeCandidateTests.test_candidate160_native_processor_tokens_raw_runner_and_archive)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_decode_error_retains_exact_native_ids (test_candidate_native.NativeCandidateTests.test_decode_error_retains_exact_native_ids)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_existing_runner_raw_before_parse_failure_tail_and_archive (test_candidate_native.NativeCandidateTests.test_existing_runner_raw_before_parse_failure_tail_and_archive)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_four_labels_whitespace_and_existing_fifteen_raw_cases (test_candidate_native.NativeCandidateTests.test_four_labels_whitespace_and_existing_fifteen_raw_cases)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_input_faults_and_dtype_transfer (test_candidate_native.NativeCandidateTests.test_input_faults_and_dtype_transfer)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_invalid_repetition_and_max64_are_not_rescued (test_candidate_native.NativeCandidateTests.test_invalid_repetition_and_max64_are_not_rescued)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_malformed_sequences_persist_before_rejection (test_candidate_native.NativeCandidateTests.test_malformed_sequences_persist_before_rejection)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_meta_loader_inventory_and_attention_faults (test_candidate_native.NativeCandidateTests.test_meta_loader_inventory_and_attention_faults)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_native_empty_safetensors_path_loader_and_failure (test_candidate_native.NativeCandidateTests.test_native_empty_safetensors_path_loader_and_failure)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_native_generation_contract_raw_ids_logits_eos_and_decode_order (test_candidate_native.NativeCandidateTests.test_native_generation_contract_raw_ids_logits_eos_and_decode_order)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_real_native_embedding_glue_with_scripted_towers (test_candidate_native.NativeCandidateTests.test_real_native_embedding_glue_with_scripted_towers)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_sizes_spatial_native_parity_and_rgb_normalization (test_candidate_native.NativeCandidateTests.test_sizes_spatial_native_parity_and_rgb_normalization)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_weight_loader_failure_uses_exact_config_and_no_fallback (test_candidate_native.NativeCandidateTests.test_weight_loader_failure_uses_exact_config_and_no_fallback)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_write_failure_stops_before_decode_and_removes_hook (test_candidate_native.NativeCandidateTests.test_write_failure_stops_before_decode_and_removes_hook)",
+            "opt-in isolated candidate CPU stack/public snapshot required"
+          ],
+          [
+            "test_a4_and_a5_real_loader_before_after (test_phi_native.NativePhiTests.test_a4_and_a5_real_loader_before_after)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_cpu_admission_processor_and_shapes_and_token_boundaries (test_phi_native.NativePhiTests.test_cpu_admission_processor_and_shapes_and_token_boundaries)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_first12_failure_and_capture_io_keep_native_custody (test_phi_native.NativePhiTests.test_first12_failure_and_capture_io_keep_native_custody)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_generation_failures_stop_raw_and_tail_accounting (test_phi_native.NativePhiTests.test_generation_failures_stop_raw_and_tail_accounting)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_phi_native.NativePhiTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_phi_native.NativePhiTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)",
+            "Opt-in pinned Phi public-source CPU rehearsal; no weights"
+          ],
+          [
+            "test_real_verified_wheel_bootstraps_pip_free_venv (test_pilot_bootstrap.PipBootstrapTests.test_real_verified_wheel_bootstraps_pip_free_venv)",
+            "opt-in real network/venv pip --python rehearsal"
+          ],
+          [
+            "test_parent_or_root_identity_mismatch_fails_closed (test_pilot_bootstrap.ScratchRootTests.test_parent_or_root_identity_mismatch_fails_closed)",
+            "directory descriptor check requires Linux"
+          ],
+          [
+            "test_real_root_and_parent_symlinks_are_rejected (test_pilot_bootstrap.ScratchRootTests.test_real_root_and_parent_symlinks_are_rejected)",
+            "real directory symlink requires Linux"
+          ],
+          [
+            "test_small_real_allocation_is_released (test_pilot_bootstrap.StorageTests.test_small_real_allocation_is_released)",
+            "Linux allocation API unavailable"
+          ],
+          [
+            "test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical (test_smol_native.NativeSmolTests.test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_all_four_labels_and_three_surfaces_use_actual_native_branch (test_smol_native.NativeSmolTests.test_all_four_labels_and_three_surfaces_use_actual_native_branch)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_first12_failure_and_capture_io_keep_native_custody (test_smol_native.NativeSmolTests.test_first12_failure_and_capture_io_keep_native_custody)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_generation_failures_stop_raw_and_tail_accounting (test_smol_native.NativeSmolTests.test_generation_failures_stop_raw_and_tail_accounting)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_independent_tokenizer_mismatch_and_raw_before_parser (test_smol_native.NativeSmolTests.test_independent_tokenizer_mismatch_and_raw_before_parser)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_smol_native.NativeSmolTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_native_processor_shapes_tokens_prompt_and_corruption (test_smol_native.NativeSmolTests.test_native_processor_shapes_tokens_prompt_and_corruption)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_smol_native.NativeSmolTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ],
+          [
+            "test_real_loader_original_checkpoint_and_nested_attention (test_smol_native.NativeSmolTests.test_real_loader_original_checkpoint_and_nested_attention)",
+            "opt-in hash-locked Smol public source/tokenizer snapshot required"
+          ]
+        ],
+        "skipped": 37
+      },
+      "returncode": 0,
+      "stderr": ".....................................sss.........sssssssssssssss................................................ssssss........................................................s............ss...................s................................................sssssssss............analysis failed: output already exists; historical results must not be overwritten\r\n...............\r\n----------------------------------------------------------------------\r\nRan 293 tests in 417.276s\r\n\r\nOK (skipped=37)\r\n",
+      "stderr_sha256": "bf664cdeb270f4c8935ea7e513d4696b5ed80be6c2e7fd56dd745b628f22f85c",
+      "stdout": "Finalizer write failed: supervisor_status.json OSError\r\nDownload private evidence: <synthetic-temporary-path> and <synthetic-temporary-path>\r\nEXPORT_FAILED; retain evidence directory/partial archive: <synthetic-temporary-path> OSError\r\nDownload private evidence: <synthetic-temporary-path> and <synthetic-temporary-path>\r\nDownload private evidence: <synthetic-temporary-path> and <synthetic-temporary-path>\r\nDownload private evidence: <synthetic-temporary-path> and <synthetic-temporary-path>\r\nResearch Lead review drop directory: <synthetic-temporary-path>\r\nDownload private evidence: <synthetic-temporary-path> and <synthetic-temporary-path>\r\nResearch Lead review drop directory: <synthetic-temporary-path>\r\nDownload private evidence: <synthetic-temporary-path> and <synthetic-temporary-path>\r\nSTOP: cpu_runtime_preflight RuntimeError \u2014 inspect exported evidence.\r\nDownload phi-9dc903541cc645e8ace9dd374dede528.zip and phi-9dc903541cc645e8ace9dd374dede528.zip.sha256.json SHA256 055433588f9de0dd97aa7dc77ce0d76fbfa02e03c6c4245bf450ec024440717e\r\nSTOP: attempt_consumption FileExistsError \u2014 inspect exported evidence.\r\nDownload phi-874aef5968334693a4cfeafa4c9dcf57.zip and phi-874aef5968334693a4cfeafa4c9dcf57.zip.sha256.json SHA256 d694989d3b0ef05548645a22a389e96354e33db8efd1085fbede9bc0e06e5d3c\r\nSTOP: authority PermissionError \u2014 inspect exported evidence.\r\nDownload phi-20640be6ec8c4af6ac90c5ec84371e76.zip and phi-20640be6ec8c4af6ac90c5ec84371e76.zip.sha256.json SHA256 47e8223b2ae7ab969bd89b19fbd54af06cf53ce5825051938a0083566e38f474\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nEXPORT_FAILED OSError download retained directory/partial archive.\r\nSTOP: authority PermissionError \u2014 inspect exported evidence.\r\nDownload gemma-3cc32b4b3bc4445eaff9f7b43c364226.zip and gemma-3cc32b4b3bc4445eaff9f7b43c364226.zip.sha256.json SHA256 0c56c1f74e9b314e2bc29fbd2d034cfa97625c26a5214b6b47853c9a709b7513\r\nSTORAGE_PREFLIGHT BLOCKED SCRATCH_PREPARATION_FAILED <synthetic-temporary-path>\r\nSTORAGE_PREFLIGHT BLOCKED INSUFFICIENT_FILESYSTEM_FREE <synthetic-temporary-path>\r\nSTORAGE_PREFLIGHT BLOCKED SYNTHETIC <synthetic-temporary-path>\r\ngemma review files 2 unavailable []\r\nENVIRONMENT_PREFLIGHT PASS phi Download phi-e5b2e58127174e2fb80b9153eac5a739.zip and phi-e5b2e58127174e2fb80b9153eac5a739.zip.sha256.json SHA256 d247d648951eb95e7b9837d80384cb7ec6fa60c5e619d5cf0f113eb58c0dcd8c\r\nENVIRONMENT_PREFLIGHT PASS smolvlm2 Download smolvlm2-7f6ae6128d9b44d3a143375b9306deec.zip and smolvlm2-7f6ae6128d9b44d3a143375b9306deec.zip.sha256.json SHA256 774b310dcf1f287ea788f25911a599b070e460587904c7c026ff24265b09d5d2\r\nSTORAGE_PREFLIGHT PASS SYNTHETIC <synthetic-temporary-path>\r\nSTORAGE_PREFLIGHT BLOCKED SCRATCH_PREPARATION_FAILED <synthetic-temporary-path>\r\nSTORAGE_PREFLIGHT BLOCKED SYNTHETIC <synthetic-temporary-path>\r\nSTORAGE_PREFLIGHT BLOCKED SCRATCH_PREPARATION_FAILED <synthetic-temporary-path>\r\nSTOP: worker RuntimeError \u2014 inspect exported evidence.\r\nEXPORT_FAILED OSError download retained directory/partial archive.\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nDownload phi-1a3ecff2c9a64a0ca4676d6a8e3985b1.zip and phi-1a3ecff2c9a64a0ca4676d6a8e3985b1.zip.sha256.json SHA256 9f5a8c143b9fd0618ec6cbd08a0cb6ec10be24c8796621deb001eaedd6060ea2\r\nSTOP: authority FileExistsError \u2014 inspect exported evidence.\r\nDownload phi-3dfe9ad8e1c74bb98e645358d03d0ecb.zip and phi-3dfe9ad8e1c74bb98e645358d03d0ecb.zip.sha256.json SHA256 0f05621765c4d00ba086b1c8352673d27baa3aae030ca9512b4718b4bfe4ffd1\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nDownload phi-8797a3ad7ba74787b7ed71d2b4b29384.zip and phi-8797a3ad7ba74787b7ed71d2b4b29384.zip.sha256.json SHA256 46f941a958992c6fa1c86447e6d881dbe59be6e398171afbf2835ee0c7d54388\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nDownload smolvlm2-f830275189f94ddd8a2c2b14762b47a2.zip and smolvlm2-f830275189f94ddd8a2c2b14762b47a2.zip.sha256.json SHA256 060d342629a6aefb6770ee508356111cdba9d796a321d77559ac3601d75a1c82\r\nSTOP: cpu_runtime_preflight RuntimeError \u2014 inspect exported evidence.\r\nDownload phi-78d838b67e5b439d84088e605599ff51.zip and phi-78d838b67e5b439d84088e605599ff51.zip.sha256.json SHA256 9e0b002b4b26a831c9f38d4187f7a5f49af6cf47dc9bb7fecb35a31dc8accc9c\r\nSTOP: cpu_runtime_preflight OSError \u2014 inspect exported evidence.\r\nDownload phi-e610b51abd4c45d49db1a97e9a65ac25.zip and phi-e610b51abd4c45d49db1a97e9a65ac25.zip.sha256.json SHA256 9cec1c92f18033cc1707b7267686d5f26100b7547576d780a83e751d47744ac0\r\nSTOP: cpu_runtime_preflight CalledProcessError \u2014 inspect exported evidence.\r\nDownload phi-031eec24ade245e286355cf63a0d8048.zip and phi-031eec24ade245e286355cf63a0d8048.zip.sha256.json SHA256 58342dc6f2d6aa6d4bdb9568e0eb11f13a1cdcac95abbb9a1c3bf6b60e541506\r\nSTOP: source_review PermissionError \u2014 inspect exported evidence.\r\nDownload gemma-5180030eb1d2411194aea3aa5d7dc2cb.zip and gemma-5180030eb1d2411194aea3aa5d7dc2cb.zip.sha256.json SHA256 33e3955b0db101249448be56653da8ff3ae068177720a7c47365502d32a7ee0f\r\nSTOP: hardware RuntimeError \u2014 inspect exported evidence.\r\nDownload phi-90907122e3e34ca7b760bfdafb7086c1.zip and phi-90907122e3e34ca7b760bfdafb7086c1.zip.sha256.json SHA256 7df929e0bca3d4a18cedf4c674c97e017ac2b10a91af4ec9bf39cf7a8196079e\r\nSTOP: hardware OSError \u2014 inspect exported evidence.\r\nDownload phi-b1a2f7ead8374e5e9acb6093e8158ad3.zip and phi-b1a2f7ead8374e5e9acb6093e8158ad3.zip.sha256.json SHA256 41e921f4ba28e27a9c1a91e29048a1a7dc942141f75b5b789579ffa5e2ff52c4\r\nSTOP: hardware OSError \u2014 inspect exported evidence.\r\nDownload phi-12c43e48fcb24f4bb615d042b1d50b78.zip and phi-12c43e48fcb24f4bb615d042b1d50b78.zip.sha256.json SHA256 929193361540142907fea7d5c2393e1c48afa751944c1890d555d6fd8d9bed7e\r\nSTOP: storage OSError \u2014 inspect exported evidence.\r\nDownload phi-d8f0e51e7b0849ce97fa1d8d7e5d0d7a.zip and phi-d8f0e51e7b0849ce97fa1d8d7e5d0d7a.zip.sha256.json SHA256 242e8b1406d828cd07aebbeea5756b91892836e673499009d382f6791dc843cd\r\nSTOP: hardware RuntimeError \u2014 inspect exported evidence.\r\nDownload phi-d77813f3f4ad4b16a69d092dce9c1ba8.zip and phi-d77813f3f4ad4b16a69d092dce9c1ba8.zip.sha256.json SHA256 497f7a958d43abb4abe791bb74e056d597aab4e8494d96933b54f2cce9ac7a5f\r\nSTOP: hardware RuntimeError \u2014 inspect exported evidence.\r\nDownload phi-00ba82b761964217946b103a90666830.zip and phi-00ba82b761964217946b103a90666830.zip.sha256.json SHA256 870f997639388e546e10c1f82f229ec0bed69627d2c7bfe5dd979123401e2919\r\nSTOP: cpu_runtime_preflight FileNotFoundError \u2014 inspect exported evidence.\r\nDownload phi-c1ec4c2f155641478e43f49364abc702.zip and phi-c1ec4c2f155641478e43f49364abc702.zip.sha256.json SHA256 ccd2f19c7049b12d8da9ce36f594f76aa73bf9317b5d540f7a20324cd2ba63d2\r\nSTOP: cpu_runtime_preflight FileNotFoundError \u2014 inspect exported evidence.\r\nDownload smolvlm2-8242a65fa23a4279997bed3a9c1e4110.zip and smolvlm2-8242a65fa23a4279997bed3a9c1e4110.zip.sha256.json SHA256 7b7b4f8260719de38b0ac36c9f1e650725edc861fe8ebcbc3e90f8434ae6a4f6\r\nSTOP: hardware FileNotFoundError \u2014 inspect exported evidence.\r\nDownload phi-46c2ec435d3047d087ba306ba35e3d1c.zip and phi-46c2ec435d3047d087ba306ba35e3d1c.zip.sha256.json SHA256 e13411375e13f87717b7430ff83a1cf99286ff87a81890aa585751d1bae73132\r\nSTOP: hardware CalledProcessError \u2014 inspect exported evidence.\r\nDownload phi-b224d51796324bf48982b03102ad1ac1.zip and phi-b224d51796324bf48982b03102ad1ac1.zip.sha256.json SHA256 91342e6875f11599b8eac04af0bfd5b3cfb88dfdc992fd02cff85b21ec277364\r\nSTOP: hardware TimeoutExpired \u2014 inspect exported evidence.\r\nDownload phi-1b1487855c5f4022a41ae806e9a11009.zip and phi-1b1487855c5f4022a41ae806e9a11009.zip.sha256.json SHA256 59f660f9117ebbae5b3f01337426c0dbb389b5c99d9c7480a556c7f897b864b8\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nDownload phi-ce64f88671df4586a922598bd99d1869.zip and phi-ce64f88671df4586a922598bd99d1869.zip.sha256.json SHA256 b2e2dcbc623ba4d378d2ad01aff17b9d2b69c71a50ce2f16c857daee5c69fd95\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nDownload smolvlm2-4f640ebc31844c94a2f656ddd5611496.zip and smolvlm2-4f640ebc31844c94a2f656ddd5611496.zip.sha256.json SHA256 fef37f28d89fb778a4e61eb8660a1838d92a49c79065ff8d6955f9ddfe8610f4\r\nSTOP: cpu_runtime_preflight RuntimeError \u2014 inspect exported evidence.\r\nDownload phi-e40af578f2bd4adb8ecae23294841122.zip and phi-e40af578f2bd4adb8ecae23294841122.zip.sha256.json SHA256 ace48f69ab11ce3ccdfe1cde3931ae36135caee30b85e41259313630ed4e6cbc\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nEXPORT_FAILED OSError download retained directory/partial archive.\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nDownload phi-cec8aff4bce8443fb7bd5493b63d5926.zip and phi-cec8aff4bce8443fb7bd5493b63d5926.zip.sha256.json SHA256 ce3cccaad2190602bb1bfe9b00a3d8510dcd909fdb47461e59ab712a829c5aab\r\nSTOP: cpu_runtime_preflight OSError \u2014 inspect exported evidence.\r\nDownload phi-3bd192d49af446f8926e9a754ad826b6.zip and phi-3bd192d49af446f8926e9a754ad826b6.zip.sha256.json SHA256 87dbab8a75ae1c8f02833924974438f7f4103fb1da25e1a6bfc13f14dc274d13\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nSCRATCH_CLEANUP_FAILED: do not publish/save entire working tree; download evidence ZIP only.\r\nDownload phi-b810cafe51c848cd8aec7be962e8ed1c.zip and phi-b810cafe51c848cd8aec7be962e8ed1c.zip.sha256.json SHA256 8679c154ebcc866d1b8239464410c243c1359e52b3885ef6073d4364fdb272bd\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nSESSION_RECORD_WRITE_FAILED; export still attempted.\r\nDownload phi-55fb70b6208a4e19a03b8ef3010cb0ad.zip and phi-55fb70b6208a4e19a03b8ef3010cb0ad.zip.sha256.json SHA256 41599f55f1fd09342cb4f77312fb8f0872aec7da29ec762dfffeb86c4998ea2b\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nDownload phi-fdc710ae066d4f58a06b3e557d6271ea.zip and phi-fdc710ae066d4f58a06b3e557d6271ea.zip.sha256.json SHA256 8548e68b01c146cf8f5621152ec7681a13e9f14ed4685dc12977641b9fca3057\r\nSTOP: worker CalledProcessError \u2014 inspect exported evidence.\r\nDownload phi-65bbf920fb71411fad05cf461eca614d.zip and phi-65bbf920fb71411fad05cf461eca614d.zip.sha256.json SHA256 6ce51f2bfc1b80bc4fdb73d0b54161365ef1e856019631a14cc27abc3f0cfdd4\r\nSTOP: cpu_runtime_preflight ValueError \u2014 inspect exported evidence.\r\nDownload phi-e7c2dc47b5ee4f6f9cccf2fce8b658d8.zip and phi-e7c2dc47b5ee4f6f9cccf2fce8b658d8.zip.sha256.json SHA256 ee6003888ca88abe7297c689ba50edda65816d54170d39fc45c83de64c9a890f\r\nSTOP: hardware RuntimeError \u2014 inspect exported evidence.\r\nDownload phi-6f0ae7b1f5aa4fff8887f220524294a2.zip and phi-6f0ae7b1f5aa4fff8887f220524294a2.zip.sha256.json SHA256 c944b444d1ad0a5686521817e6fc4c83de74fde8b3e145bc65a9b409afe903f0\r\nSTOP: cpu_runtime_preflight RuntimeError \u2014 inspect exported evidence.\r\nDownload smolvlm2-fd0191b556f145de80ab4825d5412e43.zip and smolvlm2-fd0191b556f145de80ab4825d5412e43.zip.sha256.json SHA256 2326fd8a25bf2fdff192557a37254c5043cac6e382b4a6a583c0751dd6d39757\r\nSTOP: cpu_runtime_preflight RuntimeError \u2014 inspect exported evidence.\r\nDownload smolvlm2-bf69704bf9ed4140a2e76d256f1a76cc.zip and smolvlm2-bf69704bf9ed4140a2e76d256f1a76cc.zip.sha256.json SHA256 a3d7ac7e788e06c07b9819b481d80eadbe85b5ca623f16febbb8b3ac179f74b3\r\nSTOP: cpu_runtime_preflight RuntimeError \u2014 inspect exported evidence.\r\nDownload smolvlm2-bd518c49d8454e0f9f45f81b272cdda9.zip and smolvlm2-bd518c49d8454e0f9f45f81b272cdda9.zip.sha256.json SHA256 b369b52e64f78e4dbb0cbd34dbedcc7038e6aeb84f590fef0ae8e7bcead145c2\r\nSTOP: cpu_runtime_preflight RuntimeError \u2014 inspect exported evidence.\r\nDownload smolvlm2-d9831edafcea4232a2bb2d82fa0be567.zip and smolvlm2-d9831edafcea4232a2bb2d82fa0be567.zip.sha256.json SHA256 a670e00872383e323809b8295bc6d1b329250432b09026a36e8a089a74e8d88a\r\nWorker finished; see report, coverage and per-model conclusion. No FULL TRAIN transition.\r\nEXPORT_FAILED OSError download retained directory/partial archive.\r\nSTOP: authority ValueError \u2014 inspect exported evidence.\r\nDownload smolvlm2-d9914db65c454dd2941a5061960e7fcf.zip and smolvlm2-d9914db65c454dd2941a5061960e7fcf.zip.sha256.json SHA256 8ab61759322f16ec15b3b21b42971f7ceba1df0eb5dcbe86219ceee88eb4547c\r\nSTOP: authority ValueError \u2014 inspect exported evidence.\r\nDownload smolvlm2-843577bb8eee4ceca801b672010b8d8d.zip and smolvlm2-843577bb8eee4ceca801b672010b8d8d.zip.sha256.json SHA256 3520d08b62968d63bef946f58555c3dd8cdc96264181ee959476ff4dd736a248\r\nSTOP: authority PermissionError \u2014 inspect exported evidence.\r\nDownload smolvlm2-a90a2ad6776a45bf8e16064d4f07b240.zip and smolvlm2-a90a2ad6776a45bf8e16064d4f07b240.zip.sha256.json SHA256 ea5e40ae4e8836d87bae6e89cbc4aef0d308d4450395fdad83aa96fdc4a4589d\r\nSTOP: authority PermissionError \u2014 inspect exported evidence.\r\nDownload smolvlm2-d222f7ad5fa04d16a2f00708229daeb4.zip and smolvlm2-d222f7ad5fa04d16a2f00708229daeb4.zip.sha256.json SHA256 e7e4c54d16d9304d3a108d41ea3ec9d40f4272820c612ee8b36a4f8b82249fd2\r\nSTOP: authority FileExistsError \u2014 inspect exported evidence.\r\nDownload smolvlm2-5d7479f85cbb4493a93677cc80188f27.zip and smolvlm2-5d7479f85cbb4493a93677cc80188f27.zip.sha256.json SHA256 08e1d62e5ec69972ddd3bf49f40f86460dce867cb7b082fc1be21dfd73f682ea\r\nSTOP: dataset ValueError \u2014 inspect exported evidence.\r\nDownload smolvlm2-ee3e9bc6039e4a15b5f7193274075ce4.zip and smolvlm2-ee3e9bc6039e4a15b5f7193274075ce4.zip.sha256.json SHA256 c525de5c69624eb086001f9c128755bbf49d5263eaaa79cf85754a6b71587711\r\nRELEASE_TEST_RESULT={\"run\": 293, \"failures\": 0, \"errors\": 0, \"skipped\": 37, \"skip_details\": [[\"test_symlinked_directory_is_rejected (test_candidate_cpu.CandidateCPUTests.test_symlinked_directory_is_rejected)\", \"OS symbolic link permission unavailable\"], [\"test_symlinked_file_and_dangling_link_are_rejected (test_candidate_cpu.CandidateCPUTests.test_symlinked_file_and_dangling_link_are_rejected)\", \"OS symbolic link permission unavailable\"], [\"test_symlinked_root_is_rejected_without_resolving_it (test_candidate_cpu.CandidateCPUTests.test_symlinked_root_is_rejected_without_resolving_it)\", \"OS symbolic link permission unavailable\"], [\"test_candidate160_corrupt_image_before_native_generation (test_candidate_native.NativeCandidateTests.test_candidate160_corrupt_image_before_native_generation)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_candidate160_native_processor_tokens_raw_runner_and_archive (test_candidate_native.NativeCandidateTests.test_candidate160_native_processor_tokens_raw_runner_and_archive)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_decode_error_retains_exact_native_ids (test_candidate_native.NativeCandidateTests.test_decode_error_retains_exact_native_ids)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_existing_runner_raw_before_parse_failure_tail_and_archive (test_candidate_native.NativeCandidateTests.test_existing_runner_raw_before_parse_failure_tail_and_archive)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_four_labels_whitespace_and_existing_fifteen_raw_cases (test_candidate_native.NativeCandidateTests.test_four_labels_whitespace_and_existing_fifteen_raw_cases)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_input_faults_and_dtype_transfer (test_candidate_native.NativeCandidateTests.test_input_faults_and_dtype_transfer)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_invalid_repetition_and_max64_are_not_rescued (test_candidate_native.NativeCandidateTests.test_invalid_repetition_and_max64_are_not_rescued)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_malformed_sequences_persist_before_rejection (test_candidate_native.NativeCandidateTests.test_malformed_sequences_persist_before_rejection)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_meta_loader_inventory_and_attention_faults (test_candidate_native.NativeCandidateTests.test_meta_loader_inventory_and_attention_faults)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_native_empty_safetensors_path_loader_and_failure (test_candidate_native.NativeCandidateTests.test_native_empty_safetensors_path_loader_and_failure)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_native_generation_contract_raw_ids_logits_eos_and_decode_order (test_candidate_native.NativeCandidateTests.test_native_generation_contract_raw_ids_logits_eos_and_decode_order)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_real_native_embedding_glue_with_scripted_towers (test_candidate_native.NativeCandidateTests.test_real_native_embedding_glue_with_scripted_towers)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_sizes_spatial_native_parity_and_rgb_normalization (test_candidate_native.NativeCandidateTests.test_sizes_spatial_native_parity_and_rgb_normalization)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_weight_loader_failure_uses_exact_config_and_no_fallback (test_candidate_native.NativeCandidateTests.test_weight_loader_failure_uses_exact_config_and_no_fallback)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_write_failure_stops_before_decode_and_removes_hook (test_candidate_native.NativeCandidateTests.test_write_failure_stops_before_decode_and_removes_hook)\", \"opt-in isolated candidate CPU stack/public snapshot required\"], [\"test_a4_and_a5_real_loader_before_after (test_phi_native.NativePhiTests.test_a4_and_a5_real_loader_before_after)\", \"Opt-in pinned Phi public-source CPU rehearsal; no weights\"], [\"test_cpu_admission_processor_and_shapes_and_token_boundaries (test_phi_native.NativePhiTests.test_cpu_admission_processor_and_shapes_and_token_boundaries)\", \"Opt-in pinned Phi public-source CPU rehearsal; no weights\"], [\"test_first12_failure_and_capture_io_keep_native_custody (test_phi_native.NativePhiTests.test_first12_failure_and_capture_io_keep_native_custody)\", \"Opt-in pinned Phi public-source CPU rehearsal; no weights\"], [\"test_generation_failures_stop_raw_and_tail_accounting (test_phi_native.NativePhiTests.test_generation_failures_stop_raw_and_tail_accounting)\", \"Opt-in pinned Phi public-source CPU rehearsal; no weights\"], [\"test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_phi_native.NativePhiTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)\", \"Opt-in pinned Phi public-source CPU rehearsal; no weights\"], [\"test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_phi_native.NativePhiTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)\", \"Opt-in pinned Phi public-source CPU rehearsal; no weights\"], [\"test_real_verified_wheel_bootstraps_pip_free_venv (test_pilot_bootstrap.PipBootstrapTests.test_real_verified_wheel_bootstraps_pip_free_venv)\", \"opt-in real network/venv pip --python rehearsal\"], [\"test_parent_or_root_identity_mismatch_fails_closed (test_pilot_bootstrap.ScratchRootTests.test_parent_or_root_identity_mismatch_fails_closed)\", \"directory descriptor check requires Linux\"], [\"test_real_root_and_parent_symlinks_are_rejected (test_pilot_bootstrap.ScratchRootTests.test_real_root_and_parent_symlinks_are_rejected)\", \"real directory symlink requires Linux\"], [\"test_small_real_allocation_is_released (test_pilot_bootstrap.StorageTests.test_small_real_allocation_is_released)\", \"Linux allocation API unavailable\"], [\"test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical (test_smol_native.NativeSmolTests.test_a6_invalid_repetition_160_is_diagnostic_and_first12_stays_technical)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_all_four_labels_and_three_surfaces_use_actual_native_branch (test_smol_native.NativeSmolTests.test_all_four_labels_and_three_surfaces_use_actual_native_branch)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_first12_failure_and_capture_io_keep_native_custody (test_smol_native.NativeSmolTests.test_first12_failure_and_capture_io_keep_native_custody)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_generation_failures_stop_raw_and_tail_accounting (test_smol_native.NativeSmolTests.test_generation_failures_stop_raw_and_tail_accounting)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_independent_tokenizer_mismatch_and_raw_before_parser (test_smol_native.NativeSmolTests.test_independent_tokenizer_mismatch_and_raw_before_parser)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_invalid_and_hnlo_failure_do_not_rescue_or_change_label (test_smol_native.NativeSmolTests.test_invalid_and_hnlo_failure_do_not_rescue_or_change_label)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_native_processor_shapes_tokens_prompt_and_corruption (test_smol_native.NativeSmolTests.test_native_processor_shapes_tokens_prompt_and_corruption)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_production_first12_raw_hnlo_report_zip_and_independent_replay (test_smol_native.NativeSmolTests.test_production_first12_raw_hnlo_report_zip_and_independent_replay)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"], [\"test_real_loader_original_checkpoint_and_nested_attention (test_smol_native.NativeSmolTests.test_real_loader_original_checkpoint_and_nested_attention)\", \"opt-in hash-locked Smol public source/tokenizer snapshot required\"]]}\r\n",
+      "stdout_sha256": "ed0bf8f43e9b590c023246ce73a386c4b6b40c5407650d8c8be83c2463596487"
+    }
+  },
+  "cpu_environment": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]"
+  },
+  "gates": {
+    "G0_authority": "BLOCKED_REVIEW_REQUIRED",
+    "G1_notebook": "PASS",
+    "G2_native_environment": "REQUIRES_PINNED_CPU_ENV",
+    "G3_custody": "PASS_STDLIB_ONLY_NATIVE_SKIPS_SEPARATE",
+    "G4_kaggle": "REQUIRES_AUTHORIZED_GPU",
+    "G5_behavior": "REQUIRES_AUTHORIZED_GPU",
+    "G6_release": "BLOCKED_REVIEW_REQUIRED"
+  },
+  "limits": [
+    "No native opt-in or live pip/source audit was run.",
+    "Scripted tests do not establish real model behavior.",
+    "No authority, ledger, release or GPU readiness certified.",
+    "Trusted repository tests are not an OS network sandbox."
+  ],
+  "native_model_forward": "NOT_RUN",
+  "no_grant_created": true,
+  "notebook_cells_executed": "CPU_NO_GRANT_BLOCKED_ONLY_IN_SYNTHETIC_DIRECTORIES",
+  "publication": {
+    "original_receipt_sha256": "86a9dfcfba5528179466da7e52e2cd4c209eb07ba0ae7172adc7a4f4e67cf321",
+    "redacted_fields": [
+      "checks.stdlib_suite.stdout"
+    ],
+    "scope": "Only synthetic temporary paths redacted; original stream hashes/counts/results retained."
+  },
+  "release_status": "BLOCKED",
+  "runtime_commit": "c75113f4a62d8d30303269f4a8bd72fc71040c15",
+  "schema": "safeshift-notebook-cpu-review-v1",
+  "snapshot_archive_sha256": "43215fa8027278329f632feeac24cc25adea75e446920cd610f8a5eefa528265",
+  "software_status": "CODE_PASS",
+  "source_sha256": "1d76c3a4e5cf9c5fe32d6fd94b846a2879eca268a6023ce34203794dc801d884"
+}

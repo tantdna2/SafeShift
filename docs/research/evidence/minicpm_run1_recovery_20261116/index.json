@@ -1,0 +1,34 @@
+{
+  "schema": "minicpm-run1-recovery-cpu-acceptance-v1",
+  "code_commit": "b788f3f09d55d59facabbbabd477bd5bc7b1e9b6",
+  "runtime_sha256": "dfc3a043e7b65f68726b9dfc7e0368c9a4f38f2ef4d5667f92bbd62ffd23df0d",
+  "runtime_files": 80,
+  "files": {
+    "recovery-windows-b788f3f.json": "96fec8fb1a4ba554f30096c7523ccc66ec1b9a737a47683d19fe1133ee44ca5d",
+    "recovery-windows-b788f3f-tests.txt": "5e6db5d9d656b4cd4d1fa45c823f3bd8c1f35813367c72c84bdb039d50d6b9e9",
+    "recovery-linux-b788f3f.json": "5414515e3fa7519e98374b879a10db1f2c58f71792ae939669f4a0a2220a2268",
+    "recovery-linux-b788f3f-tests.txt": "29caa14a0ec345b60c876991c13679c0718d9c8806854e74abefd8533e2b6705",
+    "regression-windows-b788f3f.json": "4394196376c2088801d49f5214479a30defb32f349023258ee5daf6b3fe42b68",
+    "regression-windows-b788f3f-tests.txt": "fbad71a47def89553d752d27ba91cb838333178060a81972f23ac5d5ca6d05e6",
+    "notebook-reproduction.json": "d577ee5eea545b5665627d43cbcf4407da87e6872801b3d633dd3b6ff6109df1",
+    "preservation.json": "455e98f744a7e40e012c0e17d79c8f6f4d747af8e71773987a5cedf662782caf"
+  },
+  "regression_patterns": [
+    "test_minicpm_fulltrain_execution.py",
+    "test_minicpm_execution_boundaries.py",
+    "test_minicpm_execution_transport.py",
+    "test_fulltrain_original_inputs.py",
+    "test_minicpm_fulltrain_ui.py",
+    "test_minicpm_fulltrain_release.py",
+    "test_fulltrain_minicpm4_notebook.py",
+    "test_minicpm_ui_transport.py"
+  ],
+  "limitations": [
+    "CPU synthetic only",
+    "Platform and SDK skips covered separately",
+    "Full3763 stress excluded; early Windows invocation stopped",
+    "No full discovery or live Kaggle/GPU/inference/TEST",
+    "Review/audit/merge/postmerge/release outstanding"
+  ],
+  "log_custody": "Public Windows logs normalized CRLF to LF; receipts retain original captured_log_sha256 and public log_sha256."
+}

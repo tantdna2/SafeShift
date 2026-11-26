@@ -1,0 +1,134 @@
+{
+  "schema": "train3763-offline-python-acceptance-v1",
+  "date": "2026-11-09",
+  "status": "CPU_SYNTHETIC_PASS_WITH_TARGETED_REGRESSION_RERUNS",
+  "base": "f88a152f481691bf678ad721ec6d2f25f95084bf",
+  "validated_code_commit": "b908938f143d0c55e1d64f0954930e560b6d97fe",
+  "runtime_commit": "cc1edb8dadf07a74ac6138f097f6a53f92b0585c",
+  "source_sha256": "3c488254f751de216c0e1d23fd576c70b773a40e6e399d20039dc6ddd69f1e8e",
+  "science_sha256": "ea03e1b716d46399032283137da073df899df427eef7dddf3d2d090b1a748f50",
+  "inherited_files_unchanged": 84,
+  "runtime_manifest_files": 91,
+  "unique_tests_with_final_pass_across_groups": 261,
+  "unresolved_failures": [],
+  "initial_failures_preserved": [
+    "test_internvl3763_campaign.CampaignTests.test_reused_capsule_or_existing_handoff_does_not_reserve_attempt2",
+    "test_internvl3763_capsule.CapsuleTransportTests.test_actual_submit_explicit_https443_pushes_once_only_after_exact_byte_proof",
+    "test_internvl3763_capsule.CapsuleTransportTests.test_actual_submit_no_port_pushes_once_only_after_exact_byte_proof"
+  ],
+  "groups": [
+    {
+      "log": "data/processed/cpython-input-validation-20261109/focused/tests.log",
+      "log_sha256": "3feb8c937116bcf0812bd0cc3211cd2d96f1d6f523b9562dbb079595953f6b88",
+      "tests": 252,
+      "passed": 247,
+      "failures_or_errors": 3,
+      "skips": [
+        "test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_linux_run_stage_deduplicates_supervisor_log_and_enforces_exact_budget_and_deadline",
+        "test_internvl3763_python.PythonInputTests.test_current_mount_layout_wrong_owner_and_symlink_alias"
+      ],
+      "summary": "FAILED (failures=1, errors=2, skipped=2)"
+    },
+    {
+      "log": "data/processed/cpython-input-validation-20261109/affected-final.log",
+      "log_sha256": "cabf352e0fa845bb2db9a5f43562cb3433833638e59254f6858e4a6b7bd991ff",
+      "tests": 28,
+      "passed": 26,
+      "failures_or_errors": 0,
+      "skips": [
+        "test_internvl3763_e2e.LauncherSupervisorSetupCompositionTests.test_linux_run_stage_deduplicates_supervisor_log_and_enforces_exact_budget_and_deadline",
+        "test_internvl3763_python.PythonInputTests.test_current_mount_layout_wrong_owner_and_symlink_alias"
+      ],
+      "summary": "OK (skipped=2)"
+    },
+    {
+      "log": "data/processed/cpython-input-validation-20261109/regressions-final.log",
+      "log_sha256": "5a5b5a3cd736e3d0c376d801852e0556a449224e7677ed3a4cedfb4222612c2a",
+      "tests": 3,
+      "passed": 3,
+      "failures_or_errors": 0,
+      "skips": [],
+      "summary": "OK"
+    },
+    {
+      "log": "data/processed/cpython-input-validation-20261109/linux-python.log",
+      "log_sha256": "92ced79d50a8ed4ad8a6da16e2fc537a87e985b7e7e915558b65c254c908ca3e",
+      "tests": 15,
+      "passed": 13,
+      "failures_or_errors": 0,
+      "skips": [
+        "test_internvl3763_python.PythonProviderTests.test_provider_metadata_transport_wrong_bytes_and_poisoned_zip_stop",
+        "test_internvl3763_python.PythonProviderTests.test_real_sdk_private_v1_metadata_and_downloaded_bytes_before_submit"
+      ],
+      "summary": "OK (skipped=2)"
+    },
+    {
+      "log": "data/processed/cpython-input-validation-20261109/linux-setup.log",
+      "log_sha256": "3752163099a07b79781c6dd312d8cfa229311522e5a5b2232ed1076bb5d2af94",
+      "tests": 5,
+      "passed": 5,
+      "failures_or_errors": 0,
+      "skips": [],
+      "summary": "OK"
+    },
+    {
+      "log": "data/processed/cpython-input-validation-20261109/notebook-smoke-final.log",
+      "log_sha256": "5b3f5ab484b087a592242a75d464125193b5fc8a306df7334c1377f046e5eecc",
+      "tests": 5,
+      "passed": 5,
+      "failures_or_errors": 0,
+      "skips": [],
+      "summary": "OK"
+    }
+  ],
+  "provenance_note": "Broad suite began at 0d8e29a; tests were imported before test-only fixes. Its receipt records HEAD and file hashes at completion, not import time. Final affected E2E/Python tests, three regressions, notebook/smoke and Linux groups are the final evidence. No claim of one clean full-suite rerun.",
+  "python_windows": "3.11.9",
+  "python_linux_orchestrator": "3.14.4",
+  "sdk": {
+    "kaggle": "2.2.5",
+    "kagglesdk": "0.1.38",
+    "requests": "2.34.2"
+  },
+  "native_cpu_dependencies": {
+    "Pillow": "12.3.0",
+    "numpy": "2.4.6",
+    "tokenizers": "0.21.4",
+    "torch": "2.6.0+cpu",
+    "torchvision": "0.21.0+cpu",
+    "transformers": "4.55.4"
+  },
+  "seed": null,
+  "randomness": "NONE",
+  "notebooks": {
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763.ipynb": {
+      "sha256": "3f845a32c120adb0d51a726ede6ed9eec4a90527ae133a29cd3ab99f8fcd3765"
+    },
+    "notebooks/SafeShift_INTERNVL35_GRAMMAR_V2_TRAIN3763_PREP.ipynb": {
+      "sha256": "1386a5400998313afe433aa198dad1e19c0b7b0130781a9b224bbec5a7fd16b2"
+    }
+  },
+  "tests_sha256": {
+    "tests/test_internvl3763.py": "90d0f01dc584930a48d08e00093e5f73ded079cb6bc4a47777f38a44c17a4abe",
+    "tests/test_internvl3763_campaign.py": "d14eab5cca8accb3aa5682e39384c0e7a9e013af4755f81225a1388b7abc8f19",
+    "tests/test_internvl3763_capsule.py": "07c9fd53bf3c8284b238034066dd2e3653f17b4ebe858d560755a872868b3e9f",
+    "tests/test_internvl3763_e2e.py": "64cfed54c60962710c26da9a4768245f1a016abe84736a33dac5a66e118fa0a8",
+    "tests/test_internvl3763_execution.py": "305cc53d66f197a7bd18bc8f6cd21ac6f3890620e99b9cf558341e4621d4fbb1",
+    "tests/test_internvl3763_notebook.py": "e843328f28cda5f8887ddfca976695cb8f2202fa636b3c8fc82319ec4a020633",
+    "tests/test_internvl3763_python.py": "2cbea7af6d89ba881dbc37218aed21ee99f43aa571f3c22561b70041761e1665",
+    "tests/test_internvl3763_versions.py": "39025c3325e99b0defff8332baf5502ffde10e1b8d88ff43b5b3ed6fa55f4d0d"
+  },
+  "live": {
+    "kaggle_api_calls": 0,
+    "uploads": 0,
+    "submits": 0,
+    "gpu_calls": 0,
+    "real_model_or_image_inference": 0,
+    "test_reads": 0,
+    "attempt7_created": false,
+    "historical_attempts_mutated": false,
+    "python_dataset_publication": "NOT_VERIFIED",
+    "worker_execution": "NOT_RUN",
+    "independent_audit": "NOT_PERFORMED",
+    "scientific_qualified": false
+  }
+}

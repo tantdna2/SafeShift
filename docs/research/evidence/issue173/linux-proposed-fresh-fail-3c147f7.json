@@ -1,0 +1,30 @@
+{
+  "schema": "safeshift-fresh-cpu-receipt-v1",
+  "source_commit": "3c147f7d1639f08943dfb0148f533f4e32c22d8e",
+  "command": [
+    "python",
+    "-B",
+    "-m",
+    "scripts.check_fresh_fulltrain_cpu",
+    "--pattern",
+    "test_fresh_fulltrain*.py",
+    "--output",
+    "<new-output>"
+  ],
+  "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "dependencies": "stdlib; native opt-ins disabled",
+  "randomness": "NONE",
+  "tests_run": 55,
+  "failures": 0,
+  "errors": 6,
+  "skipped": [],
+  "passed": 54,
+  "seconds": 61.600085547999996,
+  "status": "FAIL",
+  "log_sha256": "092c28a01ade5137dc9221714e80bdee44b9934090355a977bb0ef290a137bf4",
+  "scope": "CPU_SYNTHETIC_ONLY",
+  "gpu_calls": 0,
+  "real_inference": "NOT_RUN",
+  "release": "BLOCKED"
+}

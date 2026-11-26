@@ -1,0 +1,23 @@
+{
+  "schema": "issue173-review-preflight-source-quota-v1",
+  "ref": "nguynanhtn/safeshift-issue173-minicpm-ram-review",
+  "version": 1,
+  "kernel_id": 142345684,
+  "private": true,
+  "kaggle_status": "KernelWorkerStatus.COMPLETE",
+  "notebook_sha256": "2c14cd203bc5c24f14532a503c0e32d33b06162f02d5db5e21d0eb6773060cdc",
+  "normalized_remote_sha256": "bd5609e95911073fdb826e145fead5481fde8ca62bd35efb8eecfd84d3efe53a",
+  "all_cell_sources_match": true,
+  "metadata": {
+    "source_commit": "3fd0b8a1c2beba386c4ede0577284045ae0e6394",
+    "payload_sha256": "14c43821299f013b2c686d2ccd74862034fd814476d0a867a921f995428af5ad",
+    "model_key": "minicpm4",
+    "max_model_calls": 0,
+    "weights_loaded": false,
+    "native_dispatch": "BLOCKED_PENDING_CHATGPT_REVIEW"
+  },
+  "gpu_used_seconds": 9952.784,
+  "gpu_reserved_seconds": 0.0,
+  "max_native_calls": 0,
+  "weights_loaded": false
+}

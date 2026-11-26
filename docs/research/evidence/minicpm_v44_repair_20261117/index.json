@@ -1,0 +1,112 @@
+{
+  "schema": "safeshift-minicpm-v44-repair-evidence-v1",
+  "base": "92e7af41b3102cac16609908c88688f4049b4cc1",
+  "directive": "https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922725439",
+  "files": {
+    "real-input-rehearsal.json": {
+      "sha256": "1fee792c0bdaf0ea4bdd43a57203d57413fea34830d0166c58cb55e1da31587c",
+      "kind": "REAL_READ_ONLY_OBSERVATION"
+    },
+    "real-input-custody-limits.json": {
+      "sha256": "04a33a727f606e503dc11af09549efcaeacbf3c889418f6393f6e7e7ece41268",
+      "kind": "REAL_READ_ONLY_OBSERVATION"
+    },
+    "other-inputs.json": {
+      "sha256": "6d0e5c8b96a0b3042a79617d6d0ee69583f1b0e60c6c5c6e9aec300d92c99ef3",
+      "kind": "REAL_READ_ONLY_OBSERVATION"
+    },
+    "v44-incident.json": {
+      "sha256": "a31b3b6361ed93cabb7904e3addb596b2fe299714ba1fe4af8c7c5f857262722",
+      "kind": "REAL_READ_ONLY_OBSERVATION"
+    },
+    "reference-sources.json": {
+      "sha256": "bbcd8a582456b0820f7a80c98f3b815ad2b163f860caf064b104e20731e70499",
+      "kind": "AUTHENTIC_PROVIDER_NOTEBOOK_STATIC_PAYLOAD_INSPECTION"
+    },
+    "preservation.json": {
+      "sha256": "72d8e281668c227c44ef1db693f1941b9bb6c04b39b5781b584b089c6b3212ca",
+      "kind": "SOURCE_REVIEW_AND_PRESERVATION_RECEIPT"
+    },
+    "old-release-rejection.json": {
+      "sha256": "2ac749c653ce961aec77e40e6ed156a4690a1c86f4f02a80b6c52bb40ef80776",
+      "kind": "SOURCE_REVIEW_AND_PRESERVATION_RECEIPT"
+    },
+    "source-review-handoff.json": {
+      "sha256": "c31eb4e25f5916bf9592ca72365988104ffe993a3a2d35c3a949e71ccc688b86",
+      "kind": "SOURCE_REVIEW_AND_PRESERVATION_RECEIPT"
+    },
+    "current-quota.json": {
+      "sha256": "d380202be2fa51736b594148f6e2de819478b547bcb43049c4628a79d3552a3c",
+      "kind": "REAL_READ_ONLY_OBSERVATION"
+    },
+    "linux-debec82.json": {
+      "sha256": "6d48f6fd90ac4440d6bf5346e51bb4c1b1a6250696e40ebad77d3326e90566a0",
+      "kind": "CPU_SYNTHETIC_REGRESSION_NOT_GPU_OR_DATA_CUSTODY"
+    },
+    "linux-debec82-tests.txt": {
+      "sha256": "d2dbae4224ca35663088d6c454c432d4f9fa644f56d5384626935a6204657b13",
+      "kind": "CPU_SYNTHETIC_REGRESSION_NOT_GPU_OR_DATA_CUSTODY"
+    },
+    "builder-reproduction.json": {
+      "sha256": "7e35f68c092eadfe5a5dbb35f0763f4d8a67123a837066c1993f3d63002f8083",
+      "kind": "CPU_COMMITTED_NOTEBOOK_REPRODUCTION_NOT_ACTIVATION"
+    },
+    "windows-debec82-tests.txt": {
+      "sha256": "1c051eb9dd05bebec5a5de74ad561832d27e4eb8ba8a29ab321a85c717ea7c77",
+      "kind": "CPU_SYNTHETIC_PLATFORM_SPLIT_COVERAGE_NOT_GPU_OR_DATA_CUSTODY"
+    },
+    "windows-final-remaining-debec82-tests.txt": {
+      "sha256": "30bc84836d549a1c3ee6bdfa9a358b3d13f88844f33104ed67b6e8fe46f51a0f",
+      "kind": "CPU_SYNTHETIC_PLATFORM_SPLIT_COVERAGE_NOT_GPU_OR_DATA_CUSTODY"
+    },
+    "windows-debec82-coverage.json": {
+      "sha256": "d4598a4df47b5aa38d99f86b57c5b5897c9f6e093bd14f7f8a3471efbe3ad7fc",
+      "kind": "CPU_SYNTHETIC_PLATFORM_SPLIT_COVERAGE_NOT_GPU_OR_DATA_CUSTODY"
+    }
+  },
+  "private_evidence_root": "data/processed/minicpm-v44-repair",
+  "full_remote_train_metadata": {
+    "version": 1,
+    "entries": 24057,
+    "pages": 121,
+    "locked_train_paths": 3763,
+    "inventory_sha256": "a92ad6fb8c0f716c9f770008a4bf7e48057b3fcfd61d68b8e6dd48b960bfc019"
+  },
+  "v44_full_output_inventory": {
+    "entries": 145,
+    "sha256": "8ef44906ce46146e17c91c4f15921900b5ceff79af47dfe71c872b13ce3d959d"
+  },
+  "native_execution_this_task": "NOT_RUN",
+  "production_journal_writes": 0,
+  "source_review": "PENDING",
+  "independent_audit": "PENDING",
+  "merge": "NOT_AUTHORIZED_NOT_PERFORMED",
+  "current_owner_handoff": "BLOCKED_PENDING_FRESH_SOURCE_RELEASE",
+  "limits": [
+    "73 newly downloaded provider image files; all3763 authentic originals rehashed and decoded",
+    "TEST metadata names only; no TEST file body access",
+    "Current checkpoint marker/index/layout verified; full weights not rehashed or loaded",
+    "No production closure/signature/publication/Owner Run claimed"
+  ],
+  "code_commit": "debec82c3a80ab8d08d135cbdd4393919bbd317b",
+  "runtime_source_sha256": "3054352804cebd536b048389e01849344aacc6f5a6f2a76eb830500df9da185c",
+  "runtime_files": 81,
+  "cpu_acceptance": {
+    "code_commit": "debec82c3a80ab8d08d135cbdd4393919bbd317b",
+    "linux": {
+      "run": 98,
+      "pass": 91,
+      "skips": 7,
+      "errors": 0,
+      "failures": 0
+    },
+    "windows": {
+      "completed_distinct_cases": 97,
+      "pass": 96,
+      "skips": 1,
+      "errors": 0,
+      "failures": 0
+    },
+    "full3763_controller_export_import": "PASS_LINUX_ONLY_WINDOWS_DUPLICATE_INTERRUPTED_NOT_COUNTED_PASS"
+  }
+}

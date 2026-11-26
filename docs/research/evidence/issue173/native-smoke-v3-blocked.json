@@ -1,0 +1,90 @@
+{
+  "schema": "issue173-native-smoke-v3-blocked",
+  "source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1",
+  "kaggle": {
+    "ref": "nguynanhtn/safeshift-issue173-native-smoke-v3",
+    "version": 1,
+    "kernel_id": 142332987,
+    "status": "COMPLETE"
+  },
+  "archive_sha256": "4b74106fe476858bceffa0ce3ec50d940af0e707ecf05456370a56c6101f35c5",
+  "archive_verified_members": 26,
+  "summary": {
+    "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+    "model_calls": 0,
+    "models": {
+      "internvl35": {
+        "native_calls": 0,
+        "status": "BLOCKED",
+        "weights_loaded": false
+      },
+      "minicpm4": {
+        "native_calls": 0,
+        "status": "NOT_ATTEMPTED",
+        "weights_loaded": false
+      },
+      "qwen3": {
+        "native_calls": 0,
+        "prior_native_calls": 1,
+        "status": "PRIOR_SMOKE_CONSUMED_NOT_REPLAYED",
+        "weights_loaded": false
+      }
+    },
+    "prior_native_calls": 1,
+    "production_authorized": false,
+    "run_id": "issue173-smoke-20261102-v3",
+    "source_commit": "5139775f1fc40e357e128b3d9f10b7512bc931b1"
+  },
+  "exact_blocker": "nvidia-smi --query-gpu=index,name,memory.free,driver_version --format=csv,noheader,nounits: exit12 before load/CUDA",
+  "return_code_definition": "NVML shared library could not be found or loaded",
+  "definition_source": "https://docs.nvidia.com/deploy/nvidia-smi/index.html",
+  "stdout_stderr": "NOT_CAPTURED_IN_V3",
+  "peer_load_reservations": 0,
+  "peer_native_markers": 0,
+  "internvl_software": "PASS",
+  "internvl_resources": {
+    "devices": [
+      70,
+      1794
+    ],
+    "free_bytes": [
+      1120082284544,
+      20939956224
+    ],
+    "memory": {
+      "available_bytes": 24568025088,
+      "cgroup_remaining_bytes": [
+        24568025088
+      ]
+    },
+    "model_fit": "NOT_ESTABLISHED",
+    "requested_reserves_bytes": [
+      25769803776,
+      1073741824
+    ]
+  },
+  "internvl_reclamation": {
+    "advice_errors": [],
+    "advised_file_bytes": 5381544449,
+    "advised_regular_files": 32,
+    "after": {
+      "available_bytes": 25153216512,
+      "cgroup_remaining_bytes": [
+        25153216512
+      ]
+    },
+    "before": {
+      "available_bytes": 17776308224,
+      "cgroup_remaining_bytes": [
+        17776308224
+      ]
+    },
+    "proof": "ADVISORY_ONLY_SUBSEQUENT_RAM_GATE_REQUIRED",
+    "ram_floor_mib_unchanged": 16384,
+    "removed_owned_cache_directories": [],
+    "runtime_files_retained": true,
+    "scan_limit_reached": false,
+    "schema": "issue173-owned-cache-reclamation-v1",
+    "weights_or_inputs_modified": false
+  }
+}

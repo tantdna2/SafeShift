@@ -1,0 +1,50 @@
+{
+  "commit": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+  "sources": {
+    "safeshift/protocol/schema.py": {
+      "sha256": "1209ad7cae0b48a49e6f0507e395bee1628b733001c09f82293e58312898efcf",
+      "functions": [
+        "strict_json",
+        "fields",
+        "Classification"
+      ]
+    },
+    "safeshift/protocol/p21_schema.py": {
+      "sha256": "80c20bf640d535b7b2d8b11e951a9a6d41d803cc33be1e17a8d15b23d5ce7ca8",
+      "functions": [
+        "P21ParseResult",
+        "parse_classification"
+      ]
+    },
+    "safeshift/ls1/core.py": {
+      "sha256": "411a43e25989825064e86ca74f04852410f3e93f4fed019d50a0ad2e5c2603c4",
+      "functions": [
+        "log_softmax",
+        "distribution",
+        "candidates",
+        "locate_decision",
+        "validate_trace",
+        "score_decision"
+      ]
+    },
+    "safeshift/ls1/tokenizer.py": {
+      "sha256": "87ea11b6b4b370c029c161812b3aa6d2053d6ac562f58a5ac4eb91f0a2080b96",
+      "functions": [
+        "probe"
+      ]
+    },
+    "safeshift/ls1/evaluate.py": {
+      "sha256": "451b6fda5f5588fc453def2370dd2c5baf3884409cb44603aa4f2accfeca715e",
+      "functions": [
+        "anomaly_log_odds"
+      ]
+    },
+    "safeshift/ls1/runtime.py": {
+      "sha256": "0e28e3a7fa1d6c7c6256e149322cdd5c5e377175bcdd9c5f4346993416007115",
+      "functions": [
+        "json_number",
+        "summarize_tensor"
+      ]
+    }
+  }
+}

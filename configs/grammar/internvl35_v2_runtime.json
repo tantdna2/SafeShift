@@ -1,0 +1,32 @@
+{
+  "schema": "internvl35-grammar-v2-runtime-preparation-v1",
+  "identity": "internvl35-grammar-v2-native-qualification-v1",
+  "scientific_method": "internvl35-canonical-json-grammar-v2",
+  "scientific_decision": "DEC-20261104-OWNER-APPROVE-INTERNVL-GRAMMAR-V2-LABEL-ONLY",
+  "status": "IMPLEMENTATION_ONLY_NOT_LIVE_VERIFIED",
+  "execution_authority": null,
+  "production_activation": false,
+  "technical_series": "internvl35-grammar-v2-native-qualification-v1-technical-only",
+  "limits": {"loads": 1, "calls": 1, "seconds": 1800, "max_new_tokens": 64},
+  "checkpoint": "OpenGVLab/InternVL3_5-4B-HF",
+  "revision": "6bd4487402110ef9889ba50eb7aefeb302526fed",
+  "dtype": "float16",
+  "attention": "eager",
+  "hnlo": null,
+  "hnlo_status": "HNLO_NA_GRAMMAR_POLICY_V2",
+  "resource_policy_provenance": "Issue173 engineering floors retained; not a new execution grant or model-fit claim",
+  "resource_policy": {
+    "review_mode": "EXTERNAL",
+    "driver_versions": ["580.178.04"],
+    "free_mib_per_gpu": [13000, 13000],
+    "free_gpu0_runtime_mib": 13000,
+    "free_ram_mib": 16384,
+    "free_scratch_mib": 24576,
+    "free_output_mib": 1024,
+    "scratch_probe_bytes": 1048576,
+    "output_probe_bytes": 1048576,
+    "max_log_bytes": 16777216,
+    "setup_seconds": 900,
+    "diagnostic_seconds": 600
+  }
+}

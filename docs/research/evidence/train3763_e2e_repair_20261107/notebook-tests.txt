@@ -1,0 +1,8 @@
+test_builder_rejects_uncommitted_runtime_or_nonexact_ref (test_internvl3763_notebook.NotebookTests.test_builder_rejects_uncommitted_runtime_or_nonexact_ref) ... ok
+test_execution_candidate_rebuild_preserves_source_and_requires_separate_authority (test_internvl3763_notebook.NotebookTests.test_execution_candidate_rebuild_preserves_source_and_requires_separate_authority) ... ok
+test_rebuild_empty_outputs_exact_source_manifest_and_closed_preparation (test_internvl3763_notebook.NotebookTests.test_rebuild_empty_outputs_exact_source_manifest_and_closed_preparation) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 17.115s
+
+OK

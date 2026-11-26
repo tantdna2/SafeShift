@@ -1,0 +1,18 @@
+{
+  "scope": "ONE_BOUNDED_CPU_SYNTHETIC_SUITE_NO_PRIVATE_RAW_NO_KAGGLE",
+  "base_head": "7172ca43564d11c29d3a147e47fa4d07526e9862",
+  "test_source_sha256": "d5baff5506cd7ea5028b7f4cde0dbcc14d5803ed05ddfebfa919d85a98f5177b",
+  "legacy_ref": "31a04e6f7175cca818c63b4de0153246b3f3ecdb",
+  "command": "python -B -m unittest discover -s tests -p test_issue173_format_decision.py -v",
+  "python": "3.11.9",
+  "platform": "Windows",
+  "tests": 5,
+  "failures": 0,
+  "errors": 0,
+  "skips": 0,
+  "seconds": 0.4529999999795109,
+  "model_calls": 0,
+  "log_sha256": "f08aab235f563b023d101bcb6d71628316880c02f70cef692e149709d1362eb1",
+  "status": "PASS",
+  "limits": "Character-token mechanistic fixtures, not native checkpoint HNLO qualification or scientific evidence of improvement."
+}

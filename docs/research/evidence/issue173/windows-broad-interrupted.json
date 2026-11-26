@@ -1,0 +1,12 @@
+{
+  "schema": "issue173-windows-broad-interrupted-v1",
+  "command": "python -B -m unittest discover -s tests -v",
+  "started_source_commit": "964ee5e9e348f0c5ccedf79b37f4a8131e5216d6",
+  "working_tree_during_run": "new separate smoke scripts/tests committed in d14218b; existing runtime core unchanged",
+  "status": "INTERRUPTED_NO_SUITE_VERDICT",
+  "passed": null,
+  "log_sha256": "8df7ff47fccd55e9d3b9271d040c2282bb3f2e055a69eb4ab2b836772b869edc",
+  "log_bytes": 110844,
+  "scope": "CPU_SYNTHETIC_ONLY",
+  "model_calls": 0
+}

@@ -1,0 +1,7 @@
+{
+  "schema": "safeshift-three-vlm-authority-template-v1",
+  "grant": null,
+  "prepare_grant": null,
+  "full_train_grant": null,
+  "status": "PROPOSED_NOT_AUTHORIZED"
+}

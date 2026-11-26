@@ -1,5 +1,13 @@
 # SafeShift
 
+MiniCPM V5 RAM/source repair after merged PR200: see
+[RAM safety, authenticated failure custody and blocked V6 handoff](docs/MINICPM_V5_RAM_REPAIR.md).
+Draft PR201 prepares the complete Owner-run path; no new Kaggle/GPU job is launched.
+
+TRAIN3763 execution candidate after PR178 merge: see
+[source scope, PowerShell operations and BLOCKED live gates](docs/INTERNVL3763_EXECUTION.md).
+Current task is CPU preparation/source review only; no new Kaggle job or inference.
+
 SafeShift nghiên cứu độ tin cậy của mô hình thị giác–ngôn ngữ (VLM) khi đánh giá
 ảnh an toàn công nghiệp: mô hình phân loại sai ở đâu, lỗi nguy hiểm tập trung
 ở nhóm nào, và bất đồng giữa các mô hình có giúp nhận diện quyết định thiếu
@@ -22,17 +30,16 @@ Qwen3-VL-8B-Instruct, InternVL3-2B-hf và Moondream2**.
 [D9R22 và successor Owner](docs/RESEARCH_OVERVIEW.md) giữ ba lõi phân loại xuyên
 miền, lỗi nghiêm trọng và bất đồng. [Quyết định M1](docs/research/DECISIONS.md)
 ghi lựa chọn Owner tích hợp HNLO trong Seminar hồi cứu và dùng HNLO+bất đồng
-để xếp ưu tiên kiểm tra ở Khóa luận. Successor có hiệu lực sau [hậu merge #135](https://github.com/tantdna2/SafeShift/pull/135#issuecomment-6409830030).
-Moondream2 N/A được chấp nhận ở cấp
+để xếp ưu tiên kiểm tra ở Khóa luận. Successor có hiệu lực sau kiểm chứng/merge;
+khi PR còn Draft, D9R22 vẫn có hiệu lực. Moondream2 N/A được chấp nhận ở cấp
 dự án cho định lượng Seminar, không tuyên bố ngoại lệ học vụ đã được duyệt.
 
 Hướng dùng **Hazard–Normal Label Log-Odds (HNLO, tên kỹ thuật lịch sử PA3)**
 để nghiên cứu giá trị điểm nội tại, yếu tố gây nhiễu và khả năng chuyển miền
 được chọn trong phạm vi M1 trên; DEC-PA3-011 lịch sử vẫn **PROPOSED**, không
 sửa hồi tố hoặc duyệt toàn bộ hướng A/C độc lập. HNLO không phải xác suất nguy
-cơ đã hiệu chuẩn. [Protocol/config M2](docs/research/SEMINAR_PROTOCOL.md) **đã khóa
-bằng quyết định M2 và hai SHA-256**, giữ nguyên cờ snapshot lúc soạn.
-M3 đang triển khai trong Draft, chỉ CPU synthetic; xem [PROJECT_STATE](docs/PROJECT_STATE.md).
+cơ đã hiệu chuẩn. [Protocol/config M2](docs/research/SEMINAR_PROTOCOL.md) đã soạn,
+**còn review độc lập và Owner duyệt version/N/A**, chưa frozen hoặc mở M3.
 Quyền dữ liệu/GPU/TEST và yêu cầu học vụ chưa được cấp từ quyết định đề tài.
 
 ## Bằng chứng lịch sử tiêu biểu
@@ -63,7 +70,8 @@ Từ repository root, dùng **Python 3.11+**. Tests và demo chỉ dùng standar
 ```console
 python -B -m unittest discover -s tests -v
 python -B -m scripts.demo_cpu
-python -B scripts/analyze_seminar.py --config docs/research/seminar_analysis_config.v1.json --output-dir data/processed/seminar/m3-synthetic-review
+python -B -m scripts.demo_triage_cpu --budget 3 --tie-seed public-demo
+python -B -m scripts.demo_triage_adapter_cpu --budget 2 --tie-seed public-demo
 ```
 
 Demo tạo sáu bản ghi viết tay, gồm một dự đoán INVALID, rồi xuất JSON có thông
@@ -71,9 +79,15 @@ báo **SYNTHETIC DEMO — NOT RESEARCH RESULT**. Không cần GPU, ảnh hoặc 
 Không đưa số demo vào bảng kết quả khoa học. Dùng lệnh module từ root để Python
 tìm package; demo không được đóng gói như một backend hoặc công cụ suy luận.
 
-[Seminar CPU](docs/SEMINAR_ANALYSIS.md) tạo đủ R1–R5 và receipt từ 12 bản ghi
-synthetic viết tay, kiểm authority/hashes trước chạy và từ chối overwrite.
-Không đọc artifact thật; R5 giữ `PENDING_ANALYST_M4`. M4 cần grant riêng.
+Demo T2 so ba queue không học: HNLO-only, peer-only và combined; tính chung
+ca bắt buộc và ca xếp hạng trong K, giữ missingness/backlog/OVERLOAD. API và
+quy tắc đề xuất ở [kiến trúc T2](docs/ARCHITECTURE.md#t2-cpu-synthetic-triage--01112026).
+Chỉ dùng fixture tổng hợp; seed demo công khai, không secret thật. Đưa một ảnh
+vào queue không chứng minh phát hiện/sửa nguy hiểm hoặc cải thiện false-safe.
+
+Demo [adapter T3](docs/TRIAGE_ADAPTER.md) kiểm manifest/checksum và provenance
+riêng của ba model trước bàn giao T2. Chỉ nhận fixture có seal cố định trong
+source; không đọc báo cáo thật hoặc mở quyền bằng trường `approved`.
 
 Cài package để import từ dự án khác (tùy chọn, trong virtual environment):
 
@@ -106,6 +120,34 @@ không cần cài package để chạy tests/demo từ repository root.
 Đọc [AGENTS.md](AGENTS.md) và [ARCHITECTURE](docs/ARCHITECTURE.md) trước task code.
 Theo dõi phần thiếu và điều kiện phê duyệt ở [ROADMAP](docs/ROADMAP.md).
 Code dùng lại nằm trong package, chỉ thêm thư mục khi có chức năng cụ thể.
+
+[TRAIN3763 grammar V2 và Antigravity CLI](docs/INTERNVL3763_ANTIGRAVITY.md)
+chuẩn bị series InternVL riêng trên toàn bộ IDs gốc và bàn giao vận hành bền
+vững qua `agy --conversation`: theo dõi tối đa15 phút, dừng AI khi RUNNING,
+tiếp tục thu/kiểm chứng từ khi người dùng báo xong. Có rehearsal local không
+Kaggle và wrapper PowerShell. Native/submit vẫn BLOCKED chờ quyền/release riêng;
+CPU/CLI PASS không xác nhận final-source Kaggle hoặc full-cohort readiness.
+
+## Kaggle TRAIN pilot ba VLM — PREP
+
+[Issue #145: Smol readiness và Gemma gate](docs/SMOL_KAGGLE_READINESS_145.md)
+bổ sung real-loader CPU meta, native synthetic processor và 160-call scripted
+raw/HNLO/report/ZIP; yêu cầu `num2words/docopt` được khóa riêng cho Smol 4.51.3.
+Đây là nghiệm thu phần mềm, không dự đoán Smol thật. Phi a6 đã consumed với
+0/160 C1 JSON hợp lệ theo biên bản GitHub; Gemma vẫn BLOCKED do 10 file gated 401.
+Không tự đổi C1/parser/HNLO hoặc chạy/cấp grant từ Draft này.
+
+[Runbook pilot](docs/KAGGLE_THREE_VLM_PILOT.md) mô tả ba notebook Gemma/Phi/Smol,
+selector 160+≤20 TRAIN, native runner/raw writer, HNLO probe/replay, report và
+resume. Đây là code PREP chờ review/grant, chưa là kết quả Kaggle/HNLO hoặc thay
+roster lịch sử. FULL TRAIN khóa, TEST đóng; xem [technical audit](docs/THREE_VLM_TECHNICAL_AUDIT.md).
+
+Kernel Kaggle Python 3.13 chỉ điều phối stdlib. Phi/Smol dùng worker CPython
+3.12/3.11 trong scratch venv độc lập; thiếu `ensurepip` được xử lý bằng venv
+`--without-pip` và wheel pip source/hash-locked cài đúng target qua `pip --python`.
+Hai notebook environment preflight kiểm pins/CPU ABI mà không đọc grant/data,
+gọi GPU hoặc tải weights. Xem
+[runtime audit và đối chiếu Qwen3](docs/KAGGLE_PYTHON_RUNTIME_AUDIT_20261028.md).
 
 Toàn bộ 693 file trước reset vẫn ở các ref bất biến, được liệt kê trong
 [HISTORY](docs/HISTORY.md). Không phục hồi hệ thống cũ vào main, chuyển quyền

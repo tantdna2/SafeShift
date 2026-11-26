@@ -1,0 +1,26 @@
+{
+  "schema": "cpu-platform-split-regression-coverage-v1",
+  "code_commit": "debec82c3a80ab8d08d135cbdd4393919bbd317b",
+  "source_manifest_sha256": "3054352804cebd536b048389e01849344aacc6f5a6f2a76eb830500df9da185c",
+  "platform": "Windows",
+  "python": "3.11.9",
+  "original_run": "INTERRUPTED_DURING_DUPLICATE_FULL3763_EXPORT_IMPORT_AFTER_LINUX_PASS",
+  "original_completed_tests": 57,
+  "original_pass": 56,
+  "original_skips": {
+    "test_minicpm_run1_recovery.LiveSupervisionTests.test_native_event_forwarded_before_child_finishes_with_full_log_retained": "skipped 'Linux guardian/process groups required'"
+  },
+  "original_log_sha256": "1c051eb9dd05bebec5a5de74ad561832d27e4eb8ba8a29ab321a85c717ea7c77",
+  "remaining_run": 40,
+  "remaining_failures": 0,
+  "remaining_errors": 0,
+  "remaining_skips": [],
+  "remaining_log_sha256": "30bc84836d549a1c3ee6bdfa9a358b3d13f88844f33104ed67b6e8fe46f51a0f",
+  "linux_only_case": "test_minicpm_fulltrain_execution.ExecutionTests.test_all3763_once_through_controller_export_and_complete_resume_no_calls",
+  "linux_only_case_result": "PASS_IN_EXACT_LINUX_EXPORT_98_TEST_RUN",
+  "total_distinct_cases": 98,
+  "windows_completed_cases": 97,
+  "remaining_seconds": 92.14325857162476,
+  "gpu": "NOT_RUN",
+  "production_journal_writes": 0
+}

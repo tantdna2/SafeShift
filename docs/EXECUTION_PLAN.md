@@ -1,5 +1,15 @@
 # SafeShift — Kế hoạch thực thi M1–M8
 
+## MiniCPM Serial 7 / 18 November 2026
+
+The coding task ends at one Draft PR from `0b79c87230bcaea83f4105dea2c7b6635c97bdb4`.
+The required sequence is direct review of its HEAD, independent audit,
+separately authorized merge, postmerge verification, then exact-source release.
+The original Operator can then sign a fresh Serial 7 ticket and publish up to
+three Owner steps. The Owner runs once before expiry. Start at ordinal 0 with
+3,763 pending IDs and the six historical holds. Real GPU fit remains unverified.
+[Offline continuation and evidence pins](MINICPM_OFFLINE_CONTINUATION.md).
+
 Ngày lập: **26/10/2026 (Asia/Bangkok)**. BASE đã đối chiếu GitHub và fetch main: `bffc6032e65b38cb04b33520275a089d87d0d37f`.
 Đây là bản giao việc từ [hướng đã chọn](research/SEMINAR_THESIS_DIRECTION_LOCK_20261025.md) và [Master Plan](research/SEMINAR_THESIS_MASTER_PLAN_20261025.md), không thay hai tài liệu đó hoặc tạo quyết định khoa học mới.
 Trạng thái tiếp nối ngắn gọn: [PROJECT_STATE](PROJECT_STATE.md).

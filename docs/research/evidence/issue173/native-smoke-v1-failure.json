@@ -1,0 +1,73 @@
+{
+  "schema": "issue173-native-smoke-preload-failure-v1",
+  "source_commit": "d14218b4df956721e5d32dfc3ce226b40be8048c",
+  "kaggle": {
+    "ref": "nguynanhtn/safeshift-issue173-native-smoke",
+    "version": 1,
+    "kernel_id": 142318016,
+    "status": "COMPLETE"
+  },
+  "submitted_notebook_sha256": "e56860df36723750d27a1ef0569a0bf8f9bcf1ac0aa52e635b65a03d0085f5cf",
+  "remote_normalized_notebook_sha256": "192911e510e3beef66b049ab9032da3b854b31fd9356e2d1847a42ce90446e48",
+  "remote_all_cell_sources_match": true,
+  "archive_sha256": "a296d13984e179a2087acc25a6f45c58f4e15eeb4e32a4efdc46ce8b2a8fac17",
+  "archive_verified_members": 22,
+  "summary": {
+    "failure": "SEE_PRIVATE_FAILURE_NO_RETRY",
+    "model_calls": 0,
+    "models": {
+      "internvl35": {
+        "native_calls": 0,
+        "status": "NOT_ATTEMPTED",
+        "weights_loaded": false
+      },
+      "minicpm4": {
+        "native_calls": 0,
+        "status": "NOT_ATTEMPTED",
+        "weights_loaded": false
+      },
+      "qwen3": {
+        "native_calls": 0,
+        "status": "BLOCKED",
+        "weights_loaded": false
+      }
+    },
+    "production_authorized": false,
+    "run_id": "issue173-smoke-20261102-v1",
+    "source_commit": "d14218b4df956721e5d32dfc3ce226b40be8048c"
+  },
+  "exact_blocker": "HOST_OR_CGROUP_RAM",
+  "required_available_ram_mib": 16384,
+  "measured_available_ram_at_failure": "NOT_CAPTURED_V1",
+  "native_markers": 0,
+  "load_reservations": 0,
+  "loaded_environments": 0,
+  "stages": {
+    "setup": {
+      "automatic_retry": false,
+      "group_kill_sent": true,
+      "log_bytes": 0,
+      "model_fit": "NOT_ESTABLISHED",
+      "retention": "ALL_PARTIAL_FILES_RETAINED",
+      "returncode": 0,
+      "schema": "fresh-process-supervision-v1",
+      "seconds": 303.826283572,
+      "status": "EXITED"
+    },
+    "native": {
+      "automatic_retry": false,
+      "group_kill_sent": true,
+      "log_bytes": 1132,
+      "model_fit": "NOT_ESTABLISHED",
+      "retention": "ALL_PARTIAL_FILES_RETAINED",
+      "returncode": 1,
+      "schema": "fresh-process-supervision-v1",
+      "seconds": 4.702249273999996,
+      "status": "CHILD_FAILURE"
+    }
+  },
+  "qwen_pinned_cpu_software": "PASS",
+  "first_image_decode": "PASS",
+  "live_cuda": "NOT_RUN",
+  "disposition": "PRESERVED_NO_MODEL_CALL_OR_LOAD_TO_RETRY"
+}

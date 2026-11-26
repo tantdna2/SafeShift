@@ -1,0 +1,14 @@
+{
+  "internvl-full": {
+    "provider_notebook_sha256": "cecd5e84dc98704cd97aa7dfda277b67f1b2ac1d90d53383effb92410f0928c7",
+    "source_sha256": "e772f2dac6f10a1e9b07208227d4bc8eb8008a3708a1a0287fa5b5a6c9a994b8"
+  },
+  "minicpm-one": {
+    "provider_notebook_sha256": "864d365cd4596200e72d91324aeab92a623697ef69989b63f7fa26709c231a7c",
+    "source_sha256": "ae94d0033e8215fb3cf1e192c0ef0b5c0e5d76cc8eb904558dc4d9a26186ab7b"
+  },
+  "minicpm-three": {
+    "provider_notebook_sha256": "ccffabaec503ad745609d49580da90c39d4e9754d07098469947c0095b0b6d26",
+    "source_sha256": "09d94fd27a6a5260526c981a55854e8217536e0499824400ea9df5d213fb2d08"
+  }
+}

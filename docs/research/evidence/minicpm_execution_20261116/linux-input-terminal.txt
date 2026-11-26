@@ -1,0 +1,6 @@
+test_current_mount_layout_wrong_owner_and_symlink_alias (test_internvl3763_python.PythonInputTests.test_current_mount_layout_wrong_owner_and_symlink_alias) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.107s
+
+OK

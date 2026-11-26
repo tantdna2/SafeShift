@@ -1,0 +1,28 @@
+test_downstream_reader_recomputes_and_rejects_tampering (test_qwen_composite.HandoffTests.test_downstream_reader_recomputes_and_rejects_tampering) ... ok
+test_resealed_metric_must_recompute (test_qwen_composite.HandoffTests.test_resealed_metric_must_recompute) ... ok
+test_auc_pairwise_oracle (test_qwen_composite.MetricTests.test_auc_pairwise_oracle) ... ok
+test_auc_ties_one_class_empty_and_missing (test_qwen_composite.MetricTests.test_auc_ties_one_class_empty_and_missing) ... ok
+test_empty_and_absent_classes (test_qwen_composite.MetricTests.test_empty_and_absent_classes) ... ok
+test_exhaustive_confusion_against_fraction_oracle (test_qwen_composite.MetricTests.test_exhaustive_confusion_against_fraction_oracle) ... ok
+test_hand_oracle_four_class_and_binary (test_qwen_composite.MetricTests.test_hand_oracle_four_class_and_binary) ... ok
+test_invalid_stays_in_denominator (test_qwen_composite.MetricTests.test_invalid_stays_in_denominator) ... ok
+test_report_strata_and_no_auc_pooling (test_qwen_composite.MetricTests.test_report_strata_and_no_auc_pooling) ... ok
+test_bad_hash_label_domain_split_status (test_qwen_composite.SelectionTests.test_bad_hash_label_domain_split_status) ... ok
+test_bad_prediction_and_source_kind (test_qwen_composite.SelectionTests.test_bad_prediction_and_source_kind) ... ok
+test_each_provenance_field_rejected_including_original_error (test_qwen_composite.SelectionTests.test_each_provenance_field_rejected_including_original_error) ... ok
+test_exact_complement_preserves_errors_and_inputs (test_qwen_composite.SelectionTests.test_exact_complement_preserves_errors_and_inputs) ... ok
+test_missing_extra_duplicate_ids_all_ledgers (test_qwen_composite.SelectionTests.test_missing_extra_duplicate_ids_all_ledgers) ... ok
+test_no_favorable_duplicate_or_recovery_of_success (test_qwen_composite.SelectionTests.test_no_favorable_duplicate_or_recovery_of_success) ... ok
+test_predictions_do_not_select_sources (test_qwen_composite.SelectionTests.test_predictions_do_not_select_sources) ... ok
+test_unavailable_scores_do_not_block_labels (test_qwen_composite.SelectionTests.test_unavailable_scores_do_not_block_labels) ... ok
+test_archive_inventory_hash_duplicate_and_missing (test_qwen_composite.SourceTests.test_archive_inventory_hash_duplicate_and_missing) ... ok
+test_mapping_uses_historical_lf_canonicalization (test_qwen_composite.SourceTests.test_mapping_uses_historical_lf_canonicalization) ... ok
+test_protocol_is_append_only_and_frozen_config_unchanged (test_qwen_composite.SourceTests.test_protocol_is_append_only_and_frozen_config_unchanged) ... ok
+test_train_byte_hash_and_path_fences (test_qwen_composite.SourceTests.test_train_byte_hash_and_path_fences) ... ok
+test_unit_negatives (test_qwen_composite.SourceTests.test_unit_negatives) ... ok
+test_valid_saved_unit_and_no_score_label_dependency (test_qwen_composite.SourceTests.test_valid_saved_unit_and_no_score_label_dependency) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.394s
+
+OK

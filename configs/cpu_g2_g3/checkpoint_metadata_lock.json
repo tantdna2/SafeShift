@@ -1,0 +1,48 @@
+{
+  "internvl35": {
+    "id": "OpenGVLab/InternVL3_5-4B-HF",
+    "index": {
+      "filename": "model.safetensors.index.json",
+      "sha256": "4f5f24a16dc7fcba6edeb8df8482f633b369c284685f92c6e3d6069ee3b323e1",
+      "size": 79936,
+      "tensor_count": 841,
+      "url": "https://huggingface.co/OpenGVLab/InternVL3_5-4B-HF/resolve/6bd4487402110ef9889ba50eb7aefeb302526fed/model.safetensors.index.json"
+    },
+    "metadata_sha256": "bcfa69ba8a1ff52cf7390b8acd8423a2e23c6c324b422e36e7627fb303cb78b9",
+    "metadata_url": "https://huggingface.co/api/models/OpenGVLab/InternVL3_5-4B-HF/revision/6bd4487402110ef9889ba50eb7aefeb302526fed?blobs=true",
+    "revision": "6bd4487402110ef9889ba50eb7aefeb302526fed",
+    "weights": {
+      "model-00001-of-00002.safetensors": {
+        "sha256": "337d6d5bea97956480a1560c3a88e4e6c4455c3954b94ed468c367cf4b500f20",
+        "size": 4954007064
+      },
+      "model-00002-of-00002.safetensors": {
+        "sha256": "343234927f41c7d3a4aa8a2280864f477b1f77795463feb6b26910fa2e4921d3",
+        "size": 4511078400
+      }
+    }
+  },
+  "minicpm4": {
+    "id": "openbmb/MiniCPM-V-4",
+    "index": {
+      "filename": "model.safetensors.index.json",
+      "sha256": "803b4c6605fd33df8ba4386c787f914e75d4d382f937e4e2c3f640d47e1f6d5c",
+      "size": 62812,
+      "tensor_count": 741,
+      "url": "https://huggingface.co/openbmb/MiniCPM-V-4/resolve/6f69a8235885be89608f3a71ffd40695b379e1e7/model.safetensors.index.json"
+    },
+    "metadata_sha256": "a059c9d042f7248804073975737a51ed1da2301881cac612ec32917ac65cea3b",
+    "metadata_url": "https://huggingface.co/api/models/openbmb/MiniCPM-V-4/revision/6f69a8235885be89608f3a71ffd40695b379e1e7?blobs=true",
+    "revision": "6f69a8235885be89608f3a71ffd40695b379e1e7",
+    "weights": {
+      "model-00001-of-00002.safetensors": {
+        "sha256": "c1636a5c21c7fedb3f6f0ff3f3a4e35103e6208c1144f320a0c5a92c22a16af6",
+        "size": 4966445072
+      },
+      "model-00002-of-00002.safetensors": {
+        "sha256": "cd6ee63b0a3ae1ad24790f954cca3448392cd3a0d9d2d208cb2b14e0da53d32e",
+        "size": 3152707944
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "antigravity_audit": "PENDING",
+  "base": "6252a7de91d9d98bd68a33b9bc13ae9888f2b9da",
+  "candidate_source_sha256": "f2b6af6d23869acea7ed7e6ee35162f7d2d1b9c83bc24c06d3040f1bfc2439cb",
+  "files": {
+    "invariants.json": "043d162af0a9f18b75d0d333d461893586908d33cf7cea49d709d9d3f0fbf011",
+    "linux-final.json": "14d1559775d6d54558dbfc0dccbf6ea8bc8b48233eef8c0bb9e1b310d6574261",
+    "linux-initial.json": "5d5d376219b74b2f42a67f65a073891e224a6f3229f8d991ab0f23e9ee77760a",
+    "windows.json": "6a80539f33125897c262f13fb1621095d0483e2c9c203a4ef1d9d4c0aeaa142b"
+  },
+  "final_linux_counts": {
+    "errors": 0,
+    "failures": 0,
+    "passed": 315,
+    "run": 347,
+    "skipped": 32
+  },
+  "kaggle_gpu_weights_private_data_experiment": "NOT_RUN",
+  "native_optins": "NOT_RUN",
+  "notebooks_verified": 10,
+  "pooling_allowed": false,
+  "release_status": "BLOCKED_REVIEW_REQUIRED",
+  "runtime_ref": "0f0d272c60c3a574814c1b0d3dc4a73ee169b30c",
+  "schema": "safeshift-candidate160-recovery-evidence-index-v1",
+  "scientific_selection": "PENDING",
+  "software_status": "CODE_PASS",
+  "tested_snapshot": "afbf0307178b2ecfb1d81b7ec2504628bacaaaf0"
+}

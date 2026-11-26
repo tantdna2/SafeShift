@@ -1,0 +1,17 @@
+{
+  "base": "39ec489403753ada10f4924c4b0d6077e027f5e1",
+  "files": {
+    "internvl35-native.json": "5c144835fd3ec1c4fb9fc76f926ba8ac065168f30a0e1861e001d9c5c7c62030",
+    "internvl35-software.json": "aca9c90b4450737cd2298bea3ec7e2e4dbe26ab71972f3c1bab0af524eaea49f",
+    "linux-full.json": "95cca48f7a3c05fa0abeac10b086105b9bfea0497a57c828d96d0ebc34fdeac1",
+    "minicpm4-native.json": "6e168b1016789607f319d49706c024c71d08e40a9a2eca4d7978915271602ead",
+    "minicpm4-software.json": "321dbffbe280f4ac5a56fa30f067036da53ea74d926a6efcfe1bc9b5049998c5",
+    "windows-focused.json": "43039f251d4e4d71c1c9a21c183a8000b4b7ae391c625854a23e618ebc51bada"
+  },
+  "gpu": "NOT_RUN",
+  "private_data": "NOT_ACCESSED",
+  "runtime_commit": "e55aab81f66c81d3e295f9065ecec1b4fdb23ad0",
+  "schema": "safeshift-candidate160-env-cpu-evidence-v1",
+  "tested_snapshot": "2306aecb280acfedd1dd11523f14b60f892c771f",
+  "weights": "NOT_LOADED"
+}

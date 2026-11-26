@@ -1,0 +1,55 @@
+{
+  "schema": "issue173-sealed-diagnostic-custody-v1",
+  "attempts": [
+    {
+      "identity": "issue173-diag-mini-synthetic-v1",
+      "kernel_slug": "safeshift-issue173-diag-mini-synthetic-v1",
+      "archive_sha256": "5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512",
+      "source_commit": "f2dd41c1a09c1bb860fec756c63628169664c37c",
+      "model_key": "minicpm4",
+      "native_calls": 1,
+      "loads": 1,
+      "status": "NATIVE_FORMAT_INVALID"
+    },
+    {
+      "identity": "issue173-diag-intern-format-v1",
+      "kernel_slug": "safeshift-issue173-diag-intern-format-v1",
+      "archive_sha256": "05ed72478ba15585ad3cc13df4479f8ee15bcec98651b7fab093b222c19a82e3",
+      "source_commit": "f2dd41c1a09c1bb860fec756c63628169664c37c",
+      "model_key": "internvl35",
+      "native_calls": 2,
+      "loads": 1,
+      "status": "NATIVE_FORMAT_PASS"
+    },
+    {
+      "identity": "issue173-diag-mini-scene-v2",
+      "kernel_slug": "safeshift-issue173-diag-mini-scene-v2",
+      "archive_sha256": "e3bfef0467b82a3b19b13fa52041a241e1f58c5815975f9b30e90445f0658991",
+      "source_commit": "767cf45d68584b0ad1d40b6ffdb714f7b6e49bc5",
+      "model_key": "minicpm4",
+      "native_calls": 1,
+      "loads": 1,
+      "status": "NATIVE_FORMAT_PASS"
+    },
+    {
+      "identity": "issue173-diag-intern-grammar-v2",
+      "kernel_slug": "safeshift-issue173-diag-intern-grammar-v2",
+      "archive_sha256": "2b4593439e76a47035a322a2842c720e5edea98feb1dcd85794ffb8f71378dac",
+      "source_commit": "25f760b711fdb7423352416fa8bd03e33de23371",
+      "model_key": "internvl35",
+      "native_calls": 1,
+      "loads": 1,
+      "status": "NATIVE_FORMAT_PASS"
+    }
+  ],
+  "total_native_calls": 5,
+  "total_loads": 4,
+  "max_declared_calls": 7,
+  "max_declared_loads": 4,
+  "original_smoke_consumed": {
+    "qwen3": 1,
+    "internvl35": 1,
+    "minicpm4": 0
+  },
+  "remaining_original_train_call": "BLOCKED_PENDING_CHATGPT_DIRECT_REVIEW"
+}

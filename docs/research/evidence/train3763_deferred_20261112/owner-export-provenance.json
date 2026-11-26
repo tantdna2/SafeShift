@@ -1,0 +1,11 @@
+{
+  "comment_id": 6816197123,
+  "url": "https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6816197123",
+  "owner_login": "tantdna2",
+  "owner_numeric_id": 246929698,
+  "body_sha256": "50e416ea2d77606bbbdad7e1bc660be36af4d979720d47234ac22e234c03d5f8",
+  "export_sha256": "af2ea5c82096b2a883b180b944dbfaa7027e7734fa696ac61d0a2df668e3feda",
+  "evidence_origin": "Owner-supplied authenticated GitHub export; no live API called by Codex",
+  "created_at": "2026-11-12T06:11:35Z",
+  "updated_at": "2026-11-12T06:11:35Z"
+}

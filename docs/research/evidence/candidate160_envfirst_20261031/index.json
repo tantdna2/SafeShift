@@ -1,0 +1,40 @@
+{
+  "agents_base_object_sha256": "ad4309eae94bd270a0080eb51d91291239e337fd3fd3612f899a1703bc61e3d2",
+  "agents_current_sha256": "7e53bb6dcd60583032d5c2d4a5bb4e140c6d823744077f8fed82774a6b1c1ef3",
+  "agents_legacy_object_sha256": "aa2f1830012fe73ba8859ceea0e87442510cc57bd5d115042dd40ec27def0183",
+  "attempt": "NOT_CONSUMED",
+  "base": "39ec489403753ada10f4924c4b0d6077e027f5e1",
+  "base_agents_prefix_unchanged": true,
+  "continuation_from": "bf45a9766000582d67538278c5b848f7bcf8e242",
+  "files": {
+    "internvl35-cpu-child.json": "eb35b6c9ce430062ebf3e216a1631445af0abf11674b6156356886ac35ad68d1",
+    "linux-full.json": "85c4e6313a80f3189afa13a2f2f84212bb7c3d868c71193daa8ff2260bc62bd2",
+    "minicpm4-cpu-child.json": "238c704ee476ed725a6d72b9c19e64f6343a2629cf85136a757cec320bbcbda7",
+    "windows-focused.json": "bfcdfe465db2758ae3bcd9483287a1ed85382c060694d6e52ecfa229b969f33b"
+  },
+  "gpu": "NOT_RUN",
+  "owner_directive": "https://github.com/tantdna2/SafeShift/pull/155#issuecomment-6533181366",
+  "permanent_rule_main_status": "PENDING_FINAL_REVIEW_AUDIT_MERGE_AND_POST_MERGE_VERIFICATION",
+  "protected_science_retry_and_pins_unchanged": [
+    "safeshift/candidates/train_owner.py",
+    "safeshift/candidates/train_incident.py",
+    "safeshift/candidates/train_run.py",
+    "safeshift/candidates/train_contract.py",
+    "safeshift/candidates/train_runtime.py",
+    "safeshift/candidates/backend.py",
+    "safeshift/candidates/inputs.py",
+    "safeshift/candidates/loading.py",
+    "safeshift/candidates/minicpm_image.py",
+    "safeshift/pilot",
+    "configs/pilot",
+    "configs/candidate160",
+    "configs/cpu_g2_g3",
+    "docs/research/DECISIONS.md",
+    "docs/research/SEMINAR_PROTOCOL.md",
+    "docs/research/seminar_analysis_config.v1.json"
+  ],
+  "runtime_ref": "f679e3153a1418cd521d1875cfa797b5aded8570",
+  "schema": "safeshift-candidate160-environment-first-evidence-v1",
+  "source_sha256": "ed5e9f677efac015990d3fceb35ef1057cc4ac52dae468afb6c5491713bc47de",
+  "tested_snapshot": "0363db4976f39f8c4249ab84a7c54986f41e1e99"
+}

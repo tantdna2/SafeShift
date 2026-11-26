@@ -1,0 +1,28 @@
+{
+  "scope": "READ_ONLY_NO_TRAIN_IMAGE_OR_MODEL",
+  "status": "PASS",
+  "diagnostics": [
+    {
+      "identity": "issue173-diag-mini-synthetic-v1",
+      "sha256": "5819e9347f9a376b65c32591b384bd3b1f4b4f9a3b1a8498d3b0edb54413d512",
+      "calls": 1
+    },
+    {
+      "identity": "issue173-diag-intern-format-v1",
+      "sha256": "05ed72478ba15585ad3cc13df4479f8ee15bcec98651b7fab093b222c19a82e3",
+      "calls": 2
+    },
+    {
+      "identity": "issue173-diag-mini-scene-v2",
+      "sha256": "e3bfef0467b82a3b19b13fa52041a241e1f58c5815975f9b30e90445f0658991",
+      "calls": 1
+    },
+    {
+      "identity": "issue173-diag-intern-grammar-v2",
+      "sha256": "2b4593439e76a47035a322a2842c720e5edea98feb1dcd85794ffb8f71378dac",
+      "calls": 1
+    }
+  ],
+  "remaining_train_dispatch": "REVIEW_HOLD",
+  "native_calls": 0
+}

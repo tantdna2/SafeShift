@@ -1,0 +1,42 @@
+{
+  "status": "READ_ONLY_LOCAL_CUSTODY_VERIFIED",
+  "production_collection": "NOT_APPENDED",
+  "provider": "NOT_QUERIED",
+  "numeric_vector_replay": "DEFERRED_TO_FINAL",
+  "journal_events": 35,
+  "journal_head_sha256": "f16a75b01e7a0ad1550e17cc4fdaeaacdc3abd9e99329e562c9d7d16de147b18",
+  "verification": {
+    "status": "PASS",
+    "archive_sha256": "a06f6714e4755a084af66312d06cf06fe7ea04456e807c71daaa875b07969ea0",
+    "members": 8264,
+    "model_calls": 200,
+    "counts": {
+      "NOT_ATTEMPTED": 3563,
+      "SUCCESS": 200
+    },
+    "scope": "PRIVATE_TRAIN_METADATA",
+    "scientific_qualified": false
+  },
+  "attempt11_first_ordinal": 323,
+  "attempt11_last_ordinal": 522,
+  "original_journals_and_registration_unchanged": true,
+  "historical_file_fingerprint": "ebdf759587b8fc9e8aab2b3ce44603f5873683490f9b19e83893a78ebce5d1c3",
+  "budget": {
+    "reserved_calls": 528,
+    "reserved_gpu_seconds": 72000,
+    "jobs": 11
+  },
+  "effective_caps": {
+    "archive_bytes": 7516192768,
+    "job_calls": 1000,
+    "job_seconds": 7200,
+    "machine_shape": "NvidiaTeslaT4",
+    "max_repairs_per_image": 10,
+    "physical_gpus": 2,
+    "total_calls": 4500,
+    "total_gpu_seconds": 430000,
+    "total_jobs": 100
+  },
+  "owner_decision_body_sha256": "50e416ea2d77606bbbdad7e1bc660be36af4d979720d47234ac22e234c03d5f8",
+  "separate_full_runtime_verify_bundle_and_sealed_history": "PASS: CPU read-only before quick-route implementation; no live provider verification"
+}
