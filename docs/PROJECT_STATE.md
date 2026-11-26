@@ -1,6 +1,20 @@
 # SafeShift — PROJECT STATE
 
-## MiniCPM-V-4 sau Serial 22 — 24/11/2026
+## Hiện hành — MiniCPM-V-4 Full-TRAIN đã hoàn thành — 26/11/2026
+
+| Trạng thái | Bằng chứng và phạm vi |
+| --- | --- |
+| `EXECUTION_COMPLETED_OWNER_CONFIRMED` | Owner xác nhận đã chạy xong Full-TRAIN MiniCPM-V-4. Serial 23 xử lý 669 ảnh cuối, gồm 611 `SUCCESS` và 58 `INVALID`. [Bản ghi Owner](research/DECISIONS.md#dec-20261126-owner-minicpm3763-execution-completed). |
+| `OFFLINE_VERIFIED_PROVISIONAL` | Fast PR #212 kiểm hai bản journal cục bộ. Có đủ **3.763/3.763** ID TRAIN, mỗi ID một lần, đúng ordinal 0–3762. Có **3.558 `SUCCESS`, 205 `INVALID`, 0 `TECHNICAL_ERROR`, 0 `NOT_ATTEMPTED`**. Phân bố dự đoán Level01/02/03/04 là **145 / 206 / 286 / 2.921**. Tổng `overhead_seconds` và `call_seconds` của 13 lượt có kết quả là **56.648,2 giây**. [Bằng chứng cục bộ và cách đối chiếu](research/MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md#đối-chiếu-full-train). |
+| `FINAL_ADMISSION` / `SCIENTIFIC_QUALIFICATION` | **PENDING.** Fast trả về `PENDING_FINAL_RECONCILIATION`. Final Admission còn cần đối soát provider của Owner, phê duyệt gắn hash, certificate và `official-report`. Quyền sử dụng trong phân tích khoa học theo quyết định O2–O6 áp dụng. [Quy trình Final Admission](MINICPM_OFFLINE_CONTINUATION.md). |
+
+Replay cục bộ cả 205 đầu ra xác nhận một nhóm lỗi duy nhất. MiniCPM điền
+cụm mô tả Normal có trong prompt vào trường `safety_level`. Parser C1 trả
+`INVALID` đúng hợp đồng vốn yêu cầu mã định danh. Đề xuất chờ duyệt là thử
+ánh xạ chính xác cụm đó trong một bản dẫn xuất có phiên bản trên CPU.
+[Phân tích nguyên nhân, phương án và kiểm thử](research/MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md).
+
+## Lịch sử — MiniCPM-V-4 sau Serial 22 — 24/11/2026
 
 | Phạm vi | Trạng thái và bằng chứng |
 | --- | --- |
