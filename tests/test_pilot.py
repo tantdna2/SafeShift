@@ -102,6 +102,13 @@ class ParserTests(unittest.TestCase):
         for level in c.LEVELS:
             self.assertEqual(c.parse_label(' {"safety_level": "' + level + '"}\n'), level)
 
+    def test_normal_description_in_public_prompt_is_not_a_canonical_value(self):
+        description = "no abnormalities observed"
+        for value in (description, description.upper(), description + " ", "Level 04"):
+            with self.subTest(value=value):
+                self.assertIsNone(c.parse_label(json.dumps({"safety_level": value})))
+        self.assertEqual(c.parse_label('{"safety_level":"Level04"}'), "Level04")
+
     def test_invalid_not_rescued(self):
         for text in ("Level01", '```json\n{"safety_level":"Level01"}\n```',
                      '{"safety_level":"Level01","explanation":"x"}', '{"safety_level":"Level01"} extra',

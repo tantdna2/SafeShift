@@ -848,3 +848,28 @@ thích của Owner. Xác minh provider, thẩm quyền journal, final certificat
 `official-report` và quyền dùng kết quả trong phân tích khoa học vẫn theo
 [quy trình đối soát](../TRAIN3763_DEFERRED_RECONCILIATION.md) và giao thức áp
 dụng. Xem [trạng thái hiện hành và phạm vi kiểm tra cục bộ](../PROJECT_STATE.md#hiện-hành--internvl35-full-train-đã-hoàn-thành--19112026).
+
+## DEC-20261126-OWNER-MINICPM3763-EXECUTION-COMPLETED
+
+**Nguồn.** Owner xác nhận trực tiếp trong cuộc trò chuyện giao task ngày
+26/11/2026 (Asia/Bangkok), trên main `5f12a752acd636878fb6044c00185e7af5e2ae63`
+sau PR #212. Phạm vi xác nhận là `EXECUTION_COMPLETED_OWNER_CONFIRMED`.
+
+**Đối chiếu cục bộ.** Fast PR #212 kiểm hai mirror. Event 30 ghi
+`OFFLINE_VERIFIED_PROVISIONAL`. Bộ kết quả có 3.763 ID TRAIN duy nhất, gồm 3.558
+`SUCCESS` và 205 `INVALID`. Serial 23 xử lý 669 ID cuối. Giữ nguyên journal,
+archive, receipt, các closure và reservation lịch sử. [Bằng chứng và chẩn đoán
+205 ca](MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md).
+
+**Đề xuất chờ duyệt.** Theo [quyết định Full-TRAIN ngày 02/11](#dec-20261102-owner-thesis-fulltrain-repair),
+ưu tiên thử một phép ánh xạ chính xác trên CPU từ cụm mô tả Normal mà prompt
+đã định nghĩa sang mã tương ứng, trên bản dẫn xuất có phiên bản. Việc triển
+khai, công nhận khả năng so sánh và sử dụng bản dẫn xuất cần quyết định khoa
+học riêng. Kết quả strict C1 vẫn là bản ghi gốc của thực thi MiniCPM. Bộ kiểm
+thử CPU tổng hợp ghi nhận hành vi C1 hiện hành và chuẩn bị tiêu chí cho lần
+review phương án sửa.
+
+**Điều kiện còn lại.** Final Admission của bản gốc chờ đối soát provider,
+Owner approval gắn hash và xác minh `official-report`. Scientific Qualification
+và quyền so sánh TRAIN vẫn theo O2–O6 và giao thức hiện hành.
+[Trạng thái thực thi](../PROJECT_STATE.md#hiện-hành--minicpm-v-4-full-train-đã-hoàn-thành--26112026).
