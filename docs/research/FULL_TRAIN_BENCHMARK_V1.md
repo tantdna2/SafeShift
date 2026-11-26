@@ -72,8 +72,10 @@ lớp của Qwen3 và Hazard Recall bằng 0. Accuracy riêng lẻ dễ che mứ
 - **InternVL3.5** dự đoán Hazard 2.261/3.763 và riêng Level03 1.418/3.763.
   Nếu đủ 3.763 ID khớp chính xác GT tổng hợp ở trên, phải có ít nhất 1.512
   false alarm (FPR ≥50,17%, Hazard Precision ≤33,13%) và precision Level03
-  ≤8/1.418 = 0,56%. Các cận lấy trường hợp thuận lợi nhất về phần giao giữa
-  hai tập. Độ lệch phân bố là quan sát. Nguyên nhân như ranking token bị grammar
+  ≤8/1.418 = 0,56%. Accuracy bốn lớp tối đa 2.006/3.763 = 53,31% vì số đúng
+  từng lớp bị chặn bởi min(support, số dự đoán). Các cận lấy trường hợp
+  thuận lợi nhất về phần giao giữa hai tập. Độ lệch phân bố là quan sát.
+  Nguyên nhân như ranking token bị grammar
   khuếch đại, nhầm rubric hoặc shortcut còn cần kiểm trên bản lưu có quyền.
 - **MiniCPM V1** dự đoán Hazard 637/3.763, Normal 3.126/3.763. Với cùng điều kiện
   khớp cohort, phải có ít nhất 112 false-safe (FNR ≥14,95%, Hazard Recall
@@ -189,9 +191,13 @@ python -B -m scripts.benchmark_full_train --input-dir data/processed/full-train-
 
 Bằng chứng còn cần gồm quyền O4 cho đúng mục đích đọc và ghép saved labels với
 TRAIN GT, phạm vi xuất số liệu và case review nếu có, projection/receipt xác
-thực cho InternVL, MiniCPM và cohort, cùng review/audit trên chính HEAD. Chưa
-cần thay lựa chọn sản phẩm, lấy thêm split hoặc yêu cầu chạy lại model. M3 R1–R5
-synthetic và M2 lịch sử có [lệnh và mẫu số riêng](../SEMINAR_ANALYSIS.md).
+thực cho InternVL, MiniCPM và cohort, cùng review/audit trên chính HEAD.
+Hồ sơ đối soát provider, certificate và bản `official-report` của nguồn đang
+chờ Final Admission theo hai runbook. Quyền payload M4 lịch sử vẫn cần grant
+riêng. Ba sản phẩm, split và kế hoạch dùng kết quả đã lưu đã rõ.
+[InternVL](../TRAIN3763_DEFERRED_RECONCILIATION.md),
+[MiniCPM](../MINICPM_OFFLINE_CONTINUATION.md),
+[M2 và lệnh M3 R1–R5](../SEMINAR_ANALYSIS.md).
 
 ## Đối chiếu qua Orca
 
@@ -206,6 +212,14 @@ synthetic và M2 lịch sử có [lệnh và mẫu số riêng](../SEMINAR_ANALY
   kiểm đường đi CLI/export. Các mục đã được sửa, test bổ sung xác nhận
   receipt và refusal khi dùng lại thư mục đích. Review này dùng dữ liệu
   tổng hợp/công khai và fixture.
+- Antigravity Neon Medium phản biện độc lập từ tài liệu công khai. Phép
+  tính Fraction khớp bảng Qwen3. Báo cáo bổ sung cận Accuracy của InternVL
+  và xác nhận rằng conversion MiniCPM giữ TP, có thể chuyển Hazard bất
+  hợp lệ thành false-safe. Neon ưu tiên kiểm ảnh trùng, ca Level03 và
+  lineage, cân workload và chi phí khi thử CT2/CT3. Hai reviewer thống
+  nhất về công thức, cận và phạm vi kết luận. Cả hai giữ mở nguyên nhân
+  của pattern thị giác và audit chính thức của HEAD mới. Lượt Neon dùng
+  main đã xác minh và hồ sơ audit lịch sử, không kiểm software mới.
 - Review trực tiếp trên GitHub và audit độc lập theo cổng merge của chính
   HEAD vẫn cần ghi nhận. Các kiểm tra CPU của PR xác nhận phần mềm và phép
   tính trong đúng phạm vi đầu vào đã sử dụng.
