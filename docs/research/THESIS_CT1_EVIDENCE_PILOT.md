@@ -124,5 +124,5 @@ tính phân xử. Owner chốt số lượt, trần thời gian/VRAM và nguồn
   tải model, đọc TEST, chạy GPU hoặc gửi Kaggle. Dự toán chưa tính live
   smoke có quyền riêng.
 - Đa tỉ lệ giữ làm ablation thị giác kế tiếp, không lấy polygon làm crop.
-  Domain-aware chờ metadata vận hành độc lập hợp lệ hoặc điều kiện
-  mô hình suy ngành từ ảnh có thể đánh giá độc lập.
+  Domain-aware chỉ thử khi có thông tin ngành hợp lệ, xác minh độc lập
+  và thực sự sẵn ở thời điểm suy luận.

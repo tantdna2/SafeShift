@@ -111,6 +111,8 @@ def _validate_entry(item):
                 raise ValueError(f"invalid {key}")
         elif not isinstance(value, str) or not re.search(r"\S", value) or len(value) > TEXT_MAX:
             raise ValueError(f"invalid {key}")
+        else:
+            value.encode("utf-8")  # Reject escaped lone surrogates before JSON export.
     if item["rule_source"] == "unknown":
         if item["rule"] != "unknown" or item["rule_level"] is not None:
             raise ValueError("unknown rule source requires an unknown rule and null rule level")

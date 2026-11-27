@@ -91,7 +91,8 @@ class ContractTest(unittest.TestCase):
                    fence + "json\n" + json.dumps(evidence()),
                    json.dumps({**evidence(), "evidence_status": "NO_VISIBLE_HAZARD"}),
                    json.dumps({**evidence(), "evidence": []})]
-        for invalid in ({"cue": " "}, {"region": 1}, {"visibility": "unverifiable"},
+        for invalid in ({"cue": " "}, {"cue": chr(0xd800)}, {"region": 1},
+                        {"visibility": "unverifiable"},
                         {"rule_source": "unknown"}, {"rule_level": "Level04"}, {"condition": "x" * 121}):
             row = evidence()
             row["evidence"][0].update(invalid)
