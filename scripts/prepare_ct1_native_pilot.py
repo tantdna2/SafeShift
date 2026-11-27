@@ -187,7 +187,7 @@ def checkpoint_bundle(output):
     verified = qwen.verify_snapshot(snapshot, repo=ROOT)
     write(output / "checkpoint-receipt.json", verified)
 
-def source_bundle(commit, output):
+def source_payload(commit):
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ValueError("supply exact commit SHA")
     code_path = ("safeshift", "scripts/run_ct1_native_pilot.py", "configs/fulltrain/qwen3.json",
@@ -198,6 +198,11 @@ def source_bundle(commit, output):
     with ZipFile(BytesIO(payload)) as archive:
         if any(not (n.startswith("safeshift/") or n in code_path) for n in archive.namelist() if not n.endswith("/")):
             raise ValueError("unexpected source capsule entries")
+    return payload
+
+
+def source_bundle(commit, output):
+    payload = source_payload(commit)
     notebook = git(ROOT, "show", commit + ":" + NOTEBOOK)
     output.mkdir(exist_ok=False)
     write_bytes(output / "ct1-source.zip", payload)

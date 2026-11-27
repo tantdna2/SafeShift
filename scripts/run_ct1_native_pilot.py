@@ -38,9 +38,12 @@ def mount_path(value, *, directory):
 def config(path):
     require(path.is_file() and path.stat().st_size <= 16384, "CT1_CONFIG_SIZE")
     value = strict_json(path.read_bytes())
-    fields(value, {"run_id", "mode", "source_commit", "source_capsule_sha256",
-                   "pilot_input", "plan_sha256", "checkpoint", "software_input",
-                   "software_marker_sha256", "approved_drivers", "observed_driver", "resume"})
+    required = {"run_id", "mode", "source_commit", "source_capsule_sha256", "pilot_input",
+                "plan_sha256", "checkpoint", "software_input", "software_marker_sha256",
+                "approved_drivers", "observed_driver", "resume"}
+    if isinstance(value, dict) and value.get("mode") == "smoke":
+        required.add("operator_request_sha256")
+    fields(value, required)
     require(value["mode"] in ("preflight", "pilot", "smoke"), "CT1_MODE")
     commit = value["source_commit"]
     require(isinstance(commit, str) and len(commit) == 40 and all(x in "0123456789abcdef" for x in commit),
@@ -57,10 +60,13 @@ def config(path):
     return value
 
 
-def require_native_admission(mode):
-    # No trusted single-use admission is available in this candidate. A local
-    # marker cannot prove first use if an earlier Kaggle VM has disappeared.
-    require(mode == "preflight", "CT1_NATIVE_BLOCKED_NO_TRUSTED_SINGLE_USE_ADMISSION")
+def require_native_admission(cfg):
+    # Smoke uses the sole Operator's durable push intent. Its digest identifies
+    # that request, but cannot serve as a remote anti-replay claim.
+    if cfg["mode"] == "smoke":
+        require(is_sha256(cfg.get("operator_request_sha256")), "CT1_SMOKE_OPERATOR_REQUEST_REQUIRED")
+        return
+    require(cfg["mode"] == "preflight", "CT1_NATIVE_BLOCKED_NO_TRUSTED_SINGLE_USE_ADMISSION")
 
 
 def layout(cfg):
@@ -84,13 +90,16 @@ def binding(cfg, lock):
                                "observed_driver": cfg["observed_driver"],
                                "runtime_lock": lock, "shared_max_new_tokens": ct1_native.MAX_NEW,
                                "max_input_tokens": ct1_native.MAX_INPUT, "checkpoint": qwen.reference(REPO)["model"]}))
-    return ct1_run.identity(cfg["plan_sha256"], source, cfg["source_capsule_sha256"],
-                            cfg["software_marker_sha256"], cfg["run_id"], smoke=cfg.get("mode") == "smoke")
+    state = ct1_run.identity(cfg["plan_sha256"], source, cfg["source_capsule_sha256"],
+                             cfg["software_marker_sha256"], cfg["run_id"], smoke=cfg.get("mode") == "smoke")
+    if cfg.get("mode") == "smoke":
+        state["operator_request_sha256"] = cfg["operator_request_sha256"]
+    return state
 
 
 def worker(args):
     cfg = config(args.config)
-    require_native_admission(cfg["mode"])
+    require_native_admission(cfg)
     deadline = args.deadline
     root, scratch = args.job / "evidence", args.scratch
     data, software, checkpoint, lock, plan = layout(cfg)
@@ -184,7 +193,7 @@ def export_job(root, archive, plan, state, mode):
 
 def supervise(args):
     cfg = config(args.config)
-    require_native_admission(cfg["mode"])
+    require_native_admission(cfg)
     require(sys.platform == "linux" and WORK.is_dir() and args.job.parent == WORK
             and args.job.name == cfg["run_id"], "CT1_EXACT_KAGGLE_JOB_ROOT")
     deadline = time.monotonic() + (WALL_SECONDS if cfg["mode"] == "pilot" else PREFLIGHT_SECONDS)

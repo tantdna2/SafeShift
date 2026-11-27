@@ -19,6 +19,7 @@ from safeshift.fulltrain import ct1_run, ct1_native
 from safeshift.pilot.artifacts import export, sha, verify_archive, write, write_bytes
 from scripts import build_ct1_kaggle_notebooks as nb
 from scripts import run_ct1_native_pilot as controller
+from scripts import submit_ct1_smoke as operator
 
 
 class FixtureBackend:
@@ -282,7 +283,8 @@ class NativeTest(unittest.TestCase):
                     ct1_run.restore(archive, sha(archive), work / "restore", self.binding)
 
     def test_technical_smoke_shares_the_pipeline_without_a_scoring_export(self):
-        cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000")
+        cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
+                                operator_request_sha256="f" * 64)
         software = self.root / "software"
         software.mkdir()
         cfg["software_marker_sha256"] = write(software / "fresh_qwen_software.json", {"runtime_lock": {}})
@@ -399,20 +401,69 @@ class NativeTest(unittest.TestCase):
                 self.assertFalse(archive.exists())
                 self.assertTrue((job / "export-stage" / (archive.name + ".pending")).is_file())
 
-    def test_without_trusted_first_use_proof_native_stops_before_layout(self):
-        for mode in ("pilot", "smoke"):
-            run_id = "ct1-smoke-000000000000" if mode == "smoke" else self.binding["run_id"]
-            config = self.root / (mode + ".json")
-            write(config, self.config_value(mode=mode, run_id=run_id))
+    def test_pilot_remains_blocked_and_smoke_requires_operator_request(self):
+        for settings, expected in (
+            (self.config_value(), "NO_TRUSTED_SINGLE_USE_ADMISSION"),
+            (self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
+                               operator_request_sha256="invalid"), "SMOKE_OPERATOR_REQUEST_REQUIRED"),
+        ):
+            run_id = settings["run_id"]
+            config = self.root / (settings["mode"] + ".json")
+            write(config, settings)
             job = self.root / run_id
             with patch.object(controller, "layout") as layout:
                 for entry in (controller.supervise, controller.worker):
-                    for _ in range(2):
-                        with self.assertRaisesRegex(ValueError, "NO_TRUSTED_SINGLE_USE_ADMISSION"):
-                            entry(SimpleNamespace(config=config, job=job))
+                    with self.assertRaisesRegex(ValueError, expected):
+                        entry(SimpleNamespace(config=config, job=job))
                 layout.assert_not_called()
             self.assertFalse(job.exists())
-        controller.require_native_admission("preflight")
+        controller.require_native_admission({"mode": "preflight"})
+        controller.require_native_admission({"mode": "smoke", "operator_request_sha256": "a" * 64})
+
+    def test_operator_uses_one_durable_intent_and_never_resubmits(self):
+        request = {"settings": {"source": "/kaggle/input/source", "source_commit": "a" * 40,
+                   "source_zip_sha256": "b" * 64, "owner": {"run_id": "ct1-smoke-000000000000",
+                   "pilot_input": "/kaggle/input/images", "plan_sha256": operator.PLAN_SHA,
+                   "checkpoint": "/kaggle/input/checkpoint/" + ct1_run.REVISION,
+                   "software_input": "/kaggle/input/software", "software_marker_sha256": operator.SOFTWARE_SHA,
+                   "approved_drivers": [], "resume": None}},
+                   "inputs": dict(zip(operator.ROLES, ("owner/source/1", "owner/images/2",
+                                                      "owner/checkpoint/1", "owner/software/3"))),
+                   "kaggle_owner": "owner", "data_authority_ref": "synthetic fixture"}
+        bound, seal, notebook = operator.prepare(request)
+        self.assertEqual(bound["limits"], {"jobs": 1, "images": 1, "calls": 3,
+                                           "physical_gpus": 2, "seconds": 5400})
+        for error in (True, False):
+            with self.subTest(uncertain_response=error):
+                ledger = self.root / ("ledger-uncertain" if error else "ledger-success")
+                call_args = []
+                digest = sha256(notebook)
+
+                def push(path, **kwargs):
+                    self.assertTrue((ledger / "push-intent.json").is_file())
+                    meta = json.loads((Path(path) / "kernel-metadata.json").read_bytes())
+                    self.assertTrue(meta["is_private"])
+                    self.assertFalse(meta["enable_internet"])
+                    self.assertEqual(meta["dataset_sources"], list(request["inputs"].values()))
+                    self.assertEqual(sha(Path(path) / "smoke.ipynb"), digest)
+                    call_args.append(kwargs)
+                    if error:
+                        raise TimeoutError("response unknown")
+                    return SimpleNamespace(error="", ref=bound["job"], version_number=1)
+
+                with (patch.object(operator, "api", return_value=SimpleNamespace(kernels_push=push)),
+                      patch.object(operator, "provider_inventory", return_value={}),
+                      patch.object(operator, "bounded_http", return_value=nullcontext())):
+                    if error:
+                        with self.assertRaises(TimeoutError):
+                            operator.submit(bound, seal, notebook, digest, ledger)
+                    else:
+                        result = operator.submit(bound, seal, notebook, digest, ledger)
+                        self.assertEqual(result["kind"], "SUBMITTED")
+                    with self.assertRaisesRegex(ValueError, "NO_RETRY"):
+                        operator.submit(bound, seal, notebook, digest, ledger)
+                self.assertEqual(call_args, [{"timeout": "5400", "acc": "NvidiaTeslaT4"}])
+                self.assertEqual((ledger / "submitted.json").exists(), not error)
 
     def test_observed_driver_changes_checkpoint_identity(self):
         cfg = {"source_commit": "a" * 40, "approved_drivers": ["570.26", "570.27"],
@@ -438,7 +489,8 @@ class NativeTest(unittest.TestCase):
             exec("".join(row["source"]), env)
             self.assertEqual(env["OWNER"], settings["owner"])
             self.assertEqual(env["SOURCE_COMMIT"], settings["source_commit"])
-        smoke = {**settings, "owner": {**settings["owner"], "run_id": "ct1-smoke-000000000000"}}
+        smoke = {**settings, "owner": {**settings["owner"], "run_id": "ct1-smoke-000000000000",
+                                        "operator_request_sha256": "d" * 64}}
         self.assertEqual(json.loads(nb.content("smoke", smoke))["cells"][-1]["source"],
                          json.loads(nb.content("pilot", settings))["cells"][-1]["source"])
         with self.assertRaisesRegex(ValueError, "distinct run ID"):

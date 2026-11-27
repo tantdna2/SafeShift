@@ -100,10 +100,13 @@ result.check_returncode()
 """
 
 
-def owner_settings(settings):
+def owner_settings(settings, *, smoke=False):
     fields(settings, {"source", "source_commit", "source_zip_sha256", "owner"})
-    fields(settings["owner"], {"run_id", "pilot_input", "plan_sha256", "checkpoint", "software_input",
-                              "software_marker_sha256", "approved_drivers", "resume"})
+    required = {"run_id", "pilot_input", "plan_sha256", "checkpoint", "software_input",
+                "software_marker_sha256", "approved_drivers", "resume"}
+    if smoke:
+        required.add("operator_request_sha256")
+    fields(settings["owner"], required)
     from safeshift.evaluation.full_train_benchmark import is_sha256
     from safeshift.fulltrain.ct1_run import RUN_ID
     import re
@@ -113,6 +116,8 @@ def owner_settings(settings):
             and all(is_sha256(value) for value in
                     (settings["source_zip_sha256"], owner["plan_sha256"], owner["software_marker_sha256"]))):
         raise ValueError("sealed source and owner input identity required")
+    if smoke and not is_sha256(owner["operator_request_sha256"]):
+        raise ValueError("sealed smoke Operator request required")
     for path in (settings["source"], owner["pilot_input"], owner["checkpoint"], owner["software_input"]):
         if not isinstance(path, str) or not path.startswith("/kaggle/input/"):
             raise ValueError("Owner Input paths must be exact Kaggle mounts")
@@ -127,15 +132,18 @@ def owner_settings(settings):
 def content(mode, settings=None):
     if mode not in ("pilot", "preflight", "smoke"):
         raise ValueError("invalid notebook mode")
-    instructions = SETTINGS if settings is None else owner_settings(settings)
     if settings and settings["owner"]["run_id"].startswith("ct1-smoke-") != (mode == "smoke"):
         raise ValueError("technical smoke requires a distinct run ID")
+    if mode == "smoke" and settings is None:
+        raise ValueError("technical smoke requires sealed Operator settings")
+    instructions = SETTINGS if settings is None else owner_settings(settings, smoke=mode == "smoke")
     return notebook([
         ("intro", "markdown", "# SafeShift CT1 — Kaggle " + mode + "\n"
          "Candidate tĩnh. Chỉ chạy khi Owner đã chấp thuận đúng SHA và Inputs. "
          "Đính kèm riêng source, ảnh TRAIN mù, checkpoint và phần mềm. "
          "Dùng 2×T4, tắt Internet. Resume qua VM mới đang khóa. "
-         "Smoke và pilot bị chặn đến khi có admission dùng một lần đã xác minh.\n"),
+         + ("Chỉ Operator thực thi smoke qua ledger D và lịch sử Kaggle. Không bấm Run.\n"
+            if mode == "smoke" else "Pilot chính vẫn khóa và preflight không gọi model.\n")),
         ("gpu-observe", "code", """import subprocess
 gpu_query = subprocess.run(
     ["nvidia-smi", "--query-gpu=index,name,driver_version,memory.free", "--format=csv,noheader,nounits"],

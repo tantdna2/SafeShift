@@ -1,11 +1,10 @@
 # CT1 — Pilot native Kaggle trên 48 ảnh TRAIN
 
-**Candidate trong Draft PR #216.** Controller chặn `smoke` và `pilot`
-trước khi đọc Inputs hoặc tạo ledger vì chưa có admission dùng một lần
-có thể xác minh qua các VM. `preflight` vẫn là chế độ không gọi model.
-Muốn gỡ chặn native, cần cơ chế admission đáng tin cậy gắn đúng source/run
-và được review, rồi kiểm chứng G4–G6. Các bước chạy pilot bên dưới chỉ áp
-dụng cho bản đã được phát hành.
+**Candidate trong Draft PR #216.** Owner duyệt riêng một smoke do Antigravity
+Operator thực hiện, dùng ledger trên D và lịch sử job Kaggle. Controller
+tiếp tục chặn `pilot` trước khi đọc Inputs hoặc tạo ledger. `preflight`
+không gọi model. Các bước chạy pilot bên dưới chỉ áp dụng cho bản đã phát hành
+sau G4–G6 và quyền chạy pilot riêng.
 
 ## Owner chạy khi đã duyệt đúng SHA
 
@@ -113,10 +112,9 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
   có khóa hoặc bằng chứng chung về snapshot mới nhất. Runner hiện từ chối
   mọi yêu cầu resume qua VM mới trước khi đọc Inputs hoặc mở ngân sách. Một
   marker local cũng không thể phân biệt lần đầu và lần chạy lại sau khi VM
-  cũ mất. Candidate chặn mọi native launch, kể cả `resume: None`, đến khi
-  có admission dùng một lần được xác minh. Khi VM mất hoặc ZIP bị cắt, có
-  thể không còn gì để thu thập. Giữ nguyên mọi lượt đã đặt trước hoặc chưa
-  đối soát. TEST tiếp tục khóa.
+  cũ mất. Riêng smoke dùng admission của Operator đã được Owner duyệt.
+  Khi VM mất hoặc ZIP bị cắt, có thể không còn gì để thu thập. Giữ nguyên
+  mọi lượt đã đặt trước hoặc chưa đối soát. TEST tiếp tục khóa.
 
 ## Smoke kỹ thuật trên đúng runtime
 
@@ -125,8 +123,8 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
   TRAIN mù đã niêm phong. Runner kiểm đủ 48 ảnh rồi chỉ chạy ảnh đầu tiên theo
   plan, mỗi cấu hình A/E/S một lượt. Tối đa 3 lượt, không retry và không mở GT,
   annotation, nhãn thư mục hoặc TEST.
-- Render bằng cùng builder với `--mode smoke` và run ID dạng
-  `ct1-smoke-<12 hex>`. Smoke đi qua cùng setup, preflight, tải weights, model,
+- `scripts.submit_ct1_smoke` gọi cùng builder cho smoke, gắn request SHA
+  và run ID dạng `ct1-smoke-<12 hex>`. Smoke đi qua cùng setup, preflight, tải weights, model,
   ngân sách token, parser và đường xuất ZIP. Kiểm 2 T4/VRAM trước và sau load/call,
   latency theo arm, 3 intent và 3 raw trước parse, trạng thái parse từng arm,
   log, kết thúc process group, ZIP và SHA outer/từng member. Đối chiếu cả
@@ -136,6 +134,29 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
   144 lượt chính, không dùng smoke để suy luận chất lượng hoặc độ bền của toàn
   pilot. Chỉ chạy khi xác minh quyền, các mount private đúng phiên bản,
   kết nối Kaggle, hai T4 và quota còn đủ.
+
+### Một Operator và một job
+
+- Operator giữ một thư mục ledger cố định `data/processed/ct1-native-operator/pr216-smoke`
+  dưới gốc dự án Windows trên D. Request cục bộ gồm `settings` nguồn/mount
+  khóa như builder, `inputs` gồm bốn role `source/pilot_input/checkpoint/software_input`
+  ánh xạ tới ref private `owner/slug/version`, `kaggle_owner` đã xác minh và
+  `data_authority_ref` dẫn quyền dữ liệu. Request SHA nằm trong notebook và
+  evidence identity. Không ghi GT, annotation, token hoặc ảnh vào request.
+- Dùng `python -B -m scripts.submit_ct1_smoke prepare --request <request.json> --notebook-output <smoke.ipynb>`
+  trên D để chuẩn bị notebook. Khi đúng source, notebook SHA và bốn Inputs đã
+  được xác minh, cùng Operator dùng `submit --request <request.json> --notebook-sha256 <sha>`
+  bằng môi trường SDK đã ghim. Submit kiểm phiên bản private, lịch sử job và
+  quota. Lock OS giữ qua một POST, ghi độc quyền và fsync `PUSH_INTENT` trước POST.
+  Job có tên cố định `safeshift-ct1-smoke-pr216`, chấp nhận xác nhận version 1.
+- Khi lỗi, mất phản hồi hoặc trạng thái chưa rõ, giữ intent và đối soát read-only
+  cùng job ref/version. Không gửi lại, đổi slug, xóa ledger hay cấp lại lượt.
+  Khóa và ledger chặn phát lại qua công cụ trên D. Kiểm soát bằng quy trình
+  là chỉ Operator sử dụng quyền submit, giữ custody, không Run thủ công hoặc
+  từ máy khác. Request SHA nhận diện request, không phải claim dùng một lần
+  của Kaggle. Hai VM không chia sẻ khóa ledger.
+
+[Tiền lệ Operator và PUSH_INTENT của TRAIN3763](../TRAIN3763_CAMPAIGN.md#historical-pr181-implementation-contract-and-acceptance)
 
 ## Tái lập và handoff
 
