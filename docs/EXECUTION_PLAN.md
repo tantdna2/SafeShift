@@ -16,8 +16,11 @@ luận hiện hành theo chỉ đạo Owner/giảng viên gồm các mốc sau.
 
 Panel hồi cứu gồm đúng Qwen3 Composite V1, InternVL3.5 Grammar V2 và MiniCPM
 Normalization V1. MiniCPM strict C1 là sensitivity trên cùng ID. Yêu cầu bốn
-model và thiết kế ensemble thuộc hồ sơ lịch sử/đề xuất. [Phạm vi dự án và
-thẩm quyền còn thiếu](research/DECISIONS.md#dec-20261127-owner-benchmark-first).
+model và thiết kế ensemble thuộc hồ sơ lịch sử/đề xuất.
+[Phạm vi benchmark](research/DECISIONS.md#dec-20261127-owner-retrospective-benchmark-authority).
+Đã đo baseline và phân tích cặp trên đủ 3.763 TRAIN ID với trạng thái
+`PROVISIONAL_PRE_FINAL_ADMISSION`. Phản biện ứng viên đã ghi trong báo cáo.
+Bước chọn và triển khai phương pháp chờ Owner chốt.
 [Đầu ra, giới hạn và tái lập](research/FULL_TRAIN_BENCHMARK_V1.md).
 
 ## MiniCPM Serial 7 / 18 November 2026

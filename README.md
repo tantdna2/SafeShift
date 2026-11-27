@@ -2,9 +2,9 @@
 
 ## Benchmark First — Draft #136
 
-[Báo cáo Full-TRAIN](docs/research/FULL_TRAIN_BENCHMARK_V1.md) ghi kết quả Qwen3
-đã tái tính, độ phủ và giới hạn của InternVL3.5/MiniCPM, cùng cách chạy bộ
-benchmark CPU. [Kế hoạch hiện hành](docs/EXECUTION_PLAN.md) đặt baseline và
+[Báo cáo Full-TRAIN](docs/research/FULL_TRAIN_BENCHMARK_V1.md) ghi benchmark
+CPU của cả ba sản phẩm nhãn trên cùng 3.763 TRAIN ID, điểm yếu theo miền,
+lỗi chung và độ nhạy MiniCPM C1. [Kế hoạch hiện hành](docs/EXECUTION_PLAN.md) đặt baseline và
 truy nguyên lỗi trước lựa chọn phương pháp. Protocol M2 lịch sử đã khóa bằng
 quyết định và hai SHA256. [CLI R1–R5](docs/SEMINAR_ANALYSIS.md) dùng fixture CPU.
 

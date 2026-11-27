@@ -11,8 +11,9 @@ giữ bộ đọc, ledger và adapter native byte-only dùng lại cho sensitivi
 Extension label-only dùng lại confusion/metric của Qwen3 Composite và các
 kiểm SHA/path của M3. Cohort và ba projection đã được cấp quyền đi vào
 [`scripts/benchmark_full_train.py`](../scripts/benchmark_full_train.py), rồi
-exact join, metrics, so sánh cặp, C1 sensitivity và receipt. Cấu hình hiện
-giữ cổng payload đóng. [Hợp đồng, kết quả và trạng thái](research/FULL_TRAIN_BENCHMARK_V1.md).
+exact join, metrics, so sánh cặp, C1 sensitivity và receipt. Cấu hình ghim
+bốn projection có quyền cho benchmark `PROVISIONAL_PRE_FINAL_ADMISSION`.
+[Hợp đồng, kết quả và trạng thái](research/FULL_TRAIN_BENCHMARK_V1.md).
 
 ## Post-PR200 V5 RAM/source repair — 17/11/2026
 
