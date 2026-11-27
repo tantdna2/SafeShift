@@ -1,5 +1,66 @@
 # Kiến trúc Foundation V1
 
+## Windows — workspace và tài nguyên SafeShift
+
+Thư mục gốc của SafeShift trên máy Owner là `D:\SafeShift`. Trong Project
+Settings của **SafeShift** tại Orca, chọn Worktree location
+`D:\SafeShift\.worktrees`. Kiểm giá trị lưu với
+`orca repo show --repo path:D:/SafeShift --json`, rồi xác minh trường
+`path` của workspace tạo mới. Khi bật folder theo project, Orca đặt
+worktree vào `.worktrees/SafeShift/`. Đặt riêng cho dự án để tránh đổi vị
+trí workspace của project khác hoặc thay cấu hình Windows toàn cục.
+
+Với phiên và worker đã mở, kiểm cwd thực tế. Orca gắn state phiên và pane
+với workspace ID gồm cả đường dẫn. Đổi Worktree location chỉ định vị nơi
+tạo mới. Trước khi di chuyển checkout cũ, kiểm liveness, branch, HEAD,
+index, untracked/ignored files và cách reattach/di chuyển session được
+bản Orca đang chạy hỗ trợ. Dùng Git worktree move nếu hỗ trợ move trên
+cùng filesystem. Khi phải sao chép giữa volumes, xác minh đích rồi dùng
+`git worktree repair` để sửa liên kết Git nếu Orca/session có thể chuyển
+địa chỉ an toàn. Giữ source và mọi phiên đang chạy nếu chưa có đường
+retarget; chuyển phần dữ liệu riêng có thể xác minh độc lập trước.
+
+Đặt env ở phạm vi process. Mỗi shell có thể là một process khác. Đặt lại
+các biến trước khi gọi Python/pip/model tooling, và kiểm resolved paths
+của child. Orca chat/worker native có thể được runtime đã chạy sẵn khởi
+động, không kế thừa env từ shell phát CLI. Không suy con đã nhận env chỉ
+vì shell phát lệnh có env đó. Giữ profile/session/cấu hình tin cậy và
+cache dùng chung của ứng dụng tại vị trí ứng dụng quản lý.
+
+```powershell
+# Chạy từ một Git worktree của SafeShift trên D.
+$safeRoot = (git rev-parse --show-toplevel).Trim()
+if (-not $safeRoot.StartsWith('D:/SafeShift/', [StringComparison]::OrdinalIgnoreCase) -and
+    -not $safeRoot.Equals('D:/SafeShift', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'SafeShift process must start under D:/SafeShift.'
+}
+$safeScratch = 'D:/SafeShift/data/processed/tmp'
+New-Item -ItemType Directory -Force -Path $safeScratch | Out-Null
+$env:TEMP = $safeScratch
+$env:TMP = $safeScratch
+$env:TMPDIR = $safeScratch
+# Chỉ đặt các cache cần cho công cụ sắp chạy.
+$env:PIP_CACHE_DIR = 'D:/SafeShift/.cache/pip'
+$env:HF_HOME = 'D:/SafeShift/.cache/huggingface'
+$env:HF_HUB_CACHE = Join-Path $env:HF_HOME 'hub'
+$env:TORCH_HOME = 'D:/SafeShift/.cache/torch'
+python -B -c "import os,tempfile; print(os.getcwd()); print(tempfile.gettempdir())"
+```
+
+Codex CLI có thể đặt cwd bằng `-C`. Antigravity CLI dùng cwd của shell
+khởi chạy và có `--log-file` cho log phiên CLI. Giữ Orca/Codex/Antigravity
+app data dùng chung và binaries tại thư mục ứng dụng, không đưa session DB
+hoặc credentials vào repo. Tách các thư mục logs/cache mới theo công cụ
+khi có cơ chế được hỗ trợ và dùng một scratch đã có thay vì tạo cây dư.
+Nếu dùng subprocess con sẽ mở notebook/model sau này, kiểm cả cache model,
+dataset và drive thực tế của output trước khi thao tác.
+
+Giữ `AGENTS.md` tối đa 20.000 byte UTF-8. Kiểm ngân sách chỉ thị dự án
+hiện có, file chỉ thị global hiệu lực và file theo từng thư mục từ root
+đến cwd, kể cả `AGENTS.override.md` và fallback tên file đang cấu hình.
+Dùng phiên mới xác nhận cwd, không có thông báo truncation và đọc được
+dòng dấu kiểm cuối. Chi tiết chỉ mở theo liên kết trong `AGENTS.md`.
+
 ## CPU Seminar M3 và benchmark Full-TRAIN — Draft #136
 
 [`scripts/analyze_seminar.py`](../scripts/analyze_seminar.py) phát R1–R5 từ fixture
