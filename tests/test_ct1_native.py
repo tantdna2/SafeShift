@@ -2,6 +2,7 @@
 
 from collections import Counter
 from contextlib import nullcontext
+from datetime import timedelta
 from itertools import permutations
 import json
 import os
@@ -433,9 +434,9 @@ class NativeTest(unittest.TestCase):
         bound, seal, notebook = operator.prepare(request)
         self.assertEqual(bound["limits"], {"jobs": 1, "images": 1, "calls": 3,
                                            "physical_gpus": 2, "seconds": 5400})
-        for error in (True, False):
-            with self.subTest(uncertain_response=error):
-                ledger = self.root / ("ledger-uncertain" if error else "ledger-success")
+        for outcome in ("timeout", "rejected-input", "submitted"):
+            with self.subTest(provider_response=outcome):
+                ledger = self.root / ("ledger-" + outcome)
                 call_args = []
                 digest = sha256(notebook)
 
@@ -447,23 +448,44 @@ class NativeTest(unittest.TestCase):
                     self.assertEqual(meta["dataset_sources"], list(request["inputs"].values()))
                     self.assertEqual(sha(Path(path) / "smoke.ipynb"), digest)
                     call_args.append(kwargs)
-                    if error:
+                    if outcome == "timeout":
                         raise TimeoutError("response unknown")
-                    return SimpleNamespace(error="", ref=bound["job"], version_number=1)
+                    rejected = [request["inputs"]["checkpoint"]] if outcome == "rejected-input" else []
+                    return SimpleNamespace(error="", ref=bound["job"], version_number=1,
+                                           invalid_dataset_sources=rejected, invalid_competition_sources=[],
+                                           invalid_kernel_sources=[], invalid_model_sources=[], invalid_tags=[])
 
                 with (patch.object(operator, "api", return_value=SimpleNamespace(kernels_push=push)),
                       patch.object(operator, "provider_inventory", return_value={}),
                       patch.object(operator, "bounded_http", return_value=nullcontext())):
-                    if error:
+                    if outcome == "timeout":
                         with self.assertRaises(TimeoutError):
                             operator.submit(bound, seal, notebook, digest, ledger)
+                    elif outcome == "rejected-input":
+                        with self.assertRaisesRegex(ValueError, "RESULT_UNCERTAIN_NO_RETRY"):
+                            operator.submit(bound, seal, notebook, digest, ledger)
+                        row = json.loads((ledger / "submission-reconciliation.json").read_bytes())
+                        self.assertEqual(row["rejected"], {"invalid_dataset_sources":
+                                                          [request["inputs"]["checkpoint"]]})
                     else:
                         result = operator.submit(bound, seal, notebook, digest, ledger)
                         self.assertEqual(result["kind"], "SUBMITTED")
                     with self.assertRaisesRegex(ValueError, "NO_RETRY"):
                         operator.submit(bound, seal, notebook, digest, ledger)
                 self.assertEqual(call_args, [{"timeout": "5400", "acc": "NvidiaTeslaT4"}])
-                self.assertEqual((ledger / "submitted.json").exists(), not error)
+                self.assertEqual((ledger / "submitted.json").exists(), outcome == "submitted")
+
+    def test_operator_does_not_round_away_reserved_or_missing_gpu_quota(self):
+        gpu = SimpleNamespace(total_time_allowed=timedelta(seconds=10800),
+                              time_used=timedelta(), time_reserved=timedelta())
+        self.assertEqual(operator.verify_quota(gpu), {"total": 10800, "used": 0, "reserved": 0})
+        for field in ("time_used", "time_reserved"):
+            low = SimpleNamespace(**{**vars(gpu), field: timedelta(microseconds=1)})
+            with self.assertRaisesRegex(ValueError, "QUOTA_OR_EXISTING_RESERVATION"):
+                operator.verify_quota(low)
+        gpu.total_time_allowed += timedelta(seconds=1)
+        gpu.time_used = timedelta(microseconds=500000)
+        self.assertEqual(operator.verify_quota(gpu)["used"], .5)
 
     def test_observed_driver_changes_checkpoint_identity(self):
         cfg = {"source_commit": "a" * 40, "approved_drivers": ["570.26", "570.27"],
