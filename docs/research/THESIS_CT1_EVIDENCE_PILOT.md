@@ -1,6 +1,8 @@
 # CT1 — Pilot Evidence-based Reasoning
 
-Triển khai CPU và chuẩn bị notebook theo yêu cầu Owner. Trạng thái chạy
+Triển khai CPU và chuẩn bị notebook theo yêu cầu Owner. Xem [runbook native
+Kaggle 48 ảnh](THESIS_CT1_NATIVE_RUNBOOK.md) cho phần triển khai nối tiếp.
+Trạng thái chạy
 native là **BLOCKED**. Gói audit 16 ảnh và annotation đã đối chiếu thuộc
 development đã quan sát. Giữ nguyên các artifact và không dùng gói đó
 làm dữ liệu xác nhận hoặc đưa vào cohort pilot này.

@@ -1,0 +1,176 @@
+"""Sealed, image-only CT1 input contract and hard-capped checkpoint orchestration."""
+
+from collections import Counter
+from itertools import permutations
+from pathlib import Path
+import re
+import time
+from zipfile import ZipFile
+
+from safeshift.data.saved_reports import checked, json_bytes, sha256, strict_json
+from safeshift.evaluation.ct1_contract import ARMS, parse, prompt_hashes
+from safeshift.evaluation.ct1_pilot import MODEL_ID, REVISION, validate_plan
+from safeshift.evaluation.full_train_benchmark import is_sha256
+from safeshift.fulltrain.qwen_semantics import fields
+from safeshift.pilot.artifacts import export, safe, sha, verify_archive, write, write_bytes
+from safeshift.candidates.source import require
+
+N_IMAGES = 48
+N_CALLS = 144
+IMAGE_BYTES = 12 * 2**20
+RUN_ID = re.compile(r"ct1-[0-9a-f]{12}")
+ENTRY = re.compile(r"calls/[0-9]{3}/(intent|tokens|raw|result|failure)\.json")
+
+
+def read_sealed(path, expected, limit):
+    require(path.is_file() and path.stat().st_size <= limit, "CT1_INPUT_SIZE")
+    return checked(path.read_bytes(), expected)
+
+
+def admit(mount, plan_sha):
+    require(mount.is_dir() and not mount.is_symlink(), "CT1_ISOLATED_INPUT_REQUIRED")
+    require({p.name for p in mount.iterdir()} == {"plan.json", "exclusions.json", "images"}, "CT1_INPUT_ALLOWLIST")
+    raw = read_sealed(safe(mount, "plan.json"), plan_sha, 65536)
+    plan = strict_json(raw)
+    exclusion = safe(mount, "exclusions.json")
+    require(exclusion.stat().st_size <= 4096, "CT1_EXCLUSION_SIZE")
+    exclusions = strict_json(exclusion.read_bytes())
+    validate_plan(plan, exclusions)
+    files = {r["case_id"] + ".png": r["image_sha256"] for r in plan["cases"]}
+    images = safe(mount, "images")
+    require(plan["kind"] == "TRAIN_DEVELOPMENT" and plan["arms"] == list(ARMS)
+            and len(files) == N_IMAGES and {p.name for p in images.iterdir()} == files.keys(),
+            "CT1_EXACT_48_IMAGE_ONLY_A_E_S")
+    for name, expected in files.items():
+        path = safe(mount, "images/" + name)
+        require(path.is_file() and path.stat().st_size <= IMAGE_BYTES and sha(path) == expected, "CT1_IMAGE_SEAL")
+    return plan, exclusions
+
+
+def schedule(plan):
+    orders = list(permutations(ARMS))
+    return [(row["case_id"], arm, row["image_sha256"]) for i, row in enumerate(plan["cases"])
+            for arm in orders[i % len(orders)]]
+
+
+def identity(plan_sha, source_sha, capsule_sha, software_sha, run_id):
+    require(RUN_ID.fullmatch(run_id) and is_sha256(source_sha) and is_sha256(capsule_sha)
+            and is_sha256(plan_sha) and is_sha256(software_sha), "CT1_EXACT_RUN_IDENTITY")
+    return {"schema": "ct1-native-48-v1", "run_id": run_id, "plan_sha256": plan_sha,
+            "source_sha256": source_sha, "capsule_sha256": capsule_sha, "software_sha256": software_sha,
+            "model": MODEL_ID, "revision": REVISION, "prompt_sha256": prompt_hashes(ARMS),
+            "max_calls": N_CALLS}
+
+
+def restore(archive, expected, root, binding):
+    require(archive.is_file() and archive.stat().st_size <= 32 * 2**20 and sha(archive) == expected,
+            "CT1_RESUME_ZIP_SEAL")
+    with ZipFile(archive) as z:
+        infos = z.infolist()
+        require(len(infos) <= 730 and sum(x.file_size for x in infos) <= 32 * 2**20, "CT1_RESUME_BOUND")
+        names = verify_archive(archive)
+        require("identity.json" in names and strict_json(z.read("identity.json")) == binding,
+                "CT1_RESUME_IDENTITY")
+        # Only the ledger is restored. Output snapshots and receipts keep their original custody.
+        call_files = [name for name in names if name.startswith("calls/")]
+        require(all(ENTRY.fullmatch(name) and int(name.split("/")[1]) < N_CALLS for name in call_files),
+                "CT1_RESUME_MEMBER")
+        require("config-summary.json" in names
+                and strict_json(z.read("config-summary.json"))["mode"] == "pilot", "CT1_RESUME_PILOT_ONLY")
+        for name in call_files:
+            write_bytes(safe(root, name), z.read(name))
+
+
+def slot_state(sample, case, arm, image_sha, binding_sha):
+    records = {p.stem: p for p in sample.iterdir()} if sample.exists() else {}
+    require(all(ENTRY.fullmatch("calls/000/" + p.name) and p.is_file() and not p.is_symlink()
+                for p in records.values()), "CT1_UNEXPECTED_JOURNAL_MEMBER")
+    if "intent" in records:
+        intent = strict_json(records["intent"].read_bytes())
+        require((intent["case_id"], intent["arm"], intent["image_sha256"], intent["binding_sha256"]) ==
+                (case, arm, image_sha, binding_sha),
+                "CT1_JOURNAL_CASE_MISMATCH")
+    if "raw" in records:
+        require("intent" in records and "tokens" in records, "CT1_UNBOUND_RAW")
+        raw = strict_json(records["raw"].read_bytes())
+        require(raw["tokens_sha256"] == sha(records["tokens"]), "CT1_RAW_TOKEN_BINDING")
+        if "result" in records:
+            require(strict_json(records["result"].read_bytes()) == _parsed(arm, raw),
+                    "CT1_RESULT_REPLAY_MISMATCH")
+        return "RETURNED", raw["raw_text"]
+    require("result" not in records, "CT1_RESULT_WITHOUT_RAW")
+    if "intent" in records or "failure" in records or "tokens" in records:
+        require("tokens" not in records or "intent" in records, "CT1_TOKENS_WITHOUT_INTENT")
+        return "TECHNICAL_ERROR", None
+    return "NOT_ATTEMPTED", None
+
+
+def _parsed(arm, raw):
+    parsed = parse(arm, raw["raw_text"])
+    return {"status": parsed.status, "level": parsed.level, "wrapped": parsed.wrapped,
+            "error": parsed.error, "evidence_status": parsed.evidence_status}
+
+
+def checkpoint_results(root, output, plan, binding):
+    records, calls = [], 0
+    parses = {arm: Counter() for arm in ARMS}
+    token_cap = Counter()
+    binding_sha = sha256(json_bytes(binding))
+    for i, (case, arm, image_sha) in enumerate(schedule(plan)):
+        path = root / "calls" / f"{i:03}"
+        status, raw = slot_state(path, case, arm, image_sha, binding_sha)
+        parses[arm][parse(arm, raw).status if status == "RETURNED" else status] += 1
+        if status == "RETURNED":
+            token_cap[arm] += strict_json((path / "raw.json").read_bytes())["at_cap"]
+        calls += (path / "intent.json").exists()
+        records.append({"case_id": case, "arm": arm, "attempt_status": status, "raw_text": raw})
+    runs = {k: binding[k] for k in ("plan_sha256", "prompt_sha256")}
+    runs.update(model_id=MODEL_ID, revision=REVISION, runtime_sha256=sha256(json_bytes(binding)), records=records)
+    write(root / "runs.json", runs)
+    write(root / "summary.json", {"planned_calls": N_CALLS, "durable_native_intents": calls,
+                                  "returned": sum(r["attempt_status"] == "RETURNED" for r in records),
+                                  "technical_error": sum(r["attempt_status"] == "TECHNICAL_ERROR" for r in records),
+                                  "not_attempted": sum(r["attempt_status"] == "NOT_ATTEMPTED" for r in records),
+                                  "arm_status_counts": {arm: dict(x) for arm, x in parses.items()},
+                                  "token_cap_hits_by_arm": {arm: token_cap[arm] for arm in ARMS},
+                                  "interpretation": "NATIVE_INTENT_IS_A_RESERVATION_NOT_COMPLETION"})
+    export(root, output)
+
+
+def execute(root, plan, binding, image_dir, backend, deadline):
+    """Exactly one reserved slot per scheduled case/arm. Never retry an intent."""
+    binding_sha = sha256(json_bytes(binding))
+    for i, (case, arm, image_sha) in enumerate(schedule(plan)):
+        sample = root / "calls" / f"{i:03}"
+        status, _ = slot_state(sample, case, arm, image_sha, binding_sha)
+        if status != "NOT_ATTEMPTED":
+            # Finish parse, or decode durable tokens locally, without rerunning generate.
+            if (sample / "tokens.json").exists() and not (sample / "raw.json").exists():
+                obj = backend.decode(strict_json((sample / "tokens.json").read_bytes()))
+                write(sample / "raw.json", {**obj, "tokens_sha256": sha(sample / "tokens.json")})
+            if (sample / "raw.json").exists() and not (sample / "result.json").exists():
+                write(sample / "result.json", _parsed(arm, strict_json((sample / "raw.json").read_bytes())))
+            continue
+        if time.monotonic() >= deadline:
+            break
+        try:
+            payload = read_sealed(safe(image_dir, case + ".png"), image_sha, IMAGE_BYTES)
+            def begin(detail):
+                write(sample / "intent.json", {"case_id": case, "arm": arm, "image_sha256": image_sha,
+                                               "binding_sha256": binding_sha, **detail})
+            def record_tokens(detail):
+                require((sample / "intent.json").is_file(), "CT1_INTENT_REQUIRED")
+                write(sample / "tokens.json", detail)
+            raw, memory_after = backend.generate(payload, arm, begin, record_tokens)
+            write(sample / "raw.json", {**raw, "memory_after": memory_after,
+                                        "tokens_sha256": sha(sample / "tokens.json")})
+            write(sample / "result.json", _parsed(arm, raw))
+        except Exception as exc:
+            details = {"type": type(exc).__name__, "message": str(exc)[:2000],
+                       "seconds_monotonic": time.monotonic(), "automatic_retry": False}
+            try:
+                details["memory_at_failure"] = backend.failure_memory()
+            except Exception as memory_error:
+                details["memory_probe_failure"] = type(memory_error).__name__
+            write(sample / "failure.json", details)
+            raise

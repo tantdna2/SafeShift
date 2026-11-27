@@ -14,7 +14,8 @@
   khung, khói rõ, loại làn chưa xác minh và một bất nhất miền. Chưa
   xác nhận precedence giải thích các lỗi 01→02. Đã triển khai bộ CPU A/E/S cho
   Evidence-based Reasoning. [Hợp đồng pilot](research/THESIS_CT1_EVIDENCE_PILOT.md)
-  gồm parser, đánh giá evidence tách GT và notebook PREP; native BLOCKED.
+  gồm parser và bộ chấm evidence tách GT. [Native candidate](research/THESIS_CT1_NATIVE_RUNBOOK.md)
+  chuẩn bị 48 TRAIN development và 144 lượt A/E/S, chờ live preflight và Owner.
   Đa tỉ lệ là ablation và domain-aware chờ nguồn miền vận hành. Báo cáo và biên nhận nằm cục bộ dưới
   `data/processed/CT1-AI-audit-16/` tính từ gốc dự án. [Kế hoạch CT1](research/THESIS_CT123_PREPARATION.md#đối-chiếu-annotation-và-ưu-tiên-ct1-sau-audit).
   A/B/C, hồ sơ validation, biên khoa học, quota và quyền chạy vẫn có
