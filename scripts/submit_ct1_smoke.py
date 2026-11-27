@@ -1,6 +1,6 @@
 """Submit the single Owner-approved PR #216 smoke through the D-drive Operator."""
 from argparse import ArgumentParser
-from datetime import timedelta
+from decimal import Decimal
 import json
 from pathlib import Path
 import re
@@ -91,16 +91,34 @@ def provider_inventory(client, request):
             files = client.dataset_list_files(ref, page_size=1)
             require(files.files and not files.error_message, "CT1_PRIVATE_INPUT_FILES_UNKNOWN")
     return {"owned_jobs_sha256": sha256(json_bytes(sorted(owned))), "inputs": request["inputs"],
-            "gpu_quota_seconds": verify_quota(client.quota_view().gpu_quota)}
+            "gpu_quota_wire": read_quota(client)}
+
+
+class QuotaResponse:
+    @staticmethod
+    def prepare_from(response):
+        # The SDK duration deserializer truncates nanoseconds to microseconds.
+        require(len(response.content) <= 65536, "CT1_GPU_QUOTA_RESPONSE_BOUND")
+        return verify_quota(strict_json(response.content)["gpuQuota"])
+
+
+def read_quota(client):
+    from kagglesdk.kernels.types.kernels_api_service import ApiGetAcceleratorQuotaStatisticsRequest
+
+    with client.build_kaggle_client() as remote:
+        return remote.http_client().call("kernels.KernelsApiService", "GetAcceleratorQuotaStatistics",
+                                         ApiGetAcceleratorQuotaStatisticsRequest(), QuotaResponse)
 
 
 def verify_quota(gpu):
-    zero = timedelta()
-    cap = timedelta(seconds=LIMITS["physical_gpus"] * LIMITS["seconds"])
-    require(gpu.time_used >= zero and gpu.time_reserved == zero
-            and gpu.total_time_allowed - gpu.time_used >= cap, "CT1_GPU_QUOTA_OR_EXISTING_RESERVATION")
-    return {"used": gpu.time_used.total_seconds(), "reserved": gpu.time_reserved.total_seconds(),
-            "total": gpu.total_time_allowed.total_seconds()}
+    wire = {name: gpu.get(field) for name, field in (
+        ("used", "timeUsed"), ("reserved", "timeReserved"), ("total", "totalTimeAllowed"))}
+    require(all(type(text) is str and re.fullmatch(r"[0-9]{1,10}(?:\.[0-9]{1,9})?s", text)
+                for text in wire.values()), "CT1_GPU_QUOTA_WIRE_FORMAT")
+    used, reserved, total = (Decimal(wire[name][:-1]) for name in ("used", "reserved", "total"))
+    require(reserved == 0 and total - used >= LIMITS["physical_gpus"] * LIMITS["seconds"],
+            "CT1_GPU_QUOTA_OR_EXISTING_RESERVATION")
+    return wire
 
 
 def submit(request, seal, notebook, approved_notebook_sha, ledger):
@@ -121,20 +139,28 @@ def submit(request, seal, notebook, approved_notebook_sha, ledger):
                 "dataset_sources": [request["inputs"][role] for role in ROLES],
             })
             write_bytes(stage / "smoke.ipynb", notebook)
-            write(intent, {"kind": "PUSH_INTENT", "request": request, "request_sha256": seal,
-                           "notebook_sha256": approved_notebook_sha, "inventory": observed})
-            result = client.kernels_push(str(stage), timeout=str(LIMITS["seconds"]), acc="NvidiaTeslaT4")
+            intent_sha = write(intent, {"kind": "PUSH_INTENT", "request": request, "request_sha256": seal,
+                                        "notebook_sha256": approved_notebook_sha, "inventory": observed})
+            reconciliation = {"kind": "PROVIDER_RESPONSE_REQUIRES_RECONCILIATION",
+                              "expected_job": request["job"], "intent_sha256": intent_sha,
+                              "automatic_retry": False}
+            try:
+                result = client.kernels_push(str(stage), timeout=str(LIMITS["seconds"]), acc="NvidiaTeslaT4")
+            except Exception as exc:
+                status = getattr(getattr(exc, "response", None), "status_code", None)
+                write(safe(ledger, "submission-reconciliation.json"), {
+                    **reconciliation, "exception_type": type(exc).__name__,
+                    "http_status": status if type(status) is int else None,
+                })
+                raise
         rejected = {field: getattr(result, field) for field in
                     ("invalid_dataset_sources", "invalid_competition_sources",
                      "invalid_kernel_sources", "invalid_model_sources", "invalid_tags")
                     if getattr(result, field)}
-        intent_sha = sha256(intent.read_bytes())
         if result.error or rejected or result.ref != request["job"] or result.version_number != 1:
             write(safe(ledger, "submission-reconciliation.json"), {
-                "kind": "PROVIDER_RESPONSE_REQUIRES_RECONCILIATION", "expected_job": request["job"],
-                "observed_ref": result.ref, "observed_version": result.version_number,
-                "reported_error": result.error, "rejected": rejected, "intent_sha256": intent_sha,
-                "automatic_retry": False,
+                **reconciliation, "observed_ref": result.ref, "observed_version": result.version_number,
+                "reported_error": result.error, "rejected": rejected,
             })
             raise ValueError("CT1_SUBMISSION_RESULT_UNCERTAIN_NO_RETRY")
         submitted = {"kind": "SUBMITTED", "job": request["job"], "version": 1,

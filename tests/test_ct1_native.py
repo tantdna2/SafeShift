@@ -2,7 +2,6 @@
 
 from collections import Counter
 from contextlib import nullcontext
-from datetime import timedelta
 from itertools import permutations
 import json
 import os
@@ -434,7 +433,7 @@ class NativeTest(unittest.TestCase):
         bound, seal, notebook = operator.prepare(request)
         self.assertEqual(bound["limits"], {"jobs": 1, "images": 1, "calls": 3,
                                            "physical_gpus": 2, "seconds": 5400})
-        for outcome in ("timeout", "rejected-input", "submitted"):
+        for outcome in ("timeout", "http-503", "malformed-response", "rejected-input", "submitted"):
             with self.subTest(provider_response=outcome):
                 ledger = self.root / ("ledger-" + outcome)
                 call_args = []
@@ -450,6 +449,12 @@ class NativeTest(unittest.TestCase):
                     call_args.append(kwargs)
                     if outcome == "timeout":
                         raise TimeoutError("response unknown")
+                    if outcome == "http-503":
+                        error = RuntimeError("provider error")
+                        error.response = SimpleNamespace(status_code=503)
+                        raise error
+                    if outcome == "malformed-response":
+                        raise json.JSONDecodeError("response is malformed", "", 0)
                     rejected = [request["inputs"]["checkpoint"]] if outcome == "rejected-input" else []
                     return SimpleNamespace(error="", ref=bound["job"], version_number=1,
                                            invalid_dataset_sources=rejected, invalid_competition_sources=[],
@@ -461,6 +466,14 @@ class NativeTest(unittest.TestCase):
                     if outcome == "timeout":
                         with self.assertRaises(TimeoutError):
                             operator.submit(bound, seal, notebook, digest, ledger)
+                    elif outcome in ("http-503", "malformed-response"):
+                        expected = RuntimeError if outcome == "http-503" else json.JSONDecodeError
+                        with self.assertRaises(expected):
+                            operator.submit(bound, seal, notebook, digest, ledger)
+                        row = json.loads((ledger / "submission-reconciliation.json").read_bytes())
+                        self.assertEqual(row["exception_type"], expected.__name__)
+                        self.assertEqual(row["http_status"], 503 if outcome == "http-503" else None)
+                        self.assertEqual(row["intent_sha256"], sha(ledger / "push-intent.json"))
                     elif outcome == "rejected-input":
                         with self.assertRaisesRegex(ValueError, "RESULT_UNCERTAIN_NO_RETRY"):
                             operator.submit(bound, seal, notebook, digest, ledger)
@@ -476,16 +489,18 @@ class NativeTest(unittest.TestCase):
                 self.assertEqual((ledger / "submitted.json").exists(), outcome == "submitted")
 
     def test_operator_does_not_round_away_reserved_or_missing_gpu_quota(self):
-        gpu = SimpleNamespace(total_time_allowed=timedelta(seconds=10800),
-                              time_used=timedelta(), time_reserved=timedelta())
-        self.assertEqual(operator.verify_quota(gpu), {"total": 10800, "used": 0, "reserved": 0})
-        for field in ("time_used", "time_reserved"):
-            low = SimpleNamespace(**{**vars(gpu), field: timedelta(microseconds=1)})
+        gpu = {"totalTimeAllowed": "10800s", "timeUsed": "0s", "timeReserved": "0s"}
+        def read(gpu_quota):
+            response = SimpleNamespace(content=json_bytes({"gpuQuota": gpu_quota}))
+            return operator.QuotaResponse.prepare_from(response)
+
+        self.assertEqual(read(gpu), {"total": "10800s", "used": "0s", "reserved": "0s"})
+        for field in ("timeUsed", "timeReserved"):
+            low = {**gpu, field: "0.000000100s"}
             with self.assertRaisesRegex(ValueError, "QUOTA_OR_EXISTING_RESERVATION"):
-                operator.verify_quota(low)
-        gpu.total_time_allowed += timedelta(seconds=1)
-        gpu.time_used = timedelta(microseconds=500000)
-        self.assertEqual(operator.verify_quota(gpu)["used"], .5)
+                read(low)
+        exact = {**gpu, "totalTimeAllowed": "10800.000000100s", "timeUsed": "0.000000100s"}
+        self.assertEqual(read(exact)["used"], "0.000000100s")
 
     def test_observed_driver_changes_checkpoint_identity(self):
         cfg = {"source_commit": "a" * 40, "approved_drivers": ["570.26", "570.27"],
