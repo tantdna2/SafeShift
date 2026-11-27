@@ -1,8 +1,11 @@
 # CT1 — Pilot native Kaggle trên 48 ảnh TRAIN
 
-**Candidate trong Draft PR #216.** CPU tổng hợp và kiểm tra bytes có thể xác
-minh trước khi chạy. Khi chưa có receipt smoke của đúng source và Inputs, G4–G6
-vẫn chặn phát hành. Các bước chạy pilot chỉ áp dụng sau khi các cổng này hoàn tất.
+**Candidate trong Draft PR #216.** Controller chặn `smoke` và `pilot`
+trước khi đọc Inputs hoặc tạo ledger vì chưa có admission dùng một lần
+có thể xác minh qua các VM. `preflight` vẫn là chế độ không gọi model.
+Muốn gỡ chặn native, cần cơ chế admission đáng tin cậy gắn đúng source/run
+và được review, rồi kiểm chứng G4–G6. Các bước chạy pilot bên dưới chỉ áp
+dụng cho bản đã được phát hành.
 
 ## Owner chạy khi đã duyệt đúng SHA
 
@@ -31,6 +34,8 @@ vẫn chặn phát hành. Các bước chạy pilot chỉ áp dụng sau khi cá
    có `<run_id>-diagnostic.zip` hoặc không có ZIP, dừng. Không attach ZIP cũ,
    chạy lại notebook trên VM mới hay cấp lại lượt khi thiếu bằng chứng.
    `resume` phải là `None` và chỉ áp dụng cho lần khởi chạy đầu tiên đã được cấp.
+   Một bản xuất hợp lệ cần cả ZIP và sidecar. Nếu chỉ có sidecar hoặc file
+   staging `.pending`, giữ để đối soát như một lần xuất chưa hoàn tất.
 
 [Kaggle Notebooks](https://www.kaggle.com/docs/notebooks) ·
 [NVIDIA CUDA 12.8](https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html)
@@ -100,13 +105,18 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
   controller giữ nguyên thư mục đang viết và chỉ xuất ZIP chẩn đoán với
   các receipt đã có. ZIP này không chứa ledger hoặc kết quả có thể dùng
   làm checkpoint. Nếu đã xác minh dừng nhưng ledger hỏng, ZIP chỉ phục vụ
-  đối soát và ghi rõ lỗi tái dựng.
+  đối soát, dùng đuôi `-diagnostic.zip` và ghi rõ lỗi tái dựng. Các receipt
+  qua đường dẫn alias, không phải file thường, quá giới hạn hoặc thay đổi
+  khi đọc bị bỏ khỏi bản sao chẩn đoán. Tên ZIP kết quả chỉ công bố sau khi
+  bản staging đã qua xác minh và sidecar đã được ghi.
 - ZIP và SHA chỉ xác minh nội dung của một snapshot. Hai VM Kaggle không
   có khóa hoặc bằng chứng chung về snapshot mới nhất. Runner hiện từ chối
-  mọi yêu cầu resume qua VM mới trước khi đọc Inputs hoặc mở ngân sách. Khi
-  VM mất hoặc ZIP bị cắt, có thể không còn gì để thu thập. Giữ nguyên lượt
-  đã đặt trước hoặc chưa đối soát, không làm mới bằng cách chạy lại notebook
-  với `resume: None`. TEST tiếp tục khóa.
+  mọi yêu cầu resume qua VM mới trước khi đọc Inputs hoặc mở ngân sách. Một
+  marker local cũng không thể phân biệt lần đầu và lần chạy lại sau khi VM
+  cũ mất. Candidate chặn mọi native launch, kể cả `resume: None`, đến khi
+  có admission dùng một lần được xác minh. Khi VM mất hoặc ZIP bị cắt, có
+  thể không còn gì để thu thập. Giữ nguyên mọi lượt đã đặt trước hoặc chưa
+  đối soát. TEST tiếp tục khóa.
 
 ## Smoke kỹ thuật trên đúng runtime
 

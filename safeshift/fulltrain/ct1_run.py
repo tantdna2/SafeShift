@@ -5,6 +5,7 @@ from itertools import permutations
 import os
 from pathlib import Path
 import re
+import stat
 import time
 from uuid import uuid4
 from zipfile import ZipFile
@@ -22,6 +23,7 @@ N_IMAGES = 48
 N_CALLS = 144
 SMOKE_CALLS = len(ARMS)
 PROCESS_RECEIPTS = ("setup-supervisor.json", "worker-supervisor.json")
+CONTROLLER_RECORD_BYTES = 65536
 IMAGE_BYTES = 12 * 2**20
 RUN_ID = re.compile(r"ct1-(?:smoke-)?[0-9a-f]{12}")
 RECORD = r"(intent|tokens|raw|result|failure)\.json"
@@ -93,19 +95,34 @@ def stability(read_receipt):
     seals = {}
     for name in PROCESS_RECEIPTS:
         payload = read_receipt(name)
-        require(len(payload) <= 65536 and process_group_closed(strict_json(payload)),
+        require(len(payload) <= CONTROLLER_RECORD_BYTES and process_group_closed(strict_json(payload)),
                 "CT1_PROCESS_GROUP_UNVERIFIED")
         seals[name] = sha256(payload)
     return {"status": "LEDGER_STABLE", "process_receipts_sha256": seals}
 
 
+def read_controller_record(root, name):
+    """Read a bounded, regular controller record without following a leaf alias."""
+    path = safe(root, name)
+    original = path.stat(follow_symlinks=False)
+    require(stat.S_ISREG(original.st_mode) and original.st_nlink == 1
+            and original.st_size <= CONTROLLER_RECORD_BYTES, "CT1_CONTROLLER_RECORD_TYPE_OR_SIZE")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0)
+    with os.fdopen(os.open(path, flags), "rb") as stream:
+        before = os.fstat(stream.fileno())
+        require(os.path.samestat(original, before) and stat.S_ISREG(before.st_mode)
+                and before.st_nlink == 1 and before.st_size <= CONTROLLER_RECORD_BYTES,
+                "CT1_CONTROLLER_RECORD_CHANGED")
+        data = stream.read(CONTROLLER_RECORD_BYTES + 1)
+        after = os.fstat(stream.fileno())
+        require(after.st_nlink == 1 and len(data) == before.st_size == after.st_size
+                and len(data) <= CONTROLLER_RECORD_BYTES and before.st_mtime_ns == after.st_mtime_ns
+                and before.st_ctime_ns == after.st_ctime_ns, "CT1_CONTROLLER_RECORD_CHANGED")
+    return data
+
+
 def stable_journal(root):
-    def read_receipt(name):
-        path = safe(root, name)
-        require(path.is_file() and path.stat().st_size <= 65536, "CT1_PROCESS_RECEIPT_MISSING_OR_OVERSIZE")
-        with path.open("rb") as stream:
-            return stream.read(65537)
-    return stability(read_receipt)
+    return stability(lambda name: read_controller_record(root, name))
 
 
 def restore(archive, expected, root, binding):

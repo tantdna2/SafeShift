@@ -134,7 +134,8 @@ def content(mode, settings=None):
         ("intro", "markdown", "# SafeShift CT1 — Kaggle " + mode + "\n"
          "Candidate tĩnh. Chỉ chạy khi Owner đã chấp thuận đúng SHA và Inputs. "
          "Đính kèm riêng source, ảnh TRAIN mù, checkpoint và phần mềm. "
-         "Dùng 2×T4, tắt Internet. Resume qua VM mới đang khóa.\n"),
+         "Dùng 2×T4, tắt Internet. Resume qua VM mới đang khóa. "
+         "Smoke và pilot bị chặn đến khi có admission dùng một lần đã xác minh.\n"),
         ("gpu-observe", "code", """import subprocess
 gpu_query = subprocess.run(
     ["nvidia-smi", "--query-gpu=index,name,driver_version,memory.free", "--format=csv,noheader,nounits"],

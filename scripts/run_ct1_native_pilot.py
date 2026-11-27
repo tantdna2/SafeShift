@@ -57,6 +57,12 @@ def config(path):
     return value
 
 
+def require_native_admission(mode):
+    # No trusted single-use admission is available in this candidate. A local
+    # marker cannot prove first use if an earlier Kaggle VM has disappeared.
+    require(mode == "preflight", "CT1_NATIVE_BLOCKED_NO_TRUSTED_SINGLE_USE_ADMISSION")
+
+
 def layout(cfg):
     data = mount_path(cfg["pilot_input"], directory=True)
     software = mount_path(cfg["software_input"], directory=True)
@@ -84,6 +90,7 @@ def binding(cfg, lock):
 
 def worker(args):
     cfg = config(args.config)
+    require_native_admission(cfg["mode"])
     deadline = args.deadline
     root, scratch = args.job / "evidence", args.scratch
     data, software, checkpoint, lock, plan = layout(cfg)
@@ -114,19 +121,45 @@ def worker(args):
     ct1_run.execute(root, plan, state, data / "images", backend, deadline)
 
 
-def export_diagnostic(root, archive, reason):
-    # The worker may still be writing journals or logs. Copy only records
-    # published by the controller after launch returned, or before it started.
-    diagnostic = root.parent / "diagnostic"
-    diagnostic.mkdir()
-    write(diagnostic / "diagnostic-status.json", {"status": "FORENSIC_ONLY",
-           "reason": reason, "ledger_stable": False, "resumable": False,
-           "budget_release": False, "live_evidence": "PRESERVED_IN_PLACE"})
-    for name in ("identity.json", "config-summary.json", "controller-failure.json", *ct1_run.PROCESS_RECEIPTS):
-        path = root / name
-        if path.is_file() and path.stat().st_size <= 65536:
-            write_bytes(diagnostic / name, path.read_bytes())
-    export(diagnostic, archive.with_name(archive.stem + "-diagnostic.zip"))
+def diagnostic_path(archive):
+    return archive.with_name(archive.stem + "-diagnostic.zip")
+
+
+def publish_export(root, archive):
+    # Export and verify under the job directory. Publish the ZIP name last,
+    # so an interruption cannot leave an ordinary result ZIP without its seal.
+    staging = root.parent / "export-stage"
+    staging.mkdir()
+    staged_zip = staging / (archive.name + ".pending")
+    export(root, staged_zip)
+    staged_seal = staging / (staged_zip.name + ".sha256.json")
+    os.link(staged_seal, archive.with_name(archive.name + ".sha256.json"))
+    os.link(staged_zip, archive)
+    staged_zip.unlink()
+    staged_seal.unlink()
+
+
+def export_diagnostic(root, archive, reason, *, ledger_stable=False):
+    evidence = root
+    omitted = []
+    if not ledger_stable:
+        # The worker may still be writing. Copy only bounded controller
+        # records without examining the ledger, logs or worker output.
+        evidence = root.parent / "diagnostic"
+        evidence.mkdir()
+        records = ("identity.json", "config-summary.json", "controller-failure.json", *ct1_run.PROCESS_RECEIPTS)
+        for name in records:
+            try:
+                data = ct1_run.read_controller_record(root, name)
+            except (ValueError, OSError):
+                omitted.append(name)
+                continue
+            write_bytes(evidence / name, data)
+    write(evidence / "diagnostic-status.json", {"status": "FORENSIC_ONLY",
+          "reason": reason, "ledger_stable": ledger_stable, "resumable": False,
+          "budget_release": False, "omitted_controller_records": omitted,
+          "live_evidence": "PRESERVED_IN_PLACE" if not ledger_stable else "STOPPED_LEDGER_RETAINED"})
+    publish_export(evidence, diagnostic_path(archive))
 
 
 def export_job(root, archive, plan, state, mode):
@@ -136,18 +169,22 @@ def export_job(root, archive, plan, state, mode):
         export_diagnostic(root, archive, str(exc)[:2000])
         return "FORENSIC_ONLY"
     write(root / "checkpoint-stability.json", stable)
-    if mode in ("pilot", "smoke") and (root / "resume-admission.json").is_file():
+    if mode in ("pilot", "smoke"):
         try:
+            require((root / "resume-admission.json").is_file(), "CT1_RESULT_ADMISSION_MISSING")
             ct1_run.reconstruct(root, plan, state, smoke=mode == "smoke")
         except (ValueError, KeyError, TypeError, OSError) as exc:
             write(root / "journal-export-failure.json",
                   {"status": "FORENSIC_ONLY", "type": type(exc).__name__, "message": str(exc)[:2000]})
-    export(root, archive)
+            export_diagnostic(root, archive, str(exc)[:2000], ledger_stable=True)
+            return "FORENSIC_ONLY"
+    publish_export(root, archive)
     return "PROCESS_EXITED"
 
 
 def supervise(args):
     cfg = config(args.config)
+    require_native_admission(cfg["mode"])
     require(sys.platform == "linux" and WORK.is_dir() and args.job.parent == WORK
             and args.job.name == cfg["run_id"], "CT1_EXACT_KAGGLE_JOB_ROOT")
     deadline = time.monotonic() + (WALL_SECONDS if cfg["mode"] == "pilot" else PREFLIGHT_SECONDS)
@@ -156,7 +193,7 @@ def supervise(args):
     state = binding(cfg, lock)
     root = args.job / "evidence"
     archive = WORK / (cfg["run_id"] + ".zip")
-    diagnostic = archive.with_name(archive.stem + "-diagnostic.zip")
+    diagnostic = diagnostic_path(archive)
     require(not any(p.exists() or Path(str(p) + ".sha256.json").exists() for p in (archive, diagnostic)),
             "CT1_EXPORT_ALREADY_PRESENT")
     args.job.mkdir(exist_ok=False)
@@ -172,7 +209,8 @@ def supervise(args):
                TMP=str(scratch), TEMP=str(scratch), OMP_NUM_THREADS="2", MKL_NUM_THREADS="2")
     setup_cutoff = min(deadline - EXPORT_RESERVE, time.monotonic() + budgets["setup_seconds"])
     try:
-        write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
+        if cfg["mode"] != "preflight":
+            write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         args_common = ["--config", str(args.config), "--job", str(args.job), "--scratch", str(scratch)]
         def launch(phase, python, cutoff, phase_env):
             command = [str(python), "-B", "-m", "scripts.run_ct1_native_pilot", phase,
@@ -182,7 +220,8 @@ def supervise(args):
                 log=root / (phase + ".log"), receipt=receipt,
                 max_log_bytes=budgets["max_log_bytes"], watch_log_root=args.job / "setup")
             require(report["status"] == "EXITED" and report["returncode"] == 0
-                    and supervision.process_group_closed(strict_json(receipt.read_bytes())),
+                    and supervision.process_group_closed(strict_json(ct1_run.read_controller_record(
+                        root, receipt.name))),
                     "CT1_" + phase.upper() + "_SUPERVISOR_FAILED")
 
         launch("setup", sys.executable, setup_cutoff, env)
@@ -204,7 +243,7 @@ def supervise(args):
     failure = any((root / name).exists()
                   for name in ("controller-failure.json", "journal-export-failure.json"))
     if outcome == "FORENSIC_ONLY":
-        print("FORENSIC_ONLY", archive.with_name(archive.stem + "-diagnostic.zip"))
+        print("FORENSIC_ONLY", diagnostic_path(archive))
     else:
         print("PARTIAL_OR_BLOCKED" if failure else outcome, archive)
 

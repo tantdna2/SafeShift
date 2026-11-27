@@ -4,6 +4,7 @@ from collections import Counter
 from contextlib import nullcontext
 from itertools import permutations
 import json
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import time
@@ -257,6 +258,7 @@ class NativeTest(unittest.TestCase):
                     return {"status": "EXITED", "returncode": 0}
 
                 with (patch.object(controller, "WORK", work), patch.object(controller.sys, "platform", "linux"),
+                      patch.object(controller, "require_native_admission"),
                       patch.object(controller, "layout", return_value=(self.data, work, work, {}, self.plan)),
                       patch.object(controller.tempfile, "mkdtemp", return_value=str(scratch)),
                       patch.object(controller.provision, "clean_env", return_value={}),
@@ -340,13 +342,77 @@ class NativeTest(unittest.TestCase):
         root = self.evidence("corrupt")
         write_bytes(root / "calls/000/intent.json", b"{")
         archive = self.root / "corrupt.zip"
-        controller.export_job(root, archive, self.plan, self.binding, "pilot")
-        members = verify_archive(archive)
+        self.assertEqual(controller.export_job(root, archive, self.plan, self.binding, "pilot"), "FORENSIC_ONLY")
+        self.assertFalse(archive.exists())
+        diagnostic = controller.diagnostic_path(archive)
+        members = verify_archive(diagnostic)
         self.assertIn("calls/000/intent.json", members)
         self.assertIn("journal-export-failure.json", members)
+        self.assertIn("diagnostic-status.json", members)
         self.assertNotIn("runs.json", members)
         with self.assertRaisesRegex(ValueError, "FORENSIC_ARCHIVE_NOT_RESUMABLE"):
-            ct1_run.restore(archive, sha(archive), self.root / "forbidden", self.binding)
+            ct1_run.restore(diagnostic, sha(diagnostic), self.root / "forbidden", self.binding)
+
+    def test_diagnostic_omits_receipt_alias_and_oversize(self):
+        root = self.evidence("unsafe-records")
+        adjacent = self.root / "adjacent.json"
+        write_bytes(adjacent, b"must not be copied")
+        setup, worker = (root / name for name in ct1_run.PROCESS_RECEIPTS)
+        setup.unlink()
+        os.link(adjacent, setup)
+        worker.write_bytes(b"A" * (ct1_run.CONTROLLER_RECORD_BYTES + 1))
+        archive = self.root / "unsafe-records.zip"
+        self.assertEqual(controller.export_job(root, archive, self.plan, self.binding, "pilot"), "FORENSIC_ONLY")
+        diagnostic = controller.diagnostic_path(archive)
+        members = verify_archive(diagnostic)
+        self.assertTrue(set(ct1_run.PROCESS_RECEIPTS).isdisjoint(members))
+        status = json.loads((root.parent / "diagnostic/diagnostic-status.json").read_bytes())
+        self.assertTrue(set(ct1_run.PROCESS_RECEIPTS) <= set(status["omitted_controller_records"]))
+        self.assertEqual(adjacent.read_bytes(), b"must not be copied")
+
+    def test_partial_archive_publication_never_exposes_an_unsealed_zip(self):
+        for stage in ("write", "publish"):
+            with self.subTest(stage=stage):
+                job = self.root / stage
+                job.mkdir()
+                root = job / "evidence"
+                root.mkdir()
+                write(root / "data.json", {})
+                archive = self.root / f"job-{stage}.zip"
+                real_link = os.link
+
+                def fail_during_write(_root, staged):
+                    write_bytes(staged, b"incomplete")
+                    raise OSError("fixture write interrupted")
+
+                def fail_before_zip(source, target):
+                    if target == archive:
+                        raise OSError("fixture publication interrupted")
+                    return real_link(source, target)
+
+                if stage == "write":
+                    failure = patch.object(controller, "export", side_effect=fail_during_write)
+                else:
+                    failure = patch.object(controller.os, "link", side_effect=fail_before_zip)
+                with failure, self.assertRaisesRegex(OSError, "interrupted"):
+                    controller.publish_export(root, archive)
+                self.assertFalse(archive.exists())
+                self.assertTrue((job / "export-stage" / (archive.name + ".pending")).is_file())
+
+    def test_without_trusted_first_use_proof_native_stops_before_layout(self):
+        for mode in ("pilot", "smoke"):
+            run_id = "ct1-smoke-000000000000" if mode == "smoke" else self.binding["run_id"]
+            config = self.root / (mode + ".json")
+            write(config, self.config_value(mode=mode, run_id=run_id))
+            job = self.root / run_id
+            with patch.object(controller, "layout") as layout:
+                for entry in (controller.supervise, controller.worker):
+                    for _ in range(2):
+                        with self.assertRaisesRegex(ValueError, "NO_TRUSTED_SINGLE_USE_ADMISSION"):
+                            entry(SimpleNamespace(config=config, job=job))
+                layout.assert_not_called()
+            self.assertFalse(job.exists())
+        controller.require_native_admission("preflight")
 
     def test_observed_driver_changes_checkpoint_identity(self):
         cfg = {"source_commit": "a" * 40, "approved_drivers": ["570.26", "570.27"],
