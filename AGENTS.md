@@ -96,8 +96,10 @@ và [hợp đồng CT1–CT3](docs/research/THESIS_CT123_PREPARATION.md).
   và môi trường tương ứng. Ghi rõ kết quả, giới hạn, giá trị chưa kiểm và
   bằng chứng có thể tái lập. Phân biệt kết quả đã kiểm chứng, thông tin
   do người khác cung cấp và giả thuyết.
-- Điều phối qua Orca với skill đúng executable, tối đa hai worker đồng
-  thời mặc định. Medium/High theo task. GPT-6.2 Astra và Gemini 4 Neon
+- Coordinator dùng **GPT-6.2 Sol High** và xác minh model/effort hiệu lực
+  của phiên điều phối. Điều phối qua Orca với skill đúng executable, tối
+  đa hai worker đồng thời mặc định. Worker dùng Medium/High theo task.
+  GPT-6.2 Astra và Gemini 4 Neon
   dành cho bài khó cần thiết, hạn chế Carbon, loại Claude và GPT-OSS 120B.
   Kiểm model/effort hiệu lực, vị trí và quota, lưu dispatch/receipt.
   Tái sử dụng session đúng vai trò. Khi quota hoặc liveness không rõ,
