@@ -38,7 +38,7 @@ def fingerprint(image):
 def clean_png(raw):
     from PIL import Image, ImageOps
     with Image.open(BytesIO(raw), formats=("JPEG", "PNG")) as source:
-        if getattr(source, "n_frames", 1) != 1 or max(source.size) > 2560:
+        if getattr(source, "n_frames", 1) != 1 or not ct1_native.image_size_allowed(source.size):
             return None
         with ImageOps.exif_transpose(source).convert("RGB") as rgb:
             image = Image.frombytes("RGB", rgb.size, rgb.tobytes())
@@ -46,7 +46,10 @@ def clean_png(raw):
                 image.save(stream, "PNG", compress_level=3)
                 payload = stream.getvalue()
                 require_image = len(payload) <= ct1_run.IMAGE_BYTES
-                return (payload, fingerprint(image)) if require_image else None
+                if not require_image:
+                    return None
+                with ct1_native.image_from_bytes(payload) as admitted:
+                    return payload, fingerprint(admitted)
 
 
 def prepare_images(train, audit_images, exclusions_file, output):

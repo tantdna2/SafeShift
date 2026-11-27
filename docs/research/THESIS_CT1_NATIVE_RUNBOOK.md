@@ -45,6 +45,9 @@ và kiểm thêm dHash với 16 ảnh audit và các ảnh được chọn, ngư
 dHash là sàng lọc gần trùng, chưa chứng minh độc lập nguồn. Định danh
 ngẫu nhiên giữ trong gói, mức và locator gốc chỉ có trong custody
 cục bộ. PNG nguồn runner giữ pixel hiển thị RGB và bỏ metadata.
+Bộ đóng gói và runner cùng dùng giới hạn tối đa 2.560 pixel mỗi
+chiều và 3.686.400 pixel mỗi ảnh. Bộ đóng gói chạy lại phép mở PNG
+của runner trước khi đưa ảnh vào cohort.
 Cohort đã phơi nhiễm dùng để đo kỹ thuật và phát triển, không dùng
 xác nhận hiệu quả.
 

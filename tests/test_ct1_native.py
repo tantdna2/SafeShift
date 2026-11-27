@@ -163,6 +163,12 @@ class NativeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "TOKEN_BINDING"):
             ct1_run.checkpoint_results(out, self.root / "invalid.zip", self.plan, self.binding)
 
+    def test_source_and_native_share_pixel_envelope(self):
+        for size in ((2560, 1440), (1440, 2560), (720, 406)):
+            self.assertTrue(ct1_native.image_size_allowed(size))
+        for size in ((2336, 1752), (2561, 900), (0, 500)):
+            self.assertFalse(ct1_native.image_size_allowed(size))
+
     def test_driver_and_resource_configuration(self):
         with self.assertRaises(ValueError):
             ct1_native.release_budgets([])

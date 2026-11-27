@@ -43,11 +43,16 @@ def memory_headroom(torch, *, before_call):
     return {"host": host, "devices": devices}
 
 
+def image_size_allowed(size):
+    width, height = size
+    return 0 < width <= 2560 and 0 < height <= 2560 and width * height <= MAX_PIXELS
+
+
 def image_from_bytes(payload):
     from PIL import Image
     with Image.open(BytesIO(payload), formats=("PNG",)) as image:
         require(getattr(image, "n_frames", 1) == 1 and image.mode == "RGB"
-                and image.width * image.height <= MAX_PIXELS and max(image.size) <= 2560,
+                and image_size_allowed(image.size),
                 "CT1_BOUNDED_STILL_RGB_PNG_REQUIRED")
         require(not image.info and not image.getexif(), "CT1_IMAGE_METADATA_NOT_ALLOWED")
         image.load()
