@@ -11,8 +11,10 @@
   ảnh hoặc inference. Còn thiếu quyền xem ảnh, hai chuyên gia, hồ sơ V,
   biên khoa học, quota theo cấu hình và quyền chạy.
 - **CT2** là hướng thuật toán riêng. Sàng lọc ba sản phẩm nhãn Full-TRAIN
-  bằng CPU trên 3.763 TRAIN đã phơi nhiễm, với hai ngân sách M/K. Kết quả chỉ
-  có phạm vi hồi cứu, giữ `PROVISIONAL_PRE_FINAL_ADMISSION` của inputs.
+  bằng CPU trên 3.763 TRAIN đã phơi nhiễm hoàn tất lưới M/K với 240 ô
+  seed/budget. Hai lượt cho cùng output/receipt SHA256. Biên nhận và
+  [số gộp theo ngân sách](research/THESIS_CT123_PREPARATION.md#kết-quả-screening-train)
+  thuộc `EXPLORATORY_EXPOSED_TRAIN`, nguồn giữ `PROVISIONAL_PRE_FINAL_ADMISSION`.
 - **CT3** hỗ trợ audit mù, truy nguồn và review CT1/CT2. Study người dùng cần
   quyền, reviewer và chuẩn chấm riêng. HNLO theo nguồn và calibration vẫn có
   điều kiện. TEST 1.250 giữ khóa. Final Admission và học vụ tiếp tục theo

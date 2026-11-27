@@ -142,6 +142,41 @@ hash đầu vào/đầu ra và cấu hình. Đầu ra từng ca, ảnh, raw và 
 riêng nằm ngoài Git. Kết quả mang trạng thái `EXPLORATORY_EXPOSED_TRAIN`
 và giữ `PROVISIONAL_PRE_FINAL_ADMISSION` của nguồn.
 
+### Kết quả screening TRAIN
+
+Python 3.11.9 trên Windows, source sạch
+`0a9c623e3962115f8018d2622b4187eee454ea19`. Đọc 3.763/3.763 ID,
+eligible 2.609 ca Qwen3-Normal, gồm 38 false-safe và 14 severe miss.
+Đã kiểm 240 ô seed/M/K và các mốc full-acquisition của benchmark.
+Hai lượt CPU độc lập tạo outputs trùng byte. SHA256 `screening.json`
+`b4b90d393bfe85b5cb5a56138214785482615790afe2040bc2821d0883719c4e`,
+receipt `6091a9c21b730eed2e6581e1d9d4b8a1051a1018812e54118e672b3b272dddc6`.
+Hai tệp nằm trong `data/processed/thesis-ct2/screening-v1/`.
+
+Các ô dưới là trung bình 20 seed trên cùng cohort, ghi **false-safe /
+severe miss được đưa vào hàng review**. Random/focal-only dùng 3.763
+lượt mô phỏng. Mỗi arm peer dùng đủ M trong bảng.
+
+| M | K | Random / focal-only | InternVL nhị phân | InternVL theo severity | MiniCPM nhị phân |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 4.139 | 188 | 2,80 / 1,05 | 3,75 / 2,20 | 3,80 / 2,25 | 3,10 / 1,40 |
+| 4.891 | 188 | 2,80 / 1,05 | 3,90 / 2,40 | 9,20 / 5,50 | 3,60 / 1,70 |
+| 6.372 | 37 | 0,35 / 0,10 | 0,35 / 0,25 | 0,85 / 0,85 | 3,15 / 2,05 |
+| 6.372 | 188 | 2,80 / 1,05 | 4,30 / 2,50 | 20,20 / 12,05 | 5,20 / 2,70 |
+| 6.372 | 376 | 6,05 / 2,45 | 7,80 / 4,55 | 20,75 / 12,30 | 8,25 / 3,80 |
+| 6.372 | 1.133 | 16,65 / 6,50 | 23 / 13 | 23 / 13 | 18,45 / 7,60 |
+
+Ở M=6.372, K=188 (5,0% planned), InternVL theo severity dùng thêm 2.609
+lượt peer mô phỏng và đưa trung bình 20,20/38 ca vào hàng, precision 10,74%
+và còn 17,80 false-safe ngoài hàng. Chênh paired với random trung bình
++17,40 false-safe và +11,00 severe miss. MiniCPM strict C1 và V1 chọn
+cùng hàng ở lưới này vì cả INVALID và Normal đều không tạo cờ Hazard.
+K=37 cho thứ tự khác. Chênh quan sát dưới từng ngân sách và min/max theo
+seed không đo bất định chuyển nguồn. Các số này phục vụ chọn ứng viên
+cho validation, chưa xác lập cấu hình vận hành, hiệu quả thực tế hay
+tính mới. Nếu mỗi hồ sơ mất 3–5 phút, K=188 tương đương 9,4–15,7
+giờ review, trước phân xử. Chưa có đo thực địa hoặc người xử lý hàng.
+
 ## CT3 — Hồ sơ và luồng kiểm toán
 
 Giao diện nhỏ ưu tiên task review cụ thể. Luồng CT1 mở ảnh đúng quyền,
