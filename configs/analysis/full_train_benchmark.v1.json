@@ -1,0 +1,47 @@
+{
+  "schema": "safeshift-full-train-benchmark-v1",
+  "planned_n": 3763,
+  "products": {
+    "qwen3": {
+      "id": "QWEN3_FULL_TRAIN_COMPOSITE_V1",
+      "source_seal_sha256": "7e7793073eb639a2d0bd22e84c11cd773be7fdb86e7e1f5f59e3baf0dd0c98de",
+      "score_limit": "CROSS_SERIES_SCORE_COMPATIBILITY_UNVERIFIED"
+    },
+    "internvl35": {
+      "id": "InternVL3.5 Full-TRAIN Grammar V2",
+      "source_seal_sha256": "8bd91408bcac1510aec15f70428e973b1c7c3e72a64272f7d35dc2c330c0e947",
+      "score_limit": "HNLO_NOT_AVAILABLE"
+    },
+    "minicpm": {
+      "id": "minicpm-fulltrain-normalization-v1",
+      "source_seal_sha256": "385ceddb799e735e3eecea04457f3a178996e29992e69265762a5031a6cb1fbd",
+      "score_limit": "HNLO_NOT_AVAILABLE"
+    }
+  },
+  "release": {
+    "rights_ref": "https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7206868367",
+    "authority_body_sha256": "325209db59efac0226600e7be07b19a1c7650e0dacc7765bfecb9ad3353a6366",
+    "custody_ref": "docs/research/FULL_TRAIN_BENCHMARK_V1.md#xác-minh-đầu-vào",
+    "source_review_ref": "docs/research/FULL_TRAIN_BENCHMARK_V1.md#xác-minh-đầu-vào",
+    "result_status": "PROVISIONAL_PRE_FINAL_ADMISSION",
+    "internvl_handoff_manifest_sha256": "6c043c753f1c9bda037df4da10ff18217ab6dd7c7638f03834de7055f031063c",
+    "members": {
+      "cohort": {
+        "size_bytes": 935125,
+        "sha256": "d3e01a7ada38bc3c68217bd19bfdfba055a27241b11732da8723243a17d39f35"
+      },
+      "qwen3": {
+        "size_bytes": 1281172,
+        "sha256": "5dd2c9d042f822805c157088c1fc6b489e90c10374a28b66db79648b61864b3b"
+      },
+      "internvl35": {
+        "size_bytes": 1305569,
+        "sha256": "af58fcb60c43bf689e3fbe74250e641f1645a0b4cee375bdf856e1aa14ff859e"
+      },
+      "minicpm": {
+        "size_bytes": 1579734,
+        "sha256": "1e576b51eace6897ac14d8b81ff1fb745e8a745c294b051de5ebf87d07e53f90"
+      }
+    }
+  }
+}

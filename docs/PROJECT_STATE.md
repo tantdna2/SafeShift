@@ -1,5 +1,30 @@
 # SafeShift — PROJECT STATE
 
+## Hiện hành — Benchmark First, 27/11/2026
+
+- Main xác minh trên GitHub tại `c238f841fb766db430df83ba22967e6b03713952`.
+  Tiếp tục cùng [Draft PR #136](https://github.com/tantdna2/SafeShift/pull/136)
+  với lịch sử merge main thông thường. Audit FAIL tháng 10 là hồ sơ lịch sử.
+  Bản sửa và extension trên HEAD mới cần review và audit riêng.
+- Owner đã chốt Qwen3 Composite V1, InternVL3.5 Grammar V2 và MiniCPM
+  Normalization V1 để so nhãn trên cùng TRAIN, giữ MiniCPM C1 làm sensitivity.
+  [Quyết định Benchmark First](research/DECISIONS.md#dec-20261127-owner-benchmark-first).
+- Benchmark đo đủ 3.763 ID cho cả ba sản phẩm dưới trạng thái
+  `PROVISIONAL_PRE_FINAL_ADMISSION` theo quyền Owner mới. Bảng lớp/miền,
+  ma trận và đối chiếu cặp đã hoàn thành. Cả 205 conversion MiniCPM là
+  GT Normal. Bộ kiểm số học độc lập đạt 3.204 phép đối chiếu.
+  Final Admission của các route vận hành và score chung vẫn riêng.
+  [Báo cáo kết quả](research/FULL_TRAIN_BENCHMARK_V1.md).
+- Đã truy nguyên các nhóm lỗi A–E từ 24 ID có nguồn, GT và output đã kiểm.
+  Ba phương án CT1–CT3 là audit rubric/severity, triage có giới hạn workload
+  và viewer truy bằng chứng. Bằng chứng visual, validation độc lập và
+  phương pháp chờ quyết định theo phạm vi áp dụng. Rubric dùng E1 cùng protocol, E2 ablation,
+  E3 stress test, E4 error analysis và E5 tái lập. Scope hiện hành là CPU
+  và kết quả đã lưu. TEST, GPU và Kaggle nằm ngoài phạm vi.
+- Đã quy cả 46 mục FAIL/ERROR của lần discovery trước về lỗi tái hiện trên
+  main. Không thấy hồi quy PR trong nhóm đã kiểm. Draft chờ xác nhận review
+  chính thức và quyền merge riêng theo quy trình hiện hành.
+
 ## Hiện hành — MiniCPM-V-4 Full-TRAIN đã hoàn thành — 26/11/2026
 
 | Trạng thái | Bằng chứng và phạm vi |

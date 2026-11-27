@@ -1,5 +1,41 @@
 # SafeShift — Kế hoạch thực thi Khóa luận tốt nghiệp 2026
 
+## Hiện hành — Benchmark First, 27/11/2026
+
+Trọng tâm Khóa luận là VLM nhận diện nguy cơ công nghiệp, confidence calibration
+và evidence auditing. Chỉ đạo hiện hành đặt **benchmark baseline → phân tích lỗi
+→ truy nguyên → đề xuất → phản biện khoa học → Owner chốt → triển khai → E1–E5**.
+Thiết kế bốn peers, focal rotation, logistic và ensemble bên dưới được lưu như
+đề xuất lịch sử. Quyết định hiện hành chọn ba **sản phẩm nhãn** đã lưu làm
+baseline hồi cứu trên TRAIN đã phơi nhiễm. M2 giữ phạm vi Seminar lịch sử.
+[Xem quyết định mới](DECISIONS.md#dec-20261127-owner-benchmark-first).
+
+| Định hướng giảng viên | Câu hỏi phải trả lời từ baseline và case review |
+| --- | --- |
+| CT1 / CV-B/D | Metric và loại lỗi nào cần ưu tiên, false-safe/severe miss và false alarm thay đổi thế nào theo lớp và miền? |
+| CT2 / CV-B/C | Có điểm đáng tin để hiệu chỉnh hoặc chỉnh ngưỡng, hay bằng chứng cho sampling, grounding hoặc bổ trợ giữa các model? Chọn đối chứng và tính đủ chi phí. |
+| CT3 / CV-C/D | Có thể tái dựng bằng chứng cho ca nghiêm trọng hay disagreement từ lineage, và đo được độ chính xác/thời gian của người kiểm tra theo rubric được duyệt? |
+
+| Thí nghiệm | Nghiệm thu theo rubric giảng viên |
+| --- | --- |
+| **E1 — So sánh cùng protocol** | Cùng dữ liệu, ID, GT, workload, quy tắc metric, mẫu số và điều kiện so sánh. Ghi version của từng hệ thống, số mẫu, hướng mong muốn của metric chính và guardrail. Khi Owner đã chốt phương pháp, so paired baseline với proposed trên phạm vi được freeze. |
+| **E2 — Ablation** | Tắt từng thành phần mới. Khi cấu hình phù hợp, so baseline, chỉ thêm phương pháp và cấu hình đầy đủ. Báo thay đổi chất lượng, lỗi an toàn, độ trễ và chi phí. |
+| **E3 — Stress test** | Audit mapping nhãn, kiểm lớp hiếm và domain shift. Báo worst-domain AUPRC/FNR khi đủ score/support, kết quả âm và bất định. CI bootstrap chỉ dùng khi xác định được đơn vị lấy mẫu phù hợp. |
+| **E4 — Error analysis** | Tối thiểu ba nhóm lỗi và ba ví dụ trước–sau có quyền và provenance. Ghi cơ chế đã xác minh, giả thuyết, cách khắc phục và giới hạn. Trước khi có phương pháp chỉ ghi ca baseline. |
+| **E5 — Tái lập** | Git commit, môi trường, lệnh chạy, seed nếu áp dụng, config và kết quả gốc. Ghi source/model revision, hash đầu vào, stdout/receipt và file đầu ra phù hợp quyền. |
+
+Baseline TRAIN là hồi cứu. Validation độc lập dùng chọn phương pháp hoặc
+ngưỡng sau khi đủ quyền. TEST giữ khóa và đánh giá xác nhận cần freeze, đủ
+precision và quyết định riêng. Giữ kết quả âm, không chia lại TRAIN thành
+holdout. Đánh giá người dùng chỉ thuộc nhánh CT3 nếu viewer được chọn, theo
+rubric và quyền riêng. [Báo cáo baseline và giới hạn](FULL_TRAIN_BENCHMARK_V1.md).
+
+Đầu vào cho quyết định Owner gồm benchmark ba sản phẩm, truy nguyên A–E
+từ bản lưu và ba ứng viên CT1–CT3. Đề xuất chính là đối chứng rubric/severity
+đơn yếu tố, triage cùng ngân sách là nhánh ứng viên và viewer cần kiểm
+tính hữu ích với reviewer có quyền. Validation độc lập và protocol mới
+chờ chốt trước khi triển khai. [Hồ sơ quyết định và guardrail](FULL_TRAIN_BENCHMARK_V1.md#ba-phương-án-trình-owner).
+
 ## OWNER UPDATE - 02/11/2026: fresh full TRAIN only
 
 [Issue #171](https://github.com/tantdna2/SafeShift/issues/171) /

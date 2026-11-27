@@ -1,5 +1,20 @@
 # Kiến trúc Foundation V1
 
+## CPU Seminar M3 và benchmark Full-TRAIN — Draft #136
+
+[`scripts/analyze_seminar.py`](../scripts/analyze_seminar.py) phát R1–R5 từ fixture
+sau gate M2 khóa hash. [`data/saved_reports.py`](../safeshift/data/saved_reports.py)
+giữ bộ đọc, ledger và adapter native byte-only dùng lại cho sensitivity.
+[`evaluation/seminar.py`](../safeshift/evaluation/seminar.py) tính metrics M2.
+[Xem cách chạy và hợp đồng lịch sử](SEMINAR_ANALYSIS.md).
+
+Extension label-only dùng lại confusion/metric của Qwen3 Composite và các
+kiểm SHA/path của M3. Cohort và ba projection đã được cấp quyền đi vào
+[`scripts/benchmark_full_train.py`](../scripts/benchmark_full_train.py), rồi
+exact join, metrics, so sánh cặp, C1 sensitivity và receipt. Cấu hình ghim
+bốn projection có quyền cho benchmark `PROVISIONAL_PRE_FINAL_ADMISSION`.
+[Hợp đồng, kết quả và trạng thái](research/FULL_TRAIN_BENCHMARK_V1.md).
+
 ## Post-PR200 V5 RAM/source repair — 17/11/2026
 
 Read [RAM runbook](MINICPM_V5_RAM_REPAIR.md) first. `fulltrain/memory.py` reuses

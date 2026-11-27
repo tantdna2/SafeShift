@@ -1,5 +1,30 @@
 # SafeShift — Kế hoạch thực thi M1–M8
 
+## Hiện hành — Benchmark First, 27/11/2026
+
+Task hiện tại tiếp tục Draft PR #136 trên main `c238f841`. Các thẻ M1–M8 bên
+dưới ghi lộ trình Seminar lịch sử và quyền đã cấp đúng phạm vi. Trình tự Khóa
+luận hiện hành theo chỉ đạo Owner/giảng viên gồm các mốc sau.
+
+| Mốc | Đầu ra và điều kiện chuyển |
+| --- | --- |
+| Baseline | Sửa lineage CSV R3/R4 và kiểm R1–R5 M2 bằng fixture; extension Full-TRAIN riêng. Chỉ báo cáo kết quả thật đã được phép và tái tính, ghi mẫu số và giới hạn nguồn. |
+| Phân tích lỗi và truy nguyên | Ghép 3.763 ID/hash/GT/domain từ đúng dữ liệu đã niêm phong. Xếp theo số ca, mức nặng, domain và độ mạnh bằng chứng. Tách pattern, cơ chế đã xác minh và giả thuyết. |
+| Đề xuất và phản biện | Gắn chứng cứ với CV-A/B/C/D và CT1/CT2/CT3, endpoint chính/guardrail, đối chứng và chi phí. Codex và Antigravity phản biện độc lập qua Orca; Coordinator xử lý bất đồng và ghi blocker. |
+| Chốt và triển khai | Owner chọn phương pháp sau phản biện. Chốt giao thức, quyền dữ liệu, precision, chi phí và điều kiện loại trước khi lập trình phương pháp hoặc chạy E1–E5. |
+| E1–E5 | E1 so sánh cùng protocol, E2 ablation, E3 stress test, E4 error analysis, E5 tái lập. Tách hồi cứu TRAIN khỏi validation và đánh giá độc lập. Giữ split/GT và khóa TEST. [Rubric nghiệm thu](research/THESIS_EXECUTION_PLAN_2026.md#hiện-hành--benchmark-first-27112026). |
+
+Panel hồi cứu gồm đúng Qwen3 Composite V1, InternVL3.5 Grammar V2 và MiniCPM
+Normalization V1. MiniCPM strict C1 là sensitivity trên cùng ID. Yêu cầu bốn
+model và thiết kế ensemble thuộc hồ sơ lịch sử/đề xuất.
+[Phạm vi benchmark](research/DECISIONS.md#dec-20261127-owner-retrospective-benchmark-authority).
+Đã đo baseline và phân tích cặp trên đủ 3.763 TRAIN ID với trạng thái
+`PROVISIONAL_PRE_FINAL_ADMISSION`. Đã truy nguyên output đã lưu ở 24 ID,
+đối chiếu rubric và phản biện ba ứng viên CT1–CT3. Owner chọn hướng trước
+khi khóa protocol validation, ngân sách và guardrail. Review hình ảnh/case
+visual và study viewer cần phạm vi quyền dữ liệu tương ứng.
+[Đầu ra, giới hạn và tái lập](research/FULL_TRAIN_BENCHMARK_V1.md).
+
 ## MiniCPM Serial 7 / 18 November 2026
 
 The coding task ends at one Draft PR from `0b79c87230bcaea83f4105dea2c7b6635c97bdb4`.
