@@ -30,6 +30,12 @@ precision và quyết định riêng. Giữ kết quả âm, không chia lại T
 holdout. Đánh giá người dùng chỉ thuộc nhánh CT3 nếu viewer được chọn, theo
 rubric và quyền riêng. [Báo cáo baseline và giới hạn](FULL_TRAIN_BENCHMARK_V1.md).
 
+Đầu vào cho quyết định Owner gồm benchmark ba sản phẩm, truy nguyên A–E
+từ bản lưu và ba ứng viên CT1–CT3. Đề xuất chính là đối chứng rubric/severity
+đơn yếu tố, triage cùng ngân sách là nhánh ứng viên và viewer cần kiểm
+tính hữu ích với reviewer có quyền. Validation độc lập và protocol mới
+chờ chốt trước khi triển khai. [Hồ sơ quyết định và guardrail](FULL_TRAIN_BENCHMARK_V1.md#ba-phương-án-trình-owner).
+
 ## OWNER UPDATE - 02/11/2026: fresh full TRAIN only
 
 [Issue #171](https://github.com/tantdna2/SafeShift/issues/171) /

@@ -163,73 +163,76 @@ nhau đáng kể, như 9 Hazard và 8 Level01 trong luyện kim.
 | level01_false_safe | 30,00% (147/490) | 30,00% (147/490) | 0,00% (0/490) |
 | valid_label_rate | 94,55% (3558/3763) | 100,00% (3763/3763) | 5,45% (205/3763) |
 
-## Điểm yếu và cơ chế lỗi
+## Truy nguyên các nhóm lỗi A–E
 
-- **Qwen3.** Macro-F1 và Balanced Accuracy cao nhất trong ba sản phẩm. Accuracy
-  77,92% thấp hơn mốc luôn đoán Normal (80,10%), với Hazard Recall 94,93% so với
-  0 ở mốc đó. Hạ Level01 thành Level02 **303/490** lần. Precision Level03 là
-  5/232. Điện chiếm 19/38 false-safe, còn dầu và hóa chất chiếm 12/14 severe
-  miss. Điện có FNR cao nhất (19/81), luyện kim có Macro-F1 thấp nhất (29,12%).
-- **InternVL3.5.** FNR 20/749 và severe miss 4/490 thấp nhất, đi kèm FPR
-  1.532/3.014. Ô Normal → Level03 có **1.310** ca, chiếm 85,51% FP.
-  Level03 precision là 5/1.418. Level01 → Level02 có 339/490 ca. Luyện kim
-  có Macro-F1 8,22%, FPR 467/534. Điện có FNR cao nhất (12/81).
-- **MiniCPM V1.** Accuracy 81,13% cao nhất và FPR 160/3.014 thấp nhất, trong
-  khi FNR **272/749** và severe miss **147/490** cao nhất. Đường hầm có
-  FNR 122/200, severe miss 73/103 và FPR 0/764. Điện có FNR 47/81.
-  Macro-F1 thấp nhất trong luyện kim (33,38%).
-- **Cơ chế đã xác minh.** Cả **205/205** conversion là GT Level04, gồm điện
-  114, đường hầm 64, dầu và hóa chất 26, luyện kim 1, băng tải than 0. Mọi
-  ca chuyển từ INVALID sang true negative. Tăng **205/3.763**, tức 5,45 điểm
-  phần trăm cho độ phủ và accuracy, giảm U_N từ 205 xuống 0. FNR, FPR và
-  severe miss giữ nguyên theo mẫu số cố định. Việc kiểm GT diễn ra sau
-  normalization. Không suy độ thuần 205/205 sang dữ liệu mới.
-  [Cách xác nhận lỗi định dạng gốc](MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md).
+Từ hai danh sách review đã chuẩn bị, chọn **24 ID riêng biệt** cho chín
+nhóm đối chiếu có thể chồng lấp. Ưu tiên phủ miền rồi dùng thứ tự đã
+niêm phong trong danh sách. Kiểm cả ba projection khớp TRAIN, GT mức ảnh,
+folder domain và SHA256 ảnh. Qwen3 khớp nhãn và nguồn ở ledger V4/Recovery
+đã chọn trên cả 24 ID. InternVL và MiniCPM khớp SHA256 và token nhãn ở
+48 thành viên raw đã lưu. Cả 24 MiniCPM là nhãn C1 hợp lệ trong mẫu này.
+Audit dùng ca có chủ đích để truy xuất nguồn lỗi, với mẫu số toàn cohort lấy
+từ benchmark đã niêm phong. SHA256 của biên bản gộp là
+`9606d6f6f4d588f3448f956490106eb256cbe6784dbca0444c2b12df2561dd1d`.
 
-Phân bố GT Normal 3.014/3.763 và Level03 8/3.763 cho thấy mất cân bằng thực
-tế. Bảng nhầm lẫn xác nhận hiện tượng hạ severity, dự đoán Level03 quá nhiều
-và bỏ sót theo miền. Các giả thuyết còn mở gồm lệch ranh giới phân loại,
-ảnh hưởng của grammar/prompt hoặc resampler, dịch chuyển giữa nguồn, và
-shortcut do người hoặc thiết bị xuất hiện. Folder domain và nhãn đầu ra
-chưa cô lập được những nguyên nhân đó. Danh sách riêng chọn 60 ID theo quy
-tắc hash cố định trong từng nhóm/miền, gồm các ca bỏ sót chung, ba nhóm lỗi
-trọng tâm và ca đúng đối chứng. Chưa review ảnh hay lý do thị giác.
+Phạm vi Owner đã cấp gồm saved outputs, GT mức ảnh, miền và hash. Các
+biên bản giữ ID và đối chiếu row-level cục bộ. Kiểm SHA chứng minh đúng
+danh tính ảnh theo hồ sơ và đúng bản lưu. Việc xác định vật thể, độ che khuất,
+ánh sáng và người trong ảnh còn cần xem mẫu visual theo quyền riêng.
+Bộ dữ liệu mô tả nhãn mức ảnh và polygon đối tượng. Polygon đối tượng
+chưa tự xác định lý do cho nhãn nguy cơ hoặc cho quyết định của VLM.
+[Phạm vi Owner](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7206868367),
+[InspecSafe-V1 của Liu và cộng sự](https://arxiv.org/abs/2601.21173),
+[quy ước nguồn/GT](../DATA_AND_ETHICS.md).
 
-## Bổ trợ và giới hạn của kết hợp
-
-InternVL phát hiện **23/38** false-safe và **13/14** severe miss của Qwen3.
-Qwen3 phát hiện **5/20** false-safe của InternVL. Hai hệ cùng bỏ sót 15 Hazard,
-gồm một Level01. Cả 20 ca InternVL bỏ sót cũng bị MiniCPM bỏ sót. MiniCPM
-phát hiện 3/38 false-safe của Qwen3, trong khi sửa được 302 báo động giả của
-Qwen3 ở mặt nhãn nhị phân. Đây là giao nhau theo ID, chưa đo khả năng chọn
-trước ca nào để sửa dưới một budget thực tế.
-
-Có 1.630 ID cả ba đúng bốn lớp và **507** ID cả ba sai, trong đó 15 ca Hazard
-đều thành Normal. Quy tắc đa số 2/3 yêu cầu hai dự đoán trùng. Khi tính
-thiếu nhãn vào planned, đa số không trọng số
-đúng trên tối đa **2.864/3.763 = 76,11%**, thấp hơn Qwen3 và MiniCPM. Đó là
-cận từ tập ca có ít nhất hai nhãn đúng theo GT. Một hệ chọn nhãn khi không có
-đa số phải đánh giá riêng. Đối với nhị phân, gộp cảnh báo Qwen3 và InternVL
-theo OR sẽ giữ 15 false-safe nhưng có 1.553/3.014 FP (51,53%). Đây là hệ quả
-từ giao các nhãn đã lưu, chưa triển khai ensemble hay rule vận hành.
-
-## Hướng nghiên cứu trình Owner
-
-| Vấn đề và bằng chứng | Hướng ứng viên theo rubric | Cách chứng minh và guardrail |
+| Nhóm | Đã xác minh | Giả thuyết có căn cứ và điều chưa xác định |
 | --- | --- | --- |
-| Lớp hiếm và chênh lệch miền. Level03 có 8 GT, luyện kim có 9 Hazard, đường hầm có 122/200 MiniCPM false-safe. | **CV-A/D** hỗ trợ CT1 và CT2. Kiểm nhóm hiếm, mapping nguồn và shortcut bằng cohort development/validation đủ quyền. Cân nhắc sampling cân miền sau khi biết support và nguồn. | E3 đo worst-domain FNR, severe miss, Macro-F1, support và kết quả âm. Giữ split đánh giá tự nhiên và chỉ dùng CI bootstrap khi xác định được cluster độc lập phù hợp. |
-| Qwen3 và InternVL hạ Level01 nhiều. InternVL dự đoán Level03 cho 1.310 Normal. | **CV-B/D (CT1)** và **CV-B/C (CT2)**. Audit mapping trước, sau đó đối chứng có kiểm soát một yếu tố như cách biểu thị severity, prompt grounding hoặc grammar. | E1 cùng protocol, E2 ablation từng yếu tố, E4 ca trước–sau. Metric chính ứng viên là severe miss/FNR và recall Level01; guardrail FPR, Macro-F1, valid rate, latency, chi phí. |
-| InternVL bổ trợ hướng phát hiện Qwen3 false-safe, nhưng FPR tổng cao. MiniCPM giảm một số cảnh báo giả, nhưng có nhiều false-safe. | **CV-C (CT2)**. Cân nhắc dùng tín hiệu bất đồng để chuyển ca cho người kiểm tra dưới budget, so với baseline đơn mô hình, random hoặc đối chứng điểm hợp lệ. | E1 paired, E2 tắt từng tín hiệu, E3 overload và miền xấu nhất. Báo capture severe miss theo budget, số ca chuyển sai, coverage, latency và chi phí. Kết quả đa số và OR là đối chứng mô tả. |
-| Điểm nội tại chưa đồng nhất giữa các nguồn. | **CV-B/C (CT1/CT2)**. Chỉ xét calibration/threshold tuning khi có score đúng nghĩa và validation độc lập. | Đăng ký trước mục tiêu xác suất và operating point. Đo Brier/reliability, AUPRC hoặc FNR@fixed FPR tùy estimand; không dùng accuracy đơn lẻ hoặc fit trên TRAIN này. |
-| 205 conversion MiniCPM truy vết được và 507 lỗi chung cần xem lại. | **CV-C/D (CT3)**. Cân nhắc viewer truy nguồn lỗi, hiển thị provenance và cờ thiếu bằng chứng có thật. | E4 phân biệt lỗi nhãn với lỗi lý do; E5 giữ audit trail. Thử task-based với người kiểm tra có quyền, đo độ chính xác, thời gian và workload. Chỉ đo IoU khi có vùng GT được duyệt. |
+| **A — Hạ Level01 xuống Level02** | Qwen3 303/490, InternVL 339/490, MiniCPM 128/490. Trên shortlist rộng hơn, 15/15 dòng Qwen3 hạ Level01 cũng được InternVL trả Level02, 9/15 được cả ba trả Level02. Ba đối chiếu mỗi mô hình xác nhận nhãn đã có trong ledger Qwen3 và raw InternVL. C1 đặt thiếu PPE trong ví dụ tổng quát Level02, trong khi bảng ngành đặt một số thiếu PPE ở Level01 và thay đổi mức theo ngành. | Chồng lấn rubric là cơ chế có thể gây lẫn mức. Cần người xem ảnh có quyền xác định hazard, PPE và miền rồi thử một thay đổi duy nhất về thứ tự ưu tiên rubric. Chưa biết lỗi nào đến từ nhìn thiếu vật thể, chọn sai miền hay diễn giải severity. |
+| **B — InternVL gán Level03 cho Normal** | 1.310/3.014 Normal thành Level03, chiếm 85,51% FP. Năm mẫu ở năm miền đều giữ token Level03 trong archived response. Trong shortlist rộng hơn, Qwen3 và MiniCPM cùng trả Normal ở 11/15 dòng của nhóm này. T0 ghi từ advisory TRAIN160 cũ 34 báo động giả trên Normal nơi MiniCPM đúng, trước khi áp dụng Grammar V2. | Grammar V2 chỉ cho phép bốn chuỗi canonical và có thể đổi prefix của trajectory. Xu hướng báo động giả đã được ghi ở một cohort và cấu hình khác, nên attribution riêng cho grammar chưa xác định. Cần ablation paired giữ cùng ảnh, model, prompt và mọi yếu tố còn lại. |
+| **C — MiniCPM bỏ sót ở đường hầm và điện** | Đường hầm FNR 122/200, severe miss 73/103, FPR 0/764. Điện FNR 47/81. Ba ca đã kiểm ở mỗi miền phát ra Level04 canonical trong C1 gốc. 205 conversion trước đó thuộc GT Normal, khớp exact cụm mô tả có trong C1. Chúng giảm lỗi format và không đổi 272 false-safe toàn TRAIN. | Chuỗi format giải thích đúng nhóm 205. Với bỏ sót đã có token Level04, chưa cô lập nguyên nhân do tín hiệu ảnh, phân phối nguồn, prompt hay resampler. Tách audit mức ảnh khỏi mọi suy luận về precision. |
+| **D — Lỗi chung cả ba** | 507/3.763 ID cùng sai bốn lớp. Trong đó 15/749 Hazard đều thành Normal, gồm một Level01. Kiểm ba ca cùng Normal ở ba miền và ba ca cùng sai dù nhãn bất đồng. Ledger và raw member khớp nhãn từng case. | Cùng sai chỉ đo giới hạn của ba sản phẩm đã lưu trên cohort này. Lỗi rubric/GT, tín hiệu chung khó quan sát hoặc dấu hiệu shortcut cần adjudication độc lập. Các case bất đồng trong nhóm cùng sai cần được giữ khi thử chuyển ca review. |
+| **E — InternVL phát hiện ca Qwen3 bỏ sót** | 23/38 Hazard và 13/14 Level01 Qwen3 bỏ sót được InternVL báo Hazard. Đối chiếu ba rescue và ba cảnh báo giả bổ sung xác nhận hai hướng đều có thật trong bản lưu. Trên toàn TRAIN, quy tắc chỉ xét Qwen3-Normal và InternVL-Hazard xác định 1.133 ca, gồm 23 Hazard và 1.110 Normal. Precision của cờ là **23/1.133 = 2,03%**, workload **30,11%** của 3.763. | Có tín hiệu bổ trợ nhưng cờ phổ thông gây khoảng 48 cảnh báo giả cho mỗi Hazard phát hiện. Cần so cùng ngân sách với random trong tập đủ điều kiện, baseline đơn mô hình và ablation từng tín hiệu. Chưa chứng minh phân tầng mức InternVL hoặc dùng MiniCPM lọc báo động sẽ hạ chi phí mà giữ severe capture. |
 
-Codex và Antigravity Neon Medium độc lập đối chiếu các lỗi và bổ trợ từ số
-liệu đã đo. Cả hai ưu tiên false-safe và severity với FPR làm guardrail,
-giới hạn suy luận từ lớp hiếm và nguồn chưa độc lập. Phản biện đề xuất dùng
-bổ trợ bất đối xứng để xây dựng đối chứng triage. Báo cáo xếp ứng viên đó
-vào CV-C theo rubric giảng viên và giữ CV-A cho dữ liệu/phân phối. Hai bên
-đồng thuận về số liệu. Giữ các ứng viên chưa triển khai cho Owner chốt sau
-phản biện. [Rubric E1–E5 và điều kiện thực nghiệm](THESIS_EXECUTION_PLAN_2026.md).
+Nguồn về logic hiện hành gồm [prompt C1 bất biến](../../configs/pilot/classification_c1.txt),
+[Grammar V2 và giới hạn counterfactual](INTERNVL_GRAMMAR_SCIENCE_V1.md),
+[bằng chứng T0 TRAIN160](T0_FALSE_SAFE_EVIDENCE_20261101.md#3-nguồn-dữ-liệuoutputs-thật-đã-định-danh)
+và [chẩn đoán format MiniCPM](MINICPM_FULLTRAIN_INVALID_REVIEW_20261126.md).
+Shortlist tổng hợp cũ có 64 dòng, 60 ID khác nhau và nhóm đối chứng toàn
+Normal. Đối chiếu tiếp đã bổ sung lát cắt rescue và false alarm trong chính
+union shortlist. Để kiểm nguyên nhân bằng mắt hoặc E4 trước–sau, cần thêm
+đối chứng đúng Hazard ghép cùng mức/miền, reviewer xem ảnh mù với kết quả
+model và đủ quyền truy cập.
+
+Có 1.630 ID cả ba đúng bốn lớp. Đa số 2/3 không trọng số đạt tối đa
+2.864/3.763 (76,11%) nếu giữ planned và tính ca không có majority là sai.
+Kết hợp OR Qwen3–InternVL giữ 15 false-safe và làm tăng FP từ 443
+lên 1.553/3.014 (51,53%). Hai đối chứng này được suy từ các bảng paired
+đã có. Cả 20 ca InternVL bỏ sót đều bị MiniCPM bỏ sót, còn MiniCPM trả đúng
+302 ca Normal mà Qwen3 báo Hazard. Mức bổ trợ bất đối xứng là căn cứ để
+thiết kế đối chứng review, chưa chứng minh lợi ích của một phương pháp.
+
+## Ba phương án trình Owner
+
+| Ưu tiên | Phương án và giả thuyết | Metric, đối chứng và bằng chứng cần có | Tính mới, khả thi và chi phí |
+| --- | --- | --- | --- |
+| **1 — CT1, CV-B/D: phân biệt severity bằng rubric rõ precedence** | Kiểm độc lập cách xử lý PPE, vật thể và nhiều nguy cơ theo ngành. Giả thuyết là làm rõ ranh giới Level01–02 và Normal–Level03 sẽ giảm nhầm severity. Dữ liệu/shortcut theo CV-A chỉ bổ sung khi audit xác định vấn đề nguồn hoặc support. | Chính: recall Level01, tỷ lệ Level01→Level02 và severe miss theo miền. Guardrail: FPR, FNR, Macro-F1, coverage, độ trễ. E1 giữ cùng dữ liệu/protocol, E2 thay đúng một yếu tố rubric hoặc grammar, E3 stress nhóm hiếm và miền, E4 case trước–sau, E5 khóa prompt/config. | Câu hỏi mới có giá trị ở kiểm chứng mức độ và domain trong bối cảnh công nghiệp. Audit rubric khả thi trước với ít tài nguyên. Thử nghiệm nhân quả cần quyền ảnh, người adjudicate, validation/target phù hợp và ngân sách cho các cấu hình chạy mới sau khi Owner chốt. |
+| **2 — CT2, CV-C/D: kiểm tra chéo có chọn lọc dưới ngân sách review** | Xem xét chuyển ca cho người kiểm tra bằng bất đồng và vai trò bất đối xứng của peers. Giả thuyết là chọn theo tín hiệu cải thiện số ca nguy hiểm phát hiện tại cùng K so với chọn ngẫu nhiên hoặc chỉ dùng focal. | Chính: số severe miss bắt được và precision tại cùng K, kèm denominators planned. Guardrail: overload/tồn đọng, ca bỏ sót ngoài K, số cảnh báo giả, độ trễ, chi phí tính mọi peer. E1 cùng ID và K, E2 bỏ từng peer/tín hiệu, E3 worst domain và thiếu tín hiệu, E4 shared failure, E5 tie rule/seed. | Selective review đã có cơ sở học thuật. Giá trị mới phải đến từ kiểm chứng bất đối xứng và chi phí thật của triage công nghiệp. Phân tích label-only trên dữ liệu đã lưu khả thi. Xác nhận cần cohort độc lập, K và tiêu chí tối thiểu chốt trước, nhân lực review và chi phí peer. |
+| **3 — CT3, CV-C/D: viewer truy xuất bằng chứng và cờ thiếu provenance** | Dùng case C1/V1 và lỗi chung để đánh giá viewer cho phép thấy nhãn, nguồn, digest, lịch sử sửa và tình trạng thiếu bằng chứng. Giả thuyết là rút ngắn thời gian đối soát mà giữ đúng quyết định review. | Chính: tỷ lệ truy nguồn đúng và thời gian review ở cùng độ chính xác. Guardrail: tỷ lệ chấp nhận sai, lỗi truy xuất, quyền chia sẻ, workload. E1 so phiếu label-only, E2 tắt metadata/cờ, E3 lỗi thiếu/chồng lineage, E4 ca thật và E5 audit trail. | Một màn hình demo có tính mới thấp. Giá trị thực nghiệm nằm ở study đối chứng có reviewer đồng ý. Gói metadata khả thi và ít compute; chi phí chủ yếu ở rights, reviewer, adjudication và rubric. Chỉ hiển thị vùng/lý do khi có bằng chứng đủ quyền. |
+
+Antigravity ưu tiên kiểm tra chéo vì evidence paired và chi phí thử trên
+saved labels. Codex ưu tiên CT1 cho câu hỏi nguyên nhân và đề nghị CT2 đo
+cùng ngân sách. Khuyến nghị là **CT1 làm trục chính**, CT2 làm nhánh ứng viên
+có tiêu chí dừng riêng và CT3 thử usefulness khi đủ quyền. Các phản biện
+đồng thuận về số liệu và ranh giới nhân quả. Tín hiệu site/person, calibration
+hoặc threshold tuning đều cần chứng từ phù hợp trước khi thử, và các HNLO
+hiện có vẫn thuộc scope theo nguồn. Điều kiện tối thiểu cho calibration là
+score cùng estimand, validation đủ quyền và kiểm domain shift theo E3.
+Không khóa threshold hoặc suy ra xác suất từ nhãn TRAIN đã phơi nhiễm.
+[Selective classification](https://proceedings.neurips.cc/paper/2017/hash/4a8423d5e91fda00bb7e46540e2b0cf1-Abstract.html),
+[calibration](https://proceedings.mlr.press/v70/guo17a.html),
+[uncertainty dưới dataset shift](https://proceedings.neurips.cc/paper/2019/hash/8558cb408c1d76621371888657d2eb1d-Abstract.html),
+[đánh giá faithfulness](https://aclanthology.org/2020.acl-main.386/),
+[rubric E1–E5](THESIS_EXECUTION_PLAN_2026.md).
 
 ## Điểm, độ bất định và tái lập
 
@@ -262,5 +265,25 @@ revision, config và archive SHA256. Chỉ dùng bộ exact đã ghim và đúng
 CLI từ chối sai SHA, GT, hash ảnh, domain, ID, split hoặc đích đã có.
 Run xuất `benchmark.json`, `metrics.csv`, `confusion.html` và `receipt.json`
 trong thư mục ignored. Biểu đồ FNR/FPR và bảng gộp cũng lưu cục bộ.
-M2/R1–R5 lịch sử có [lệnh riêng](../SEMINAR_ANALYSIS.md). GitHub HEAD của PR
-chờ cổng review/merge hiện hành.
+M2/R1–R5 lịch sử có [lệnh riêng](../SEMINAR_ANALYSIS.md).
+
+## Kiểm thử và review PR #136
+
+Đối chiếu snapshot chạy toàn repo gồm 19 FAIL và 27 ERROR với main sạch
+`c238f841` và HEAD đầu lượt `22d90b4`. Tái sử dụng 12 mục Candidate160 đã
+tái hiện ở cả hai checkout và đối chiếu runtime tương ứng giữ nguyên.
+Antigravity Hydrogen chạy 14 test ID chọn lọc ở cả hai checkout và xác
+nhận 21 mục lỗi/subtest trùng nhau. Coordinator chạy riêng 13 test O5 còn
+lại trên cả hai checkout sạch, khớp tên, kiểu kết quả và exception signature
+(1 FAIL, 12 ERROR). **Cả 46 mục đã được tái hiện trên main.** Chưa phát hiện
+hồi quy thuộc PR. Các lỗi gắn với pin cấu hình, notebook hoặc runtime lịch sử
+tiếp tục ở phạm vi riêng. Không rerun discovery toàn repo hoặc đổi pin.
+
+Codex Sol Medium kiểm đúng GitHub HEAD đầu lượt, khớp bảy source blob và
+11 SHA256 output M2 với receipt sạch đã lưu. Kiểm lại 132 dòng CSV synthetic
+có oracle độc lập cho ba lỗi audit. Thành viên panel R4, nhóm thiếu M224
+theo miền/mức ở R3 và ô score Qwen3 hữu hạn đều khớp. Dùng lại bằng chứng
+11.032 dòng và 3.204 phép đối chiếu benchmark, với scope tương ứng. Bản sửa
+hiện hành bổ sung phân tích và hồ sơ review. Cổng review trực tiếp, re-audit
+theo chỉ thị lịch sử, quyền merge riêng và hậu kiểm vẫn áp dụng.
+[Chỉ thị audit và merge](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-6412563251).

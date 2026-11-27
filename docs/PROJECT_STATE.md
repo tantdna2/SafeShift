@@ -15,10 +15,15 @@
   GT Normal. Bộ kiểm số học độc lập đạt 3.204 phép đối chiếu.
   Final Admission của các route vận hành và score chung vẫn riêng.
   [Báo cáo kết quả](research/FULL_TRAIN_BENCHMARK_V1.md).
-- Đã phản biện lỗi và ứng viên cải tiến theo CT1–CT3. Chờ Owner chốt phương
-  pháp trước khi triển khai. Rubric dùng E1 so sánh cùng protocol, E2 ablation,
+- Đã truy nguyên các nhóm lỗi A–E từ 24 ID có nguồn, GT và output đã kiểm.
+  Ba phương án CT1–CT3 là audit rubric/severity, triage có giới hạn workload
+  và viewer truy bằng chứng. Bằng chứng visual, validation độc lập và
+  phương pháp chờ quyết định theo phạm vi áp dụng. Rubric dùng E1 cùng protocol, E2 ablation,
   E3 stress test, E4 error analysis và E5 tái lập. Scope hiện hành là CPU
   và kết quả đã lưu. TEST, GPU và Kaggle nằm ngoài phạm vi.
+- Đã quy cả 46 mục FAIL/ERROR của lần discovery trước về lỗi tái hiện trên
+  main. Không thấy hồi quy PR trong nhóm đã kiểm. Draft chờ xác nhận review
+  chính thức và quyền merge riêng theo quy trình hiện hành.
 
 ## Hiện hành — MiniCPM-V-4 Full-TRAIN đã hoàn thành — 26/11/2026
 

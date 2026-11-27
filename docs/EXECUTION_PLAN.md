@@ -19,8 +19,10 @@ Normalization V1. MiniCPM strict C1 là sensitivity trên cùng ID. Yêu cầu b
 model và thiết kế ensemble thuộc hồ sơ lịch sử/đề xuất.
 [Phạm vi benchmark](research/DECISIONS.md#dec-20261127-owner-retrospective-benchmark-authority).
 Đã đo baseline và phân tích cặp trên đủ 3.763 TRAIN ID với trạng thái
-`PROVISIONAL_PRE_FINAL_ADMISSION`. Phản biện ứng viên đã ghi trong báo cáo.
-Bước chọn và triển khai phương pháp chờ Owner chốt.
+`PROVISIONAL_PRE_FINAL_ADMISSION`. Đã truy nguyên output đã lưu ở 24 ID,
+đối chiếu rubric và phản biện ba ứng viên CT1–CT3. Owner chọn hướng trước
+khi khóa protocol validation, ngân sách và guardrail. Review hình ảnh/case
+visual và study viewer cần phạm vi quyền dữ liệu tương ứng.
 [Đầu ra, giới hạn và tái lập](research/FULL_TRAIN_BENCHMARK_V1.md).
 
 ## MiniCPM Serial 7 / 18 November 2026
