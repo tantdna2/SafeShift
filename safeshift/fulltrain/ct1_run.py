@@ -16,11 +16,14 @@ from safeshift.evaluation.full_train_benchmark import is_sha256
 from safeshift.fulltrain.qwen_semantics import fields
 from safeshift.pilot.artifacts import export, safe, sha, verify_archive, write, write_bytes
 from safeshift.candidates.source import require
+from safeshift.fulltrain.supervision import process_group_closed
 
 N_IMAGES = 48
 N_CALLS = 144
+SMOKE_CALLS = len(ARMS)
+PROCESS_RECEIPTS = ("setup-supervisor.json", "worker-supervisor.json")
 IMAGE_BYTES = 12 * 2**20
-RUN_ID = re.compile(r"ct1-[0-9a-f]{12}")
+RUN_ID = re.compile(r"ct1-(?:smoke-)?[0-9a-f]{12}")
 RECORD = r"(intent|tokens|raw|result|failure)\.json"
 ENTRY = re.compile(r"calls/[0-9]{3}/" + RECORD)
 PENDING = re.compile(r"calls/[0-9]{3}/\." + RECORD + r"\.[a-f0-9]{32}\.pending")
@@ -76,22 +79,44 @@ def schedule(plan):
             for arm in orders[i % len(orders)]]
 
 
-def identity(plan_sha, source_sha, capsule_sha, software_sha, run_id):
+def identity(plan_sha, source_sha, capsule_sha, software_sha, run_id, *, smoke=False):
     require(RUN_ID.fullmatch(run_id) and is_sha256(source_sha) and is_sha256(capsule_sha)
             and is_sha256(plan_sha) and is_sha256(software_sha), "CT1_EXACT_RUN_IDENTITY")
+    require(run_id.startswith("ct1-smoke-") == smoke, "CT1_RUN_SCOPE")
     return {"schema": "ct1-native-48-v1", "run_id": run_id, "plan_sha256": plan_sha,
             "source_sha256": source_sha, "capsule_sha256": capsule_sha, "software_sha256": software_sha,
             "model": MODEL_ID, "revision": REVISION, "prompt_sha256": prompt_hashes(ARMS),
-            "max_calls": N_CALLS}
+            "max_calls": SMOKE_CALLS if smoke else N_CALLS}
+
+
+def stability(read_receipt):
+    seals = {}
+    for name in PROCESS_RECEIPTS:
+        payload = read_receipt(name)
+        require(len(payload) <= 65536 and process_group_closed(strict_json(payload)),
+                "CT1_PROCESS_GROUP_UNVERIFIED")
+        seals[name] = sha256(payload)
+    return {"status": "LEDGER_STABLE", "process_receipts_sha256": seals}
+
+
+def stable_journal(root):
+    def read_receipt(name):
+        path = safe(root, name)
+        require(path.is_file() and path.stat().st_size <= 65536, "CT1_PROCESS_RECEIPT_MISSING_OR_OVERSIZE")
+        with path.open("rb") as stream:
+            return stream.read(65537)
+    return stability(read_receipt)
 
 
 def restore(archive, expected, root, binding):
+    """Read an archive for offline reconciliation; a digest cannot authorize a new VM."""
     require(archive.is_file() and archive.stat().st_size <= 32 * 2**20 and sha(archive) == expected,
             "CT1_RESUME_ZIP_SEAL")
     with ZipFile(archive) as z:
         infos = z.infolist()
         require(len(infos) <= 1000 and sum(x.file_size for x in infos) <= 32 * 2**20, "CT1_RESUME_BOUND")
         names = verify_archive(archive)
+        require("diagnostic-status.json" not in names, "CT1_FORENSIC_ARCHIVE_NOT_RESUMABLE")
         require("identity.json" in names and strict_json(z.read("identity.json")) == binding,
                 "CT1_RESUME_IDENTITY")
         # Only the ledger is restored. Output snapshots and receipts keep their original custody.
@@ -104,6 +129,12 @@ def restore(archive, expected, root, binding):
                 in ("FRESH_ADMITTED", "PARENT_VERIFIED_AND_INHERITED"), "CT1_RESUME_NOT_ADMITTED")
         require("summary.json" in names and "runs.json" in names
                 and "journal-export-failure.json" not in names, "CT1_FORENSIC_ARCHIVE_NOT_RESUMABLE")
+        require({"checkpoint-stability.json", *PROCESS_RECEIPTS} <= names.keys(),
+                "CT1_CHECKPOINT_STABILITY_REQUIRED")
+        for name in PROCESS_RECEIPTS:
+            require(z.getinfo(name).file_size <= 65536, "CT1_PROCESS_RECEIPT_BOUND")
+        require(strict_json(z.read("checkpoint-stability.json")) == stability(z.read),
+                "CT1_CHECKPOINT_STABILITY_MISMATCH")
         for name in call_files:
             write_bytes(safe(root, name), z.read(name))
 
@@ -144,7 +175,8 @@ def _parsed(arm, raw):
             "error": parsed.error, "evidence_status": parsed.evidence_status}
 
 
-def reconstruct(root, plan, binding):
+def reconstruct(root, plan, binding, *, smoke=False):
+    require(len(schedule(plan)) == binding['max_calls'], 'CT1_CALL_PLAN_MISMATCH')
     records, calls, uncertain = [], 0, 0
     parses = {arm: Counter() for arm in ARMS}
     token_cap = Counter()
@@ -161,8 +193,11 @@ def reconstruct(root, plan, binding):
         records.append({"case_id": case, "arm": arm, "attempt_status": status, "raw_text": raw})
     runs = {k: binding[k] for k in ("plan_sha256", "prompt_sha256")}
     runs.update(model_id=MODEL_ID, revision=REVISION, runtime_sha256=sha256(json_bytes(binding)), records=records)
-    write(root / "runs.json", runs)
-    write(root / "summary.json", {"planned_calls": N_CALLS, "durable_native_intents": calls, "uncertain_intents": uncertain,
+    if smoke:
+        runs["scope"] = "TECHNICAL_SMOKE_NOT_RESEARCH"
+    write(root / ("smoke-runs.json" if smoke else "runs.json"), runs)
+    write(root / "summary.json", {"scope": "TECHNICAL_SMOKE" if smoke else "PILOT",
+                                  "planned_calls": binding["max_calls"], "durable_native_intents": calls, "uncertain_intents": uncertain,
                                   "returned": sum(r["attempt_status"] == "RETURNED" for r in records),
                                   "technical_error": sum(r["attempt_status"] == "TECHNICAL_ERROR" for r in records),
                                   "not_attempted": sum(r["attempt_status"] == "NOT_ATTEMPTED" for r in records),
@@ -172,12 +207,14 @@ def reconstruct(root, plan, binding):
 
 
 def checkpoint_results(root, output, plan, binding):
+    write(root / "checkpoint-stability.json", stable_journal(root))
     reconstruct(root, plan, binding)
     export(root, output)
 
 
 def execute(root, plan, binding, image_dir, backend, deadline):
     """Exactly one reserved slot per scheduled case/arm. Never retry an intent."""
+    require(len(schedule(plan)) == binding["max_calls"], "CT1_CALL_PLAN_MISMATCH")
     binding_sha = sha256(json_bytes(binding))
     for i, (case, arm, image_sha) in enumerate(schedule(plan)):
         sample = root / "calls" / f"{i:03}"

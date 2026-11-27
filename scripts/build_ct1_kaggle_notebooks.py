@@ -16,14 +16,14 @@ SOURCE = "/kaggle/input/ct1-reviewed-source"
 SOURCE_COMMIT = ""
 SOURCE_ZIP_SHA256 = ""
 OWNER = {
-    "run_id": "",  # ct1- followed by 12 lowercase hexadecimal characters. Keep for resume.
+    "run_id": "",  # ct1-<12 hex>, or ct1-smoke-<12 hex> for a separate smoke.
     "pilot_input": "/kaggle/input/ct1-train48",
     "plan_sha256": "",
     "checkpoint": "/kaggle/input/ct1-qwen-checkpoint/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
     "software_input": "/kaggle/input/ct1-qwen-software",
     "software_marker_sha256": "",
     "approved_drivers": [],  # Empty admits the observed host driver at or above the CUDA 12.8 GA floor.
-    "resume": None,  # {"path": "/kaggle/input/.../<run_id>.zip", "sha256": "..."}
+    "resume": None,  # Cross-VM resume is blocked without a trusted latest-ledger proof.
 }
 """
 
@@ -46,7 +46,7 @@ assert root.is_absolute() and root.resolve().is_relative_to(input_root)
 assert not any(p.is_symlink() for p in (root, *root.parents))
 assert re.fullmatch(r"[0-9a-f]{40}", SOURCE_COMMIT)
 assert re.fullmatch(r"[0-9a-f]{64}", SOURCE_ZIP_SHA256)
-assert re.fullmatch(r"ct1-[0-9a-f]{12}", OWNER["run_id"])
+assert re.fullmatch(r"ct1-(?:smoke-)?[0-9a-f]{12}", OWNER["run_id"])
 assert {p.name for p in root.iterdir()} == {"ct1-source.zip", "ct1-source.json"}
 path = root / "ct1-source.zip"
 marker_path = root / "ct1-source.json"
@@ -95,7 +95,7 @@ result = subprocess.run(
      "--config", str(repo / "owner-run.json"), "--job", str(base / OWNER["run_id"])],
     cwd=repo, env=clean, timeout=11100, check=False,
 )
-print("ZIP output:", base / (OWNER["run_id"] + ".zip"))
+print("Check Output for the job ZIP or its diagnostic-only ZIP and SHA sidecar.")
 result.check_returncode()
 """
 
@@ -117,9 +117,7 @@ def owner_settings(settings):
         if not isinstance(path, str) or not path.startswith("/kaggle/input/"):
             raise ValueError("Owner Input paths must be exact Kaggle mounts")
     if owner["resume"] is not None:
-        fields(owner["resume"], {"path", "sha256"})
-        if not owner["resume"]["path"].startswith("/kaggle/input/") or not is_sha256(owner["resume"]["sha256"]):
-            raise ValueError("exact resume Input and SHA required")
+        raise ValueError("CT1_CROSS_VM_RESUME_BLOCKED_NO_LATEST_LEDGER_PROOF")
     return (f'SOURCE = {settings["source"]!r}\n'
             f'SOURCE_COMMIT = {settings["source_commit"]!r}\n'
             f'SOURCE_ZIP_SHA256 = {settings["source_zip_sha256"]!r}\n'
@@ -127,14 +125,16 @@ def owner_settings(settings):
 
 
 def content(mode, settings=None):
-    if mode not in ("pilot", "preflight") or (mode == "preflight" and settings and settings["owner"]["resume"]):
-        raise ValueError("invalid notebook mode or preflight resume")
+    if mode not in ("pilot", "preflight", "smoke"):
+        raise ValueError("invalid notebook mode")
     instructions = SETTINGS if settings is None else owner_settings(settings)
+    if settings and settings["owner"]["run_id"].startswith("ct1-smoke-") != (mode == "smoke"):
+        raise ValueError("technical smoke requires a distinct run ID")
     return notebook([
         ("intro", "markdown", "# SafeShift CT1 — Kaggle " + mode + "\n"
          "Candidate tĩnh. Chỉ chạy khi Owner đã chấp thuận đúng SHA và Inputs. "
          "Đính kèm riêng source, ảnh TRAIN mù, checkpoint và phần mềm. "
-         "Dùng 2×T4, tắt Internet. Chỉ attach ZIP checkpoint khi tiếp tục.\n"),
+         "Dùng 2×T4, tắt Internet. Resume qua VM mới đang khóa.\n"),
         ("gpu-observe", "code", """import subprocess
 gpu_query = subprocess.run(
     ["nvidia-smi", "--query-gpu=index,name,driver_version,memory.free", "--format=csv,noheader,nounits"],
@@ -151,7 +151,7 @@ def main(argv=None):
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--settings", type=Path, help="exact Owner settings JSON")
-    parser.add_argument("--mode", choices=("pilot", "preflight"))
+    parser.add_argument("--mode", choices=("pilot", "preflight", "smoke"))
     parser.add_argument("--output", type=Path, help="new configured notebook file")
     args = parser.parse_args(argv)
     if args.settings or args.mode or args.output:

@@ -41,7 +41,7 @@ def config(path):
     fields(value, {"run_id", "mode", "source_commit", "source_capsule_sha256",
                    "pilot_input", "plan_sha256", "checkpoint", "software_input",
                    "software_marker_sha256", "approved_drivers", "observed_driver", "resume"})
-    require(value["mode"] in ("preflight", "pilot"), "CT1_MODE")
+    require(value["mode"] in ("preflight", "pilot", "smoke"), "CT1_MODE")
     commit = value["source_commit"]
     require(isinstance(commit, str) and len(commit) == 40 and all(x in "0123456789abcdef" for x in commit),
             "CT1_EXACT_SOURCE_COMMIT")
@@ -52,9 +52,8 @@ def config(path):
     require(all(tuple(map(int, version.split("."))) >= (570, 26)
                 for version in value["approved_drivers"]), "CT1_CUDA_128_GA_DRIVER_FLOOR")
     require(value["observed_driver"] in value["approved_drivers"], "CT1_OBSERVED_DRIVER_NOT_APPROVED")
-    if value["resume"] is not None:
-        fields(value["resume"], {"path", "sha256"})
-        require(value["mode"] == "pilot" and is_sha256(value["resume"]["sha256"]), "CT1_RESUME_SEAL")
+    require(value["run_id"].startswith("ct1-smoke-") == (value["mode"] == "smoke"), "CT1_RUN_SCOPE")
+    require(value["resume"] is None, "CT1_CROSS_VM_RESUME_BLOCKED_NO_LATEST_LEDGER_PROOF")
     return value
 
 
@@ -69,6 +68,8 @@ def layout(cfg):
             and not any(a.is_relative_to(b) for a in (data, software, checkpoint)
                         for b in (data, software, checkpoint) if a != b), "CT1_INPUT_ROLES_MUST_BE_SEPARATE")
     plan, _ = ct1_run.admit(data, cfg["plan_sha256"])
+    if cfg["mode"] == "smoke":
+        plan = {**plan, "cases": plan["cases"][:1]}
     return data, software, checkpoint, lock, plan
 
 
@@ -78,7 +79,7 @@ def binding(cfg, lock):
                                "runtime_lock": lock, "shared_max_new_tokens": ct1_native.MAX_NEW,
                                "max_input_tokens": ct1_native.MAX_INPUT, "checkpoint": qwen.reference(REPO)["model"]}))
     return ct1_run.identity(cfg["plan_sha256"], source, cfg["source_capsule_sha256"],
-                            cfg["software_marker_sha256"], cfg["run_id"])
+                            cfg["software_marker_sha256"], cfg["run_id"], smoke=cfg.get("mode") == "smoke")
 
 
 def worker(args):
@@ -104,47 +105,45 @@ def worker(args):
         return
     state = binding(cfg, lock)
     require(state == strict_json((root / "identity.json").read_bytes()), "CT1_RUNTIME_IDENTITY_CHANGED")
-    # A resumed journal with a finished schedule needs no further native calls.
-    pending = False
-    for i, row in enumerate(ct1_run.schedule(plan)):
-        case = root / "calls" / f"{i:03}"
-        pending |= (ct1_run.slot_state(case, *row, sha256(json_bytes(state)))[0] == "NOT_ATTEMPTED"
-                    or (case / "tokens.json").exists() and not (case / "raw.json").exists())
-    if pending:
-        backend = ct1_native.Backend(checkpoint, REPO)
-        write(root / "model-loaded.json", {"weights_loaded": True, "device_map": qwen.DEVICE_MAP,
-                                          "generation": backend.config.to_dict(),
-                                          "memory": backend.failure_memory()})
-        ct1_run.execute(root, plan, state, data / "images", backend, deadline)
+    require(strict_json((root / "resume-admission.json").read_bytes()) == {"status": "FRESH_ADMITTED"}
+            and not (root / "calls").exists(), "CT1_FRESH_LEDGER_REQUIRED")
+    backend = ct1_native.Backend(checkpoint, REPO)
+    write(root / "model-loaded.json", {"weights_loaded": True, "device_map": qwen.DEVICE_MAP,
+                                      "generation": backend.config.to_dict(),
+                                      "memory": backend.failure_memory()})
+    ct1_run.execute(root, plan, state, data / "images", backend, deadline)
 
 
-def admit_lineage(job, root, resume, plan, state):
-    if resume is None:
-        write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
-        return
-
-    # A partially copied parent never becomes the authoritative journal.
-    resume_path = mount_path(resume["path"], directory=False)
-    staging = job / "restore-stage"
-    staging.mkdir()
-    ct1_run.restore(resume_path, resume["sha256"], staging, state)
-    binding_sha = sha256(json_bytes(state))
-    for i, row in enumerate(ct1_run.schedule(plan)):
-        ct1_run.slot_state(staging / "calls" / f"{i:03}", *row, binding_sha)
-    if (staging / "calls").exists():
-        (staging / "calls").rename(root / "calls")
-    write(root / "resume-admission.json", {"status": "PARENT_VERIFIED_AND_INHERITED",
-                                           "parent_sha256": resume["sha256"]})
+def export_diagnostic(root, archive, reason):
+    # The worker may still be writing journals or logs. Copy only records
+    # published by the controller after launch returned, or before it started.
+    diagnostic = root.parent / "diagnostic"
+    diagnostic.mkdir()
+    write(diagnostic / "diagnostic-status.json", {"status": "FORENSIC_ONLY",
+           "reason": reason, "ledger_stable": False, "resumable": False,
+           "budget_release": False, "live_evidence": "PRESERVED_IN_PLACE"})
+    for name in ("identity.json", "config-summary.json", "controller-failure.json", *ct1_run.PROCESS_RECEIPTS):
+        path = root / name
+        if path.is_file() and path.stat().st_size <= 65536:
+            write_bytes(diagnostic / name, path.read_bytes())
+    export(diagnostic, archive.with_name(archive.stem + "-diagnostic.zip"))
 
 
 def export_job(root, archive, plan, state, mode):
-    if mode == "pilot" and (root / "resume-admission.json").is_file():
+    try:
+        stable = ct1_run.stable_journal(root)
+    except (ValueError, KeyError, TypeError, OSError) as exc:
+        export_diagnostic(root, archive, str(exc)[:2000])
+        return "FORENSIC_ONLY"
+    write(root / "checkpoint-stability.json", stable)
+    if mode in ("pilot", "smoke") and (root / "resume-admission.json").is_file():
         try:
-            ct1_run.reconstruct(root, plan, state)
+            ct1_run.reconstruct(root, plan, state, smoke=mode == "smoke")
         except (ValueError, KeyError, TypeError, OSError) as exc:
             write(root / "journal-export-failure.json",
                   {"status": "FORENSIC_ONLY", "type": type(exc).__name__, "message": str(exc)[:2000]})
     export(root, archive)
+    return "PROCESS_EXITED"
 
 
 def supervise(args):
@@ -157,7 +156,8 @@ def supervise(args):
     state = binding(cfg, lock)
     root = args.job / "evidence"
     archive = WORK / (cfg["run_id"] + ".zip")
-    require(not archive.exists() and not Path(str(archive) + ".sha256.json").exists(),
+    diagnostic = archive.with_name(archive.stem + "-diagnostic.zip")
+    require(not any(p.exists() or Path(str(p) + ".sha256.json").exists() for p in (archive, diagnostic)),
             "CT1_EXPORT_ALREADY_PRESENT")
     args.job.mkdir(exist_ok=False)
     scratch = Path(tempfile.mkdtemp(prefix=cfg["run_id"] + "-", dir="/tmp"))
@@ -165,22 +165,25 @@ def supervise(args):
         sub.mkdir()
     write(root / "identity.json", state)
     write(root / "config-summary.json", {"mode": cfg["mode"], "source_commit": cfg["source_commit"],
-                                        "limits": budgets, "resume_sha256": (
-                                            cfg["resume"]["sha256"] if cfg["resume"] else None)})
+                                        "limits": budgets, "max_calls": state["max_calls"],
+                                        "cross_vm_resume": "BLOCKED_NO_LATEST_LEDGER_PROOF"})
     env = provision.clean_env(REPO, scratch)
     env.update(PYTORCH_ALLOC_CONF="expandable_segments:True", CUDA_VISIBLE_DEVICES="0,1",
                TMP=str(scratch), TEMP=str(scratch), OMP_NUM_THREADS="2", MKL_NUM_THREADS="2")
     setup_cutoff = min(deadline - EXPORT_RESERVE, time.monotonic() + budgets["setup_seconds"])
     try:
-        admit_lineage(args.job, root, cfg["resume"], plan, state)
+        write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         args_common = ["--config", str(args.config), "--job", str(args.job), "--scratch", str(scratch)]
         def launch(phase, python, cutoff, phase_env):
             command = [str(python), "-B", "-m", "scripts.run_ct1_native_pilot", phase,
                        *args_common, "--deadline", str(cutoff)]
+            receipt = root / (phase + "-supervisor.json")
             report = supervision.run(command, cwd=REPO, env=phase_env, deadline=cutoff,
-                log=root / (phase + ".log"), receipt=root / (phase + "-supervisor.json"),
+                log=root / (phase + ".log"), receipt=receipt,
                 max_log_bytes=budgets["max_log_bytes"], watch_log_root=args.job / "setup")
-            require(report["status"] == "EXITED" and report["returncode"] == 0, "CT1_" + phase.upper() + "_SUPERVISOR_FAILED")
+            require(report["status"] == "EXITED" and report["returncode"] == 0
+                    and supervision.process_group_closed(strict_json(receipt.read_bytes())),
+                    "CT1_" + phase.upper() + "_SUPERVISOR_FAILED")
 
         launch("setup", sys.executable, setup_cutoff, env)
         venv = scratch / "qwen-software/venv"
@@ -197,13 +200,13 @@ def supervise(args):
         # notebook versioner. The receipt and summary carry the actual status.
     finally:
         with supervision.parent_deadline(deadline, "ct1_export"):
-            for log in sorted((args.job / "setup").glob("*.log")):
-                if log.stat().st_size <= 256 * 2**10:
-                    write_bytes(root / "setup-logs" / log.name, log.read_bytes())
-            export_job(root, archive, plan, state, cfg["mode"])
+            outcome = export_job(root, archive, plan, state, cfg["mode"])
     failure = any((root / name).exists()
                   for name in ("controller-failure.json", "journal-export-failure.json"))
-    print("PARTIAL_OR_BLOCKED" if failure else "PROCESS_EXITED", archive)
+    if outcome == "FORENSIC_ONLY":
+        print("FORENSIC_ONLY", archive.with_name(archive.stem + "-diagnostic.zip"))
+    else:
+        print("PARTIAL_OR_BLOCKED" if failure else outcome, archive)
 
 
 def main():

@@ -108,6 +108,23 @@ def group_members(pgid, proc=Path('/proc')):
     return found
 
 
+def process_group_closed(receipt):
+    """Only affirmative, persisted reaping evidence can seal a worker ledger."""
+    if not isinstance(receipt, dict) or receipt.get("schema") != "fresh-process-supervision-v1":
+        return False
+    observation = receipt.get("group_exit")
+    status = receipt.get("status")
+    if (status not in ("EXITED", "CHILD_FAILURE", "HARD_DEADLINE", "LOG_BUDGET_EXCEEDED",
+                       "SUPERVISOR_EXCEPTION")
+            or receipt.get("group_kill_sent") is not True or type(receipt.get("returncode")) is not int
+            or (status == "EXITED" and receipt["returncode"] != 0)
+            or not isinstance(observation, dict) or observation.get("status") != "NO_LIVE_MEMBERS"):
+        return False
+    members = observation.get("members")
+    return isinstance(members, list) and all(isinstance(row, dict) and row.get("state") == "Z"
+                                              for row in members)
+
+
 def wait_group_exit(pgid, *, seconds=2):
     deadline = time.monotonic() + seconds
     while True:

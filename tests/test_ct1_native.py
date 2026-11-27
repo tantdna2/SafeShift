@@ -1,11 +1,13 @@
 """CPU-only regressions for the CT1 production path. All payloads are synthetic."""
 
 from collections import Counter
+from contextlib import nullcontext
 from itertools import permutations
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -13,7 +15,7 @@ from safeshift.data.saved_reports import json_bytes, sha256
 from safeshift.evaluation.ct1_contract import ARMS
 from safeshift.evaluation.ct1_pilot import replay
 from safeshift.fulltrain import ct1_run, ct1_native
-from safeshift.pilot.artifacts import sha, verify_archive, write, write_bytes
+from safeshift.pilot.artifacts import export, sha, verify_archive, write, write_bytes
 from scripts import build_ct1_kaggle_notebooks as nb
 from scripts import run_ct1_native_pilot as controller
 
@@ -68,12 +70,28 @@ class NativeTest(unittest.TestCase):
         self.patch.start()
         self.addCleanup(self.patch.stop)
 
-    def evidence(self, name):
+    @staticmethod
+    def receipt(status="EXITED", **changes):
+        return {"schema": "fresh-process-supervision-v1", "status": status,
+                "returncode": 0, "group_kill_sent": True,
+                "group_exit": {"status": "NO_LIVE_MEMBERS", "members": []}, **changes}
+
+    def config_value(self, **changes):
+        return {"run_id": self.binding["run_id"], "mode": "pilot", "source_commit": "a" * 40,
+                "source_capsule_sha256": "b" * 64, "plan_sha256": self.plan_sha,
+                "software_marker_sha256": "c" * 64, "approved_drivers": ["570.26"],
+                "observed_driver": "570.26", "resume": None, "pilot_input": str(self.data),
+                "software_input": str(self.root / "software"),
+                "checkpoint": str(self.root / ct1_run.REVISION), **changes}
+
+    def evidence(self, name, *, mode="pilot", binding=None):
         out = self.root / name
         out.mkdir()
-        write(out / "identity.json", self.binding)
-        write(out / "config-summary.json", {"mode": "pilot"})
+        write(out / "identity.json", binding or self.binding)
+        write(out / "config-summary.json", {"mode": mode})
         write(out / "resume-admission.json", {"status": "FRESH_ADMITTED"})
+        for name in ct1_run.PROCESS_RECEIPTS:
+            write(out / name, self.receipt())
         return out
 
     def run_it(self, out, backend, *, seconds=60):
@@ -164,41 +182,131 @@ class NativeTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "TOKEN_BINDING"):
             ct1_run.checkpoint_results(out, self.root / "invalid.zip", self.plan, self.binding)
 
-    def test_rejected_resume_and_torn_import_are_not_resumable(self):
-        authoritative = self.evidence("parent")
-        broken = FixtureBackend(after=lambda: (_ for _ in ()).throw(RuntimeError("fixture stop")))
-        with self.assertRaises(RuntimeError):
-            self.run_it(authoritative, broken)
-        parent = self.root / "parent.zip"
-        ct1_run.checkpoint_results(authoritative, parent, self.plan, self.binding)
-        before = sha(parent)
-        real_restore = ct1_run.restore
-        for scenario in ("bad-seal", "interrupted"):
-            job = self.root / scenario
-            root = job / "evidence"
-            root.mkdir(parents=True)
-            write(root / "identity.json", self.binding)
-            write(root / "config-summary.json", {"mode": "pilot"})
-            digest = "0" * 64 if scenario == "bad-seal" else before
+    def test_old_or_missing_checkpoint_cannot_start_a_new_vm(self):
+        parent = self.root / "old.zip"
+        older = self.evidence("old")
+        ct1_run.checkpoint_results(older, parent, self.plan, self.binding)
+        digest = sha(parent)
+        for i, resume in enumerate(({"path": str(parent), "sha256": digest},
+                                    {"path": "missing", "sha256": "0" * 64}, {})):
+            config = self.root / f"resume-{i}.json"
+            write(config, self.config_value(resume=resume))
+            job = self.root / f"restart-{i}"
+            with patch.object(controller, "layout") as layout:
+                with self.assertRaisesRegex(ValueError, "CROSS_VM_RESUME_BLOCKED"):
+                    controller.supervise(SimpleNamespace(config=config, job=job))
+                layout.assert_not_called()
+            self.assertFalse(job.exists())
+        self.assertEqual(sha(parent), digest)
 
-            def restore_with_cut(archive, expected, staging, binding):
-                if scenario == "bad-seal":
-                    return real_restore(archive, expected, staging, binding)
-                write_bytes(staging / "calls/000/intent.json", b"{")
-                raise OSError("fixture interrupted import")
+    def test_missing_stability_proof_and_truncated_archive_are_rejected(self):
+        older = self.evidence("legacy")
+        ct1_run.reconstruct(older, self.plan, self.binding)
+        old = self.root / "legacy.zip"
+        export(older, old)
+        rejected = self.root / "rejected"
+        with self.assertRaisesRegex(ValueError, "CHECKPOINT_STABILITY_REQUIRED"):
+            ct1_run.restore(old, sha(old), rejected, self.binding)
+        truncated = self.root / "truncated.zip"
+        truncated.write_bytes(old.read_bytes()[:-12])
+        with self.assertRaisesRegex(ValueError, "RESUME_ZIP_SEAL"):
+            ct1_run.restore(truncated, sha(old), rejected, self.binding)
+        self.assertFalse(rejected.exists())
 
-            with patch.object(controller, "mount_path", return_value=parent), \
-                 patch.object(ct1_run, "restore", side_effect=restore_with_cut):
-                with self.assertRaises((ValueError, OSError)):
-                    controller.admit_lineage(job, root, {"path": str(parent), "sha256": digest},
-                                             self.plan, self.binding)
-            self.assertFalse((root / "calls").exists())
-            diagnostic = job / "diagnostic.zip"
-            controller.export_job(root, diagnostic, self.plan, self.binding, "pilot")
-            self.assertNotIn("runs.json", verify_archive(diagnostic))
-            with self.assertRaisesRegex(ValueError, "RESUME_NOT_ADMITTED"):
-                real_restore(diagnostic, sha(diagnostic), job / "unexpected", self.binding)
-        self.assertEqual(sha(parent), before)
+    def test_missing_worker_receipt_after_vm_loss_exports_only_diagnostics(self):
+        root = self.evidence("interrupted")
+        (root / "worker-supervisor.json").unlink()
+        archive = self.root / "interrupted.zip"
+        with patch.object(ct1_run, "reconstruct") as reconstruct:
+            self.assertEqual(controller.export_job(root, archive, self.plan, self.binding, "pilot"),
+                             "FORENSIC_ONLY")
+            reconstruct.assert_not_called()
+        self.assertFalse(archive.exists())
+        diagnostic = self.root / "interrupted-diagnostic.zip"
+        self.assertIn("setup-supervisor.json", verify_archive(diagnostic))
+        self.assertNotIn("checkpoint-stability.json", verify_archive(diagnostic))
+        with self.assertRaisesRegex(ValueError, "FORENSIC_ARCHIVE_NOT_RESUMABLE"):
+            ct1_run.restore(diagnostic, sha(diagnostic), self.root / "restore", self.binding)
+
+    def test_supervisor_cleanup_blockers_never_read_or_seal_the_ledger(self):
+        for where, status in (("worker", "PROCESS_GROUP_SURVIVORS"),
+                              ("setup", "PROCESS_GROUP_CLEANUP_UNVERIFIED")):
+            with self.subTest(stage=where, status=status):
+                work = self.root / where
+                work.mkdir()
+                scratch = work / "scratch"
+                scratch.mkdir()
+                cfg = self.config_value()
+                config = work / "settings.json"
+                write(config, cfg)
+                job = work / cfg["run_id"]
+                root = job / "evidence"
+                calls = []
+
+                def run(command, *, receipt, **kwargs):
+                    stage = command[4]
+                    calls.append(stage)
+                    failure = stage == where
+                    group_exit = ({"status": "LIVE_SURVIVORS", "members": [{"pid": 123, "state": "S"}]}
+                                  if stage == "worker" else {"status": "UNVERIFIED"})
+                    row = self.receipt(status, group_exit=group_exit) if failure else self.receipt()
+                    write(receipt, row)
+                    if failure:
+                        write_bytes(root / "calls/000/intent.json", b"{")
+                        raise RuntimeError("SUPERVISED_" + status)
+                    return {"status": "EXITED", "returncode": 0}
+
+                with (patch.object(controller, "WORK", work), patch.object(controller.sys, "platform", "linux"),
+                      patch.object(controller, "layout", return_value=(self.data, work, work, {}, self.plan)),
+                      patch.object(controller.tempfile, "mkdtemp", return_value=str(scratch)),
+                      patch.object(controller.provision, "clean_env", return_value={}),
+                      patch.object(controller.supervision, "run", side_effect=run),
+                      patch.object(controller.supervision, "parent_deadline", return_value=nullcontext()),
+                      patch.object(ct1_run, "reconstruct") as reconstruct):
+                    controller.supervise(SimpleNamespace(config=config, job=job))
+                    reconstruct.assert_not_called()
+                self.assertEqual(calls, ["setup", where] if where == "worker" else ["setup"])
+                self.assertEqual((root / "calls/000/intent.json").read_bytes(), b"{")
+                archive = work / (cfg["run_id"] + "-diagnostic.zip")
+                members = verify_archive(archive)
+                self.assertIn(where + "-supervisor.json", members)
+                self.assertNotIn("checkpoint-stability.json", members)
+                self.assertFalse(any(name.startswith("calls/") for name in members))
+                evidence = json.loads((job / "diagnostic/diagnostic-status.json").read_bytes())
+                self.assertFalse(evidence["budget_release"])
+                self.assertFalse(evidence["resumable"])
+                self.assertFalse((work / (cfg["run_id"] + ".zip")).exists())
+                with self.assertRaisesRegex(ValueError, "FORENSIC_ARCHIVE_NOT_RESUMABLE"):
+                    ct1_run.restore(archive, sha(archive), work / "restore", self.binding)
+
+    def test_technical_smoke_shares_the_pipeline_without_a_scoring_export(self):
+        cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000")
+        software = self.root / "software"
+        software.mkdir()
+        cfg["software_marker_sha256"] = write(software / "fresh_qwen_software.json", {"runtime_lock": {}})
+        with patch.object(controller, "mount_path", side_effect=lambda value, **_: Path(value)):
+            _, _, _, lock, plan = controller.layout(cfg)
+        self.assertEqual(plan["cases"], self.plan["cases"][:1])
+        binding = controller.binding(cfg, lock)
+        self.assertEqual(binding["max_calls"], 3)
+        root = self.evidence("smoke", mode="smoke", binding=binding)
+        fake = FixtureBackend()
+        deadline = time.monotonic() + 60
+        with self.assertRaisesRegex(ValueError, "CALL_PLAN_MISMATCH"):
+            ct1_run.execute(root, self.plan, binding, self.data / "images", fake, deadline)
+        self.assertFalse(fake.calls)
+        ct1_run.execute(root, plan, binding, self.data / "images", fake, deadline)
+        self.assertEqual(fake.calls, ["A", "E", "S"])
+        archive = self.root / "smoke.zip"
+        controller.export_job(root, archive, plan, binding, "smoke")
+        members = verify_archive(archive)
+        self.assertIn("smoke-runs.json", members)
+        self.assertIn("calls/002/raw.json", members)
+        self.assertNotIn("runs.json", members)
+        with self.assertRaises(ValueError):
+            replay(self.plan, json.loads((root / "smoke-runs.json").read_bytes()), self.plan_sha, self.exclusions)
+        with self.assertRaisesRegex(ValueError, "RESUME_PILOT_ONLY"):
+            ct1_run.restore(archive, sha(archive), self.root / "restore", binding)
 
     def test_atomic_journal_cut_points_export_and_do_not_repeat_call(self):
         for record in ("intent", "tokens", "raw", "result"):
@@ -264,6 +372,13 @@ class NativeTest(unittest.TestCase):
             exec("".join(row["source"]), env)
             self.assertEqual(env["OWNER"], settings["owner"])
             self.assertEqual(env["SOURCE_COMMIT"], settings["source_commit"])
+        smoke = {**settings, "owner": {**settings["owner"], "run_id": "ct1-smoke-000000000000"}}
+        self.assertEqual(json.loads(nb.content("smoke", smoke))["cells"][-1]["source"],
+                         json.loads(nb.content("pilot", settings))["cells"][-1]["source"])
+        with self.assertRaisesRegex(ValueError, "distinct run ID"):
+            nb.content("smoke", settings)
+        with self.assertRaisesRegex(ValueError, "CROSS_VM_RESUME_BLOCKED"):
+            nb.content("pilot", {**settings, "owner": {**settings["owner"], "resume": {}}})
         with self.assertRaisesRegex(ValueError, "sealed source"):
             nb.content("pilot", {**settings, "source_zip_sha256": ""})
 

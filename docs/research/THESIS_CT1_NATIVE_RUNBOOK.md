@@ -1,9 +1,8 @@
 # CT1 — Pilot native Kaggle trên 48 ảnh TRAIN
 
-**Candidate chờ Owner.** CPU tổng hợp và kiểm tra bytes có thể xác minh
-trước khi chạy. Chưa có đo trực tiếp trên Kaggle, load Qwen3 hoặc native
-call. Trạng thái G4–G6 chưa được xác nhận. Đợt này chỉ dựng code,
-notebook, Input và Draft PR theo yêu cầu Owner.
+**Candidate trong Draft PR #216.** CPU tổng hợp và kiểm tra bytes có thể xác
+minh trước khi chạy. Khi chưa có receipt smoke của đúng source và Inputs, G4–G6
+vẫn chặn phát hành. Các bước chạy pilot chỉ áp dụng sau khi các cổng này hoàn tất.
 
 ## Owner chạy khi đã duyệt đúng SHA
 
@@ -28,12 +27,10 @@ notebook, Input và Draft PR theo yêu cầu Owner.
 3. Giữ output `<run_id>.zip` và `<run_id>.zip.sha256.json`.
    Kiểm `summary.json`, `controller-failure.json` nếu có và nguyên
    nhân trong log. Chấm `runs.json` cục bộ với công cụ CT1 và GT riêng.
-   Khi lỗi, giữ tất cả checkpoint và lịch sử. Chỉ tiếp tục khi xác minh
-   ZIP hợp lệ của lượt gần nhất, không có VM đang chạy và vẫn cùng
-   source, plan, phần mềm, driver và run ID. Attach ZIP qua Input
-   bổ sung và render notebook mới với path và SHA ở `resume`. Nếu
-   mất checkpoint hoặc chưa rõ có call
-   xảy ra hay chưa, dừng để đối soát.
+   Khi lỗi, giữ mọi ZIP, sidecar, log và lịch sử job để đối soát. Nếu chỉ
+   có `<run_id>-diagnostic.zip` hoặc không có ZIP, dừng. Không attach ZIP cũ,
+   chạy lại notebook trên VM mới hay cấp lại lượt khi thiếu bằng chứng.
+   `resume` phải là `None` và chỉ áp dụng cho lần khởi chạy đầu tiên đã được cấp.
 
 [Kaggle Notebooks](https://www.kaggle.com/docs/notebooks) ·
 [NVIDIA CUDA 12.8](https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html)
@@ -95,18 +92,40 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
 - Mỗi entry ghi và fsync dưới tên tạm, rồi xuất bản record hoàn chỉnh
   bằng rename. Intent hoàn chỉnh bắt buộc trước model.generate. Giữ
   file tạm còn lại sau ngắt và coi intent tạm là lượt bất định. Nếu còn
-  token hoàn chỉnh, decode lại mà không gọi model. Resume chỉ bắt đầu
-  sau khi toàn bộ ledger cha được xác minh ở vùng staging và nhập.
-  ZIP chẩn đoán sau nhập lỗi hoặc ledger không tái dựng được chỉ giữ
-  bằng chứng, không được dùng làm checkpoint mới.
-  Nếu call có thể đã xảy ra và thiếu kết quả, giữ TECHNICAL_ERROR,
-  không thử lại. Runtime/scheduler không cấp lại ngân sách từ đầu.
-  Giới hạn này dựa trên một chuỗi checkpoint mới nhất được Owner quản lý.
-  Hai Kaggle VM rời nhau không có khóa chung.
-- Dừng có kiểm soát xuất ZIP partial nếu còn đủ cửa sổ ghi. Đây là
-  checkpoint của version, không hứa cứu file nếu nền tảng hard-kill
-  cả VM trước giờ xuất. Dùng receipt để đánh giá kết quả, kể cả khi
-  notebook lưu được version. Giữ cả log và raw. Không tự mở TEST.
+  token hoàn chỉnh, có thể decode để đối soát mà không gọi model. Nếu call có
+  thể đã xảy ra và thiếu kết quả, giữ TECHNICAL_ERROR và lượt đã đặt trước.
+- Controller chỉ đóng dấu ledger sau khi hai receipt ghi nhận đã chờ tiến
+  trình chính thoát và không thấy thành viên còn sống trong process group.
+  Nếu còn tiến trình sống, cleanup không xác minh được, hoặc thiếu receipt,
+  controller giữ nguyên thư mục đang viết và chỉ xuất ZIP chẩn đoán với
+  các receipt đã có. ZIP này không chứa ledger hoặc kết quả có thể dùng
+  làm checkpoint. Nếu đã xác minh dừng nhưng ledger hỏng, ZIP chỉ phục vụ
+  đối soát và ghi rõ lỗi tái dựng.
+- ZIP và SHA chỉ xác minh nội dung của một snapshot. Hai VM Kaggle không
+  có khóa hoặc bằng chứng chung về snapshot mới nhất. Runner hiện từ chối
+  mọi yêu cầu resume qua VM mới trước khi đọc Inputs hoặc mở ngân sách. Khi
+  VM mất hoặc ZIP bị cắt, có thể không còn gì để thu thập. Giữ nguyên lượt
+  đã đặt trước hoặc chưa đối soát, không làm mới bằng cách chạy lại notebook
+  với `resume: None`. TEST tiếp tục khóa.
+
+## Smoke kỹ thuật trên đúng runtime
+
+- Một job private, Internet tắt, hai T4, tối đa 90 phút wall time (tối đa
+  3 GPU-giờ). Dùng cùng source capsule, checkpoint revision, software và gói
+  TRAIN mù đã niêm phong. Runner kiểm đủ 48 ảnh rồi chỉ chạy ảnh đầu tiên theo
+  plan, mỗi cấu hình A/E/S một lượt. Tối đa 3 lượt, không retry và không mở GT,
+  annotation, nhãn thư mục hoặc TEST.
+- Render bằng cùng builder với `--mode smoke` và run ID dạng
+  `ct1-smoke-<12 hex>`. Smoke đi qua cùng setup, preflight, tải weights, model,
+  ngân sách token, parser và đường xuất ZIP. Kiểm 2 T4/VRAM trước và sau load/call,
+  latency theo arm, 3 intent và 3 raw trước parse, trạng thái parse từng arm,
+  log, kết thúc process group, ZIP và SHA outer/từng member. Đối chiếu cả
+  INVALID nếu có. Software/preflight/VM RUNNING riêng lẻ chưa xác nhận smoke.
+- Thư mục và ZIP smoke có run ID riêng, dùng `smoke-runs.json` và dấu scope
+  riêng. Bộ chấm nghiên cứu không nhận output này. Không đưa ba lượt smoke vào
+  144 lượt chính, không dùng smoke để suy luận chất lượng hoặc độ bền của toàn
+  pilot. Chỉ chạy khi xác minh quyền, các mount private đúng phiên bản,
+  kết nối Kaggle, hai T4 và quota còn đủ.
 
 ## Tái lập và handoff
 
