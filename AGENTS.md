@@ -1,524 +1,131 @@
-# Hướng dẫn làm việc với SafeShift
-
-## Owner 27/11/2026 — triển khai CT1–CT3 sau PR #136
-
-- [Chỉ đạo CT1–CT3](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7208108548)
-  chốt CT1 làm trục chất lượng với Qwen3 và giả thuyết ưu tiên bảng ngành, CT2
-  là hướng thuật toán riêng với hai ngân sách M/K, CT3 là luồng truy nguyên và
-  kiểm toán bằng chứng phục vụ CT1/CT2. HNLO là đối chứng phụ theo nguồn.
-  Calibration cần điểm tương thích, validation phù hợp và phạm vi học vụ.
-- [PR #136](https://github.com/tantdna2/SafeShift/pull/136) đã merge tại
-  `77d625ad6b9f1bd52c1cc3b3bdc4e60aebf3251a` sau re-audit độc lập và hậu kiểm.
-  Task này dùng một Draft PR triển khai tiếp theo từ đúng commit đó. Giữ M2,
-  prompt C1 đã khóa, GT/split, artifacts và lịch sử nguyên bản.
-- CT1 chuẩn bị audit ảnh mù và ba nhánh A/B/C. CT2 dùng CPU trên ba projection
-  TRAIN đã niêm phong, GT chỉ tham gia chấm sau khi chọn hàng đợi. CT3 thiết kế
-  provenance và phiếu review. Đọc ảnh, tuyển reviewer, TEST, GPU, Kaggle,
-  inference, thí nghiệm mới và biên khoa học chính thức cần phạm vi riêng.
-  Xem [hợp đồng chuẩn bị](docs/research/THESIS_CT123_PREPARATION.md).
-- Coordinator dùng Orca, mặc định tối đa hai worker đồng thời. Medium và High
-  tùy nhiệm vụ, ghi model/effort hiệu lực theo receipt. GPT-6.2 Astra và Gemini
-  4 Neon dành cho việc khó và cần thiết. Hạn chế Carbon, loại Claude và
-  GPT-OSS 120B. Áp dụng chính sách này cho các lựa chọn worker của task hiện tại.
-- Kiểm thử, audit độc lập, review đúng HEAD và quyền merge của PR tiếp theo
-  theo phạm vi riêng. Benchmark và sàng lọc TRAIN tiếp tục ở trạng thái hồi
-  cứu, trước Final Admission.
-
-## Lịch sử 27/11/2026 — Benchmark First và điều phối Orca trước merge #136
-
-- Coordinator xác minh main, HEAD và chỉ thị GitHub, đọc hướng dẫn orchestration
-  từ đúng Orca đang chạy, kiểm agent/model và quota khả dụng. Phân công Codex
-  sửa code/test, Antigravity phản biện độc lập, rồi tự theo dõi, xử lý findings
-  và tích hợp qua Orca. Owner nhận báo cáo tổng hợp. Dùng Codex và Gemini trong
-  Antigravity, loại Claude và GPT-OSS 120B. Ghi nhận dispatch, model và đầu ra;
-  khi quota hoặc session cũ không xác minh được, ghi đúng giới hạn.
-- Chọn trong danh sách Owner cho phép: Codex GPT-6.2 Sol, GPT-6.1 Sol/Terra,
-  GPT-6 Sol/Luna, GPT-5.6 Sol/Terra/Luna; Antigravity Gemini 4 Neon/Hydrogen.
-  Tạm dừng GPT-6.2 Astra, GPT-6 Astra, Gemini 4 Carbon, Claude mọi phiên bản
-  và GPT-OSS 120B. Khi hết quota, chỉ chuyển sang model được phép.
-- Ưu tiên Medium. Dùng GPT-6.2 Sol cho điều phối/tích hợp, GPT-6.1 Sol/Terra
-  cho code, Gemini 4 Neon cho phản biện khoa học, Gemini 4 Hydrogen cho test,
-  review code và tài liệu, GPT-6 Luna hoặc GPT-5.6 Luna cho việc đơn giản.
-  Tăng effort khi có blocker cụ thể. Đối chiếu model thực tế từ receipt Orca.
-- Tối đa hai worker đồng thời ngoài Coordinator theo mặc định. Khi quota gián
-  đoạn, kiểm trạng thái và liveness, giữ code/evidence rồi dừng có xác nhận
-  bằng Orca nếu cần. Dùng lại phiên/worktree/task phù hợp và chuyển đúng phần
-  còn dở qua Orca. Giao phạm vi file/kiểm thử vừa đủ và tránh lặp review.
-- Thứ tự Khóa luận: benchmark baseline, phân tích lỗi, truy nguyên, đề xuất,
-  phản biện, Owner chốt, triển khai, E1–E5. Ba sản phẩm Full-TRAIN đã chốt ở cấp
-  dự án, MiniCPM strict C1 dùng cho sensitivity. Giữ M2 và các đề xuất lịch sử.
-  Bốn model và ensemble trong kế hoạch cũ thuộc hồ sơ lịch sử/đề xuất.
-- Task CPU này tiếp tục đúng [Draft PR #136](https://github.com/tantdna2/SafeShift/pull/136)
-  theo [review](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-6412563251)
-  và [phạm vi Owner](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7199181963).
-  Giữ M2/R1–R5 khóa hash và dùng extension riêng. Phân biệt TRAIN đã phơi nhiễm
-  với validation và TEST độc lập. GT chỉ đánh giá. Việc đọc, ghép hoặc xuất
-  dữ liệu cần đúng quyền hiện có. Không GPU, Kaggle, inference hoặc mở TEST
-  trong task này.
-- Quy trình điều phối này bổ sung các cổng cũ. Review trực tiếp đúng HEAD,
-  audit độc lập và quyền merge riêng vẫn áp dụng. Không gộp báo cáo kiểm thử,
-  pre-audit của worker hay quyền truy cập dự án thành phê duyệt dữ liệu, khoa học
-  hoặc tích hợp. Xem [kế hoạch hiện hành](docs/EXECUTION_PLAN.md).
-
-## Owner17/11/2026 — V5 RAM repair after PR200
-
-[Incident6937169950](https://github.com/tantdna2/SafeShift/pull/200#issuecomment-6937169950)
-and direct Owner task require one NEW Codex branch/Draft PR from merged0061050.
-Read actual successful MiniCPM1/3-image and InternVL Full-TRAIN sources,
-Issue173 cache remedy and fulltrain/internvl_v2 memory code. Reuse only safe
-job-owned runtime advice under hard supervision; unchanged signed16GiB floor,
-fresh RAM/disk gates and failure snapshots through native/pre-call. No GPU smoke,
-Kaggle submit, old notebook/ticket edits, production journal writes or science
-changes. Read-only provider verification is allowed. Authenticate V5 supervisor-
-only CPU failure and retain every hold; source-bound serial6 requires fresh
-authority/ticket after direct review, independent audit, separately authorized
-merge/postmerge/release. Same original Operator later publishes <=3 Owner steps;
-Owner personally runs. See [RAM repair runbook](docs/MINICPM_V5_RAM_REPAIR.md).
-
-## Owner16/11/2026 — post-PR199 V4-4 real-Input/source repair
-
-[Directive6922725439](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922725439)
-and [incident6922592580](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6922592580)
-require a NEW Codex coding task/branch/one Draft PR after merged92e7af4.
-Read actual successful MiniCPM one/three-image and InternVL Full-TRAIN source,
-not only summaries; verify current versioned Master/TRAIN and other Input roots
-with real read-only evidence. No separate GPU smoke or Owner path-discovery run.
-See [comparison](docs/research/MINICPM_V44_REFERENCE_COMPARISON_20261117.md) and
-[source-repair runbook](docs/MINICPM_V44_REPAIR.md).
-
-Preserve science/model/precision/parser/labels/results and every historical
-grant/ticket/journal/reservation/partial. Reconcile exact terminal V4-4 supervisor-
-only admit failure without false COLLECTED or refund. Source transition requires
-new reviewed/merged source authority and fresh valid signed ticket; no V4-4 reuse.
-Codex does code/CPU/docs/read-only provider verification/push only and stops at
-the new Draft PR for direct ChatGPT review. Independent audit, separately
-authorized merge/postmerge and authentic final-source release precede the SAME
-old Antigravity Operator session publishing a current <=3-step Owner handoff.
-Owner personally runs once before expiry; no Codex submit/live observer.
-
-## Owner16/11/2026 — PR199 Owner UI restart / finite derived budget
-
-[Directive6918902424](https://github.com/tantdna2/SafeShift/pull/199#issuecomment-6918902424)
-supersedes PR199's automatic Codex submit and recurring72000-cap amendment flow.
-Continue SAME Codex session/branch/Draft PR199; no new PR. Retire only the three
-named historical MiniCPM attempts as sources of results, preserving every ticket,
-journal/reservation/local log/sealed archive and provider uncertainty. Zero calls
-are Owner/local-reported, never authenticated remote deletion or terminal proof.
-
-Implement a separately identified Owner-UI restart at ordinal0 over all original
-3763 TRAIN IDs, no old predictions. Bind a finite auditable reservation policy to
-this exact directive and reviewed source; distinguish derived numerical ceilings,
-historical reservations, actual native calls and current account quota. No fake
-APPROVED amendment, counter rewrite/refund, automatic account switching or quota
-circumvention. Per-job caps, signed expiry/source/Input/raw/claims/anti-replay stay.
-
-Codex performs code/CPU tests/docs/push only and requests fresh direct HEAD review.
-After source PASS: independent Antigravity audit, separately authorized merge and
-verified postmerge, then authentic final-source release. Antigravity in SAME old
-Operator session publishes current signed notebook/private capsule and ≤3 concrete
-Owner steps; Owner personally Save Version > Save & Run All once before expiry.
-No Codex submit/live observer or claim that publication/Owner Run already happened.
-Antigravity collects authenticated new results and stages only NOT_ATTEMPTED.
-Science/FP16 weights/FP32 resampler/C1/HNLO N/A/TEST closure remain unchanged.
-
-## Owner16/11/2026 — post-PR198 Run1 recovery / one Codex launch
-
-[Directive6914854993](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6914854993)
-starts a new coding session/one Draft PR from merged main507e981. Diagnose direct
-versus nested five Inputs, preserve all original/V2/V3 grants, mirrored journals,
-failures and full reservations; no fourth campaign or automatic refund. Read-only
-provider reconciliation is allowed. New source/auth/journal changes require
-ChatGPT direct GitHub review, independent Antigravity audit, separately authorized
-merge by the audit session and verified postmerge in this same task.
-
-After those gates and an authentic final-source release, Codex may upload and
-submit exactly ONE Owner-account Kaggle TRAIN job through the reviewed signed
-V3 route. V2 UI-only grants do not authorize an API POST. Expiry/unknown provider,
-partial ZIP, native ambiguity, duplicate intent or exhausted project caps STOP.
-No invented rights, new campaign, expired ticket reuse, budget reset, TEST or
-science/precision/parser changes. See [recovery runbook](docs/MINICPM_RUN1_RECOVERY.md).
-
-PASS requires genuine provider source/version/Inputs, positive admit/setup/cpu/gpu
-receipts and the first ordered TRAIN model.generate-start receipt after model
-load, while the exact job is still RUNNING. RUNNING alone is UNVERIFIED. Then
-stop Codex monitoring, leave the kernel running and hand its URL/version/source/
-capsule/ticket/SHA/quota/log/journal to Antigravity's SAME historical Operator
-session. Do not wait for full success. Subsequent runs use verified collection,
-signed caps and NOT_ATTEMPTED only; no second Codex submission.
-
-## Owner16/11/2026 — PR198 expanded MiniCPM execution release, same session
-
-[Directive6907347740](https://github.com/tantdna2/SafeShift/pull/198#issuecomment-6907347740)
-requires completing the functional MiniCPM Full-TRAIN release/execution path in
-the SAME branch/session/Draft PR198, superseding dossier-only preparation scope.
-Reuse PR195; implement authentic exact-source authority, finite signed serial
-reservations/claims, provider/Input/quota gates, integrated preflight/native/raw/
-ZIP and NOT_ATTEMPTED-only continuation. No fixed160/200 calls,19-job guarantee,
-unnecessary standalone smoke rounds, fake rights or gate removal. Version source
-changes explicitly; preserve scientific method, historical notebooks/locks/raw.
-Codex may implement/tests/docs/push this same PR, but must not perform Kaggle/API
-provider/GPU/inference/TEST or production writes. Expanded direct ChatGPT review,
-new independent Antigravity audit, separately authorized merge/postmerge and
-authentic final-source release precede Owner Run. Old dossier pre-audit PASS is
-not approval for this expanded scope. Missing external rights/caps/projection/
-release evidence remains BLOCKED with precise required evidence; no fake DONE.
-
-## Owner12/11/2026 — PR196 review fixes, same branch/session
-
-[Review6817877168](https://github.com/tantdna2/SafeShift/pull/196#issuecomment-6817877168)
-requires a narrow read-only official results/status/budget bridge and regression
-coverage in the same Draft PR. Current direct Owner task authorizes Codex to read
-that review, update code/tests/evidence/docs and push the same branch/PR196.
-This code-administration permission does not authorize Kaggle, production ledger
-mutation, model inference, TEST, audit/merge or operations by Antigravity online.
-Original runtime/notebook/science/history remain immutable; use the versioned
-`official-report` handoff after verified final release, never fabricate legacy
-COLLECTED/MEASURED or treat provisional output as official. Stop at Draft PR for
-fresh ChatGPT review and mandatory independent Antigravity audit before merge.
-
-## Owner12/11/2026 — offline continuation / deferred reconciliation
-
-[Directive6816197123](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6816197123)
-and [runbook](docs/TRAIN3763_DEFERRED_RECONCILIATION.md) define a distinct versioned
-route; this programming task is CPU-only and stops at one Draft PR. No production
-mutation, API/Kaggle/GPU/inference/TEST or activation. Keep the original Operator
-checkout and frozen runtime/notebook bytes unchanged. Antigravity does offline
-work only; Owner personally performs every external operation, at most three
-actionable steps per turn. Never run the Owner-only online verifier on their
-behalf. Preserve INTENT35 and all histories; provisional local completion never
-means COLLECTED. New source-bound route release, direct ChatGPT review, mandatory
-independent Antigravity audit, separately authorized merge and postmerge
-verification precede activation. No self-issued approvals or readiness claim.
-
-## Owner09/11/2026 — Owner UI Kaggle reconciliation, code-only
-
-[Official directive6736965547](https://github.com/tantdna2/SafeShift/issues/180#issuecomment-6736965547)
-requires one new branch/Draft PR for truthful manual-result collection. Follow
-[the reconciliation runbook](docs/TRAIN3763_MANUAL_RECONCILIATION.md).
-Antigravity prepares → Owner presses Run → Owner reports completion → Antigravity
-collects with provider/Owner/capsule/archive/raw/trace/intent/history checks. On
-GitHub API throttling, provide the exact Owner UI procedure; missing authentic
-authority remains BLOCKED. No invented PUSH_INTENT/SUBMITTED, refund, history
-rewrite, duplicate result or implicit source/release/200-call authority.
-Keep original runtime source/science hashes and exact clean approved operator
-commit; run the separately reviewed external companion without overlaying runtime.
-An accepted truthful COLLECTED may feed unchanged histories and Ledger.measure;
-ordinal2 cannot be skipped or repeated by editing history. Preserve all partials
-and BLOCKED handoff bytes; mirror divergence means STOP/read-only reconciliation.
-This task forbids GPU, Kaggle submit/live probing, real inference, TEST and
-production-ledger writes. Stop at one Draft PR for direct ChatGPT review, then
-mandatory independent Antigravity audit and separately authorized merge. No
-self-issued review/audit/merge or scientific qualification.
-
-## Owner05/11/2026 — Issue180 campaign admission after PR179 MERGED
-
-[Issue180](https://github.com/tantdna2/SafeShift/issues/180), BASE
-`300fc4e305ffa6f1fed9b86ebfedbc996bc9dde2`: one new branch and one Draft PR
-implements a serial TRAIN3763 campaign. [Current contract/runbook](docs/TRAIN3763_CAMPAIGN.md)
-supersedes per-attempt Owner release and mandatory HTTPS witness **only on the
-new campaign route**. One authentic campaign grant binds original science/rights,
-operator/history, finite calls/jobs/GPU-time/deadline and stop rules. No renewed
-Owner permission for each shard, continuation or diagnosed technical fix inside
-that grant. Source fixes still require tests, technical review/audit/merge and
-provenance; changing science/data/TEST or exceeding caps requires a new decision.
-Resume only NOT_ATTEMPTED; exact-target repair preserves all errors/raw/attempts.
-One local operator/mirrored create-only ledger; ambiguous submit/history/provider/
-ZIP STOP for read-only reconciliation. No automatic cross-machine takeover or
-global exactly-once claim. Historical grants/witness claims/results stay immutable.
-
-This implementation task explicitly prohibits actual Kaggle submit, GPU, real
-model/image inference and TEST, including smoke. No campaign grant or budget
-exists yet; O2–O6 remain PENDING where evidence is missing. Reuse verified existing
-Inputs/checkpoints/SDK and PR177 evidence without reupload or new live probing.
-Antigravity monitors <=15 minutes, checkpoints and exits; resume the same session
-for terminal collection on the next user message. Codex fixes code; operations
-do not replace the required independent Antigravity audit. Stop at the single
-Draft PR for ChatGPT direct GitHub review, independent audit and separately
-authorized merge. No self-issued approval, merge or scientific qualification.
-
-## Owner05/11/2026 — execution candidate after PR178 MERGED
-
-New task starts from exact merged main `1d161546b93fdf1ae3f80d6baebccdf0d6a6106d`.
-See [execution candidate](docs/INTERNVL3763_EXECUTION.md). One new branch/Draft PR
-prepares notebook/runner/SDK isolation/exact authority/cross-machine claims and
-Antigravity operations. **No new Kaggle submit or real model/image inference**
-in this task, including live smoke. Preserve PR177/178 history; do not reuse grants.
-Antigravity's supplied read-only account/connectivity PASS need not be repeated.
-Actual execution remains BLOCKED until separately authorized source/release,
-numerical caps/Inputs/rights and reviewed durable remote-witness deployment.
-Codex owns code/tests/PR; Antigravity operates separately authorized jobs;
-ChatGPT reviews GitHub and decides audit/merge. Never self-issue those approvals.
-
-## Owner 05/11/2026 — TRAIN3763 grammar V2 và Antigravity CLI
-
-Task mới sau PR177 đã merge: một branch mới từ main và một Draft PR thống nhất
-cho chuẩn bị InternVL3.5 grammar V2 trên toàn bộ3763 TRAIN IDs gốc và cơ chế
-ủy nhiệm vận hành. Xem [hợp đồng/hướng dẫn](docs/INTERNVL3763_ANTIGRAVITY.md).
-Codex viết/sửa code, kiểm thử và quản lý PR; Antigravity CLI1.5.0 nhận phần
-vận hành Kaggle **chỉ khi có exact execution scope/release riêng**. Lưu commit,
-runtime/notebook hash, Input/checkpoint/rights/caps, job/version/conversation ID
-và mọi report/evidence dưới Git-ignored `data/processed/`.
-
-Antigravity theo dõi ban đầu tối đa15 phút; RUNNING thì lưu RUNNING_UNVERIFIED,
-kết thúc lượt AI, không hủy kernel/job hoặc submit lại. Người dùng báo xong thì
-resume đúng conversation (hoặc recovery read-only từ file), kiểm terminal thật,
-thu ZIP/SHA/log/receipt và kiểm toàn vẹn/hợp đồng trước PASS/FAIL/BLOCKED.
-Unknown submission/calls chặn retry; không giữ AI nền trong lúc chờ người dùng.
-Notebook còn cần live permit coordinator không được detach bằng cơ chế này.
-
-Hiện chỉ cấp CPU synthetic/code/notebook preparation và rehearsal CLI local,
-không full TRAIN3763, TEST, Kaggle job hoặc scientific decision mới. Source/method
-đã duyệt và lịch sử #177 bất biến; final-source live verification còn NOT_RUN.
-Báo cáo vận hành không thay independent audit. Dừng Draft PR cho ChatGPT kiểm
-GitHub trước khi tổ chức audit độc lập; merge cần quyền riêng.
-
-## Owner 02/11/2026 — Khóa luận full TRAIN 3.763 / sửa lỗi có kiểm soát
-
-[Issue #167](https://github.com/tantdna2/SafeShift/issues/167), [DEC-20261102-OWNER-THESIS-FULLTRAIN-REPAIR](docs/research/DECISIONS.md#dec-20261102-owner-thesis-fulltrain-repair): đích nghiên cứu TRAIN là **cùng 3.763 IDs với mọi model đã được chọn**, không dùng TRAIN160 pilot làm full. Phấn đấu nhãn Level01–04 hợp lệ trên toàn planned; INVALID/TECHNICAL_ERROR/NOT_ATTEMPTED phải phân tích nguyên nhân và chuẩn bị sửa/rerun có kiểm soát, **không** bắt buộc bịa 100% SUCCESS, không chữa bằng GT, parser lax hoặc loại ca lỗi.
-
-Giữ bản ghi raw/attempt/series gốc, không ghép Recovery224/composite/peers các series hay đổi khoa học; nếu sửa prompt/parser/generation/model ảnh hưởng semantics phải version/series và phê duyệt comparability. Quy tắc `resume` Candidate160 lịch sử không tự đổi thành `repair` và không mở quyền full TRAIN. **Tài liệu trước, CPU synthetic/code/test/notebook preflight G0–G6 sau, đúng một branch/PR; chưa cấp Kaggle/GPU/TEST/private raw/full inference.** Ba model hiện chỉ là ứng viên; quyết định 01/11 dừng tuyển model thứ tư còn hiệu lực, O2–O6/học vụ tiếp tục PENDING.
-
-## Phạm vi hiện tại
-
-- Đọc `AGENTS.md`, `README.md` và `docs/ROADMAP.md` trước mỗi task; task liên quan
-  code phải đọc thêm `docs/ARCHITECTURE.md`. Task description là phạm vi công việc
-  hiện tại. Root `ROADMAP.md` và `TASKS.md` thuộc lịch sử trước reset, không có trên
-  main mới; tra qua `docs/HISTORY.md` khi cần, không tạo lại các log cũ.
-- Foundation V1 có record/validation, phép đếm classification cơ bản, model
-  transport interface và demo CPU tổng hợp. Không có dataset parser/backend hay
-  quyền thực nghiệm mới. Xác định phạm vi được giao, giữ file local ngoài phạm vi.
-- Sau tài liệu đầu vào, chỉ đọc module/test và nguồn hợp đồng liên quan theo
-  bảng định tuyến trong ARCHITECTURE; không nạp toàn bộ 693 file lịch sử.
-- Code, notebook, môi trường, test và hồ sơ nghiên cứu cũ nằm tại các ref lưu trữ
-  ghi trong `docs/HISTORY.md`. Tra cứu bằng đúng commit; không nhập lại code cũ
-  vào main khi chưa được review và chấp thuận.
-
-## Bảo vệ lịch sử và thẩm quyền nghiên cứu
-
-- Giữ bất biến nhánh `legacy/pre-reset-20261024` và annotated tag
-  `safeshift-pre-reset-20261024`; không di chuyển, ghi đè hoặc force-push các ref này.
-  Không viết lại lịch sử Git hoặc sửa source lock để chạy release cũ ở HEAD mới.
-- D9R22 vẫn là phạm vi có hiệu lực trong hồ sơ nghiên cứu; DEC-PA3-011 vẫn
-  **PROPOSED**. Hướng A/C chưa được phê duyệt. Reset không hủy quyết định đã có,
-  phê duyệt hướng mới, thay đổi kết quả/AUROC hay nâng trạng thái kiểm toán.
-- Quyền thực thi cũ chỉ áp dụng cho đúng source/release/run/attempt đã cấp;
-  không chuyển quyền đó sang main mới. GPU, inference, đọc TEST/dữ liệu bị khóa,
-  nhãn/annotation và thí nghiệm mới đều cần phạm vi và quyền cụ thể.
-- Không tự thay dataset, split, nhãn, metric, protocol hoặc roster. Giữ yêu cầu
-  Seminar bốn mô hình trong hồ sơ cũ; mọi thay đổi cần Research Lead duyệt và ghi
-  vào log quyết định mới dưới `docs/` trước khi áp dụng, không sửa quyết định cũ.
-- Phân biệt bằng chứng đã kiểm chứng, thông tin được cung cấp, giả thuyết và câu
-  hỏi mở; dẫn nguồn. Không bịa kết quả hoặc coi TRAIN đã phơi nhiễm là holdout.
-- Sáu Draft PR cũ được liệt kê trong `docs/HISTORY.md`; không tự sửa, đóng,
-  rebase hoặc merge chúng khi làm việc trên cấu trúc mới.
-
-## Chỉ thị Owner về chạy Kaggle
-
-Khi Owner trực tiếp yêu cầu chạy Kaggle trong phạm vi dữ liệu và tài nguyên họ
-kiểm soát, không hỏi lại quyền chạy hoặc yêu cầu phê duyệt thủ công từng notebook.
-Thực hiện phần đã được yêu cầu và đưa ra thao tác cụ thể. Nếu có blocker kỹ thuật
-hoặc phần ngoài quyền Owner, nêu chính xác blocker và cách xử lý; không coi đó
-là thiếu sự đồng ý chung của Owner.
-
-Giữ nguyên các kiểm tra kỹ thuật, giới hạn từng lượt chạy, quyết định khoa học,
-source/hash/custody, raw-before-parse, chống retry/replay và xuất evidence theo
-hợp đồng hiện hành. TEST vẫn đóng; không tự đổi dataset/split/nhãn/metric/HNLO/
-protocol/model revision. Chỉ thị này không cấp quyền của chủ dữ liệu/bên thứ ba
-hoặc cho GPU job ngoài phạm vi, và không thay phê duyệt học vụ. Không giả approval
-ref, tự đặt ngưỡng khoa học hoặc bỏ cổng kỹ thuật để vượt blocker.
-
-Nguồn: [bản ghi chỉ thị Owner do ChatGPT chuyển lên GitHub ngày 30/10/2026](https://github.com/tantdna2/SafeShift/pull/153#issuecomment-6516812967).
-
-## Dữ liệu và Git
-
-- Giữ nguyên dữ liệu gốc. Sản phẩm dẫn xuất local đặt trong `data/processed/`,
-  có quy trình tạo lại rõ ràng; cả `data/` được ignore mặc định trên main mới.
-- Không commit dataset, ảnh/video thật, archive dữ liệu, checkpoint, raw model
-  output hoặc artifact lớn, secrets hay credentials, kể cả qua Git LFS.
-- Chỉ version control code, tài liệu và fixture nhỏ tổng hợp/được phép chia sẻ
-  sau review. Không dùng `git add -f`; kiểm tra toàn bộ staged diff và danh sách
-  file trước commit. Manifest không chứa dữ liệu nhúng hoặc đường dẫn máy cá nhân.
-- Khi được phép chạy VLM, lưu raw output của từng mẫu/lần gọi **trước** parse
-  hoặc tổng hợp; liên kết sample ID, prompt, model/version, cấu hình sinh và run ID.
-  Giữ cả lỗi, lần chạy dở và provenance, không chỉ nhãn hoặc điểm tổng hợp.
-
-## Code và bằng chứng kiểm tra
-
-- Dùng đường dẫn tương đối từ repository root trong code, cấu hình và tài liệu.
-- Giữ bốn nhãn canonical và quy tắc INVALID/support/recall theo nguồn lịch sử
-  đã dẫn trong ARCHITECTURE. Application records/model transport mới không phải
-  production schema/parser hoặc protocol freeze. Không tự bổ sung metric pending.
-- Demo và tests chỉ dùng bản ghi tổng hợp, phải phân biệt rõ với kết quả thật;
-  không đưa số demo vào báo cáo khoa học, không viết backend sinh dự đoán giả.
-- Chỉ thêm code/module/thư mục có chức năng được giao; không tạo train.py,
-  notebook GPU, inference pipeline hoặc nhập lại stub/hệ thống cũ cho đủ cấu trúc.
-- Ghi nguồn/version/checksum đầu vào, môi trường/dependency versions, lệnh chạy,
-  cấu hình, seed nếu có ngẫu nhiên, Git commit và vị trí artifact cho mỗi lần chạy.
-- Code dùng lại cần test phù hợp, gồm lỗi/biên có ý nghĩa. Không lấy mẫu dataset
-  thật làm fixture được commit; không thêm dependency khi chưa cần.
-- Smoke test hiện tại: `python -B -m unittest discover -s tests -v`.
-  Chạy kiểm tra phù hợp thay đổi; ghi rõ kết quả, giới hạn và kiểm tra chưa chạy
-  trong PR/log. Chỉ đánh dấu hoàn thành khi có bằng chứng.
-- Test lịch sử thuộc commit lưu trữ và môi trường tương ứng; không chạy chúng
-  trên scaffold mới rồi kết luận hệ thống cũ lỗi.
-
-## Thiết kế notebook Kaggle: kiểm môi trường trước thực nghiệm
-
-Nguồn bắt buộc: [chỉ thị Owner ngày 31/10/2026 tại PR #155](https://github.com/tantdna2/SafeShift/pull/155#issuecomment-6533181366).
-Đây là yêu cầu thiết kế, không approval review/merge hoặc kết quả GPU.
-
-- Trước thiết kế/phát hành notebook thực nghiệm, thu thập bằng chứng target:
-  kernel/worker Python và ABI/OS/kiến trúc, cách provision worker đúng phiên bản,
-  pins/torch/transformers/compiled ABI; layout Input/unique marker, manifest/source/
-  weights SHA256 và allowlist; scratch/output device, free space, cấp phát thật,
-  ghi/fsync/cleanup, RAM/cgroup/quota/time; GPU count/model/driver/visibility và
-  CUDA/FP16 trong child đúng môi trường. Ghi rõ giới hạn chưa load weights thật.
-- Nếu chưa đo Kaggle thực tế, bàn giao trước một diagnostic cell có giới hạn
-  hoặc notebook preflight độc lập cho Owner chạy với cùng Inputs/settings.
-  Không dùng lượt production để phát hiện rồi vá dần lỗi môi trường cơ bản.
-  Preflight lặp lại được, không Owner execution slot/consumption/native inference,
-  không tải weights hoặc walk đệ quy không giới hạn. Công khai side effects
-  provision phần mềm pinned, cấp phát/xóa scratch và vị trí evidence/export.
-- Tách rõ `ENVIRONMENT_OBSERVED`, `CPU_SOFTWARE_PASS`, `LIVE_GPU_PREFLIGHT_PASS`,
-  `WEIGHTS_LOADED`, `INFERENCE_VERIFIED`, `SCIENTIFIC_QUALIFIED`. Chỉ claim mức
-  đã có bằng chứng; local mock/CPU synthetic không là Kaggle GPU/model-fit PASS.
-  Thiếu/lỗi bằng chứng phải BLOCKED/NOT_RUN/UNVERIFIED, không im lặng thành READY.
-- Thiếu/sai Input/hash/path/package ABI/allocation/GPU/driver/CUDA/technical gate
-  hoặc lịch sử không rõ phải chặn production trước consumption khi có thể.
-  Giữ nguyên no-retry/resume/replacement/overwrite theo hợp đồng; không né science,
-  source/nhãn/split/metric/protocol/model revision/TEST hoặc bịa approval. Không
-  hỏi lại quyền notebook đã được Owner cấp trong phạm vi quyền của họ; quyền
-  bên ngoài và cổng khoa học vẫn riêng.
-- Bàn giao cùng nhau notebook production, diagnostic/preflight không tiêu lượt,
-  tests/receipts máy đọc được, lệnh tái lập, hướng dẫn chạy/export/xử lý lỗi và
-  danh sách live constraints chưa kiểm. Không hứa không còn lỗi GPU/model nếu
-  chưa thể chứng minh load weights bằng hành động GPU thực tế được phép.
-- Kiểm thử âm tính: marker thiếu/trùng/sai, source/weights/hash sai, Python thiếu/
-  tải sai/package mismatch, mount sai, cùng/khác filesystem/thiếu dung lượng/quota,
-  CUDA/driver thiếu, output partial/unknown và preflight lặp. Assert preflight
-  không Owner slot, không attempt, không model call. Giữ đối chiếu BASE/hash lịch sử.
-
-Quy tắc này chỉ COMPLETE sau final HEAD được ChatGPT review, Antigravity audit,
-merge được cho phép riêng và hậu merge xác minh có quy tắc trên main; Draft/CPU
-PASS hoặc comment không tự hoàn tất yêu cầu.
-
-## Candidate160 retry/resume — chỉ thị Owner 31/10/2026
-
-Nguồn: task trực tiếp của Owner “Loại bỏ cơ chế One-Shot/No-Retry” cho
-InternVL3.5 và MiniCPM-V-4, ghi tại
-[DEC-20261031-CANDIDATE160-RECOVERY](docs/research/CANDIDATE160_RECOVERY_DECISION_20261031.md).
-Đây là bổ sung vận hành, thay các lệnh cấm retry/resume/replacement và khóa
-vĩnh viễn **chỉ cho hai notebook Candidate160 Owner**. Không sửa hoặc hồi tố
-quyết định cũ; luồng grant/pilot khác giữ hợp đồng riêng.
-
-- Owner có thể tiếp tục/chạy lại sau lỗi trong phạm vi đã giao, kể cả lỗi load,
-  mà không xin phép thủ công từng lần. Mỗi kích hoạt tạo run/attempt riêng;
-  tối đa160 calls và12 giờ/lượt, không retry nội bộ vô hạn hoặc job trùng.
-- Giữ mọi raw/error/attempt/hash/marker cũ; resume dùng lịch sử kiểm checksum và
-  custody, kể cả Outputs Kaggle cũ. Không xóa khóa hoặc sửa source lock để chạy.
-  Thiếu/mâu thuẫn lịch sử phải ghi BLOCKED và yêu cầu bổ sung evidence có sẵn.
-- Rerun toàn bộ tạo series riêng; resume tiếp tục series vận hành hiện hành.
-  INITIAL/RECOVERY/FULL_RERUN không tự trộn vào khoa học. Quy tắc chọn kết quả
-  phân tích là **PENDING**; không chọn output thuận lợi, gộp AUROC hoặc nâng PASS.
-- Khóa tiến trình tự nhả khi tiến trình/worker kết thúc. Kaggle VM độc lập không
-  có shared lock: Owner phải dừng phiên trước và attach đủ Outputs trước resume;
-  không claim global exactly-once khi thiếu shared state.
-- Giữ nguyên160 TRAIN/order/revisions/source/checkpoint hashes/C1/HNLO/metric/
-  nhãn/protocol/raw-before-parse, preflight môi trường và mọi quyền dữ liệu.
-  Task mã nguồn chỉ CPU synthetic, không GPU hoặc tiêu lượt thực nghiệm.
-- Dừng ở một Draft PR. ChatGPT kiểm GitHub và Antigravity audit độc lập trước
-  merge; không tự nhận audit hoặc merge đã hoàn thành.
-
-## Quy trình bắt buộc cho mọi notebook Kaggle — Owner 31/10/2026
-
-Nguồn: [chỉ thị Owner tại PR #156](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
-và task trực tiếp khôi phục thực nghiệm ngày31/10/2026. Đây là bổ sung có truy
-vết, áp dụng cho mọi model/cohort/notebook Kaggle hiện tại và tương lai, kể cả
-phiên Codex mới; không hồi tố sửa các quyết định lịch sử.
-
-- Khi phát triển bất kỳ notebook SafeShift nào dự kiến chạy trên Kaggle,
-  Codex phải kiểm mã nguồn và local integration, rồi **tự chạy trên Kaggle
-  thật** bằng CLI/API chính thức, với dữ liệu thật trong phạm vi được phép,
-  dùng số mẫu tối thiểu đủ kiểm các đường kỹ thuật quan trọng. Ban đầu một
-  ảnh theo thứ tự đã khóa; thêm trường hợp chỉ khi có lý do kỹ thuật ghi rõ.
-- Kiểm cùng production entrypoint/child/CLI/path types, runtime/pins/Input,
-  source/checkpoint/revision/precision/C1; phải nạp weights thật, inference
-  thật trên GPU, raw-before-parse, parser/HNLO liên quan và export ZIP/SHA256.
-  Preflight, CPU mock/unit tests hoặc GPU tensor probe không đủ bàn giao.
-- Smoke có ID, sample ID/hash, cấu hình, source/notebook hash, giới hạn ảnh/
-  calls/time/resource và evidence riêng. Không tiêu/sửa production history,
-  không trộn vào kết quả khoa học, không tạo cohort khoa học hoặc đổi dữ liệu/
-  split/nhãn/prompt/model/precision/parser/HNLO/metric/protocol để đạt PASS.
-- Lỗi phải giữ cả log/raw/archive/receipt FAIL, sửa tận gốc, thêm regression,
-  chạy local rồi kiểm Kaggle lại có giới hạn. Không retry vô hạn/job trùng.
-  Chỉ phiên bản notebook/source cuối có bằng chứng thật mới được bàn giao
-  **READY FOR REVIEW**; source/runtime/Input thay đổi phải kiểm lại tương ứng.
-- Không kết nối/xác thực được, thiếu Input/GPU/quota/quyền hoặc chưa chạy
-  inference/export thật → **BLOCKED / NOT VERIFIED**, không READY FOR OWNER.
-  Không yêu cầu Owner trở thành người phát hiện lỗi cơ bản bằng production.
-- Owner đã cho phép các smoke kỹ thuật có giới hạn trên dữ liệu/tài nguyên họ
-  kiểm soát; không hỏi lại quyền chung từng lần. Dùng xác thực chính thức,
-  không yêu cầu token/password/kaggle.json qua chat, không log/commit/upload
-  credentials và không đổi privacy hoặc suy quyền sang TEST/bên thứ ba.
-- Sau ChatGPT review, Antigravity audit độc lập và merge được cấp quyền,
-  **Owner tự chạy thực nghiệm chính thức đầy đủ**, gửi Output cho ChatGPT.
-  Codex không tự chạy toàn bộ cohort thay Owner. Một smoke PASS không chứng
-  minh cả160 ảnh/long-run/quality hoặc hoàn tất quyết định khoa học PENDING.
-
-Trong phạm vi này, quy tắc mới thay hướng dẫn cũ cho phép bàn giao chỉ với
-preflight/Owner diagnostic và giới hạn task chỉ CPU ở snapshot Candidate160
-phía trên. Retry/resume production vẫn theo quyết định recovery; smoke một
-call riêng không dùng production reservation/history. Không xóa artifact
-CONSUMED/BLOCKED_RESERVED_NO_RETRY/UNKNOWN/replacement1. Dừng ở Draft PR #156;
-không tự merge, tự nhận audit PASS hoặc đổi scientific selection=PENDING.
-
-## MiniCPM resampler FP32 — ngoại lệ kỹ thuật Owner31/10/2026
-
-[Quyết định append-only](docs/research/DECISIONS.md#dec-20261031-minicpm-resampler-fp32-technical-exception)
-cho phép riêng score/softmax/value product trong resampler attention dùng FP32,
-output về dtype gốc; weights FP16, eager và mọi model/checkpoint/source lock/
-TRAIN160/C1/parser/HNLO giữ nguyên. Phải có effective implementation/config/ID/
-hash riêng, không giả source gốc không đổi về thực thi. Chỉ thử kỹ thuật có
-giới hạn, bắt đầu1 ảnh thật; không production160, không TEST, không baseline
-khoa học hoặc pooling/result selection. Giữ mọi FAIL/PASS/receipt cũ. Không
-suy rộng quyền sang toàn model/precision/prompt/parser/nguồn khác. Tiếp tục
-đúng session/branch/Draft PR156; ChatGPT review và quyết định audit trước merge.
-
-## Hoàn thiện production engineering — Owner31/10/2026
-
-[Chỉ thị tiếp nối](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6540904325)
-cho phép chuẩn bị đường production FP32 riêng và kiểm kỹ thuật tối thiểu trên
-TRAIN; không phê duyệt baseline FP32 hoặc Codex chạy chính thức160. Profile
-`train160-production-engineering-v1` khóa ordinal0,15,111 trước inference mới:
-ảnh đầu, diện tích nhỏ nhất, height/width lớn nhất (tie lấy ordinal đầu).
-Đây là mẫu phủ nhánh kỹ thuật, không scientific cohort hay chọn theo dự đoán.
-Tối đa3 native calls/1 load/3600 giây; history/campaign/slot/series riêng,
-metrics excluded. Kiểm resume bằng sealed ZIP vào workspace mới phải no-op,
-không load/call lại ảnh đã hoàn thành. INVALID là durable completion.
-
-MiniCPM FP32 official resume/rerun giữ
-`BLOCKED_PENDING_SCIENTIFIC_DECISION`, kể cả direct worker/execution record.
-Không tự bóc fence, nới parser, đổi prompt/token/HNLO hoặc hợp nhất series.
-Chuẩn bị đầy đủ chứng cứ trước khi yêu cầu đúng quyết định hẹp về việc dùng
-implementation đã định danh làm baseline khoa học. Codex tự kiểm chính notebook
-production cuối trên Kaggle thật; fresh ChatGPT review và Antigravity audit
-độc lập vẫn bắt buộc. Dừng tại Draft PR156, không merge/full160/TEST.
-
-## Owner adopts MiniCPM FP32 for original official TRAIN160 —31/10/2026
-
-[Owner decision6544285481](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6544285481)
-and the current direct task authorize a new cohesive Draft PR for exact numerical
-adoption/activation, tests, documents and final-source bounded Kaggle verification.
-The append-only [decision](docs/research/DECISIONS.md#dec-20261031-owner-minicpm-fp32-official-train160)
-pins the implementation/configuration/descriptor, original TRAIN160 and scope.
-This replaces the preceding adoption BLOCKED status only for that identity;
-it is not a separate Research Lead/faculty signature or approval of other configs.
-
-Stop at Draft PR for ChatGPT's direct GitHub review, independent Antigravity audit
-and separately authorized merge. PR156's audit waiver does not apply to this PR.
-After ChatGPT verifies that merge, Codex is authorized to operate official Kaggle
-resume in the same session, instead of requiring the Owner to upload/run manually.
-Keep technical verification separate, preserve all historical evidence, enforce
-160 native calls/43200 seconds per attempt and check history before resume.
-No official160 before review/audit/merge verification; no TEST, scientific result
-selection/pooling, Accuracy/Macro-F1 analysis or model selection in this task.
+# SafeShift — Hướng dẫn làm việc
+
+## Bắt đầu mỗi task
+
+1. Đọc trọn file này, [README](README.md) và [ROADMAP](docs/ROADMAP.md).
+   Với code, đọc thêm [ARCHITECTURE](docs/ARCHITECTURE.md) và chỉ mở
+   module, test và hợp đồng liên quan. Đối chiếu [PROJECT_STATE](docs/PROJECT_STATE.md)
+   và chỉ đạo Owner/PR hiện hành để xác định đúng source, phạm vi và quyền.
+2. Trên Windows, `D:\SafeShift` là gốc dự án. Với Orca, chọn Worktree
+   location riêng của SafeShift là `D:\SafeShift\.worktrees`, kiểm đường dẫn
+   tuyệt đối Orca trả về trước khi giao việc. Tái sử dụng workspace phù hợp
+   trên D, kể cả phiên Coordinator và worker Codex/Antigravity.
+3. Tạo workspace, repo/worktree, file tạm, notebook, môi trường Python,
+   cache model, dataset, checkpoints, artifacts và kết quả SafeShift trên D.
+   Cấm chủ động tạo các tài nguyên này trên C. Chỉ giữ trên C dữ liệu bắt
+   buộc của ứng dụng/hệ điều hành khi không có cơ chế chuyển phù hợp.
+   Dùng `data/processed/` Git-ignored cho dẫn xuất và scratch, có đường
+   dẫn dưới gốc dự án và có thể tái lập. Với từng process được hỗ trợ,
+   ghim cwd, `TEMP`/`TMP`/`TMPDIR` và cache theo công cụ trên D. Giữ
+   Windows system/user environment và profile dùng chung. Nếu Orca
+   không truyền env cho chat/worker, cấu hình lại trong từng shell gọi
+   subprocess trước khi tạo file. Xem [thao tác Windows và kiểm liên kết](docs/ARCHITECTURE.md#windows--workspace-và-tài-nguyên-safeshift).
+4. Giữ file này tối đa **20.000 byte UTF-8**. Ghi chi tiết nhiệm vụ vào
+   tài liệu chuyên biệt. Khi thay chỉ thị, kiểm tổng dung lượng các file
+   Codex thực sự nạp từ gốc tới cwd, kể cả override và chỉ thị người dùng
+   đang áp dụng. Xác minh phiên mới đọc hết ở mức nạp hiện có.
+
+## Khóa luận hiện hành
+
+[Owner chọn CT1–CT3](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7208108548)
+sau phản biện độc lập. PR #136 đã merge và hậu kiểm tại
+`77d625ad6b9f1bd52c1cc3b3bdc4e60aebf3251a`. Tiếp tục một PR triển khai
+với [kế hoạch](docs/EXECUTION_PLAN.md), [thiết kế Khóa luận](docs/research/THESIS_EXECUTION_PLAN_2026.md)
+và [hợp đồng CT1–CT3](docs/research/THESIS_CT123_PREPARATION.md).
+
+- Benchmark First theo thứ tự baseline, lỗi, truy nguyên, đề xuất,
+  phản biện, Owner chốt, triển khai và E1–E5. CT1 ưu tiên Qwen3 cùng
+  revision, A C1 gốc, B ưu tiên tiêu chí ngành, C đối chứng trung tính.
+  Audit ảnh mù trước inference mới. Chốt biên và quota theo bằng chứng.
+- CT2 là hướng thuật toán riêng với M lượt model và K lượt review. CPU
+  dùng ba projection Full-TRAIN đã niêm phong. Giữ cohort 3.763 TRAIN đã
+  phơi nhiễm, GT chỉ chấm sau khi chọn hàng đợi, không dùng GT để xếp
+  hạng hoặc sửa nhãn. Qwen3 Composite, InternVL3.5 Grammar V2 và MiniCPM
+  Normalization V1 là ba sản phẩm nhãn dị thể. MiniCPM strict C1 là
+  sensitivity. Báo `PROVISIONAL_PRE_FINAL_ADMISSION` của nguồn và giới
+  hạn hồi cứu. HNLO đối chứng phụ theo nguồn, calibration cần score
+  tương thích, validation và phạm vi học vụ.
+- CT3 hỗ trợ audit và truy nguồn. Ảnh, reviewer, nghiên cứu người dùng,
+  TEST 1.250, GPU, Kaggle, inference mới và thí nghiệm xác nhận cần quyền
+  đúng phạm vi. Đọc [protocol dữ liệu](docs/research/THESIS_DATA_PROTOCOL.md)
+  trước khi chia nhóm, kiểm overlap hoặc thiết kế validation/TEST.
+- Giữ nguyên M1/M2/R1–R5, C1, GT/split và hồ sơ lịch sử. Đọc
+  [quyết định append-only](docs/research/DECISIONS.md) trước khi thay phương
+  pháp, score hoặc thí nghiệm. D9R22 và successor theo phạm vi đã chốt,
+  DEC-PA3-011 còn PROPOSED. Roster bốn mô hình của Seminar là lịch sử.
+  Bất kỳ thay đổi roster, split, GT, metric, protocol hoặc model revision
+  cần quyền Research Lead và quyết định mới theo đúng phạm vi. Không
+  suy từ merge, benchmark, shadow run hay pre-audit sang quyền khoa học.
+
+## Dữ liệu, lịch sử và vị trí artifact
+
+- Giữ bất biến dữ liệu gốc, journal, source lock, raw, lỗi, partial và
+  provenance. Không ép 100% SUCCESS, dùng parser lax hoặc GT để chữa lỗi,
+  loại ca lỗi hay trộn series. Chỉ dùng bảng dẫn xuất đúng quyết định
+  như Qwen3 Composite V1. Chuyển source, repair và resume theo hợp đồng
+  từng route, từng ticket và quyền hiện hành.
+- Khi inference được cấp quyền, ghi raw từng sample/lần gọi trước parse,
+  liên kết sample ID, prompt, model/revision, cấu hình sinh và run/attempt.
+  Ghi source/input SHA, env, lệnh, seed, vị trí artifact, status và lỗi.
+- Giữ `legacy/pre-reset-20261024` và tag
+  `safeshift-pre-reset-20261024` bất biến, không viết lại lịch sử, force
+  push, chỉnh source lock để dùng quyền cũ hoặc tự sửa/đóng/rebase/merge
+  sáu Draft lịch sử. [HISTORY](docs/HISTORY.md) định tuyến commit lưu trữ
+  và các PR. Chỉ tra exact revision, giữ code legacy ngoài main trừ phần
+  được review và chấp thuận.
+- Chỉ commit code, tài liệu, fixture tổng hợp nhỏ/được phép. Không commit
+  ảnh/video thật, raw output, dataset, archive, weights/checkpoint, file
+  lớn, secrets hoặc credentials, kể cả qua LFS. Không `git add -f`.
+  Kiểm danh sách staged và toàn bộ staged diff. Dùng đường dẫn tương đối
+  từ repo root trong code, manifest và cấu hình chia sẻ, với ngoại lệ
+  đường dẫn quản trị máy trong chính sách Windows này.
+- Khi chuyển tài nguyên, ghi branch, commit, trạng thái staged/unstaged
+  và phiên liên quan. Dùng thao tác Git/Orca được hỗ trợ, kiểm SHA256 của
+  artifact và dữ liệu, giữ bản gốc đến khi xác minh đích. Không ghi đè,
+  di chuyển workspace đang chạy khi chưa bảo toàn trạng thái, hoặc xóa
+  app state/cache dùng chung. Ghi alias cũ và điều kiện retarget khi có.
+
+## Code, kiểm thử và điều phối
+
+- Giữ bốn nhãn canonical và semantics INVALID/support/recall. Demo và
+  test chỉ dùng fixture tổng hợp, ghi rõ khác kết quả nghiên cứu. Đọc
+  ARCHITECTURE, tái sử dụng module hiện có, test lỗi/biên phù hợp, tránh
+  backend dự đoán giả, dependency hoặc pipeline ngoài phạm vi.
+- Chọn kiểm thử phù hợp. Smoke tổng quát
+  `python -B -m unittest discover -s tests -v`. Test lịch sử dùng ref
+  và môi trường tương ứng. Ghi rõ kết quả, giới hạn, giá trị chưa kiểm và
+  bằng chứng có thể tái lập. Phân biệt kết quả đã kiểm chứng, thông tin
+  do người khác cung cấp và giả thuyết.
+- Điều phối qua Orca với skill đúng executable, tối đa hai worker đồng
+  thời mặc định. Medium/High theo task. GPT-6.2 Astra và Gemini 4 Neon
+  dành cho bài khó cần thiết, hạn chế Carbon, loại Claude và GPT-OSS 120B.
+  Kiểm model/effort hiệu lực, vị trí và quota, lưu dispatch/receipt.
+  Tái sử dụng session đúng vai trò. Khi quota hoặc liveness không rõ,
+  bảo toàn công việc và kiểm lại qua Orca trước mọi thao tác retry.
+- Phân biệt kiểm thử Codex, review trực tiếp đúng HEAD, audit Antigravity
+  độc lập, quyền merge, hậu kiểm và exact-source release. Chỉ làm bước
+  được cấp trong task. Review/audit/merge cũ không tự áp sang HEAD mới.
+  Không tự cấp phép, suy từ QA sang kết quả khoa học hoặc bypass release.
+
+## Định tuyến vận hành Kaggle và historical handoff
+
+Đọc [Kaggle failure/release gates](docs/KAGGLE_FAILURES_AND_RELEASE_GATES.md)
+trước khi thiết kế, sửa hoặc giao notebook. Áp dụng quy tắc môi trường,
+preflight lặp được, thử kỹ thuật tối thiểu đúng source, G0–G6, raw trước parse,
+checksums và receipt. [Owner đã cấp smoke có giới hạn](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+trong phạm vi tài nguyên họ kiểm soát. Chỉ thị hoặc route cụ thể CPU-only,
+Owner-only, TEST đóng hay no-submit vẫn áp dụng. Khi Owner cấp quyền trực
+tiếp trong phạm vi của họ, thực hiện theo gate kỹ thuật và giới hạn, không
+hỏi lại quyền chung từng job. Phê duyệt học vụ và quyền bên thứ ba vẫn riêng.
+Dùng xác thực chính thức, không yêu cầu/đăng credentials.
+[Chỉ thị Owner về Kaggle](https://github.com/tantdna2/SafeShift/pull/153#issuecomment-6516812967)
+
+| Khi mở task thuộc phạm vi này | Đọc trước khi thao tác |
+| --- | --- |
+| Candidate160, retry/resume, FP32 resampler | [Candidate160](docs/CANDIDATE160_KAGGLE.md), [quyết định recovery](docs/research/CANDIDATE160_RECOVERY_DECISION_20261031.md), [production engineering](docs/research/CANDIDATE160_PRODUCTION_ENGINEERING_20261031.md), [DECISIONS](docs/research/DECISIONS.md). Candidate160 tối đa 160 calls/12 giờ mỗi lượt theo quyền đã cấp. Resume, rerun, repair, review và scientific selection là các việc riêng. |
+| InternVL #177–#179 và Issue180 | [Orca/Antigravity](docs/INTERNVL3763_ANTIGRAVITY.md), [execution](docs/INTERNVL3763_EXECUTION.md), [campaign](docs/TRAIN3763_CAMPAIGN.md). Không tái dùng grants. Chỉ tiếp tục NOT_ATTEMPTED ở route được cấp, giữ caps, mirror và claims. Khi monitor được cấp, theo giới hạn 15 phút, ghi RUNNING_UNVERIFIED và resume cùng Operator session sau; uncertainty chặn retry. |
+| Owner UI, deferred, PR196 | [manual reconciliation](docs/TRAIN3763_MANUAL_RECONCILIATION.md), [deferred reconciliation và official-report](docs/TRAIN3763_DEFERRED_RECONCILIATION.md). Giữ INTENT35, mọi lịch sử, raw/partial, không fake COLLECTED/MEASURED/refund. Owner tự thực hiện thao tác đã dành riêng cho họ. |
+| MiniCPM PR198–200, source/RAM và Owner restart | [V3 recovery](docs/MINICPM_RUN1_RECOVERY.md), [V4-4](docs/MINICPM_V44_REPAIR.md), [V5 RAM](docs/MINICPM_V5_RAM_REPAIR.md), [offline continuation](docs/MINICPM_OFFLINE_CONTINUATION.md), [PROJECT_STATE](docs/PROJECT_STATE.md). Giữ mọi holds, grants, reservations và failure snapshots, signed 16 GiB floor và raw/hash custody. Không chuyển lịch sử/quyền giữa V1/V2/V3/V4/V5. Giữ same Operator khi bàn giao yêu cầu, người chạy theo đúng route, ≤3 bước khi quy trình Owner UI yêu cầu. |
+| Full-TRAIN repair và lịch sử nhiệm vụ | [Issue #167](https://github.com/tantdna2/SafeShift/issues/167), [DECISIONS](docs/research/DECISIONS.md), [PROJECT_STATE](docs/PROJECT_STATE.md), [ảnh chụp chỉ thị trước khi rút gọn](https://github.com/tantdna2/SafeShift/blob/208a6b1f485fa492eb0c49e95dbc236d41bde0e0/AGENTS.md). Dùng nguồn lịch sử để xác định ràng buộc chính xác của task đã cấp, không áp ngược quyền lên task mới. |
+
+Dấu kiểm cuối chỉ thị SafeShift — quyền chạy theo exact source và task.

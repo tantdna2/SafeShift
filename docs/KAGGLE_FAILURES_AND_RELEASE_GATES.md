@@ -127,3 +127,85 @@ Kết quả thực chạy, SHA và inventory cuối ghi ở PR body. ChatGPT ki�
 sau đó kiểm toán khoa học độc lập **và code gate mới** trước bất kỳ merge. Kế hoạch
 ngang hàng ở [THESIS_EXECUTION_PLAN_2026](research/THESIS_EXECUTION_PLAN_2026.md)
 vẫn PROPOSED; tiêu chí số và quyền ở O1–O8 chưa tự được cấp.
+
+## Owner notebook requirements from AGENTS.md
+
+Apply these requirements within the exact task and route authority.
+A bounded smoke uses the original grant conditions. CPU-only, TEST-closed
+and Owner-only routes keep their own limits.
+
+## Thiết kế notebook Kaggle: kiểm môi trường trước thực nghiệm
+
+Nguồn bắt buộc: [chỉ thị Owner ngày 31/10/2026 tại PR #155](https://github.com/tantdna2/SafeShift/pull/155#issuecomment-6533181366).
+Đây là yêu cầu thiết kế, không approval review/merge hoặc kết quả GPU.
+
+- Trước thiết kế/phát hành notebook thực nghiệm, thu thập bằng chứng target:
+  kernel/worker Python và ABI/OS/kiến trúc, cách provision worker đúng phiên bản,
+  pins/torch/transformers/compiled ABI; layout Input/unique marker, manifest/source/
+  weights SHA256 và allowlist; scratch/output device, free space, cấp phát thật,
+  ghi/fsync/cleanup, RAM/cgroup/quota/time; GPU count/model/driver/visibility và
+  CUDA/FP16 trong child đúng môi trường. Ghi rõ giới hạn chưa load weights thật.
+- Nếu chưa đo Kaggle thực tế, bàn giao trước một diagnostic cell có giới hạn
+  hoặc notebook preflight độc lập cho Owner chạy với cùng Inputs/settings.
+  Không dùng lượt production để phát hiện rồi vá dần lỗi môi trường cơ bản.
+  Preflight lặp lại được, không Owner execution slot/consumption/native inference,
+  không tải weights hoặc walk đệ quy không giới hạn. Công khai side effects
+  provision phần mềm pinned, cấp phát/xóa scratch và vị trí evidence/export.
+- Tách rõ `ENVIRONMENT_OBSERVED`, `CPU_SOFTWARE_PASS`, `LIVE_GPU_PREFLIGHT_PASS`,
+  `WEIGHTS_LOADED`, `INFERENCE_VERIFIED`, `SCIENTIFIC_QUALIFIED`. Chỉ claim mức
+  đã có bằng chứng; local mock/CPU synthetic không là Kaggle GPU/model-fit PASS.
+  Thiếu/lỗi bằng chứng phải BLOCKED/NOT_RUN/UNVERIFIED, không im lặng thành READY.
+- Thiếu/sai Input/hash/path/package ABI/allocation/GPU/driver/CUDA/technical gate
+  hoặc lịch sử không rõ phải chặn production trước consumption khi có thể.
+  Giữ nguyên no-retry/resume/replacement/overwrite theo hợp đồng; không né science,
+  source/nhãn/split/metric/protocol/model revision/TEST hoặc bịa approval. Không
+  hỏi lại quyền notebook đã được Owner cấp trong phạm vi quyền của họ; quyền
+  bên ngoài và cổng khoa học vẫn riêng.
+- Bàn giao cùng nhau notebook production, diagnostic/preflight không tiêu lượt,
+  tests/receipts máy đọc được, lệnh tái lập, hướng dẫn chạy/export/xử lý lỗi và
+  danh sách live constraints chưa kiểm. Không hứa không còn lỗi GPU/model nếu
+  chưa thể chứng minh load weights bằng hành động GPU thực tế được phép.
+- Kiểm thử âm tính: marker thiếu/trùng/sai, source/weights/hash sai, Python thiếu/
+  tải sai/package mismatch, mount sai, cùng/khác filesystem/thiếu dung lượng/quota,
+  CUDA/driver thiếu, output partial/unknown và preflight lặp. Assert preflight
+  không Owner slot, không attempt, không model call. Giữ đối chiếu BASE/hash lịch sử.
+
+Quy tắc này chỉ COMPLETE sau final HEAD được ChatGPT review, Antigravity audit,
+merge được cho phép riêng và hậu merge xác minh có quy tắc trên main; Draft/CPU
+PASS hoặc comment không tự hoàn tất yêu cầu.
+
+## Quy trình bắt buộc cho mọi notebook Kaggle — Owner 31/10/2026
+
+Nguồn: [chỉ thị Owner tại PR #156](https://github.com/tantdna2/SafeShift/pull/156#issuecomment-6539523161)
+và task trực tiếp khôi phục thực nghiệm ngày31/10/2026. Đây là bổ sung có truy
+vết, áp dụng cho mọi model/cohort/notebook Kaggle hiện tại và tương lai, kể cả
+phiên Codex mới; không hồi tố sửa các quyết định lịch sử.
+
+- Khi phát triển bất kỳ notebook SafeShift nào dự kiến chạy trên Kaggle,
+  Codex phải kiểm mã nguồn và local integration, rồi **tự chạy trên Kaggle
+  thật** bằng CLI/API chính thức, với dữ liệu thật trong phạm vi được phép,
+  dùng số mẫu tối thiểu đủ kiểm các đường kỹ thuật quan trọng. Ban đầu một
+  ảnh theo thứ tự đã khóa; thêm trường hợp chỉ khi có lý do kỹ thuật ghi rõ.
+- Kiểm cùng production entrypoint/child/CLI/path types, runtime/pins/Input,
+  source/checkpoint/revision/precision/C1; phải nạp weights thật, inference
+  thật trên GPU, raw-before-parse, parser/HNLO liên quan và export ZIP/SHA256.
+  Preflight, CPU mock/unit tests hoặc GPU tensor probe không đủ bàn giao.
+- Smoke có ID, sample ID/hash, cấu hình, source/notebook hash, giới hạn ảnh/
+  calls/time/resource và evidence riêng. Không tiêu/sửa production history,
+  không trộn vào kết quả khoa học, không tạo cohort khoa học hoặc đổi dữ liệu/
+  split/nhãn/prompt/model/precision/parser/HNLO/metric/protocol để đạt PASS.
+- Lỗi phải giữ cả log/raw/archive/receipt FAIL, sửa tận gốc, thêm regression,
+  chạy local rồi kiểm Kaggle lại có giới hạn. Không retry vô hạn/job trùng.
+  Chỉ phiên bản notebook/source cuối có bằng chứng thật mới được bàn giao
+  **READY FOR REVIEW**; source/runtime/Input thay đổi phải kiểm lại tương ứng.
+- Không kết nối/xác thực được, thiếu Input/GPU/quota/quyền hoặc chưa chạy
+  inference/export thật → **BLOCKED / NOT VERIFIED**, không READY FOR OWNER.
+  Không yêu cầu Owner trở thành người phát hiện lỗi cơ bản bằng production.
+- Owner đã cho phép các smoke kỹ thuật có giới hạn trên dữ liệu/tài nguyên họ
+  kiểm soát; không hỏi lại quyền chung từng lần. Dùng xác thực chính thức,
+  không yêu cầu token/password/kaggle.json qua chat, không log/commit/upload
+  credentials và không đổi privacy hoặc suy quyền sang TEST/bên thứ ba.
+- Sau ChatGPT review, Antigravity audit độc lập và merge được cấp quyền,
+  **Owner tự chạy thực nghiệm chính thức đầy đủ**, gửi Output cho ChatGPT.
+  Codex không tự chạy toàn bộ cohort thay Owner. Một smoke PASS không chứng
+  minh cả160 ảnh/long-run/quality hoặc hoàn tất quyết định khoa học PENDING.
