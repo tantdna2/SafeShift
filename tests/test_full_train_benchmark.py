@@ -71,7 +71,17 @@ class BenchmarkTest(unittest.TestCase):
                                            "right_only_correct")], [0, 0, 2, 3])
         self.assertEqual(pair["label_disagreement"]["value"], 1)
         self.assertEqual(p["paired"]["qwen3|internvl35"]["binary"]["both_correct"], 1)
+        safety = p["paired"]["qwen3|internvl35"]["hazard_false_safe"]
+        self.assertEqual(safety["support_n"], 3)
+        self.assertEqual([safety[key]["numerator"] for key in
+                          ("both_false_safe", "left_only_false_safe",
+                           "right_only_false_safe", "neither_false_safe")], [0, 1, 1, 1])
+        severe = p["paired"]["qwen3|internvl35"]["level01_false_safe"]
+        self.assertEqual(severe["neither_false_safe"]["value"], 1)
+        west = p["paired"]["qwen3|internvl35"]["by_domain"]["west"]["hazard_false_safe"]
+        self.assertIsNone(west["both_false_safe"]["value"])
         self.assertEqual(p["paired"]["minicpm_c1|minicpm"]["four_level"]["label_disagreement"]["denominator"], 4)
+        self.assertNotIn("hazard_false_safe", p["paired"]["minicpm_c1|minicpm"])
         self.assertEqual(sum(r["n"] for r in p["four_level_error_patterns"]), 5)
         self.assertTrue(all(r["AUROC"] is None for r in p["scores"].values()))
         self.assertIn(b'&lt;qwen&gt;', confusion_html({"<qwen>": p["models"]["qwen3"]}, "SYNTHETIC"))

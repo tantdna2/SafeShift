@@ -131,6 +131,30 @@ def paired(left, right, *, binary=False):
             "left_only_correct": counts[True, False], "right_only_correct": counts[False, True]}
 
 
+def paired_false_safe(left, right, levels):
+    counts = Counter()
+    for a, b in zip(left, right, strict=True):
+        require(a["sample_id"] == b["sample_id"], "paired row order mismatch")
+        if a["true_level"] in levels:
+            counts[a["generated_label"] == "Level04", b["generated_label"] == "Level04"] += 1
+    n = sum(counts.values())
+    return {
+        "support_n": n,
+        "both_false_safe": ratio(counts[True, True], n),
+        "left_only_false_safe": ratio(counts[True, False], n),
+        "right_only_false_safe": ratio(counts[False, True], n),
+        "neither_false_safe": ratio(counts[False, False], n),
+    }
+
+
+def pair_summary(left, right, *, primary):
+    result = {"four_level": paired(left, right), "binary": paired(left, right, binary=True)}
+    if primary:
+        result["hazard_false_safe"] = paired_false_safe(left, right, LEVELS[:-1])
+        result["level01_false_safe"] = paired_false_safe(left, right, LEVELS[:1])
+    return result
+
+
 def worst_domains(domains):
     extractors = {
         "accuracy": (lambda m: m["accuracy"]["value"], min),
@@ -184,14 +208,14 @@ def compare(cohort, products, config, *, mini_conversion_n=205):
     paired_results = {}
     pairs = [*combinations(PRODUCTS, 2), ("minicpm_c1", "minicpm")]
     for left, right in pairs:
+        primary = left != "minicpm_c1"
         per_domain = {}
         for domain, indices in sorted(strata.items()):
             a = [panels[left][i] for i in indices]
             b = [panels[right][i] for i in indices]
-            per_domain[domain] = {"four_level": paired(a, b), "binary": paired(a, b, binary=True)}
+            per_domain[domain] = pair_summary(a, b, primary=primary)
         paired_results[f"{left}|{right}"] = {
-            "four_level": paired(panels[left], panels[right]),
-            "binary": paired(panels[left], panels[right], binary=True),
+            **pair_summary(panels[left], panels[right], primary=primary),
             "by_domain": per_domain,
         }
     triple_errors = Counter(

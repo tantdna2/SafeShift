@@ -931,3 +931,26 @@ TEST, GPU, Kaggle hay chạy lại model trong task #136.
 **Điều phối và review.** Coordinator giao việc với Orca cho Codex và
 Antigravity, tiếp tục đúng Draft PR #136 và kiểm trực tiếp bằng chứng. Quyền
 merge, audit chính thức và thẩm quyền dữ liệu giữ đúng phạm vi.
+
+
+## DEC-20261127-OWNER-RETROSPECTIVE-BENCHMARK-AUTHORITY
+
+[Chỉ thị Owner do ChatGPT chuyển tiếp](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7206868367)
+được kiểm từ GitHub, comment 7206868367, tài khoản `tantdna2` với association
+`OWNER`, thời điểm tạo/cập nhật 2026-11-27T00:55:44Z. SHA256 UTF-8 của body là
+`325209db59efac0226600e7be07b19a1c7650e0dacc7765bfecb9ad3353a6366`.
+
+Trong phạm vi Owner quản lý, Coordinator, Codex và Antigravity được đọc cục
+bộ ba sản phẩm đã chọn, ghép GT mức ảnh, miền và SHA256 cho đúng 3.763 TRAIN ID,
+tính benchmark, tác động 205 conversion MiniCPM và xuất kết quả gộp dưới trạng
+thái `PROVISIONAL_PRE_FINAL_ADMISSION`. Cohort và Qwen3 dùng bản đã xác minh.
+MiniCPM dùng bản PR #214 với receipt SHA256
+`385ceddb799e735e3eecea04457f3a178996e29992e69265762a5031a6cb1fbd`. InternVL
+phải khớp snapshot có chứng từ local và giữ lineage, gồm lần chạy lại Attempt
+23 đã ghi. Kiểm manifest, receipt và SHA256 theo nguồn thực tế.
+
+Quyết định giữ quyền của bên thứ ba, Final Admission, phê duyệt học vụ, giao
+thức khóa, GT, split, kết quả gốc và quy trình review/merge hiện hành. Bản ghi
+riêng tư lưu ngoài Git. TEST và mọi tác vụ chạy model, GPU hoặc Kaggle nằm
+ngoài phạm vi. Xong benchmark mới phản biện CV-A/B/C/D và CT1–CT3 để trình
+Owner chốt; các phương pháp cải tiến vẫn là ứng viên.

@@ -1,5 +1,23 @@
 # SafeShift — Benchmark First trên Full-TRAIN
 
+## Xác minh đầu vào
+
+Owner cấp phạm vi đọc và ghép chính xác 3.763 TRAIN ID, với kết quả
+`PROVISIONAL_PRE_FINAL_ADMISSION`. Bốn projection được ghim kích thước
+và SHA256 trong [cấu hình benchmark](../../configs/analysis/full_train_benchmark.v1.json).
+Khi ghép phải khớp ID, split, GT, domain và SHA256 ảnh với cohort đã khóa.
+[Chỉ thị Owner](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7206868367).
+
+- **Qwen3.** Dùng lại manifest `7e779307…` và hai projection đã kiểm.
+- **InternVL3.5.** Manifest continuation SHA256 `8bd91408…` khớp snapshot
+  theo audit cục bộ trước đó. 23 attempt đóng góp đủ 3.763 nhãn và lineage.
+  Attempt 23 lấy ZIP `217f685b…` từ event 25 theo lựa chọn đã ghi.
+  Manifest bàn giao mới `6c043c75…` khóa projection, biên bản và script tái lập.
+  Các kiểm tra local giữ nguyên tình trạng đối soát provider và Final Admission.
+- **MiniCPM.** Tái lập từ hai bản custody đã lưu. Receipt `385ceddb…` và cả
+  bốn member trùng byte với PR #214, bao gồm 205 conversion và C1 gốc.
+  [Hậu kiểm PR #214](https://github.com/tantdna2/SafeShift/pull/214#issuecomment-7184951265).
+
 ## Trạng thái
 
 `safeshift-full-train-benchmark-v1` so sánh ba sản phẩm nhãn đã được Owner
