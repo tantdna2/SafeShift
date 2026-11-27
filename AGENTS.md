@@ -1,6 +1,30 @@
 # Hướng dẫn làm việc với SafeShift
 
-## Owner 27/11/2026 — Benchmark First và điều phối Orca
+## Owner 27/11/2026 — triển khai CT1–CT3 sau PR #136
+
+- [Chỉ đạo CT1–CT3](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7208108548)
+  chốt CT1 làm trục chất lượng với Qwen3 và giả thuyết ưu tiên bảng ngành, CT2
+  là hướng thuật toán riêng với hai ngân sách M/K, CT3 là luồng truy nguyên và
+  kiểm toán bằng chứng phục vụ CT1/CT2. HNLO là đối chứng phụ theo nguồn.
+  Calibration cần điểm tương thích, validation phù hợp và phạm vi học vụ.
+- [PR #136](https://github.com/tantdna2/SafeShift/pull/136) đã merge tại
+  `77d625ad6b9f1bd52c1cc3b3bdc4e60aebf3251a` sau re-audit độc lập và hậu kiểm.
+  Task này dùng một Draft PR triển khai tiếp theo từ đúng commit đó. Giữ M2,
+  prompt C1 đã khóa, GT/split, artifacts và lịch sử nguyên bản.
+- CT1 chuẩn bị audit ảnh mù và ba nhánh A/B/C. CT2 dùng CPU trên ba projection
+  TRAIN đã niêm phong, GT chỉ tham gia chấm sau khi chọn hàng đợi. CT3 thiết kế
+  provenance và phiếu review. Đọc ảnh, tuyển reviewer, TEST, GPU, Kaggle,
+  inference, thí nghiệm mới và biên khoa học chính thức cần phạm vi riêng.
+  Xem [hợp đồng chuẩn bị](docs/research/THESIS_CT123_PREPARATION.md).
+- Coordinator dùng Orca, mặc định tối đa hai worker đồng thời. Medium và High
+  tùy nhiệm vụ, ghi model/effort hiệu lực theo receipt. GPT-6.2 Astra và Gemini
+  4 Neon dành cho việc khó và cần thiết. Hạn chế Carbon, loại Claude và
+  GPT-OSS 120B. Áp dụng chính sách này cho các lựa chọn worker của task hiện tại.
+- Kiểm thử, audit độc lập, review đúng HEAD và quyền merge của PR tiếp theo
+  theo phạm vi riêng. Benchmark và sàng lọc TRAIN tiếp tục ở trạng thái hồi
+  cứu, trước Final Admission.
+
+## Lịch sử 27/11/2026 — Benchmark First và điều phối Orca trước merge #136
 
 - Coordinator xác minh main, HEAD và chỉ thị GitHub, đọc hướng dẫn orchestration
   từ đúng Orca đang chạy, kiểm agent/model và quota khả dụng. Phân công Codex

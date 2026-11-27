@@ -1,6 +1,27 @@
 # SafeShift — PROJECT STATE
 
-## Hiện hành — Benchmark First, 27/11/2026
+## Hiện hành — Chuẩn bị CT1–CT3 sau PR #136, 27/11/2026
+
+- **PR #136 MERGED / hậu kiểm PASS.** Merge `77d625ad6b9f1bd52c1cc3b3bdc4e60aebf3251a`
+  có hai parent `c238f841fb766db430df83ba22967e6b03713952` và
+  `19d345d8fa7e381a4109ac5d909d51c8c6f69cb4`. Tree
+  `4a6f1d465d9de2ebef4963e094531b2f1ffe6304` khớp HEAD đã audit.
+  [PASS re-audit và hòa giải](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7208189828).
+- **CT1** ưu tiên Qwen3, audit ảnh mù và thiết kế A/B/C. Chưa thực hiện audit
+  ảnh hoặc inference. Còn thiếu quyền xem ảnh, hai chuyên gia, hồ sơ V,
+  biên khoa học, quota theo cấu hình và quyền chạy.
+- **CT2** là hướng thuật toán riêng. Sàng lọc ba sản phẩm nhãn Full-TRAIN
+  bằng CPU trên 3.763 TRAIN đã phơi nhiễm, với hai ngân sách M/K. Kết quả chỉ
+  có phạm vi hồi cứu, giữ `PROVISIONAL_PRE_FINAL_ADMISSION` của inputs.
+- **CT3** hỗ trợ audit mù, truy nguồn và review CT1/CT2. Study người dùng cần
+  quyền, reviewer và chuẩn chấm riêng. HNLO theo nguồn và calibration vẫn có
+  điều kiện. TEST 1.250 giữ khóa. Final Admission và học vụ tiếp tục theo
+  phạm vi tương ứng.
+- [Quyết định Owner](research/DECISIONS.md#dec-20261127-owner-ct123-implementation)
+  và [hợp đồng chuẩn bị](research/THESIS_CT123_PREPARATION.md). Thay đổi này
+  đi trong một Draft PR triển khai riêng sau #136.
+
+## Lịch sử — Benchmark First trước merge #136, 27/11/2026
 
 - Main xác minh trên GitHub tại `c238f841fb766db430df83ba22967e6b03713952`.
   Tiếp tục cùng [Draft PR #136](https://github.com/tantdna2/SafeShift/pull/136)

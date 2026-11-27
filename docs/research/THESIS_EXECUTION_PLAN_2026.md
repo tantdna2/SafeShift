@@ -1,6 +1,27 @@
 # SafeShift — Kế hoạch thực thi Khóa luận tốt nghiệp 2026
 
-## Hiện hành — Benchmark First, 27/11/2026
+## Hiện hành — Thiết kế CT1–CT3 Owner đã chọn, 27/11/2026
+
+[Quyết định Owner](DECISIONS.md#dec-20261127-owner-ct123-implementation) áp dụng
+cho Khóa luận sau khi PR #136 được hậu kiểm. [Hợp đồng chuẩn bị](THESIS_CT123_PREPARATION.md)
+quy định thiết kế CT1 A/B/C, screening CT2, workflow CT3, quy tắc nguồn và
+dự toán. Các mục thiết kế bốn peer, ensemble và trạng thái PR #136 bên dưới
+là hồ sơ lịch sử. M2/R1–R5 tiếp tục theo quyết định riêng.
+
+| Hướng được chọn | Endpoint và điều kiện |
+| --- | --- |
+| **CT1 chất lượng phân loại** | Qwen3 ứng viên, cùng revision và ảnh. B−A đo thay đổi recall Level01 trên support planned. C đối chứng việc thêm văn bản. Guardrail gồm precision Level01, Level02→01, severe miss, FNR/FPR, coverage. Audit mù trước inference. |
+| **CT2 triage** | Hướng thuật toán riêng. Phát hiện false-safe/severe miss tại M/K so random matched, focal-only và bất đồng thô. Gắn cờ chỉ là vào hàng review. Báo chi phí và workload cùng hiệu quả hồi cứu. |
+| **CT3 audit bằng chứng** | Truy nguồn, hiển thị trạng thái chứng cứ, tách dự đoán gốc khỏi phiếu review. Giá trị người dùng chỉ kết luận sau study có quyền. |
+| **HNLO và calibration** | HNLO đối chứng phụ theo nguồn hợp lệ. Calibration cần score đúng đại lượng, validation tách nguồn và phạm vi học vụ. |
+
+TRAIN 3.763 đã quan sát dùng cho development và error analysis. TEST 1.250
+giữ nguyên và đóng. Xác minh trùng và quan hệ nguồn, đăng ký trước protocol
+full split và sensitivity, khóa thông số và quyền trước mọi mở TEST.
+E1–E5 áp dụng theo rubric dưới đây. Cỡ mẫu, biên nghiệm thu và run grant
+chờ chứng cứ, chi phí thực tế và quyết định tương ứng.
+
+## Lịch sử — Benchmark First trước khi Owner chọn CT1–CT3, 27/11/2026
 
 Trọng tâm Khóa luận là VLM nhận diện nguy cơ công nghiệp, confidence calibration
 và evidence auditing. Chỉ đạo hiện hành đặt **benchmark baseline → phân tích lỗi

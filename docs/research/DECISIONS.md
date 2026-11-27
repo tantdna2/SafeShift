@@ -954,3 +954,34 @@ thức khóa, GT, split, kết quả gốc và quy trình review/merge hiện h�
 riêng tư lưu ngoài Git. TEST và mọi tác vụ chạy model, GPU hoặc Kaggle nằm
 ngoài phạm vi. Xong benchmark mới phản biện CV-A/B/C/D và CT1–CT3 để trình
 Owner chốt; các phương pháp cải tiến vẫn là ứng viên.
+
+## DEC-20261127-OWNER-CT123-IMPLEMENTATION
+
+[Bản chuyển tiếp quyết định Owner](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7208108548)
+từ tài khoản `tantdna2` (association `OWNER`), 2026-11-27T02:25:14Z, SHA256
+UTF-8 body `794e49658a96da128c55be9b0c5fb48336f26555e8f8c97445ba53ea0039ca93`.
+Phản biện độc lập Astra High/Neon High được ghi trong Orca `run_3d7a940037e5`.
+
+- CT1 làm trục cải thiện phân loại. Dùng Qwen3 ứng viên với A C1 gốc,
+  B ưu tiên tiêu chí ngành, C câu trung tính. Audit ảnh mù trước inference.
+  Ghim recall Level01 và guardrail overgrading, precision, FNR/FPR, coverage.
+- CT2 là hướng thuật toán riêng. Bắt đầu sàng lọc CPU bằng ba sản phẩm nhãn
+  đã cấp quyền theo hai giới hạn M lượt model và K lượt review. Đối chứng
+  random đúng tập eligible, tín hiệu sẵn đúng thời điểm và tính đủ chi phí.
+- CT3 xây dựng chức năng truy nguyên và quy trình audit hỗ trợ CT1/CT2.
+  HNLO giữ làm đối chứng phụ theo nguồn. Calibration, study người dùng và
+  mọi claim tính mới/hiệu quả đòi hỏi bằng chứng tương ứng.
+- Giữ 3.763 TRAIN đã quan sát, split/GT và TEST 1.250 đóng. Công bố bảy
+  cặp exact xuyên split từ hồ sơ lịch sử, xác minh độc lập nguồn và đăng ký
+  trước protocol toàn split/độ nhạy trước TEST. Quyết định cấp triển khai
+  CPU và thiết kế. Quyền ảnh, chuyên gia, TEST, GPU, Kaggle, inference mới,
+  biên số, ngân sách và phê duyệt học vụ chờ quyết định riêng.
+- [Quyền tích hợp có điều kiện](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7207507870)
+  chỉ áp dụng cho HEAD #136 `19d345d8fa7e381a4109ac5d909d51c8c6f69cb4`.
+  [Re-audit PASS](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7208189828)
+  và hậu kiểm merge `77d625ad6b9f1bd52c1cc3b3bdc4e60aebf3251a` đã xác minh
+  hai parent và tree khớp HEAD. PR triển khai sau đó có review và quyền
+  tích hợp riêng.
+- Orca Medium hoặc High tùy việc, tối đa hai worker theo mặc định. Astra
+  và Neon dành cho nhiệm vụ khó và cần thiết. Hạn chế Carbon, loại Claude
+  và GPT-OSS 120B. Ghi model và effort thực tế từ receipt.

@@ -1,6 +1,21 @@
 # SafeShift — Kế hoạch thực thi M1–M8
 
-## Hiện hành — Benchmark First, 27/11/2026
+## Hiện hành — Triển khai CT1–CT3, 27/11/2026
+
+[Owner đã chốt ba hướng](https://github.com/tantdna2/SafeShift/pull/136#issuecomment-7208108548)
+sau phản biện Astra High và Neon High. [PR #136](https://github.com/tantdna2/SafeShift/pull/136)
+đã merge và hậu kiểm tại `77d625ad6b9f1bd52c1cc3b3bdc4e60aebf3251a`.
+Chi tiết thao tác và cổng nghiệm thu ở [hợp đồng chuẩn bị CT1–CT3](research/THESIS_CT123_PREPARATION.md).
+
+| Mốc | Việc tiếp theo và điều kiện chuyển |
+| --- | --- |
+| CT1 | Chuẩn bị lấy mẫu mù và đối chứng Qwen3 cùng revision. A là C1 gốc, B thêm câu precedence, C thêm câu trung tính. Chỉ đầu tư inference sau khi audit và các điều kiện dữ liệu, tiêu chí, quota và quyền được xác nhận. |
+| CT2 | Sàng lọc CPU ba bộ nhãn TRAIN đã niêm phong. So random trên đúng tập eligible, focal-only và bất đồng thô ở cùng trần M lượt model, K lượt review. Ghi lượt thực dùng, ca chưa bắt và chi phí. Đây là hướng nghiên cứu riêng. |
+| CT3 | Dùng truy nguyên dự đoán, bất đồng và hồ sơ review để hỗ trợ CT1/CT2. Study người dùng cần dữ liệu, chuyên gia và phạm vi riêng. |
+| Chuẩn bị xác nhận | Tách nguồn validation nếu chọn cấu hình, kiểm trùng và rò rỉ, khóa protocol, metric, cỡ mẫu và chi phí. TEST 1.250 giữ nguyên và đóng. HNLO theo nguồn và calibration có điều kiện. |
+| E1–E5 | Cùng protocol, ablation, stress, error analysis và tái lập. Chạy thí nghiệm sau khi đủ quyền và điều kiện thiết kế, lưu cả kết quả âm hoặc chưa đủ độ chính xác. |
+
+## Lịch sử — Benchmark First trước merge #136, 27/11/2026
 
 Task hiện tại tiếp tục Draft PR #136 trên main `c238f841`. Các thẻ M1–M8 bên
 dưới ghi lộ trình Seminar lịch sử và quyền đã cấp đúng phạm vi. Trình tự Khóa
@@ -12,7 +27,7 @@ luận hiện hành theo chỉ đạo Owner/giảng viên gồm các mốc sau.
 | Phân tích lỗi và truy nguyên | Ghép 3.763 ID/hash/GT/domain từ đúng dữ liệu đã niêm phong. Xếp theo số ca, mức nặng, domain và độ mạnh bằng chứng. Tách pattern, cơ chế đã xác minh và giả thuyết. |
 | Đề xuất và phản biện | Gắn chứng cứ với CV-A/B/C/D và CT1/CT2/CT3, endpoint chính/guardrail, đối chứng và chi phí. Codex và Antigravity phản biện độc lập qua Orca; Coordinator xử lý bất đồng và ghi blocker. |
 | Chốt và triển khai | Owner chọn phương pháp sau phản biện. Chốt giao thức, quyền dữ liệu, precision, chi phí và điều kiện loại trước khi lập trình phương pháp hoặc chạy E1–E5. |
-| E1–E5 | E1 so sánh cùng protocol, E2 ablation, E3 stress test, E4 error analysis, E5 tái lập. Tách hồi cứu TRAIN khỏi validation và đánh giá độc lập. Giữ split/GT và khóa TEST. [Rubric nghiệm thu](research/THESIS_EXECUTION_PLAN_2026.md#hiện-hành--benchmark-first-27112026). |
+| E1–E5 | E1 so sánh cùng protocol, E2 ablation, E3 stress test, E4 error analysis, E5 tái lập. Tách hồi cứu TRAIN khỏi validation và đánh giá độc lập. Giữ split/GT và khóa TEST. [Rubric nghiệm thu](research/THESIS_EXECUTION_PLAN_2026.md#lịch-sử--benchmark-first-trước-khi-owner-chọn-ct1ct3-27112026). |
 
 Panel hồi cứu gồm đúng Qwen3 Composite V1, InternVL3.5 Grammar V2 và MiniCPM
 Normalization V1. MiniCPM strict C1 là sensitivity trên cùng ID. Yêu cầu bốn
