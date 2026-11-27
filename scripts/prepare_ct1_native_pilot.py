@@ -1,18 +1,21 @@
 """Local CT1 preparation. Outputs separate runner inputs from private scoring custody."""
 
 from argparse import ArgumentParser
+import base64
 from collections import Counter
 from io import BytesIO
 from pathlib import Path
 import re
 from secrets import token_bytes
+import shutil
 import subprocess
+from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
 from safeshift.data.saved_reports import checked, confined, git, json_bytes, sha256, strict_json
 from safeshift.evaluation.ct1_pilot import EXCLUSIONS_SHA256, validate_plan
-from safeshift.fulltrain import ct1_native, ct1_run
-from safeshift.pilot.artifacts import sha, write, write_bytes
+from safeshift.fulltrain import ct1_native, ct1_run, provision
+from safeshift.pilot.artifacts import safe, sha, write, write_bytes
 from safeshift.pilot.manifest import validate_master
 from scripts.build_qwen3_composite import CONFIG, MASTER
 
@@ -212,6 +215,46 @@ def source_bundle(commit, output):
     print(sha256(payload))
 
 
+def transport_inputs(commit, software, software_marker_sha, output):
+    """Stage only source/software for private Owner upload. Never read image Inputs."""
+    capsule = source_payload(commit)
+    capsule_sha = sha256(capsule)
+    marker = safe(software, ct1_run.SOFTWARE_MARKER)
+    marker_bytes = ct1_run.read_sealed(marker, software_marker_sha, 2**20)
+    marker_value = strict_json(marker_bytes)
+    lock = marker_value["runtime_lock"]
+    provision.software_input(software, software_marker_sha, lock, ROOT)
+
+    output.mkdir(exist_ok=False)
+    source_dir = output / "ct1-reviewed-source"
+    software_dir = output / "ct1-qwen-software"
+    software_dir.mkdir()
+    write(source_dir / "ct1-source.json", {"commit": commit, "sha256": capsule_sha})
+    transport_sha = write_bytes(source_dir / ct1_run.SOURCE_TRANSPORT, base64.b64encode(capsule))
+    write_bytes(software_dir / ct1_run.SOFTWARE_MARKER, marker_bytes)
+    inventory = {}
+    for component in ct1_run.SOFTWARE_ARCHIVES:
+        row = marker_value[component]
+        name = ct1_run.software_transport_name(row["file"])
+        data = ct1_run.read_sealed(safe(software, row["file"]), row["sha256"], ct1_run.SOFTWARE_ARCHIVE_LIMIT)
+        inventory[name] = {"raw_sha256": row["sha256"], "raw_bytes": len(data),
+                           "sha256": write_bytes(software_dir / name, base64.b64encode(data))}
+    wheels_dir = software_dir / "wheels"
+    wheels_dir.mkdir()
+    for row in lock["wheels"]:
+        shutil.copyfile(safe(software, "wheels/" + row["file"]), wheels_dir / row["file"])
+    # Recheck every staged wheel and round-trip both source archives before handoff.
+    with TemporaryDirectory(dir=output) as temp:
+        archive_dir = ct1_run.restore_software(software_dir, software_marker_sha, lock, Path(temp), ROOT)
+        provision.software_input(software_dir, software_marker_sha, lock, ROOT, archive_dir=archive_dir)
+    write(output / "transport-receipt.json", {
+        "commit": commit, "source_zip_sha256": capsule_sha, "source_transport_sha256": transport_sha,
+        "software_marker_sha256": software_marker_sha, "software_archives": inventory,
+        "wheel_count_verified": len(lock["wheels"]), "wheel_inventory": lock["wheels"],
+        "source_dir": source_dir.name, "software_dir": software_dir.name,
+    })
+
+
 def main():
     parser = ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -222,7 +265,11 @@ def main():
     stage.add_argument("--audit-images", type=Path, required=True)
     stage.add_argument("--exclusions", type=Path, required=True)
     sw = sub.add_parser("software")
-    for p in (source, stage, sw, sub.add_parser("checkpoint")):
+    transport = sub.add_parser("transport")
+    transport.add_argument("--commit", required=True)
+    transport.add_argument("--software-input", type=Path, required=True)
+    transport.add_argument("--software-marker-sha256", required=True)
+    for p in (source, stage, sw, transport, sub.add_parser("checkpoint")):
         p.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "images":
@@ -231,6 +278,8 @@ def main():
         source_bundle(args.commit, args.output)
     elif args.command == "software":
         software_bundle(args.output)
+    elif args.command == "transport":
+        transport_inputs(args.commit, args.software_input, args.software_marker_sha256, args.output)
     else:
         checkpoint_bundle(args.output)
 

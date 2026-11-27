@@ -116,6 +116,29 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
   Khi VM mất hoặc ZIP bị cắt, có thể không còn gì để thu thập. Giữ nguyên
   mọi lượt đã đặt trước hoặc chưa đối soát. TEST tiếp tục khóa.
 
+## Vận chuyển Input và upload của Owner
+
+Kaggle giải nén `ct1-source.zip` cả khi nằm trong TAR. Bản sửa lưu ba archive
+theo canonical Base64 ở các file `*-base64.bin`. Notebook kiểm kích thước,
+Base64 và SHA-256 gốc trước khi mở ZIP nguồn. Setup child phục hồi hai archive
+Python/zlib vào scratch riêng, đối chiếu kích thước và SHA trước khi chạy
+provision. Wheel vẫn nằm dưới `wheels/` và được kiểm đủ tên, kích thước, SHA
+theo lock. Không copy wheelhouse sang VM scratch. Marker phần mềm giữ nguyên.
+Runner chỉ nhận đúng bốn mount đã khóa ở root cũ hoặc
+`/kaggle/input/datasets/nguynanhtn/` và chặn mount trùng.
+
+Giữ `nguynanhtn/ct1-train48/1` và `nguynanhtn/ct1-qwen-checkpoint/1` đã xác
+minh byte. Từ gốc repo, dùng `python -B -m scripts.prepare_ct1_native_pilot transport`
+với `--commit`, `--software-input`, `--software-marker-sha256` và `--output`
+để chuẩn bị hai thư mục riêng. Biên nhận nằm ngoài hai thư mục upload.
+
+Owner trực tiếp upload Dataset và Notebook. Antigravity chỉ chuẩn bị và xác
+minh read-only phiên bản private, danh mục file, byte/SHA toàn bộ wheel và
+archive, code notebook cùng thiết lập sau upload. Dùng **Quick Save** để
+xác minh notebook mà chưa thực thi. Không dùng CLI `submit` thay Owner nếu
+nó gửi lại code notebook. Việc chạy chờ xác minh đường admission phù hợp
+với chỉ thị upload của Owner.
+
 ## Smoke kỹ thuật trên đúng runtime
 
 - Một job private, Internet tắt, hai T4, tối đa 90 phút wall time (tối đa
@@ -145,10 +168,11 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
   evidence identity. Không ghi GT, annotation, token hoặc ảnh vào request.
 - Dùng `python -B -m scripts.submit_ct1_smoke prepare --request <request.json> --notebook-output <smoke.ipynb>`
   trên D để chuẩn bị notebook. Khi đúng source, notebook SHA và bốn Inputs đã
-  được xác minh, cùng Operator dùng `submit --request <request.json> --notebook-sha256 <sha>`
-  bằng môi trường SDK đã ghim. Submit kiểm phiên bản private, lịch sử job và
-  quota. Lock OS giữ qua một POST, ghi độc quyền và fsync `PUSH_INTENT` trước POST.
-  Job có tên cố định `safeshift-ct1-smoke-pr216`, chấp nhận xác nhận version 1.
+  được xác minh, Operator đối soát lịch sử job và quota. Đường `submit` cũ
+  giữ lock OS qua một POST và ghi độc quyền, fsync `PUSH_INTENT` trước POST,
+  nhưng POST cũng upload code notebook. Khi chỉ thị Owner upload còn áp
+  dụng, agent không dùng đường đó. Tên notebook cố định
+  `safeshift-ct1-smoke-pr216`.
 - Khi lỗi, mất phản hồi hoặc trạng thái chưa rõ, giữ intent và đối soát read-only
   cùng job ref/version. Không gửi lại, đổi slug, xóa ledger hay cấp lại lượt.
   Khóa và ledger chặn phát lại qua công cụ trên D. Kiểm soát bằng quy trình

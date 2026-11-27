@@ -27,7 +27,8 @@ OWNER = {
 }
 """
 
-BOOTSTRAP = r"""import hashlib
+BOOTSTRAP = r"""import base64
+import hashlib
 import io
 import json
 import os
@@ -40,21 +41,41 @@ from zipfile import ZipFile
 
 base = Path("/kaggle/working")
 input_root = Path("/kaggle/input")
-root = Path(SOURCE)
-assert sys.platform == "linux" and base.is_dir() and root.is_dir()
-assert root.is_absolute() and root.resolve().is_relative_to(input_root)
-assert not any(p.is_symlink() for p in (root, *root.parents))
+assert sys.platform == "linux" and base.is_dir()
+
+def private_input(value):
+    path = Path(value)
+    assert path.is_absolute() and path.is_relative_to(input_root)
+    parts = path.relative_to(input_root).parts
+    if parts[:2] == ("datasets", "nguynanhtn"):
+        parts = parts[2:]
+    assert parts and all(part not in (".", "..") and part.casefold() != "test" for part in parts)
+    candidates = (input_root.joinpath(*parts), input_root.joinpath("datasets", "nguynanhtn", *parts))
+    found = [p for p in candidates if p.is_dir()]
+    assert len(found) == 1, "CT1_INPUT_MOUNT_MISSING_OR_AMBIGUOUS"
+    root, = found
+    assert root.resolve().is_relative_to(input_root)
+    assert not any(p.is_symlink() for p in (root, *root.parents))
+    return root
+
+root = private_input(SOURCE)
 assert re.fullmatch(r"[0-9a-f]{40}", SOURCE_COMMIT)
 assert re.fullmatch(r"[0-9a-f]{64}", SOURCE_ZIP_SHA256)
 assert re.fullmatch(r"ct1-(?:smoke-)?[0-9a-f]{12}", OWNER["run_id"])
-assert {p.name for p in root.iterdir()} == {"ct1-source.zip", "ct1-source.json"}
-path = root / "ct1-source.zip"
+assert {p.name for p in root.iterdir()} == {"ct1-source-base64.bin", "ct1-source.json"}
+path = root / "ct1-source-base64.bin"
 marker_path = root / "ct1-source.json"
 assert all(p.is_file() and not p.is_symlink() and p.stat().st_nlink == 1 for p in (path, marker_path))
-assert 0 < path.stat().st_size <= 8 * 2**20 and marker_path.stat().st_size <= 2048
+max_source_bytes = 8 * 2**20
+max_transport_bytes = 4 * ((max_source_bytes + 2) // 3)
+assert 0 < path.stat().st_size <= max_transport_bytes and marker_path.stat().st_size <= 2048
 marker = json.loads(marker_path.read_bytes())
 assert marker == {"commit": SOURCE_COMMIT, "sha256": SOURCE_ZIP_SHA256}
-payload = path.read_bytes()
+with path.open("rb") as stream:
+    encoded = stream.read(max_transport_bytes + 1)
+assert 0 < len(encoded) <= max_transport_bytes
+payload = base64.b64decode(encoded, validate=True)
+assert 0 < len(payload) <= max_source_bytes and base64.b64encode(payload) == encoded
 assert hashlib.sha256(payload).hexdigest() == SOURCE_ZIP_SHA256
 repo = base / ("ct1-source-" + OWNER["run_id"])
 allowed = {"scripts/run_ct1_native_pilot.py", "configs/fulltrain/qwen3.json",
@@ -81,6 +102,8 @@ observed_drivers = sorted({row.split(",")[2].strip() for row in gpu_query.stdout
 assert len(observed_drivers) == 1
 assert tuple(map(int, observed_drivers[0].split("."))) >= (570, 26), "CUDA 12.8 GA driver required"
 owner_values = dict(OWNER)
+for role in ("pilot_input", "software_input", "checkpoint"):
+    owner_values[role] = str(private_input(owner_values[role]))
 if not owner_values["approved_drivers"]:
     owner_values["approved_drivers"] = observed_drivers
 owner_values["observed_driver"] = observed_drivers[0]
@@ -142,7 +165,7 @@ def content(mode, settings=None):
          "Candidate tĩnh. Chỉ chạy khi Owner đã chấp thuận đúng SHA và Inputs. "
          "Đính kèm riêng source, ảnh TRAIN mù, checkpoint và phần mềm. "
          "Dùng 2×T4, tắt Internet. Resume qua VM mới đang khóa. "
-         + ("Chỉ Operator thực thi smoke qua ledger D và lịch sử Kaggle. Không bấm Run.\n"
+         + ("Chỉ Owner upload ở chế độ private. Chờ Operator xác minh admission trước mọi lượt chạy.\n"
             if mode == "smoke" else "Pilot chính vẫn khóa và preflight không gọi model.\n")),
         ("gpu-observe", "code", """import subprocess
 gpu_query = subprocess.run(

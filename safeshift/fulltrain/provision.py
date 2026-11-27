@@ -30,8 +30,9 @@ def clean_env(repo, scratch):
     return env
 
 
-def software_input(root, expected_sha, runtime_lock, repo=ROOT):
+def software_input(root, expected_sha, runtime_lock, repo=ROOT, *, archive_dir=None):
     root = Path(root)
+    archive_dir = root if archive_dir is None else Path(archive_dir)
     marker = safe(root, "fresh_qwen_software.json")
     require_hash(expected_sha)
     require(marker.stat().st_size <= 2**20 and sha(marker) == expected_sha, "QWEN_SOFTWARE_MARKER_PIN")
@@ -71,7 +72,7 @@ def software_input(root, expected_sha, runtime_lock, repo=ROOT):
         require(set(row) == {"file", "size", "sha256"} and row["sha256"] == ref[name]["sha256"], "QWEN_BUILD_SOURCE_PIN")
         relative(row["file"])
         require("/" not in row["file"] and type(row["size"]) is int and 0 < row["size"] <= 64 * 2**20, "QWEN_SOURCE_BOUND")
-        p = safe(root, row["file"])
+        p = safe(archive_dir, row["file"])
         snapshot_stat(p)
         require(p.stat().st_size == row["size"] and sha(p) == row["sha256"], "QWEN_BUILD_ARCHIVE_HASH")
     return value
@@ -103,7 +104,7 @@ def extract_source(archive, target):
                 p.chmod(0o755 if member.mode & 0o111 else 0o644)
 
 
-def prepare(request, repo, output, deadline):
+def prepare(request, repo, output, deadline, *, archive_dir=None):
     """Called in the supervised setup child; all its descendants share one group."""
     key, scratch = request["model_key"], Path(request["scratch"])
     env = clean_env(repo, scratch)
@@ -120,7 +121,9 @@ def prepare(request, repo, output, deadline):
     else:
         from safeshift.pilot import bootstrap
         root = Path(request["software_input"])
-        seal = software_input(root, request["software_marker_sha256"], request["runtime_lock"], repo)
+        archive_dir = root if archive_dir is None else Path(archive_dir)
+        seal = software_input(root, request["software_marker_sha256"], request["runtime_lock"], repo,
+                              archive_dir=archive_dir)
         runtime = scratch / "qwen-software"
         runtime.mkdir(exist_ok=False)
         def invoke(argv, name, cwd):
@@ -129,7 +132,7 @@ def prepare(request, repo, output, deadline):
                 subprocess.run(list(map(str, argv)), cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT,
                                check=True, timeout=max(.001, deadline - time.monotonic()))
         for component in ("zlib", "python"):
-            extract_source(root / seal[component + "_source"]["file"], runtime / (component + "-source"))
+            extract_source(archive_dir / seal[component + "_source"]["file"], runtime / (component + "-source"))
         zsource = runtime / "zlib-source/zlib-1.2.11"
         zprefix = runtime / "zlib"
         invoke(["./configure", "--prefix=" + str(zprefix)], "zlib-configure", zsource)

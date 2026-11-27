@@ -1,5 +1,7 @@
 """Sealed, image-only CT1 input contract and hard-capped checkpoint orchestration."""
 
+import base64
+import binascii
 from collections import Counter
 from itertools import permutations
 import os
@@ -53,6 +55,55 @@ def publish_slot(path, value):
 def read_sealed(path, expected, limit):
     require(path.is_file() and path.stat().st_size <= limit, "CT1_INPUT_SIZE")
     return checked(path.read_bytes(), expected)
+
+
+SOFTWARE_ARCHIVE_LIMIT = 64 * 2**20
+SOFTWARE_ARCHIVES = ("python_source", "zlib_source")
+SOFTWARE_MARKER = "fresh_qwen_software.json"
+SOURCE_TRANSPORT = "ct1-source-base64.bin"
+
+
+def software_transport_name(filename):
+    return filename + "-base64.bin"
+
+
+def restore_software(mount, marker_sha, runtime_lock, scratch, repo):
+    from .qwen import reference
+
+    marker = safe(mount, SOFTWARE_MARKER)
+    value = strict_json(read_sealed(marker, marker_sha, 2**20))
+    require(value["runtime_lock"] == runtime_lock, "CT1_SOFTWARE_RUNTIME_LOCK")
+    ref = reference(repo)
+    rows = []
+    for component in SOFTWARE_ARCHIVES:
+        row = value[component]
+        expected_name = ref[component]["url"].rsplit("/", 1)[1]
+        require(set(row) == {"file", "size", "sha256"} and row["file"] == expected_name
+                and row["sha256"] == ref[component]["sha256"]
+                and type(row["size"]) is int and 0 < row["size"] <= SOFTWARE_ARCHIVE_LIMIT,
+                "CT1_SOFTWARE_ARCHIVE_PIN")
+        rows.append(row)
+    names = {software_transport_name(row["file"]) for row in rows}
+    require({path.name for path in mount.iterdir()} == {SOFTWARE_MARKER, "wheels", *names},
+            "CT1_SOFTWARE_TRANSPORT_ALLOWLIST")
+    root = scratch / "ct1-build-archives"
+    root.mkdir(exist_ok=False)
+    for row in rows:
+        transport = safe(mount, software_transport_name(row["file"]))
+        size = row["size"]
+        encoded_size = 4 * ((size + 2) // 3)
+        require(transport.is_file() and transport.stat().st_size == encoded_size, "CT1_SOFTWARE_TRANSPORT_SIZE")
+        with transport.open("rb") as stream:
+            encoded = stream.read(encoded_size + 1)
+        require(len(encoded) == encoded_size, "CT1_SOFTWARE_TRANSPORT_SIZE")
+        try:
+            raw = base64.b64decode(encoded, validate=True)
+        except binascii.Error as exc:
+            raise ValueError("CT1_SOFTWARE_TRANSPORT_ENCODING") from exc
+        require(len(raw) == size and base64.b64encode(raw) == encoded, "CT1_SOFTWARE_TRANSPORT_ENCODING")
+        require(sha256(raw) == row["sha256"], "CT1_SOFTWARE_ARCHIVE_SHA256")
+        write_bytes(root / row["file"], raw)
+    return root
 
 
 def admit(mount, plan_sha):

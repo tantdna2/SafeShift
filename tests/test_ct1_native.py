@@ -1,7 +1,9 @@
 """CPU-only regressions for the CT1 production path. All payloads are synthetic."""
 
+import base64
 from collections import Counter
 from contextlib import nullcontext
+from io import BytesIO
 from itertools import permutations
 import json
 import os
@@ -11,11 +13,12 @@ import time
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from zipfile import ZipFile
 
 from safeshift.data.saved_reports import json_bytes, sha256
 from safeshift.evaluation.ct1_contract import ARMS
 from safeshift.evaluation.ct1_pilot import replay
-from safeshift.fulltrain import ct1_run, ct1_native
+from safeshift.fulltrain import ct1_run, ct1_native, provision, qwen
 from safeshift.pilot.artifacts import export, sha, verify_archive, write, write_bytes
 from scripts import build_ct1_kaggle_notebooks as nb
 from scripts import run_ct1_native_pilot as controller
@@ -536,6 +539,99 @@ class NativeTest(unittest.TestCase):
             nb.content("pilot", {**settings, "owner": {**settings["owner"], "resume": {}}})
         with self.assertRaisesRegex(ValueError, "sealed source"):
             nb.content("pilot", {**settings, "source_zip_sha256": ""})
+
+    def test_bootstrap_restores_exact_capsule_and_rejects_bad_transport(self):
+        work = self.root / "working"
+        work.mkdir()
+        mounts = self.root / "input"
+        source = mounts / "datasets/nguynanhtn/source"
+        source.mkdir(parents=True)
+        for role in ("train", "software", "checkpoint"):
+            (mounts / role).mkdir()
+        buffer = BytesIO()
+        paths = ("scripts/run_ct1_native_pilot.py", "configs/fulltrain/qwen3.json",
+                 "configs/pilot/classification_c1.txt", "configs/pilot/pip_bootstrap.json")
+        with ZipFile(buffer, "w") as archive:
+            for path in paths:
+                archive.writestr(path, path.encode())
+        raw = buffer.getvalue()
+        marker = {"commit": "a" * 40, "sha256": sha256(raw)}
+        write(source / "ct1-source.json", marker)
+        transport = source / ct1_run.SOURCE_TRANSPORT
+        program = nb.BOOTSTRAP.replace('Path("/kaggle/working")', f"Path({str(work)!r})")
+        program = program.replace('Path("/kaggle/input")', f"Path({str(mounts)!r})")
+        env = {"SOURCE": str(mounts / "source"), "SOURCE_COMMIT": marker["commit"],
+               "SOURCE_ZIP_SHA256": marker["sha256"], "MODE": "smoke",
+               "OWNER": {"run_id": "ct1-smoke-000000000000", "pilot_input": str(mounts / "train"),
+                         "software_input": str(mounts / "software"), "checkpoint": str(mounts / "checkpoint"),
+                         "approved_drivers": []}, "gpu_query": SimpleNamespace(stdout="0, T4, 580.178.04")}
+
+        with (patch.object(controller.sys, "platform", "linux"),
+              patch.object(controller.subprocess, "run") as launch):
+            for content in (b"!bad", b"AB==", base64.b64encode(raw + b"x"),
+                            b"A" * (4 * (((8 * 2**20) + 2)//3) + 1)):
+                transport.write_bytes(content)
+                with self.assertRaises((ValueError, AssertionError)):
+                    exec(program, env.copy())
+                launch.assert_not_called()
+            transport.write_bytes(base64.b64encode(raw))
+            exec(program, env.copy())
+            launch.assert_called_once()
+            capsule = work / ("ct1-source-" + env["OWNER"]["run_id"])
+            self.assertEqual((capsule / paths[0]).read_bytes(), paths[0].encode())
+            self.assertEqual(json.loads((capsule / "owner-run.json").read_bytes())["pilot_input"],
+                             str(mounts / "train"))
+
+    def test_software_transport_restores_pinned_archives_and_checks_all_wheels(self):
+        software = self.root / "software"
+        (software / "wheels").mkdir(parents=True)
+        reference = qwen.reference(nb.ROOT)
+        versions = {name.lower().replace("_", "-").replace(".", "-"): version
+                    for name, version in reference["software"].items() if name not in ("python", "zlib")}
+        versions["pip"] = "25.0.1"
+        wheels = []
+        for name, version in versions.items():
+            file = name + ".whl"
+            write_bytes(software / "wheels" / file, name.encode())
+            wheels.append({"file": file, "name": name, "version": version,
+                           "size": len(name), "sha256": sha256(name.encode())})
+        lock = {"versions": versions, "wheels": wheels}
+        marker = {"schema": "fresh-qwen-software-v1", "runtime_lock": lock}
+        for component in ct1_run.SOFTWARE_ARCHIVES:
+            payload = b"abcde"
+            name = reference[component]["url"].rsplit("/", 1)[1]
+            reference[component]["sha256"] = sha256(payload)
+            marker[component] = {"file": name, "size": len(payload), "sha256": sha256(payload)}
+            write_bytes(software / ct1_run.software_transport_name(name), base64.b64encode(payload))
+        marker_sha = write(software / ct1_run.SOFTWARE_MARKER, marker)
+        python_path = software / ct1_run.software_transport_name(marker["python_source"]["file"])
+        with (patch.object(qwen, "reference", return_value=reference),
+              patch.object(provision, "reference", return_value=reference)):
+            for case, bad, rule in (("truncated", b"YQ==", "TRANSPORT_SIZE"),
+                                    ("oversized", b"YQ==" * 3, "TRANSPORT_SIZE"),
+                                    ("malformed", b"abcdefgh", "TRANSPORT_ENCODING"),
+                                    ("padding", b"YWJjZGV=", "TRANSPORT_ENCODING"),
+                                    ("wrong-sha", base64.b64encode(b"12345"), "ARCHIVE_SHA256")):
+                scratch = self.root / case
+                scratch.mkdir()
+                python_path.write_bytes(bad)
+                with self.assertRaisesRegex(ValueError, rule):
+                    ct1_run.restore_software(software, marker_sha, lock, scratch, nb.ROOT)
+            python_path.write_bytes(base64.b64encode(payload))
+            archives = ct1_run.restore_software(software, marker_sha, lock, self.root, nb.ROOT)
+            self.assertEqual(provision.software_input(software, marker_sha, lock, nb.ROOT,
+                                                     archive_dir=archives), marker)
+            for component in ct1_run.SOFTWARE_ARCHIVES:
+                self.assertEqual((archives / marker[component]["file"]).read_bytes(), payload)
+            wheel = software / "wheels" / wheels[0]["file"]
+            original_wheel = wheel.read_bytes()
+            wheel.write_bytes(b"?" * len(original_wheel))
+            with self.assertRaisesRegex(ValueError, "WHEEL_HASH"):
+                provision.software_input(software, marker_sha, lock, nb.ROOT, archive_dir=archives)
+            wheel.write_bytes(original_wheel)
+            (software / "wheels/extra.whl").touch()
+            with self.assertRaisesRegex(ValueError, "NO_EXTRA_WHEELS"):
+                provision.software_input(software, marker_sha, lock, nb.ROOT, archive_dir=archives)
 
     def test_source_and_native_share_pixel_envelope(self):
         for size in ((2560, 1440), (1440, 2560), (720, 406)):

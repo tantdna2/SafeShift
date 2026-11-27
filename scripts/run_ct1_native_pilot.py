@@ -72,7 +72,7 @@ def require_native_admission(cfg):
 def layout(cfg):
     data = mount_path(cfg["pilot_input"], directory=True)
     software = mount_path(cfg["software_input"], directory=True)
-    marker = safe(software, "fresh_qwen_software.json")
+    marker = safe(software, ct1_run.SOFTWARE_MARKER)
     lock = strict_json(ct1_run.read_sealed(marker, cfg["software_marker_sha256"], 2**20))["runtime_lock"]
     checkpoint = mount_path(cfg["checkpoint"], directory=True)
     require(checkpoint.name == ct1_run.REVISION, "CT1_CHECKPOINT_REVISION_DIR")
@@ -109,10 +109,11 @@ def worker(args):
         write(root / "before-setup.json", {
             "resources": environment.resources("qwen3", budgets, scratch, args.job),
             "physical": environment.hardware("qwen3", budgets), "native_calls": 0})
+        archive_dir = ct1_run.restore_software(software, cfg["software_marker_sha256"], lock, scratch, REPO)
         python, _ = provision.prepare({"model_key": "qwen3", "scratch": str(scratch),
                                       "software_input": str(software), "software_marker_sha256":
                                       cfg["software_marker_sha256"], "runtime_lock": lock},
-                                     REPO, args.job / "setup", deadline)
+                                     REPO, args.job / "setup", deadline, archive_dir=archive_dir)
         require(python == scratch / "qwen-software/venv/bin/python", "CT1_RUNTIME_PATH")
         return
     current = ct1_native.preflight(checkpoint, REPO, lock, drivers, scratch, args.job, data, plan)
