@@ -73,6 +73,7 @@ class NativeTest(unittest.TestCase):
         out.mkdir()
         write(out / "identity.json", self.binding)
         write(out / "config-summary.json", {"mode": "pilot"})
+        write(out / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         return out
 
     def run_it(self, out, backend, *, seconds=60):
@@ -162,6 +163,109 @@ class NativeTest(unittest.TestCase):
         (out / "calls/000/tokens.json").write_text("{}")
         with self.assertRaisesRegex(ValueError, "TOKEN_BINDING"):
             ct1_run.checkpoint_results(out, self.root / "invalid.zip", self.plan, self.binding)
+
+    def test_rejected_resume_and_torn_import_are_not_resumable(self):
+        authoritative = self.evidence("parent")
+        broken = FixtureBackend(after=lambda: (_ for _ in ()).throw(RuntimeError("fixture stop")))
+        with self.assertRaises(RuntimeError):
+            self.run_it(authoritative, broken)
+        parent = self.root / "parent.zip"
+        ct1_run.checkpoint_results(authoritative, parent, self.plan, self.binding)
+        before = sha(parent)
+        real_restore = ct1_run.restore
+        for scenario in ("bad-seal", "interrupted"):
+            job = self.root / scenario
+            root = job / "evidence"
+            root.mkdir(parents=True)
+            write(root / "identity.json", self.binding)
+            write(root / "config-summary.json", {"mode": "pilot"})
+            digest = "0" * 64 if scenario == "bad-seal" else before
+
+            def restore_with_cut(archive, expected, staging, binding):
+                if scenario == "bad-seal":
+                    return real_restore(archive, expected, staging, binding)
+                write_bytes(staging / "calls/000/intent.json", b"{")
+                raise OSError("fixture interrupted import")
+
+            with patch.object(controller, "mount_path", return_value=parent), \
+                 patch.object(ct1_run, "restore", side_effect=restore_with_cut):
+                with self.assertRaises((ValueError, OSError)):
+                    controller.admit_lineage(job, root, {"path": str(parent), "sha256": digest},
+                                             self.plan, self.binding)
+            self.assertFalse((root / "calls").exists())
+            diagnostic = job / "diagnostic.zip"
+            controller.export_job(root, diagnostic, self.plan, self.binding, "pilot")
+            self.assertNotIn("runs.json", verify_archive(diagnostic))
+            with self.assertRaisesRegex(ValueError, "RESUME_NOT_ADMITTED"):
+                real_restore(diagnostic, sha(diagnostic), job / "unexpected", self.binding)
+        self.assertEqual(sha(parent), before)
+
+    def test_atomic_journal_cut_points_export_and_do_not_repeat_call(self):
+        for record in ("intent", "tokens", "raw", "result"):
+            with self.subTest(record=record):
+                out = self.evidence(record)
+                real_write = ct1_run.write_bytes
+
+                def torn_write(path, payload):
+                    if path.name.startswith(f".{record}.json."):
+                        real_write(path, b"{")
+                        raise RuntimeError("fixture torn write")
+                    return real_write(path, payload)
+
+                with patch.object(ct1_run, "write_bytes", side_effect=torn_write):
+                    with self.assertRaisesRegex(RuntimeError, "torn write"):
+                        self.run_it(out, FixtureBackend())
+                self.assertFalse((out / "calls/000" / f"{record}.json").exists())
+                archive = self.root / f"cut-{record}.zip"
+                ct1_run.checkpoint_results(out, archive, self.plan, self.binding)
+                members = verify_archive(archive)
+                self.assertTrue(any(f"/.{record}.json." in m for m in members))
+                recovered = self.evidence(f"recovered-{record}")
+                ct1_run.restore(archive, sha(archive), recovered, self.binding)
+                backend = FixtureBackend()
+                self.run_it(recovered, backend)
+                self.assertEqual(len(backend.calls), 143)
+                if record in ("raw", "result"):
+                    self.assertTrue((recovered / "calls/000/raw.json").is_file())
+
+    def test_corrupt_published_record_exports_forensic_only(self):
+        root = self.evidence("corrupt")
+        write_bytes(root / "calls/000/intent.json", b"{")
+        archive = self.root / "corrupt.zip"
+        controller.export_job(root, archive, self.plan, self.binding, "pilot")
+        members = verify_archive(archive)
+        self.assertIn("calls/000/intent.json", members)
+        self.assertIn("journal-export-failure.json", members)
+        self.assertNotIn("runs.json", members)
+        with self.assertRaisesRegex(ValueError, "FORENSIC_ARCHIVE_NOT_RESUMABLE"):
+            ct1_run.restore(archive, sha(archive), self.root / "forbidden", self.binding)
+
+    def test_observed_driver_changes_checkpoint_identity(self):
+        cfg = {"source_commit": "a" * 40, "approved_drivers": ["570.26", "570.27"],
+               "observed_driver": "570.26", "plan_sha256": self.plan_sha,
+               "software_marker_sha256": "c" * 64, "source_capsule_sha256": "b" * 64,
+               "run_id": "ct1-000000000000"}
+        first = controller.binding(cfg, {})
+        second = controller.binding({**cfg, "observed_driver": "570.27"}, {})
+        self.assertNotEqual(first, second)
+
+    def test_render_owner_notebook_is_exact_and_requires_seals(self):
+        settings = {"source": "/kaggle/input/source", "source_commit": "a" * 40,
+                    "source_zip_sha256": "b" * 64, "owner": {
+                        "run_id": "ct1-000000000000", "pilot_input": "/kaggle/input/images",
+                        "plan_sha256": self.plan_sha, "checkpoint": "/kaggle/input/checkpoint",
+                        "software_input": "/kaggle/input/software",
+                        "software_marker_sha256": "c" * 64, "approved_drivers": [], "resume": None}}
+        for mode in ("pilot", "preflight"):
+            payload = nb.content(mode, settings)
+            self.assertEqual(payload, nb.content(mode, settings))
+            row = next(c for c in json.loads(payload)["cells"] if c["id"] == "owner-settings")
+            env = {}
+            exec("".join(row["source"]), env)
+            self.assertEqual(env["OWNER"], settings["owner"])
+            self.assertEqual(env["SOURCE_COMMIT"], settings["source_commit"])
+        with self.assertRaisesRegex(ValueError, "sealed source"):
+            nb.content("pilot", {**settings, "source_zip_sha256": ""})
 
     def test_source_and_native_share_pixel_envelope(self):
         for size in ((2560, 1440), (1440, 2560), (720, 406)):

@@ -2,9 +2,11 @@
 
 from collections import Counter
 from itertools import permutations
+import os
 from pathlib import Path
 import re
 import time
+from uuid import uuid4
 from zipfile import ZipFile
 
 from safeshift.data.saved_reports import checked, json_bytes, sha256, strict_json
@@ -19,7 +21,28 @@ N_IMAGES = 48
 N_CALLS = 144
 IMAGE_BYTES = 12 * 2**20
 RUN_ID = re.compile(r"ct1-[0-9a-f]{12}")
-ENTRY = re.compile(r"calls/[0-9]{3}/(intent|tokens|raw|result|failure)\.json")
+RECORD = r"(intent|tokens|raw|result|failure)\.json"
+ENTRY = re.compile(r"calls/[0-9]{3}/" + RECORD)
+PENDING = re.compile(r"calls/[0-9]{3}/\." + RECORD + r"\.[a-f0-9]{32}\.pending")
+
+
+def publish_slot(path, value):
+    """Flush a private staging name before publishing a finished slot record.
+
+    Only the supervised child writes this journal. The supervisor reads or
+    exports it after reaping that child. Orphans stay under their staging name.
+    """
+    require(not path.exists(), "CT1_JOURNAL_ALREADY_PUBLISHED")
+    temporary = path.with_name(f".{path.name}.{uuid4().hex}.pending")
+    write_bytes(temporary, json_bytes(value))
+    require(not path.exists(), "CT1_JOURNAL_ALREADY_PUBLISHED")
+    os.rename(temporary, path)
+    if os.name == "posix":
+        fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
 
 
 def read_sealed(path, expected, limit):
@@ -67,24 +90,34 @@ def restore(archive, expected, root, binding):
             "CT1_RESUME_ZIP_SEAL")
     with ZipFile(archive) as z:
         infos = z.infolist()
-        require(len(infos) <= 730 and sum(x.file_size for x in infos) <= 32 * 2**20, "CT1_RESUME_BOUND")
+        require(len(infos) <= 1000 and sum(x.file_size for x in infos) <= 32 * 2**20, "CT1_RESUME_BOUND")
         names = verify_archive(archive)
         require("identity.json" in names and strict_json(z.read("identity.json")) == binding,
                 "CT1_RESUME_IDENTITY")
         # Only the ledger is restored. Output snapshots and receipts keep their original custody.
         call_files = [name for name in names if name.startswith("calls/")]
-        require(all(ENTRY.fullmatch(name) and int(name.split("/")[1]) < N_CALLS for name in call_files),
-                "CT1_RESUME_MEMBER")
+        require(all((ENTRY.fullmatch(name) or PENDING.fullmatch(name))
+                    and int(name.split("/")[1]) < N_CALLS for name in call_files), "CT1_RESUME_MEMBER")
         require("config-summary.json" in names
                 and strict_json(z.read("config-summary.json"))["mode"] == "pilot", "CT1_RESUME_PILOT_ONLY")
+        require("resume-admission.json" in names and strict_json(z.read("resume-admission.json")).get("status")
+                in ("FRESH_ADMITTED", "PARENT_VERIFIED_AND_INHERITED"), "CT1_RESUME_NOT_ADMITTED")
+        require("summary.json" in names and "runs.json" in names
+                and "journal-export-failure.json" not in names, "CT1_FORENSIC_ARCHIVE_NOT_RESUMABLE")
         for name in call_files:
             write_bytes(safe(root, name), z.read(name))
 
 
 def slot_state(sample, case, arm, image_sha, binding_sha):
-    records = {p.stem: p for p in sample.iterdir()} if sample.exists() else {}
-    require(all(ENTRY.fullmatch("calls/000/" + p.name) and p.is_file() and not p.is_symlink()
-                for p in records.values()), "CT1_UNEXPECTED_JOURNAL_MEMBER")
+    members = list(sample.iterdir()) if sample.exists() else []
+    require(all(p.is_file() and not p.is_symlink() and
+                (ENTRY.fullmatch("calls/000/" + p.name) or PENDING.fullmatch("calls/000/" + p.name))
+                for p in members), "CT1_UNEXPECTED_JOURNAL_MEMBER")
+    records = {p.stem: p for p in members if ENTRY.fullmatch("calls/000/" + p.name)}
+    uncertain_intent = any(
+        (match := PENDING.fullmatch("calls/000/" + p.name)) and match[1] == "intent"
+        for p in members
+    )
     if "intent" in records:
         intent = strict_json(records["intent"].read_bytes())
         require((intent["case_id"], intent["arm"], intent["image_sha256"], intent["binding_sha256"]) ==
@@ -99,7 +132,7 @@ def slot_state(sample, case, arm, image_sha, binding_sha):
                     "CT1_RESULT_REPLAY_MISMATCH")
         return "RETURNED", raw["raw_text"]
     require("result" not in records, "CT1_RESULT_WITHOUT_RAW")
-    if "intent" in records or "failure" in records or "tokens" in records:
+    if "intent" in records or "failure" in records or "tokens" in records or uncertain_intent:
         require("tokens" not in records or "intent" in records, "CT1_TOKENS_WITHOUT_INTENT")
         return "TECHNICAL_ERROR", None
     return "NOT_ATTEMPTED", None
@@ -111,8 +144,8 @@ def _parsed(arm, raw):
             "error": parsed.error, "evidence_status": parsed.evidence_status}
 
 
-def checkpoint_results(root, output, plan, binding):
-    records, calls = [], 0
+def reconstruct(root, plan, binding):
+    records, calls, uncertain = [], 0, 0
     parses = {arm: Counter() for arm in ARMS}
     token_cap = Counter()
     binding_sha = sha256(json_bytes(binding))
@@ -122,18 +155,24 @@ def checkpoint_results(root, output, plan, binding):
         parses[arm][parse(arm, raw).status if status == "RETURNED" else status] += 1
         if status == "RETURNED":
             token_cap[arm] += strict_json((path / "raw.json").read_bytes())["at_cap"]
-        calls += (path / "intent.json").exists()
+        intent_present = (path / "intent.json").exists()
+        calls += intent_present
+        uncertain += not intent_present and any(path.glob(".intent.json.*.pending"))
         records.append({"case_id": case, "arm": arm, "attempt_status": status, "raw_text": raw})
     runs = {k: binding[k] for k in ("plan_sha256", "prompt_sha256")}
     runs.update(model_id=MODEL_ID, revision=REVISION, runtime_sha256=sha256(json_bytes(binding)), records=records)
     write(root / "runs.json", runs)
-    write(root / "summary.json", {"planned_calls": N_CALLS, "durable_native_intents": calls,
+    write(root / "summary.json", {"planned_calls": N_CALLS, "durable_native_intents": calls, "uncertain_intents": uncertain,
                                   "returned": sum(r["attempt_status"] == "RETURNED" for r in records),
                                   "technical_error": sum(r["attempt_status"] == "TECHNICAL_ERROR" for r in records),
                                   "not_attempted": sum(r["attempt_status"] == "NOT_ATTEMPTED" for r in records),
                                   "arm_status_counts": {arm: dict(x) for arm, x in parses.items()},
                                   "token_cap_hits_by_arm": {arm: token_cap[arm] for arm in ARMS},
                                   "interpretation": "NATIVE_INTENT_IS_A_RESERVATION_NOT_COMPLETION"})
+
+
+def checkpoint_results(root, output, plan, binding):
+    reconstruct(root, plan, binding)
     export(root, output)
 
 
@@ -147,24 +186,24 @@ def execute(root, plan, binding, image_dir, backend, deadline):
             # Finish parse, or decode durable tokens locally, without rerunning generate.
             if (sample / "tokens.json").exists() and not (sample / "raw.json").exists():
                 obj = backend.decode(strict_json((sample / "tokens.json").read_bytes()))
-                write(sample / "raw.json", {**obj, "tokens_sha256": sha(sample / "tokens.json")})
+                publish_slot(sample / "raw.json", {**obj, "tokens_sha256": sha(sample / "tokens.json")})
             if (sample / "raw.json").exists() and not (sample / "result.json").exists():
-                write(sample / "result.json", _parsed(arm, strict_json((sample / "raw.json").read_bytes())))
+                publish_slot(sample / "result.json", _parsed(arm, strict_json((sample / "raw.json").read_bytes())))
             continue
         if time.monotonic() >= deadline:
             break
         try:
             payload = read_sealed(safe(image_dir, case + ".png"), image_sha, IMAGE_BYTES)
             def begin(detail):
-                write(sample / "intent.json", {"case_id": case, "arm": arm, "image_sha256": image_sha,
+                publish_slot(sample / "intent.json", {"case_id": case, "arm": arm, "image_sha256": image_sha,
                                                "binding_sha256": binding_sha, **detail})
             def record_tokens(detail):
                 require((sample / "intent.json").is_file(), "CT1_INTENT_REQUIRED")
-                write(sample / "tokens.json", detail)
+                publish_slot(sample / "tokens.json", detail)
             raw, memory_after = backend.generate(payload, arm, begin, record_tokens)
-            write(sample / "raw.json", {**raw, "memory_after": memory_after,
+            publish_slot(sample / "raw.json", {**raw, "memory_after": memory_after,
                                         "tokens_sha256": sha(sample / "tokens.json")})
-            write(sample / "result.json", _parsed(arm, raw))
+            publish_slot(sample / "result.json", _parsed(arm, raw))
         except Exception as exc:
             details = {"type": type(exc).__name__, "message": str(exc)[:2000],
                        "seconds_monotonic": time.monotonic(), "automatic_retry": False}
@@ -172,5 +211,5 @@ def execute(root, plan, binding, image_dir, backend, deadline):
                 details["memory_at_failure"] = backend.failure_memory()
             except Exception as memory_error:
                 details["memory_probe_failure"] = type(memory_error).__name__
-            write(sample / "failure.json", details)
+            publish_slot(sample / "failure.json", details)
             raise

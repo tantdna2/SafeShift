@@ -3,13 +3,15 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
+from safeshift.data.saved_reports import strict_json
+from safeshift.fulltrain.qwen_semantics import fields
 from scripts.build_ct1_evidence_notebooks import notebook
 
 ROOT = Path(__file__).resolve().parents[1]
 PILOT = "SafeShift_CT1_EVIDENCE_PILOT_KAGGLE.ipynb"
 PREFLIGHT = "SafeShift_CT1_EVIDENCE_PREFLIGHT_KAGGLE.ipynb"
 
-SETTINGS = """# Fill only this cell using the handoff receipt. Set resume only for an approved continuation.
+SETTINGS = """# Template only. Render a sealed Owner notebook with --settings before running.
 SOURCE = "/kaggle/input/ct1-reviewed-source"
 SOURCE_COMMIT = ""
 SOURCE_ZIP_SHA256 = ""
@@ -20,7 +22,7 @@ OWNER = {
     "checkpoint": "/kaggle/input/ct1-qwen-checkpoint/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
     "software_input": "/kaggle/input/ct1-qwen-software",
     "software_marker_sha256": "",
-    "approved_drivers": [],  # Empty pins the observed host driver under the CUDA 12.8 GA floor.
+    "approved_drivers": [],  # Empty admits the observed host driver at or above the CUDA 12.8 GA floor.
     "resume": None,  # {"path": "/kaggle/input/.../<run_id>.zip", "sha256": "..."}
 }
 """
@@ -81,6 +83,7 @@ assert tuple(map(int, observed_drivers[0].split("."))) >= (570, 26), "CUDA 12.8 
 owner_values = dict(OWNER)
 if not owner_values["approved_drivers"]:
     owner_values["approved_drivers"] = observed_drivers
+owner_values["observed_driver"] = observed_drivers[0]
 with (repo / "owner-run.json").open("x", encoding="utf-8") as stream:
     json.dump({**owner_values, "mode": MODE, "source_commit": SOURCE_COMMIT,
                "source_capsule_sha256": SOURCE_ZIP_SHA256}, stream, allow_nan=False)
@@ -97,7 +100,36 @@ result.check_returncode()
 """
 
 
-def content(mode):
+def owner_settings(settings):
+    fields(settings, {"source", "source_commit", "source_zip_sha256", "owner"})
+    fields(settings["owner"], {"run_id", "pilot_input", "plan_sha256", "checkpoint", "software_input",
+                              "software_marker_sha256", "approved_drivers", "resume"})
+    from safeshift.evaluation.full_train_benchmark import is_sha256
+    from safeshift.fulltrain.ct1_run import RUN_ID
+    import re
+    owner = settings["owner"]
+    if not (re.fullmatch(r"[0-9a-f]{40}", settings["source_commit"])
+            and RUN_ID.fullmatch(owner["run_id"])
+            and all(is_sha256(value) for value in
+                    (settings["source_zip_sha256"], owner["plan_sha256"], owner["software_marker_sha256"]))):
+        raise ValueError("sealed source and owner input identity required")
+    for path in (settings["source"], owner["pilot_input"], owner["checkpoint"], owner["software_input"]):
+        if not isinstance(path, str) or not path.startswith("/kaggle/input/"):
+            raise ValueError("Owner Input paths must be exact Kaggle mounts")
+    if owner["resume"] is not None:
+        fields(owner["resume"], {"path", "sha256"})
+        if not owner["resume"]["path"].startswith("/kaggle/input/") or not is_sha256(owner["resume"]["sha256"]):
+            raise ValueError("exact resume Input and SHA required")
+    return (f'SOURCE = {settings["source"]!r}\n'
+            f'SOURCE_COMMIT = {settings["source_commit"]!r}\n'
+            f'SOURCE_ZIP_SHA256 = {settings["source_zip_sha256"]!r}\n'
+            f'OWNER = {owner!r}\n')
+
+
+def content(mode, settings=None):
+    if mode not in ("pilot", "preflight") or (mode == "preflight" and settings and settings["owner"]["resume"]):
+        raise ValueError("invalid notebook mode or preflight resume")
+    instructions = SETTINGS if settings is None else owner_settings(settings)
     return notebook([
         ("intro", "markdown", "# SafeShift CT1 — Kaggle " + mode + "\n"
          "Candidate tĩnh. Chỉ chạy khi Owner đã chấp thuận đúng SHA và Inputs. "
@@ -110,7 +142,7 @@ gpu_query = subprocess.run(
 )
 print(gpu_query.stdout.strip())
 """),
-        ("owner-settings", "code", f'MODE = "{mode}"\n' + SETTINGS),
+        ("owner-settings", "code", f'MODE = "{mode}"\n' + instructions),
         ("execute", "code", BOOTSTRAP),
     ])
 
@@ -118,7 +150,17 @@ print(gpu_query.stdout.strip())
 def main(argv=None):
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--settings", type=Path, help="exact Owner settings JSON")
+    parser.add_argument("--mode", choices=("pilot", "preflight"))
+    parser.add_argument("--output", type=Path, help="new configured notebook file")
     args = parser.parse_args(argv)
+    if args.settings or args.mode or args.output:
+        if args.check or not (args.settings and args.mode and args.output):
+            parser.error("--settings, --mode and --output must be used together")
+        from safeshift.pilot.artifacts import write_bytes
+        payload = content(args.mode, strict_json(args.settings.read_bytes()))
+        print(write_bytes(args.output, payload))
+        return
     for name, mode in ((PILOT, "pilot"), (PREFLIGHT, "preflight")):
         path = ROOT / "notebooks" / name
         data = content(mode)

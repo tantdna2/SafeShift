@@ -40,7 +40,7 @@ def config(path):
     value = strict_json(path.read_bytes())
     fields(value, {"run_id", "mode", "source_commit", "source_capsule_sha256",
                    "pilot_input", "plan_sha256", "checkpoint", "software_input",
-                   "software_marker_sha256", "approved_drivers", "resume"})
+                   "software_marker_sha256", "approved_drivers", "observed_driver", "resume"})
     require(value["mode"] in ("preflight", "pilot"), "CT1_MODE")
     commit = value["source_commit"]
     require(isinstance(commit, str) and len(commit) == 40 and all(x in "0123456789abcdef" for x in commit),
@@ -51,6 +51,7 @@ def config(path):
     ct1_native.release_budgets(value["approved_drivers"])
     require(all(tuple(map(int, version.split("."))) >= (570, 26)
                 for version in value["approved_drivers"]), "CT1_CUDA_128_GA_DRIVER_FLOOR")
+    require(value["observed_driver"] in value["approved_drivers"], "CT1_OBSERVED_DRIVER_NOT_APPROVED")
     if value["resume"] is not None:
         fields(value["resume"], {"path", "sha256"})
         require(value["mode"] == "pilot" and is_sha256(value["resume"]["sha256"]), "CT1_RESUME_SEAL")
@@ -73,6 +74,7 @@ def layout(cfg):
 
 def binding(cfg, lock):
     source = sha256(json_bytes({"commit": cfg["source_commit"], "drivers": cfg["approved_drivers"],
+                               "observed_driver": cfg["observed_driver"],
                                "runtime_lock": lock, "shared_max_new_tokens": ct1_native.MAX_NEW,
                                "max_input_tokens": ct1_native.MAX_INPUT, "checkpoint": qwen.reference(REPO)["model"]}))
     return ct1_run.identity(cfg["plan_sha256"], source, cfg["source_capsule_sha256"],
@@ -84,7 +86,7 @@ def worker(args):
     deadline = args.deadline
     root, scratch = args.job / "evidence", args.scratch
     data, software, checkpoint, lock, plan = layout(cfg)
-    drivers = cfg["approved_drivers"]
+    drivers = [cfg["observed_driver"]]
     budgets = ct1_native.release_budgets(drivers)
     if args.command == "setup":
         write(root / "before-setup.json", {
@@ -116,13 +118,42 @@ def worker(args):
         ct1_run.execute(root, plan, state, data / "images", backend, deadline)
 
 
+def admit_lineage(job, root, resume, plan, state):
+    if resume is None:
+        write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
+        return
+
+    # A partially copied parent never becomes the authoritative journal.
+    resume_path = mount_path(resume["path"], directory=False)
+    staging = job / "restore-stage"
+    staging.mkdir()
+    ct1_run.restore(resume_path, resume["sha256"], staging, state)
+    binding_sha = sha256(json_bytes(state))
+    for i, row in enumerate(ct1_run.schedule(plan)):
+        ct1_run.slot_state(staging / "calls" / f"{i:03}", *row, binding_sha)
+    if (staging / "calls").exists():
+        (staging / "calls").rename(root / "calls")
+    write(root / "resume-admission.json", {"status": "PARENT_VERIFIED_AND_INHERITED",
+                                           "parent_sha256": resume["sha256"]})
+
+
+def export_job(root, archive, plan, state, mode):
+    if mode == "pilot" and (root / "resume-admission.json").is_file():
+        try:
+            ct1_run.reconstruct(root, plan, state)
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            write(root / "journal-export-failure.json",
+                  {"status": "FORENSIC_ONLY", "type": type(exc).__name__, "message": str(exc)[:2000]})
+    export(root, archive)
+
+
 def supervise(args):
     cfg = config(args.config)
     require(sys.platform == "linux" and WORK.is_dir() and args.job.parent == WORK
             and args.job.name == cfg["run_id"], "CT1_EXACT_KAGGLE_JOB_ROOT")
     deadline = time.monotonic() + (WALL_SECONDS if cfg["mode"] == "pilot" else PREFLIGHT_SECONDS)
     data, software, checkpoint, lock, plan = layout(cfg)
-    budgets = ct1_native.release_budgets(cfg["approved_drivers"])
+    budgets = ct1_native.release_budgets([cfg["observed_driver"]])
     state = binding(cfg, lock)
     root = args.job / "evidence"
     archive = WORK / (cfg["run_id"] + ".zip")
@@ -141,11 +172,7 @@ def supervise(args):
                TMP=str(scratch), TEMP=str(scratch), OMP_NUM_THREADS="2", MKL_NUM_THREADS="2")
     setup_cutoff = min(deadline - EXPORT_RESERVE, time.monotonic() + budgets["setup_seconds"])
     try:
-        if cfg["resume"]:
-            resume = mount_path(cfg["resume"]["path"], directory=False)
-            ct1_run.restore(resume, cfg["resume"]["sha256"], root, state)
-            for i, row in enumerate(ct1_run.schedule(plan)):
-                ct1_run.slot_state(root / "calls" / f"{i:03}", *row, sha256(json_bytes(state)))
+        admit_lineage(args.job, root, cfg["resume"], plan, state)
         args_common = ["--config", str(args.config), "--job", str(args.job), "--scratch", str(scratch)]
         def launch(phase, python, cutoff, phase_env):
             command = [str(python), "-B", "-m", "scripts.run_ct1_native_pilot", phase,
@@ -173,11 +200,10 @@ def supervise(args):
             for log in sorted((args.job / "setup").glob("*.log")):
                 if log.stat().st_size <= 256 * 2**10:
                     write_bytes(root / "setup-logs" / log.name, log.read_bytes())
-            if cfg["mode"] == "pilot":
-                ct1_run.checkpoint_results(root, archive, plan, state)
-            else:
-                export(root, archive)
-    print("PARTIAL_OR_BLOCKED" if (root / "controller-failure.json").exists() else "PROCESS_EXITED", archive)
+            export_job(root, archive, plan, state, cfg["mode"])
+    failure = any((root / name).exists()
+                  for name in ("controller-failure.json", "journal-export-failure.json"))
+    print("PARTIAL_OR_BLOCKED" if failure else "PROCESS_EXITED", archive)
 
 
 def main():

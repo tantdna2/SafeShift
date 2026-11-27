@@ -10,15 +10,18 @@ notebook, Input và Draft PR theo yêu cầu Owner.
 1. Tạo notebook **private**, import notebook pilot từ bộ bàn giao. Chọn
    **GPU T4 ×2**, tắt Internet. Trong Add Input, attach riêng bốn Input
    private chứa source capsule, pilot ảnh mù, snapshot Qwen3 và bộ
-   phần mềm đã ghim. So đường dẫn mount thực tế với ô cấu hình. Phần
+   phần mềm đã ghim. Đối chiếu các mount với bộ cấu hình đã khóa. Phần
    checkpoint chỉ trỏ đến thư mục mang đúng tên revision chứa các
    file đã khóa. Đính kèm **chỉ** thư mục `pilot-input`, bên trong có
    `plan.json`, `exclusions.json` và 48 PNG tên mù. Giữ
    `private-scoring` trên D. Không attach archive/dataset InspecSafe
    gốc, GT, annotation, TXT, checkpoint của model khác hoặc TEST.
-2. Kiểm tra SHA của notebook và capsule theo bảng bàn giao, plan
-   SHA, marker phần mềm và run ID. Giữ `resume: None` cho lần đầu.
-   Driver được ghim theo quan sát đầu job, tối thiểu 570.26 trên Linux.
+2. Kiểm tra SHA notebook **đã render** và capsule, plan SHA, marker
+   phần mềm và run ID trong biên nhận. Nếu mount thực tế khác, cập
+   nhật JSON cấu hình cục bộ rồi render và kiểm SHA mới trước khi
+   import. Giữ `resume: None` cho lần đầu. Driver quan sát được, tối
+   thiểu 570.26 trên Linux, được khóa trong identity kể cả khi
+   danh sách driver được phép có nhiều phiên bản.
    Dùng notebook preflight riêng nếu muốn kiểm môi trường với cùng
    Inputs mà không chạy model. Notebook pilot chạy lại các gate trước
    khi load và thực hiện **Save Version → Save & Run All** một lần.
@@ -26,9 +29,10 @@ notebook, Input và Draft PR theo yêu cầu Owner.
    Kiểm `summary.json`, `controller-failure.json` nếu có và nguyên
    nhân trong log. Chấm `runs.json` cục bộ với công cụ CT1 và GT riêng.
    Khi lỗi, giữ tất cả checkpoint và lịch sử. Chỉ tiếp tục khi xác minh
-   ZIP của lượt gần nhất, không có VM đang chạy và vẫn cùng source,
-   plan, phần mềm, driver và run ID. Attach ZIP qua Input bổ sung, điền
-   path và SHA ở `resume`. Nếu mất checkpoint hoặc chưa rõ có call
+   ZIP hợp lệ của lượt gần nhất, không có VM đang chạy và vẫn cùng
+   source, plan, phần mềm, driver và run ID. Attach ZIP qua Input
+   bổ sung và render notebook mới với path và SHA ở `resume`. Nếu
+   mất checkpoint hoặc chưa rõ có call
    xảy ra hay chưa, dừng để đối soát.
 
 [Kaggle Notebooks](https://www.kaggle.com/docs/notebooks) ·
@@ -88,10 +92,13 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
   khoảng **148 phút**. Cap setup 40 phút, chừa 120 giây cho xuất.
   Phần mềm mount khoảng **4,19 GB** và checkpoint khoảng **17,55 GB**.
   Upload và thời gian lấy Input không nằm trong dự toán native.
-- Mỗi entry có intent create-only trước model.generate, rồi returned IDs,
-  raw text và parse receipt. Pending chưa bắt đầu vẫn có thể chạy khi
-  tiếp tục đúng checkpoint. Intent không có kết quả đã niêm phong
-  được giữ nguyên. Nếu token đã ghi, decode lại mà không gọi model.
+- Mỗi entry ghi và fsync dưới tên tạm, rồi xuất bản record hoàn chỉnh
+  bằng rename. Intent hoàn chỉnh bắt buộc trước model.generate. Giữ
+  file tạm còn lại sau ngắt và coi intent tạm là lượt bất định. Nếu còn
+  token hoàn chỉnh, decode lại mà không gọi model. Resume chỉ bắt đầu
+  sau khi toàn bộ ledger cha được xác minh ở vùng staging và nhập.
+  ZIP chẩn đoán sau nhập lỗi hoặc ledger không tái dựng được chỉ giữ
+  bằng chứng, không được dùng làm checkpoint mới.
   Nếu call có thể đã xảy ra và thiếu kết quả, giữ TECHNICAL_ERROR,
   không thử lại. Runtime/scheduler không cấp lại ngân sách từ đầu.
   Giới hạn này dựa trên một chuỗi checkpoint mới nhất được Owner quản lý.
@@ -107,7 +114,13 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
 python -B -m unittest discover -s tests -p "test_ct1*.py" -v
 python -B -m scripts.build_ct1_kaggle_notebooks --check
 python -B -m scripts.prepare_ct1_native_pilot source --commit <40-hex> --output <new-source-dir>
+python -B -m scripts.build_ct1_kaggle_notebooks --settings <sealed-settings.json> --mode pilot --output <new-owner-notebook.ipynb>
 ```
+
+Cấu hình JSON cần được giữ cùng SHA notebook đã render. Notebook template
+trong Git phục vụ tái lập. Bộ bàn giao cung cấp SHA riêng của từng notebook
+đã render và SHA cấu hình tương ứng. Không chỉnh trực tiếp ô notebook sau
+khi chốt SHA.
 
 Trên Windows đặt cwd, TEMP/TMP/TMPDIR và toàn bộ artifact ở D. Lệnh
 `images` tạo hai thư mục runner / scoring riêng từ master đã khóa.
