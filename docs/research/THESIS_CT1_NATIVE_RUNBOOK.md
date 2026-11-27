@@ -79,6 +79,22 @@ Nguồn lịch sử: [Qwen3 S2 OOM](https://github.com/tantdna2/SafeShift/blob/3
 · [Fresh Full-TRAIN](../FRESH_FULLTRAIN_171.md)
 · [G0–G6](../KAGGLE_FAILURES_AND_RELEASE_GATES.md).
 
+### Smoke v1 trên Kaggle
+
+Version 1 của `nguynanhtn/safeshift-ct1-smoke-pr216`, source `1dd92c9`,
+đã thấy hai T4 với driver 580.178.04 ở notebook. Tiến trình setup đã dừng
+khi `nvidia-smi` trả code 12 trong môi trường đã cô lập. Worker suy luận
+chưa khởi chạy, chưa nạp weights và không gọi model. Kaggle báo
+`COMPLETE` vì notebook đã xuất ZIP chẩn đoán. ZIP có SHA-256
+`f4db02f500f642dc04269312ad03620b0e80671278d7f441b3401d1f9f9e80d8`.
+
+Setup dùng lại bước tìm thư mục driver được mount và giới hạn đường dẫn
+NVML trong subprocess `nvidia-smi`. Worker nạp `libcuda.so.1` từ mount đó
+trước khi import Torch, rồi kiểm lại hai T4, driver, VRAM và phép thử FP16
+theo ngưỡng cũ. Receipt lưu stdout/stderr có giới hạn của probe. Thay đổi
+này cần xác minh native trên lượt được admission riêng. Giữ version 1 và
+ZIP chẩn đoán để đối soát.
+
 ## Giới hạn tài nguyên và resume
 
 - **144 lượt chính**, trần 3 giờ wall time trong một job. Hai T4 (16 GB class),

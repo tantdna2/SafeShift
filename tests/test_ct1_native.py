@@ -18,7 +18,7 @@ from zipfile import ZipFile
 from safeshift.data.saved_reports import json_bytes, sha256
 from safeshift.evaluation.ct1_contract import ARMS
 from safeshift.evaluation.ct1_pilot import replay
-from safeshift.fulltrain import ct1_run, ct1_native, provision, qwen
+from safeshift.fulltrain import ct1_run, ct1_native, environment, gpu_driver, provision, qwen
 from safeshift.pilot.artifacts import export, sha, verify_archive, write, write_bytes
 from scripts import build_ct1_kaggle_notebooks as nb
 from scripts import run_ct1_native_pilot as controller
@@ -638,6 +638,77 @@ class NativeTest(unittest.TestCase):
             self.assertTrue(ct1_native.image_size_allowed(size))
         for size in ((2336, 1752), (2561, 900), (0, 500)):
             self.assertFalse(ct1_native.image_size_allowed(size))
+
+    def test_setup_uses_scoped_nvml_before_provision(self):
+        job = self.root / "job"
+        root = job / "evidence"
+        root.mkdir(parents=True)
+        cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
+                                operator_request_sha256="f" * 64)
+        settings = self.root / "setup.json"
+        write(settings, cfg)
+        args = SimpleNamespace(config=settings, command="setup", job=job, scratch=self.root,
+                               deadline=time.monotonic() + 60)
+        driver = Path("/usr/local/nvidia/lib64")
+        software = self.root / "software"
+        archive_dir = self.root / "archives"
+        with (patch.object(controller, "layout", return_value=(self.data, software, None, {}, self.plan)),
+              patch.object(environment, "resources", return_value={"free_bytes": []}),
+              patch.object(environment, "hardware") as unscoped,
+              patch.object(gpu_driver, "locate", return_value=(driver, {})),
+              patch.object(gpu_driver, "hardware", return_value={"physical_gpus": [0, 1]}) as probe,
+              patch.object(ct1_run, "restore_software", return_value=archive_dir),
+              patch.object(provision, "prepare") as prepare):
+            probe.side_effect = ValueError("scoped probe fails")
+            with self.assertRaisesRegex(ValueError, "scoped probe fails"):
+                controller.worker(args)
+            prepare.assert_not_called()
+            probe.reset_mock(side_effect=True)
+            probe.return_value = {"physical_gpus": [0, 1]}
+            prepare.return_value = (self.root / "qwen-software/venv/bin/python", {})
+            controller.worker(args)
+            self.assertEqual(probe.call_args.args[2:], (driver, root, "setup"))
+            prepare.assert_called_once()
+            unscoped.assert_not_called()
+        before = json.loads((root / "before-setup.json").read_bytes())
+        self.assertEqual(before["native_calls"], 0)
+        self.assertEqual(before["physical"]["physical_gpus"], [0, 1])
+
+    def test_worker_binds_cuda_before_torch_abi_checks(self):
+        from safeshift.fulltrain import preflight
+
+        order = []
+        evidence = self.root / "evidence"
+        driver = Path("/usr/local/nvidia/lib64")
+        def bind(out):
+            self.assertEqual(out, evidence)
+            order.append("bind")
+            return driver
+
+        def hardware(key, policy, bound, out, label):
+            self.assertEqual((bound, out, label), (driver, evidence, "worker"))
+            order.append("physical")
+
+        def software(*args):
+            order.append("Torch import")
+
+        def cuda(*args):
+            order.append("CUDA tensor")
+            raise ValueError("fixture stops after CUDA")
+
+        with (patch.dict(os.environ, {"SAFESHIFT_RUNTIME_ROOT": str(self.root / "venv")}),
+              patch.object(environment, "resources"),
+              patch.object(preflight, "storage_probe"),
+              patch.object(gpu_driver, "bind", side_effect=bind),
+              patch.object(gpu_driver, "hardware", side_effect=hardware),
+              patch.object(environment, "software", side_effect=software),
+              patch.object(environment, "cuda", side_effect=cuda),
+              patch.object(qwen, "verify_snapshot") as checkpoint):
+            with self.assertRaisesRegex(ValueError, "fixture stops after CUDA"):
+                ct1_native.preflight(None, nb.ROOT, {}, ["580.178.04"], self.root, self.root,
+                                    self.data, self.plan)
+            self.assertEqual(order, ["bind", "physical", "Torch import", "CUDA tensor"])
+            checkpoint.assert_not_called()
 
     def test_driver_and_resource_configuration(self):
         with self.assertRaises(ValueError):

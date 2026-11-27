@@ -12,7 +12,7 @@ import time
 from safeshift.candidates.source import require
 from safeshift.data.saved_reports import json_bytes, sha256, strict_json
 from safeshift.evaluation.full_train_benchmark import is_sha256
-from safeshift.fulltrain import ct1_native, ct1_run, environment, provision, qwen, supervision
+from safeshift.fulltrain import ct1_native, ct1_run, environment, gpu_driver, provision, qwen, supervision
 from safeshift.fulltrain.qwen_semantics import fields
 from safeshift.pilot.artifacts import export, safe, write, write_bytes
 
@@ -106,9 +106,11 @@ def worker(args):
     drivers = [cfg["observed_driver"]]
     budgets = ct1_native.release_budgets(drivers)
     if args.command == "setup":
+        resources = environment.resources("qwen3", budgets, scratch, args.job)
+        driver, _ = gpu_driver.locate()
         write(root / "before-setup.json", {
-            "resources": environment.resources("qwen3", budgets, scratch, args.job),
-            "physical": environment.hardware("qwen3", budgets), "native_calls": 0})
+            "resources": resources,
+            "physical": gpu_driver.hardware("qwen3", budgets, driver, root, "setup"), "native_calls": 0})
         archive_dir = ct1_run.restore_software(software, cfg["software_marker_sha256"], lock, scratch, REPO)
         python, _ = provision.prepare({"model_key": "qwen3", "scratch": str(scratch),
                                       "software_input": str(software), "software_marker_sha256":

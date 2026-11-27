@@ -8,7 +8,7 @@ import time
 
 from safeshift.candidates.source import require
 from safeshift.evaluation.ct1_contract import ARMS, prompt
-from . import environment, qwen
+from . import environment, gpu_driver, qwen
 
 MAX_NEW = 768
 MAX_INPUT = 4800
@@ -147,8 +147,10 @@ def preflight(snapshot, repo, lock, drivers, scratch, output, data, plan):
     resources = environment.resources("qwen3", limits, scratch, output)
     storage = common_preflight.storage_probe(scratch, output, scratch_bytes=limits["scratch_probe_bytes"],
                                              output_bytes=limits["output_probe_bytes"])
+    evidence = output / "evidence"
+    driver = gpu_driver.bind(evidence)
+    physical = gpu_driver.hardware("qwen3", limits, driver, evidence, "worker")
     software = environment.software("qwen3", repo, lock)
-    physical = environment.hardware("qwen3", limits)
     cuda = environment.cuda("qwen3", limits)
     checkpoint = qwen.verify_snapshot(snapshot, repo=repo)
     processor, tokenizer, _ = qwen.native_setup(snapshot, repo)
