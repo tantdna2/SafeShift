@@ -212,6 +212,46 @@ parser A/E/S vẫn cần một lượt được duyệt riêng.
   nguyên ngưỡng RAM và VRAM từng T4 trước load. Advice không cấp quyền hoặc
   bảo đảm kernel sẽ thu hồi đủ RAM.
 
+### Smoke sau khi nạp checkpoint chạm hạn giờ
+
+Lượt `ct1-smoke-a44b40fd71fa` tại `c0a9db6` qua RAM 16 GiB và GPU,
+băm checkpoint khoảng 102 giây, hoàn tất shard đầu sau 39m02s rồi dừng
+theo hạn mà chưa có intent. ZIP 66 mục đã xác minh với SHA-256
+`66ed69314aaa3afcfb14b03d0af24c3d16ea58764a47b91c493b6ca8969f8e0c`.
+Đọc shard qua mmap, cast sang FP16 và chuyển tensor chưa được đo riêng.
+
+- Smoke dùng một bản snapshot scratch có ownership của job. Stage ghi
+  thông tin mount, loại filesystem và dung lượng trước/sau, từ chối bộ
+  nhớ như tmpfs và giữ 14 GiB scratch, 256 MiB Output cùng biên 2 GiB
+  ngoài checkpoint. Ghi đồng bộ từng khoảng và chỉ advice trang đã ghi
+  trên file tạm do job sở hữu. Hash input trong lúc copy rồi mở lại và
+  hash toàn bộ file đích. Kiểm inode, kích thước và thời điểm sửa trước
+  khi load. Giữ snapshot tạm trong VM qua khi worker kết thúc.
+- Setup, runtime probe, stage, so I/O và native worker dùng process group
+  riêng. Stage tối đa 600 giây. Probe bốn mẫu 4 MiB trên hai đường có
+  tối đa 30 giây, ghi rõ cache chưa chuẩn hóa. Probe hết giờ chỉ được
+  đi tiếp khi group đã đóng. Sai SHA trong mẫu so sánh dừng trước load.
+  Controller dùng pipe nonblocking để xác nhận model-loaded trong tối đa
+  900 giây kể từ khi mở native worker gồm khởi tạo processor và load,
+  luôn nằm trong cutoff tổng. Chừa export reserve hiện có.
+- RAM admission CT1 lấy min giữa host và cgroup v2 nhìn thấy gồm
+  các ancestor. Giữ ngưỡng trước load 16 GiB và 13.000 MiB từng T4. Giữ
+  mẫu đầu và mẫu gần nhất trong pha load, số đếm file/anon/fault và
+  số liệu process khi đọc được. Sau load ghi peak theo GPU; từng slot
+  lưu thời gian chuẩn bị, generate và đến lúc có raw/parse. Dừng mở
+  intent khi cửa sổ còn lại thấp hơn 120 giây hoặc 120% lượt dài nhất
+  quan sát được, lấy mức lớn hơn. Đây là giới hạn vận hành, không phải
+  đảm bảo slot tiếp theo xong trong khoảng đó.
+- Khi stage/probe có lỗi, chỉ xuất receipt thuộc group đã đóng. Dừng
+  hay mất VM không cấp lại lượt. Notebook smoke private, Internet Off,
+  T4 ×2, một ảnh × A/E/S, tối đa 3 lượt, không retry. Owner upload source
+  và notebook mới rồi Quick Save để Operator đối chiếu. Admission
+  dựa trên đúng SHA/phiên bản và quyền đã cấp. Cap controller từ cell
+  đầu khác giới hạn thời gian chờ/lưu Output của provider.
+- CPU kiểm toàn bộ custody, loader ingress và hồi quy; xác nhận native
+  còn chờ Owner chạy. Ba lượt smoke không đủ để lập phân vị latency
+  hay mở pilot. Pilot 48 ảnh/144 lượt và TEST tiếp tục khóa.
+
 ## Giới hạn tài nguyên và resume
 
 - **144 lượt chính**, trần 3 giờ wall time trong một job. Hai T4 (16 GB class),
@@ -270,7 +310,10 @@ minh read-only phiên bản private, danh mục file, byte/SHA toàn bộ wheel 
 archive, code notebook cùng thiết lập sau upload. Dùng **Quick Save** để
 xác minh notebook mà chưa thực thi. Không dùng CLI `submit` thay Owner nếu
 nó gửi lại code notebook. Việc chạy chờ xác minh đường admission phù hợp
-với chỉ thị upload của Owner.
+  với chỉ thị upload của Owner. Đường Owner UI hiện render bằng
+  `prepare --owner-ui-slug <slug>`, khóa đúng ref riêng và phiên bản
+  chạy v2 sau Quick Save v1. Kiểm code và bốn Input trước khi Owner chạy
+  v2. SDK submit từ chối request Owner UI trước khi tạo ledger.
 
 ## Smoke kỹ thuật trên đúng runtime
 

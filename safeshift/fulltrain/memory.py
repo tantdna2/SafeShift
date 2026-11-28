@@ -57,7 +57,7 @@ def ct1_ram_gate(out, name, floor):
     """Record the exact operands and keep the conservative host/cgroup minimum."""
     observe(out, name + '-before')
     try:
-        return environment.check_ram(floor, receipt=Path(out) / (name + '.json'))
+        return environment.check_ram(floor, receipt=Path(out) / (name + '.json'), include_ancestors=True)
     except (OSError, ValueError, KeyError):
         observe(out, name + '-failure')
         raise

@@ -27,6 +27,9 @@ SMOKE_CALLS = len(ARMS)
 PROCESS_RECEIPTS = ("setup-supervisor.json", "worker-supervisor.json")
 PROBE_RECEIPT = "probe-supervisor.json"
 PROBED_PROCESS_RECEIPTS = (PROCESS_RECEIPTS[0], PROBE_RECEIPT, PROCESS_RECEIPTS[1])
+STAGE_RECEIPT = "stage-supervisor.json"
+IO_RECEIPT = "io-probe-supervisor.json"
+STAGED_PROCESS_RECEIPTS = (*PROBED_PROCESS_RECEIPTS[:2], STAGE_RECEIPT, IO_RECEIPT, PROCESS_RECEIPTS[1])
 CONTROLLER_RECORD_BYTES = 65536
 IMAGE_BYTES = 12 * 2**20
 RUN_ID = re.compile(r"ct1-(?:smoke-)?[0-9a-f]{12}")
@@ -144,14 +147,17 @@ def identity(plan_sha, source_sha, capsule_sha, software_sha, run_id, *, smoke=F
             "max_calls": SMOKE_CALLS if smoke else N_CALLS}
 
 
-def stability(read_receipt, *, probe_required=False):
+def stability(read_receipt, *, probe_required=False, stage_required=False):
     seals = {}
-    receipt_names = PROBED_PROCESS_RECEIPTS if probe_required else PROCESS_RECEIPTS
+    receipt_names = (STAGED_PROCESS_RECEIPTS if stage_required else
+                     PROBED_PROCESS_RECEIPTS if probe_required else PROCESS_RECEIPTS)
     for name in receipt_names:
         payload = read_receipt(name)
         require(len(payload) <= CONTROLLER_RECORD_BYTES, "CT1_PROCESS_RECEIPT_BOUND")
         receipt = strict_json(payload)
-        require(process_group_closed(receipt) and (name != PROBE_RECEIPT or receipt["status"] == "EXITED"),
+        require(process_group_closed(receipt)
+                and (name not in (PROBE_RECEIPT, STAGE_RECEIPT) or receipt["status"] == "EXITED")
+                and (name != IO_RECEIPT or receipt["status"] in ("EXITED", "HARD_DEADLINE")),
                 "CT1_PROCESS_GROUP_UNVERIFIED:" + name)
         seals[name] = sha256(payload)
     return {"status": "LEDGER_STABLE", "process_receipts_sha256": seals}
@@ -182,7 +188,8 @@ def stable_journal(root):
         return read_controller_record(root, name)
     summary = strict_json(receipt("config-summary.json"))
     probe_required = summary.get("runtime_probe_required") is True or (root / PROBE_RECEIPT).exists()
-    return stability(receipt, probe_required=probe_required)
+    stage_required = summary.get("checkpoint_stage_required") is True or (root / STAGE_RECEIPT).exists()
+    return stability(receipt, probe_required=probe_required, stage_required=stage_required)
 
 
 def restore(archive, expected, root, binding):
@@ -209,12 +216,15 @@ def restore(archive, expected, root, binding):
                 and "journal-export-failure.json" not in names, "CT1_FORENSIC_ARCHIVE_NOT_RESUMABLE")
         probe_required = (config.get("runtime_probe_required") is True
                           or PROBE_RECEIPT in names)
-        required_receipts = PROBED_PROCESS_RECEIPTS if probe_required else PROCESS_RECEIPTS
+        stage_required = config.get("checkpoint_stage_required") is True or STAGE_RECEIPT in names
+        required_receipts = (STAGED_PROCESS_RECEIPTS if stage_required else
+                             PROBED_PROCESS_RECEIPTS if probe_required else PROCESS_RECEIPTS)
         require({"checkpoint-stability.json", *required_receipts} <= names.keys(),
                 "CT1_CHECKPOINT_STABILITY_REQUIRED")
         for name in required_receipts:
             require(z.getinfo(name).file_size <= CONTROLLER_RECORD_BYTES, "CT1_PROCESS_RECEIPT_BOUND")
-        require(strict_json(z.read("checkpoint-stability.json")) == stability(z.read, probe_required=probe_required),
+        require(strict_json(z.read("checkpoint-stability.json")) == stability(
+            z.read, probe_required=probe_required, stage_required=stage_required),
                 "CT1_CHECKPOINT_STABILITY_MISMATCH")
         for name in call_files:
             write_bytes(safe(root, name), z.read(name))
@@ -297,10 +307,11 @@ def checkpoint_results(root, output, plan, binding):
     export(root, output)
 
 
-def execute(root, plan, binding, image_dir, backend, deadline):
+def execute(root, plan, binding, image_dir, backend, deadline, *, reserve_seconds=0):
     """Exactly one reserved slot per scheduled case/arm. Never retry an intent."""
     require(len(schedule(plan)) == binding["max_calls"], "CT1_CALL_PLAN_MISMATCH")
     binding_sha = sha256(json_bytes(binding))
+    longest_slot = 0.0
     for i, (case, arm, image_sha) in enumerate(schedule(plan)):
         sample = root / "calls" / f"{i:03}"
         status, _ = slot_state(sample, case, arm, image_sha, binding_sha)
@@ -312,7 +323,13 @@ def execute(root, plan, binding, image_dir, backend, deadline):
             if (sample / "raw.json").exists() and not (sample / "result.json").exists():
                 publish_slot(sample / "result.json", _parsed(arm, strict_json((sample / "raw.json").read_bytes())))
             continue
-        if time.monotonic() >= deadline:
+        started = time.monotonic()
+        remaining = deadline - started
+        reserve = max(reserve_seconds, 1.2 * longest_slot) if reserve_seconds else 0
+        if remaining <= reserve:
+            if reserve_seconds:
+                write(root / "call-admission-stop.json", {"reason": "INSUFFICIENT_REMAINING_TIME", "next_slot": i,
+                      "remaining_seconds": remaining, "required_seconds": reserve, "automatic_retry": False})
             break
         try:
             payload = read_sealed(safe(image_dir, case + ".png"), image_sha, IMAGE_BYTES)
@@ -325,7 +342,10 @@ def execute(root, plan, binding, image_dir, backend, deadline):
             raw = backend.generate(payload, arm, begin, record_tokens)
             publish_slot(sample / "raw.json", {**raw, "tokens_sha256": sha(sample / "tokens.json")})
             publish_slot(sample / "result.json", _parsed(arm, raw))
-            publish_slot(sample / "memory.json", backend.record_memory())
+            observation = backend.record_memory()
+            publish_slot(sample / "memory.json", {**observation, "slot_seconds_before_telemetry_write":
+                                                  time.monotonic() - started})
+            longest_slot = max(longest_slot, time.monotonic() - started)
         except Exception as exc:
             details = {"type": type(exc).__name__, "message": str(exc)[:2000],
                        "seconds_monotonic": time.monotonic(), "automatic_retry": False}

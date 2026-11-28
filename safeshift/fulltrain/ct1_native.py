@@ -29,7 +29,7 @@ def release_budgets(drivers):
 
 
 def memory_headroom(torch, *, before_call):
-    host = environment.host_memory()
+    host = environment.host_memory(include_ancestors=True)
     if before_call:
         require(host["available_bytes"] >= 2 * GIB, "CT1_AVAILABLE_HOST_RAM")
     devices = []
@@ -101,6 +101,7 @@ class Backend:
 
     def generate(self, payload, arm, begin, record_tokens):
         torch = self.torch
+        started = time.monotonic()
         qwen.loaded_state(self.model)
         self.reset()
         for i in range(2):
@@ -110,8 +111,11 @@ class Backend:
         before = memory_headroom(torch, before_call=True)
         prefix = inputs["input_ids"][0].tolist()
         request = {"prompt_tokens": len(prefix), "image_grid_thw": inputs["image_grid_thw"].tolist(),
-                   "memory_before": before, "max_new_tokens": MAX_NEW}
+                   "memory_before": before, "max_new_tokens": MAX_NEW,
+                   "prepare_seconds": time.monotonic() - started}
+        transfer_started = time.monotonic()
         inputs = inputs.to(self.model.device)
+        request["input_transfer_wall_seconds"] = time.monotonic() - transfer_started
         try:
             began = time.monotonic()
             with torch.inference_mode():
@@ -159,7 +163,7 @@ def probe_runtime(snapshot, repo, lock, drivers, scratch, output, data, plan):
     memory.observe(evidence, "before-gate")
     try:
         resources = environment.resources("qwen3", limits, scratch, output,
-                                          memory_receipt=evidence / "ram-gate.json")
+                                          memory_receipt=evidence / "ram-gate.json", include_ancestors=True)
     except (OSError, ValueError, KeyError):
         memory.observe(evidence, "gate-failure")
         raise

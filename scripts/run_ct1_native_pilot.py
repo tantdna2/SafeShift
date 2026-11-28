@@ -1,6 +1,7 @@
 """One Kaggle job for CT1. The notebook launches this controller as a subprocess."""
 
 from argparse import ArgumentParser
+from collections import deque
 from contextlib import contextmanager
 import math
 import os
@@ -16,7 +17,7 @@ import time
 from safeshift.candidates.source import require, snapshot_stat
 from safeshift.data.saved_reports import json_bytes, sha256, strict_json
 from safeshift.evaluation.full_train_benchmark import is_sha256
-from safeshift.fulltrain import ct1_native, ct1_run, environment, gpu_driver, memory, provision, qwen, supervision
+from safeshift.fulltrain import ct1_checkpoint, ct1_native, ct1_run, environment, gpu_driver, memory, provision, qwen, supervision
 from safeshift.fulltrain.qwen_semantics import fields
 from safeshift.pilot.artifacts import export, safe, write, write_bytes
 
@@ -28,7 +29,9 @@ PREFLIGHT_SECONDS = 90 * 60
 SMOKE_CONTROLLER_SECONDS = 85 * 60
 EXPORT_RESERVE = 120
 WORKER_TELEMETRY_RESERVE = 5
-LOAD_SAMPLE_LIMIT = 48
+LOAD_INITIAL_SAMPLES = 8
+LOAD_RECENT_SAMPLES = 16
+CALL_RESERVE = 120
 WORKER_MEMORY = "controller-worker-memory.json"
 CONTROLLER_MEMORY = ("controller-before-setup-memory.json", "controller-after-setup-memory.json",
                      "controller-before-probe-memory.json", "controller-after-probe-memory.json",
@@ -135,39 +138,80 @@ def reclaim_setup(root, scratch, deadline, *, phase="setup", label=None):
     write(root / (label + "-cache-advice.json"), report)
 
 
+def load_process_counters(pid, proc=Path("/proc")):
+    """Best-effort Linux counters for the model worker, not the observer."""
+    base = proc / str(pid)
+    try:
+        value = (base / "stat").read_text()
+        fields = value[value.rindex(")") + 2:].split()
+        counters = {"pid": pid, "start_ticks": int(fields[19]), "state": fields[0],
+                    "minor_faults": int(fields[7]), "major_faults": int(fields[9]),
+                    "user_ticks": int(fields[11]), "system_ticks": int(fields[12])}
+    except (OSError, ValueError, IndexError):
+        return None
+    try:
+        io = dict(line.split(":", 1) for line in (base / "io").read_text().splitlines())
+        counters["io"] = {key: int(io[key]) for key in ("rchar", "read_bytes", "write_bytes")}
+    except (OSError, ValueError, KeyError):
+        pass
+    return counters
+
+
 @contextmanager
 def observe_worker_load(root, *, cutoff=None):
     """Keep sampling I/O out of the hard supervisor and result directories."""
     finished = Event()
-    observations = {"load_samples": []}
+    observations = {"load_samples": [], "load_sample_count": 0}
+    recent = deque(maxlen=LOAD_RECENT_SAMPLES)
     result = {}
 
-    def snapshot():
+    def snapshot(*, process=False):
         raw = memory.snapshot()
         cgroup = raw["cgroup"]
         stat = cgroup.get("memory.stat", {})
-        return {
+        result = {
             "monotonic": raw["monotonic"], "status": raw["status"],
             "host_mem_available_bytes": raw.get("host_mem_available_bytes"),
             "gate_memory": raw.get("gate_memory"),
             "cgroup": {name: cgroup.get(name) for name in
                        ("memory.current", "memory.max", "memory.peak", "memory.events")},
             "cgroup_usage": {name: stat.get(name) for name in
-                             ("anon", "file", "inactive_file", "shmem")},
+                             ("anon", "file", "inactive_file", "shmem", "file_dirty", "file_writeback",
+                              "pgmajfault", "pgscan", "pgsteal", "pswpin", "pswpout")},
             "observer_rss_bytes": raw["process"]["status"].get("VmRSS"),
         }
+        if process:
+            try:
+                marker = strict_json(ct1_run.read_controller_record(root, "model-load-start.json"))
+                pid = marker.get("pid")
+                if type(pid) is int and pid > 0:
+                    counters = load_process_counters(pid)
+                    if counters and counters["start_ticks"] == marker.get("process_start_ticks"):
+                        result["worker_process"] = counters
+            except (OSError, ValueError):
+                pass
+        return result
 
     def collect():
         try:
-            while len(observations["load_samples"]) < LOAD_SAMPLE_LIMIT and not finished.wait(1):
+            while not finished.wait(1):
                 if (root / "model-initialization-exit-memory.json").is_file():
                     break
                 if (root / "model-load-start.json").is_file():
-                    observation = snapshot()
+                    observation = snapshot(process=True)
                     if finished.is_set():
                         break
-                    observations["load_samples"].append(observation)
-                    if finished.wait(4):
+                    count = observations["load_sample_count"] + 1
+                    observations["load_sample_count"] = count
+                    available = (observation.get("gate_memory") or {}).get("available_bytes")
+                    if type(available) is int:
+                        observations["min_available_bytes"] = min(
+                            available, observations.get("min_available_bytes", available))
+                    if count <= LOAD_INITIAL_SAMPLES:
+                        observations["load_samples"].append(observation)
+                    else:
+                        recent.append(observation)
+                    if finished.wait(4 if count < LOAD_INITIAL_SAMPLES else 19):
                         break
             finished.wait()
             observations["after_worker"] = snapshot()
@@ -185,7 +229,7 @@ def observe_worker_load(root, *, cutoff=None):
         # A stalled daemon retains no file handle to an output and can never
         # publish into the result. The controller exports only this frozen copy.
         captured = dict(observations)
-        result.update(captured, load_samples=tuple(captured["load_samples"]),
+        result.update(captured, load_samples=(*captured["load_samples"], *recent.copy()),
                       after_worker_status="OBSERVED" if "after_worker" in captured else "UNAVAILABLE")
 
 
@@ -214,6 +258,28 @@ def worker(args):
     require_native_admission(cfg)
     deadline = args.deadline
     root, scratch = args.job / "evidence", args.scratch
+    if args.command in ("stage", "io-probe"):
+        require(cfg["mode"] in ("pilot", "smoke"), "CT1_STAGE_NATIVE_MODE_REQUIRED")
+        require_closed_phase(root, "setup")
+        require_closed_phase(root, "probe")
+        checkpoint = mount_path(cfg["checkpoint"], directory=True)
+        try:
+            if args.command == "stage":
+                reclaim_setup(root, scratch, deadline, phase="probe")
+                ct1_checkpoint.stage(checkpoint, scratch, args.job, root, REPO,
+                                     ct1_native.release_budgets([cfg["observed_driver"]]), deadline)
+            else:
+                require_closed_phase(root, "stage")
+                staged, _ = ct1_checkpoint.verified_stage(scratch, root, REPO)
+                ct1_checkpoint.compare_reads(checkpoint, staged, root, deadline)
+        except (OSError, RuntimeError, ValueError) as error:
+            code = str(error).split(":", 1)[0]
+            if not re.fullmatch(r"[A-Z][A-Z0-9_]{2,100}", code):
+                code = "SEE_CHECKPOINT_PHASE_LOG"
+            write(root / (args.command + "-failure.json"), {
+                "type": type(error).__name__, "code": code, "errno": getattr(error, "errno", None)})
+            raise
+        return
     data, software, checkpoint, lock, plan = layout(cfg)
     drivers = [cfg["observed_driver"]]
     budgets = ct1_native.release_budgets(drivers)
@@ -221,7 +287,7 @@ def worker(args):
         memory.observe(root, "setup-entry")
         try:
             resources = environment.resources("qwen3", budgets, scratch, args.job,
-                                              memory_receipt=root / "setup-ram-gate.json")
+                                              memory_receipt=root / "setup-ram-gate.json", include_ancestors=True)
             driver, _ = gpu_driver.locate()
             write(root / "before-setup.json", {
                 "resources": resources,
@@ -257,14 +323,21 @@ def worker(args):
             memory.observe(root, "runtime-probe-exit")
         return
 
-    reclaim_setup(root, scratch, deadline, phase="probe")
+    require_closed_phase(root, "probe")
     runtime = strict_json(ct1_run.read_controller_record(root, "runtime-probe.json"))
     require(runtime.get("model_calls") == 0 and runtime.get("weights_loaded") is False,
             "CT1_RUNTIME_PROBE_RECEIPT")
-    checked = ct1_native.verify_checkpoint(checkpoint, REPO, drivers, root, deadline)
-    write(root / "preflight.json", {**runtime, "checkpoint": checked})
     if cfg["mode"] == "preflight":
+        reclaim_setup(root, scratch, deadline, phase="probe")
+        checked = ct1_native.verify_checkpoint(checkpoint, REPO, drivers, root, deadline)
+        write(root / "preflight.json", {**runtime, "checkpoint": checked})
         return
+    require_closed_phase(root, "stage")
+    io_receipt = strict_json(ct1_run.read_controller_record(root, ct1_run.IO_RECEIPT))
+    require(supervision.process_group_closed(io_receipt)
+            and io_receipt["status"] in ("EXITED", "HARD_DEADLINE"), "CT1_CHECKPOINT_IO_GROUP_UNVERIFIED")
+    checkpoint, checked = ct1_checkpoint.verified_stage(scratch, root, REPO)
+    write(root / "preflight.json", {**runtime, "checkpoint": checked, "load_path": "VERIFIED_DISK_SCRATCH"})
     state = binding(cfg, lock)
     require(state == strict_json((root / "identity.json").read_bytes()), "CT1_RUNTIME_IDENTITY_CHANGED")
     require(strict_json((root / "resume-admission.json").read_bytes()) == {"status": "FRESH_ADMITTED"}
@@ -272,6 +345,8 @@ def worker(args):
     driver = gpu_driver.bind(root)
 
     def before_load():
+        require(ct1_checkpoint.verified_stage(scratch, root, REPO)[0] == checkpoint,
+                "CT1_CHECKPOINT_STAGE_REBOUND")
         admit_model_load(root, scratch, deadline, budgets, driver)
 
     memory.observe(root, "model-initialization-entry")
@@ -281,18 +356,24 @@ def worker(args):
         memory.observe(root, "model-initialization-exit")
     write(root / "model-loaded.json", {"weights_loaded": True, "device_map": qwen.DEVICE_MAP,
                                       "generation": backend.config.to_dict(),
-                                      "memory": backend.record_memory()})
+                                      "memory": backend.record_memory(), "monotonic": time.monotonic()})
+    ready_fd = args.loaded_fd
+    require(type(ready_fd) is int and ready_fd >= 3, "CT1_MODEL_READINESS_PIPE_REQUIRED")
+    try:
+        require(os.write(ready_fd, b"1") == 1, "CT1_MODEL_READINESS_WRITE")
+    finally:
+        os.close(ready_fd)
     shards = {row["path"]: row["size_bytes"] for row in qwen.reference(REPO)["snapshot_files"]
               if row["path"].endswith(".safetensors")}
     ct1_native.advise_locked_files(checkpoint, shards, root / "loaded-weight-cache-advice.json", deadline)
     memory.observe(root, "after-loaded-weight-cache-advice")
-    ct1_run.execute(root, plan, state, data / "images", backend, deadline)
+    ct1_run.execute(root, plan, state, data / "images", backend, deadline, reserve_seconds=CALL_RESERVE)
 
 
 def admit_model_load(root, scratch, deadline, budgets, driver):
     floor = budgets["free_ram_mib"] * 2**20
     try:
-        below_floor = environment.host_memory()["available_bytes"] < floor
+        below_floor = environment.host_memory(include_ancestors=True)["available_bytes"] < floor
     except (OSError, ValueError, KeyError):
         below_floor = False  # The fresh gate below records a failed read.
     if below_floor:
@@ -301,7 +382,10 @@ def admit_model_load(root, scratch, deadline, budgets, driver):
         reclaim_setup(root, scratch, deadline, phase="probe", label="preload")
     gpu_driver.hardware("qwen3", budgets, driver, root, "worker")
     memory.ct1_ram_gate(root, "before-model-load-ram-gate", floor)
-    write(root / "model-load-start.json", {"monotonic": time.monotonic()})
+    pid = os.getpid()
+    counters = load_process_counters(pid)
+    write(root / "model-load-start.json", {"monotonic": time.monotonic(), "pid": pid,
+                                           "process_start_ticks": counters["start_ticks"] if counters else None})
 
 
 def diagnostic_path(archive):
@@ -331,7 +415,7 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
         evidence = root.parent / "diagnostic"
         evidence.mkdir()
         records = ("identity.json", "config-summary.json", "controller-failure.json",
-                   *CONTROLLER_MEMORY, *ct1_run.PROBED_PROCESS_RECEIPTS)
+                   *CONTROLLER_MEMORY, *ct1_run.STAGED_PROCESS_RECEIPTS)
         # A failed setup can be safely collected without a worker receipt, but
         # only when setup's own receipt proves its entire group was reaped.
         try:
@@ -340,6 +424,23 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
                 records += ("setup-ram-gate.json", *(f"setup-{phase}-memory.json" for phase in SETUP_MEMORY))
         except (ValueError, OSError):
             pass
+        for phase, names in (
+            ("stage", (ct1_checkpoint.STAGE_RECORD, "checkpoint-stage-copy.json", "stage-failure.json",
+                       "checkpoint-stage-storage.json", "checkpoint-stage-storage-after.json",
+                       "before-checkpoint-stage-ram-gate.json",
+                       "before-checkpoint-stage-ram-gate-before-memory.json", "after-checkpoint-stage-ram-gate.json",
+                       "after-checkpoint-stage-ram-gate-before-memory.json", "probe-cache-advice.json",
+                       *(f"checkpoint-stage/{i:02}-{state}.json"
+                         for i in range(16) for state in ("start", "copied")))),
+            ("io-probe", ("io-probe-failure.json", *(f"checkpoint-io-{i}-{state}.json"
+                         for i in range(4) for state in ("start", "result")))),
+        ):
+            try:
+                receipt = strict_json(ct1_run.read_controller_record(root, phase + "-supervisor.json"))
+                if supervision.process_group_closed(receipt):
+                    records += names
+            except (ValueError, OSError):
+                pass
         try:
             probe = strict_json(ct1_run.read_controller_record(root, ct1_run.PROBE_RECEIPT))
             if supervision.process_group_closed(probe):
@@ -424,10 +525,12 @@ def supervise(args):
     info = snapshot_stat(scratch, directory=True)
     write(root / "scratch-ownership.json", {"device": info.st_dev, "inode": info.st_ino})
     write(root / "identity.json", state)
+    stage_required = cfg["mode"] != "preflight"
     write(root / "config-summary.json", {"mode": cfg["mode"], "source_commit": cfg["source_commit"],
                                         "limits": budgets, "max_calls": state["max_calls"],
                                         "controller_deadline_monotonic": deadline,
-                                        "runtime_probe_required": True, "cross_vm_resume": "BLOCKED_NO_LATEST_LEDGER_PROOF"})
+                                        "runtime_probe_required": True, "checkpoint_stage_required": stage_required,
+                                        "cross_vm_resume": "BLOCKED_NO_LATEST_LEDGER_PROOF"})
     env = provision.clean_env(REPO, scratch)
     env.update(PYTORCH_ALLOC_CONF="expandable_segments:True", CUDA_VISIBLE_DEVICES="0,1",
                TMP=str(scratch), TEMP=str(scratch), OMP_NUM_THREADS="2", MKL_NUM_THREADS="2")
@@ -437,13 +540,27 @@ def supervise(args):
         if cfg["mode"] != "preflight":
             write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         args_common = ["--config", str(args.config), "--job", str(args.job), "--scratch", str(scratch)]
-        def launch(phase, python, cutoff, phase_env):
+        def launch(phase, python, cutoff, phase_env, *, load_pipe=None, allow_timeout=False):
             command = [str(python), "-B", "-m", "scripts.run_ct1_native_pilot", phase,
                        *args_common, "--deadline", str(cutoff)]
+            watchdog = {}
+            if load_pipe is not None:
+                ready, writer = load_pipe
+                command.extend(("--loaded-fd", str(writer)))
+                watchdog = {"pass_fds": (writer,),
+                            "readiness": (ready, min(cutoff, time.monotonic() + ct1_checkpoint.LOAD_SECONDS))}
             receipt = root / (phase + "-supervisor.json")
-            report = supervision.run(command, cwd=REPO, env=phase_env, deadline=cutoff,
-                log=root / (phase + ".log"), receipt=receipt,
-                max_log_bytes=budgets["max_log_bytes"], watch_log_root=args.job / "setup")
+            try:
+                report = supervision.run(command, cwd=REPO, env=phase_env, deadline=cutoff,
+                    log=root / (phase + ".log"), receipt=receipt,
+                    max_log_bytes=budgets["max_log_bytes"],
+                    watch_log_root=args.job / "setup" if phase == "setup" else None, **watchdog)
+            except RuntimeError as error:
+                if (allow_timeout and str(error) == "SUPERVISED_HARD_DEADLINE"
+                        and supervision.process_group_closed(strict_json(ct1_run.read_controller_record(
+                            root, receipt.name)))):
+                    return
+                raise
             require(report["status"] == "EXITED" and report["returncode"] == 0
                     and supervision.process_group_closed(strict_json(ct1_run.read_controller_record(
                         root, receipt.name))),
@@ -466,9 +583,23 @@ def supervise(args):
             launch("probe", python, probe_cutoff, env)
         finally:
             memory.observe(root, "controller-after-probe")
+        if stage_required:
+            stage_env = {**env, "CUDA_VISIBLE_DEVICES": ""}
+            launch("stage", python, min(native_cutoff, time.monotonic() + ct1_checkpoint.STAGE_SECONDS), stage_env)
+            launch("io-probe", python, min(native_cutoff, time.monotonic() + ct1_checkpoint.IO_SECONDS),
+                   stage_env, allow_timeout=True)
         memory.observe(root, "controller-before-worker")
         with observe_worker_load(root, cutoff=deadline - EXPORT_RESERVE) as worker_memory:
-            launch("worker", python, native_cutoff, env)
+            if stage_required:
+                ready, writer = os.pipe()
+                try:
+                    os.set_blocking(ready, False)
+                    launch("worker", python, native_cutoff, env, load_pipe=(ready, writer))
+                finally:
+                    os.close(ready)
+                    os.close(writer)
+            else:
+                launch("worker", python, native_cutoff, env)
     except (ValueError, OSError, RuntimeError, TimeoutError, subprocess.SubprocessError) as exc:
         write(root / "controller-failure.json", {"type": type(exc).__name__,
               "message": str(exc)[:2000], "automatic_retry": False, "status": "PARTIAL_OR_BLOCKED"})
@@ -488,11 +619,12 @@ def supervise(args):
 
 def main():
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("supervise", "setup", "probe", "worker"))
+    parser.add_argument("command", choices=("supervise", "setup", "probe", "stage", "io-probe", "worker"))
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--job", type=Path, required=True)
     parser.add_argument("--deadline", type=float)
     parser.add_argument("--scratch", type=Path)
+    parser.add_argument("--loaded-fd", type=int)
     args = parser.parse_args()
     if args.command == "supervise":
         supervise(args)

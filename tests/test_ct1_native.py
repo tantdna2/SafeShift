@@ -18,7 +18,7 @@ from zipfile import ZipFile
 from safeshift.data.saved_reports import json_bytes, sha256
 from safeshift.evaluation.ct1_contract import ARMS
 from safeshift.evaluation.ct1_pilot import replay
-from safeshift.fulltrain import ct1_run, ct1_native, environment, gpu_driver, memory, provision, qwen
+from safeshift.fulltrain import ct1_checkpoint, ct1_run, ct1_native, environment, gpu_driver, memory, provision, qwen
 from safeshift.pilot.artifacts import export, sha, verify_archive, write, write_bytes
 from scripts import build_ct1_kaggle_notebooks as nb
 from scripts import run_ct1_native_pilot as controller
@@ -238,7 +238,8 @@ class NativeTest(unittest.TestCase):
 
     def test_supervisor_cleanup_blockers_never_read_or_seal_the_ledger(self):
         for where, status in (("worker", "PROCESS_GROUP_SURVIVORS"),
-                              ("setup", "PROCESS_GROUP_CLEANUP_UNVERIFIED")):
+                              ("setup", "PROCESS_GROUP_CLEANUP_UNVERIFIED"),
+                              ("stage", "PROCESS_GROUP_CLEANUP_UNVERIFIED")):
             with self.subTest(stage=where, status=status):
                 work = self.root / where
                 work.mkdir()
@@ -269,12 +270,14 @@ class NativeTest(unittest.TestCase):
                       patch.object(controller, "layout", return_value=(self.data, work, work, {}, self.plan)),
                       patch.object(controller.tempfile, "mkdtemp", return_value=str(scratch)),
                       patch.object(controller.provision, "clean_env", return_value={}),
+                      patch.object(controller.os, "set_blocking", create=True),
                       patch.object(controller.supervision, "run", side_effect=run),
                       patch.object(controller.supervision, "parent_deadline", return_value=nullcontext()),
                       patch.object(ct1_run, "reconstruct") as reconstruct):
                     controller.supervise(SimpleNamespace(config=config, job=job, deadline=None))
                     reconstruct.assert_not_called()
-                self.assertEqual(calls, ["setup", "probe", "worker"] if where == "worker" else ["setup"])
+                sequence = ["setup", "probe", "stage", "io-probe", "worker"]
+                self.assertEqual(calls, sequence[:sequence.index(where) + 1])
                 self.assertEqual((root / "calls/000/intent.json").read_bytes(), b"{")
                 archive = work / (cfg["run_id"] + "-diagnostic.zip")
                 members = verify_archive(archive)
@@ -439,6 +442,13 @@ class NativeTest(unittest.TestCase):
         bound, seal, notebook = operator.prepare(request)
         self.assertEqual(bound["limits"], {"jobs": 1, "images": 1, "calls": 3,
                                            "physical_gpus": 2, "seconds": 5400})
+        ui_bound, ui_seal, ui_nb = operator.prepare(request, owner_ui_slug=operator.JOB + "-scratch")
+        self.assertEqual((ui_bound["job"], ui_bound["version"]), ("owner/" + operator.JOB + "-scratch", 2))
+        self.assertNotEqual(ui_seal, seal)
+        ui_ledger = self.root / "owner-ui-ledger"
+        with self.assertRaisesRegex(ValueError, "OWNER_UI_SMOKE_REQUIRES_OWNER"):
+            operator.submit(ui_bound, ui_seal, ui_nb, sha256(ui_nb), ui_ledger)
+        self.assertFalse(ui_ledger.exists())
         for outcome in ("timeout", "http-503", "malformed-response", "rejected-input", "submitted"):
             with self.subTest(provider_response=outcome):
                 ledger = self.root / ("ledger-" + outcome)
@@ -808,6 +818,7 @@ class NativeTest(unittest.TestCase):
         config = self.root / "settings.json"
         write(config, cfg)
         write(root / "runtime-probe.json", {"model_calls": 0, "weights_loaded": False})
+        write(root / ct1_run.IO_RECEIPT, self.receipt())
         write(root / "identity.json", controller.binding(cfg, {}))
         write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         events = []
@@ -825,7 +836,7 @@ class NativeTest(unittest.TestCase):
               patch.object(controller, "require_closed_phase"),
               patch.object(controller, "reclaim_setup"),
               patch.object(memory, "observe"),
-              patch.object(ct1_native, "verify_checkpoint", return_value={}),
+              patch.object(ct1_checkpoint, "verified_stage", return_value=(self.root, {})),
               patch.object(gpu_driver, "bind"),
               patch.object(gpu_driver, "hardware", side_effect=physical),
               patch.object(environment, "host_memory", return_value={"available_bytes": 16 * 2**30}),
@@ -837,6 +848,193 @@ class NativeTest(unittest.TestCase):
         self.assertEqual(events, ["processor-initialized", "physical-gate"])
         self.assertFalse((root / "model-load-start.json").exists())
         execute.assert_not_called()
+
+    def checkpoint_fixture(self):
+        source = self.root / "mount" / ct1_run.REVISION
+        source.mkdir(parents=True)
+        shard = "model-00001-of-00004.safetensors"
+        files = {shard: b"synthetic locked weights", "model.safetensors.index.json":
+                 json_bytes({"weight_map": {"fixture.weight": shard}})}
+        for name, payload in files.items():
+            write_bytes(source / name, payload)
+        lock = {"model": {"revision": source.name}, "snapshot_files": [
+            {"path": name, "size_bytes": len(payload), "hash_algorithm": "sha256",
+             "expected_hash": sha256(payload)} for name, payload in files.items()]}
+        evidence = self.root / "stage-evidence"
+        scratch = self.root / "scratch"
+        evidence.mkdir()
+        scratch.mkdir()
+        stat = scratch.stat()
+        write(evidence / "scratch-ownership.json", {"device": stat.st_dev, "inode": stat.st_ino})
+        return source, scratch, evidence, lock
+
+    def test_checkpoint_stage_rechecks_actual_bytes_and_rejects_changed_destination(self):
+        source, scratch, evidence, lock = self.checkpoint_fixture()
+        budgets = ct1_native.release_budgets(["580.178.04"])
+        with (patch.object(qwen, "reference", return_value=lock),
+              patch.object(memory, "ct1_ram_gate"), patch.object(ct1_checkpoint, "capacity", return_value={}),
+              patch.object(memory, "stream_readonly_sha256", wraps=memory.stream_readonly_sha256) as reader):
+            ct1_checkpoint.stage(source, scratch, self.root, evidence, self.root, budgets, time.monotonic() + 30)
+            staged, receipt = ct1_checkpoint.verified_stage(scratch, evidence, self.root)
+            self.assertEqual([c.args[0].parent for c in reader.call_args_list], [source, source, staged, staged])
+            self.assertTrue(receipt["weight_bytes_verified"])
+            self.assertEqual({p.name: p.read_bytes() for p in staged.iterdir()},
+                             {p.name: p.read_bytes() for p in source.iterdir()})
+            shard = next(staged.glob("*.safetensors"))
+            shard.chmod(0o600)
+            self.addCleanup(lambda: [p.chmod(0o600) for p in staged.iterdir()])
+            shard.write_bytes(b"wrong")
+            with self.assertRaisesRegex(ValueError, "CT1_CHECKPOINT_STAGE_CHANGED"):
+                ct1_checkpoint.verified_stage(scratch, evidence, self.root)
+
+    def test_checkpoint_stage_does_not_admit_incorrect_readback(self):
+        source, scratch, evidence, lock = self.checkpoint_fixture()
+        budgets = ct1_native.release_budgets(["580.178.04"])
+        stream = memory.stream_readonly_sha256
+
+        def corrupt_digest(path, **kwargs):
+            actual = stream(path, **kwargs)
+            return "0" * 64 if path.is_relative_to(scratch) else actual
+
+        with (patch.object(qwen, "reference", return_value=lock),
+              patch.object(memory, "ct1_ram_gate"), patch.object(ct1_checkpoint, "capacity", return_value={}),
+              patch.object(memory, "stream_readonly_sha256", side_effect=corrupt_digest)):
+            with self.assertRaisesRegex(ValueError, "QWEN_FILE_SHA256"):
+                ct1_checkpoint.stage(source, scratch, self.root, evidence, self.root, budgets, time.monotonic() + 30)
+        self.assertFalse((evidence / ct1_checkpoint.STAGE_RECORD).exists())
+        self.assertTrue((evidence / "checkpoint-stage-copy.json").exists())
+
+    def test_staging_rejects_memory_backed_or_insufficient_scratch(self):
+        source, scratch, _, _ = self.checkpoint_fixture()
+        budgets = ct1_native.release_budgets(["580.178.04"])
+        good = {"filesystem": "ext4", "mountpoint": "/kernel"}
+        with patch.object(ct1_checkpoint, "mount_details",
+                          side_effect=[good, {"filesystem": "tmpfs", "mountpoint": "/tmp"}, good]):
+            with self.assertRaisesRegex(ValueError, "CT1_CHECKPOINT_SCRATCH_NOT_DISK"):
+                ct1_checkpoint.capacity(source, scratch, self.root, 1, budgets)
+        with (patch.object(ct1_checkpoint, "mount_details",
+                           side_effect=[good, {"filesystem": "ext4", "mountpoint": "/tmp"}, good]),
+              patch.object(ct1_checkpoint.shutil, "disk_usage", return_value=SimpleNamespace(free=1))):
+            with self.assertRaisesRegex(ValueError, "CT1_CHECKPOINT_STAGE_DISK"):
+                ct1_checkpoint.capacity(source, scratch, self.root, 1, budgets)
+
+    def test_ct1_checks_a_tighter_visible_cgroup_ancestor(self):
+        proc, cgroup = self.root / "proc", self.root / "cgroup"
+        write_bytes(proc / "meminfo", b"MemAvailable: 40000000 kB\n")
+        write_bytes(proc / "self/cgroup", b"0::/container/section/leaf\n")
+        write_bytes(proc / "self/mountinfo",
+                    f"1 2 0:1 /container {cgroup.as_posix()} rw - cgroup2 cgroup rw\n".encode())
+        write_bytes(cgroup / "cgroup.controllers", b"memory cpu\n")
+        for group, limit, used in ((".", 30, 6), ("section", 18, 3), ("section/leaf", 24, 2)):
+            write_bytes(cgroup / group / "memory.max", str(limit * 2**30).encode())
+            write_bytes(cgroup / group / "memory.current", str(used * 2**30).encode())
+        self.assertEqual(environment.host_memory(proc / "meminfo", cgroup)["available_bytes"], 24 * 2**30)
+        measured = environment.host_memory(proc / "meminfo", cgroup, details=True, include_ancestors=True)
+        self.assertEqual(measured["available_bytes"], 15 * 2**30)
+        self.assertEqual(measured["cgroups"]["section/memory.max"]["remaining_bytes"], 15 * 2**30)
+
+    def test_checkpoint_io_probe_matches_equal_bytes_and_detects_mount_drift(self):
+        source, staged, evidence = (self.root / name for name in ("source", "staged", "io"))
+        evidence.mkdir()
+        name = "model-00001-of-00004.safetensors"
+        size = 64 * 1024
+        payload = b"a" * size + b"b" * size
+        write_bytes(source / name, payload)
+        write_bytes(staged / name, payload)
+        with patch.object(ct1_checkpoint, "SAMPLE_BYTES", size):
+            ct1_checkpoint.compare_reads(source, staged, evidence, time.monotonic() + 30)
+            self.assertEqual(len(list(evidence.glob("*-result.json"))), 4)
+            (source / name).write_bytes(b"x" + payload[1:])
+            with self.assertRaisesRegex(ValueError, "CT1_CHECKPOINT_IO_BYTES_CHANGED"):
+                ct1_checkpoint.compare_reads(source, staged, self.root / "changed-io", time.monotonic() + 30)
+
+    def test_call_time_reserve_stops_without_writing_any_intent(self):
+        output = self.evidence("short-reserve")
+        fake = FixtureBackend()
+        ct1_run.execute(output, self.plan, self.binding, self.data / "images", fake,
+                        time.monotonic() + 30, reserve_seconds=120)
+        self.assertEqual(fake.calls, [])
+        self.assertFalse((output / "calls").exists())
+        self.assertEqual(json.loads((output / "call-admission-stop.json").read_bytes())["next_slot"], 0)
+
+    def test_staged_smoke_allows_only_a_reaped_io_timeout_and_exports_three_results(self):
+        for io_closed in (True, False):
+            work = self.root / f"io-closure-{io_closed}"
+            scratch = work / "scratch"
+            scratch.mkdir(parents=True)
+            cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
+                                    operator_request_sha256="a" * 64)
+            config = work / "settings.json"
+            write(config, cfg)
+            job = work / cfg["run_id"]
+            plan = {**self.plan, "cases": self.plan["cases"][:1]}
+            stages = []
+
+            def launch(command, *, receipt, deadline, **kwargs):
+                phase = command[4]
+                stages.append(phase)
+                if phase == "io-probe":
+                    if io_closed:
+                        write(receipt, self.receipt("HARD_DEADLINE", returncode=-9))
+                        raise RuntimeError("SUPERVISED_HARD_DEADLINE")
+                    write(receipt, self.receipt("PROCESS_GROUP_SURVIVORS", returncode=-9))
+                    raise RuntimeError("SUPERVISED_PROCESS_GROUP_SURVIVORS")
+                if phase == "worker":
+                    self.assertLessEqual(kwargs["readiness"][1], deadline)
+                    self.assertIn(str(kwargs["pass_fds"][0]), command)
+                    state = controller.binding(cfg, {})
+                    ct1_run.execute(job / "evidence", plan, state, self.data / "images",
+                                    FixtureBackend(), time.monotonic() + 30)
+                write(receipt, self.receipt())
+                return {"status": "EXITED", "returncode": 0}
+
+            with (patch.object(controller, "WORK", work), patch.object(controller.sys, "platform", "linux"),
+                  patch.object(controller, "layout", return_value=(self.data, work, work, {}, plan)),
+                  patch.object(controller.tempfile, "mkdtemp", return_value=str(scratch)),
+                  patch.object(controller.provision, "clean_env", return_value={}),
+                  patch.object(controller.os, "set_blocking", create=True),
+                  patch.object(controller.supervision, "run", side_effect=launch),
+                  patch.object(controller.supervision, "parent_deadline", return_value=nullcontext())):
+                controller.supervise(SimpleNamespace(config=config, job=job, deadline=time.monotonic() + 600))
+            prefix = ["setup", "probe", "stage", "io-probe"]
+            self.assertEqual(stages, prefix + (["worker"] if io_closed else []))
+            if io_closed:
+                with ZipFile(work / (cfg["run_id"] + ".zip")) as archive:
+                    self.assertEqual(json.loads(archive.read("summary.json"))["returned"], 3)
+                    stable = json.loads(archive.read("checkpoint-stability.json"))
+                    self.assertEqual(set(stable["process_receipts_sha256"]), set(ct1_run.STAGED_PROCESS_RECEIPTS))
+            else:
+                names = verify_archive(work / (cfg["run_id"] + "-diagnostic.zip"))
+                self.assertNotIn("checkpoint-stability.json", names)
+
+    @unittest.skipUnless(os.name == "posix", "real Linux readiness pipe and process group")
+    def test_loading_watchdog_reaps_child_and_preserves_its_phase(self):
+        import sys
+        for acknowledged in (False, True):
+            root = self.root / str(acknowledged)
+            root.mkdir()
+            read_fd, write_fd = os.pipe()
+            try:
+                os.set_blocking(read_fd, False)
+                body = ("import time; time.sleep(30)" if not acknowledged else
+                        f"import os, time; os.write({write_fd}, b'1'); time.sleep(1.3)")
+                now = time.monotonic()
+                kwargs = dict(cwd=root, env=os.environ.copy(), deadline=now + 5,
+                              log=root / "worker.log", receipt=root / "worker-supervisor.json",
+                              max_log_bytes=65536, pass_fds=(write_fd,), readiness=(read_fd, now + 1))
+                command = [sys.executable, "-B", "-c", body]
+                if acknowledged:
+                    controller.supervision.run(command, **kwargs)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "SUPERVISED_HARD_DEADLINE"):
+                        controller.supervision.run(command, **kwargs)
+            finally:
+                os.close(read_fd)
+                os.close(write_fd)
+            actual = json.loads((root / "worker-supervisor.json").read_bytes())
+            self.assertTrue(controller.supervision.process_group_closed(actual))
+            self.assertEqual(actual["readiness_received"], acknowledged)
+            self.assertEqual(actual["readiness_deadline_expired"], not acknowledged)
 
     def test_new_run_requires_closed_probe_receipt_for_ordinary_zip(self):
         for status in (None, "PROCESS_GROUP_SURVIVORS", "CHILD_FAILURE", "EXITED"):

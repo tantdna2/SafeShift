@@ -135,7 +135,8 @@ def wait_group_exit(pgid, *, seconds=2):
         time.sleep(.02)
 
 
-def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_root=None, pass_fds=(), live_prefix=None):
+def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_root=None, pass_fds=(),
+        live_prefix=None, readiness=None):
     """Reap one tree, never retry; timeout includes hanging load/native calls.
 
     Descendants must not deliberately escape their process group. The reviewed
@@ -153,6 +154,13 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
     require(not receipt.exists(), "SUPERVISOR_RECEIPT_EXISTS")
     require(live_prefix is None or live_prefix == "SAFESHIFT_MINICPM_LIVE_V3 ", "SUPERVISOR_LIVE_PREFIX")
     begun, child, reason, code = time.monotonic(), None, None, None
+    ready = False
+    readiness_expired = False
+    if readiness is not None:
+        ready_fd, ready_by = readiness
+        require(type(ready_fd) is int and math.isfinite(ready_by)
+                and begun < ready_by <= deadline and not os.get_blocking(ready_fd),
+                "SUPERVISOR_NONBLOCKING_READINESS_REQUIRED")
     position, pending = 0, b""
     try:
         with log.open("xb") as stream:
@@ -165,6 +173,15 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
                 if time.monotonic() >= deadline:
                     reason = "HARD_DEADLINE"
                     break
+                if readiness is not None and not ready:
+                    if time.monotonic() >= ready_by:
+                        readiness_expired = True
+                        reason = "HARD_DEADLINE"
+                        break
+                    try:
+                        ready = os.read(ready_fd, 1) == b"1"
+                    except BlockingIOError:
+                        pass
                 log_bytes = os.fstat(stream.fileno()).st_size
                 if live_prefix is not None:
                     # Only small structured public receipts reach provider logs.
@@ -194,7 +211,7 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
                     reason = "LOG_BUDGET_EXCEEDED"
                     break
                 if code is not None and (live_prefix is None or position >= os.fstat(stream.fileno()).st_size):
-                    reason = "EXITED" if code == 0 else "CHILD_FAILURE"
+                    reason = "EXITED" if code == 0 and (readiness is None or ready) else "CHILD_FAILURE"
                     break
                 time.sleep(min(.05, max(0, deadline - time.monotonic())))
     except BaseException:
@@ -220,7 +237,9 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
             "returncode": code, "seconds": time.monotonic() - begun,
             "log_bytes": log.stat().st_size if log.exists() else 0,
             "group_kill_sent": child is not None, "group_exit": group_exit, "automatic_retry": False,
-            "retention": "ALL_PARTIAL_FILES_RETAINED", "model_fit": "NOT_ESTABLISHED"})
+            "retention": "ALL_PARTIAL_FILES_RETAINED", "model_fit": "NOT_ESTABLISHED",
+            **({"readiness_received": ready, "readiness_deadline_expired": readiness_expired}
+               if readiness is not None else {})})
     if reason != "EXITED":
         raise RuntimeError("SUPERVISED_" + str(reason))
     return {"status": reason, "returncode": code}
