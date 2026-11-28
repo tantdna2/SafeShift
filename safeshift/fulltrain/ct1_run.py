@@ -30,7 +30,7 @@ PROBED_PROCESS_RECEIPTS = (PROCESS_RECEIPTS[0], PROBE_RECEIPT, PROCESS_RECEIPTS[
 CONTROLLER_RECORD_BYTES = 65536
 IMAGE_BYTES = 12 * 2**20
 RUN_ID = re.compile(r"ct1-(?:smoke-)?[0-9a-f]{12}")
-RECORD = r"(intent|tokens|raw|result|failure)\.json"
+RECORD = r"(intent|tokens|raw|result|failure|memory)\.json"
 ENTRY = re.compile(r"calls/[0-9]{3}/" + RECORD)
 PENDING = re.compile(r"calls/[0-9]{3}/\." + RECORD + r"\.[a-f0-9]{32}\.pending")
 
@@ -244,6 +244,7 @@ def slot_state(sample, case, arm, image_sha, binding_sha):
                     "CT1_RESULT_REPLAY_MISMATCH")
         return "RETURNED", raw["raw_text"]
     require("result" not in records, "CT1_RESULT_WITHOUT_RAW")
+    require("memory" not in records, "CT1_MEMORY_WITHOUT_RAW")
     if "intent" in records or "failure" in records or "tokens" in records or uncertain_intent:
         require("tokens" not in records or "intent" in records, "CT1_TOKENS_WITHOUT_INTENT")
         return "TECHNICAL_ERROR", None
@@ -259,6 +260,7 @@ def _parsed(arm, raw):
 def reconstruct(root, plan, binding, *, smoke=False):
     require(len(schedule(plan)) == binding['max_calls'], 'CT1_CALL_PLAN_MISMATCH')
     records, calls, uncertain = [], 0, 0
+    tokens_without_raw = 0
     parses = {arm: Counter() for arm in ARMS}
     token_cap = Counter()
     binding_sha = sha256(json_bytes(binding))
@@ -269,6 +271,7 @@ def reconstruct(root, plan, binding, *, smoke=False):
         if status == "RETURNED":
             token_cap[arm] += strict_json((path / "raw.json").read_bytes())["at_cap"]
         intent_present = (path / "intent.json").exists()
+        tokens_without_raw += status == "TECHNICAL_ERROR" and (path / "tokens.json").is_file()
         calls += intent_present
         uncertain += not intent_present and any(path.glob(".intent.json.*.pending"))
         records.append({"case_id": case, "arm": arm, "attempt_status": status, "raw_text": raw})
@@ -282,6 +285,7 @@ def reconstruct(root, plan, binding, *, smoke=False):
                                   "returned": sum(r["attempt_status"] == "RETURNED" for r in records),
                                   "technical_error": sum(r["attempt_status"] == "TECHNICAL_ERROR" for r in records),
                                   "not_attempted": sum(r["attempt_status"] == "NOT_ATTEMPTED" for r in records),
+                                  "durable_tokens_without_raw": tokens_without_raw,
                                   "arm_status_counts": {arm: dict(x) for arm, x in parses.items()},
                                   "token_cap_hits_by_arm": {arm: token_cap[arm] for arm in ARMS},
                                   "interpretation": "NATIVE_INTENT_IS_A_RESERVATION_NOT_COMPLETION"})
@@ -318,10 +322,10 @@ def execute(root, plan, binding, image_dir, backend, deadline):
             def record_tokens(detail):
                 require((sample / "intent.json").is_file(), "CT1_INTENT_REQUIRED")
                 publish_slot(sample / "tokens.json", detail)
-            raw, memory_after = backend.generate(payload, arm, begin, record_tokens)
-            publish_slot(sample / "raw.json", {**raw, "memory_after": memory_after,
-                                        "tokens_sha256": sha(sample / "tokens.json")})
+            raw = backend.generate(payload, arm, begin, record_tokens)
+            publish_slot(sample / "raw.json", {**raw, "tokens_sha256": sha(sample / "tokens.json")})
             publish_slot(sample / "result.json", _parsed(arm, raw))
+            publish_slot(sample / "memory.json", backend.record_memory())
         except Exception as exc:
             details = {"type": type(exc).__name__, "message": str(exc)[:2000],
                        "seconds_monotonic": time.monotonic(), "automatic_retry": False}

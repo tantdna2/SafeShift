@@ -123,8 +123,7 @@ class Backend:
                     output_logits=False, output_scores=False)
             returned = output.detach().cpu().tolist()
             record_tokens({"input_ids": prefix, "returned_ids": returned, "seconds": time.monotonic() - began})
-            raw = self.decode({"input_ids": prefix, "returned_ids": returned})
-            return raw, self.record_memory()
+            return self.decode({"input_ids": prefix, "returned_ids": returned})
         finally:
             self.reset()
 

@@ -37,6 +37,7 @@ import re
 import stat
 import subprocess
 import sys
+import time
 from zipfile import ZipFile
 
 base = Path("/kaggle/working")
@@ -113,11 +114,17 @@ with (repo / "owner-run.json").open("x", encoding="utf-8") as stream:
 clean = {k: os.environ[k] for k in ("PATH", "LANG", "LC_ALL") if k in os.environ}
 clean.update(PYTHONNOUSERSITE="1", PYTHONDONTWRITEBYTECODE="1", HF_HUB_OFFLINE="1",
              TRANSFORMERS_OFFLINE="1", TEMP=str(base), TMP=str(base), TMPDIR=str(base))
-result = subprocess.run(
-    [sys.executable, "-B", "-m", "scripts.run_ct1_native_pilot", "supervise",
-     "--config", str(repo / "owner-run.json"), "--job", str(base / OWNER["run_id"])],
-    cwd=repo, env=clean, timeout=11100, check=False,
-)
+command = [sys.executable, "-B", "-m", "scripts.run_ct1_native_pilot", "supervise",
+           "--config", str(repo / "owner-run.json"), "--job", str(base / OWNER["run_id"])]
+timeout = 11100
+if MODE == "smoke":
+    # Budget includes the first cell and capsule bootstrap. Leave room for
+    # controller export, then the notebook/provider finalizer.
+    smoke_deadline = notebook_started + 5100
+    assert time.monotonic() < smoke_deadline - 120, "CT1_SMOKE_EXPORT_RESERVE_UNAVAILABLE"
+    command.extend(("--deadline", str(smoke_deadline)))
+    timeout = notebook_started + 5250 - time.monotonic()
+result = subprocess.run(command, cwd=repo, env=clean, timeout=timeout, check=False)
 print("Check Output for the job ZIP or its diagnostic-only ZIP and SHA sidecar.")
 result.check_returncode()
 """
@@ -167,7 +174,9 @@ def content(mode, settings=None):
          "Dùng 2×T4, tắt Internet. Resume qua VM mới đang khóa. "
          + ("Chỉ Owner upload ở chế độ private. Chờ Operator xác minh admission trước mọi lượt chạy.\n"
             if mode == "smoke" else "Pilot chính vẫn khóa và preflight không gọi model.\n")),
-        ("gpu-observe", "code", """import subprocess
+        ("gpu-observe", "code", """import time
+notebook_started = time.monotonic()
+import subprocess
 gpu_query = subprocess.run(
     ["nvidia-smi", "--query-gpu=index,name,driver_version,memory.free", "--format=csv,noheader,nounits"],
     capture_output=True, text=True, check=True, timeout=10,

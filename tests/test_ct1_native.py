@@ -43,7 +43,10 @@ class FixtureBackend:
         text = {"safety_level": level}
         if arm != "A":
             text.update(evidence_status="INSUFFICIENT", evidence=[])
-        return {"raw_text": json.dumps(text), "at_cap": False, "eos": True, "new_tokens": 1}, {}
+        return {"raw_text": json.dumps(text), "at_cap": False, "eos": True, "new_tokens": 1}
+
+    def record_memory(self):
+        return {}
 
     def decode(self, tokens):
         return {"raw_text": '{"safety_level":"Level02"}', "at_cap": False, "eos": True, "new_tokens": 1}
@@ -199,7 +202,7 @@ class NativeTest(unittest.TestCase):
             job = self.root / f"restart-{i}"
             with patch.object(controller, "layout") as layout:
                 with self.assertRaisesRegex(ValueError, "CROSS_VM_RESUME_BLOCKED"):
-                    controller.supervise(SimpleNamespace(config=config, job=job))
+                    controller.supervise(SimpleNamespace(config=config, job=job, deadline=None))
                 layout.assert_not_called()
             self.assertFalse(job.exists())
         self.assertEqual(sha(parent), digest)
@@ -269,7 +272,7 @@ class NativeTest(unittest.TestCase):
                       patch.object(controller.supervision, "run", side_effect=run),
                       patch.object(controller.supervision, "parent_deadline", return_value=nullcontext()),
                       patch.object(ct1_run, "reconstruct") as reconstruct):
-                    controller.supervise(SimpleNamespace(config=config, job=job))
+                    controller.supervise(SimpleNamespace(config=config, job=job, deadline=None))
                     reconstruct.assert_not_called()
                 self.assertEqual(calls, ["setup", "probe", "worker"] if where == "worker" else ["setup"])
                 self.assertEqual((root / "calls/000/intent.json").read_bytes(), b"{")
@@ -564,7 +567,8 @@ class NativeTest(unittest.TestCase):
                "SOURCE_ZIP_SHA256": marker["sha256"], "MODE": "smoke",
                "OWNER": {"run_id": "ct1-smoke-000000000000", "pilot_input": str(mounts / "train"),
                          "software_input": str(mounts / "software"), "checkpoint": str(mounts / "checkpoint"),
-                         "approved_drivers": []}, "gpu_query": SimpleNamespace(stdout="0, T4, 580.178.04")}
+                         "approved_drivers": []}, "gpu_query": SimpleNamespace(stdout="0, T4, 580.178.04"),
+               "notebook_started": time.monotonic() - 180}
 
         with (patch.object(controller.sys, "platform", "linux"),
               patch.object(controller.subprocess, "run") as launch):
@@ -577,6 +581,8 @@ class NativeTest(unittest.TestCase):
             transport.write_bytes(base64.b64encode(raw))
             exec(program, env.copy())
             launch.assert_called_once()
+            self.assertEqual(float(launch.call_args.args[0][-1]), env["notebook_started"] + 5100)
+            self.assertLess(launch.call_args.kwargs["timeout"], 5100)
             capsule = work / ("ct1-source-" + env["OWNER"]["run_id"])
             self.assertEqual((capsule / paths[0]).read_bytes(), paths[0].encode())
             self.assertEqual(json.loads((capsule / "owner-run.json").read_bytes())["pilot_input"],
@@ -782,7 +788,7 @@ class NativeTest(unittest.TestCase):
               patch.object(controller.tempfile, "mkdtemp", return_value=str(scratch)),
               patch.object(controller.supervision, "run", side_effect=run),
               patch.object(controller.supervision, "parent_deadline", return_value=nullcontext())):
-            controller.supervise(SimpleNamespace(config=config, job=job))
+            controller.supervise(SimpleNamespace(config=config, job=job, deadline=time.monotonic() + 600))
         self.assertEqual(phases, ["setup", "probe"])
         members = verify_archive(work / (cfg["run_id"] + "-diagnostic.zip"))
         self.assertIn("probe-supervisor.json", members)
@@ -862,6 +868,47 @@ class NativeTest(unittest.TestCase):
         with ZipFile(archive) as z:
             self.assertEqual(json.loads(z.read("summary.json"))["not_attempted"], 3)
             self.assertEqual(json.loads(z.read("export-status.json"))["status"], "PARTIAL_OR_BLOCKED")
+
+    def test_raw_and_result_survive_interrupted_post_generate_telemetry(self):
+        out = self.evidence("post-generate-interrupt")
+        slot = out / "calls/000"
+
+        def interrupt():
+            self.assertTrue((slot / "raw.json").is_file())
+            self.assertTrue((slot / "result.json").is_file())
+            raise TimeoutError("interrupted after generate")
+
+        backend = FixtureBackend()
+        backend.record_memory = interrupt
+        with self.assertRaisesRegex(TimeoutError, "interrupted after generate"):
+            self.run_it(out, backend)
+        ct1_run.reconstruct(out, self.plan, self.binding)
+        summary = json.loads((out / "summary.json").read_bytes())
+        self.assertEqual(summary["returned"], 1)
+        self.assertEqual(summary["durable_native_intents"], 1)
+        self.assertEqual(summary["durable_tokens_without_raw"], 0)
+        self.assertEqual(backend.calls, ["A"])
+        self.assertFalse((slot / "memory.json").exists())
+
+    def test_export_counts_tokens_only_without_claiming_raw_return(self):
+        out = self.evidence("interrupted-decode")
+        backend = FixtureBackend(after=lambda: (_ for _ in ()).throw(RuntimeError("fixture")))
+        with self.assertRaises(RuntimeError):
+            self.run_it(out, backend)
+        ct1_run.reconstruct(out, self.plan, self.binding)
+        summary = json.loads((out / "summary.json").read_bytes())
+        self.assertEqual(summary["returned"], 0)
+        self.assertEqual(summary["durable_native_intents"], 1)
+        self.assertEqual(summary["durable_tokens_without_raw"], 1)
+        self.assertTrue((out / "calls/000/tokens.json").is_file())
+
+    def test_smoke_deadline_preserves_export_reserve_and_rejects_extended_budget(self):
+        self.assertEqual(controller.job_deadline("smoke", 5100, 180), 5100)
+        for requested in (None, 180 + 120, 180 + 5101, float("nan")):
+            with self.subTest(requested=requested):
+                with self.assertRaisesRegex(ValueError, "CT1_SMOKE_DEADLINE_REQUIRED"):
+                    controller.job_deadline("smoke", requested, 180)
+        self.assertEqual(controller.job_deadline("preflight", None, 80), 5480)
 
     def test_post_generate_measurement_failure_is_diagnostic_only(self):
         backend = ct1_native.Backend.__new__(ct1_native.Backend)

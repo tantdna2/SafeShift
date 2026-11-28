@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser
 from contextlib import contextmanager
+import math
 import os
 from pathlib import Path
 import re
@@ -24,6 +25,7 @@ INPUT = Path("/kaggle/input")
 WORK = Path("/kaggle/working")
 WALL_SECONDS = 3 * 60 * 60
 PREFLIGHT_SECONDS = 90 * 60
+SMOKE_CONTROLLER_SECONDS = 85 * 60
 EXPORT_RESERVE = 120
 WORKER_TELEMETRY_RESERVE = 5
 LOAD_SAMPLE_LIMIT = 48
@@ -377,12 +379,22 @@ def export_job(root, archive, plan, state, mode):
     return outcome
 
 
+def job_deadline(mode, requested, now):
+    if mode == "smoke":
+        require(requested is not None and math.isfinite(requested)
+                and now + EXPORT_RESERVE < requested <= now + SMOKE_CONTROLLER_SECONDS,
+                "CT1_SMOKE_DEADLINE_REQUIRED")
+        return requested
+    require(requested is None, "CT1_UNEXPECTED_CONTROLLER_DEADLINE")
+    return now + (WALL_SECONDS if mode == "pilot" else PREFLIGHT_SECONDS)
+
+
 def supervise(args):
     cfg = config(args.config)
     require_native_admission(cfg)
     require(sys.platform == "linux" and WORK.is_dir() and args.job.parent == WORK
             and args.job.name == cfg["run_id"], "CT1_EXACT_KAGGLE_JOB_ROOT")
-    deadline = time.monotonic() + (WALL_SECONDS if cfg["mode"] == "pilot" else PREFLIGHT_SECONDS)
+    deadline = job_deadline(cfg["mode"], args.deadline, time.monotonic())
     data, software, checkpoint, lock, plan = layout(cfg)
     budgets = ct1_native.release_budgets([cfg["observed_driver"]])
     state = binding(cfg, lock)
@@ -400,6 +412,7 @@ def supervise(args):
     write(root / "identity.json", state)
     write(root / "config-summary.json", {"mode": cfg["mode"], "source_commit": cfg["source_commit"],
                                         "limits": budgets, "max_calls": state["max_calls"],
+                                        "controller_deadline_monotonic": deadline,
                                         "runtime_probe_required": True, "cross_vm_resume": "BLOCKED_NO_LATEST_LEDGER_PROOF"})
     env = provision.clean_env(REPO, scratch)
     env.update(PYTORCH_ALLOC_CONF="expandable_segments:True", CUDA_VISIBLE_DEVICES="0,1",

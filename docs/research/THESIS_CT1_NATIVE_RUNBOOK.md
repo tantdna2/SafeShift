@@ -189,6 +189,25 @@ generate bị lỗi, vẫn lưu raw đã sinh trước parse và ghi trạng th�
 khi worker kết thúc sạch. Giá trị RAM khi load, đỉnh VRAM và kết quả
 parser A/E/S vẫn cần một lượt được duyệt riêng.
 
+### Rà soát ranh giới ghi kết quả và giờ kết thúc của smoke
+
+- Tính hạn controller smoke từ ô notebook đầu tiên. Controller kết thúc
+  trước phút 85, dành 120 giây cuối trong khoảng đó cho ZIP. Notebook chờ
+  controller tới phút 87,5. Kaggle có ngân sách 90 phút. Khoảng đệm này
+  không đo được thời gian Kaggle dùng để khởi tạo container trước ô đầu.
+- Ghi token, raw và kết quả parse trước số đo RAM/VRAM sau generate. Nếu
+  worker bị dừng giữa token và raw, ZIP giữ token và ghi số lượt
+  `durable_tokens_without_raw`. Không suy lượt trả về, chạy lại hoặc nhập
+  lượt smoke vào bộ chấm từ token chưa đối soát.
+- Kaggle COMPLETE đi kèm archive forensic hoặc `PARTIAL_OR_BLOCKED` vẫn
+  là smoke dừng. Receipt đóng nhóm chỉ chứng minh không còn tiến trình
+  ghi ledger, kể cả khi worker lỗi hoặc chạm deadline.
+- Accelerate 1.11.0 có thể đưa trọng số embedding đang offload trên CPU
+  tới thiết bị thực thi theo từng forward. Giữ nguyên device map đã khóa.
+  Đo đỉnh VRAM từng GPU và thời gian thật từng arm để phân biệt chi phí
+  offload với các lỗi kỹ thuật còn lại. CPU audit chưa xác nhận mức đỉnh
+  hoặc tốc độ này ở 768 token.
+
 ## Giới hạn tài nguyên và resume
 
 - **144 lượt chính**, trần 3 giờ wall time trong một job. Hai T4 (16 GB class),
