@@ -228,6 +228,26 @@ theo hạn mà chưa có intent. ZIP 66 mục đã xác minh với SHA-256
   hash toàn bộ file đích. Kiểm inode, kích thước và thời điểm sửa trước
   khi load. Giữ snapshot tạm trong VM qua khi worker kết thúc.
 - Setup, runtime probe, stage, so I/O và native worker dùng process group
+
+### Smoke staging dừng sau khi xác minh bản sao
+
+Lượt `ct1-smoke-99febdc3b0a6` tại `1e92a6f` xác minh SHA của cả
+checkpoint trên scratch và qua kiểm tra dung lượng. RAM khả dụng theo
+cgroup giảm từ 20,53 xuống 5,51 GiB. Bộ đếm `file` tăng 14,57 GiB,
+còn `anon` tăng 6,72 MiB. RAM host cuối pha là 29,87 GiB và chưa có
+OOM hay intent. ZIP chẩn đoán có SHA-256
+`2c4a45b44a8fb5ea812ddb4523d96700d90121e444768e7e89db909226765034`.
+Hai mẫu đo kẹp cả copy và đọc lại SHA, chưa tách được đóng góp từng bước.
+
+- Smoke kế tiếp thử `O_DIRECT` trên một file scratch nhỏ có đuôi không
+  thẳng hàng. Khi probe qua, dùng direct I/O cho ghi và đọc lại các file
+  từ 8 MiB trên scratch. Kiểm SHA độc lập trên đúng số byte đích và giữ
+  kiểm tra định danh file. Input tiếp tục chỉ đọc.
+- Nếu hệ thống tệp từ chối tính năng ngay ở probe, dùng I/O thường với
+  lời khuyên cache giới hạn ở từng file. Lỗi ổ đĩa hoặc SHA sai dừng stage.
+  Gate 16 GiB đọc mới sau mỗi file lớn ở cả hai lượt và trước khi chuyển
+  pha. ZIP chẩn đoán giữ số đo và chế độ I/O khi stage đã đóng an toàn.
+  Kaggle vẫn cần chứng minh cache, tốc độ, model load và đủ ba lượt A/E/S.
   riêng. Stage tối đa 600 giây. Probe bốn mẫu 4 MiB trên hai đường có
   tối đa 30 giây, ghi rõ cache chưa chuẩn hóa. Probe có thể chủ động
   bỏ mẫu chưa bắt đầu rồi kết thúc sạch. Timeout cưỡng bức, lỗi I/O

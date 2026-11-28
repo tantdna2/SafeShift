@@ -4,6 +4,7 @@ import base64
 from collections import Counter
 from contextlib import nullcontext
 from io import BytesIO
+import errno
 from itertools import permutations
 import json
 import os
@@ -961,6 +962,98 @@ class NativeTest(unittest.TestCase):
                 ct1_checkpoint.stage(source, scratch, self.root, evidence, self.root, budgets, time.monotonic() + 30)
         self.assertFalse((evidence / ct1_checkpoint.STAGE_RECORD).exists())
         self.assertTrue((evidence / "checkpoint-stage-copy.json").exists())
+
+    def test_cache_receipts_in_diagnostic_require_closed_stage(self):
+        cache_receipts = (ct1_checkpoint.STAGE_IO_MODE,
+                          "checkpoint-stage/00-copy-ram-before-memory.json",
+                          "checkpoint-stage/00-readback-ram-failure-memory.json")
+        for closed in (True, False):
+            job = self.root / f"stage-cache-{closed}"
+            job.mkdir()
+            root = job / "evidence"
+            root.mkdir()
+            # Force diagnostic-only export with a failed stage and no worker.
+            status = "CHILD_FAILURE" if closed else "PROCESS_GROUP_SURVIVORS"
+            write(root / "stage-supervisor.json", self.receipt(status, returncode=1))
+            for name in cache_receipts:
+                write(root / name, {"synthetic": True})
+            archive = job / "stage.zip"
+            self.assertEqual(controller.export_job(root, archive, self.plan, self.binding, "smoke"),
+                             "FORENSIC_ONLY")
+            names = verify_archive(controller.diagnostic_path(archive))
+            self.assertFalse(archive.exists())
+            self.assertEqual(set(cache_receipts) & set(names), set(cache_receipts) if closed else set())
+            self.assertNotIn("checkpoint-stability.json", names)
+
+    def test_stage_low_ram_after_copy_prevents_readback_and_admission(self):
+        source, scratch, evidence, lock = self.checkpoint_fixture()
+        budgets = ct1_native.release_budgets(["580.178.04"])
+        gates = []
+
+        def gate(out, name, floor):
+            gates.append((name, floor))
+            if name == "before-checkpoint-readback-ram-gate":
+                write(out / (name + "-failure-memory.json"), {"status": "OBSERVED"})
+                raise ValueError("HOST_OR_CGROUP_RAM")
+
+        with (patch.object(qwen, "reference", return_value=lock),
+              patch.object(memory, "ct1_ram_gate", side_effect=gate),
+              patch.object(ct1_checkpoint, "capacity", return_value={}),
+              patch.object(memory, "stream_readonly_sha256", wraps=memory.stream_readonly_sha256) as reader):
+            with self.assertRaisesRegex(ValueError, "HOST_OR_CGROUP_RAM"):
+                ct1_checkpoint.stage(source, scratch, self.root, evidence, self.root, budgets, time.monotonic() + 30)
+        self.assertEqual(gates, [(name, 16 * 2**30) for name in ct1_checkpoint.STAGE_RAM_GATES[:2]])
+        self.assertEqual([c.args[0].parent for c in reader.call_args_list], [source, source])
+        self.assertTrue((evidence / "before-checkpoint-readback-ram-gate-failure-memory.json").exists())
+        self.assertFalse((evidence / ct1_checkpoint.STAGE_RECORD).exists())
+
+    def test_direct_probe_falls_back_only_on_unsupported_io(self):
+        with (patch.object(os, "O_DIRECT", 0, create=True),
+              patch.object(os, "sysconf", return_value=4096, create=True),
+              patch.object(os, "preadv", create=True), patch.object(os, "pwritev", create=True),
+              patch.object(ct1_checkpoint.os, "open", side_effect=OSError(errno.EINVAL, "fixture"))):
+            self.assertEqual(ct1_checkpoint._scratch_io_mode(self.root, time.monotonic() + 30),
+                             {"mode": "BUFFERED", "reason": "DIRECT_PROBE_UNSUPPORTED", "errno": errno.EINVAL})
+        for failure in (errno.EIO, errno.ENOSPC):
+            with (patch.object(os, "O_DIRECT", 0, create=True),
+                  patch.object(os, "sysconf", return_value=4096, create=True),
+                  patch.object(os, "preadv", create=True),
+                  patch.object(os, "pwritev", side_effect=OSError(failure, "fixture"), create=True)):
+                with self.assertRaises(OSError) as caught:
+                    ct1_checkpoint._scratch_io_mode(self.root, time.monotonic() + 30)
+            self.assertEqual(caught.exception.errno, failure)
+            self.assertFalse((self.root / ".direct-io-probe").exists())
+
+    @unittest.skipUnless(hasattr(os, "O_DIRECT"), "Linux direct I/O")
+    def test_staging_direct_shard_roundtrips_full_block_and_unaligned_tail(self):
+        source, scratch, evidence, lock = self.checkpoint_fixture()
+        if ct1_checkpoint._scratch_io_mode(scratch, time.monotonic() + 30)["mode"] != "DIRECT":
+            self.skipTest("test filesystem does not support aligned direct I/O")
+        shard = next(source.glob("*.safetensors"))
+        payload = bytes(range(256)) * (ct1_checkpoint.DIRECT_CHUNK // 256) + b"tail!"
+        shard.write_bytes(payload)
+        record = next(row for row in lock["snapshot_files"] if row["path"] == shard.name)
+        record.update(size_bytes=len(payload), expected_hash=sha256(payload))
+        raw_read = os.read
+
+        def short_read(fd, length):
+            return raw_read(fd, min(length, 2**20 + 1))
+
+        with (patch.object(qwen, "reference", return_value=lock),
+              patch.object(memory, "ct1_ram_gate") as ram,
+              patch.object(ct1_checkpoint, "capacity", return_value={}),
+              patch.object(os, "read", side_effect=short_read)):
+            ct1_checkpoint.stage(source, scratch, self.root, evidence, self.root,
+                                 ct1_native.release_budgets(["580.178.04"]), time.monotonic() + 30)
+            staged, _ = ct1_checkpoint.verified_stage(scratch, evidence, self.root)
+        self.assertEqual((staged / shard.name).read_bytes(), payload)
+        receipt = json.loads((evidence / ct1_checkpoint.STAGE_RECORD).read_bytes())
+        self.assertEqual(receipt["scratch_io"]["mode"], "DIRECT")
+        self.assertEqual(receipt["checkpoint"]["files"][shard.name], sha256(payload))
+        self.assertEqual([args.args[1] for args in ram.call_args_list],
+                         ["before-checkpoint-stage-ram-gate", "00-copy-ram",
+                          "before-checkpoint-readback-ram-gate", "00-readback-ram",
+                          "after-checkpoint-stage-ram-gate"])
 
     def test_staging_rejects_memory_backed_or_insufficient_scratch(self):
         source, scratch, _, _ = self.checkpoint_fixture()

@@ -105,7 +105,7 @@ def check_deadline(deadline):
 
 @contextmanager
 def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise_file=None,
-                advise_whole_file=True):
+                advise_whole_file=True, direct=False):
     path = Path(path)
     advise_file = os.posix_fadvise if advise_file is None and hasattr(os, 'posix_fadvise') else advise_file
     check_deadline(deadline)
@@ -115,7 +115,8 @@ def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise
     require(expected_size is None or before.st_size == expected_size, 'READONLY_EXPECTED_SIZE')
     require(expected_identity is None or identity(before) == expected_identity, 'READONLY_FILE_CHANGED')
     fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
-                 | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0))
+                 | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0)
+                 | (os.O_DIRECT if direct else 0))
     try:
         require(identity(os.fstat(fd)) == identity(before), 'READONLY_OPEN_CHANGED')
         advice = hasattr(os, 'posix_fadvise') and hasattr(os, 'POSIX_FADV_DONTNEED')

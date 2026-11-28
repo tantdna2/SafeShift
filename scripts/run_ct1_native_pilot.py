@@ -432,11 +432,14 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
         for phase, names in (
             ("stage", (ct1_checkpoint.STAGE_RECORD, "checkpoint-stage-copy.json", "stage-failure.json",
                        "checkpoint-stage-storage.json", "checkpoint-stage-storage-after.json",
-                       "before-checkpoint-stage-ram-gate.json",
-                       "before-checkpoint-stage-ram-gate-before-memory.json", "after-checkpoint-stage-ram-gate.json",
-                       "after-checkpoint-stage-ram-gate-before-memory.json", "probe-cache-advice.json",
+                       ct1_checkpoint.STAGE_IO_MODE, "probe-cache-advice.json",
+                       *(f"{gate}{suffix}.json" for gate in ct1_checkpoint.STAGE_RAM_GATES
+                         for suffix in ct1_checkpoint.RAM_GATE_SUFFIXES),
                        *(f"checkpoint-stage/{i:02}-{state}.json"
-                         for i in range(16) for state in ("start", "copied")))),
+                         for i in range(16) for state in ("start", "copied")),
+                       *(f"checkpoint-stage/{i:02}-{phase}-ram{suffix}.json"
+                         for i in range(16) for phase in ("copy", "readback")
+                         for suffix in ct1_checkpoint.RAM_GATE_SUFFIXES))),
             ("io-probe", ("io-probe-failure.json", ct1_run.IO_SUMMARY, *(f"checkpoint-io-{i}-{state}.json"
                          for i in range(4) for state in ("start", "result")))),
         ):

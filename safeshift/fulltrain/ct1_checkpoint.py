@@ -1,5 +1,6 @@
 """CT1-only, checked disk staging and a bounded comparison of read paths."""
 
+import errno
 import hashlib
 import mmap
 import os
@@ -18,9 +19,18 @@ STAGE_SECONDS = 600
 IO_SECONDS = 30
 LOAD_SECONDS = 900
 SYNC_BYTES = 64 * MIB
+DIRECT_CHUNK = 8 * MIB
+DIRECT_UNSUPPORTED = {errno.EINVAL, errno.ENOSYS, errno.EOPNOTSUPP}
 DISK_MARGIN = 2**31
 SAMPLE_BYTES = 4 * MIB
 STAGE_RECORD = "checkpoint-stage.json"
+STAGE_IO_MODE = "checkpoint-stage-io-mode.json"
+STAGE_RAM_GATES = (
+    "before-checkpoint-stage-ram-gate",
+    "before-checkpoint-readback-ram-gate",
+    "after-checkpoint-stage-ram-gate",
+)
+RAM_GATE_SUFFIXES = ("", "-before-memory", "-failure-memory")
 
 
 def mount_details(path, mountinfo=Path("/proc/self/mountinfo")):
@@ -96,6 +106,103 @@ class _DiskCopy:
         memory.check_deadline(self.deadline)
 
 
+class _DirectDiskCopy:
+    """Coalesce short source reads and pad only the last disk write."""
+
+    def __init__(self, fd, buffer, alignment, deadline):
+        self.fd, self.buffer, self.alignment, self.deadline = fd, buffer, alignment, deadline
+        self.written = self.pending = 0
+
+    def write(self, block):
+        with memoryview(block) as data:
+            offset = 0
+            while offset < len(data):
+                length = min(len(data) - offset, len(self.buffer) - self.pending)
+                self.buffer[self.pending:self.pending + length] = data[offset:offset + length]
+                self.pending += length
+                offset += length
+                if self.pending == len(self.buffer):
+                    self.flush(self.pending)
+
+    def flush(self, length):
+        memory.check_deadline(self.deadline)
+        with memoryview(self.buffer)[:length] as span:
+            count = os.pwritev(self.fd, [span], self.written)
+        require(count == length, "CT1_CHECKPOINT_STAGE_DIRECT_SHORT_WRITE")
+        self.written += self.pending
+        self.pending = 0
+
+    def sync(self):
+        if self.pending:
+            length = _round_up(self.pending, self.alignment)
+            self.buffer[self.pending:length] = bytes(length - self.pending)
+            self.flush(length)
+        os.ftruncate(self.fd, self.written)
+        getattr(os, "fdatasync", os.fsync)(self.fd)
+        memory.check_deadline(self.deadline)
+
+
+def _round_up(size, alignment):
+    return (size + alignment - 1) // alignment * alignment
+
+
+def _direct_sha256(path, size, identity, alignment, deadline):
+    digest = hashlib.sha256()
+    with (memory.readonly_fd(path, size, deadline, expected_identity=identity,
+                             advise_whole_file=False, direct=True) as (fd, _, _),
+          mmap.mmap(-1, DIRECT_CHUNK) as buffer):
+        offset = 0
+        while offset < size:
+            memory.check_deadline(deadline)
+            wanted = min(DIRECT_CHUNK, size - offset)
+            with memoryview(buffer)[:_round_up(wanted, alignment)] as span:
+                count = os.preadv(fd, [span], offset)
+                require(0 < count <= wanted and
+                        (count == size - offset or count % alignment == 0),
+                        "CT1_CHECKPOINT_STAGE_DIRECT_SHORT_READ")
+                with span[:count] as consumed:
+                    digest.update(consumed)
+            offset += count
+    return digest.hexdigest()
+
+
+def _destination_flags():
+    return (os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+            | getattr(os, "O_BINARY", 0))
+
+
+def _scratch_io_mode(staged, deadline):
+    if not all(hasattr(os, name) for name in ("O_DIRECT", "preadv", "pwritev", "sysconf")):
+        return {"mode": "BUFFERED", "reason": "DIRECT_API_UNAVAILABLE"}
+    alignment = os.sysconf("SC_PAGE_SIZE")
+    if alignment <= 0 or DIRECT_CHUNK % alignment:
+        return {"mode": "BUFFERED", "reason": "DIRECT_ALIGNMENT_UNAVAILABLE"}
+    path = safe(staged, ".direct-io-probe")
+    payload = b"CT1" * alignment + b"\n"
+    created = False
+    try:
+        fd = os.open(path, _destination_flags() | os.O_DIRECT, 0o600)
+        created = True
+        try:
+            with mmap.mmap(-1, DIRECT_CHUNK) as buffer:
+                stream = _DirectDiskCopy(fd, buffer, alignment, deadline)
+                stream.write(payload)
+                stream.sync()
+        finally:
+            os.close(fd)
+        identity = memory.identity(snapshot_stat(path))
+        require(_direct_sha256(path, len(payload), identity, alignment, deadline)
+                == hashlib.sha256(payload).hexdigest(), "CT1_CHECKPOINT_DIRECT_PROBE_SHA256")
+    except OSError as error:
+        if error.errno not in DIRECT_UNSUPPORTED:
+            raise
+        return {"mode": "BUFFERED", "reason": "DIRECT_PROBE_UNSUPPORTED", "errno": error.errno}
+    finally:
+        if created:
+            path.unlink()
+    return {"mode": "DIRECT", "alignment": alignment, "min_bytes": DIRECT_CHUNK}
+
+
 def _stage_root(scratch, revision, evidence):
     owned = strict_json(ct1_run.read_controller_record(evidence, "scratch-ownership.json"))
     info = snapshot_stat(scratch, directory=True)
@@ -118,21 +225,36 @@ def stage(source, scratch, output, evidence, repo, budgets, deadline):
     progress.mkdir()
     hints, receipts = [], {}
     started = time.monotonic()
+    io_mode = _scratch_io_mode(staged, deadline)
+    write(evidence / STAGE_IO_MODE, io_mode)
+    alignment = io_mode.get("alignment")
 
     def copy(path, size):
         memory.check_deadline(deadline)
         dest = safe(staged, path.name)
-        row = {"file": path.name, "size_bytes": size, "copy_started": time.monotonic()}
+        direct = alignment is not None and size >= DIRECT_CHUNK
+        row = {"file": path.name, "size_bytes": size, "copy_started": time.monotonic(),
+               "destination_io": "DIRECT" if direct else "BUFFERED"}
         number = len(receipts)
         write(progress / f"{number:02}-start.json", row)
         dest_hints = []
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+        flags = _destination_flags() | (os.O_DIRECT if direct else 0)
         fd = os.open(dest, flags, 0o600)
         try:
-            stream = _DiskCopy(fd, deadline, dest_hints)
-            digest = memory.stream_readonly_sha256(path, expected_size=size, deadline=deadline,
-                                                  copy_to=stream, advice_errors=hints, advise_whole_file=False)
-            stream.sync()
+            def copy_to(stream):
+                digest = memory.stream_readonly_sha256(path, expected_size=size, deadline=deadline,
+                                                       copy_to=stream, advice_errors=hints,
+                                                       advise_whole_file=False)
+                stream.sync()
+                return digest
+
+            if direct:
+                with mmap.mmap(-1, DIRECT_CHUNK) as buffer:
+                    stream = _DirectDiskCopy(fd, buffer, alignment, deadline)
+                    digest = copy_to(stream)
+            else:
+                stream = _DiskCopy(fd, deadline, dest_hints)
+                digest = copy_to(stream)
             require(stream.written == size and os.fstat(fd).st_size == size, "CT1_CHECKPOINT_STAGE_SIZE")
         finally:
             os.close(fd)
@@ -140,6 +262,8 @@ def stage(source, scratch, output, evidence, repo, budgets, deadline):
         receipts[path.name] = row
         write(progress / f"{number:02}-copied.json", {**row, "copy_seconds": time.monotonic() - row["copy_started"],
                                                     "destination_advice_errors": dest_hints})
+        if size >= DIRECT_CHUNK:
+            memory.ct1_ram_gate(progress, f"{number:02}-copy-ram", floor)
         return digest
 
     source_receipt = qwen.verify_snapshot(source, repo=repo, hash_reader=copy)
@@ -153,14 +277,19 @@ def stage(source, scratch, output, evidence, repo, budgets, deadline):
     copied = time.monotonic()
     write(evidence / "checkpoint-stage-copy.json", {"seconds": copied - started, "source_advice_errors": hints,
                                                    "files": len(receipts)})
+    memory.ct1_ram_gate(evidence, "before-checkpoint-readback-ram-gate", floor)
     identities = {}
     local_hints = []
 
     def readback(path, size):
         identity = memory.identity(snapshot_stat(path))
-        digest = memory.stream_readonly_sha256(path, expected_size=size, deadline=deadline,
-                                              expected_identity=identity, advice_errors=local_hints,
-                                              advise_whole_file=False)
+        if receipts[path.name]["destination_io"] == "DIRECT":
+            digest = _direct_sha256(path, size, identity, alignment, deadline)
+        else:
+            digest = memory.stream_readonly_sha256(path, expected_size=size, deadline=deadline,
+                                                  expected_identity=identity, advice_errors=local_hints)
+        if size >= DIRECT_CHUNK:
+            memory.ct1_ram_gate(progress, f"{len(identities):02}-readback-ram", floor)
         identities[path.name] = list(identity)
         return digest
 
@@ -171,7 +300,7 @@ def stage(source, scratch, output, evidence, repo, budgets, deadline):
     memory.ct1_ram_gate(evidence, "after-checkpoint-stage-ram-gate", floor)
     write(evidence / STAGE_RECORD, {"status": "READBACK_VERIFIED", "checkpoint": verified,
                                     "identities": identities, "readback_seconds": time.monotonic() - copied,
-                                    "readback_advice_errors": local_hints})
+                                    "readback_advice_errors": local_hints, "scratch_io": io_mode})
 
 
 def verified_stage(scratch, evidence, repo):
