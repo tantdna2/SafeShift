@@ -193,6 +193,7 @@ def publish_worker_memory(root, observations, cutoff):
         with supervision.parent_deadline(cutoff, "ct1_worker_telemetry"):
             write_bytes(staging, payload)
             os.link(staging, root / WORKER_MEMORY)
+            staging.unlink()
     except (TimeoutError, OSError):
         pass
 
