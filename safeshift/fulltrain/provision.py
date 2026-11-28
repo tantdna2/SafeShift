@@ -30,8 +30,9 @@ def clean_env(repo, scratch):
     return env
 
 
-def software_input(root, expected_sha, runtime_lock, repo=ROOT):
+def software_input(root, expected_sha, runtime_lock, repo=ROOT, *, archive_dir=None):
     root = Path(root)
+    archive_dir = root if archive_dir is None else Path(archive_dir)
     marker = safe(root, "fresh_qwen_software.json")
     require_hash(expected_sha)
     require(marker.stat().st_size <= 2**20 and sha(marker) == expected_sha, "QWEN_SOFTWARE_MARKER_PIN")
@@ -71,7 +72,7 @@ def software_input(root, expected_sha, runtime_lock, repo=ROOT):
         require(set(row) == {"file", "size", "sha256"} and row["sha256"] == ref[name]["sha256"], "QWEN_BUILD_SOURCE_PIN")
         relative(row["file"])
         require("/" not in row["file"] and type(row["size"]) is int and 0 < row["size"] <= 64 * 2**20, "QWEN_SOURCE_BOUND")
-        p = safe(root, row["file"])
+        p = safe(archive_dir, row["file"])
         snapshot_stat(p)
         require(p.stat().st_size == row["size"] and sha(p) == row["sha256"], "QWEN_BUILD_ARCHIVE_HASH")
     return value
@@ -103,7 +104,7 @@ def extract_source(archive, target):
                 p.chmod(0o755 if member.mode & 0o111 else 0o644)
 
 
-def prepare(request, repo, output, deadline):
+def prepare(request, repo, output, deadline, *, archive_dir=None, observe=None):
     """Called in the supervised setup child; all its descendants share one group."""
     key, scratch = request["model_key"], Path(request["scratch"])
     env = clean_env(repo, scratch)
@@ -120,16 +121,25 @@ def prepare(request, repo, output, deadline):
     else:
         from safeshift.pilot import bootstrap
         root = Path(request["software_input"])
-        seal = software_input(root, request["software_marker_sha256"], request["runtime_lock"], repo)
+        archive_dir = root if archive_dir is None else Path(archive_dir)
+        seal = software_input(root, request["software_marker_sha256"], request["runtime_lock"], repo,
+                              archive_dir=archive_dir)
         runtime = scratch / "qwen-software"
         runtime.mkdir(exist_ok=False)
+
         def invoke(argv, name, cwd):
             require(time.monotonic() < deadline, "SETUP_DEADLINE")
-            with (Path(output) / (name + ".log")).open("xb") as log:
-                subprocess.run(list(map(str, argv)), cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT,
-                               check=True, timeout=max(.001, deadline - time.monotonic()))
+            try:
+                with (Path(output) / (name + ".log")).open("xb") as log:
+                    subprocess.run(list(map(str, argv)), cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                   check=True, timeout=max(.001, deadline - time.monotonic()))
+            finally:
+                if observe is not None:
+                    observe(name + "-exit")
         for component in ("zlib", "python"):
-            extract_source(root / seal[component + "_source"]["file"], runtime / (component + "-source"))
+            extract_source(archive_dir / seal[component + "_source"]["file"], runtime / (component + "-source"))
+        if observe is not None:
+            observe("sources-extracted")
         zsource = runtime / "zlib-source/zlib-1.2.11"
         zprefix = runtime / "zlib"
         invoke(["./configure", "--prefix=" + str(zprefix)], "zlib-configure", zsource)
@@ -151,10 +161,14 @@ def prepare(request, repo, output, deadline):
         require(pip_row["sha256"] == read(Path(repo) / "configs/pilot/pip_bootstrap.json")["pip"]["sha256"], "QWEN_PIP_WHEEL_PIN")
         wheel = root / "wheels" / pip_row["file"]
         code = "import runpy,sys; sys.path.insert(0,sys.argv.pop(1)); runpy.run_module('pip',run_name='__main__')"
-        invoke([python, "-I", "-B", "-c", code, wheel, "install", "--no-index", "--no-deps", wheel], "pip-bootstrap", repo)
+        # CT1 uses isolated pip, so make its existing no-cache policy explicit on argv.
+        install = ["install", "--no-index", "--no-deps"]
+        if observe is not None:
+            install.append("--no-cache-dir")
+        invoke([python, "-I", "-B", "-c", code, wheel, *install, wheel], "pip-bootstrap", repo)
         pip = [python, "-I", "-B", "-m", "pip", "--isolated", "--disable-pip-version-check"]
         wheels = [root / "wheels" / r["file"] for r in request["runtime_lock"]["wheels"]]
-        invoke(pip + ["install", "--no-index", "--no-deps", *wheels], "offline-install", repo)
+        invoke(pip + [*install, *wheels], "offline-install", repo)
         invoke(pip + ["check"], "pip-check", repo)
         env = clean_env(repo, scratch)
         env.update(SAFESHIFT_WORKER_PYTHON=str(python), SAFESHIFT_RUNTIME_ROOT=str(venv),

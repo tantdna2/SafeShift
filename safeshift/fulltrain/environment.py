@@ -5,7 +5,7 @@ only by the fenced future diagnostic/worker composition, never by preparation.
 """
 import importlib.metadata as metadata
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import platform
 import shutil
 import subprocess
@@ -13,7 +13,7 @@ import sys
 import zlib
 
 from safeshift.candidates.source import ROOT, require
-from safeshift.pilot.artifacts import read, sha
+from safeshift.pilot.artifacts import read, sha, write
 from safeshift.pilot import bootstrap
 
 
@@ -35,28 +35,89 @@ def policy(key, value):
     return value
 
 
-def host_memory(proc=Path("/proc/meminfo"), cgroup=Path("/sys/fs/cgroup")):
+def visible_cgroup_ancestors(root, proc_root):
+    """Resolve a v2 leaf inside the visible mount, then include its parents."""
+    membership = (proc_root / "self/cgroup").read_text().splitlines()
+    paths = [PurePosixPath(row[3:]) for row in membership if row.startswith("0::")]
+    require(len(paths) == 1 and paths[0].is_absolute() and ".." not in paths[0].parts,
+            "CGROUP_V2_MEMBERSHIP_UNOBSERVED")
+    mounts = []
+    for line in (proc_root / "self/mountinfo").read_text().splitlines():
+        before, after = line.split(" - ", 1)
+        fields = before.split()
+        if after.startswith("cgroup2 ") and fields[4] == root.as_posix():
+            mounts.append(PurePosixPath(fields[3]))
+    require(len(mounts) == 1, "CGROUP_V2_MOUNT_UNOBSERVED")
+    path, mount = paths[0], mounts[0]
+    relative = path.relative_to(mount) if path.is_relative_to(mount) else path.relative_to("/")
+    leaf = root.joinpath(*relative.parts)
+    require(len(relative.parts) <= 32 and leaf.resolve() == leaf
+            and (leaf / "memory.current").is_file(), "CGROUP_V2_LEAF_UNOBSERVED")
+    return [part for part in (leaf, *leaf.parents) if part.is_relative_to(root) and part != root]
+
+
+def host_memory(proc=Path("/proc/meminfo"), cgroup=Path("/sys/fs/cgroup"), *, details=False,
+                include_ancestors=False):
     rows = dict(line.split(":", 1) for line in proc.read_text().splitlines())
-    available = int(rows["MemAvailable"].split()[0]) * 1024
-    constraints = []
+    available_kib, *_ = rows["MemAvailable"].split()
+    host = available = int(available_kib) * 1024
+    constraints, cgroups = [], {}
     found = False
     for limit, used in (("memory.max", "memory.current"),
                         ("memory/memory.limit_in_bytes", "memory/memory.usage_in_bytes")):
         if (cgroup / limit).exists():
             found = True
             text = (cgroup / limit).read_text().strip()
-            if text != "max":
-                remaining = max(0, int(text) - int((cgroup / used).read_text()))
-                constraints.append(remaining)
-                available = min(available, remaining)
+            if text == "max":
+                cgroups[limit] = {"limit_bytes": "max"}
+                continue
+            maximum, current = int(text), int((cgroup / used).read_text())
+            remaining = max(0, maximum - current)
+            constraints.append(remaining)
+            cgroups[limit] = {"limit_bytes": maximum, "usage_bytes": current, "remaining_bytes": remaining}
+            available = min(available, remaining)
+    if include_ancestors and (cgroup / "cgroup.controllers").exists():
+        for group in visible_cgroup_ancestors(cgroup, proc.parent):
+            limit = (group / "memory.max").read_text().strip()
+            found = True
+            key = group.relative_to(cgroup).as_posix() + "/memory.max"
+            if limit == "max":
+                cgroups[key] = {"limit_bytes": "max"}
+                continue
+            maximum = int(limit)
+            current = int((group / "memory.current").read_text())
+            require(maximum > 0 and current >= 0, "CGROUP_INVALID_MEMORY_COUNTER")
+            remaining = max(0, maximum - current)
+            constraints.append(remaining)
+            cgroups[key] = {"limit_bytes": maximum, "remaining_bytes": remaining, "usage_bytes": current}
+            available = min(available, remaining)
     require(found, "CGROUP_MEMORY_LIMIT_UNOBSERVED")
-    return {"available_bytes": available, "cgroup_remaining_bytes": constraints}
+    result = {"available_bytes": available, "cgroup_remaining_bytes": constraints}
+    if details:
+        result.update(host_mem_available_bytes=host, cgroups=cgroups)
+    return result
 
 
-def resources(key, budgets, scratch, output):
+def check_ram(floor, *, receipt=None, include_ancestors=False):
+    try:
+        flags = {"include_ancestors": True} if include_ancestors else {}
+        memory = host_memory(details=True, **flags) if receipt is not None else host_memory(**flags)
+    except (OSError, ValueError, KeyError) as error:
+        if receipt is not None:
+            write(receipt, {"floor_bytes": floor, "ram_gate_passed": False,
+                            "read_error": {"type": type(error).__name__, "message": str(error)[:300]}})
+        raise
+    passed = memory["available_bytes"] >= floor
+    if receipt is not None:
+        write(receipt, {"memory": memory, "floor_bytes": floor, "ram_gate_passed": passed})
+    require(passed, "HOST_OR_CGROUP_RAM")
+    return memory
+
+
+def resources(key, budgets, scratch, output, *, memory_receipt=None, include_ancestors=False):
     policy(key, budgets)
-    memory = host_memory()
-    require(memory["available_bytes"] >= budgets["free_ram_mib"] * 2**20, "HOST_OR_CGROUP_RAM")
+    flags = {"include_ancestors": True} if include_ancestors else {}
+    memory = check_ram(budgets["free_ram_mib"] * 2**20, receipt=memory_receipt, **flags)
     roots = [Path(scratch), Path(output)]
     devices = [p.stat().st_dev for p in roots]
     free = [shutil.disk_usage(p).free for p in roots]

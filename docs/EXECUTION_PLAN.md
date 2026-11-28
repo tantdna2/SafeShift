@@ -9,7 +9,7 @@ Chi tiết thao tác và cổng nghiệm thu ở [hợp đồng chuẩn bị CT1
 
 | Mốc | Việc tiếp theo và điều kiện chuyển |
 | --- | --- |
-| CT1 | Chuẩn bị lấy mẫu mù và đối chứng Qwen3 cùng revision. A là C1 gốc, B thêm câu precedence, C thêm câu trung tính. Chỉ đầu tư inference sau khi audit và các điều kiện dữ liệu, tiêu chí, quota và quyền được xác nhận. |
+| CT1 | Audit và annotation đã đối chiếu trên 16 TRAIN. Triển khai A/E và đối chứng S, parser và bộ chấm CPU. Native pilot còn BLOCKED theo [gói Evidence-based Reasoning](research/THESIS_CT1_EVIDENCE_PILOT.md). Đa tỉ lệ làm ablation sau, domain-aware chờ nguồn miền vận hành độc lập. A/B/C precedence vẫn có điều kiện. |
 | CT2 | Sàng lọc CPU ba bộ nhãn TRAIN đã niêm phong. So random trên đúng tập eligible, focal-only và bất đồng thô ở cùng trần M lượt model, K lượt review. Ghi lượt thực dùng, ca chưa bắt và chi phí. Đây là hướng nghiên cứu riêng. |
 | CT3 | Dùng truy nguyên dự đoán, bất đồng và hồ sơ review để hỗ trợ CT1/CT2. Study người dùng cần dữ liệu, chuyên gia và phạm vi riêng. |
 | Chuẩn bị xác nhận | Tách nguồn validation nếu chọn cấu hình, kiểm trùng và rò rỉ, khóa protocol, metric, cỡ mẫu và chi phí. TEST 1.250 giữ nguyên và đóng. HNLO theo nguồn và calibration có điều kiện. |

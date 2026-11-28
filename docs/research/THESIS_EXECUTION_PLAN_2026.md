@@ -10,7 +10,7 @@ là hồ sơ lịch sử. M2/R1–R5 tiếp tục theo quyết định riêng.
 
 | Hướng được chọn | Endpoint và điều kiện |
 | --- | --- |
-| **CT1 chất lượng phân loại** | Qwen3 ứng viên, cùng revision và ảnh. B−A đo thay đổi recall Level01 trên support planned. C đối chứng việc thêm văn bản. Guardrail gồm precision Level01, Level02→01, severe miss, FNR/FPR, coverage. Audit mù trước inference. |
+| **CT1 chất lượng phân loại** | Triển khai CPU A = C1 gốc, E = ghi bằng chứng trước khi chấm, S = chấm trước rồi ghi cùng schema. Recall Level01 E−A là endpoint đề xuất, E−S đo khác biệt chỉ dẫn. Giữ Macro-F1, precision Level01, nâng nhầm mức, FNR/FPR và coverage. [Pilot, đánh giá bằng chứng và dự toán](THESIS_CT1_EVIDENCE_PILOT.md). A/B/C precedence giữ độc lập và có điều kiện. |
 | **CT2 triage** | Hướng thuật toán riêng. Phát hiện false-safe/severe miss tại M/K so random matched, focal-only và bất đồng thô. Gắn cờ chỉ là vào hàng review. Báo chi phí và workload cùng hiệu quả hồi cứu. |
 | **CT3 audit bằng chứng** | Truy nguồn, hiển thị trạng thái chứng cứ, tách dự đoán gốc khỏi phiếu review. Giá trị người dùng chỉ kết luận sau study có quyền. |
 | **HNLO và calibration** | HNLO đối chứng phụ theo nguồn hợp lệ. Calibration cần score đúng đại lượng, validation tách nguồn và phạm vi học vụ. |

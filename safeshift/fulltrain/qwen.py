@@ -40,14 +40,16 @@ def verify_transformers(module, repo=ROOT):
     return {n: r["sha256"] for n, r in rows.items()}
 
 
-def verify_snapshot(snapshot, *, repo=ROOT, weights=True):
+def verify_snapshot(snapshot, *, repo=ROOT, weights=True, permit_unread_weights=False,
+                    hash_reader=None, index_reader=None):
     snapshot = Path(snapshot)
     lock = reference(repo)
     require(snapshot.name == lock["model"]["revision"], "QWEN_REVISION_DIRECTORY")
     snapshot_stat(snapshot, directory=True)
     rows = lock["snapshot_files"]
-    # Metadata-only admission never opens weights; full admission requires all.
-    expected = {r["path"] for r in rows if weights or not r["path"].endswith(".safetensors")}
+    # Metadata-only callers may validate the full mount inventory without reading shards.
+    full_inventory = weights or permit_unread_weights
+    expected = {r["path"] for r in rows if full_inventory or not r["path"].endswith(".safetensors")}
     present = set()
     for p in snapshot.iterdir():
         require(len(present) < 32, "QWEN_SNAPSHOT_MEMBER_BOUND")
@@ -60,11 +62,15 @@ def verify_snapshot(snapshot, *, repo=ROOT, weights=True):
         p = safe(snapshot, row["path"])
         snapshot_stat(p)
         require(p.stat().st_size == row["size_bytes"], "QWEN_FILE_SIZE:" + p.name)
+        if not weights and p.name.endswith(".safetensors"):
+            continue
         expected_sha = row.get("sha256") if row["hash_algorithm"] == "git_blob_sha1" else row["expected_hash"]
-        require(expected_sha and sha(p) == expected_sha, "QWEN_FILE_SHA256:" + p.name)
+        actual = sha(p) if hash_reader is None else hash_reader(p, row["size_bytes"])
+        require(expected_sha and actual == expected_sha, "QWEN_FILE_SHA256:" + p.name)
         hashes[p.name] = expected_sha
-    if weights:
-        index = read(snapshot / "model.safetensors.index.json")
+    if full_inventory:
+        index_path = snapshot / "model.safetensors.index.json"
+        index = read(index_path) if index_reader is None else index_reader(index_path)
         require(set(index["weight_map"].values()) == {r["path"] for r in rows if r["path"].endswith(".safetensors")},
                 "QWEN_WEIGHT_INDEX_SHARDS")
     return {"model": lock["model"], "files": hashes, "weight_bytes_verified": weights,

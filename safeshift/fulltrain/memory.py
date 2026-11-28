@@ -23,7 +23,12 @@ def snapshot(proc=Path('/proc'), cgroup=Path('/sys/fs/cgroup')):
         rows = dict(line.split(':', 1) for line in raw.splitlines())
         value['host_mem_available_bytes'] = int(rows['MemAvailable'].split()[0]) * 1024
         require(value['host_mem_available_bytes'] >= 0, 'NEGATIVE_HOST_MEMORY')
-    except (OSError, ValueError, KeyError) as error:
+        value['host_memory_bytes'] = {
+            name: int(rows[name].split()[0]) * 1024
+            for name in ('MemTotal', 'MemFree', 'Buffers', 'Cached', 'SReclaimable', 'Shmem', 'Dirty', 'Writeback')
+            if name in rows
+        }
+    except (OSError, ValueError, KeyError, IndexError) as error:
         value['errors'].append({'file': 'meminfo', 'type': type(error).__name__})
     cg = value['cgroup']
     numbers = [cg.get('memory.current'), *cg.get('memory.stat', {}).values(),
@@ -46,6 +51,16 @@ def observe(out, name):
     value = snapshot()
     write(Path(out) / (name + '-memory.json'), value)
     return value
+
+
+def ct1_ram_gate(out, name, floor):
+    """Record the exact operands and keep the conservative host/cgroup minimum."""
+    observe(out, name + '-before')
+    try:
+        return environment.check_ram(floor, receipt=Path(out) / (name + '.json'), include_ancestors=True)
+    except (OSError, ValueError, KeyError):
+        observe(out, name + '-failure')
+        raise
 
 
 def complete(value):
@@ -89,8 +104,10 @@ def check_deadline(deadline):
 
 
 @contextmanager
-def readonly_fd(path, expected_size, deadline, *, expected_identity=None):
+def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise_file=None,
+                advise_whole_file=True, direct=False):
     path = Path(path)
+    advise_file = os.posix_fadvise if advise_file is None and hasattr(os, 'posix_fadvise') else advise_file
     check_deadline(deadline)
     for parent in path.parents:
         snapshot_stat(parent, directory=True)
@@ -98,15 +115,16 @@ def readonly_fd(path, expected_size, deadline, *, expected_identity=None):
     require(expected_size is None or before.st_size == expected_size, 'READONLY_EXPECTED_SIZE')
     require(expected_identity is None or identity(before) == expected_identity, 'READONLY_FILE_CHANGED')
     fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
-                 | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0))
+                 | getattr(os, 'O_NONBLOCK', 0) | getattr(os, 'O_BINARY', 0)
+                 | (os.O_DIRECT if direct else 0))
     try:
         require(identity(os.fstat(fd)) == identity(before), 'READONLY_OPEN_CHANGED')
         advice = hasattr(os, 'posix_fadvise') and hasattr(os, 'POSIX_FADV_DONTNEED')
         try:
             yield fd, before.st_size, advice
         finally:
-            if advice:
-                os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+            if advice and advise_whole_file:
+                advise_file(fd, 0, 0, os.POSIX_FADV_DONTNEED)
         require(identity(os.fstat(fd)) == identity(before)
                 and identity(snapshot_stat(path)) == identity(before), 'READONLY_FILE_CHANGED')
         check_deadline(deadline)
@@ -114,11 +132,26 @@ def readonly_fd(path, expected_size, deadline, *, expected_identity=None):
         os.close(fd)
 
 
-def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=None, expected_identity=None):
+def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=None,
+                           expected_identity=None, advice_errors=None, advise_whole_file=True):
     hashed = hashlib.sha256()
-    with readonly_fd(path, expected_size, deadline, expected_identity=expected_identity) as (fd, size, advice):
+    failed_hints = set()
+
+    def advise_file(fd, offset, length, hint):
+        if hint in failed_hints:
+            return
+        try:
+            os.posix_fadvise(fd, offset, length, hint)
+        except OSError as error:
+            if advice_errors is None:
+                raise
+            failed_hints.add(hint)
+            advice_errors.append({"file": Path(path).name, "hint": hint, "errno": error.errno})
+
+    with readonly_fd(path, expected_size, deadline, expected_identity=expected_identity,
+                     advise_file=advise_file, advise_whole_file=advise_whole_file) as (fd, size, advice):
         if advice and hasattr(os, 'POSIX_FADV_RANDOM'):
-            os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_RANDOM)
+            advise_file(fd, 0, 0, os.POSIX_FADV_RANDOM)
         page = os.sysconf('SC_PAGE_SIZE') if advice else None
         consumed = advised = 0
         while consumed < size:
@@ -132,7 +165,7 @@ def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=N
             if advice:
                 aligned = consumed - consumed % page
                 if aligned > advised:
-                    os.posix_fadvise(fd, advised, aligned - advised, os.POSIX_FADV_DONTNEED)
+                    advise_file(fd, advised, aligned - advised, os.POSIX_FADV_DONTNEED)
                     advised = aligned
         require(not os.read(fd, 1), 'READONLY_FILE_GREW')
     return hashed.hexdigest()
@@ -162,10 +195,26 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
     prefix = scratch / 'venv3119'
     require(installed['env']['SAFESHIFT_RUNTIME_ROOT'] == str(prefix)
             and installed['python'] == str(prefix / 'bin/python'), 'ADVICE_OWNED_VENV_ONLY')
+    archive = py.manifest()['filename']
+    targets = (('venv3119', False, True), (archive, True, False),
+               ('pip-bootstrap', True, True), ('input-cpython3119', True, True))
+    return _advise_owned_files(scratch, owned, targets, deadline=deadline,
+                               max_entries=max_entries, min_bytes=min_bytes, label=label)
+
+
+def advise_ct1_setup(scratch, owned, *, deadline):
+    """Advise only the job's copied install, build trees and restored archives."""
+    targets = (('qwen-software', False, True), ('ct1-build-archives', False, True))
+    return _advise_owned_files(Path(scratch), owned, targets, deadline=deadline,
+                               max_entries=100000, min_bytes=2**20, label='ct1-post-setup')
+
+
+def _advise_owned_files(scratch, owned, targets, *, deadline, max_entries, min_bytes, label):
     require(hasattr(os, 'posix_fadvise') and hasattr(os, 'O_NOFOLLOW'), 'ADVICE_REQUIRES_POSIX')
+    for parent in (scratch, *scratch.parents):
+        snapshot_stat(parent, directory=True)
     require(type(max_entries) is int and 0 < max_entries <= 100000
             and type(min_bytes) is int and min_bytes >= 1, 'ADVICE_SCAN_BOUND')
-    archive = py.manifest()['filename']
     flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
     directory_flags = flags | os.O_DIRECTORY
     entries = skipped = 0
@@ -184,7 +233,8 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
         entries += 1
         children = {} if stat.S_ISDIR(info.st_mode) else None
         tree[name] = (identity(info), children)
-        if skip_links and stat.S_ISLNK(info.st_mode):
+        if (skip_links and stat.S_ISLNK(info.st_mode)
+                or (path[0] == 'qwen-software' and stat.S_ISREG(info.st_mode) and info.st_nlink != 1)):
             skipped += 1
             return
         is_dir = stat.S_ISDIR(info.st_mode)
@@ -199,7 +249,8 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
                     inspect(child, 'lib', path + ('lib',), children, directory=True)
                     inspect(child, 'bin', path + ('bin',), children, optional=True, directory=True)
                 else:
-                    allow_links = path[:2] == ('venv3119', 'bin') or path[0] == 'input-cpython3119'
+                    allow_links = path[:2] == ('venv3119', 'bin') or path[0] in (
+                        'input-cpython3119', 'qwen-software')
                     with os.scandir(child) as scanned:
                         for entry in scanned:
                             inspect(child, entry.name, path + (entry.name,), children, skip_links=allow_links)
@@ -212,10 +263,8 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
         require((root_info.st_dev, root_info.st_ino) == (owned['device'], owned['inode']),
                 'ADVICE_ROOT_CHANGED')
         inventory = {}
-        inspect(root, 'venv3119', ('venv3119',), inventory, directory=True)
-        inspect(root, archive, (archive,), inventory, optional=True, directory=False)
-        for name in ('pip-bootstrap', 'input-cpython3119'):
-            inspect(root, name, (name,), inventory, optional=True, directory=True)
+        for name, optional, directory in targets:
+            inspect(root, name, (name,), inventory, optional=optional, directory=directory)
 
         count = total = 0
 
@@ -235,7 +284,7 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
                                 'ADVICE_DIRECTORY_CHANGED')
                     finally:
                         os.close(child)
-                elif stat.S_ISREG(info.st_mode) and info.st_size >= min_bytes:
+                elif stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and info.st_size >= min_bytes:
                     fd = os.open(name, flags, dir_fd=parent)
                     try:
                         require(identity(os.fstat(fd)) == expected, 'ADVICE_OPEN_CHANGED')
@@ -255,9 +304,10 @@ def advise_owned_runtime(request, owned, installed, *, deadline, max_entries=100
         require(identity(os.fstat(root)) == identity(root_info) == identity(scratch.lstat()),
                 'ADVICE_ROOT_CHANGED')
         return {'method': 'FSYNC_POSIX_FADV_DONTNEED_OWNED_RUNTIME', 'label': label,
-                'scan_complete': True, 'entries': entries, 'skipped_symlinks': skipped,
+                'scan_complete': True, 'entries': entries,
                 'advised_files': count, 'advised_bytes': total,
-                'deleted_files': 0, 'effect': 'ADVISORY_NOT_RAM_PROOF'}
+                'deleted_files': 0, 'effect': 'ADVISORY_NOT_RAM_PROOF',
+                ('skipped_aliases' if label == 'ct1-post-setup' else 'skipped_symlinks'): skipped}
     finally:
         os.close(root)
 

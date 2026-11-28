@@ -45,12 +45,49 @@ gán mức khác nhau giữa bảng và ví dụ. [InspecSafe-V1](https://arxiv.
    mức chưa định nghĩa được cơ chế, sửa rubric audit hoặc dừng giả thuyết
    này. Đổi sang phép thử max-severity, ngành hoặc grammar cần thiết kế riêng.
 
-Còn thiếu quyền xem ảnh cho chính các reviewer, hai người có chuyên môn và
-quy trình phân xử, nơi lưu hồ sơ đúng quyền. Kịch bản 80–120 ảnh × 2 reviewer
-× 3–5 phút tương ứng 8–20 người-giờ trước phân xử. Cỡ audit minh họa này phục
-vụ tính khả thi và cần điều chỉnh qua khung lấy mẫu.
+Audit hỗ trợ bằng AI đã hoàn tất trên 16 ảnh theo quyền riêng. Phân xử
+chuyên gia và quyền xem của người chấm vẫn là điều kiện cho vòng người.
+Kịch bản 80–120 ảnh × 2 reviewer × 3–5 phút tương ứng 8–20 người-giờ trước
+phân xử. Cỡ audit minh họa cần điều chỉnh qua khung lấy mẫu.
 
-### Thiết kế A/B/C
+### Đối chiếu annotation và ưu tiên CT1 sau audit
+
+32 JSON/TXT khớp TRAIN master. Ảnh nhúng trong JSON khớp từng byte với
+16 ảnh nguồn. Mức từ TXT và thư mục khớp trên mẫu này, nhưng một ca có
+bất nhất miền. Có ca phần đầu ngoài khung, ca thiếu căn cứ về loại làn,
+ca có dấu hiệu rất nhỏ và ca khói rõ được cả hai bảng chấm mức 1.
+Annotation giúp truy nguồn sau khóa, không xác lập nguy cơ độc lập từ
+polygon vật thể. Báo cáo theo mã mù và biên nhận nằm trong
+`data/processed/CT1-AI-audit-16/` tính từ gốc dự án.
+
+- **Ưu tiên triển khai CPU** là Evidence-based Reasoning theo [spec pilot và code](THESIS_CT1_EVIDENCE_PILOT.md). Trước khi xin inference,
+  kiểm schema/prompt/parser và mapping quy tắc bằng fixture CPU. Cùng
+  Qwen3, so A là C1 gốc và E là C1 với đầu ra gồm dấu hiệu nhìn thấy,
+  vị trí, điều kiện còn thiếu và mức cuối. Nếu thêm engine ánh xạ quy
+  tắc hoặc đối chứng schema, giữ arm riêng để phân biệt tác động.
+  Dự toán 2n lượt cho A/E, hoặc 3n khi có arm đối chứng mới một lượt
+  mỗi ảnh. Báo Δ recall Level01 E−A trên planned, 01→02, precision
+  Level01, 02→01, 01→04, FNR/FPR, coverage và chi phí. Đánh giá chất
+  lượng dấu hiệu riêng, giữ ca không thể xác minh và lỗi parser trên
+  mẫu số. Khóa revision, prompt, preprocessing, parser từng arm, nguồn
+  validation, quota và tiêu chí nghiệm thu trước khi chạy.
+- **Multi-scale Vision** là ablation cho tín hiệu nhỏ đã chứng minh còn
+  trong khung. So mức phân giải nền với ngân sách token lớn hơn hoặc
+  ảnh toàn cảnh kèm ô lưới cố định lấy từ pixel. Đo token, độ trễ và
+  peak VRAM. Giữ C1 và điều kiện còn lại. Không crop từ polygon.
+- **Domain-aware Classification** chỉ dùng miền vận hành đã xác minh
+  độc lập và sẵn có lúc dùng, hoặc miền dự đoán từ ảnh có giá trị
+  “không rõ”. Đo lỗi miền và khác biệt worst-domain. Không dùng TXT,
+  thư mục, ID nguồn, polygon hoặc GT làm tín hiệu vào bất cứ arm nào.
+  Annotation chỉ để truy nguyên và chấm sau khóa. Gói 16 đã quan sát
+  chỉ để phát triển giả thuyết, không dùng làm tập xác nhận.
+
+### Thiết kế A/B/C precedence có điều kiện
+
+Giữ thiết kế dưới đây cho giả thuyết ban đầu. Chỉ mở khi một dấu hiệu
+thực sự nhìn thấy được và một miền xác minh độc lập giúp áp hai quy tắc
+có mức khác nhau, theo hướng giải thích hạ mức Level01. B không đánh giá
+hiệu ứng của Evidence-based Reasoning. TEST vẫn đóng.
 
 | Nhánh | Prompt tham chiếu và thay đổi đề nghị |
 | --- | --- |
