@@ -157,6 +157,38 @@ Bản sửa tích hợp chẩn đoán vào notebook smoke hiện có.
   chặn, dùng receipt mới để phân biệt host với cgroup và so
   file/anon/inactive_file trước khi cân nhắc thay đổi điều kiện chạy.
 
+### Lượt sau bản thu hồi cache dừng trước khi băm checkpoint
+
+Notebook private `safeshift-ct1-smoke-pr216-ram-candidate/1` chạy source
+`f47c2a3`, run `ct1-smoke-43325b48e104`. ZIP và manifest xác minh đủ
+44 mục, SHA-256
+`bb28caf3dab376a8ef7172423468f784c9d64639f3700b54d417c96a63e70f3d`.
+Kaggle báo COMPLETE sau khi xuất `PARTIAL_OR_BLOCKED`. Cả A/E/S đều
+`NOT_ATTEMPTED`, với 0 intent và 0 lượt trả về.
+
+| Mốc đo | Headroom cgroup | File cache | Anon |
+| --- | ---: | ---: | ---: |
+| Sau khi cài wheel | 10,16 GiB | 18,99 GiB | 0,27 GiB |
+| Sau thu hồi cache cục bộ | 16,72 GiB | 12,61 GiB | 0,26 GiB |
+| Sau các probe và trước hash | 15,84 GiB | 13,10 GiB | 0,65 GiB |
+
+Cgroup giới hạn 30 GiB và tại cổng thiếu 166,99 MiB. Host báo còn
+29,38 GiB, bộ đếm OOM bằng 0. Hai T4 báo 14.912 MiB trống mỗi GPU.
+Các mốc chỉ cho biết mức tăng khoảng 909 MiB trong cả cụm probe, chưa
+định lượng từng thao tác. Chưa bắt đầu băm hoặc nạp shard.
+
+Bản sửa gom ABI, hai CUDA FP16 probe và kiểm token vào subprocess riêng
+không nạp weights. Sau khi thu hồi toàn bộ nhóm probe, worker nhẹ đo lại
+RAM cgroup và băm checkpoint theo khối trước khi import Torch. Chỉ khuyến
+nghị kernel nhả cache cho file job sở hữu, wheel đã niêm phong và shard
+đã nạp. Linux có thể bỏ qua advice. Lỗi một hint được ghi theo loại và
+tệp, SHA của tất cả shard vẫn bắt buộc. Ngay trước `from_pretrained`,
+đo lại VRAM từng T4 và áp dụng nguyên ngưỡng 16 GiB. Nếu phép đo sau
+generate bị lỗi, vẫn lưu raw đã sinh trước parse và ghi trạng thái số
+đo riêng. Nếu còn lượt chưa trả về, ZIP ghi `PARTIAL_OR_BLOCKED` ngay cả
+khi worker kết thúc sạch. Giá trị RAM khi load, đỉnh VRAM và kết quả
+parser A/E/S vẫn cần một lượt được duyệt riêng.
+
 ## Giới hạn tài nguyên và resume
 
 - **144 lượt chính**, trần 3 giờ wall time trong một job. Hai T4 (16 GB class),

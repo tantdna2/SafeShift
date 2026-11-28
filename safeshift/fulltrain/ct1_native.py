@@ -8,8 +8,8 @@ import time
 
 from safeshift.candidates.source import require
 from safeshift.evaluation.ct1_contract import ARMS, prompt
-from safeshift.pilot.artifacts import write
-from . import environment, gpu_driver, qwen
+from safeshift.pilot.artifacts import safe, write
+from . import environment, gpu_driver, memory, qwen
 
 MAX_NEW = 768
 MAX_INPUT = 4800
@@ -123,7 +123,8 @@ class Backend:
                     output_logits=False, output_scores=False)
             returned = output.detach().cpu().tolist()
             record_tokens({"input_ids": prefix, "returned_ids": returned, "seconds": time.monotonic() - began})
-            return self.decode({"input_ids": prefix, "returned_ids": returned}), memory_headroom(torch, before_call=False)
+            raw = self.decode({"input_ids": prefix, "returned_ids": returned})
+            return raw, self.record_memory()
         finally:
             self.reset()
 
@@ -142,26 +143,73 @@ class Backend:
     def failure_memory(self):
         return memory_headroom(self.torch, before_call=False)
 
+    def record_memory(self):
+        """An unavailable telemetry probe must not discard completed model output."""
+        try:
+            return self.failure_memory()
+        except (OSError, RuntimeError, ValueError, KeyError) as error:
+            return {"status": "UNAVAILABLE", "error_type": type(error).__name__}
 
-def preflight(snapshot, repo, lock, drivers, scratch, output, data, plan, *, deadline):
-    from . import memory, preflight as common_preflight
+
+def probe_runtime(snapshot, repo, lock, drivers, scratch, output, data, plan):
+    """Run the pinned ABI, CUDA and token envelope checks in a disposable process."""
+    from . import preflight as common_preflight
     limits = release_budgets(drivers)
     require(Path(os.environ["SAFESHIFT_RUNTIME_ROOT"]).is_relative_to(scratch), "CT1_RUNTIME_OUTSIDE_SCRATCH")
-    evidence = output / "evidence"
-    memory.observe(evidence, "worker-before-gate")
+    evidence = output / "evidence" / "runtime-probe"
+    memory.observe(evidence, "before-gate")
     try:
         resources = environment.resources("qwen3", limits, scratch, output,
-                                          memory_receipt=evidence / "worker-ram-gate.json")
+                                          memory_receipt=evidence / "ram-gate.json")
     except (OSError, ValueError, KeyError):
-        memory.observe(evidence, "worker-gate-failure")
+        memory.observe(evidence, "gate-failure")
         raise
     storage = common_preflight.storage_probe(scratch, output, scratch_bytes=limits["scratch_probe_bytes"],
                                              output_bytes=limits["output_probe_bytes"])
     driver = gpu_driver.bind(evidence)
-    physical = gpu_driver.hardware("qwen3", limits, driver, evidence, "worker")
+    physical = gpu_driver.hardware("qwen3", limits, driver, evidence, "probe")
     software = environment.software("qwen3", repo, lock)
+    write(evidence / "software.json", software)
     cuda = environment.cuda("qwen3", limits)
-    floor = limits["free_ram_mib"] * MIB
+    write(evidence / "cuda.json", cuda)
+    processor, tokenizer, _ = qwen.native_setup(snapshot, repo)
+    from PIL import Image
+    with Image.new("RGB", (448, 448)) as image:
+        sample_tokens = {arm: prepare(processor, image, prompt(arm, repo).decode())["input_ids"].shape[1]
+                         for arm in ARMS}
+    text_tokens = {arm: len(tokenizer.encode(prompt(arm, repo).decode(), add_special_tokens=False))
+                   for arm in ARMS}
+    from .ct1_run import IMAGE_BYTES, read_sealed
+    texts = {arm: prompt(arm, repo).decode() for arm in ARMS}
+    counts = {}
+    for item in plan["cases"]:
+        case, digest = item["case_id"], item["image_sha256"]
+        payload = read_sealed(safe(data, "images/" + case + ".png"), digest, IMAGE_BYTES)
+        with image_from_bytes(payload) as image:
+            counts[case] = {arm: prepare(processor, image, text)["input_ids"].shape[1]
+                            for arm, text in texts.items()}
+    return {"resources": resources, "storage": storage, "software": software, "physical": physical,
+            "cuda": cuda, "fixture_prompt_tokens": sample_tokens,
+            "text_tokens": text_tokens, "planned_input_tokens": counts,
+            "model_calls": 0, "weights_loaded": False}
+
+
+def advise_locked_files(root, files, receipt, deadline):
+    """Release cache held by already verified input files without writing the mount."""
+    results = {}
+    for name, size in sorted(files.items()):
+        memory.check_deadline(deadline)
+        try:
+            results[name] = memory.evict_readonly_file(safe(root, name), expected_size=size, deadline=deadline)
+        except (OSError, ValueError) as error:
+            results[name] = {"advised": False, "error_type": type(error).__name__}
+    memory.check_deadline(deadline)
+    write(receipt, {"files": results, "effect": "ADVISORY_NOT_RAM_PROOF"})
+
+
+def verify_checkpoint(snapshot, repo, drivers, evidence, deadline):
+    """Hash the locked weights before this process imports Torch or enters CUDA."""
+    floor = release_budgets(drivers)["free_ram_mib"] * MIB
     memory.ct1_ram_gate(evidence, "before-checkpoint-ram-gate", floor)
     advice_errors = []
     try:
@@ -173,24 +221,4 @@ def preflight(snapshot, repo, lock, drivers, scratch, output, data, plan, *, dea
             "method": "READONLY_SHA256_ADVISE_CONSUMED_PAGES", "errors": advice_errors,
             "available": hasattr(os, "posix_fadvise"), "effect": "ADVISORY_NOT_RAM_PROOF"})
         memory.observe(evidence, "checkpoint-hash-exit")
-    processor, tokenizer, _ = qwen.native_setup(snapshot, repo)
-    from PIL import Image
-    with Image.new("RGB", (448, 448)) as image:
-        sample_tokens = {arm: prepare(processor, image, prompt(arm, repo).decode())["input_ids"].shape[1]
-                         for arm in ARMS}
-    text_tokens = {arm: len(tokenizer.encode(prompt(arm, repo).decode(), add_special_tokens=False))
-                   for arm in ARMS}
-    from .ct1_run import IMAGE_BYTES, read_sealed
-    from safeshift.pilot.artifacts import safe
-    texts = {arm: prompt(arm, repo).decode() for arm in ARMS}
-    counts = {}
-    for item in plan["cases"]:
-        case, digest = item["case_id"], item["image_sha256"]
-        payload = read_sealed(safe(data, "images/" + case + ".png"), digest, IMAGE_BYTES)
-        with image_from_bytes(payload) as image:
-            counts[case] = {arm: prepare(processor, image, text)["input_ids"].shape[1]
-                            for arm, text in texts.items()}
-    return {"resources": resources, "storage": storage, "software": software, "physical": physical,
-            "cuda": cuda, "checkpoint": checkpoint, "fixture_prompt_tokens": sample_tokens,
-            "text_tokens": text_tokens, "planned_input_tokens": counts,
-            "model_calls": 0, "weights_loaded": False}
+    return checkpoint

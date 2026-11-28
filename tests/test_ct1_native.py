@@ -271,7 +271,7 @@ class NativeTest(unittest.TestCase):
                       patch.object(ct1_run, "reconstruct") as reconstruct):
                     controller.supervise(SimpleNamespace(config=config, job=job))
                     reconstruct.assert_not_called()
-                self.assertEqual(calls, ["setup", where] if where == "worker" else ["setup"])
+                self.assertEqual(calls, ["setup", "probe", "worker"] if where == "worker" else ["setup"])
                 self.assertEqual((root / "calls/000/intent.json").read_bytes(), b"{")
                 archive = work / (cfg["run_id"] + "-diagnostic.zip")
                 members = verify_archive(archive)
@@ -680,11 +680,11 @@ class NativeTest(unittest.TestCase):
         self.assertEqual(before["native_calls"], 0)
         self.assertEqual(before["physical"]["physical_gpus"], [0, 1])
 
-    def test_worker_binds_cuda_before_torch_abi_checks(self):
+    def test_probe_binds_cuda_before_torch_abi_checks(self):
         from safeshift.fulltrain import preflight
 
         order = []
-        evidence = self.root / "evidence"
+        evidence = self.root / "evidence/runtime-probe"
         driver = Path("/usr/local/nvidia/lib64")
         def bind(out):
             self.assertEqual(out, evidence)
@@ -692,11 +692,12 @@ class NativeTest(unittest.TestCase):
             return driver
 
         def hardware(key, policy, bound, out, label):
-            self.assertEqual((bound, out, label), (driver, evidence, "worker"))
+            self.assertEqual((bound, out, label), (driver, evidence, "probe"))
             order.append("physical")
 
         def software(*args):
             order.append("Torch import")
+            return {"compiled_cpu_nms": "PASS"}
 
         def cuda(*args):
             order.append("CUDA tensor")
@@ -712,12 +713,12 @@ class NativeTest(unittest.TestCase):
               patch.object(environment, "cuda", side_effect=cuda),
               patch.object(qwen, "verify_snapshot") as checkpoint):
             with self.assertRaisesRegex(ValueError, "fixture stops after CUDA"):
-                ct1_native.preflight(None, nb.ROOT, {}, ["580.178.04"], self.root, self.root,
-                                    self.data, self.plan, deadline=time.monotonic() + 60)
+                ct1_native.probe_runtime(None, nb.ROOT, {}, ["580.178.04"], self.root, self.root,
+                                         self.data, self.plan)
             self.assertEqual(order, ["bind", "physical", "Torch import", "CUDA tensor"])
             checkpoint.assert_not_called()
 
-    def test_worker_preserves_exact_ram_failure_before_driver_probe(self):
+    def test_probe_preserves_exact_ram_failure_before_driver_probe(self):
         low_memory = {"available_bytes": 16 * 2**30 - 1,
                       "cgroup_remaining_bytes": [16 * 2**30 - 1]}
         with (patch.dict(os.environ, {"SAFESHIFT_RUNTIME_ROOT": str(self.root / "venv")}),
@@ -725,15 +726,84 @@ class NativeTest(unittest.TestCase):
               patch.object(environment, "host_memory", return_value=low_memory),
               patch.object(gpu_driver, "bind") as bind):
             with self.assertRaisesRegex(ValueError, "HOST_OR_CGROUP_RAM"):
-                ct1_native.preflight(None, nb.ROOT, {}, ["580.178.04"], self.root, self.root,
-                                    self.data, self.plan, deadline=time.monotonic() + 60)
+                ct1_native.probe_runtime(None, nb.ROOT, {}, ["580.178.04"], self.root, self.root,
+                                         self.data, self.plan)
             self.assertEqual(observe.call_args_list, [
-                call(self.root / "evidence", "worker-before-gate"),
-                call(self.root / "evidence", "worker-gate-failure")])
+                call(self.root / "evidence/runtime-probe", "before-gate"),
+                call(self.root / "evidence/runtime-probe", "gate-failure")])
             bind.assert_not_called()
-        receipt = json.loads((self.root / "evidence/worker-ram-gate.json").read_bytes())
+        receipt = json.loads((self.root / "evidence/runtime-probe/ram-gate.json").read_bytes())
         self.assertEqual(receipt, {"memory": low_memory, "floor_bytes": 16 * 2**30,
                                    "ram_gate_passed": False})
+
+    def test_checkpoint_gate_does_not_import_or_probe_cuda(self):
+        # Reproduce the former incident boundary: enough RAM before probes,
+        # unavailable immediately afterward. Hashing now runs in a separate stage.
+        floor = 16 * 2**30
+        phases = []
+        with (patch.object(memory, "observe"),
+              patch.object(environment, "host_memory", return_value={"available_bytes": floor}),
+              patch.object(environment, "software", side_effect=AssertionError("no ABI probe in hash")),
+              patch.object(environment, "cuda", side_effect=AssertionError("no CUDA probe in hash")),
+              patch.object(qwen, "verify_snapshot", side_effect=lambda *a, **kw: phases.append("hash"))):
+            ct1_native.verify_checkpoint(self.root, nb.ROOT, ["580.178.04"], self.root,
+                                         time.monotonic() + 10)
+        self.assertEqual(phases, ["hash"])
+        gate = json.loads((self.root / "before-checkpoint-ram-gate.json").read_bytes())
+        self.assertEqual(gate, {"floor_bytes": floor, "memory": {"available_bytes": floor},
+                                "ram_gate_passed": True})
+
+    def test_probe_failure_prevents_worker_and_retains_diagnostics(self):
+        work = self.root / "work"
+        work.mkdir()
+        scratch = work / "scratch"
+        scratch.mkdir()
+        cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
+                                operator_request_sha256="a" * 64)
+        config = work / "args.json"
+        write(config, cfg)
+        job = work / cfg["run_id"]
+        phases = []
+
+        def run(command, *, receipt, **kwargs):
+            phase = command[4]
+            phases.append(phase)
+            if phase == "probe":
+                write(job / "evidence/runtime-probe/ram-gate.json", {"ram_gate_passed": False})
+                write(receipt, self.receipt("CHILD_FAILURE", returncode=1))
+                raise RuntimeError("SUPERVISED_CHILD_FAILURE")
+            write(receipt, self.receipt())
+            return {"status": "EXITED", "returncode": 0}
+
+        with (patch.object(controller, "WORK", work), patch.object(controller.sys, "platform", "linux"),
+              patch.object(controller, "layout", return_value=(self.data, work, work, {},
+                           {**self.plan, "cases": self.plan["cases"][:1]})),
+              patch.object(controller.tempfile, "mkdtemp", return_value=str(scratch)),
+              patch.object(controller.supervision, "run", side_effect=run),
+              patch.object(controller.supervision, "parent_deadline", return_value=nullcontext())):
+            controller.supervise(SimpleNamespace(config=config, job=job))
+        self.assertEqual(phases, ["setup", "probe"])
+        members = verify_archive(work / (cfg["run_id"] + "-diagnostic.zip"))
+        self.assertIn("probe-supervisor.json", members)
+        self.assertIn("runtime-probe/ram-gate.json", members)
+        self.assertNotIn("worker-supervisor.json", members)
+        self.assertNotIn("checkpoint-stability.json", members)
+
+    def test_clean_exit_with_incomplete_smoke_is_reported_as_partial(self):
+        run_id = "ct1-smoke-000000000000"
+        state = ct1_run.identity(self.plan_sha, "a" * 64, "b" * 64, "c" * 64, run_id, smoke=True)
+        out = self.evidence("incomplete", mode="smoke", binding=state)
+        archive = self.root / "smoke.zip"
+        plan = {**self.plan, "cases": self.plan["cases"][:1]}
+        self.assertEqual(controller.export_job(out, archive, plan, state, "smoke"), "PARTIAL_OR_BLOCKED")
+        with ZipFile(archive) as z:
+            self.assertEqual(json.loads(z.read("summary.json"))["not_attempted"], 3)
+
+    def test_post_generate_measurement_failure_is_diagnostic_only(self):
+        backend = ct1_native.Backend.__new__(ct1_native.Backend)
+        with patch.object(backend, "failure_memory", side_effect=RuntimeError("NVML")):
+            self.assertEqual(backend.record_memory(), {"status": "UNAVAILABLE",
+                                                       "error_type": "RuntimeError"})
 
     def test_gate_records_host_and_named_cgroup_operands_and_unreadable_gate(self):
         proc = self.root / "meminfo"
@@ -768,7 +838,7 @@ class NativeTest(unittest.TestCase):
               patch.object(memory, "advise_ct1_setup", side_effect=OSError("fixture")) as advise):
             survivor = {**closed, "group_exit": {"status": "PROCESS_GROUP_SURVIVORS"}}
             read_record.return_value = json_bytes(survivor)
-            with self.assertRaisesRegex(ValueError, "RECLAIM_SETUP_GROUP_UNVERIFIED"):
+            with self.assertRaisesRegex(ValueError, "DEPENDENCY_GROUP_UNVERIFIED:setup"):
                 controller.reclaim_setup(root, self.root, time.monotonic() + 60)
             advise.assert_not_called()
             observe.assert_not_called()
@@ -777,7 +847,7 @@ class NativeTest(unittest.TestCase):
             deadline = time.monotonic() + 60
             controller.reclaim_setup(root, self.root, deadline)
             advise.assert_called_once_with(self.root, {"device": 1, "inode": 2}, deadline=deadline)
-            self.assertEqual(observe.call_args_list, [call(root, "reclaim-before"), call(root, "reclaim-after")])
+            self.assertEqual(observe.call_args_list, [call(root, "setup-reclaim-before"), call(root, "setup-reclaim-after")])
         report = json.loads((root / "setup-cache-advice.json").read_bytes())
         self.assertEqual(report["status"], "ADVICE_FAILED")
         self.assertEqual(report["effect"], "ADVISORY_NOT_RAM_PROOF")
@@ -824,7 +894,29 @@ class NativeTest(unittest.TestCase):
                                                    deadline=time.monotonic() + 60)
             advise.assert_called_once()
         self.assertEqual(actual, sha256(b"actual bytes"))
-        self.assertEqual(advice_errors, [{"file": fixture.name, "errno": 22}])
+        self.assertEqual(advice_errors, [{"file": fixture.name, "hint": 4, "errno": 22}])
+
+    def test_optional_random_hint_failure_does_not_disable_dontneed_or_other_files(self):
+        values = [self.root / name for name in ("first.safetensors", "second.safetensors")]
+        hints = []
+        for item in values:
+            item.write_bytes(b"x" * 4096)
+
+        def fadvise(fd, offset, length, hint):
+            hints.append((offset, length, hint))
+            if hint == 1:
+                raise OSError(22, "fixture")
+
+        errors = []
+        with (patch.object(os, "POSIX_FADV_DONTNEED", 4, create=True),
+              patch.object(os, "POSIX_FADV_RANDOM", 1, create=True),
+              patch.object(os, "sysconf", return_value=4096, create=True),
+              patch.object(os, "posix_fadvise", side_effect=fadvise, create=True)):
+            for item in values:
+                self.assertEqual(memory.stream_readonly_sha256(
+                    item, advice_errors=errors, advise_whole_file=False), sha(item))
+        self.assertEqual(hints, [(0, 0, 1), (0, 4096, 4)] * 2)
+        self.assertEqual(errors, [{"file": item.name, "hint": 1, "errno": 22} for item in values])
 
     def test_interrupted_ct1_hash_advises_only_complete_consumed_pages(self):
         fixture = self.root / "fixture.checkpoint"

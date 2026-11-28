@@ -134,16 +134,18 @@ def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise
 def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=None,
                            expected_identity=None, advice_errors=None, advise_whole_file=True):
     hashed = hashlib.sha256()
+    failed_hints = set()
 
     def advise_file(fd, offset, length, hint):
-        if advice_errors is not None and advice_errors:
+        if hint in failed_hints:
             return
         try:
             os.posix_fadvise(fd, offset, length, hint)
         except OSError as error:
             if advice_errors is None:
                 raise
-            advice_errors.append({"file": Path(path).name, "errno": error.errno})
+            failed_hints.add(hint)
+            advice_errors.append({"file": Path(path).name, "hint": hint, "errno": error.errno})
 
     with readonly_fd(path, expected_size, deadline, expected_identity=expected_identity,
                      advise_file=advise_file, advise_whole_file=advise_whole_file) as (fd, size, advice):

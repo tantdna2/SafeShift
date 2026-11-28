@@ -28,6 +28,7 @@ WORKER_TELEMETRY_RESERVE = 5
 LOAD_SAMPLE_LIMIT = 48
 WORKER_MEMORY = "controller-worker-memory.json"
 CONTROLLER_MEMORY = ("controller-before-setup-memory.json", "controller-after-setup-memory.json",
+                     "controller-before-probe-memory.json", "controller-after-probe-memory.json",
                      "controller-before-worker-memory.json", WORKER_MEMORY)
 SETUP_MEMORY = (
     "entry", "archives-restored", "sources-extracted", "zlib-configure-exit", "zlib-make-exit",
@@ -109,12 +110,16 @@ def binding(cfg, lock):
     return state
 
 
-def reclaim_setup(root, scratch, deadline):
-    process = strict_json(ct1_run.read_controller_record(root, "setup-supervisor.json"))
-    require(process["status"] == "EXITED" and process["returncode"] == 0
-            and supervision.process_group_closed(process), "CT1_RECLAIM_SETUP_GROUP_UNVERIFIED")
+def require_closed_phase(root, phase):
+    process = strict_json(ct1_run.read_controller_record(root, phase + "-supervisor.json"))
+    require(supervision.process_group_closed(process) and process["status"] == "EXITED",
+            "CT1_DEPENDENCY_GROUP_UNVERIFIED:" + phase)
+
+
+def reclaim_setup(root, scratch, deadline, *, label="setup"):
+    require_closed_phase(root, label)
     owned = strict_json(ct1_run.read_controller_record(root, "scratch-ownership.json"))
-    memory.observe(root, "reclaim-before")
+    memory.observe(root, label + "-reclaim-before")
     try:
         # Bounded inside the supervised worker so slow fsync cannot consume the export reserve.
         report = memory.advise_ct1_setup(scratch, owned, deadline=deadline)
@@ -122,8 +127,8 @@ def reclaim_setup(root, scratch, deadline):
         report = {"status": "ADVICE_FAILED", "type": type(error).__name__,
                   "message": str(error)[:300], "effect": "ADVISORY_NOT_RAM_PROOF"}
     finally:
-        memory.observe(root, "reclaim-after")
-    write(root / "setup-cache-advice.json", report)
+        memory.observe(root, label + "-reclaim-after")
+    write(root / (label + "-cache-advice.json"), report)
 
 
 @contextmanager
@@ -228,17 +233,35 @@ def worker(args):
         finally:
             memory.observe(root, "setup-exit")
         return
-    reclaim_setup(root, scratch, deadline)
-    current = ct1_native.preflight(checkpoint, REPO, lock, drivers, scratch, args.job, data, plan,
-                                   deadline=deadline)
-    write(root / "preflight.json", current)
+    require_closed_phase(root, "setup")
+    if args.command == "probe":
+        reclaim_setup(root, scratch, deadline)
+        ct1_native.advise_locked_files(
+            software / "wheels", {r["file"]: r["size"] for r in lock["wheels"]},
+            root / "wheel-cache-advice.json", deadline)
+        try:
+            runtime = ct1_native.probe_runtime(checkpoint, REPO, lock, drivers, scratch, args.job, data, plan)
+            write(root / "runtime-probe.json", runtime)
+        finally:
+            memory.observe(root, "runtime-probe-exit")
+        return
+
+    reclaim_setup(root, scratch, deadline, label="probe")
+    runtime = strict_json(ct1_run.read_controller_record(root, "runtime-probe.json"))
+    require(runtime.get("model_calls") == 0 and runtime.get("weights_loaded") is False,
+            "CT1_RUNTIME_PROBE_RECEIPT")
+    checked = ct1_native.verify_checkpoint(checkpoint, REPO, drivers, root, deadline)
+    write(root / "preflight.json", {**runtime, "checkpoint": checked})
     if cfg["mode"] == "preflight":
         return
     state = binding(cfg, lock)
     require(state == strict_json((root / "identity.json").read_bytes()), "CT1_RUNTIME_IDENTITY_CHANGED")
     require(strict_json((root / "resume-admission.json").read_bytes()) == {"status": "FRESH_ADMITTED"}
             and not (root / "calls").exists(), "CT1_FRESH_LEDGER_REQUIRED")
+    driver = gpu_driver.bind(root)
+
     def before_load():
+        gpu_driver.hardware("qwen3", budgets, driver, root, "worker")
         memory.ct1_ram_gate(root, "before-model-load-ram-gate", budgets["free_ram_mib"] * 2**20)
         write(root / "model-load-start.json", {"monotonic": time.monotonic()})
 
@@ -249,7 +272,10 @@ def worker(args):
         memory.observe(root, "model-initialization-exit")
     write(root / "model-loaded.json", {"weights_loaded": True, "device_map": qwen.DEVICE_MAP,
                                       "generation": backend.config.to_dict(),
-                                      "memory": backend.failure_memory()})
+                                      "memory": backend.record_memory()})
+    shards = {row["path"]: row["size_bytes"] for row in qwen.reference(REPO)["snapshot_files"]
+              if row["path"].endswith(".safetensors")}
+    ct1_native.advise_locked_files(checkpoint, shards, root / "loaded-weight-cache-advice.json", deadline)
     ct1_run.execute(root, plan, state, data / "images", backend, deadline)
 
 
@@ -280,13 +306,24 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
         evidence = root.parent / "diagnostic"
         evidence.mkdir()
         records = ("identity.json", "config-summary.json", "controller-failure.json",
-                   *CONTROLLER_MEMORY, *ct1_run.PROCESS_RECEIPTS)
+                   *CONTROLLER_MEMORY, *ct1_run.PROCESS_RECEIPTS, "probe-supervisor.json")
         # A failed setup can be safely collected without a worker receipt, but
         # only when setup's own receipt proves its entire group was reaped.
         try:
             setup = strict_json(ct1_run.read_controller_record(root, "setup-supervisor.json"))
             if supervision.process_group_closed(setup):
                 records += ("setup-ram-gate.json", *(f"setup-{phase}-memory.json" for phase in SETUP_MEMORY))
+        except (ValueError, OSError):
+            pass
+        try:
+            probe = strict_json(ct1_run.read_controller_record(root, "probe-supervisor.json"))
+            if supervision.process_group_closed(probe):
+                records += ("runtime-probe.json", "runtime-probe-exit-memory.json", "wheel-cache-advice.json",
+                            "setup-cache-advice.json", "setup-reclaim-before-memory.json",
+                            "setup-reclaim-after-memory.json", "runtime-probe/ram-gate.json",
+                            "runtime-probe/before-gate-memory.json", "runtime-probe/gate-failure-memory.json",
+                            "runtime-probe/driver-library-binding.json", "runtime-probe/probe-nvidia-smi.json",
+                            "runtime-probe/software.json", "runtime-probe/cuda.json")
         except (ValueError, OSError):
             pass
         for name in records:
@@ -314,12 +351,15 @@ def export_job(root, archive, plan, state, mode):
         try:
             require((root / "resume-admission.json").is_file(), "CT1_RESULT_ADMISSION_MISSING")
             ct1_run.reconstruct(root, plan, state, smoke=mode == "smoke")
+            summary = strict_json(ct1_run.read_controller_record(root, "summary.json"))
         except (ValueError, KeyError, TypeError, OSError) as exc:
             write(root / "journal-export-failure.json",
                   {"status": "FORENSIC_ONLY", "type": type(exc).__name__, "message": str(exc)[:2000]})
             export_diagnostic(root, archive, str(exc)[:2000], ledger_stable=True)
             return "FORENSIC_ONLY"
     publish_export(root, archive)
+    if mode in ("pilot", "smoke") and summary["returned"] != summary["planned_calls"]:
+        return "PARTIAL_OR_BLOCKED"
     return "PROCESS_EXITED"
 
 
@@ -379,6 +419,12 @@ def supervise(args):
         native_cutoff = deadline - EXPORT_RESERVE - WORKER_TELEMETRY_RESERVE
         if cfg["mode"] == "preflight":
             native_cutoff = min(native_cutoff, time.monotonic() + budgets["diagnostic_seconds"])
+        probe_cutoff = min(native_cutoff, time.monotonic() + budgets["diagnostic_seconds"])
+        memory.observe(root, "controller-before-probe")
+        try:
+            launch("probe", python, probe_cutoff, env)
+        finally:
+            memory.observe(root, "controller-after-probe")
         memory.observe(root, "controller-before-worker")
         with observe_worker_load(root, cutoff=deadline - EXPORT_RESERVE) as worker_memory:
             launch("worker", python, native_cutoff, env)
@@ -401,7 +447,7 @@ def supervise(args):
 
 def main():
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("supervise", "setup", "worker"))
+    parser.add_argument("command", choices=("supervise", "setup", "probe", "worker"))
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--job", type=Path, required=True)
     parser.add_argument("--deadline", type=float)
