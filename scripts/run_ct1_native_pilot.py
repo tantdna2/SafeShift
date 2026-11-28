@@ -1,12 +1,14 @@
 """One Kaggle job for CT1. The notebook launches this controller as a subprocess."""
 
 from argparse import ArgumentParser
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import stat
 import subprocess
 import sys
 import tempfile
+from threading import Event, Thread
 import time
 
 from safeshift.candidates.source import require, snapshot_stat
@@ -22,10 +24,11 @@ WORK = Path("/kaggle/working")
 WALL_SECONDS = 3 * 60 * 60
 PREFLIGHT_SECONDS = 90 * 60
 EXPORT_RESERVE = 120
+WORKER_TELEMETRY_RESERVE = 5
 LOAD_SAMPLE_LIMIT = 48
+WORKER_MEMORY = "controller-worker-memory.json"
 CONTROLLER_MEMORY = ("controller-before-setup-memory.json", "controller-after-setup-memory.json",
-                     "controller-before-worker-memory.json", "controller-after-worker-memory.json")
-LOAD_SAMPLE_NAMES = tuple(f"controller-load-{i:02d}" for i in range(LOAD_SAMPLE_LIMIT))
+                     "controller-before-worker-memory.json", WORKER_MEMORY)
 SETUP_MEMORY = (
     "entry", "archives-restored", "sources-extracted", "zlib-configure-exit", "zlib-make-exit",
     "zlib-install-exit", "python-configure-exit", "python-make-exit", "python-install-exit",
@@ -123,23 +126,75 @@ def reclaim_setup(root, scratch, deadline):
     write(root / "setup-cache-advice.json", report)
 
 
-def load_observer(root):
-    """Sample through the live supervisor even if deserialization kills the worker."""
-    sample, next_poll = 0, 0.0
+@contextmanager
+def observe_worker_load(root, *, cutoff=None):
+    """Keep sampling I/O out of the hard supervisor and result directories."""
+    finished = Event()
+    observations = {"load_samples": []}
+    result = {}
 
-    def sample_live_load():
-        nonlocal sample, next_poll
-        now = time.monotonic()
-        if sample >= LOAD_SAMPLE_LIMIT or now < next_poll:
-            return
-        next_poll = now + 1.0
-        if ((root / "model-load-start.json").is_file()
-                and not (root / "model-initialization-exit-memory.json").is_file()):
-            memory.observe(root, LOAD_SAMPLE_NAMES[sample])
-            sample += 1
-            next_poll = now + 5.0
+    def snapshot():
+        raw = memory.snapshot()
+        cgroup = raw["cgroup"]
+        stat = cgroup.get("memory.stat", {})
+        return {
+            "monotonic": raw["monotonic"], "status": raw["status"],
+            "host_mem_available_bytes": raw.get("host_mem_available_bytes"),
+            "gate_memory": raw.get("gate_memory"),
+            "cgroup": {name: cgroup.get(name) for name in
+                       ("memory.current", "memory.max", "memory.peak", "memory.events")},
+            "cgroup_usage": {name: stat.get(name) for name in
+                             ("anon", "file", "inactive_file", "shmem")},
+            "observer_rss_bytes": raw["process"]["status"].get("VmRSS"),
+        }
 
-    return sample_live_load
+    def collect():
+        try:
+            while len(observations["load_samples"]) < LOAD_SAMPLE_LIMIT and not finished.wait(1):
+                if (root / "model-initialization-exit-memory.json").is_file():
+                    break
+                if (root / "model-load-start.json").is_file():
+                    observation = snapshot()
+                    if finished.is_set():
+                        break
+                    observations["load_samples"].append(observation)
+                    if finished.wait(4):
+                        break
+            finished.wait()
+            observations["after_worker"] = snapshot()
+        except (OSError, ValueError, KeyError) as error:
+            observations["observer_error"] = type(error).__name__
+
+    observer = Thread(target=collect, name="ct1-ram-observer", daemon=True)
+    observer.start()
+    try:
+        yield result
+    finally:
+        finished.set()
+        wait = 1 if cutoff is None else min(1, max(0, cutoff - time.monotonic()))
+        observer.join(timeout=wait)
+        # A stalled daemon retains no file handle to an output and can never
+        # publish into the result. The controller exports only this frozen copy.
+        captured = dict(observations)
+        result.update(captured, load_samples=tuple(captured["load_samples"]),
+                      after_worker_status="OBSERVED" if "after_worker" in captured else "UNAVAILABLE")
+
+
+def publish_worker_memory(root, observations, cutoff):
+    if observations is None or time.monotonic() >= cutoff:
+        return
+    # Seal one bounded record via a separate staging name. A timed-out write
+    # cannot expose a partial observation to result/checkpoint reconstruction.
+    staging = root.parent / (WORKER_MEMORY + ".pending")
+    payload = json_bytes(dict(observations))
+    if len(payload) > ct1_run.CONTROLLER_RECORD_BYTES:
+        return
+    try:
+        with supervision.parent_deadline(cutoff, "ct1_worker_telemetry"):
+            write_bytes(staging, payload)
+            os.link(staging, root / WORKER_MEMORY)
+    except (TimeoutError, OSError):
+        pass
 
 
 def worker(args):
@@ -231,9 +286,6 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
                 records += ("setup-ram-gate.json", *(f"setup-{phase}-memory.json" for phase in SETUP_MEMORY))
         except (ValueError, OSError):
             pass
-        # Absence of a sample is ordinary on short loads or when no load started.
-        samples = (f"{name}-memory.json" for name in LOAD_SAMPLE_NAMES)
-        records += tuple(name for name in samples if (root / name).exists())
         for name in records:
             try:
                 data = ct1_run.read_controller_record(root, name)
@@ -296,17 +348,18 @@ def supervise(args):
     env.update(PYTORCH_ALLOC_CONF="expandable_segments:True", CUDA_VISIBLE_DEVICES="0,1",
                TMP=str(scratch), TEMP=str(scratch), OMP_NUM_THREADS="2", MKL_NUM_THREADS="2")
     setup_cutoff = min(deadline - EXPORT_RESERVE, time.monotonic() + budgets["setup_seconds"])
+    worker_memory = None
     try:
         if cfg["mode"] != "preflight":
             write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         args_common = ["--config", str(args.config), "--job", str(args.job), "--scratch", str(scratch)]
-        def launch(phase, python, cutoff, phase_env, *, on_poll=None):
+        def launch(phase, python, cutoff, phase_env):
             command = [str(python), "-B", "-m", "scripts.run_ct1_native_pilot", phase,
                        *args_common, "--deadline", str(cutoff)]
             receipt = root / (phase + "-supervisor.json")
             report = supervision.run(command, cwd=REPO, env=phase_env, deadline=cutoff,
                 log=root / (phase + ".log"), receipt=receipt,
-                max_log_bytes=budgets["max_log_bytes"], watch_log_root=args.job / "setup", on_poll=on_poll)
+                max_log_bytes=budgets["max_log_bytes"], watch_log_root=args.job / "setup")
             require(report["status"] == "EXITED" and report["returncode"] == 0
                     and supervision.process_group_closed(strict_json(ct1_run.read_controller_record(
                         root, receipt.name))),
@@ -320,20 +373,19 @@ def supervise(args):
         venv = scratch / "qwen-software/venv"
         python = venv / "bin/python"
         env.update(SAFESHIFT_WORKER_PYTHON=str(python), SAFESHIFT_RUNTIME_ROOT=str(venv))
-        native_cutoff = deadline - EXPORT_RESERVE
+        native_cutoff = deadline - EXPORT_RESERVE - WORKER_TELEMETRY_RESERVE
         if cfg["mode"] == "preflight":
             native_cutoff = min(native_cutoff, time.monotonic() + budgets["diagnostic_seconds"])
         memory.observe(root, "controller-before-worker")
-        try:
-            launch("worker", python, native_cutoff, env, on_poll=load_observer(root))
-        finally:
-            memory.observe(root, "controller-after-worker")
+        with observe_worker_load(root, cutoff=deadline - EXPORT_RESERVE) as worker_memory:
+            launch("worker", python, native_cutoff, env)
     except (ValueError, OSError, RuntimeError, TimeoutError, subprocess.SubprocessError) as exc:
         write(root / "controller-failure.json", {"type": type(exc).__name__,
               "message": str(exc)[:2000], "automatic_retry": False, "status": "PARTIAL_OR_BLOCKED"})
         # Return with an export for controlled failure, so it is retained by the
         # notebook versioner. The receipt and summary carry the actual status.
     finally:
+        publish_worker_memory(root, worker_memory, deadline - EXPORT_RESERVE)
         with supervision.parent_deadline(deadline, "ct1_export"):
             outcome = export_job(root, archive, plan, state, cfg["mode"])
     failure = any((root / name).exists()

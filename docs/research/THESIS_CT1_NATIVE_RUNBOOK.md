@@ -122,10 +122,12 @@ Bản sửa tích hợp chẩn đoán vào notebook smoke hiện có.
   đếm cache của host, cgroup current/max/peak/stat/events nếu có, cùng RSS
   của tiến trình đo. Sau lỗi, bản đo controller được đưa vào ZIP chẩn đoán
   ngay cả khi chưa có worker. Chỉ thu bản đo do setup ghi khi đã xác minh
-  nhóm setup dừng. Khi bắt đầu nạp model, controller đo RAM mỗi 5 giây,
-  tối đa 48 mẫu, và đo thêm khi supervisor thu hồi worker. Các mẫu độc lập
-  với worker có thể được xuất ngay cả nếu worker bị kill. Receipt gate lưu
-  các toán hạng thực dùng, ngưỡng 16 GiB, kết quả hoặc lỗi đọc.
+  nhóm setup dừng. Controller dùng luồng quan sát riêng để đo RAM khoảng
+  mỗi 5 giây khi nạp model, tối đa 48 mẫu, và đo thêm sau khi thu hồi worker.
+  Supervisor vẫn dừng worker theo deadline kể cả khi luồng quan sát bị kẹt.
+  Controller niêm phong một bản ghi giới hạn trước thời gian dự trữ xuất ZIP,
+  kể cả nếu worker bị kill. Ghi rõ khi thiếu số đo sau worker. Receipt gate
+  lưu các toán hạng thực dùng, ngưỡng 16 GiB, kết quả hoặc lỗi đọc.
 - Sau khi setup thoát sạch, worker đối chiếu inode/device của scratch do
   controller tạo. Dùng lại cách MiniCPM V5 fsync rồi
   POSIX_FADV_DONTNEED trên file thường riêng của job từ 1 MiB, trong

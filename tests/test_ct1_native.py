@@ -849,30 +849,19 @@ class NativeTest(unittest.TestCase):
         root = self.root / "evidence"
         root.mkdir()
         archive = self.root / "smoke.zip"
-        observer = controller.load_observer(root)
-
-        def observed(out, name):
-            write(out / (name + "-memory.json"), {"fixture": True})
-
-        with (patch.object(controller.time, "monotonic", side_effect=[1, 2, 3, 7, 12]),
-              patch.object(memory, "observe", side_effect=observed) as observe):
-            observer()  # No model-load marker.
-            write(root / "model-load-start.json", {"monotonic": 1.5})
-            observer()  # Model load began.
-            observer()  # The sample interval has not elapsed.
-            observer()  # Still loading.
-            write(root / "model-initialization-exit-memory.json", {})
-            observer()  # Load exit receipt exists.
-            self.assertEqual(observe.call_args_list, [
-                call(root, "controller-load-00"), call(root, "controller-load-01")])
-        observed(root, "controller-after-worker")
+        observed = {"load_samples": [{"monotonic": 2}], "after_worker": {"monotonic": 3}}
+        with patch.object(controller.supervision, "parent_deadline", return_value=nullcontext()):
+            controller.publish_worker_memory(root, observed, time.monotonic() + 30)
+        write(root / "model-initialization-exit-memory.json", {})
         write(root / "worker-supervisor.json", self.receipt("PROCESS_GROUP_CLEANUP_UNVERIFIED"))
         self.assertEqual(controller.export_job(root, archive, self.plan, self.binding, "pilot"), "FORENSIC_ONLY")
         self.assertFalse(archive.exists())
-        verified = verify_archive(controller.diagnostic_path(archive))
-        self.assertTrue({"controller-load-00-memory.json", "controller-load-01-memory.json",
-                         "controller-after-worker-memory.json"} <= verified.keys())
+        diagnostic = controller.diagnostic_path(archive)
+        verified = verify_archive(diagnostic)
+        self.assertIn(controller.WORKER_MEMORY, verified)
         self.assertNotIn("model-initialization-exit-memory.json", verified)
+        with ZipFile(diagnostic) as bundle:
+            self.assertEqual(json.loads(bundle.read(controller.WORKER_MEMORY)), observed)
 
     @unittest.skipUnless(os.name == "posix", "real Linux worker supervision")
     def test_supervisor_samples_load_before_sigkill(self):
@@ -886,16 +875,47 @@ class NativeTest(unittest.TestCase):
             "Path(sys.argv[1], 'model-load-start.json').touch(); "
             "time.sleep(2); os.kill(os.getpid(), signal.SIGKILL)"
         )
-        with patch.object(memory, "observe", side_effect=lambda out, name:
-                          write(out / (name + "-memory.json"), {"fixture": True})):
+        with controller.observe_worker_load(root) as observed:
             with self.assertRaisesRegex(RuntimeError, "SUPERVISED_CHILD_FAILURE"):
                 controller.supervision.run([sys.executable, "-B", "-c", program, str(root)],
                     cwd=self.root, env=os.environ.copy(), deadline=time.monotonic() + 15,
-                    log=root / "worker.log", receipt=receipt, max_log_bytes=65536,
-                    on_poll=controller.load_observer(root))
-        self.assertTrue((root / "controller-load-00-memory.json").is_file())
-        self.assertFalse((root / "model-initialization-exit-memory.json").exists())
+                    log=root / "worker.log", receipt=receipt, max_log_bytes=65536)
+        self.assertTrue(observed["load_samples"])
+        self.assertEqual(observed["after_worker_status"], "OBSERVED")
         self.assertTrue(controller.supervision.process_group_closed(json.loads(receipt.read_bytes())))
+
+    @unittest.skipUnless(os.name == "posix", "real Linux worker supervision")
+    def test_stalled_load_sampler_cannot_extend_hard_worker_deadline(self):
+        import sys
+        from threading import Event
+
+        root = self.root / "hung"
+        root.mkdir()
+        write(root / "model-load-start.json", {})
+        entered, release = Event(), Event()
+
+        def stalled_snapshot():
+            entered.set()
+            release.wait(timeout=15)
+            return {}
+
+        receipt = root / "worker-supervisor.json"
+        try:
+            with patch.object(memory, "snapshot", side_effect=stalled_snapshot):
+                with controller.observe_worker_load(root) as observed:
+                    with self.assertRaisesRegex(RuntimeError, "SUPERVISED_HARD_DEADLINE"):
+                        controller.supervision.run([sys.executable, "-B", "-c", "import time; time.sleep(20)"],
+                            cwd=self.root, env=os.environ.copy(), deadline=time.monotonic() + 2,
+                            log=root / "worker.log", receipt=receipt, max_log_bytes=65536)
+                    self.assertTrue(entered.is_set())
+                frozen = dict(observed)
+                self.assertEqual(frozen["after_worker_status"], "UNAVAILABLE")
+        finally:
+            release.set()
+        diagnosis = json.loads(receipt.read_bytes())
+        self.assertLess(diagnosis["seconds"], 3.5)
+        self.assertTrue(controller.supervision.process_group_closed(diagnosis))
+        self.assertEqual(observed, frozen)
 
     def test_observing_low_ram_does_not_drop_returned_output(self):
         class Cuda:
