@@ -29,6 +29,7 @@ PROBE_RECEIPT = "probe-supervisor.json"
 PROBED_PROCESS_RECEIPTS = (PROCESS_RECEIPTS[0], PROBE_RECEIPT, PROCESS_RECEIPTS[1])
 STAGE_RECEIPT = "stage-supervisor.json"
 IO_RECEIPT = "io-probe-supervisor.json"
+IO_SUMMARY = "checkpoint-io-summary.json"
 STAGED_PROCESS_RECEIPTS = (*PROBED_PROCESS_RECEIPTS[:2], STAGE_RECEIPT, IO_RECEIPT, PROCESS_RECEIPTS[1])
 CONTROLLER_RECORD_BYTES = 65536
 IMAGE_BYTES = 12 * 2**20
@@ -147,6 +148,17 @@ def identity(plan_sha, source_sha, capsule_sha, software_sha, run_id, *, smoke=F
             "max_calls": SMOKE_CALLS if smoke else N_CALLS}
 
 
+def io_summary(read_receipt):
+    payload = read_receipt(IO_SUMMARY)
+    require(len(payload) <= CONTROLLER_RECORD_BYTES, "CT1_CHECKPOINT_IO_SUMMARY_REQUIRED")
+    summary = strict_json(payload)
+    require(type(summary) is dict, "CT1_CHECKPOINT_IO_SUMMARY_REQUIRED")
+    count = summary.get("completed")
+    require(type(count) is int and ((summary.get("status") == "COMPLETE" and count == 4)
+            or (summary.get("status") == "CENSORED_BEFORE_SAMPLE" and 0 <= count < 4)),
+            "CT1_CHECKPOINT_IO_SUMMARY_REQUIRED")
+
+
 def stability(read_receipt, *, probe_required=False, stage_required=False):
     seals = {}
     receipt_names = (STAGED_PROCESS_RECEIPTS if stage_required else
@@ -156,10 +168,12 @@ def stability(read_receipt, *, probe_required=False, stage_required=False):
         require(len(payload) <= CONTROLLER_RECORD_BYTES, "CT1_PROCESS_RECEIPT_BOUND")
         receipt = strict_json(payload)
         require(process_group_closed(receipt)
-                and (name not in (PROBE_RECEIPT, STAGE_RECEIPT) or receipt["status"] == "EXITED")
-                and (name != IO_RECEIPT or receipt["status"] in ("EXITED", "HARD_DEADLINE")),
+                and (name not in (PROBE_RECEIPT, STAGE_RECEIPT, IO_RECEIPT)
+                     or receipt["status"] == "EXITED"),
                 "CT1_PROCESS_GROUP_UNVERIFIED:" + name)
         seals[name] = sha256(payload)
+    if stage_required:
+        io_summary(read_receipt)
     return {"status": "LEDGER_STABLE", "process_receipts_sha256": seals}
 
 

@@ -170,6 +170,9 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
                 close_fds=True, start_new_session=True, pass_fds=pass_fds)
             while True:
                 code = child.poll()
+                if code is not None and code != 0 and live_prefix is None:
+                    reason = "CHILD_FAILURE"
+                    break
                 if time.monotonic() >= deadline:
                     reason = "HARD_DEADLINE"
                     break

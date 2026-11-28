@@ -229,8 +229,9 @@ theo hạn mà chưa có intent. ZIP 66 mục đã xác minh với SHA-256
   khi load. Giữ snapshot tạm trong VM qua khi worker kết thúc.
 - Setup, runtime probe, stage, so I/O và native worker dùng process group
   riêng. Stage tối đa 600 giây. Probe bốn mẫu 4 MiB trên hai đường có
-  tối đa 30 giây, ghi rõ cache chưa chuẩn hóa. Probe hết giờ chỉ được
-  đi tiếp khi group đã đóng. Sai SHA trong mẫu so sánh dừng trước load.
+  tối đa 30 giây, ghi rõ cache chưa chuẩn hóa. Probe có thể chủ động
+  bỏ mẫu chưa bắt đầu rồi kết thúc sạch. Timeout cưỡng bức, lỗi I/O
+  hoặc sai SHA của mẫu so sánh dừng trước load.
   Controller dùng pipe nonblocking để xác nhận model-loaded trong tối đa
   900 giây kể từ khi mở native worker gồm khởi tạo processor và load,
   luôn nằm trong cutoff tổng. Chừa export reserve hiện có.
@@ -311,7 +312,7 @@ archive, code notebook cùng thiết lập sau upload. Dùng **Quick Save** đ�
 xác minh notebook mà chưa thực thi. Không dùng CLI `submit` thay Owner nếu
 nó gửi lại code notebook. Việc chạy chờ xác minh đường admission phù hợp
   với chỉ thị upload của Owner. Đường Owner UI hiện render bằng
-  `prepare --owner-ui-slug <slug>`, khóa đúng ref riêng và phiên bản
+  `prepare` với trường request `owner_ui_slug`, khóa đúng ref riêng và phiên bản
   chạy v2 sau Quick Save v1. Kiểm code và bốn Input trước khi Owner chạy
   v2. SDK submit từ chối request Owner UI trước khi tạo ledger.
 

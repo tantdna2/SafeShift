@@ -442,13 +442,22 @@ class NativeTest(unittest.TestCase):
         bound, seal, notebook = operator.prepare(request)
         self.assertEqual(bound["limits"], {"jobs": 1, "images": 1, "calls": 3,
                                            "physical_gpus": 2, "seconds": 5400})
-        ui_bound, ui_seal, ui_nb = operator.prepare(request, owner_ui_slug=operator.JOB + "-scratch")
+        ui_request = {**request, "owner_ui_slug": operator.JOB + "-scratch"}
+        ui_bound, ui_seal, ui_nb = operator.prepare(ui_request)
         self.assertEqual((ui_bound["job"], ui_bound["version"]), ("owner/" + operator.JOB + "-scratch", 2))
         self.assertNotEqual(ui_seal, seal)
         ui_ledger = self.root / "owner-ui-ledger"
         with self.assertRaisesRegex(ValueError, "OWNER_UI_SMOKE_REQUIRES_OWNER"):
             operator.submit(ui_bound, ui_seal, ui_nb, sha256(ui_nb), ui_ledger)
         self.assertFalse(ui_ledger.exists())
+        ui_path = self.root / "data/processed/owner-ui.json"
+        write(ui_path, ui_request)
+        with (patch.object(operator, "PROJECT", self.root), patch.object(operator, "submit") as submit,
+              patch("sys.argv", ["submit_ct1_smoke", "submit", "--request", str(ui_path),
+                                 "--notebook-sha256", sha256(ui_nb)])):
+            with self.assertRaisesRegex(ValueError, "OWNER_UI_SMOKE_REQUIRES_OWNER"):
+                operator.main()
+        submit.assert_not_called()
         for outcome in ("timeout", "http-503", "malformed-response", "rejected-input", "submitted"):
             with self.subTest(provider_response=outcome):
                 ledger = self.root / ("ledger-" + outcome)
@@ -819,6 +828,7 @@ class NativeTest(unittest.TestCase):
         write(config, cfg)
         write(root / "runtime-probe.json", {"model_calls": 0, "weights_loaded": False})
         write(root / ct1_run.IO_RECEIPT, self.receipt())
+        write(root / ct1_run.IO_SUMMARY, {"status": "COMPLETE", "completed": 4})
         write(root / "identity.json", controller.binding(cfg, {}))
         write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         events = []
@@ -843,11 +853,57 @@ class NativeTest(unittest.TestCase):
               patch.object(ct1_native, "Backend", side_effect=backend),
               patch.object(ct1_run, "execute") as execute):
             with self.assertRaisesRegex(ValueError, "INDIVIDUAL_GPU_HEADROOM"):
-                controller.worker(SimpleNamespace(command="worker", deadline=time.monotonic() + 30,
+                controller.worker(SimpleNamespace(command="worker", deadline=time.monotonic() + 60,
+                                                  loaded_by=time.monotonic() + 30,
                                                   job=job, scratch=self.root, config=config))
         self.assertEqual(events, ["processor-initialized", "physical-gate"])
         self.assertFalse((root / "model-load-start.json").exists())
         execute.assert_not_called()
+
+    def test_worker_cannot_open_an_intent_after_late_model_load(self):
+        job = self.root / "late-job"
+        root = job / "evidence"
+        root.mkdir(parents=True)
+        cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
+                                operator_request_sha256="a" * 64)
+        config = self.root / "late-settings.json"
+        write(config, cfg)
+        write(root / "runtime-probe.json", {"model_calls": 0, "weights_loaded": False})
+        write(root / ct1_run.IO_SUMMARY, {"status": "COMPLETE", "completed": 4})
+        write(root / "identity.json", controller.binding(cfg, {}))
+        write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
+        clock = [100.0]
+
+        def backend(*args, before_load):
+            before_load()
+            clock[0] = 111.0
+            return SimpleNamespace(config=SimpleNamespace(to_dict=lambda: {}), record_memory=lambda: {})
+
+        reader, writer = os.pipe()
+        try:
+            with (patch.object(controller, "layout", return_value=(self.data, None, None, {}, self.plan)),
+                  patch.object(controller, "require_closed_phase"), patch.object(memory, "observe"),
+                  patch.object(ct1_checkpoint, "verified_stage", return_value=(self.root, {})),
+                  patch.object(controller, "admit_model_load"), patch.object(gpu_driver, "bind"),
+                  patch.object(ct1_native, "Backend", side_effect=backend),
+                  patch.object(time, "monotonic", side_effect=lambda: clock[0]),
+                  patch.object(ct1_run, "execute") as execute):
+                with self.assertRaisesRegex(ValueError, "CT1_MODEL_READINESS_DEADLINE"):
+                    controller.worker(SimpleNamespace(command="worker", deadline=180.0, loaded_by=110.0,
+                                                      loaded_fd=writer, job=job, scratch=self.root, config=config))
+            execute.assert_not_called()
+            self.assertFalse((root / "calls").exists())
+        finally:
+            os.close(reader)
+
+    def test_stability_refuses_a_closed_timeout_with_io_failure_evidence(self):
+        out = self.evidence("timed-out-drift")
+        for name in (ct1_run.PROBE_RECEIPT, ct1_run.STAGE_RECEIPT):
+            write(out / name, self.receipt())
+        write(out / ct1_run.IO_RECEIPT, self.receipt("HARD_DEADLINE", returncode=1))
+        write(out / "io-probe-failure.json", {"code":"CT1_CHECKPOINT_IO_BYTES_CHANGED"})
+        with self.assertRaisesRegex(ValueError, "CT1_PROCESS_GROUP_UNVERIFIED:io-probe"):
+            ct1_run.stable_journal(out)
 
     def checkpoint_fixture(self):
         source = self.root / "mount" / ct1_run.REVISION
@@ -948,6 +1004,15 @@ class NativeTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "CT1_CHECKPOINT_IO_BYTES_CHANGED"):
                 ct1_checkpoint.compare_reads(source, staged, self.root / "changed-io", time.monotonic() + 30)
 
+    def test_io_probe_records_censoring_only_before_starting_a_sample(self):
+        out = self.root / "censored"
+        out.mkdir()
+        with patch.object(memory, "readonly_fd") as read:
+            ct1_checkpoint.compare_reads(self.root, self.root, out, time.monotonic() + 1)
+        read.assert_not_called()
+        self.assertEqual(json.loads((out / ct1_run.IO_SUMMARY).read_bytes()),
+                         {"status": "CENSORED_BEFORE_SAMPLE", "completed": 0})
+
     def test_call_time_reserve_stops_without_writing_any_intent(self):
         output = self.evidence("short-reserve")
         fake = FixtureBackend()
@@ -957,9 +1022,10 @@ class NativeTest(unittest.TestCase):
         self.assertFalse((output / "calls").exists())
         self.assertEqual(json.loads((output / "call-admission-stop.json").read_bytes())["next_slot"], 0)
 
-    def test_staged_smoke_allows_only_a_reaped_io_timeout_and_exports_three_results(self):
-        for io_closed in (True, False):
-            work = self.root / f"io-closure-{io_closed}"
+    def test_staged_smoke_does_not_accept_a_timed_out_io_child(self):
+        for io_status in ("EXITED", "HARD_DEADLINE", "PROCESS_GROUP_SURVIVORS"):
+            io_closed = io_status == "EXITED"
+            work = self.root / f"io-closure-{io_status}"
             scratch = work / "scratch"
             scratch.mkdir(parents=True)
             cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
@@ -975,13 +1041,15 @@ class NativeTest(unittest.TestCase):
                 stages.append(phase)
                 if phase == "io-probe":
                     if io_closed:
-                        write(receipt, self.receipt("HARD_DEADLINE", returncode=-9))
-                        raise RuntimeError("SUPERVISED_HARD_DEADLINE")
-                    write(receipt, self.receipt("PROCESS_GROUP_SURVIVORS", returncode=-9))
-                    raise RuntimeError("SUPERVISED_PROCESS_GROUP_SURVIVORS")
+                        write(receipt.parent / ct1_run.IO_SUMMARY,
+                              {"status": "CENSORED_BEFORE_SAMPLE", "completed": 1})
+                    else:
+                        write(receipt, self.receipt(io_status, returncode=-9))
+                        raise RuntimeError("SUPERVISED_" + io_status)
                 if phase == "worker":
                     self.assertLessEqual(kwargs["readiness"][1], deadline)
                     self.assertIn(str(kwargs["pass_fds"][0]), command)
+                    self.assertEqual(float(command[command.index("--loaded-by") + 1]), kwargs["readiness"][1])
                     state = controller.binding(cfg, {})
                     ct1_run.execute(job / "evidence", plan, state, self.data / "images",
                                     FixtureBackend(), time.monotonic() + 30)
@@ -1006,6 +1074,20 @@ class NativeTest(unittest.TestCase):
             else:
                 names = verify_archive(work / (cfg["run_id"] + "-diagnostic.zip"))
                 self.assertNotIn("checkpoint-stability.json", names)
+
+    @unittest.skipUnless(os.name == "posix", "real Linux readiness pipe and process group")
+    def test_supervision_preserves_observed_child_failure_at_cutoff(self):
+        child = SimpleNamespace(pid=123, poll=lambda: 1, wait=lambda **_: 1)
+        with (patch.object(time, "monotonic", side_effect=[100.0, 100.0, 102.0, 102.0]),
+              patch.object(controller.supervision.subprocess, "Popen", return_value=child),
+              patch.object(os, "killpg"),
+              patch.object(controller.supervision, "wait_group_exit",
+                           return_value={"status":"NO_LIVE_MEMBERS", "members":[]})):
+            with self.assertRaisesRegex(RuntimeError, "SUPERVISED_CHILD_FAILURE"):
+                controller.supervision.run(["synthetic"], cwd=self.root, env={}, deadline=101,
+                    log=self.root / "io.log", receipt=self.root / "io.json", max_log_bytes=1024)
+        receipt = json.loads((self.root / "io.json").read_bytes())
+        self.assertEqual((receipt["status"], receipt["returncode"]), ("CHILD_FAILURE", 1))
 
     @unittest.skipUnless(os.name == "posix", "real Linux readiness pipe and process group")
     def test_loading_watchdog_reaps_child_and_preserves_its_phase(self):

@@ -26,8 +26,11 @@ PLAN_SHA = "a4e1ec60eb966133748b4ee9c145cff7e6ab1d2aaae929d796af8c0d6dbfa4a5"
 SOFTWARE_SHA = "f5af28b0d7b77b30a88732d2416b9216435bd1328e7d1aa336b753d3817820cc"
 
 
-def prepare(request, *, owner_ui_slug=None):
-    fields(request, {"settings", "inputs", "kaggle_owner", "data_authority_ref"})
+def prepare(request):
+    required = {"settings", "inputs", "kaggle_owner", "data_authority_ref"}
+    ui = "owner_ui_slug" in request
+    fields(request, required | ({"owner_ui_slug"} if ui else set()))
+    slug_for_ui = request.get("owner_ui_slug")
     inputs = request["inputs"]
     fields(inputs, set(ROLES))
     account = request["kaggle_owner"]
@@ -51,11 +54,11 @@ def prepare(request, *, owner_ui_slug=None):
                               for part in mounts[role].split("/")), "CT1_MOUNT_INPUT_BINDING")
     require(len({ref.rsplit("/", 1)[0] for ref in inputs.values()}) == len(ROLES)
             and owner["checkpoint"].endswith("/" + REVISION), "CT1_FOUR_DISTINCT_INPUTS")
-    if owner_ui_slug is not None:
-        require(re.fullmatch(re.escape(JOB) + r"-[a-z0-9-]{1,30}", owner_ui_slug),
+    if ui:
+        require(type(slug_for_ui) is str and re.fullmatch(re.escape(JOB) + r"-[a-z0-9-]{1,30}", slug_for_ui),
                 "CT1_OWNER_UI_SMOKE_SLUG")
-    bound = {**request, "job": account + "/" + (owner_ui_slug or JOB),
-             "version": 2 if owner_ui_slug else 1, "limits": LIMITS,
+    bound = {**request, "job": account + "/" + (slug_for_ui or JOB),
+             "version": 2 if ui else 1, "limits": LIMITS,
              "authority": "PR216_OWNER_APPROVED_OPERATOR_SMOKE_ONLY"}
     seal = sha256(json_bytes(bound))
     notebook = content("smoke", {**settings, "owner": {**owner, "operator_request_sha256": seal}})
@@ -126,7 +129,8 @@ def verify_quota(gpu):
 
 
 def submit(request, seal, notebook, approved_notebook_sha, ledger):
-    require(request["job"] == request["kaggle_owner"] + "/" + JOB and request["version"] == 1,
+    require("owner_ui_slug" not in request and request["job"] == request["kaggle_owner"] + "/" + JOB
+            and request["version"] == 1,
             "CT1_OWNER_UI_SMOKE_REQUIRES_OWNER")
     require(sha256(notebook) == approved_notebook_sha, "CT1_EXACT_REVIEWED_SMOKE_NOTEBOOK")
     ledger.mkdir(parents=True, exist_ok=True)
@@ -181,14 +185,14 @@ def main():
     parser.add_argument("--request", type=Path, required=True)
     parser.add_argument("--notebook-output", type=Path)
     parser.add_argument("--notebook-sha256")
-    parser.add_argument("--owner-ui-slug", help="prepare only: Quick Save v1, then Owner runs v2")
     args = parser.parse_args()
     private = (PROJECT / "data/processed").resolve()
     path = args.request.resolve()
     require(path.is_relative_to(private) and path.is_file() and path.stat().st_size <= 32768,
             "CT1_LOCAL_BOUNDED_OPERATOR_REQUEST")
-    require(args.action == "prepare" or args.owner_ui_slug is None, "CT1_OWNER_UI_SMOKE_REQUIRES_OWNER")
-    bound, seal, notebook = prepare(strict_json(path.read_bytes()), owner_ui_slug=args.owner_ui_slug)
+    request = strict_json(path.read_bytes())
+    require(args.action == "prepare" or "owner_ui_slug" not in request, "CT1_OWNER_UI_SMOKE_REQUIRES_OWNER")
+    bound, seal, notebook = prepare(request)
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     require(head == bound["settings"]["source_commit"]
             and not subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT),

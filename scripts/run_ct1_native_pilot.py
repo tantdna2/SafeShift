@@ -172,7 +172,7 @@ def observe_worker_load(root, *, cutoff=None):
         result = {
             "monotonic": raw["monotonic"], "status": raw["status"],
             "host_mem_available_bytes": raw.get("host_mem_available_bytes"),
-            "gate_memory": raw.get("gate_memory"),
+            "root_only_memory": raw.get("gate_memory"),
             "cgroup": {name: cgroup.get(name) for name in
                        ("memory.current", "memory.max", "memory.peak", "memory.events")},
             "cgroup_usage": {name: stat.get(name) for name in
@@ -203,10 +203,10 @@ def observe_worker_load(root, *, cutoff=None):
                         break
                     count = observations["load_sample_count"] + 1
                     observations["load_sample_count"] = count
-                    available = (observation.get("gate_memory") or {}).get("available_bytes")
+                    available = (observation.get("root_only_memory") or {}).get("available_bytes")
                     if type(available) is int:
-                        observations["min_available_bytes"] = min(
-                            available, observations.get("min_available_bytes", available))
+                        observations["root_only_min_available_bytes"] = min(
+                            available, observations.get("root_only_min_available_bytes", available))
                     if count <= LOAD_INITIAL_SAMPLES:
                         observations["load_samples"].append(observation)
                     else:
@@ -333,9 +333,8 @@ def worker(args):
         write(root / "preflight.json", {**runtime, "checkpoint": checked})
         return
     require_closed_phase(root, "stage")
-    io_receipt = strict_json(ct1_run.read_controller_record(root, ct1_run.IO_RECEIPT))
-    require(supervision.process_group_closed(io_receipt)
-            and io_receipt["status"] in ("EXITED", "HARD_DEADLINE"), "CT1_CHECKPOINT_IO_GROUP_UNVERIFIED")
+    require_closed_phase(root, "io-probe")
+    ct1_run.io_summary(lambda name: ct1_run.read_controller_record(root, name))
     checkpoint, checked = ct1_checkpoint.verified_stage(scratch, root, REPO)
     write(root / "preflight.json", {**runtime, "checkpoint": checked, "load_path": "VERIFIED_DISK_SCRATCH"})
     state = binding(cfg, lock)
@@ -343,11 +342,15 @@ def worker(args):
     require(strict_json((root / "resume-admission.json").read_bytes()) == {"status": "FRESH_ADMITTED"}
             and not (root / "calls").exists(), "CT1_FRESH_LEDGER_REQUIRED")
     driver = gpu_driver.bind(root)
+    loaded_by = args.loaded_by
+    require(type(loaded_by) in (int, float) and math.isfinite(loaded_by)
+            and time.monotonic() < loaded_by <= deadline, "CT1_MODEL_READINESS_DEADLINE")
 
     def before_load():
         require(ct1_checkpoint.verified_stage(scratch, root, REPO)[0] == checkpoint,
                 "CT1_CHECKPOINT_STAGE_REBOUND")
-        admit_model_load(root, scratch, deadline, budgets, driver)
+        admit_model_load(root, scratch, loaded_by, budgets, driver)
+        require(time.monotonic() < loaded_by, "CT1_MODEL_READINESS_DEADLINE")
 
     memory.observe(root, "model-initialization-entry")
     try:
@@ -360,7 +363,9 @@ def worker(args):
     ready_fd = args.loaded_fd
     require(type(ready_fd) is int and ready_fd >= 3, "CT1_MODEL_READINESS_PIPE_REQUIRED")
     try:
+        require(time.monotonic() < loaded_by, "CT1_MODEL_READINESS_DEADLINE")
         require(os.write(ready_fd, b"1") == 1, "CT1_MODEL_READINESS_WRITE")
+        require(time.monotonic() < loaded_by, "CT1_MODEL_READINESS_DEADLINE")
     finally:
         os.close(ready_fd)
     shards = {row["path"]: row["size_bytes"] for row in qwen.reference(REPO)["snapshot_files"]
@@ -432,7 +437,7 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
                        "after-checkpoint-stage-ram-gate-before-memory.json", "probe-cache-advice.json",
                        *(f"checkpoint-stage/{i:02}-{state}.json"
                          for i in range(16) for state in ("start", "copied")))),
-            ("io-probe", ("io-probe-failure.json", *(f"checkpoint-io-{i}-{state}.json"
+            ("io-probe", ("io-probe-failure.json", ct1_run.IO_SUMMARY, *(f"checkpoint-io-{i}-{state}.json"
                          for i in range(4) for state in ("start", "result")))),
         ):
             try:
@@ -540,27 +545,20 @@ def supervise(args):
         if cfg["mode"] != "preflight":
             write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         args_common = ["--config", str(args.config), "--job", str(args.job), "--scratch", str(scratch)]
-        def launch(phase, python, cutoff, phase_env, *, load_pipe=None, allow_timeout=False):
+        def launch(phase, python, cutoff, phase_env, *, load_pipe=None):
             command = [str(python), "-B", "-m", "scripts.run_ct1_native_pilot", phase,
                        *args_common, "--deadline", str(cutoff)]
             watchdog = {}
             if load_pipe is not None:
                 ready, writer = load_pipe
-                command.extend(("--loaded-fd", str(writer)))
-                watchdog = {"pass_fds": (writer,),
-                            "readiness": (ready, min(cutoff, time.monotonic() + ct1_checkpoint.LOAD_SECONDS))}
+                loaded_by = min(cutoff, time.monotonic() + ct1_checkpoint.LOAD_SECONDS)
+                command.extend(("--loaded-fd", str(writer), "--loaded-by", str(loaded_by)))
+                watchdog = {"pass_fds": (writer,), "readiness": (ready, loaded_by)}
             receipt = root / (phase + "-supervisor.json")
-            try:
-                report = supervision.run(command, cwd=REPO, env=phase_env, deadline=cutoff,
-                    log=root / (phase + ".log"), receipt=receipt,
-                    max_log_bytes=budgets["max_log_bytes"],
-                    watch_log_root=args.job / "setup" if phase == "setup" else None, **watchdog)
-            except RuntimeError as error:
-                if (allow_timeout and str(error) == "SUPERVISED_HARD_DEADLINE"
-                        and supervision.process_group_closed(strict_json(ct1_run.read_controller_record(
-                            root, receipt.name)))):
-                    return
-                raise
+            report = supervision.run(command, cwd=REPO, env=phase_env, deadline=cutoff,
+                log=root / (phase + ".log"), receipt=receipt,
+                max_log_bytes=budgets["max_log_bytes"],
+                watch_log_root=args.job / "setup" if phase == "setup" else None, **watchdog)
             require(report["status"] == "EXITED" and report["returncode"] == 0
                     and supervision.process_group_closed(strict_json(ct1_run.read_controller_record(
                         root, receipt.name))),
@@ -587,7 +585,8 @@ def supervise(args):
             stage_env = {**env, "CUDA_VISIBLE_DEVICES": ""}
             launch("stage", python, min(native_cutoff, time.monotonic() + ct1_checkpoint.STAGE_SECONDS), stage_env)
             launch("io-probe", python, min(native_cutoff, time.monotonic() + ct1_checkpoint.IO_SECONDS),
-                   stage_env, allow_timeout=True)
+                   stage_env)
+            ct1_run.io_summary(lambda name: ct1_run.read_controller_record(root, name))
         memory.observe(root, "controller-before-worker")
         with observe_worker_load(root, cutoff=deadline - EXPORT_RESERVE) as worker_memory:
             if stage_required:
@@ -625,6 +624,7 @@ def main():
     parser.add_argument("--deadline", type=float)
     parser.add_argument("--scratch", type=Path)
     parser.add_argument("--loaded-fd", type=int)
+    parser.add_argument("--loaded-by", type=float)
     args = parser.parse_args()
     if args.command == "supervise":
         supervise(args)

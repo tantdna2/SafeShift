@@ -198,6 +198,12 @@ def compare_reads(source, staged, evidence, deadline):
         ("scratch", staged, "buffered", 0), ("input", source, "mmap", SAMPLE_BYTES),
     )):
         started = time.monotonic()
+        # A cooperative stop may omit unstarted samples. An interrupted I/O
+        # call, which may have failed before recording evidence, cannot admit load.
+        if started >= deadline - 2:
+            write(evidence / ct1_run.IO_SUMMARY,
+                  {"status": "CENSORED_BEFORE_SAMPLE", "completed": number})
+            return
         record = {"location": label, "method": mode, "offset": offset, "bytes": SAMPLE_BYTES}
         write(evidence / f"checkpoint-io-{number}-start.json", record)
         with memory.readonly_fd(safe(snapshot, shard), None, deadline, advise_whole_file=False) as (fd, size, _):
@@ -215,3 +221,4 @@ def compare_reads(source, staged, evidence, deadline):
         write(evidence / f"checkpoint-io-{number}-result.json",
               {**record, "sha256": digest, "seconds": time.monotonic() - started,
                "cache_state": "UNCONTROLLED_AFTER_STAGE"})
+    write(evidence / ct1_run.IO_SUMMARY, {"status": "COMPLETE", "completed": 4})
