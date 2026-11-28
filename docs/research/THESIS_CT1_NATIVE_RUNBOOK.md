@@ -95,6 +95,58 @@ theo ngưỡng cũ. Receipt lưu stdout/stderr có giới hạn của probe. Tha
 này cần xác minh native trên lượt được admission riêng. Giữ version 1 và
 ZIP chẩn đoán để đối soát.
 
+### Smoke thay thế dừng ở kiểm tra RAM
+
+Job `nguynanhtn/safeshift-ct1-smoke-pr216-v2/1` dùng HEAD `888b3cb`.
+Setup hoàn tất sau 350 giây, đã kiểm hai T4 và `pip check` báo sạch.
+Bước kiểm RAM của worker dừng với `HOST_OR_CGROUP_RAM` trước khi nạp
+weights. Trước setup có khoảng 29,45 GiB khả dụng. Lượt này thiếu số đo
+ngay tại lần chặn nên không quy nguyên nhân cho cache hoặc OOM.
+ZIP cuối có SHA-256
+`4ff19393181288757dfd4b06002bf41b687075449b6b8d985106b84f8c0ccf4b`.
+Summary xác nhận 0 lượt gọi và cả A/E/S `NOT_ATTEMPTED`.
+
+Bằng chứng supervisor cho thấy hai nhóm setup/worker không còn tiến trình
+sống khi được thu hồi. Receipt setup v2 ghi 31.626.194.944 byte, bằng
+headroom cgroup được ghi ở thời điểm đó. Receipt không lưu riêng RAM host.
+Không có memory.stat hay bộ đếm OOM tại lúc worker dừng. Các khả năng còn
+mở gồm page cache do đọc wheel và ghi runtime, cấp phát ẩn danh và áp lực từ
+host/cgroup. Hai lượt đều có 0 lượt gọi. Việc thiếu log từng giai đoạn không
+được suy diễn thành OOM kill.
+
+Bản sửa tích hợp chẩn đoán vào notebook smoke hiện có.
+
+- Controller đo trước setup và trong finally sau khi supervisor trả về.
+  Setup ghi theo mốc giải nén, build Python/zlib, tạo venv, cài wheel và
+  pip check, kể cả khi lệnh setup lỗi. Snapshot ghi MemAvailable và các bộ
+  đếm cache của host, cgroup current/max/peak/stat/events nếu có, cùng RSS
+  của tiến trình đo. Sau lỗi, bản đo controller được đưa vào ZIP chẩn đoán
+  ngay cả khi chưa có worker. Chỉ thu bản đo do setup ghi khi đã xác minh
+  nhóm setup dừng. Receipt gate lưu các toán hạng thực dùng, ngưỡng
+  16 GiB, kết quả hoặc lỗi đọc.
+- Sau khi setup thoát sạch, worker đối chiếu inode/device của scratch do
+  controller tạo. Dùng lại cách MiniCPM V5 fsync rồi
+  POSIX_FADV_DONTNEED trên file thường riêng của job từ 1 MiB, trong
+  qwen-software/ và ct1-build-archives/. Cây được duyệt tối đa 100.000
+  mục, độ sâu 64, trong deadline supervisor. Không đi theo symlink,
+  hardlink hoặc cây ngoài scratch. Không xóa file, xóa cache toàn máy hay
+  sửa Input. Advice có thể không thu hồi được RAM. Báo riêng lỗi advice
+  và đo lại bằng gate hiện hành. Pip CT1 cài offline với cache tắt.
+- Giữ gate 16 GiB ở đầu worker, kiểm lại trước hash checkpoint và ngay
+  trước from_pretrained. SHA-256 kiểm đủ byte thật theo revision khóa.
+  Đọc checkpoint theo khối hữu hạn và dùng advice trên đoạn vừa đọc theo
+  tiền lệ InternVL V2. Nếu filesystem từ chối advice, ghi lỗi rồi
+  kiểm đủ SHA và vẫn dùng gate RAM tươi. Lưu số đo khi hash/load kết thúc
+  hoặc lỗi. Giữ hai T4, FP16/SDPA, device map, giới hạn context và kiểm tra
+  headroom trước từng lượt A/E/S. Mất VM trước khi có bằng chứng terminal
+  vẫn giữ các quy tắc forensic và không cho resume qua VM.
+- MiniCPM V5 có bằng chứng hồi phục headroom sau advice trong một môi
+  trường khác. InternVL V2 đã chạy với thu hồi page cache khi hash.
+  Full-TRAIN Qwen3 cung cấp tiền lệ cho cách nạp hai T4. G4–G6 cần bằng
+  chứng native từ một lượt được Owner duyệt riêng. Nếu gate RAM tiếp tục
+  chặn, dùng receipt mới để phân biệt host với cgroup và so
+  file/anon/inactive_file trước khi cân nhắc thay đổi điều kiện chạy.
+
 ## Giới hạn tài nguyên và resume
 
 - **144 lượt chính**, trần 3 giờ wall time trong một job. Hai T4 (16 GB class),

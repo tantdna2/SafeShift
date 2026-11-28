@@ -40,7 +40,7 @@ def verify_transformers(module, repo=ROOT):
     return {n: r["sha256"] for n, r in rows.items()}
 
 
-def verify_snapshot(snapshot, *, repo=ROOT, weights=True):
+def verify_snapshot(snapshot, *, repo=ROOT, weights=True, hash_reader=None):
     snapshot = Path(snapshot)
     lock = reference(repo)
     require(snapshot.name == lock["model"]["revision"], "QWEN_REVISION_DIRECTORY")
@@ -61,7 +61,8 @@ def verify_snapshot(snapshot, *, repo=ROOT, weights=True):
         snapshot_stat(p)
         require(p.stat().st_size == row["size_bytes"], "QWEN_FILE_SIZE:" + p.name)
         expected_sha = row.get("sha256") if row["hash_algorithm"] == "git_blob_sha1" else row["expected_hash"]
-        require(expected_sha and sha(p) == expected_sha, "QWEN_FILE_SHA256:" + p.name)
+        actual = sha(p) if hash_reader is None else hash_reader(p, row["size_bytes"])
+        require(expected_sha and actual == expected_sha, "QWEN_FILE_SHA256:" + p.name)
         hashes[p.name] = expected_sha
     if weights:
         index = read(snapshot / "model.safetensors.index.json")

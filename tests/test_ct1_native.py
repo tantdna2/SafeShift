@@ -12,13 +12,13 @@ from tempfile import TemporaryDirectory
 import time
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 from zipfile import ZipFile
 
 from safeshift.data.saved_reports import json_bytes, sha256
 from safeshift.evaluation.ct1_contract import ARMS
 from safeshift.evaluation.ct1_pilot import replay
-from safeshift.fulltrain import ct1_run, ct1_native, environment, gpu_driver, provision, qwen
+from safeshift.fulltrain import ct1_run, ct1_native, environment, gpu_driver, memory, provision, qwen
 from safeshift.pilot.artifacts import export, sha, verify_archive, write, write_bytes
 from scripts import build_ct1_kaggle_notebooks as nb
 from scripts import run_ct1_native_pilot as controller
@@ -658,17 +658,23 @@ class NativeTest(unittest.TestCase):
               patch.object(gpu_driver, "locate", return_value=(driver, {})),
               patch.object(gpu_driver, "hardware", return_value={"physical_gpus": [0, 1]}) as probe,
               patch.object(ct1_run, "restore_software", return_value=archive_dir),
-              patch.object(provision, "prepare") as prepare):
+              patch.object(provision, "prepare") as prepare,
+              patch.object(memory, "observe") as observe):
             probe.side_effect = ValueError("scoped probe fails")
             with self.assertRaisesRegex(ValueError, "scoped probe fails"):
                 controller.worker(args)
             prepare.assert_not_called()
+            self.assertEqual(observe.call_args_list, [
+                call(root, "setup-entry"), call(root, "setup-exit")])
+            observe.reset_mock()
             probe.reset_mock(side_effect=True)
             probe.return_value = {"physical_gpus": [0, 1]}
             prepare.return_value = (self.root / "qwen-software/venv/bin/python", {})
             controller.worker(args)
             self.assertEqual(probe.call_args.args[2:], (driver, root, "setup"))
             prepare.assert_called_once()
+            self.assertEqual(observe.call_args_list, [
+                call(root, "setup-entry"), call(root, "setup-archives-restored"), call(root, "setup-exit")])
             unscoped.assert_not_called()
         before = json.loads((root / "before-setup.json").read_bytes())
         self.assertEqual(before["native_calls"], 0)
@@ -698,6 +704,7 @@ class NativeTest(unittest.TestCase):
 
         with (patch.dict(os.environ, {"SAFESHIFT_RUNTIME_ROOT": str(self.root / "venv")}),
               patch.object(environment, "resources"),
+              patch.object(memory, "observe"),
               patch.object(preflight, "storage_probe"),
               patch.object(gpu_driver, "bind", side_effect=bind),
               patch.object(gpu_driver, "hardware", side_effect=hardware),
@@ -706,9 +713,134 @@ class NativeTest(unittest.TestCase):
               patch.object(qwen, "verify_snapshot") as checkpoint):
             with self.assertRaisesRegex(ValueError, "fixture stops after CUDA"):
                 ct1_native.preflight(None, nb.ROOT, {}, ["580.178.04"], self.root, self.root,
-                                    self.data, self.plan)
+                                    self.data, self.plan, deadline=time.monotonic() + 60)
             self.assertEqual(order, ["bind", "physical", "Torch import", "CUDA tensor"])
             checkpoint.assert_not_called()
+
+    def test_worker_preserves_exact_ram_failure_before_driver_probe(self):
+        low_memory = {"available_bytes": 16 * 2**30 - 1,
+                      "cgroup_remaining_bytes": [16 * 2**30 - 1]}
+        with (patch.dict(os.environ, {"SAFESHIFT_RUNTIME_ROOT": str(self.root / "venv")}),
+              patch.object(memory, "observe") as observe,
+              patch.object(environment, "host_memory", return_value=low_memory),
+              patch.object(gpu_driver, "bind") as bind):
+            with self.assertRaisesRegex(ValueError, "HOST_OR_CGROUP_RAM"):
+                ct1_native.preflight(None, nb.ROOT, {}, ["580.178.04"], self.root, self.root,
+                                    self.data, self.plan, deadline=time.monotonic() + 60)
+            self.assertEqual(observe.call_args_list, [
+                call(self.root / "evidence", "worker-before-gate"),
+                call(self.root / "evidence", "worker-gate-failure")])
+            bind.assert_not_called()
+        receipt = json.loads((self.root / "evidence/worker-ram-gate.json").read_bytes())
+        self.assertEqual(receipt, {"memory": low_memory, "floor_bytes": 16 * 2**30,
+                                   "ram_gate_passed": False})
+
+    def test_gate_records_host_and_named_cgroup_operands_and_unreadable_gate(self):
+        proc = self.root / "meminfo"
+        proc.write_text("MemAvailable: 31457280 kB\n", encoding="utf-8")
+        group = self.root / "cgroup"
+        group.mkdir()
+        (group / "memory.max").write_text(str(32 * 2**30))
+        (group / "memory.current").write_text(str(17 * 2**30))
+        self.assertEqual(environment.host_memory(proc, group, details=True), {
+            "available_bytes": 15 * 2**30, "cgroup_remaining_bytes": [15 * 2**30],
+            "host_mem_available_bytes": 30 * 2**30,
+            "cgroups": {"memory.max": {"limit_bytes": 32 * 2**30,
+                                      "usage_bytes": 17 * 2**30, "remaining_bytes": 15 * 2**30}}})
+        floor = 16 * 2**30
+        with (patch.object(environment, "host_memory", side_effect=OSError("fixture")),
+              patch.object(memory, "observe") as observe):
+            with self.assertRaisesRegex(OSError, "fixture"):
+                memory.ct1_ram_gate(self.root, "before-model-load-ram-gate", floor)
+        self.assertEqual(observe.call_args_list, [
+            call(self.root, "before-model-load-ram-gate-before"),
+            call(self.root, "before-model-load-ram-gate-failure")])
+        receipt = json.loads((self.root / "before-model-load-ram-gate.json").read_bytes())
+        self.assertEqual(receipt, {"floor_bytes": floor, "ram_gate_passed": False,
+                                   "read_error": {"type": "OSError", "message": "fixture"}})
+
+    def test_reclaim_waits_for_closed_setup_group_and_failure_is_advisory(self):
+        root = self.root / "evidence"
+        closed = self.receipt()
+        # A valid controller report is the source of group closure, not a zero exit alone.
+        with (patch.object(ct1_run, "read_controller_record") as read_record,
+              patch.object(memory, "observe") as observe,
+              patch.object(memory, "advise_ct1_setup", side_effect=OSError("fixture")) as advise):
+            survivor = {**closed, "group_exit": {"status": "PROCESS_GROUP_SURVIVORS"}}
+            read_record.return_value = json_bytes(survivor)
+            with self.assertRaisesRegex(ValueError, "RECLAIM_SETUP_GROUP_UNVERIFIED"):
+                controller.reclaim_setup(root, self.root, time.monotonic() + 60)
+            advise.assert_not_called()
+            observe.assert_not_called()
+
+            read_record.side_effect = [json_bytes(closed), json_bytes({"device": 1, "inode": 2})]
+            deadline = time.monotonic() + 60
+            controller.reclaim_setup(root, self.root, deadline)
+            advise.assert_called_once_with(self.root, {"device": 1, "inode": 2}, deadline=deadline)
+            self.assertEqual(observe.call_args_list, [call(root, "reclaim-before"), call(root, "reclaim-after")])
+        report = json.loads((root / "setup-cache-advice.json").read_bytes())
+        self.assertEqual(report["status"], "ADVICE_FAILED")
+        self.assertEqual(report["effect"], "ADVISORY_NOT_RAM_PROOF")
+
+    @unittest.skipUnless(hasattr(os, "posix_fadvise"), "POSIX descriptor cache advice")
+    def test_ct1_advises_only_owned_unaliased_files(self):
+        setup = self.root / "scratch/qwen-software"
+        archives = setup.parent / "ct1-build-archives"
+        setup.mkdir(parents=True)
+        archives.mkdir()
+        original = self.root / "outside.bin"
+        payload = b"x" * (2**20)
+        original.write_bytes(payload)
+        active = setup / "lib.bin"
+        active.write_bytes(payload)
+        (archives / "python.tar.xz").write_bytes(payload)
+        os.link(original, setup / "hardlink.bin")
+        (setup / "alias.bin").symlink_to(original)
+        info = setup.parent.stat()
+        owned = {"device": info.st_dev, "inode": info.st_ino}
+        advised = []
+        def advice(fd, *args):
+            advised.append(os.fstat(fd).st_ino)
+
+        with patch.object(os, "posix_fadvise", side_effect=advice):
+            report = memory.advise_ct1_setup(setup.parent, owned, deadline=time.monotonic() + 60)
+        self.assertEqual(set(advised), {active.stat().st_ino, (archives / "python.tar.xz").stat().st_ino})
+        self.assertEqual(report["advised_bytes"], 2 * len(payload))
+        self.assertEqual(report["skipped_aliases"], 2)
+        self.assertEqual(report["deleted_files"], 0)
+        self.assertEqual(original.read_bytes(), payload)
+        self.assertEqual(active.read_bytes(), payload)
+        with self.assertRaisesRegex(ValueError, "ADVICE_ROOT_CHANGED"):
+            memory.advise_ct1_setup(setup.parent, {**owned, "inode": -1}, deadline=time.monotonic() + 60)
+
+    def test_fadvise_error_does_not_substitute_for_actual_checkpoint_sha(self):
+        fixture = self.root / "fixture.safetensors"
+        fixture.write_bytes(b"actual bytes")
+        advice_errors = []
+        with (patch.object(os, "POSIX_FADV_DONTNEED", 4, create=True),
+              patch.object(os, "sysconf", return_value=4096, create=True),
+              patch.object(os, "posix_fadvise", side_effect=OSError(22, "fixture"), create=True) as advise):
+            actual = memory.stream_readonly_sha256(fixture, advice_errors=advice_errors,
+                                                   deadline=time.monotonic() + 60)
+            advise.assert_called_once()
+        self.assertEqual(actual, sha256(b"actual bytes"))
+        self.assertEqual(advice_errors, [{"file": fixture.name, "errno": 22}])
+
+    def test_model_ram_guard_precedes_weight_load(self):
+        import sys
+        events = []
+        model = SimpleNamespace(from_pretrained=lambda *a, **kw: events.append("load"))
+        modules = {"torch": SimpleNamespace(float16="fp16"),
+                   "transformers": SimpleNamespace(Qwen3VLForConditionalGeneration=model)}
+        def gate():
+            events.append("ram")
+            raise ValueError("HOST_OR_CGROUP_RAM")
+        with (patch.dict(sys.modules, modules),
+              patch.object(qwen, "native_setup", return_value=(None, None, None)),
+              patch.object(ct1_native, "prompt", return_value=b"fixture")):
+            with self.assertRaisesRegex(ValueError, "HOST_OR_CGROUP_RAM"):
+                ct1_native.Backend(self.root, nb.ROOT, before_load=gate)
+        self.assertEqual(events, ["ram"])
 
     def test_driver_and_resource_configuration(self):
         with self.assertRaises(ValueError):

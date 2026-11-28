@@ -8,6 +8,7 @@ import time
 
 from safeshift.candidates.source import require
 from safeshift.evaluation.ct1_contract import ARMS, prompt
+from safeshift.pilot.artifacts import write
 from . import environment, gpu_driver, qwen
 
 MAX_NEW = 768
@@ -72,12 +73,13 @@ def prepare(processor, image, text):
 
 
 class Backend:
-    def __init__(self, checkpoint, repo):
+    def __init__(self, checkpoint, repo, *, before_load):
         import torch
         import transformers
         self.torch = torch
         self.processor, self.tokenizer, _ = qwen.native_setup(checkpoint, repo)
         self.prompts = {arm: prompt(arm, repo).decode("utf-8") for arm in ARMS}
+        before_load()
         self.model = transformers.Qwen3VLForConditionalGeneration.from_pretrained(
             str(checkpoint), local_files_only=True, trust_remote_code=False, dtype=torch.float16,
             device_map=deepcopy(qwen.DEVICE_MAP), attn_implementation="sdpa")
@@ -140,19 +142,36 @@ class Backend:
         return memory_headroom(self.torch, before_call=False)
 
 
-def preflight(snapshot, repo, lock, drivers, scratch, output, data, plan):
-    from . import preflight as common_preflight
+def preflight(snapshot, repo, lock, drivers, scratch, output, data, plan, *, deadline):
+    from . import memory, preflight as common_preflight
     limits = release_budgets(drivers)
     require(Path(os.environ["SAFESHIFT_RUNTIME_ROOT"]).is_relative_to(scratch), "CT1_RUNTIME_OUTSIDE_SCRATCH")
-    resources = environment.resources("qwen3", limits, scratch, output)
+    evidence = output / "evidence"
+    memory.observe(evidence, "worker-before-gate")
+    try:
+        resources = environment.resources("qwen3", limits, scratch, output,
+                                          memory_receipt=evidence / "worker-ram-gate.json")
+    except (OSError, ValueError, KeyError):
+        memory.observe(evidence, "worker-gate-failure")
+        raise
     storage = common_preflight.storage_probe(scratch, output, scratch_bytes=limits["scratch_probe_bytes"],
                                              output_bytes=limits["output_probe_bytes"])
-    evidence = output / "evidence"
     driver = gpu_driver.bind(evidence)
     physical = gpu_driver.hardware("qwen3", limits, driver, evidence, "worker")
     software = environment.software("qwen3", repo, lock)
     cuda = environment.cuda("qwen3", limits)
-    checkpoint = qwen.verify_snapshot(snapshot, repo=repo)
+    floor = limits["free_ram_mib"] * MIB
+    memory.ct1_ram_gate(evidence, "before-checkpoint-ram-gate", floor)
+    advice_errors = []
+    try:
+        checkpoint = qwen.verify_snapshot(snapshot, repo=repo, hash_reader=lambda path, size:
+            memory.stream_readonly_sha256(path, expected_size=size, deadline=deadline,
+                                          advice_errors=advice_errors))
+    finally:
+        write(evidence / "checkpoint-cache-advice.json", {
+            "method": "READONLY_SHA256_ADVISE_CONSUMED_PAGES", "errors": advice_errors,
+            "available": hasattr(os, "posix_fadvise"), "effect": "ADVISORY_NOT_RAM_PROOF"})
+        memory.observe(evidence, "checkpoint-hash-exit")
     processor, tokenizer, _ = qwen.native_setup(snapshot, repo)
     from PIL import Image
     with Image.new("RGB", (448, 448)) as image:

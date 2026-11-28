@@ -13,7 +13,7 @@ import sys
 import zlib
 
 from safeshift.candidates.source import ROOT, require
-from safeshift.pilot.artifacts import read, sha
+from safeshift.pilot.artifacts import read, sha, write
 from safeshift.pilot import bootstrap
 
 
@@ -35,28 +35,49 @@ def policy(key, value):
     return value
 
 
-def host_memory(proc=Path("/proc/meminfo"), cgroup=Path("/sys/fs/cgroup")):
+def host_memory(proc=Path("/proc/meminfo"), cgroup=Path("/sys/fs/cgroup"), *, details=False):
     rows = dict(line.split(":", 1) for line in proc.read_text().splitlines())
-    available = int(rows["MemAvailable"].split()[0]) * 1024
-    constraints = []
+    host = available = int(rows["MemAvailable"].split()[0]) * 1024
+    constraints, cgroups = [], {}
     found = False
     for limit, used in (("memory.max", "memory.current"),
                         ("memory/memory.limit_in_bytes", "memory/memory.usage_in_bytes")):
         if (cgroup / limit).exists():
             found = True
             text = (cgroup / limit).read_text().strip()
-            if text != "max":
-                remaining = max(0, int(text) - int((cgroup / used).read_text()))
-                constraints.append(remaining)
-                available = min(available, remaining)
+            if text == "max":
+                cgroups[limit] = {"limit_bytes": "max"}
+                continue
+            maximum, current = int(text), int((cgroup / used).read_text())
+            remaining = max(0, maximum - current)
+            constraints.append(remaining)
+            cgroups[limit] = {"limit_bytes": maximum, "usage_bytes": current, "remaining_bytes": remaining}
+            available = min(available, remaining)
     require(found, "CGROUP_MEMORY_LIMIT_UNOBSERVED")
-    return {"available_bytes": available, "cgroup_remaining_bytes": constraints}
+    result = {"available_bytes": available, "cgroup_remaining_bytes": constraints}
+    if details:
+        result.update(host_mem_available_bytes=host, cgroups=cgroups)
+    return result
 
 
-def resources(key, budgets, scratch, output):
+def check_ram(floor, *, receipt=None):
+    try:
+        memory = host_memory(details=True) if receipt is not None else host_memory()
+    except (OSError, ValueError, KeyError) as error:
+        if receipt is not None:
+            write(receipt, {"floor_bytes": floor, "ram_gate_passed": False,
+                            "read_error": {"type": type(error).__name__, "message": str(error)[:300]}})
+        raise
+    passed = memory["available_bytes"] >= floor
+    if receipt is not None:
+        write(receipt, {"memory": memory, "floor_bytes": floor, "ram_gate_passed": passed})
+    require(passed, "HOST_OR_CGROUP_RAM")
+    return memory
+
+
+def resources(key, budgets, scratch, output, *, memory_receipt=None):
     policy(key, budgets)
-    memory = host_memory()
-    require(memory["available_bytes"] >= budgets["free_ram_mib"] * 2**20, "HOST_OR_CGROUP_RAM")
+    memory = check_ram(budgets["free_ram_mib"] * 2**20, receipt=memory_receipt)
     roots = [Path(scratch), Path(output)]
     devices = [p.stat().st_dev for p in roots]
     free = [shutil.disk_usage(p).free for p in roots]

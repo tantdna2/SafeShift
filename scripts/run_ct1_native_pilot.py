@@ -9,10 +9,10 @@ import sys
 import tempfile
 import time
 
-from safeshift.candidates.source import require
+from safeshift.candidates.source import require, snapshot_stat
 from safeshift.data.saved_reports import json_bytes, sha256, strict_json
 from safeshift.evaluation.full_train_benchmark import is_sha256
-from safeshift.fulltrain import ct1_native, ct1_run, environment, gpu_driver, provision, qwen, supervision
+from safeshift.fulltrain import ct1_native, ct1_run, environment, gpu_driver, memory, provision, qwen, supervision
 from safeshift.fulltrain.qwen_semantics import fields
 from safeshift.pilot.artifacts import export, safe, write, write_bytes
 
@@ -22,6 +22,12 @@ WORK = Path("/kaggle/working")
 WALL_SECONDS = 3 * 60 * 60
 PREFLIGHT_SECONDS = 90 * 60
 EXPORT_RESERVE = 120
+CONTROLLER_MEMORY = ("controller-before-setup-memory.json", "controller-after-setup-memory.json")
+SETUP_MEMORY = (
+    "entry", "archives-restored", "sources-extracted", "zlib-configure-exit", "zlib-make-exit",
+    "zlib-install-exit", "python-configure-exit", "python-make-exit", "python-install-exit",
+    "venv-exit", "pip-bootstrap-exit", "offline-install-exit", "pip-check-exit", "exit",
+)
 
 
 def mount_path(value, *, directory):
@@ -97,6 +103,23 @@ def binding(cfg, lock):
     return state
 
 
+def reclaim_setup(root, scratch, deadline):
+    process = strict_json(ct1_run.read_controller_record(root, "setup-supervisor.json"))
+    require(process["status"] == "EXITED" and process["returncode"] == 0
+            and supervision.process_group_closed(process), "CT1_RECLAIM_SETUP_GROUP_UNVERIFIED")
+    owned = strict_json(ct1_run.read_controller_record(root, "scratch-ownership.json"))
+    memory.observe(root, "reclaim-before")
+    try:
+        # Bounded inside the supervised worker so slow fsync cannot consume the export reserve.
+        report = memory.advise_ct1_setup(scratch, owned, deadline=deadline)
+    except (OSError, ValueError, TimeoutError) as error:
+        report = {"status": "ADVICE_FAILED", "type": type(error).__name__,
+                  "message": str(error)[:300], "effect": "ADVISORY_NOT_RAM_PROOF"}
+    finally:
+        memory.observe(root, "reclaim-after")
+    write(root / "setup-cache-advice.json", report)
+
+
 def worker(args):
     cfg = config(args.config)
     require_native_admission(cfg)
@@ -106,19 +129,28 @@ def worker(args):
     drivers = [cfg["observed_driver"]]
     budgets = ct1_native.release_budgets(drivers)
     if args.command == "setup":
-        resources = environment.resources("qwen3", budgets, scratch, args.job)
-        driver, _ = gpu_driver.locate()
-        write(root / "before-setup.json", {
-            "resources": resources,
-            "physical": gpu_driver.hardware("qwen3", budgets, driver, root, "setup"), "native_calls": 0})
-        archive_dir = ct1_run.restore_software(software, cfg["software_marker_sha256"], lock, scratch, REPO)
-        python, _ = provision.prepare({"model_key": "qwen3", "scratch": str(scratch),
-                                      "software_input": str(software), "software_marker_sha256":
-                                      cfg["software_marker_sha256"], "runtime_lock": lock},
-                                     REPO, args.job / "setup", deadline, archive_dir=archive_dir)
-        require(python == scratch / "qwen-software/venv/bin/python", "CT1_RUNTIME_PATH")
+        memory.observe(root, "setup-entry")
+        try:
+            resources = environment.resources("qwen3", budgets, scratch, args.job,
+                                              memory_receipt=root / "setup-ram-gate.json")
+            driver, _ = gpu_driver.locate()
+            write(root / "before-setup.json", {
+                "resources": resources,
+                "physical": gpu_driver.hardware("qwen3", budgets, driver, root, "setup"), "native_calls": 0})
+            archive_dir = ct1_run.restore_software(software, cfg["software_marker_sha256"], lock, scratch, REPO)
+            memory.observe(root, "setup-archives-restored")
+            python, _ = provision.prepare({"model_key": "qwen3", "scratch": str(scratch),
+                                          "software_input": str(software), "software_marker_sha256":
+                                          cfg["software_marker_sha256"], "runtime_lock": lock},
+                                         REPO, args.job / "setup", deadline, archive_dir=archive_dir,
+                                         observe=lambda phase: memory.observe(root, "setup-" + phase))
+            require(python == scratch / "qwen-software/venv/bin/python", "CT1_RUNTIME_PATH")
+        finally:
+            memory.observe(root, "setup-exit")
         return
-    current = ct1_native.preflight(checkpoint, REPO, lock, drivers, scratch, args.job, data, plan)
+    reclaim_setup(root, scratch, deadline)
+    current = ct1_native.preflight(checkpoint, REPO, lock, drivers, scratch, args.job, data, plan,
+                                   deadline=deadline)
     write(root / "preflight.json", current)
     if cfg["mode"] == "preflight":
         return
@@ -126,7 +158,14 @@ def worker(args):
     require(state == strict_json((root / "identity.json").read_bytes()), "CT1_RUNTIME_IDENTITY_CHANGED")
     require(strict_json((root / "resume-admission.json").read_bytes()) == {"status": "FRESH_ADMITTED"}
             and not (root / "calls").exists(), "CT1_FRESH_LEDGER_REQUIRED")
-    backend = ct1_native.Backend(checkpoint, REPO)
+    def before_load():
+        memory.ct1_ram_gate(root, "before-model-load-ram-gate", budgets["free_ram_mib"] * 2**20)
+
+    memory.observe(root, "model-initialization-entry")
+    try:
+        backend = ct1_native.Backend(checkpoint, REPO, before_load=before_load)
+    finally:
+        memory.observe(root, "model-initialization-exit")
     write(root / "model-loaded.json", {"weights_loaded": True, "device_map": qwen.DEVICE_MAP,
                                       "generation": backend.config.to_dict(),
                                       "memory": backend.failure_memory()})
@@ -159,7 +198,16 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
         # records without examining the ledger, logs or worker output.
         evidence = root.parent / "diagnostic"
         evidence.mkdir()
-        records = ("identity.json", "config-summary.json", "controller-failure.json", *ct1_run.PROCESS_RECEIPTS)
+        records = ("identity.json", "config-summary.json", "controller-failure.json",
+                   *CONTROLLER_MEMORY, *ct1_run.PROCESS_RECEIPTS)
+        # A failed setup can be safely collected without a worker receipt, but
+        # only when setup's own receipt proves its entire group was reaped.
+        try:
+            setup = strict_json(ct1_run.read_controller_record(root, "setup-supervisor.json"))
+            if supervision.process_group_closed(setup):
+                records += ("setup-ram-gate.json", *(f"setup-{phase}-memory.json" for phase in SETUP_MEMORY))
+        except (ValueError, OSError):
+            pass
         for name in records:
             try:
                 data = ct1_run.read_controller_record(root, name)
@@ -212,6 +260,8 @@ def supervise(args):
     scratch = Path(tempfile.mkdtemp(prefix=cfg["run_id"] + "-", dir="/tmp"))
     for sub in (root, args.job / "setup"):
         sub.mkdir()
+    info = snapshot_stat(scratch, directory=True)
+    write(root / "scratch-ownership.json", {"device": info.st_dev, "inode": info.st_ino})
     write(root / "identity.json", state)
     write(root / "config-summary.json", {"mode": cfg["mode"], "source_commit": cfg["source_commit"],
                                         "limits": budgets, "max_calls": state["max_calls"],
@@ -236,7 +286,11 @@ def supervise(args):
                         root, receipt.name))),
                     "CT1_" + phase.upper() + "_SUPERVISOR_FAILED")
 
-        launch("setup", sys.executable, setup_cutoff, env)
+        memory.observe(root, "controller-before-setup")
+        try:
+            launch("setup", sys.executable, setup_cutoff, env)
+        finally:
+            memory.observe(root, "controller-after-setup")
         venv = scratch / "qwen-software/venv"
         python = venv / "bin/python"
         env.update(SAFESHIFT_WORKER_PYTHON=str(python), SAFESHIFT_RUNTIME_ROOT=str(venv))
