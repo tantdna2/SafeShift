@@ -40,7 +40,8 @@ def verify_transformers(module, repo=ROOT):
     return {n: r["sha256"] for n, r in rows.items()}
 
 
-def verify_snapshot(snapshot, *, repo=ROOT, weights=True, permit_unread_weights=False, hash_reader=None):
+def verify_snapshot(snapshot, *, repo=ROOT, weights=True, permit_unread_weights=False,
+                    hash_reader=None, index_reader=None):
     snapshot = Path(snapshot)
     lock = reference(repo)
     require(snapshot.name == lock["model"]["revision"], "QWEN_REVISION_DIRECTORY")
@@ -68,7 +69,8 @@ def verify_snapshot(snapshot, *, repo=ROOT, weights=True, permit_unread_weights=
         require(expected_sha and actual == expected_sha, "QWEN_FILE_SHA256:" + p.name)
         hashes[p.name] = expected_sha
     if full_inventory:
-        index = read(snapshot / "model.safetensors.index.json")
+        index_path = snapshot / "model.safetensors.index.json"
+        index = read(index_path) if index_reader is None else index_reader(index_path)
         require(set(index["weight_map"].values()) == {r["path"] for r in rows if r["path"].endswith(".safetensors")},
                 "QWEN_WEIGHT_INDEX_SHARDS")
     return {"model": lock["model"], "files": hashes, "weight_bytes_verified": weights,

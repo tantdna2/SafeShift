@@ -400,3 +400,41 @@ không gọi inference hoặc Kaggle. Trước upload chỉ dùng bản đã có
 Notebook prep CPU cũ và audit PASS của commit 25558af tiếp tục là
 bằng chứng trước thay đổi. Scope audit native độc lập kiểm code và fixture
 CPU. Một PASS CPU không chứng minh inference, fit hoặc cải thiện metric.
+
+## Nguyên mẫu CPU đọc checkpoint hai lượt
+
+Nguyên mẫu tại Draft PR #216 xác minh SHA-256 của cả bốn shard trước khi cấp
+`safe_open`, giữ cùng descriptor và kiểm danh tính file trong hai lượt.
+Lượt hai dùng `preadv` với `O_DIRECT`, một buffer 8 MiB và storage BF16
+do từng tensor sở hữu. Lỗi căn chỉnh, EOF sai, I/O hoặc thay file sẽ dừng lượt.
+Kiểm chứng trên Kaggle cần Input cố định theo phiên bản và mount read-only.
+Chỉ đổi `transformers.modeling_utils.safe_open` của bản 4.57.1 trong context
+nguyên mẫu. Luồng notebook hiện tại giữ nguyên.
+
+Hai process CPU tuần tự kiểm toàn bộ checkpoint khóa trên Linux với Python
+3.12.13, Torch 2.10.0+cu128, Safetensors 0.6.2 và NumPy 1.26.4. Đối chứng
+Safetensors đọc từng block. Candidate giữ embedding FP16 sống trong lúc cast
+`lm_head`. So digest BF16 và FP16 từng tensor, key, shape, offset và shard.
+Kiểm thử Qwen3-VL nhỏ gọi chính `from_pretrained` để kiểm assignment,
+tied/untied, buffer, CPU map và generation config.
+
+```text
+python -B -m scripts.verify_ct1_direct_cpu --snapshot <locked-revision-directory> --output <new-data/processed-directory> --seconds 1500
+python -B -m unittest discover -s tests -p "test_ct1_direct.py" -v
+```
+
+| Chặng | Lỗi cần bắt | Cách kiểm và xử lý |
+|---|---|---|
+| Input, bootstrap và software | Sai version, layout, Base64, ABI hoặc seal | Xác minh inventory, seal provider, wheelhouse và software lock trước admission. Prototype chỉ đọc checkpoint. |
+| Đọc checkpoint | Sai SHA/index, đổi shard, partial read, EOF, mount từ chối O_DIRECT | Xác minh trước materialize, kiểm lại danh tính qua descriptor, dùng index đã xác minh. Fault injection trên CPU. Dừng khi mount hoặc nguồn không đạt. |
+| RAM và thời gian | Paging, storage bị dùng lại, đọc chậm | Ghi RSS, cgroup, file/anon, byte và syscall. Hai pha đọc ≤360 giây mỗi pha, ≤2,10× byte weights, ≤16 MiB buffer I/O, ≤2,5 GiB storage tạm. Đánh giá ngân sách từng pha dựa trên receipt. Watchdog ngoài process chặn thời gian tổng mỗi process. |
+| Runtime và load model | Driver, CUDA, CPU embedding/offload, device map và buffer | Kiểm source pin và parity offline. Cổng native cần trace mount thật, peak hai T4 và model-ready. Giữ sàn RAM 16 GiB và mọi gate VRAM hiện hành. |
+| Xử lý ảnh và A/E/S | Vượt token envelope, OOM, parser hoặc truncation | Kiểm ở smoke có quyền riêng. Giữ pre-call gates, schema, INVALID và raw-before-parse. |
+| Ledger, deadline, ZIP và thu kết quả | Child sống sót, torn write, partial bị đọc nhầm | Giữ xác minh process group và thời gian dự trữ xuất ZIP. Lưu forensic cùng checksum. Dừng resume hoặc cấp lượt mới khi chưa rõ custody. |
+
+Chỉ chuẩn bị một notebook diagnostic Kaggle CPU ≤20 phút sau khi local đạt
+điều kiện nghiệm thu. Diagnostic kiểm đủ bốn shard, không cần GPU, inference,
+ảnh TRAIN hoặc GT. H2D, offload hai T4 và model-ready cần kiểm chứng native riêng.
+Nếu sàn RAM hoặc I/O không đạt, ưu tiên đánh giá runner Linux có block storage
+và đủ headroom để dùng loader pinned. Việc khảo sát pin Safetensors khác cần
+Owner duyệt. Giữ các layout scratch đã bác bỏ ngoài phương án này.
