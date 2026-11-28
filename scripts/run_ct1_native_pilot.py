@@ -119,8 +119,9 @@ def require_closed_phase(root, phase):
             "CT1_DEPENDENCY_GROUP_UNVERIFIED:" + phase)
 
 
-def reclaim_setup(root, scratch, deadline, *, label="setup"):
-    require_closed_phase(root, label)
+def reclaim_setup(root, scratch, deadline, *, phase="setup", label=None):
+    require_closed_phase(root, phase)
+    label = phase if label is None else label
     owned = strict_json(ct1_run.read_controller_record(root, "scratch-ownership.json"))
     memory.observe(root, label + "-reclaim-before")
     try:
@@ -256,7 +257,7 @@ def worker(args):
             memory.observe(root, "runtime-probe-exit")
         return
 
-    reclaim_setup(root, scratch, deadline, label="probe")
+    reclaim_setup(root, scratch, deadline, phase="probe")
     runtime = strict_json(ct1_run.read_controller_record(root, "runtime-probe.json"))
     require(runtime.get("model_calls") == 0 and runtime.get("weights_loaded") is False,
             "CT1_RUNTIME_PROBE_RECEIPT")
@@ -271,9 +272,7 @@ def worker(args):
     driver = gpu_driver.bind(root)
 
     def before_load():
-        gpu_driver.hardware("qwen3", budgets, driver, root, "worker")
-        memory.ct1_ram_gate(root, "before-model-load-ram-gate", budgets["free_ram_mib"] * 2**20)
-        write(root / "model-load-start.json", {"monotonic": time.monotonic()})
+        admit_model_load(root, scratch, deadline, budgets, driver)
 
     memory.observe(root, "model-initialization-entry")
     try:
@@ -288,6 +287,21 @@ def worker(args):
     ct1_native.advise_locked_files(checkpoint, shards, root / "loaded-weight-cache-advice.json", deadline)
     memory.observe(root, "after-loaded-weight-cache-advice")
     ct1_run.execute(root, plan, state, data / "images", backend, deadline)
+
+
+def admit_model_load(root, scratch, deadline, budgets, driver):
+    floor = budgets["free_ram_mib"] * 2**20
+    try:
+        below_floor = environment.host_memory()["available_bytes"] < floor
+    except (OSError, ValueError, KeyError):
+        below_floor = False  # The fresh gate below records a failed read.
+    if below_floor:
+        # Imports and CPU processor setup can repopulate runtime page cache.
+        # Advise once, then use the same strict, freshly measured gate.
+        reclaim_setup(root, scratch, deadline, phase="probe", label="preload")
+    gpu_driver.hardware("qwen3", budgets, driver, root, "worker")
+    memory.ct1_ram_gate(root, "before-model-load-ram-gate", floor)
+    write(root / "model-load-start.json", {"monotonic": time.monotonic()})
 
 
 def diagnostic_path(archive):

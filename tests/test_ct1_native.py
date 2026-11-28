@@ -828,6 +828,7 @@ class NativeTest(unittest.TestCase):
               patch.object(ct1_native, "verify_checkpoint", return_value={}),
               patch.object(gpu_driver, "bind"),
               patch.object(gpu_driver, "hardware", side_effect=physical),
+              patch.object(environment, "host_memory", return_value={"available_bytes": 16 * 2**30}),
               patch.object(ct1_native, "Backend", side_effect=backend),
               patch.object(ct1_run, "execute") as execute):
             with self.assertRaisesRegex(ValueError, "INDIVIDUAL_GPU_HEADROOM"):
@@ -901,6 +902,25 @@ class NativeTest(unittest.TestCase):
         self.assertEqual(summary["durable_native_intents"], 1)
         self.assertEqual(summary["durable_tokens_without_raw"], 1)
         self.assertTrue((out / "calls/000/tokens.json").is_file())
+
+    def test_preload_cache_advice_only_once_then_enforces_fresh_floor(self):
+        budgets = ct1_native.release_budgets(["580.178.04"])
+        floor = 16 * 2**30
+        for final in (floor - 1, floor):
+            out = self.root / str(final)
+            deadline = time.monotonic() + 30
+            with (patch.object(controller, "reclaim_setup") as reclaim,
+                  patch.object(gpu_driver, "hardware"),
+                  patch.object(memory, "observe"),
+                  patch.object(environment, "host_memory", side_effect=[
+                      {"available_bytes": floor - 1}, {"available_bytes": final}])):
+                if final < floor:
+                    with self.assertRaisesRegex(ValueError, "HOST_OR_CGROUP_RAM"):
+                        controller.admit_model_load(out, self.root, deadline, budgets, "driver")
+                else:
+                    controller.admit_model_load(out, self.root, deadline, budgets, "driver")
+            reclaim.assert_called_once_with(out, self.root, deadline, phase="probe", label="preload")
+            self.assertEqual((out / "model-load-start.json").is_file(), final == floor)
 
     def test_smoke_deadline_preserves_export_reserve_and_rejects_extended_budget(self):
         self.assertEqual(controller.job_deadline("smoke", 5100, 180), 5100)

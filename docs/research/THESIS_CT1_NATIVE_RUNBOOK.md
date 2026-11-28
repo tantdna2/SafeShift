@@ -207,6 +207,10 @@ parser A/E/S vẫn cần một lượt được duyệt riêng.
   Đo đỉnh VRAM từng GPU và thời gian thật từng arm để phân biệt chi phí
   offload với các lỗi kỹ thuật còn lại. CPU audit chưa xác nhận mức đỉnh
   hoặc tốc độ này ở 768 token.
+- Sau khi native worker tạo processor, nếu phép đo ban đầu dưới 16 GiB,
+  thử nhả cache runtime một lần trong scratch của job. Sau đó đo lại
+  nguyên ngưỡng RAM và VRAM từng T4 trước load. Advice không cấp quyền hoặc
+  bảo đảm kernel sẽ thu hồi đủ RAM.
 
 ## Giới hạn tài nguyên và resume
 
