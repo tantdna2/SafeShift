@@ -172,6 +172,8 @@ def probe_runtime(snapshot, repo, lock, drivers, scratch, output, data, plan):
     write(evidence / "software.json", software)
     cuda = environment.cuda("qwen3", limits)
     write(evidence / "cuda.json", cuda)
+    metadata = qwen.verify_snapshot(snapshot, repo=repo, weights=False, permit_unread_weights=True)
+    write(evidence / "checkpoint-metadata.json", metadata)
     processor, tokenizer, _ = qwen.native_setup(snapshot, repo)
     from PIL import Image
     with Image.new("RGB", (448, 448)) as image:
@@ -189,7 +191,7 @@ def probe_runtime(snapshot, repo, lock, drivers, scratch, output, data, plan):
             counts[case] = {arm: prepare(processor, image, text)["input_ids"].shape[1]
                             for arm, text in texts.items()}
     return {"resources": resources, "storage": storage, "software": software, "physical": physical,
-            "cuda": cuda, "fixture_prompt_tokens": sample_tokens,
+            "cuda": cuda, "checkpoint_metadata": metadata, "fixture_prompt_tokens": sample_tokens,
             "text_tokens": text_tokens, "planned_input_tokens": counts,
             "model_calls": 0, "weights_loaded": False}
 

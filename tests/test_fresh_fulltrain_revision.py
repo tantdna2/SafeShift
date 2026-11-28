@@ -251,6 +251,32 @@ class RevisionTests(unittest.TestCase):
             (snapshot / "extra.py").write_text('raise AssertionError()')
             with self.assertRaisesRegex(ValueError, "INVENTORY"): q.verify_snapshot(snapshot, weights=False)
 
+    def test_qwen_metadata_on_full_mount_verifies_config_without_opening_shards(self):
+        snapshot = self.root / ("a" * 40)
+        snapshot.mkdir()
+        contents = {"config.json": b"{}", "model.safetensors.index.json":
+                    b'{"weight_map":{"param":"model-00001.safetensors"}}',
+                    "model-00001.safetensors": b"locked"}
+        for name, body in contents.items():
+            (snapshot / name).write_bytes(body)
+        reference = {"model": {"revision": snapshot.name}, "snapshot_files": [
+            {"path": name, "size_bytes": len(body), "hash_algorithm": "sha256",
+             "expected_hash": hashlib.sha256(body).hexdigest()} for name, body in contents.items()]}
+        opened = []
+        def read_metadata(path, size):
+            self.assertFalse(path.name.endswith(".safetensors"))
+            opened.append(path.name)
+            return hashlib.sha256(path.read_bytes()).hexdigest()
+
+        with patch.object(q, "reference", return_value=reference):
+            receipt = q.verify_snapshot(snapshot, weights=False, permit_unread_weights=True,
+                                        hash_reader=read_metadata)
+            self.assertFalse(receipt["weight_bytes_verified"])
+            self.assertEqual(set(opened), {"config.json", "model.safetensors.index.json"})
+            (snapshot / "config.json").write_bytes(b"[]")
+            with self.assertRaisesRegex(ValueError, "SHA256:config.json"):
+                q.verify_snapshot(snapshot, weights=False, permit_unread_weights=True)
+
     def test_explicit_budget_policy_no_default_or_pooled_gpu(self):
         for key in c.planning.MODELS:
             self.assertEqual(e.policy(key, budgets()), budgets())

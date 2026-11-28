@@ -276,6 +276,7 @@ def worker(args):
     shards = {row["path"]: row["size_bytes"] for row in qwen.reference(REPO)["snapshot_files"]
               if row["path"].endswith(".safetensors")}
     ct1_native.advise_locked_files(checkpoint, shards, root / "loaded-weight-cache-advice.json", deadline)
+    memory.observe(root, "after-loaded-weight-cache-advice")
     ct1_run.execute(root, plan, state, data / "images", backend, deadline)
 
 
@@ -323,7 +324,8 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
                             "setup-reclaim-after-memory.json", "runtime-probe/ram-gate.json",
                             "runtime-probe/before-gate-memory.json", "runtime-probe/gate-failure-memory.json",
                             "runtime-probe/driver-library-binding.json", "runtime-probe/probe-nvidia-smi.json",
-                            "runtime-probe/software.json", "runtime-probe/cuda.json")
+                            "runtime-probe/software.json", "runtime-probe/cuda.json",
+                            "runtime-probe/checkpoint-metadata.json")
         except (ValueError, OSError):
             pass
         for name in records:

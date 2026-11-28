@@ -789,6 +789,44 @@ class NativeTest(unittest.TestCase):
         self.assertNotIn("worker-supervisor.json", members)
         self.assertNotIn("checkpoint-stability.json", members)
 
+    def test_worker_rechecks_each_t4_after_processor_init_before_loading_weights(self):
+        job = self.root / "job"
+        root = job / "evidence"
+        root.mkdir(parents=True)
+        cfg = self.config_value(mode="smoke", run_id="ct1-smoke-000000000000",
+                                operator_request_sha256="a" * 64)
+        config = self.root / "settings.json"
+        write(config, cfg)
+        write(root / "runtime-probe.json", {"model_calls": 0, "weights_loaded": False})
+        write(root / "identity.json", controller.binding(cfg, {}))
+        write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
+        events = []
+
+        def backend(*args, before_load):
+            events.append("processor-initialized")
+            before_load()
+            self.fail("must not load weights after T4 failure")
+
+        def physical(*args):
+            events.append("physical-gate")
+            raise ValueError("INDIVIDUAL_GPU_HEADROOM")
+
+        with (patch.object(controller, "layout", return_value=(self.data, None, None, {}, self.plan)),
+              patch.object(controller, "require_closed_phase"),
+              patch.object(controller, "reclaim_setup"),
+              patch.object(memory, "observe"),
+              patch.object(ct1_native, "verify_checkpoint", return_value={}),
+              patch.object(gpu_driver, "bind"),
+              patch.object(gpu_driver, "hardware", side_effect=physical),
+              patch.object(ct1_native, "Backend", side_effect=backend),
+              patch.object(ct1_run, "execute") as execute):
+            with self.assertRaisesRegex(ValueError, "INDIVIDUAL_GPU_HEADROOM"):
+                controller.worker(SimpleNamespace(command="worker", deadline=time.monotonic() + 30,
+                                                  job=job, scratch=self.root, config=config))
+        self.assertEqual(events, ["processor-initialized", "physical-gate"])
+        self.assertFalse((root / "model-load-start.json").exists())
+        execute.assert_not_called()
+
     def test_clean_exit_with_incomplete_smoke_is_reported_as_partial(self):
         run_id = "ct1-smoke-000000000000"
         state = ct1_run.identity(self.plan_sha, "a" * 64, "b" * 64, "c" * 64, run_id, smoke=True)
