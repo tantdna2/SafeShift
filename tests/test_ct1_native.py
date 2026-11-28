@@ -770,6 +770,7 @@ class NativeTest(unittest.TestCase):
             phases.append(phase)
             if phase == "probe":
                 write(job / "evidence/runtime-probe/ram-gate.json", {"ram_gate_passed": False})
+                write(job / "evidence/runtime-probe-failure.json", {"code": "CT1_INPUT_TOKEN_BUDGET"})
                 write(receipt, self.receipt("CHILD_FAILURE", returncode=1))
                 raise RuntimeError("SUPERVISED_CHILD_FAILURE")
             write(receipt, self.receipt())
@@ -786,6 +787,9 @@ class NativeTest(unittest.TestCase):
         members = verify_archive(work / (cfg["run_id"] + "-diagnostic.zip"))
         self.assertIn("probe-supervisor.json", members)
         self.assertIn("runtime-probe/ram-gate.json", members)
+        self.assertIn("runtime-probe-failure.json", members)
+        with ZipFile(work / (cfg["run_id"] + "-diagnostic.zip")) as z:
+            self.assertEqual(json.loads(z.read("runtime-probe-failure.json"))["code"], "CT1_INPUT_TOKEN_BUDGET")
         self.assertNotIn("worker-supervisor.json", members)
         self.assertNotIn("checkpoint-stability.json", members)
 
@@ -827,6 +831,27 @@ class NativeTest(unittest.TestCase):
         self.assertFalse((root / "model-load-start.json").exists())
         execute.assert_not_called()
 
+    def test_new_run_requires_closed_probe_receipt_for_ordinary_zip(self):
+        for status in (None, "PROCESS_GROUP_SURVIVORS", "CHILD_FAILURE", "EXITED"):
+            job = self.root / ("proof-" + str(status))
+            job.mkdir()
+            out = self.evidence(str(job / "evidence"))
+            (out / "config-summary.json").write_bytes(json_bytes({
+                "mode": "pilot", "runtime_probe_required": True}))
+            if status is not None:
+                data = self.receipt(status, returncode=0 if status == "EXITED" else 1)
+                write(out / ct1_run.PROBE_RECEIPT, data)
+            archive = job / "result.zip"
+            result = controller.export_job(out, archive, self.plan, self.binding, "pilot")
+            if status == "EXITED":
+                self.assertEqual(result, "PARTIAL_OR_BLOCKED")
+                with ZipFile(archive) as z:
+                    hashes = json.loads(z.read("checkpoint-stability.json"))["process_receipts_sha256"]
+                    self.assertEqual(set(hashes), set(ct1_run.PROBED_PROCESS_RECEIPTS))
+            else:
+                self.assertEqual(result, "FORENSIC_ONLY")
+                self.assertFalse(archive.exists())
+
     def test_clean_exit_with_incomplete_smoke_is_reported_as_partial(self):
         run_id = "ct1-smoke-000000000000"
         state = ct1_run.identity(self.plan_sha, "a" * 64, "b" * 64, "c" * 64, run_id, smoke=True)
@@ -836,6 +861,7 @@ class NativeTest(unittest.TestCase):
         self.assertEqual(controller.export_job(out, archive, plan, state, "smoke"), "PARTIAL_OR_BLOCKED")
         with ZipFile(archive) as z:
             self.assertEqual(json.loads(z.read("summary.json"))["not_attempted"], 3)
+            self.assertEqual(json.loads(z.read("export-status.json"))["status"], "PARTIAL_OR_BLOCKED")
 
     def test_post_generate_measurement_failure_is_diagnostic_only(self):
         backend = ct1_native.Backend.__new__(ct1_native.Backend)

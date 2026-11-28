@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from contextlib import contextmanager
 import os
 from pathlib import Path
+import re
 import stat
 import subprocess
 import sys
@@ -242,6 +243,13 @@ def worker(args):
         try:
             runtime = ct1_native.probe_runtime(checkpoint, REPO, lock, drivers, scratch, args.job, data, plan)
             write(root / "runtime-probe.json", runtime)
+        except Exception as error:
+            # Persist only stable error codes in portable forensic evidence.
+            code = str(error).split(":", 1)[0]
+            if not re.fullmatch(r"[A-Z][A-Z0-9_]{2,100}", code):
+                code = "SEE_RUNTIME_PROBE_LOG"
+            write(root / "runtime-probe-failure.json", {"code": code, "type": type(error).__name__})
+            raise
         finally:
             memory.observe(root, "runtime-probe-exit")
         return
@@ -307,7 +315,7 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
         evidence = root.parent / "diagnostic"
         evidence.mkdir()
         records = ("identity.json", "config-summary.json", "controller-failure.json",
-                   *CONTROLLER_MEMORY, *ct1_run.PROCESS_RECEIPTS, "probe-supervisor.json")
+                   *CONTROLLER_MEMORY, *ct1_run.PROBED_PROCESS_RECEIPTS)
         # A failed setup can be safely collected without a worker receipt, but
         # only when setup's own receipt proves its entire group was reaped.
         try:
@@ -317,9 +325,10 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
         except (ValueError, OSError):
             pass
         try:
-            probe = strict_json(ct1_run.read_controller_record(root, "probe-supervisor.json"))
+            probe = strict_json(ct1_run.read_controller_record(root, ct1_run.PROBE_RECEIPT))
             if supervision.process_group_closed(probe):
-                records += ("runtime-probe.json", "runtime-probe-exit-memory.json", "wheel-cache-advice.json",
+                records += ("runtime-probe.json", "runtime-probe-failure.json",
+                            "runtime-probe-exit-memory.json", "wheel-cache-advice.json",
                             "setup-cache-advice.json", "setup-reclaim-before-memory.json",
                             "setup-reclaim-after-memory.json", "runtime-probe/ram-gate.json",
                             "runtime-probe/before-gate-memory.json", "runtime-probe/gate-failure-memory.json",
@@ -359,10 +368,13 @@ def export_job(root, archive, plan, state, mode):
                   {"status": "FORENSIC_ONLY", "type": type(exc).__name__, "message": str(exc)[:2000]})
             export_diagnostic(root, archive, str(exc)[:2000], ledger_stable=True)
             return "FORENSIC_ONLY"
+    outcome = "PROCESS_EXITED"
+    if mode in ("pilot", "smoke") and (summary["returned"] != summary["planned_calls"]
+                                      or (root / "controller-failure.json").exists()):
+        outcome = "PARTIAL_OR_BLOCKED"
+    write(root / "export-status.json", {"status": outcome, "mode": mode})
     publish_export(root, archive)
-    if mode in ("pilot", "smoke") and summary["returned"] != summary["planned_calls"]:
-        return "PARTIAL_OR_BLOCKED"
-    return "PROCESS_EXITED"
+    return outcome
 
 
 def supervise(args):
@@ -388,7 +400,7 @@ def supervise(args):
     write(root / "identity.json", state)
     write(root / "config-summary.json", {"mode": cfg["mode"], "source_commit": cfg["source_commit"],
                                         "limits": budgets, "max_calls": state["max_calls"],
-                                        "cross_vm_resume": "BLOCKED_NO_LATEST_LEDGER_PROOF"})
+                                        "runtime_probe_required": True, "cross_vm_resume": "BLOCKED_NO_LATEST_LEDGER_PROOF"})
     env = provision.clean_env(REPO, scratch)
     env.update(PYTORCH_ALLOC_CONF="expandable_segments:True", CUDA_VISIBLE_DEVICES="0,1",
                TMP=str(scratch), TEMP=str(scratch), OMP_NUM_THREADS="2", MKL_NUM_THREADS="2")

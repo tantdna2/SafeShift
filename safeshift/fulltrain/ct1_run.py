@@ -25,6 +25,8 @@ N_IMAGES = 48
 N_CALLS = 144
 SMOKE_CALLS = len(ARMS)
 PROCESS_RECEIPTS = ("setup-supervisor.json", "worker-supervisor.json")
+PROBE_RECEIPT = "probe-supervisor.json"
+PROBED_PROCESS_RECEIPTS = (PROCESS_RECEIPTS[0], PROBE_RECEIPT, PROCESS_RECEIPTS[1])
 CONTROLLER_RECORD_BYTES = 65536
 IMAGE_BYTES = 12 * 2**20
 RUN_ID = re.compile(r"ct1-(?:smoke-)?[0-9a-f]{12}")
@@ -142,12 +144,15 @@ def identity(plan_sha, source_sha, capsule_sha, software_sha, run_id, *, smoke=F
             "max_calls": SMOKE_CALLS if smoke else N_CALLS}
 
 
-def stability(read_receipt):
+def stability(read_receipt, *, probe_required=False):
     seals = {}
-    for name in PROCESS_RECEIPTS:
+    receipt_names = PROBED_PROCESS_RECEIPTS if probe_required else PROCESS_RECEIPTS
+    for name in receipt_names:
         payload = read_receipt(name)
-        require(len(payload) <= CONTROLLER_RECORD_BYTES and process_group_closed(strict_json(payload)),
-                "CT1_PROCESS_GROUP_UNVERIFIED")
+        require(len(payload) <= CONTROLLER_RECORD_BYTES, "CT1_PROCESS_RECEIPT_BOUND")
+        receipt = strict_json(payload)
+        require(process_group_closed(receipt) and (name != PROBE_RECEIPT or receipt["status"] == "EXITED"),
+                "CT1_PROCESS_GROUP_UNVERIFIED:" + name)
         seals[name] = sha256(payload)
     return {"status": "LEDGER_STABLE", "process_receipts_sha256": seals}
 
@@ -173,7 +178,11 @@ def read_controller_record(root, name):
 
 
 def stable_journal(root):
-    return stability(lambda name: read_controller_record(root, name))
+    def receipt(name):
+        return read_controller_record(root, name)
+    summary = strict_json(receipt("config-summary.json"))
+    probe_required = summary.get("runtime_probe_required") is True or (root / PROBE_RECEIPT).exists()
+    return stability(receipt, probe_required=probe_required)
 
 
 def restore(archive, expected, root, binding):
@@ -191,17 +200,21 @@ def restore(archive, expected, root, binding):
         call_files = [name for name in names if name.startswith("calls/")]
         require(all((ENTRY.fullmatch(name) or PENDING.fullmatch(name))
                     and int(name.split("/")[1]) < N_CALLS for name in call_files), "CT1_RESUME_MEMBER")
-        require("config-summary.json" in names
-                and strict_json(z.read("config-summary.json"))["mode"] == "pilot", "CT1_RESUME_PILOT_ONLY")
+        require("config-summary.json" in names, "CT1_RESUME_PILOT_ONLY")
+        config = strict_json(z.read("config-summary.json"))
+        require(config["mode"] == "pilot", "CT1_RESUME_PILOT_ONLY")
         require("resume-admission.json" in names and strict_json(z.read("resume-admission.json")).get("status")
                 in ("FRESH_ADMITTED", "PARENT_VERIFIED_AND_INHERITED"), "CT1_RESUME_NOT_ADMITTED")
         require("summary.json" in names and "runs.json" in names
                 and "journal-export-failure.json" not in names, "CT1_FORENSIC_ARCHIVE_NOT_RESUMABLE")
-        require({"checkpoint-stability.json", *PROCESS_RECEIPTS} <= names.keys(),
+        probe_required = (config.get("runtime_probe_required") is True
+                          or PROBE_RECEIPT in names)
+        required_receipts = PROBED_PROCESS_RECEIPTS if probe_required else PROCESS_RECEIPTS
+        require({"checkpoint-stability.json", *required_receipts} <= names.keys(),
                 "CT1_CHECKPOINT_STABILITY_REQUIRED")
-        for name in PROCESS_RECEIPTS:
-            require(z.getinfo(name).file_size <= 65536, "CT1_PROCESS_RECEIPT_BOUND")
-        require(strict_json(z.read("checkpoint-stability.json")) == stability(z.read),
+        for name in required_receipts:
+            require(z.getinfo(name).file_size <= CONTROLLER_RECORD_BYTES, "CT1_PROCESS_RECEIPT_BOUND")
+        require(strict_json(z.read("checkpoint-stability.json")) == stability(z.read, probe_required=probe_required),
                 "CT1_CHECKPOINT_STABILITY_MISMATCH")
         for name in call_files:
             write_bytes(safe(root, name), z.read(name))
