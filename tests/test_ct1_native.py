@@ -926,13 +926,15 @@ class NativeTest(unittest.TestCase):
         fixture.write_bytes(b"actual bytes")
         advice_errors = []
         with (patch.object(os, "POSIX_FADV_DONTNEED", 4, create=True),
+              patch.object(os, "POSIX_FADV_RANDOM", 1, create=True),
               patch.object(os, "sysconf", return_value=4096, create=True),
               patch.object(os, "posix_fadvise", side_effect=OSError(22, "fixture"), create=True) as advise):
             actual = memory.stream_readonly_sha256(fixture, advice_errors=advice_errors,
                                                    deadline=time.monotonic() + 60)
-            advise.assert_called_once()
+            self.assertEqual([entry.args[-1] for entry in advise.call_args_list], [1, 4])
         self.assertEqual(actual, sha256(b"actual bytes"))
-        self.assertEqual(advice_errors, [{"file": fixture.name, "hint": 4, "errno": 22}])
+        self.assertEqual(advice_errors, [
+            {"file": fixture.name, "hint": hint, "errno": 22} for hint in (1, 4)])
 
     def test_optional_random_hint_failure_does_not_disable_dontneed_or_other_files(self):
         values = [self.root / name for name in ("first.safetensors", "second.safetensors")]
