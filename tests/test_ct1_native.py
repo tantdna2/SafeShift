@@ -260,6 +260,8 @@ class NativeTest(unittest.TestCase):
                                   if stage == "worker" else {"status": "UNVERIFIED"})
                     row = self.receipt(status, group_exit=group_exit) if failure else self.receipt()
                     write(receipt, row)
+                    if stage == "io-probe":
+                        write(root / ct1_run.IO_SUMMARY, {"status": "COMPLETE", "completed": 4})
                     if failure:
                         write_bytes(root / "calls/000/intent.json", b"{")
                         raise RuntimeError("SUPERVISED_" + status)
