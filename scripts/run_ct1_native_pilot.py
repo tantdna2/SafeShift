@@ -186,14 +186,16 @@ def publish_worker_memory(root, observations, cutoff):
     # Seal one bounded record via a separate staging name. A timed-out write
     # cannot expose a partial observation to result/checkpoint reconstruction.
     staging = root.parent / (WORKER_MEMORY + ".pending")
+    target = root / WORKER_MEMORY
     payload = json_bytes(dict(observations))
     if len(payload) > ct1_run.CONTROLLER_RECORD_BYTES:
         return
     try:
         with supervision.parent_deadline(cutoff, "ct1_worker_telemetry"):
             write_bytes(staging, payload)
-            os.link(staging, root / WORKER_MEMORY)
-            staging.unlink()
+            # The controller exclusively owns this name in its fresh job.
+            if not target.exists():
+                staging.rename(target)
     except (TimeoutError, OSError):
         pass
 
