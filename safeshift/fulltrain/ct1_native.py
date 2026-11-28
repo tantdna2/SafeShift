@@ -30,7 +30,8 @@ def release_budgets(drivers):
 
 def memory_headroom(torch, *, before_call):
     host = environment.host_memory()
-    require(host["available_bytes"] >= 2 * GIB, "CT1_AVAILABLE_HOST_RAM")
+    if before_call:
+        require(host["available_bytes"] >= 2 * GIB, "CT1_AVAILABLE_HOST_RAM")
     devices = []
     for device in range(2):
         free, total = torch.cuda.mem_get_info(device)
@@ -166,7 +167,7 @@ def preflight(snapshot, repo, lock, drivers, scratch, output, data, plan, *, dea
     try:
         checkpoint = qwen.verify_snapshot(snapshot, repo=repo, hash_reader=lambda path, size:
             memory.stream_readonly_sha256(path, expected_size=size, deadline=deadline,
-                                          advice_errors=advice_errors))
+                                          advice_errors=advice_errors, advise_whole_file=False))
     finally:
         write(evidence / "checkpoint-cache-advice.json", {
             "method": "READONLY_SHA256_ADVISE_CONSUMED_PAGES", "errors": advice_errors,

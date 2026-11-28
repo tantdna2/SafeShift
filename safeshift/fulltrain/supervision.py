@@ -135,7 +135,8 @@ def wait_group_exit(pgid, *, seconds=2):
         time.sleep(.02)
 
 
-def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_root=None, pass_fds=(), live_prefix=None):
+def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_root=None,
+        pass_fds=(), live_prefix=None, on_poll=None):
     """Reap one tree, never retry; timeout includes hanging load/native calls.
 
     Descendants must not deliberately escape their process group. The reviewed
@@ -196,6 +197,8 @@ def run(command, *, cwd, env, deadline, log, receipt, max_log_bytes, watch_log_r
                 if code is not None and (live_prefix is None or position >= os.fstat(stream.fileno()).st_size):
                     reason = "EXITED" if code == 0 else "CHILD_FAILURE"
                     break
+                if code is None and on_poll is not None:
+                    on_poll()
                 time.sleep(min(.05, max(0, deadline - time.monotonic())))
     except BaseException:
         reason = "SUPERVISOR_EXCEPTION"

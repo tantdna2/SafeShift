@@ -22,7 +22,10 @@ WORK = Path("/kaggle/working")
 WALL_SECONDS = 3 * 60 * 60
 PREFLIGHT_SECONDS = 90 * 60
 EXPORT_RESERVE = 120
-CONTROLLER_MEMORY = ("controller-before-setup-memory.json", "controller-after-setup-memory.json")
+LOAD_SAMPLE_LIMIT = 48
+CONTROLLER_MEMORY = ("controller-before-setup-memory.json", "controller-after-setup-memory.json",
+                     "controller-before-worker-memory.json", "controller-after-worker-memory.json")
+LOAD_SAMPLE_NAMES = tuple(f"controller-load-{i:02d}" for i in range(LOAD_SAMPLE_LIMIT))
 SETUP_MEMORY = (
     "entry", "archives-restored", "sources-extracted", "zlib-configure-exit", "zlib-make-exit",
     "zlib-install-exit", "python-configure-exit", "python-make-exit", "python-install-exit",
@@ -120,6 +123,25 @@ def reclaim_setup(root, scratch, deadline):
     write(root / "setup-cache-advice.json", report)
 
 
+def load_observer(root):
+    """Sample through the live supervisor even if deserialization kills the worker."""
+    sample, next_poll = 0, 0.0
+
+    def sample_live_load():
+        nonlocal sample, next_poll
+        now = time.monotonic()
+        if sample >= LOAD_SAMPLE_LIMIT or now < next_poll:
+            return
+        next_poll = now + 1.0
+        if ((root / "model-load-start.json").is_file()
+                and not (root / "model-initialization-exit-memory.json").is_file()):
+            memory.observe(root, LOAD_SAMPLE_NAMES[sample])
+            sample += 1
+            next_poll = now + 5.0
+
+    return sample_live_load
+
+
 def worker(args):
     cfg = config(args.config)
     require_native_admission(cfg)
@@ -160,6 +182,7 @@ def worker(args):
             and not (root / "calls").exists(), "CT1_FRESH_LEDGER_REQUIRED")
     def before_load():
         memory.ct1_ram_gate(root, "before-model-load-ram-gate", budgets["free_ram_mib"] * 2**20)
+        write(root / "model-load-start.json", {"monotonic": time.monotonic()})
 
     memory.observe(root, "model-initialization-entry")
     try:
@@ -208,6 +231,9 @@ def export_diagnostic(root, archive, reason, *, ledger_stable=False):
                 records += ("setup-ram-gate.json", *(f"setup-{phase}-memory.json" for phase in SETUP_MEMORY))
         except (ValueError, OSError):
             pass
+        # Absence of a sample is ordinary on short loads or when no load started.
+        samples = (f"{name}-memory.json" for name in LOAD_SAMPLE_NAMES)
+        records += tuple(name for name in samples if (root / name).exists())
         for name in records:
             try:
                 data = ct1_run.read_controller_record(root, name)
@@ -274,13 +300,13 @@ def supervise(args):
         if cfg["mode"] != "preflight":
             write(root / "resume-admission.json", {"status": "FRESH_ADMITTED"})
         args_common = ["--config", str(args.config), "--job", str(args.job), "--scratch", str(scratch)]
-        def launch(phase, python, cutoff, phase_env):
+        def launch(phase, python, cutoff, phase_env, *, on_poll=None):
             command = [str(python), "-B", "-m", "scripts.run_ct1_native_pilot", phase,
                        *args_common, "--deadline", str(cutoff)]
             receipt = root / (phase + "-supervisor.json")
             report = supervision.run(command, cwd=REPO, env=phase_env, deadline=cutoff,
                 log=root / (phase + ".log"), receipt=receipt,
-                max_log_bytes=budgets["max_log_bytes"], watch_log_root=args.job / "setup")
+                max_log_bytes=budgets["max_log_bytes"], watch_log_root=args.job / "setup", on_poll=on_poll)
             require(report["status"] == "EXITED" and report["returncode"] == 0
                     and supervision.process_group_closed(strict_json(ct1_run.read_controller_record(
                         root, receipt.name))),
@@ -297,7 +323,11 @@ def supervise(args):
         native_cutoff = deadline - EXPORT_RESERVE
         if cfg["mode"] == "preflight":
             native_cutoff = min(native_cutoff, time.monotonic() + budgets["diagnostic_seconds"])
-        launch("worker", python, native_cutoff, env)
+        memory.observe(root, "controller-before-worker")
+        try:
+            launch("worker", python, native_cutoff, env, on_poll=load_observer(root))
+        finally:
+            memory.observe(root, "controller-after-worker")
     except (ValueError, OSError, RuntimeError, TimeoutError, subprocess.SubprocessError) as exc:
         write(root / "controller-failure.json", {"type": type(exc).__name__,
               "message": str(exc)[:2000], "automatic_retry": False, "status": "PARTIAL_OR_BLOCKED"})

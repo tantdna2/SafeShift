@@ -122,8 +122,10 @@ Bản sửa tích hợp chẩn đoán vào notebook smoke hiện có.
   đếm cache của host, cgroup current/max/peak/stat/events nếu có, cùng RSS
   của tiến trình đo. Sau lỗi, bản đo controller được đưa vào ZIP chẩn đoán
   ngay cả khi chưa có worker. Chỉ thu bản đo do setup ghi khi đã xác minh
-  nhóm setup dừng. Receipt gate lưu các toán hạng thực dùng, ngưỡng
-  16 GiB, kết quả hoặc lỗi đọc.
+  nhóm setup dừng. Khi bắt đầu nạp model, controller đo RAM mỗi 5 giây,
+  tối đa 48 mẫu, và đo thêm khi supervisor thu hồi worker. Các mẫu độc lập
+  với worker có thể được xuất ngay cả nếu worker bị kill. Receipt gate lưu
+  các toán hạng thực dùng, ngưỡng 16 GiB, kết quả hoặc lỗi đọc.
 - Sau khi setup thoát sạch, worker đối chiếu inode/device của scratch do
   controller tạo. Dùng lại cách MiniCPM V5 fsync rồi
   POSIX_FADV_DONTNEED trên file thường riêng của job từ 1 MiB, trong
@@ -135,14 +137,20 @@ Bản sửa tích hợp chẩn đoán vào notebook smoke hiện có.
 - Giữ gate 16 GiB ở đầu worker, kiểm lại trước hash checkpoint và ngay
   trước from_pretrained. SHA-256 kiểm đủ byte thật theo revision khóa.
   Đọc checkpoint theo khối hữu hạn và dùng advice trên đoạn vừa đọc theo
-  tiền lệ InternVL V2. Nếu filesystem từ chối advice, ghi lỗi rồi
+  tiền lệ InternVL V2, chỉ với phần đọc xong và đủ trang. Nếu filesystem từ
+  chối advice, ghi lỗi rồi
   kiểm đủ SHA và vẫn dùng gate RAM tươi. Lưu số đo khi hash/load kết thúc
   hoặc lỗi. Giữ hai T4, FP16/SDPA, device map, giới hạn context và kiểm tra
-  headroom trước từng lượt A/E/S. Mất VM trước khi có bằng chứng terminal
+  headroom trước từng lượt A/E/S. Sau generate, số đo RAM thấp vẫn được
+  ghi kèm raw đã trả về. Gate 2 GiB tiếp tục chặn lượt tiếp theo. Mất VM
+  trước khi có bằng chứng terminal
   vẫn giữ các quy tắc forensic và không cho resume qua VM.
-- MiniCPM V5 có bằng chứng hồi phục headroom sau advice trong một môi
-  trường khác. InternVL V2 đã chạy với thu hồi page cache khi hash.
-  Full-TRAIN Qwen3 cung cấp tiền lệ cho cách nạp hai T4. G4–G6 cần bằng
+- [Qwen3 Issue173](../KAGGLE_CHECKPOINTS_173.md#qwen-actual-inference-pass-remaining-peer-continuation)
+  đo 4.555.481.088 → 18.531.954.688 byte sau thu hồi cache và hoàn tất một
+  lượt Qwen trên hai T4. CT1 dùng wheel mount trực tiếp, nên không có bản
+  sao wheelhouse lớn của Issue173 để xóa. MiniCPM V5 có bằng chứng hồi phục
+  trong một môi trường khác. InternVL V2 đã chạy với thu hồi page cache
+  khi hash. G4–G6 cần bằng
   chứng native từ một lượt được Owner duyệt riêng. Nếu gate RAM tiếp tục
   chặn, dùng receipt mới để phân biệt host với cgroup và so
   file/anon/inactive_file trước khi cân nhắc thay đổi điều kiện chạy.

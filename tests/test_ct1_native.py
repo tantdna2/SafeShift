@@ -826,6 +826,91 @@ class NativeTest(unittest.TestCase):
         self.assertEqual(actual, sha256(b"actual bytes"))
         self.assertEqual(advice_errors, [{"file": fixture.name, "errno": 22}])
 
+    def test_interrupted_ct1_hash_advises_only_complete_consumed_pages(self):
+        fixture = self.root / "fixture.checkpoint"
+        payload = b"x" * 8192
+        fixture.write_bytes(payload)
+        with (patch.object(os, "POSIX_FADV_DONTNEED", 4, create=True),
+              patch.object(os, "POSIX_FADV_RANDOM", 1, create=True),
+              patch.object(os, "sysconf", return_value=4096, create=True)):
+            for reads, expected in (([OSError("read failed")], []),
+                                     ([payload[:4096], OSError("read failed")], [(0, 4096, 4)])):
+                with (self.subTest(expected=expected),
+                      patch.object(os, "read", side_effect=reads),
+                      patch.object(os, "posix_fadvise", create=True) as fadvise):
+                    with self.assertRaisesRegex(OSError, "read failed"):
+                        memory.stream_readonly_sha256(fixture, expected_size=len(payload),
+                                                      advise_whole_file=False)
+                    self.assertEqual([c.args[1:] for c in fadvise.call_args_list if c.args[-1] == 4],
+                                     expected)
+        self.assertEqual(fixture.read_bytes(), payload)
+
+    def test_parent_load_samples_survive_missing_worker_cleanup(self):
+        root = self.root / "evidence"
+        root.mkdir()
+        archive = self.root / "smoke.zip"
+        observer = controller.load_observer(root)
+
+        def observed(out, name):
+            write(out / (name + "-memory.json"), {"fixture": True})
+
+        with (patch.object(controller.time, "monotonic", side_effect=[1, 2, 3, 7, 12]),
+              patch.object(memory, "observe", side_effect=observed) as observe):
+            observer()  # No model-load marker.
+            write(root / "model-load-start.json", {"monotonic": 1.5})
+            observer()  # Model load began.
+            observer()  # The sample interval has not elapsed.
+            observer()  # Still loading.
+            write(root / "model-initialization-exit-memory.json", {})
+            observer()  # Load exit receipt exists.
+            self.assertEqual(observe.call_args_list, [
+                call(root, "controller-load-00"), call(root, "controller-load-01")])
+        observed(root, "controller-after-worker")
+        write(root / "worker-supervisor.json", self.receipt("PROCESS_GROUP_CLEANUP_UNVERIFIED"))
+        self.assertEqual(controller.export_job(root, archive, self.plan, self.binding, "pilot"), "FORENSIC_ONLY")
+        self.assertFalse(archive.exists())
+        verified = verify_archive(controller.diagnostic_path(archive))
+        self.assertTrue({"controller-load-00-memory.json", "controller-load-01-memory.json",
+                         "controller-after-worker-memory.json"} <= verified.keys())
+        self.assertNotIn("model-initialization-exit-memory.json", verified)
+
+    @unittest.skipUnless(os.name == "posix", "real Linux worker supervision")
+    def test_supervisor_samples_load_before_sigkill(self):
+        import sys
+
+        root = self.root / "killed"
+        root.mkdir()
+        receipt = root / "worker-supervisor.json"
+        program = (
+            "import os, signal, sys, time; from pathlib import Path; "
+            "Path(sys.argv[1], 'model-load-start.json').touch(); "
+            "time.sleep(2); os.kill(os.getpid(), signal.SIGKILL)"
+        )
+        with patch.object(memory, "observe", side_effect=lambda out, name:
+                          write(out / (name + "-memory.json"), {"fixture": True})):
+            with self.assertRaisesRegex(RuntimeError, "SUPERVISED_CHILD_FAILURE"):
+                controller.supervision.run([sys.executable, "-B", "-c", program, str(root)],
+                    cwd=self.root, env=os.environ.copy(), deadline=time.monotonic() + 15,
+                    log=root / "worker.log", receipt=receipt, max_log_bytes=65536,
+                    on_poll=controller.load_observer(root))
+        self.assertTrue((root / "controller-load-00-memory.json").is_file())
+        self.assertFalse((root / "model-initialization-exit-memory.json").exists())
+        self.assertTrue(controller.supervision.process_group_closed(json.loads(receipt.read_bytes())))
+
+    def test_observing_low_ram_does_not_drop_returned_output(self):
+        class Cuda:
+            mem_get_info = staticmethod(lambda device: (10, 20))
+            memory_allocated = staticmethod(lambda device: 1)
+            memory_reserved = staticmethod(lambda device: 2)
+            max_memory_allocated = staticmethod(lambda device: 3)
+
+        with patch.object(environment, "host_memory", return_value={"available_bytes": 2**30}):
+            report = ct1_native.memory_headroom(SimpleNamespace(cuda=Cuda), before_call=False)
+            self.assertEqual(report["host"]["available_bytes"], 2**30)
+            self.assertEqual(len(report["devices"]), 2)
+            with self.assertRaisesRegex(ValueError, "CT1_AVAILABLE_HOST_RAM"):
+                ct1_native.memory_headroom(SimpleNamespace(cuda=Cuda), before_call=True)
+
     def test_model_ram_guard_precedes_weight_load(self):
         import sys
         events = []

@@ -37,7 +37,8 @@ def policy(key, value):
 
 def host_memory(proc=Path("/proc/meminfo"), cgroup=Path("/sys/fs/cgroup"), *, details=False):
     rows = dict(line.split(":", 1) for line in proc.read_text().splitlines())
-    host = available = int(rows["MemAvailable"].split()[0]) * 1024
+    available_kib, *_ = rows["MemAvailable"].split()
+    host = available = int(available_kib) * 1024
     constraints, cgroups = [], {}
     found = False
     for limit, used in (("memory.max", "memory.current"),

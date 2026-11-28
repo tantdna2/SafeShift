@@ -28,7 +28,7 @@ def snapshot(proc=Path('/proc'), cgroup=Path('/sys/fs/cgroup')):
             for name in ('MemTotal', 'MemFree', 'Buffers', 'Cached', 'SReclaimable', 'Shmem', 'Dirty', 'Writeback')
             if name in rows
         }
-    except (OSError, ValueError, KeyError) as error:
+    except (OSError, ValueError, KeyError, IndexError) as error:
         value['errors'].append({'file': 'meminfo', 'type': type(error).__name__})
     cg = value['cgroup']
     numbers = [cg.get('memory.current'), *cg.get('memory.stat', {}).values(),
@@ -104,7 +104,8 @@ def check_deadline(deadline):
 
 
 @contextmanager
-def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise_file=None):
+def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise_file=None,
+                advise_whole_file=True):
     path = Path(path)
     advise_file = os.posix_fadvise if advise_file is None and hasattr(os, 'posix_fadvise') else advise_file
     check_deadline(deadline)
@@ -121,7 +122,7 @@ def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise
         try:
             yield fd, before.st_size, advice
         finally:
-            if advice:
+            if advice and advise_whole_file:
                 advise_file(fd, 0, 0, os.POSIX_FADV_DONTNEED)
         require(identity(os.fstat(fd)) == identity(before)
                 and identity(snapshot_stat(path)) == identity(before), 'READONLY_FILE_CHANGED')
@@ -131,7 +132,7 @@ def readonly_fd(path, expected_size, deadline, *, expected_identity=None, advise
 
 
 def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=None,
-                           expected_identity=None, advice_errors=None):
+                           expected_identity=None, advice_errors=None, advise_whole_file=True):
     hashed = hashlib.sha256()
 
     def advise_file(fd, offset, length, hint):
@@ -145,7 +146,7 @@ def stream_readonly_sha256(path, *, expected_size=None, deadline=None, copy_to=N
             advice_errors.append({"file": Path(path).name, "errno": error.errno})
 
     with readonly_fd(path, expected_size, deadline, expected_identity=expected_identity,
-                     advise_file=advise_file) as (fd, size, advice):
+                     advise_file=advise_file, advise_whole_file=advise_whole_file) as (fd, size, advice):
         if advice and hasattr(os, 'POSIX_FADV_RANDOM'):
             advise_file(fd, 0, 0, os.POSIX_FADV_RANDOM)
         page = os.sysconf('SC_PAGE_SIZE') if advice else None
